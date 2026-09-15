@@ -1,0 +1,4 @@
+format,operation,rounding,cases,value_mismatches,flag_mismatches,parse_errors
+f32,sqrt,max,8800,0,0,0
+f32,to_bf16,near_even,8800,0,0,0
+f16,add,near_even,1254528,0,0,0

@@ -1,0 +1,10 @@
+floatlean_revision	332491fd0acb7702b5730aa96bf5927063583d92
+floatlean_worktree	dirty
+compiler	cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+mpfr_compile_flags	-O2 -std=c11 -Wall -Wextra -Werror
+mpfr_version	4.2.1
+python_version	Python 3.12.3
+random_count_per_format	256
+core_math_revision	68b034fbe9512781352d28f2dc9795c1686fe8e9
+openlibm_revision	5fe399749f9276eaa0b8403e507470da05cbbb3f
+rlibm_revision	90431a000071e415abf0f403b6125c385551e346

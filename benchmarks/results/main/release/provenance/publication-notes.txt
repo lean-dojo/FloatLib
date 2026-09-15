@@ -1,0 +1,34 @@
+FloatLean benchmark publication notes
+=====================================
+
+The evaluator completed all 4,032 timed rows and staged a result whose outer
+and benchmark manifests both verified before publication.
+
+The evaluator image did not contain ripgrep. The timing script used `rg` only
+to enumerate the Lean source tree for `leanSourceAndBuildConfigHash`, so the
+staged metadata recorded the hash of the three build-configuration files:
+
+  ff1fec851e0c80d2e992e9e0f7b4574c7b2032e2d98ac0261c1573087810d0cc
+
+We recomputed that field from the authenticated `source-files.sha256` ledger,
+selecting every `LeanFloat/` file plus `lakefile.lean`, `lean-toolchain`, and
+`lake-manifest.json`. The published metadata records:
+
+  1227ebb6c2f75af590c099104ba31bbf88a7e70bfe836952105891ccf2574771
+
+No calibration row, timed row, resource record, workload check, table, or plot
+was changed. The original staged files are retained here as:
+
+  staged-result-MANIFEST.tsv
+    sha256 b8178d0b39615091befec1f0c238b7a429efbaef204d62527d582b0ed3452609
+
+  staged-benchmark-MANIFEST.tsv
+    sha256 8ee0f9d299aba0fafa939da81f80fc2bf3edf273aac8cdd1d04f2c58351d0765
+
+  staged-benchmark-metadata.txt
+    sha256 da821acd57b7e9e78c4e190eeabb5518877874c4dcd462fa6062b843192a7860
+
+The publication scripts now enumerate sources with the file tools guaranteed
+by the evaluator and verify the aggregate hash against the retained source
+ledger. The matrix verifier also recognizes the adapter's actual
+`Universal <commit> ...` backend label.

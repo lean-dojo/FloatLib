@@ -1,0 +1,1 @@
+RESULT format=f16 operation=to_f128 rounding=near_even cases=408 value_mismatches=0 flag_mismatches=0 parse_errors=0

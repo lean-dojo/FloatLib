@@ -1,0 +1,642 @@
+[
+  {
+    "key": "ieee754_1985",
+    "authors": "IEEE",
+    "title": "IEEE Standard for Binary Floating-Point Arithmetic",
+    "venue": "ANSI/IEEE Std 754-1985",
+    "year": "1985",
+    "url": "https://doi.org/10.1109/IEEESTD.1985.82928"
+  },
+  {
+    "key": "ieee854_1987",
+    "authors": "IEEE",
+    "title": "IEEE Standard for Radix-Independent Floating-Point Arithmetic",
+    "venue": "ANSI/IEEE Std 854-1987",
+    "year": "1987",
+    "url": "https://doi.org/10.1109/IEEESTD.1987.81037"
+  },
+  {
+    "key": "ieee754_2008",
+    "authors": "IEEE",
+    "title": "IEEE Standard for Floating-Point Arithmetic",
+    "venue": "IEEE Std 754-2008",
+    "year": "2008",
+    "url": "https://doi.org/10.1109/IEEESTD.2008.4610935"
+  },
+  {
+    "key": "ieee754_2019",
+    "authors": "IEEE",
+    "title": "IEEE Standard for Floating-Point Arithmetic",
+    "venue": "IEEE Std 754-2019",
+    "year": "2019",
+    "url": "https://doi.org/10.1109/IEEESTD.2019.8766229"
+  },
+  {
+    "key": "positStandard2022",
+    "authors": "Posit Working Group",
+    "title": "Standard for Posit Arithmetic",
+    "venue": "Release 2022",
+    "year": "2022",
+    "url": "https://posithub.org/docs/posit_standard-2.pdf"
+  },
+  {
+    "key": "p3109InterimReport",
+    "authors": "IEEE SA P3109 Working Group",
+    "title": "IEEE Working Group P3109 Interim Report on Arithmetic Formats for Machine Learning, version 4.0.3",
+    "venue": "Public repository, revision 34f5964",
+    "year": "2026",
+    "url": "https://github.com/P3109/Public/blob/34f5964d9bb2382b2665d15467fc3517b990b308/IEEE%20P3109%20Interim%20Report.pdf"
+  },
+  {
+    "key": "ocpOfp8",
+    "authors": "Open Compute Project",
+    "title": "OCP 8-bit Floating Point Specification (OFP8), Revision 1.0",
+    "venue": "OCP Specification",
+    "year": "2023",
+    "url": "https://www.opencompute.org/documents/ocp-8-bit-floating-point-specification-ofp8-revision-1-0-2023-12-01-pdf-1"
+  },
+  {
+    "key": "ocpMx",
+    "authors": "Open Compute Project",
+    "title": "OCP Microscaling Formats (MX) Specification, Version 1.0",
+    "venue": "OCP Specification",
+    "year": "2023",
+    "url": "https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf"
+  },
+  {
+    "key": "onnxFloat8",
+    "authors": "ONNX",
+    "title": "Float stored in 8 bits",
+    "venue": "ONNX technical documentation",
+    "year": "2023",
+    "url": "https://onnx.ai/onnx/technical/float8.html"
+  },
+  {
+    "key": "nvidiaTf32",
+    "authors": "NVIDIA",
+    "title": "Accelerating AI Training with NVIDIA TF32 Tensor Cores",
+    "venue": "NVIDIA Developer Blog",
+    "year": "2020",
+    "url": "https://developer.nvidia.com/blog/accelerating-ai-training-with-tf32-tensor-cores/"
+  },
+  {
+    "key": "goldberg1991",
+    "authors": "David Goldberg",
+    "title": "What Every Computer Scientist Should Know About Floating-Point Arithmetic",
+    "venue": "ACM Computing Surveys, volume 23, number 1, pages 5 to 48",
+    "year": "1991",
+    "url": "https://doi.org/10.1145/103162.103163"
+  },
+  {
+    "key": "higham2002",
+    "authors": "Nicholas J. Higham",
+    "title": "Accuracy and Stability of Numerical Algorithms, second edition",
+    "venue": "SIAM",
+    "year": "2002",
+    "url": "https://doi.org/10.1137/1.9780898718027"
+  },
+  {
+    "key": "mullerHandbook",
+    "authors": "Jean-Michel Muller, Nicolas Brunie, Florent de Dinechin, Claude-Pierre Jeannerod, Mioara Joldes, Vincent Lefèvre, Guillaume Melquiond, Nathalie Revol, and Serge Torres",
+    "title": "Handbook of Floating-Point Arithmetic, second edition",
+    "venue": "Birkhäuser",
+    "year": "2018",
+    "url": "https://doi.org/10.1007/978-3-319-76526-6"
+  },
+  {
+    "key": "kahan1997",
+    "authors": "William Kahan",
+    "title": "Lecture Notes on the Status of IEEE Standard 754 for Binary Floating-Point Arithmetic",
+    "venue": "University of California, Berkeley; work in progress dated 1 October 1997, archived copy",
+    "year": "1997",
+    "url": "https://web.archive.org/web/20260729051124/https://people.eecs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF"
+  },
+  {
+    "key": "moore1966",
+    "authors": "Ramon E. Moore",
+    "title": "Interval Analysis",
+    "venue": "Prentice-Hall",
+    "year": "1966",
+    "url": ""
+  },
+  {
+    "key": "sterbenz1974",
+    "authors": "Pat H. Sterbenz",
+    "title": "Floating-Point Computation",
+    "venue": "Prentice-Hall",
+    "year": "1974",
+    "url": ""
+  },
+  {
+    "key": "dekker1971",
+    "authors": "T. J. Dekker",
+    "title": "A Floating-Point Technique for Extending the Available Precision",
+    "venue": "Numerische Mathematik, volume 18, number 3, pages 224 to 242",
+    "year": "1971",
+    "url": "https://doi.org/10.1007/BF01397083"
+  },
+  {
+    "key": "swartzlanderAlexopoulos1975",
+    "authors": "Earl E. Swartzlander and Aristides G. Alexopoulos",
+    "title": "The Sign/Logarithm Number System",
+    "venue": "IEEE Transactions on Computers, volume C-24, number 12, pages 1238 to 1242",
+    "year": "1975",
+    "url": "https://doi.org/10.1109/T-C.1975.224172"
+  },
+  {
+    "key": "deDinechinLog2007",
+    "authors": "Florent de Dinechin, Christoph Lauter, and Jean-Michel Muller",
+    "title": "Fast and Correctly Rounded Logarithms in Double-Precision",
+    "venue": "RAIRO Theoretical Informatics and Applications, volume 41, number 1, pages 85 to 102",
+    "year": "2007",
+    "url": "https://doi.org/10.1051/ita:2007003"
+  },
+  {
+    "key": "monniaux2008",
+    "authors": "David Monniaux",
+    "title": "The Pitfalls of Verifying Floating-Point Computations",
+    "venue": "ACM Transactions on Programming Languages and Systems, volume 30, number 3, pages 1 to 41",
+    "year": "2008",
+    "url": "https://doi.org/10.1145/1353445.1353446"
+  },
+  {
+    "key": "knuth1997",
+    "authors": "Donald E. Knuth",
+    "title": "The Art of Computer Programming, Volume 2: Seminumerical Algorithms, third edition",
+    "venue": "Addison-Wesley (Algorithm D, Section 4.3.1)",
+    "year": "1997",
+    "url": ""
+  },
+  {
+    "key": "warrenHackersDelight2013",
+    "authors": "Henry S. Warren, Jr.",
+    "title": "Hacker's Delight, second edition",
+    "venue": "Addison-Wesley",
+    "year": "2013",
+    "url": ""
+  },
+  {
+    "key": "kulisch2013",
+    "authors": "Ulrich Kulisch",
+    "title": "Computer Arithmetic and Validity: Theory, Implementation, and Applications, second edition",
+    "venue": "De Gruyter",
+    "year": "2013",
+    "url": "https://doi.org/10.1515/9783110301793"
+  },
+  {
+    "key": "boldoMelquiond2011",
+    "authors": "Sylvie Boldo and Guillaume Melquiond",
+    "title": "Flocq: A Unified Library for Proving Floating-Point Algorithms in Coq",
+    "venue": "20th IEEE Symposium on Computer Arithmetic (ARITH 2011), pages 243 to 252",
+    "year": "2011",
+    "url": "https://doi.org/10.1109/ARITH.2011.40"
+  },
+  {
+    "key": "boldoMelquiondBook",
+    "authors": "Sylvie Boldo and Guillaume Melquiond",
+    "title": "Computer Arithmetic and Formal Proofs: Verifying Floating-Point Algorithms with the Coq System",
+    "venue": "ISTE Press and Elsevier",
+    "year": "2017",
+    "url": ""
+  },
+  {
+    "key": "harrison1999",
+    "authors": "John Harrison",
+    "title": "A Machine-Checked Theory of Floating Point Arithmetic",
+    "venue": "Theorem Proving in Higher Order Logics (TPHOLs 1999), Lecture Notes in Computer Science, pages 113 to 130",
+    "year": "1999",
+    "url": "https://doi.org/10.1007/3-540-48256-3_9"
+  },
+  {
+    "key": "mooreLynchKaufmann1998",
+    "authors": "J. Strother Moore, Tom Lynch, and Matt Kaufmann",
+    "title": "A Mechanically Checked Proof of the AMD5K86 Floating-Point Division Program",
+    "venue": "IEEE Transactions on Computers, volume 47, number 9, pages 913 to 926",
+    "year": "1998",
+    "url": "https://doi.org/10.1109/12.713311"
+  },
+  {
+    "key": "russinoff1998",
+    "authors": "David M. Russinoff",
+    "title": "A Mechanically Checked Proof of IEEE Compliance of the Floating Point Multiplication, Division and Square Root Algorithms of the AMD-K7 Processor",
+    "venue": "LMS Journal of Computation and Mathematics, volume 1, pages 148 to 200",
+    "year": "1998",
+    "url": "https://doi.org/10.1112/S1461157000000176"
+  },
+  {
+    "key": "moura2021lean4",
+    "authors": "Leonardo de Moura and Sebastian Ullrich",
+    "title": "The Lean 4 Theorem Prover and Programming Language",
+    "venue": "Automated Deduction (CADE 28), Lecture Notes in Computer Science, pages 625 to 635",
+    "year": "2021",
+    "url": "https://doi.org/10.1007/978-3-030-79876-5_37"
+  },
+  {
+    "key": "leanMathlib2020",
+    "authors": "The mathlib Community",
+    "title": "The Lean Mathematical Library",
+    "venue": "Certified Programs and Proofs (CPP 2020), pages 367 to 381",
+    "year": "2020",
+    "url": "https://doi.org/10.1145/3372885.3373824"
+  },
+  {
+    "key": "leanReference",
+    "authors": "Lean FRO",
+    "title": "The Lean Language Reference",
+    "venue": "lean-lang.org",
+    "year": "",
+    "url": "https://lean-lang.org/doc/reference/latest/"
+  },
+  {
+    "key": "gustafsonYonemoto2017",
+    "authors": "John L. Gustafson and Isaac Yonemoto",
+    "title": "Beating Floating Point at its Own Game: Posit Arithmetic",
+    "venue": "Supercomputing Frontiers and Innovations, volume 4, number 2, pages 71 to 86",
+    "year": "2017",
+    "url": "https://doi.org/10.14529/jsfi170206"
+  },
+  {
+    "key": "deDinechinPosits2019",
+    "authors": "Florent de Dinechin, Luc Forget, Jean-Michel Muller, and Yohann Uguen",
+    "title": "Posits: The Good, the Bad and the Ugly",
+    "venue": "Proceedings of the Conference for Next Generation Arithmetic (CoNGA 2019), pages 1 to 10",
+    "year": "2019",
+    "url": "https://doi.org/10.1145/3316279.3316285"
+  },
+  {
+    "key": "micikevicius2018mixed",
+    "authors": "Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich Elsen, David Garcia, Boris Ginsburg, Michael Houston, Oleksii Kuchaiev, Ganesh Venkatesh, and Hao Wu",
+    "title": "Mixed Precision Training",
+    "venue": "arXiv:1710.03740",
+    "year": "2018",
+    "url": "https://arxiv.org/abs/1710.03740"
+  },
+  {
+    "key": "kalamkarBfloat2019",
+    "authors": "Dhiraj Kalamkar, Dheevatsa Mudigere, Naveen Mellempudi, Dipankar Das, Kunal Banerjee, Sasikanth Avancha, Dharma Teja Vooturi, Nataraj Jammalamadaka, Jianyu Huang, Hector Yuen, Jiyan Yang, Jongsoo Park, Alexander Heinecke, Evangelos Georganas, Sudarshan Srinivasan, Abhisek Kundu, Misha Smelyanskiy, Bharat Kaul, and Pradeep Dubey",
+    "title": "A Study of BFLOAT16 for Deep Learning Training",
+    "venue": "arXiv:1905.12322",
+    "year": "2019",
+    "url": "https://arxiv.org/abs/1905.12322"
+  },
+  {
+    "key": "micikevicius2022fp8",
+    "authors": "Paulius Micikevicius, Dusan Stosic, Neil Burgess, Marius Cornea, Pradeep Dubey, Richard Grisenthwaite, Sangwon Ha, Alexander Heinecke, Patrick Judd, John Kamalu, Naveen Mellempudi, Stuart Oberman, Mohammad Shoeybi, Michael Siu, and Hao Wu",
+    "title": "FP8 Formats for Deep Learning",
+    "venue": "arXiv:2209.05433",
+    "year": "2022",
+    "url": "https://arxiv.org/abs/2209.05433"
+  },
+  {
+    "key": "hauserSoftFloat",
+    "authors": "John R. Hauser",
+    "title": "Berkeley SoftFloat, Release 3e",
+    "venue": "pinned at commit a0c6494 of https://github.com/ucb-bar/berkeley-softfloat-3 by tests/oracles/testfloat.sh",
+    "year": "",
+    "url": "https://www.jhauser.us/arithmetic/SoftFloat.html"
+  },
+  {
+    "key": "hauserTestFloat",
+    "authors": "John R. Hauser",
+    "title": "Berkeley TestFloat, Release 3e",
+    "venue": "pinned at commit a9c849f of https://github.com/ucb-bar/berkeley-testfloat-3 by tests/oracles/testfloat.sh",
+    "year": "",
+    "url": "https://www.jhauser.us/arithmetic/TestFloat.html"
+  },
+  {
+    "key": "fousseMpfr2007",
+    "authors": "Laurent Fousse, Guillaume Hanrot, Vincent Lefèvre, Patrick Pélissier, and Paul Zimmermann",
+    "title": "MPFR: A Multiple-Precision Binary Floating-Point Library with Correct Rounding",
+    "venue": "ACM Transactions on Mathematical Software, volume 33, number 2, article 13",
+    "year": "2007",
+    "url": "https://doi.org/10.1145/1236463.1236468"
+  },
+  {
+    "key": "abelUopsInfo2019",
+    "authors": "Andreas Abel and Jan Reineke",
+    "title": "uops.info: Characterizing Latency, Throughput, and Port Usage of Instructions on Intel Microarchitectures",
+    "venue": "Proceedings of the Twenty-Fourth International Conference on Architectural Support for Programming Languages and Operating Systems, pages 673 to 686",
+    "year": "2019",
+    "url": "https://doi.org/10.1145/3297858.3304062"
+  },
+  {
+    "key": "johanssonArb2017",
+    "authors": "Fredrik Johansson",
+    "title": "Arb: Efficient Arbitrary-Precision Midpoint-Radius Interval Arithmetic",
+    "venue": "IEEE Transactions on Computers, volume 66, number 8, pages 1281 to 1292",
+    "year": "2017",
+    "url": "https://doi.org/10.1109/TC.2017.2690633"
+  },
+  {
+    "key": "pythonFlint",
+    "authors": "python-flint contributors",
+    "title": "python-flint: Python bindings for FLINT and Arb",
+    "venue": "version 0.9.0 in tests/EXTERNAL.md",
+    "year": "",
+    "url": "https://github.com/flintlib/python-flint"
+  },
+  {
+    "key": "softPosit",
+    "authors": "SoftPosit contributors",
+    "title": "SoftPosit",
+    "venue": "GitLab repository, pinned at commit 17d5628",
+    "year": "",
+    "url": "https://gitlab.com/cerlane/SoftPosit"
+  },
+  {
+    "key": "ibmFpgen",
+    "authors": "IBM and ieee754-test-suite contributors",
+    "title": "IBM Floating-Point Test Suite vectors",
+    "venue": "GitHub repository, pinned at commit 12e883a",
+    "year": "",
+    "url": "https://github.com/sergev/ieee754-test-suite"
+  },
+  {
+    "key": "smtLibQfFp",
+    "authors": "SMT-LIB Initiative",
+    "title": "QF_FP: Quantifier-Free Floating-Point Arithmetic",
+    "venue": "SMT-LIB logic specification",
+    "year": "",
+    "url": "https://smt-lib.org/logics-all.shtml#QF_FP"
+  },
+  {
+    "key": "z3",
+    "authors": "Microsoft Research and Z3 contributors",
+    "title": "The Z3 Theorem Prover",
+    "venue": "GitHub repository",
+    "year": "",
+    "url": "https://github.com/Z3Prover/z3"
+  },
+  {
+    "key": "fpBench",
+    "authors": "FPBench contributors",
+    "title": "FPBench",
+    "venue": "Project site and GitHub repository, pinned at commit a6621d5",
+    "year": "",
+    "url": "https://fpbench.org/"
+  },
+  {
+    "key": "daisy",
+    "authors": "Daisy contributors",
+    "title": "Daisy: A Framework for Analysis and Optimization of Numerical Programs",
+    "venue": "GitHub repository, pinned at commit 6a6f47a",
+    "year": "",
+    "url": "https://github.com/malyzajko/daisy"
+  },
+  {
+    "key": "fpTaylor",
+    "authors": "FPTaylor contributors",
+    "title": "FPTaylor",
+    "venue": "GitHub repository, pinned at commit b5a77ca",
+    "year": "",
+    "url": "https://github.com/soarlab/FPTaylor"
+  },
+  {
+    "key": "herbie",
+    "authors": "Herbie contributors",
+    "title": "Herbie",
+    "venue": "Project site and GitHub repository, pinned at commit 52cba77",
+    "year": "",
+    "url": "https://herbie.uwplse.org/"
+  },
+  {
+    "key": "coreMath",
+    "authors": "CORE-MATH contributors",
+    "title": "CORE-MATH",
+    "venue": "GitLab repository, pinned at commit 68b034f",
+    "year": "",
+    "url": "https://gitlab.inria.fr/core-math/core-math"
+  },
+  {
+    "key": "openLibm",
+    "authors": "OpenLibm contributors",
+    "title": "OpenLibm",
+    "venue": "GitHub repository, pinned at commit 5fe3997",
+    "year": "",
+    "url": "https://github.com/JuliaMath/openlibm"
+  },
+  {
+    "key": "rlibmAll",
+    "authors": "RLIBM contributors",
+    "title": "RLIBM-ALL",
+    "venue": "GitHub repository, pinned at commit 90431a0",
+    "year": "",
+    "url": "https://github.com/rutgers-apl/rlibm-all"
+  },
+  {
+    "key": "flit",
+    "authors": "PRUNERS and FLiT contributors",
+    "title": "FLiT: Floating-Point Litmus Tester",
+    "venue": "GitHub repository, pinned at commit 27b6061",
+    "year": "",
+    "url": "https://github.com/PRUNERS/FLiT"
+  },
+  {
+    "key": "verificarlo",
+    "authors": "Verificarlo contributors",
+    "title": "Verificarlo",
+    "venue": "GitHub repository, pinned at commit c5d1bf7",
+    "year": "",
+    "url": "https://github.com/verificarlo/verificarlo"
+  },
+  {
+    "key": "reproBLAS",
+    "authors": "ReproBLAS contributors",
+    "title": "ReproBLAS",
+    "venue": "Project site and GitHub repository, pinned at commit dfb8150",
+    "year": "",
+    "url": "https://bebop.cs.berkeley.edu/reproblas/"
+  },
+  {
+    "key": "exBLAS",
+    "authors": "ExBLAS contributors",
+    "title": "ExBLAS",
+    "venue": "GitHub repository, pinned at commit 856130e",
+    "year": "",
+    "url": "https://github.com/riakymch/exblas"
+  },
+  {
+    "key": "stillwaterUniversal",
+    "authors": "E. Theodore L. Omtzigt, Peter Gottschling, Mark Seligman, and William Zorn",
+    "title": "Universal: A Header-Only C++ Template Library for Universal Number Arithmetic",
+    "venue": "Stillwater Supercomputing, GitHub repository, pinned at commit 26e69f5 by benchmarks/scripts/format-comparison.sh",
+    "year": "",
+    "url": "https://github.com/stillwater-sc/universal"
+  },
+  {
+    "key": "gmpManual",
+    "authors": "GNU Project",
+    "title": "GNU MP Manual, Multiplication Algorithms",
+    "venue": "GMP documentation",
+    "year": "",
+    "url": "https://gmplib.org/manual/Multiplication-Algorithms"
+  },
+  {
+    "key": "fftwPlanner",
+    "authors": "Matteo Frigo and Steven G. Johnson",
+    "title": "FFTW 3 Documentation, Planner Flags",
+    "venue": "FFTW documentation",
+    "year": "",
+    "url": "https://www.fftw.org/fftw3_doc/Planner-Flags.html"
+  },
+  {
+    "key": "gaoPatriot1992",
+    "authors": "U.S. General Accounting Office",
+    "title": "Patriot Missile Defense: Software Problem Led to System Failure at Dhahran, Saudi Arabia",
+    "venue": "GAO/IMTEC-92-26, 4 February 1992",
+    "year": "1992",
+    "url": "https://www.gao.gov/products/imtec-92-26"
+  },
+  {
+    "key": "skeel1992",
+    "authors": "Robert Skeel",
+    "title": "Roundoff Error and the Patriot Missile",
+    "venue": "SIAM News, volume 25, number 4, page 11, July 1992",
+    "year": "1992",
+    "url": "https://www-users.cse.umn.edu/~arnold/disasters/Patriot-dharan-skeel-siam.pdf"
+  },
+  {
+    "key": "lions1996",
+    "authors": "Jacques-Louis Lions and others",
+    "title": "ARIANE 5: Flight 501 Failure, Report by the Inquiry Board",
+    "venue": "European Space Agency, Paris, 19 July 1996",
+    "year": "1996",
+    "url": "https://esamultimedia.esa.int/docs/esa-x-1819eng.pdf"
+  },
+  {
+    "key": "quinn1983",
+    "authors": "Kevin Quinn",
+    "title": "Ever Had Problems Rounding Off Figures? This Stock Exchange Has",
+    "venue": "The Wall Street Journal, 8 November 1983, page 37",
+    "year": "1983",
+    "url": ""
+  },
+  {
+    "key": "lilley1983",
+    "authors": "Wayne Lilley",
+    "title": "Vancouver stock index has right number at last",
+    "venue": "The Toronto Star, 29 November 1983",
+    "year": "1983",
+    "url": ""
+  },
+  {
+    "key": "coePentium1995",
+    "authors": "Tim Coe, Terje Mathisen, Cleve Moler, and Vaughan Pratt",
+    "title": "Computational Aspects of the Pentium Affair",
+    "venue": "IEEE Computational Science and Engineering, volume 2, number 1, pages 18 to 30",
+    "year": "1995",
+    "url": "https://doi.org/10.1109/99.372929"
+  },
+  {
+    "key": "edelman1997",
+    "authors": "Alan Edelman",
+    "title": "The Mathematics of the Pentium Division Bug",
+    "venue": "SIAM Review, volume 39, number 1, pages 54 to 67",
+    "year": "1997",
+    "url": "https://doi.org/10.1137/S0036144595293959"
+  },
+  {
+    "key": "intelAnnualReport1994",
+    "authors": "Intel Corporation",
+    "title": "1994 Annual Report",
+    "venue": "Intel Corporation",
+    "year": "1994",
+    "url": ""
+  },
+  {
+    "key": "jakobsenRosendahl1994",
+    "authors": "Bernt Jakobsen and Finn Rosendahl",
+    "title": "The Sleipner Platform Accident",
+    "venue": "Structural Engineering International, volume 4, number 3, pages 190 to 193",
+    "year": "1994",
+    "url": "https://doi.org/10.2749/101686694780601971"
+  },
+  {
+    "key": "selbyVecchioCollins1997",
+    "authors": "R. G. Selby, F. J. Vecchio, and M. P. Collins",
+    "title": "The Failure of an Offshore Platform",
+    "venue": "Concrete International, volume 19, number 8, pages 28 to 35",
+    "year": "1997",
+    "url": ""
+  },
+  {
+    "key": "arnoldDisasters",
+    "authors": "Douglas N. Arnold",
+    "title": "Some disasters attributable to bad numerical computing",
+    "venue": "University of Minnesota",
+    "year": "",
+    "url": "https://www-users.cse.umn.edu/~arnold/disasters/"
+  },
+  {
+    "key": "gmpFloatingPointManual",
+    "authors": "GNU Project",
+    "title": "GNU MP Manual, Floating-point Functions",
+    "venue": "GMP documentation",
+    "year": "",
+    "url": "https://gmplib.org/manual/Floating_002dpoint-Functions"
+  },
+  {
+    "key": "mpfrManual",
+    "authors": "The MPFR Team",
+    "title": "GNU MPFR Manual, Rounding",
+    "venue": "MPFR documentation",
+    "year": "",
+    "url": "https://www.mpfr.org/mpfr-current/mpfr.html#Rounding"
+  },
+  {
+    "key": "flopsPaper",
+    "authors": "Tung-Che Chang, Sehyeok Park, Jay P. Lim, and Santosh Nagarakatte",
+    "title": "Semantics, Operations, and Properties of P3109 Floating-Point Representations in Lean",
+    "venue": "arXiv:2602.15965, version 3",
+    "year": "2026",
+    "url": "https://arxiv.org/abs/2602.15965v3"
+  },
+  {
+    "key": "flopsArtifact",
+    "authors": "Tung-Che Chang, Sehyeok Park, Jay P. Lim, and Santosh Nagarakatte",
+    "title": "FLoPS: executable P3109 arithmetic and refinement proofs",
+    "venue": "FMCAD 2026 artifact, revision 4ead906",
+    "year": "2026",
+    "url": "https://github.com/rutgers-apl/FLoPS/tree/4ead906d8bceefd400620dcc52ec3245f84669e9"
+  },
+  {
+    "key": "floatSpec",
+    "authors": "FloatSpec contributors",
+    "title": "FloatSpec: floating-point arithmetic in Lean 4",
+    "venue": "Source repository, revision 158263e",
+    "year": "2026",
+    "url": "https://github.com/Beneficial-AI-Foundation/FloatSpec/tree/158263e983ec3925e02b10f5b312498bf414e0f1"
+  },
+  {
+    "key": "vcfloat2",
+    "authors": "Andrew W. Appel and Ariel E. Kellison",
+    "title": "VCFloat2: Floating-Point Error Analysis in Coq",
+    "venue": "CPP 2024, pages 14–29",
+    "year": "2024",
+    "url": "https://doi.org/10.1145/3636501.3636953"
+  },
+  {
+    "key": "gappa",
+    "authors": "Marc Daumas and Guillaume Melquiond",
+    "title": "Certification of Bounds on Expressions Involving Rounded Operators",
+    "venue": "ACM Transactions on Mathematical Software, volume 37, number 1",
+    "year": "2010",
+    "url": "https://doi.org/10.1145/1644001.1644003"
+  },
+  {
+    "key": "symfpu",
+    "authors": "Martin Brain, Florian Schanda, and Youcheng Sun",
+    "title": "Building Better Bit-Blasting for Floating-Point Problems",
+    "venue": "TACAS 2019, pages 79–98",
+    "year": "2019",
+    "url": "https://doi.org/10.1007/978-3-030-17462-0_5"
+  },
+  {
+    "key": "tensorLib",
+    "authors": "TensorLib contributors",
+    "title": "TensorLib: a tensor library in Lean",
+    "venue": "Source repository, revision 85e61c9",
+    "year": "2026",
+    "url": "https://github.com/leanprover/TensorLib/tree/85e61c9eb3211c736ded72b37254e2d608bbdbeb"
+  }
+]

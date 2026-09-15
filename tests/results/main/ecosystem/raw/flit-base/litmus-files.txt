@@ -1,0 +1,14 @@
+total 21088
+drwxr-xr-x.   6 root root      188 Sep 11 12:24 .
+drwxr-xr-x.   5 root root       46 Sep 11 12:21 ..
+-rw-r--r--.   1 root root    13494 Sep 11 12:21 Makefile
+drwxr-xr-x.   2 root root    16384 Sep 11 12:24 bin
+-rw-r--r--.   1 root root     1321 Sep 11 12:21 custom.mk
+-rw-r--r--.   1 root root     1553 Sep 11 12:21 flit-config.toml
+-rw-r--r--.   1 root root    27694 Sep 11 12:24 ground-truth.csv
+-rwxr-xr-x.   1 root root 18127016 Sep 11 12:24 gtrun
+-rw-r--r--.   1 root root      116 Sep 11 12:21 main.cpp
+drwxr-xr-x. 143 root root    16384 Sep 11 12:24 obj
+drwxr-xr-x.   2 root root    16384 Sep 11 12:24 results
+-rw-r--r--.   1 root root  3342336 Sep 11 12:24 results.sqlite
+drwxr-xr-x.   2 root root    16384 Sep 11 12:21 tests

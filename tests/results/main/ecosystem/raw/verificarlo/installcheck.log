@@ -1,0 +1,73 @@
+make[1]: Entering directory '/work/verificarlo-rerun2/src/tests'
+make  check-TESTS
+make[2]: Entering directory '/work/verificarlo-rerun2/src/tests'
+make[3]: Entering directory '/work/verificarlo-rerun2/src/tests'
+PASS: testplan.test 1 ./test_absolute_error
+PASS: testplan.test 2 ./test_bitmask_backend
+PASS: testplan.test 3 ./test_branch_instrumentation
+PASS: testplan.test 4 ./test_cancellation
+PASS: testplan.test 5 ./test_cast_instrumentation
+PASS: testplan.test 6 ./test_cpp
+PASS: testplan.test 7 ./test_cython
+PASS: testplan.test 8 ./test_daz_ftz
+PASS: testplan.test 9 ./test_ddebug_archimedes
+PASS: testplan.test 10 ./test_ddebug_canc
+PASS: testplan.test 11 ./test_ddebug_exclude
+PASS: testplan.test 12 ./test_ddebug_gen_include
+PASS: testplan.test 13 ./test_ddebug_integration
+PASS: testplan.test 14 ./test_ffastmath
+PASS: testplan.test 15 ./test_fix_seed
+PASS: testplan.test 16 ./test_fma_inst
+PASS: testplan.test 17 ./test_fortran
+PASS: testplan.test 18 ./test_fortran_NAS
+PASS: testplan.test 19 ./test_fortran_vfc_probes
+PASS: testplan.test 20 ./test_fp80
+PASS: testplan.test 21 ./test_ieee_backend
+PASS: testplan.test 22 ./test_ieee_backend_debug_binary
+PASS: testplan.test 23 ./test_include_exclude
+PASS: testplan.test 24 ./test_isa_dispatch
+PASS: testplan.test 25 ./test_kahan
+PASS: testplan.test 26 ./test_linear_system_kahan
+PASS: testplan.test 27 ./test_logger
+PASS: testplan.test 28 ./test_mca_rng
+PASS: testplan.test 29 ./test_new_pm_args
+PASS: testplan.test 30 ./test_newton_vprec
+PASS: testplan.test 31 ./test_per_function
+PASS: testplan.test 32 ./test_prism_backend
+PASS: testplan.test 33 ./test_prism_backend_integration
+PASS: testplan.test 34 ./test_prism_runtime_precision
+PASS: testplan.test 35 ./test_prism_virtual_precision
+PASS: testplan.test 36 ./test_rr_mode_exact
+PASS: testplan.test 37 ./test_save_temps_option
+PASS: testplan.test 38 ./test_shell_argument_quoting
+PASS: testplan.test 39 ./test_shell_expansion
+PASS: testplan.test 40 ./test_sparsity
+PASS: testplan.test 41 ./test_sr
+XFAIL: testplan.test 42 ./test_static_mode # TODO
+PASS: testplan.test 43 ./test_tchebychev
+PASS: testplan.test 44 ./test_unstable_branches
+PASS: testplan.test 45 ./test_usercall_change_precision
+PASS: testplan.test 46 ./test_usercall_inexact
+PASS: testplan.test 47 ./test_usercall_python_frontend
+PASS: testplan.test 48 ./test_uv_integration
+PASS: testplan.test 49 ./test_vectorization
+PASS: testplan.test 50 ./test_vfc_ci
+PASS: testplan.test 51 ./test_vfcwrapper_dynamic_lib
+PASS: testplan.test 52 ./test_vprec_backend
+PASS: testplan.test 53 ./test_vprec_backend_simple
+PASS: testplan.test 54 ./test_vprec_instrument
+============================================================================
+Testsuite summary for verificarlo 2.5.1
+============================================================================
+# TOTAL: 54
+# PASS:  53
+# SKIP:  0
+# XFAIL: 1
+# FAIL:  0
+# XPASS: 0
+# ERROR: 0
+============================================================================
+make[3]: Leaving directory '/work/verificarlo-rerun2/src/tests'
+make[2]: Leaving directory '/work/verificarlo-rerun2/src/tests'
+make[1]: Leaving directory '/work/verificarlo-rerun2/src/tests'
+All tests have passed.

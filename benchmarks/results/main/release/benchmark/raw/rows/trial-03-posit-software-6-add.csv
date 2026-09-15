@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,posit,posit6,6,add,proved-software,posit exhaustive encoded-value table,result-dependent-fixture-chain,1931940,201286261,1249677771525007143,10009275387119665800,0,0,0

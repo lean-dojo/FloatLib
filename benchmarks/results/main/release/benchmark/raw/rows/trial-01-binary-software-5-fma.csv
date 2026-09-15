@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,binary-interchange,binary5-e2m2,5,fma,proved-software,binary-interchange fused multiply-add exhaustive table,result-dependent-fixture-chain,1127937,200900952,10655654985556387603,15328002963132445437,256,17561184979992092190,11513456574949391548

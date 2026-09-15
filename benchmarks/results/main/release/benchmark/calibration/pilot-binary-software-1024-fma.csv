@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,binary-interchange,binary1024-custom-e19m1004,1024,fma,proved-software,binary-interchange fused multiply-add exact baseline,result-dependent-fixture-chain,25,85654,16315817429929185286,14004263034981849100,256,1574300555002444628,17008690229445754520

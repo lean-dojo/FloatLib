@@ -1,0 +1,1 @@
+RESULT format=f32 operation=to_bf16 rounding=minMag cases=600 value_mismatches=0 flag_mismatches=0 parse_errors=0

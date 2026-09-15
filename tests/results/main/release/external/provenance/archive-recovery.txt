@@ -1,0 +1,15 @@
+The conformance run itself returned 1 because the SoftPosit adapter reported
+7,562 differences. The exact FloatLean specification and an independent source
+audit later showed that all of those differences are SoftPosit pX2 defects; the
+raw failing logs remain in this bundle.
+
+The campaign packager also returned 1 because `cp -a` tried to preserve pod
+ownership on EFS. The files had already been copied and the campaign manifest
+verified. We recovered the same staging tree with rsync while deliberately not
+preserving owner, group, or mode. No test was rerun and no raw result was
+rewritten during recovery.
+
+Original campaign status:
+run_exit_code=1
+packaging_exit_code=1
+final_exit_code=1

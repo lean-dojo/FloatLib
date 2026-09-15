@@ -1,0 +1,137 @@
+case	file	line	source
+1	Overflow.fptest	1573	b32/ 0 -1.7FFFFCP72 -1.000000P-55 -> +1.7FFFFCP127 
+2	Overflow.fptest	1574	b32/ 0 +1.03EB23P60 +1.03EB25P-68 -> +1.7FFFFCP127 x
+3	Overflow.fptest	1575	b32/ 0 -1.1A38EEP18 -1.1A38F0P-110 -> +1.7FFFFCP127 x
+4	Overflow.fptest	1576	b32/ 0 -1.7FFFFDP52 -1.000000P-75 -> +1.7FFFFDP127 
+5	Overflow.fptest	1577	b32/ 0 -1.457DB7P87 -1.457DB9P-41 -> +1.7FFFFDP127 x
+6	Overflow.fptest	1578	b32/ 0 -1.55B5BCP13 -1.55B5BEP-115 -> +1.7FFFFDP127 x
+7	Overflow.fptest	1579	b32/ 0 +1.7FFFFEP56 +1.000000P-71 -> +1.7FFFFEP127 
+8	Overflow.fptest	1580	b32/ 0 -1.14766CP22 -1.14766DP-106 -> +1.7FFFFEP127 x
+9	Overflow.fptest	1581	b32/ 0 +1.3DD75FP46 +1.3DD760P-82 -> +1.7FFFFEP127 x
+10	Overflow.fptest	1582	b32/ 0 +1.7FFFFFP51 +1.000000P-76 -> +1.7FFFFFP127 
+11	Overflow.fptest	1583	b32/ 0 +1.7F814AP112 +1.7F814AP-16 -> +1.7FFFFFP127 xo
+12	Overflow.fptest	1584	b32/ 0 +1.0B831CP10 +1.0B831BP-118 -> +1.7FFFFFP127 xo
+13	Overflow.fptest	1585	b32/ 0 -1.000001P41 -1.000000P-87 -> +1.7FFFFFP127 xo
+14	Overflow.fptest	1586	b32/ 0 +1.5011D8P25 +1.5011D6P-103 -> +1.7FFFFFP127 xo
+15	Overflow.fptest	1587	b32/ 0 -1.73C4B8P72 -1.73C4B5P-56 -> +1.7FFFFFP127 xo
+16	Overflow.fptest	1588	b32/ 0 -1.000002P61 -1.000000P-67 -> +1.7FFFFFP127 xo
+17	Overflow.fptest	1589	b32/ 0 +1.000002P93 -1.000000P-35 -> -1.7FFFFFP127 xo
+18	Overflow.fptest	1590	b32/ 0 +1.1766F0P2 -1.1766EEP-126 -> -1.7FFFFFP127 xo
+19	Overflow.fptest	1591	b32/ 0 +1.3BF62BP29 -1.3BF629P-99 -> -1.7FFFFFP127 xo
+20	Overflow.fptest	1592	b32/ 0 +1.000001P42 -1.000000P-86 -> -1.7FFFFFP127 xo
+21	Overflow.fptest	1593	b32/ 0 -1.0046ECP89 +1.0046EBP-39 -> -1.7FFFFFP127 xo
+22	Overflow.fptest	1594	b32/ 0 -1.077034P105 +1.077034P-23 -> -1.7FFFFFP127 xo
+23	Overflow.fptest	1595	b32/ 0 -1.7FFFFFP13 +1.000000P-114 -> -1.7FFFFFP127 
+24	Overflow.fptest	1596	b32/ 0 -1.712411P123 +1.712412P-5 -> -1.7FFFFEP127 x
+25	Overflow.fptest	1597	b32/ 0 +1.281277P-1 -0.15024FP-126 -> -1.7FFFFEP127 x
+26	Overflow.fptest	1598	b32/ 0 -1.7FFFFEP-7 +0.008000P-126 -> -1.7FFFFEP127 
+27	Overflow.fptest	1599	b32/ 0 -1.57F038P100 +1.57F03AP-28 -> -1.7FFFFDP127 x
+28	Overflow.fptest	1600	b32/ 0 -1.40B093P83 +1.40B095P-45 -> -1.7FFFFDP127 x
+29	Overflow.fptest	1601	b32/ 0 +1.7FFFFDP-3 -0.080000P-126 -> -1.7FFFFDP127 
+30	Overflow.fptest	1602	b32/ 0 -1.1E33E0P99 +1.1E33E2P-29 -> -1.7FFFFCP127 x
+31	Overflow.fptest	1603	b32/ 0 -1.0BA0EFP42 +1.0BA0F1P-86 -> -1.7FFFFCP127 x
+32	Overflow.fptest	1604	b32/ 0 -1.3FFFFDP-19 +0.000006P-126 -> -1.7FFFFCP127 
+33	Overflow.fptest	1605	b32/ 0 -1.02E43FP55 -0.16FDDFP-126 -> +1.7FFFFFP127 xo
+34	Overflow.fptest	1606	b32/ 0 +1.2E5F6DP79 -0.000323P-126 -> -1.7FFFFFP127 xo
+35	Overflow.fptest	1607	b32/ 0 -1.49A371P99 +1.400000P-25 -> -1.066CF6P124 
+36	Overflow.fptest	1608	b32/ 0 +1.6824AFP88 -1.2A2C2DP-37 -> -1.2E9CEDP125 x
+37	Overflow.fptest	1609	b32/ 0 +1.2D409CP78 -1.4218E6P-49 -> -1.6481D3P126 x
+38	Overflow.fptest	1610	b32/ 0 -1.47629FP11 +1.000000P-116 -> -1.47629FP127 
+39	Overflow.fptest	1611	b32/ 0 -1.6FB297P79 +1.000000P-49 -> -1.7FFFFFP127 xo
+40	Overflow.fptest	1612	b32/ 0 -1.63A3D5P74 +1.400000P-55 -> -1.7FFFFFP127 xo
+41	Overflow.fptest	1613	b32/ 0 +1.797837P38 -1.265BD2P-92 -> -1.7FFFFFP127 xo
+42	Overflow.fptest	1614	b32/ 0 +1.59E0CBP28 +1.2B57F7P-96 -> +1.22C352P124 x
+43	Overflow.fptest	1615	b32/ 0 +1.20F2CCP90 +1.4B04E4P-36 -> +1.4AF349P125 x
+44	Overflow.fptest	1616	b32/ 0 -1.08B1D4P73 -1.100000P-54 -> +1.730340P126 
+45	Overflow.fptest	1617	b32/ 0 +1.458564P92 +1.22E765P-35 -> +1.1B3338P127 x
+46	Overflow.fptest	1618	b32/ 0 -1.52B605P121 -1.457C71P-7 -> +1.7FFFFFP127 xo
+47	Overflow.fptest	1619	b32/ 0 -1.56A7EFP83 -1.69642BP-47 -> +1.7FFFFFP127 xo
+48	Overflow.fptest	1620	b32/ 0 +1.335554P90 +1.1B6A19P-40 -> +1.7FFFFFP127 xo
+49	Overflow.fptest	1765	b32/ 0 xo -1.7FFFFCP72 -1.000000P-55 -> +1.7FFFFCP127 
+50	Overflow.fptest	1768	b32/ 0 xo -1.7FFFFDP52 -1.000000P-75 -> +1.7FFFFDP127 
+51	Overflow.fptest	1771	b32/ 0 xo +1.7FFFFEP56 +1.000000P-71 -> +1.7FFFFEP127 
+52	Overflow.fptest	1774	b32/ 0 xo +1.7FFFFFP51 +1.000000P-76 -> +1.7FFFFFP127 
+53	Overflow.fptest	1787	b32/ 0 xo -1.7FFFFFP13 +1.000000P-114 -> -1.7FFFFFP127 
+54	Overflow.fptest	1790	b32/ 0 xo -1.7FFFFEP-7 +0.008000P-126 -> -1.7FFFFEP127 
+55	Overflow.fptest	1793	b32/ 0 xo +1.7FFFFDP-3 -0.080000P-126 -> -1.7FFFFDP127 
+56	Overflow.fptest	1796	b32/ 0 xo -1.3FFFFDP-19 +0.000006P-126 -> -1.7FFFFCP127 
+57	Overflow.fptest	1799	b32/ 0 xo -1.49A371P99 +1.400000P-25 -> -1.066CF6P124 
+58	Overflow.fptest	1802	b32/ 0 xo -1.47629FP11 +1.000000P-116 -> -1.47629FP127 
+59	Overflow.fptest	1808	b32/ 0 xo -1.08B1D4P73 -1.100000P-54 -> +1.730340P126 
+60	Rounding.fptest	413	b32/ 0 x -1.7B3558P29 +1.000000P52 -> -1.7B3558P-23 
+61	Rounding.fptest	414	b32/ 0 x -1.0EDCA6P-119 -1.600000P-101 -> +1.234550P-19 
+62	Rounding.fptest	415	b32/ 0 x -1.4B6547P111 +1.000000P-9 -> -1.4B6547P120 
+63	Rounding.fptest	416	b32/ 0 x -1.2E6615P-104 -1.000000P-52 -> +1.2E6615P-52 
+64	Rounding.fptest	425	b32/ 0 +1.2F7823P-105 -1.400000P13 -> -1.69F584P-119 
+65	Rounding.fptest	426	b32/ 0 +1.12057CP-19 +1.000000P104 -> +1.12057CP-123 
+66	Rounding.fptest	427	b32/ 0 +1.3A2573P47 -1.000000P47 -> -1.3A2573P0 
+67	Rounding.fptest	428	b32/ 0 +1.1D2641P-9 +1.000000P107 -> +1.1D2641P-116 
+68	Rounding.fptest	429	b32/ 0 +1.265CBFP111 -1.57D14EP-13 -> -1.455636P123 x
+69	Rounding.fptest	430	b32/ 0 +1.51E1E4P-28 +1.166F02P-102 -> +1.329558P74 x
+70	Rounding.fptest	431	b32/ 0 +1.416EADP-53 -0.0713D5P-126 -> -1.5AA551P77 x
+71	Rounding.fptest	432	b32/ 0 +1.56160AP-19 +1.518CDCP-20 -> +1.02C549P1 x
+72	Rounding.fptest	433	b32/ 0 -1.076853P-9 +1.69DAE1P-123 -> -1.143AE0P113 x
+73	Rounding.fptest	434	b32/ 0 -1.5BE8F8P76 -1.63D2C0P79 -> +1.771BACP-4 x
+74	Rounding.fptest	435	b32/ 0 +1.65C970P-37 -1.38C99AP-5 -> -1.1F2BA5P-32 x
+75	Rounding.fptest	436	b32/ 0 -1.291001P-107 -1.58F606P-47 -> +1.477B9BP-61 x
+76	Underflow.fptest	1288	b32/ 0 -1.65A620P-31 -1.65A620P118 -> +0.000001P-126 
+77	Underflow.fptest	1305	b32/ 0 -1.655B3CP-122 +1.655B3CP27 -> -0.000001P-126 
+78	Underflow.fptest	1316	b32/ 0 -1.7FFFFEP-66 -1.000000P61 -> +0.7FFFFFP-126 
+79	Underflow.fptest	1320	b32/ 0 +1.2DCC9CP-115 +1.2DCC9CP11 -> +1.000000P-126 
+80	Underflow.fptest	1321	b32/ 0 +1.2CF032P-38 +1.2CF031P88 -> +1.000000P-126 x
+81	Underflow.fptest	1322	b32/ 0 +1.000001P-116 +1.000000P10 -> +1.000001P-126 
+82	Underflow.fptest	1323	b32/ 0 -1.482312P-55 -1.482310P71 -> +1.000001P-126 x
+83	Underflow.fptest	1324	b32/ 0 +1.0EF1D4P-59 +1.0EF1D2P67 -> +1.000001P-126 x
+84	Underflow.fptest	1325	b32/ 0 -1.000002P-48 -1.000000P78 -> +1.000002P-126 
+85	Underflow.fptest	1326	b32/ 0 -1.3064B4P-109 -1.3064B1P17 -> +1.000002P-126 x
+86	Underflow.fptest	1327	b32/ 0 -1.74B3F9P-113 -1.74B3F4P13 -> +1.000002P-126 x
+87	Underflow.fptest	1328	b32/ 0 +1.000003P-105 +1.000000P21 -> +1.000003P-126 
+88	Underflow.fptest	1329	b32/ 0 +1.000003P-40 -1.000000P86 -> -1.000003P-126 
+89	Underflow.fptest	1330	b32/ 0 +1.55A6CAP-96 -1.55A6C5P30 -> -1.000002P-126 x
+90	Underflow.fptest	1331	b32/ 0 +1.3CE4EAP-20 -1.3CE4E7P106 -> -1.000002P-126 x
+91	Underflow.fptest	1332	b32/ 0 +1.400003P-106 -1.400000P20 -> -1.000002P-126 
+92	Underflow.fptest	1333	b32/ 0 -1.400960P-92 +1.40095DP34 -> -1.000001P-126 x
+93	Underflow.fptest	1334	b32/ 0 -1.2CE68BP-41 +1.2CE689P85 -> -1.000001P-126 x
+94	Underflow.fptest	1335	b32/ 0 -1.000001P-104 +1.000000P22 -> -1.000001P-126 
+95	Underflow.fptest	1336	b32/ 0 +1.69356DP-46 -1.69356CP80 -> -1.000000P-126 x
+96	Underflow.fptest	1337	b32/ 0 +1.0BFAA7P-96 -1.0BFAA7P30 -> -1.000000P-126 
+97	Underflow.fptest	1341	b32/ 0 -1.7FFFFEP-33 +1.000000P94 -> -0.7FFFFFP-126 
+98	Underflow.fptest	1347	b32/ 0 +1.47CED8P-45 +1.33E6FFP81 -> +1.0E29AEP-126 x
+99	Underflow.fptest	1348	b32/ 0 -1.3659A5P-69 -1.000000P56 -> +1.3659A5P-125 
+100	Underflow.fptest	1349	b32/ 0 -1.0668D3P-53 +1.6077B7P70 -> -1.194A72P-124 x
+101	Underflow.fptest	1350	b32/ 0 -1.3BFD6BP-4 +1.78BCFDP118 -> -1.417A69P-123 x
+102	Underflow.fptest	1351	b32/ 0 -1.61853BP-102 -1.773567P19 -> +1.698A60P-122 x
+103	Underflow.fptest	1352	b32/ 0 +1.0E5B5CP-74 +1.7A13FFP46 -> +1.11BA58P-121 x
+104	Underflow.fptest	1616	b32/ 0 xu +1.2DCC9CP-115 +1.2DCC9CP11 -> +1.000000P-126 
+105	Underflow.fptest	1618	b32/ 0 xu +1.000001P-116 +1.000000P10 -> +1.000001P-126 
+106	Underflow.fptest	1621	b32/ 0 xu -1.000002P-48 -1.000000P78 -> +1.000002P-126 
+107	Underflow.fptest	1624	b32/ 0 xu +1.000003P-105 +1.000000P21 -> +1.000003P-126 
+108	Underflow.fptest	1625	b32/ 0 xu +1.000003P-40 -1.000000P86 -> -1.000003P-126 
+109	Underflow.fptest	1628	b32/ 0 xu +1.400003P-106 -1.400000P20 -> -1.000002P-126 
+110	Underflow.fptest	1631	b32/ 0 xu -1.000001P-104 +1.000000P22 -> -1.000001P-126 
+111	Underflow.fptest	1633	b32/ 0 xu +1.0BFAA7P-96 -1.0BFAA7P30 -> -1.000000P-126 
+112	Underflow.fptest	1644	b32/ 0 xu -1.3659A5P-69 -1.000000P56 -> +1.3659A5P-125 
+113	Vicinity-Of-Rounding-Boundaries.fptest	389	b32/ 0 +1.2FB130P-90 -1.4F9295P31 -> -1.58AE86P-122 x
+114	Vicinity-Of-Rounding-Boundaries.fptest	390	b32/ 0 +1.3C54D4P48 +1.0D8579P50 -> +1.2A566EP-2 x
+115	Vicinity-Of-Rounding-Boundaries.fptest	391	b32/ 0 -1.0C26CCP46 +1.2C9371P31 -> -1.4FE6C8P14 x
+116	Vicinity-Of-Rounding-Boundaries.fptest	392	b32/ 0 -1.2B9EF5P76 -1.4E2A8AP63 -> +1.551AC6P12 x
+117	Vicinity-Of-Rounding-Boundaries.fptest	393	b32/ 0 -1.2362DCP-79 +1.7BFCC4P-30 -> -1.25FCE8P-50 x
+118	Vicinity-Of-Rounding-Boundaries.fptest	394	b32/ 0 +1.78F3FAP-86 -1.3B2751P-96 -> -1.2A443AP10 x
+119	Vicinity-Of-Rounding-Boundaries.fptest	395	b32/ 0 +1.297BD7P-9 +1.0D3637P-96 -> +1.19A079P87 x
+120	Vicinity-Of-Rounding-Boundaries.fptest	396	b32/ 0 -1.68F805P-13 +1.2EC1CAP105 -> -1.2AA313P-118 x
+121	Vicinity-Of-Rounding-Boundaries.fptest	397	b32/ 0 -1.2FC7E3P-67 +1.09B662P56 -> -1.23622FP-123 x
+122	Vicinity-Of-Rounding-Boundaries.fptest	398	b32/ 0 -1.0AD8FBP-53 +1.01F20BP-125 -> -1.08C4D1P72 x
+123	Vicinity-Of-Rounding-Boundaries.fptest	399	b32/ 0 +1.6C64D4P7 -1.7E1C89P-73 -> -1.6E2695P79 x
+124	Vicinity-Of-Rounding-Boundaries.fptest	400	b32/ 0 +1.72A679P45 -1.38FA81P-62 -> -1.27E841P107 x
+125	Vicinity-Of-Rounding-Boundaries.fptest	401	b32/ 0 -1.647118P106 -1.1D94CCP26 -> +1.398EFDP80 x
+126	Vicinity-Of-Rounding-Boundaries.fptest	402	b32/ 0 -1.2BC3BFP-30 +1.1145CEP15 -> -1.175794P-45 x
+127	Vicinity-Of-Rounding-Boundaries.fptest	403	b32/ 0 -1.58F5C4P-2 +1.16E129P93 -> -1.380F5AP-95 x
+128	Vicinity-Of-Rounding-Boundaries.fptest	404	b32/ 0 +1.66AFC0P27 -1.74389DP-90 -> -1.71D006P116 x
+129	Vicinity-Of-Rounding-Boundaries.fptest	405	b32/ 0 -1.08369AP117 +1.38E8E5P73 -> -1.3C94ECP43 x
+130	Vicinity-Of-Rounding-Boundaries.fptest	406	b32/ 0 -1.35754EP-75 +1.6956FEP-47 -> -1.47147EP-29 x
+131	Vicinity-Of-Rounding-Boundaries.fptest	407	b32/ 0 +1.2E4955P-55 -1.40DBA1P-49 -> -1.675922P-7 x
+132	Vicinity-Of-Rounding-Boundaries.fptest	408	b32/ 0 -1.4B7905P-25 +1.0794DAP55 -> -1.40184DP-80 x
+133	Vicinity-Of-Rounding-Boundaries.fptest	409	b32/ 0 +1.463EC1P107 -1.19585FP3 -> -1.257A91P104 x
+134	Vicinity-Of-Rounding-Boundaries.fptest	410	b32/ 0 +1.5396A7P29 +1.5A7D16P-69 -> +1.77EA4BP97 x
+135	Vicinity-Of-Rounding-Boundaries.fptest	411	b32/ 0 +1.26FBB0P40 -1.504AD3P127 -> -1.4D3AB5P-88 x
+136	Vicinity-Of-Rounding-Boundaries.fptest	412	b32/ 0 -1.2F3FC7P102 +1.2263FDP104 -> -1.0A22A9P-2 x

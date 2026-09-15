@@ -1,0 +1,2924 @@
+Get:1 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1791 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:10 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1530 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1564 kB]
+Get:13 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1240 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2151 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1908 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Fetched 32.6 MB in 1s (24.7 MB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bash is already the newest version (5.2.21-2ubuntu4).
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu bzip2 cpp cpp-13
+  cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu dpkg-dev g++ g++-13
+  g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13 gcc-13-base
+  gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git-man libasan8 libatomic1
+  libbinutils libbrotli1 libc-bin libc-dev-bin libc6 libc6-dev libcc1-0
+  libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64
+  libdpkg-perl liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64
+  libgdbm6t64 libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0 libisl23
+  libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap2 liblsan0 libmpc3 libmpfr6 libnghttp2-14 libperl5.38t64 libpkgconf3
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db
+  libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev libtsan2 libubsan1
+  linux-libc-dev lto-disabled-list media-types netbase openssl patch perl
+  perl-modules-5.38 pkgconf pkgconf-bin python3-minimal python3-pip-whl
+  python3-pkg-resources python3-setuptools python3-setuptools-whl
+  python3-wheel python3.12 python3.12-minimal python3.12-venv readline-common
+  rpcsvc-proto tzdata xz-utils
+Suggested packages:
+  binutils-doc gprofng-gui bzip2-doc cpp-doc gcc-13-locales cpp-13-doc
+  debian-keyring g++-multilib g++-13-multilib gcc-13-doc gcc-multilib
+  manpages-dev autoconf automake libtool flex bison gdb gcc-doc
+  gcc-13-multilib gdb-x86-64-linux-gnu gettext-base git-daemon-run
+  | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb git-cvs
+  git-mediawiki git-svn manpages glibc-doc locales libnss-nis libnss-nisplus
+  gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg bzr gdbm-l10n
+  krb5-doc krb5-user libstdc++-13-doc make-doc ed diffutils-doc perl-doc
+  libterm-readline-gnu-perl | libterm-readline-perl-perl
+  libtap-harness-archive-perl python3-doc python3-tk python-setuptools-doc
+  python3.12-doc binfmt-support readline-doc
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  libalgorithm-merge-perl less ssh-client manpages manpages-dev libc-devtools
+  libfile-fcntllock-perl liblocale-gettext-perl krb5-locales libldap-common
+  publicsuffix libsasl2-modules python3-dev
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cpp cpp-13 cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu curl
+  dpkg-dev g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13
+  gcc-13-base gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git git-man
+  libasan8 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcc1-0
+  libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64
+  libdpkg-perl liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64
+  libgdbm6t64 libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0 libisl23
+  libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap2 liblsan0 libmpc3 libmpfr6 libnghttp2-14 libperl5.38t64 libpkgconf3
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db
+  libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev libtsan2 libubsan1
+  linux-libc-dev lto-disabled-list make media-types netbase openssl patch perl
+  perl-modules-5.38 pkg-config pkgconf pkgconf-bin python3 python3-minimal
+  python3-pip python3-pip-whl python3-pkg-resources python3-setuptools
+  python3-setuptools-whl python3-venv python3-wheel python3.12
+  python3.12-minimal python3.12-venv readline-common rpcsvc-proto time tzdata
+  xz-utils
+The following packages will be upgraded:
+  libc-bin libc6
+2 upgraded, 103 newly installed, 0 to remove and 1 not upgraded.
+Need to get 104 MB of archives.
+After this operation, 377 MB of additional disk space will be used.
+Get:1 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6 amd64 2.39-0ubuntu8.9 [3264 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-minimal amd64 3.12.3-1ubuntu0.17 [839 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-bin amd64 2.39-0ubuntu8.9 [682 kB]
+Get:4 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-dev-bin amd64 2.39-0ubuntu8.9 [20.4 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6-dev amd64 2.39-0ubuntu8.9 [2126 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libexpat1 amd64 2.6.1-2ubuntu0.4 [88.2 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12-minimal amd64 3.12.3-1ubuntu0.17 [2335 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-minimal amd64 3.12.3-0ubuntu2.1 [27.4 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 media-types all 10.1.0 [27.5 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 netbase all 6.4 [13.1 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 tzdata all 2026c-0ubuntu0.24.04.1 [280 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/main amd64 readline-common all 8.2-4build1 [56.5 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble/main amd64 libreadline8t64 amd64 8.2-4build1 [153 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsqlite3-0 amd64 3.45.1-1ubuntu2.7 [701 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-stdlib amd64 3.12.3-1ubuntu0.17 [2071 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12 amd64 3.12.3-1ubuntu0.17 [651 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3-stdlib amd64 3.12.3-0ubuntu2.1 [10.1 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3 amd64 3.12.3-0ubuntu2.1 [23.0 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.4 [3110 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm6t64 amd64 1.23-5.1build1 [34.4 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:22 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.4 [4870 kB]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl amd64 5.38.2-3.2ubuntu0.4 [231 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 openssl amd64 3.0.13-0ubuntu3.15 [1003 kB]
+Get:25 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260601~24.04.1 [139 kB]
+Get:26 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.8 [34.7 kB]
+Get:27 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libk5crypto3 amd64 1.20.1-6ubuntu2.8 [81.9 kB]
+Get:28 http://archive.ubuntu.com/ubuntu noble/main amd64 libkeyutils1 amd64 1.6.3-3build1 [9490 B]
+Get:29 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5-3 amd64 1.20.1-6ubuntu2.8 [348 kB]
+Get:30 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgssapi-krb5-2 amd64 1.20.1-6ubuntu2.8 [143 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-pkg-resources all 68.1.2-2ubuntu1.2 [168 kB]
+Get:32 http://archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:33 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble/main amd64 libpsl5t64 amd64 0.21.2-1.1build1 [57.1 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble/main amd64 time amd64 1.9-0.2build1 [45.2 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15.7 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Get:40 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98.0 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94.5 kB]
+Get:42 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Get:43 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2463 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18.2 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 linux-libc-dev amd64 6.8.0-139.139 [1527 kB]
+Get:46 http://archive.ubuntu.com/ubuntu noble/main amd64 libcrypt-dev amd64 1:4.4.36-4build1 [112 kB]
+Get:47 http://archive.ubuntu.com/ubuntu noble/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu7 [67.4 kB]
+Get:48 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-base amd64 13.3.0-6ubuntu2~24.04.1 [51.6 kB]
+Get:49 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libisl23 amd64 0.26-3build1.1 [680 kB]
+Get:50 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr6 amd64 4.2.1-1build1.1 [353 kB]
+Get:51 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpc3 amd64 1.3.1-1build1.1 [54.6 kB]
+Get:52 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [10.7 MB]
+Get:53 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13 amd64 13.3.0-6ubuntu2~24.04.1 [1042 B]
+Get:54 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5326 B]
+Get:55 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp amd64 4:13.2.0-7ubuntu1 [22.4 kB]
+Get:56 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48.0 kB]
+Get:57 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1 amd64 14.2.0-4ubuntu2~24.04.1 [148 kB]
+Get:58 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29.7 kB]
+Get:59 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1 amd64 14.2.0-4ubuntu2~24.04.1 [10.5 kB]
+Get:60 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3027 kB]
+Get:61 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1322 kB]
+Get:62 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2772 kB]
+Get:63 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1184 kB]
+Get:64 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1641 kB]
+Get:65 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Get:66 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2681 kB]
+Get:67 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21.1 MB]
+Get:68 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Get:69 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1212 B]
+Get:70 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5018 B]
+Get:71 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2420 kB]
+Get:72 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12.2 MB]
+Get:73 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16.0 kB]
+Get:74 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Get:75 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1100 B]
+Get:76 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Get:77 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Get:78 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1ubuntu0.1 [34.6 kB]
+Get:79 http://archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:80 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12.4 kB]
+Get:81 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1074 kB]
+Get:82 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:83 http://archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:84 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:85 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:86 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:87 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:88 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:89 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.13 [343 kB]
+Get:90 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 curl amd64 8.5.0-2ubuntu10.13 [226 kB]
+Get:91 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.13 [335 kB]
+Get:92 http://archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:93 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:94 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:95 http://archive.ubuntu.com/ubuntu noble/main amd64 libpkgconf3 amd64 1.8.1-2build1 [30.7 kB]
+Get:96 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf-bin amd64 1.8.1-2build1 [20.7 kB]
+Get:97 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf amd64 1.8.1-2build1 [16.8 kB]
+Get:98 http://archive.ubuntu.com/ubuntu noble/main amd64 pkg-config amd64 1.8.1-2build1 [7264 B]
+Get:99 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-setuptools all 68.1.2-2ubuntu1.2 [397 kB]
+Get:100 http://archive.ubuntu.com/ubuntu noble/universe amd64 python3-wheel all 0.42.0-2 [53.1 kB]
+Get:101 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip all 24.0+dfsg-1ubuntu1.3 [1320 kB]
+Get:102 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip-whl all 24.0+dfsg-1ubuntu1.3 [1707 kB]
+Get:103 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-setuptools-whl all 68.1.2-2ubuntu1.2 [716 kB]
+Get:104 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3.12-venv amd64 3.12.3-1ubuntu0.17 [5684 B]
+Get:105 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-venv amd64 3.12.3-0ubuntu2.1 [1032 B]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 104 MB in 4s (26.1 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc6_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6:amd64 (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc6:amd64 (2.39-0ubuntu8.9) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-bin (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libpython3.12-minimal:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../libexpat1_2.6.1-2ubuntu0.4_amd64.deb ...
+Unpacking libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Selecting previously unselected package python3.12-minimal.
+Preparing to unpack .../python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Setting up libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Setting up python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4700 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_10.1.0_all.deb ...
+Unpacking media-types (10.1.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package tzdata.
+Preparing to unpack .../3-tzdata_2026c-0ubuntu0.24.04.1_all.deb ...
+Unpacking tzdata (2026c-0ubuntu0.24.04.1) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-4build1_all.deb ...
+Unpacking readline-common (8.2-4build1) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-4build1_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-4build1) ...
+Selecting previously unselected package libsqlite3-0:amd64.
+Preparing to unpack .../6-libsqlite3-0_3.45.1-1ubuntu2.7_amd64.deb ...
+Unpacking libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Selecting previously unselected package libpython3.12-stdlib:amd64.
+Preparing to unpack .../7-libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3.12.
+Preparing to unpack .../8-python3.12_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../9-libpython3-stdlib_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package python3.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5706 files and directories currently installed.)
+Preparing to unpack .../00-python3_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3 (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../01-perl-modules-5.38_5.38.2-3.2ubuntu0.4_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package libgdbm6t64:amd64.
+Preparing to unpack .../02-libgdbm6t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm6t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../03-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../04-libperl5.38t64_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../05-perl_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../06-openssl_3.0.13-0ubuntu3.15_amd64.deb ...
+Unpacking openssl (3.0.13-0ubuntu3.15) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../07-ca-certificates_20260601~24.04.1_all.deb ...
+Unpacking ca-certificates (20260601~24.04.1) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../08-libkrb5support0_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../09-libk5crypto3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../10-libkeyutils1_1.6.3-3build1_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-3build1) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../11-libkrb5-3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../12-libgssapi-krb5-2_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package python3-pkg-resources.
+Preparing to unpack .../13-python3-pkg-resources_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../14-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../15-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libpsl5t64:amd64.
+Preparing to unpack .../16-libpsl5t64_0.21.2-1.1build1_amd64.deb ...
+Unpacking libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Selecting previously unselected package time.
+Preparing to unpack .../17-time_1.9-0.2build1_amd64.deb ...
+Unpacking time (1.9-0.2build1) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../18-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../19-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libsframe1:amd64.
+Preparing to unpack .../20-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../21-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../22-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../23-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../24-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../25-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../26-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../27-libc-dev-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-dev-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../28-linux-libc-dev_6.8.0-139.139_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.8.0-139.139) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../29-libcrypt-dev_1%3a4.4.36-4build1_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../30-rpcsvc-proto_1.4.2-0ubuntu7_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.2-0ubuntu7) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../31-libc6-dev_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Selecting previously unselected package gcc-13-base:amd64.
+Preparing to unpack .../32-gcc-13-base_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../33-libisl23_0.26-3build1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.26-3build1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../34-libmpfr6_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../35-libmpc3_1.3.1-1build1.1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1build1.1) ...
+Selecting previously unselected package cpp-13-x86-64-linux-gnu.
+Preparing to unpack .../36-cpp-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-13.
+Preparing to unpack .../37-cpp-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../38-cpp-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../39-cpp_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../40-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../41-libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../42-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../43-libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../44-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../45-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../46-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../47-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libhwasan0:amd64.
+Preparing to unpack .../48-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../49-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgcc-13-dev:amd64.
+Preparing to unpack .../50-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13-x86-64-linux-gnu.
+Preparing to unpack .../51-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13.
+Preparing to unpack .../52-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-x86-64-linux-gnu.
+Preparing to unpack .../53-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../54-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libstdc++-13-dev:amd64.
+Preparing to unpack .../55-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13-x86-64-linux-gnu.
+Preparing to unpack .../56-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13.
+Preparing to unpack .../57-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-x86-64-linux-gnu.
+Preparing to unpack .../58-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../59-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++ (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package make.
+Preparing to unpack .../60-make_4.3-4.1build2_amd64.deb ...
+Unpacking make (4.3-4.1build2) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../61-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Unpacking libdpkg-perl (1.22.6ubuntu6.6) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../62-bzip2_1.0.8-5.1ubuntu0.1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5.1ubuntu0.1) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../63-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Selecting previously unselected package lto-disabled-list.
+Preparing to unpack .../64-lto-disabled-list_47_all.deb ...
+Unpacking lto-disabled-list (47) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../65-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Unpacking dpkg-dev (1.22.6ubuntu6.6) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../66-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../67-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../68-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../69-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../70-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../71-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../72-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../73-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../74-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../75-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../76-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../77-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../78-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package libpkgconf3:amd64.
+Preparing to unpack .../79-libpkgconf3_1.8.1-2build1_amd64.deb ...
+Unpacking libpkgconf3:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package pkgconf-bin.
+Preparing to unpack .../80-pkgconf-bin_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf-bin (1.8.1-2build1) ...
+Selecting previously unselected package pkgconf:amd64.
+Preparing to unpack .../81-pkgconf_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package pkg-config:amd64.
+Preparing to unpack .../82-pkg-config_1.8.1-2build1_amd64.deb ...
+Unpacking pkg-config:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package python3-setuptools.
+Preparing to unpack .../83-python3-setuptools_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3-wheel.
+Preparing to unpack .../84-python3-wheel_0.42.0-2_all.deb ...
+Unpacking python3-wheel (0.42.0-2) ...
+Selecting previously unselected package python3-pip.
+Preparing to unpack .../85-python3-pip_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-pip-whl.
+Preparing to unpack .../86-python3-pip-whl_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-setuptools-whl.
+Preparing to unpack .../87-python3-setuptools-whl_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3.12-venv.
+Preparing to unpack .../88-python3.12-venv_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-venv (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-venv.
+Preparing to unpack .../89-python3-venv_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up media-types (10.1.0) ...
+Setting up time (1.9-0.2build1) ...
+Setting up python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Setting up libkeyutils1:amd64 (1.6.3-3build1) ...
+Setting up lto-disabled-list (47) ...
+Setting up libgdbm6t64:amd64 (1.23-5.1build1) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Setting up binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Setting up libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up linux-libc-dev:amd64 (6.8.0-139.139) ...
+Setting up libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up bzip2 (1.0.8-5.1ubuntu0.1) ...
+Setting up libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up tzdata (2026c-0ubuntu0.24.04.1) ...
+
+Current default time zone: 'Etc/UTC'
+Local time is now:      Thu Sep 10 15:17:34 UTC 2026.
+Universal Time is now:  Thu Sep 10 15:17:34 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libpkgconf3:amd64 (1.8.1-2build1) ...
+Setting up rpcsvc-proto (1.4.2-0ubuntu7) ...
+Setting up gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up make (4.3-4.1build2) ...
+Setting up libmpfr6:amd64 (4.2.1-1build1.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Setting up libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libmpc3:amd64 (1.3.1-1build1.1) ...
+Setting up libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up patch (2.7.6-7build3) ...
+Setting up pkgconf-bin (1.8.1-2build1) ...
+Setting up libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Setting up libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up netbase (6.4) ...
+Setting up libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Setting up libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Setting up libisl23:amd64 (0.26-3build1.1) ...
+Setting up libc-dev-bin (2.39-0ubuntu8.9) ...
+Setting up openssl (3.0.13-0ubuntu3.15) ...
+Setting up readline-common (8.2-4build1) ...
+Setting up libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libctf0:amd64 (2.42-4ubuntu2.10) ...
+Setting up cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up pkgconf:amd64 (1.8.1-2build1) ...
+Setting up ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+121 added, 0 removed; done.
+Setting up perl (5.38.2-3.2ubuntu0.4) ...
+Setting up libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up pkg-config:amd64 (1.8.1-2build1) ...
+Setting up libdpkg-perl (1.22.6ubuntu6.6) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libreadline8t64:amd64 (8.2-4build1) ...
+Setting up libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Setting up libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Setting up cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Setting up gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3.12 (3.12.3-1ubuntu0.17) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up binutils (2.42-4ubuntu2.10) ...
+Setting up dpkg-dev (1.22.6ubuntu6.6) ...
+Setting up liberror-perl (0.17029-2) ...
+Setting up gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Setting up cpp (4:13.2.0-7ubuntu1) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3.12-venv (3.12.3-1ubuntu0.17) ...
+Setting up python3 (3.12.3-0ubuntu2.1) ...
+Setting up python3-wheel (0.42.0-2) ...
+Setting up gcc (4:13.2.0-7ubuntu1) ...
+Setting up python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Setting up g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3-setuptools (68.1.2-2ubuntu1.2) ...
+Setting up python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.10ubuntu1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+gcc is already the newest version (4:13.2.0-7ubuntu1).
+gcc set to manually installed.
+g++ is already the newest version (4:13.2.0-7ubuntu1).
+g++ set to manually installed.
+The following additional packages will be installed:
+  bubblewrap libamd3 libcolamd3 libglpk40 libltdl7 libsuitesparseconfig7
+  libyaml-0-2 opam-installer unzip
+Suggested packages:
+  bison-doc flex-doc libiodbc2-dev default-libmysqlclient-dev m4-doc opam-doc
+  zip
+Recommended packages:
+  libfl-dev ocaml darcs mercurial rsync
+The following NEW packages will be installed:
+  bison bubblewrap flex libamd3 libcolamd3 libglpk40 libltdl7
+  libsuitesparseconfig7 libyaml-0-2 m4 opam opam-installer python3-yaml unzip
+0 upgraded, 14 newly installed, 0 to remove and 1 not upgraded.
+Need to get 6001 kB of archives.
+After this operation, 20.7 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble/main amd64 m4 amd64 1.4.19-4build1 [244 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble/main amd64 flex amd64 2.6.4-8.2build1 [301 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble/main amd64 libyaml-0-2 amd64 0.2.5-1build1 [51.5 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble/main amd64 python3-yaml amd64 6.0.1-2build2 [123 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble/main amd64 bison amd64 2:3.8.2+dfsg-1build2 [749 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bubblewrap amd64 0.9.0-1ubuntu0.1 [50.2 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/main amd64 libsuitesparseconfig7 amd64 1:7.6.1+dfsg-1build1 [12.9 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble/universe amd64 libamd3 amd64 1:7.6.1+dfsg-1build1 [27.2 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 libcolamd3 amd64 1:7.6.1+dfsg-1build1 [19.4 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 libltdl7 amd64 2.4.7-7build1 [40.3 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/universe amd64 libglpk40 amd64 5.0-1build2 [369 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/universe amd64 opam-installer amd64 2.1.5-1 [1256 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 unzip amd64 6.0-28ubuntu4.1 [174 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble/universe amd64 opam amd64 2.1.5-1 [2584 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 6001 kB in 1s (5230 kB/s)
+Selecting previously unselected package m4.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14335 files and directories currently installed.)
+Preparing to unpack .../00-m4_1.4.19-4build1_amd64.deb ...
+Unpacking m4 (1.4.19-4build1) ...
+Selecting previously unselected package flex.
+Preparing to unpack .../01-flex_2.6.4-8.2build1_amd64.deb ...
+Unpacking flex (2.6.4-8.2build1) ...
+Selecting previously unselected package libyaml-0-2:amd64.
+Preparing to unpack .../02-libyaml-0-2_0.2.5-1build1_amd64.deb ...
+Unpacking libyaml-0-2:amd64 (0.2.5-1build1) ...
+Selecting previously unselected package python3-yaml.
+Preparing to unpack .../03-python3-yaml_6.0.1-2build2_amd64.deb ...
+Unpacking python3-yaml (6.0.1-2build2) ...
+Selecting previously unselected package bison.
+Preparing to unpack .../04-bison_2%3a3.8.2+dfsg-1build2_amd64.deb ...
+Unpacking bison (2:3.8.2+dfsg-1build2) ...
+Selecting previously unselected package bubblewrap.
+Preparing to unpack .../05-bubblewrap_0.9.0-1ubuntu0.1_amd64.deb ...
+Unpacking bubblewrap (0.9.0-1ubuntu0.1) ...
+Selecting previously unselected package libsuitesparseconfig7:amd64.
+Preparing to unpack .../06-libsuitesparseconfig7_1%3a7.6.1+dfsg-1build1_amd64.deb ...
+Unpacking libsuitesparseconfig7:amd64 (1:7.6.1+dfsg-1build1) ...
+Selecting previously unselected package libamd3:amd64.
+Preparing to unpack .../07-libamd3_1%3a7.6.1+dfsg-1build1_amd64.deb ...
+Unpacking libamd3:amd64 (1:7.6.1+dfsg-1build1) ...
+Selecting previously unselected package libcolamd3:amd64.
+Preparing to unpack .../08-libcolamd3_1%3a7.6.1+dfsg-1build1_amd64.deb ...
+Unpacking libcolamd3:amd64 (1:7.6.1+dfsg-1build1) ...
+Selecting previously unselected package libltdl7:amd64.
+Preparing to unpack .../09-libltdl7_2.4.7-7build1_amd64.deb ...
+Unpacking libltdl7:amd64 (2.4.7-7build1) ...
+Selecting previously unselected package libglpk40:amd64.
+Preparing to unpack .../10-libglpk40_5.0-1build2_amd64.deb ...
+Unpacking libglpk40:amd64 (5.0-1build2) ...
+Selecting previously unselected package opam-installer.
+Preparing to unpack .../11-opam-installer_2.1.5-1_amd64.deb ...
+Unpacking opam-installer (2.1.5-1) ...
+Selecting previously unselected package unzip.
+Preparing to unpack .../12-unzip_6.0-28ubuntu4.1_amd64.deb ...
+Unpacking unzip (6.0-28ubuntu4.1) ...
+Selecting previously unselected package opam.
+Preparing to unpack .../13-opam_2.1.5-1_amd64.deb ...
+Unpacking opam (2.1.5-1) ...
+Setting up bubblewrap (0.9.0-1ubuntu0.1) ...
+Setting up libyaml-0-2:amd64 (0.2.5-1build1) ...
+Setting up unzip (6.0-28ubuntu4.1) ...
+Setting up m4 (1.4.19-4build1) ...
+Setting up python3-yaml (6.0.1-2build2) ...
+Setting up libltdl7:amd64 (2.4.7-7build1) ...
+Setting up opam-installer (2.1.5-1) ...
+Setting up bison (2:3.8.2+dfsg-1build2) ...
+update-alternatives: using /usr/bin/bison.yacc to provide /usr/bin/yacc (yacc) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/yacc.1.gz because associated file /usr/share/man/man1/bison.yacc.1.gz (of link group yacc) doesn't exist
+Setting up libsuitesparseconfig7:amd64 (1:7.6.1+dfsg-1build1) ...
+Setting up flex (2.6.4-8.2build1) ...
+Setting up libamd3:amd64 (1:7.6.1+dfsg-1build1) ...
+Setting up libcolamd3:amd64 (1:7.6.1+dfsg-1build1) ...
+Setting up libglpk40:amd64 (5.0-1build2) ...
+Setting up opam (2.1.5-1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Cloning into '/work/fptaylor-rerun1/src'...
+HEAD is now at b5a77ca Merge pull request #33 from bernardosulzbach/typos
+b5a77cae348400f21f83512210d9f43c4bffb381
+[WARNING] Running as root is not recommended
+No configuration file found, using built-in defaults.
+Checking for available remotes: git.
+  - you won't be able to use rsync and local repositories unless you install the rsync command on your system.
+  - you won't be able to use mercurial repositories unless you install the hg command on your system.
+  - you won't be able to use darcs repositories unless you install the darcs command on your system.
+
+
+<><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
+[default] Initialised
+default (at https://opam.ocaml.org): 
+    [WARNING] opam is out-of-date. Please consider updating it (https://opam.ocaml.org/doc/Install.html)
+
+
+<><> Required setup - please read <><><><><><><><><><><><><><><><><><><><><><><>
+
+  In normal operation, opam only alters files within ~/.opam.
+
+  However, to best integrate with your system, some environment variables
+  should be set. If you allow it to, this initialisation step will update
+  your bash configuration by adding the following line to ~/.profile:
+
+    test -r /work/fptaylor-rerun1/opam/opam-init/init.sh && . /work/fptaylor-rerun1/opam/opam-init/init.sh > /dev/null 2> /dev/null || true
+
+  Otherwise, every time you want to access your opam installation, you will
+  need to run:
+
+    eval $(opam env)
+
+  You can always re-run this setup with 'opam init' later.
+
+[WARNING] Shell not updated in non-interactive mode: use --shell-setup
+
+<><> Creating initial switch 'default' (invariant ["ocaml" {>= "4.05.0"}] - initially with ocaml-base-compiler) 
+
+<><> Installing new switch packages <><><><><><><><><><><><><><><><><><><><><><>
+Switch invariant: ["ocaml" {>= "4.05.0"}]
+
+<><> Processing actions <><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+-> installed base-bigarray.base
+-> installed base-threads.base
+-> installed base-unix.base
+-> installed compiler-cloning.enabled
+-> installed ocaml-options-vanilla.1
+-> retrieved ocaml.5.5.1  (https://opam.ocaml.org/cache)
+-> retrieved ocaml-compiler.5.5.1  (https://opam.ocaml.org/cache)
+-> installed ocaml-compiler.5.5.1
+-> installed ocaml-base-compiler.5.5.1
+-> installed ocaml.5.5.1
+-> installed base-domains.base
+-> installed base-effects.base
+-> installed base-nnp.base
+Done.
+
+<><> ocaml-compiler.5.5.1 installed successfully ><><><><><><><><><><><><><><><>
+=> This switch had to be compiled from sources, but future switches with the 🐌
+   same compiler version and configuration should assemble instantly.
+# Run eval $(opam env --switch=default) to update the current shell environment
+[WARNING] Running as root is not recommended
+
+<><> Installing new switch packages <><><><><><><><><><><><><><><><><><><><><><>
+Switch invariant: ["ocaml-base-compiler" {= "4.14.2"}]
+
+<><> Processing actions <><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+-> installed base-bigarray.base
+-> installed base-threads.base
+-> installed base-unix.base
+-> installed ocaml-options-vanilla.1
+-> retrieved ocaml-config.2  (2 extra sources)
+-> retrieved ocaml-base-compiler.4.14.2  (https://opam.ocaml.org/cache)
+-> installed ocaml-base-compiler.4.14.2
+-> installed ocaml-config.2
+-> installed ocaml.4.14.2
+Done.
+# Run eval $(opam env --switch=fptaylor-4.14.2) to update the current shell environment
+[WARNING] Running as root is not recommended
+[WARNING] Running as root is not recommended
+The following actions will be performed:
+  - install num 1.6
+
+<><> Processing actions <><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+-> retrieved num.1.6  (https://opam.ocaml.org/cache)
+-> installed num.1.6
+Done.
+[WARNING] Running as root is not recommended
+cd INTERVAL; make
+make[1]: Entering directory '/work/fptaylor-rerun1/src/INTERVAL'
+ocamlc -c fpu.mli
+ocamlc -c fpu.ml
+File "fpu.ml", line 24, characters 0-52:
+24 | external set_low: unit -> unit = "set_low" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+File "fpu.ml", line 25, characters 0-54:
+25 | external set_high: unit -> unit = "set_high" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+File "fpu.ml", line 26, characters 0-60:
+26 | external set_nearest: unit -> unit = "set_nearest" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+ocamlc -c fpu_rename_all.mli
+ocamlc -c fpu_rename_all.ml
+ocamlc -c fpu_rename.mli
+ocamlc -c fpu_rename.ml
+ocamlc -c interval.mli
+ocamlc -c interval.ml
+ocamlc -a -custom -o interval.cma fpu.cmo fpu_rename_all.cmo fpu_rename.cmo interval.cmo 
+ocamlopt -c fpu.ml
+File "fpu.ml", line 24, characters 0-52:
+24 | external set_low: unit -> unit = "set_low" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+File "fpu.ml", line 25, characters 0-54:
+25 | external set_high: unit -> unit = "set_high" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+File "fpu.ml", line 26, characters 0-60:
+26 | external set_nearest: unit -> unit = "set_nearest" "noalloc"
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: [@@noalloc] should be used instead of "noalloc"
+ocamlopt -c fpu_rename_all.ml
+ocamlopt -c fpu_rename.ml
+ocamlopt -c interval.ml
+ocamlopt -a -o interval.cmxa  fpu.cmx fpu_rename_all.cmx fpu_rename.cmx interval.cmx
+gcc -W -Wall -O3 -I "/work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/ocaml"/caml -c  chcw.c
+rm -f libinterval.a
+ar rc libinterval.a  chcw.o
+ranlib libinterval.a
+ocamldoc -d doc -html *.mli
+ocamlmktop -o ocamlfpu chcw.o interval.cma libinterval.a
+make[1]: Leaving directory '/work/fptaylor-rerun1/src/INTERVAL'
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL version.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL version.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL lib.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL lib.ml
+File "lib.ml", line 120, characters 15-19:
+120 | let slice str ?last ~first =
+                     ^^^^
+Warning 16 [unerasable-optional-argument]: this optional argument cannot be erased.
+File "lib.ml", line 142, characters 13-34:
+142 |       lf ic (Pervasives.input_line ic :: a)
+                   ^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: module Stdlib.Pervasives
+Use Stdlib instead.
+
+If you need to stay compatible with OCaml < 4.07, you can use the 
+stdlib-shims library: https://github.com/ocaml/stdlib-shims
+File "lib.ml", line 145, characters 19-38:
+145 |   if do_close then Pervasives.close_in ic;
+                         ^^^^^^^^^^^^^^^^^^^
+Alert deprecated: module Stdlib.Pervasives
+Use Stdlib instead.
+
+If you need to stay compatible with OCaml < 4.07, you can use the 
+stdlib-shims library: https://github.com/ocaml/stdlib-shims
+File "lib.ml", line 149, characters 11-29:
+149 |   let ic = Pervasives.open_in filename in
+                 ^^^^^^^^^^^^^^^^^^
+Alert deprecated: module Stdlib.Pervasives
+Use Stdlib instead.
+
+If you need to stay compatible with OCaml < 4.07, you can use the 
+stdlib-shims library: https://github.com/ocaml/stdlib-shims
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL func.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL log.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL log.ml
+File "log.ml", line 25, characters 5-25:
+25 |      Pervasives.close_out c;
+          ^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: module Stdlib.Pervasives
+Use Stdlib instead.
+
+If you need to stay compatible with OCaml < 4.07, you can use the 
+stdlib-shims library: https://github.com/ocaml/stdlib-shims
+File "log.ml", line 41, characters 12-31:
+41 |     let c = Pervasives.open_out log_name in
+                 ^^^^^^^^^^^^^^^^^^^
+Alert deprecated: module Stdlib.Pervasives
+Use Stdlib instead.
+
+If you need to stay compatible with OCaml < 4.07, you can use the 
+stdlib-shims library: https://github.com/ocaml/stdlib-shims
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL more_num.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL more_num.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL rounding.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL rounding.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL binary_float.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL const.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL const.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL expr.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL expr.ml
+File "expr.ml", line 205, characters 13-28:
+205 | | Var v when Lib.starts_with v "ref~" -> true
+                   ^^^^^^^^^^^^^^^
+Warning 6 [labels-omitted]: label prefix was omitted in the application of this function.
+File "expr.ml", line 211, characters 13-28:
+211 | | Var v when Lib.starts_with v "ref~" -> int_of_string (Lib.slice v 4)
+                   ^^^^^^^^^^^^^^^
+Warning 6 [labels-omitted]: label prefix was omitted in the application of this function.
+File "expr.ml", line 211, characters 56-65:
+211 | | Var v when Lib.starts_with v "ref~" -> int_of_string (Lib.slice v 4)
+                                                              ^^^^^^^^^
+Warning 6 [labels-omitted]: label first was omitted in the application of this function.
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL exprOut.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL exprOut.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL eval.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL eval.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL task.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL task.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL config.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL config.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL input_parser_env.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL input_parser_env.ml
+ocamlyacc input_parser.mly
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL input_parser.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL input_parser.ml
+ocamllex input_lexer.mll
+50 states, 919 transitions, table size 3976 bytes
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL input_lexer.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL parser.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL parser.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL rounding_simpl.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL rounding_simpl.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL maxima.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL maxima.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_common.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_common.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_basic_bb.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_basic_bb.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_gelpia.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_gelpia.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_z3.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_z3.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_nlopt.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_nlopt.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL b_and_b/opt0.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL b_and_b/opt0.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_bb_eval.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt_bb_eval.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL opt.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL out_test.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL out_error_bounds.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL out_error_bounds.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL taylor_form.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL taylor_form.ml
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL fptaylor.mli
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL fptaylor.ml
+File "fptaylor.ml", line 628, characters 2-22:
+628 |   Config.print_options `Debug;
+        ^^^^^^^^^^^^^^^^^^^^
+Warning 6 [labels-omitted]: label level was omitted in the application of this function.
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -c -I b_and_b -I INTERVAL main.ml
+File "main.ml", line 27, characters 2-19:
+27 |   Fptaylor.fptaylor input_files |> ignore
+       ^^^^^^^^^^^^^^^^^
+Warning 6 [labels-omitted]: label input_files was omitted in the application of this function.
+FPTaylor compiled (bytecode)
+ocamlc -I /work/fptaylor-rerun1/opam/fptaylor-4.14.2/lib/num -o fptaylor -I b_and_b -I INTERVAL \
+	unix.cma str.cma nums.cma \
+	INTERVAL/chcw.o INTERVAL/interval.cma \
+	version.mli version.cmo lib.mli lib.cmo func.cmo log.mli log.cmo more_num.mli more_num.cmo rounding.mli rounding.cmo binary_float.cmo const.mli const.cmo expr.mli expr.cmo exprOut.mli exprOut.cmo eval.mli eval.cmo task.mli task.cmo config.mli config.cmo input_parser_env.mli input_parser_env.cmo input_parser.mli input_parser.cmo input_lexer.cmo parser.mli parser.cmo rounding_simpl.mli rounding_simpl.cmo maxima.mli maxima.cmo opt_common.mli opt_common.cmo opt_basic_bb.mli opt_basic_bb.cmo opt_gelpia.mli opt_gelpia.cmo opt_z3.mli opt_z3.cmo opt_nlopt.mli opt_nlopt.cmo b_and_b/opt0.mli b_and_b/opt0.cmo opt_bb_eval.mli opt_bb_eval.cmo opt.mli opt.cmo out_test.cmo out_error_bounds.mli out_error_bounds.cmo taylor_form.mli taylor_form.cmo fptaylor.mli fptaylor.cmo main.cmo
+cp b_and_b/compile.template b_and_b/compile.sh
+echo "compile_native_with_INTERVAL" >> b_and_b/compile.sh
+chmod +x b_and_b/compile.sh	
+./fptaylor benchmarks/tests/test01_sum3.txt benchmarks/tests/test02_sum8.txt benchmarks/tests/test03_nonlin2.txt benchmarks/tests/test05_nonlin1.txt benchmarks/tests/test06_sums4.txt
+FPTaylor, version 0.9.4+dev
+Loading configuration file: ./default.cfg
+
+Loading: benchmarks/tests/test01_sum3.txt
+Processing: Expression 1
+
+*************************************
+Taylor form for: rnd32((rnd32((rnd32(rnd32((rnd32((rnd32(x0) + rnd32(x1))) - rnd32(x2)))) + rnd32(rnd32((rnd32((rnd32(x1) + rnd32(x2))) - rnd32(x0)))))) + rnd32(rnd32((rnd32((rnd32(x2) + rnd32(x0))) - rnd32(x1))))))
+
+Conservative bound: [-0.000001, 9.000004]
+
+Simplified rounding: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) - x2)) + rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x1 + x2)) - x0)))) + rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x2 + x0)) - x1))))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = ((((x0 + x1) - x2) + ((x1 + x2) - x0)) + ((x2 + x0) - x1))
+-1: exp = -24: 0
+1: exp = -24: floor_power2(((x0 + x1) + 0))
+2: exp = -24: floor_power2((((x0 + x1) - x2) + interval(-1.19209289550781250000e-07, 1.19209289550781250000e-07)))
+3: exp = -24: floor_power2(((x1 + x2) + 0))
+4: exp = -24: floor_power2((((x1 + x2) - x0) + interval(-1.19209289550781250000e-07, 1.19209289550781250000e-07)))
+5: exp = -24: floor_power2(((((x0 + x1) - x2) + ((x1 + x2) - x0)) + interval(-4.76837158203125000000e-07, 4.76837158203125000000e-07)))
+6: exp = -24: floor_power2(((x2 + x0) + 0))
+7: exp = -24: floor_power2((((x2 + x0) - x1) + interval(-1.19209289550781250000e-07, 1.19209289550781250000e-07)))
+8: exp = -24: floor_power2((((((x0 + x1) - x2) + ((x1 + x2) - x0)) + ((x2 + x0) - x1)) + interval(-9.53674316406250000000e-07, 9.53674316406250000000e-07)))
+
+Corresponding original subexpressions:
+1: rnd[32,ne,1.00,-24,0]((x0 + x1))
+2: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) - x2))
+3: rnd[32,ne,1.00,-24,0]((x1 + x2))
+4: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x1 + x2)) - x0))
+5: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) - x2)) + rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x1 + x2)) - x0))))
+6: rnd[32,ne,1.00,-24,0]((x2 + x0))
+7: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x2 + x0)) - x1))
+8: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) - x2)) + rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x1 + x2)) - x0)))) + rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x2 + x0)) - x1))))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -24: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+
+Solving the exact optimization problem
+Selected optimization method: bb
+exact bound (exp = -24): 2.000000e+01 (low = 1.600000e+01, subopt = 20.0%)
+total2: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+exact total: 1.192093e-06 (low = 9.536743e-07, subopt = 20.0%)
+
+Elapsed time: 0.53064
+*************************************
+
+-------------------------------------------------------------------------------
+Problem: Expression 1
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 9.536743e-7 (0x1p-20) (suboptimality = 20.0%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 1.192093e-6 (0x1.4p-20)
+
+Elapsed time: 0.53
+
+
+Loading: benchmarks/tests/test02_sum8.txt
+Processing: Expression 1
+
+*************************************
+Taylor form for: rnd64((rnd64((rnd64((rnd64((rnd64((rnd64((rnd64((rnd64(x0) + rnd64(x1))) + rnd64(x2))) + rnd64(x3))) + rnd64(x4))) + rnd64(x5))) + rnd64(x6))) + rnd64(x7)))
+
+Conservative bound: [8.000000, 16.000000]
+
+Simplified rounding: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3)) + x4)) + x5)) + x6)) + x7))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = (((((((x0 + x1) + x2) + x3) + x4) + x5) + x6) + x7)
+-1: exp = -53: 0
+1: exp = -53: floor_power2(((x0 + x1) + 0))
+2: exp = -53: floor_power2((((x0 + x1) + x2) + interval(-2.22044604925031308085e-16, 2.22044604925031308085e-16)))
+3: exp = -53: floor_power2(((((x0 + x1) + x2) + x3) + interval(-6.66133814775093924254e-16, 6.66133814775093924254e-16)))
+4: exp = -53: floor_power2((((((x0 + x1) + x2) + x3) + x4) + interval(-1.55431223447521915659e-15, 1.55431223447521915659e-15)))
+5: exp = -53: floor_power2(((((((x0 + x1) + x2) + x3) + x4) + x5) + interval(-2.44249065417534438893e-15, 2.44249065417534438893e-15)))
+6: exp = -53: floor_power2((((((((x0 + x1) + x2) + x3) + x4) + x5) + x6) + interval(-3.33066907387546962127e-15, 3.33066907387546962127e-15)))
+7: exp = -53: floor_power2(((((((((x0 + x1) + x2) + x3) + x4) + x5) + x6) + x7) + interval(-4.21884749357559485361e-15, 4.21884749357559485361e-15)))
+
+Corresponding original subexpressions:
+1: rnd[64,ne,1.00,-53,0]((x0 + x1))
+2: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2))
+3: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3))
+4: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3)) + x4))
+5: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3)) + x4)) + x5))
+6: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3)) + x4)) + x5)) + x6))
+7: rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((rnd[64,ne,1.00,-53,0]((x0 + x1)) + x2)) + x3)) + x4)) + x5)) + x6)) + x7))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -53: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+
+Solving the exact optimization problem
+Selected optimization method: bb
+exact bound (exp = -53): 5.400000e+01 (low = 4.200000e+01, subopt = 22.2%)
+total2: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+exact total: 5.995204e-15 (low = 4.662937e-15, subopt = 22.2%)
+
+Elapsed time: 6.42056
+*************************************
+
+-------------------------------------------------------------------------------
+Problem: Expression 1
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 4.662936e-15 (0x1.5p-48) (suboptimality = 22.2%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 5.995205e-15 (0x1.bp-48)
+
+Elapsed time: 6.42
+
+
+Loading: benchmarks/tests/test03_nonlin2.txt
+Processing: Expression 1
+
+*************************************
+Taylor form for: rnd64((rnd64((rnd64(x) + rnd64(y))) / rnd64((rnd64(x) - rnd64(y)))))
+
+Conservative bound: [-10.000000, 9.000000]
+
+Simplified rounding: rnd64((rnd[64,ne,1.00,-53,0]((x + y)) / rnd[64,ne,1.00,-53,0]((x - y))))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = ((x + y) * (1 / (x - y)))
+-1: exp = -53: (2308974418329609/19807040628566084398385987584)
+1: exp = -53: ((1 / (x - y)) * floor_power2(((x + y) + 0)))
+2: exp = -53: ((x + y) * (-((floor_power2(((x - y) + 0)) / ((x - y) * (x - y))))))
+3: exp = -53: floor_power2((((x + y) * (1 / (x - y))) + interval(-1.16573417585641626071e-14, 1.16573417585641626071e-14)))
+
+Corresponding original subexpressions:
+1: rnd[64,ne,1.00,-53,0]((x + y))
+2: rnd[64,ne,1.00,-53,0]((x - y))
+3: rnd64((rnd[64,ne,1.00,-53,0]((x + y)) / rnd[64,ne,1.00,-53,0]((x - y))))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -53: 1.165734e-13 (low = 1.165734e-13, subopt = 0.0%)
+
+Solving the exact optimization problem
+Selected optimization method: bb-eval
+exact bound (exp = -53): 3.124454e+00 (low = 2.496880e+00, subopt = 20.1%)
+total2: 1.294225e-29 (low = 1.294225e-29, subopt = 0.0%)
+exact total: 3.468840e-16 (low = 2.772094e-16, subopt = 20.1%)
+
+Elapsed time: 0.01023
+*************************************
+
+-------------------------------------------------------------------------------
+Problem: Expression 1
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 2.772093e-16 (0x1.3f99c27f00769p-52) (suboptimality = 20.1%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 3.468841e-16 (0x1.8fee1940f228cp-52)
+
+Elapsed time: 0.01
+
+
+Loading: benchmarks/tests/test05_nonlin1.txt
+Processing: Expression 1
+
+*************************************
+Taylor form for: rnd64((rnd64(rnd64((rnd64(x) - rnd64(1)))) / rnd64(rnd64((rnd64(rnd64((rnd64(x) * rnd64(x)))) - rnd64(1))))))
+
+Conservative bound: [0.000003, 49999.750005]
+
+Simplified rounding: rnd64((rnd[64,ne,1.00,-53,0]((x - 1)) / rnd[64,ne,1.00,-53,0]((rnd64((x * x)) - 1))))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = ((x - 1) * (1 / ((x * x) - 1)))
+-1: exp = -53: (3999950001082545/18014398509481984)
+1: exp = -53: ((1 / ((x * x) - 1)) * floor_power2(((x - 1) + 0)))
+2: exp = -53: ((x - 1) * (-((floor_power2(((x * x) + 0)) / (((x * x) - 1) * ((x * x) - 1))))))
+3: exp = -53: ((x - 1) * (-((floor_power2((((x * x) - 1) + interval(-2.22044604925031357389e-16, 2.22044604925031357389e-16))) / (((x * x) - 1) * ((x * x) - 1))))))
+4: exp = -53: floor_power2((((x - 1) * (1 / ((x * x) - 1))) + interval(-1.11021469810500194500e-06, 1.11021469810500194500e-06)))
+
+Corresponding original subexpressions:
+1: rnd[64,ne,1.00,-53,0]((x - 1))
+2: rnd64((x * x))
+3: rnd[64,ne,1.00,-53,0]((rnd64((x * x)) - 1))
+4: rnd64((rnd[64,ne,1.00,-53,0]((x - 1)) / rnd[64,ne,1.00,-53,0]((rnd64((x * x)) - 1))))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -53: 2.220418e-01 (low = 2.220418e-01, subopt = 0.0%)
+
+Solving the exact optimization problem
+Selected optimization method: bb-eval
+exact bound (exp = -53): 1.986207e+07 (low = 2.500076e+04, subopt = 99.9%)
+total2: 2.465160e-17 (low = 2.465160e-17, subopt = 0.0%)
+exact total: 2.205132e-09 (low = 2.775667e-12, subopt = 99.9%)
+
+Elapsed time: 0.00795
+Processing: test2
+
+*************************************
+Taylor form for: rnd64((rnd64(1) / rnd64((rnd64(x) + rnd64(1)))))
+
+Conservative bound: [0.333333, 0.499998]
+
+Simplified rounding: rnd64((1 / rnd[64,ne,1.00,-53,0]((x + 1))))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = (1 * (1 / (x + 1)))
+-1: exp = -53: (9007064148103253/162259276829213363391578010288128)
+1: exp = -53: (1 * (-((floor_power2(((x + 1) + 0)) / ((x + 1) * (x + 1))))))
+2: exp = -53: floor_power2(((1 * (1 / (x + 1))) + interval(-5.55105961239088659820e-17, 5.55105961239088659820e-17)))
+
+Corresponding original subexpressions:
+1: rnd[64,ne,1.00,-53,0]((x + 1))
+2: rnd64((1 / rnd[64,ne,1.00,-53,0]((x + 1))))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -53: 5.551032e-17 (low = 5.551032e-17, subopt = 0.0%)
+
+Solving the exact optimization problem
+Selected optimization method: bb-eval
+exact bound (exp = -53): 7.499950e-01 (low = 7.499950e-01, subopt = 0.0%)
+total2: 6.162883e-33 (low = 6.162883e-33, subopt = 0.0%)
+exact total: 8.326617e-17 (low = 8.326617e-17, subopt = 0.0%)
+
+Elapsed time: 0.00684
+*************************************
+
+-------------------------------------------------------------------------------
+Problem: Expression 1
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 2.775666e-12 (0x1.86a3f09e05a33p-39) (suboptimality = 99.9%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 2.205133e-9 (0x1.2f123245ffe73p-29)
+
+Elapsed time: 0.01
+
+-------------------------------------------------------------------------------
+Problem: test2
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 8.326617e-17 (0x1.7fff583aa62f5p-54) (suboptimality = 0.0%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 8.326618e-17 (0x1.7fff583aa62fap-54)
+
+Elapsed time: 0.01
+
+
+Loading: benchmarks/tests/test06_sums4.txt
+Processing: Expression 1
+
+*************************************
+Taylor form for: rnd32((rnd32((rnd32((rnd32(x0) + rnd32(x1))) + rnd32(x2))) + rnd32(x3)))
+
+Conservative bound: [-0.000000, 4.000001]
+
+Simplified rounding: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) + x2)) + x3))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = (((x0 + x1) + x2) + x3)
+-1: exp = -24: 0
+1: exp = -24: floor_power2(((x0 + x1) + 0))
+2: exp = -24: floor_power2((((x0 + x1) + x2) + interval(-5.96046447753906250000e-08, 5.96046447753906250000e-08)))
+3: exp = -24: floor_power2(((((x0 + x1) + x2) + x3) + interval(-1.78813934326171875000e-07, 1.78813934326171875000e-07)))
+
+Corresponding original subexpressions:
+1: rnd[32,ne,1.00,-24,0]((x0 + x1))
+2: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) + x2))
+3: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) + x2)) + x3))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -24: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+
+Solving the exact optimization problem
+Selected optimization method: bb
+exact bound (exp = -24): 7.000000e+00 (low = 5.000000e+00, subopt = 28.6%)
+total2: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+exact total: 4.172325e-07 (low = 2.980232e-07, subopt = 28.6%)
+
+Elapsed time: 0.13893
+Processing: Expression 2
+
+*************************************
+Taylor form for: rnd32((rnd32((rnd32(x0) + rnd32(x1))) + rnd32((rnd32(x2) + rnd32(x3)))))
+
+Conservative bound: [-0.000000, 4.000001]
+
+Simplified rounding: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) + rnd[32,ne,1.00,-24,0]((x2 + x3))))
+Building Taylor forms...
+Simplifying Taylor forms...
+success
+v0 = ((x0 + x1) + (x2 + x3))
+-1: exp = -24: 0
+1: exp = -24: floor_power2(((x0 + x1) + 0))
+2: exp = -24: floor_power2(((x2 + x3) + 0))
+3: exp = -24: floor_power2((((x0 + x1) + (x2 + x3)) + interval(-1.19209289550781250000e-07, 1.19209289550781250000e-07)))
+
+Corresponding original subexpressions:
+1: rnd[32,ne,1.00,-24,0]((x0 + x1))
+2: rnd[32,ne,1.00,-24,0]((x2 + x3))
+3: rnd[32,ne,1.00,-24,0]((rnd[32,ne,1.00,-24,0]((x0 + x1)) + rnd[32,ne,1.00,-24,0]((x2 + x3))))
+
+bounds: [-inf, inf]
+
+Computing absolute errors
+Selected optimization method: bb-eval
+-1: exp = -24: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+
+Solving the exact optimization problem
+Selected optimization method: bb
+exact bound (exp = -24): 6.000000e+00 (low = 4.000000e+00, subopt = 33.3%)
+total2: 0.000000e+00 (low = 0.000000e+00, subopt = -nan%)
+exact total: 3.576279e-07 (low = 2.384186e-07, subopt = 33.3%)
+
+Elapsed time: 0.13468
+*************************************
+
+-------------------------------------------------------------------------------
+Problem: Expression 1
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 2.980232e-7 (0x1.4p-22) (suboptimality = 28.6%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 4.172326e-7 (0x1.cp-22)
+
+Elapsed time: 0.14
+
+-------------------------------------------------------------------------------
+Problem: Expression 2
+
+Optimization lower bounds for error models:
+The absolute error (exact) model: 2.384185e-7 (0x1p-22) (suboptimality = 33.3%)
+
+Bounds (without rounding): [-inf, +inf]
+
+Absolute error (exact): 3.576279e-7 (0x1.8p-22)
+
+Elapsed time: 0.13
+
+
+Running tests from: ../tests/basic/_tests-b.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+Running tests from: ../tests/basic/_tests.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+Running tests from: ../tests/basic/_tests_eval.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+
+Passed: 600 / 600
+
+Running tests from: ../tests/micro/_tests-b.yml
+Testing: ../tests/micro/f1_all.txt
+  f1: PASSED
+  f1_mixed: PASSED
+Testing: ../tests/micro/micro.txt
+  sum: PASSED
+  nonlin1: PASSED
+  nonlin2: PASSED
+Testing: ../tests/micro/sqrt_add.txt
+  sqrt_add: PASSED
+Testing: ../tests/micro/sqrt_sub.txt
+  sqrt_sub: PASSED
+Testing: ../tests/micro/sub.txt
+  sub: PASSED
+Testing: ../tests/micro/sub_sub.txt
+  e_add32: PASSED
+  e_add64: PASSED
+  e_sub_add32: PASSED
+Running tests from: ../tests/micro/_tests.yml
+Testing: ../tests/micro/f1_all.txt
+  f1: PASSED
+  f1_mixed: PASSED
+Testing: ../tests/micro/micro.txt
+  sum: PASSED
+  nonlin1: PASSED
+  nonlin2: PASSED
+Testing: ../tests/micro/sqrt_add.txt
+  sqrt_add: PASSED
+Testing: ../tests/micro/sqrt_sub.txt
+  sqrt_sub: PASSED
+Testing: ../tests/micro/sub.txt
+  sub: PASSED
+Testing: ../tests/micro/sub_sub.txt
+  e_add32: PASSED
+  e_add64: PASSED
+  e_sub_add32: PASSED
+
+Passed: 22 / 22
+
+Running tests from: ../tests/core/_tests-b.yml
+Testing: ../tests/core/carbonGas.txt
+  carbon_gas: PASSED
+Testing: ../tests/core/doppler1.txt
+  doppler1: PASSED
+Testing: ../tests/core/doppler2.txt
+  doppler2: PASSED
+Testing: ../tests/core/doppler3.txt
+  doppler3: PASSED
+Testing: ../tests/core/himmilbeau.txt
+  himmilbeau: PASSED
+Testing: ../tests/core/jet.txt
+  jet: PASSED
+Testing: ../tests/core/kepler0.txt
+  kepler0: PASSED
+Testing: ../tests/core/kepler1.txt
+  kepler1: PASSED
+Testing: ../tests/core/kepler2.txt
+  kepler2: PASSED
+Testing: ../tests/core/predatorPrey.txt
+  predatorPrey: PASSED
+Testing: ../tests/core/rigidBody1.txt
+  rigidBody1: PASSED
+Testing: ../tests/core/rigidBody2.txt
+  rigidBody2: PASSED
+Testing: ../tests/core/sine.txt
+  sine: PASSED
+Testing: ../tests/core/sineOrder3.txt
+  sineOrder3: PASSED
+Testing: ../tests/core/sqroot.txt
+  sqroot: PASSED
+Testing: ../tests/core/t_div_t1.txt
+  t_div_t1: PASSED
+Testing: ../tests/core/turbine1.txt
+  turbine1: PASSED
+Testing: ../tests/core/turbine2.txt
+  turbine2: PASSED
+Testing: ../tests/core/turbine3.txt
+  turbine3: PASSED
+Testing: ../tests/core/verhulst.txt
+  verhulst: PASSED
+Running tests from: ../tests/core/_tests.yml
+Testing: ../tests/core/carbonGas.txt
+  carbon_gas: PASSED
+Testing: ../tests/core/doppler1.txt
+  doppler1: PASSED
+Testing: ../tests/core/doppler2.txt
+  doppler2: PASSED
+Testing: ../tests/core/doppler3.txt
+  doppler3: PASSED
+Testing: ../tests/core/himmilbeau.txt
+  himmilbeau: PASSED
+Testing: ../tests/core/jet.txt
+  jet: PASSED
+Testing: ../tests/core/kepler0.txt
+  kepler0: PASSED
+Testing: ../tests/core/kepler1.txt
+  kepler1: PASSED
+Testing: ../tests/core/kepler2.txt
+  kepler2: PASSED
+Testing: ../tests/core/predatorPrey.txt
+  predatorPrey: PASSED
+Testing: ../tests/core/rigidBody1.txt
+  rigidBody1: PASSED
+Testing: ../tests/core/rigidBody2.txt
+  rigidBody2: PASSED
+Testing: ../tests/core/sine.txt
+  sine: PASSED
+Testing: ../tests/core/sineOrder3.txt
+  sineOrder3: PASSED
+Testing: ../tests/core/sqroot.txt
+  sqroot: PASSED
+Testing: ../tests/core/t_div_t1.txt
+  t_div_t1: PASSED
+Testing: ../tests/core/turbine1.txt
+  turbine1: PASSED
+Testing: ../tests/core/turbine2.txt
+  turbine2: PASSED
+Testing: ../tests/core/turbine3.txt
+  turbine3: PASSED
+Testing: ../tests/core/verhulst.txt
+  verhulst: PASSED
+
+Passed: 40 / 40
+
+Running tests from: ../tests/basic/_tests-b.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+Running tests from: ../tests/basic/_tests.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+Running tests from: ../tests/basic/_tests_eval.yml
+Testing: ../tests/basic/constants.txt
+  c1_32: PASSED
+  c1_64: PASSED
+  c1_2_64: PASSED
+  c2_32: PASSED
+  c2_64: PASSED
+  c3_32: PASSED
+  c3_64: PASSED
+  c4_32: PASSED
+  c4_64: PASSED
+  c5_32: PASSED
+  c5_64: PASSED
+  c6_32: PASSED
+  c6_64: PASSED
+  c7_32: PASSED
+  c7_64: PASSED
+  c8_32: PASSED
+  c8_64: PASSED
+  test_64: PASSED
+  test_c_add_64: PASSED
+  test_add_64: PASSED
+Testing: ../tests/basic/constants2.txt
+  a64: PASSED
+  a32: PASSED
+  b64: PASSED
+  b32: PASSED
+  c64: PASSED
+  c32: PASSED
+  d64: PASSED
+  d32: PASSED
+  e64: PASSED
+  e32: PASSED
+Testing: ../tests/basic/ops.txt
+  add_small: PASSED
+  sub_small: PASSED
+  mul_small: PASSED
+  div_small: PASSED
+  sqrt_small: PASSED
+  add_large: PASSED
+  sub_large: PASSED
+  mul_large: PASSED
+  add_r: PASSED
+  sub_r: PASSED
+  mul_r: PASSED
+  div_r: PASSED
+  add_small32: PASSED
+  sub_small32: PASSED
+  mul_small32: PASSED
+  div_small32: PASSED
+  sqrt_small32: PASSED
+  add_large32: PASSED
+  sub_large32: PASSED
+  mul_large32: PASSED
+Testing: ../tests/basic/ops_constants.txt
+  add_x_c1: PASSED
+  add_y_c1: PASSED
+  sub_x_c1: PASSED
+  sub_y_c1: PASSED
+  mul_x_c1: PASSED
+  mul_y_c1: PASSED
+  mul_c1_x: PASSED
+  mul_c1_y: PASSED
+  div_x_c1: PASSED
+  div_y_c1: PASSED
+  div_c1_x: PASSED
+  add_u_c2: PASSED
+  add_v_c2: PASSED
+  sub_u_c2: PASSED
+  sub_v_c2: PASSED
+  mul_u_c2: PASSED
+  mul_v_c2: PASSED
+  mul_c2_u: PASSED
+  mul_c2_v: PASSED
+  div_u_c2: PASSED
+  div_v_c2: PASSED
+  div_c2_u: PASSED
+  add_c1_c2: PASSED
+  sub_c1_c2: PASSED
+  mul_c1_c2: PASSED
+  div_c1_c2: PASSED
+  sqrt_c1: PASSED
+  sqrt_c2: PASSED
+Testing: ../tests/basic/ops_nonsmooth.txt
+  abs_x: PASSED
+  abs_y: PASSED
+  abs_z: PASSED
+  abs_u: PASSED
+  max_xz: PASSED
+  min_xz: PASSED
+  max_yz: PASSED
+  min_yz: PASSED
+  max_zu: PASSED
+  min_zu: PASSED
+  max_xx: PASSED
+  max_xx32: PASSED
+  max_uu: PASSED
+Testing: ../tests/basic/ops_pow.txt
+  pow2_x: PASSED
+  pow2_y: PASSED
+  pow2_z: PASSED
+  pow3_x: PASSED
+  pow3_y: PASSED
+  pow3_z: PASSED
+Testing: ../tests/basic/ops_trans.txt
+  sin_x: PASSED
+  cos_x: PASSED
+  tan_x: PASSED
+  exp_x: PASSED
+  asin_x: PASSED
+  acos_x: PASSED
+  atan_x: PASSED
+  sinh_x: PASSED
+  cosh_x: PASSED
+  tanh_x: PASSED
+  asinh_x: PASSED
+  atanh_x: PASSED
+  sin_y: PASSED
+  cos_y: PASSED
+  exp_y: PASSED
+  atan_y: PASSED
+  sinh_y: PASSED
+  cosh_y: PASSED
+  tanh_y: PASSED
+  acosh_y: PASSED
+  asinh_y: PASSED
+  log_y: PASSED
+  sin_z: PASSED
+  cos_z: PASSED
+  exp_z: PASSED
+  atan_z: PASSED
+  sinh_z: PASSED
+  cosh_z: PASSED
+  tanh_z: PASSED
+  asinh_z: PASSED
+  log_z: PASSED
+  sin_y_scaled: PASSED
+  cos_y_scaled: PASSED
+  exp_y_scaled: PASSED
+  log_y_scaled: PASSED
+Testing: ../tests/basic/rounding.txt
+  c1_32: PASSED
+  c1_32_d: PASSED
+  c1_32_u: PASSED
+  c1_32_0: PASSED
+  x_32: PASSED
+  x_32_d: PASSED
+  x_32_u: PASSED
+  x_32_0: PASSED
+  y_32: PASSED
+  y_32_d: PASSED
+  y_32_u: PASSED
+  y_32_0: PASSED
+  z_32: PASSED
+  z_32_d: PASSED
+  z_32_u: PASSED
+  z_32_0: PASSED
+  c1_16: PASSED
+  x_16: PASSED
+  y_16: PASSED
+  z_16: PASSED
+  c1_128_d: PASSED
+  x_128_u: PASSED
+  x_128_0: PASSED
+  x_128: PASSED
+  c1_64_d_scaled: PASSED
+  x_64_u_scaled: PASSED
+  y_64_0_scaled: PASSED
+  z_64_scaled: PASSED
+  c1_16_d_scaled: PASSED
+  x_16_u_scaled: PASSED
+  y_16_0_scaled: PASSED
+  z_16_scaled: PASSED
+  c1_32_d_full: PASSED
+  x_32_u_full: PASSED
+  y_32_0_full: PASSED
+  z_32_full: PASSED
+Testing: ../tests/basic/rounding2.txt
+  c1_xy_64: PASSED
+  c1_xy_32: PASSED
+  c1_xy_64_nornd: PASSED
+  c1_xy_64_32: PASSED
+  c1_xy_32_64: PASSED
+  c1_32_xy_64: PASSED
+  xy_rnd32_rnd32: PASSED
+  xy_rnd32: PASSED
+  xy_64_32: PASSED
+  xy_32_64: PASSED
+  xyz64: PASSED
+  xyz32: PASSED
+  xyz32_64_1: PASSED
+  xyz32_64: PASSED
+Testing: ../tests/basic/uncertainty.txt
+  add: PASSED
+  sub: PASSED
+  mul: PASSED
+  div: PASSED
+Testing: ../tests/basic/variables.txt
+  x32: PASSED
+  x64: PASSED
+  y32: PASSED
+  y64: PASSED
+  z32: PASSED
+  z64: PASSED
+  u32: PASSED
+  u64: PASSED
+  a32: PASSED
+  a64: PASSED
+  b32: PASSED
+  b64: PASSED
+  c32: PASSED
+  c64: PASSED
+Running tests from: ../tests/core/_tests-b.yml
+Testing: ../tests/core/carbonGas.txt
+  carbon_gas: PASSED
+Testing: ../tests/core/doppler1.txt
+  doppler1: PASSED
+Testing: ../tests/core/doppler2.txt
+  doppler2: PASSED
+Testing: ../tests/core/doppler3.txt
+  doppler3: PASSED
+Testing: ../tests/core/himmilbeau.txt
+  himmilbeau: PASSED
+Testing: ../tests/core/jet.txt
+  jet: PASSED
+Testing: ../tests/core/kepler0.txt
+  kepler0: PASSED
+Testing: ../tests/core/kepler1.txt
+  kepler1: PASSED
+Testing: ../tests/core/kepler2.txt
+  kepler2: PASSED
+Testing: ../tests/core/predatorPrey.txt
+  predatorPrey: PASSED
+Testing: ../tests/core/rigidBody1.txt
+  rigidBody1: PASSED
+Testing: ../tests/core/rigidBody2.txt
+  rigidBody2: PASSED
+Testing: ../tests/core/sine.txt
+  sine: PASSED
+Testing: ../tests/core/sineOrder3.txt
+  sineOrder3: PASSED
+Testing: ../tests/core/sqroot.txt
+  sqroot: PASSED
+Testing: ../tests/core/t_div_t1.txt
+  t_div_t1: PASSED
+Testing: ../tests/core/turbine1.txt
+  turbine1: PASSED
+Testing: ../tests/core/turbine2.txt
+  turbine2: PASSED
+Testing: ../tests/core/turbine3.txt
+  turbine3: PASSED
+Testing: ../tests/core/verhulst.txt
+  verhulst: PASSED
+Running tests from: ../tests/core/_tests.yml
+Testing: ../tests/core/carbonGas.txt
+  carbon_gas: PASSED
+Testing: ../tests/core/doppler1.txt
+  doppler1: PASSED
+Testing: ../tests/core/doppler2.txt
+  doppler2: PASSED
+Testing: ../tests/core/doppler3.txt
+  doppler3: PASSED
+Testing: ../tests/core/himmilbeau.txt
+  himmilbeau: PASSED
+Testing: ../tests/core/jet.txt
+  jet: PASSED
+Testing: ../tests/core/kepler0.txt
+  kepler0: PASSED
+Testing: ../tests/core/kepler1.txt
+  kepler1: PASSED
+Testing: ../tests/core/kepler2.txt
+  kepler2: PASSED
+Testing: ../tests/core/predatorPrey.txt
+  predatorPrey: PASSED
+Testing: ../tests/core/rigidBody1.txt
+  rigidBody1: PASSED
+Testing: ../tests/core/rigidBody2.txt
+  rigidBody2: PASSED
+Testing: ../tests/core/sine.txt
+  sine: PASSED
+Testing: ../tests/core/sineOrder3.txt
+  sineOrder3: PASSED
+Testing: ../tests/core/sqroot.txt
+  sqroot: PASSED
+Testing: ../tests/core/t_div_t1.txt
+  t_div_t1: PASSED
+Testing: ../tests/core/turbine1.txt
+  turbine1: PASSED
+Testing: ../tests/core/turbine2.txt
+  turbine2: PASSED
+Testing: ../tests/core/turbine3.txt
+  turbine3: PASSED
+Testing: ../tests/core/verhulst.txt
+  verhulst: PASSED
+Running tests from: ../tests/micro/_tests-b.yml
+Testing: ../tests/micro/f1_all.txt
+  f1: PASSED
+  f1_mixed: PASSED
+Testing: ../tests/micro/micro.txt
+  sum: PASSED
+  nonlin1: PASSED
+  nonlin2: PASSED
+Testing: ../tests/micro/sqrt_add.txt
+  sqrt_add: PASSED
+Testing: ../tests/micro/sqrt_sub.txt
+  sqrt_sub: PASSED
+Testing: ../tests/micro/sub.txt
+  sub: PASSED
+Testing: ../tests/micro/sub_sub.txt
+  e_add32: PASSED
+  e_add64: PASSED
+  e_sub_add32: PASSED
+Running tests from: ../tests/micro/_tests.yml
+Testing: ../tests/micro/f1_all.txt
+  f1: PASSED
+  f1_mixed: PASSED
+Testing: ../tests/micro/micro.txt
+  sum: PASSED
+  nonlin1: PASSED
+  nonlin2: PASSED
+Testing: ../tests/micro/sqrt_add.txt
+  sqrt_add: PASSED
+Testing: ../tests/micro/sqrt_sub.txt
+  sqrt_sub: PASSED
+Testing: ../tests/micro/sub.txt
+  sub: PASSED
+Testing: ../tests/micro/sub_sub.txt
+  e_add32: PASSED
+  e_add64: PASSED
+  e_sub_add32: PASSED
+Running tests from: ../tests/transcendental/_tests-b.yml
+Testing: ../tests/transcendental/azimuth.txt
+  azimuth: PASSED
+Testing: ../tests/transcendental/hartman3.txt
+  hartman3: PASSED
+Testing: ../tests/transcendental/logexp.txt
+  logexp: PASSED
+Testing: ../tests/transcendental/sphere.txt
+  sphere: PASSED
+Running tests from: ../tests/transcendental/_tests.yml
+Testing: ../tests/transcendental/azimuth.txt
+  azimuth: PASSED
+Testing: ../tests/transcendental/hartman3.txt
+  hartman3: PASSED
+Testing: ../tests/transcendental/logexp.txt
+  logexp: PASSED
+Testing: ../tests/transcendental/sphere.txt
+  sphere: PASSED
+
+Passed: 670 / 670
+
+status=0
+finished=2026-09-10T15:22:03Z

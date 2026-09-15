@@ -1,0 +1,2862 @@
+Get:1 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:4 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1530 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1796 kB]
+Get:6 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1242 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2151 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1908 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1564 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Fetched 32.6 MB in 3s (13.0 MB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bash is already the newest version (5.2.21-2ubuntu4).
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu bzip2 cpp cpp-13
+  cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu dpkg-dev g++-13
+  g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc-13 gcc-13-base
+  gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu gfortran-13
+  gfortran-13-x86-64-linux-gnu gfortran-x86-64-linux-gnu git-man libasan8
+  libatomic1 libbinutils libbrotli1 libc-dev-bin libc6 libc6-dev libcares2
+  libcc1-0 libcompiler-libs-ocaml-dev libcrypt-dev libctf-nobfd0 libctf0
+  libcurl3t64-gnutls libcurl4t64 libdpkg-perl liberror-perl libexpat1
+  libgcc-13-dev libgdbm-compat4t64 libgdbm6t64 libgfortran-13-dev libgfortran5
+  libgmp-dev libgmpxx4ldbl libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0
+  libicu74 libisl23 libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3
+  libkrb5support0 libldap2 liblsan0 libmpc3 libncurses-dev libncurses6
+  libnghttp2-14 libnode109 libperl5.38t64 libpsl5t64 libpython3-stdlib
+  libpython3.12-minimal libpython3.12-stdlib libquadmath0 libreadline8t64
+  librtmp1 libsasl2-2 libsasl2-modules-db libsframe1 libsqlite3-0 libssh-4
+  libstdc++-13-dev libstdlib-ocaml libstdlib-ocaml-dev libtsan2 libubsan1
+  libuv1t64 linux-libc-dev lto-disabled-list make media-types netbase
+  node-acorn node-busboy node-cjs-module-lexer node-undici node-xtend ocaml
+  ocaml-base ocaml-interp openssl patch perl perl-modules-5.38 python3-minimal
+  python3.12 python3.12-minimal readline-common rpcsvc-proto tzdata xz-utils
+Suggested packages:
+  binutils-doc gprofng-gui bzip2-doc cpp-doc gcc-13-locales cpp-13-doc
+  debian-keyring g++-multilib g++-13-multilib gcc-13-doc gcc-multilib
+  manpages-dev autoconf automake libtool flex bison gdb gcc-doc
+  gcc-13-multilib gdb-x86-64-linux-gnu gfortran-multilib gfortran-doc
+  gfortran-13-multilib gfortran-13-doc libcoarrays-dev gettext-base
+  git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb
+  git-cvs git-mediawiki git-svn manpages glibc-doc locales libnss-nis
+  libnss-nisplus gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  bzr gdbm-l10n gmp-doc libgmp10-doc krb5-doc krb5-user libmpfr-doc
+  ncurses-doc libstdc++-13-doc make-doc npm ocaml-doc elpa-tuareg ed
+  diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl libtap-harness-archive-perl python3-doc
+  python3-tk python3-venv python3.12-venv python3.12-doc binfmt-support
+  readline-doc
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  libalgorithm-merge-perl less ssh-client manpages manpages-dev libc-devtools
+  libfile-fcntllock-perl liblocale-gettext-perl krb5-locales libldap-common
+  libgpm2 publicsuffix libsasl2-modules ocaml-man nodejs-doc file ledit
+  | readline-editor
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cpp cpp-13 cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu curl
+  dpkg-dev g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13
+  gcc-13-base gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu gfortran
+  gfortran-13 gfortran-13-x86-64-linux-gnu gfortran-x86-64-linux-gnu git
+  git-man libasan8 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev
+  libcares2 libcc1-0 libcompiler-libs-ocaml-dev libcrypt-dev libctf-nobfd0
+  libctf0 libcurl3t64-gnutls libcurl4t64 libdpkg-perl liberror-perl libexpat1
+  libgcc-13-dev libgdbm-compat4t64 libgdbm6t64 libgfortran-13-dev libgfortran5
+  libgmp-dev libgmpxx4ldbl libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0
+  libicu74 libisl23 libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3
+  libkrb5support0 libldap2 liblsan0 libmpc3 libmpfr-dev libmpfr6
+  libncurses-dev libncurses6 libnghttp2-14 libnode109 libperl5.38t64
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db
+  libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev libstdlib-ocaml
+  libstdlib-ocaml-dev libtsan2 libubsan1 libuv1t64 linux-libc-dev
+  lto-disabled-list make media-types netbase node-acorn node-busboy
+  node-cjs-module-lexer node-undici node-xtend nodejs ocaml ocaml-base
+  ocaml-interp ocaml-nox openssl patch perl perl-modules-5.38 python3
+  python3-minimal python3.12 python3.12-minimal readline-common rpcsvc-proto
+  time tzdata xz-utils z3
+The following packages will be upgraded:
+  libc-bin libc6
+2 upgraded, 120 newly installed, 0 to remove and 1 not upgraded.
+Need to get 280 MB of archives.
+After this operation, 981 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libc6 amd64 2.39-0ubuntu8.9 [3264 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libc-bin amd64 2.39-0ubuntu8.9 [682 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-minimal amd64 3.12.3-1ubuntu0.17 [839 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libexpat1 amd64 2.6.1-2ubuntu0.4 [88.2 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12-minimal amd64 3.12.3-1ubuntu0.17 [2335 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-minimal amd64 3.12.3-0ubuntu2.1 [27.4 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/main amd64 media-types all 10.1.0 [27.5 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble/main amd64 netbase all 6.4 [13.1 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 tzdata all 2026c-0ubuntu0.24.04.1 [280 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 readline-common all 8.2-4build1 [56.5 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/main amd64 libreadline8t64 amd64 8.2-4build1 [153 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsqlite3-0 amd64 3.45.1-1ubuntu2.7 [701 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-stdlib amd64 3.12.3-1ubuntu0.17 [2071 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12 amd64 3.12.3-1ubuntu0.17 [651 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3-stdlib amd64 3.12.3-0ubuntu2.1 [10.1 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3 amd64 3.12.3-0ubuntu2.1 [23.0 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.4 [3110 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm6t64 amd64 1.23-5.1build1 [34.4 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:20 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.4 [4870 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl amd64 5.38.2-3.2ubuntu0.4 [231 kB]
+Get:22 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 openssl amd64 3.0.13-0ubuntu3.15 [1003 kB]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260601~24.04.1 [139 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.8 [34.7 kB]
+Get:25 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libk5crypto3 amd64 1.20.1-6ubuntu2.8 [81.9 kB]
+Get:26 http://archive.ubuntu.com/ubuntu noble/main amd64 libkeyutils1 amd64 1.6.3-3build1 [9490 B]
+Get:27 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5-3 amd64 1.20.1-6ubuntu2.8 [348 kB]
+Get:28 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgssapi-krb5-2 amd64 1.20.1-6ubuntu2.8 [143 kB]
+Get:29 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libicu74 amd64 74.2-1ubuntu3.1 [10.9 MB]
+Get:30 http://archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libncurses6 amd64 6.4+20240113-1ubuntu2.2 [112 kB]
+Get:32 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:33 http://archive.ubuntu.com/ubuntu noble/main amd64 libpsl5t64 amd64 0.21.2-1.1build1 [57.1 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble/main amd64 libuv1t64 amd64 1.48.0-1.1build1 [97.3 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble/main amd64 time amd64 1.9-0.2build1 [45.2 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15.7 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Get:40 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98.0 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94.5 kB]
+Get:42 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Get:43 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2463 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18.2 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libc-dev-bin amd64 2.39-0ubuntu8.9 [20.4 kB]
+Get:46 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 linux-libc-dev amd64 6.8.0-139.139 [1527 kB]
+Get:47 http://archive.ubuntu.com/ubuntu noble/main amd64 libcrypt-dev amd64 1:4.4.36-4build1 [112 kB]
+Get:48 http://archive.ubuntu.com/ubuntu noble/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu7 [67.4 kB]
+Get:49 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libc6-dev amd64 2.39-0ubuntu8.9 [2126 kB]
+Get:50 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-base amd64 13.3.0-6ubuntu2~24.04.1 [51.6 kB]
+Get:51 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libisl23 amd64 0.26-3build1.1 [680 kB]
+Get:52 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr6 amd64 4.2.1-1build1.1 [353 kB]
+Get:53 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpc3 amd64 1.3.1-1build1.1 [54.6 kB]
+Get:54 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [10.7 MB]
+Get:55 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13 amd64 13.3.0-6ubuntu2~24.04.1 [1042 B]
+Get:56 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5326 B]
+Get:57 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp amd64 4:13.2.0-7ubuntu1 [22.4 kB]
+Get:58 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48.0 kB]
+Get:59 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1 amd64 14.2.0-4ubuntu2~24.04.1 [148 kB]
+Get:60 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29.7 kB]
+Get:61 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1 amd64 14.2.0-4ubuntu2~24.04.1 [10.5 kB]
+Get:62 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3027 kB]
+Get:63 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1322 kB]
+Get:64 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2772 kB]
+Get:65 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1184 kB]
+Get:66 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1641 kB]
+Get:67 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Get:68 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2681 kB]
+Get:69 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21.1 MB]
+Get:70 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Get:71 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1212 B]
+Get:72 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5018 B]
+Get:73 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2420 kB]
+Get:74 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12.2 MB]
+Get:75 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16.0 kB]
+Get:76 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Get:77 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1100 B]
+Get:78 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Get:79 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Get:80 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1ubuntu0.1 [34.6 kB]
+Get:81 http://archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:82 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12.4 kB]
+Get:83 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1074 kB]
+Get:84 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:85 http://archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:86 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:87 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:88 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:89 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:90 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:91 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.13 [343 kB]
+Get:92 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 curl amd64 8.5.0-2ubuntu10.13 [226 kB]
+Get:93 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgfortran5 amd64 14.2.0-4ubuntu2~24.04.1 [916 kB]
+Get:94 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgfortran-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [928 kB]
+Get:95 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gfortran-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [11.4 MB]
+Get:96 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gfortran-13 amd64 13.3.0-6ubuntu2~24.04.1 [13.9 kB]
+Get:97 http://archive.ubuntu.com/ubuntu noble/main amd64 gfortran-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1024 B]
+Get:98 http://archive.ubuntu.com/ubuntu noble/main amd64 gfortran amd64 4:13.2.0-7ubuntu1 [1176 B]
+Get:99 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.13 [335 kB]
+Get:100 http://archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:101 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:102 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:103 http://archive.ubuntu.com/ubuntu noble/main amd64 libcares2 amd64 1.27.0-1.0ubuntu1 [73.7 kB]
+Get:104 http://archive.ubuntu.com/ubuntu noble/universe amd64 libstdlib-ocaml amd64 4.14.1-1ubuntu1 [378 kB]
+Get:105 http://archive.ubuntu.com/ubuntu noble/universe amd64 libstdlib-ocaml-dev amd64 4.14.1-1ubuntu1 [8453 kB]
+Get:106 http://archive.ubuntu.com/ubuntu noble/universe amd64 libcompiler-libs-ocaml-dev amd64 4.14.1-1ubuntu1 [38.4 MB]
+Get:107 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmpxx4ldbl amd64 2:6.3.0+dfsg-2ubuntu6.1 [9888 B]
+Get:108 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmp-dev amd64 2:6.3.0+dfsg-2ubuntu6.1 [340 kB]
+Get:109 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr-dev amd64 4.2.1-1build1.1 [288 kB]
+Get:110 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libncurses-dev amd64 6.4+20240113-1ubuntu2.2 [384 kB]
+Get:111 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-xtend all 4.0.2-3 [3902 B]
+Get:112 http://archive.ubuntu.com/ubuntu noble/universe amd64 nodejs amd64 18.19.1+dfsg-6ubuntu5 [306 kB]
+Get:113 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-acorn all 8.8.1+ds+~cs25.17.7-2 [115 kB]
+Get:114 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-cjs-module-lexer all 1.2.3+dfsg-1 [32.1 kB]
+Get:115 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-busboy all 1.6.0+~cs2.6.0-2 [17.3 kB]
+Get:116 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-undici all 5.26.3+dfsg1+~cs23.10.12-2 [325 kB]
+Get:117 http://archive.ubuntu.com/ubuntu noble/universe amd64 libnode109 amd64 18.19.1+dfsg-6ubuntu5 [11.6 MB]
+Get:118 http://archive.ubuntu.com/ubuntu noble/universe amd64 ocaml-base amd64 4.14.1-1ubuntu1 [256 kB]
+Get:119 http://archive.ubuntu.com/ubuntu noble/universe amd64 ocaml-interp amd64 4.14.1-1ubuntu1 [7825 kB]
+Get:120 http://archive.ubuntu.com/ubuntu noble/universe amd64 ocaml amd64 4.14.1-1ubuntu1 [81.4 MB]
+Get:121 http://archive.ubuntu.com/ubuntu noble/universe amd64 ocaml-nox all 4.14.1-1ubuntu1 [4716 B]
+Get:122 http://archive.ubuntu.com/ubuntu noble/universe amd64 z3 amd64 4.8.12-3.1build1 [5911 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 280 MB in 2s (122 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc6_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6:amd64 (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc6:amd64 (2.39-0ubuntu8.9) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-bin (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libpython3.12-minimal:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../libexpat1_2.6.1-2ubuntu0.4_amd64.deb ...
+Unpacking libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Selecting previously unselected package python3.12-minimal.
+Preparing to unpack .../python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Setting up libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Setting up python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4700 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_10.1.0_all.deb ...
+Unpacking media-types (10.1.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package tzdata.
+Preparing to unpack .../3-tzdata_2026c-0ubuntu0.24.04.1_all.deb ...
+Unpacking tzdata (2026c-0ubuntu0.24.04.1) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-4build1_all.deb ...
+Unpacking readline-common (8.2-4build1) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-4build1_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-4build1) ...
+Selecting previously unselected package libsqlite3-0:amd64.
+Preparing to unpack .../6-libsqlite3-0_3.45.1-1ubuntu2.7_amd64.deb ...
+Unpacking libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Selecting previously unselected package libpython3.12-stdlib:amd64.
+Preparing to unpack .../7-libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3.12.
+Preparing to unpack .../8-python3.12_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../9-libpython3-stdlib_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package python3.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5706 files and directories currently installed.)
+Preparing to unpack .../000-python3_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3 (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../001-perl-modules-5.38_5.38.2-3.2ubuntu0.4_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package libgdbm6t64:amd64.
+Preparing to unpack .../002-libgdbm6t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm6t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../003-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../004-libperl5.38t64_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../005-perl_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../006-openssl_3.0.13-0ubuntu3.15_amd64.deb ...
+Unpacking openssl (3.0.13-0ubuntu3.15) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../007-ca-certificates_20260601~24.04.1_all.deb ...
+Unpacking ca-certificates (20260601~24.04.1) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../008-libkrb5support0_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../009-libk5crypto3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../010-libkeyutils1_1.6.3-3build1_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-3build1) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../011-libkrb5-3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../012-libgssapi-krb5-2_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libicu74:amd64.
+Preparing to unpack .../013-libicu74_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking libicu74:amd64 (74.2-1ubuntu3.1) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../014-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libncurses6:amd64.
+Preparing to unpack .../015-libncurses6_6.4+20240113-1ubuntu2.2_amd64.deb ...
+Unpacking libncurses6:amd64 (6.4+20240113-1ubuntu2.2) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../016-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libpsl5t64:amd64.
+Preparing to unpack .../017-libpsl5t64_0.21.2-1.1build1_amd64.deb ...
+Unpacking libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Selecting previously unselected package libuv1t64:amd64.
+Preparing to unpack .../018-libuv1t64_1.48.0-1.1build1_amd64.deb ...
+Unpacking libuv1t64:amd64 (1.48.0-1.1build1) ...
+Selecting previously unselected package time.
+Preparing to unpack .../019-time_1.9-0.2build1_amd64.deb ...
+Unpacking time (1.9-0.2build1) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../020-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../021-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libsframe1:amd64.
+Preparing to unpack .../022-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../023-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../024-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../025-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../026-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../027-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../028-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../029-libc-dev-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-dev-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../030-linux-libc-dev_6.8.0-139.139_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.8.0-139.139) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../031-libcrypt-dev_1%3a4.4.36-4build1_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../032-rpcsvc-proto_1.4.2-0ubuntu7_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.2-0ubuntu7) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../033-libc6-dev_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Selecting previously unselected package gcc-13-base:amd64.
+Preparing to unpack .../034-gcc-13-base_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../035-libisl23_0.26-3build1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.26-3build1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../036-libmpfr6_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../037-libmpc3_1.3.1-1build1.1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1build1.1) ...
+Selecting previously unselected package cpp-13-x86-64-linux-gnu.
+Preparing to unpack .../038-cpp-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-13.
+Preparing to unpack .../039-cpp-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../040-cpp-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../041-cpp_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../042-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../043-libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../044-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../045-libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../046-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../047-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../048-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../049-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libhwasan0:amd64.
+Preparing to unpack .../050-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../051-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgcc-13-dev:amd64.
+Preparing to unpack .../052-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13-x86-64-linux-gnu.
+Preparing to unpack .../053-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13.
+Preparing to unpack .../054-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-x86-64-linux-gnu.
+Preparing to unpack .../055-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../056-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libstdc++-13-dev:amd64.
+Preparing to unpack .../057-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13-x86-64-linux-gnu.
+Preparing to unpack .../058-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13.
+Preparing to unpack .../059-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-x86-64-linux-gnu.
+Preparing to unpack .../060-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../061-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++ (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package make.
+Preparing to unpack .../062-make_4.3-4.1build2_amd64.deb ...
+Unpacking make (4.3-4.1build2) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../063-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Unpacking libdpkg-perl (1.22.6ubuntu6.6) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../064-bzip2_1.0.8-5.1ubuntu0.1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5.1ubuntu0.1) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../065-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Selecting previously unselected package lto-disabled-list.
+Preparing to unpack .../066-lto-disabled-list_47_all.deb ...
+Unpacking lto-disabled-list (47) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../067-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Unpacking dpkg-dev (1.22.6ubuntu6.6) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../068-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../069-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../070-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../071-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../072-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../073-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../074-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../075-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../076-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libgfortran5:amd64.
+Preparing to unpack .../077-libgfortran5_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgfortran5:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgfortran-13-dev:amd64.
+Preparing to unpack .../078-libgfortran-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgfortran-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-13-x86-64-linux-gnu.
+Preparing to unpack .../079-gfortran-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gfortran-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-13.
+Preparing to unpack .../080-gfortran-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gfortran-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-x86-64-linux-gnu.
+Preparing to unpack .../081-gfortran-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gfortran-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gfortran.
+Preparing to unpack .../082-gfortran_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gfortran (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../083-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../084-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../085-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../086-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package libcares2:amd64.
+Preparing to unpack .../087-libcares2_1.27.0-1.0ubuntu1_amd64.deb ...
+Unpacking libcares2:amd64 (1.27.0-1.0ubuntu1) ...
+Selecting previously unselected package libstdlib-ocaml.
+Preparing to unpack .../088-libstdlib-ocaml_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking libstdlib-ocaml (4.14.1-1ubuntu1) ...
+Selecting previously unselected package libstdlib-ocaml-dev.
+Preparing to unpack .../089-libstdlib-ocaml-dev_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking libstdlib-ocaml-dev (4.14.1-1ubuntu1) ...
+Selecting previously unselected package libcompiler-libs-ocaml-dev.
+Preparing to unpack .../090-libcompiler-libs-ocaml-dev_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking libcompiler-libs-ocaml-dev (4.14.1-1ubuntu1) ...
+Selecting previously unselected package libgmpxx4ldbl:amd64.
+Preparing to unpack .../091-libgmpxx4ldbl_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libgmp-dev:amd64.
+Preparing to unpack .../092-libgmp-dev_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libmpfr-dev:amd64.
+Preparing to unpack .../093-libmpfr-dev_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libncurses-dev:amd64.
+Preparing to unpack .../094-libncurses-dev_6.4+20240113-1ubuntu2.2_amd64.deb ...
+Unpacking libncurses-dev:amd64 (6.4+20240113-1ubuntu2.2) ...
+Selecting previously unselected package node-xtend.
+Preparing to unpack .../095-node-xtend_4.0.2-3_all.deb ...
+Unpacking node-xtend (4.0.2-3) ...
+Selecting previously unselected package nodejs.
+Preparing to unpack .../096-nodejs_18.19.1+dfsg-6ubuntu5_amd64.deb ...
+Unpacking nodejs (18.19.1+dfsg-6ubuntu5) ...
+Selecting previously unselected package node-acorn.
+Preparing to unpack .../097-node-acorn_8.8.1+ds+~cs25.17.7-2_all.deb ...
+Unpacking node-acorn (8.8.1+ds+~cs25.17.7-2) ...
+Selecting previously unselected package node-cjs-module-lexer.
+Preparing to unpack .../098-node-cjs-module-lexer_1.2.3+dfsg-1_all.deb ...
+Unpacking node-cjs-module-lexer (1.2.3+dfsg-1) ...
+Selecting previously unselected package node-busboy.
+Preparing to unpack .../099-node-busboy_1.6.0+~cs2.6.0-2_all.deb ...
+Unpacking node-busboy (1.6.0+~cs2.6.0-2) ...
+Selecting previously unselected package node-undici.
+Preparing to unpack .../100-node-undici_5.26.3+dfsg1+~cs23.10.12-2_all.deb ...
+Unpacking node-undici (5.26.3+dfsg1+~cs23.10.12-2) ...
+Selecting previously unselected package libnode109:amd64.
+Preparing to unpack .../101-libnode109_18.19.1+dfsg-6ubuntu5_amd64.deb ...
+Unpacking libnode109:amd64 (18.19.1+dfsg-6ubuntu5) ...
+Selecting previously unselected package ocaml-base.
+Preparing to unpack .../102-ocaml-base_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking ocaml-base (4.14.1-1ubuntu1) ...
+Selecting previously unselected package ocaml-interp.
+Preparing to unpack .../103-ocaml-interp_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking ocaml-interp (4.14.1-1ubuntu1) ...
+Selecting previously unselected package ocaml.
+Preparing to unpack .../104-ocaml_4.14.1-1ubuntu1_amd64.deb ...
+Unpacking ocaml (4.14.1-1ubuntu1) ...
+Selecting previously unselected package ocaml-nox.
+Preparing to unpack .../105-ocaml-nox_4.14.1-1ubuntu1_all.deb ...
+Unpacking ocaml-nox (4.14.1-1ubuntu1) ...
+Selecting previously unselected package z3.
+Preparing to unpack .../106-z3_4.8.12-3.1build1_amd64.deb ...
+Unpacking z3 (4.8.12-3.1build1) ...
+Setting up media-types (10.1.0) ...
+Setting up time (1.9-0.2build1) ...
+Setting up libkeyutils1:amd64 (1.6.3-3build1) ...
+Setting up lto-disabled-list (47) ...
+Setting up libgdbm6t64:amd64 (1.23-5.1build1) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Setting up libuv1t64:amd64 (1.48.0-1.1build1) ...
+Setting up binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Setting up libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up linux-libc-dev:amd64 (6.8.0-139.139) ...
+Setting up libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Setting up node-cjs-module-lexer (1.2.3+dfsg-1) ...
+Setting up libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up bzip2 (1.0.8-5.1ubuntu0.1) ...
+Setting up z3 (4.8.12-3.1build1) ...
+Setting up libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up tzdata (2026c-0ubuntu0.24.04.1) ...
+
+Current default time zone: 'Etc/UTC'
+Local time is now:      Thu Sep 10 19:19:37 UTC 2026.
+Universal Time is now:  Thu Sep 10 19:19:37 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up rpcsvc-proto (1.4.2-0ubuntu7) ...
+Setting up gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up make (4.3-4.1build2) ...
+Setting up libmpfr6:amd64 (4.2.1-1build1.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up libncurses6:amd64 (6.4+20240113-1ubuntu2.2) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Setting up libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libstdlib-ocaml (4.14.1-1ubuntu1) ...
+Setting up libcares2:amd64 (1.27.0-1.0ubuntu1) ...
+Setting up libmpc3:amd64 (1.3.1-1build1.1) ...
+Setting up libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up patch (2.7.6-7build3) ...
+Setting up ocaml-base (4.14.1-1ubuntu1) ...
+Setting up libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libgfortran5:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libicu74:amd64 (74.2-1ubuntu3.1) ...
+Setting up libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Setting up libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up netbase (6.4) ...
+Setting up libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Setting up libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Setting up node-xtend (4.0.2-3) ...
+Setting up libisl23:amd64 (0.26-3build1.1) ...
+Setting up libc-dev-bin (2.39-0ubuntu8.9) ...
+Setting up openssl (3.0.13-0ubuntu3.15) ...
+Setting up readline-common (8.2-4build1) ...
+Setting up libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up node-busboy (1.6.0+~cs2.6.0-2) ...
+Setting up libctf0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up libstdlib-ocaml-dev (4.14.1-1ubuntu1) ...
+Setting up cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Setting up libcompiler-libs-ocaml-dev (4.14.1-1ubuntu1) ...
+Setting up ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+121 added, 0 removed; done.
+Setting up perl (5.38.2-3.2ubuntu0.4) ...
+Setting up libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Setting up ocaml-interp (4.14.1-1ubuntu1) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libdpkg-perl (1.22.6ubuntu6.6) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libreadline8t64:amd64 (8.2-4build1) ...
+Setting up node-undici (5.26.3+dfsg1+~cs23.10.12-2) ...
+Setting up libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Setting up libgfortran-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Setting up cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libncurses-dev:amd64 (6.4+20240113-1ubuntu2.2) ...
+Setting up libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3.12 (3.12.3-1ubuntu0.17) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up binutils (2.42-4ubuntu2.10) ...
+Setting up gfortran-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up dpkg-dev (1.22.6ubuntu6.6) ...
+Setting up liberror-perl (0.17029-2) ...
+Setting up gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Setting up cpp (4:13.2.0-7ubuntu1) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3 (3.12.3-0ubuntu2.1) ...
+Setting up gfortran-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up gcc (4:13.2.0-7ubuntu1) ...
+Setting up gfortran-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up ocaml (4.14.1-1ubuntu1) ...
+Setting up gfortran (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/gfortran to provide /usr/bin/f95 (f95) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/f95.1.gz because associated file /usr/share/man/man1/gfortran.1.gz (of link group f95) doesn't exist
+update-alternatives: using /usr/bin/gfortran to provide /usr/bin/f77 (f77) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/f77.1.gz because associated file /usr/share/man/man1/gfortran.1.gz (of link group f77) doesn't exist
+Setting up ocaml-nox (4.14.1-1ubuntu1) ...
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.10ubuntu1) ...
+Setting up node-acorn (8.8.1+ds+~cs25.17.7-2) ...
+Setting up libnode109:amd64 (18.19.1+dfsg-6ubuntu5) ...
+Setting up nodejs (18.19.1+dfsg-6ubuntu5) ...
+update-alternatives: using /usr/bin/nodejs to provide /usr/bin/js (js) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/js.1.gz because associated file /usr/share/man/man1/nodejs.1.gz (of link group js) doesn't exist
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+This program will extract and install Racket v9.3.
+
+Note: the required diskspace for this installation is 757M.
+
+Base directory does not exist: /opt/racket
+
+Checking the integrity of the binary archive... ok.
+Unpacking into "/opt/racket/racket-tmp-install" (Ctrl+C to abort)...
+Done.
+Moving bin -> /opt/racket/bin
+Moving collects -> /opt/racket/share/racket/collects
+Moving share/pkgs -> /opt/racket/share/racket/pkgs
+Moving doc -> /opt/racket/share/racket/doc
+Moving lib -> /opt/racket/lib/racket
+Moving include -> /opt/racket/include/racket
+Moving share/applications -> /opt/racket/share/applications
+Moving share -> /opt/racket/share/racket
+Moving etc -> /opt/racket/etc/racket
+Moving man -> /opt/racket/share/man
+Moving README -> /opt/racket/share/racket/doc/README
+Writing uninstaller at: /opt/racket/bin/racket-uninstall...
+Rewriting configuration file at: /opt/racket/etc/racket/config.rktd...
+Moving "compiled" in /opt/racket/share/racket/collects to /opt/racket/lib/racket/compiled/opt/racket/share/racket/collects
+Moving "compiled" in /opt/racket/share/racket/pkgs to /opt/racket/lib/racket/compiled/opt/racket/share/racket/pkgs
+Rewriting configuration file at: /opt/racket/etc/racket/config.rktd...
+
+Installation complete.
+Cloning into '/work/fpbench-rerun4/src'...
+HEAD is now at a6621d5 Merge pull request #152 from FPBench/update-github-ci-dependencies
+Cloning into '/work/fpbench-rerun4/generic-flonum'...
+HEAD is now at e222637 Merge pull request #4 from bksaiki/update-ci
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [19:19:51]
+raco setup: updating: /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [19:19:51]
+raco setup: --- installing foreign libraries ---                   [19:19:51]
+raco setup: --- installing shared files ---                        [19:19:51]
+raco setup: --- compiling collections ---                          [19:19:51]
+raco setup: --- parallel build using 8 jobs ---                    [19:19:51]
+raco setup: 7 making: <pkgs>/generic-flonum (generic-flonum)
+raco setup: --- creating launchers ---                             [19:19:56]
+raco setup: --- installing man pages ---                           [19:19:56]
+raco setup: --- installing collections ---                         [19:19:56]
+raco setup: --- post-installing collections ---                    [19:19:56]
+raco setup: version: 9.3
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 9.3
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [19:19:57]
+raco setup: updating: /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [19:19:57]
+raco setup: --- installing foreign libraries ---                   [19:19:57]
+raco setup: --- installing shared files ---                        [19:19:57]
+raco setup: --- compiling collections ---                          [19:19:57]
+raco setup: --- parallel build using 8 jobs ---                    [19:19:57]
+raco setup: 7 making: <pkgs>/fpbench (fpbench)
+raco setup: 7 making: <pkgs>/fpbench/src
+raco setup: --- creating launchers ---                             [19:20:11]
+raco setup: launcher: /work/fpbench-rerun4/racket-home/.local/share/racket/9.3/bin/fpbench
+raco setup: --- installing man pages ---                           [19:20:11]
+raco setup: --- installing collections ---                         [19:20:11]
+raco setup: --- post-installing collections ---                    [19:20:11]
+raco test .
+raco test: (file "./evaluate.rkt")
+raco test: (file "./export.rkt")
+raco test: (file "./fpbench.rkt")
+raco test: (file "./info.rkt")
+raco test: (submod (file "./infra/bench-stats.rkt") test)
+raco test: (file "./infra/core2json.rkt")
+raco test: (file "./infra/filter.rkt")
+raco test: (file "./infra/gen-expr.rkt")
+raco test: (file "./infra/gen-sanity.rkt")
+raco test: (file "./infra/gen-tests.rkt")
+raco test: (submod (file "./infra/test-common.rkt") test)
+raco test: (file "./infra/test-core2c.rkt")
+raco test: (file "./infra/test-core2cakeml.rkt")
+raco test: (file "./infra/test-core2cuda.rkt")
+raco test: (file "./infra/test-core2fortran03.rkt")
+raco test: (file "./infra/test-core2fptaylor.rkt")
+raco test: (file "./infra/test-core2go.rkt")
+raco test: (file "./infra/test-core2haskell.rkt")
+raco test: (file "./infra/test-core2java.rkt")
+raco test: (file "./infra/test-core2js.rkt")
+raco test: (file "./infra/test-core2julia.rkt")
+raco test: (file "./infra/test-core2matlab.rkt")
+raco test: (file "./infra/test-core2ocaml.rkt")
+raco test: (file "./infra/test-core2python.rkt")
+raco test: (file "./infra/test-core2reflow.rkt")
+raco test: (file "./infra/test-core2rust.rkt")
+raco test: (file "./infra/test-core2scala.rkt")
+raco test: (file "./infra/test-core2smtlib2.rkt")
+raco test: (file "./infra/test-core2sollya.rkt")
+raco test: (file "./infra/test-core2vivado.rkt")
+raco test: (file "./infra/test-core2wls.rkt")
+raco test: (file "./main.rkt")
+raco test: (file "./src/canonicalizer.rkt")
+raco test: (submod (file "./src/common-subexpr-elim.rkt") test)
+raco test: (file "./src/common.rkt")
+raco test: (file "./src/compilers.rkt")
+raco test: (file "./src/core2c.rkt")
+raco test: (file "./src/core2cakeml.rkt")
+raco test: (file "./src/core2cuda.rkt")
+raco test: (file "./src/core2fortran03.rkt")
+raco test: (file "./src/core2fptaylor.rkt")
+raco test: (submod (file "./src/core2gappa.rkt") test)
+raco test: (file "./src/core2go.rkt")
+raco test: (file "./src/core2h.rkt")
+raco test: (file "./src/core2haskell.rkt")
+raco test: (file "./src/core2java.rkt")
+raco test: (file "./src/core2js.rkt")
+raco test: (file "./src/core2julia.rkt")
+raco test: (file "./src/core2matlab.rkt")
+raco test: (file "./src/core2ocaml.rkt")
+raco test: (file "./src/core2python.rkt")
+raco test: (submod (file "./src/core2reflow.rkt") test)
+f(a, b, c, d, e, f_1, g, h, i):
+	a in [-inf, +inf],
+	b in [-10, 10],
+	c in [-10, 10],
+	d in [-10, 10],
+	e in [-10, 10],
+	f_1 in [-10, 10],
+	g in [-10, 10],
+	h in [-10, 10],
+	i in [-10, 10]
+fn1: THEORY
+BEGIN
+f(a, b, c, d, e, f_1, g, h, i: real): real =
+	((((a * e) * i) + ((b * f_1) * g)) + ((c * d) * h)) - ((((c * e) * g) + ((b * d) * i)) + ((a * f_1) * h))
+END fn1
+raco test: (file "./src/core2rust.rkt")
+raco test: (file "./src/core2scala.rkt")
+raco test: (file "./src/core2smtlib2.rkt")
+raco test: (file "./src/core2sollya.rkt")
+raco test: (file "./src/core2tex.rkt")
+raco test: (file "./src/core2vivado.rkt")
+raco test: (file "./src/core2wls.rkt")
+raco test: (file "./src/evaluator.rkt")
+raco test: (file "./src/fpcore-checker.rkt")
+raco test: (submod (file "./src/fpcore-extra.rkt") test)
+raco test: (file "./src/fpcore-interpreter.rkt")
+raco test: (file "./src/fpcore-reader.rkt")
+raco test: (submod (file "./src/fpcore-visitor.rkt") test)
+raco test: (submod (file "./src/imperative.rkt") test)
+"function fn1(x) {\n\tvar tmp;\n\tif (x < 0) {\n\t\ttmp = x + 1;\n\t} else {\n\t\ttmp = x - 1;\n\t}\n\treturn tmp;\n}\n"
+"function fn2(x) {\n\tvar x_1 = 1;\n\tvar y = x;\n\treturn x_1 + y;\n}\n"
+"function fn3(x) {\n\tvar x_1 = 1;\n\tvar y = x_1;\n\treturn x_1 + y;\n}\n"
+"function fn4(x) {\n\tvar x_1 = 0.0;\n\tvar tmp = x_1 < 4;\n\twhile (tmp) {\n\t\tvar x_2 = x_1 + 1.0;\n\t\tx_1 = x_2;\n\t\ttmp = x_1 < 4;\n\t}\n\treturn x_1;\n}\n"
+"function fn5(x) {\n\tvar x_1 = 0.0;\n\tvar tmp = x_1 < 4;\n\twhile (tmp) {\n\t\tx_1 = x_1 + 1.0;\n\t\ttmp = x_1 < 4;\n\t}\n\treturn x_1;\n}\n"
+"function fn6(x) {\n\treturn foo(x) + 1;\n}\n"
+"function fn7(x) {\n\treturn sqrt((x + 1)) - sqrt(x);\n}\n"
+"function fn8(a, b) {\n\treturn (a * b) + (a - b);\n}\n"
+raco test: (file "./src/lisp.rkt")
+raco test: (submod (file "./src/ml-canonicalizer.rkt") test)
+raco test: (submod (file "./src/ml.rkt") test)
+"fun fn1 x = if (x < 0) then\n    (x + 1)\n  else\n    (x - 1)\n"
+"fun fn2 x = let\n    val x_1 = 1\n    val y = x\n  in\n    x_1 + y\n  end\n"
+"fun fn3 x = let\n    val x_1 = 1\n    val y = x_1\n  in\n    x_1 + y\n  end\n"
+"fun fn4 x = let\n    val x_1 = 0.0\n    fun loop x_1 =\n      if (x_1 < 4) then\n        let\n          val x_2 =  x_1 + 1.0\n        in\n          loop x_2\n        end\n      else\n        x_1\n  in\n    loop x_1\n  end\n"
+"fun fn5 x = let\n    val x_1 = 0.0\n    fun loop x_1 =\n      if (x_1 < 4) then\n        let\n          val x_2 =  x_1 + 1.0\n        in\n          loop x_2\n        end\n      else\n        x_1\n  in\n    loop x_1\n  end\n"
+"fun fn6 x = foo x + 1\n"
+"fun fn7 x = sqrt (x + 1) - sqrt x\n"
+"fun fn8 a b = (a * b) + (a - b)\n"
+raco test: (file "./src/multi-command-line.rkt")
+raco test: (submod (file "./src/range-analysis.rkt") test)
+raco test: (submod (file "./src/sampler.rkt") test)
+raco test: (submod (file "./src/supported.rkt") test)
+raco test: (file "./src/tensor.rkt")
+raco test: (submod (file "./toolserver.rkt") test)
+raco test: (file "./transform.rkt")
+177 tests passed
+tests/scripts/test-export.sh
+tests/scripts/test-transform.sh
+tests/scripts/test-toolserver.sh
+tests/scripts/test-evaluate.sh
+tests/scripts/test-evaluate.sh
+cat tests/tensor/batch.txt | racket toolserver.rkt
+((1.0 0.0) (0.0 1.0))
+2.0
+(2.0 3.0)
+(3.0 2.0)
+((1.0 3.0) (2.0 4.0))
+(0.0 1.0 1.0 2.0 3.0 5.0 8.0 13.0 21.0 34.0)
+45.0
+((3.0 4.0) (1.0 2.0))
+2.0
+((4.0 8.0 12.0) (12.0 8.0 4.0))
+((4.0 0.0) (0.0 4.0))
+((4.0 0.0) (0.0 4.0))
+((4.0 0.0) (0.0 4.0))
+((1.0 2.0 3.0 4.0) (1.0 2.0 3.0 4.0) (1.0 2.0 3.0 4.0) (1.0 2.0 3.0 4.0))
+3.0
+3.0
+((0.0 0.0) (1.0 1.0) (1.0 1.0) (2.0 2.0) (3.0 3.0) (5.0 5.0) (8.0 8.0) (13.0 13.0) (21.0 21.0) (34.0 34.0))
+(#t #f #t #f #t #f #t #f #t #f)
+1.0
+(1e+50 0.0)
+35.0
+(251.249000999001 219.6262243973172)
+((1.0488662731555556 1.5239316247370653 0.9731117580107864) (1.1869179383290782 2.0884472765323863 0.9617340586319224) (1.409610249604387 2.738439240465283 0.9726055484043027) (1.7211665530243672 3.517449651669914 1.0171850840869587) (2.1331018512502546 4.471269239313313 1.1138985515094153) (2.6635469143032444 5.6502611976070725 1.2918929913767818) (3.336977424463445 7.110101388260935 1.5968396332420207) (4.183899896377389 8.909836930246689 2.099490212259743) (5.239818001536866 11.104888115244135 2.9075233685784174) (6.542320183814469 13.730632963383732 4.180117403373529) (8.124313969443005 16.76969660370019 6.141309722794546) (10.00037462946892 20.09480889150804 9.080249420442719) (12.142627459569994 23.385204742359896 13.311950713280606) (14.444933356141163 26.041332446483814 19.05625695801838) (16.68404937354061 27.182941986729666 26.204149194972725) (18.506900239816535 25.877855303941075 34.03968510182721) (19.49079924206246 21.669757737273642 41.18308454231534) (19.296943255807356 15.113485124796682 46.0721906735236) (17.84504702906077 7.715369702799963 47.83136072494751) (15.370259841804998 1.1252277844105523 46.759008441355505) (12.307381683977994 -3.6995937603802647 43.957447377121746) (9.102486709942978 -6.666714408273113 40.578757642225696) (6.083708262998483 -8.188535023342476 37.37035522012395) (3.430492123222457 -8.782035444865864 34.64797899944546) (1.2037115346927671 -8.86462727924981 32.45719348815696) (-0.6092006934336742 -8.712751080103 30.727130500316328) (-2.0574271016120678 -8.489148083785802 29.359889902602326) (-3.2031686198836207 -8.281501684557668 28.268529655831728) (-4.10866894890619 -8.132607637098184 27.38751916270105) (-4.830035095859492 -8.059805252139848 26.67176918231112) (-5.41490330100246 -8.066408370739202 26.092251901081205) (-5.902089690441115 -8.148099304221052 25.631450356059776) (-6.322161507879211 -8.29636610451598 25.27963016282401) (-6.698355124275888 -8.500252210321692 25.032026317248718) (-7.047547548718999 -8.747159561248921 24.886746454452222) (-7.381144871540226 -9.023147328685686 24.843146190507664) (-7.705839700668426 -9.313011929553717 24.90047455197181) (-8.024241936983229 -9.600355411180914 25.05665719517243) (-8.335419692301661 -9.867806846636629 25.307162233362828) (-8.635407159804991 -10.097527135984066 25.643972195104954) (-8.917745545831465 -10.272081243748811 26.054760739683818) (-9.174120102251946 -10.375689690824085 26.522432890442737) (-9.395137900817609 -10.395769699847571 27.025213521264913) (-9.571255676897248 -10.32455868886545 27.53743818613752) (-9.693817699080652 -10.160511016289869 28.031098749161995) (-9.756109780782035 -9.909118237511468 28.478032245754942) (-9.754293120805823 -9.582863235932292 28.852456122954504) (-9.688068257264632 -9.200187772206203 29.133413495913356) (-9.56094653477551 -8.783591126807917 29.306664233077782) (-9.380072097164005 -8.35720377438337 29.365670026580762) (-9.15562406558662 -7.944308315143895 29.31154289017717) (-8.899909412225826 -7.565262990934408 29.15207640983996) (-8.626307361764042 -7.236136721114935 28.900168098334188) (-8.34823372469727 -6.968155185380874 28.572014580582874) (-8.078262259981404 -6.767864374798448 28.185418912995903) (-7.827485661930524 -6.63779607316341 27.758433750660863) (-7.605140111853375 -6.577383335263077 27.30843108253765) (-7.418469421351852 -6.58390470366545 26.851581364160015) (-7.272774865035738 -6.653301230493795 26.402660367453652) (-7.171584996529233 -6.780780949567347 25.97507847351033) (-7.116881854813384 -6.961183253692798 25.581031271026) (-7.109330420341528 -7.189114413185747 25.231687518458546) (-7.148472092739194 -7.458887046143578 24.93734982459954) (-7.232857084139174 -7.764306352075176 24.707538960696713) (-7.360103415875557 -8.098350677916926 24.550963082584495) (-7.526881480772469 -8.452798797935504 24.47533990920055) (-7.728833528274336 -8.817864596697996 24.487046602463163) (-7.960447876889148 -9.181912695615587 24.590583412588515) (-8.214918838505824 -9.531343984012416 24.787858204231803) (-8.484035109219276 -9.850752270648394 25.077334057693886) (-8.758150197962186 -10.12345252693795 25.453132507011766) (-9.02629496657079 -10.33245462935715 25.904245628057073) (-9.276489467620767 -10.461892219627913 26.414066589409448) (-9.49629331788172 -10.498810651984494 26.960475513416974) (-9.673597042084708 -10.435084851989135 27.516685327234175) (-9.79760273985902 -10.269114525364085 28.052938410140314) (-9.859881008886246 -10.006885902364113 28.538953646348318) (-9.855340590491538 -9.662048028543264 28.94679993503763) (-9.782929208571595 -9.25484366704119 29.253696337049114) (-9.64591365122868 -8.810016367948176 29.444193877807933) (-9.45166333192918 -8.354089050931192 29.511319161806227) (-9.210964179069313 -7.912568202312752 29.456520759699856) (-8.93698636843968 -7.507610705737014 29.288557970821312) (-8.644089834931965 -7.156515298297286 29.02169710612229) (-8.346660664123032 -6.871149755964732 28.67366501968608) (-8.05813423810814 -6.658196067604136 28.263754136007083) (-7.790296701447945 -6.519955367570974 27.811331692496275) (-7.552888021142301 -6.455417598640103 27.33484729915474) (-7.35347525566481 -6.461342870457003 26.851308061331455) (-7.197531694465146 -6.5331817033444475 26.376119489115638) (-7.08864579803889 -6.665744529408824 25.92316810581401) (-7.028787894844347 -6.853596472100299 25.50503085306114) (-7.018575584023148 -7.091195421837557 25.133219109854497) (-7.057495040273885 -7.372812972138375 24.818388601615695) (-7.144051268790529 -7.692286098299657 24.570464234164355) (-7.275834212676481 -8.042650182817551 24.398639620110796) (-7.44949943253725 -8.41570735859621 24.31121680940525) (-7.6606727650782656 -8.801592270139023 24.315256588392323) (-7.903799181037721 -9.188411796022006 24.416019075620554) (-8.171968022207798 -9.562054344092914 24.616194312857246) (-8.45676005086079 -9.906282111094473 24.914958766240723) (-8.74817487822687 -10.20322527760581 25.30694894291686) (-9.034706779209943 -10.434375236736118 25.781313884488068) (-9.303636822847016 -10.58210890164359 26.321079260534518) (-9.541592610544184 -10.631660050828739 26.903098979129684) (-9.735388183980437 -10.573298265778904 27.498848520365016) (-9.873096063665148 -10.404321811558049 28.076196260167315) (-9.945231025075152 -10.130383888172371 28.60207279029099) (-9.94586204010274 -9.765719701116199 29.04569103436582) (-9.873441190750258 -9.332053466224247 29.381746602994266) (-9.731166536884905 -8.856295193931727 29.59295387226892) (-9.526781330987644 -8.36747156556844 29.671405958408084) (-9.271832021766913 -7.893538480032578 29.61855150993359) (-8.980523230938287 -7.458713504023599 29.44394047556659) (-8.668381656153487 -7.081761499034413 29.163165962233617) (-8.350953320905587 -6.775366127931266 28.79553303164942) (-8.042715130425744 -6.546445570361656 28.36191758659072) (-7.756305772938731 -6.397104914352958 27.883106689343272) (-7.5021007825327075 -6.325878204670115 27.378721514386914) (-7.288093243319162 -6.3289677199079915 26.86667771154815) (-7.12000446249633 -6.401286021327715 26.36305817081538) (-7.001536846978218 -6.537204865536245 25.882251898613834) (-6.934687226319216 -6.730990441487965 25.437227787765067) (-6.92005470041978 -6.976950494221805 25.039841434559587) (-6.957096007098225 -7.269340551950362 24.70110172561199) (-7.044299236250984 -7.602082780095709 24.431344471166593) (-7.179261753905608 -7.968351111755085 24.24027168139389) (-7.358670547729154 -8.360077585817583 24.13681966138474) (-7.5781940620495725 -8.767442188996187 24.12882159597962) (-7.832305581783503 -9.17842417672306 24.222436799398373) (-8.114070786332519 -9.578515704999184 24.421336422805904) (-8.414946786486212 -9.95072290506786 24.72567132887116) (-8.724655657726853 -10.27599360987526 25.130906960089323) (-9.031208577828174 -10.534197136706343 25.62669062300108) (-9.321160672871999 -10.705719606785111 26.196004588759866) (-9.580163012453918 -10.773614466967258 26.81492303561885) (-9.79383908356152 -10.726069237953714 27.45328743943084) (-9.948946518682488 -10.558757745269734 28.076500402673354) (-10.034700263971992 -10.27651932322038 28.6483989660719) (-10.044054008978586 -9.893830374795398 29.134851001894976) (-9.974694651837906 -9.433757691233911 29.507432032044523) (-9.82952717159642 -8.925467646056518 29.746418921537263) (-9.616520516924682 -8.400776958597937 29.842465790768173) (-9.34792496433381 -7.8904988810343095 29.79667829703559) (-9.039011366266683 -7.4213508514763165 29.619236634975994) (-8.706575378570005 -7.0139557860989195 29.32706029105268) (-8.3674691496715 -6.68210892040289 28.94114338857484) (-8.037373925854926 -6.433148322609646 28.48411261121045) (-7.729937742713079 -6.269065239889269 27.9783525789737) (-7.456307411978943 -6.187943808083859 27.444813749067205) (-7.2250094302789885 -6.185387780893096 26.902443046699048) (-7.042091445230449 -6.2557112614030705 26.368085191797142) (-6.9114228200824055 -6.392788162109381 25.856681669596398) (-6.835060907885789 -6.5905429532285345 25.38161620367067) (-6.813608761170443 -6.843116867899969 24.95509311811247) (-6.846512094159324 -7.144765825549999 24.588470007708686) (-6.932263531073849 -7.489550285735382 24.292490404476283) (-7.068498623535997 -7.8708740630991905 24.077374483559687) (-7.251981040998709 -8.280927449318897 23.95272926157208) (-7.478485233503495 -8.71009567945853 23.9272394063478) (-7.742595774435646 -9.146409939776209 24.008102408830084) (-8.037455442509867 -9.57514447629912 24.200185522163807) (-8.354510007190669 -9.978694864011576 24.504915379406892) (-8.683316025616378 -10.336897311229137 24.918972028250476) (-9.011495356835775 -10.627947321324218 25.43294870688052) (-9.324929619840459 -10.83002296984186 26.03024533039979) (-9.608279371566539 -10.923591938758875 26.68655564471305) (-9.845875814133738 -10.894181246156394 27.370333283010233) (-10.022962037366668 -10.735153311069121 28.0445227663195) (-10.127163421991504 -10.449848294741841 28.669587477041986) (-10.149967503519695 -10.052432250904925 29.207494991366655) (-10.087930648512534 -9.567011579646888 29.62595269238512) (-9.943339144929432 -9.025013003416937 29.901992156423812) (-9.724149636188182 -8.461335841427974 30.024104506827996) (-9.443195007212205 -7.910145722770164 29.99252210962503) (-9.116812347347485 -7.401236779067667 29.817767311521752) (-8.763169245626885 -6.957633655654429 29.518025384638932) (-8.400597136198462 -6.5946740663295085 29.11608824567435) (-8.04618794181102 -6.320400163762964 28.636537635175596) (-7.714805949501723 -6.136832062891827 28.103589276931704) (-7.418553480243191 -6.041634634702917 27.53973910010552) (-7.166639355120488 -6.029770151063012 26.965138946898072) (-6.965547737127089 -6.094874503833572 26.397518316700825) (-6.819389651252063 -6.230237058075498 25.852446096635273) (-6.730329533201576 -6.429368661539435 25.343755900760506) (-6.699002066028298 -6.6862017714130975 24.884006313610314) (-6.724860519264324 -6.994989959690123 24.48489077142998) (-6.806421007662779 -7.349975404628588 24.15754122521277) (-6.941385336662186 -7.744885661120727 23.91268394395136) (-7.12663873103887 -8.17231521571052 23.760608320388652) (-7.3581295658533765 -8.623050056917862 23.710906070298797) (-7.630648715920555 -9.085408848766887 23.77193598087432) (-7.937538804784247 -9.544703217047646 23.94997719020357) (-8.270380267758371 -9.982958364269146 24.248062264535694) (-8.61872189446521 -10.379072646075517 24.664540447383374) (-8.969945612198135 -10.709610099778104 25.191517119807866) (-9.30937177589921 -10.950383404641599 25.813440604972385) (-9.620710763489347 -11.078865499852514 26.506232069738427) (-9.886935604766238 -11.077252696162041 27.237420829518218) (-10.091578793628864 -10.935720605138693 27.967681679015286) (-10.220347351139662 -10.65515799781263 28.65391798134168) (-10.262827587615194 -10.248570529788836 29.253611329344178) (-10.213959043058816 -9.740535839861987 29.729691237321283) (-10.074944614064385 -9.164573606482332 30.054873567339715) (-9.853357501498612 -8.558915629724932 30.214457568888875) (-9.562387315588543 -7.96165773946699 30.20699076356647) (-9.219375773557987 -7.4064196316212945 30.04284207223039) (-8.843950394956037 -6.919380637592607 29.741289554038293) (-8.456120314793662 -6.518049991897283 29.3270074416237) (-8.074647353565009 -6.211613106807866 28.82677617939488) (-7.715885191030066 -6.002360954653699 28.266949551957687) (-7.393143045451644 -5.88761622416981 27.671867496950235) (-7.116520295535064 -5.861661785173322 27.063135045408103) (-6.893094498813933 -5.917353161191895 26.459547909320634) (-6.727325669760872 -6.047271297528481 25.87741711656427) (-6.621551268097541 -6.2443994031157235 25.331083135791786) (-6.57647361972846 -6.502378773194919 24.833470357921446) (-6.5915722532232035 -6.815424564598582 24.3965874536126) (-6.665400718534591 -7.177981235039604 24.031915871995476) (-6.795748145941137 -7.5841850126934585 23.75064622721104) (-6.979660451791419 -8.027189473632436 23.563724613671255) (-7.213326816122704 -8.49840833924979 23.48166430899392) (-7.4918467832047595 -8.986742231256978 23.51407044275929) (-7.808905169140423 -9.477885737590539 23.668825308166653) (-8.15639850994863 -9.95385590476808 23.950901682333164) (-8.524079224372349 -10.392934053922522 24.360824031760025) (-8.899310317941994 -10.77024939480905 24.892893748138167) (-9.267048055471985 -11.059222154423257 25.533434520179988) (-9.61018056708577 -11.23398513027841 26.259473693550284) (-9.910330221641118 -11.272685642369204 27.03839626371011) (-10.149161184369026 -11.161247009720205 27.829100329031096) (-10.310116893146398 -10.89682597137366 28.584959735213214) (-10.380364965148193 -10.49000031492558 29.25844237696901) (-10.352597125950034 -9.964832355487887 29.806653012780274) (-10.226281769445729 -9.356447818088334 30.1966083682451) (-10.008042346924174 -8.706513355269054 30.40897039713146) (-9.711030894820857 -8.057677165212189 30.43936849018872) (-9.353417734121992 -7.4483331721487955 30.297182946787824) (-8.956329884983699 -6.90885200635674 30.002402789280378) (-8.541666132994497 -6.4598348829251035 29.58159461674859) (-8.130177397031888 -6.11229229641633 29.064011713752194) (-7.740066044871411 -5.869194410365841 28.47854565232441) (-7.38619282392908 -5.727686812969638 27.851794467984256) (-7.0798418728909995 -5.681358397225216 27.20717511237648) (-6.8289111208106155 -5.722160457334196 26.56482117072419) (-6.638367640743433 -5.841793707941943 25.941965154584473) (-6.510819457121326 -6.032540412167775 25.353550635352402) (-6.447087459615063 -6.2876081039998 24.81289595912762) (-6.446697904345374 -6.601083214533257 24.33230123193793) (-6.508248278510194 -6.967589591124806 23.923537725248302) (-6.629623479965039 -7.381728656878756 23.59818190939022) (-6.808055549196042 -7.837359530139296 23.367759775579003) (-7.040030964317383 -8.32676861184453 23.243658001250743) (-7.3210581590909145 -8.83978541504737 23.236744716707516) (-7.645318161522213 -9.362928735403575 23.356633460621374) (-8.005236551515527 -9.878715260527635 23.610531505906653) (-8.391037714310036 -10.365325528200806 24.001653576950076) (-8.79037254070027 -10.796882410248788 24.52727040593135) (-9.188143608426156 -11.144621447495862 25.176607791465365) (-9.56667601691727 -11.379171518755328 25.92900315167392) (-9.906378776757986 -11.473968992306965 26.752910819609045) (-10.186989224280278 -11.40948283670972 27.606425492100012) (-10.38937748787503 -11.177496075182994 28.43984384611248) (-10.497719717002786 -10.784339648084739 29.200333669336988) (-10.501673723091475 -10.251939185558577 29.838095814826488) (-10.398084336027019 -9.615973773481851 30.312740222958634) (-10.191779526336761 -8.921291506794912 30.598303056436023) (-9.895212321016915 -8.215642874577854 30.685638845751345) (-9.526999580261775 -7.543338026985031 30.58174792400538) (-9.109691814624604 -6.940343863419197 30.30656230470776) (-8.667268663999403 -6.4317000075795585 29.888367674374816) (-8.222846849402677 -6.031307709212865 29.35915596896949) (-7.796944534692202 -5.743508234952425 28.750863261763183) (-7.406447420346635 -5.565602702915583 28.09291947097841) (-7.064244495700333 -5.49053657514201 27.411076741379713) (-6.779388412663481 -5.50922278564817 26.727219440406294) (-6.557592620784612 -5.612252752514433 26.05978723708911) (-6.401886877900268 -5.790953617957369 25.42449319877802) (-6.313289939985795 -6.0378685942549986 24.835115156326623) (-6.291402749509924 -6.346780571649393 24.30422974869071) (-6.334864908171788 -6.712395474323313 23.843821989295616) (-6.441646555264905 -7.129777104275672 23.46573557702769) (-6.60916683412553 -7.593597843450429 23.18193618255977) (-6.834241490658108 -8.097251394726053 23.004549739332763) (-7.112869632465464 -8.631872391706823 22.94561864623498) (-7.439877576031259 -9.185328614184076 23.01649972682938) (-7.808450331230595 -9.741297943889444 23.22682049201046) (-8.209602345922779 -10.278612550665056 23.582931080181737) (-8.63167057065897 -10.771135266372786 24.085858895654265) (-9.059952572128106 -11.188498135276589 24.728910735672542) (-9.476651125956714 -11.498028713324134 25.495276632063234) (-9.861305797999721 -11.668048484717168 26.356235719315002) (-10.191864746736544 -11.672397657818944 27.270752486017578) (-10.44645076937605 -11.495541146172886 28.187232514631276) (-10.605698560748339 -11.137090034520252 29.047837490196223) (-10.655319979212951 -10.614305675149048 29.79502200144951) (-10.588372173444224 -9.961418738034865 30.37906506858486) (-10.406660385109674 -9.225461247986445 30.76475143523344) (-10.120864601546616 -8.459481539115899 30.935417288847557) (-9.749305554038436 -7.714931887852501 30.893391989971377) (-9.315635852877431 -7.035211357921794 30.65707424598114) (-8.846003578911692 -6.451750559504038 30.255883011575385) (-8.366295447613037 -5.9830149603831115 29.72469368961587) (-7.899935411545718 -5.635898314741114 29.09908794894929) (-7.4664813779784795 -5.40851060165931 28.412112805802423) (-7.0810320342648225 -5.2933612608845175 27.692623555860084) (-6.75429612069583 -5.280218841024551 26.96489216571849) (-6.493105967459004 -5.358278910321449 26.249028690159836) (-6.301157895757246 -5.517554205048929 25.561807272993118) (-6.179803253373904 -5.749568005573194 24.917607511804746) (-6.128767910037534 -6.0474974117308165 24.329302745231587) (-6.146727508199975 -6.4059133770762635 23.809014517568677) (-6.231702924917464 -6.82023327116264 23.368700334145075) (-6.381264238772297 -7.285963603154489 23.020556416425546) (-6.592544653584056 -7.797780161961292 22.777208498889447) (-6.8620725510541565 -8.348479175128077 22.651641059761527) (-7.185434951699906 -8.927842601111776 22.656787336375338) (-7.556794172622159 -9.521498736450432 22.80467934386104) (-7.968296290101474 -10.109928983562208 23.105054125505767) (-8.409439138308105 -10.667868654316365 23.56335197615817) (-8.866510155650179 -11.164453794975804 24.178151938790403) (-9.322255366453295 -11.564530673833637 24.938291449299346) (-9.755984717642658 -11.831493447218909 25.82020343811456) (-10.144327777040171 -11.931760594697392 26.78630620411185) (-10.462791383678452 -11.840496844640398 27.785445806235337) (-10.6881101551182 -11.547516498332339 28.756210655666518) (-10.801131750484439 -11.061734417389754 29.633269782943483) (-10.78971209005456 -10.412454379891223 30.35582332736447) (-10.650934268115597 -9.646481772385215 30.876219397261924) (-10.392025894508427 -8.821397229725187 31.166381501268717) (-10.029660748553564 -7.9967347389170795 31.220274271596665) (-9.58778550806002 -7.2255280160072575 31.052011180364037) (-9.09451708716382 -6.548351966027736 30.69067511824727) (-8.57884412305952 -5.9908547675007515 30.173760612218064) (-8.067792283576763 -5.564511963440206 29.541089169936786) (-7.5844589161531575 -5.269512538880832 28.8303585037278) (-7.147024577963503 -5.098493052429539 28.0746512011719) (-6.768617013967864 -5.040103550915691 27.301621052756705) (-6.457782038552746 -5.081829517371926 26.53381270555497) (-6.219294298166867 -5.21188593924371 25.789577827934043) (-6.05508158497787 -5.420249026052145 25.084190998529447) (-5.9651013634815415 -5.699000749376996 24.43092998037947) (-5.948071548045131 -6.042175203297611 23.842010240762786) (-6.002006746313629 -6.445260547719049 23.329337368479028) (-6.12454323385404 -6.904459868115131 22.90507012291338) (-6.3130532538390085 -7.415768695266792 22.581984140617163) (-6.564556508263642 -7.973897105749139 22.373603427703543) (-6.875439287353618 -8.571057232705925 22.294032606240503) (-7.240995137781517 -9.195659042465579 22.357385939293255) (-7.654811038570531 -9.831014884970767 22.576681489291555) (-8.108045428633694 -10.454250266469561 22.96207039906469) (-8.588683589939231 -11.035747430138269 23.518332669885986) (-9.080912210191425 -11.539578786755186 24.24172868091655) (-9.564819768239472 -11.92545045845759 25.11657546169354) (-10.016679336338404 -12.152564549105477 26.11229639554658) (-10.410065457643169 -12.185409633888112 27.182057002182315) (-10.717949835733078 -12.000772738197135 28.26421883045454) (-10.915685040245647 -11.594404796460134 29.287445257266114) (-10.984454801436968 -10.985188860617754 30.179254252345206) (-10.914461110285654 -10.21487382078829 30.876395345992737) (-10.70700156770612 -9.342675375476926 31.334315438897427) (-10.374788582274393 -8.435905115818896 31.532923142571207) (-9.94034614483284 -7.559322920130469 31.47709416132406) (-9.432891434604104 -6.766252850274404 31.19229137131861) (-8.884510431807222 -6.09352552892673 30.717263971737562) (-8.326513665975584 -5.560674491706761 30.096303123909696) (-7.786636047977037 -5.172423766606224 29.37297530420045) (-7.287379547626588 -4.922885707892519 28.5861960016557) (-6.845459472565203 -4.800011708602445 27.768560656013022) (-6.472103153273913 -4.789352038713217 26.946329598328113) (-6.173877003707695 -4.876730160962236 26.140358197863975) (-5.953744661031393 -5.049828043797601 25.367402550984174) (-5.812133299141154 -5.29887615841918 24.64144378034581) (-5.747867164321122 -5.616692167075068 23.974857466793797) (-5.758895020213375 -5.998280672057035 23.37937295993507) (-5.842784291157929 -6.440143443992351 22.866823460145188) (-5.996980593786616 -6.939385487038157 22.449698655766536) (-6.218842092938768 -7.4926522384995415 22.14149367940326) (-6.5054597672664345 -8.094904691492344 21.956812600418115) (-6.853273323488715 -8.738038145188119 21.911139226571056) (-7.2574943347885075 -9.409384054642556 22.020140605758243) (-7.711359778276462 -10.090212042549227 22.298333161355906) (-8.20526734877916 -10.754476430011653 22.756943500899517) (-8.725894276517817 -11.368220100089069 23.400876285427714) (-9.255474088523995 -11.890216546647347 24.22490987911265) (-9.771488745373293 -12.274504259579603 25.209610115390923) (-10.247094551831177 -12.475298410828213 26.317947963457428) (-10.652584517102651 -12.45420487224559 27.494058745606733) (-10.958035573249749 -12.188693490503287 28.66566508768532) (-11.136968230946641 -11.67969084353127 29.75104276027347) (-11.170419721083098 -10.955544224122097 30.66993692841508) (-11.050473221144312 -10.07015979412841 31.356006147695812) (-10.782219720050367 -9.094983481019373 31.767184793917092) (-10.383482584316058 -8.106911793012408 31.890731753317354) (-9.882307969962786 -7.175844074899701 31.741701466391312) (-9.312912434981415 -6.355464759452668 31.356074032378256) (-8.711163217590132 -5.679166209682305 30.78142842024466) (-8.11061676773385 -5.1609028489605135 30.06815157816102) (-7.539766653083334 -4.799318538933363 29.26309623825869) (-7.020684060061335 -4.58312605529451 28.406207271033956) (-6.568868103360249 -4.49616480416021 27.529630012811324) (-6.193938817111631 -4.521296720934209 26.658410409084286) (-5.900781940432974 -4.642928189026129 25.811949721917387) (-5.6908258668742535 -4.848319145783467 25.00563336727472) (-5.563234445100289 -5.127982225397373 24.252323674165893) (-5.515894586066874 -5.475470476571499 23.56360238007091) (-5.5461476407841115 -5.886781603357402 22.950756823985675) (-5.651256056297228 -6.359520974320752 22.42554327173244) (-5.8286168361758754 -6.891890339165332 22.000756129000596) (-6.075737912445196 -7.481514594086337 21.690601097785294) (-6.389989693562734 -8.124089638430753 21.51082378904537) (-6.768138349959566 -8.811835592668519 21.478488453419924) (-7.2056664953219505 -9.531780544922674 21.611240790854836) (-7.695898316401099 -10.263993450669712 21.925838726554087) (-8.22897834112655 -10.98004185485072 22.435726050799506) (-8.790813599704611 -11.642165435963094 23.147507975570612) (-9.362179798476337 -12.203882949907591 24.056433198399088) (-9.918299977047997 -12.61286950140234 25.14144679212025) (-10.429288898866778 -12.816756088582126 26.361018592022173) (-10.861846589018377 -12.771804396514986 27.651557545025206) (-11.182395721592563 -12.453156379982207 28.930357698017897) (-11.361449115036987 -11.863920967201576 30.10418665500632) (-11.378446025294819 -11.039587497598095 31.08268166201078) (-11.225845687373296 -10.045064318522602 31.79333004983917) (-10.91121472269004 -8.964188351637613 32.19337898816085) (-10.456545748807638 -7.884697271155838 32.27475265203302) (-9.894931811216923 -6.883533516819082 32.06082721573623) (-9.265567128354844 -6.016813432996085 31.59712983718619) (-8.608443446339313 -5.316361041259862 30.939845452941004) (-7.9599465743406075 -4.792009502237488 30.14575140876923) (-7.350025884422684 -4.437299953600007 29.26556962765612) (-6.801026666812349 -4.236073449566221 28.340958082533714) (-6.327869100486742 -4.168222060381537 27.404265565203104) (-5.939091910580863 -4.213828259990402 26.479869264265364) (-5.638298691342103 -4.355639750550934 25.586117926935326) (-5.425658256762172 -4.580193134818134 24.737275774237382) (-5.299242444080356 -4.877994794379016 23.94519176876436) (-5.256094557321526 -5.243114316766819 23.22063117017384) (-5.2929957855354886 -5.672439342427795 22.574308729241732) (-5.406937688768465 -6.164732938967056 22.017689774014226) (-5.595324379463935 -6.7195469045410805 21.56360878560005) (-5.855927224027704 -7.335982468926515 21.22671477507687) (-6.186605517170688 -8.011255071032302 21.023697684834055) (-6.584795413599005 -8.739016226002915 20.973182815189674) (-7.046763268416595 -9.507423349900971 21.095103990497474) (-7.566626605410148 -10.297045309140337 21.40929260164895) (-8.135176422340775 -11.078867288223705 21.93297972998116) (-8.738599556620176 -11.812920238606637 22.676962659468252) (-9.357306168844072 -12.448370311484407 23.64042570610491) (-9.965206194133513 -12.926136091994282 24.80491975913927) (-10.529908651458772 -13.185011474942492 26.12880316459131) (-11.014352891662007 -13.171550042524961 27.544315565640975) (-11.380204271994089 -12.852456471069646 28.959859646381346) (-11.592876926723315 -12.226286896363614 30.26927918723981) (-11.627348836014948 -11.329954726675194 31.36757586448167) (-11.473296513574834 -10.236223607116866 32.16930413352224) (-11.137915112565109 -9.04151407400825 32.62368844913151) (-10.645363037100509 -7.84758300151851 32.72115839338347) (-10.032902136687987 -6.743347472469568 32.48955680938735) (-9.344925533066633 -5.792559225656223 31.982610900930386) (-8.626605198364592 -5.02980660187113 31.265734427518456) (-7.91867741776193 -4.463719784883292 30.403841900837428) (-7.254185526509978 -4.084228839251474 29.453623745763103) (-6.657249052183232 -3.8706634872310586 28.460390926650078) (-6.143427423758269 -3.798585702142567 27.458231825416988) (-5.721064438897321 -3.844520969701327 26.47193184017233) (-5.393050270609277 -3.9886434958369636 25.519448332753456) (-5.158594730045691 -4.2158807734380055 24.614245682426514) (-5.014773881925858 -4.515973229148024 23.76721364715746) (-4.95774475552474 -4.882927507143981 22.988143369490963) (-4.983608037328585 -5.314156449704133 22.286845432359634) (-5.0889423975937556 -5.809463784561217 21.674015696912054) (-5.271048124030703 -6.369926287080037 21.16192995907014) (-5.527933072735634 -6.996651916741351 20.765001956062065) (-5.858059307937819 -7.689346038427573 20.500179706221985) (-6.2598510090582495 -8.444599897881599 20.387082259291216) (-6.7309496884607825 -9.253834936239626 20.44769023912003) (-7.267199358122596 -10.100913167921943 20.705302931150246) (-7.861363039546475 -10.959587316374163 21.182384117234104) (-8.501627507749362 -11.791243190770333 21.89689432220612) (-9.170060227099025 -12.543778186198539 22.856851815141614) (-9.841345536567975 -13.152873388674228 24.053319390695805) (-10.482319757940962 -13.547105963994051 25.452885860023457) (-11.052963947880457 -13.657898390993882 26.991907242077914) (-11.50945118008373 -13.43380445359092 28.575782826439838) (-11.809423104111367 -12.856145549947586 30.086399458805655) (-11.9188551948905 -11.950578251876632 31.398658739547937) (-11.81891739379729 -10.788724592951898 32.402895596379) (-11.510691380918123 -9.477004354309791 33.02607022913785) (-11.015983354502662 -8.135421074908757 33.243861703471694) (-10.373782825129418 -6.873883042935104 33.07949942845486) (-9.63351214105843 -5.774347705901994 32.59120354202655) (-8.84721126449681 -4.88341411838769 31.85449797596971) (-8.062766466508958 -4.214858201294956 30.94606989474702) (-7.319461152776045 -3.7582231497138694 29.93312272473954) (-6.646102131536933 -3.4890441050006347 28.868811393400545) (-6.061238563285191 -3.377656097408701 27.792213430516448) (-5.574694712049629 -3.3953197990123045 26.73073014745448) (-5.189679995403085 -3.5176860300933295 25.703239993684278) (-4.904942438971402 -3.726217987669847 24.723040655621176) (-4.716655863286745 -4.008294680870778 23.80020746803716) (-4.619907986038631 -4.356585383208036 22.94334713442002) (-4.609769342924649 -4.76808777915257 22.16087675187375) (-4.681980544180296 -5.243044545442752 21.461987476632373) (-4.833314219201008 -5.7838182285420325 20.857423509624407) (-5.061662874202199 -6.39370980317858 20.360156342033356) (-5.365885592556394 -7.075642731710655 19.98597453996732) (-5.745422344030779 -7.830595284442665 19.753939728235544) (-6.199660175146595 -8.655651363748945 19.68657208021455) (-6.727016751324412 -9.541568749058113 19.809516039354694) (-7.323702670435653 -10.469864274621283 20.15030172823416) (-7.982149171065207 -11.409633973631891 20.735688453030807) (-8.689162989752111 -12.314709182049462 21.587033310265237) (-9.424017363860642 -13.122298913711637 22.71332268270557) (-10.15691516665083 -13.754852754259534 24.102150505920026) (-10.848527754715917 -14.127121046327995 25.710185455724574) (-11.451495128335072 -14.15965456421331 27.456376340786452) (-11.914647100944931 -13.797686043780027 29.22246818499792) (-12.190045279614624 -13.030698249626386 30.864831144470525) (-12.241752070178219 -11.904835547657216 32.23788711606883) (-12.053968491241164 -10.520644653063732 33.22333324108231) (-11.635690252169283 -9.01409270922766 33.754567252319255) (-11.019943444773823 -7.527012820108513 33.82647906860743) (-10.25770925811659 -6.17845716553177 33.487625159055355) (-9.408675232897794 -5.046997703776373 32.8201507092333) (-8.53180395150485 -4.167392837842016 31.916995700115898) (-7.678129619584592 -3.538387888028409 30.864242515535878) (-6.886832978795215 -3.135495077530779 29.73171599586432) (-6.184376544408717 -2.9234531854444445 28.570820779419275) (-5.5857868089992655 -2.8655672477770713 27.416796234826705) (-5.097048750060503 -2.929357316712007 26.292706631986377) (-4.717791908203229 -3.0891699124342202 25.213448708682368) (-4.443758018890486 -3.3267610406376886 24.189014976207137) (-4.268809094986275 -3.6307438018263185 23.22687372894464) (-4.186416053016022 -3.9955244283887086 22.333619825043055) (-4.190666943014013 -4.420091341122436 21.516130481257235) (-4.27687345176898 -4.9068254066311265 20.782437517880396) (-4.441857206527629 -5.46036566288084 20.14246974401572) (-4.683979993926387 -6.086476196374429 19.60875664140019) (-5.002954555591549 -6.790799496934304 19.197122902464898) (-5.399440960160417 -7.577339058968585 18.92733501172159) (-5.874401469684015 -8.44648904692797 18.823571672491884) (-6.428158669296914 -9.392435910852424 18.91446388023796) (-7.0590854395237566 -10.399831152836791 19.23227911366038) (-7.761866481229843 -11.439837178311189 19.810622931557823) (-8.525335336032681 -12.46606000708076 20.67987201958727) (-9.330042969640107 -13.411562935271697 21.859607568638996) (-10.145983434819788 -14.189034579459891 23.347883464639477) (-10.931274291229744 -14.696883126243918 25.108577702104373) (-11.632941108231991 -14.833708585243826 27.06039226743148) (-12.191002752223614 -14.521188429033256 29.073477360708637) (-12.546418640390531 -13.730571017072078 30.980106302998383) (-12.651964130480573 -12.502638876025323 32.60189891557276) (-12.483206280425575 -10.949617623627756 33.787703351888695) (-12.045648468270583 -9.233799508216803 34.44804949453624) (-11.374962387051204 -7.529548762364614 34.571212056223416) (-10.52996013013334 -5.984511460248766 34.21487476213943) (-9.580974425774421 -4.695041100006783 33.47999429863005) (-8.597744816814776 -3.7014352184888506 32.480411270165746) (-7.640189773804818 -2.99854181382295 31.319624392872793) (-6.753517120133042 -2.5528947427365667 30.079083968331854) (-5.967327030966101 -2.3189444760927005 28.816282322789238) (-5.2974213306465225 -2.2507312085843028 27.568465469643364) (-4.748921897569399 -2.3085287110898136 26.358220510456853) (-4.3196407994926 -2.4615796873959086 25.19870833446285) (-4.00308533098704 -2.6883826823030064 24.097678091985458) (-3.7908379388622806 -2.97572560527054 23.060216257092023) (-3.674276551485503 -3.3172499418206036 22.090520833397257) (-3.645714825657823 -3.7119781433545875 21.1930495542529) (-3.6990814082777774 -4.1629928495010144 20.373331940153207) (-3.830254474641997 -4.676303922700189 19.638649815221573) (-4.037143864134948 -5.259846341412876 18.99871589616584) (-4.319580071000003 -5.922491442049558 18.466420932060178) (-4.6790327879254345 -6.672906985637289 18.058667177354216) (-5.118143678971235 -7.518058373224276 17.797242941396664) (-5.640019474273693 -8.461105490657197 17.70959798186142) (-6.247194797895437 -9.498435605572345 17.829227986933073) (-6.9401471472938185 -10.615628843135866 18.195147546189876) (-7.715247602998112 -11.78236656049771 18.84962877599745) (-8.562095440518258 -12.946795813321 19.833082442699716) (-9.460366961932976 -14.030787780125415 21.174883816384856) (-10.376666471218755 -14.928858993737252 22.879541408498152) (-11.262408123978966 -15.514793586767649 24.909472147924077) (-12.054332144161034 -15.659957012230903 27.16907073416026) (-12.67944945295821 -15.26406441963135 29.49871375618745) (-13.065388381860883 -14.29185450054233 31.688575004238206) (-13.154922217344248 -12.800576989647167 33.51639549192809) (-12.920568509950861 -10.940886810479224 34.800170523815765) (-12.373518795262733 -8.924078884646608 35.443985949957394) (-11.562666538073605 -6.967589253751601 35.45509812384212) (-10.563844451442726 -5.243625613029403 34.92598334194082) (-9.46373587493916 -3.851657704304423 33.99445732306657) (-8.344424187042431 -2.819209525936331 32.80289264627432) (-7.2728218830778815 -2.1212079271376068 31.47120047364832) (-6.296174936982345 -1.7043514719924429 30.086617338826077) (-5.442495176597404 -1.507245036732242 28.705512077062522) (-4.7238808836474115 -1.473101408540874 27.360659789001016) (-4.140887565117293 -1.555780866511602 26.069240131852553) (-3.686747525859111 -1.7213480442413702 24.839305998371838) (-3.3508532870871055 -1.947207900343558 23.674217585232686) (-3.1213435015768947 -2.2202525100579042 22.57536834081643) (-2.9868596181323004 -2.534839949434736 21.543751614687455) (-2.9376349842861504 -2.8909969923809955 20.580857122031453) (-2.9660934353563513 -3.292979683488903 19.68924792231135) (-3.067112128330952 -3.748185733349743 18.873042759124758) (-3.238066683943622 -4.266339886396015 18.13844099304828) (-3.4787368845356865 -4.858832539793296 17.494374310955298) (-3.7911122834976827 -5.538059934676605 16.95333718572656) (-4.17909907411712 -6.31657639750215 16.532419944881287) (-4.648090310948777 -7.205816771402926 16.254524640931727) (-5.204318453702271 -8.21407972906277 16.14965899438851) (-5.8538612455000845 -9.343395150257036 16.256042323594983) (-6.601123768762567 -10.58487848085759 16.620476335085645) (-7.44658860401753 -11.91230877040073 17.296999046463682) (-8.38365403532878 -13.274150813925948 18.342282539664772) (-9.394545307588636 -14.58535268143042 19.80577042654908) (-10.44569813520773 -15.722198251119881 21.712762493261067) (-11.483768305064256 -16.525975392194297 24.04059173656183) (-12.434427446736091 -16.8226464500568 26.692781116659408) (-13.206838826885884 -16.462805591976007 29.483113799436623) (-13.706102792534466 -15.37583713872761 32.14640514175857) (-13.852997251739431 -13.616703153039104 34.387102966751605) (-13.605536384902567 -11.37548843074531 35.956262502290436) (-12.973355607665303 -8.933438792388165 36.72313066490158) (-12.017552193209783 -6.581830716385852 36.703245269923684) (-10.835576052826555 -4.544785891877254 36.030647020936485) (-9.538170454874516 -2.9407812563201636 34.89626909254352) (-8.227806329177225 -1.7885882785189218 33.48789812985994) (-6.984906761732214 -1.0394848299125257 31.954286621303307) (-5.863061112394164 -0.6134551122894527 30.395478015072975) (-4.890926346068687 -0.42624443825379255 28.869599769658837) (-4.077553872071416 -0.404395724203102 27.40541618720972) (-3.4185437598830184 -0.4909158075574569 26.014050219605362) (-2.901539030691956 -0.6454134012762442 24.69744536467452) (-2.5104770877808704 -0.8417216467803529 23.453556427535034) (-2.2285540029860327 -1.0648190389591208 22.27914170477184) (-2.04010277888897 -1.3079455926458405 21.171086115751816) (-1.9316564710147228 -1.570261925845723 20.126949961420692) (-1.892451437452789 -1.8551172571350039 19.145178943221637) (-1.9145782263873734 -2.1688671397489623 18.22521892317634) (-1.9929342356458166 -2.5201369621945857 17.367662340251382) (-2.125084359199286 -2.919418844402492 16.574493973481765) (-2.31109650938501 -3.3788935128542446 15.849481081208864) (-2.553387459694031 -3.9123712972348392 15.198751020544933) (-2.856588294333534 -4.53523818158126 14.631607454494194) (-3.227414183588393 -5.264265486148573 14.161645651083765) (-3.6744956278069836 -6.117086094169267 13.808227822949974) (-4.208092208776795 -7.111046251356232 13.598353185803965) (-4.839559110481134 -8.261002881506235 13.56887132542326) (-5.580366050016325 -9.575460184995102 13.768782902106581) (-6.440378568252461 -11.05027880458907 14.260956538394984) (-7.425021653162119 -12.659203024951301 15.121851300371329) (-8.530916167461209 -14.340990041884499 16.436714197013014) (-9.739748515521779 -15.984613307472218 18.286457091930693) (-11.0107465477497 -17.417577409753175 20.722007142602514) (-12.273469841085982 -18.407772402061312 23.72465491389163) (-13.424672957210726 -18.693640059207123 27.159868569065992) (-14.334799908946696 -18.053106489592526 30.747375870678333) (-14.868796692516526 -16.399949402867378 34.08217286265169) (-14.919797358102967 -13.861752277326278 36.728364503994996) (-14.444133638081503 -10.77826308246706 38.359650650388375) (-13.47995941034548 -7.598314617363451 38.86986581399099) (-12.138048596785888 -4.72833866395343 38.38424444848458) (-10.569410376378679 -2.421076457952453 37.173521208058816) (-8.926657453411169 -0.7522497833325434 35.537005356095555) (-7.335223077960995 0.33376314298969145 33.71951078179255) (-5.880707163474751 0.957405899298301 31.88232605276958) (-4.609605538831729 1.2512730568174393 30.112355269877256) (-3.537242123663813 1.3311848925691547 28.445570056445973) (-2.6576266815251524 1.2860948790786495 26.889271416083485) (-1.9522516742187697 1.1785563771696197 25.43758500164602) (-1.3967348999044908 1.0494863289382168 24.08031205922616) (-0.9652798414870569 0.9237755783967737 22.80714450597435) (-0.6333568571497815 0.8152645902624391 21.609220986104557) (-0.3790942335918933 0.7306493619508424 20.479394050298747) (-0.18380911985819876 0.6723389491507709 19.41199427786232) (-0.0320086913943555 0.6404440831936421 18.402477000215182) (0.08890439786392579 0.6341045382782441 17.447108545797747) (0.18906677137615846 0.6523421845826642 16.542736107768246) (0.2766326844105372 0.6945917617125847 15.686638691584255) (0.35824109542203764 0.7610261389026116 14.876442962376638) (0.4394447387445048 0.8527622546346687 14.110088393760059) (0.5250925666149828 0.9720094804645374 13.385831655705923) (0.6196678710061774 1.1222036881417918 12.702286847409955) (0.7275905023330924 1.308156946622896 12.05850494915565))
+cat tests/sanity/*.fpcore | racket infra/test-core2c.rkt --repeat 1
+1/1: "Test < (1/7)"
+1/1: "Test < (2/7)"
+1/1: "Test < (3/7)"
+1/1: "Test < (4/7)"
+1/1: "Test < (5/7)"
+1/1: "Test < (6/7)"
+1/1: "Test < (7/7)"
+1/1: "Test > (1/7)"
+1/1: "Test > (2/7)"
+1/1: "Test > (3/7)"
+1/1: "Test > (4/7)"
+1/1: "Test > (5/7)"
+1/1: "Test > (6/7)"
+1/1: "Test > (7/7)"
+1/1: "Test <= (1/7)"
+1/1: "Test <= (2/7)"
+1/1: "Test <= (3/7)"
+1/1: "Test <= (4/7)"
+1/1: "Test <= (5/7)"
+1/1: "Test <= (6/7)"
+1/1: "Test <= (7/7)"
+1/1: "Test >= (1/7)"
+1/1: "Test >= (2/7)"
+1/1: "Test >= (3/7)"
+1/1: "Test >= (4/7)"
+1/1: "Test >= (5/7)"
+1/1: "Test >= (6/7)"
+1/1: "Test >= (7/7)"
+1/1: "Test == (1/7)"
+1/1: "Test == (2/7)"
+1/1: "Test == (3/7)"
+1/1: "Test == (4/7)"
+1/1: "Test == (5/7)"
+1/1: "Test == (6/7)"
+1/1: "Test == (7/7)"
+1/1: "Test != (1/7)"
+1/1: "Test != (2/7)"
+1/1: "Test != (3/7)"
+1/1: "Test != (4/7)"
+1/1: "Test != (5/7)"
+1/1: "Test != (6/7)"
+1/1: "Test != (7/7)"
+1/1: "Test and (1/4)"
+1/1: "Test and (2/4)"
+1/1: "Test and (3/4)"
+1/1: "Test and (4/4)"
+1/1: "Test or (1/4)"
+1/1: "Test or (2/4)"
+1/1: "Test or (3/4)"
+1/1: "Test or (4/4)"
+1/1: "Test not (1/2)"
+1/1: "Test not (2/2)"
+1/1: "Test isinf (1/4)"
+1/1: "Test isinf (2/4)"
+1/1: "Test isinf (3/4)"
+1/1: "Test isinf (4/4)"
+1/1: "Test isnan (1/4)"
+1/1: "Test isnan (2/4)"
+1/1: "Test isnan (3/4)"
+1/1: "Test isnan (4/4)"
+1/1: "Test isfinite (1/4)"
+1/1: "Test isfinite (2/4)"
+1/1: "Test isfinite (3/4)"
+1/1: "Test isfinite (4/4)"
+1/1: "Test isnormal (1/4)"
+1/1: "Test isnormal (2/4)"
+1/1: "Test isnormal (3/4)"
+1/1: "Test isnormal (4/4)"
+1/1: "Test signbit (1/3)"
+1/1: "Test signbit (2/3)"
+1/1: "Test signbit (3/3)"
+1/1: "Test E (1/1)"
+1/1: "Test LOG2E (1/1)"
+1/1: "Test LOG10E (1/1)"
+1/1: "Test LN2 (1/1)"
+1/1: "Test PI (1/1)"
+1/1: "Test PI_2 (1/1)"
+1/1: "Test PI_4 (1/1)"
+1/1: "Test M_1_PI (1/1)"
+1/1: "Test M_2_PI (1/1)"
+1/1: "Test M_2_SQRTPI (1/1)"
+1/1: "Test SQRT2 (1/1)"
+1/1: "Test SQRT1_2 (1/1)"
+1/1: Test let (1/5)
+1/1: Test let (2/5)
+1/1: Test let (3/5)
+1/1: Test let (4/5)
+1/1: Test let (5/5)
+1/1: Test let* (1/5)
+1/1: Test let* (2/5)
+1/1: Test let* (3/5)
+1/1: Test let* (4/5)
+1/1: Test let* (5/5)
+1/1: Test while (1/7)
+1/1: Test while (2/7)
+1/1: Test while (3/7)
+1/1: Test while (4/7)
+1/1: Test while (5/7)
+1/1: Test while (6/7)
+1/1: Test while (7/7)
+1/1: Test while* (1/7)
+1/1: Test while* (2/7)
+1/1: Test while* (3/7)
+1/1: Test while* (4/7)
+1/1: Test while* (5/7)
+1/1: Test while* (6/7)
+1/1: Test while* (7/7)
+1/1: Test if (1/6)
+1/1: Test if (2/6)
+1/1: Test if (3/6)
+1/1: Test if (4/6)
+1/1: Test if (5/6)
+1/1: Test if (6/6)
+1/1: Test cast (1/1)
+1/1: Test ! (1/1)
+1/1: Test FPCore identifier (FPBench 2.0)
+1/1: Test arguments (1/2)
+1/1: Test arguments (2/2)
+1/1: Nested syntax (1/2)
+1/1: Nested syntax (2/2)
+1/1: "Test decnum (1/5)"
+1/1: "Test decnum (2/5)"
+1/1: "Test decnum (3/5)"
+1/1: "Test decnum (4/5)"
+1/1: "Test decnum (5/5)"
+1/1: "Test hexnum (1/6)"
+1/1: "Test hexnum (2/6)"
+1/1: "Test hexnum (3/6)"
+1/1: "Test hexnum (4/6)"
+1/1: "Test hexnum (5/6)"
+1/1: "Test hexnum (6/6)"
+1/1: "Test rational (1/5)"
+1/1: "Test rational (2/5)"
+1/1: "Test rational (3/5)"
+1/1: "Test rational (4/5)"
+1/1: "Test rational (5/5)"
+1/1: "Test digits (1/4)"
+1/1: "Test digits (2/4)"
+1/1: "Test digits (3/4)"
+1/1: "Test digits (4/4)"
+1/1: "Test - (1/2)"
+1/1: "Test - (2/2)"
+1/1: "Test + (1/3)"
+1/1: "Test + (2/3)"
+1/1: "Test + (3/3)"
+1/1: "Test - (1/3)"
+1/1: "Test - (2/3)"
+1/1: "Test - (3/3)"
+1/1: "Test * (1/3)"
+1/1: "Test * (2/3)"
+1/1: "Test * (3/3)"
+1/1: "Test / (1/3)"
+1/1: "Test / (2/3)"
+1/1: "Test / (3/3)"
+1/1: "Test fabs (1/3)"
+1/1: "Test fabs (2/3)"
+1/1: "Test fabs (3/3)"
+1/1: "Test fma (1/5)"
+1/1: "Test fma (2/5)"
+1/1: "Test fma (3/5)"
+1/1: "Test fma (4/5)"
+1/1: "Test fma (5/5)"
+1/1: "Test exp (1/1)"
+1/1: "Test exp2 (1/4)"
+1/1: "Test exp2 (2/4)"
+1/1: "Test exp2 (3/4)"
+1/1: "Test exp2 (4/4)"
+1/1: "Test expm1 (1/1)"
+1/1: "Test log (1/1)"
+1/1: "Test log10 (1/2)"
+1/1: "Test log10 (2/2)"
+1/1: "Test log2 (1/3)"
+1/1: "Test log2 (2/3)"
+1/1: "Test log2 (3/3)"
+1/1: "Test log1p (1/1)"
+1/1: "Test pow (1/5)"
+1/1: "Test pow (2/5)"
+1/1: "Test pow (3/5)"
+1/1: "Test pow (4/5)"
+1/1: "Test pow (5/5)"
+1/1: "Test sqrt (1/3)"
+1/1: "Test sqrt (2/3)"
+1/1: "Test sqrt (3/3)"
+1/1: "Test cbrt (1/3)"
+1/1: "Test cbrt (2/3)"
+1/1: "Test cbrt (3/3)"
+1/1: "Test hypot (1/2)"
+1/1: "Test hypot (2/2)"
+1/1: "Test sin (1/1)"
+1/1: "Test cos (1/1)"
+1/1: "Test tan (1/1)"
+1/1: "Test asin (1/1)"
+1/1: "Test acos (1/1)"
+1/1: "Test atan (1/1)"
+1/1: "Test atan2 (1/1)"
+1/1: "Test sinh (1/1)"
+1/1: "Test cosh (1/1)"
+1/1: "Test tanh (1/1)"
+1/1: "Test asinh (1/1)"
+1/1: "Test acosh (1/1)"
+1/1: "Test atanh (1/1)"
+1/1: "Test erf (1/1)"
+1/1: "Test erfc (1/1)"
+1/1: "Test tgamma (1/3)"
+1/1: "Test tgamma (2/3)"
+1/1: "Test tgamma (3/3)"
+1/1: "Test lgamma (1/2)"
+1/1: "Test lgamma (2/2)"
+1/1: "Test ceil (1/4)"
+1/1: "Test ceil (2/4)"
+1/1: "Test ceil (3/4)"
+1/1: "Test ceil (4/4)"
+1/1: "Test floor (1/4)"
+1/1: "Test floor (2/4)"
+1/1: "Test floor (3/4)"
+1/1: "Test floor (4/4)"
+1/1: "Test fmod (1/3)"
+1/1: "Test fmod (2/3)"
+1/1: "Test fmod (3/3)"
+1/1: "Test remainder (1/3)"
+1/1: "Test remainder (2/3)"
+1/1: "Test remainder (3/3)"
+1/1: "Test fmax (1/3)"
+1/1: "Test fmax (2/3)"
+1/1: "Test fmax (3/3)"
+1/1: "Test fmin (1/3)"
+1/1: "Test fmin (2/3)"
+1/1: "Test fmin (3/3)"
+1/1: "Test fdim (1/3)"
+1/1: "Test fdim (2/3)"
+1/1: "Test fdim (3/3)"
+1/1: "Test copysign (1/4)"
+1/1: "Test copysign (2/4)"
+1/1: "Test copysign (3/4)"
+1/1: "Test copysign (4/4)"
+1/1: "Test trunc (1/4)"
+1/1: "Test trunc (2/4)"
+1/1: "Test trunc (3/4)"
+1/1: "Test trunc (4/4)"
+1/1: "Test round (1/4)"
+1/1: "Test round (2/4)"
+1/1: "Test round (3/4)"
+1/1: "Test round (4/4)"
+1/1: "Test nearbyint (1/4)"
+1/1: "Test nearbyint (2/4)"
+1/1: "Test nearbyint (3/4)"
+1/1: "Test nearbyint (4/4)"
+cat benchmarks/*.fpcore tests/*.fpcore | racket infra/test-core2c.rkt --error 3
+10/10: Filter (10 timeouts)
+10/10: carthesianToPolar, radius
+10/10: carthesianToPolar, theta
+10/10: polarToCarthesian, x
+10/10: polarToCarthesian, y
+10/10: instantaneousCurrent
+10/10: matrixDeterminant
+10/10: matrixDeterminant2
+10/10: intro-example-mixed
+10/10: delta4
+10/10: delta
+10/10: sqrt_add
+10/10: exp1x
+10/10: exp1x_32
+10/10: floudas
+10/10: exp1x_log
+10/10: x_by_xy
+10/10: hypot
+10/10: hypot32
+10/10: logexp
+10/10: sum
+10/10: nonlin1
+10/10: nonlin2
+10/10: i4
+10/10: i6
+10/10: himmilbeau
+10/10: logexp
+10/10: sphere
+10/10: azimuth
+10/10: floudas1
+10/10: floudas2
+10/10: floudas3
+10/10: hartman3
+10/10: hartman6
+10/10: kepler0
+10/10: kepler1
+10/10: kepler2
+10/10: intro-example
+10/10: sec4-example
+10/10: test01_sum3
+10/10: test02_sum8
+10/10: test03_nonlin2
+10/10: test04_dqmom9
+10/10: test05_nonlin1, r4
+10/10: test05_nonlin1, test2
+10/10: test06_sums4, sum1
+10/10: test06_sums4, sum2
+10/10: An eigenvalue calculation from TNG
+10/10: NMSE example 3.1
+10/10: NMSE example 3.3
+10/10: NMSE example 3.4
+10/10: NMSE example 3.5
+10/10: NMSE example 3.6
+10/10: NMSE problem 3.3.1
+10/10: NMSE problem 3.3.2
+10/10: NMSE problem 3.3.3
+10/10: NMSE problem 3.3.4
+10/10: NMSE problem 3.3.5
+10/10: NMSE problem 3.3.6
+10/10: NMSE problem 3.3.7
+10/10: NMSE p42, positive
+10/10: NMSE p42, negative
+10/10: NMSE problem 3.2.1, positive
+10/10: NMSE problem 3.2.1, negative
+10/10: NMSE example 3.7
+10/10: NMSE example 3.8
+10/10: NMSE example 3.9
+10/10: NMSE example 3.10
+10/10: NMSE problem 3.4.1
+10/10: NMSE problem 3.4.2
+10/10: NMSE problem 3.4.3
+10/10: NMSE problem 3.4.4
+10/10: NMSE problem 3.4.5
+10/10: NMSE problem 3.4.6
+10/10: NMSE section 3.5
+10/10: NMSE section 3.11
+10/10: Complex square root
+10/10: Complex sine and cosine
+10/10: Probabilities in a clustering algorithm
+10/10: arclength of a wiggly function (7 timeouts)
+10/10: arclength of a wiggly function (old version) (2 timeouts)
+10/10: doppler1
+10/10: doppler2
+10/10: doppler3
+10/10: rigidBody1
+10/10: rigidBody2
+10/10: jetEngine
+10/10: turbine1
+10/10: turbine2
+10/10: turbine3
+10/10: verhulst
+10/10: predatorPrey
+10/10: carbonGas
+10/10: sine
+10/10: sqroot
+10/10: sineOrder3
+10/10: smartRoot
+10/10: cav10
+10/10: squareRoot3
+10/10: squareRoot3Invalid
+10/10: triangle
+10/10: triangle1
+10/10: triangle2
+10/10: triangle3
+10/10: triangle4
+10/10: triangle5
+10/10: triangle6
+10/10: triangle7
+10/10: triangle8
+10/10: triangle9
+10/10: triangle10
+10/10: triangle11
+10/10: triangle12
+10/10: bspline3
+10/10: triangleSorted
+10/10: N Body Simulation
+10/10: Pendulum (2 timeouts)
+10/10: Sine Newton
+10/10: Rump's example, with pow
+10/10: Rump's example, from C program
+10/10: Rump's example revisited for floating point
+10/10: Odometry (10 timeouts)
+10/10: PID (10 timeouts)
+10/10: Runge-Kutta 4
+10/10: Lead-lag System
+10/10: Trapeze
+10/10: Rocket Trajectory (10 timeouts)
+10/10: Jacobi's Method
+10/10: Newton-Raphson's Method
+10/10: Eigenvalue Computation
+10/10: Iterative Gram-Schmidt Method
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (fma 1 1 1)
+10/10: (fma arg1 1 1)
+10/10: (fma 1 arg1 1)
+10/10: (fma 1 1 arg1)
+10/10: (fma arg1 arg1 1)
+10/10: (fma arg1 1 arg1)
+10/10: (fma 1 arg1 arg1)
+10/10: (fma arg1 arg2 1)
+10/10: (fma arg2 arg1 1)
+10/10: (fma arg1 1 arg2)
+10/10: (fma 1 arg1 arg2)
+10/10: (fma arg2 1 arg1)
+10/10: (fma 1 arg2 arg1)
+10/10: (fma arg1 arg1 arg1)
+10/10: (fma arg1 arg1 arg2)
+10/10: (fma arg1 arg2 arg1)
+10/10: (fma arg2 arg1 arg1)
+10/10: (fma arg1 arg2 arg2)
+10/10: (fma arg2 arg1 arg2)
+10/10: (fma arg2 arg2 arg1)
+10/10: (fma arg1 arg2 arg3)
+10/10: (fma arg2 arg1 arg3)
+10/10: (fma arg1 arg3 arg2)
+10/10: (fma arg3 arg1 arg2)
+10/10: (fma arg2 arg3 arg1)
+10/10: (fma arg3 arg2 arg1)
+10/10: (exp 1)
+10/10: (exp arg1)
+10/10: (exp2 1)
+10/10: (exp2 arg1)
+10/10: (expm1 1)
+10/10: (expm1 arg1)
+10/10: (log 1)
+10/10: (log arg1)
+10/10: (log10 1)
+10/10: (log10 arg1)
+10/10: (log2 1)
+10/10: (log2 arg1)
+10/10: (log1p 1)
+10/10: (log1p arg1)
+10/10: (pow 1 1)
+10/10: (pow arg1 1)
+10/10: (pow 1 arg1)
+10/10: (pow arg1 arg1)
+10/10: (pow arg1 arg2)
+10/10: (pow arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (cbrt 1)
+10/10: (cbrt arg1)
+10/10: (hypot 1 1)
+10/10: (hypot arg1 1)
+10/10: (hypot 1 arg1)
+10/10: (hypot arg1 arg1)
+10/10: (hypot arg1 arg2)
+10/10: (hypot arg2 arg1)
+10/10: (sin 1)
+10/10: (sin arg1)
+10/10: (cos 1)
+10/10: (cos arg1)
+10/10: (tan 1)
+10/10: (tan arg1)
+10/10: (asin 1)
+10/10: (asin arg1)
+10/10: (acos 1)
+10/10: (acos arg1)
+10/10: (atan 1)
+10/10: (atan arg1)
+10/10: (atan2 1 1)
+10/10: (atan2 arg1 1)
+10/10: (atan2 1 arg1)
+10/10: (atan2 arg1 arg1)
+10/10: (atan2 arg1 arg2)
+10/10: (atan2 arg2 arg1)
+10/10: (sinh 1)
+10/10: (sinh arg1)
+10/10: (cosh 1)
+10/10: (cosh arg1)
+10/10: (tanh 1)
+10/10: (tanh arg1)
+10/10: (asinh 1)
+10/10: (asinh arg1)
+10/10: (acosh 1)
+10/10: (acosh arg1)
+10/10: (atanh 1)
+10/10: (atanh arg1)
+10/10: (erf 1)
+10/10: (erf arg1)
+10/10: (erfc 1)
+10/10: (erfc arg1)
+10/10: (tgamma 1)
+10/10: (tgamma arg1)
+10/10: (lgamma 1)
+10/10: (lgamma arg1)
+10/10: (ceil 1)
+10/10: (ceil arg1)
+10/10: (floor 1)
+10/10: (floor arg1)
+10/10: (fmod 1 1)
+10/10: (fmod arg1 1)
+10/10: (fmod 1 arg1)
+10/10: (fmod arg1 arg1)
+10/10: (fmod arg1 arg2)
+10/10: (fmod arg2 arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (fdim 1 1)
+10/10: (fdim arg1 1)
+10/10: (fdim 1 arg1)
+10/10: (fdim arg1 arg1)
+10/10: (fdim arg1 arg2)
+10/10: (fdim arg2 arg1)
+10/10: (copysign 1 1)
+10/10: (copysign arg1 1)
+10/10: (copysign 1 arg1)
+10/10: (copysign arg1 arg1)
+10/10: (copysign arg1 arg2)
+10/10: (copysign arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (round 1)
+10/10: (round arg1)
+10/10: (nearbyint 1)
+10/10: (nearbyint arg1)
+10/10: (cast 1)
+10/10: (cast arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (fma 1 1 1)
+10/10: (fma arg1 1 1)
+10/10: (fma 1 arg1 1)
+10/10: (fma 1 1 arg1)
+10/10: (fma arg1 arg1 1)
+10/10: (fma arg1 1 arg1)
+10/10: (fma 1 arg1 arg1)
+10/10: (fma arg1 arg2 1)
+10/10: (fma arg2 arg1 1)
+10/10: (fma arg1 1 arg2)
+10/10: (fma 1 arg1 arg2)
+10/10: (fma arg2 1 arg1)
+10/10: (fma 1 arg2 arg1)
+10/10: (fma arg1 arg1 arg1)
+10/10: (fma arg1 arg1 arg2)
+10/10: (fma arg1 arg2 arg1)
+10/10: (fma arg2 arg1 arg1)
+10/10: (fma arg1 arg2 arg2)
+10/10: (fma arg2 arg1 arg2)
+10/10: (fma arg2 arg2 arg1)
+10/10: (fma arg1 arg2 arg3)
+10/10: (fma arg2 arg1 arg3)
+10/10: (fma arg1 arg3 arg2)
+10/10: (fma arg3 arg1 arg2)
+10/10: (fma arg2 arg3 arg1)
+10/10: (fma arg3 arg2 arg1)
+10/10: (exp 1)
+10/10: (exp arg1)
+10/10: (exp2 1)
+10/10: (exp2 arg1)
+10/10: (expm1 1)
+10/10: (expm1 arg1)
+10/10: (log 1)
+10/10: (log arg1)
+10/10: (log10 1)
+10/10: (log10 arg1)
+10/10: (log2 1)
+10/10: (log2 arg1)
+10/10: (log1p 1)
+10/10: (log1p arg1)
+10/10: (pow 1 1)
+10/10: (pow arg1 1)
+10/10: (pow 1 arg1)
+10/10: (pow arg1 arg1)
+10/10: (pow arg1 arg2)
+10/10: (pow arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (cbrt 1)
+10/10: (cbrt arg1)
+10/10: (hypot 1 1)
+10/10: (hypot arg1 1)
+10/10: (hypot 1 arg1)
+10/10: (hypot arg1 arg1)
+10/10: (hypot arg1 arg2)
+10/10: (hypot arg2 arg1)
+10/10: (sin 1)
+10/10: (sin arg1)
+10/10: (cos 1)
+10/10: (cos arg1)
+10/10: (tan 1)
+10/10: (tan arg1)
+10/10: (asin 1)
+10/10: (asin arg1)
+10/10: (acos 1)
+10/10: (acos arg1)
+10/10: (atan 1)
+10/10: (atan arg1)
+10/10: (atan2 1 1)
+10/10: (atan2 arg1 1)
+10/10: (atan2 1 arg1)
+10/10: (atan2 arg1 arg1)
+10/10: (atan2 arg1 arg2)
+10/10: (atan2 arg2 arg1)
+10/10: (sinh 1)
+10/10: (sinh arg1)
+10/10: (cosh 1)
+10/10: (cosh arg1)
+10/10: (tanh 1)
+10/10: (tanh arg1)
+10/10: (asinh 1)
+10/10: (asinh arg1)
+10/10: (acosh 1)
+10/10: (acosh arg1)
+10/10: (atanh 1)
+10/10: (atanh arg1)
+10/10: (erf 1)
+10/10: (erf arg1)
+10/10: (erfc 1)
+10/10: (erfc arg1)
+10/10: (tgamma 1)
+10/10: (tgamma arg1)
+10/10: (lgamma 1)
+10/10: (lgamma arg1)
+10/10: (ceil 1)
+10/10: (ceil arg1)
+10/10: (floor 1)
+10/10: (floor arg1)
+10/10: (fmod 1 1)
+10/10: (fmod arg1 1)
+10/10: (fmod 1 arg1)
+10/10: (fmod arg1 arg1)
+10/10: (fmod arg1 arg2)
+10/10: (fmod arg2 arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (fdim 1 1)
+10/10: (fdim arg1 1)
+10/10: (fdim 1 arg1)
+10/10: (fdim arg1 arg1)
+10/10: (fdim arg1 arg2)
+10/10: (fdim arg2 arg1)
+10/10: (copysign 1 1)
+10/10: (copysign arg1 1)
+10/10: (copysign 1 arg1)
+10/10: (copysign arg1 arg1)
+10/10: (copysign arg1 arg2)
+10/10: (copysign arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (round 1)
+10/10: (round arg1)
+10/10: (nearbyint 1)
+10/10: (nearbyint arg1)
+10/10: (cast 1)
+10/10: (cast arg1)
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (if (< 1 1) 1 0)
+10/10: (if (< arg1 1) 1 0)
+10/10: (if (< 1 arg1) 1 0)
+10/10: (if (< arg1 arg1) 1 0)
+10/10: (if (< arg1 arg2) 1 0)
+10/10: (if (< arg2 arg1) 1 0)
+10/10: (if (> 1 1) 1 0)
+10/10: (if (> arg1 1) 1 0)
+10/10: (if (> 1 arg1) 1 0)
+10/10: (if (> arg1 arg1) 1 0)
+10/10: (if (> arg1 arg2) 1 0)
+10/10: (if (> arg2 arg1) 1 0)
+10/10: (if (<= 1 1) 1 0)
+10/10: (if (<= arg1 1) 1 0)
+10/10: (if (<= 1 arg1) 1 0)
+10/10: (if (<= arg1 arg1) 1 0)
+10/10: (if (<= arg1 arg2) 1 0)
+10/10: (if (<= arg2 arg1) 1 0)
+10/10: (if (>= 1 1) 1 0)
+10/10: (if (>= arg1 1) 1 0)
+10/10: (if (>= 1 arg1) 1 0)
+10/10: (if (>= arg1 arg1) 1 0)
+10/10: (if (>= arg1 arg2) 1 0)
+10/10: (if (>= arg2 arg1) 1 0)
+10/10: (if (== 1 1) 1 0)
+10/10: (if (== arg1 1) 1 0)
+10/10: (if (== 1 arg1) 1 0)
+10/10: (if (== arg1 arg1) 1 0)
+10/10: (if (== arg1 arg2) 1 0)
+10/10: (if (== arg2 arg1) 1 0)
+10/10: (if (!= 1 1) 1 0)
+10/10: (if (!= arg1 1) 1 0)
+10/10: (if (!= 1 arg1) 1 0)
+10/10: (if (!= arg1 arg1) 1 0)
+10/10: (if (!= arg1 arg2) 1 0)
+10/10: (if (!= arg2 arg1) 1 0)
+10/10: (if (isfinite 1) 1 0)
+10/10: (if (isfinite arg1) 1 0)
+10/10: (if (isinf 1) 1 0)
+10/10: (if (isinf arg1) 1 0)
+10/10: (if (isnan 1) 1 0)
+10/10: (if (isnan arg1) 1 0)
+10/10: (if (isnormal 1) 1 0)
+10/10: (if (isnormal arg1) 1 0)
+10/10: (if (signbit 1) 1 0)
+10/10: (if (signbit arg1) 1 0)
+10/10: (if (< 1 1) 1 0)
+10/10: (if (< arg1 1) 1 0)
+10/10: (if (< 1 arg1) 1 0)
+10/10: (if (< arg1 arg1) 1 0)
+10/10: (if (< arg1 arg2) 1 0)
+10/10: (if (< arg2 arg1) 1 0)
+10/10: (if (> 1 1) 1 0)
+10/10: (if (> arg1 1) 1 0)
+10/10: (if (> 1 arg1) 1 0)
+10/10: (if (> arg1 arg1) 1 0)
+10/10: (if (> arg1 arg2) 1 0)
+10/10: (if (> arg2 arg1) 1 0)
+10/10: (if (<= 1 1) 1 0)
+10/10: (if (<= arg1 1) 1 0)
+10/10: (if (<= 1 arg1) 1 0)
+10/10: (if (<= arg1 arg1) 1 0)
+10/10: (if (<= arg1 arg2) 1 0)
+10/10: (if (<= arg2 arg1) 1 0)
+10/10: (if (>= 1 1) 1 0)
+10/10: (if (>= arg1 1) 1 0)
+10/10: (if (>= 1 arg1) 1 0)
+10/10: (if (>= arg1 arg1) 1 0)
+10/10: (if (>= arg1 arg2) 1 0)
+10/10: (if (>= arg2 arg1) 1 0)
+10/10: (if (== 1 1) 1 0)
+10/10: (if (== arg1 1) 1 0)
+10/10: (if (== 1 arg1) 1 0)
+10/10: (if (== arg1 arg1) 1 0)
+10/10: (if (== arg1 arg2) 1 0)
+10/10: (if (== arg2 arg1) 1 0)
+10/10: (if (!= 1 1) 1 0)
+10/10: (if (!= arg1 1) 1 0)
+10/10: (if (!= 1 arg1) 1 0)
+10/10: (if (!= arg1 arg1) 1 0)
+10/10: (if (!= arg1 arg2) 1 0)
+10/10: (if (!= arg2 arg1) 1 0)
+10/10: (if (isfinite 1) 1 0)
+10/10: (if (isfinite arg1) 1 0)
+10/10: (if (isinf 1) 1 0)
+10/10: (if (isinf arg1) 1 0)
+10/10: (if (isnan 1) 1 0)
+10/10: (if (isnan arg1) 1 0)
+10/10: (if (isnormal 1) 1 0)
+10/10: (if (isnormal arg1) 1 0)
+10/10: (if (signbit 1) 1 0)
+10/10: (if (signbit arg1) 1 0)
+10/10: (if (< 1 1) 1 0)
+10/10: (if (< arg1 1) 1 0)
+10/10: (if (< 1 arg1) 1 0)
+10/10: (if (< arg1 arg1) 1 0)
+10/10: (if (< arg1 arg2) 1 0)
+10/10: (if (< arg2 arg1) 1 0)
+10/10: (if (> 1 1) 1 0)
+10/10: (if (> arg1 1) 1 0)
+10/10: (if (> 1 arg1) 1 0)
+10/10: (if (> arg1 arg1) 1 0)
+10/10: (if (> arg1 arg2) 1 0)
+10/10: (if (> arg2 arg1) 1 0)
+10/10: (if (<= 1 1) 1 0)
+10/10: (if (<= arg1 1) 1 0)
+10/10: (if (<= 1 arg1) 1 0)
+10/10: (if (<= arg1 arg1) 1 0)
+10/10: (if (<= arg1 arg2) 1 0)
+10/10: (if (<= arg2 arg1) 1 0)
+10/10: (if (>= 1 1) 1 0)
+10/10: (if (>= arg1 1) 1 0)
+10/10: (if (>= 1 arg1) 1 0)
+10/10: (if (>= arg1 arg1) 1 0)
+10/10: (if (>= arg1 arg2) 1 0)
+10/10: (if (>= arg2 arg1) 1 0)
+10/10: (if (== 1 1) 1 0)
+10/10: (if (== arg1 1) 1 0)
+10/10: (if (== 1 arg1) 1 0)
+10/10: (if (== arg1 arg1) 1 0)
+10/10: (if (== arg1 arg2) 1 0)
+10/10: (if (== arg2 arg1) 1 0)
+10/10: (if (!= 1 1) 1 0)
+10/10: (if (!= arg1 1) 1 0)
+10/10: (if (!= 1 arg1) 1 0)
+10/10: (if (!= arg1 arg1) 1 0)
+10/10: (if (!= arg1 arg2) 1 0)
+10/10: (if (!= arg2 arg1) 1 0)
+10/10: (if (isfinite 1) 1 0)
+10/10: (if (isfinite arg1) 1 0)
+10/10: (if (isinf 1) 1 0)
+10/10: (if (isinf arg1) 1 0)
+10/10: (if (isnan 1) 1 0)
+10/10: (if (isnan arg1) 1 0)
+10/10: (if (isnormal 1) 1 0)
+10/10: (if (isnormal arg1) 1 0)
+10/10: (if (signbit 1) 1 0)
+10/10: (if (signbit arg1) 1 0)
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (fma 1 1 1)
+10/10: (fma arg1 1 1)
+10/10: (fma 1 arg1 1)
+10/10: (fma 1 1 arg1)
+10/10: (fma arg1 arg1 1)
+10/10: (fma arg1 1 arg1)
+10/10: (fma 1 arg1 arg1)
+10/10: (fma arg1 arg2 1)
+10/10: (fma arg2 arg1 1)
+10/10: (fma arg1 1 arg2)
+10/10: (fma 1 arg1 arg2)
+10/10: (fma arg2 1 arg1)
+10/10: (fma 1 arg2 arg1)
+10/10: (fma arg1 arg1 arg1)
+10/10: (fma arg1 arg1 arg2)
+10/10: (fma arg1 arg2 arg1)
+10/10: (fma arg2 arg1 arg1)
+10/10: (fma arg1 arg2 arg2)
+10/10: (fma arg2 arg1 arg2)
+10/10: (fma arg2 arg2 arg1)
+10/10: (fma arg1 arg2 arg3)
+10/10: (fma arg2 arg1 arg3)
+10/10: (fma arg1 arg3 arg2)
+10/10: (fma arg3 arg1 arg2)
+10/10: (fma arg2 arg3 arg1)
+10/10: (fma arg3 arg2 arg1)
+10/10: (exp 1)
+10/10: (exp arg1)
+10/10: (exp2 1)
+10/10: (exp2 arg1)
+10/10: (expm1 1)
+10/10: (expm1 arg1)
+10/10: (log 1)
+10/10: (log arg1)
+10/10: (log10 1)
+10/10: (log10 arg1)
+10/10: (log2 1)
+10/10: (log2 arg1)
+10/10: (log1p 1)
+10/10: (log1p arg1)
+10/10: (pow 1 1)
+10/10: (pow arg1 1)
+10/10: (pow 1 arg1)
+10/10: (pow arg1 arg1)
+10/10: (pow arg1 arg2)
+10/10: (pow arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (cbrt 1)
+10/10: (cbrt arg1)
+10/10: (hypot 1 1)
+10/10: (hypot arg1 1)
+10/10: (hypot 1 arg1)
+10/10: (hypot arg1 arg1)
+10/10: (hypot arg1 arg2)
+10/10: (hypot arg2 arg1)
+10/10: (sin 1)
+10/10: (sin arg1)
+10/10: (cos 1)
+10/10: (cos arg1)
+10/10: (tan 1)
+10/10: (tan arg1)
+10/10: (asin 1)
+10/10: (asin arg1)
+10/10: (acos 1)
+10/10: (acos arg1)
+10/10: (atan 1)
+10/10: (atan arg1)
+10/10: (atan2 1 1)
+10/10: (atan2 arg1 1)
+10/10: (atan2 1 arg1)
+10/10: (atan2 arg1 arg1)
+10/10: (atan2 arg1 arg2)
+10/10: (atan2 arg2 arg1)
+10/10: (sinh 1)
+10/10: (sinh arg1)
+10/10: (cosh 1)
+10/10: (cosh arg1)
+10/10: (tanh 1)
+10/10: (tanh arg1)
+10/10: (asinh 1)
+10/10: (asinh arg1)
+10/10: (acosh 1)
+10/10: (acosh arg1)
+10/10: (atanh 1)
+10/10: (atanh arg1)
+10/10: (erf 1)
+10/10: (erf arg1)
+10/10: (erfc 1)
+10/10: (erfc arg1)
+10/10: (tgamma 1)
+10/10: (tgamma arg1)
+10/10: (lgamma 1)
+10/10: (lgamma arg1)
+10/10: (ceil 1)
+10/10: (ceil arg1)
+10/10: (floor 1)
+10/10: (floor arg1)
+10/10: (fmod 1 1)
+10/10: (fmod arg1 1)
+10/10: (fmod 1 arg1)
+10/10: (fmod arg1 arg1)
+10/10: (fmod arg1 arg2)
+10/10: (fmod arg2 arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (fdim 1 1)
+10/10: (fdim arg1 1)
+10/10: (fdim 1 arg1)
+10/10: (fdim arg1 arg1)
+10/10: (fdim arg1 arg2)
+10/10: (fdim arg2 arg1)
+10/10: (copysign 1 1)
+10/10: (copysign arg1 1)
+10/10: (copysign 1 arg1)
+10/10: (copysign arg1 arg1)
+10/10: (copysign arg1 arg2)
+10/10: (copysign arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (round 1)
+10/10: (round arg1)
+10/10: (nearbyint 1)
+10/10: (nearbyint arg1)
+10/10: (cast 1)
+10/10: (cast arg1)
+10/10: (let ((a b) (b a)) (- a b))
+10/10: (let* ((a b) (b a)) (- a b))
+10/10: (let* ((a 1) (b a)) b)
+10/10: (while (< c a) ((c 0 (+ 1 c)) (d 0 (+ d c))) d)
+10/10: (while* (< c a) ((c 0 (+ 1 c)) (d 0 (+ d c))) d) (5 timeouts)
+10/10: Single interval (1/4)
+10/10: Single interval (2/4)
+10/10: Single interval (3/4)
+10/10: Single interval (4/4)
+10/10: Multiple intervals (1/2)
+10/10: Multiple intervals (2/2)
+10/10: Round with addition
+10/10: FPBench precision example
+10/10: FPBench precision example w/ rounding mode
+10/10: FPBench rounding mode example
+10/10: Adapted example with mixed-precision (1/2)
+10/10: Adapted example with mixed-precision (2/2)
+10/10: FPBench casting example
+10/10: monadius 1
+10/10: monadius 2
+10/10: monadius 3
+10/10: monadius 4
+10/10: monadius double-rounding
+10/10: monadius approx 1
+10/10: variable annotations
+10/10: variable annotations 2
+10/10: monadius variable annotations
+10/10: if mixed-precision
+10/10: let mixed-precision
+cat tests/sanity/*.fpcore | racket infra/test-core2smtlib2.rkt --repeat 1
+1/1: Test let (1/5)
+1/1: Test let (2/5)
+1/1: Test let (4/5)
+1/1: Test let (5/5)
+1/1: Test let* (1/5)
+1/1: Test let* (2/5)
+1/1: Test let* (4/5)
+1/1: Test let* (5/5)
+1/1: Test FPCore identifier (FPBench 2.0)
+1/1: Test arguments (1/2)
+1/1: Test arguments (2/2)
+1/1: Nested syntax (2/2)
+1/1: "Test decnum (1/5)"
+1/1: "Test decnum (2/5)"
+1/1: "Test decnum (3/5)"
+1/1: "Test decnum (4/5)"
+1/1: "Test decnum (5/5)"
+1/1: "Test hexnum (1/6)"
+1/1: "Test hexnum (2/6)"
+1/1: "Test hexnum (3/6)"
+1/1: "Test hexnum (4/6)"
+1/1: "Test hexnum (5/6)"
+1/1: "Test hexnum (6/6)"
+1/1: "Test rational (1/5)"
+1/1: "Test rational (2/5)"
+1/1: "Test rational (3/5)"
+1/1: "Test rational (4/5)"
+1/1: "Test rational (5/5)"
+1/1: "Test digits (1/4)"
+1/1: "Test digits (2/4)"
+1/1: "Test digits (3/4)"
+1/1: "Test digits (4/4)"
+1/1: "Test - (1/2)"
+1/1: "Test - (2/2)"
+1/1: "Test + (1/3)"
+1/1: "Test + (2/3)"
+1/1: "Test + (3/3)"
+1/1: "Test - (1/3)"
+1/1: "Test - (2/3)"
+1/1: "Test - (3/3)"
+1/1: "Test * (1/3)"
+1/1: "Test * (2/3)"
+1/1: "Test * (3/3)"
+1/1: "Test / (1/3)"
+1/1: "Test / (2/3)"
+1/1: "Test / (3/3)"
+1/1: "Test fabs (1/3)"
+1/1: "Test fabs (2/3)"
+1/1: "Test fabs (3/3)"
+1/1: "Test fma (1/5)"
+1/1: "Test fma (2/5)"
+1/1: "Test fma (3/5)"
+1/1: "Test fma (4/5)"
+1/1: "Test fma (5/5)"
+1/1: "Test sqrt (1/3)"
+1/1: "Test sqrt (2/3)"
+1/1: "Test sqrt (3/3)"
+1/1: "Test remainder (1/3)"
+1/1: "Test remainder (2/3)"
+1/1: "Test remainder (3/3)"
+1/1: "Test fmax (1/3)"
+1/1: "Test fmax (2/3)"
+1/1: "Test fmax (3/3)"
+1/1: "Test fmin (1/3)"
+1/1: "Test fmin (2/3)"
+1/1: "Test fmin (3/3)"
+1/1: "Test trunc (1/4)"
+1/1: "Test trunc (2/4)"
+1/1: "Test trunc (3/4)"
+1/1: "Test trunc (4/4)"
+1/1: "Test round (1/4)"
+1/1: "Test round (2/4)"
+1/1: "Test round (3/4)"
+1/1: "Test round (4/4)"
+1/1: "Test nearbyint (1/4)"
+1/1: "Test nearbyint (2/4)"
+1/1: "Test nearbyint (3/4)"
+1/1: "Test nearbyint (4/4)"
+cat benchmarks/*.fpcore tests/*.fpcore | racket infra/test-core2smtlib2.rkt
+10/10: carthesianToPolar, radius
+10/10: matrixDeterminant
+10/10: matrixDeterminant2
+10/10: delta4
+10/10: delta
+10/10: sqrt_add
+10/10: floudas
+10/10: x_by_xy
+10/10: hypot
+10/10: hypot32
+10/10: sum
+10/10: nonlin1
+10/10: nonlin2
+10/10: i4
+10/10: himmilbeau
+10/10: floudas1
+10/10: floudas2
+10/10: floudas3
+10/10: kepler0
+10/10: kepler1
+10/10: kepler2
+10/10: intro-example
+10/10: sec4-example
+10/10: test01_sum3
+10/10: test02_sum8
+10/10: test03_nonlin2
+10/10: test04_dqmom9
+10/10: test05_nonlin1, r4
+10/10: test05_nonlin1, test2
+10/10: test06_sums4, sum1
+10/10: test06_sums4, sum2
+10/10: NMSE example 3.1
+10/10: NMSE example 3.6
+10/10: NMSE problem 3.3.1
+10/10: NMSE problem 3.3.3
+10/10: NMSE p42, positive
+10/10: NMSE p42, negative
+10/10: NMSE problem 3.2.1, positive
+10/10: NMSE problem 3.2.1, negative
+10/10: Complex square root
+10/10: doppler1
+10/10: doppler2
+10/10: doppler3
+10/10: rigidBody1
+10/10: rigidBody2
+10/10: jetEngine
+10/10: turbine1
+10/10: turbine2
+10/10: turbine3
+10/10: verhulst
+10/10: predatorPrey
+10/10: carbonGas
+10/10: sine
+10/10: sqroot
+10/10: sineOrder3
+10/10: triangle
+10/10: triangle1
+10/10: triangle2
+10/10: triangle3
+10/10: triangle4
+10/10: triangle5
+10/10: triangle6
+10/10: triangle7
+10/10: triangle8
+10/10: triangle9
+10/10: triangle10
+10/10: triangle11
+10/10: triangle12
+10/10: bspline3
+10/10: Rump's example, from C program
+10/10: Rump's example revisited for floating point
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (fma 1 1 1)
+10/10: (fma arg1 1 1)
+10/10: (fma 1 arg1 1)
+10/10: (fma 1 1 arg1)
+10/10: (fma arg1 arg1 1)
+10/10: (fma arg1 1 arg1)
+10/10: (fma 1 arg1 arg1)
+10/10: (fma arg1 arg2 1)
+10/10: (fma arg2 arg1 1)
+10/10: (fma arg1 1 arg2)
+10/10: (fma 1 arg1 arg2)
+10/10: (fma arg2 1 arg1)
+10/10: (fma 1 arg2 arg1)
+10/10: (fma arg1 arg1 arg1)
+10/10: (fma arg1 arg1 arg2)
+10/10: (fma arg1 arg2 arg1)
+10/10: (fma arg2 arg1 arg1)
+10/10: (fma arg1 arg2 arg2)
+10/10: (fma arg2 arg1 arg2)
+10/10: (fma arg2 arg2 arg1)
+10/10: (fma arg1 arg2 arg3)
+10/10: (fma arg2 arg1 arg3)
+10/10: (fma arg1 arg3 arg2)
+10/10: (fma arg3 arg1 arg2)
+10/10: (fma arg2 arg3 arg1)
+10/10: (fma arg3 arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (round 1)
+10/10: (round arg1)
+10/10: (nearbyint 1)
+10/10: (nearbyint arg1)
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (fma 1 1 1)
+10/10: (fma arg1 1 1)
+10/10: (fma 1 arg1 1)
+10/10: (fma 1 1 arg1)
+10/10: (fma arg1 arg1 1)
+10/10: (fma arg1 1 arg1)
+10/10: (fma 1 arg1 arg1)
+10/10: (fma arg1 arg2 1)
+10/10: (fma arg2 arg1 1)
+10/10: (fma arg1 1 arg2)
+10/10: (fma 1 arg1 arg2)
+10/10: (fma arg2 1 arg1)
+10/10: (fma 1 arg2 arg1)
+10/10: (fma arg1 arg1 arg1)
+10/10: (fma arg1 arg1 arg2)
+10/10: (fma arg1 arg2 arg1)
+10/10: (fma arg2 arg1 arg1)
+10/10: (fma arg1 arg2 arg2)
+10/10: (fma arg2 arg1 arg2)
+10/10: (fma arg2 arg2 arg1)
+10/10: (fma arg1 arg2 arg3)
+10/10: (fma arg2 arg1 arg3)
+10/10: (fma arg1 arg3 arg2)
+10/10: (fma arg3 arg1 arg2)
+10/10: (fma arg2 arg3 arg1)
+10/10: (fma arg3 arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (round 1)
+10/10: (round arg1)
+10/10: (nearbyint 1)
+10/10: (nearbyint arg1)
+10/10: (let ((a b) (b a)) (- a b))
+10/10: (let* ((a b) (b a)) (- a b))
+10/10: (let* ((a 1) (b a)) b)
+10/10: variable annotations
+10/10: variable annotations 2
+10/10: monadius variable annotations
+cat tests/sanity/*.fpcore | racket infra/test-core2python.rkt --repeat 1
+1/1: "Test < (1/7)"
+1/1: "Test < (2/7)"
+1/1: "Test < (3/7)"
+1/1: "Test < (4/7)"
+1/1: "Test < (5/7)"
+1/1: "Test < (6/7)"
+1/1: "Test < (7/7)"
+1/1: "Test > (1/7)"
+1/1: "Test > (2/7)"
+1/1: "Test > (3/7)"
+1/1: "Test > (4/7)"
+1/1: "Test > (5/7)"
+1/1: "Test > (6/7)"
+1/1: "Test > (7/7)"
+1/1: "Test <= (1/7)"
+1/1: "Test <= (2/7)"
+1/1: "Test <= (3/7)"
+1/1: "Test <= (4/7)"
+1/1: "Test <= (5/7)"
+1/1: "Test <= (6/7)"
+1/1: "Test <= (7/7)"
+1/1: "Test >= (1/7)"
+1/1: "Test >= (2/7)"
+1/1: "Test >= (3/7)"
+1/1: "Test >= (4/7)"
+1/1: "Test >= (5/7)"
+1/1: "Test >= (6/7)"
+1/1: "Test >= (7/7)"
+1/1: "Test == (1/7)"
+1/1: "Test == (2/7)"
+1/1: "Test == (3/7)"
+1/1: "Test == (4/7)"
+1/1: "Test == (5/7)"
+1/1: "Test == (6/7)"
+1/1: "Test == (7/7)"
+1/1: "Test != (1/7)"
+1/1: "Test != (2/7)"
+1/1: "Test != (3/7)"
+1/1: "Test != (4/7)"
+1/1: "Test != (5/7)"
+1/1: "Test != (6/7)"
+1/1: "Test != (7/7)"
+1/1: "Test and (1/4)"
+1/1: "Test and (2/4)"
+1/1: "Test and (3/4)"
+1/1: "Test and (4/4)"
+1/1: "Test or (1/4)"
+1/1: "Test or (2/4)"
+1/1: "Test or (3/4)"
+1/1: "Test or (4/4)"
+1/1: "Test not (1/2)"
+1/1: "Test not (2/2)"
+1/1: "Test isinf (1/4)"
+1/1: "Test isinf (2/4)"
+1/1: "Test isinf (3/4)"
+1/1: "Test isinf (4/4)"
+1/1: "Test isnan (1/4)"
+1/1: "Test isnan (2/4)"
+1/1: "Test isnan (3/4)"
+1/1: "Test isnan (4/4)"
+1/1: "Test isfinite (1/4)"
+1/1: "Test isfinite (2/4)"
+1/1: "Test isfinite (3/4)"
+1/1: "Test isfinite (4/4)"
+1/1: "Test E (1/1)"
+1/1: "Test PI (1/1)"
+1/1: Test let (1/5)
+1/1: Test let (2/5)
+1/1: Test let (3/5)
+1/1: Test let (4/5)
+1/1: Test let (5/5)
+1/1: Test let* (1/5)
+1/1: Test let* (2/5)
+1/1: Test let* (3/5)
+1/1: Test let* (4/5)
+1/1: Test let* (5/5)
+1/1: Test while (1/7)
+1/1: Test while (2/7)
+1/1: Test while (3/7)
+1/1: Test while (4/7)
+1/1: Test while (5/7)
+1/1: Test while (6/7)
+1/1: Test while (7/7)
+1/1: Test while* (1/7)
+1/1: Test while* (2/7)
+1/1: Test while* (3/7)
+1/1: Test while* (4/7)
+1/1: Test while* (5/7)
+1/1: Test while* (6/7)
+1/1: Test while* (7/7)
+1/1: Test if (1/6)
+1/1: Test if (2/6)
+1/1: Test if (3/6)
+1/1: Test if (4/6)
+1/1: Test if (5/6)
+1/1: Test if (6/6)
+1/1: Test cast (1/1)
+1/1: Test ! (1/1)
+1/1: Test FPCore identifier (FPBench 2.0)
+1/1: Test arguments (1/2)
+1/1: Test arguments (2/2)
+1/1: Nested syntax (1/2)
+1/1: Nested syntax (2/2)
+1/1: "Test decnum (1/5)"
+1/1: "Test decnum (2/5)"
+1/1: "Test decnum (3/5)"
+1/1: "Test decnum (4/5)"
+1/1: "Test decnum (5/5)"
+1/1: "Test hexnum (1/6)"
+1/1: "Test hexnum (2/6)"
+1/1: "Test hexnum (3/6)"
+1/1: "Test hexnum (4/6)"
+1/1: "Test hexnum (5/6)"
+1/1: "Test hexnum (6/6)"
+1/1: "Test rational (1/5)"
+1/1: "Test rational (2/5)"
+1/1: "Test rational (3/5)"
+1/1: "Test rational (4/5)"
+1/1: "Test rational (5/5)"
+1/1: "Test digits (1/4)"
+1/1: "Test digits (2/4)"
+1/1: "Test digits (3/4)"
+1/1: "Test digits (4/4)"
+1/1: "Test - (1/2)"
+1/1: "Test - (2/2)"
+1/1: "Test + (1/3)"
+1/1: "Test + (2/3)"
+1/1: "Test + (3/3)"
+1/1: "Test - (1/3)"
+1/1: "Test - (2/3)"
+1/1: "Test - (3/3)"
+1/1: "Test * (1/3)"
+1/1: "Test * (2/3)"
+1/1: "Test * (3/3)"
+1/1: "Test / (1/3)"
+1/1: "Test / (2/3)"
+1/1: "Test / (3/3)"
+1/1: "Test fabs (1/3)"
+1/1: "Test fabs (2/3)"
+1/1: "Test fabs (3/3)"
+1/1: "Test exp (1/1)"
+1/1: "Test expm1 (1/1)"
+1/1: "Test log (1/1)"
+1/1: "Test log10 (1/2)"
+1/1: "Test log10 (2/2)"
+1/1: "Test log2 (1/3)"
+1/1: "Test log2 (2/3)"
+1/1: "Test log2 (3/3)"
+1/1: "Test log1p (1/1)"
+1/1: "Test pow (1/5)"
+1/1: "Test pow (2/5)"
+1/1: "Test pow (3/5)"
+1/1: "Test pow (4/5)"
+1/1: "Test pow (5/5)"
+1/1: "Test sqrt (1/3)"
+1/1: "Test sqrt (2/3)"
+1/1: "Test sqrt (3/3)"
+1/1: "Test hypot (1/2)"
+1/1: "Test hypot (2/2)"
+1/1: "Test sin (1/1)"
+1/1: "Test cos (1/1)"
+1/1: "Test tan (1/1)"
+1/1: "Test asin (1/1)"
+1/1: "Test acos (1/1)"
+1/1: "Test atan (1/1)"
+1/1: "Test atan2 (1/1)"
+1/1: "Test sinh (1/1)"
+1/1: "Test cosh (1/1)"
+1/1: "Test tanh (1/1)"
+1/1: "Test asinh (1/1)"
+1/1: "Test acosh (1/1)"
+1/1: "Test atanh (1/1)"
+1/1: "Test erf (1/1)"
+1/1: "Test erfc (1/1)"
+1/1: "Test tgamma (1/3)"
+1/1: "Test tgamma (2/3)"
+1/1: "Test tgamma (3/3)"
+1/1: "Test lgamma (1/2)"
+1/1: "Test lgamma (2/2)"
+1/1: "Test ceil (1/4)"
+1/1: "Test ceil (2/4)"
+1/1: "Test ceil (3/4)"
+1/1: "Test ceil (4/4)"
+1/1: "Test floor (1/4)"
+1/1: "Test floor (2/4)"
+1/1: "Test floor (3/4)"
+1/1: "Test floor (4/4)"
+1/1: "Test fmod (1/3)"
+1/1: "Test fmod (2/3)"
+1/1: "Test fmod (3/3)"
+1/1: "Test remainder (1/3)"
+1/1: "Test remainder (2/3)"
+1/1: "Test remainder (3/3)"
+1/1: "Test fmax (1/3)"
+1/1: "Test fmax (2/3)"
+1/1: "Test fmax (3/3)"
+1/1: "Test fmin (1/3)"
+1/1: "Test fmin (2/3)"
+1/1: "Test fmin (3/3)"
+1/1: "Test copysign (1/4)"
+1/1: "Test copysign (2/4)"
+1/1: "Test copysign (3/4)"
+1/1: "Test copysign (4/4)"
+1/1: "Test trunc (1/4)"
+1/1: "Test trunc (2/4)"
+1/1: "Test trunc (3/4)"
+1/1: "Test trunc (4/4)"
+cat benchmarks/*.fpcore tests/*.fpcore | racket infra/test-core2python.rkt --error 3
+10/10: Filter (10 timeouts)
+10/10: carthesianToPolar, radius
+10/10: carthesianToPolar, theta
+10/10: polarToCarthesian, x
+10/10: polarToCarthesian, y
+10/10: instantaneousCurrent
+10/10: matrixDeterminant
+10/10: matrixDeterminant2
+10/10: delta4
+10/10: delta
+10/10: sqrt_add
+10/10: exp1x
+10/10: floudas
+10/10: exp1x_log
+10/10: hypot
+10/10: logexp
+10/10: sum
+10/10: nonlin1
+10/10: nonlin2
+10/10: himmilbeau
+10/10: logexp
+10/10: sphere
+10/10: azimuth
+10/10: floudas1
+10/10: floudas2
+10/10: floudas3
+10/10: hartman3
+10/10: hartman6
+10/10: kepler0
+10/10: kepler1
+10/10: kepler2
+10/10: intro-example
+10/10: sec4-example
+10/10: test02_sum8
+10/10: test03_nonlin2
+10/10: test04_dqmom9
+10/10: test05_nonlin1, r4
+10/10: test05_nonlin1, test2
+10/10: An eigenvalue calculation from TNG
+10/10: NMSE example 3.1
+10/10: NMSE example 3.3
+10/10: NMSE example 3.4
+10/10: NMSE example 3.5
+10/10: NMSE example 3.6
+10/10: NMSE problem 3.3.1
+10/10: NMSE problem 3.3.2
+10/10: NMSE problem 3.3.3
+10/10: NMSE problem 3.3.4
+10/10: NMSE problem 3.3.5
+10/10: NMSE problem 3.3.6
+10/10: NMSE problem 3.3.7
+10/10: NMSE p42, positive
+10/10: NMSE p42, negative
+10/10: NMSE problem 3.2.1, positive
+10/10: NMSE problem 3.2.1, negative
+10/10: NMSE example 3.7
+10/10: NMSE example 3.8
+10/10: NMSE example 3.9
+10/10: NMSE example 3.10
+10/10: NMSE problem 3.4.1
+10/10: NMSE problem 3.4.2
+10/10: NMSE problem 3.4.3
+10/10: NMSE problem 3.4.4
+10/10: NMSE problem 3.4.5
+10/10: NMSE problem 3.4.6
+10/10: NMSE section 3.5
+10/10: NMSE section 3.11
+10/10: Complex square root
+10/10: Complex sine and cosine
+10/10: Probabilities in a clustering algorithm
+10/10: doppler1
+10/10: doppler2
+10/10: doppler3
+10/10: rigidBody1
+10/10: rigidBody2
+10/10: jetEngine
+10/10: turbine1
+10/10: turbine2
+10/10: turbine3
+10/10: verhulst
+10/10: predatorPrey
+10/10: carbonGas
+10/10: sine
+10/10: sqroot
+10/10: sineOrder3
+10/10: smartRoot
+10/10: cav10
+10/10: squareRoot3
+10/10: squareRoot3Invalid
+10/10: triangle
+10/10: triangle1
+10/10: triangle2
+10/10: triangle3
+10/10: triangle4
+10/10: triangle5
+10/10: triangle6
+10/10: triangle7
+10/10: triangle8
+10/10: triangle9
+10/10: triangle10
+10/10: triangle11
+10/10: triangle12
+10/10: bspline3
+10/10: triangleSorted
+10/10: N Body Simulation
+10/10: Pendulum (2 timeouts)
+10/10: Sine Newton
+10/10: Rump's example, with pow
+10/10: Rump's example, from C program
+10/10: Rump's example revisited for floating point
+10/10: PID (10 timeouts)
+10/10: Trapeze
+10/10: (if (< 1 1) 1 0)
+10/10: (if (< arg1 1) 1 0)
+10/10: (if (< 1 arg1) 1 0)
+10/10: (if (< arg1 arg1) 1 0)
+10/10: (if (< arg1 arg2) 1 0)
+10/10: (if (< arg2 arg1) 1 0)
+10/10: (if (> 1 1) 1 0)
+10/10: (if (> arg1 1) 1 0)
+10/10: (if (> 1 arg1) 1 0)
+10/10: (if (> arg1 arg1) 1 0)
+10/10: (if (> arg1 arg2) 1 0)
+10/10: (if (> arg2 arg1) 1 0)
+10/10: (if (<= 1 1) 1 0)
+10/10: (if (<= arg1 1) 1 0)
+10/10: (if (<= 1 arg1) 1 0)
+10/10: (if (<= arg1 arg1) 1 0)
+10/10: (if (<= arg1 arg2) 1 0)
+10/10: (if (<= arg2 arg1) 1 0)
+10/10: (if (>= 1 1) 1 0)
+10/10: (if (>= arg1 1) 1 0)
+10/10: (if (>= 1 arg1) 1 0)
+10/10: (if (>= arg1 arg1) 1 0)
+10/10: (if (>= arg1 arg2) 1 0)
+10/10: (if (>= arg2 arg1) 1 0)
+10/10: (if (== 1 1) 1 0)
+10/10: (if (== arg1 1) 1 0)
+10/10: (if (== 1 arg1) 1 0)
+10/10: (if (== arg1 arg1) 1 0)
+10/10: (if (== arg1 arg2) 1 0)
+10/10: (if (== arg2 arg1) 1 0)
+10/10: (if (!= 1 1) 1 0)
+10/10: (if (!= arg1 1) 1 0)
+10/10: (if (!= 1 arg1) 1 0)
+10/10: (if (!= arg1 arg1) 1 0)
+10/10: (if (!= arg1 arg2) 1 0)
+10/10: (if (!= arg2 arg1) 1 0)
+10/10: (if (isfinite 1) 1 0)
+10/10: (if (isfinite arg1) 1 0)
+10/10: (if (isinf 1) 1 0)
+10/10: (if (isinf arg1) 1 0)
+10/10: (if (isnan 1) 1 0)
+10/10: (if (isnan arg1) 1 0)
+10/10: (- 1)
+10/10: (- arg1)
+10/10: (+ 1 1)
+10/10: (+ arg1 1)
+10/10: (+ 1 arg1)
+10/10: (+ arg1 arg1)
+10/10: (+ arg1 arg2)
+10/10: (+ arg2 arg1)
+10/10: (- 1 1)
+10/10: (- arg1 1)
+10/10: (- 1 arg1)
+10/10: (- arg1 arg1)
+10/10: (- arg1 arg2)
+10/10: (- arg2 arg1)
+10/10: (* 1 1)
+10/10: (* arg1 1)
+10/10: (* 1 arg1)
+10/10: (* arg1 arg1)
+10/10: (* arg1 arg2)
+10/10: (* arg2 arg1)
+10/10: (/ 1 1)
+10/10: (/ arg1 1)
+10/10: (/ 1 arg1)
+10/10: (/ arg1 arg1)
+10/10: (/ arg1 arg2)
+10/10: (/ arg2 arg1)
+10/10: (fabs 1)
+10/10: (fabs arg1)
+10/10: (exp 1)
+10/10: (exp arg1)
+10/10: (expm1 1)
+10/10: (expm1 arg1)
+10/10: (log 1)
+10/10: (log arg1)
+10/10: (log10 1)
+10/10: (log10 arg1)
+10/10: (log2 1)
+10/10: (log2 arg1)
+10/10: (log1p 1)
+10/10: (log1p arg1)
+10/10: (pow 1 1)
+10/10: (pow arg1 1)
+10/10: (pow 1 arg1)
+10/10: (pow arg1 arg1)
+10/10: (pow arg1 arg2)
+10/10: (pow arg2 arg1)
+10/10: (sqrt 1)
+10/10: (sqrt arg1)
+10/10: (hypot 1 1)
+10/10: (hypot arg1 1)
+10/10: (hypot 1 arg1)
+10/10: (hypot arg1 arg1)
+10/10: (hypot arg1 arg2)
+10/10: (hypot arg2 arg1)
+10/10: (sin 1)
+10/10: (sin arg1)
+10/10: (cos 1)
+10/10: (cos arg1)
+10/10: (tan 1)
+10/10: (tan arg1)
+10/10: (asin 1)
+10/10: (asin arg1)
+10/10: (acos 1)
+10/10: (acos arg1)
+10/10: (atan 1)
+10/10: (atan arg1)
+10/10: (atan2 1 1)
+10/10: (atan2 arg1 1)
+10/10: (atan2 1 arg1)
+10/10: (atan2 arg1 arg1)
+10/10: (atan2 arg1 arg2)
+10/10: (atan2 arg2 arg1)
+10/10: (sinh 1)
+10/10: (sinh arg1)
+10/10: (cosh 1)
+10/10: (cosh arg1)
+10/10: (tanh 1)
+10/10: (tanh arg1)
+10/10: (asinh 1)
+10/10: (asinh arg1)
+10/10: (acosh 1)
+10/10: (acosh arg1)
+10/10: (atanh 1)
+10/10: (atanh arg1)
+10/10: (erf 1)
+10/10: (erf arg1)
+10/10: (erfc 1)
+10/10: (erfc arg1)
+10/10: (tgamma 1)
+10/10: (tgamma arg1)
+10/10: (lgamma 1)
+10/10: (lgamma arg1)
+10/10: (ceil 1)
+10/10: (ceil arg1)
+10/10: (floor 1)
+10/10: (floor arg1)
+10/10: (fmod 1 1)
+10/10: (fmod arg1 1)
+10/10: (fmod 1 arg1)
+10/10: (fmod arg1 arg1)
+10/10: (fmod arg1 arg2)
+10/10: (fmod arg2 arg1)
+10/10: (remainder 1 1)
+10/10: (remainder arg1 1)
+10/10: (remainder 1 arg1)
+10/10: (remainder arg1 arg1)
+10/10: (remainder arg1 arg2)
+10/10: (remainder arg2 arg1)
+10/10: (fmax 1 1)
+10/10: (fmax arg1 1)
+10/10: (fmax 1 arg1)
+10/10: (fmax arg1 arg1)
+10/10: (fmax arg1 arg2)
+10/10: (fmax arg2 arg1)
+10/10: (fmin 1 1)
+10/10: (fmin arg1 1)
+10/10: (fmin 1 arg1)
+10/10: (fmin arg1 arg1)
+10/10: (fmin arg1 arg2)
+10/10: (fmin arg2 arg1)
+10/10: (copysign 1 1)
+10/10: (copysign arg1 1)
+10/10: (copysign 1 arg1)
+10/10: (copysign arg1 arg1)
+10/10: (copysign arg1 arg2)
+10/10: (copysign arg2 arg1)
+10/10: (trunc 1)
+10/10: (trunc arg1)
+10/10: (cast 1)
+10/10: (cast arg1)
+10/10: (let ((a b) (b a)) (- a b))
+10/10: (let* ((a b) (b a)) (- a b))
+10/10: (let* ((a 1) (b a)) b)
+10/10: (while (< c a) ((c 0 (+ 1 c)) (d 0 (+ d c))) d)
+10/10: (while* (< c a) ((c 0 (+ 1 c)) (d 0 (+ d c))) d) (2 timeouts)
+10/10: Single interval (1/4)
+10/10: Single interval (2/4)
+10/10: Single interval (3/4)
+10/10: Single interval (4/4)
+10/10: Multiple intervals (1/2)
+10/10: Multiple intervals (2/2)
+10/10: Round with addition
+Ignored: 44
+status=0
+finished=2026-09-10T19:24:58Z

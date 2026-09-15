@@ -1,0 +1,59 @@
+{
+  "what-imprecision-has-cost": {
+    "slug": "a-short-history-of-floating-point",
+    "heading": "what-imprecision-has-cost"
+  },
+  "comparing-with-lean-native-floats": {
+    "slug": "performance",
+    "heading": "comparing-with-leans-native-floats"
+  },
+  "a-tour-of-the-codebase": {
+    "slug": "using-the-library",
+    "heading": "a-tour-of-the-codebase",
+    "headings": {
+      "the-shape-of-the-tree": {
+        "slug": "using-the-library",
+        "heading": "a-tour-of-the-codebase"
+      },
+      "numerics-exact-values-and-contracts": {
+        "slug": "the-numerical-models",
+        "heading": "numerics-exact-values-and-contracts"
+      },
+      "kernels-fixed-word-algorithms-and-limb-arrays": {
+        "slug": "kernels-fixed-word-algorithms",
+        "heading": "kernels-fixed-word-algorithms-and-limb-arrays"
+      },
+      "formats-encodings-and-their-meaning": {
+        "slug": "ieee-binary-formats",
+        "heading": "formats-encodings-and-their-meaning"
+      },
+      "execfloat-the-carrier-and-its-backends": {
+        "slug": "backends-and-the-planner",
+        "heading": "execfloat-the-carrier-and-its-backends"
+      },
+      "public-and-private-imports": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "public-and-private-imports"
+      },
+      "tests-what-is-validated": {
+        "slug": "external-validation",
+        "heading": "tests-what-is-validated"
+      },
+      "benchmarks-and-the-website": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "how-the-website-examples-are-checked"
+      },
+      "what-the-check-scripts-enforce": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "the-check-that-enforces-the-split"
+      },
+      "examples-and-extension-guides": {
+        "slug": "using-the-library",
+        "heading": "examples-and-extension-guides"
+      }
+    }
+  },
+  "validation-against-the-outside-world": {
+    "slug": "external-validation"
+  }
+}

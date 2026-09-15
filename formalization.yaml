@@ -1,0 +1,116 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: FloatLib
+  description: >-
+    Executable numerical representations and their correctness proofs in Lean.
+    The library connects bit-level arithmetic to exact specifications and
+    real-valued rounding theory, covering IEEE binary and decimal formats,
+    posits and quires, low-precision ML formats, and shared integer kernels.
+  authors:
+    - Robert Joseph George
+    - Will Adkisson
+    - Anima Anandkumar
+  license: MIT
+
+sources:
+  - title: IEEE Standard for Floating-Point Arithmetic
+    authors: [IEEE]
+    id: "https://doi.org/10.1109/IEEESTD.2019.8766229"
+    type: standard
+    relationship: formalizes
+    note: >-
+      Binary and decimal representations, rounding, arithmetic, exceptional
+      values, and status flags. The theorem statements specify their format
+      and range hypotheses; this is not a claim to formalize every requirement
+      of IEEE 754-2019.
+  - title: Standard for Posit Arithmetic, 2022
+    authors: [Posit Working Group]
+    id: "https://posithub.org/docs/posit_standard-2.pdf"
+    type: standard
+    relationship: formalizes
+    note: Posit encodings, arithmetic, elementary functions, and quire accumulation.
+  - title: IEEE P3109 Interim Report on Arithmetic Formats for Machine Learning, v4.0.3
+    authors: [IEEE SA P3109 Working Group]
+    id: "https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308"
+    type: technical-report
+    relationship: formalizes
+    note: Implements the identified working-group report, not a published IEEE standard.
+  - title: OCP 8-bit Floating Point Specification, Revision 1.0
+    authors: [Open Compute Project]
+    type: specification
+    relationship: formalizes
+    note: The E4M3 and E5M2 encodings and their numerical behavior.
+  - title: OCP Microscaling Formats Specification, Version 1.0
+    authors: [Open Compute Project]
+    type: specification
+    relationship: formalizes
+    note: Shared-scale block quantization and the six implemented element profiles.
+  - title: "Flocq: A Unified Library for Proving Floating-Point Algorithms in Coq"
+    authors: [Sylvie Boldo, Guillaume Melquiond]
+    id: "https://doi.org/10.1109/ARITH.2011.40"
+    type: article
+    relationship: adapts
+    note: Generic radix, precision, rounding, ulp, and error-bound theory.
+
+related_formalizations:
+  - id: "https://flocq.gitlabpages.inria.fr/"
+    relationship: adapts
+    note: >-
+      The Flocq theory in FloatLib is a Lean development of generic
+      floating-point reasoning. FloatLib's executable backends are separate.
+  - id: "https://github.com/leanprover-community/mathlib4"
+    relationship: builds-on
+    note: Uses Mathlib's real analysis, algebra, order theory, and proof automation.
+
+status:
+  scope: >-
+    The reusable Lean library under FloatLib/ and its root import. Tests and
+    benchmark adapters are separate workspaces. The results below identify
+    representative declarations, with their own checked axiom dependencies.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  main_results:
+    - declaration: FloatLib.Floats.ExecFloat.Proof.add_eq_spec
+      file: FloatLib/Floats/ExecFloat/Proof/Arithmetic.lean
+      sorry_count: 0
+      axioms: []
+    - declaration: FloatLib.Floats.ExecFloat.Proof.sqrt_eq_spec
+      file: FloatLib/Floats/ExecFloat/Proof/Arithmetic.lean
+      sorry_count: 0
+      axioms: []
+    - declaration: FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz
+      file: FloatLib/Floats/Formats/BinaryInterchange/Analysis/Sterbenz.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+    - declaration: FloatLib.Floats.Formats.DecimalInterchange.Codec.decode_encode
+      file: FloatLib/Floats/Formats/DecimalInterchange/Codec/Proof.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+    - declaration: FloatLib.Floats.Formats.Posit.Model.exp_eq_real
+      file: FloatLib/Floats/Formats/Posit/Elementary/Proof.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+    - declaration: FloatLib.Numerics.Enclosure.contains_exp
+      file: FloatLib/Numerics/Enclosure/Elementary/Proof.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+    - declaration: FloatLib.Numerics.Enclosure.contains_log
+      file: FloatLib/Numerics/Enclosure/Elementary/Proof.lean
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+
+automation:
+  methods:
+    - method: manual
+    - method: agent
+  notes: >-
+    We spent several months planning FloatLib and implementing its foundations.
+    Codex helped us complete some of the proofs and optimize the arithmetic
+    backends. Each optimized backend used by the certified execution path comes
+    with a Lean proof that it returns the same result as the reference specification.
+
+review:
+  status: Locally checked
+  notes: Lean compilation, linting, and the repository's verification checks pass.

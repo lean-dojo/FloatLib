@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+Berkeley SoftFloat,binary-interchange,binary64,64,fma,external-software,SoftFloat 3e,result-dependent-fixture-chain,6907998,200426837,18200810723979946123,7626825509977864118,256,4302356234228363402,11033997570786036178

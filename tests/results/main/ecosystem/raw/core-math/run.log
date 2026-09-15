@@ -1,0 +1,36 @@
+CORE-MATH upstream qualification
+
+CORE-MATH revision: 68b034fbe9512781352d28f2dc9795c1686fe8e9
+FloatLean revision associated with the campaign: 332491fd0acb7702b5730aa96bf5927063583d92
+Started: 2026-09-10T16:00:41Z
+Finished: 2026-09-10T23:51:19Z
+End-to-end elapsed time: 28238 seconds
+
+The campaign ran five initial shards, seven continuation workers, and six
+final continuation workers. A continuation treated every result row already
+written by an earlier worker as a checkpoint and assigned only the remaining
+functions.
+
+Merged result
+
+  Functions: 169
+  PASS: 166
+  FAIL(2): 3
+  binary16: 43
+  binaryb16: 43
+  binary32: 42
+  binary64: 41
+
+The three incomplete checks were:
+
+  binary16   compoundf16       FAIL(2)
+  binaryb16  compound_bf16     FAIL(2)
+  binary32   compoundf         FAIL(2)
+
+Each failed during linking because the installed MPFR library did not export
+mpfr_compound. The other 166 upstream checks passed. This supports a
+qualified-pass result: the campaign covered the full function inventory, but
+the environment could not execute the three compound reference checks.
+
+The worker logs, tables, metadata, and exit records are preserved unchanged
+under attempts/.

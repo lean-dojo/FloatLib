@@ -1,0 +1,15 @@
+profile=smoke
+level=2
+seed=1
+fma_campaigns=0
+bf16_arithmetic_campaigns=0
+workers=90
+build_jobs=90
+cpu_set=none
+softfloat_revision=a0c6494cdc11865811dec815d5c0049fba9d82a8
+testfloat_revision=a9c849f1b0eb0264b626d9686ffae167d996e3be
+lean_revision=332491fd0acb7702b5730aa96bf5927063583d92
+lean_build_dir=/work/floatlean-conformance/build
+compiler=gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+host=Linux 6.1.176-221.360.amzn2023.x86_64 x86_64 GNU/Linux
+worktree_diff_sha256=336e6e715351a925c81755fd0a7348f16b72133d4faf6e673df57385ecbe4e3f

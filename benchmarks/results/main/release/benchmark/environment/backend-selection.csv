@@ -1,0 +1,314 @@
+family,format,storageBits,maximumSignificandBits,operation,candidateCount,selected,kernelClass,residentBytes,policy,expectedCalls,maxResidentBytes,warmCost,coldCost,score
+configured binary,binary4-e2m1,4,2,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,7204,15007204
+configured binary,binary4-e2m1,4,2,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,7716,15007716
+configured binary,binary4-e2m1,4,2,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,7204,15007204
+configured binary,binary4-e2m1,4,2,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,7204,15007204
+configured binary,binary4-e2m1,4,2,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,16,throughput,5000000,16777216,3,609,15000609
+configured binary,binary4-e2m1,4,2,fma,3,binary-interchange fused multiply-add exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,139360,15139360
+configured binary,binary5-e2m2,5,3,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,1024,throughput,5000000,16777216,3,24624,15024624
+configured binary,binary5-e2m2,5,3,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,1024,throughput,5000000,16777216,3,29744,15029744
+configured binary,binary5-e2m2,5,3,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,1024,throughput,5000000,16777216,3,26672,15026672
+configured binary,binary5-e2m2,5,3,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,1024,throughput,5000000,16777216,3,26672,15026672
+configured binary,binary5-e2m2,5,3,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,32,throughput,5000000,16777216,3,801,15000801
+configured binary,binary5-e2m2,5,3,fma,3,binary-interchange fused multiply-add exhaustive table,exhaustive encoded-value table,32768,throughput,5000000,16777216,3,1016352,16016352
+configured binary,binary6-e3m2,6,3,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,98400,15098400
+configured binary,binary6-e3m2,6,3,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,118880,15118880
+configured binary,binary6-e3m2,6,3,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,106592,15106592
+configured binary,binary6-e3m2,6,3,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,106592,15106592
+configured binary,binary6-e3m2,6,3,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,64,throughput,5000000,16777216,3,1569,15001569
+configured binary,binary6-e3m2,6,3,fma,3,binary-interchange fused multiply-add exhaustive table,exhaustive encoded-value table,262144,throughput,5000000,16777216,3,7344160,22344160
+configured binary,binary7-e3m3,7,4,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,16384,throughput,5000000,16777216,3,360736,15360736
+configured binary,binary7-e3m3,7,4,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,16384,throughput,5000000,16777216,3,409888,15409888
+configured binary,binary7-e3m3,7,4,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,16384,throughput,5000000,16777216,3,360736,15360736
+configured binary,binary7-e3m3,7,4,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,16384,throughput,5000000,16777216,3,377120,15377120
+configured binary,binary7-e3m3,7,4,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,128,throughput,5000000,16777216,3,2978,15002978
+configured binary,binary7-e3m3,7,4,fma,3,binary-interchange fused multiply-add exhaustive table,exhaustive encoded-value table,2097152,throughput,5000000,16777216,3,58753056,73753056
+configured binary,binary8-e4m3,8,4,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,binary8-e4m3,8,4,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,binary8-e4m3,8,4,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,binary8-e4m3,8,4,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,binary8-e4m3,8,4,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,binary8-e4m3,8,4,fma,3,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,p4,6,4,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,98400,15098400
+configured binary,p4,6,4,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,118880,15118880
+configured binary,p4,6,4,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,106592,15106592
+configured binary,p4,6,4,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,4096,throughput,5000000,16777216,3,106592,15106592
+configured binary,p4,6,4,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,64,throughput,5000000,16777216,3,1569,15001569
+configured binary,p4,6,4,fma,3,binary-interchange fused multiply-add exhaustive table,exhaustive encoded-value table,262144,throughput,5000000,16777216,3,7344160,22344160
+configured binary,p5,8,5,add,3,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,p5,8,5,sub,3,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,p5,8,5,mul,3,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,p5,8,5,div,3,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,p5,8,5,sqrt,3,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,p5,8,5,fma,3,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,p6,10,6,add,2,binary-interchange addition native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p6,10,6,sub,2,binary-interchange subtraction native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p6,10,6,mul,2,binary-interchange multiplication native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p6,10,6,div,2,binary-interchange division native-word kernel,machine-word kernel,0,throughput,5000000,16777216,7,0,35000000
+configured binary,p6,10,6,sqrt,2,binary-interchange square root native-word kernel,machine-word kernel,0,throughput,5000000,16777216,84,0,420000000
+configured binary,p6,10,6,fma,2,binary-interchange fused multiply-add native-word kernel,machine-word kernel,0,throughput,5000000,16777216,50,0,250000000
+configured binary,p7,11,7,add,2,binary-interchange addition native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p7,11,7,sub,2,binary-interchange subtraction native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p7,11,7,mul,2,binary-interchange multiplication native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,p7,11,7,div,2,binary-interchange division native-word kernel,machine-word kernel,0,throughput,5000000,16777216,7,0,35000000
+configured binary,p7,11,7,sqrt,2,binary-interchange square root native-word kernel,machine-word kernel,0,throughput,5000000,16777216,84,0,420000000
+configured binary,p7,11,7,fma,2,binary-interchange fused multiply-add native-word kernel,machine-word kernel,0,throughput,5000000,16777216,50,0,250000000
+configured binary,bfloat16,16,8,add,2,binary-interchange addition native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,bfloat16,16,8,sub,2,binary-interchange subtraction native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,bfloat16,16,8,mul,2,binary-interchange multiplication native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,bfloat16,16,8,div,2,binary-interchange division native-word kernel,machine-word kernel,0,throughput,5000000,16777216,7,0,35000000
+configured binary,bfloat16,16,8,sqrt,2,binary-interchange square root native-word kernel,machine-word kernel,0,throughput,5000000,16777216,84,0,420000000
+configured binary,bfloat16,16,8,fma,2,binary-interchange fused multiply-add native-word kernel,machine-word kernel,0,throughput,5000000,16777216,50,0,250000000
+configured binary,binary16,16,11,add,2,binary-interchange addition native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary16,16,11,sub,2,binary-interchange subtraction native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary16,16,11,mul,2,binary-interchange multiplication native-word kernel,machine-word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary16,16,11,div,2,binary-interchange division native-word kernel,machine-word kernel,0,throughput,5000000,16777216,7,0,35000000
+configured binary,binary16,16,11,sqrt,2,binary-interchange square root native-word kernel,machine-word kernel,0,throughput,5000000,16777216,84,0,420000000
+configured binary,binary16,16,11,fma,2,binary-interchange fused multiply-add native-word kernel,machine-word kernel,0,throughput,5000000,16777216,50,0,250000000
+configured binary,binary32,32,24,add,2,binary-interchange addition fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary32,32,24,sub,2,binary-interchange subtraction fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary32,32,24,mul,2,binary-interchange multiplication fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary32,32,24,div,2,binary-interchange division fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,6,0,30000000
+configured binary,binary32,32,24,sqrt,2,binary-interchange square root fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,57,0,285000000
+configured binary,binary32,32,24,fma,2,binary-interchange fused multiply-add fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,32,0,160000000
+configured binary,binary64,64,53,add,2,binary-interchange addition fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary64,64,53,sub,2,binary-interchange subtraction fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary64,64,53,mul,2,binary-interchange multiplication fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,4,0,20000000
+configured binary,binary64,64,53,div,2,binary-interchange division fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,6,0,30000000
+configured binary,binary64,64,53,sqrt,2,binary-interchange square root fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,57,0,285000000
+configured binary,binary64,64,53,fma,2,binary-interchange fused multiply-add fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,32,0,160000000
+configured binary,binary96-e15m80,96,81,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary96-e15m80,96,81,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary96-e15m80,96,81,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
+configured binary,binary96-e15m80,96,81,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
+configured binary,binary96-e15m80,96,81,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
+configured binary,binary96-e15m80,96,81,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
+configured binary,binary112-e15m96,112,97,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary112-e15m96,112,97,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary112-e15m96,112,97,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
+configured binary,binary112-e15m96,112,97,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
+configured binary,binary112-e15m96,112,97,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
+configured binary,binary112-e15m96,112,97,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
+configured binary,binary128,128,113,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary128,128,113,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
+configured binary,binary128,128,113,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
+configured binary,binary128,128,113,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
+configured binary,binary128,128,113,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
+configured binary,binary128,128,113,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
+configured binary,p161,180,161,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,137,0,685000000
+configured binary,p161,180,161,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,143,0,715000000
+configured binary,p161,180,161,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,136,0,680000000
+configured binary,p161,180,161,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,144,0,720000000
+configured binary,p161,180,161,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,191,0,955000000
+configured binary,p161,180,161,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,134,0,670000000
+configured binary,binary256,256,237,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,137,0,685000000
+configured binary,binary256,256,237,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,143,0,715000000
+configured binary,binary256,256,237,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,137,0,685000000
+configured binary,binary256,256,237,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,145,0,725000000
+configured binary,binary256,256,237,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,196,0,980000000
+configured binary,binary256,256,237,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,135,0,675000000
+configured binary,p493,512,493,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,138,0,690000000
+configured binary,p493,512,493,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,144,0,720000000
+configured binary,p493,512,493,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,139,0,695000000
+configured binary,p493,512,493,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,149,0,745000000
+configured binary,p493,512,493,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,216,0,1080000000
+configured binary,p493,512,493,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,137,0,685000000
+configured binary,p1024,1043,1024,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,140,0,700000000
+configured binary,p1024,1043,1024,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,146,0,730000000
+configured binary,p1024,1043,1024,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,143,0,715000000
+configured binary,p1024,1043,1024,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,157,0,785000000
+configured binary,p1024,1043,1024,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,258,0,1290000000
+configured binary,p1024,1043,1024,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,141,0,705000000
+configured binary,p2048,2067,2048,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,143,0,715000000
+configured binary,p2048,2067,2048,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,149,0,745000000
+configured binary,p2048,2067,2048,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,151,0,755000000
+configured binary,p2048,2067,2048,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,173,0,865000000
+configured binary,p2048,2067,2048,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,338,0,1690000000
+configured binary,p2048,2067,2048,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,149,0,745000000
+configured binary,p4096,4115,4096,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,149,0,745000000
+configured binary,p4096,4115,4096,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,155,0,775000000
+configured binary,p4096,4115,4096,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,167,0,835000000
+configured binary,p4096,4115,4096,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,205,0,1025000000
+configured binary,p4096,4115,4096,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,498,0,2490000000
+configured binary,p4096,4115,4096,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,165,0,825000000
+nominal byte,OCP E4M3FN,8,4,add,2,OCP E4M3FN addition table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E4M3FN,8,4,sub,2,OCP E4M3FN subtraction table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E4M3FN,8,4,mul,2,OCP E4M3FN multiplication table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E4M3FN,8,4,div,2,OCP E4M3FN division table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E4M3FN,8,4,sqrt,2,OCP E4M3FN square-root table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,163876,20163876
+nominal byte,OCP E4M3FN,8,4,fma,1,static-byte exact fused multiply-add baseline,exact baseline,0,throughput,5000000,16777216,640,0,3200000000
+nominal byte,OCP E5M2,8,3,add,2,OCP E5M2 addition table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E5M2,8,3,sub,2,OCP E5M2 subtraction table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E5M2,8,3,mul,2,OCP E5M2 multiplication table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E5M2,8,3,div,2,OCP E5M2 division table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,OCP E5M2,8,3,sqrt,2,OCP E5M2 square-root table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,163876,20163876
+nominal byte,OCP E5M2,8,3,fma,1,static-byte exact fused multiply-add baseline,exact baseline,0,throughput,5000000,16777216,640,0,3200000000
+nominal byte,ONNX E4M3FNUZ,8,4,add,2,FNUZ E4M3 addition table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E4M3FNUZ,8,4,sub,2,FNUZ E4M3 subtraction table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E4M3FNUZ,8,4,mul,2,FNUZ E4M3 multiplication table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E4M3FNUZ,8,4,div,2,FNUZ E4M3 division table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E4M3FNUZ,8,4,sqrt,2,FNUZ E4M3 square-root table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,163876,20163876
+nominal byte,ONNX E4M3FNUZ,8,4,fma,1,static-byte exact fused multiply-add baseline,exact baseline,0,throughput,5000000,16777216,640,0,3200000000
+nominal byte,ONNX E5M2FNUZ,8,3,add,2,FNUZ E5M2 addition table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E5M2FNUZ,8,3,sub,2,FNUZ E5M2 subtraction table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E5M2FNUZ,8,3,mul,2,FNUZ E5M2 multiplication table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E5M2FNUZ,8,3,div,2,FNUZ E5M2 division table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,41944096,61944096
+nominal byte,ONNX E5M2FNUZ,8,3,sqrt,2,FNUZ E5M2 square-root table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,163876,20163876
+nominal byte,ONNX E5M2FNUZ,8,3,fma,1,static-byte exact fused multiply-add baseline,exact baseline,0,throughput,5000000,16777216,640,0,3200000000
+configured binary,finiteMaxNaN E4M3,8,4,add,2,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteMaxNaN E4M3,8,4,sub,2,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,finiteMaxNaN E4M3,8,4,mul,2,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteMaxNaN E4M3,8,4,div,2,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,finiteMaxNaN E4M3,8,4,sqrt,2,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,finiteMaxNaN E4M3,8,4,fma,2,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,finiteMaxNaN E5M2,8,3,add,2,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteMaxNaN E5M2,8,3,sub,2,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,finiteMaxNaN E5M2,8,3,mul,2,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteMaxNaN E5M2,8,3,div,2,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,finiteMaxNaN E5M2,8,3,sqrt,2,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,finiteMaxNaN E5M2,8,3,fma,2,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,finiteUnsignedZero E4M3,8,4,add,2,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteUnsignedZero E4M3,8,4,sub,2,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,finiteUnsignedZero E4M3,8,4,mul,2,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteUnsignedZero E4M3,8,4,div,2,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,finiteUnsignedZero E4M3,8,4,sqrt,2,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,finiteUnsignedZero E4M3,8,4,fma,2,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,finiteUnsignedZero E5M2,8,3,add,2,binary-interchange addition exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteUnsignedZero E5M2,8,3,sub,2,binary-interchange subtraction exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1639456,16639456
+configured binary,finiteUnsignedZero E5M2,8,3,mul,2,binary-interchange multiplication exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1442848,16442848
+configured binary,finiteUnsignedZero E5M2,8,3,div,2,binary-interchange division exhaustive table,exhaustive encoded-value table,65536,throughput,5000000,16777216,3,1508384,16508384
+configured binary,finiteUnsignedZero E5M2,8,3,sqrt,2,binary-interchange square root exhaustive table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,5924,15005924
+configured binary,finiteUnsignedZero E5M2,8,3,fma,2,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,20,0,100000000
+configured binary,custom-bias finite16,16,11,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,179,0,895000000
+configured binary,custom-bias finite16,16,11,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,179,0,895000000
+configured binary,custom-bias finite16,16,11,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,171,0,855000000
+configured binary,custom-bias finite16,16,11,div,1,binary-interchange division exact baseline,exact baseline,0,throughput,5000000,16777216,247,0,1235000000
+configured binary,custom-bias finite16,16,11,sqrt,1,binary-interchange square root exact baseline,exact baseline,0,throughput,5000000,16777216,286,0,1430000000
+configured binary,custom-bias finite16,16,11,fma,1,binary-interchange fused multiply-add exact baseline,exact baseline,0,throughput,5000000,16777216,248,0,1240000000
+configured posit,posit2,2,1,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16,throughput,5000000,16777216,4,2753,20002753
+configured posit,posit2,2,1,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16,throughput,5000000,16777216,4,2753,20002753
+configured posit,posit2,2,1,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16,throughput,5000000,16777216,4,2561,20002561
+configured posit,posit2,2,1,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16,throughput,5000000,16777216,4,3585,20003585
+configured posit,posit2,2,1,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,4,throughput,5000000,16777216,3,897,15000897
+configured posit,posit2,2,1,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,117,0,585000000
+configured posit,posit3,3,1,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,64,throughput,5000000,16777216,4,11649,20011649
+configured posit,posit3,3,1,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,64,throughput,5000000,16777216,4,11649,20011649
+configured posit,posit3,3,1,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,64,throughput,5000000,16777216,4,10753,20010753
+configured posit,posit3,3,1,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,64,throughput,5000000,16777216,4,15617,20015617
+configured posit,posit3,3,1,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,8,throughput,5000000,16777216,3,1953,15001953
+configured posit,posit3,3,1,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,121,0,605000000
+configured posit,posit4,4,1,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,49156,20049156
+configured posit,posit4,4,1,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,49156,20049156
+configured posit,posit4,4,1,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,45060,20045060
+configured posit,posit4,4,1,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,256,throughput,5000000,16777216,4,67588,20067588
+configured posit,posit4,4,1,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16,throughput,5000000,16777216,3,4225,15004225
+configured posit,posit4,4,1,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,126,0,630000000
+configured posit,posit5,5,1,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,1024,throughput,5000000,16777216,4,206864,20206864
+configured posit,posit5,5,1,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,1024,throughput,5000000,16777216,4,206864,20206864
+configured posit,posit5,5,1,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,1024,throughput,5000000,16777216,4,188432,20188432
+configured posit,posit5,5,1,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,1024,throughput,5000000,16777216,4,290832,20290832
+configured posit,posit5,5,1,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,32,throughput,5000000,16777216,3,9089,15009089
+configured posit,posit5,5,1,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,130,0,650000000
+configured posit,posit6,6,2,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,4096,throughput,5000000,16777216,4,868416,20868416
+configured posit,posit6,6,2,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,4096,throughput,5000000,16777216,4,868416,20868416
+configured posit,posit6,6,2,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,4096,throughput,5000000,16777216,4,786496,20786496
+configured posit,posit6,6,2,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,4096,throughput,5000000,16777216,4,1245248,21245248
+configured posit,posit6,6,2,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,64,throughput,5000000,16777216,3,19457,15019457
+configured posit,posit6,6,2,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,134,0,670000000
+configured posit,posit7,7,3,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16384,throughput,5000000,16777216,4,3637504,23637504
+configured posit,posit7,7,3,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16384,throughput,5000000,16777216,4,3637504,23637504
+configured posit,posit7,7,3,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16384,throughput,5000000,16777216,4,3277056,23277056
+configured posit,posit7,7,3,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,16384,throughput,5000000,16777216,4,5308672,25308672
+configured posit,posit7,7,3,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,128,throughput,5000000,16777216,3,41474,15041474
+configured posit,posit7,7,3,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,138,0,690000000
+configured posit,posit8,8,4,add,4,posit exhaustive encoded-value table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,15205376,35205376
+configured posit,posit8,8,4,sub,4,posit exhaustive encoded-value table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,15205376,35205376
+configured posit,posit8,8,4,mul,4,posit exhaustive encoded-value table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,13632512,33632512
+configured posit,posit8,8,4,div,4,posit exhaustive encoded-value table,exhaustive encoded-value table,65536,throughput,5000000,16777216,4,22545408,42545408
+configured posit,posit8,8,4,sqrt,4,posit exhaustive encoded-value table,exhaustive encoded-value table,256,throughput,5000000,16777216,3,88068,15088068
+configured posit,posit8,8,4,fma,4,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,142,0,710000000
+configured posit,posit9,9,5,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,80,0,400000000
+configured posit,posit9,9,5,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,80,0,400000000
+configured posit,posit9,9,5,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,93,0,465000000
+configured posit,posit9,9,5,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,174,0,870000000
+configured posit,posit9,9,5,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,174,0,870000000
+configured posit,posit9,9,5,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,147,0,735000000
+configured posit,posit16,16,12,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,95,0,475000000
+configured posit,posit16,16,12,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,95,0,475000000
+configured posit,posit16,16,12,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,115,0,575000000
+configured posit,posit16,16,12,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,231,0,1155000000
+configured posit,posit16,16,12,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,231,0,1155000000
+configured posit,posit16,16,12,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,176,0,880000000
+configured posit,posit17,17,13,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,97,0,485000000
+configured posit,posit17,17,13,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,97,0,485000000
+configured posit,posit17,17,13,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,118,0,590000000
+configured posit,posit17,17,13,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,239,0,1195000000
+configured posit,posit17,17,13,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,239,0,1195000000
+configured posit,posit17,17,13,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,180,0,900000000
+configured posit,posit32,32,28,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,130,0,650000000
+configured posit,posit32,32,28,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,130,0,650000000
+configured posit,posit32,32,28,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,166,0,830000000
+configured posit,posit32,32,28,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,362,0,1810000000
+configured posit,posit32,32,28,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,362,0,1810000000
+configured posit,posit32,32,28,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,244,0,1220000000
+configured posit,posit33,33,29,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,132,0,660000000
+configured posit,posit33,33,29,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,132,0,660000000
+configured posit,posit33,33,29,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,169,0,845000000
+configured posit,posit33,33,29,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,370,0,1850000000
+configured posit,posit33,33,29,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,370,0,1850000000
+configured posit,posit33,33,29,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,248,0,1240000000
+configured posit,posit64,64,60,add,1,posit direct packed-word exact sum,direct packed-word kernel,0,throughput,5000000,16777216,199,0,995000000
+configured posit,posit64,64,60,sub,1,posit direct packed-word exact difference,direct packed-word kernel,0,throughput,5000000,16777216,199,0,995000000
+configured posit,posit64,64,60,mul,1,posit direct packed-word exact product,direct packed-word kernel,0,throughput,5000000,16777216,267,0,1335000000
+configured posit,posit64,64,60,div,1,posit direct packed-word exact quotient,direct packed-word kernel,0,throughput,5000000,16777216,623,0,3115000000
+configured posit,posit64,64,60,sqrt,1,posit direct packed-word exact square root,direct packed-word kernel,0,throughput,5000000,16777216,623,0,3115000000
+configured posit,posit64,64,60,fma,1,posit direct packed-word exact fused accumulation,direct packed-word kernel,0,throughput,5000000,16777216,379,0,1895000000
+configured posit,posit65,65,61,add,1,posit direct packed-pair exact sum,direct packed-pair kernel,0,throughput,5000000,16777216,278,0,1390000000
+configured posit,posit65,65,61,sub,1,posit direct packed-pair exact difference,direct packed-pair kernel,0,throughput,5000000,16777216,278,0,1390000000
+configured posit,posit65,65,61,mul,1,posit direct packed-pair exact product,direct packed-pair kernel,0,throughput,5000000,16777216,347,0,1735000000
+configured posit,posit65,65,61,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,1501,0,7505000000
+configured posit,posit65,65,61,sqrt,1,posit direct packed-pair exact square root,direct packed-pair kernel,0,throughput,5000000,16777216,777,0,3885000000
+configured posit,posit65,65,61,fma,1,posit direct packed-pair exact fused accumulation,direct packed-pair kernel,0,throughput,5000000,16777216,531,0,2655000000
+configured posit,posit128,128,124,add,1,posit direct packed-pair exact sum,direct packed-pair kernel,0,throughput,5000000,16777216,479,0,2395000000
+configured posit,posit128,128,124,sub,1,posit direct packed-pair exact difference,direct packed-pair kernel,0,throughput,5000000,16777216,479,0,2395000000
+configured posit,posit128,128,124,mul,1,posit direct packed-pair exact product,direct packed-pair kernel,0,throughput,5000000,16777216,611,0,3055000000
+configured posit,posit128,128,124,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,2777,0,13885000000
+configured posit,posit128,128,124,sqrt,1,posit direct packed-pair exact square root,direct packed-pair kernel,0,throughput,5000000,16777216,1419,0,7095000000
+configured posit,posit128,128,124,fma,1,posit direct packed-pair exact fused accumulation,direct packed-pair kernel,0,throughput,5000000,16777216,925,0,4625000000
+configured posit,posit129,129,125,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,1475,0,7375000000
+configured posit,posit129,129,125,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,1475,0,7375000000
+configured posit,posit129,129,125,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,1209,0,6045000000
+configured posit,posit129,129,125,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,2797,0,13985000000
+configured posit,posit129,129,125,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,2797,0,13985000000
+configured posit,posit129,129,125,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,2313,0,11565000000
+configured posit,posit256,256,252,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,2777,0,13885000000
+configured posit,posit256,256,252,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,2777,0,13885000000
+configured posit,posit256,256,252,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,2257,0,11285000000
+configured posit,posit256,256,252,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,5369,0,26845000000
+configured posit,posit256,256,252,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,5369,0,26845000000
+configured posit,posit256,256,252,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,4393,0,21965000000
+configured posit,posit512,512,508,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,5401,0,27005000000
+configured posit,posit512,512,508,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,5401,0,27005000000
+configured posit,posit512,512,508,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,4369,0,21845000000
+configured posit,posit512,512,508,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,10553,0,52765000000
+configured posit,posit512,512,508,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,10553,0,52765000000
+configured posit,posit512,512,508,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,8585,0,42925000000
+configured posit,posit1024,1024,1020,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,10649,0,53245000000
+configured posit,posit1024,1024,1020,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,10649,0,53245000000
+configured posit,posit1024,1024,1020,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,8593,0,42965000000
+configured posit,posit1024,1024,1020,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,20921,0,104605000000
+configured posit,posit1024,1024,1020,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,20921,0,104605000000
+configured posit,posit1024,1024,1020,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,16969,0,84845000000
+configured posit,posit2048,2048,2044,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,21145,0,105725000000
+configured posit,posit2048,2048,2044,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,21145,0,105725000000
+configured posit,posit2048,2048,2044,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,17041,0,85205000000
+configured posit,posit2048,2048,2044,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,41657,0,208285000000
+configured posit,posit2048,2048,2044,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,41657,0,208285000000
+configured posit,posit2048,2048,2044,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,33737,0,168685000000
+configured posit,posit4096,4096,4092,add,1,posit direct exact-dyadic sum,width-generic exact-integer kernel,0,throughput,5000000,16777216,42137,0,210685000000
+configured posit,posit4096,4096,4092,sub,1,posit direct exact-dyadic difference,width-generic exact-integer kernel,0,throughput,5000000,16777216,42137,0,210685000000
+configured posit,posit4096,4096,4092,mul,1,posit direct exact-dyadic product,width-generic exact-integer kernel,0,throughput,5000000,16777216,33937,0,169685000000
+configured posit,posit4096,4096,4092,div,1,posit width-generic quotient-prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,83129,0,415645000000
+configured posit,posit4096,4096,4092,sqrt,1,posit width-generic integer-root prefix,width-generic exact-integer kernel,0,throughput,5000000,16777216,83129,0,415645000000
+configured posit,posit4096,4096,4092,fma,1,posit direct exact-dyadic fused accumulation,width-generic exact-integer kernel,0,throughput,5000000,16777216,67273,0,336365000000
+custom,TestByte,8,8,add,4,custom TestByte lazy specialization,custom lazy specialization,0,throughput,5000000,16777216,1,1000000,6000000

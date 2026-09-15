@@ -1,0 +1,3 @@
+oracle,status,formats,cases,mismatches
+ONNX low-bit decode,pass,6,1296,0
+P3109 4.0.3 value tables,pass,504,7602160,0

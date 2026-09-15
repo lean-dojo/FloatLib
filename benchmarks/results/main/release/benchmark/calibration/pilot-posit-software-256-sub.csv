@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,posit,posit256,256,sub,proved-software,posit direct exact-dyadic difference,result-dependent-fixture-chain,500,1777695,8724966011269725161,8663513674141518912,0,0,0

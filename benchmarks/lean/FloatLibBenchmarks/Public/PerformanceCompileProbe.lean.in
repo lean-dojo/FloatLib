@@ -1,0 +1,34 @@
+/-
+Copyright (c) 2026 FloatLib
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+import FloatLibBenchmarks.Public.Sweep
+import FloatLibBenchmarks.Support.Posit
+
+/-!
+Template for one disposable performance-compilation probe.
+
+`benchmarks/scripts/performance-regression.sh` substitutes the type and result observer into a
+temporary copy. The generated source is never checked in.
+-/
+
+open FloatLib.Floats
+open FloatLibBenchmarks.Support
+
+namespace FloatLibBenchmarks.Public.PerformanceCompileProbe
+
+abbrev Probe := @PROBE_TYPE@
+
+@[noinline] def probeAdd :
+    Nat → Array Probe → Array Probe → UInt64 → UInt64
+  | 0, _, _, sink => sink
+  | count + 1, xs, ys, sink =>
+      let index := count &&& 15
+      let result := ExecFloat.add xs[index]! ys[index]!
+      probeAdd count xs ys (Sink.mix sink (@RESULT_BITS@ result))
+
+end FloatLibBenchmarks.Public.PerformanceCompileProbe

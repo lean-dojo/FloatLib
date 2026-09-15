@@ -1,0 +1,9 @@
+16777216 1 
+  exsum with superacc = 18454937.6
+  exsum with FPE2 and superacc = 18454937.6
+  exsum with FPE4 and superacc = 18454937.6
+  exsum with FPE4 early-exit and superacc = 18454937.6
+  exsum with FPE6 early-exit and superacc = 18454937.6
+  exsum with FPE8 early-exit and superacc = 18454937.6
+  exsum with MPFR = 18454937.6
+TestPassed; ALL OK!

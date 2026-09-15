@@ -1,0 +1,12 @@
+info: FloatLeanSMTFP: no previous manifest, creating one from scratch
+info: toolchain not updated; already up-to-date
+info: mathlib: running post-update hooks
+Current branch: HEAD
+Using cache from origin: (some leanprover-community/mathlib4)
+No files to download
+Already decompressed 8690 file(s)
+✔ [4579/4581] Built LeanFloatTests.Oracle.SMT (6.3s)
+✔ [4580/4581] Built LeanFloatTests.Oracle.SMT:c.o (13s)
+✔ [4581/4581] Built smtFpRunner:exe (938ms)
+Build completed successfully (4581 jobs).
+RESULT cases=27492 errors=0

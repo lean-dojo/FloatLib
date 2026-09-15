@@ -1,0 +1,4 @@
+binary64	log1p	PASS
+binaryb16	cospi_bf16	PASS
+binaryb16	log2p1_bf16	PASS
+binaryb16	tgamma_bf16	PASS

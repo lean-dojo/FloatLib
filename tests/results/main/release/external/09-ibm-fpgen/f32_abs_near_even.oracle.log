@@ -1,0 +1,1 @@
+RESULT format=f32 operation=abs rounding=near_even cases=41 value_mismatches=0 flag_mismatches=0 parse_errors=0

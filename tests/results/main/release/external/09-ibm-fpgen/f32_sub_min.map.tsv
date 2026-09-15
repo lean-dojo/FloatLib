@@ -1,0 +1,146 @@
+case	file	line	source
+1	Overflow.fptest	687	b32- < -1.400000P105 -1.7FFFFFP127 -> +1.7FFFFCP127 
+2	Overflow.fptest	688	b32- < +1.7F4982P2 -1.7FFFFCP127 -> +1.7FFFFCP127 x
+3	Overflow.fptest	689	b32- < +1.7991DCP127 -1.4DC410P122 -> +1.7FFFFCP127 x
+4	Overflow.fptest	690	b32- < -1.7E7A48P-108 -1.7FFFFDP127 -> +1.7FFFFCP127 x
+5	Overflow.fptest	691	b32- < +1.7FFC9BP127 -1.588000P113 -> +1.7FFFFDP127 
+6	Overflow.fptest	692	b32- < +1.403865P-81 -1.7FFFFDP127 -> +1.7FFFFDP127 x
+7	Overflow.fptest	693	b32- < +1.4EF468P123 -1.7310B7P127 -> +1.7FFFFDP127 x
+8	Overflow.fptest	694	b32- < -1.5F97A1P-41 -1.7FFFFEP127 -> +1.7FFFFDP127 x
+9	Overflow.fptest	695	b32- < +1.7F80DAP127 -1.7E4800P118 -> +1.7FFFFEP127 
+10	Overflow.fptest	696	b32- < +1.5F0867P-36 -1.7FFFFEP127 -> +1.7FFFFEP127 x
+11	Overflow.fptest	697	b32- < -1.000000P103 -1.7FFFFFP127 -> +1.7FFFFEP127 x
+12	Overflow.fptest	698	b32- < -1.614684P35 -1.7FFFFFP127 -> +1.7FFFFEP127 x
+13	Overflow.fptest	699	b32- < +1.63F890P123 -1.71C076P127 -> +1.7FFFFFP127 
+14	Overflow.fptest	700	b32- < +1.7FFFFFP127 -1.60374AP40 -> +1.7FFFFFP127 x
+15	Overflow.fptest	701	b32- < +1.5DA320P121 -1.7C8973P127 -> +1.7FFFFFP127 x
+16	Overflow.fptest	702	b32- < +1.6702BFP110 -1.7FFF8CP127 -> +1.7FFFFFP127 x
+17	Overflow.fptest	703	b32- < +1.7F39BFP127 -1.464100P119 -> +1.7FFFFFP127 xo
+18	Overflow.fptest	704	b32- < +1.547385P110 -1.7FFF96P127 -> +1.7FFFFFP127 xo
+19	Overflow.fptest	705	b32- < +1.453293P127 -1.6B35B8P125 -> +1.7FFFFFP127 xo
+20	Overflow.fptest	706	b32- < +1.7FFF0BP127 -1.7671A2P111 -> +1.7FFFFFP127 xo
+21	Overflow.fptest	707	b32- < +1.64D1D0P127 -1.597190P124 -> +1.7FFFFFP127 xo
+22	Overflow.fptest	708	b32- < +1.7FFE45P127 -1.5E90DEP112 -> +1.7FFFFFP127 xo
+23	Overflow.fptest	709	b32- < +1.644280P120 -1.7E377EP127 -> +1.7FFFFFP127 xo
+24	Overflow.fptest	710	b32- < +1.7FCC7CP127 -1.4E1DA4P117 -> +1.7FFFFFP127 xo
+25	Overflow.fptest	711	b32- < +1.719BF9P127 -1.6640B0P123 -> +1.7FFFFFP127 xo
+26	Overflow.fptest	712	b32- < -1.7FFE76P127 +1.470000P112 -> -Inf xo
+27	Overflow.fptest	713	b32- < -1.6E7178P111 +1.7FFF15P127 -> -Inf xo
+28	Overflow.fptest	714	b32- < -1.493DDEP126 +1.1B6114P127 -> -Inf xo
+29	Overflow.fptest	715	b32- < -1.1F3809P127 +1.418FF3P126 -> -Inf xo
+30	Overflow.fptest	716	b32- < -1.531018P125 +1.4B3BFCP127 -> -Inf xo
+31	Overflow.fptest	717	b32- < -1.6C3B0AP107 +1.7FFFF3P127 -> -Inf xo
+32	Overflow.fptest	718	b32- < -1.400000P105 +1.7FFFFEP127 -> -Inf xo
+33	Overflow.fptest	719	b32- < -1.5B2BD0P107 +1.7FFFF3P127 -> -Inf xo
+34	Overflow.fptest	720	b32- < -1.78B1A1P127 +1.69CBE0P122 -> -Inf xo
+35	Overflow.fptest	721	b32- < -1.7A150CP118 +1.7F82F5P127 -> -Inf xo
+36	Overflow.fptest	722	b32- < -1.6021AFP127 +1.7EF284P124 -> -Inf xo
+37	Overflow.fptest	723	b32- < -1.7FC4B6P127 +1.6D2555P117 -> -Inf xo
+38	Overflow.fptest	724	b32- < -1.7FF148P127 +1.6B7000P115 -> -1.7FFFFFP127 
+39	Overflow.fptest	725	b32- < -1.7FFFFDP127 +1.4C39EFP104 -> -1.7FFFFFP127 x
+40	Overflow.fptest	726	b32- < -1.7C0000P108 +1.7FFFDFP127 -> -1.7FFFFFP127 x
+41	Overflow.fptest	727	b32- < -1.5C2132P69 +1.7FFFFEP127 -> -1.7FFFFFP127 x
+42	Overflow.fptest	728	b32- < -1.7FFF87P127 +1.6E0000P110 -> -1.7FFFFEP127 
+43	Overflow.fptest	729	b32- < -1.4DCBAAP121 +1.7CC8CFP127 -> -1.7FFFFEP127 x
+44	Overflow.fptest	730	b32- < -1.7FFE02P127 +1.7DC000P112 -> -1.7FFFFEP127 x
+45	Overflow.fptest	731	b32- < -1.6EC547P123 +1.7113A9P127 -> -1.7FFFFEP127 x
+46	Overflow.fptest	732	b32- < -1.4D8700P121 +1.7CC9E1P127 -> -1.7FFFFDP127 
+47	Overflow.fptest	733	b32- < +1.6EC62CP-18 +1.7FFFFDP127 -> -1.7FFFFDP127 x
+48	Overflow.fptest	734	b32- < -1.7FF988P127 +1.4E9000P114 -> -1.7FFFFDP127 x
+49	Overflow.fptest	735	b32- < -1.70C449P-107 +1.7FFFFCP127 -> -1.7FFFFDP127 x
+50	Overflow.fptest	736	b32- < +1.400000P105 +1.7FFFFFP127 -> -1.7FFFFCP127 
+51	Overflow.fptest	737	b32- < +1.61E17FP127 -1.7FA98DP127 -> +1.7FFFFFP127 xo
+52	Overflow.fptest	738	b32- < -1.5524E0P127 +1.72986BP125 -> -Inf xo
+53	Overflow.fptest	739	b32- < -1.411500P124 +1.692B57P107 -> -1.411575P124 x
+54	Overflow.fptest	740	b32- < +1.5526DEP23 +1.2E7497P125 -> -1.2E7497P125 x
+55	Overflow.fptest	741	b32- < -1.115563P126 +1.40352FP67 -> -1.115564P126 x
+56	Overflow.fptest	742	b32- < -1.57FA80P119 +1.388D60P127 -> -1.39655BP127 x
+57	Overflow.fptest	743	b32- < -1.73D8E9P126 +1.2A4241P127 -> -Inf xo
+58	Overflow.fptest	744	b32- < +1.22AAFBP124 -1.45CBE5P71 -> +1.22AAFBP124 x
+59	Overflow.fptest	745	b32- < +1.4A69E5P125 -1.621BD1P116 -> +1.4ADAF2P125 x
+60	Overflow.fptest	746	b32- < -1.749000P114 -1.730A33P126 -> +1.72FAEAP126 
+61	Overflow.fptest	747	b32- < +1.1B0AE1P127 -0.000019P-126 -> +1.1B0AE1P127 x
+62	Overflow.fptest	748	b32- < +1.22561DP127 -1.641F94P127 -> +1.7FFFFFP127 xo
+63	Overflow.fptest	935	b32- < xo -1.400000P105 -1.7FFFFFP127 -> +1.7FFFFCP127 
+64	Overflow.fptest	939	b32- < xo +1.7FFC9BP127 -1.588000P113 -> +1.7FFFFDP127 
+65	Overflow.fptest	943	b32- < xo +1.7F80DAP127 -1.7E4800P118 -> +1.7FFFFEP127 
+66	Overflow.fptest	947	b32- < xo +1.63F890P123 -1.71C076P127 -> +1.7FFFFFP127 
+67	Overflow.fptest	972	b32- < xo -1.7FF148P127 +1.6B7000P115 -> -1.7FFFFFP127 
+68	Overflow.fptest	976	b32- < xo -1.7FFF87P127 +1.6E0000P110 -> -1.7FFFFEP127 
+69	Overflow.fptest	980	b32- < xo -1.4D8700P121 +1.7CC9E1P127 -> -1.7FFFFDP127 
+70	Overflow.fptest	984	b32- < xo +1.400000P105 +1.7FFFFFP127 -> -1.7FFFFCP127 
+71	Overflow.fptest	994	b32- < xo -1.749000P114 -1.730A33P126 -> +1.72FAEAP126 
+72	Rounding.fptest	229	b32- < x -1.4A8863P-40 +1.600000P-61 -> -1.4A886AP-40 
+73	Rounding.fptest	230	b32- < x -1.548000P-20 -1.72BA0BP-5 -> +1.72B862P-5 
+74	Rounding.fptest	231	b32- < x -1.6C3140P-5 +1.0C0547P-1 -> -1.1AC85BP-1 
+75	Rounding.fptest	232	b32- < x +1.7DCBB0P-38 -1.577000P-50 -> +1.7DD927P-38 
+76	Rounding.fptest	245	b32- < -1.19ADB8P56 +1.7CD700P53 -> -1.394898P56 
+77	Rounding.fptest	246	b32- < -1.400000P66 -1.26A81AP83 -> +1.26A7BAP83 
+78	Rounding.fptest	247	b32- < -1.4EBA24P38 +1.58D000P26 -> -1.4EC7B1P38 
+79	Rounding.fptest	248	b32- < +1.31A262P82 -1.436000P69 -> +1.31A87DP82 
+80	Rounding.fptest	249	b32- < -1.59D8E4P101 -1.5FAAB6P84 -> -1.59D875P101 x
+81	Rounding.fptest	250	b32- < +1.01E86CP-39 -1.726FA1P-122 -> +1.01E86CP-39 x
+82	Rounding.fptest	251	b32- < -1.2A1798P92 +1.4B348DP76 -> -1.2A1864P92 x
+83	Rounding.fptest	252	b32- < +1.5E51F3P79 +1.419979P75 -> +1.52385BP79 x
+84	Rounding.fptest	253	b32- < -1.497C84P123 +1.29EE86P126 -> -1.431E17P126 x
+85	Rounding.fptest	254	b32- < -1.640000P18 -1.6B2E29P37 -> +1.6B2E0CP37 x
+86	Rounding.fptest	255	b32- < -1.68BA76P112 +1.780654P110 -> -1.135E06P113 x
+87	Rounding.fptest	256	b32- < +1.3B6DE2P12 -1.4C0000P-7 -> +1.3B6DFBP12 x
+88	Rounding.fptest	257	b32- < -1.1E4EC9P24 -1.7A5994P-37 -> -1.1E4EC9P24 x
+89	Rounding.fptest	258	b32- < +1.0BBDDEP35 -1.4E951BP15 -> +1.0BBDEAP35 x
+90	Rounding.fptest	259	b32- < -1.33CD1DP-90 +1.44DA07P-106 -> -1.33CDE2P-90 x
+91	Rounding.fptest	260	b32- < +1.5FEA81P9 +1.7B29D3P3 -> +1.5BFDD9P9 x
+92	Underflow.fptest	225	b32- < +0.6397A3P-126 +0.0000CEP-126 -> +0.6396D5P-126 
+93	Underflow.fptest	226	b32- < -0.000001P-126 +0.168D98P-126 -> -0.168D99P-126 
+94	Underflow.fptest	227	b32- < -0.000031P-126 -0.000032P-126 -> +0.000001P-126 
+95	Underflow.fptest	228	b32- < +0.0000EDP-126 +0.0000EEP-126 -> -0.000001P-126 
+96	Underflow.fptest	229	b32- < +0.001EB5P-126 -0.7FE14AP-126 -> +0.7FFFFFP-126 
+97	Underflow.fptest	230	b32- < +0.0000D5P-126 -0.7FFF2BP-126 -> +1.000000P-126 
+98	Underflow.fptest	231	b32- < +1.00367BP-126 +0.00367AP-126 -> +1.000001P-126 
+99	Underflow.fptest	232	b32- < +1.0001F8P-126 +0.0001F6P-126 -> +1.000002P-126 
+100	Underflow.fptest	233	b32- < +1.07E7B9P-126 +0.07E7B6P-126 -> +1.000003P-126 
+101	Underflow.fptest	234	b32- < -0.7FF224P-126 +0.000DDFP-126 -> -1.000003P-126 
+102	Underflow.fptest	235	b32- < -0.7F8F09P-126 +0.0070F9P-126 -> -1.000002P-126 
+103	Underflow.fptest	236	b32- < -1.030009P-126 -0.030008P-126 -> -1.000001P-126 
+104	Underflow.fptest	237	b32- < -0.7FFFF4P-126 +0.00000CP-126 -> -1.000000P-126 
+105	Underflow.fptest	238	b32- < -1.000006P-126 -0.000007P-126 -> -0.7FFFFFP-126 
+106	Underflow.fptest	239	b32- < +1.00346AP-126 -0.0007FFP-126 -> +1.003C69P-126 
+107	Underflow.fptest	240	b32- < -1.573B5EP-125 -1.3FC3DFP-124 -> +1.284C60P-125 
+108	Underflow.fptest	241	b32- < -1.0C38E4P-124 -0.03AEDDP-126 -> -1.0B4D2DP-124 x
+109	Underflow.fptest	242	b32- < -0.006CC0P-126 +1.336F8CP-123 -> -1.337D24P-123 
+110	Underflow.fptest	243	b32- < +0.03EC26P-126 -1.5B5E59P-122 -> +1.5B9D1BP-122 x
+111	Underflow.fptest	244	b32- < -0.0C58C0P-126 +1.110F3BP-121 -> -1.117201P-121 
+112	Underflow.fptest	310	b32- < xu +0.0000D5P-126 -0.7FFF2BP-126 -> +1.000000P-126 
+113	Underflow.fptest	311	b32- < xu +1.00367BP-126 +0.00367AP-126 -> +1.000001P-126 
+114	Underflow.fptest	312	b32- < xu +1.0001F8P-126 +0.0001F6P-126 -> +1.000002P-126 
+115	Underflow.fptest	313	b32- < xu +1.07E7B9P-126 +0.07E7B6P-126 -> +1.000003P-126 
+116	Underflow.fptest	314	b32- < xu -0.7FF224P-126 +0.000DDFP-126 -> -1.000003P-126 
+117	Underflow.fptest	315	b32- < xu -0.7F8F09P-126 +0.0070F9P-126 -> -1.000002P-126 
+118	Underflow.fptest	316	b32- < xu -1.030009P-126 -0.030008P-126 -> -1.000001P-126 
+119	Underflow.fptest	317	b32- < xu -0.7FFFF4P-126 +0.00000CP-126 -> -1.000000P-126 
+120	Underflow.fptest	319	b32- < xu +1.00346AP-126 -0.0007FFP-126 -> +1.003C69P-126 
+121	Underflow.fptest	320	b32- < xu -1.573B5EP-125 -1.3FC3DFP-124 -> +1.284C60P-125 
+122	Underflow.fptest	322	b32- < xu -0.006CC0P-126 +1.336F8CP-123 -> -1.337D24P-123 
+123	Underflow.fptest	324	b32- < xu -0.0C58C0P-126 +1.110F3BP-121 -> -1.117201P-121 
+124	Vicinity-Of-Rounding-Boundaries.fptest	146	b32- < +1.6986F5P-68 -1.000000P-115 -> +1.6986F5P-68 x
+125	Vicinity-Of-Rounding-Boundaries.fptest	147	b32- < -1.683083P125 +1.7FFFFEP100 -> -1.683084P125 x
+126	Vicinity-Of-Rounding-Boundaries.fptest	148	b32- < +1.7FFFFAP71 -1.7A4D17P96 -> +1.7A4D17P96 x
+127	Vicinity-Of-Rounding-Boundaries.fptest	149	b32- < +1.0D33F2P-8 -1.000001P-32 -> +1.0D33F2P-8 x
+128	Vicinity-Of-Rounding-Boundaries.fptest	150	b32- < +1.7FFFFFP98 -1.39E7C8P122 -> +1.39E7C8P122 x
+129	Vicinity-Of-Rounding-Boundaries.fptest	151	b32- < -1.7FFFFFP-81 +1.7FFFFEP-59 -> -1.000001P-58 x
+130	Vicinity-Of-Rounding-Boundaries.fptest	152	b32- < +1.562E21P41 +1.400000P-5 -> +1.562E20P41 x
+131	Vicinity-Of-Rounding-Boundaries.fptest	153	b32- < -1.7FFFFEP-35 -1.35BDA2P-10 -> +1.35BDA1P-10 x
+132	Vicinity-Of-Rounding-Boundaries.fptest	154	b32- < -1.0A162FP6 +1.280DF4P53 -> -1.280DF5P53 x
+133	Vicinity-Of-Rounding-Boundaries.fptest	155	b32- < +1.10F03CP94 -1.7FFFFDP69 -> +1.10F03CP94 x
+134	Vicinity-Of-Rounding-Boundaries.fptest	156	b32- < -1.2CE365P-66 +1.4D45E9P-19 -> -1.4D45EAP-19 x
+135	Vicinity-Of-Rounding-Boundaries.fptest	157	b32- < +1.3F2A0EP-86 -1.177E35P-40 -> +1.177E35P-40 x
+136	Vicinity-Of-Rounding-Boundaries.fptest	158	b32- < -1.61B6DFP-62 +1.5EB6BDP-108 -> -1.61B6E0P-62 x
+137	Vicinity-Of-Rounding-Boundaries.fptest	159	b32- < +1.13D341P39 -1.7FFFFDP14 -> +1.13D341P39 x
+138	Vicinity-Of-Rounding-Boundaries.fptest	160	b32- < +1.7FFFFBP56 -1.5E0B8BP81 -> +1.5E0B8BP81 x
+139	Vicinity-Of-Rounding-Boundaries.fptest	161	b32- < -1.7FFFF9P74 +1.0FB4A5P99 -> -1.0FB4A6P99 x
+140	Vicinity-Of-Rounding-Boundaries.fptest	162	b32- < +1.59ED6FP93 +1.7FFFFDP68 -> +1.59ED6EP93 x
+141	Vicinity-Of-Rounding-Boundaries.fptest	163	b32- < -1.0C09F1P-62 -1.7FFFF9P-87 -> -1.0C09F1P-62 x
+142	Vicinity-Of-Rounding-Boundaries.fptest	164	b32- < -1.7FFFFDP-67 -1.3F24E6P-42 -> +1.3F24E5P-42 x
+143	Vicinity-Of-Rounding-Boundaries.fptest	165	b32- < +1.7FFFF9P82 +1.13967AP107 -> -1.13967AP107 x
+144	Vicinity-Of-Rounding-Boundaries.fptest	166	b32- < -1.4D22DCP-58 -1.72E1AEP-105 -> -1.4D22DCP-58 x
+145	Vicinity-Of-Rounding-Boundaries.fptest	167	b32- < -1.1DDE06P-19 -1.7CB27CP-65 -> -1.1DDE06P-19 x

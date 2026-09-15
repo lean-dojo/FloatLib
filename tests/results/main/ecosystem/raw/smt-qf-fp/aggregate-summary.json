@@ -1,0 +1,37 @@
+{
+  "adapter": "smt_fp_campaign",
+  "counts": {
+    "bit_mismatches": 0,
+    "exact_bit_cases": 126160,
+    "generated": 147876,
+    "mismatches": 0,
+    "missing_floatlean": 0,
+    "nan_class_cases": 21716,
+    "nan_class_mismatches": 0,
+    "protocol_errors": 0,
+    "tool_failures": 0
+  },
+  "random_per_format_per_sampled_run": 64,
+  "runs": 17,
+  "sampled_runs": 16,
+  "status": "pass",
+  "summaries": [
+    "edge-only/summary.json",
+    "seed-00/summary.json",
+    "seed-01/summary.json",
+    "seed-02/summary.json",
+    "seed-03/summary.json",
+    "seed-04/summary.json",
+    "seed-05/summary.json",
+    "seed-06/summary.json",
+    "seed-07/summary.json",
+    "seed-08/summary.json",
+    "seed-09/summary.json",
+    "seed-10/summary.json",
+    "seed-11/summary.json",
+    "seed-12/summary.json",
+    "seed-13/summary.json",
+    "seed-14/summary.json",
+    "seed-15/summary.json"
+  ]
+}

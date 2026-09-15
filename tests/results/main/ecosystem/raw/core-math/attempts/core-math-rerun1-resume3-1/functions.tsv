@@ -1,0 +1,4 @@
+binary64	acos	PASS
+binaryb16	acosh_bf16	PASS
+binaryb16	exp2m1_bf16	PASS
+binaryb16	sincos_bf16	PASS

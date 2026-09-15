@@ -1,0 +1,16 @@
+suite	evidence	status	seconds	log
+daisy	upstream-qualification	pass	944	raw/daisy/run.log
+fptaylor	upstream-qualification	pass	284	raw/fptaylor/run.log
+herbie	upstream-qualification	observational-complete	670	raw/herbie/run.log
+openlibm	upstream-qualification	pass	24	raw/openlibm/run.log
+rlibm-all	upstream-qualification	qualified-pass	477	raw/rlibm-all/run.log
+reproblas	upstream-qualification	qualified-pass	132	raw/reproblas/run.log
+exblas	upstream-qualification	qualified-pass	37	raw/exblas/run.log
+smt-qf-fp	direct-differential	pass	297	raw/smt-qf-fp/run.log
+transcendental-direct	direct-observational	observational-complete	593	raw/transcendental-direct/run.log
+fpbench	upstream-qualification	qualified-pass	338	raw/fpbench/run.log
+verificarlo	upstream-qualification	pass	883	raw/verificarlo/run.log
+core-math	upstream-qualification	qualified-pass	28238	raw/core-math/run.log
+flit-base	upstream-qualification	pass	1524	raw/flit-base/run.log
+flit-openmpi	upstream-qualification	pass	1673	raw/flit-openmpi/run.log
+flit-mpich	upstream-qualification	pass	672	raw/flit-mpich/run.log

@@ -1,0 +1,1728 @@
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1791 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:8 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:9 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1530 kB]
+Get:10 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1240 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1908 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2151 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1564 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Fetched 32.6 MB in 3s (9879 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bash is already the newest version (5.2.21-2ubuntu4).
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu bzip2 cpp cpp-13
+  cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu dpkg-dev g++-13
+  g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc-13 gcc-13-base
+  gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git-man icu-devtools libasan8
+  libatomic1 libbinutils libbrotli1 libc-bin libc-dev-bin libc6 libc6-dev
+  libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64
+  libdpkg-perl liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64
+  libgdbm6t64 libgmp-dev libgmpxx4ldbl libgomp1 libgprofng0 libgssapi-krb5-2
+  libhwasan0 libicu74 libisl23 libitm1 libjansson4 libk5crypto3 libkeyutils1
+  libkrb5-3 libkrb5support0 libldap2 liblsan0 libmpc3 libnghttp2-14
+  libperl5.38t64 libpsl5t64 libpython3-stdlib libpython3.12-minimal
+  libpython3.12-stdlib libquadmath0 libreadline8t64 librtmp1 libsasl2-2
+  libsasl2-modules-db libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev
+  libtsan2 libubsan1 linux-libc-dev lto-disabled-list media-types netbase
+  openssl patch perl perl-modules-5.38 python3-minimal python3.12
+  python3.12-minimal readline-common rpcsvc-proto tzdata xz-utils
+Suggested packages:
+  binutils-doc gprofng-gui bzip2-doc cpp-doc gcc-13-locales cpp-13-doc
+  debian-keyring g++-multilib g++-13-multilib gcc-13-doc gcc-multilib
+  manpages-dev autoconf automake libtool flex bison gdb gcc-doc
+  gcc-13-multilib gdb-x86-64-linux-gnu gettext-base git-daemon-run
+  | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb git-cvs
+  git-mediawiki git-svn manpages glibc-doc libnss-nis libnss-nisplus gnupg
+  | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg bzr gdbm-l10n gmp-doc
+  libgmp10-doc krb5-doc krb5-user icu-doc libmpfr-doc libstdc++-13-doc
+  make-doc ed diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl libtap-harness-archive-perl python3-doc
+  python3-tk python3-venv python3.12-venv python3.12-doc binfmt-support
+  readline-doc
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  libalgorithm-merge-perl less ssh-client manpages manpages-dev libc-devtools
+  libfile-fcntllock-perl liblocale-gettext-perl krb5-locales libldap-common
+  publicsuffix libsasl2-modules
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cpp cpp-13 cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu curl
+  dpkg-dev g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13
+  gcc-13-base gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git git-man
+  icu-devtools libasan8 libatomic1 libbinutils libbrotli1 libc-dev-bin
+  libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls
+  libcurl4t64 libdpkg-perl liberror-perl libexpat1 libgcc-13-dev
+  libgdbm-compat4t64 libgdbm6t64 libgmp-dev libgmpxx4ldbl libgomp1 libgprofng0
+  libgssapi-krb5-2 libhwasan0 libicu-dev libicu74 libisl23 libitm1 libjansson4
+  libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap2 liblsan0
+  libmpc3 libmpfr-dev libmpfr6 libnghttp2-14 libperl5.38t64 libpsl5t64
+  libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib libquadmath0
+  libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db libsframe1
+  libsqlite3-0 libssh-4 libstdc++-13-dev libtsan2 libubsan1 linux-libc-dev
+  locales lto-disabled-list make media-types netbase openssl patch perl
+  perl-modules-5.38 python3 python3-minimal python3.12 python3.12-minimal
+  readline-common rpcsvc-proto time tzdata xz-utils z3
+The following packages will be upgraded:
+  libc-bin libc6
+2 upgraded, 99 newly installed, 0 to remove and 1 not upgraded.
+Need to get 133 MB of archives.
+After this operation, 487 MB of additional disk space will be used.
+Get:1 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6 amd64 2.39-0ubuntu8.9 [3264 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-minimal amd64 3.12.3-1ubuntu0.17 [839 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libexpat1 amd64 2.6.1-2ubuntu0.4 [88.2 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12-minimal amd64 3.12.3-1ubuntu0.17 [2335 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-bin amd64 2.39-0ubuntu8.9 [682 kB]
+Get:6 http://security.ubuntu.com/ubuntu noble-security/main amd64 locales all 2.39-0ubuntu8.9 [4232 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-minimal amd64 3.12.3-0ubuntu2.1 [27.4 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble/main amd64 media-types all 10.1.0 [27.5 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 netbase all 6.4 [13.1 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 tzdata all 2026c-0ubuntu0.24.04.1 [280 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/main amd64 readline-common all 8.2-4build1 [56.5 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/main amd64 libreadline8t64 amd64 8.2-4build1 [153 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsqlite3-0 amd64 3.45.1-1ubuntu2.7 [701 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-stdlib amd64 3.12.3-1ubuntu0.17 [2071 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12 amd64 3.12.3-1ubuntu0.17 [651 kB]
+Get:16 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-dev-bin amd64 2.39-0ubuntu8.9 [20.4 kB]
+Get:17 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6-dev amd64 2.39-0ubuntu8.9 [2126 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3-stdlib amd64 3.12.3-0ubuntu2.1 [10.1 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3 amd64 3.12.3-0ubuntu2.1 [23.0 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.4 [3110 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm6t64 amd64 1.23-5.1build1 [34.4 kB]
+Get:22 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.4 [4870 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl amd64 5.38.2-3.2ubuntu0.4 [231 kB]
+Get:25 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 openssl amd64 3.0.13-0ubuntu3.15 [1003 kB]
+Get:26 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260601~24.04.1 [139 kB]
+Get:27 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.8 [34.7 kB]
+Get:28 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libk5crypto3 amd64 1.20.1-6ubuntu2.8 [81.9 kB]
+Get:29 http://archive.ubuntu.com/ubuntu noble/main amd64 libkeyutils1 amd64 1.6.3-3build1 [9490 B]
+Get:30 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5-3 amd64 1.20.1-6ubuntu2.8 [348 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgssapi-krb5-2 amd64 1.20.1-6ubuntu2.8 [143 kB]
+Get:32 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libicu74 amd64 74.2-1ubuntu3.1 [10.9 MB]
+Get:33 http://archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble/main amd64 libpsl5t64 amd64 0.21.2-1.1build1 [57.1 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble/main amd64 time amd64 1.9-0.2build1 [45.2 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15.7 kB]
+Get:40 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98.0 kB]
+Get:42 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94.5 kB]
+Get:43 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2463 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18.2 kB]
+Get:46 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 linux-libc-dev amd64 6.8.0-139.139 [1527 kB]
+Get:47 http://archive.ubuntu.com/ubuntu noble/main amd64 libcrypt-dev amd64 1:4.4.36-4build1 [112 kB]
+Get:48 http://archive.ubuntu.com/ubuntu noble/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu7 [67.4 kB]
+Get:49 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-base amd64 13.3.0-6ubuntu2~24.04.1 [51.6 kB]
+Get:50 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libisl23 amd64 0.26-3build1.1 [680 kB]
+Get:51 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr6 amd64 4.2.1-1build1.1 [353 kB]
+Get:52 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpc3 amd64 1.3.1-1build1.1 [54.6 kB]
+Get:53 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [10.7 MB]
+Get:54 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13 amd64 13.3.0-6ubuntu2~24.04.1 [1042 B]
+Get:55 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5326 B]
+Get:56 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp amd64 4:13.2.0-7ubuntu1 [22.4 kB]
+Get:57 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48.0 kB]
+Get:58 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1 amd64 14.2.0-4ubuntu2~24.04.1 [148 kB]
+Get:59 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29.7 kB]
+Get:60 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1 amd64 14.2.0-4ubuntu2~24.04.1 [10.5 kB]
+Get:61 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3027 kB]
+Get:62 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1322 kB]
+Get:63 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2772 kB]
+Get:64 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1184 kB]
+Get:65 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1641 kB]
+Get:66 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Get:67 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2681 kB]
+Get:68 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21.1 MB]
+Get:69 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Get:70 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1212 B]
+Get:71 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5018 B]
+Get:72 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2420 kB]
+Get:73 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12.2 MB]
+Get:74 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16.0 kB]
+Get:75 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Get:76 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1100 B]
+Get:77 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Get:78 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Get:79 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1ubuntu0.1 [34.6 kB]
+Get:80 http://archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:81 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12.4 kB]
+Get:82 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1074 kB]
+Get:83 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:84 http://archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:85 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:86 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:87 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:88 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:89 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:90 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.13 [343 kB]
+Get:91 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 curl amd64 8.5.0-2ubuntu10.13 [226 kB]
+Get:92 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.13 [335 kB]
+Get:93 http://archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:94 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:95 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:96 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 icu-devtools amd64 74.2-1ubuntu3.1 [212 kB]
+Get:97 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmpxx4ldbl amd64 2:6.3.0+dfsg-2ubuntu6.1 [9888 B]
+Get:98 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmp-dev amd64 2:6.3.0+dfsg-2ubuntu6.1 [340 kB]
+Get:99 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libicu-dev amd64 74.2-1ubuntu3.1 [11.9 MB]
+Get:100 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr-dev amd64 4.2.1-1build1.1 [288 kB]
+Get:101 http://archive.ubuntu.com/ubuntu noble/universe amd64 z3 amd64 4.8.12-3.1build1 [5911 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 133 MB in 4s (31.8 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc6_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6:amd64 (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc6:amd64 (2.39-0ubuntu8.9) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-bin (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libpython3.12-minimal:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../libexpat1_2.6.1-2ubuntu0.4_amd64.deb ...
+Unpacking libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Selecting previously unselected package python3.12-minimal.
+Preparing to unpack .../python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Setting up libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Setting up python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4700 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_10.1.0_all.deb ...
+Unpacking media-types (10.1.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package tzdata.
+Preparing to unpack .../3-tzdata_2026c-0ubuntu0.24.04.1_all.deb ...
+Unpacking tzdata (2026c-0ubuntu0.24.04.1) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-4build1_all.deb ...
+Unpacking readline-common (8.2-4build1) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-4build1_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-4build1) ...
+Selecting previously unselected package libsqlite3-0:amd64.
+Preparing to unpack .../6-libsqlite3-0_3.45.1-1ubuntu2.7_amd64.deb ...
+Unpacking libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Selecting previously unselected package libpython3.12-stdlib:amd64.
+Preparing to unpack .../7-libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3.12.
+Preparing to unpack .../8-python3.12_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../9-libpython3-stdlib_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package python3.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5706 files and directories currently installed.)
+Preparing to unpack .../00-python3_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3 (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../01-perl-modules-5.38_5.38.2-3.2ubuntu0.4_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package libgdbm6t64:amd64.
+Preparing to unpack .../02-libgdbm6t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm6t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../03-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../04-libperl5.38t64_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../05-perl_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../06-openssl_3.0.13-0ubuntu3.15_amd64.deb ...
+Unpacking openssl (3.0.13-0ubuntu3.15) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../07-ca-certificates_20260601~24.04.1_all.deb ...
+Unpacking ca-certificates (20260601~24.04.1) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../08-libkrb5support0_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../09-libk5crypto3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../10-libkeyutils1_1.6.3-3build1_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-3build1) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../11-libkrb5-3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../12-libgssapi-krb5-2_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libicu74:amd64.
+Preparing to unpack .../13-libicu74_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking libicu74:amd64 (74.2-1ubuntu3.1) ...
+Selecting previously unselected package locales.
+Preparing to unpack .../14-locales_2.39-0ubuntu8.9_all.deb ...
+Unpacking locales (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../15-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../16-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libpsl5t64:amd64.
+Preparing to unpack .../17-libpsl5t64_0.21.2-1.1build1_amd64.deb ...
+Unpacking libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Selecting previously unselected package time.
+Preparing to unpack .../18-time_1.9-0.2build1_amd64.deb ...
+Unpacking time (1.9-0.2build1) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../19-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../20-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libsframe1:amd64.
+Preparing to unpack .../21-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../22-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../23-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../24-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../25-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../26-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../27-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../28-libc-dev-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-dev-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../29-linux-libc-dev_6.8.0-139.139_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.8.0-139.139) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../30-libcrypt-dev_1%3a4.4.36-4build1_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../31-rpcsvc-proto_1.4.2-0ubuntu7_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.2-0ubuntu7) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../32-libc6-dev_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Selecting previously unselected package gcc-13-base:amd64.
+Preparing to unpack .../33-gcc-13-base_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../34-libisl23_0.26-3build1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.26-3build1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../35-libmpfr6_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../36-libmpc3_1.3.1-1build1.1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1build1.1) ...
+Selecting previously unselected package cpp-13-x86-64-linux-gnu.
+Preparing to unpack .../37-cpp-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-13.
+Preparing to unpack .../38-cpp-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../39-cpp-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../40-cpp_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../41-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../42-libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../43-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../44-libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../45-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../46-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../47-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../48-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libhwasan0:amd64.
+Preparing to unpack .../49-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../50-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgcc-13-dev:amd64.
+Preparing to unpack .../51-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13-x86-64-linux-gnu.
+Preparing to unpack .../52-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13.
+Preparing to unpack .../53-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-x86-64-linux-gnu.
+Preparing to unpack .../54-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../55-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libstdc++-13-dev:amd64.
+Preparing to unpack .../56-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13-x86-64-linux-gnu.
+Preparing to unpack .../57-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13.
+Preparing to unpack .../58-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-x86-64-linux-gnu.
+Preparing to unpack .../59-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../60-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++ (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package make.
+Preparing to unpack .../61-make_4.3-4.1build2_amd64.deb ...
+Unpacking make (4.3-4.1build2) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../62-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Unpacking libdpkg-perl (1.22.6ubuntu6.6) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../63-bzip2_1.0.8-5.1ubuntu0.1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5.1ubuntu0.1) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../64-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Selecting previously unselected package lto-disabled-list.
+Preparing to unpack .../65-lto-disabled-list_47_all.deb ...
+Unpacking lto-disabled-list (47) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../66-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Unpacking dpkg-dev (1.22.6ubuntu6.6) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../67-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../68-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../69-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../70-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../71-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../72-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../73-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../74-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../75-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../76-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../77-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../78-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../79-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package icu-devtools.
+Preparing to unpack .../80-icu-devtools_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking icu-devtools (74.2-1ubuntu3.1) ...
+Selecting previously unselected package libgmpxx4ldbl:amd64.
+Preparing to unpack .../81-libgmpxx4ldbl_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libgmp-dev:amd64.
+Preparing to unpack .../82-libgmp-dev_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libicu-dev:amd64.
+Preparing to unpack .../83-libicu-dev_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking libicu-dev:amd64 (74.2-1ubuntu3.1) ...
+Selecting previously unselected package libmpfr-dev:amd64.
+Preparing to unpack .../84-libmpfr-dev_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package z3.
+Preparing to unpack .../85-z3_4.8.12-3.1build1_amd64.deb ...
+Unpacking z3 (4.8.12-3.1build1) ...
+Setting up media-types (10.1.0) ...
+Setting up time (1.9-0.2build1) ...
+Setting up libkeyutils1:amd64 (1.6.3-3build1) ...
+Setting up lto-disabled-list (47) ...
+Setting up libgdbm6t64:amd64 (1.23-5.1build1) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Setting up binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Setting up libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up linux-libc-dev:amd64 (6.8.0-139.139) ...
+Setting up libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up bzip2 (1.0.8-5.1ubuntu0.1) ...
+Setting up locales (2.39-0ubuntu8.9) ...
+Generating locales (this might take a while)...
+Generation complete.
+Setting up z3 (4.8.12-3.1build1) ...
+Setting up libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up tzdata (2026c-0ubuntu0.24.04.1) ...
+
+Current default time zone: 'Etc/UTC'
+Local time is now:      Thu Sep 10 15:14:59 UTC 2026.
+Universal Time is now:  Thu Sep 10 15:14:59 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up rpcsvc-proto (1.4.2-0ubuntu7) ...
+Setting up gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up make (4.3-4.1build2) ...
+Setting up libmpfr6:amd64 (4.2.1-1build1.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Setting up libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libmpc3:amd64 (1.3.1-1build1.1) ...
+Setting up libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up patch (2.7.6-7build3) ...
+Setting up libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libicu74:amd64 (74.2-1ubuntu3.1) ...
+Setting up libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Setting up libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up netbase (6.4) ...
+Setting up libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Setting up libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Setting up libisl23:amd64 (0.26-3build1.1) ...
+Setting up libc-dev-bin (2.39-0ubuntu8.9) ...
+Setting up openssl (3.0.13-0ubuntu3.15) ...
+Setting up readline-common (8.2-4build1) ...
+Setting up libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libctf0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Setting up ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+121 added, 0 removed; done.
+Setting up perl (5.38.2-3.2ubuntu0.4) ...
+Setting up libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up icu-devtools (74.2-1ubuntu3.1) ...
+Setting up libdpkg-perl (1.22.6ubuntu6.6) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libreadline8t64:amd64 (8.2-4build1) ...
+Setting up libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Setting up libicu-dev:amd64 (74.2-1ubuntu3.1) ...
+Setting up libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Setting up cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3.12 (3.12.3-1ubuntu0.17) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up binutils (2.42-4ubuntu2.10) ...
+Setting up dpkg-dev (1.22.6ubuntu6.6) ...
+Setting up liberror-perl (0.17029-2) ...
+Setting up gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Setting up cpp (4:13.2.0-7ubuntu1) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3 (3.12.3-0ubuntu2.1) ...
+Setting up gcc (4:13.2.0-7ubuntu1) ...
+Setting up g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.10ubuntu1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+openjdk version "25.0.4.1" 2026-08-18 LTS
+OpenJDK Runtime Environment Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.4.1+1 (build 25.0.4.1+1-LTS, mixed mode, sharing)
+copying runtime jar...
+1.9.9
+Cloning into '/work/daisy-rerun1/src'...
+HEAD is now at 6a6f47a fixing test after fixing bug
+6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+[sbt_options] declare -a sbt_options=([0]="-Xms1G" [1]="-Xmx16G" [2]="-Xss8M")
+[process_args] java_version = '25'
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+[copyRt] java9_rt = '/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1/rt.jar'
+# Executing command line:
+java
+-Dfile.encoding=UTF-8
+-Dsbt.script=/opt/sbt/bin/sbt
+-Dscala.ext.dirs=/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1
+-Xms1G
+-Xmx16G
+-Xss8M
+-Xss8M
+-jar
+/opt/sbt/bin/sbt-launch.jar
+compile
+Test/compile
+
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+[info] [launcher] getting org.scala-sbt sbt 1.9.9  (this may take some time)...
+[info] [launcher] getting Scala 2.12.18 (for sbt)...
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by net.openhft.hashing.UnsafeAccess (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/zero-allocation-hashing-0.10.1.jar)
+WARNING: Please consider reporting this to the maintainers of class net.openhft.hashing.UnsafeAccess
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/jna-5.13.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+[info] welcome to sbt 1.9.9 (Eclipse Adoptium Java 25.0.4.1)
+[info] loading settings for project src-build from plugins.sbt ...
+[info] loading project definition from /work/daisy-rerun1/src/project
+[info] compiling 1 Scala source to /work/daisy-rerun1/src/project/target/scala-2.12/sbt-1.0/classes ...
+[info] Non-compiled module 'compiler-bridge_2.12' for Scala 2.12.18. Compiling...
+[info]   Compilation completed in 4.436s.
+[info] done compiling
+/work/daisy-rerun1/src/build.sbt:50: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+Keys.fork in run := true
+          ^
+/work/daisy-rerun1/src/build.sbt:52: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+Keys.fork in Test := true
+          ^
+/work/daisy-rerun1/src/build.sbt:57: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+parallelExecution in Test := false
+                  ^
+/work/daisy-rerun1/src/build.sbt:84: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+    val res = (resourceDirectory   in Compile).value
+                                   ^
+/work/daisy-rerun1/src/build.sbt:83: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+    val out = (classDirectory      in Compile).value
+                                   ^
+/work/daisy-rerun1/src/build.sbt:82: warning: method in in trait ScopingSetting is deprecated (since 1.5.0): `in` is deprecated; migrate to slash syntax - https://www.scala-sbt.org/1.x/docs/Migrating-from-sbt-013x.html#slash
+    val cps = (dependencyClasspath in Compile).value
+                                   ^
+[info] loading settings for project src from build.sbt ...
+[info] set current project to Daisy (in build file:/work/daisy-rerun1/src/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Fetching https://github.com/tree-sitter/tree-sitter @ v0.25.10
+[info] Building libtree-sitter-v0.25.10-linux-x86_64.so
+[info] Fetching https://github.com/tree-sitter/tree-sitter-c @ v0.24.1
+[info] Building libtree-sitter-c-v0.24.1-linux-x86_64.so
+[info] Fetching https://github.com/tree-sitter/tree-sitter-scala @ v0.24.0
+[info] Building libtree-sitter-scala-v0.24.0-linux-x86_64.so
+[info] Fetching https://github.com/agilot/tree-sitter-fpcore @ v0.1.1
+[info] Building libtree-sitter-fpcore-v0.1.1-linux-x86_64.so
+[info] compiling 119 Scala sources to /work/daisy-rerun1/src/target/scala-2.13/classes ...
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/AbsErrorPhase.scala:33:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/DataflowPhase.scala:35:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/DataflowSubdivisionPhase.scala:36:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/DynamicPhase.scala:68:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/FPTaylorPhase.scala:26:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/FPTaylorPhaseOriginal.scala:24:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/FunctionCallPhase.scala:18:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/ModularRoundOffErrorEvalPhase.scala:22:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/RangePhase.scala:35:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/RelativeErrorPhase.scala:55:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/SpecsProcessingPhase.scala:38:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/TaylorAbstractPhase.scala:23:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/analysis/TaylorErrorPhase.scala:24:25: Implicit definition should have explicit type (inferred daisy.DebugSectionAnalysis.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionAnalysis
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/backend/CodeGenerationPhase.scala:41:25: Implicit definition should have explicit type (inferred daisy.DebugSectionBackend.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionBackend
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/backend/InfoPhase.scala:37:25: Implicit definition should have explicit type (inferred daisy.DebugSectionBackend.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionBackend
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/experiments/BenchmarkingPhase.scala:18:25: Implicit definition should have explicit type (inferred daisy.DebugSectionExperiment.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionExperiment
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/experiments/CostFunctionEvaluationExperiment.scala:41:25: Implicit definition should have explicit type (inferred daisy.DebugSectionExperiment.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionExperiment
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/experiments/MixedPrecisionExperimentGenerationPhase.scala:33:25: Implicit definition should have explicit type (inferred daisy.DebugSectionExperiment.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionExperiment
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/frontend/CExtractionPhase.scala:14:25: Implicit definition should have explicit type (inferred daisy.DebugSectionFrontend.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionFrontend
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/frontend/CodeExtraction.scala:28:16: Implicit definition should have explicit type (inferred daisy.DebugSectionFrontend.type) [quickfixable]
+[warn]   implicit val debugSection = DebugSectionFrontend
+[warn]                ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/frontend/ExtractionPhase.scala:15:25: Implicit definition should have explicit type (inferred daisy.DebugSectionFrontend.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionFrontend
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/frontend/SpecGenerationPhase.scala:25:25: Implicit definition should have explicit type (inferred daisy.DebugSectionFrontend.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionFrontend
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/ApproxPhase.scala:474:9: dead code following this construct
+[warn]         throw new DaisyFatalError(Some("Metalibm timed out"))
+[warn]         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/ApproxPhase.scala:478:9: dead code following this construct
+[warn]         throw new DaisyFatalError(Some("There was a problem calling Metalibm."))
+[warn]         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/ApproxPhase.scala:483:10: dead code following this construct
+[warn]          throw new DaisyFatalError(Some("There was a problem calling Metalibm."))
+[warn]          ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/MetalibmPhase.scala:40:25: Implicit definition should have explicit type (inferred daisy.DebugSectionOptimization.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionOptimization
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/MixedPrecisionOptimizationPhase.scala:42:25: Implicit definition should have explicit type (inferred daisy.DebugSectionOptimization.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionOptimization
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/opt/RewritingOptimizationPhase.scala:33:25: Implicit definition should have explicit type (inferred daisy.DebugSectionOptimization.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionOptimization
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/solvers/DRealSolver.scala:19:16: Implicit definition should have explicit type (inferred daisy.DebugSectionSolver.type) [quickfixable]
+[warn]   implicit val debugSection = DebugSectionSolver
+[warn]                ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/solvers/Solver.scala:67:16: Implicit definition should have explicit type (inferred daisy.DebugSectionSolver.type) [quickfixable]
+[warn]   implicit val debugSection = DebugSectionSolver
+[warn]                ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/tools/SMTRange.scala:22:16: Implicit definition should have explicit type (inferred daisy.DebugSectionTools.type) [quickfixable]
+[warn]   implicit val debugSection = DebugSectionTools
+[warn]                ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/tools/Taylor.scala:23:16: Implicit definition should have explicit type (inferred Ordering[Option[daisy.tools.Rational]]) [quickfixable]
+[warn]   implicit val optionAbsOrdering = new Ordering[Option[Rational]]{
+[warn]                ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/CompilerOptimizationPhase.scala:27:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/ConstantTransformerPhase.scala:33:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/DecompositionPhase.scala:28:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/PowTransformerPhase.scala:18:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/TACTransformerPhase.scala:26:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/transform/UnrollPhase.scala:30:25: Implicit definition should have explicit type (inferred daisy.DebugSectionTransform.type) [quickfixable]
+[warn]   override implicit val debugSection = DebugSectionTransform
+[warn]                         ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/utils/ScalaPrinter.scala:509:26: a type was inferred to be `Object`; this may indicate a programming error.
+[warn]                val map = Map("fnc" -> fnc.id.name.toString, "inputs" -> argMap)
+[warn]                          ^
+[warn] /work/daisy-rerun1/src/src/main/scala/daisy/tools/MPFRFloat.scala:164:29: comparing values of types org.kframework.mpfr.BigFloat and Any using `equals` unsafely bypasses cooperative equality; use `==` instead
+[warn]     case _ => this.bf.equals(other)
+[warn]                             ^
+[warn] 2 deprecations (since 18)
+[warn] 3 deprecations (since 2.11.0)
+[warn] 1 deprecation (since 2.12.5)
+[warn] 108 deprecations (since 2.13.0)
+[warn] 1 deprecation (since 2.13.12)
+[warn] 1 deprecation (since 2.13.2)
+[warn] 4 deprecations (since 2.13.3)
+[warn] 1 deprecation (since 2.13.4)
+[warn] 121 deprecations in total; re-run with -deprecation for details
+[warn] 49 warnings found
+[info] done compiling
+[success] Total time: 30 s, completed Sep 10, 2026, 3:15:58 PM
+[info] compiling 7 Scala sources to /work/daisy-rerun1/src/target/scala-2.13/test-classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 10, 2026, 3:15:58 PM
+[sbt_options] declare -a sbt_options=([0]="-Xms1G" [1]="-Xmx16G" [2]="-Xss8M")
+[process_args] java_version = '25'
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+[copyRt] java9_rt = '/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1/rt.jar'
+# Executing command line:
+java
+-Dfile.encoding=UTF-8
+-Dsbt.script=/opt/sbt/bin/sbt
+-Dscala.ext.dirs=/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1
+-Xms1G
+-Xmx16G
+-Xss8M
+-Xss8M
+-jar
+/opt/sbt/bin/sbt-launch.jar
+test
+
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by net.openhft.hashing.UnsafeAccess (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/zero-allocation-hashing-0.10.1.jar)
+WARNING: Please consider reporting this to the maintainers of class net.openhft.hashing.UnsafeAccess
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/jna-5.13.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+[info] welcome to sbt 1.9.9 (Eclipse Adoptium Java 25.0.4.1)
+[info] loading settings for project src-build from plugins.sbt ...
+[info] loading project definition from /work/daisy-rerun1/src/project
+[info] loading settings for project src from build.sbt ...
+[info] set current project to Daisy (in build file:/work/daisy-rerun1/src/)
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+[[34m  Info  [0m] 
+[[34m  Info  [0m] Starting Scala extraction phase
+[info] FixedpointCodegenRegressionTest:
+[info] - codegen-doppler-fixed32
+[info] - codegen-sine-fixed32
+[info] - codegen-rigidBody2-fixed32
+[info] - codegen-turbine1-fixed8
+[info] - codegen-kepler2-fixed32
+[info] - codegen-himmilbeau-fixed32
+[info] RelErrorRegressionTest:
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: doppler
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: sine
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: sineOrder3
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: sqroot
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: bspline0
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: bspline1
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: bspline2
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: bspline3
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: rigidBody1
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: rigidBody2
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: turbine1
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: turbine2
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: turbine3
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: kepler1
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: kepler2
+[info] - --analysis=relative --rel-rangeMethod=interval Float64: himmilbeau
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: sineOrder3
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: sqroot
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: bspline0
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: bspline1
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: bspline2
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: bspline3
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: rigidBody1
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: rigidBody2
+[info] - --analysis=relative --rel-rangeMethod=interval --denormals Float64: himmilbeau
+[info] TreesitterParsingTest:
+[info] - C: azimuth.c
+[info] - C: bspline3.c
+[info] - C: carbonGas.c
+[info] - C: carthesianToPolar_radius.c
+[info] - C: carthesianToPolar_theta.c
+[info] - C: cav10.c
+[info] - C: complex_sine_cosine.c
+[info] - C: complex_square_root.c
+[info] - C: delta.c
+[info] - C: delta4.c
+[info] - C: doppler1.c
+[info] - C: doppler2.c
+[info] - C: doppler3.c
+[info] - C: exp1x.c
+[info] - C: exp1x_32.c
+[info] - C: exp1x_log.c
+[info] - C: floudas.c
+[info] - C: floudas1.c
+[info] - C: floudas2.c
+[info] - C: floudas3.c
+[info] - C: hartman3.c
+[info] - C: hartman6.c
+[info] - C: himmilbeau.c
+[info] - C: hypot.c
+[info] - C: hypot32.c
+[info] - C: i6.c
+[info] - C: instantaneousCurrent.c
+[info] - C: intro_example.c
+[info] - C: jetEngineModified.c
+[info] - C: kepler0.c
+[info] - C: kepler1.c
+[info] - C: kepler2.c
+[info] - C: logexp.c
+[info] - C: matrixDeterminant.c
+[info] - C: matrixDeterminant2.c
+[info] - C: nonlin1.c
+[info] - C: nonlin2.c
+[info] - C: polarToCarthesian_x.c
+[info] - C: polarToCarthesian_y.c
+[info] - C: predatorPrey.c
+[info] - C: rigidBody1.c
+[info] - C: rigidBody2.c
+[info] - C: rump_from_C.c
+[info] - C: rump_revisited.c
+[info] - C: rump_with_pow.c
+[info] - C: sec4_example.c
+[info] - C: sine.c
+[info] - C: sineOrder3.c
+[info] - C: sphere.c
+[info] - C: sqroot.c
+[info] - C: sqrt_add.c
+[info] - C: sum.c
+[info] - C: test01_sum3.c
+[info] - C: test02_sum8.c
+[info] - C: test03_nonlin2.c
+[info] - C: test04_dqmom9.c
+[info] - C: test05_nonlin1_r4.c
+[info] - C: test05_nonlin1_test2.c
+[info] - C: test06_sums4_sum1.c
+[info] - C: test06_sums4_sum2.c
+[info] - C: turbine1.c
+[info] - C: turbine2.c
+[info] - C: turbine3.c
+[info] - C: verhulst.c
+[info] - C: x_by_xy.c
+[info] - Scala: azimuth.scala
+[info] - Scala: bspline3.scala
+[info] - Scala: carbonGas.scala
+[info] - Scala: carthesianToPolar_radius.scala
+[info] - Scala: carthesianToPolar_theta.scala
+[info] - Scala: cav10.scala
+[info] - Scala: complex_sine_cosine.scala
+[info] - Scala: complex_square_root.scala
+[info] - Scala: delta.scala
+[info] - Scala: delta4.scala
+[info] - Scala: doppler1.scala
+[info] - Scala: doppler2.scala
+[info] - Scala: doppler3.scala
+[info] - Scala: eigenvalueComputation.scala
+[info] - Scala: exp1x.scala
+[info] - Scala: exp1x_32.scala
+[info] - Scala: exp1x_log.scala
+[info] - Scala: floudas.scala
+[info] - Scala: floudas1.scala
+[info] - Scala: floudas2.scala
+[info] - Scala: floudas3.scala
+[info] - Scala: hartman3.scala
+[info] - Scala: hartman6.scala
+[info] - Scala: himmilbeau.scala
+[info] - Scala: hypot.scala
+[info] - Scala: hypot32.scala
+[info] - Scala: i4.scala
+[info] - Scala: i4modified.scala
+[info] - Scala: i6.scala
+[info] - Scala: instantaneousCurrent.scala
+[info] - Scala: intro_example.scala
+[info] - Scala: jacobisMethodX1.scala
+[info] - Scala: jacobisMethodX2.scala
+[info] - Scala: jacobisMethodX3.scala
+[info] - Scala: jacobisMethodX4.scala
+[info] - Scala: jetEngine.scala
+[info] - Scala: jetEngineModified.scala
+[info] - Scala: kepler0.scala
+[info] - Scala: kepler1.scala
+[info] - Scala: kepler2.scala
+[info] - Scala: logexp.scala
+[info] - Scala: matrixDeterminant.scala
+[info] - Scala: matrixDeterminant2.scala
+[info] - Scala: matrixDeterminant2modified.scala
+[info] - Scala: n_body.scala
+[info] - Scala: n_bodyXmodified.scala
+[info] - Scala: n_bodyZmodified.scala
+[info] - Scala: newtonRaphson.scala
+[info] - Scala: nmse_example_3_1.scala
+[info] - Scala: nmse_example_3_10.scala
+[info] - Scala: nmse_example_3_3.scala
+[info] - Scala: nmse_example_3_4.scala
+[info] - Scala: nmse_example_3_5.scala
+[info] - Scala: nmse_example_3_6.scala
+[info] - Scala: nmse_example_3_7.scala
+[info] - Scala: nmse_example_3_8.scala
+[info] - Scala: nmse_example_3_9.scala
+[info] - Scala: nmse_p42_negative.scala
+[info] - Scala: nmse_p42_positive.scala
+[info] - Scala: nmse_problem_3_2_1_negative.scala
+[info] - Scala: nmse_problem_3_2_1_positive.scala
+[info] - Scala: nmse_problem_3_3_1.scala
+[info] - Scala: nmse_problem_3_3_2.scala
+[info] - Scala: nmse_problem_3_3_3.scala
+[info] - Scala: nmse_problem_3_3_5.scala
+[info] - Scala: nmse_problem_3_3_6.scala
+[info] - Scala: nmse_problem_3_3_7.scala
+[info] - Scala: nmse_problem_3_4_1.scala
+[info] - Scala: nmse_problem_3_4_2.scala
+[info] - Scala: nmse_problem_3_4_3.scala
+[info] - Scala: nmse_problem_3_4_4.scala
+[info] - Scala: nmse_problem_3_4_5.scala
+[info] - Scala: nmse_section_3_11.scala
+[info] - Scala: nmse_section_3_5.scala
+[info] - Scala: nonlin1.scala
+[info] - Scala: nonlin2.scala
+[info] - Scala: pendulum.scala
+[info] - Scala: pid.scala
+[info] - Scala: polarToCarthesian_x.scala
+[info] - Scala: polarToCarthesian_y.scala
+[info] - Scala: predatorPrey.scala
+[info] - Scala: rigidBody1.scala
+[info] - Scala: rigidBody2.scala
+[info] - Scala: rump_from_C.scala
+[info] - Scala: rump_revisited.scala
+[info] - Scala: rump_with_pow.scala
+[info] - Scala: runge_kutta_4.scala
+[info] - Scala: sec4_example.scala
+[info] - Scala: sine.scala
+[info] - Scala: sineOrder3.scala
+[info] - Scala: sine_newton.scala
+[info] - Scala: smartRoot.scala
+[info] - Scala: sphere.scala
+[info] - Scala: sqroot.scala
+[info] - Scala: sqrt_add.scala
+[info] - Scala: squareRoot3.scala
+[info] - Scala: squareRoot3Invalid.scala
+[info] - Scala: sum.scala
+[info] - Scala: test01_sum3.scala
+[info] - Scala: test02_sum8.scala
+[info] - Scala: test03_nonlin2.scala
+[info] - Scala: test04_dqmom9.scala
+[info] - Scala: test05_nonlin1_r4.scala
+[info] - Scala: test05_nonlin1_test2.scala
+[info] - Scala: test06_sums4_sum1.scala
+[info] - Scala: test06_sums4_sum2.scala
+[info] - Scala: triangle.scala
+[info] - Scala: triangle1.scala
+[info] - Scala: triangle10.scala
+[info] - Scala: triangle11.scala
+[info] - Scala: triangle12.scala
+[info] - Scala: triangle2.scala
+[info] - Scala: triangle3.scala
+[info] - Scala: triangle4.scala
+[info] - Scala: triangle5.scala
+[info] - Scala: triangle6.scala
+[info] - Scala: triangle7.scala
+[info] - Scala: triangle8.scala
+[info] - Scala: triangle9.scala
+[info] - Scala: triangleSorted.scala
+[info] - Scala: turbine1.scala
+[info] - Scala: turbine2.scala
+[info] - Scala: turbine3.scala
+[info] - Scala: verhulst.scala
+[info] - Scala: x_by_xy.scala
+[info] - FPCore: apron.fpcore (known unsupported) !!! IGNORED !!!
+[info] - FPCore: daisy.fpcore
+[info] - FPCore: fptaylor-extra.fpcore (known unsupported) !!! IGNORED !!!
+[info] - FPCore: fptaylor-real2float.fpcore
+[info] - FPCore: fptaylor-tests.fpcore
+[info] - FPCore: graphics.fpcore
+[info] - FPCore: hamming-ch3.fpcore
+[info] - FPCore: herbie.fpcore
+[info] - FPCore: precimonious.fpcore (known unsupported) !!! IGNORED !!!
+[info] - FPCore: rosa.fpcore (known unsupported) !!! IGNORED !!!
+[info] - FPCore: rump.fpcore
+[info] - FPCore: salsa.fpcore (known unsupported) !!! IGNORED !!!
+[info] RewritingRegressionTest:
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: doppler
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: sine
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: sineOrder3
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: sqroot
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: bspline0
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: bspline1
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: bspline2
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: bspline3
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: rigidBody1
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: rigidBody2
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: turbine1
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: turbine2
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: turbine3
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: kepler0
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: kepler1
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: kepler2
+[info] - --rewrite --rewrite-fitness-fnc=interval-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=interval Float64: himmilbeau
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: doppler
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: sine
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: sineOrder3
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: sqroot
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: bspline0
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: bspline1
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: bspline2
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: bspline3
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: rigidBody1
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: rigidBody2
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: turbine1
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: turbine2
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: turbine3
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: kepler0
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: kepler1
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: kepler2
+[info] - --rewrite --rewrite-fitness-fnc=affine-affine --rewrite-seed=4781 --analysis=dataflow --rangeMethod=affine Float64: himmilbeau
+[info] AbsErrorAnalysisRegressionTest:
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: carbonGas
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: pendulum1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: pendulum2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: analysis1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: analysis2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: logExp
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float32: sphere
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: pendulum1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: pendulum2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: analysis1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: analysis2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: logExp
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=interval Float16: sphere
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: carbonGas
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Fixed32: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: carbonGas
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: pendulum1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: pendulum2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: analysis1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: analysis2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: logExp
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float32: sphere
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: carbonGas
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: pendulum1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: pendulum2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: analysis1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: analysis2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: logExp
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Float64: sphere
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: doppler
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: sine
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: sqroot
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: bspline0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: bspline1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: bspline2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: bspline3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: verhulst
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: carbonGas
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: turbine1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: turbine2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: turbine3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: kepler0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: kepler1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: kepler2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Fixed32: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: doppler
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: sine
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: sqroot
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: bspline0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: bspline1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: bspline2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: bspline3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: verhulst
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: carbonGas
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: turbine1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: turbine2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: turbine3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: kepler0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: kepler1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: kepler2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: pendulum1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: pendulum2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: analysis1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: logExp
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float32: sphere
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: doppler
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: sine
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: sqroot
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: bspline0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: bspline1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: bspline2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: bspline3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: verhulst
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: carbonGas
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: turbine1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: turbine2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: turbine3
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: kepler0
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: kepler1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: kepler2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: pendulum1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: pendulum2
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: analysis1
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: logExp
+[info] - --analysis=dataflow --rangeMethod=affine --errorMethod=affine Float64: sphere
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: sqroot
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: bspline1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: bspline2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: bspline3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: verhulst
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: carbonGas
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: kepler0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: kepler1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: kepler2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: pendulum1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: pendulum2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: analysis1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: analysis2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: logExp
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine Quad: sphere
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: doppler
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: sine
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: sineOrder3
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: sqroot
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: bspline0
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: bspline1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: bspline2
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: bspline3
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: rigidBody1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: rigidBody2
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: verhulst
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: predatorPrey
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: carbonGas
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: turbine1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: turbine2
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: turbine3
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: kepler0
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: kepler1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: kepler2
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: himmilbeau
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: pendulum1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: pendulum2
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: analysis1
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: logExp
+[info] - --analysis=dataflow --subdiv --rangeMethod=affine --errorMethod=affine Float32: sphere
+[info] - --analysis=opt --rangeMethod=interval Float64: doppler
+[info] - --analysis=opt --rangeMethod=interval Float64: sine
+[info] - --analysis=opt --rangeMethod=interval Float64: sineOrder3
+[info] - --analysis=opt --rangeMethod=interval Float64: sqroot
+[info] - --analysis=opt --rangeMethod=interval Float64: bspline0
+[info] - --analysis=opt --rangeMethod=interval Float64: bspline1
+[info] - --analysis=opt --rangeMethod=interval Float64: bspline2
+[info] - --analysis=opt --rangeMethod=interval Float64: bspline3
+[info] - --analysis=opt --rangeMethod=interval Float64: rigidBody1
+[info] - --analysis=opt --rangeMethod=interval Float64: rigidBody2
+[info] - --analysis=opt --rangeMethod=interval Float64: verhulst
+[info] - --analysis=opt --rangeMethod=interval Float64: predatorPrey
+[info] - --analysis=opt --rangeMethod=interval Float64: carbonGas
+[info] - --analysis=opt --rangeMethod=interval Float64: turbine1
+[info] - --analysis=opt --rangeMethod=interval Float64: turbine2
+[info] - --analysis=opt --rangeMethod=interval Float64: turbine3
+[info] - --analysis=opt --rangeMethod=interval Float64: kepler0
+[info] - --analysis=opt --rangeMethod=interval Float64: kepler1
+[info] - --analysis=opt --rangeMethod=interval Float64: kepler2
+[info] - --analysis=opt --rangeMethod=interval Float64: himmilbeau
+[info] - --analysis=opt --rangeMethod=interval Float64: pendulum1
+[info] - --analysis=opt --rangeMethod=interval Float64: pendulum2
+[info] - --analysis=opt --rangeMethod=interval Float64: analysis1
+[info] - --analysis=opt --rangeMethod=interval Float64: analysis2
+[info] - --analysis=opt --rangeMethod=interval Float64: logExp
+[info] - --analysis=opt --rangeMethod=interval Float64: sphere
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: dopplerInlined
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: bspline0
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: bspline1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: bspline2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: bspline3
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: rigidBody1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: rigidBody2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: turbine1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: turbine2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: turbine3
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: kepler0
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: kepler1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: kepler2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: himmilbeau
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: invertedPendulum
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: sine
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: sineOrder3
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: sqroot
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_out1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state3
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state4
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state5
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state6
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state7
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state8
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: train4_state9
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: jetEngineInlined
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: pendulum1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: pendulum2
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: analysis1
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: analysis2
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 71: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 112: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 93: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 134: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 98: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 141: unknown constant exp (Real) 
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: logExp
+[info] - --analysis=opt --rangeMethod=smt --solver=z3 Float64: sphere
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: doppler
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: sine
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: sqroot
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: bspline0
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: bspline1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: bspline2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: bspline3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: turbine1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: turbine2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: turbine3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: kepler0
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: kepler1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: kepler2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: invertedPendulum
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_out1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state4
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state5
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state6
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state7
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state8
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: train4_state9
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: jetEngine
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: pendulum1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: pendulum2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: analysis1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: analysis2
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 71: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 112: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 93: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 134: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 98: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 141: unknown constant exp (Real) 
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: logExp
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=affine Float64: sphere
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: doppler
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: sine
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: sqroot
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: bspline0
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: bspline1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: bspline2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: bspline3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: invertedPendulum
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: rigidBody1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: rigidBody2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: turbine1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: turbine2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: turbine3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: kepler0
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: kepler1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: kepler2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: jetEngine
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_out1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state3
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state4
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state5
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state6
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state7
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state8
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: train4_state9
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: pendulum1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: pendulum2
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: analysis1
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: analysis2
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 71: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 7 column 112: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 93: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 134: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 98: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 141: unknown constant exp (Real) 
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: logExp
+[info] - --analysis=dataflow --rangeMethod=smt --solver=z3 --errorMethod=interval Float64: sphere
+[info] - IA-AA Default: JetEngine (fails)
+[info] - AA-AA Default: JetEngine
+[info] PowTransformerRegressionTest:
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: doppler
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: sine
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: sineOrder3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: bspline0
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: predatorPrey
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: turbine1
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: turbine2
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: turbine3
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: himmilbeau
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: evenPowers
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: inverseSquare
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-roll Float64: euclideanDistance
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-unroll Float64: evenPowers
+[info] - --analysis=dataflow --rangeMethod=interval --errorMethod=affine --pow-unroll Float64: inverseSquare
+[info] MixedTuningRegressionTest:
+[info] - --rangeMethod=interval: doppler_float64_05
+[info] - --rangeMethod=interval: sine_float64_05
+[info] - --rangeMethod=interval: sqroot_float64_05
+[info] - --rangeMethod=interval: bspline0_float64_05
+[info] - --rangeMethod=interval: bspline1_float64_05
+[info] - --rangeMethod=interval: bspline2_float64_05
+[info] - --rangeMethod=interval: rigidBody1_float64_05
+[info] - --rangeMethod=interval: rigidBody2_float64_05
+[info] - --rangeMethod=interval: turbine1_float64_05
+[info] - --rangeMethod=interval: turbine2_float64_05
+[info] - --rangeMethod=interval: turbine3_float64_05
+[info] - --rangeMethod=interval: kepler0_float64_05
+[info] - --rangeMethod=interval: kepler1_float64_05
+[info] - --rangeMethod=interval: kepler2_float64_05
+[info] - --rangeMethod=interval: himmilbeau_float64_05
+[info] - --rangeMethod=interval: doppler_float32_05
+[info] - --rangeMethod=interval: sine_float32_05
+[info] - --rangeMethod=interval: sqroot_float32_05
+[info] - --rangeMethod=interval: bspline0_float32_05
+[info] - --rangeMethod=interval: bspline1_float32_05
+[info] - --rangeMethod=interval: bspline2_float32_05
+[info] - --rangeMethod=interval: rigidBody1_float32_05
+[info] - --rangeMethod=interval: rigidBody2_float32_05
+[info] - --rangeMethod=interval: turbine1_float32_05
+[info] - --rangeMethod=interval: turbine2_float32_05
+[info] - --rangeMethod=interval: turbine3_float32_05
+[info] - --rangeMethod=interval: kepler0_float32_05
+[info] - --rangeMethod=interval: kepler1_float32_05
+[info] - --rangeMethod=interval: kepler2_float32_05
+[info] - --rangeMethod=interval: himmilbeau_float32_05
+[info] Run completed in 9 minutes, 17 seconds.
+[info] Total number of tests run: 682
+[info] Suites: completed 7, aborted 0
+[info] Tests: succeeded 682, failed 0, canceled 0, ignored 5, pending 0
+[info] All tests passed.
+[success] Total time: 558 s (09:18), completed Sep 10, 2026, 3:25:20 PM
+[sbt_options] declare -a sbt_options=([0]="-Xms1G" [1]="-Xmx16G" [2]="-Xss8M")
+[process_args] java_version = '25'
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+[copyRt] java9_rt = '/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1/rt.jar'
+# Executing command line:
+java
+-Dfile.encoding=UTF-8
+-Dsbt.script=/opt/sbt/bin/sbt
+-Dscala.ext.dirs=/root/.sbt/1.0/java9-rt-ext-eclipse_adoptium_25_0_4_1
+-Xms1G
+-Xmx16G
+-Xss8M
+-Xss8M
+-jar
+/opt/sbt/bin/sbt-launch.jar
+script
+
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by net.openhft.hashing.UnsafeAccess (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/zero-allocation-hashing-0.10.1.jar)
+WARNING: Please consider reporting this to the maintainers of class net.openhft.hashing.UnsafeAccess
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/root/.sbt/boot/scala-2.12.18/org.scala-sbt/sbt/1.9.9/jna-5.13.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+[info] welcome to sbt 1.9.9 (Eclipse Adoptium Java 25.0.4.1)
+[info] loading settings for project src-build from plugins.sbt ...
+[info] loading project definition from /work/daisy-rerun1/src/project
+[info] loading settings for project src from build.sbt ...
+[info] set current project to Daisy (in build file:/work/daisy-rerun1/src/)
+[info] Generating 'daisy' script ...
+[success] Total time: 0 s, completed Sep 10, 2026, 3:25:24 PM
+TEST 1 (quick): dataflow analysis, interval ranges, affine errors
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m16.037s
+All results consistent
+
+TEST 2 (quick): dataflow analysis, interval ranges, interval errors
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m4.633s
+All results consistent
+
+TEST 3 (quick): dataflow analysis, affine ranges, affine errors
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m6.507s
+All results consistent
+
+TEST 4 (longer): dataflow subdivision, interval ranges, affine errors
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m22.059s
+All results consistent
+
+TEST 5 (longer): taylor analysis with intervals
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m20.971s
+All results consistent
+
+TEST 6 (longer): dataflow analysis, Z3 ranges, affine errors
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 113: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 153: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 109: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 149: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 116: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 9 column 124: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 11 column 153: unknown constant exp (Real) 
+[[33mWarning [0m] Unexpected error from z3 solver: line 11 column 161: unknown constant exp (Real) 
+[[33mWarning [0m] Solver returned unknown or timed out 33 times.
+1m34.236s
+All results consistent
+
+TEST 8 (quick): DS2L analysis (data structures)
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m14.884s
+All results consistent
+
+TEST 9 (longer): rewriting optimization
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+1m52.493s
+All results consistent
+
+TEST 10 (quick): mixed-tuning optimization
+Picked up JAVA_TOOL_OPTIONS: -Xss8M
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by org.fusesource.hawtjni.runtime.Library in an unnamed module (file:/root/.cache/coursier/v1/https/repo1.maven.org/maven2/org/fusesource/hawtjni/hawtjni-runtime/1.9/hawtjni-runtime-1.9.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+0m8.750s
+All results consistent
+status=0
+finished=2026-09-10T15:30:25Z

@@ -1,0 +1,1716 @@
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1530 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:7 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:8 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1240 kB]
+Get:9 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1791 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1908 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2151 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1564 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Fetched 32.6 MB in 3s (12.9 MB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bash is already the newest version (5.2.21-2ubuntu4).
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu bzip2 cpp cpp-13
+  cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu dpkg-dev g++ g++-13
+  g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13 gcc-13-base
+  gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git-man libasan8 libatomic1
+  libbinutils libbrotli1 libc-bin libc-dev-bin libc6 libc6-dev libcc1-0
+  libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64
+  libdpkg-perl liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64
+  libgdbm6t64 libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0 libisl23
+  libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap2 liblsan0 libmpc3 libmpfr6 libnghttp2-14 libperl5.38t64 libpkgconf3
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db
+  libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev libtsan2 libubsan1
+  linux-libc-dev lto-disabled-list media-types netbase openssl patch perl
+  perl-modules-5.38 pkgconf pkgconf-bin python3-minimal python3-pip-whl
+  python3-pkg-resources python3-setuptools python3-setuptools-whl
+  python3-wheel python3.12 python3.12-minimal python3.12-venv readline-common
+  rpcsvc-proto tzdata xz-utils
+Suggested packages:
+  binutils-doc gprofng-gui bzip2-doc cpp-doc gcc-13-locales cpp-13-doc
+  debian-keyring g++-multilib g++-13-multilib gcc-13-doc gcc-multilib
+  manpages-dev autoconf automake libtool flex bison gdb gcc-doc
+  gcc-13-multilib gdb-x86-64-linux-gnu gettext-base git-daemon-run
+  | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb git-cvs
+  git-mediawiki git-svn manpages glibc-doc locales libnss-nis libnss-nisplus
+  gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg bzr gdbm-l10n
+  krb5-doc krb5-user libstdc++-13-doc make-doc ed diffutils-doc perl-doc
+  libterm-readline-gnu-perl | libterm-readline-perl-perl
+  libtap-harness-archive-perl python3-doc python3-tk python-setuptools-doc
+  python3.12-doc binfmt-support readline-doc
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  libalgorithm-merge-perl less ssh-client manpages manpages-dev libc-devtools
+  libfile-fcntllock-perl liblocale-gettext-perl krb5-locales libldap-common
+  publicsuffix libsasl2-modules python3-dev
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cpp cpp-13 cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu curl
+  dpkg-dev g++ g++-13 g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13
+  gcc-13-base gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git git-man
+  libasan8 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcc1-0
+  libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64
+  libdpkg-perl liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64
+  libgdbm6t64 libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0 libisl23
+  libitm1 libjansson4 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap2 liblsan0 libmpc3 libmpfr6 libnghttp2-14 libperl5.38t64 libpkgconf3
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db
+  libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev libtsan2 libubsan1
+  linux-libc-dev lto-disabled-list make media-types netbase openssl patch perl
+  perl-modules-5.38 pkg-config pkgconf pkgconf-bin python3 python3-minimal
+  python3-pip python3-pip-whl python3-pkg-resources python3-setuptools
+  python3-setuptools-whl python3-venv python3-wheel python3.12
+  python3.12-minimal python3.12-venv readline-common rpcsvc-proto time tzdata
+  xz-utils
+The following packages will be upgraded:
+  libc-bin libc6
+2 upgraded, 103 newly installed, 0 to remove and 1 not upgraded.
+Need to get 104 MB of archives.
+After this operation, 377 MB of additional disk space will be used.
+Get:1 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6 amd64 2.39-0ubuntu8.9 [3264 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-bin amd64 2.39-0ubuntu8.9 [682 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-dev-bin amd64 2.39-0ubuntu8.9 [20.4 kB]
+Get:4 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6-dev amd64 2.39-0ubuntu8.9 [2126 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-minimal amd64 3.12.3-1ubuntu0.17 [839 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libexpat1 amd64 2.6.1-2ubuntu0.4 [88.2 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12-minimal amd64 3.12.3-1ubuntu0.17 [2335 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-minimal amd64 3.12.3-0ubuntu2.1 [27.4 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 media-types all 10.1.0 [27.5 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 netbase all 6.4 [13.1 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 tzdata all 2026c-0ubuntu0.24.04.1 [280 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/main amd64 readline-common all 8.2-4build1 [56.5 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble/main amd64 libreadline8t64 amd64 8.2-4build1 [153 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsqlite3-0 amd64 3.45.1-1ubuntu2.7 [701 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-stdlib amd64 3.12.3-1ubuntu0.17 [2071 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12 amd64 3.12.3-1ubuntu0.17 [651 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3-stdlib amd64 3.12.3-0ubuntu2.1 [10.1 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3 amd64 3.12.3-0ubuntu2.1 [23.0 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.4 [3110 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm6t64 amd64 1.23-5.1build1 [34.4 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:22 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.4 [4870 kB]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl amd64 5.38.2-3.2ubuntu0.4 [231 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 openssl amd64 3.0.13-0ubuntu3.15 [1003 kB]
+Get:25 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260601~24.04.1 [139 kB]
+Get:26 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.8 [34.7 kB]
+Get:27 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libk5crypto3 amd64 1.20.1-6ubuntu2.8 [81.9 kB]
+Get:28 http://archive.ubuntu.com/ubuntu noble/main amd64 libkeyutils1 amd64 1.6.3-3build1 [9490 B]
+Get:29 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5-3 amd64 1.20.1-6ubuntu2.8 [348 kB]
+Get:30 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgssapi-krb5-2 amd64 1.20.1-6ubuntu2.8 [143 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-pkg-resources all 68.1.2-2ubuntu1.2 [168 kB]
+Get:32 http://archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:33 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble/main amd64 libpsl5t64 amd64 0.21.2-1.1build1 [57.1 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble/main amd64 time amd64 1.9-0.2build1 [45.2 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15.7 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Get:40 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98.0 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94.5 kB]
+Get:42 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Get:43 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2463 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18.2 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 linux-libc-dev amd64 6.8.0-139.139 [1527 kB]
+Get:46 http://archive.ubuntu.com/ubuntu noble/main amd64 libcrypt-dev amd64 1:4.4.36-4build1 [112 kB]
+Get:47 http://archive.ubuntu.com/ubuntu noble/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu7 [67.4 kB]
+Get:48 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-base amd64 13.3.0-6ubuntu2~24.04.1 [51.6 kB]
+Get:49 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libisl23 amd64 0.26-3build1.1 [680 kB]
+Get:50 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr6 amd64 4.2.1-1build1.1 [353 kB]
+Get:51 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpc3 amd64 1.3.1-1build1.1 [54.6 kB]
+Get:52 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [10.7 MB]
+Get:53 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13 amd64 13.3.0-6ubuntu2~24.04.1 [1042 B]
+Get:54 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5326 B]
+Get:55 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp amd64 4:13.2.0-7ubuntu1 [22.4 kB]
+Get:56 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48.0 kB]
+Get:57 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1 amd64 14.2.0-4ubuntu2~24.04.1 [148 kB]
+Get:58 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29.7 kB]
+Get:59 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1 amd64 14.2.0-4ubuntu2~24.04.1 [10.5 kB]
+Get:60 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3027 kB]
+Get:61 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1322 kB]
+Get:62 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2772 kB]
+Get:63 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1184 kB]
+Get:64 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1641 kB]
+Get:65 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Get:66 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2681 kB]
+Get:67 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21.1 MB]
+Get:68 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Get:69 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1212 B]
+Get:70 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5018 B]
+Get:71 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2420 kB]
+Get:72 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12.2 MB]
+Get:73 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16.0 kB]
+Get:74 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Get:75 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1100 B]
+Get:76 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Get:77 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Get:78 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1ubuntu0.1 [34.6 kB]
+Get:79 http://archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:80 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12.4 kB]
+Get:81 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1074 kB]
+Get:82 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:83 http://archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:84 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:85 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:86 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:87 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:88 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:89 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.13 [343 kB]
+Get:90 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 curl amd64 8.5.0-2ubuntu10.13 [226 kB]
+Get:91 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.13 [335 kB]
+Get:92 http://archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:93 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:94 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:95 http://archive.ubuntu.com/ubuntu noble/main amd64 libpkgconf3 amd64 1.8.1-2build1 [30.7 kB]
+Get:96 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf-bin amd64 1.8.1-2build1 [20.7 kB]
+Get:97 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf amd64 1.8.1-2build1 [16.8 kB]
+Get:98 http://archive.ubuntu.com/ubuntu noble/main amd64 pkg-config amd64 1.8.1-2build1 [7264 B]
+Get:99 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-setuptools all 68.1.2-2ubuntu1.2 [397 kB]
+Get:100 http://archive.ubuntu.com/ubuntu noble/universe amd64 python3-wheel all 0.42.0-2 [53.1 kB]
+Get:101 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip all 24.0+dfsg-1ubuntu1.3 [1320 kB]
+Get:102 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip-whl all 24.0+dfsg-1ubuntu1.3 [1707 kB]
+Get:103 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-setuptools-whl all 68.1.2-2ubuntu1.2 [716 kB]
+Get:104 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3.12-venv amd64 3.12.3-1ubuntu0.17 [5684 B]
+Get:105 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-venv amd64 3.12.3-0ubuntu2.1 [1032 B]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 104 MB in 6s (18.5 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc6_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6:amd64 (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc6:amd64 (2.39-0ubuntu8.9) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-bin (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libpython3.12-minimal:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../libexpat1_2.6.1-2ubuntu0.4_amd64.deb ...
+Unpacking libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Selecting previously unselected package python3.12-minimal.
+Preparing to unpack .../python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Setting up libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Setting up python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4700 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_10.1.0_all.deb ...
+Unpacking media-types (10.1.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package tzdata.
+Preparing to unpack .../3-tzdata_2026c-0ubuntu0.24.04.1_all.deb ...
+Unpacking tzdata (2026c-0ubuntu0.24.04.1) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-4build1_all.deb ...
+Unpacking readline-common (8.2-4build1) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-4build1_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-4build1) ...
+Selecting previously unselected package libsqlite3-0:amd64.
+Preparing to unpack .../6-libsqlite3-0_3.45.1-1ubuntu2.7_amd64.deb ...
+Unpacking libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Selecting previously unselected package libpython3.12-stdlib:amd64.
+Preparing to unpack .../7-libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3.12.
+Preparing to unpack .../8-python3.12_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../9-libpython3-stdlib_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package python3.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5706 files and directories currently installed.)
+Preparing to unpack .../00-python3_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3 (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../01-perl-modules-5.38_5.38.2-3.2ubuntu0.4_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package libgdbm6t64:amd64.
+Preparing to unpack .../02-libgdbm6t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm6t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../03-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../04-libperl5.38t64_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../05-perl_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../06-openssl_3.0.13-0ubuntu3.15_amd64.deb ...
+Unpacking openssl (3.0.13-0ubuntu3.15) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../07-ca-certificates_20260601~24.04.1_all.deb ...
+Unpacking ca-certificates (20260601~24.04.1) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../08-libkrb5support0_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../09-libk5crypto3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../10-libkeyutils1_1.6.3-3build1_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-3build1) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../11-libkrb5-3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../12-libgssapi-krb5-2_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package python3-pkg-resources.
+Preparing to unpack .../13-python3-pkg-resources_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../14-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../15-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libpsl5t64:amd64.
+Preparing to unpack .../16-libpsl5t64_0.21.2-1.1build1_amd64.deb ...
+Unpacking libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Selecting previously unselected package time.
+Preparing to unpack .../17-time_1.9-0.2build1_amd64.deb ...
+Unpacking time (1.9-0.2build1) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../18-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../19-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libsframe1:amd64.
+Preparing to unpack .../20-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../21-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../22-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../23-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../24-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../25-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../26-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../27-libc-dev-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-dev-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../28-linux-libc-dev_6.8.0-139.139_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.8.0-139.139) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../29-libcrypt-dev_1%3a4.4.36-4build1_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../30-rpcsvc-proto_1.4.2-0ubuntu7_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.2-0ubuntu7) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../31-libc6-dev_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Selecting previously unselected package gcc-13-base:amd64.
+Preparing to unpack .../32-gcc-13-base_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../33-libisl23_0.26-3build1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.26-3build1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../34-libmpfr6_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../35-libmpc3_1.3.1-1build1.1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1build1.1) ...
+Selecting previously unselected package cpp-13-x86-64-linux-gnu.
+Preparing to unpack .../36-cpp-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-13.
+Preparing to unpack .../37-cpp-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../38-cpp-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../39-cpp_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../40-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../41-libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../42-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../43-libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../44-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../45-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../46-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../47-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libhwasan0:amd64.
+Preparing to unpack .../48-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../49-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgcc-13-dev:amd64.
+Preparing to unpack .../50-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13-x86-64-linux-gnu.
+Preparing to unpack .../51-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13.
+Preparing to unpack .../52-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-x86-64-linux-gnu.
+Preparing to unpack .../53-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../54-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libstdc++-13-dev:amd64.
+Preparing to unpack .../55-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13-x86-64-linux-gnu.
+Preparing to unpack .../56-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13.
+Preparing to unpack .../57-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-x86-64-linux-gnu.
+Preparing to unpack .../58-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../59-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++ (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package make.
+Preparing to unpack .../60-make_4.3-4.1build2_amd64.deb ...
+Unpacking make (4.3-4.1build2) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../61-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Unpacking libdpkg-perl (1.22.6ubuntu6.6) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../62-bzip2_1.0.8-5.1ubuntu0.1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5.1ubuntu0.1) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../63-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Selecting previously unselected package lto-disabled-list.
+Preparing to unpack .../64-lto-disabled-list_47_all.deb ...
+Unpacking lto-disabled-list (47) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../65-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Unpacking dpkg-dev (1.22.6ubuntu6.6) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../66-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../67-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../68-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../69-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../70-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../71-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../72-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../73-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../74-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../75-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../76-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../77-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../78-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package libpkgconf3:amd64.
+Preparing to unpack .../79-libpkgconf3_1.8.1-2build1_amd64.deb ...
+Unpacking libpkgconf3:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package pkgconf-bin.
+Preparing to unpack .../80-pkgconf-bin_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf-bin (1.8.1-2build1) ...
+Selecting previously unselected package pkgconf:amd64.
+Preparing to unpack .../81-pkgconf_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package pkg-config:amd64.
+Preparing to unpack .../82-pkg-config_1.8.1-2build1_amd64.deb ...
+Unpacking pkg-config:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package python3-setuptools.
+Preparing to unpack .../83-python3-setuptools_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3-wheel.
+Preparing to unpack .../84-python3-wheel_0.42.0-2_all.deb ...
+Unpacking python3-wheel (0.42.0-2) ...
+Selecting previously unselected package python3-pip.
+Preparing to unpack .../85-python3-pip_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-pip-whl.
+Preparing to unpack .../86-python3-pip-whl_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-setuptools-whl.
+Preparing to unpack .../87-python3-setuptools-whl_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3.12-venv.
+Preparing to unpack .../88-python3.12-venv_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-venv (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-venv.
+Preparing to unpack .../89-python3-venv_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up media-types (10.1.0) ...
+Setting up time (1.9-0.2build1) ...
+Setting up python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Setting up libkeyutils1:amd64 (1.6.3-3build1) ...
+Setting up lto-disabled-list (47) ...
+Setting up libgdbm6t64:amd64 (1.23-5.1build1) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Setting up binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Setting up libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up linux-libc-dev:amd64 (6.8.0-139.139) ...
+Setting up libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up bzip2 (1.0.8-5.1ubuntu0.1) ...
+Setting up libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up tzdata (2026c-0ubuntu0.24.04.1) ...
+
+Current default time zone: 'Etc/UTC'
+Local time is now:      Thu Sep 10 15:17:35 UTC 2026.
+Universal Time is now:  Thu Sep 10 15:17:35 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libpkgconf3:amd64 (1.8.1-2build1) ...
+Setting up rpcsvc-proto (1.4.2-0ubuntu7) ...
+Setting up gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up make (4.3-4.1build2) ...
+Setting up libmpfr6:amd64 (4.2.1-1build1.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Setting up libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libmpc3:amd64 (1.3.1-1build1.1) ...
+Setting up libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up patch (2.7.6-7build3) ...
+Setting up pkgconf-bin (1.8.1-2build1) ...
+Setting up libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Setting up libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up netbase (6.4) ...
+Setting up libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Setting up libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Setting up libisl23:amd64 (0.26-3build1.1) ...
+Setting up libc-dev-bin (2.39-0ubuntu8.9) ...
+Setting up openssl (3.0.13-0ubuntu3.15) ...
+Setting up readline-common (8.2-4build1) ...
+Setting up libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libctf0:amd64 (2.42-4ubuntu2.10) ...
+Setting up cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up pkgconf:amd64 (1.8.1-2build1) ...
+Setting up ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+121 added, 0 removed; done.
+Setting up perl (5.38.2-3.2ubuntu0.4) ...
+Setting up libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up pkg-config:amd64 (1.8.1-2build1) ...
+Setting up libdpkg-perl (1.22.6ubuntu6.6) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libreadline8t64:amd64 (8.2-4build1) ...
+Setting up libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Setting up libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Setting up cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Setting up gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3.12 (3.12.3-1ubuntu0.17) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up binutils (2.42-4ubuntu2.10) ...
+Setting up dpkg-dev (1.22.6ubuntu6.6) ...
+Setting up liberror-perl (0.17029-2) ...
+Setting up gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Setting up cpp (4:13.2.0-7ubuntu1) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3.12-venv (3.12.3-1ubuntu0.17) ...
+Setting up python3 (3.12.3-0ubuntu2.1) ...
+Setting up python3-wheel (0.42.0-2) ...
+Setting up gcc (4:13.2.0-7ubuntu1) ...
+Setting up python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Setting up g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3-setuptools (68.1.2-2ubuntu1.2) ...
+Setting up python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.10ubuntu1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+libmpfr6 is already the newest version (4.2.1-1build1.1).
+libmpfr6 set to manually installed.
+The following additional packages will be installed:
+  libcares2 libgmp-dev libgmpxx4ldbl libicu74 libnode109 libuv1t64 node-acorn
+  node-busboy node-cjs-module-lexer node-undici node-xtend
+Suggested packages:
+  gmp-doc libgmp10-doc libmpfr-doc npm
+Recommended packages:
+  nodejs-doc
+The following NEW packages will be installed:
+  libcares2 libgmp-dev libgmpxx4ldbl libicu74 libmpfr-dev libnode109 libuv1t64
+  node-acorn node-busboy node-cjs-module-lexer node-undici node-xtend nodejs
+0 upgraded, 13 newly installed, 0 to remove and 1 not upgraded.
+Need to get 24.1 MB of archives.
+After this operation, 95.0 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libicu74 amd64 74.2-1ubuntu3.1 [10.9 MB]
+Get:2 http://archive.ubuntu.com/ubuntu noble/main amd64 libuv1t64 amd64 1.48.0-1.1build1 [97.3 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble/main amd64 libcares2 amd64 1.27.0-1.0ubuntu1 [73.7 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmpxx4ldbl amd64 2:6.3.0+dfsg-2ubuntu6.1 [9888 B]
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgmp-dev amd64 2:6.3.0+dfsg-2ubuntu6.1 [340 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr-dev amd64 4.2.1-1build1.1 [288 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-xtend all 4.0.2-3 [3902 B]
+Get:8 http://archive.ubuntu.com/ubuntu noble/universe amd64 nodejs amd64 18.19.1+dfsg-6ubuntu5 [306 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-acorn all 8.8.1+ds+~cs25.17.7-2 [115 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-cjs-module-lexer all 1.2.3+dfsg-1 [32.1 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-busboy all 1.6.0+~cs2.6.0-2 [17.3 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/universe amd64 node-undici all 5.26.3+dfsg1+~cs23.10.12-2 [325 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble/universe amd64 libnode109 amd64 18.19.1+dfsg-6ubuntu5 [11.6 MB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 24.1 MB in 2s (11.0 MB/s)
+Selecting previously unselected package libicu74:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14335 files and directories currently installed.)
+Preparing to unpack .../00-libicu74_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking libicu74:amd64 (74.2-1ubuntu3.1) ...
+Selecting previously unselected package libuv1t64:amd64.
+Preparing to unpack .../01-libuv1t64_1.48.0-1.1build1_amd64.deb ...
+Unpacking libuv1t64:amd64 (1.48.0-1.1build1) ...
+Selecting previously unselected package libcares2:amd64.
+Preparing to unpack .../02-libcares2_1.27.0-1.0ubuntu1_amd64.deb ...
+Unpacking libcares2:amd64 (1.27.0-1.0ubuntu1) ...
+Selecting previously unselected package libgmpxx4ldbl:amd64.
+Preparing to unpack .../03-libgmpxx4ldbl_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libgmp-dev:amd64.
+Preparing to unpack .../04-libgmp-dev_2%3a6.3.0+dfsg-2ubuntu6.1_amd64.deb ...
+Unpacking libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Selecting previously unselected package libmpfr-dev:amd64.
+Preparing to unpack .../05-libmpfr-dev_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package node-xtend.
+Preparing to unpack .../06-node-xtend_4.0.2-3_all.deb ...
+Unpacking node-xtend (4.0.2-3) ...
+Selecting previously unselected package nodejs.
+Preparing to unpack .../07-nodejs_18.19.1+dfsg-6ubuntu5_amd64.deb ...
+Unpacking nodejs (18.19.1+dfsg-6ubuntu5) ...
+Selecting previously unselected package node-acorn.
+Preparing to unpack .../08-node-acorn_8.8.1+ds+~cs25.17.7-2_all.deb ...
+Unpacking node-acorn (8.8.1+ds+~cs25.17.7-2) ...
+Selecting previously unselected package node-cjs-module-lexer.
+Preparing to unpack .../09-node-cjs-module-lexer_1.2.3+dfsg-1_all.deb ...
+Unpacking node-cjs-module-lexer (1.2.3+dfsg-1) ...
+Selecting previously unselected package node-busboy.
+Preparing to unpack .../10-node-busboy_1.6.0+~cs2.6.0-2_all.deb ...
+Unpacking node-busboy (1.6.0+~cs2.6.0-2) ...
+Selecting previously unselected package node-undici.
+Preparing to unpack .../11-node-undici_5.26.3+dfsg1+~cs23.10.12-2_all.deb ...
+Unpacking node-undici (5.26.3+dfsg1+~cs23.10.12-2) ...
+Selecting previously unselected package libnode109:amd64.
+Preparing to unpack .../12-libnode109_18.19.1+dfsg-6ubuntu5_amd64.deb ...
+Unpacking libnode109:amd64 (18.19.1+dfsg-6ubuntu5) ...
+Setting up libuv1t64:amd64 (1.48.0-1.1build1) ...
+Setting up node-cjs-module-lexer (1.2.3+dfsg-1) ...
+Setting up libgmpxx4ldbl:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up libcares2:amd64 (1.27.0-1.0ubuntu1) ...
+Setting up libicu74:amd64 (74.2-1ubuntu3.1) ...
+Setting up node-xtend (4.0.2-3) ...
+Setting up node-busboy (1.6.0+~cs2.6.0-2) ...
+Setting up libgmp-dev:amd64 (2:6.3.0+dfsg-2ubuntu6.1) ...
+Setting up libmpfr-dev:amd64 (4.2.1-1build1.1) ...
+Setting up node-undici (5.26.3+dfsg1+~cs23.10.12-2) ...
+Setting up node-acorn (8.8.1+ds+~cs25.17.7-2) ...
+Setting up libnode109:amd64 (18.19.1+dfsg-6ubuntu5) ...
+Setting up nodejs (18.19.1+dfsg-6ubuntu5) ...
+update-alternatives: using /usr/bin/nodejs to provide /usr/bin/js (js) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/js.1.gz because associated file /usr/share/man/man1/nodejs.1.gz (of link group js) doesn't exist
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+This program will extract and install Racket v8.18.
+
+Note: the required diskspace for this installation is 691M.
+
+Base directory does not exist: /opt/racket
+
+Checking the integrity of the binary archive... ok.
+Unpacking into "/opt/racket/racket-tmp-install" (Ctrl+C to abort)...
+Done.
+Moving bin -> /opt/racket/bin
+Moving collects -> /opt/racket/share/racket/collects
+Moving share/pkgs -> /opt/racket/share/racket/pkgs
+Moving doc -> /opt/racket/share/racket/doc
+Moving lib -> /opt/racket/lib/racket
+Moving include -> /opt/racket/include/racket
+Moving share/applications -> /opt/racket/share/applications
+Moving share -> /opt/racket/share/racket
+Moving etc -> /opt/racket/etc/racket
+Moving man -> /opt/racket/share/man
+Moving README -> /opt/racket/share/racket/doc/README
+Writing uninstaller at: /opt/racket/bin/racket-uninstall...
+Rewriting configuration file at: /opt/racket/etc/racket/config.rktd...
+Moving "compiled" in /opt/racket/share/racket/collects to /opt/racket/lib/racket/compiled/opt/racket/share/racket/collects
+Moving "compiled" in /opt/racket/share/racket/pkgs to /opt/racket/lib/racket/compiled/opt/racket/share/racket/pkgs
+Rewriting configuration file at: /opt/racket/etc/racket/config.rktd...
+
+Installation complete.
+Welcome to Racket v8.18 [cs].
+info: downloading installer
+info: profile set to minimal
+info: default host tuple is x86_64-unknown-linux-gnu
+info: syncing channel updates for 1.88.0-x86_64-unknown-linux-gnu
+info: latest update on 2025-06-26 for version 1.88.0 (6b00bc388 2025-06-23)
+info: downloading 3 components
+info: default toolchain set to 1.88.0-x86_64-unknown-linux-gnu
+
+  1.88.0-x86_64-unknown-linux-gnu installed - rustc 1.88.0 (6b00bc388 2025-06-23)
+
+
+Rust is installed now. Great!
+
+To get started you may need to restart your current shell.
+This would reload your PATH environment variable to include
+Cargo's bin directory ($HOME/.cargo/bin).
+
+To configure your current shell, you need to source the
+corresponding env file under $HOME/.cargo.
+
+Consider running the right command for your shell (note the leading DOT):
+. "$HOME/.cargo/env" # For sh/ash/dash/pdksh/bash
+cargo:rerun-if-env-changed=CC_x86_64-unknown-linux-gnu
+CC_x86_64-unknown-linux-gnu = None
+cargo:rerun-if-env-changed=CC_x86_64_unknown_linux_gnu
+CC_x86_64_unknown_linux_gnu = None
+cargo:rerun-if-env-changed=HOST_CC
+HOST_CC = None
+cargo:rerun-if-env-changed=CC
+CC = None
+cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+CRATE_CC_NO_DEFAULTS = None
+cargo:rerun-if-env-changed=CFLAGS
+CFLAGS = None
+cargo:rerun-if-env-changed=HOST_CFLAGS
+HOST_CFLAGS = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64_unknown_linux_gnu
+CFLAGS_x86_64_unknown_linux_gnu = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-linux-gnu
+CFLAGS_x86_64-unknown-linux-gnu = None
+info: downloading component rustfmt
+Cloning into '/work/herbie-rerun1/src'...
+HEAD is now at 52cba77bd Merge pull request #1633 from herbie-fp/taylor-near-zero
+52cba77bdd002d6a71feecc2e57631c8d462b4b2
+raco pkg remove --force --no-docs herbie && echo "Uninstalled old herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: herbie
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie && echo "Uninstalled old egg-herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-linux && echo "Uninstalled old egg-herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-linux
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-windows && echo "Uninstalled old egg-herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-windows
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-osx && echo "Uninstalled old egg-herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-osx
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-macosm1 && echo "Uninstalled old egg-herbie" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-macosm1
+  current scope: user
+cargo build --release --manifest-path=egg-herbie/Cargo.toml
+    Updating git repository `https://github.com/egraphs-good/egg.git`
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded version_check v0.9.4
+  Downloaded byteorder v1.5.0
+  Downloaded num-bigint v0.4.4
+  Downloaded thiserror-impl v1.0.56
+  Downloaded symbolic_expressions v5.0.3
+  Downloaded env_logger v0.9.3
+  Downloaded smallvec v1.13.1
+  Downloaded saturating v0.1.0
+  Downloaded syn v2.0.48
+  Downloaded unicode-ident v1.0.12
+  Downloaded num-rational v0.4.1
+  Downloaded ahash v0.7.7
+  Downloaded num-traits v0.2.18
+  Downloaded hashbrown v0.12.3
+  Downloaded bitflags v2.6.0
+  Downloaded autocfg v1.1.0
+  Downloaded log v0.4.20
+  Downloaded indexmap v1.9.3
+  Downloaded quanta v0.12.3
+  Downloaded crossbeam-utils v0.8.20
+  Downloaded thiserror v1.0.56
+  Downloaded symbol_table v0.2.0
+  Downloaded raw-cpuid v11.2.0
+  Downloaded quote v1.0.35
+  Downloaded once_cell v1.19.0
+  Downloaded num-integer v0.1.46
+  Downloaded getrandom v0.2.12
+  Downloaded fxhash v0.2.1
+  Downloaded cfg-if v1.0.0
+  Downloaded libc v0.2.153
+  Downloaded proc-macro2 v1.0.78
+   Compiling autocfg v1.1.0
+   Compiling libc v0.2.153
+   Compiling proc-macro2 v1.0.78
+   Compiling version_check v0.9.4
+   Compiling cfg-if v1.0.0
+   Compiling unicode-ident v1.0.12
+   Compiling once_cell v1.19.0
+   Compiling crossbeam-utils v0.8.20
+   Compiling thiserror v1.0.56
+   Compiling bitflags v2.6.0
+   Compiling log v0.4.20
+   Compiling byteorder v1.5.0
+   Compiling saturating v0.1.0
+   Compiling symbolic_expressions v5.0.3
+   Compiling smallvec v1.13.1
+   Compiling raw-cpuid v11.2.0
+   Compiling env_logger v0.9.3
+   Compiling ahash v0.7.7
+   Compiling num-traits v0.2.18
+   Compiling num-bigint v0.4.4
+   Compiling indexmap v1.9.3
+   Compiling num-rational v0.4.1
+   Compiling fxhash v0.2.1
+   Compiling quote v1.0.35
+   Compiling getrandom v0.2.12
+   Compiling syn v2.0.48
+   Compiling hashbrown v0.12.3
+   Compiling num-integer v0.1.46
+   Compiling quanta v0.12.3
+   Compiling symbol_table v0.2.0
+   Compiling thiserror-impl v1.0.56
+   Compiling egg v0.9.5 (https://github.com/egraphs-good/egg.git?rev=6f2ac1ee72d0ec6b51d12c9ca59e94ada6615e87#6f2ac1ee)
+   Compiling egg-herbie v0.3.0 (/work/herbie-rerun1/src/egg-herbie)
+    Finished `release` profile [optimized + debuginfo] target(s) in 12.54s
+raco pkg remove --force --no-docs egg-herbie && echo "Warning: uninstalling egg-herbie and reinstalling local version" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-linux && echo "Warning: uninstalling egg-herbie and reinstalling local version" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-linux
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-windows && echo "Warning: uninstalling egg-herbie and reinstalling local version" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-windows
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-osx && echo "Warning: uninstalling egg-herbie and reinstalling local version" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-osx
+  current scope: user
+raco pkg remove --force --no-docs egg-herbie-macosm1 && echo "Warning: uninstalling egg-herbie and reinstalling local version" || :
+Redirecting to `raco pkg uninstall`
+raco pkg uninstall: package not currently installed
+  package: egg-herbie-macosm1
+  current scope: user
+raco pkg install ./egg-herbie
+raco setup: version: 8.18
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 8.18
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [15:18:24]
+raco setup: updating: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [15:18:24]
+raco setup: --- installing foreign libraries ---                   [15:18:24]
+raco setup: --- installing shared files ---                        [15:18:24]
+raco setup: --- compiling collections ---                          [15:18:24]
+raco setup: --- parallel build using 8 jobs ---                    [15:18:24]
+raco setup: 7 making: <pkgs>/egg-herbie
+raco setup: --- creating launchers ---                             [15:18:25]
+raco setup: --- installing man pages ---                           [15:18:25]
+raco setup: --- building documentation ---                         [15:18:25]
+raco setup: --- installing collections ---                         [15:18:25]
+raco setup: --- post-installing collections ---                    [15:18:25]
+cargo install --locked --git "https://github.com/egraphs-good/egglog-experimental" egglog-experimental
+    Updating git repository `https://github.com/egraphs-good/egglog-experimental`
+  Installing egglog-experimental v3.0.0 (https://github.com/egraphs-good/egglog-experimental#55240709)
+    Updating git repository `https://github.com/egraphs-good/egglog.git`
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded shlex v2.0.1
+  Downloaded scopeguard v1.2.0
+  Downloaded utf8parse v0.2.2
+  Downloaded rustversion v1.0.23
+  Downloaded version_check v0.9.5
+  Downloaded zmij v1.0.23
+  Downloaded ucd-trie v0.1.7
+  Downloaded unicode-ident v1.0.24
+  Downloaded serde_core v1.0.229
+  Downloaded serde_json v1.0.151
+  Downloaded typenum v1.20.1
+  Downloaded itoa v1.0.18
+  Downloaded equivalent v1.0.2
+  Downloaded rustc-hash v2.1.3
+  Downloaded rand_xoshiro v0.6.0
+  Downloaded syn v1.0.109
+  Downloaded pest_meta v2.9.0
+  Downloaded zerocopy v0.8.56
+  Downloaded syn v2.0.119
+  Downloaded num-bigint v0.4.8
+  Downloaded pest v2.9.0
+  Downloaded rustix v1.1.4
+  Downloaded hashbrown v0.17.1
+  Downloaded clap_builder v4.6.6
+  Downloaded im-rc v15.1.0
+  Downloaded aho-corasick v1.1.5
+  Downloaded chrono v0.4.45
+  Downloaded regex v1.13.1
+  Downloaded jiff-core v0.1.0
+  Downloaded hashbrown v0.14.5
+  Downloaded hashbrown v0.16.1
+  Downloaded bumpalo v3.20.3
+  Downloaded rand v0.9.5
+  Downloaded object v0.39.1
+  Downloaded regex-syntax v0.8.11
+  Downloaded memchr v2.8.3
+  Downloaded indexmap v2.14.0
+  Downloaded crossbeam-channel v0.5.16
+  Downloaded syn v3.0.3
+  Downloaded clap v4.6.6
+  Downloaded libmimalloc-sys v0.1.49
+  Downloaded cc v1.4.3
+  Downloaded ar_archive_writer v0.5.3
+  Downloaded rand v0.8.7
+  Downloaded proc-macro2 v1.0.107
+  Downloaded arc-swap v1.9.2
+  Downloaded regex-automata v0.4.18
+  Downloaded allocator-api2 v0.2.21
+  Downloaded jiff v0.2.35
+  Downloaded num-traits v0.2.19
+  Downloaded log v0.4.33
+  Downloaded getrandom v0.4.3
+  Downloaded getrandom v0.3.4
+  Downloaded clap_derive v4.6.4
+  Downloaded bitflags v2.13.1
+  Downloaded anyhow v1.0.104
+  Downloaded rand_core v0.9.5
+  Downloaded quote v1.0.47
+  Downloaded pest_generator v2.9.0
+  Downloaded libc v0.2.189
+  Downloaded pest_derive v2.9.0
+  Downloaded parking_lot_core v0.9.12
+  Downloaded csv v1.4.0
+  Downloaded ordered-float v5.3.0
+  Downloaded once_cell v1.21.4
+  Downloaded num-rational v0.4.2
+  Downloaded num-complex v0.4.6
+  Downloaded graphviz-rust v0.9.8
+  Downloaded fixedbitset v0.5.7
+  Downloaded env_logger v0.11.11
+  Downloaded defmt v1.1.1
+  Downloaded dashmap v6.2.1
+  Downloaded crossbeam-utils v0.8.22
+  Downloaded crossbeam-epoch v0.9.20
+  Downloaded crossbeam-deque v0.8.7
+  Downloaded bitflags v1.3.2
+  Downloaded autocfg v1.5.1
+  Downloaded anstyle-parse v1.0.0
+  Downloaded anstyle v1.0.14
+  Downloaded anstream v1.0.0
+  Downloaded rand_core v0.6.4
+  Downloaded rand_chacha v0.9.0
+  Downloaded psm v0.1.32
+  Downloaded ppv-lite86 v0.2.21
+  Downloaded num-integer v0.1.47
+  Downloaded num v0.4.3
+  Downloaded lock_api v0.4.14
+  Downloaded foldhash v0.2.0
+  Downloaded find-msvc-tools v0.1.11
+  Downloaded fastrand v2.5.0
+  Downloaded enum-map v2.7.3
+  Downloaded dot-structures v0.1.2
+  Downloaded defmt-macros v1.1.1
+  Downloaded csv-core v0.1.13
+  Downloaded crossbeam-queue v0.3.13
+  Downloaded clap_lex v1.1.0
+  Downloaded bitmaps v2.1.0
+  Downloaded num-iter v0.1.46
+  Downloaded mimalloc v0.1.52
+  Downloaded is_terminal_polyfill v1.70.2
+  Downloaded into-attr-derive v0.2.1
+  Downloaded enum-map-derive v0.17.0
+  Downloaded dyn-clone v1.0.20
+  Downloaded defmt-parser v1.0.0
+  Downloaded heck v0.5.0
+  Downloaded crossbeam v0.8.4
+  Downloaded colorchoice v1.0.5
+  Downloaded cfg-if v1.0.4
+  Downloaded anstyle-query v1.1.5
+  Downloaded serde v1.0.229
+  Downloaded lazy_static v1.5.0
+  Downloaded dot-generator v0.2.0
+  Downloaded tempfile v3.27.0
+  Downloaded smallvec v1.15.2
+  Downloaded serde_derive v1.0.229
+  Downloaded ryu v1.0.23
+  Downloaded into-attr v0.1.1
+  Downloaded errno v0.3.14
+  Downloaded env_filter v2.0.0
+  Downloaded sized-chunks v0.6.5
+  Downloaded web-time v1.1.0
+  Downloaded thiserror-impl v2.0.20
+  Downloaded thiserror v2.0.20
+  Downloaded strsim v0.11.1
+  Downloaded stacker v0.1.25
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded egraph-serialize v0.3.0
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.189
+   Compiling memchr v2.8.3
+   Compiling cfg-if v1.0.4
+   Compiling serde_core v1.0.229
+   Compiling crossbeam-utils v0.8.22
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.11
+   Compiling getrandom v0.3.4
+   Compiling zerocopy v0.8.56
+   Compiling utf8parse v0.2.2
+   Compiling crossbeam-epoch v0.9.20
+   Compiling serde v1.0.229
+   Compiling crossbeam-deque v0.8.7
+   Compiling anstyle v1.0.14
+   Compiling rustversion v1.0.23
+   Compiling equivalent v1.0.2
+   Compiling zmij v1.0.23
+   Compiling colorchoice v1.0.5
+   Compiling anstyle-query v1.1.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling hashbrown v0.17.1
+   Compiling itoa v1.0.18
+   Compiling once_cell v1.21.4
+   Compiling serde_json v1.0.151
+   Compiling smallvec v1.15.2
+   Compiling object v0.39.1
+   Compiling ucd-trie v0.1.7
+   Compiling rustix v1.1.4
+   Compiling heck v0.5.0
+   Compiling clap_lex v1.1.0
+   Compiling dot-structures v0.1.2
+   Compiling getrandom v0.4.3
+   Compiling strsim v0.11.1
+   Compiling syn v1.0.109
+   Compiling parking_lot_core v0.9.12
+   Compiling allocator-api2 v0.2.21
+   Compiling thiserror v2.0.20
+   Compiling regex-syntax v0.8.11
+   Compiling linux-raw-sys v0.12.1
+   Compiling anyhow v1.0.104
+   Compiling scopeguard v1.2.0
+   Compiling bumpalo v3.20.3
+   Compiling foldhash v0.2.0
+   Compiling egglog-numeric-id v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling log v0.4.33
+   Compiling bitflags v2.13.1
+   Compiling web-time v1.1.0
+   Compiling rustc-hash v2.1.3
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling hashbrown v0.14.5
+   Compiling fastrand v2.5.0
+   Compiling dyn-clone v1.0.20
+   Compiling jiff-core v0.1.0
+   Compiling rand_core v0.6.4
+   Compiling fixedbitset v0.5.7
+   Compiling ryu v1.0.23
+   Compiling lazy_static v1.5.0
+   Compiling anstyle-parse v1.0.0
+   Compiling num-traits v0.2.19
+   Compiling cc v1.4.3
+   Compiling im-rc v15.1.0
+   Compiling pest v2.9.0
+   Compiling lock_api v0.4.14
+   Compiling dot-generator v0.2.0
+   Compiling into-attr v0.1.1
+   Compiling aho-corasick v1.1.5
+   Compiling csv-core v0.1.13
+   Compiling rand_xoshiro v0.6.0
+   Compiling anstream v1.0.0
+   Compiling crossbeam-channel v0.5.16
+   Compiling crossbeam-queue v0.3.13
+   Compiling clap_builder v4.6.6
+   Compiling bitmaps v2.1.0
+   Compiling syn v3.0.3
+   Compiling syn v2.0.119
+   Compiling arc-swap v1.9.2
+   Compiling chrono v0.4.45
+   Compiling crossbeam v0.8.4
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling egglog-concurrency v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling libmimalloc-sys v0.1.49
+   Compiling stacker v0.1.25
+   Compiling jiff v0.2.35
+   Compiling sized-chunks v0.6.5
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling rand_core v0.9.5
+   Compiling dashmap v6.2.1
+   Compiling egglog-union-find v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling pest_meta v2.9.0
+   Compiling regex-automata v0.4.18
+   Compiling egglog v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling into-attr-derive v0.2.1
+   Compiling indexmap v2.14.0
+   Compiling hashbrown v0.16.1
+   Compiling csv v1.4.0
+   Compiling tempfile v3.27.0
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling pest_generator v2.9.0
+   Compiling enum-map-derive v0.17.0
+   Compiling egglog-add-primitive v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling serde_derive v1.0.229
+   Compiling clap_derive v4.6.4
+   Compiling thiserror-impl v2.0.20
+   Compiling pest_derive v2.9.0
+   Compiling ar_archive_writer v0.5.3
+   Compiling enum-map v2.7.3
+   Compiling ppv-lite86 v0.2.21
+   Compiling regex v1.13.1
+   Compiling psm v0.1.32
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.9.5
+   Compiling env_filter v2.0.0
+   Compiling clap v4.6.6
+   Compiling env_logger v0.11.11
+   Compiling graphviz-rust v0.9.8
+   Compiling ordered-float v5.3.0
+   Compiling egglog-reports v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling egglog-core-relations v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling egraph-serialize v0.3.0
+   Compiling egglog-ast v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling mimalloc v0.1.52
+   Compiling egglog-bridge v3.0.0 (https://github.com/egraphs-good/egglog.git?rev=d61ba050231778fcc8d053d4fc9dbc8d9ae1f779#d61ba050)
+   Compiling egglog-experimental v3.0.0 (/root/.cargo/git/checkouts/egglog-experimental-e48206cd5b150391/5524070)
+    Finished `release` profile [optimized] target(s) in 22.54s
+  Installing /root/.cargo/bin/egglog-experimental
+   Installed package `egglog-experimental v3.0.0 (https://github.com/egraphs-good/egglog-experimental#55240709)` (executable `egglog-experimental`)
+raco pkg install --update-deps --no-docs --auto --name herbie src/
+00: Resolving "cover" via https://download.racket-lang.org/releases/8.18/catalog/
+01: Resolving "rival3" via https://download.racket-lang.org/releases/8.18/catalog/
+02: Resolving "rival" via https://download.racket-lang.org/releases/8.18/catalog/
+03: Resolving "fpbench" via https://download.racket-lang.org/releases/8.18/catalog/
+01: Resolving "rival3" via https://pkgs.racket-lang.org
+00: Resolving "cover" via https://pkgs.racket-lang.org
+03: Resolving "fpbench" via https://pkgs.racket-lang.org
+02: Resolving "rival" via https://pkgs.racket-lang.org
+Resolving "fmt" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "fmt" via https://pkgs.racket-lang.org
+Downloading repository https://github.com/florence/cover.git?path=cover#release commit ad50ffa8f6246053bec24b39b9cae7fad1534373
+Downloading https://github.com/herbie-fp/rival3/releases/latest/download/rival3-racket.zip
+Downloading repository https://github.com/herbie-fp/rival.git#main commit 4d2334a05338be8df9c6924e30534d693f83267d
+Downloading repository https://github.com/FPBench/FPBench.git#main commit a6621d5f86276859bc01cc7b9c238dee73ff5dbe
+Downloading repository https://github.com/sorawee/fmt.git commit 4e1ed68e596e656960b44a8244bb33eb4e65ec64
+03: Resolving "cover-lib" via https://download.racket-lang.org/releases/8.18/catalog/
+03: Resolving "cover-lib" via https://pkgs.racket-lang.org
+Resolving "cover-doc" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "cover-doc" via https://pkgs.racket-lang.org
+Using cached17890535311789053531760 for https://github.com/florence/cover.git?path=cover-lib#release
+Using cached17890535311789053531760 for https://github.com/florence/cover.git?path=cover-doc#release
+Resolving "custom-load" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "custom-load" via https://pkgs.racket-lang.org
+Downloading repository git://github.com/rmculpepper/custom-load commit 142b32a0381d271f4bc6efbbcf3d306a0ee55566
+Resolving "generic-flonum" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "generic-flonum" via https://pkgs.racket-lang.org
+Downloading repository https://github.com/herbie-fp/generic-flonum.git commit e2226376ed7b9bb543ec21606327d52e4077818a
+Resolving "pretty-expressive" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "pretty-expressive" via https://pkgs.racket-lang.org
+Downloading repository https://github.com/sorawee/pretty-expressive.git?path=pretty-expressive commit 27e7be8016b38252a19f3620bc37539100b02503
+Resolving "pretty-expressive-lib" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "pretty-expressive-lib" via https://pkgs.racket-lang.org
+Using cached17890535511789053551219 for https://github.com/sorawee/pretty-expressive.git?path=pretty-expressive-lib
+Skipping update of linked package: egg-herbie
+The following uninstalled packages were listed as dependencies
+and they were automatically installed:
+ dependencies of herbie:
+   cover
+   rival3
+   rival
+   fpbench
+   fmt
+ dependencies of cover:
+   cover-lib
+   cover-doc
+ dependencies of cover-lib:
+   custom-load
+ dependencies of fpbench:
+   generic-flonum
+ dependencies of fmt:
+   pretty-expressive
+ dependencies of pretty-expressive:
+   pretty-expressive-lib
+raco setup: version: 8.18
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 8.18
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [15:19:12]
+raco setup: updating: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [15:19:12]
+raco setup: --- installing foreign libraries ---                   [15:19:12]
+raco setup: --- installing shared files ---                        [15:19:12]
+raco setup: --- compiling collections ---                          [15:19:12]
+raco setup: --- parallel build using 8 jobs ---                    [15:19:12]
+raco setup: 7 making: <pkgs>/cover-doc/cover
+raco setup: 6 making: <pkgs>/cover-lib/cover
+raco setup: 5 making: <pkgs>/custom-load (custom-load)
+raco setup: 4 making: <pkgs>/fmt
+raco setup: 3 making: <pkgs>/fpbench (fpbench)
+raco setup: 2 making: <pkgs>/generic-flonum (generic-flonum)
+raco setup: 1 making: <pkgs>/herbie
+raco setup: 0 making: <pkgs>/pretty-expressive (pretty-expressive)
+raco setup: 0 making: <pkgs>/pretty-expressive/tests
+raco setup: 7 making: <pkgs>/pretty-expressive-lib (pretty-expressive)
+raco setup: 5 making: <pkgs>/custom-load/private
+raco setup: 5 making: <pkgs>/rival
+raco setup: 7 making: <pkgs>/rival3
+raco setup: 6 making: <pkgs>/cover-lib/cover/private
+raco setup: 6 making: <pkgs>/cover-lib/cover/private/html
+raco setup: 2 making: <pkgs>/generic-flonum/private
+raco setup: 2 making: <pkgs>/generic-flonum/tests
+raco setup: 4 making: <pkgs>/fmt/private
+raco setup: 4 making: <pkgs>/fmt/tests
+raco setup: 4 making: <pkgs>/fmt/tests/config-tests
+raco setup: 5 making: <pkgs>/rival/eval
+raco setup: 5 making: <pkgs>/rival/ops
+raco setup: 3 making: <pkgs>/fpbench/infra
+raco setup: 1 making: <pkgs>/herbie/platforms
+raco setup: 1 making: <pkgs>/herbie/reports
+raco setup: 1 making: <pkgs>/herbie/syntax
+raco setup: --- creating launchers ---                             [15:19:36]
+raco setup: launcher: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/bin/fpbench
+raco setup: launcher: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/bin/herbie
+raco setup: --- installing man pages ---                           [15:19:36]
+raco setup: --- installing collections ---                         [15:19:36]
+raco setup: --- post-installing collections ---                    [15:19:36]
+raco pkg update --auto rival
+Resolving "rival" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "rival" via https://pkgs.racket-lang.org
+No updates available
+raco pkg update --auto rival3
+Resolving "rival3" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "rival3" via https://pkgs.racket-lang.org
+No updates available
+raco pkg update --name herbie --deps search-auto src/
+Updating:
+  herbie
+Uninstalling to prepare re-install of herbie
+Re-installing herbie
+raco setup: version: 8.18
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 8.18
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [15:19:40]
+raco setup: --- pre-installing collections ---                     [15:19:40]
+raco setup: --- installing foreign libraries ---                   [15:19:40]
+raco setup: --- installing shared files ---                        [15:19:40]
+raco setup: --- compiling collections ---                          [15:19:40]
+raco setup: --- parallel build using 8 jobs ---                    [15:19:40]
+raco setup: 7 making: <pkgs>/herbie
+raco setup: --- creating launchers ---                             [15:19:41]
+raco setup: launcher: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/bin/herbie
+raco setup: --- installing man pages ---                           [15:19:41]
+raco setup: --- building documentation ---                         [15:19:41]
+raco setup: 4 skipping: <pkgs>/cover-doc/cover/scribblings/cover.scrbl
+raco setup: 3 skipping: <pkgs>/custom-load/custom-load.scrbl
+raco setup: 4 skipping: <pkgs>/fmt/scribblings/fmt.scrbl
+raco setup: 7 skipping: <pkgs>/generic-flonum/scribblings/generic-flonum.scrbl
+raco setup: 0 running: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: 5 skipping: <pkgs>/pretty-expressive/scribblings/pretty-expressive.scrbl
+raco setup: 6 skipping: <pkgs>/rival/scribblings/rival.scrbl
+raco setup: 2 skipping: <pkgs>/rival3/scribblings/rival3.scrbl
+raco setup: 3 running: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: 5 running: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: 7 running: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: 3 rendering: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: 2 rendering: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: 1 rendering: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: 0 rendering: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: --- installing collections ---                         [15:19:47]
+raco setup: --- post-installing collections ---                    [15:19:47]
+Resolving "softposit-rkt" via https://download.racket-lang.org/releases/8.18/catalog/
+Resolving "softposit-rkt" via https://pkgs.racket-lang.org
+Downloading repository https://github.com/DavidThien/softposit-rkt.git commit ce68790cb7a2f0492ca110803982f2e7361c2ed7
+raco setup: version: 8.18
+raco setup: platform: x86_64-linux [cs]
+raco setup: target machine: ta6le
+raco setup: installation name: 8.18
+raco setup: variants: cs
+raco setup: main collects: /opt/racket/share/racket/collects/
+raco setup: collects paths: 
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/collects
+raco setup:   /opt/racket/share/racket/collects/
+raco setup: main pkgs: /opt/racket/share/racket/pkgs
+raco setup: pkgs paths: 
+raco setup:   /opt/racket/share/racket/pkgs
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/pkgs
+raco setup: links files: 
+raco setup:   /opt/racket/share/racket/links.rktd
+raco setup:   /work/herbie-rerun1/racket-home/.local/share/racket/8.18/links.rktd
+raco setup: compiled-file roots: 
+raco setup:   same
+raco setup:   /opt/racket/lib/racket/compiled
+raco setup: --- updating info-domain tables ---                    [15:19:48]
+raco setup: updating: /work/herbie-rerun1/racket-home/.local/share/racket/8.18/share/info-cache.rktd
+raco setup: --- pre-installing collections ---                     [15:19:48]
+raco setup: --- installing foreign libraries ---                   [15:19:48]
+raco setup: --- installing shared files ---                        [15:19:48]
+raco setup: --- compiling collections ---                          [15:19:48]
+raco setup: --- parallel build using 8 jobs ---                    [15:19:48]
+raco setup: 7 making: <pkgs>/softposit-rkt (softposit-rkt)
+raco setup: --- creating launchers ---                             [15:19:51]
+raco setup: --- installing man pages ---                           [15:19:51]
+raco setup: --- building documentation ---                         [15:19:51]
+raco setup: 1 skipping: <pkgs>/cover-doc/cover/scribblings/cover.scrbl
+raco setup: 5 skipping: <pkgs>/custom-load/custom-load.scrbl
+raco setup: 4 skipping: <pkgs>/fmt/scribblings/fmt.scrbl
+raco setup: 5 skipping: <pkgs>/generic-flonum/scribblings/generic-flonum.scrbl
+raco setup: 6 skipping: <pkgs>/pretty-expressive/scribblings/pretty-expressive.scrbl
+raco setup: 2 skipping: <pkgs>/rival/scribblings/rival.scrbl
+raco setup: 5 skipping: <pkgs>/rival3/scribblings/rival3.scrbl
+raco setup: 7 running: <pkgs>/softposit-rkt/softposit-rkt.scrbl
+raco setup: 4 rendering: <pkgs>/racket-index/scribblings/main/user/local-redirect.scrbl
+raco setup: 3 rendering: <pkgs>/racket-index/scribblings/main/user/release.scrbl
+raco setup: 2 rendering: <pkgs>/racket-index/scribblings/main/user/search.scrbl
+raco setup: 1 rendering: <pkgs>/softposit-rkt/softposit-rkt.scrbl
+raco setup: 0 rendering: <pkgs>/racket-index/scribblings/main/user/start.scrbl
+raco setup: --- installing collections ---                         [15:19:57]
+raco setup: installing: <pkgs>/softposit-rkt (softposit-rkt)
+raco setup: --- post-installing collections ---                    [15:20:00]
+raco test: (file "src/api/datafile.rkt")
+raco test: (file "src/api/demo.rkt")
+raco test: (file "src/api/run.rkt")
+raco test: (file "src/api/sandbox.rkt")
+raco test: (file "src/api/server.rkt")
+raco test: (file "src/api/shell.rkt")
+raco test: (file "src/config.rkt")
+raco test: (file "src/core/alt-table.rkt")
+raco test: (file "src/core/alternative.rkt")
+raco test: (submod (file "src/core/arrays.rkt") test)
+raco test: (submod (file "src/core/bsearch.rkt") test)
+raco test: (file "src/core/compiler.rkt")
+raco test: (file "src/core/derivations.rkt")
+raco test: (submod (file "src/core/egg-herbie.rkt") test)
+raco test: (submod (file "src/core/egglog-herbie-tests.rkt") test)
+raco test: (file "src/core/egglog-herbie.rkt")
+raco test: (file "src/core/egglog-subprocess.rkt")
+raco test: (file "src/core/explain.rkt")
+raco test: (submod (file "src/core/localize.rkt") test)
+raco test: (file "src/core/mainloop.rkt")
+raco test: (file "src/core/patch.rkt")
+raco test: (file "src/core/points.rkt")
+raco test: (file "src/core/preprocess.rkt")
+raco test: (submod (file "src/core/programs.rkt") test)
+raco test: (submod (file "src/core/prove-rules.rkt") test)
+raco test: (submod (file "src/core/reduce.rkt") test)
+raco test: (submod (file "src/core/regimes.rkt") test)
+raco test: (file "src/core/rules.rkt")
+raco test: (submod (file "src/core/sampling.rkt") test)
+raco test: (file "src/core/searchreals.rkt")
+raco test: (file "src/core/taylor-cover.rkt")
+raco test: (submod (file "src/core/taylor.rkt") test)
+raco test: (submod (file "src/core/test-rules.rkt") test)
+Warning: 46.0% of points produce a very large (infinite) output. You may want to add a precondition.
+See <https://herbie.uwplse.org/doc/2.3/faq.html#inf-points> for more.
+Warning: could not determine a ground truth
+  x = -1.0443508969970208e+299
+  y = 1.4087721078842834e+297
+See <https://herbie.uwplse.org/doc/2.3/faq.html#ground-truth> for more.
+raco test: (file "src/info.rkt")
+raco test: (file "src/main.rkt")
+raco test: (file "src/platform.rkt")
+raco test: (submod (file "src/platforms/c-windows.rkt") test)
+raco test: (submod (file "src/platforms/c.rkt") test)
+raco test: (submod (file "src/platforms/herbie10.rkt") test)
+raco test: (submod (file "src/platforms/herbie20.rkt") test)
+raco test: (submod (file "src/platforms/julia.rkt") test)
+raco test: (submod (file "src/platforms/math.rkt") test)
+raco test: (submod (file "src/platforms/python.rkt") test)
+raco test: (submod (file "src/platforms/racket.rkt") test)
+raco test: (submod (file "src/platforms/reflow.rkt") test)
+raco test: (submod (file "src/platforms/rival.rkt") test)
+raco test: (file "src/reports/common.rkt")
+raco test: (file "src/reports/core2mathjs.rkt")
+raco test: (file "src/reports/data.rkt")
+raco test: (file "src/reports/history.rkt")
+raco test: (file "src/reports/make-graph.rkt")
+raco test: (file "src/reports/pages.rkt")
+raco test: (file "src/reports/plot.rkt")
+raco test: (file "src/reports/timeline.rkt")
+raco test: (file "src/reports/traceback.rkt")
+raco test: (submod (file "src/syntax/block.rkt") test)
+raco test: (file "src/syntax/float.rkt")
+raco test: (file "src/syntax/generators.rkt")
+raco test: (file "src/syntax/load-platform.rkt")
+raco test: (file "src/syntax/matcher.rkt")
+raco test: (file "src/syntax/platform-language.rkt")
+raco test: (file "src/syntax/platform-state.rkt")
+raco test: (submod (file "src/syntax/platform.rkt") test)
+raco test: (submod (file "src/syntax/read.rkt") test)
+raco test: (submod (file "src/syntax/rival.rkt") test)
+raco test: (file "src/syntax/sugar.rkt")
+raco test: (submod (file "src/syntax/syntax-check.rkt") test)
+raco test: (file "src/syntax/syntax.rkt")
+raco test: (submod (file "src/syntax/test-syntax.rkt") test)
+raco test: (submod (file "src/syntax/type-check.rkt") test)
+raco test: (submod (file "src/syntax/types.rkt") test)
+raco test: (submod (file "src/utils/common.rkt") test)
+raco test: (submod (file "src/utils/dvector.rkt") test)
+0
+128
+129
+raco test: (file "src/utils/errors.rkt")
+raco test: (file "src/utils/multi-command-line.rkt")
+raco test: (submod (file "src/utils/pareto.rkt") test)
+raco test: (submod (file "src/utils/pretty-print.rkt") test)
+raco test: (file "src/utils/profile.rkt")
+raco test: (file "src/utils/timeline.rkt")
+raco test: (file "infra/analyze-rules.rkt")
+raco test: (file "infra/ci.rkt")
+raco test: (file "infra/convert-demo.rkt")
+raco test: (file "infra/convert-json.rkt")
+raco test: (file "infra/coverage.rkt")
+raco test: (file "infra/diff.rkt")
+raco test: (file "infra/merge.rkt")
+raco test: (submod (file "infra/softposit.rkt") test)
+raco test: (file "infra/sort-fpcore.rkt")
+raco test: (file "infra/survey.rkt")
+raco test: (file "egg-herbie/info.rkt")
+raco test: @(test-responsible '("Oliver Flatt" "Brett Saiki" "Pavel Panchekha"))
+raco test: (file "egg-herbie/main.rkt")
+raco test: @(test-responsible '("Oliver Flatt" "Brett Saiki" "Pavel Panchekha"))
+26464 tests passed
+   Compiling autocfg v1.1.0
+   Compiling libc v0.2.153
+   Compiling version_check v0.9.4
+   Compiling proc-macro2 v1.0.78
+   Compiling unicode-ident v1.0.12
+   Compiling cfg-if v1.0.0
+   Compiling once_cell v1.19.0
+   Compiling crossbeam-utils v0.8.20
+   Compiling thiserror v1.0.56
+   Compiling bitflags v2.6.0
+   Compiling log v0.4.20
+   Compiling byteorder v1.5.0
+   Compiling smallvec v1.13.1
+   Compiling saturating v0.1.0
+   Compiling symbolic_expressions v5.0.3
+   Compiling raw-cpuid v11.2.0
+   Compiling env_logger v0.9.3
+   Compiling fxhash v0.2.1
+   Compiling ahash v0.7.7
+   Compiling num-traits v0.2.18
+   Compiling num-bigint v0.4.4
+   Compiling indexmap v1.9.3
+   Compiling num-rational v0.4.1
+   Compiling quote v1.0.35
+   Compiling syn v2.0.48
+   Compiling getrandom v0.2.12
+   Compiling hashbrown v0.12.3
+   Compiling num-integer v0.1.46
+   Compiling quanta v0.12.3
+   Compiling symbol_table v0.2.0
+   Compiling thiserror-impl v1.0.56
+   Compiling egg v0.9.5 (https://github.com/egraphs-good/egg.git?rev=6f2ac1ee72d0ec6b51d12c9ca59e94ada6615e87#6f2ac1ee)
+   Compiling egg-herbie v0.3.0 (/work/herbie-rerun1/src/egg-herbie)
+    Finished `test` profile [optimized + debuginfo] target(s) in 5.20s
+     Running unittests src/lib.rs (target/debug/deps/egg_math-66e22b6c66b3de78)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests egg_math
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+raco test: (file "./info.rkt")
+raco test: @(test-responsible '("Oliver Flatt" "Brett Saiki" "Pavel Panchekha"))
+raco test: (file "./main.rkt")
+raco test: @(test-responsible '("Oliver Flatt" "Brett Saiki" "Pavel Panchekha"))
+Warning: could not determine a ground truth
+  x = 7947284004208640.0
+See <https://herbie.uwplse.org/doc/2.3/faq.html#ground-truth> for more.
+Warning: Could not converge on a ground truth
+  x = -10090796032.0
+  n = -2.97091413969941e-11
+Running Herbie on 28 tests, seed: #(1062452524 2961816100 342112271 2854655039 3321940838 3542344109)
+  1/28	[   1.518s]   12→ 0	expax (section 3.5)
+  2/28	[   2.505s]   17→ 0	expq2 (section 3.11)
+  3/28	[   2.294s]   14→ 4	quadp (p42, positive)
+  4/28	[   2.652s]   15→ 5	quadm (p42, negative)
+  5/28	[   1.815s]   15→ 5	quad2m (problem 3.2.1, negative)
+  6/28	[   1.795s]   14→ 5	quad2p (problem 3.2.1, positive)
+  7/28	[   1.800s]   26→ 0	2sqrt (example 3.1)
+  8/28	[   3.474s]   17→ 1	2isqrt (example 3.6)
+  9/28	[   1.826s]    6→ 1	2frac (problem 3.3.1)
+ 10/28	[   1.876s]    8→ 1	3frac (problem 3.3.3)
+ 11/28	[   3.001s]   26→ 0	2cbrt (problem 3.3.4)
+ 12/28	[   1.595s]   25→ 0	2log (problem 3.3.6)
+ 13/28	[   4.028s]   12→ 0	exp2 (problem 3.3.7)
+ 14/28	[   0.831s]   25→ 0	expm1 (example 3.7)
+ 15/28	[   1.255s]   31→ 0	logs (example 3.8)
+ 16/28	[   1.496s]   28→ 0	invcot (example 3.9)
+ 17/28	[   2.473s]   27→ 0	qlog (example 3.10)
+ 18/28	[   3.376s]   15→ 0	cos2 (problem 3.4.1)
+ 19/28	[   1.708s]   32→ 0	expq3 (problem 3.4.2)
+ 20/28	[   2.056s]   25→ 0	logq (problem 3.4.3)
+ 21/28	[   1.882s]   19→ 0	sqrtexp (problem 3.4.4)
+ 22/28	[   9.706s]   13→ 4	2nthrt (problem 3.4.6)
+ 23/28	[   2.095s]   19→ 0	2sin (example 3.3)
+ 24/28	[   2.562s]   16→ 1	2cos (problem 3.3.5)
+ 25/28	[   3.186s]   19→ 0	2tan (problem 3.3.2)
+ 26/28	[   1.952s]   14→ 0	tanhf (example 3.4)
+ 27/28	[   2.418s]   13→ 1	2atan (example 3.5)
+ 28/28	[   4.261s]   30→ 0	sintan (problem 3.4.5)
+Warning: could not determine a ground truth
+  x = 2.6041264815670598e+241
+See <https://herbie.uwplse.org/doc/2.3/faq.html#ground-truth> for more.
+Warning: Could not converge on a ground truth
+  x = -1.7505910862125937e+107
+  n = -8.21357794541123e-130
+Running Herbie on 28 tests, seed: #(1062452524 2961816100 342112271 2854655039 3321940838 3542344109)
+  1/28	[   1.210s]   30→ 0	expax (section 3.5)
+  2/28	[   1.889s]   40→ 0	expq2 (section 3.11)
+  3/28	[   2.020s]   31→ 9	quadp (p42, positive)
+  4/28	[   2.447s]   30→ 6	quadm (p42, negative)
+  5/28	[   1.879s]   30→ 6	quad2m (problem 3.2.1, negative)
+  6/28	[   1.990s]   31→ 8	quad2p (problem 3.2.1, positive)
+  7/28	[   1.481s]   60→ 0	2sqrt (example 3.1)
+  8/28	[   3.191s]   39→ 1	2isqrt (example 3.6)
+  9/28	[   1.764s]   14→ 0	2frac (problem 3.3.1)
+ 10/28	[   2.574s]   19→ 0	3frac (problem 3.3.3)
+ 11/28	[   3.076s]   59→ 1	2cbrt (problem 3.3.4)
+ 12/28	[   1.634s]   49→ 0	2log (problem 3.3.6)
+ 13/28	[   6.123s]   29→ 0	exp2 (problem 3.3.7)
+ 14/28	[   0.475s]   59→ 0	expm1 (example 3.7)
+ 15/28	[   1.747s]   63→ 0	logs (example 3.8)
+ 16/28	[  11.112s]   60→ 0	invcot (example 3.9)
+ 17/28	[   3.298s]   61→ 0	qlog (example 3.10)
+ 18/28	[   4.652s]   31→ 0	cos2 (problem 3.4.1)
+ 19/28	[   2.669s]   64→ 0	expq3 (problem 3.4.2)
+ 20/28	[   4.508s]   59→ 0	logq (problem 3.4.3)
+ 21/28	[   1.382s]   41→ 0	sqrtexp (problem 3.4.4)
+ 22/28	[  10.678s]   29→ 3	2nthrt (problem 3.4.6)
+ 23/28	[   1.500s]   24→ 0	2sin (example 3.3)
+ 24/28	[   3.017s]   30→ 0	2cos (problem 3.3.5)
+ 25/28	[   2.394s]   24→ 0	2tan (problem 3.3.2)
+ 26/28	[   1.668s]   30→ 0	tanhf (example 3.4)
+ 27/28	[   1.433s]   58→ 0	2atan (example 3.5)
+ 28/28	[  11.418s]   63→ 0	sintan (problem 3.4.5)
+Warning: / is deprecated as a variary operator
+Warning: Could not converge on a ground truth
+Warning: Could not converge on a ground truth
+Running Herbie on 33 tests, seed: #(1062452524 2961816100 342112271 2854655039 3321940838 3542344109)
+  1/33	[  12.419s]    2→ 1	quadp (p42, positive)
+  2/33	[  11.657s]    2→ 1	quadm (p42, negative)
+  3/33	[  10.940s]    2→ 0	quad2m (problem 3.2.1, negative)
+  4/33	[  10.129s]    2→ 0	quad2p (problem 3.2.1, positive)
+  5/33	[   5.208s]    2→ 0	2sqrt (example 3.1)
+  6/33	[   8.560s]    1→ 1	2isqrt (example 3.6)
+  7/33	[   4.946s]    1→ 0	2frac (problem 3.3.1)
+  8/33	[   7.105s]    1→ 0	3frac (problem 3.3.3)
+  9/33	[   3.600s]    1→ 1	math.abs on complex
+ 10/33	[   5.437s]    0→ 0	math.cube on complex, real part
+ 11/33	[   4.696s]    0→ 0	math.cube on complex, imaginary part
+ 12/33	[  11.080s]    1→ 1	_divideComplex, real part
+ 13/33	[  10.678s]    1→ 1	_divideComplex, imaginary part
+ 14/33	[   2.734s]    0→ 0	_multiplyComplex, real part
+ 15/33	[   3.369s]    0→ 0	_multiplyComplex, imaginary part
+ 16/33	[  10.462s]    2→ 1	math.sqrt on complex, real part
+ 17/33	[  11.151s]    2→ 1	math.sqrt on complex, imaginary part, im greater than 0 branch
+ 18/33	[   2.920s]    0→ 0	math.square on complex, real part
+ 19/33	[   0.769s]    0→ 0	math.square on complex, imaginary part
+ 20/33	[  11.455s]    1→ 0	Octave 3.8, jcobi/1
+ 21/33	[  22.972s]    1→ 1	Octave 3.8, jcobi/2
+ 22/33	[  14.013s]    0→ 0	Octave 3.8, jcobi/3
+ 23/33	[  35.643s]    3→ 1	Octave 3.8, jcobi/4
+ 24/33	[   6.260s]    2→ 0	Octave 3.8, jcobi/4, as called
+ 25/33	[   9.559s]    1→ 0	Octave 3.8, oct_fill_randg
+ 26/33	[   1.744s]    0→ 0	FastMath dist
+ 27/33	[   0.531s]    0→ 0	FastMath test1
+ 28/33	[   2.310s]    0→ 0	FastMath test2
+ 29/33	[   2.296s]    0→ 0	FastMath dist3
+ 30/33	[   5.026s]    1→ 0	FastMath dist4
+ 31/33	[   1.936s]    1→ 0	FastMath test3
+ 32/33	[   1.643s]    0→ 0	FastMath repmul
+ 33/33	[  25.971s]    4→ 1	Jmat.Real.dawson
+status=0
+finished=2026-09-10T15:28:27Z

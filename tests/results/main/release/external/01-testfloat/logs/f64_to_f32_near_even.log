@@ -1,0 +1,1 @@
+RESULT format=f64 operation=to_f32 rounding=near_even cases=768 value_mismatches=0 flag_mismatches=0 parse_errors=0

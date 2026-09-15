@@ -1,0 +1,10 @@
+== native arithmetic ==
+dispatch32=0,dispatch64=0,unchecked32=0,unchecked64=0,TOTAL: 0
+
+== native bit interop ==
+binary32 round trips: 0
+binary64 round trips: 0
+TOTAL: 0
+
+== aggregate ==
+TOTAL: 0

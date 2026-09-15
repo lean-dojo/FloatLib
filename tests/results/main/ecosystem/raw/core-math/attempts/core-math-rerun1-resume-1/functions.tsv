@@ -1,0 +1,15 @@
+binary32	cospif	PASS
+binary32	logf	PASS
+binary32	sinhf	PASS
+binary64	acosh	PASS
+binary64	atan2pi	PASS
+binary64	erf	PASS
+binary64	expm1	PASS
+binary64	log2	PASS
+binary64	sinpi	PASS
+binaryb16	acospi_bf16	PASS
+binaryb16	atanh_bf16	PASS
+binaryb16	erf_bf16	PASS
+binaryb16	expm1_bf16	PASS
+binaryb16	log2_bf16	PASS
+binaryb16	sinpi_bf16	PASS

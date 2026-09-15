@@ -1,0 +1,9 @@
+binary32	hypotf	PASS
+binary32	sinf	PASS
+binary32	tgammaf	PASS
+binary64	atan	PASS
+binary64	cosh	PASS
+binary64	exp2	PASS
+binary64	log10p1	PASS
+binary64	sincos	PASS
+binaryb16	acos_bf16	PASS

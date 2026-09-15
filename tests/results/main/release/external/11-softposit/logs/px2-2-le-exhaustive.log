@@ -1,0 +1,57 @@
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_addMagsPX2.o  ../../source/s_addMagsPX2.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_subMagsPX2.o  ../../source/s_subMagsPX2.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_mulAddPX2.o  ../../source/s_mulAddPX2.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_add.o  ../../source/pX2_add.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_sub.o  ../../source/pX2_sub.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_mul.o  ../../source/pX2_mul.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_div.o  ../../source/pX2_div.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_mulAdd.o  ../../source/pX2_mulAdd.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_roundToInt.o  ../../source/pX2_roundToInt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_sqrt.o  ../../source/pX2_sqrt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_eq.o  ../../source/pX2_eq.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_le.o  ../../source/pX2_le.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o pX2_lt.o  ../../source/pX2_lt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_addMagsP32.o  ../../source/s_addMagsP32.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_subMagsP32.o  ../../source/s_subMagsP32.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o s_mulAddP32.o  ../../source/s_mulAddP32.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_add.o  ../../source/p32_add.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_sub.o  ../../source/p32_sub.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_mul.o  ../../source/p32_mul.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_div.o  ../../source/p32_div.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_mulAdd.o  ../../source/p32_mulAdd.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_roundToInt.o  ../../source/p32_roundToInt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_sqrt.o  ../../source/p32_sqrt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_eq.o  ../../source/p32_eq.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_le.o  ../../source/p32_le.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+c++ -c -Werror-implicit-function-declaration -DSOFTPOSIT_FAST_INT64 -DINLINE_LEVEL=5  -I. -I../../source/8086-SSE -I../../source/include -O2  -o p32_lt.o  ../../source/p32_lt.c
+cc1plus: warning: ‘-Werror=’ argument ‘-Werror=implicit-function-declaration’ is not valid for C++
+waiting for Lake build lock held by process 29977
+Build completed successfully (5143 jobs).
+RESULT emitter=softposit family=px2 bits=2 operation=le mode=exhaustive source_cases=16 expected_cases=16 first_case=0 stride=1 seed=1592614637 revision=17d5628185b31828b10c1f910c9bf65737e83640 cases=16 padding_errors=0
+RESULT oracle=softposit family=px2 bits=2 operation=le mode=exhaustive source_cases=16 expected_cases=16 first_case=0 stride=1 seed=1592614637 revision=17d5628185b31828b10c1f910c9bf65737e83640 cases=16 mismatches=0 protocol_errors=0
+RESULT driver=softposit revision=17d5628185b31828b10c1f910c9bf65737e83640 requested_cases=16 received_cases=16 metadata=pass emitter_status=0 oracle_status=0

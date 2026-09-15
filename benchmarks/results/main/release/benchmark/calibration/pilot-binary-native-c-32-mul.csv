@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+Native C,binary-interchange,binary32,32,mul,native-fpu,C float host FPU,result-dependent-fixture-chain,1000000,8669135,14250734012177042773,5646303033533253028,256,10455358528253897402,7341641514666459220

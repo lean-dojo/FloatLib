@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,posit,posit64,64,fma,proved-software,posit direct packed-word exact fused accumulation,result-dependent-fixture-chain,25000,10967238,18309967653530659915,5265763724031518263,0,0,0

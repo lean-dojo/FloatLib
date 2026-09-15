@@ -1,0 +1,16 @@
+binary16	acosf16	PASS
+binary16	asinpif16	PASS
+binary16	atanpif16	PASS
+binary16	cospif16	PASS
+binary16	exp10m1f16	PASS
+binary16	lgammaf16	PASS
+binary16	log2f16	PASS
+binary16	sincosf16	PASS
+binary16	tanhf16	PASS
+binary32	acospif	PASS
+binary32	atan2f	PASS
+binary32	compoundf	FAIL(2)
+binary32	erfcf	PASS
+binary32	exp2m1f	PASS
+binary32	log10f	PASS
+binary32	powf	PASS

@@ -1,0 +1,4 @@
+binary64	exp2m1	PASS
+binaryb16	cosh_bf16	PASS
+binaryb16	log1p_bf16	PASS
+binaryb16	tan_bf16	PASS

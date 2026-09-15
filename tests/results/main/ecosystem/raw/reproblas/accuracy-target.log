@@ -1,0 +1,8 @@
+Rules generated for "release" mode...
+PYTHONPATH=/work/reproblas-rerun1/src python3.10 /work/reproblas-rerun1/src/tests/accs/acc.py --runmode parallel --verbose 
+Measuring: max_ratio(e)
+Traceback (most recent call last):
+  File "/work/reproblas-rerun1/src/tests/accs/acc.py", line 18, in <module>
+    acc_harness.add_suite(accs.AccSuite([accs.AccRDSUMTest(), accs.AccRDASUMTest(), accs.AccRDNRM2Test(), accs.AccRDDOTTest()], params, ranges, attribute))
+AttributeError: module 'tests.accs.accs' has no attribute 'AccRDASUMTest'. Did you mean: 'AccRDSUMTest'?
+make: *** [/work/reproblas-rerun1/src/final.mk:63: acc] Error 1
