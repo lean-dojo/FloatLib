@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -117,8 +117,8 @@ theorem roundPositiveCode_bounds
     lowerCode format target ≤ roundPositiveCode format target ∧
       roundPositiveCode format target ≤ lowerCode format target + 1 := by
   unfold roundPositiveCode
-  rw [if_neg (not_le_of_gt hpositive),
-    if_neg (not_lt_of_ge hminimum)]
+  rw [ite_eq_right (not_le_of_gt hpositive),
+    ite_eq_right (not_lt_of_ge hminimum)]
   dsimp only
   split
   · split
@@ -207,7 +207,7 @@ theorem round_ratCast (format : Format) (target : Rat) :
   by_cases hzero : target = 0
   · subst target
     simp [round, roundPositive, roundPositiveCode, Model.roundRat, Model.zero]
-  · simp only [round, Model.roundRat, if_neg hzero, Rat.cast_lt_zero]
+  · simp only [round, Model.roundRat, ite_eq_right hzero, Rat.cast_lt_zero]
     split
     · rw [← Rat.cast_neg, roundPositive_ratCast]
     · rw [roundPositive_ratCast]

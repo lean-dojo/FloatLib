@@ -98,9 +98,9 @@ theorem sqrtWordCode_lt_modulus
           format.modulus
       by_cases hnegative :
           radicand.isLess FloatLib.Numerics.Dyadic.zero = true
-      · rw [if_pos hnegative]
+      · rw [ite_eq_left hnegative]
         exact format.signMaskNat_lt_modulus
-      · rw [if_neg hnegative]
+      · rw [ite_eq_right hnegative]
         exact DirectDyadicSquareRoot.roundCode_lt_modulus
           format radicand
 

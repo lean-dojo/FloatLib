@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Data.EReal.Basic
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 
 /-!
 # Coercion lemmas for `ℝ → EReal`

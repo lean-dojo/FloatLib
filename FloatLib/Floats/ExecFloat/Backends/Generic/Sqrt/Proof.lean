@@ -90,7 +90,7 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
       some (sqrtPositiveRuntime x hfinite hnonzero hpositive) := by
   unfold sqrtPositiveRuntime? FiniteKernel.withFinite? sqrtPositiveRuntime
   by_cases hieee : fmt.isIEEE = true
-  · simp only [hieee, if_true]
+  · simp only [hieee, ite_true]
     change
       (if expFieldImpl x == FloatFormat.expAllOnesNat fmt then
           none
@@ -114,7 +114,7 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
       rw [← expField_eq_expFieldImpl_apply x]
       rw [← fracField_eq_fracFieldImpl_apply x]
       unfold sqrtFields?
-      simp only [hpositive, Bool.false_eq_true, if_false]
+      simp only [hpositive, Bool.false_eq_true, ite_false]
       by_cases hexponentZero : expField x = 0
       · have hfraction : fracField x ≠ 0 := by
           intro hfraction
@@ -131,9 +131,9 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
         simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
   · simp only [hieee]
     unfold FiniteKernel.decode?
-    simp only [hfinite, Bool.not_true, Bool.false_eq_true, if_false]
+    simp only [hfinite, Bool.not_true, Bool.false_eq_true, ite_false]
     unfold sqrtFields?
-    simp only [hpositive, Bool.false_eq_true, if_false]
+    simp only [hpositive, Bool.false_eq_true, ite_false]
     by_cases hexponentZero : expField x = 0
     · have hfraction : fracField x ≠ 0 := by
         intro hfraction

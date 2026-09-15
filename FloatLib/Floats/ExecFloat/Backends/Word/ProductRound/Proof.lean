@@ -142,11 +142,11 @@ theorem finish_eq
     · have hcarryTrue : (rounded == carryBit fmt) = true := by
         rw [hcarry]
         simp [hc]
-      rw [if_pos hcarryTrue, if_pos hc, hpositionAdd]
+      rw [ite_eq_left hcarryTrue, ite_eq_left hc, hpositionAdd]
     · have hcarryFalse : ¬(rounded == carryBit fmt) = true := by
         rw [hcarry]
         simp [hc]
-      rw [if_neg hcarryFalse, if_neg hc, hposition]
+      rw [ite_eq_right hcarryFalse, ite_eq_right hc, hposition]
   have hoverflowThreshold :
       (3 * biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 2).toNat =
         3 * fmt.bias + 2 * fmt.fracWidth - 2 :=
@@ -174,10 +174,10 @@ theorem finish_eq
   by_cases hoverflow :
       3 * fmt.bias + 2 * fmt.fracWidth - 2 <
         normalizedPositionNat
-  · rw [if_pos (hoverflowWordIff.mpr hoverflow),
-      if_pos hoverflow]
-  rw [if_neg (fun h => hoverflow (hoverflowWordIff.mp h)),
-    if_neg hoverflow]
+  · rw [ite_eq_left (hoverflowWordIff.mpr hoverflow),
+      ite_eq_left hoverflow]
+  rw [ite_eq_right (fun h => hoverflow (hoverflowWordIff.mp h)),
+    ite_eq_right hoverflow]
   let normalizedMantissaWord :=
     if rounded == carryBit fmt then hiddenBit fmt else rounded
   let normalizedMantissaNat :=
@@ -191,7 +191,7 @@ theorem finish_eq
         rw [hrounded, hcarryBit, hc]
       have hcarryTrue : (rounded == carryBit fmt) = true := by
         simp [hword]
-      rw [if_pos hcarryTrue, if_pos hc, hhidden]
+      rw [ite_eq_left hcarryTrue, ite_eq_left hc, hhidden]
     · have hword : rounded ≠ carryBit fmt := by
         intro heq
         apply hc
@@ -199,7 +199,7 @@ theorem finish_eq
         simpa [hrounded, hcarryBit] using hnat
       have hcarryFalse : ¬(rounded == carryBit fmt) = true := by
         simp [hword]
-      rw [if_neg hcarryFalse, if_neg hc, hrounded]
+      rw [ite_eq_right hcarryFalse, ite_eq_right hc, hrounded]
   have hexponentOffset :
       (biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 2).toNat =
         fmt.bias + 2 * fmt.fracWidth - 2 :=

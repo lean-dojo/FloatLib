@@ -119,7 +119,7 @@ theorem roundAway_eq_rational (format : Format) (mode : RoundingMode)
     rw [hp]
     omega
   cases mode <;>
-    simp only [roundAway, roundRationalAwayWithParity, beq_iff_eq, hr, if_false,
+    simp only [roundAway, roundRationalAwayWithParity, beq_iff_eq, hr, ite_false,
       Nat.shiftLeft_eq', Nat.shiftLeft_eq, one_mul, scaleFractionFloor_eq_rational, heven,
       hle, hlt]
   have hb : (2 ^ discarded == 2 * remainder) = (remainder == 2 ^ (discarded - 1)) := by

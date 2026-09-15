@@ -72,13 +72,13 @@ theorem roundRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 ≤ base
   · subst base
     have he : 0 < exponent := hdomain.resolve_left (by simp)
     have heReal : (exponent : ℝ) ≠ 0 := by exact_mod_cast he.ne'
-    simp only [roundRatPower, he, if_true, Rat.cast_zero, Real.zero_rpow heReal]
+    simp only [roundRatPower, he, ite_true, Rat.cast_zero, Real.zero_rpow heReal]
     simpa using roundRat_eq_roundPositive_of_nonneg (format := format) 0 (by decide)
   by_cases hone : base = 1
   · subst base
-    simp only [roundRatPower, one_ne_zero, if_false, Rat.cast_one, Real.one_rpow]
+    simp only [roundRatPower, one_ne_zero, ite_false, Rat.cast_one, Real.one_rpow]
     simpa using roundRat_eq_roundPositive_of_nonneg (format := format) 1 (by decide)
-  simp only [roundRatPower, hzero, hone, if_false, not_lt.mpr hbase]
+  simp only [roundRatPower, hzero, hone, ite_false, not_lt.mpr hbase]
   exact roundPositiveRatPower_eq_roundPositive base exponent (lt_of_le_of_ne hbase (Ne.symm hzero))
 
 /-- A negative base with an integral exponent rounds the exact rational integer power once. -/
@@ -86,7 +86,7 @@ theorem roundRatPower_eq_roundRat_of_neg (base exponent : Rat) (hbase : base < 0
     (hinteger : exponent.den = 1) :
     roundRatPower format base exponent = roundRat format (base ^ exponent.num) := by
   have hone : base ≠ 1 := by linarith
-  simp only [roundRatPower, hbase.ne, hone, hbase, hinteger, if_false, if_true]
+  simp only [roundRatPower, hbase.ne, hone, hbase, hinteger, ite_false, ite_true]
   rw [roundPositiveRatPower_eq_roundRat (-base) exponent (neg_pos.mpr hbase) hinteger]
   split
   · rename_i heven

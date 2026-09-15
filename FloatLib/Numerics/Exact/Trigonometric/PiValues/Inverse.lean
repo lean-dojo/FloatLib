@@ -55,7 +55,6 @@ theorem irrational_arctanPi_of_exact_none (argument : ℚ)
   all_goals
     intro h
     norm_num [arctanPiExact, h] at hnone
-  all_goals cases hnone
 
 private theorem arcsin_half : Real.arcsin (1 / 2) = Real.pi / 6 := by
   apply Real.arcsin_eq_of_sin_eq Real.sin_pi_div_six
@@ -119,32 +118,27 @@ theorem irrational_arcsinPi_of_exact_none (argument : ℚ)
       push_cast
       linarith
     norm_num [arcsinPiExact, hq] at hnone
-    cases hnone
   · have hq : argument = -1 / 2 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
       linarith
     norm_num [arcsinPiExact, hq] at hnone
-    cases hnone
   · have hq : argument = 0 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
       linarith
     norm_num [arcsinPiExact, hq] at hnone
-    cases hnone
   · have hq : argument = 1 / 2 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
       linarith
     norm_num [arcsinPiExact, hq] at hnone
-    cases hnone
   · have hq : argument = 1 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
       change (argument : ℝ) = 1 at h
       exact h
     norm_num [arcsinPiExact, hq] at hnone
-    cases hnone
 
 /-- Every classified inverse cosine value is exact. -/
 theorem arccosPiExact_eq_real (argument value : ℚ)

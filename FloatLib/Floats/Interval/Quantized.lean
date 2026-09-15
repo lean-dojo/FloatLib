@@ -279,7 +279,7 @@ theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
     (show x ∈ Set.Icc A.lo A.hi from hx)
     (show y ∈ Set.Icc B.lo B.hi from hy)
     hside
-  rw [div, dif_neg h0]
+  rw [div, dite_eq_right h0]
   apply (EInterval.mem_ofRInterval _ _).2
   exact And.intro
     (le_trans (R.down_le _) hbounds.1)
@@ -296,7 +296,7 @@ theorem mem_div {R : Rounder} {A B : RInterval} {x y : ℝ}
     (hx : x ∈ A) (hy : y ∈ B) :
     ((x / y : ℝ) : EReal) ∈ (div R A B) := by
   by_cases h0 : B.lo ≤ 0 ∧ 0 ≤ B.hi
-  · rw [div, dif_pos h0]
+  · rw [div, dite_eq_left h0]
     exact EInterval.mem_top _
   · exact mem_div_of_nozero hx hy h0
 

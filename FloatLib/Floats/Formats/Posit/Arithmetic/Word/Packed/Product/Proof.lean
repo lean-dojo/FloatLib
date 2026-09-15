@@ -39,7 +39,7 @@ theorem roundFieldsWord_toNat_eq_direct
   unfold roundFieldsWord
   by_cases hhigh :
       (FixedWord.mul64 leftSignificand rightSignificand).hi = 0
-  · simp only [beq_iff_eq, hhigh, if_true]
+  · simp only [beq_iff_eq, hhigh, ite_true]
     rw [NativeWordRounding.GuardSticky.roundCodeWord_toNat_eq_direct
       format heligible
       (Bool.xor leftNegative rightNegative)
@@ -51,7 +51,7 @@ theorem roundFieldsWord_toNat_eq_direct
     · exact FixedWord.mul64_lo_toNat_of_hi_eq_zero
         leftSignificand rightSignificand hhigh
     · rfl
-  · simp only [beq_iff_eq, hhigh, if_false]
+  · simp only [beq_iff_eq, hhigh, ite_false]
     rw [NativeWordLimb.roundCodeWordLow_toNat_eq_direct
       format heligible
       (Bool.xor leftNegative rightNegative)

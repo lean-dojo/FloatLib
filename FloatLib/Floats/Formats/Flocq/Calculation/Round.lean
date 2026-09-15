@@ -472,9 +472,9 @@ theorem truncate_brackets (β : Numerics.Radix) (fexp : ℤ → ℤ)
     (state : TruncationState) {x : ℝ} (hl : state.Brackets β x) :
     (truncate β fexp state).Brackets β x := by
   by_cases hshift : 0 < truncationShift β fexp state
-  · rw [truncate, if_pos hshift]
+  · rw [truncate, ite_eq_left hshift]
     exact truncateAux_brackets β state hshift hl
-  · rw [truncate, if_neg hshift]
+  · rw [truncate, ite_eq_right hshift]
     exact hl
 
 /--
@@ -492,10 +492,10 @@ theorem truncate_brackets_and_exponent
   constructor
   · exact truncate_brackets β fexp state hl
   · by_cases hshift : 0 < truncationShift β fexp state
-    · rw [truncate, if_pos hshift]
+    · rw [truncate, ite_eq_left hshift]
       simp only [truncateAux, truncationShift]
       linarith
-    · rw [truncate, if_neg hshift]
+    · rw [truncate, ite_eq_right hshift]
       simp only [truncationShift] at hshift
       have hle : state.exponent ≤ cexp β fexp x := by
         rcases hexp with h | h

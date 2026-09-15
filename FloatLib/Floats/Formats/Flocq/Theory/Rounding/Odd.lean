@@ -38,10 +38,10 @@ theorem oddRound_bounds (x : ℝ) :
 /-- An inexact input receives an odd integer result. -/
 theorem oddRound_odd_of_inexact {x : ℝ} (hx : x ≠ (⌊x⌋ : ℝ)) :
     Odd (oddRound x) := by
-  simp only [oddRound, hx, if_false]
+  simp only [oddRound, hx, ite_false]
   by_cases hodd : Odd ⌊x⌋
   · simp [hodd]
-  · rw [if_neg hodd]
+  · rw [ite_eq_right hodd]
     exact odd_add_one.mpr (Int.not_odd_iff_even.mp hodd)
 
 /-- Round-to-odd is monotone and fixes every integer. -/
@@ -61,7 +61,7 @@ instance oddRoundValid : ValidRnd oddRound where
           have hxyFloor : x ≤ (⌊x⌋ : ℝ) := by simpa [hfloorEq] using hxy.trans_eq hy
           exact hxInt (le_antisymm hxyFloor hxfloor)
         have hxIntY : x ≠ (⌊y⌋ : ℝ) := by simpa [← hfloorEq] using hxInt
-        simp only [oddRound, hxIntY, hyInt, if_false, hfloorEq]
+        simp only [oddRound, hxIntY, hyInt, ite_false, hfloorEq]
         exact le_rfl
     · exact (oddRound_bounds x).2.trans
         ((Int.add_one_le_iff.mpr hfloorLt).trans (oddRound_bounds y).1)
@@ -77,7 +77,7 @@ theorem oddRound_lt_even {x : ℝ} {n : ℤ} (hxn : x < (n : ℝ)) (hn : Even n)
   by_cases hx : x = (⌊x⌋ : ℝ)
   · have hround : oddRound x = ⌊x⌋ := by
       unfold oddRound
-      rw [if_pos hx]
+      rw [ite_eq_left hx]
     have : x = (n : ℝ) := by rw [hx, ← hround, heq]
     exact hxn.ne this
   · have hodd : Odd n := by simpa [heq] using oddRound_odd_of_inexact hx
@@ -94,7 +94,7 @@ theorem even_lt_oddRound {x : ℝ} {n : ℤ} (hnx : (n : ℝ) < x) (hn : Even n)
   by_cases hx : x = (⌊x⌋ : ℝ)
   · have hround : oddRound x = ⌊x⌋ := by
       unfold oddRound
-      rw [if_pos hx]
+      rw [ite_eq_left hx]
     have : (n : ℝ) = x := by rw [hx, ← hround, ← heq]
     exact hnx.ne this
   · have hodd : Odd n := by simpa [← heq] using oddRound_odd_of_inexact hx

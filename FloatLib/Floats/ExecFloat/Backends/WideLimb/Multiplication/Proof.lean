@@ -36,9 +36,9 @@ theorem mulNormal?_refines (h : Eligible fmt) (x y r : Value fmt)
   unfold mulNormal? at hr
   by_cases hcond : (expWord x == 0 || expWord x == expAllOnes fmt ||
       expWord y == 0 || expWord y == expAllOnes fmt) = true
-  · rw [if_pos hcond] at hr
+  · rw [ite_eq_left hcond] at hr
     exact absurd hr (by simp)
-  · rw [if_neg hcond] at hr
+  · rw [ite_eq_right hcond] at hr
     simp only [Bool.or_eq_true, beq_iff_eq, not_or] at hcond
     obtain ⟨⟨⟨hx0, hxAll⟩, hy0⟩, hyAll⟩ := hcond
     obtain ⟨hxe0, hxeFinite⟩ := normalExponent_of_expWord h x hx0 hxAll
@@ -72,7 +72,7 @@ theorem mulNormal?_refines (h : Eligible fmt) (x y r : Value fmt)
     have hy0' : ((normalMantissa y).toNat == 0) = false := by simpa using hyNe
     have hxe0' : (expField x == 0) = false := by simpa using hxe0
     have hye0' : (expField y == 0) = false := by simpa using hye0
-    simp only [hx0', hy0', Bool.or_self, Bool.false_eq_true, if_false, h.isIEEE, if_true,
+    simp only [hx0', hy0', Bool.or_self, Bool.false_eq_true, ite_false, h.isIEEE, ite_true,
       FiniteKernel.scale, hxe0', hye0', Option.some.injEq]
     rw [← hround, hproduct]
     rfl

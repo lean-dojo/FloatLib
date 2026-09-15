@@ -91,7 +91,7 @@ theorem sqrtMagnitude_value (f : Format) (mode : RoundingMode)
     (sqrtMagnitude f mode x preferred).value.toRat? =
       some ((mode.sqrtRound (x / (10 : ℚ) ^ (2 * sqrtQuantum f x)) : ℚ) *
         (10 : ℚ) ^ sqrtQuantum f x) := by
-  simp only [sqrtMagnitude, if_neg (not_lt.mpr hq)]
+  simp only [sqrtMagnitude, ite_eq_right (not_lt.mpr hq)]
   have hv := sqrtPair_value f mode x
   split
   · simp only [Datum.toRat?_eq, Bool.false_eq_true, ↓reduceIte, one_mul, hv]
@@ -161,7 +161,7 @@ theorem sqrtMagnitude_inexact_iff (f : Format) (mode : RoundingMode)
       have hsq := Real.sq_sqrt (show 0 ≤ (x : ℝ) by exact_mod_cast hx)
       rw [← h] at hsq
       exact_mod_cast hsq
-  simp only [sqrtMagnitude, if_neg (not_lt.mpr hq), decide_eq_true_eq]
+  simp only [sqrtMagnitude, ite_eq_right (not_lt.mpr hq), decide_eq_true_eq]
   rw [sqrtPair_value, ← hv']
   exact not_congr hexact
 

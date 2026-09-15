@@ -64,7 +64,7 @@ theorem sqrtMagnitude_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
       apply quantum_le_of_full_coefficient f _ d _ r _ hd.1 hvalue
       exact f.payloadBound_le_coefficientBound_sub_one
   · rename_i hq
-    simp only [if_neg hq] at hinexact
+    simp only [ite_eq_right hq] at hinexact
     simp only [hinexact, ite_true] at hout
     obtain ⟨_, rfl, rfl⟩ := Datum.finite.inj hout
     exact sqrtPair_quantum_minimal f mode hx d r hd.1 hd.2.1 hvalue
@@ -79,7 +79,7 @@ theorem Arithmetic.sqrt_inexact_quantum_minimal (f : Format) (mode : RoundingMod
   by_cases ha : a = 0
   · simp [ha, sqrt_zero] at hinexact
   · cases s
-    · simp only [sqrt, if_neg ha, Bool.false_eq_true, ite_false] at hinexact hout
+    · simp only [sqrt, ite_eq_right ha, Bool.false_eq_true, ite_false] at hinexact hout
       exact sqrtMagnitude_inexact_quantum_minimal f mode
         (mul_nonneg (Nat.cast_nonneg a) (zpow_pos (by norm_num : (0 : ℚ) < 10) b).le)
         (b / 2) hinexact c q hout d r hv hvalue

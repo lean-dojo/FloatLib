@@ -60,9 +60,9 @@ theorem bitAt_eq_testBit (value : FloatLib.Numerics.FixedWord.UInt128) (index : 
   rw [Nat.add_comm, Nat.mul_comm value.hi.toNat,
     Nat.testBit_two_pow_mul_add value.hi.toNat value.lo.toNat_lt index]
   by_cases hindex : index < 64
-  · rw [if_pos hindex, if_pos hindex]
+  · rw [ite_eq_left hindex, ite_eq_left hindex]
     exact NativeWord.bitAt_eq_testBit value.lo index
-  · rw [if_neg hindex, if_neg hindex]
+  · rw [ite_eq_right hindex, ite_eq_right hindex]
     exact NativeWord.bitAt_eq_testBit value.hi (index - 64)
 
 /-- Two-limb low-bit extraction is exact at every zero-extended width. -/
@@ -75,7 +75,7 @@ theorem lowBits_toNat
           2 ^ 64 = 2 ^ width * 2 ^ (64 - width) := by
         rw [← pow_add, Nat.add_sub_of_le (Nat.le_of_lt hsmall)]
       unfold lowBits FloatLib.Numerics.FixedWord.UInt128.toNat
-      simp only [hsmall, if_true, UInt64.reduceToNat, zero_mul, add_zero,
+      simp only [hsmall, ite_true, UInt64.reduceToNat, zero_mul, add_zero,
         NativeWord.lowBits_toNat _ width hsmall]
       rw [hpow]
       rw [show
@@ -108,7 +108,7 @@ theorem lowBits_toNat
         have hlow := value.lo.toNat_lt
         nlinarith
       unfold lowBits FloatLib.Numerics.FixedWord.UInt128.toNat
-      simp only [hsmall, if_false, hwidth, if_true]
+      simp only [hsmall, ite_false, hwidth, ite_true]
       rw [hhighRemainder]
       rw [hmodulus, Nat.add_mod,
         Nat.mod_eq_of_lt (lt_of_lt_of_le value.lo.toNat_lt
@@ -120,7 +120,7 @@ theorem lowBits_toNat
       exact value.toNat_lt.trans_le <|
         Nat.pow_le_pow_right (by decide) (by omega)
     unfold lowBits
-    simp only [hsmall, if_false, hwidth, Nat.mod_eq_of_lt hvalue]
+    simp only [hsmall, ite_false, hwidth, Nat.mod_eq_of_lt hvalue]
 
 /--
 For a standardized posit exponent field, the low limb already contains the complete extraction.
@@ -135,7 +135,7 @@ private theorem lowBits_lo_toNat_of_le_two
   have hsmall : width < 64 := by omega
   rw [← lowBits_toNat value width]
   unfold lowBits FloatLib.Numerics.FixedWord.UInt128.toNat
-  simp only [hsmall, if_true, UInt64.toNat_zero, zero_mul, add_zero]
+  simp only [hsmall, ite_true, UInt64.toNat_zero, zero_mul, add_zero]
 
 /--
 Native hidden-bit insertion produces the exact posit significand throughout the two-limb range.
@@ -213,9 +213,9 @@ theorem countLeadingRun_eq_model
   | false =>
       exact countLeadingZeros_eq_model value width
   | true =>
-      simp only [if_true]
+      simp only [ite_true]
       by_cases hwidth : width ≤ 128
-      · rw [if_pos hwidth, countLeadingZeros_eq_model]
+      · rw [ite_eq_left hwidth, countLeadingZeros_eq_model]
         exact
           (Model.countLeadingRun_true_eq_false_of_testBit_flip
             value.toNat (complement value).toNat width (by
@@ -224,13 +224,13 @@ theorem countLeadingRun_eq_model
                 ← bitAt_eq_testBit (complement value) index]
               unfold bitAt complement
               by_cases hlow : index < 64
-              · simp only [hlow, if_true]
+              · simp only [hlow, ite_true]
                 exact NativeWord.bitAt_complement value.lo index hlow
               · have hhigh : index - 64 < 64 := by omega
-                simp only [hlow, if_false]
+                simp only [hlow, ite_false]
                 exact NativeWord.bitAt_complement
                   value.hi (index - 64) hhigh)).symm
-      · rw [if_neg hwidth]
+      · rw [ite_eq_right hwidth]
         cases width with
         | zero =>
             contradiction
@@ -310,7 +310,7 @@ private theorem nonnegativeDyadicAt_eq_decodeFields
     unfold CandidateEligible Format.payloadBits at *
     omega
   unfold nonnegativeDyadicAt withNonnegativeFields
-  simp only [hcodeBool, Bool.false_eq_true, if_false]
+  simp only [hcodeBool, Bool.false_eq_true, ite_false]
   rw [hbit, hrun]
   change
     FloatLib.Numerics.Dyadic.mk false
@@ -483,7 +483,7 @@ private theorem magnitudeWord_toNat_eq_model
   cases hnegative : isNegative format code with
   | false =>
       unfold magnitudeWord Model.magnitudeBits
-      simp only [hnegative, Bool.false_eq_true, if_false]
+      simp only [hnegative, Bool.false_eq_true, ite_false]
       rw [← hsign, hnegative, hbits]
       simp
   | true =>
@@ -496,7 +496,7 @@ private theorem magnitudeWord_toNat_eq_model
         rw [hnegative] at this
         contradiction
       unfold magnitudeWord Model.magnitudeBits
-      simp only [hnegative, if_true]
+      simp only [hnegative, ite_true]
       rw [lowBits_complement_increment_toNat
         format code heligible hcode hnonzero,
         ← hsign, hnegative, hbits]
@@ -567,7 +567,7 @@ private theorem toDyadic?_eq_model_of_nar
     apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective
     rw [hnarCode, signMaskWord_toNat format heligible]
   unfold toDyadic?
-  simp only [hword, beq_self_eq_true, if_true]
+  simp only [hword, beq_self_eq_true, ite_true]
   rw [signMaskWord_toNat format heligible]
   change none = (Model.nar format).toDyadic?
   exact (Model.toDyadic?_nar format).symm
@@ -613,7 +613,7 @@ private theorem toDyadic?_eq_model_of_zero
       isZero (FloatLib.Numerics.FixedWord.UInt128.ofNat 0) = true :=
     (isZero_eq_true_iff _).mpr htoNat
   simp only [hmaskBool, hzeroBool, Bool.false_eq_true,
-    if_false, if_true]
+    ite_false, ite_true]
 
 -- Every ordinary in-range word takes the finite two-limb decoding branch.
 private theorem toDyadic?_eq_model_of_ordinary
@@ -653,7 +653,7 @@ private theorem toDyadic?_eq_model_of_ordinary
       FloatLib.Numerics.FixedWord.UInt128.toNat equality
     simpa [signMaskWord_toNat format heligible] using equalityNat
   unfold toDyadic?
-  simp only [hnarWordBool, hzeroBool, Bool.false_eq_true, if_false]
+  simp only [hnarWordBool, hzeroBool, Bool.false_eq_true, ite_false]
   change some (decodeFinite format code) = value.toDyadic?
   rw [decodeFinite_eq_decodeFields format code heligible hcode
     hvalueNaR hvalueZero]
@@ -716,7 +716,7 @@ private theorem withDyadicFields_eq_match_toDyadic?
   · simp [hnar]
   · by_cases hzero : isZero code
     · simp [hnar, hzero, FloatLib.Numerics.FixedWord.UInt128.toNat]
-    · simp only [hnar, hzero, Bool.false_eq_true, if_false]
+    · simp only [hnar, hzero, Bool.false_eq_true, ite_false]
       exact withNonnegativeFields_eq_nonnegativeDyadicAt
         format
         (if isNegative format code then

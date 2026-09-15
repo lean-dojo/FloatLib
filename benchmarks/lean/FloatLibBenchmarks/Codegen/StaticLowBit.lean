@@ -22,7 +22,7 @@ The required result is a native `uint8_t` boundary with the nominal format and c
 dictionaries specialized away. This follows Lean's documented erased-subtype representation and
 runtime code-generation model:
 
-* <https://github.com/leanprover/lean4/blob/v4.33.0/src/lean/Init/Prelude.lean#L648-L652>
+* <https://github.com/leanprover/lean4/blob/v4.34.0/src/Init/Prelude.lean#L641-L643>
 * <https://lean-lang.org/doc/reference/latest/Run-Time-Code-Generation/>.
 -/
 

@@ -142,7 +142,8 @@ theorem significantDecimal_exact (mode : RoundingMode) (value : Decimal) (digits
   · have hlog := Nat.log_lt_of_lt_pow hz hc
     have hq : significantQuantum value.significand value.exponent digits ≤
         value.exponent := by
-      simp only [significantQuantum, FloatLib.Numerics.RadixText.significantQuantum, if_neg hz]
+      simp only [significantQuantum, FloatLib.Numerics.RadixText.significantQuantum,
+        ite_eq_right hz]
       omega
     rw [significantDecimal_value, mul_assoc,
       RoundingMode.roundAt_exact_value mode value.negative value.significand hq]
@@ -170,7 +171,7 @@ theorem significantDecimal_error_le_half (mode : RoundingMode)
   rw [significantDecimal_value]
   cases hs : value.negative
   · simpa [Decimal.toRat, hs] using h
-  · simp only [hs, if_true, neg_one_mul, Decimal.toRat]
+  · simp only [hs, ite_true, neg_one_mul, Decimal.toRat]
     have he : -((mode.roundAt true
         ((value.significand : ℚ) * (10 : ℚ) ^ value.exponent)
         (significantQuantum value.significand value.exponent digits) : ℚ)) *

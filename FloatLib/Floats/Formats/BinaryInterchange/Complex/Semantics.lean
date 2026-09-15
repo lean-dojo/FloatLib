@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.DivisionSeman
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 
 /-!
 # Real and complex semantics of `ExecComplex`
@@ -360,11 +360,11 @@ theorem isFinite_div {fmt : FloatFormat} (x y : ExecComplex fmt) (h : DivFinite 
   split
   next hb =>
     have hbranch := h.branch
-    rw [if_pos hb] at hbranch
+    rw [ite_eq_left hb] at hbranch
     simpa [isFinite, conj] using hbranch.result
   next hb =>
     have hbranch := h.branch
-    rw [if_neg hb] at hbranch
+    rw [ite_eq_right hb] at hbranch
     exact hbranch.result
 
 /-- Division agrees with the selected ratio formula and all nine scalar rounding sites. -/
@@ -376,16 +376,16 @@ theorem toComplex_div_eq_roundedDiv {fmt : FloatFormat} (x y : ExecComplex fmt)
   have hbranch := h.branch
   split
   next hb =>
-    rw [if_pos ((Internal.imagDominant_eq_true_iff y hfmt h.right).1 hb)]
-    rw [if_pos hb] at hbranch
+    rw [ite_eq_left ((Internal.imagDominant_eq_true_iff y hfmt h.right).1 hb)]
+    rw [ite_eq_left hb] at hbranch
     rw [toComplex_conj _ hbranch.result,
       Internal.toComplex_divRealDominant _ _ hfmt
         (by simpa [isFinite, Internal.swap, Bool.and_comm] using h.left)
         (by simpa [isFinite, Internal.swap, Bool.and_comm] using h.right) hbranch]
     rfl
   next hb =>
-    rw [if_neg (mt (Internal.imagDominant_eq_true_iff y hfmt h.right).2 hb)]
-    rw [if_neg hb] at hbranch
+    rw [ite_eq_right (mt (Internal.imagDominant_eq_true_iff y hfmt h.right).2 hb)]
+    rw [ite_eq_right hb] at hbranch
     exact Internal.toComplex_divRealDominant x y hfmt h.left h.right hbranch
 
 /-- Infinity determines magnitude when neither component is a signaling NaN. -/
@@ -451,13 +451,13 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
     (Internal.magnitudeScale z) hsfinite
   rw [hsreal] at hszero
   unfold magnitude roundedMagnitude
-  rw [if_pos h.input]
+  rw [ite_eq_left h.input]
   dsimp only
   split
   next hz =>
-    rw [if_pos (hszero.1 hz), hsreal, hszero.1 hz]
+    rw [ite_eq_left (hszero.1 hz), hsreal, hszero.1 hz]
   next hz =>
-    rw [if_neg (mt hszero.2 hz)]
+    rw [ite_eq_right (mt hszero.2 hz)]
     obtain ⟨hnorm, hdomain⟩ := h.scaled (Bool.eq_false_of_not_eq_true hz)
     have hsqrt := Model.isFinite_sqrt_of_isFinite _ hfmt hnorm.result hdomain
     have hout : Model.isFinite

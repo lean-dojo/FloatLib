@@ -65,7 +65,7 @@ theorem nextUp_valid (f : Format) (x : Datum) (hx : x.Valid f) :
         exact ⟨f.one_lt_coefficientBound, le_rfl, f.minQuantum_le_maxQuantum⟩
       · obtain ⟨d, r, hp, hd, hdpos, hrmin, hrmax, hfull, _⟩ :=
           neighbor_normalize f s c q hx hc
-        simp only [nextUp, if_neg hc, hp]
+        simp only [nextUp, ite_eq_right hc, hp]
         cases s
         · exact neighborAbove_valid f d r hrmin hrmax
         · obtain ⟨a, b, he, hv, _, _⟩ :=
@@ -112,7 +112,7 @@ theorem nextUp_full (f : Format) (x : Datum) (hx : x.Valid f)
         exact Or.inl hout.2.2.symm
       · obtain ⟨a, b, hp, ha, hapos, hbmin, hbmax, hfull, _⟩ :=
           neighbor_normalize f t d r hx hd
-        simp only [nextUp, if_neg hd, hp] at hout
+        simp only [nextUp, ite_eq_right hd, hp] at hout
         cases t
         · exact neighborAbove_full f a c b q s hfull hout
         · obtain ⟨e, u, he, _, hefull, _⟩ :=

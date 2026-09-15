@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Algebra.Order.Field.Basic
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 
 /-!
 # Interval corner bounds

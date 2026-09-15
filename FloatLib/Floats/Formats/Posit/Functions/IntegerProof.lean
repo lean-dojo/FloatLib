@@ -180,12 +180,12 @@ private theorem exists_code_integer_neighbor (format : Format) {code : Nat}
     simp only [trailingBits, hasRegimeTerminator] at ht
     split_ifs at ht <;> omega
   have hpayload : format.payloadBits = value.regimeRunLength + value.fractionBits + 3 := by
-    simp only [trailingBits, hasRegimeTerminator, hterm, decide_true, if_true] at ht
+    simp only [trailingBits, hasRegimeTerminator, hterm, decide_true, ite_true] at ht
     omega
   have hex := value.exponentField_lt_four
   have hregime : value.regimeBit = true := by
     cases hb : value.regimeBit
-    · simp only [exponent, regimeValue, hb, Bool.false_eq_true, if_false,
+    · simp only [exponent, regimeValue, hb, Bool.false_eq_true, ite_false,
         Int.ofNat_eq_natCast] at he
       omega
     · rfl
@@ -229,13 +229,13 @@ private theorem toRat?_signed_code (format : Format) (code : Nat)
     rw [toNatBits_ofNatBits_of_lt _ hw, nar_toNatBits] at he
     exact hn he
   cases negative
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     rw [toRat?_eq_signed_magnitude _
       (hne code (hcode.trans format.signMaskNat_lt_modulus) (Nat.ne_of_lt hcode)),
       signBit_ofNatBits_eq_false format code hcode,
       magnitudeBits_ofNatBits_of_lt_signMask format code hcode]
     rfl
-  · simp only [if_true]
+  · simp only [ite_true]
     by_cases hz : code = 0
     · subst code
       change (neg (zero format)).toRat? = some (-nonnegativeRatAt format 0)
@@ -247,10 +247,10 @@ private theorem toRat?_signed_code (format : Format) (code : Nat)
       exact decide_eq_true (by omega)
     have hmag : (ofNatBits (format := format) (format.modulus - code)).magnitudeBits =
         code := by
-      rw [magnitudeBits, hs, if_pos rfl, toNatBits_ofNatBits_of_lt _ hw]
+      rw [magnitudeBits, hs, ite_eq_left rfl, toNatBits_ofNatBits_of_lt _ hw]
       omega
     rw [neg, toNatBits_ofNatBits_of_lt _ (hcode.trans format.signMaskNat_lt_modulus),
-      toRat?_eq_signed_magnitude _ (hne _ hw (by omega)), hs, if_pos rfl, hmag]
+      toRat?_eq_signed_magnitude _ (hne _ hw (by omega)), hs, ite_eq_left rfl, hmag]
 
 /--
 Every integer between the exact floor and ceiling of a finite posit is representable.
@@ -267,13 +267,13 @@ theorem exists_toRat?_integer_neighbor (value : Model format) {q : ℚ}
   have hq := toRat?_eq_signed_magnitude value hnar
   rw [hvalue, Option.some.injEq] at hq
   cases hs : value.signBit
-  · simp only [hs, Bool.false_eq_true, if_false] at hq
+  · simp only [hs, Bool.false_eq_true, ite_false] at hq
     obtain ⟨code, hc, hv⟩ := exists_code_integer_neighbor format hm n
       (by simpa [hq] using hlower) (by simpa [hq] using hupper)
     refine ⟨ofNatBits code, ?_⟩
-    simpa only [Bool.false_eq_true, if_false, hv] using
+    simpa only [Bool.false_eq_true, ite_false, hv] using
       toRat?_signed_code format code hc false
-  · simp only [hs, if_true] at hq
+  · simp only [hs, ite_true] at hq
     let magnitude := nonnegativeRatAt format value.magnitudeBits
     have hf : (-magnitude).floor = -magnitude.ceil := by
       rw [Rat.ceil_eq_neg_floor_neg, neg_neg]
@@ -287,7 +287,7 @@ theorem exists_toRat?_integer_neighbor (value : Model format) {q : ℚ}
       omega
     obtain ⟨code, hcode, hv⟩ := exists_code_integer_neighbor format hm (-n) hlo hhi
     refine ⟨neg (ofNatBits code), ?_⟩
-    simpa only [if_true, hv, Int.cast_neg, neg_neg] using
+    simpa only [ite_true, hv, Int.cast_neg, neg_neg] using
       toRat?_signed_code format code hcode true
 
 /-- Posit floor returns the exact mathematical floor, without a further rounding error. -/

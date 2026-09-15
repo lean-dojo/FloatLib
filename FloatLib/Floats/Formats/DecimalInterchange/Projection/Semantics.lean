@@ -88,7 +88,7 @@ theorem projectMagnitude_inexact_iff (f : Format) (mode : RoundingMode) (s : Boo
   have he := projectMagnitude_value f mode s x preferred hq
   rw [hv] at he
   have hv' := Option.some.inj he
-  simp only [projectMagnitude_eq, if_neg (not_lt.mpr hq), decide_eq_true_eq]
+  simp only [projectMagnitude_eq, ite_eq_right (not_lt.mpr hq), decide_eq_true_eq]
   rw [hv', roundedPair_value]
   cases s <;> simp
 

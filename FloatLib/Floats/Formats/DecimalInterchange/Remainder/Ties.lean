@@ -27,7 +27,7 @@ theorem remainder_magnitude (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : I
     (hv : (remainder f (.finite sx cx qx) (.finite sy cy qy)).value.toRat? = some v) :
     |v| = (remainderCoefficient (cx * 10 ^ (qx - min qx qy).toNat)
       (cy * 10 ^ (qy - min qx qy).toNat) : ℚ) * (10 : ℚ) ^ min qx qy := by
-  simp only [remainder, if_neg hc, remainderFinite, Datum.toRat?_eq, Option.some.injEq] at hv
+  simp only [remainder, ite_eq_right hc, remainderFinite, Datum.toRat?_eq, Option.some.injEq] at hv
   rw [← hv]
   simp only [abs_mul]
   have hs : |(if (if remainderRoundUp (cx * 10 ^ (qx - min qx qy).toNat)

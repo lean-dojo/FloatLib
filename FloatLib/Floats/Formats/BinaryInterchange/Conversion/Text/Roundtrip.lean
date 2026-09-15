@@ -5,7 +5,7 @@ Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Parsing
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
 public import FloatLib.Numerics.Exact.HexText.Proof
@@ -25,10 +25,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 open FloatLib.Numerics
 
 /-- Successfully scanned text passes unchanged to the destination conversion. -/
-theorem parseWithStatus_of_readText (fmt : FloatFormat) (mode : IEEERoundingMode)
+theorem TextParser.run_of_readText (fmt : FloatFormat) (mode : IEEERoundingMode)
     (text : String) (value : TextValue) (hread : readText text = some value) :
-    parseWithStatus fmt mode text = convertText fmt mode value := by
-  simp [parseWithStatus, hread]
+    TextParser.run fmt mode text = convertText fmt mode value := by
+  simp [TextParser.run, hread]
 
 /-- The shared binary scanner recognizes every exact decimal spelling. -/
 @[simp] theorem readText_decimal_format (value : DecimalText.Decimal) :
@@ -48,11 +48,11 @@ theorem parseWithStatus_of_readText (fmt : FloatFormat) (mode : IEEERoundingMode
 /-- Hexadecimal text restores a finite IEEE word in every supported rounding direction. -/
 theorem parse_formatHex_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (mode : IEEERoundingMode) (value : Model fmt) (hfinite : isFinite value = true) :
-    parse fmt mode (formatHex value) = .ok value := by
+    parse fmt (formatHex value) (rounding := mode) = .ok value := by
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
   have hf : formatHex value = HexText.format d := by
     simp [formatHex, formatWithStatus, exactValue, hd, formatDyadicText]
-  rw [hf, parse, parseWithStatus_of_readText _ _ _ _ (readText_hex_format d)]
+  rw [hf, parse_eq_run, TextParser.run_of_readText _ _ _ _ (readText_hex_format d)]
   simp [convertText, convertDyadicText, Except.map,
     roundDyadicWithRounding_toDyadic? hfmt mode hd]
 
@@ -74,7 +74,7 @@ theorem signedScaledRatToReal_decimal (value : DecimalText.Decimal) :
   have hmreal : scaledRatToReal magnitude.num.natAbs magnitude.den 0 = (magnitude : Real) := by
     simpa [scaledRatToReal] using hrat
   cases hs : value.negative <;>
-    simp only [signedScaledRatToReal, hmreal, Bool.false_eq_true, if_true, if_false]
+    simp only [signedScaledRatToReal, hmreal, Bool.false_eq_true, ite_true, ite_false]
   · simp [magnitude, DecimalText.Decimal.toRat, hs]
   · simp [magnitude, DecimalText.Decimal.toRat, hs]
 
@@ -105,21 +105,21 @@ theorem convertDecimalText_eq_of_nonzero {fmt : FloatFormat} (hfmt : fmt.isIEEE 
 /-- Exact decimal output restores every nonzero finite IEEE word under nearest-even input. -/
 theorem parse_formatDecimal_of_isFinite_of_nonzero {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (value : Model fmt) (hfinite : isFinite value = true) (hzero : toReal value ≠ 0) :
-    parse fmt .nearestEven (formatDecimal value) = .ok value := by
+    parse fmt (formatDecimal value) = .ok value := by
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
   have hf : formatDecimal value = (DecimalText.ofDyadic d).format := by
     simp [formatDecimal, formatWithStatus, exactValue, hd, formatDyadicText,
       DecimalText.formatDyadic]
   have hv : ((DecimalText.ofDyadic d).toRat : Real) = toReal value := by
     simp [toReal_eq, hd]
-  rw [hf, parse, parseWithStatus_of_readText _ _ _ _ (readText_decimal_format _)]
+  rw [hf, parse_eq_run, TextParser.run_of_readText _ _ _ _ (readText_decimal_format _)]
   simp only [convertText, Except.map]
   exact congrArg Except.ok (convertDecimalText_eq_of_nonzero hfmt value hfinite hzero _ hv)
 
 /-- Exact decimal output restores every finite IEEE word, including either signed zero. -/
 theorem parse_formatDecimal_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (value : Model fmt) (hfinite : isFinite value = true) :
-    parse fmt .nearestEven (formatDecimal value) = .ok value := by
+    parse fmt (formatDecimal value) = .ok value := by
   by_cases hz : toReal value = 0
   · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
     have hm : d.significand = 0 := by
@@ -135,7 +135,7 @@ theorem parse_formatDecimal_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE =
         formatDecimal value = (DecimalText.Decimal.mk (signBit value) 0 0).format := by
       simp [formatDecimal, formatWithStatus, exactValue, hdx, formatDyadicText,
         DecimalText.formatDyadic, DecimalText.ofDyadic]
-    rw [hf, parse, parseWithStatus_of_readText _ _ _ _ (readText_decimal_format _)]
+    rw [hf, parse_eq_run, TextParser.run_of_readText _ _ _ _ (readText_decimal_format _)]
     simp [convertText, convertDecimalText, roundRatWithRounding, roundRatWithRoundingScaled,
       Except.map, hv]
   · exact parse_formatDecimal_of_isFinite_of_nonzero hfmt value hfinite hz

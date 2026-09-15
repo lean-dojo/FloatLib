@@ -205,14 +205,14 @@ private theorem roundNormalProduct_eq_spec
       apply UInt64.lt_iff_toNat_lt.mpr
       rw [hposition, hnormalThreshold]
       exact hsubnormal
-    rw [if_pos hsubnormalWord, if_pos hsubnormal]
+    rw [ite_eq_left hsubnormalWord, ite_eq_left hsubnormal]
   have hsubnormalWord :
       ¬position < (biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 1) := by
     intro h
     apply hsubnormal
     have hnat := UInt64.lt_iff_toNat_lt.mp h
     rwa [hposition, hnormalThreshold] at hnat
-  rw [if_neg hsubnormalWord, if_neg hsubnormal]
+  rw [ite_eq_right hsubnormalWord, ite_eq_right hsubnormal]
   let rounded :=
     FloatLib.Numerics.FixedWord.roundShiftRightEven product
       (leading - UInt64.ofNat fmt.fracWidth).toNat

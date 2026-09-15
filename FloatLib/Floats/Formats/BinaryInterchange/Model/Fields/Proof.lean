@@ -311,9 +311,9 @@ theorem toDyadic?_ofFields_of_isFinite
       hExp, hFrac, hSign, hnotAllOnes, FloatFormat.ieeeMinSubnormalExponent,
       FloatFormat.ieeeNormalMantissaExpOffset, FloatFormat.minSubnormalExponent,
       FloatFormat.minNormalExponent, hbias, sub_sub]
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, if_false]
+  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false]
     rw [hfinite]
-    simp only [Bool.not_true, Bool.false_eq_true, if_false]
+    simp only [Bool.not_true, Bool.false_eq_true, ite_false]
     rw [hZero, hExp, hFrac, hSign]
     by_cases hexponentZero : exponent = 0
     · subst exponent

@@ -48,7 +48,7 @@ theorem compareRoot_eq_real (q : Rat) (n : Nat) (x : ℝ)
     by_cases hzero : candidate = 0
     · subst candidate
       simpa [compareRoot, zero_pow hn] using hcompare
-    · simpa only [compareRoot, if_neg hnegative, if_neg hzero] using hcompare
+    · simpa only [compareRoot, ite_eq_right hnegative, ite_eq_right hzero] using hcompare
 
 /-- Model-valued exact root rounding agrees with real rounding of a characterized root. -/
 theorem round_eq_real (format : Format) (q : Rat) (n : Nat) (x : ℝ)
@@ -78,7 +78,7 @@ private theorem root_radicand_rpow (q : Rat) (degree : Int) :
   by_cases hnegative : degree < 0
   · have hcast : (degree.natAbs : ℝ) = -(degree : ℝ) := by
       rw [← Int.cast_natCast, Int.natCast_natAbs, abs_of_neg hnegative, Int.cast_neg]
-    simp only [if_pos hnegative, Rat.cast_inv, hcast, inv_neg,
+    simp only [ite_eq_left hnegative, Rat.cast_inv, hcast, inv_neg,
       ← Real.rpow_neg_eq_inv_rpow, neg_neg]
   · have hcast : (degree.natAbs : ℝ) = (degree : ℝ) := by
       rw [← Int.cast_natCast, Int.natAbs_of_nonneg (le_of_not_gt hnegative)]
@@ -103,8 +103,8 @@ theorem rootN_eq_roundPositive (value : Model format) {q : Rat} (degree : Int)
     split_ifs
     · exact inv_nonneg.mpr hq
     · exact hq
-  simp only [rootN, hvalue, if_neg hdegree, if_neg hzero, not_lt.mpr hq,
-    false_and, if_false, abs_of_nonneg hq]
+  simp only [rootN, hvalue, ite_eq_right hdegree, ite_eq_right hzero, not_lt.mpr hq,
+    false_and, ite_false, abs_of_nonneg hq]
   rw [RootRounding.round_eq_rpow format _ degree.natAbs hradicand
     (Int.natAbs_ne_zero.mpr hdegree), root_radicand_rpow]
 
@@ -125,8 +125,8 @@ theorem rootN_eq_neg_roundPositive (value : Model format) {q : Rat} (degree : In
     split_ifs
     · exact inv_nonneg.mpr (neg_nonneg.mpr hq.le)
     · exact neg_nonneg.mpr hq.le
-  simp only [rootN, hvalue, if_neg hdegree, ne_of_lt hq, false_and, if_false,
-    hodd, and_false, abs_of_neg hq, if_pos hq]
+  simp only [rootN, hvalue, ite_eq_right hdegree, ne_of_lt hq, false_and, ite_false,
+    hodd, and_false, abs_of_neg hq, ite_eq_left hq]
   rw [RootRounding.round_eq_rpow format _ degree.natAbs hradicand
     (Int.natAbs_ne_zero.mpr hdegree), root_radicand_rpow]
   simp

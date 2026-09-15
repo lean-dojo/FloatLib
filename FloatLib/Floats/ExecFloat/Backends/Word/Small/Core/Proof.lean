@@ -328,10 +328,10 @@ theorem ofWord_packFields {fmt : FloatFormat}
     Nat.mod_eq_of_lt hfracPow, Nat.mod_eq_of_lt hfrac,
     Nat.mod_eq_of_lt hexponentShift, hfractionMask]
   cases sign
-  · simp only [Bool.false_eq_true, if_false, UInt64.toNat_zero,
+  · simp only [Bool.false_eq_true, ite_false, UInt64.toNat_zero,
       Nat.zero_or, Nat.shiftLeft_eq]
     rw [hexponentShiftEq]
-  · simp only [if_true]
+  · simp only [ite_true]
     rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat',
       Nat.mod_eq_of_lt hfieldPow, Nat.mod_eq_of_lt hfield,
       show (1 : UInt64).toNat = 1 by decide,
@@ -400,10 +400,10 @@ theorem packFields_toNat_lt {fmt : FloatFormat}
       Nat.pow_le_pow_right (by decide) hwidth
   rw [Nat.mod_eq_of_lt hexponentShift64]
   cases sign
-  · simp only [Bool.false_eq_true, if_false, UInt64.toNat_zero,
+  · simp only [Bool.false_eq_true, ite_false, UInt64.toNat_zero,
       Nat.zero_or]
     exact Nat.or_lt_two_pow hexponentShift hfractionTarget
-  · simp only [if_true]
+  · simp only [ite_true]
     rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat',
       Nat.mod_eq_of_lt hfieldPow, Nat.mod_eq_of_lt hfield,
       show (1 : UInt64).toNat = 1 by decide]

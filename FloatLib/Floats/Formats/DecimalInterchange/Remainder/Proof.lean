@@ -97,7 +97,7 @@ theorem remainder_value (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
   change (a : ℚ) * (10 : ℚ) ^ q = _ at hx
   change (b : ℚ) * (10 : ℚ) ^ q = _ at hy
   have he := remainderCoefficient_signed a b hb
-  simp only [remainder, if_neg hc, remainderFinite, Datum.toRat?_eq]
+  simp only [remainder, ite_eq_right hc, remainderFinite, Datum.toRat?_eq]
   apply congrArg some
   change (if (if remainderRoundUp a b then !sx else sx) then (-1 : ℚ) else 1) *
       (remainderCoefficient a b : ℚ) * (10 : ℚ) ^ q = _
@@ -132,7 +132,7 @@ theorem remainder_error_le_half_divisor (f : Format) (sx sy : Bool)
   have hp : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) _
   have hy := remainder_align_value cy qy q (min_le_right ..)
   have hh := mul_le_mul_of_nonneg_right he hp.le
-  simp only [remainder, if_neg hc, remainderFinite, Datum.toRat?_eq]
+  simp only [remainder, ite_eq_right hc, remainderFinite, Datum.toRat?_eq]
   refine ⟨_, rfl, ?_⟩
   change 2 * |(if (if remainderRoundUp a b then !sx else sx) then (-1 : ℚ) else 1) *
       (remainderCoefficient a b : ℚ) * (10 : ℚ) ^ q| ≤ _

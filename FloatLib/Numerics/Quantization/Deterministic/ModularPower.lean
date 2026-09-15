@@ -52,7 +52,7 @@ theorem modularPow_eq_pow_mod (base exponent modulus : Nat)
     (hmodulus : modulus ≠ 0) :
     modularPow base exponent modulus = base ^ exponent % modulus := by
   unfold modularPow
-  rw [if_neg (by simp [hmodulus])]
+  rw [ite_eq_right (by simp [hmodulus])]
   induction exponent using Nat.binaryRec' with
   | zero =>
       rfl

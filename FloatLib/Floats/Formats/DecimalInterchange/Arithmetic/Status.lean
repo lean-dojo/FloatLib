@@ -73,7 +73,7 @@ theorem div_inexact_iff (f : Format) (mode : RoundingMode)
   have hc : cy ≠ 0 := by
     intro h
     simp [h] at hb
-  simp only [div, if_neg hc] at hfinite hv ⊢
+  simp only [div, ite_eq_right hc] at hfinite hv ⊢
   exact project_inexact_iff f mode _ value _ _ hfinite hv
 
 theorem fma_inexact_iff (f : Format) (mode : RoundingMode)

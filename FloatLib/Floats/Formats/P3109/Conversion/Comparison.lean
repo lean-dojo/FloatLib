@@ -73,7 +73,7 @@ theorem compareDyadic_eq_compare (negative : Bool) (numerator denominator : Nat)
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hv) hp
   have hc := compareDyadic_positive numerator denominator positive hd rfl hv
   simp only [RationalBinary.compareDyadic?, RationalBinary.compareDyadicScaled?, hd, hn,
-    hv, positive, beq_iff_eq, Bool.false_eq_true, if_false, bne_self_eq_false] at hc
+    hv, positive, beq_iff_eq, Bool.false_eq_true, ite_false, bne_self_eq_false] at hc
   have hncompare (a b : Rat) :
       (compare a b).swap = compare (-a) (-b) := by
     rcases lt_trichotomy a b with h | h | h
@@ -96,10 +96,10 @@ theorem compareDyadic_eq_compare (negative : Bool) (numerator denominator : Nat)
       Numerics.Dyadic.signedSignificand, compare_lt_iff_lt.mpr hlt]
   · have he := Option.some.inj hc
     simp only [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand,
-      Bool.false_eq_true, if_false] at he
+      Bool.false_eq_true, ite_false] at he
     simp only [RationalBinary.compareDyadic?, RationalBinary.compareDyadicScaled?, hd, hn,
-      hv, hs, beq_iff_eq, if_false, bne_self_eq_false,
-      if_true, RationalRounding.signed]
+      hv, hs, beq_iff_eq, ite_false, bne_self_eq_false,
+      ite_true, RationalRounding.signed]
     rw [he, hncompare]
     simp [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand, hs]
 

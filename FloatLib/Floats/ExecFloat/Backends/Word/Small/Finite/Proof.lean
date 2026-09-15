@@ -213,7 +213,7 @@ theorem sqrtPositive_eq_runtime {fmt : FloatFormat}
       decode? x = some components := by
     unfold decode?
     dsimp only
-    rw [if_neg (by simpa only [beq_iff_eq] using hexceptional)]
+    rw [ite_eq_right (by simpa only [beq_iff_eq] using hexceptional)]
   have hgenericDecode :
       FiniteKernel.decode? x = some components :=
     (decode_eq ⟨hieee, hwidth⟩ x).symm.trans hnativeDecode

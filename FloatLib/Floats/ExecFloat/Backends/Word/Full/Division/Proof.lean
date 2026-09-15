@@ -301,7 +301,7 @@ private theorem divNormal_refines
       hshiftNonnegative' hspec
   unfold NativeBinary64.divFiniteImpl? NativeBinary64.decode?
   simp only [xBits, yBits, xExponent, yExponent, hxExceptional,
-    hyExceptional, beq_iff_eq, if_false, Option.some.injEq]
+    hyExceptional, beq_iff_eq, ite_false, Option.some.injEq]
   change
     FiniteKernel.divComponents FloatFormat.binary64
         { sign := signBit xBits
@@ -316,7 +316,7 @@ private theorem divNormal_refines
     (uint64_toNat_eq_zero xMantissa).not.mpr hxZero
   have hyZeroNat : yMantissa.toNat ≠ 0 :=
     (uint64_toNat_eq_zero yMantissa).not.mpr hyZero
-  simp only [hxZeroNat, hyZeroNat, beq_iff_eq, if_false]
+  simp only [hxZeroNat, hyZeroNat, beq_iff_eq, ite_false]
   have hxScale :
       FiniteKernel.scale xExponent.toNat =
         (finiteScale xExponent).toNat := by

@@ -282,7 +282,7 @@ theorem roundPositiveCode_prefix_eq_reference
     decide_eq_true_eq]
   split_ifs with hunderflow hregime hsaturated hsaturated
   · unfold Model.roundPositiveCode
-    rw [if_neg (not_le_of_gt hpositive), if_pos (hunderflowIff.2 hunderflow)]
+    rw [ite_eq_right (not_le_of_gt hpositive), ite_eq_left (hunderflowIff.2 hunderflow)]
   · exact (roundPositiveCode_eq_maxPositive_of_saturated format targetExponent _ _
       quotient remainder denominator leading hregime hsaturated hlower hupper
       hdenominator hremainder hscale (fun h => hunderflow (hunderflowIff.1 h))).symm
@@ -325,7 +325,7 @@ theorem roundPositiveCode_eq_reference
   unfold roundPositiveCode
   simp only [hnumeratorBool, hnumeratorNegative,
     hdenominatorBool, hdenominatorNegative,
-    Bool.false_or, Bool.false_eq_true, if_false]
+    Bool.false_or, Bool.false_eq_true, ite_false]
   unfold quotientPrefix prefixAtLeading
   let leading := prefixLeading format
   let normalized :=

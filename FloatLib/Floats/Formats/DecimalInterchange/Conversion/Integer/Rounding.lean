@@ -64,12 +64,12 @@ theorem roundInteger_error_le_half (mode : RoundingMode)
 
 theorem roundInteger_of_nonneg (mode : RoundingMode) (value : ℚ) (h : 0 ≤ value) :
     roundInteger mode value = (mode.roundMagnitude false value : Int) := by
-  simp only [roundInteger, not_lt.mpr h, decide_false, Bool.false_eq_true, if_false,
+  simp only [roundInteger, not_lt.mpr h, decide_false, Bool.false_eq_true, ite_false,
     abs_of_nonneg h]
 
 theorem roundInteger_of_neg (mode : RoundingMode) (value : ℚ) (h : value < 0) :
     roundInteger mode value = -(mode.roundMagnitude true (-value) : Int) := by
-  simp only [roundInteger, h, decide_true, if_true, abs_of_neg h]
+  simp only [roundInteger, h, decide_true, ite_true, abs_of_neg h]
 
 /-- Exact integers are fixed in every direction, including either sign and zero. -/
 @[simp] theorem roundInteger_intCast (mode : RoundingMode) (value : Int) :
@@ -112,11 +112,11 @@ theorem roundInteger_nearestEven_midpoint (negative : Bool) (n : Nat) :
   have hp : (0 : ℚ) < n + 1 / 2 := by positivity
   cases negative with
   | false =>
-      simp only [Bool.false_eq_true, if_false, roundInteger_of_nonneg _ _ hp.le,
+      simp only [Bool.false_eq_true, ite_false, roundInteger_of_nonneg _ _ hp.le,
         RoundingMode.roundMagnitude_nearestEven_midpoint]
       split <;> rfl
   | true =>
-      simp only [if_true, roundInteger_of_neg _ _ (neg_lt_zero.mpr hp), neg_neg,
+      simp only [ite_true, roundInteger_of_neg _ _ (neg_lt_zero.mpr hp), neg_neg,
         RoundingMode.roundMagnitude_nearestEven_midpoint]
       split <;> rfl
 
@@ -126,10 +126,10 @@ theorem roundInteger_nearestAway_midpoint (negative : Bool) (n : Nat) :
   have hp : (0 : ℚ) < n + 1 / 2 := by positivity
   cases negative with
   | false =>
-      simp only [Bool.false_eq_true, if_false, roundInteger_of_nonneg _ _ hp.le,
+      simp only [Bool.false_eq_true, ite_false, roundInteger_of_nonneg _ _ hp.le,
         RoundingMode.roundMagnitude_nearestAway_midpoint]
   | true =>
-      simp only [if_true, roundInteger_of_neg _ _ (neg_lt_zero.mpr hp), neg_neg,
+      simp only [ite_true, roundInteger_of_neg _ _ (neg_lt_zero.mpr hp), neg_neg,
         RoundingMode.roundMagnitude_nearestAway_midpoint]
 
 end FloatLib.Floats.Formats.DecimalInterchange.Conversion.Integer

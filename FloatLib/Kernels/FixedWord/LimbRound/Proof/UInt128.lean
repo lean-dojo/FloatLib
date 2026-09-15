@@ -176,7 +176,7 @@ theorem roundShiftRightOneEven_toNat (value : UInt128)
       apply UInt64.toNat_inj.mp
       rw [hbits, hround]
       decide
-    simp only [hnative, beq_self_eq_true, if_true]
+    simp only [hnative, beq_self_eq_true, ite_true]
     rw [increment_toNat _ hfitShift, hshift]
     simp [hround]
   · have hnative : value.lo &&& 3 ≠ 3 := by
@@ -185,7 +185,7 @@ theorem roundShiftRightOneEven_toNat (value : UInt128)
       have heqNat := congrArg UInt64.toNat heq
       rw [hbits] at heqNat
       simpa using heqNat
-    simp only [hnative, beq_iff_eq, if_false, hshift, hround]
+    simp only [hnative, beq_iff_eq, ite_false, hshift, hround]
 
 /--
 When the shifted result fits one limb, `shiftRightLow` is the mathematical right shift of the
@@ -274,7 +274,6 @@ theorem roundShiftRightEven_toNat (value : UInt128) (shift : Nat)
       (shiftRightLow value shift + 1).toNat =
         (value.toNat >>> shift) + 1 := by
     rw [UInt64.toNat_add, hquotient]
-    norm_num
     exact Nat.mod_eq_of_lt hincrementFit
   have heven :
       ((shiftRightLow value shift &&& 1) == 0) ↔
@@ -301,7 +300,7 @@ theorem roundShiftRightEven_toNat (value : UInt128) (shift : Nat)
         else
           value.toNat.shiftRight shift + 1 := by
     rw [FloatLib.Numerics.roundShiftRightEven_def]
-    simp only [beq_iff_eq, Nat.ne_of_gt hpositive, if_false]
+    simp only [beq_iff_eq, Nat.ne_of_gt hpositive, ite_false]
     rw [hremainderNat]
   rw [hgeneric]
   unfold roundShiftRightEven

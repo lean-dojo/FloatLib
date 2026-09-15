@@ -155,7 +155,7 @@ theorem ofModel_sqrt_finite_positive_eq_ofFields (fmt : FloatFormat)
     have hencoded : Int.toNat (rootExponent + 1 + Int.ofNat fmt.bias) = q + 1 := by
       simp only [Int.ofNat_eq_natCast]
       omega
-    rw [hfinish, hpack, hencoded, if_pos hcarry, if_pos hcarry]
+    rw [hfinish, hpack, hencoded, ite_eq_left hcarry, ite_eq_left hcarry]
   · have hroundedHigh : rounded < pow2 (fmt.fracWidth + 1) :=
       lt_of_le_of_ne hroundedUpper hcarry
     have hfinish :
@@ -177,6 +177,6 @@ theorem ofModel_sqrt_finite_positive_eq_ofFields (fmt : FloatFormat)
     have hencoded : Int.toNat (rootExponent + Int.ofNat fmt.bias) = q := by
       simp only [Int.ofNat_eq_natCast]
       omega
-    rw [hfinish, hpack, hencoded, if_neg hcarry, if_neg hcarry, Nat.add_zero]
+    rw [hfinish, hpack, hencoded, ite_eq_right hcarry, ite_eq_right hcarry, Nat.add_zero]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

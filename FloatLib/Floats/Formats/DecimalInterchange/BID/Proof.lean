@@ -75,7 +75,7 @@ private theorem finite_fields (f : Format) (c e : Nat)
   split
   · rename_i hs
     have hn := small_fields_lt f c e hs he
-    simp only [rawCoefficient, biasedExponent, if_pos hn]
+    simp only [rawCoefficient, biasedExponent, ite_eq_left hn]
     constructor
     · exact Nat.mul_add_mod_of_lt hs
     · rw [Nat.add_comm, Nat.add_mul_div_right _ _
@@ -83,7 +83,7 @@ private theorem finite_fields (f : Format) (c e : Nat)
   · rename_i hs
     have hn : ¬24 * (f.exponentBase * f.trailingBase) + e * (2 * f.trailingBase) +
         (c - 8 * f.trailingBase) < 24 * (f.exponentBase * f.trailingBase) := by omega
-    simp only [rawCoefficient, biasedExponent, if_neg hn]
+    simp only [rawCoefficient, biasedExponent, ite_eq_right hn]
     have hsub : 24 * (f.exponentBase * f.trailingBase) + e * (2 * f.trailingBase) +
         (c - 8 * f.trailingBase) - 24 * (f.exponentBase * f.trailingBase) =
         e * (2 * f.trailingBase) + (c - 8 * f.trailingBase) := by omega

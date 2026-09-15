@@ -70,7 +70,7 @@ theorem nonnegativeDyadicAt_eq_decodeFields
   have hcodeBool : (code == 0) = false :=
     beq_eq_false_iff_ne.mpr hnonzero
   unfold nonnegativeDyadicAt
-  simp only [hcodeBool, Bool.false_eq_true, if_false]
+  simp only [hcodeBool, Bool.false_eq_true, ite_false]
   rw [show bitAt code (format.payloadBits - 1) = value.regimeBit by
     unfold Model.regimeBit
     rw [hmagnitude, bitAt_eq_testBit]]
@@ -227,7 +227,7 @@ theorem toDyadic?_eq_model
   let value := Model.ofNatBits (format := format) code.toNat
   by_cases hnarCode : code.toNat = format.signMaskNat
   · unfold toDyadic?
-    simp only [hnarCode, beq_self_eq_true, if_true]
+    simp only [hnarCode, beq_self_eq_true, ite_true]
     change none = (Model.nar format).toDyadic?
     exact (Model.toDyadic?_nar format).symm
   · by_cases hzeroCode : code = 0
@@ -240,7 +240,7 @@ theorem toDyadic?_eq_model
       have hmaskBool : ((0 : Nat) == format.signMaskNat) = false :=
         beq_eq_false_iff_ne.mpr (Ne.symm hsignMaskNonzero)
       simp only [UInt64.toNat_zero, hmaskBool, Bool.false_eq_true,
-        if_false, beq_self_eq_true, if_true]
+        ite_false, beq_self_eq_true, ite_true]
     · have hvalueBits : value.toNatBits = code.toNat :=
         Model.toNatBits_ofNatBits_of_lt code.toNat hcode
       have hvalueNaR : value ≠ Model.nar format := by
@@ -262,7 +262,7 @@ theorem toDyadic?_eq_model
       have hvalueZeroBool : value.isZero = false :=
         beq_eq_false_iff_ne.mpr hvalueZero
       unfold toDyadic?
-      simp only [hnarBool, hzeroBool, Bool.false_eq_true, if_false]
+      simp only [hnarBool, hzeroBool, Bool.false_eq_true, ite_false]
       change some (decodeFinite format code) = value.toDyadic?
       rw [decodeFinite_eq_decodeFields format code heligible hcode
         hvalueNaR hvalueZero]

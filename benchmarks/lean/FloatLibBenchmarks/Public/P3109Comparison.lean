@@ -15,7 +15,7 @@ private def select (format : Format) :
   | "fma" => some fun x y z => (ExecFloat.P3109.fma x y z).toNatBits
   | _ => none
 
-def main (args : List String) : IO Unit := do
+public def main (args : List String) : IO Unit := do
   let format ← match args[0]?.getD "" with
     | "Binary4p2sf" => pure (Format.signed 4 2 .finite)
     | "Binary8p4se" => pure (Format.signed 8 4 .extended)

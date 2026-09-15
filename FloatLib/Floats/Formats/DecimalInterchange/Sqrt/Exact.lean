@@ -67,7 +67,7 @@ theorem sqrtPair_quantum_le_of_valid (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) (hvalid : (Datum.finite s c q).Valid f) :
     (sqrtPair f mode (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)).2 ≤ q := by
   have hlt := sqrtRound_lt_coefficientBound_of_valid f mode s c q hvalid
-  simp only [sqrtPair, f.carry_eq, if_neg (Nat.ne_of_lt hlt)]
+  simp only [sqrtPair, f.carry_eq, ite_eq_right (Nat.ne_of_lt hlt)]
   exact sqrtQuantum_le_of_valid f s c q hvalid
 
 /-- All five modes recover every representable nonnegative root exactly. -/

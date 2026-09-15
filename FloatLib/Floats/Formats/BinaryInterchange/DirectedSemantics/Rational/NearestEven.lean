@@ -68,7 +68,7 @@ theorem roundQuotDirected_false_le_roundQuotientEven_le_true
     · simp only [roundQuotDirected]
       rcases hnearest with hnearest | hnearest <;>
         simp [hnearest, quotient]
-    · simp only [roundQuotDirected, if_true, hceil]
+    · simp only [roundQuotDirected, ite_true, hceil]
       rcases hnearest with hnearest | hnearest <;>
         simp [hnearest, quotient]
 

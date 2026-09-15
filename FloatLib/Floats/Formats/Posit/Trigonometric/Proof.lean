@@ -45,7 +45,7 @@ theorem evaluateUnit_eq_real (prepare : Rat → Nat → Prepared) (function : �
     {format : Format} (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hlower : -1 ≤ q) (hupper : q ≤ 1) :
     evaluateUnit prepare value = RealRounding.round format (function q) := by
-  simp only [evaluateUnit, hvalue, if_pos (And.intro hlower hupper)]
+  simp only [evaluateUnit, hvalue, ite_eq_left (And.intro hlower hupper)]
   exact ComparisonRounding.roundSigned_eq_real format _ _
     (fun boundary => hprepare q _ boundary hlower hupper)
 

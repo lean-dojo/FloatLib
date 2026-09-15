@@ -86,7 +86,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
       rw [UInt64.toNat_sub_of_le _ _ hhighBaseLe]
       simp
       omega
-    simp only [hborrow, if_true]
+    simp only [hborrow, ite_true]
     rw [UInt64.toNat_sub,
       UInt64.toNat_sub_of_le _ _ hhighAfterLe,
       UInt64.toNat_sub_of_le _ _ hhighBaseLe]
@@ -107,7 +107,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hhighLe : y.hi ≤ x.hi := by
       apply UInt64.le_iff_toNat_le.mpr
       omega
-    simp only [hborrow, if_false]
+    simp only [hborrow, ite_false]
     rw [UInt64.sub_zero, UInt64.toNat_sub_of_le _ _ hlowLe,
       UInt64.toNat_sub_of_le _ _ hhighLe]
     omega
@@ -120,7 +120,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
   · simp [hhigh, UInt128.toNat, FloatLib.Numerics.FixedWord.log2_toNat]
   · have hhighBool : ¬value.hi == 0 := by
       simpa only [beq_iff_eq] using hhigh
-    rw [if_neg hhighBool, FloatLib.Numerics.FixedWord.log2_toNat]
+    rw [ite_eq_right hhighBool, FloatLib.Numerics.FixedWord.log2_toNat]
     have hhighNat : value.hi.toNat ≠ 0 := by
       intro hzero
       exact hhigh (UInt64.toNat_inj.mp (by simpa using hzero))
@@ -228,8 +228,8 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
       rw [hpow]
       refine ⟨value.hi.toNat * 2 ^ (64 - shift), ?_⟩
       ring
-    simp only [shiftRight, hzero, beq_iff_eq, if_false,
-      hsmall, if_true]
+    simp only [shiftRight, hzero, beq_iff_eq, ite_false,
+      hsmall, ite_true]
     unfold UInt128.toNat
     rw [UInt64.toNat_or, hlow, hcarry, hor, hhigh]
     rw [Nat.add_div_of_dvd_left hdivisible]
@@ -268,8 +268,8 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
         rw [Nat.mul_comm value.hi.toNat, Nat.add_mul_div_left _ _
           (Nat.two_pow_pos 64), Nat.div_eq_of_lt value.lo.toNat_lt,
           Nat.zero_add]
-      simp only [shiftRight, hzero, beq_iff_eq, if_false,
-        hsmall, hwidth, if_true]
+      simp only [shiftRight, hzero, beq_iff_eq, ite_false,
+        hsmall, hwidth, ite_true]
       unfold UInt128.toNat
       simp only [UInt64.reduceToNat, zero_mul, add_zero]
       rw [hword, hshiftEq, pow_add, ← Nat.div_div_eq_div_mul,
@@ -278,7 +278,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
       have hvalue := value.toNat_lt
       have hpower : 2 ^ 128 ≤ 2 ^ shift :=
         Nat.pow_le_pow_right (by decide) hlarge
-      simp only [shiftRight, hzero, beq_iff_eq, if_false,
+      simp only [shiftRight, hzero, beq_iff_eq, ite_false,
         hsmall, hwidth]
       unfold UInt128.toNat
       simp only [UInt64.reduceToNat, zero_mul, add_zero]
@@ -291,7 +291,7 @@ theorem singleBit_toNat_of_lt (index : Nat) (hindex : index < 128) :
   · have hfit : (1 : UInt64).toNat <<< index < 2 ^ 64 := by
       simp only [UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
       exact Nat.pow_lt_pow_right (by decide) hsmall
-    simp only [singleBit, hsmall, if_true]
+    simp only [singleBit, hsmall, ite_true]
     unfold UInt128.toNat
     rw [FloatLib.Numerics.FixedWord.shiftLeft_toNat
       (1 : UInt64) index hsmall hfit]
@@ -301,7 +301,7 @@ theorem singleBit_toNat_of_lt (index : Nat) (hindex : index < 128) :
     have hfit : (1 : UInt64).toNat <<< (index - 64) < 2 ^ 64 := by
       simp only [UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
       exact Nat.pow_lt_pow_right (by decide) hinner
-    simp only [singleBit, hsmall, if_false, hindex, if_true]
+    simp only [singleBit, hsmall, ite_false, hindex, ite_true]
     unfold UInt128.toNat
     rw [FloatLib.Numerics.FixedWord.shiftLeft_toNat
       (1 : UInt64) (index - 64) hinner hfit]
@@ -398,7 +398,7 @@ theorem shiftLeft_toNat (value : UInt128) (shift : Nat)
             2 ^ 64 * ((value.lo.toNat * 2 ^ shift) / 2 ^ 64) := by ring
         _ = value.lo.toNat * 2 ^ shift :=
           Nat.mod_add_div _ _
-    simp only [shiftLeft, hzero, beq_iff_eq, if_false, hsmall, if_true]
+    simp only [shiftLeft, hzero, beq_iff_eq, ite_false, hsmall, ite_true]
     unfold UInt128.toNat
     rw [UInt64.toNat_or, hhigh, hcarry, hor, hlow]
     simp only [Nat.shiftLeft_eq]
@@ -459,7 +459,7 @@ theorem shiftLeft_toNat (value : UInt128) (shift : Nat)
         FloatLib.Numerics.FixedWord.shiftLeft_toNat
           value.lo inner hinner
           (by simpa [Nat.shiftLeft_eq] using hlowFit)
-    simp only [shiftLeft, hzero, beq_iff_eq, if_false, hsmall, hshift, if_true]
+    simp only [shiftLeft, hzero, beq_iff_eq, ite_false, hsmall, hshift, ite_true]
     unfold UInt128.toNat
     rw [hlow, hhighZero]
     simp only [UInt64.reduceToNat, zero_mul, zero_add, Nat.shiftLeft_eq]

@@ -110,7 +110,7 @@ theorem Element.quantize_quantizesWith (profile : Profile) (mode : OverflowMode)
   · simp [h.1, h.2]
   · have hbool : (decide (mode = .overflow) && Element.roundsOut profile input.value) = false :=
       Bool.eq_false_iff.mpr (by simpa using h)
-    simp only [hbool, Bool.false_eq_true, ↓reduceIte, if_neg h]
+    simp only [hbool, Bool.false_eq_true, ↓reduceIte, ite_eq_right h]
     exact Element.quantizeFinite_quantizes profile input
 
 /-- Automatic shared-scale conversion satisfies the standard destination relation. -/

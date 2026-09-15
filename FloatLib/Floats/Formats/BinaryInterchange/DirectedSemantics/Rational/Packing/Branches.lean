@@ -79,7 +79,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq
   unfold roundRatMagnitudeDirectedScaled packRoundedSubnormal packRoundedNormal
   simp only [show (denominator == 0) = false by simp [hdenominator],
     show (numerator == 0) = false by simp [hnumerator],
-    Bool.false_eq_true, if_false, beq_iff_eq, gt_iff_lt, ge_iff_le, FloatFormat.subnormalAlignExp]
+    Bool.false_eq_true, ite_false, beq_iff_eq, gt_iff_lt, ge_iff_le, FloatFormat.subnormalAlignExp]
   rfl
 
 /-- Above the largest normal exponent, positive directed packing returns the directed overflow result. -/
@@ -95,7 +95,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_overflow
       directedOverflow fmt false roundUp := by
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt roundUp numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_pos hoverflow]
+  simp only [ite_eq_left hoverflow]
 
 /--
 Below the smallest subnormal exponent, positive directed packing returns the smallest subnormal when
@@ -116,7 +116,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_underflow
       if roundUp then posMinSubnormal fmt else zero fmt false := by
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt roundUp numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_pos hunderflow]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_left hunderflow]
 
 /-- In the subnormal range, positive downward packing stores the truncated quotient as a subnormal. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_down
@@ -147,8 +147,8 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_down
       fmt numerator denominator exponent hnumerator hdenominator hlow hhigh
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt false numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_neg (not_lt_of_ge hlow), if_pos hhigh,
-    if_neg (Nat.one_le_iff_ne_zero.mp hpos), if_neg (not_le_of_gt hlt)]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right (not_lt_of_ge hlow), ite_eq_left hhigh,
+    ite_eq_right (Nat.one_le_iff_ne_zero.mp hpos), ite_eq_right (not_le_of_gt hlt)]
 
 /--
 In the subnormal range, positive upward packing stores the ceiling quotient as a subnormal, or the
@@ -182,8 +182,8 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_up
       hnumerator hdenominator hlow hhigh).1
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_neg (not_lt_of_ge hlow), if_pos hhigh,
-    if_neg (Nat.one_le_iff_ne_zero.mp hpos)]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right (not_lt_of_ge hlow), ite_eq_left hhigh,
+    ite_eq_right (Nat.one_le_iff_ne_zero.mp hpos)]
 
 /--
 In the normal range of an IEEE descriptor, positive downward packing stores the truncated
@@ -221,8 +221,9 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_down
   dsimp only at hlt hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt false numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), hnotUnderflow, if_false, if_neg (not_lt_of_ge hnormal),
-    if_neg (ne_of_lt hlt), hguard, Bool.false_eq_true]
+  simp only [ite_eq_right (not_lt_of_ge hmax), hnotUnderflow, ite_false,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_right (ne_of_lt hlt), hguard, Bool.false_eq_true]
 
 /--
 In the normal range of an IEEE descriptor, upward packing without a carry stores the ceiling
@@ -270,8 +271,9 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_no_carry
   dsimp only at hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), hnotUnderflow, if_false, if_neg (not_lt_of_ge hnormal),
-    if_neg hcarry, hguard, Bool.false_eq_true]
+  simp only [ite_eq_right (not_lt_of_ge hmax), hnotUnderflow, ite_false,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_right hcarry, hguard, Bool.false_eq_true]
 
 /-- A carry-out whose incremented exponent still fits stores the smallest mantissa one binade higher. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
@@ -312,8 +314,10 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
   dsimp only at hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), hnotUnderflow, if_false, if_neg (not_lt_of_ge hnormal),
-    if_pos hcarry, if_neg (not_lt_of_ge hcarryMax), Nat.sub_self, hguard, Bool.false_eq_true]
+  simp only [ite_eq_right (not_lt_of_ge hmax), hnotUnderflow, ite_false,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_left hcarry, ite_eq_right (not_lt_of_ge hcarryMax), Nat.sub_self, hguard,
+      Bool.false_eq_true]
 
 /-- A carry-out past the largest normal exponent returns the directed overflow result. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry_overflow
@@ -345,8 +349,9 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry_overflow
     not_lt_of_ge ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal)
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), hnotUnderflow, if_false, if_neg (not_lt_of_ge hnormal),
-    if_pos hcarry, if_pos hcarryOverflow]
+  simp only [ite_eq_right (not_lt_of_ge hmax), hnotUnderflow, ite_false,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_left hcarry, ite_eq_left hcarryOverflow]
 
 end
 

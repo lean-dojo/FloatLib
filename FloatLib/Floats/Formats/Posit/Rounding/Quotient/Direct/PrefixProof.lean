@@ -182,7 +182,7 @@ theorem normalizedQuotient_bounds
   have hdenominatorPositive : 0 < denominator :=
     (Nat.two_pow_pos common).trans_le hdenominatorLower
   by_cases hbelow : numerator < denominator
-  · rw [if_pos hbelow]
+  · rw [ite_eq_left hbelow]
     constructor
     · apply (Nat.le_div_iff_mul_le hdenominatorPositive).2
       have hdenominatorLe : denominator ≤ 2 * numerator := by
@@ -207,7 +207,7 @@ theorem normalizedQuotient_bounds
             (Nat.two_pow_pos _)
         _ = 2 ^ (leading + 1) * denominator := by
           ring
-  · rw [if_neg hbelow]
+  · rw [ite_eq_right hbelow]
     have hordered : denominator ≤ numerator :=
       Nat.le_of_not_gt hbelow
     constructor
@@ -241,16 +241,16 @@ theorem jamRemainder_bounds
   rw [jamRemainder_eq]
   by_cases hremainder : remainder = 0
   · simp [hremainder, hlower, hupper]
-  · rw [if_neg hremainder]
+  · rw [ite_eq_right hremainder]
     by_cases heven : quotient % 2 = 0
-    · rw [if_pos heven]
+    · rw [ite_eq_left heven]
       constructor
       · omega
       · have hpowerEven : 2 ^ (leading + 1) % 2 = 0 := by
           rw [pow_succ]
           omega
         omega
-    · rw [if_neg heven]
+    · rw [ite_eq_right heven]
       exact ⟨hlower, hupper⟩
 
 /-! ## Bracketing the retained quotient prefix -/

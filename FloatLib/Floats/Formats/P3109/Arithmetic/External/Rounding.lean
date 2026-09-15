@@ -38,7 +38,7 @@ theorem precisionOf_gt_one (format : FloatFormat) : 1 < precisionOf format := by
 theorem codeEven_eq (format : FloatFormat) (quantum : Int) (lower : Nat) :
     RationalRounding.codeEven (precisionOf format) (exponentBiasOf format) quantum lower =
       (lower % 2 == 0) := by
-  simp only [RationalRounding.codeEven, precisionOf_gt_one, if_pos]
+  simp only [RationalRounding.codeEven, precisionOf_gt_one, ite_eq_left]
   rfl
 
 /-- The selected external quantum uses the declared bias, including custom exponent biases. -/
@@ -58,7 +58,7 @@ theorem roundFinite_toRat (format : FloatFormat) (mode : RoundingMode) (value : 
   · simp [hz, roundFinite, RationalRounding.round]
   have hn : value.num.natAbs ≠ 0 := by
     simpa only [Int.natAbs_ne_zero] using Rat.num_ne_zero.mpr hz
-  simp only [roundFinite, beq_iff_eq, hn, if_false]
+  simp only [roundFinite, beq_iff_eq, hn, ite_false]
   rw [RationalRounding.normalized_toRat]
   rw [RationalRounding.select_eq_roundedInteger mode value _
     (fun lower => lower % 2 == 0)]

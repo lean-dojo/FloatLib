@@ -178,7 +178,7 @@ theorem coefficient_ofCoefficient_of_ordinary
     {value : Int} (hvalue : OrdinaryCoefficient format value) :
     (ofCoefficient format value).coefficient = value := by
   unfold ofCoefficient
-  rw [if_pos hvalue]
+  rw [ite_eq_left hvalue]
   apply FixedInt.toInt_ofInt_eq_self (width_pos format)
   exact ⟨le_of_lt hvalue.1, hvalue.2⟩
 

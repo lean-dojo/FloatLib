@@ -160,7 +160,7 @@ theorem ofLimbs_val (w : LimbArray) (hsize : w.size = limbCount fmt)
     (hlt : w.toNat < 2 ^ fmt.bitWidth) :
     (ofLimbs fmt w).1 = w := by
   unfold ofLimbs
-  rw [dif_pos ⟨hsize, (topLimbFits_iff w hsize).mpr hlt⟩]
+  rw [dite_eq_left ⟨hsize, (topLimbFits_iff w hsize).mpr hlt⟩]
 
 /-- The model of a stored value has the stored bit pattern. -/
 theorem toNatBits_toModel (v : Value fmt) : (toModel v).toNatBits = v.1.toNat :=
@@ -203,8 +203,8 @@ theorem signBit_eq (v : Value fmt) : signBit v = Model.signBit (toModel v) := by
 theorem expMask32_toNat (h : fmt.expWidth ≤ 32) : (expMask32 fmt).toNat = 2 ^ fmt.expWidth - 1 := by
   unfold expMask32
   by_cases hlt : fmt.expWidth < 32
-  · rw [if_pos hlt, LimbArray.lowMask32_toNat _ hlt]
-  · rw [if_neg hlt]
+  · rw [ite_eq_left hlt, LimbArray.lowMask32_toNat _ hlt]
+  · rw [ite_eq_right hlt]
     have : fmt.expWidth = 32 := by omega
     rw [this]
     decide
@@ -315,14 +315,15 @@ theorem decode?_toModel (v : Value fmt) (hieee : fmt.isIEEE = true) (h : fmt.exp
       some ⟨signBit v, expField v,
         FiniteKernel.decodeMantissa fmt (expField v) (fraction v).toNat⟩ := by
   unfold FiniteKernel.decode?
-  rw [isFinite_toModel v hieee h, if_neg (by simpa using hfinite), signBit_eq, expField_eq v h,
+  rw [isFinite_toModel v hieee h, ite_eq_right (by simpa using hfinite), signBit_eq,
+    expField_eq v h,
     fraction_toNat]
 
 /-- The decoded significand of a normal stored value is its limb significand. -/
 theorem decodeMantissa_eq_normalMantissa (v : Value fmt) (hnormal : expField v ≠ 0) :
     FiniteKernel.decodeMantissa fmt (expField v) (fraction v).toNat = (normalMantissa v).toNat := by
   unfold FiniteKernel.decodeMantissa
-  rw [if_neg (by simpa using hnormal), normalMantissa_toNat, fraction_toNat, pow2_eq_two_pow]
+  rw [ite_eq_right (by simpa using hnormal), normalMantissa_toNat, fraction_toNat, pow2_eq_two_pow]
 
 /-! ## Packing -/
 
@@ -383,12 +384,12 @@ theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray
   · unfold limbs
     cases sign
     · simp [hwithExponent]
-    · simp only [if_true]
+    · simp only [ite_true]
       rw [LimbArray.toNat_addAt _ _ _ (by rw [hwithExponentSize]; exact signIndex_div_lt fmt),
         hwithExponent, UInt32.toNat_one, Nat.one_mul]
       rw [hwithExponentSize, hwithExponent, UInt32.toNat_one, Nat.one_mul]
       have hs := hsumLt
-      simp only [if_true] at hs
+      simp only [ite_true] at hs
       exact lt_of_lt_of_le hs hradix
   · unfold limbs
     split
@@ -396,20 +397,20 @@ theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray
     · exact hwithExponentSize
   · unfold limbs
     cases sign
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       rw [hwithExponent]
       have hs := hsumLt
-      simp only [Bool.false_eq_true, if_false, Nat.add_zero] at hs
+      simp only [Bool.false_eq_true, ite_false, Nat.add_zero] at hs
       exact hs
-    · simp only [if_true]
+    · simp only [ite_true]
       rw [LimbArray.toNat_addAt _ _ _ (by rw [hwithExponentSize]; exact signIndex_div_lt fmt),
         hwithExponent, UInt32.toNat_one, Nat.one_mul]
       · have hs := hsumLt
-        simp only [if_true] at hs
+        simp only [ite_true] at hs
         exact hs
       · rw [hwithExponentSize, hwithExponent, UInt32.toNat_one, Nat.one_mul]
         have hs := hsumLt
-        simp only [if_true] at hs
+        simp only [ite_true] at hs
         exact lt_of_lt_of_le hs hradix
 
 /-- `pack` produces exactly the model field constructor on the masked fields. -/
@@ -457,9 +458,9 @@ theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
         fraction.toNat % 2 ^ fmt.fracWidth + exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth +
           (if sign = true then 2 ^ (fmt.expWidth + fmt.fracWidth) else 0) := by
     cases sign
-    · simp only [Bool.false_eq_true, if_false, Nat.zero_or, Nat.add_zero]
+    · simp only [Bool.false_eq_true, ite_false, Nat.zero_or, Nat.add_zero]
       ring
-    · simp only [if_true, Nat.shiftLeft_eq, Nat.one_mul]
+    · simp only [ite_true, Nat.shiftLeft_eq, Nat.one_mul]
       have hor := Nat.two_pow_add_eq_or_of_lt hmiddleLt 1
       rw [Nat.mul_one] at hor
       rw [← hor]

@@ -63,13 +63,13 @@ theorem toDyadic?_significand_lt_and_minSubnormalExponent_le
     hfrac.trans (Nat.pow_lt_pow_right (by decide) (by omega))
   by_cases he : expField x = 0
   · by_cases hf : fracField x = 0
-    · simp only [he, hf, if_true, Option.some.injEq] at hdecode
+    · simp only [he, hf, ite_true, Option.some.injEq] at hdecode
       rw [hdecode]
       exact ⟨Nat.two_pow_pos _, hmin⟩
-    · simp only [he, hf, if_true, if_false, Option.some.injEq] at hdecode
+    · simp only [he, hf, ite_true, ite_false, Option.some.injEq] at hdecode
       rw [hdecode]
       exact ⟨hfracSucc, le_rfl⟩
-  · simp only [he, if_false, Option.some.injEq] at hdecode
+  · simp only [he, ite_false, Option.some.injEq] at hdecode
     rw [hdecode]
     refine ⟨?_, ?_⟩
     · simp only [pow2_eq_two_pow, pow_succ]
@@ -181,7 +181,7 @@ theorem shiftRightCeilPow2_mul_pow2_of_le (m shift k : Nat) (hshift : shift ≤ 
     have hleft :
         Nat.shiftLeft (m * 2 ^ (k - shift)) shift = m * 2 ^ (k - shift) * 2 ^ shift :=
       Nat.shiftLeft_eq _ _
-    simp only [beq_iff_eq, hzero, if_false]
+    simp only [beq_iff_eq, hzero, ite_false]
     rw [hright, hleft, hexact]
     simp
 
@@ -203,7 +203,7 @@ theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2
   unfold roundMantissaToLeadingBitUp
   rw [hlog]
   by_cases hle : fracWidth ≤ m.log2 + k
-  · rw [if_pos hle, shiftRightCeilPow2_mul_pow2_of_le m (m.log2 + k - fracWidth) k (by omega)]
+  · rw [ite_eq_left hle, shiftRightCeilPow2_mul_pow2_of_le m (m.log2 + k - fracWidth) k (by omega)]
     have hupper : m < 2 ^ (m.log2 + 1) := Nat.lt_log2_self
     have hmul :
         m * 2 ^ (k - (m.log2 + k - fracWidth)) <
@@ -215,7 +215,7 @@ theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2
     rw [hexp] at hmul
     rw [pow2_eq_two_pow]
     exact Nat.ne_of_lt hmul
-  · rw [if_neg hle, Nat.shiftLeft_eq', Nat.shiftLeft_eq, pow2_eq_two_pow]
+  · rw [ite_eq_right hle, Nat.shiftLeft_eq', Nat.shiftLeft_eq, pow2_eq_two_pow]
     have hupper : m * 2 ^ k < 2 ^ (m.log2 + k + 1) := by
       rw [← hlog]
       exact Nat.lt_log2_self
@@ -327,7 +327,7 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
       · have hreal : d.toReal = 0 := by
           simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
         simp only [roundDyadicWithRounding, roundDyadicTowardZero, hzero, beq_self_eq_true,
-          if_true]
+          ite_true]
         exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
           by rw [toReal_zero, hreal]⟩
       · have hm0 : m ≠ 0 := by
@@ -336,11 +336,11 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
         have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
         rw [hsig] at hmax
         have hpos := roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-        simp only [roundDyadicWithRounding, roundDyadicTowardZero, hzero, beq_iff_eq, if_false]
+        simp only [roundDyadicWithRounding, roundDyadicTowardZero, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
         cases hneg : d.negative
         · simpa [roundDyadicPosDown] using hpos
-        · simp only [if_true]
+        · simp only [ite_true]
           rw [roundDyadicMagnitudeDown_true_eq_neg_false fmt _ _ (by simp [hfmt])]
           refine ⟨by simpa [roundDyadicPosDown] using hpos.1, ?_⟩
           rw [toReal_neg _ (by simpa [roundDyadicPosDown] using hpos.1)]
@@ -349,7 +349,7 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
       by_cases hzero : d.significand = 0
       · have hreal : d.toReal = 0 := by
           simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [roundDyadicWithRounding, roundDyadicUp, hzero, beq_self_eq_true, if_true]
+        simp only [roundDyadicWithRounding, roundDyadicUp, hzero, beq_self_eq_true, ite_true]
         exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
           by rw [toReal_zero, hreal]⟩
       · have hm0 : m ≠ 0 := by
@@ -357,14 +357,14 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
           exact hzero (by simp [hsig, hm0])
         have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
         rw [hsig] at hmax
-        simp only [roundDyadicWithRounding, roundDyadicUp, hzero, beq_iff_eq, if_false]
+        simp only [roundDyadicWithRounding, roundDyadicUp, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
         cases hneg : d.negative
         · have hpos := roundDyadicPosUp_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
           simpa [roundDyadicPosUp] using hpos
         · have hpos :=
             roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simp only [if_true]
+          simp only [ite_true]
           rw [roundDyadicMagnitudeDown_true_eq_neg_false fmt _ _ (by simp [hfmt])]
           refine ⟨by simpa [roundDyadicPosDown] using hpos.1, ?_⟩
           rw [toReal_neg _ (by simpa [roundDyadicPosDown] using hpos.1)]
@@ -373,7 +373,7 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
       by_cases hzero : d.significand = 0
       · have hreal : d.toReal = 0 := by
           simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [roundDyadicWithRounding, roundDyadicDown, hzero, beq_self_eq_true, if_true]
+        simp only [roundDyadicWithRounding, roundDyadicDown, hzero, beq_self_eq_true, ite_true]
         exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
           by rw [toReal_zero, hreal]⟩
       · have hm0 : m ≠ 0 := by
@@ -381,14 +381,14 @@ theorem roundDyadicWithRounding_of_eq_mul_pow2
           exact hzero (by simp [hsig, hm0])
         have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
         rw [hsig] at hmax
-        simp only [roundDyadicWithRounding, roundDyadicDown, hzero, beq_iff_eq, if_false]
+        simp only [roundDyadicWithRounding, roundDyadicDown, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
         cases hneg : d.negative
         · have hpos :=
             roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
           simpa [roundDyadicPosDown] using hpos
         · have hpos := roundDyadicPosUp_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simp only [if_true]
+          simp only [ite_true]
           rw [roundDyadicMagnitudeUp_true_eq_neg_false fmt _ _ (by simp [hfmt])
             (nativeOverflow_true_eq_neg_false_of_isIEEE fmt hfmt)]
           refine ⟨by simpa [roundDyadicPosUp] using hpos.1, ?_⟩

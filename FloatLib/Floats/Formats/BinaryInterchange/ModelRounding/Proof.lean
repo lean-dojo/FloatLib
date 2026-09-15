@@ -53,7 +53,7 @@ theorem roundToNearestEven_accuracyOfFraction_mod
   have hmodLt : num % den < den := Nat.mod_lt num hdenPos
   by_cases hrem : num % den = 0
   · simp [hrem, hdenPos, Accuracy.roundToNearestEven]
-  · simp only [hrem, if_false]
+  · simp only [hrem, ite_false]
     split <;> rename_i hcmp
     · have hcompare : compare (2 * (num % den)) den = .lt :=
         Nat.compare_eq_lt.mpr hcmp
@@ -211,7 +211,7 @@ theorem roundShiftRightEven_eq_zero_of_lt_half
   have hq : Nat.shiftRight n shift = 0 := Nat.shiftRight_eq_zero n shift hnPow
   have hshiftNe : shift ≠ 0 := Nat.ne_of_gt hshift
   rw [Numerics.roundShiftRightEven_def, ← pow2_eq_two_pow (shift - 1)]
-  simp only [beq_iff_eq, hshiftNe, if_false]
+  simp only [beq_iff_eq, hshiftNe, ite_false]
   rw [hq]
   simp [pow2] at hlt ⊢
   grind
@@ -238,7 +238,7 @@ theorem roundShiftRightEven_shiftLeft_add_of_lt_half
       Nat.mul_add_div (Nat.two_pow_pos shift),
       Nat.div_eq_of_lt hremainderPow, Nat.add_zero]
   rw [Numerics.roundShiftRightEven_def, ← pow2_eq_two_pow (shift - 1)]
-  simp only [beq_iff_eq, hshiftNe, if_false]
+  simp only [beq_iff_eq, hshiftNe, ite_false]
   change
     (if (mantissa <<< shift) + remainder -
           ((((mantissa <<< shift) + remainder) >>> shift) <<< shift) <
@@ -248,7 +248,7 @@ theorem roundShiftRightEven_shiftLeft_add_of_lt_half
         _) =
       mantissa
   rw [hquotient]
-  simp only [Nat.add_sub_cancel_left, hremainder, if_true]
+  simp only [Nat.add_sub_cancel_left, hremainder, ite_true]
 
 /--
 Subtracting a remainder below half an ulp from a positive left-shifted mantissa does not change
@@ -302,7 +302,7 @@ theorem roundShiftRightEven_shiftLeft_sub_of_lt_half
       simpa [pow2_eq_two_pow] using hremainder
     omega
   rw [Numerics.roundShiftRightEven_def, ← pow2_eq_two_pow (shift - 1)]
-  simp only [beq_iff_eq, hshiftNe, if_false]
+  simp only [beq_iff_eq, hshiftNe, ite_false]
   change
     (if (mantissa <<< shift) - remainder -
           ((((mantissa <<< shift) - remainder) >>> shift) <<< shift) <
@@ -316,7 +316,7 @@ theorem roundShiftRightEven_shiftLeft_sub_of_lt_half
           _) =
       mantissa
   rw [hquotient, hdiscarded]
-  rw [if_neg (Nat.not_lt.mpr hdiscardedHalf.le), if_pos hdiscardedHalf]
+  rw [ite_eq_right (Nat.not_lt.mpr hdiscardedHalf.le), ite_eq_left hdiscardedHalf]
   omega
 
 /-- A nonzero mantissa rounded to leading position `p` is at least `2^p`. -/
@@ -623,7 +623,7 @@ theorem roundMantissaAtExponentEven_minSubnormal_le_pow2
       rw [pow2_eq_two_pow, ← Nat.pow_add]
       exact hmLt
     have hround := roundShiftRightEven_le_shiftRight_add1 mantissa shift
-    simp only [roundMantissaAtExponentEven, hle, if_true]
+    simp only [roundMantissaAtExponentEven, hle, ite_true]
     change roundShiftRightEven mantissa shift ≤ pow2 fmt.fracWidth
     exact hround.trans (Nat.succ_le_iff.mpr hq)
   · have hlt : FloatFormat.ieeeMinSubnormalExponent fmt < exponent := lt_of_not_ge hle
@@ -641,7 +641,7 @@ theorem roundMantissaAtExponentEven_minSubnormal_le_pow2
     have hexponent : mantissa.log2 + 1 + shift ≤ fmt.fracWidth := by omega
     have hpow : 2 ^ (mantissa.log2 + 1 + shift) ≤ 2 ^ fmt.fracWidth :=
       Nat.pow_le_pow_right (by decide) hexponent
-    simp only [roundMantissaAtExponentEven, hle, if_false]
+    simp only [roundMantissaAtExponentEven, hle, ite_false]
     change mantissa <<< shift ≤ pow2 fmt.fracWidth
     simpa [pow2_eq_two_pow] using (hraw.trans_le hpow).le
 

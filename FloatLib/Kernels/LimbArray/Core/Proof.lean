@@ -332,7 +332,7 @@ theorem getElem_ofNatLoop (count n : Nat) (acc : Array UInt32) (j : Nat)
       · have hlt' : j < (acc.push (UInt32.ofNat n)).size := by
           rw [Array.size_push]
           omega
-        rw [dif_pos hlt', dif_pos hlt, Array.getElem_push_lt hlt]
+        rw [dite_eq_left hlt', dite_eq_left hlt, Array.getElem_push_lt hlt]
       · by_cases heq : j = acc.size
         · subst heq
           simp
@@ -340,7 +340,8 @@ theorem getElem_ofNatLoop (count n : Nat) (acc : Array UInt32) (j : Nat)
           have hge' : ¬ j < (acc.push (UInt32.ofNat n)).size := by
             rw [Array.size_push]
             omega
-          rw [dif_neg hge', dif_neg hlt, Nat.shiftRight_eq_div_pow, Array.size_push, ← radix_eq,
+          rw [dite_eq_right hge', dite_eq_right hlt, Nat.shiftRight_eq_div_pow,
+            Array.size_push, ← radix_eq,
             Nat.div_div_eq_div_mul, ← pow_succ', show j - acc.size = j - (acc.size + 1) + 1 by omega]
 
 /-- `ofNat n count` has exactly `count` limbs. -/
@@ -412,13 +413,13 @@ theorem topLimb_eq_zero_iff (v : LimbArray) (n : Nat) :
   | succ n ih =>
       unfold topLimb
       by_cases h : v.limb n != 0
-      · simp only [h, if_true]
+      · simp only [h, ite_true]
         constructor
         · intro hcontra; omega
         · intro hall
           have := hall n (by omega)
           simp [this] at h
-      · simp only [h, Bool.false_eq_true, if_false]
+      · simp only [h, Bool.false_eq_true, ite_false]
         rw [ih]
         have hzero : v.limb n = 0 := by simpa using h
         constructor
@@ -449,12 +450,12 @@ theorem topLimb_spec (v : LimbArray) (n i : Nat) (h : topLimb v n = i + 1) :
   | succ n ih =>
       unfold topLimb at h
       by_cases hn : v.limb n != 0
-      · simp only [hn, if_true, Nat.add_right_cancel_iff] at h
+      · simp only [hn, ite_true, Nat.add_right_cancel_iff] at h
         subst h
         refine ⟨by simpa using hn, by omega, ?_⟩
         intro j hj hjn
         omega
-      · simp only [hn, Bool.false_eq_true, if_false] at h
+      · simp only [hn, Bool.false_eq_true, ite_false] at h
         obtain ⟨hne, hlt, hzero⟩ := ih h
         refine ⟨hne, by omega, ?_⟩
         intro j hj hjn
@@ -581,7 +582,7 @@ theorem testBit_and_lowMask32 (x : UInt32) (r j : Nat) (hr : r < 32) :
   have hlo : lo = 32 * (lo / 32) + lo % 32 := (Nat.div_add_mod lo 32).symm
   unfold bitsAt32
   by_cases hr0 : lo % 32 = 0
-  · simp only [hr0, beq_self_eq_true, if_true]
+  · simp only [hr0, beq_self_eq_true, ite_true]
     by_cases hn : n < 32
     · rw [limb_testBit v _ n hn]
       simp only [hn, decide_true, Bool.true_and]
@@ -590,7 +591,7 @@ theorem testBit_and_lowMask32 (x : UInt32) (r j : Nat) (hr : r < 32) :
     · rw [limb_testBit_eq_false v _ n (by omega)]
       simp [hn]
   · have hbeq : (lo % 32 == 0) = false := by simpa using hr0
-    simp only [hbeq, Bool.false_eq_true, if_false]
+    simp only [hbeq, Bool.false_eq_true, ite_false]
     have hofNat1 : (UInt32.ofNat (lo % 32)).toNat % 32 = lo % 32 := by
       rw [UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : lo % 32 < 2 ^ 32)]
       exact Nat.mod_eq_of_lt hr
@@ -658,7 +659,7 @@ theorem limb_lowBits (v : LimbArray) (k i : Nat) :
   · have : 32 * (n / 32) + n % 32 < k := by omega
     simp [hlt, this]
   · by_cases heq : n / 32 = k / 32
-    · rw [if_neg hlt, if_pos heq, testBit_and_lowMask32 _ _ _ (Nat.mod_lt _ (by decide))]
+    · rw [ite_eq_right hlt, ite_eq_left heq, testBit_and_lowMask32 _ _ _ (Nat.mod_lt _ (by decide))]
       have : (32 * (n / 32) + n % 32 < k) ↔ (n % 32 < k % 32) := by omega
       simp [this, Bool.and_comm]
     · have : ¬ (32 * (n / 32) + n % 32 < k) := by omega
@@ -733,14 +734,14 @@ theorem anyBelow_eq_true_iff (v : LimbArray) (k : Nat) :
       apply hne
       by_cases hsize : i < v.size
       · have := hzero i (by simpa using hsize)
-        rw [Nat.zero_add, limb_lowBits, if_pos hi] at this
+        rw [Nat.zero_add, limb_lowBits, ite_eq_left hi] at this
         exact this
       · exact limb_eq_zero_of_size_le v (by omega)
     · rw [toNat, segment_eq_zero_iff] at hzero
       apply hne
       by_cases hsize : k / 32 < v.size
       · have := hzero (k / 32) (by simpa using hsize)
-        rw [Nat.zero_add, limb_lowBits, if_neg (Nat.lt_irrefl _), if_pos rfl] at this
+        rw [Nat.zero_add, limb_lowBits, ite_eq_right (Nat.lt_irrefl _), ite_eq_left rfl] at this
         exact this
       · rw [limb_eq_zero_of_size_le v (by omega)]
         simp
@@ -786,14 +787,14 @@ theorem limb_orLowBit_true (v : LimbArray) (hsize : 0 < v.size) (i : Nat) :
   · subst h0
     have hsize' : 0 < v.limbs.size := hsize
     simp [hsize']
-  · rw [if_neg (Ne.symm h0), if_neg h0, ← Array.getD_eq_getD_getElem?]
+  · rw [ite_eq_right (Ne.symm h0), ite_eq_right h0, ← Array.getD_eq_getD_getElem?]
 
 /-- Jamming a sticky bit sets bit zero of the value. -/
 theorem toNat_orLowBit (v : LimbArray) (hsize : 0 < v.size) (sticky : Bool) :
     toNat (orLowBit v sticky) = if sticky then toNat v ||| 1 else toNat v := by
   cases sticky
   · simp [orLowBit]
-  · simp only [if_true]
+  · simp only [ite_true]
     apply Nat.eq_of_testBit_eq
     intro n
     rw [Nat.testBit_or]
@@ -801,9 +802,10 @@ theorem toNat_orLowBit (v : LimbArray) (hsize : 0 < v.size) (sticky : Bool) :
     have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
     rw [← hdecomp, ← limb_testBit _ _ _ hn, ← limb_testBit _ _ _ hn, limb_orLowBit_true v hsize]
     by_cases hq : n / 32 = 0
-    · rw [if_pos hq, UInt32.toNat_or, Nat.testBit_or, show (1 : UInt32).toNat = 1 by decide, hq,
+    · rw [ite_eq_left hq, UInt32.toNat_or, Nat.testBit_or,
+      show (1 : UInt32).toNat = 1 by decide, hq,
         Nat.mul_zero, Nat.zero_add]
-    · rw [if_neg hq]
+    · rw [ite_eq_right hq]
       have hone : (1 : Nat).testBit (32 * (n / 32) + n % 32) = false := by
         rw [Bool.eq_false_iff, Ne, Nat.testBit_one_eq_true_iff_self_eq_zero]
         omega
@@ -823,7 +825,7 @@ theorem compareFrom_eq (a b : LimbArray) (n : Nat) :
       have hb := segment_lt b 0 n
       have hpos : 0 < radix ^ n := Nat.pow_pos (by decide)
       by_cases hlt : a.limb n < b.limb n
-      · rw [if_pos hlt]
+      · rw [ite_eq_left hlt]
         rw [UInt32.lt_iff_toNat_lt] at hlt
         symm
         rw [Nat.compare_eq_lt]
@@ -831,9 +833,9 @@ theorem compareFrom_eq (a b : LimbArray) (n : Nat) :
           Nat.mul_le_mul_right _ hlt
         rw [Nat.add_mul, Nat.one_mul] at h1
         omega
-      · rw [if_neg hlt]
+      · rw [ite_eq_right hlt]
         by_cases hgt : b.limb n < a.limb n
-        · rw [if_pos hgt]
+        · rw [ite_eq_left hgt]
           rw [UInt32.lt_iff_toNat_lt] at hgt
           symm
           rw [Nat.compare_eq_gt]
@@ -841,7 +843,7 @@ theorem compareFrom_eq (a b : LimbArray) (n : Nat) :
             Nat.mul_le_mul_right _ hgt
           rw [Nat.add_mul, Nat.one_mul] at h1
           omega
-        · rw [if_neg hgt, ih]
+        · rw [ite_eq_right hgt, ih]
           have heq : a.limb n = b.limb n := by
             rw [UInt32.lt_iff_toNat_lt] at hlt hgt
             exact UInt32.toNat_inj.mp (by omega)

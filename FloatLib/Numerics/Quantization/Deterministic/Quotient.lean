@@ -88,8 +88,8 @@ theorem roundQuotientEven_eq_quotient_add (numerator denominator : Nat) :
             roundQuotientEven numerator denominator =
               numerator / denominator := by
           unfold roundQuotientEven
-          rw [if_neg hbelow, if_neg habove,
-            if_pos (beq_iff_eq.mpr heven)]
+          rw [ite_eq_right hbelow, ite_eq_right habove,
+            ite_eq_left (beq_iff_eq.mpr heven)]
         have hcompare :
             (decide (denominator < 2 * (numerator % denominator)) : Bool) =
               false := by
@@ -116,8 +116,8 @@ theorem roundQuotientEven_eq_quotient_add (numerator denominator : Nat) :
             roundQuotientEven numerator denominator =
               numerator / denominator + 1 := by
           unfold roundQuotientEven
-          rw [if_neg hbelow, if_neg habove,
-            if_neg (by simpa only [beq_iff_eq] using heven)]
+          rw [ite_eq_right hbelow, ite_eq_right habove,
+            ite_eq_right (by simpa only [beq_iff_eq] using heven)]
         have hcompare :
             (decide (denominator < 2 * (numerator % denominator)) : Bool) =
               false := by

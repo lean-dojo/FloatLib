@@ -165,7 +165,7 @@ Nearest-even rounds down when the fractional part is strictly less than `1/2`.
 -/
 lemma nearestEven_eq_floor_of_frac_lt_half (x : ℝ) (h : x - ⌊x⌋ < 1/2) :
     nearestEven x = ⌊x⌋ := by
-  simp only [nearestEven, h, if_true]
+  simp only [nearestEven, h, ite_true]
 
 /--
 Nearest-even rounds up when the fractional part is strictly greater than `1/2`.
@@ -174,7 +174,7 @@ lemma nearestEven_eq_ceil_of_frac_gt_half (x : ℝ) (h : x - ⌊x⌋ > 1/2) :
     nearestEven x = ⌊x⌋ + 1 := by
   simp only [nearestEven]
   have h1 : ¬(x - ⌊x⌋ < 1/2) := not_lt.mpr (le_of_lt h)
-  simp only [h1, if_false, h, if_true]
+  simp only [h1, ite_false, h, ite_true]
 
 /--
 Nearest-even tie-breaking: when the fractional part is exactly `1/2` and the floor is even,
@@ -185,7 +185,7 @@ lemma nearestEven_eq_floor_of_frac_half_even (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) 
   simp only [nearestEven]
   have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; norm_num
   have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; norm_num
-  simp only [h3, h4, if_false, h2, if_true]
+  simp only [h3, h4, ite_false, h2, ite_true]
 
 /--
 Nearest-even tie-breaking: when the fractional part is exactly `1/2` and the floor is odd,
@@ -196,7 +196,7 @@ lemma nearestEven_eq_ceil_of_frac_half_odd (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) (h
   simp only [nearestEven]
   have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; norm_num
   have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; norm_num
-  simp only [h3, h4, if_false, h2, if_false]
+  simp only [h3, h4, ite_false, h2, ite_false]
 
 /-- `nearestEven` is a valid rounding mode: it is monotone and fixes integers. -/
 instance : ValidRnd nearestEven where

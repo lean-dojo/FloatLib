@@ -99,7 +99,7 @@ theorem decodePositiveFinite_encodePositiveFinite_eq_of_le
   have hvalue : value.toRat = (value.significand : Rat) * 2 ^ value.exponent := by
     simp [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand, hnegative]
   unfold Internal.encodePositiveFinite
-  simp only [hzero, beq_iff_eq, if_false]
+  simp only [hzero, beq_iff_eq, ite_false]
   generalize hE : max (Int.ofNat value.significand.log2 + value.exponent)
     format.minimumNormalExponent = E
   have hminE : format.minimumNormalExponent ≤ E := hE ▸ le_max_right _ _

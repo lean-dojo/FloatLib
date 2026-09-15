@@ -101,7 +101,7 @@ theorem minimumMagnitude_neg_self (value : Rat) (hvalue : 0 ≤ value) :
   have habs : abs (.finite (-value)) = abs (.finite value) := by
     simp only [abs]
     split_ifs <;> simp_all <;> linarith
-  simp only [minimumMagnitude, habs, less_self, Bool.false_eq_true, if_false]
+  simp only [minimumMagnitude, habs, less_self, Bool.false_eq_true, ite_false]
   rw [minimum_finite, min_eq_left (by linarith)]
 
 /-- Equal nonnegative magnitudes are resolved toward the positive datum by maximum. -/
@@ -110,7 +110,7 @@ theorem maximumMagnitude_neg_self (value : Rat) (hvalue : 0 ≤ value) :
   have habs : abs (.finite (-value)) = abs (.finite value) := by
     simp only [abs]
     split_ifs <;> simp_all <;> linarith
-  simp only [maximumMagnitude, habs, less_self, Bool.false_eq_true, if_false]
+  simp only [maximumMagnitude, habs, less_self, Bool.false_eq_true, ite_false]
   rw [maximum_finite, max_eq_right (by linarith)]
 
 end FloatLib.Floats.Formats.P3109.Arithmetic

@@ -5,7 +5,7 @@ import FloatLibBenchmarks.Support.ConversionProtocol
 
 open FloatLib.Floats.Formats.BinaryInterchange
 
-def main (args : List String) : IO Unit := do
+public def main (args : List String) : IO Unit := do
   let format ← match args[0]?.getD "" with
     | "binary16" => pure FloatFormat.binary16
     | "bfloat16" => pure FloatFormat.bfloat16

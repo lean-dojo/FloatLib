@@ -6,7 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormatting
 
 /-! # External character output for configured binary values
 
@@ -35,6 +35,38 @@ def formatDecimal (value : Value) : String := Model.formatDecimal (toModel value
 
 /-- Exact hexadecimal output with an integral significand and a decimal binary exponent. -/
 def formatHex (value : Value) : String := Model.formatHex (toModel value)
+
+/-- Fixed or scientific decimal output, with explicit rounding and exception status. -/
+def formatDecimalWithStatus (rounding : Model.IEEERoundingMode) (style : Model.DecimalStyle)
+    (value : Value) : Model.TextOutcome :=
+  Model.formatDecimalWithStatus rounding style (toModel value)
+
+/-- Nearest-even fixed output with exactly `places` digits after the decimal point. -/
+def formatFixed (value : Value) (places : Nat) : String :=
+  Model.formatFixed (toModel value) places
+
+/-- Nearest-even scientific output with `places + 1` significant digits. -/
+def formatScientific (value : Value) (places : Nat) : String :=
+  Model.formatScientific (toModel value) places
+
+/-- Decimal notation and its status flags are independent of the storage representation. -/
+@[simp] theorem formatDecimalWithStatus_ofModel (rounding : Model.IEEERoundingMode)
+    (style : Model.DecimalStyle) (value : Model fmt) :
+    formatDecimalWithStatus rounding style (ofModel (plan := plan) (code := code) value) =
+      Model.formatDecimalWithStatus rounding style value := by
+  simp [formatDecimalWithStatus]
+
+/-- Repacking a value does not change fixed decimal output. -/
+@[simp] theorem formatFixed_ofModel (value : Model fmt) (places : Nat) :
+    formatFixed (ofModel (plan := plan) (code := code) value) places =
+      Model.formatFixed value places := by
+  simp [formatFixed]
+
+/-- Repacking a value does not change scientific decimal output. -/
+@[simp] theorem formatScientific_ofModel (value : Model fmt) (places : Nat) :
+    formatScientific (ofModel (plan := plan) (code := code) value) places =
+      Model.formatScientific value places := by
+  simp [formatScientific]
 
 /-- Configured precision output is identical to descriptor-model output, including status. -/
 @[simp] theorem formatWithStatus_ofModel (rounding : Model.IEEERoundingMode)

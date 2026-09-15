@@ -548,7 +548,7 @@ assigning them the same numbers.
 
 ## Lean's model and its compiled operations
 
-In Lean 4.33.1, `Float32` contains a `Float32.Model`, which holds a `UInt32`
+In Lean 4.34.0, `Float32` contains a `Float32.Model`, which holds a `UInt32`
 word and a validity proof. Its NaN representation is canonical: different NaN payloads do not
 remain distinct model values. `Float` has the corresponding structure over `UInt64`.
 

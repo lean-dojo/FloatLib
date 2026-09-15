@@ -10,7 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
 public import FloatLib.Numerics.Representations.StaticStorage
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import FloatLib.Numerics.Core.Representation
 
 /-!

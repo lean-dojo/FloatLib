@@ -57,7 +57,7 @@ theorem mulFiniteImpl_eq (x y : Value) :
   have hyNatNonzero : yMantissa.toNat ≠ 0 :=
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxExceptional, hyExceptional, hxZero, hyZero, hxNatNonzero,
-    hyNatNonzero, or_self, if_false]
+    hyNatNonzero, or_self, ite_false]
   have hxMantissaLt :=
     finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
   have hyMantissaLt :=

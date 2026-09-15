@@ -62,7 +62,7 @@ theorem shiftRightJam_mod_two_eq_one
     (value shift : Nat) (hinexact : value % 2 ^ shift ≠ 0) :
     shiftRightJam value shift % 2 = 1 := by
   unfold shiftRightJam
-  rw [if_neg (by simpa only [beq_iff_eq] using hinexact)]
+  rw [ite_eq_right (by simpa only [beq_iff_eq] using hinexact)]
   rw [Nat.or_mod_two_eq_one]
   simp
 
@@ -78,9 +78,9 @@ theorem shiftRightJam_div_pow
       value / 2 ^ (shift + extra) := by
   unfold shiftRightJam
   by_cases hexact : value % 2 ^ shift = 0
-  · rw [if_pos (by simpa only [beq_iff_eq] using hexact)]
+  · rw [ite_eq_left (by simpa only [beq_iff_eq] using hexact)]
     rw [pow_add, ← Nat.div_div_eq_div_mul]
-  · rw [if_neg (by simpa only [beq_iff_eq] using hexact)]
+  · rw [ite_eq_right (by simpa only [beq_iff_eq] using hexact)]
     rw [Nat.or_div_two_pow]
     have honeSmall : 1 < 2 ^ extra :=
       Nat.one_lt_two_pow (Nat.ne_of_gt hextra)

@@ -185,8 +185,8 @@ private theorem roundDyadic_shiftLeft_add_small
     simp only [Int.ofNat_eq_natCast]
     omega
   unfold roundDyadic
-  simp only [beq_iff_eq, hcombinedNe, if_false, hleading, hnormal,
-    hleadingWidth, if_true, hshift, hround, hcarry, hoverflow, hencoded]
+  simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
+    hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
   rw [Model.pow2_eq_two_pow]
 
 private theorem roundDyadic_shiftLeft_add_value
@@ -334,8 +334,8 @@ private theorem roundDyadic_shiftLeft_sub_small
       simp only [Int.ofNat_eq_natCast]
       omega
     unfold roundDyadic
-    simp only [beq_iff_eq, hcombinedNe, if_false, hleading, hnormal,
-      hleadingWidth, if_true, hshift, hround, hcarry, hoverflow, hencoded]
+    simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
+      hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
     simp [Model.pow2_eq_two_pow]
   · have hlargeStrict : 2 ^ 23 < large := by omega
     have hcombinedPos : 0 < (large <<< gap) - small := by
@@ -395,8 +395,8 @@ private theorem roundDyadic_shiftLeft_sub_small
       simp only [Int.ofNat_eq_natCast]
       omega
     unfold roundDyadic
-    simp only [beq_iff_eq, hcombinedNe, if_false, hleading, hnormal,
-      hleadingWidth, if_true, hshift, hround, hcarry, hoverflow, hencoded]
+    simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
+      hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
     rw [Model.pow2_eq_two_pow]
 
 private theorem roundDyadic_shiftLeft_sub_value
@@ -499,19 +499,19 @@ private theorem roundDyadic_addDyadic_far
   have hscaleLe := finiteScale_le_of_components z rfl rfl hfinite
   have hexponentNonzero : expField (toUInt32 z) ≠ 0 := by
     intro h
-    rw [finiteScale_toNat, if_pos h] at hgap
+    rw [finiteScale_toNat, ite_eq_left h] at hgap
     omega
   have hexponentNat :
       (expField (toUInt32 z)).toNat =
         smallScale + ((finiteScale (expField (toUInt32 z))).toNat - smallScale) + 1 := by
     have h := finiteScale_toNat (expField (toUInt32 z))
-    rw [if_neg hexponentNonzero] at h
+    rw [ite_eq_right hexponentNonzero] at h
     have : (expField (toUInt32 z)).toNat ≠ 0 := fun h0 =>
       hexponentNonzero (UInt32.toNat_inj.mp (by simpa using h0))
     omega
   have hmantissaNonzero :
       (finiteMantissa (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat ≠ 0 := by
-    rw [finiteMantissa_toNat _ _ (fracField_lt z), if_neg hexponentNonzero,
+    rw [finiteMantissa_toNat _ _ (fracField_lt z), ite_eq_right hexponentNonzero,
       Model.pow2_eq_two_pow]
     omega
   set gap := (finiteScale (expField (toUInt32 z))).toNat - smallScale with hgapDef
@@ -569,7 +569,7 @@ theorem addFiniteImpl_eq (x y : Value) :
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero xMantissa).not.mpr hxZero
   have hyNatNonzero : yMantissa.toNat ≠ 0 :=
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
-  simp only [hxExceptional, hyExceptional, hxZero, hyZero, or_self, if_false]
+  simp only [hxExceptional, hyExceptional, hxZero, hyZero, or_self, ite_false]
   have hxMantissaLt := finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
   have hyMantissaLt := finiteMantissa_lt_of_components y hyExponent hyFraction hyMantissa
   have hxScaleLe := finiteScale_le_of_components x hxExponent hxScale hxExceptional
@@ -577,18 +577,18 @@ theorem addFiniteImpl_eq (x y : Value) :
   by_cases hscale : xScale ≤ yScale
   · have hscaleNat := UInt64.le_iff_toNat_le.mp hscale
     have hshiftNat := UInt64.toNat_sub_of_le yScale xScale hscale
-    rw [if_pos hscale]
+    rw [ite_eq_left hscale]
     by_cases hshift : yScale - xScale ≤ 39
     · obtain ⟨hshifted, hnonzero, hbound⟩ := shiftLeft_facts yMantissa (yScale - xScale) hyZero
         hyMantissaLt (by simpa using UInt64.le_iff_toNat_le.mp hshift)
-      rw [if_pos hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hxZero hnonzero
+      rw [ite_eq_left hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hxZero hnonzero
         (by rw [hshifted]; norm_num at hxMantissaLt hbound ⊢; omega) hxScaleLe, hshifted, hshiftNat,
         ← addDyadic_alignRight _ _ _ _ _ _ hxNatNonzero hyNatNonzero hscaleNat]
     · have hgap : xScale.toNat + 39 < yScale.toNat := by
         have h : ¬ (yScale - xScale).toNat ≤ 39 := fun hle =>
           hshift (UInt64.le_iff_toNat_le.mpr (by simpa using hle))
         omega
-      rw [if_neg hshift, roundDyadic_addDyadic_far y hyExponent hyFraction hyMantissa hyScale
+      rw [ite_eq_right hshift, roundDyadic_addDyadic_far y hyExponent hyFraction hyMantissa hyScale
         hyExceptional _ _ _ hxNatNonzero hxMantissaLt hgap]
       simp
   · have hscaleNat : yScale.toNat < xScale.toNat := by
@@ -596,18 +596,19 @@ theorem addFiniteImpl_eq (x y : Value) :
       omega
     have hscale' : yScale ≤ xScale := UInt64.le_iff_toNat_le.mpr hscaleNat.le
     have hshiftNat := UInt64.toNat_sub_of_le xScale yScale hscale'
-    rw [if_neg hscale]
+    rw [ite_eq_right hscale]
     by_cases hshift : xScale - yScale ≤ 39
     · obtain ⟨hshifted, hnonzero, hbound⟩ := shiftLeft_facts xMantissa (xScale - yScale) hxZero
         hxMantissaLt (by simpa using UInt64.le_iff_toNat_le.mp hshift)
-      rw [if_pos hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hnonzero hyZero
+      rw [ite_eq_left hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hnonzero hyZero
         (by rw [hshifted]; norm_num at hyMantissaLt hbound ⊢; omega) hyScaleLe, hshifted, hshiftNat,
         ← addDyadic_alignLeft _ _ _ _ _ _ hxNatNonzero hyNatNonzero hscaleNat]
     · have hgap : yScale.toNat + 39 < xScale.toNat := by
         have h : ¬ (xScale - yScale).toNat ≤ 39 := fun hle =>
           hshift (UInt64.le_iff_toNat_le.mpr (by simpa using hle))
         omega
-      rw [if_neg hshift, Model.addDyadic_comm, roundDyadic_addDyadic_far x hxExponent hxFraction
+      rw [ite_eq_right hshift, Model.addDyadic_comm,
+        roundDyadic_addDyadic_far x hxExponent hxFraction
         hxMantissa hxScale hxExceptional _ _ _ hyNatNonzero hyMantissaLt hgap]
       simp
 

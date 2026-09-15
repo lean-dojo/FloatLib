@@ -35,7 +35,7 @@ theorem toEReal_neg_of_isNaN_eq_false
     toEReal (neg x) = -toEReal x := by
   rw [toEReal_eq_ite (neg x), toEReal_eq_ite x]
   rw [isNaN_neg, hnan, isInf_neg]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   cases hinf : isInf x
   · have hfinite :
         isFinite x = true :=

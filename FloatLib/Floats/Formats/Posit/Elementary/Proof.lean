@@ -38,7 +38,7 @@ theorem expRat_eq_real (format : Format) (argument offset : Rat) :
 /-- A positive rational logarithm argument is rounded according to its exact real value. -/
 theorem logRat_eq_real (format : Format) (argument : Rat) (hpositive : 0 < argument) :
     logRat format argument = RealRounding.round format (Real.log (argument : ℝ)) := by
-  rw [logRat, dif_pos hpositive]
+  rw [logRat, dite_eq_left hpositive]
   exact ComparisonRounding.roundSigned_eq_real format _ _
     (fun boundary => FloatLib.Numerics.ElementaryComparison.prepareLog_eq_real
       argument (format.bits.log2 + 2) hpositive boundary)

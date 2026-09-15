@@ -46,7 +46,7 @@ private theorem encodePositiveFinite_mk_of_max_eq
           Int.toNat (exponent + Int.ofNat format.trailingBits + Int.ofNat format.exponentBias) *
             2 ^ format.trailingBits := by
   unfold Internal.encodePositiveFinite
-  simp only [hzero, beq_iff_eq, if_false, hmax]
+  simp only [hzero, beq_iff_eq, ite_false, hmax]
   rw [show exponent - (exponent + Int.ofNat format.trailingBits) + Int.ofNat format.trailingBits =
     Int.ofNat 0 by simp only [Int.ofNat_eq_natCast]; omega]
   simp
@@ -71,7 +71,7 @@ private theorem encodePositiveFinite_decodePositiveFinite
       (Nat.div_eq_zero_iff.mp hrow).resolve_left hunit.ne'
     have hlog : bits.log2 < format.trailingBits := (Nat.log2_lt hzero).2 hlt
     rw [format.decodePositiveFinite_of_biasedExponent_eq_zero bits hzero hrow,
-      Nat.mod_eq_of_lt hlt, encodePositiveFinite_mk_of_max_eq _ _ _ hzero, if_pos hlt,
+      Nat.mod_eq_of_lt hlt, encodePositiveFinite_mk_of_max_eq _ _ _ hzero, ite_eq_left hlt,
       Nat.mod_eq_of_lt hlt]
     rw [max_eq_right] <;>
       unfold minimumQuantumExponent minimumNormalExponent <;>
@@ -83,7 +83,7 @@ private theorem encodePositiveFinite_decodePositiveFinite
         format.trailingBits :=
       (Nat.log2_eq_iff (by omega)).2 ⟨Nat.le_add_right _ _, by rw [Nat.pow_succ]; omega⟩
     rw [format.decodePositiveFinite_of_biasedExponent_ne_zero bits hzero hrow,
-      encodePositiveFinite_mk_of_max_eq _ _ _ (by omega), if_neg (by omega),
+      encodePositiveFinite_mk_of_max_eq _ _ _ (by omega), ite_eq_right (by omega),
       Nat.add_mod_left, Nat.mod_eq_of_lt hmod,
       show Int.ofNat (bits / 2 ^ format.trailingBits) - Int.ofNat format.exponentBias + 1 -
           Int.ofNat format.precision + Int.ofNat format.trailingBits +
@@ -104,7 +104,7 @@ private theorem encodeDatumNat_finite_decodePositiveFinite
   by_cases bits_eq_zero : bits = 0
   · simp [bits_eq_zero, Internal.encodeDatumNat]
   have hne := (format.decodePositiveFinite_significand_eq_zero_iff bits).not.mpr bits_eq_zero
-  simp only [Internal.encodeDatumNat, beq_iff_eq, hne, if_false, decodePositiveFinite_negative,
+  simp only [Internal.encodeDatumNat, beq_iff_eq, hne, ite_false, decodePositiveFinite_negative,
     Bool.false_eq_true]
   exact format.encodePositiveFinite_decodePositiveFinite bits
 
@@ -121,9 +121,9 @@ private theorem encodeDatumNat_finite_neg_decodePositiveFinite
         (format.decodePositiveFinite bits).exponent⟩ : Numerics.Dyadic) =
         format.decodePositiveFinite bits :=
     Numerics.Dyadic.ext (format.decodePositiveFinite_negative bits).symm rfl rfl
-  simp only [Internal.encodeDatumNat, Numerics.Dyadic.neg_significand, beq_iff_eq, hne, if_false,
+  simp only [Internal.encodeDatumNat, Numerics.Dyadic.neg_significand, beq_iff_eq, hne, ite_false,
     Numerics.Dyadic.neg_negative, Numerics.Dyadic.neg_exponent, decodePositiveFinite_negative,
-    Bool.not_false, if_true]
+    Bool.not_false, ite_true]
   rw [hrecord, format.encodePositiveFinite_decodePositiveFinite]
 
 /--

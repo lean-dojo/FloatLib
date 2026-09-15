@@ -114,9 +114,9 @@ theorem magnitudeBits_lt_signMask_of_ne_nar
   unfold magnitudeBits
   rw [signBit_eq_decide]
   by_cases hnegative : format.signMaskNat ≤ value.toNatBits
-  · simp only [decide_eq_true hnegative, if_true]
+  · simp only [decide_eq_true hnegative, ite_true]
     omega
-  · simp only [decide_eq_false hnegative, Bool.false_eq_true, if_false]
+  · simp only [decide_eq_false hnegative, Bool.false_eq_true, ite_false]
     omega
 
 /-- Every nonzero posit has nonzero unsigned magnitude. -/
@@ -133,9 +133,9 @@ theorem magnitudeBits_ne_zero_of_ne_zero
   unfold magnitudeBits
   rw [signBit_eq_decide]
   by_cases hnegative : format.signMaskNat ≤ value.toNatBits
-  · simp only [decide_eq_true hnegative, if_true]
+  · simp only [decide_eq_true hnegative, ite_true]
     omega
-  · simp only [decide_eq_false hnegative, Bool.false_eq_true, if_false]
+  · simp only [decide_eq_false hnegative, Bool.false_eq_true, ite_false]
     exact hcodeNonzero
 
 end Model

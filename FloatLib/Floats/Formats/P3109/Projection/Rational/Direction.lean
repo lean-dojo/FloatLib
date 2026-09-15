@@ -52,7 +52,7 @@ theorem roundedInteger_error_lt_one (mode : RoundingMode) (negative : Bool)
   have hlo := Nat.floor_le hnonneg
   have hhi := Nat.lt_floor_add_one scaled
   by_cases hz : scaled - (⌊scaled⌋₊ : Rat) = 0
-  · simp only [roundedInteger, hz, roundAway_zero, Bool.false_eq_true, if_false]
+  · simp only [roundedInteger, hz, roundAway_zero, Bool.false_eq_true, ite_false]
     rw [abs_lt]
     constructor <;> linarith
   · have hpos : (⌊scaled⌋₊ : Rat) < scaled := by
@@ -155,7 +155,7 @@ theorem roundAt_error (mode : RoundingMode) (quantum : Int) (parity : Nat → Bo
   conv_lhs => arg 1; arg 2; rw [hx]
   unfold roundAt
   cases hn : decide (value.num < 0) <;>
-    simp only [signed, Bool.false_eq_true, if_false, if_true]
+    simp only [signed, Bool.false_eq_true, ite_false, ite_true]
   · rw [← sub_mul, abs_mul,
       abs_of_pos (zpow_pos (by norm_num : (0 : Rat) < 2) quantum)]
   · rw [neg_sub_neg, ← sub_mul, abs_sub_comm, abs_mul,
@@ -219,15 +219,15 @@ theorem roundAt_towardPositive (quantum : Int) (parity : Nat → Bool) (value : 
   have hx := signed_abs value
   rw [← scaledMagnitude_mul_quantum value quantum] at hx
   cases hn : decide (value.num < 0)
-  · simp only [hn, signed, Bool.false_eq_true, if_false] at hx
-    simp only [roundAt, hn, signed, Bool.false_eq_true, if_false]
+  · simp only [hn, signed, Bool.false_eq_true, ite_false] at hx
+    simp only [roundAt, hn, signed, Bool.false_eq_true, ite_false]
     constructor <;> nlinarith
   · have hdown :
         roundedInteger .towardPositive true parity (scaledMagnitude value quantum) =
           ⌊scaledMagnitude value quantum⌋₊ := by
       simp [roundedInteger, roundAway]
-    simp only [hn, signed, if_true] at hx
-    simp only [roundAt, hn, hdown, signed, if_true]
+    simp only [hn, signed, ite_true] at hx
+    simp only [roundAt, hn, hdown, signed, ite_true]
     constructor <;> nlinarith
 
 /-- Directed rounding toward negative infinity brackets the input from below. -/
@@ -249,14 +249,14 @@ theorem roundAt_towardNegative (quantum : Int) (parity : Nat → Bool) (value : 
         roundedInteger .towardNegative false parity (scaledMagnitude value quantum) =
           ⌊scaledMagnitude value quantum⌋₊ := by
       simp [roundedInteger, roundAway]
-    simp only [hn, signed, Bool.false_eq_true, if_false] at hx
-    simp only [roundAt, hn, hdown, signed, Bool.false_eq_true, if_false]
+    simp only [hn, signed, Bool.false_eq_true, ite_false] at hx
+    simp only [roundAt, hn, hdown, signed, Bool.false_eq_true, ite_false]
     constructor <;> nlinarith
   · have hup' :
         roundedInteger .towardNegative true parity (scaledMagnitude value quantum) =
           roundedInteger .towardPositive false parity (scaledMagnitude value quantum) := rfl
-    simp only [hn, signed, if_true] at hx
-    simp only [roundAt, hn, hup', signed, if_true]
+    simp only [hn, signed, ite_true] at hx
+    simp only [roundAt, hn, hup', signed, ite_true]
     constructor <;> nlinarith
 
 /-- The halfway value is resolved by code parity, with the original sign restored. -/

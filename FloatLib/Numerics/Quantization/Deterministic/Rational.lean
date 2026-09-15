@@ -133,19 +133,19 @@ theorem roundQuotientEven_error_le_half
   unfold roundRatEven
   dsimp only
   by_cases hvalue : (value : Rat).num < 0
-  · rw [if_pos hvalue]
+  · rw [ite_eq_left hvalue]
     simp only [Rat.num_intCast, Rat.den_intCast]
     rw [show roundQuotientEven value.natAbs 1 = value.natAbs by
       simp only [roundQuotientEven, Nat.div_one, Nat.mod_one, mul_zero,
-        Nat.zero_lt_one, if_true]]
+        Nat.zero_lt_one, ite_true]]
     have hvalue' : value < 0 := by
       simpa only [Rat.num_intCast] using hvalue
     simp [abs_of_neg hvalue']
-  · rw [if_neg hvalue]
+  · rw [ite_eq_right hvalue]
     simp only [Rat.num_intCast, Rat.den_intCast]
     rw [show roundQuotientEven value.natAbs 1 = value.natAbs by
       simp only [roundQuotientEven, Nat.div_one, Nat.mod_one, mul_zero,
-        Nat.zero_lt_one, if_true]]
+        Nat.zero_lt_one, ite_true]]
     have hvalue' : ¬ value < 0 := by
       simpa only [Rat.num_intCast] using hvalue
     simp [abs_of_nonneg (Int.not_lt.mp hvalue')]
@@ -157,7 +157,7 @@ theorem roundRatEven_error_eq_magnitude (x : Rat) :
   unfold roundRatEven
   dsimp only
   by_cases hnum : x.num < 0
-  · rw [if_pos hnum]
+  · rw [ite_eq_left hnum]
     have habsInt : Int.ofNat x.num.natAbs = -x.num := by
       simp [abs_of_neg hnum]
     have habsRat : (x.num.natAbs : Rat) = -(x.num : Rat) := by
@@ -168,7 +168,7 @@ theorem roundRatEven_error_eq_magnitude (x : Rat) :
     rw [show -(roundQuotientEven x.num.natAbs x.den : Rat) - x =
       -((roundQuotientEven x.num.natAbs x.den : Rat) + x) by ring, abs_neg]
     simp only [sub_neg_eq_add]
-  · rw [if_neg hnum]
+  · rw [ite_eq_right hnum]
     have habsInt : Int.ofNat x.num.natAbs = x.num := by
       simp [abs_of_nonneg (Int.not_lt.mp hnum)]
     have habsRat : (x.num.natAbs : Rat) = (x.num : Rat) := by
@@ -239,7 +239,7 @@ theorem roundQuotientEven_error_lt_half (numerator denominator : Nat)
     exact hhalf
   · rename_i h
     have hg : denominator < 2 * (numerator % denominator) := by omega
-    rw [if_pos hg, quotient_value numerator denominator hd]
+    rw [ite_eq_left hg, quotient_value numerator denominator hd]
     push_cast
     have hhalf : (1 : Rat) / 2 < (numerator % denominator : Rat) / denominator := by
       rw [lt_div_iff₀ hdp]

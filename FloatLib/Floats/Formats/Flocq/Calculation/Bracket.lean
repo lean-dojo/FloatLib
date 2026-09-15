@@ -41,10 +41,10 @@ inductive Inbetween (d u x : ℝ) : Location → Prop where
 theorem inbetweenLocation_spec {d u x : ℝ} (_hdu : d < u) (hx : d ≤ x ∧ x < u) :
     Inbetween d u x (inbetweenLocation d u x) := by
   by_cases hdx : d < x
-  · rw [inbetweenLocation, if_pos hdx]
+  · rw [inbetweenLocation, ite_eq_left hdx]
     exact .inexact _ ⟨hdx, hx.2⟩ rfl
   · have hxd : x = d := le_antisymm (le_of_not_gt hdx) hx.1
-    rw [inbetweenLocation, if_neg hdx]
+    rw [inbetweenLocation, ite_eq_right hdx]
     exact .exact hxd
 
 /-- A value has at most one semantic location in a fixed bracket. -/
@@ -437,9 +437,9 @@ theorem refineLocation_correct {start step x : ℝ} {steps k : ℤ}
     Inbetween start (start + (steps : ℝ) * step) x
       (refineLocation steps k location) := by
   by_cases heven : steps % 2 = 0
-  · rw [refineLocation, if_pos heven]
+  · rw [refineLocation, ite_eq_left heven]
     exact refineLocationEven_correct hstep hsteps (Int.even_iff.mpr heven) hk hl
-  · rw [refineLocation, if_neg heven]
+  · rw [refineLocation, ite_eq_right heven]
     exact refineLocationOdd_correct hstep hsteps
       (Int.odd_iff.mpr (Int.emod_two_ne_zero.mp heven)) hk hl
 

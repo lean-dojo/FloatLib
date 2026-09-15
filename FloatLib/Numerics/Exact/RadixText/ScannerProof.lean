@@ -68,7 +68,7 @@ theorem scanDigits_naturalDigits (radix : Nat) (hradix : 1 < radix)
   · subst value
     have hzero : readDigit '0' = some 0 := hdigit 0 (by omega)
     simp [naturalDigits, scanDigits, hzero, scanDigits_stop radix readDigit tail htail]
-  · rw [naturalDigits, if_neg hz]
+  · rw [naturalDigits, ite_eq_right hz]
     rw [scanDigits_map_append radix readDigit _ tail
       (fun digit h => hdigit digit (Nat.digits_lt_base hradix (List.mem_reverse.mp h))) htail]
     simp [hz, Nat.ofDigits_digits]

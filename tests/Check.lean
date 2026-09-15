@@ -20,6 +20,7 @@ import FloatLibTests.Regression.BinaryInterchange.NativeBinary64
 import FloatLibTests.Regression.BinaryInterchange.NativeProduct
 import FloatLibTests.Regression.BinaryInterchange.PolicyRounding
 import FloatLibTests.Regression.BinaryInterchange.SmallWord
+import FloatLibTests.Regression.BinaryInterchange.Text
 import FloatLibTests.Regression.BinaryInterchange.TinyArithmetic
 import FloatLibTests.Regression.BinaryInterchange.TwoWordMul
 import FloatLibTests.Regression.BinaryInterchange.WideLimb
@@ -49,6 +50,7 @@ open FloatLibTests.Regression.BinaryInterchange.ExecFloatTranscendentals
 private def core : IO UInt32 :=
   runSectionedReport #[
     Model.report.get,
+    Text.report.get,
     { title := "public instances"
       body := ExecFloatInstances.report.get
       failures := ExecFloatInstances.totalFailures.get },

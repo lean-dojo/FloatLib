@@ -71,7 +71,7 @@ theorem roundRatScaled_false_eq_of_isIEEE
           ofFields fmt false
             (Int.toNat (totalExponent + Int.ofNat fmt.exponentBias))
             (rounded - pow2 fmt.fracWidth) := by
-  simp only [roundRatScaled, dif_pos hfmt]
+  simp only [roundRatScaled, dite_eq_left hfmt]
   unfold ieeeRoundRatScaled
   rw [← FloatFormat.maxNormalExponent_eq_ieee fmt hfmt,
     ← FloatFormat.minNormalExponent_eq_ieee fmt hfmt,
@@ -79,7 +79,7 @@ theorem roundRatScaled_false_eq_of_isIEEE
     neg_normalMantissaExpOffset_eq_minSubnormalExponent_sub_one]
   simp only [show (denominator == 0) = false by simp [hdenominator],
     show (numerator == 0) = false by simp [hnumerator],
-    Bool.false_eq_true, if_false, beq_iff_eq, gt_iff_lt]
+    Bool.false_eq_true, ite_false, beq_iff_eq, gt_iff_lt]
   split_ifs <;> first
     | rfl
     | (rw [Nat.sub_self])
@@ -96,7 +96,7 @@ theorem roundRatScaled_false_eq_posInf_of_maxNormal_lt
     roundRatScaled fmt false numerator denominator exponent = posInf fmt := by
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
-  simp only [if_pos hoverflow]
+  simp only [ite_eq_left hoverflow]
 
 /-- Below half of the smallest subnormal, positive nearest-even packing returns positive zero. -/
 theorem roundRatScaled_false_eq_posZero_of_lt_minSubnormal_sub_one
@@ -112,7 +112,7 @@ theorem roundRatScaled_false_eq_posZero_of_lt_minSubnormal_sub_one
     roundRatScaled fmt false numerator denominator exponent = posZero fmt := by
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_pos hunderflow]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_left hunderflow]
 
 /--
 In the subnormal range, positive nearest-even packing rounds the quotient on the subnormal grid
@@ -155,7 +155,7 @@ theorem roundRatScaled_false_eq_subnormal
     hhigh.le.trans (minNormalExponent_le_maxNormalExponent fmt)
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_neg (not_lt_of_ge hlow), if_pos hhigh]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right (not_lt_of_ge hlow), ite_eq_left hhigh]
 
 /--
 In the normal range without a carry-out, positive nearest-even packing stores the rounded
@@ -194,8 +194,9 @@ theorem roundRatScaled_false_eq_normal_of_ne_carry
     omega
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_neg hnotUnderflow, if_neg (not_lt_of_ge hnormal),
-    if_neg hcarry]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right hnotUnderflow,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_right hcarry]
 
 /--
 A carry-out whose incremented exponent still fits stores the smallest mantissa one binade
@@ -233,8 +234,8 @@ theorem roundRatScaled_false_eq_normal_of_carry
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
         fmt.maxNormalExponent := by
     omega
-  simp only [if_neg (not_lt_of_ge hmax), if_neg hnotUnderflow,
-    if_neg (not_lt_of_ge hnormal), if_pos hcarry, if_neg (not_lt_of_ge hcarryMax)]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right hnotUnderflow,
+    ite_eq_right (not_lt_of_ge hnormal), ite_eq_left hcarry, ite_eq_right (not_lt_of_ge hcarryMax)]
 
 /-- A carry-out past the largest normal exponent overflows to positive infinity. -/
 theorem roundRatScaled_false_eq_posInf_of_carry
@@ -263,8 +264,9 @@ theorem roundRatScaled_false_eq_posInf_of_carry
     omega
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
-  simp only [if_neg (not_lt_of_ge hmax), if_neg hnotUnderflow, if_neg (not_lt_of_ge hnormal),
-    if_pos hcarry, if_pos hcarryOverflow]
+  simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right hnotUnderflow,
+    ite_eq_right (not_lt_of_ge hnormal),
+    ite_eq_left hcarry, ite_eq_left hcarryOverflow]
 
 end
 

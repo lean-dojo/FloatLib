@@ -46,12 +46,12 @@ theorem roundRatScaled_true_eq_neg_false
     rw [roundRatScaled_num_zero fmt true denominator exponent hdenominator,
       roundRatScaled_num_zero fmt false denominator exponent hdenominator]
     simp [zero]
-  simp only [roundRatScaled, dif_pos hfmt]
+  simp only [roundRatScaled, dite_eq_left hfmt]
   unfold ieeeRoundRatScaled
   have hsigned := FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt
   simp only [show (denominator == 0) = false by simp [hdenominator],
     show (numerator == 0) = false by simp [hnumerator],
-    Bool.false_eq_true, if_false]
+    Bool.false_eq_true, ite_false]
   split
   · simp [neg_posInf]
   · split
@@ -156,14 +156,14 @@ theorem scaledMantissa_signedScaledRatToReal
       scaledRatToReal_mul_bpow numerator denominator exponent (-target)
   cases sign with
   | false =>
-      simp only [signedScaledRatToReal, Bool.false_eq_true, if_false]
+      simp only [signedScaledRatToReal, Bool.false_eq_true, ite_false]
       rw [div_eq_mul_inv, ← bpow.neg_exp]
       change
         scaledRatToReal numerator denominator exponent * bpow (-target) =
           (scaled.1 : Real) / (scaled.2 : Real)
       rw [hcombine, ← hscale]
   | true =>
-      simp only [signedScaledRatToReal, if_true]
+      simp only [signedScaledRatToReal, ite_true]
       rw [div_eq_mul_inv, ← bpow.neg_exp]
       change
         -scaledRatToReal numerator denominator exponent * bpow (-target) =
@@ -299,7 +299,7 @@ private theorem roundQuotientEven_ne_top_of_bound_at_max
       roundAt fmt
           (signedScaledRatToReal false numerator denominator exponent) =
         bpow (fmt.maxNormalExponent + 1) := by
-    simp only [Bool.false_eq_true, if_false] at hround
+    simp only [Bool.false_eq_true, ite_false] at hround
     rw [htarget] at hround
     have hscaled :
         Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator

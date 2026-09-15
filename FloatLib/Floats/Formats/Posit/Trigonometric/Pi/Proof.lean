@@ -42,7 +42,7 @@ theorem cosPi_eq_real (value : Model format) {q : Rat} (hvalue : value.toRat? = 
 theorem tanPi_eq_real (value : Model format) {q : Rat} (hvalue : value.toRat? = some q)
     (hpole : Int.fract q ≠ 1 / 2) :
     tanPi value = RealRounding.round format (Real.tan ((q : ℝ) * Real.pi)) := by
-  simp only [tanPi, hvalue, if_neg hpole]
+  simp only [tanPi, hvalue, ite_eq_right hpole]
   exact ComparisonRounding.roundSigned_eq_real format _ _ (prepareTanPi_eq_real q _)
 
 /-- Every half-integer pi-scaled tangent input produces NaR. -/

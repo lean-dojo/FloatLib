@@ -237,14 +237,14 @@ theorem div_sound
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
     ERealMem (div A B) ((x / y : ℝ) : EReal) := by
   by_cases hcontains : containsZero B = true
-  · rw [div, if_pos hcontains]
+  · rw [div, ite_eq_left hcontains]
     exact eRealMem_whole fmt hfmt _
   · have hsign := denominator_sign_stable B hB (Bool.eq_false_iff.mpr hcontains)
     have hzero : ∀ b, b = B.lo ∨ b = B.hi → isZero b = false := by
       rintro b (rfl | rfl)
       · exact isZero_eq_false_of_sign_stable B hsign le_rfl hB.toReal_ordered
       · exact isZero_eq_false_of_sign_stable B hsign hB.toReal_ordered le_rfl
-    rw [div, if_neg hcontains]
+    rw [div, ite_eq_right hcontains]
     exact eRealMem_ofBounds_corners A B hfmt hA hB divDown divUp (· / ·)
       (fun a b ha hb hb' =>
         ⟨isNaN_divDown_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),

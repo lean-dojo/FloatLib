@@ -249,7 +249,7 @@ For literal widths and biases, Lean discharges the four side conditions with `by
   mantissaBitsWithoutImplicit := fmt.fracWidth
   exponentBits := fmt.expWidth
   hm := fmt.fracWidth_pos
-  he := Nat.lt_of_lt_of_le (by decide : 0 < 2) fmt.expWidth_ge_two
+  he := fmt.expWidth_ge_two
 
 /-- The declared exponent bias fits in the stored exponent field. -/
 theorem exponentBias_lt_two_pow (fmt : FloatFormat) :
@@ -261,11 +261,10 @@ theorem exponentBias_lt_two_pow (fmt : FloatFormat) :
     omega
 
 /--
-Recover an executable format descriptor from a nondegenerate Lean logical format descriptor.
+Recover an executable IEEE format descriptor from Lean's logical format descriptor.
 
-Lean's lower-level model admits a one-bit exponent field, but its packer cannot represent the
-usual finite/subnormal/infinity partition at that width. The executable interchange API excludes
-that degenerate case.
+Both descriptors require at least two exponent bits; `fmt.he` supplies the explicit width proof.
+The conversion assigns the conventional IEEE bias and exceptional-value interpretation.
 -/
 @[inline] def ofModel (fmt : Float.Model.Format) (h : 2 ≤ fmt.exponentBits) : FloatFormat where
   expWidth := fmt.exponentBits
@@ -278,11 +277,10 @@ that degenerate case.
   exponentBias_le_maxFinite :=
     ieeeBias_le_maxFiniteExponent fmt.exponentBits h
 
-/-- Converting a nondegenerate Lean logical format to an executable descriptor and back is exact. -/
+/-- Converting a Lean logical format to an executable descriptor and back is exact. -/
 @[simp] theorem toModel_ofModel (fmt : Float.Model.Format) (h : 2 ≤ fmt.exponentBits) :
     toModel (ofModel fmt h) = fmt := by
-  cases fmt
-  congr
+  rfl
 
 /--
 Converting through Lean's logical model retains the widths and produces the corresponding

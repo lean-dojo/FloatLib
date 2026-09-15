@@ -373,7 +373,7 @@ private theorem sameDatum_decode_encodeNegativeFinite
         have := format.modulus_eq_two_mul_signBoundary
         unfold modulus at this
         omega
-      simp only [Internal.encodeDatumNat, beq_iff_eq, hzero, if_false, hnegative, if_true,
+      simp only [Internal.encodeDatumNat, beq_iff_eq, hzero, ite_false, hnegative, ite_true,
         hmagnitude]
       unfold decode
       rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hwidth,

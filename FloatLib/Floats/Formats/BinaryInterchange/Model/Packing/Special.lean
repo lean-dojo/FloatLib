@@ -273,7 +273,7 @@ theorem negInf_eq_ofModel_infinity (fmt : FloatFormat) :
     unpackSign_packComponents]
   have hExponent : (0#spec.exponentBits) ≠ (-1#spec.exponentBits) := by
     rw [ne_eq, BitVec.zero_eq_neg_one_iff]
-    exact Nat.ne_of_gt spec.he
+    exact Nat.ne_zero_of_lt spec.he
   have hsign : Sign.ofBitVec sign.toBitVec = sign := by
     cases sign <;> rfl
   simp [hExponent, hsign]

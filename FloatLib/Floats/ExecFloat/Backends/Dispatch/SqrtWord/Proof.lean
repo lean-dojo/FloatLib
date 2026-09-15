@@ -69,7 +69,7 @@ theorem sqrt_eq_spec (x : Value) :
           change Model.IEEE.isInf x = true
           simp [Model.IEEE.isInf, hexpAll, hexponentAllOnes, hfractionZero]
         simp only [hexponentAllOnes, hfractionZero, hsignFalse,
-          beq_self_eq_true, if_true]
+          beq_self_eq_true, ite_true]
         simp [Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hsignFalse]
         rw [← ofUInt32_toUInt32 x, ← mkBits_fields (toUInt32 x)]
         rw [signBit_eq, expField_toNat, fracField_toNat, hsignFalse,
@@ -182,17 +182,17 @@ theorem sqrt_eq_spec (x : Value) :
       | true =>
           simp
       | false =>
-          simp only [Bool.false_eq_true, if_false]
+          simp only [Bool.false_eq_true, ite_false]
           cases hzero : Model.isZero x with
           | true =>
               simp
           | false =>
-              simp only [Bool.false_eq_true, if_false]
+              simp only [Bool.false_eq_true, ite_false]
               cases hsign : Model.signBit x with
               | true =>
                   simp
               | false =>
-                  simp only [Bool.false_eq_true, if_false]
+                  simp only [Bool.false_eq_true, ite_false]
                   have hfinite :
                       Model.expField x ≠
                         FloatFormat.expAllOnesNat FloatFormat.binary64 := by
@@ -221,7 +221,7 @@ theorem sqrt_eq_spec (x : Value) :
                       (fmt := FloatFormat.binary64) (by decide) x
                       hfinitePolicy hzero hsign
                   simp only [Model.Spec.sqrt, Model.chooseNaN1, hnanFalse,
-                    Bool.false_eq_true, if_false, hinf, hzero, hsign] at hpublic
+                    Bool.false_eq_true, ite_false, hinf, hzero, hsign] at hpublic
                   rw [hnative, ← hpublic]
 
 end NativeBinary64
@@ -243,17 +243,17 @@ theorem generic_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     · simp [hinf]
     · have hinfFalse : isInf x = false :=
         Bool.eq_false_of_not_eq_true hinf
-      rw [dif_neg hinf, if_neg hinf]
+      rw [dite_eq_right hinf, ite_eq_right hinf]
       by_cases hzero : isZero x = true
       · simp [hzero]
       · have hzeroFalse : isZero x = false :=
           Bool.eq_false_of_not_eq_true hzero
-        rw [dif_neg hzero, if_neg hzero]
+        rw [dite_eq_right hzero, ite_eq_right hzero]
         by_cases hsignBit : signBit x = true
         · simp [hsignBit]
         · have hsignFalse : signBit x = false :=
             Bool.eq_false_of_not_eq_true hsignBit
-          rw [dif_neg hsignBit, if_neg hsignBit]
+          rw [dite_eq_right hsignBit, ite_eq_right hsignBit]
           have hnotNaN := (chooseNaN1_eq_none_iff x).1 hnan
           have hfinite :=
             isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false

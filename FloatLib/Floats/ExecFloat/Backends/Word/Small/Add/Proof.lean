@@ -102,8 +102,8 @@ theorem normalSpec_refines
       normalizedPosition, overflowThreshold, hoverflow] using hresult
   rw [← hresultEq]
   unfold FiniteProductRound.round
-  simp only [beq_iff_eq, hmagnitude, if_false]
-  rw [if_neg hsubnormal, if_neg hoverflow]
+  simp only [beq_iff_eq, hmagnitude, ite_false]
+  rw [ite_eq_right hsubnormal, ite_eq_right hoverflow]
 
 /-! ## Machine-word rounding -/
 
@@ -209,14 +209,14 @@ theorem roundMagnitude_eq_normalSpec
       apply UInt64.lt_iff_toNat_lt.mpr
       rw [hposition, hnormalThreshold]
       exact hsubnormal
-    rw [if_pos hsubnormalWord, if_pos hsubnormal]
+    rw [ite_eq_left hsubnormalWord, ite_eq_left hsubnormal]
   have hsubnormalWord :
       ¬position < (biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 1) := by
     intro h
     apply hsubnormal
     have hnat := UInt64.lt_iff_toNat_lt.mp h
     rwa [hposition, hnormalThreshold] at hnat
-  rw [if_neg hsubnormalWord, if_neg hsubnormal]
+  rw [ite_eq_right hsubnormalWord, ite_eq_right hsubnormal]
   let fracWidthWord := UInt64.ofNat fmt.fracWidth
   have hfracWord : fracWidthWord.toNat = fmt.fracWidth := by
     unfold fracWidthWord
@@ -240,7 +240,7 @@ theorem roundMagnitude_eq_normalSpec
         apply UInt64.le_iff_toNat_le.mpr
         rw [hfracWord, hleading]
         exact hle
-      rw [if_pos hleWord, if_pos hle,
+      rw [ite_eq_left hleWord, ite_eq_left hle,
         FloatLib.Numerics.FixedWord.roundShiftRightEven_toNat,
         UInt64.toNat_sub_of_le _ _ hleWord, hleading, hfracWord]
     · have hleWord : ¬fracWidthWord ≤ leading := by
@@ -248,7 +248,7 @@ theorem roundMagnitude_eq_normalSpec
         apply hle
         have hnat := UInt64.le_iff_toNat_le.mp h
         rwa [hfracWord, hleading] at hnat
-      rw [if_neg hleWord, if_neg hle]
+      rw [ite_eq_right hleWord, ite_eq_right hle]
       have hshiftLe : leading ≤ fracWidthWord := by
         apply UInt64.le_iff_toNat_le.mpr
         rw [hfracWord, hleading]
@@ -341,8 +341,8 @@ theorem roundAligned_refines
   unfold roundAligned? at hresult
   unfold FiniteScaleAdd.roundMagnitudes
   by_cases hsign : leftSign = rightSign
-  · rw [if_pos (by simp [hsign])] at hresult
-    rw [if_pos (by simp [hsign])]
+  · rw [ite_eq_left (by simp [hsign])] at hresult
+    rw [ite_eq_left (by simp [hsign])]
     have hadd : (left + right).toNat = left.toNat + right.toNat := by
       rw [UInt64.toNat_add, Nat.mod_eq_of_lt hsum]
     have haddNe : left + right ≠ 0 := by
@@ -352,22 +352,22 @@ theorem roundAligned_refines
       omega
     rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth leftSign (left + right) scale
       haddNe hscale result hresult, hadd]
-  · rw [if_neg (by simpa using hsign)] at hresult
-    rw [if_neg (by simpa using hsign)]
+  · rw [ite_eq_right (by simpa using hsign)] at hresult
+    rw [ite_eq_right (by simpa using hsign)]
     by_cases heq : left = right
     · subst heq
-      simp only [beq_self_eq_true, if_true, Option.some.injEq] at hresult
-      simp only [beq_self_eq_true, if_true]
+      simp only [beq_self_eq_true, ite_true, Option.some.injEq] at hresult
+      simp only [beq_self_eq_true, ite_true]
       exact hresult.symm
     · have heqNat : left.toNat ≠ right.toNat := by
         intro h
         exact heq (UInt64.toNat_inj.mp h)
-      rw [if_neg (by simpa using heq)] at hresult
-      rw [if_neg (by simpa using heqNat)]
+      rw [ite_eq_right (by simpa using heq)] at hresult
+      rw [ite_eq_right (by simpa using heqNat)]
       by_cases hlt : left < right
       · have hltNat : left.toNat < right.toNat := UInt64.lt_iff_toNat_lt.mp hlt
-        rw [if_pos hlt] at hresult
-        rw [if_pos hltNat]
+        rw [ite_eq_left hlt] at hresult
+        rw [ite_eq_left hltNat]
         have hsub : (right - left).toNat = right.toNat - left.toNat :=
           UInt64.toNat_sub_of_le _ _ (UInt64.le_of_lt hlt)
         have hsubNe : right - left ≠ 0 := by
@@ -383,8 +383,8 @@ theorem roundAligned_refines
         have hgt : right < left := by
           apply UInt64.lt_iff_toNat_lt.mpr
           omega
-        rw [if_neg hlt] at hresult
-        rw [if_neg hltNat]
+        rw [ite_eq_right hlt] at hresult
+        rw [ite_eq_right hltNat]
         have hsub : (left - right).toNat = left.toNat - right.toNat :=
           UInt64.toNat_sub_of_le _ _ (UInt64.le_of_lt hgt)
         have hsubNe : left - right ≠ 0 := by
@@ -464,7 +464,7 @@ theorem addFields_refines
   unfold addFields? at hresult
   by_cases hzero : (xMantissa == 0 || yMantissa == 0) = true
   · simp [hzero] at hresult
-  rw [if_neg hzero] at hresult
+  rw [ite_eq_right hzero] at hresult
   simp only [Bool.or_eq_true, beq_iff_eq, not_or] at hzero
   obtain ⟨hxNe, hyNe⟩ := hzero
   have hxNeNat := toNat_ne_zero_of_ne_zero hxNe
@@ -475,19 +475,19 @@ theorem addFields_refines
   have hyScaleLt := finiteScale_toNat_lt fmt hexpWidth yExponent hyExponent
   have hlimit := shiftLimit_toNat fmt hfracWidth
   unfold FiniteKernel.addFields
-  rw [if_pos hieee]
+  rw [ite_eq_left hieee]
   unfold FiniteScaleAdd.roundSum
-  rw [if_neg (by simpa using hxNeNat), if_neg (by simpa using hyNeNat)]
+  rw [ite_eq_right (by simpa using hxNeNat), ite_eq_right (by simpa using hyNeNat)]
   set xScale := FloatLib.Numerics.FixedWord.finiteScale xExponent with hxScaleDef
   set yScale := FloatLib.Numerics.FixedWord.finiteScale yExponent with hyScaleDef
   by_cases hle : xScale ≤ yScale
   · have hleNat : FiniteKernel.scale xExponent.toNat ≤ FiniteKernel.scale yExponent.toNat := by
       rw [← hxScale, ← hyScale]
       exact UInt64.le_iff_toNat_le.mp hle
-    rw [if_pos hle] at hresult
-    rw [if_pos hleNat]
+    rw [ite_eq_left hle] at hresult
+    rw [ite_eq_left hleNat]
     by_cases hshift : yScale - xScale ≤ shiftLimit fmt
-    · rw [if_pos hshift] at hresult
+    · rw [ite_eq_left hshift] at hresult
       have hshiftNat :
           (yScale - xScale).toNat =
             FiniteKernel.scale yExponent.toNat - FiniteKernel.scale xExponent.toNat := by
@@ -510,7 +510,7 @@ theorem addFields_refines
       rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth xSign ySign xMantissa
         (yMantissa <<< (yScale - xScale)) xScale hxNe hshiftedNe hsum hxScaleLt result hresult,
         hshifted, hshiftNat, hxScale]
-    · rw [if_neg hshift] at hresult
+    · rw [ite_eq_right hshift] at hresult
       exact absurd hresult (by simp)
   · have hleNat :
         ¬FiniteKernel.scale xExponent.toNat ≤ FiniteKernel.scale yExponent.toNat := by
@@ -522,10 +522,10 @@ theorem addFields_refines
       apply UInt64.le_iff_toNat_le.mpr
       have hnat : ¬xScale.toNat ≤ yScale.toNat := fun h => hle (UInt64.le_iff_toNat_le.mpr h)
       omega
-    rw [if_neg hle] at hresult
-    rw [if_neg hleNat]
+    rw [ite_eq_right hle] at hresult
+    rw [ite_eq_right hleNat]
     by_cases hshift : xScale - yScale ≤ shiftLimit fmt
-    · rw [if_pos hshift] at hresult
+    · rw [ite_eq_left hshift] at hresult
       have hshiftNat :
           (xScale - yScale).toNat =
             FiniteKernel.scale xExponent.toNat - FiniteKernel.scale yExponent.toNat := by
@@ -548,7 +548,7 @@ theorem addFields_refines
       rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth xSign ySign
         (xMantissa <<< (xScale - yScale)) yMantissa yScale hshiftedNe hyNe hsum hyScaleLt
         result hresult, hshifted, hshiftNat, hyScale]
-    · rw [if_neg hshift] at hresult
+    · rw [ite_eq_right hshift] at hresult
       exact absurd hresult (by simp)
 
 /-! ## Storage-word decoding -/
@@ -567,7 +567,7 @@ theorem decode_of_finite {fmt : FloatFormat}
             (fractionField fmt (toWord x))).toNat } := by
   rw [← NativeSmallWordFinite.decode_eq ⟨hieee, hwidth⟩ x]
   unfold NativeSmallWordFinite.decode?
-  simp only [beq_iff_eq, hfinite, if_false]
+  simp only [beq_iff_eq, hfinite, ite_false]
 
 /-- Negating a finite word keeps its exponent and fraction fields and toggles its sign. -/
 theorem decode_neg_of_finite {fmt : FloatFormat}
@@ -589,7 +589,7 @@ theorem decode_neg_of_finite {fmt : FloatFormat}
     rw [fractionField_toNat hwidth, fractionField_toNat hwidth, fracField_neg]
   have hsign : signField fmt (toWord (neg y)) = !signField fmt (toWord y) := by
     rw [signField_eq hwidth, signField_eq hwidth, signBit_neg,
-      if_pos (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hieee)]
+      ite_eq_left (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hieee)]
   rw [decode_of_finite hieee hwidth (neg y) (by rwa [hexponent]), hexponent, hfraction, hsign]
 
 /-- The exponent field of a one-word value is a stored exponent. -/
@@ -631,7 +631,7 @@ theorem addFinite_refines {fmt : FloatFormat}
       (exponentField fmt (toWord x) == exponentMask fmt ||
         exponentField fmt (toWord y) == exponentMask fmt) = true
   · simp [hexceptional] at hresult
-  rw [if_neg hexceptional] at hresult
+  rw [ite_eq_right hexceptional] at hresult
   simp only [Bool.or_eq_true, beq_iff_eq, not_or] at hexceptional
   obtain ⟨hxFinite, hyFinite⟩ := hexceptional
   have hxExponent := exponentField_toNat_lt hwidth x
@@ -641,14 +641,14 @@ theorem addFinite_refines {fmt : FloatFormat}
   unfold FiniteKernel.add?
   rw [decode_of_finite hieee hwidth x hxFinite]
   cases negateRight
-  · simp only [Bool.false_eq_true, if_false, Bool.xor_false] at hresult ⊢
+  · simp only [Bool.false_eq_true, ite_false, Bool.xor_false] at hresult ⊢
     rw [decode_of_finite hieee hwidth y hyFinite]
     simp only
     rw [← FiniteKernel.addFields_eq]
     exact congrArg some
       (addFields_refines fmt hieee hwidth hexpWidth hfracWidth _ _ _ _ _ _
         hxExponent hyExponent hxMantissa hyMantissa result hresult).symm
-  · simp only [if_true, Bool.xor_true] at hresult ⊢
+  · simp only [ite_true, Bool.xor_true] at hresult ⊢
     rw [decode_neg_of_finite hieee hwidth y hyFinite]
     simp only
     rw [← FiniteKernel.addFields_eq]

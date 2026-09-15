@@ -161,8 +161,8 @@ theorem tailPrefix_eq_streamPrefix
   by_cases hcountTwo : count ≤ 2
   · have hcountWidth : count ≤ leading + 2 := by
       omega
-    simp only [DirectDyadicPacking.tailPrefix, if_pos hcountTwo,
-      streamPrefix, if_pos hcountWidth, Nat.shiftRight_eq_div_pow]
+    simp only [DirectDyadicPacking.tailPrefix, ite_eq_left hcountTwo,
+      streamPrefix, ite_eq_left hcountWidth, Nat.shiftRight_eq_div_pow]
     have hpower :
         2 ^ (leading + 2 - count) =
           2 ^ leading * 2 ^ (2 - count) := by
@@ -181,14 +181,14 @@ theorem tailPrefix_eq_streamPrefix
     rw [hrawDiv]
   · have hcountLarge : 2 < count := by
       omega
-    simp only [DirectDyadicPacking.tailPrefix, if_neg hcountTwo,
+    simp only [DirectDyadicPacking.tailPrefix, ite_eq_right hcountTwo,
       Nat.shiftLeft_eq]
     by_cases hcountWidth : count ≤ leading + 2
     · have hfractionCount : count - 2 ≤ leading := by
         omega
       simp only [DirectDyadicPacking.fractionPrefix,
-        if_pos hfractionCount, Nat.shiftRight_eq_div_pow,
-        streamPrefix, if_pos hcountWidth]
+        ite_eq_left hfractionCount, Nat.shiftRight_eq_div_pow,
+        streamPrefix, ite_eq_left hcountWidth]
       have hpower :
           2 ^ leading =
             2 ^ (leading - (count - 2)) *
@@ -215,8 +215,8 @@ theorem tailPrefix_eq_streamPrefix
     · have hfractionCount : ¬count - 2 ≤ leading := by
         omega
       simp only [DirectDyadicPacking.fractionPrefix,
-        if_neg hfractionCount, Nat.shiftLeft_eq,
-        streamPrefix, if_neg hcountWidth]
+        ite_eq_right hfractionCount, Nat.shiftLeft_eq,
+        streamPrefix, ite_eq_right hcountWidth]
       have hpower :
           2 ^ leading * 2 ^ (count - (leading + 2)) =
             2 ^ (count - 2) := by
@@ -238,9 +238,9 @@ theorem tailBit_eq_false_of_le
     (hindex : leading + 2 ≤ index) :
     tailBit exponentField significand leading index = false := by
   unfold tailBit
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   dsimp only
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
 
 /-- No sticky information remains after the complete finite tail has been consumed. -/
 theorem tailHasNonzeroAfter_eq_false_of_le
@@ -248,9 +248,9 @@ theorem tailHasNonzeroAfter_eq_false_of_le
     (hconsumed : leading + 2 ≤ consumed) :
     tailHasNonzeroAfter exponentField significand leading consumed = false := by
   unfold tailHasNonzeroAfter
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   dsimp only
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
 
 /-- The field-oriented bit reader is the guard bit of the complete finite stream. -/
 theorem tailBit_eq_streamGuard
@@ -263,10 +263,10 @@ theorem tailBit_eq_streamGuard
         (leading + 2) index := by
   by_cases hindex : index < leading + 2
   · unfold streamGuard
-    rw [if_pos hindex]
+    rw [ite_eq_left hindex]
     unfold tailBit
     by_cases hexponent : index < 2
-    · rw [if_pos hexponent]
+    · rw [ite_eq_left hexponent]
       have hposition :
           leading + 2 - index - 1 =
             (1 - index) + leading := by
@@ -274,11 +274,11 @@ theorem tailBit_eq_streamGuard
       rw [hposition, Nat.testBit_add]
       rw [exactTailRaw_div_two_pow
         exponentField significand leading hlower hupper]
-    · rw [if_neg hexponent]
+    · rw [ite_eq_right hexponent]
       dsimp only
       have hfraction : index - 2 < leading := by
         omega
-      rw [if_pos hfraction]
+      rw [ite_eq_left hfraction]
       let bit := leading - (index - 2) - 1
       have hbitLt : bit < leading := by
         dsimp [bit]
@@ -388,7 +388,7 @@ theorem tailHasNonzeroAfter_succ_eq_streamSticky
       · simp [hexponentMod]
   | succ retained =>
       unfold tailHasNonzeroAfter streamSticky
-      rw [if_neg (by omega)]
+      rw [ite_eq_right (by omega)]
       dsimp only
       have hconsumedFraction :
           retained + 1 + 1 - 2 = retained := by
@@ -400,11 +400,11 @@ theorem tailHasNonzeroAfter_succ_eq_streamSticky
         omega
       rw [hshift]
       by_cases hretained : retained < leading
-      · rw [if_pos hretained]
+      · rw [ite_eq_left hretained]
         rw [exactTailRaw_mod_eq_significand_mod
           exponentField significand leading (leading - retained)
           (by omega) hlower hupper]
-      · rw [if_neg hretained]
+      · rw [ite_eq_right hretained]
         have hzero : leading - retained = 0 := by
           omega
         rw [hzero, Nat.pow_zero, Nat.mod_one]
@@ -453,9 +453,9 @@ theorem tailPrefix_full
         exactTailRaw, fractionRaw]
   | succ leading =>
       unfold DirectDyadicPacking.tailPrefix
-      rw [if_neg (by omega)]
+      rw [ite_eq_right (by omega)]
       unfold DirectDyadicPacking.fractionPrefix
-      rw [if_pos (by omega)]
+      rw [ite_eq_left (by omega)]
       simp [Nat.shiftLeft_eq, Nat.shiftRight_eq_div_pow,
         exactTailRaw, fractionRaw]
 
@@ -594,7 +594,7 @@ theorem trailingRat_streamPrefix_le
       pfx = raw / 2 ^ shift := by
     dsimp [pfx, shift]
     unfold streamPrefix
-    rw [if_pos hretained]
+    rw [ite_eq_left hretained]
   have hwidth : retained + shift = width := by
     dsimp [shift]
     omega
@@ -602,7 +602,7 @@ theorem trailingRat_streamPrefix_le
       pfx < 2 ^ retained := by
     dsimp [pfx]
     unfold streamPrefix
-    rw [if_pos hretained, Nat.div_lt_iff_lt_mul
+    rw [ite_eq_left hretained, Nat.div_lt_iff_lt_mul
       (Nat.two_pow_pos (width - retained))]
     rw [← Nat.pow_add, Nat.add_comm,
       Nat.sub_add_cancel hretained]
@@ -639,7 +639,7 @@ theorem trailingRat_streamPrefix_eq_of_width_le
     by_cases hequal : retained = width
     · subst retained
       simp
-    · rw [if_neg (by omega)]
+    · rw [ite_eq_right (by omega)]
   rw [hprefix]
   have hsum : width + (retained - width) = retained :=
     Nat.add_sub_of_le hwidth
@@ -683,7 +683,7 @@ theorem trailingRat_lt_streamPrefix_succ
       pfx = raw / 2 ^ shift := by
     dsimp [pfx, shift]
     unfold streamPrefix
-    rw [if_pos hretained.le]
+    rw [ite_eq_left hretained.le]
   have hwidth : retained + shift = width := by
     dsimp [shift]
     omega

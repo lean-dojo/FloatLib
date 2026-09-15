@@ -163,7 +163,7 @@ private theorem roundQuotDirected_scaledDyadic_eq
     rw [scaleByPowerOfTwo_real]
     simp [scaledRatToReal]
   cases roundUp
-  · simp only [roundQuotDirected, Bool.false_eq_true, if_false]
+  · simp only [roundQuotDirected, Bool.false_eq_true, ite_false]
     apply Int.ofNat_inj.mp
     calc
       Int.ofNat (scaled.1 / scaled.2) =
@@ -175,7 +175,7 @@ private theorem roundQuotDirected_scaledDyadic_eq
           (roundMantissaAtExponentDown mantissa exponent targetExponent) := by
         simpa [FloatLib.Floats.Formats.Flocq.floorRound] using
           floor_scaledMagnitude mantissa exponent targetExponent
-  · simp only [roundQuotDirected, if_true]
+  · simp only [roundQuotDirected, ite_true]
     apply Int.ofNat_inj.mp
     calc
       Int.ofNat (quotCeil scaled.1 scaled.2) =
@@ -268,7 +268,7 @@ private theorem roundMantissaAtExponentEven_eq_zero_of_far_below
     simpa [pow2_eq_two_pow] using
       (Nat.lt_log2_self (n := mantissa)).trans_le hpow
   unfold roundMantissaAtExponentEven
-  rw [if_pos hexponent.le]
+  rw [ite_eq_left hexponent.le]
   exact roundShiftRightEven_eq_zero_of_lt_half
     mantissa shift hshiftPos hmantissa
 
@@ -418,14 +418,14 @@ private theorem roundRatGeneralOfDenNeZero_nearestEven_dyadic_eq
     simp only [Int.ofNat_eq_natCast] at hnormalQuot
     unfold roundRatGeneralOfDenNeZero Model.roundDyadicGeneral
     simp only [applyUnderflow, QuantizationPolicy.nearestEven,
-      beq_iff_eq, hmantissa, hscaledNumerator, if_false]
+      beq_iff_eq, hmantissa, hscaledNumerator, ite_false]
     rw [hlog]
     simp only [overflowResult, overflowRoundsMagnitudeUp,
-      directedOverflow, if_true, Int.ofNat_eq_natCast]
+      directedOverflow, ite_true, Int.ofNat_eq_natCast]
     by_cases hoverflow :
         fmt.maxNormalExponent < (mantissa.log2 : Int) + exponent
-    · simp only [if_pos hoverflow]
-    · simp only [if_neg hoverflow]
+    · simp only [ite_eq_left hoverflow]
+    · simp only [ite_eq_right hoverflow]
       by_cases hsubnormal :
           (mantissa.log2 : Int) + exponent < fmt.minNormalExponent
       · by_cases htiny :
@@ -448,7 +448,7 @@ private theorem roundRatGeneralOfDenNeZero_nearestEven_dyadic_eq
                 | .negSucc shift =>
                     roundShiftRightEven mantissa (shift + 1)) = 0 :=
             hmatchZero
-          simp only [if_pos hsubnormal, if_pos htiny,
+          simp only [ite_eq_left hsubnormal, ite_eq_left htiny,
             tinyRoundsMagnitudeUp?]
           cases hdiff : exponent - fmt.minSubnormalExponent <;>
             simp_all [packRoundedSubnormal]
@@ -469,9 +469,9 @@ private theorem roundRatGeneralOfDenNeZero_nearestEven_dyadic_eq
                 roundMantissaAtExponentEven
                   mantissa exponent fmt.minSubnormalExponent :=
             hmatch
-          simp only [if_pos hsubnormal, if_neg htiny, hsubnormalQuot]
+          simp only [ite_eq_left hsubnormal, ite_eq_right htiny, hsubnormalQuot]
           exact congrArg (packRoundedSubnormal fmt sign (zero fmt sign)) hmatch'.symm
-      · simp only [if_neg hsubnormal]
+      · simp only [ite_eq_right hsubnormal]
         exact congrArg
           (packRoundedNormal fmt sign (nativeOverflow fmt sign)
             ((mantissa.log2 : Int) + exponent)) hnormalQuot
@@ -613,13 +613,13 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
     simp only [scaled] at hscaledNumerator hlog hsubnormalQuot hnormalQuot
     unfold roundRatGeneralOfDenNeZero roundRatMagnitudeDirectedScaled
     simp only [applyUnderflow, Nat.one_ne_zero, beq_iff_eq, hmantissa,
-      hscaledNumerator, if_false]
+      hscaledNumerator, ite_false]
     rw [hlog, floorLog2_den_one mantissa hmantissa]
     simp only [overflowResult, hoverflow]
     by_cases hover :
         fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
-    · simp only [if_pos hover]
-    · simp only [if_neg hover]
+    · simp only [ite_eq_left hover]
+    · simp only [ite_eq_right hover]
       by_cases hunderflow :
           Int.ofNat mantissa.log2 + exponent < fmt.minSubnormalExponent
       · have hsubnormal :
@@ -629,13 +629,13 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
             Int.ofNat mantissa.log2 + exponent + 1 <
               fmt.minSubnormalExponent
         · cases roundUp
-          · rw [if_pos hsubnormal, if_pos htinyExponent, htiny]
-            rw [if_pos hunderflow]
+          · rw [ite_eq_left hsubnormal, ite_eq_left htinyExponent, htiny]
+            rw [ite_eq_left hunderflow]
             rfl
-          · rw [if_pos hsubnormal, if_pos htinyExponent, htiny]
-            rw [if_pos hunderflow]
+          · rw [ite_eq_left hsubnormal, ite_eq_left htinyExponent, htiny]
+            rw [ite_eq_left hunderflow]
             cases sign <;>
-              simp only [if_true, Bool.false_eq_true, if_false,
+              simp only [ite_true, Bool.false_eq_true, ite_false,
                 posMinSubnormal_eq_ofFields,
                 negMinSubnormal_eq_ofFields]
         · have halign :=
@@ -659,9 +659,9 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
           · have hrounded :=
               roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
                 fmt mantissa exponent hmantissa hunderflow
-            rw [if_pos hsubnormal, if_neg htinyExponent, hquotient]
-            simp only [Bool.false_eq_true, if_false, hrounded]
-            rw [if_pos hunderflow]
+            rw [ite_eq_left hsubnormal, ite_eq_right htinyExponent, hquotient]
+            simp only [Bool.false_eq_true, ite_false, hrounded]
+            rw [ite_eq_left hunderflow]
             rfl
           · have hrounded :=
               roundMantissaAtExponentUp_eq_one_of_lt_minSubnormal
@@ -669,12 +669,12 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
             have honeLt : 1 < pow2 fmt.fracWidth := by
               simpa [pow2_eq_two_pow] using
                 Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
-            rw [if_pos hsubnormal, if_neg htinyExponent, hquotient]
-            simp only [packRoundedSubnormal, beq_iff_eq, if_true, hrounded,
-              Nat.one_ne_zero, if_false, not_le_of_gt honeLt]
-            rw [if_pos hunderflow]
+            rw [ite_eq_left hsubnormal, ite_eq_right htinyExponent, hquotient]
+            simp only [packRoundedSubnormal, beq_iff_eq, ite_true, hrounded,
+              Nat.one_ne_zero, ite_false, not_le_of_gt honeLt]
+            rw [ite_eq_left hunderflow]
             cases sign <;>
-              simp only [if_true, Bool.false_eq_true, if_false,
+              simp only [ite_true, Bool.false_eq_true, ite_false,
                 posMinSubnormal_eq_ofFields,
                 negMinSubnormal_eq_ofFields]
       · have htinyExponent :
@@ -683,11 +683,11 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
           omega
         by_cases hsubnormal :
             Int.ofNat mantissa.log2 + exponent < fmt.minNormalExponent
-        · rw [if_pos hsubnormal, if_neg htinyExponent, hsubnormalQuot]
-          rw [if_neg hunderflow, if_pos hsubnormal]
+        · rw [ite_eq_left hsubnormal, ite_eq_right htinyExponent, hsubnormalQuot]
+          rw [ite_eq_right hunderflow, ite_eq_left hsubnormal]
         · rw [hlog] at hnormalQuot
-          rw [if_neg hsubnormal]
-          rw [if_neg hunderflow, if_neg hsubnormal]
+          rw [ite_eq_right hsubnormal]
+          rw [ite_eq_right hunderflow, ite_eq_right hsubnormal]
           exact congrArg
             (packRoundedNormal fmt sign (directedOverflow fmt sign roundUp)
               (Int.ofNat mantissa.log2 + exponent))
@@ -708,7 +708,7 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
         roundDyadicMagnitudeDown fmt sign mantissa exponent := by
   by_cases hmantissa : mantissa = 0
   · simp [roundRatMagnitudeDirectedScaled, hmantissa]
-  · rw [if_neg hmantissa]
+  · rw [ite_eq_right hmantissa]
     have halign :
         exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) =
           exponent - fmt.minSubnormalExponent :=
@@ -788,29 +788,29 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
           roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp
             mantissa fmt.fracWidth exponent
     cases roundUp
-    · simp only [Bool.false_eq_true, if_false]
+    · simp only [Bool.false_eq_true, ite_false]
       unfold roundRatMagnitudeDirectedScaled roundDyadicMagnitudeDown
-      simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, if_false,
+      simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, ite_false,
         floorLog2_den_one mantissa hmantissa]
       by_cases hoverflow :
           fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
-      · simp only [if_pos hoverflow, directedOverflow, Bool.false_eq_true,
-          if_false]
-      · simp only [if_neg hoverflow]
+      · simp only [ite_eq_left hoverflow, directedOverflow, Bool.false_eq_true,
+          ite_false]
+      · simp only [ite_eq_right hoverflow]
         by_cases hunderflow :
             Int.ofNat mantissa.log2 + exponent < fmt.minSubnormalExponent
-        · simp only [if_pos hunderflow, Bool.false_eq_true, if_false]
-        · simp only [if_neg hunderflow]
+        · simp only [ite_eq_left hunderflow, Bool.false_eq_true, ite_false]
+        · simp only [ite_eq_right hunderflow]
           by_cases hsubnormal :
               Int.ofNat mantissa.log2 + exponent < fmt.minNormalExponent
           · have hlt :=
               roundMantissaAtExponentDown_minSubnormal_lt_pow2
                 fmt mantissa exponent hsubnormal
             rw [roundMantissaAtExponentDown_eq_match] at hlt
-            rw [if_pos hsubnormal, hsubnormalDown,
+            rw [ite_eq_left hsubnormal, hsubnormalDown,
               roundMantissaAtExponentDown_eq_match]
             simp only [packRoundedSubnormal, beq_iff_eq, not_le_of_gt hlt,
-              if_false, if_pos hsubnormal]
+              ite_false, ite_eq_left hsubnormal]
             rfl
           · have hcarry :
                 roundMantissaToLeadingBitDown mantissa fmt.fracWidth ≠
@@ -818,30 +818,30 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
               ne_of_lt
                 (roundMantissaToLeadingBitDown_lt_pow2_succ
                   mantissa fmt.fracWidth)
-            rw [if_neg hsubnormal, hnormalDown]
-            rw [if_neg hsubnormal]
+            rw [ite_eq_right hsubnormal, hnormalDown]
+            rw [ite_eq_right hsubnormal]
             unfold packRoundedNormal
-            simp only [beq_iff_eq, hcarry, if_false]
-            rw [if_neg hoverflow]
+            simp only [beq_iff_eq, hcarry, ite_false]
+            rw [ite_eq_right hoverflow]
             simp only [roundMantissaToLeadingBitDown, directedOverflow,
-              Bool.false_eq_true, if_false]
+              Bool.false_eq_true, ite_false]
             by_cases hleading : fmt.fracWidth ≤ mantissa.log2 <;>
               simp [hleading]
-    · simp only [if_true]
+    · simp only [ite_true]
       unfold roundRatMagnitudeDirectedScaled roundDyadicMagnitudeUp
-      simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, if_false,
+      simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, ite_false,
         floorLog2_den_one mantissa hmantissa]
       by_cases hoverflow :
           fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
-      · simp only [if_pos hoverflow, directedOverflow, if_true]
-      · simp only [if_neg hoverflow]
+      · simp only [ite_eq_left hoverflow, directedOverflow, ite_true]
+      · simp only [ite_eq_right hoverflow]
         by_cases hunderflow :
             Int.ofNat mantissa.log2 + exponent < fmt.minSubnormalExponent
-        · simp only [if_pos hunderflow]
+        · simp only [ite_eq_left hunderflow]
           cases sign <;>
-            simp only [Bool.false_eq_true, if_false, if_true,
+            simp only [Bool.false_eq_true, ite_false, ite_true,
               posMinSubnormal_eq_ofFields, negMinSubnormal_eq_ofFields]
-        · simp only [if_neg hunderflow]
+        · simp only [ite_eq_right hunderflow]
           by_cases hsubnormal :
               Int.ofNat mantissa.log2 + exponent < fmt.minNormalExponent
           · have hrounded :
@@ -857,13 +857,13 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
               apply hrounded
               rw [roundMantissaAtExponentUp_eq_match]
               exact hzero
-            rw [if_pos hsubnormal, hsubnormalUp,
+            rw [ite_eq_left hsubnormal, hsubnormalUp,
               roundMantissaAtExponentUp_eq_match]
-            simp only [packRoundedSubnormal, beq_iff_eq, if_pos hsubnormal]
+            simp only [packRoundedSubnormal, beq_iff_eq, ite_eq_left hsubnormal]
             cases hdiff : exponent - fmt.minSubnormalExponent <;>
               simp_all
-          · rw [if_neg hsubnormal, hnormalUp]
-            simp only [directedOverflow, if_true, if_neg hsubnormal]
+          · rw [ite_eq_right hsubnormal, hnormalUp]
+            simp only [directedOverflow, ite_true, ite_eq_right hsubnormal]
             rfl
 
 /--

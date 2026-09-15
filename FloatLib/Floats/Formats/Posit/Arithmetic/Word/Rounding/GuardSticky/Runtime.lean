@@ -37,6 +37,15 @@ open FloatLib.Numerics
   else
     0
 
+-- Named predicates keep their constants out of runtime carrier closures.
+/-- Whether the discarded low-bit suffix is nonzero. -/
+@[always_inline] def hasLowBits (value : UInt64) (width : Nat) : Bool :=
+  NativeWord.lowBits value width != 0
+
+/-- Parity of the packed candidate used to break a midpoint tie. -/
+@[always_inline] def isOdd (value : UInt64) : Bool :=
+  (value &&& 1) != 0
+
 /--
 One-word implementation of the shared candidate carrier.
 
@@ -47,7 +56,7 @@ which the shared rounder applies only to values it has bounded.
 -/
 abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier UInt64 where
   bitAt := NativeWord.bitAt
-  hasLowBits := fun value width => NativeWord.lowBits value width != 0
+  hasLowBits := hasLowBits
   ofWord := fun word => word
   shiftLeft := shiftLeft
   shiftRight := NativeWord.shiftRight
@@ -55,7 +64,7 @@ abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier UInt64 where
   add := fun left right => left + right
   lowOnes := NativeWord.lowMask
   increment := fun value => value + 1
-  isOdd := fun value => (value &&& 1) != 0
+  isOdd := isOdd
   log2 := fun value => value.log2.toNat
 
 /-- Test a positive scalar target against the format's exact minimum-positive value. -/

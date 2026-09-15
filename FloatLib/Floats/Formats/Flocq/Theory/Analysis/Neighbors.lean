@@ -101,7 +101,7 @@ theorem le_succ (x : ℝ) : x ≤ succ (β := β) (fexp := fexp) x := by
   by_cases hx : 0 ≤ x
   · rw [succ_eq_of_nonneg hx]
     exact le_add_of_nonneg_right (ulp.nonneg β fexp x)
-  · simp only [succ, hx, if_false]
+  · simp only [succ, hx, ite_false]
     simpa only [neg_neg] using
       neg_le_neg (predPos_le (β := β) (fexp := fexp) (-x))
 
@@ -117,7 +117,7 @@ theorem lt_succ {x : ℝ} (hx : x ≠ 0) :
   · rw [succ_eq_of_nonneg hnonneg]
     exact lt_add_of_pos_right x (ulp.pos_of_ne_zero β fexp x hx)
   · have hnegne : -x ≠ 0 := neg_ne_zero.mpr hx
-    simp only [succ, hnonneg, if_false]
+    simp only [succ, hnonneg, ite_false]
     simpa only [neg_neg] using
       neg_lt_neg (predPos_lt (β := β) (fexp := fexp) hnegne)
 

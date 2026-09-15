@@ -108,11 +108,11 @@ theorem toReal_genericFormat_of_isFinite {fmt : FloatFormat} (x : Model fmt)
   have hfrac := fracField_lt_pow2 x
   by_cases he : expField x = 0
   · by_cases hf : fracField x = 0
-    · simp only [he, hf, if_true] at hdecode
+    · simp only [he, hf, ite_true] at hdecode
       refine ⟨hprec, ⟨0, 0⟩, ?_, by simp [Numerics.binaryRadix], hmin⟩
       simp [toReal_eq, hdecode, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
         Flocq.toReal]
-    · simp only [he, hf, if_true, if_false] at hdecode
+    · simp only [he, hf, ite_true, ite_false] at hdecode
       refine ⟨hprec, ⟨if signBit x then -(fracField x : ℤ) else fracField x,
         fmt.minSubnormalExponent⟩, ?_, ?_, le_rfl⟩
       · cases hs : signBit x <;>
@@ -121,7 +121,7 @@ theorem toReal_genericFormat_of_isFinite {fmt : FloatFormat} (x : Model fmt)
       · have hbound : fracField x < 2 ^ (fmt.fracWidth + 1) :=
           hfrac.trans (Nat.pow_lt_pow_right (by decide) (by omega))
         cases hs : signBit x <;> simpa [Numerics.binaryRadix, hs] using hbound
-  · simp only [he, if_false] at hdecode
+  · simp only [he, ite_false] at hdecode
     let m := pow2 fmt.fracWidth + fracField x
     refine ⟨hprec, ⟨if signBit x then -(m : ℤ) else m,
       (expField x : ℤ) - fmt.exponentBias - fmt.fracWidth⟩, ?_, ?_, ?_⟩
@@ -390,7 +390,7 @@ theorem toReal_roundDyadic_eq_roundAt
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (d : Numerics.Dyadic)
     (hfin : isFinite (roundDyadic fmt d) = true) :
     toReal (roundDyadic fmt d) = roundAt fmt d.toReal := by
-  simp only [roundDyadic, hfmt, if_true] at hfin ⊢
+  simp only [roundDyadic, hfmt, ite_true] at hfin ⊢
   by_cases hm : d.significand = 0
   · have hdzero : d.toReal = 0 := by
       simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hm]

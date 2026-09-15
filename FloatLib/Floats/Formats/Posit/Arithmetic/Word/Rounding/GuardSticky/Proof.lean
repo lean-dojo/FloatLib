@@ -41,7 +41,7 @@ private theorem shiftLeft_toNat
     (hfit : value.toNat <<< shift < 2 ^ 64) :
     (shiftLeft value shift).toNat = value.toNat <<< shift := by
   unfold shiftLeft
-  rw [if_pos hshift]
+  rw [ite_eq_left hshift]
   exact FixedWord.shiftLeft_toNat value shift hshift hfit
 
 /-- A single bit shifted below the word width has its exact power-of-two value. -/
@@ -72,13 +72,13 @@ theorem candidateCarrierLawful :
           value.toNat_lt.trans_le <|
             Nat.pow_le_pow_right (by decide) hlarge.le
         unfold NativeWord.lowBits NativeWord.lowMask
-        rw [if_neg (Nat.not_lt.mpr hlarge.le), UInt64.toNat_and]
+        rw [ite_eq_right (Nat.not_lt.mpr hlarge.le), UInt64.toNat_and]
         change value.toNat &&& (2 ^ 64 - 1) =
           value.toNat % 2 ^ width
         rw [Nat.and_two_pow_sub_one_eq_mod,
           Nat.mod_eq_of_lt value.toNat_lt, Nat.mod_eq_of_lt hvalue]
     apply Bool.eq_iff_iff.mpr
-    simp only [bne_iff_ne]
+    simp only [hasLowBits, bne_iff_ne]
     constructor
     · intro hword hremainder
       apply hword
@@ -154,18 +154,18 @@ theorem roundPositiveCodeWord_toNat_eq_direct
     apply UInt64.toNat_inj.mp
     simpa using hzeroNat
   unfold roundPositiveCodeWord
-  simp only [beq_iff_eq, hzero, if_false]
+  simp only [beq_iff_eq, hzero, ite_false]
   by_cases hunderflow :
       isLessMinPositive format significand exponent = true
-  · rw [if_pos hunderflow]
+  · rw [ite_eq_left hunderflow]
     rw [isLessMinPositive_eq] at hunderflow
     rw [DirectDyadicPacking.roundPositiveCode_eq_dyadic]
     unfold DyadicRounding.roundPositiveCode
     have hspecial :
         ¬(significand.toNat == 0 || false) = true := by
       simp [hnonzero]
-    rw [if_neg hspecial, if_pos hunderflow, UInt64.toNat_one]
-  · rw [if_neg hunderflow]
+    rw [ite_eq_right hspecial, ite_eq_left hunderflow, UInt64.toNat_one]
+  · rw [ite_eq_right hunderflow]
     apply GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
       format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
     rw [← isLessMinPositive_eq]

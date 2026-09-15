@@ -49,7 +49,7 @@ theorem sqrtRoundAway_stochasticA (format : Format) (quantum : Int) (random : Ra
   by_cases he : Real.sqrt ((numerator : Real) / denominator) = sqrtFloor numerator denominator
   · simp [sqrtRoundAwayReal, sqrtRoundDecision, sqrtFraction, he, Nat.not_le.mpr hr]
   · simp only [sqrtRoundAwayReal, sqrtRoundDecision, he, decide_false, Bool.false_eq_true,
-      if_false]
+      ite_false]
     apply Bool.eq_iff_iff.mpr
     simp only [bne_iff_ne, ne_eq, compare_lt_iff_lt, decide_eq_true_eq, not_lt]
     simpa only [sqrtFraction, Nat.cast_pow, Nat.cast_ofNat] using
@@ -72,7 +72,7 @@ theorem sqrtRoundAway_stochasticB (format : Format) (quantum : Int) (random : Ra
   by_cases he : Real.sqrt ((numerator : Real) / denominator) = sqrtFloor numerator denominator
   · simp [sqrtRoundAwayReal, sqrtRoundDecision, sqrtFraction, he, Nat.not_le.mpr hr]
   · simp only [sqrtRoundAwayReal, sqrtRoundDecision, he, decide_false, Bool.false_eq_true,
-      if_false]
+      ite_false]
     apply Bool.eq_iff_iff.mpr
     simp only [bne_iff_ne, ne_eq, compare_lt_iff_lt, decide_eq_true_eq, not_lt]
     simpa only [sqrtFraction, Nat.cast_pow, Nat.cast_ofNat] using
@@ -93,7 +93,7 @@ theorem sqrtRoundAway_stochasticC (format : Format) (quantum : Int) (random : Ra
   · simp [sqrtRoundAwayReal, sqrtRoundDecision, sqrtFraction, he, Nat.not_le.mpr hr,
       RealRounding.nearestEven]
   · simp only [sqrtRoundAwayReal, sqrtRoundDecision, he, decide_false, Bool.false_eq_true,
-      if_false]
+      ite_false]
     apply Bool.eq_iff_iff.mpr
     simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, compare_gt_iff_gt,
       compare_eq_iff_eq, decide_eq_true_eq]

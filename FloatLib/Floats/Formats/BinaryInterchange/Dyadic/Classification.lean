@@ -39,10 +39,10 @@ theorem toDyadic?_isSome_eq_isFinite {fmt : FloatFormat} (x : Model fmt) :
       exact hieee.1
     simpa [toDyadic?, hieee, isFinite, hencoding] using
       ieeeToDyadic?_isSome_eq_isFinite x
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, if_false]
+  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false]
     cases hfinite : isFinite x
     · rfl
-    · simp only [Bool.not_true, Bool.false_eq_true, if_false]
+    · simp only [Bool.not_true, Bool.false_eq_true, ite_false]
       split
       · rfl
       · split <;> rfl
@@ -294,7 +294,7 @@ theorem sign_eq_signBit_of_toDyadic?_some
   by_cases hieee : fmt.isIEEE = true
   · apply sign_eq_signBit_of_ieeeToDyadic?_some
     simpa [toDyadic?, hieee] using hx
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, if_false] at hx
+  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false] at hx
     split at hx
     · simp at hx
     · split at hx
@@ -315,7 +315,7 @@ theorem isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero
     have hzero :=
       isZero_eq_true_of_ieeeToDyadic?_some_of_mant_eq_zero hdecode hmant
     simpa [isZero, hencoding] using hzero
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, if_false] at hx
+  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false] at hx
     split at hx <;> rename_i hfinite
     · simp at hx
     · have hfiniteTrue : isFinite x = true := by

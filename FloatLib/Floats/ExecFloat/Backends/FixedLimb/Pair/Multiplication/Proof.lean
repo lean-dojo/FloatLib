@@ -231,9 +231,9 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
       (normalizeCarry fmt carry rounded).toNat < 2 ^ (fmt.fracWidth + 1) := by
     rw [normalizeCarry_toNat h]
     by_cases hcarryTrue : carry = true
-    · rw [if_pos hcarryTrue, pow2_eq_two_pow]
+    · rw [ite_eq_left hcarryTrue, pow2_eq_two_pow]
       exact Nat.pow_lt_pow_right (by decide) (Nat.lt_succ_self _)
-    · rw [if_neg hcarryTrue]
+    · rw [ite_eq_right hcarryTrue]
       have hne : rounded.toNat ≠ 2 ^ (fmt.fracWidth + 1) := by
         intro heq
         apply hcarryTrue
@@ -255,10 +255,10 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
         else
           product.toNat.log2 + ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
     by_cases hcarryTrue : carry = true
-    · rw [if_pos (hcarry.mp hcarryTrue)]
+    · rw [ite_eq_left (hcarry.mp hcarryTrue)]
       simp [normalizedPosition, hcarryTrue, hpositionAdd, hposition]
     · have hcarryFalse : carry = false := Bool.eq_false_of_not_eq_true hcarryTrue
-      rw [if_neg (fun hc => hcarryTrue (hcarry.mpr hc))]
+      rw [ite_eq_right (fun hc => hcarryTrue (hcarry.mpr hc))]
       simp [normalizedPosition, hcarryFalse, hposition]
   have hoverflowGeneric :
       ¬3 * fmt.bias + 2 * fmt.fracWidth - 2 <
@@ -311,15 +311,16 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
     exact hpackCanonical.symm.trans hpackResult
   rw [← hresultEq]
   unfold FiniteProductRound.round
-  simp only [beq_iff_eq, hproductNe, if_false]
-  rw [if_neg hnormal, if_pos hfracLog, ← hrounded, if_neg hoverflowGeneric, hnormalized,
+  simp only [beq_iff_eq, hproductNe, ite_false]
+  rw [ite_eq_right hnormal, ite_eq_left hfracLog, ← hrounded,
+    ite_eq_right hoverflowGeneric, hnormalized,
     normalizeCarry_toNat h]
   by_cases hcarryTrue : carry = true
   · have hroundedCarry := hcarry.mp hcarryTrue
-    rw [if_pos hroundedCarry, if_pos hcarryTrue, if_pos hroundedCarry]
+    rw [ite_eq_left hroundedCarry, ite_eq_left hcarryTrue, ite_eq_left hroundedCarry]
   · have hroundedNot : ¬rounded.toNat = pow2 (fmt.fracWidth + 1) :=
       fun hc => hcarryTrue (hcarry.mpr hc)
-    rw [if_neg hroundedNot, if_neg hcarryTrue, if_neg hroundedNot]
+    rw [ite_eq_right hroundedNot, ite_eq_right hcarryTrue, ite_eq_right hroundedNot]
 
 /-! ## Normal products -/
 

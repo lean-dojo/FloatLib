@@ -35,12 +35,12 @@ theorem roundPositiveCode_eq_direct
   unfold roundPositiveCode
   by_cases hspecial :
       target.significand == 0 || target.negative
-  · rw [if_pos hspecial]
+  · rw [ite_eq_left hspecial]
     unfold DirectDyadicPacking.roundPositiveCode
-    rw [if_pos hspecial]
-  · rw [if_neg hspecial]
+    rw [ite_eq_left hspecial]
+  · rw [ite_eq_right hspecial]
     by_cases hcapacity : target.significand < 2 ^ 128
-    · rw [dif_pos hcapacity]
+    · rw [dite_eq_left hcapacity]
       have hsignificand : target.significand ≠ 0 := by
         intro hzero
         apply hspecial
@@ -73,7 +73,7 @@ theorem roundPositiveCode_eq_direct
       by_cases hunderflow :
           GuardSticky.isLessMinPositive format
               nativeSignificand target.exponent = true
-      · rw [if_pos hunderflow]
+      · rw [ite_eq_left hunderflow]
         have hunderflowTarget :
             target.isLess (DyadicRounding.minPositive format) = true := by
           rw [← hunderflowEq]
@@ -92,9 +92,9 @@ theorem roundPositiveCode_eq_direct
           simpa only [DyadicRounding.minPositive_eq_fields, htarget] using
             hunderflowTarget
         unfold DirectDyadicPacking.roundPositiveCode
-        rw [if_neg hspecial]
-        rw [if_pos hunderflowDirect]
-      · rw [if_neg hunderflow]
+        rw [ite_eq_right hspecial]
+        rw [ite_eq_left hunderflowDirect]
+      · rw [ite_eq_right hunderflow]
         have hnotUnderflow :
             ({ negative := false
                significand := nativeSignificand.toNat
@@ -110,7 +110,7 @@ theorem roundPositiveCode_eq_direct
             hnativeNonzero hnotUnderflow
         rw [hnative, htarget] at hresult
         exact hresult
-    · rw [dif_neg hcapacity]
+    · rw [dite_eq_right hcapacity]
 
 /-- Complete two-limb rounding has the shared arbitrary-width direct semantics. -/
 theorem roundCodeNat_eq_direct
@@ -235,7 +235,7 @@ theorem GuardSticky.roundPositiveCodeWord_toNat
         rw [show GuardSticky.roundPositiveCodeWord
             format significand exponent = { hi := 0, lo := 0 } by
           unfold GuardSticky.roundPositiveCodeWord
-          rw [if_pos hzero]]
+          rw [ite_eq_left hzero]]
       _ = 0 := by
         simp only [FloatLib.Numerics.FixedWord.UInt128.toNat,
           UInt64.toNat_zero, zero_mul, add_zero]
@@ -244,7 +244,7 @@ theorem GuardSticky.roundPositiveCodeWord_toNat
             significand := significand.toNat
             exponent } := by
         unfold roundPositiveCode
-        rw [if_pos hzeroTest]
+        rw [ite_eq_left hzeroTest]
   · have hnonzeroNat : significand.toNat ≠ 0 := by
       intro equality
       exact hzero <|
@@ -253,13 +253,13 @@ theorem GuardSticky.roundPositiveCodeWord_toNat
         ¬(significand.toNat == 0 || false) = true := by
       simpa using hnonzeroNat
     unfold GuardSticky.roundPositiveCodeWord roundPositiveCode
-    rw [if_neg hzero, if_neg hnonzeroTest, dif_pos hcapacity, hroundtrip]
+    rw [ite_eq_right hzero, ite_eq_right hnonzeroTest, dite_eq_left hcapacity, hroundtrip]
     by_cases hsmall :
         GuardSticky.isLessMinPositive format significand exponent = true
-    · rw [if_pos hsmall, if_pos hsmall]
+    · rw [ite_eq_left hsmall, ite_eq_left hsmall]
       simp only [FloatLib.Numerics.FixedWord.UInt128.toNat,
         UInt64.toNat_zero, UInt64.toNat_one, zero_mul, add_zero]
-    · rw [if_neg hsmall, if_neg hsmall]
+    · rw [ite_eq_right hsmall, ite_eq_right hsmall]
 
 /-- Carrier-returning positive rounding always stays below the Posit sign bit. -/
 theorem GuardSticky.roundPositiveCodeWord_lt_signMask
@@ -325,7 +325,7 @@ theorem GuardSticky.roundPositiveCode_normalizeJam128
           significand.toNat := by
       unfold FloatLib.Numerics.shiftRightJam
       simp only [pow_zero, Nat.mod_one, beq_self_eq_true,
-        if_true, Nat.div_one]
+        ite_true, Nat.div_one]
     have hnormalization :
         significand.normalizationShift128 = 0 := by
       simpa [shift] using hshift
@@ -392,12 +392,12 @@ theorem GuardSticky.roundCodeWord_normalizeJam128_toNat
   by_cases hsignificand : significand.toNat = 0
   · have hnormalized : significand.normalizeJam128.toNat = 0 :=
       hzero.2 hsignificand
-    rw [if_pos (by simpa only [beq_iff_eq] using hnormalized)]
-    rw [if_pos (by simpa only [beq_iff_eq] using hsignificand)]
+    rw [ite_eq_left (by simpa only [beq_iff_eq] using hnormalized)]
+    rw [ite_eq_left (by simpa only [beq_iff_eq] using hsignificand)]
   · have hnormalized : significand.normalizeJam128.toNat ≠ 0 := by
       exact fun equality => hsignificand (hzero.1 equality)
-    rw [if_neg (by simpa only [beq_iff_eq] using hnormalized)]
-    rw [if_neg (by simpa only [beq_iff_eq] using hsignificand)]
+    rw [ite_eq_right (by simpa only [beq_iff_eq] using hnormalized)]
+    rw [ite_eq_right (by simpa only [beq_iff_eq] using hsignificand)]
     unfold DyadicRounding.magnitude
     change
       DyadicRounding.restoreSignCode format negative

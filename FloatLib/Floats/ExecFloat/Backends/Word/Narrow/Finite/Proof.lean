@@ -46,7 +46,7 @@ theorem finiteMantissa_toNat
       if exponent = 0 then fraction.toNat else Model.pow2 23 + fraction.toNat := by
   by_cases hexponent : exponent = 0
   · simp [finiteMantissa, hexponent]
-  · simp only [finiteMantissa, beq_iff_eq, hexponent, if_false, UInt64.toNat_or,
+  · simp only [finiteMantissa, beq_iff_eq, hexponent, ite_false, UInt64.toNat_or,
       UInt32.toNat_toUInt64]
     rw [show (0x800000 : UInt64).toNat = 2 ^ 23 by decide]
     rw [Nat.or_two_pow_eq_add_of_lt hfraction]
@@ -177,9 +177,9 @@ theorem toDyadic_eq_finiteComponents (x : Value) :
     exact fracField_lt x
   by_cases hexceptional : exponent = 0xff
   · simp [hexceptional]
-  · simp only [hexceptional, beq_iff_eq, if_false]
+  · simp only [hexceptional, beq_iff_eq, ite_false]
     by_cases hexponentZero : exponent = 0
-    · simp only [hexponentZero, beq_iff_eq, if_pos, finiteMantissa, finiteScale,
+    · simp only [hexponentZero, beq_iff_eq, ite_eq_left, finiteMantissa, finiteScale,
         FloatLib.Numerics.FixedWord.finiteScale]
       have htoUInt64Zero : fraction.toUInt64 = 0 ↔ fraction = 0 := by
         constructor
@@ -194,10 +194,10 @@ theorem toDyadic_eq_finiteComponents (x : Value) :
       · simp [hfractionZero]
       · have htoUInt64Nonzero : fraction.toUInt64 ≠ 0 :=
           (not_congr htoUInt64Zero).mpr hfractionZero
-        simp only [hfractionZero, if_false, htoUInt64Nonzero,
+        simp only [hfractionZero, ite_false, htoUInt64Nonzero,
           UInt32.toNat_toUInt64]
         rfl
-    · simp only [hexponentZero, beq_iff_eq, if_false, finiteMantissa]
+    · simp only [hexponentZero, beq_iff_eq, ite_false, finiteMantissa]
       have hmantissa :
           (fraction.toUInt64 ||| 0x800000).toNat =
             Model.pow2 23 + fraction.toNat := by
@@ -208,14 +208,14 @@ theorem toDyadic_eq_finiteComponents (x : Value) :
         have := congrArg UInt64.toNat h
         rw [hmantissa] at this
         simp [Model.pow2_eq_two_pow] at this
-      rw [if_neg hmantissaNonzero]
+      rw [ite_eq_right hmantissaNonzero]
       rw [hmantissa]
       have hexponentNat : exponent.toNat ≠ 0 := by
         intro h
         apply hexponentZero
         apply UInt32.toNat_inj.mp
         simpa using h
-      rw [finiteScale_toNat exponent, if_neg hexponentZero]
+      rw [finiteScale_toNat exponent, ite_eq_right hexponentZero]
       congr 2
       have hexponentNatOne : 1 ≤ exponent.toNat :=
         Nat.one_le_iff_ne_zero.mpr hexponentNat

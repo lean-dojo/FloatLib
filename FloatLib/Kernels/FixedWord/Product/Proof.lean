@@ -286,20 +286,20 @@ private theorem log2_low_add_high_mul_pow
   by_cases h3 : value.limb3 = 0
   · have h3test : ¬value.limb3 != 0 := by
       simp [h3]
-    rw [if_neg h3test]
+    rw [ite_eq_right h3test]
     by_cases h2 : value.limb2 = 0
     · have h2test : ¬value.limb2 != 0 := by
         simp [h2]
-      rw [if_neg h2test]
+      rw [ite_eq_right h2test]
       by_cases h1 : value.limb1 = 0
       · have h1test : ¬value.limb1 != 0 := by
           simp [h1]
-        rw [if_neg h1test,
+        rw [ite_eq_right h1test,
           FloatLib.Numerics.FixedWord.log2_toNat]
         simp [UInt256.toNat, h3, h2, h1]
       · have h1test : value.limb1 != 0 := by
           simp [h1]
-        rw [if_pos h1test,
+        rw [ite_eq_left h1test,
           FloatLib.Numerics.FixedWord.log2_toNat]
         let low := value.limb0.toNat
         have hlow : low < 2 ^ 64 := by
@@ -314,7 +314,7 @@ private theorem log2_low_add_high_mul_pow
         simpa [UInt256.toNat, h3, h2, low] using hlog.symm
     · have h2test : value.limb2 != 0 := by
         simp [h2]
-      rw [if_pos h2test,
+      rw [ite_eq_left h2test,
         FloatLib.Numerics.FixedWord.log2_toNat]
       let low :=
         value.limb0.toNat + value.limb1.toNat * 2 ^ 64
@@ -332,7 +332,7 @@ private theorem log2_low_add_high_mul_pow
       simpa [UInt256.toNat, h3, low] using hlog.symm
   · have h3test : value.limb3 != 0 := by
       simp [h3]
-    rw [if_pos h3test,
+    rw [ite_eq_left h3test,
       FloatLib.Numerics.FixedWord.log2_toNat]
     let low :=
       value.limb0.toNat +

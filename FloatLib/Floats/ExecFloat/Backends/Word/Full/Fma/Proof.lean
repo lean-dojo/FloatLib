@@ -88,10 +88,10 @@ private theorem fmaComponents_opposite_aligned_addend_larger
         ((xExponent - 1) + (yExponent - 1)) := by
   rw [← FiniteKernel.fmaComponentsImpl_eq]
   unfold FiniteKernel.fmaComponentsImpl
-  rw [if_pos (by decide : FloatFormat.binary64.isIEEE = true)]
+  rw [ite_eq_left (by decide : FloatFormat.binary64.isIEEE = true)]
   unfold FiniteScaleAdd.roundSum
   simp only [FiniteKernel.scale, hxExponent, hyExponent, hzExponent,
-    if_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
+    ite_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
     beq_iff_eq]
   have hproduct : xMantissa * yMantissa ≠ 0 :=
     Nat.mul_ne_zero hxMantissa hyMantissa
@@ -102,10 +102,10 @@ private theorem fmaComponents_opposite_aligned_addend_larger
       (xExponent - 1) + (yExponent - 1) ≤
         (zExponent - 1) + 1074
     omega
-  simp only [or_self, if_false]
-  rw [if_pos hscale]
+  simp only [or_self, ite_false]
+  rw [ite_eq_left hscale]
   unfold FiniteScaleAdd.roundMagnitudes
-  rw [if_neg (by simpa only [beq_iff_eq] using hsign)]
+  rw [ite_eq_right (by simpa only [beq_iff_eq] using hsign)]
   have hne :
       xMantissa * yMantissa ≠
         zMantissa <<<
@@ -124,7 +124,7 @@ private theorem fmaComponents_opposite_aligned_addend_larger
       omega
     rw [hshift] at heq
     omega
-  rw [if_neg (by simpa only [beq_iff_eq] using hne)]
+  rw [ite_eq_right (by simpa only [beq_iff_eq] using hne)]
   have hoffset :
       FiniteKernel.finiteScaleOffset FloatFormat.binary64 = 1074 := by
     decide
@@ -134,7 +134,7 @@ private theorem fmaComponents_opposite_aligned_addend_larger
           ((xExponent - 1) + (yExponent - 1)) =
         52 := by
     omega
-  rw [hshift, if_pos hlt]
+  rw [hshift, ite_eq_left hlt]
   rfl
 
 private theorem fmaComponents_opposite_aligned_product_larger
@@ -167,10 +167,10 @@ private theorem fmaComponents_opposite_aligned_product_larger
         ((xExponent - 1) + (yExponent - 1)) := by
   rw [← FiniteKernel.fmaComponentsImpl_eq]
   unfold FiniteKernel.fmaComponentsImpl
-  rw [if_pos (by decide : FloatFormat.binary64.isIEEE = true)]
+  rw [ite_eq_left (by decide : FloatFormat.binary64.isIEEE = true)]
   unfold FiniteScaleAdd.roundSum
   simp only [FiniteKernel.scale, hxExponent, hyExponent, hzExponent,
-    if_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
+    ite_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
     beq_iff_eq]
   have hproduct : xMantissa * yMantissa ≠ 0 :=
     Nat.mul_ne_zero hxMantissa hyMantissa
@@ -181,10 +181,10 @@ private theorem fmaComponents_opposite_aligned_product_larger
       (xExponent - 1) + (yExponent - 1) ≤
         (zExponent - 1) + 1074
     omega
-  simp only [or_self, if_false]
-  rw [if_pos hscale]
+  simp only [or_self, ite_false]
+  rw [ite_eq_left hscale]
   unfold FiniteScaleAdd.roundMagnitudes
-  rw [if_neg (by simpa only [beq_iff_eq] using hsign)]
+  rw [ite_eq_right (by simpa only [beq_iff_eq] using hsign)]
   have hne :
       xMantissa * yMantissa ≠
         zMantissa <<<
@@ -203,7 +203,7 @@ private theorem fmaComponents_opposite_aligned_product_larger
       omega
     rw [hshift] at heq
     omega
-  rw [if_neg (by simpa only [beq_iff_eq] using hne)]
+  rw [ite_eq_right (by simpa only [beq_iff_eq] using hne)]
   have hoffset :
       FiniteKernel.finiteScaleOffset FloatFormat.binary64 = 1074 := by
     decide
@@ -213,7 +213,7 @@ private theorem fmaComponents_opposite_aligned_product_larger
           ((xExponent - 1) + (yExponent - 1)) =
         52 := by
     omega
-  rw [hshift, if_neg (Nat.not_lt_of_ge hlt.le)]
+  rw [hshift, ite_eq_right (Nat.not_lt_of_ge hlt.le)]
   rfl
 
 /-! ## Refinement of native product rounding -/

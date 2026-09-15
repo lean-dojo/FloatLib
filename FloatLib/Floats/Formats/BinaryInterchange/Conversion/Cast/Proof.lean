@@ -272,7 +272,7 @@ theorem toReal_widenExact {src dst : FloatFormat} (x : Model src)
       rw [hmantissa, ← hmin, zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
       dsimp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
       ring
-  · rw [if_neg hexponent] at hxdecode hydecode
+  · rw [ite_eq_right hexponent] at hxdecode hydecode
     rw [toReal_eq, hydecode, toReal_eq, hxdecode]
     simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand]
     have hpow :

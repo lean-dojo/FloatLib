@@ -98,7 +98,8 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       FiniteScaleAdd.roundMagnitudes fmt roundOffset bSign aSign b.toNat
         (a.toNat * 2 ^ (sa - sb)) sb := by
     unfold FiniteScaleAdd.roundSum
-    rw [if_neg (by simp [hbNe']), if_neg (by simp [haNe']), if_pos hsb, Nat.shiftLeft_eq]
+    rw [ite_eq_right (by simp [hbNe']), ite_eq_right (by simp [haNe']),
+      ite_eq_left hsb, Nat.shiftLeft_eq]
   rw [hspec]
   unfold alignOrdered? at hr
   rw [LimbArray.log2_eq a haNe, LimbArray.log2_eq b hbNe] at hr
@@ -109,7 +110,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
   have hAd : (a.shiftLeft d).toNat = a.toNat * 2 ^ d := LimbArray.toNat_shiftLeft _ _
   unfold FiniteScaleAdd.roundMagnitudes FiniteScaleAdd.roundMagnitude
   by_cases hjam : 3 ≤ d ∧ lb + 2 ≤ la + d
-  · rw [if_pos hjam] at hr
+  · rw [ite_eq_left hjam] at hr
     obtain ⟨hd3, hlb⟩ := hjam
     set jam := d - 3 with hjamDef
     have hpow : 2 ^ d = 8 * 2 ^ jam := by
@@ -135,7 +136,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       congr 1
       omega
     by_cases hsign : (aSign == bSign) = true
-    · rw [if_pos hsign] at hr
+    · rw [ite_eq_left hsign] at hr
       have hsignEq : aSign = bSign := beq_iff_eq.mp hsign
       have hsizePos : 0 < ((a.shiftLeft 3).add (b.shiftRight jam) 0).size := by
         simp
@@ -149,8 +150,8 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       have hTbig : 2 ^ (fmt.fracWidth + jam + 2) ≤ a.toNat * 2 ^ d + b.toNat := by omega
       have hround := roundNormal?_jammed h.exp_le aSign _ (a.toNat * 2 ^ d + b.toNat) jam
         (sb + roundOffset) hS hTbig r hr
-      rw [hround, hsignEq, if_pos (by simp), Nat.add_comm]
-    · rw [if_neg hsign] at hr
+      rw [hround, hsignEq, ite_eq_left (by simp), Nat.add_comm]
+    · rw [ite_eq_right hsign] at hr
       have hsignNe : aSign ≠ bSign := fun heq => hsign (beq_iff_eq.mpr heq)
       have hBle : b.toNat ≤ a.toNat * 8 * 2 ^ jam := by
         rw [← hAd8]
@@ -188,20 +189,21 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       have hround := roundNormal?_jammed h.exp_le aSign _ (a.toNat * 2 ^ d - b.toNat) jam
         (sb + roundOffset) hS hTbig r hr
       have hlt : b.toNat < a.toNat * 2 ^ d := by omega
-      rw [hround, if_neg (by simpa using hsignNe.symm), if_neg (by simp; omega), if_pos hlt]
-  · rw [if_neg hjam] at hr
+      rw [hround, ite_eq_right (by simpa using hsignNe.symm),
+        ite_eq_right (by simp; omega), ite_eq_left hlt]
+  · rw [ite_eq_right hjam] at hr
     by_cases hsign : (aSign == bSign) = true
-    · rw [if_pos hsign] at hr
+    · rw [ite_eq_left hsign] at hr
       have hsignEq : aSign = bSign := beq_iff_eq.mp hsign
       have hS : ((a.shiftLeft d).add b).toNat = a.toNat * 2 ^ d + b.toNat := by
         rw [LimbArray.toNat_add, hAd, UInt32.toNat_zero, Nat.add_zero]
       have hround := roundNormal?_exact h.exp_le aSign _ _ (sb + roundOffset) hS (by omega) r hr
-      rw [hround, hsignEq, if_pos (by simp), Nat.add_comm]
-    · rw [if_neg hsign] at hr
+      rw [hround, hsignEq, ite_eq_left (by simp), Nat.add_comm]
+    · rw [ite_eq_right hsign] at hr
       have hsignNe : aSign ≠ bSign := fun heq => hsign (beq_iff_eq.mpr heq)
       have hcmp := LimbArray.compare_eq (a.shiftLeft d) b
       rw [hAd] at hcmp
-      rw [if_neg (by simpa using hsignNe.symm)]
+      rw [ite_eq_right (by simpa using hsignNe.symm)]
       cases hord : (a.shiftLeft d).compare b with
       | eq =>
           rw [hord] at hcmp
@@ -212,7 +214,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
             intro hboth
             obtain ⟨hb, ha⟩ := Bool.and_eq_true_iff.mp hboth
             exact hsignNe (ha.trans hb.symm)
-          rw [← hr, toModel_pack_zero h.exp_le, if_pos (by simp [heq]), hzeroSign,
+          rw [← hr, toModel_pack_zero h.exp_le, ite_eq_left (by simp [heq]), hzeroSign,
             zero_false]
       | gt =>
           rw [hord] at hcmp
@@ -222,7 +224,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
             rw [LimbArray.toNat_sub _ _ _ (by simp) (by rw [hAd]; simp; omega), hAd,
               UInt32.toNat_zero, Nat.sub_zero]
           have hround := roundNormal?_exact h.exp_le aSign _ _ (sb + roundOffset) hS (by omega) r hr
-          rw [hround, if_neg (by simp; omega), if_pos hgt]
+          rw [hround, ite_eq_right (by simp; omega), ite_eq_left hgt]
       | lt =>
           rw [hord] at hcmp
           have hlt : a.toNat * 2 ^ d < b.toNat := Nat.compare_eq_lt.mp hcmp.symm
@@ -231,7 +233,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
             rw [LimbArray.toNat_sub _ _ _ (by simp) (by rw [hAd]; simp; omega), hAd,
               UInt32.toNat_zero, Nat.sub_zero]
           have hround := roundNormal?_exact h.exp_le bSign _ _ (sb + roundOffset) hS (by omega) r hr
-          rw [hround, if_neg (by simp; omega), if_neg (by omega)]
+          rw [hround, ite_eq_right (by simp; omega), ite_eq_right (by omega)]
 
 /-- An accepted result of the alignment core is the unsigned-scale exact sum of its operands. -/
 theorem alignAndRound?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bool) (a : LimbArray)
@@ -241,9 +243,9 @@ theorem alignAndRound?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : B
     toModel r = FiniteScaleAdd.roundSum fmt roundOffset aSign bSign a.toNat sa b.toNat sb := by
   unfold alignAndRound? at hr
   by_cases hlt : sa < sb
-  · rw [if_pos hlt] at hr
+  · rw [ite_eq_left hlt] at hr
     exact alignOrdered?_refines h roundOffset bSign b sb aSign a sa (Nat.le_of_lt hlt) hb ha r hr
-  · rw [if_neg hlt] at hr
+  · rw [ite_eq_right hlt] at hr
     rw [alignOrdered?_refines h roundOffset aSign a sa bSign b sb (Nat.le_of_not_lt hlt) ha hb r hr]
     exact roundSum_comm h.isIEEE roundOffset bSign aSign b.toNat sb a.toNat sa
 
@@ -262,9 +264,9 @@ theorem decode?_signed (h : Eligible fmt) (negate : Bool) (v : Value fmt)
     FiniteKernel.decode? (if negate then neg (toModel v) else toModel v) =
       some ⟨Bool.xor (signBit v) negate, expField v, (normalMantissa v).toNat⟩ := by
   cases negate
-  · simp only [Bool.false_eq_true, if_false, Bool.xor_false]
+  · simp only [Bool.false_eq_true, ite_false, Bool.xor_false]
     rw [decode?_toModel v h.isIEEE h.exp_le hfinite, decodeMantissa_eq_normalMantissa v hnormal]
-  · simp only [if_true, Bool.xor_true]
+  · simp only [ite_true, Bool.xor_true]
     rw [decode?_neg h.isIEEE, decode?_toModel v h.isIEEE h.exp_le hfinite,
       decodeMantissa_eq_normalMantissa v hnormal, Option.map_some]
 
@@ -276,9 +278,9 @@ theorem addNormal?_refines (h : Eligible fmt) (negateY : Bool) (x y r : Value fm
   unfold addNormal? at hr
   by_cases hcond : (expWord x == 0 || expWord x == expAllOnes fmt ||
       expWord y == 0 || expWord y == expAllOnes fmt) = true
-  · rw [if_pos hcond] at hr
+  · rw [ite_eq_left hcond] at hr
     exact absurd hr (by simp)
-  · rw [if_neg hcond] at hr
+  · rw [ite_eq_right hcond] at hr
     simp only [Bool.or_eq_true, beq_iff_eq, not_or] at hcond
     obtain ⟨⟨⟨hx0, hxAll⟩, hy0⟩, hyAll⟩ := hcond
     obtain ⟨hxe0, hxeFinite⟩ := normalExponent_of_expWord h x hx0 hxAll
@@ -293,10 +295,10 @@ theorem addNormal?_refines (h : Eligible fmt) (negateY : Bool) (x y r : Value fm
     simp only [Option.some.injEq]
     rw [← FiniteKernel.addComponentsImpl_eq]
     unfold FiniteKernel.addComponentsImpl
-    rw [if_pos h.isIEEE, hsum]
+    rw [ite_eq_left h.isIEEE, hsum]
     have hxe0' : (expField x == 0) = false := by simpa using hxe0
     have hye0' : (expField y == 0) = false := by simpa using hye0
-    simp only [FiniteKernel.scale, hxe0', hye0', Bool.false_eq_true, if_false]
+    simp only [FiniteKernel.scale, hxe0', hye0', Bool.false_eq_true, ite_false]
     rfl
 
 /-- Wide-limb addition is the reference addition of the operand models. -/
@@ -310,7 +312,7 @@ theorem toModel_add (h : Eligible fmt) (x y : Value fmt) :
   | some r =>
       simp only
       have hadd := addNormal?_refines h false x y r hfast
-      simp only [Bool.false_eq_true, if_false] at hadd
+      simp only [Bool.false_eq_true, ite_false] at hadd
       exact (spec_add_of_add?_eq_some _ _ _ hadd).symm
 
 /-- Wide-limb subtraction is the reference subtraction of the operand models. -/
@@ -324,7 +326,7 @@ theorem toModel_sub (h : Eligible fmt) (x y : Value fmt) :
   | some r =>
       simp only
       have hadd := addNormal?_refines h true x y r hfast
-      simp only [if_true] at hadd
+      simp only [ite_true] at hadd
       exact (spec_add_of_add?_eq_some _ _ _ hadd).symm
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

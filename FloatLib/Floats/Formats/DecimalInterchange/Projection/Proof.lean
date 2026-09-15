@@ -46,7 +46,7 @@ theorem projectMagnitude_eq (f : Format) (mode : RoundingMode) (s : Bool)
   by_cases hx : x = 0
   · subst x
     simp [projectMagnitude, roundedPair_zero, not_lt.mpr f.minQuantum_le_maxQuantum]
-  · simp only [projectMagnitude, if_neg hx]
+  · simp only [projectMagnitude, ite_eq_right hx]
 
 theorem roundAt_le_coefficientBound (f : Format) (mode : RoundingMode) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) :
@@ -108,7 +108,7 @@ theorem projectMagnitude_value (f : Format) (mode : RoundingMode) (s : Bool)
     (projectMagnitude f mode s x preferred).value.toRat? =
       some ((if s then -1 else 1) * (mode.roundAt s x (roundingQuantum f x) : ℚ) *
         (10 : ℚ) ^ roundingQuantum f x) := by
-  simp only [projectMagnitude_eq, if_neg (not_lt.mpr hq)]
+  simp only [projectMagnitude_eq, ite_eq_right (not_lt.mpr hq)]
   have hv := roundedPair_value f mode s x
   split
   · simp only [Datum.toRat?_eq, mul_assoc, hv]

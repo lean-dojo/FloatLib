@@ -78,7 +78,7 @@ theorem countLeadingRun_eq_model (value : UInt64) (width : Nat) (bit : Bool) :
     | false =>
         exact countLeadingZeros_eq_model value width hwidth
     | true =>
-        simp only [if_true]
+        simp only [ite_true]
         rw [countLeadingZeros_eq_model (~~~value) width hwidth]
         exact
           (Model.countLeadingRun_true_eq_false_of_testBit_flip
@@ -94,7 +94,7 @@ theorem countLeadingRun_eq_model (value : UInt64) (width : Nat) (bit : Bool) :
 theorem shiftRight_toNat (value : UInt64) (shift : Nat) (hshift : shift < 64) :
     (shiftRight value shift).toNat = value.toNat >>> shift := by
   unfold shiftRight
-  rw [if_pos hshift, UInt64.toNat_shiftRight]
+  rw [ite_eq_left hshift, UInt64.toNat_shiftRight]
   simp [Nat.mod_eq_of_lt hshift]
 
 /-- Extracting a shifted field in one word agrees with natural-number division and remainder. -/
@@ -142,7 +142,7 @@ theorem magnitudeWord_eq_ofNat_magnitudeNat
       rw [UInt64.le_iff_toNat_le, hmask]
       exact hnegative
     unfold magnitudeWord magnitudeWordAt magnitudeNat
-    rw [if_pos hnegativeWord, if_pos (decide_eq_true hnegative)]
+    rw [ite_eq_left hnegativeWord, ite_eq_left (decide_eq_true hnegative)]
     rw [modulusWord_eq_ofNat_modulus format heligible]
     rw [UInt64.ofNat_sub (Nat.le_of_lt hcode)]
     simp
@@ -150,7 +150,7 @@ theorem magnitudeWord_eq_ofNat_magnitudeNat
       rw [UInt64.le_iff_toNat_le, hmask]
       exact hnegative
     unfold magnitudeWord magnitudeWordAt magnitudeNat
-    simp only [hnegativeWord, if_false, decide_eq_false hnegative,
+    simp only [hnegativeWord, ite_false, decide_eq_false hnegative,
       Bool.false_eq_true]
     apply UInt64.toNat_inj.mp
     rw [UInt64.toNat_ofNat', Nat.mod_eq_of_lt code.toNat_lt]

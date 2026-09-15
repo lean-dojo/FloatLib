@@ -593,7 +593,7 @@ private theorem magnitudeBits_div_twoPow_trailingBits (value : Model format)
       have htrailing : value.trailingBits =
           format.payloadBits - value.regimeRunLength - 1 := by
         simp [trailingBits, hasRegimeTerminator, hlt]
-      rw [if_neg Bool.false_ne_true, if_pos hlt, htrailing, hrun]
+      rw [ite_eq_right Bool.false_ne_true, ite_eq_left hlt, htrailing, hrun]
       exact div_twoPow_after_false_run (Nat.pos_of_ne_zero hzero) hbound
   | true =>
     have hpower := Nat.two_pow_pos format.payloadBits
@@ -624,7 +624,7 @@ private theorem magnitudeBits_div_twoPow_trailingBits (value : Model format)
           Nat.log2 (2 ^ format.payloadBits - 1 - value.magnitudeBits) := by
         simp [trailingBits, hasRegimeTerminator, hlt]
         omega
-      rw [if_pos rfl, if_pos hlt, htrailing, div_twoPow_after_true_run hbound hpos]
+      rw [ite_eq_left rfl, ite_eq_left hlt, htrailing, div_twoPow_after_true_run hbound hpos]
       congr 2
       omega
 

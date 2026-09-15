@@ -128,7 +128,7 @@ theorem roundShiftRightEven_eq_roundQuotientEven (value shift : Nat) :
     else if 2 ^ (shift - 1) < shiftRightRemainder value shift then value.shiftRight shift + 1
     else if value.shiftRight shift % 2 == 0 then value.shiftRight shift
     else value.shiftRight shift + 1) = _
-  simp only [beq_iff_eq, hs, if_false, shiftRightRemainder_eq_mod, Nat.shiftRight_eq',
+  simp only [beq_iff_eq, hs, ite_false, shiftRightRemainder_eq_mod, Nat.shiftRight_eq',
     Nat.shiftRight_eq_div_pow, roundQuotientEven]
   rw [hp]
   simp only [Nat.mul_lt_mul_left (by decide : 0 < (2 : Nat))]
@@ -162,11 +162,11 @@ private theorem roundShiftRightEven_eq_shiftRight_or_add_one
       · by_cases heven : quotient % 2 = 0
         · left
           rw [hround]
-          simp only [hlt, hgt, heven, if_false, if_true]
+          simp only [hlt, hgt, heven, ite_false, ite_true]
           rfl
         · right
           rw [hround]
-          simp only [hlt, hgt, heven, if_false]
+          simp only [hlt, hgt, heven, ite_false]
           rfl
 
 /-- Nearest-even shift rounding is never below the floor quotient. -/
@@ -208,7 +208,7 @@ theorem roundShiftRightEven_one (value : Nat) :
     rw [hshiftBack]
     exact Nat.mod_eq_sub_div_mul.symm
   rw [roundShiftRightEven_def]
-  simp only [beq_iff_eq, one_ne_zero, if_false]
+  simp only [beq_iff_eq, one_ne_zero, ite_false]
   norm_num only [Nat.reducePow, Nat.reduceSub]
   rw [hremainder, hquotient]
   have hcases :

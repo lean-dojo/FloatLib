@@ -138,7 +138,6 @@ private theorem productLeading_toNat
   have hlowerSucc :
       (UInt64.ofNat lower + 1).toNat = lower + 1 := by
     rw [UInt64.toNat_add, hlowerWord]
-    norm_num
     apply Nat.mod_eq_of_lt
     have hsmall : lower + 1 ≤ 125 := by
       unfold lower
@@ -154,7 +153,7 @@ private theorem productLeading_toNat
       (if product.hi < threshold then UInt64.ofNat lower
         else UInt64.ofNat lower + 1).toNat =
         productNat.log2
-    rw [if_pos hnative, hlowerWord, hlog]
+    rw [ite_eq_left hnative, hlowerWord, hlog]
   · have hge : 2 ^ (lower + 1) ≤ productNat :=
       Nat.le_of_not_gt hhigh
     have hlog :
@@ -168,7 +167,7 @@ private theorem productLeading_toNat
       (if product.hi < threshold then UInt64.ofNat lower
         else UInt64.ofNat lower + 1).toNat =
         productNat.log2
-    rw [if_neg hnative, hlowerSucc, hlog]
+    rw [ite_eq_right hnative, hlowerSucc, hlog]
 
 private theorem roundNormalProduct_eq_spec
     (fmt : FloatFormat)
@@ -301,7 +300,7 @@ private theorem roundNormalProduct_eq_spec
       apply UInt64.lt_iff_toNat_lt.mpr
       rw [hposition, hnormalThreshold]
       exact hsubnormal
-    rw [if_pos hsubnormalWord, if_pos hsubnormal]
+    rw [ite_eq_left hsubnormalWord, ite_eq_left hsubnormal]
   have hsubnormalWord :
       ¬position < UInt64.ofNat
         (fmt.bias + 2 * fmt.fracWidth - 1) := by
@@ -309,7 +308,7 @@ private theorem roundNormalProduct_eq_spec
     apply hsubnormal
     have hnat := UInt64.lt_iff_toNat_lt.mp h
     rwa [hposition, hnormalThreshold] at hnat
-  rw [if_neg hsubnormalWord, if_neg hsubnormal]
+  rw [ite_eq_right hsubnormalWord, ite_eq_right hsubnormal]
   let rounded :=
     product.roundShiftRightEven
       (leading - UInt64.ofNat fmt.fracWidth).toNat

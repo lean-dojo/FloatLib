@@ -26,7 +26,7 @@ namespace FloatLib.Numerics.DecimalText
     (carryDecimal digits value).toRat = value.toRat := by
   have h := RadixText.carry_value 10 (by decide) digits value.significand value.exponent
   cases hs : value.negative <;>
-    simp only [carryDecimal, Decimal.toRat, hs, Bool.false_eq_true, if_true, if_false]
+    simp only [carryDecimal, Decimal.toRat, hs, Bool.false_eq_true, ite_true, ite_false]
   · exact h
   · simpa only [neg_mul, Nat.cast_ofNat] using congrArg Neg.neg h
 

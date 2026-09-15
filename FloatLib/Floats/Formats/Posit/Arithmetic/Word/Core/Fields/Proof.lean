@@ -56,13 +56,13 @@ private theorem min_toNat (left right : UInt64) :
   change (if left ≤ right then left else right).toNat =
     min left.toNat right.toNat
   by_cases hle : left ≤ right
-  · rw [if_pos hle,
+  · rw [ite_eq_left hle,
       Nat.min_eq_left (UInt64.le_iff_toNat_le.mp hle)]
   · have hgeNat : right.toNat ≤ left.toNat := by
       have hnotNat : ¬left.toNat ≤ right.toNat :=
         fun hleNat => hle (UInt64.le_iff_toNat_le.mpr hleNat)
       omega
-    rw [if_neg hle, Nat.min_eq_right hgeNat]
+    rw [ite_eq_right hle, Nat.min_eq_right hgeNat]
 
 /-- The machine-width and natural-width regime scans return the same run length. -/
 theorem countLeadingRunWord_toNat_eq
@@ -73,7 +73,7 @@ theorem countLeadingRunWord_toNat_eq
     exact_mod_cast hwidth
   rw [FixedWord.countLeadingRunWord_toNat value width bit hwidth]
   unfold countLeadingRun
-  simp only [if_pos hwidthNat]
+  simp only [ite_eq_left hwidthNat]
   unfold countLeadingZeros
   rw [← lowBitsWord_eq_lowBits
     (if bit then ~~~value else value) width hwidth]
@@ -110,7 +110,7 @@ private theorem toInt_regimeExponent (bit : Bool) (run field fraction : UInt64)
   simp only [Int.ofNat_eq_natCast] at hrun' hfield' hfraction' ⊢
   cases bit <;>
     simp (disch := omega) only [Int64.toInt_sub, Int64.toInt_add, Int64.toInt_mul,
-      Int64.toInt_neg, Int64.toInt_one, hrun', hfield', hfraction', hfour, if_true, if_false,
+      Int64.toInt_neg, Int64.toInt_one, hrun', hfield', hfraction', hfour, ite_true, ite_false,
       Bool.false_eq_true, bmod_two_pow_eq_self]
 
 /-- Shifting a stored exponent into two positions is exact and stays below four. -/
@@ -135,13 +135,14 @@ private theorem trailing_toNat (payload run : UInt64) (hrun : run ≤ payload) :
   have hsub := UInt64.toNat_sub_of_le _ _ hrun
   by_cases h : run < payload
   · have h' : run.toNat < payload.toNat := UInt64.lt_iff_toNat_lt.mp h
-    rw [if_pos (decide_eq_true h), if_pos (decide_eq_true h'),
+    rw [ite_eq_left (decide_eq_true h), ite_eq_left (decide_eq_true h'),
       UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by
         rw [hsub, UInt64.toNat_one]
         omega)),
       hsub, UInt64.toNat_one]
   · have h' : ¬ run.toNat < payload.toNat := fun h' => h (UInt64.lt_iff_toNat_lt.mpr h')
-    rw [if_neg (fun hc => h (of_decide_eq_true hc)), if_neg (fun hc => h' (of_decide_eq_true hc)),
+    rw [ite_eq_right (fun hc => h (of_decide_eq_true hc)),
+      ite_eq_right (fun hc => h' (of_decide_eq_true hc)),
       UInt64.sub_zero, hsub, Nat.sub_zero]
 
 /-- Significand assembly agrees with the reference once the fraction width is known. -/
@@ -247,7 +248,7 @@ theorem withNonnegativeMachineFieldsAtPayload_eq_reference {α : Type}
       exponentField_toNat storedExponentNat usedExponentWord
         (by rw [husedExponent]; exact husedExponentNatLe) (by rw [husedExponent]; exact hstoredLt)
     simp only [withNonnegativeMachineFieldsAtPayload,
-      withNonnegativeReferenceFieldsAtPayload, hzero, Bool.false_eq_true, if_false]
+      withNonnegativeReferenceFieldsAtPayload, hzero, Bool.false_eq_true, ite_false]
     change
       continuation (FixedWord.lowBitsWord code fractionWord ||| ((1 : UInt64) <<< fractionWord))
           ((if regimeBitWord then regimeRunWord.toInt64 - 1 else -regimeRunWord.toInt64) * 4 +
@@ -309,8 +310,8 @@ theorem withNonnegativeWordFieldsAtPayload_toNat
     withNonnegativeWordFieldsAtPayload_eq_reference]
   unfold withNonnegativeReferenceFieldsAtPayload
   by_cases hzero : code == 0
-  · simp only [hzero, if_true]
-  · simp only [hzero, Bool.false_eq_true, if_false]
+  · simp only [hzero, ite_true]
+  · simp only [hzero, Bool.false_eq_true, ite_false]
 
 /--
 The exact-field decoder is definitionally the `Nat` view of the native-word decoder.

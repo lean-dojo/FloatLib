@@ -55,10 +55,10 @@ private theorem eventually_bisection_eq (format : Format) {x : ℝ} (hx : Irrati
             (Model.nonnegativeRatAt format ((lower + upper) / 2))
         filter_upwards [hguard, ih ((lower + upper) / 2) upper,
           ih lower ((lower + upper) / 2)] with y hy hleft hright
-        simp only [Model.lowerCodeByBisection, if_pos hsplit]
+        simp only [Model.lowerCodeByBisection, ite_eq_left hsplit]
         simp only [hy, hleft, hright]
       · exact Eventually.of_forall fun _ => by
-          simp only [Model.lowerCodeByBisection, if_neg hsplit]
+          simp only [Model.lowerCodeByBisection, ite_eq_right hsplit]
 
 /-- The finite lower-code search is locally constant at every irrational target. -/
 theorem eventually_lowerCode_eq (format : Format) {x : ℝ} (hx : Irrational x) :

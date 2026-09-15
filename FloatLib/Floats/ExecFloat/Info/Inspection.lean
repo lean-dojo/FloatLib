@@ -281,6 +281,8 @@ private meta def readCandidateNat
 /-- Evaluate one closed string expression. -/
 meta def readString (description : String) (value : Expr) : MetaM String := do
   let value ← withTransparency .all <| whnf value
+  if let some result := getStringValue? value then
+    return result
   try
     unsafe evalExpr String (mkConst ``String) value
   catch _ =>

@@ -121,7 +121,7 @@ theorem roundSum_eq
                   exponent fmt leftScale roundOffset) =
               rightScale - leftScale := by
           exact exponent_sub_toNat fmt roundOffset leftScale rightScale hscale
-        simp only [hleft, hright, beq_iff_eq, if_false, hexponent, if_true,
+        simp only [hleft, hright, beq_iff_eq, ite_false, hexponent, ite_true,
           hscale, hshift]
         exact roundMagnitudes_eq fmt hfmt roundOffset leftSign rightSign
           leftMantissa (rightMantissa <<< (rightScale - leftScale))
@@ -138,7 +138,7 @@ theorem roundSum_eq
               leftScale - rightScale := by
           exact exponent_sub_toNat fmt roundOffset rightScale leftScale
             hrightScale
-        simp only [hleft, hright, beq_iff_eq, if_false, hscale, hexponent,
+        simp only [hleft, hright, beq_iff_eq, ite_false, hscale, hexponent,
           hshift]
         exact roundMagnitudes_eq fmt hfmt roundOffset leftSign rightSign
           (leftMantissa <<< (leftScale - rightScale)) rightMantissa

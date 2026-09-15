@@ -252,17 +252,17 @@ theorem ofUInt32_roundDyadic (value : Numerics.Dyadic) :
   unfold roundDyadic
   simp only [beq_iff_eq]
   by_cases hmantissa : value.significand = 0
-  · rw [if_pos hmantissa]
+  · rw [ite_eq_left hmantissa]
     have himpl :
         Model.roundDyadicImpl FloatFormat.binary32 value =
           if value.negative then Model.negZero FloatFormat.binary32
           else Model.posZero FloatFormat.binary32 := by
       unfold Model.roundDyadicImpl Model.ieeeRoundDyadicImpl
-      simp only [show FloatFormat.binary32.isIEEE = true by decide, if_true]
-      simp only [beq_iff_eq, hmantissa, if_pos]
+      simp only [show FloatFormat.binary32.isIEEE = true by decide, ite_true]
+      simp only [beq_iff_eq, hmantissa, ite_eq_left]
     rw [himpl]
     exact ofUInt32_signedZero value.negative
-  · rw [if_neg hmantissa]
+  · rw [ite_eq_right hmantissa]
     let totalExponent := (value.significand.log2 : Int) + value.exponent
     by_cases hsubnormal : totalExponent < -126
     · have hsubnormal' :
@@ -282,17 +282,17 @@ theorem ofUInt32_roundDyadic (value : Numerics.Dyadic) :
             else
               Model.ofFields FloatFormat.binary32 value.negative 0 fraction := by
         unfold Model.roundDyadicImpl Model.ieeeRoundDyadicImpl
-        simp only [show FloatFormat.binary32.isIEEE = true by decide, if_true]
+        simp only [show FloatFormat.binary32.isIEEE = true by decide, ite_true]
         simp only [binary32_fracWidth, binary32_maxNormalUnbiasedExp,
           binary32_minNormalUnbiasedExp, binary32_bias,
-          beq_iff_eq, hmantissa, if_false]
-        rw [if_pos hsubnormal']
+          beq_iff_eq, hmantissa, ite_false]
+        rw [ite_eq_left hsubnormal']
         rfl
       rw [himpl]
       have hsubnormalNative :
           Int.ofNat value.significand.log2 + value.exponent < -126 := by
         simpa [totalExponent] using hsubnormal
-      simp only [hsubnormalNative, if_pos]
+      simp only [hsubnormalNative, ite_eq_left]
       change
         ofUInt32
             (if fraction = 0 then
@@ -309,13 +309,13 @@ theorem ofUInt32_roundDyadic (value : Numerics.Dyadic) :
           else
             Model.ofFields FloatFormat.binary32 value.negative 0 fraction
       by_cases hfractionZero : fraction = 0
-      · rw [if_pos hfractionZero, if_pos hfractionZero]
+      · rw [ite_eq_left hfractionZero, ite_eq_left hfractionZero]
         exact ofUInt32_signedZero value.negative
-      · rw [if_neg hfractionZero, if_neg hfractionZero]
+      · rw [ite_eq_right hfractionZero, ite_eq_right hfractionZero]
         by_cases hfractionNormal : fraction = Model.pow2 23
-        · rw [if_pos hfractionNormal, if_pos hfractionNormal]
+        · rw [ite_eq_left hfractionNormal, ite_eq_left hfractionNormal]
           exact ofUInt32_mkBits value.negative 1 0
-        · rw [if_neg hfractionNormal, if_neg hfractionNormal]
+        · rw [ite_eq_right hfractionNormal, ite_eq_right hfractionNormal]
           exact ofUInt32_mkBits value.negative 0 fraction
     · have hsubnormal' :
           ¬(value.significand.log2 : Int) + value.exponent < -126 := by
@@ -341,17 +341,17 @@ theorem ofUInt32_roundDyadic (value : Numerics.Dyadic) :
                 (Int.toNat (normalizedExponent + 127))
                 (normalizedMantissa - Model.pow2 23) := by
         unfold Model.roundDyadicImpl Model.ieeeRoundDyadicImpl
-        simp only [show FloatFormat.binary32.isIEEE = true by decide, if_true]
+        simp only [show FloatFormat.binary32.isIEEE = true by decide, ite_true]
         simp only [binary32_fracWidth, binary32_maxNormalUnbiasedExp,
           binary32_minNormalUnbiasedExp, binary32_bias,
-          beq_iff_eq, hmantissa, if_false]
-        rw [if_neg hsubnormal']
+          beq_iff_eq, hmantissa, ite_false]
+        rw [ite_eq_right hsubnormal']
         rfl
       rw [himpl]
       have hsubnormalNative :
           ¬Int.ofNat value.significand.log2 + value.exponent < -126 := by
         simpa [totalExponent] using hsubnormal
-      simp only [hsubnormalNative, if_false]
+      simp only [hsubnormalNative, ite_false]
       change
         ofUInt32
             (if normalizedExponent > 127 then
@@ -367,9 +367,9 @@ theorem ofUInt32_roundDyadic (value : Numerics.Dyadic) :
               (Int.toNat (normalizedExponent + 127))
               (normalizedMantissa - Model.pow2 23)
       by_cases hoverflow : normalizedExponent > 127
-      · rw [if_pos hoverflow, if_pos hoverflow]
+      · rw [ite_eq_left hoverflow, ite_eq_left hoverflow]
         exact ofUInt32_signedInf value.negative
-      · rw [if_neg hoverflow, if_neg hoverflow]
+      · rw [ite_eq_right hoverflow, ite_eq_right hoverflow]
         exact ofUInt32_mkBits value.negative
           (Int.toNat (normalizedExponent + 127))
           (normalizedMantissa - Model.pow2 23)
@@ -413,9 +413,9 @@ theorem mulFinite_eq (x y : Value) :
       | some dy =>
           dsimp only
           by_cases hzero : dx.significand = 0 ∨ dy.significand = 0
-          · simp only [beq_iff_eq, Bool.or_eq_true, hzero, if_pos]
+          · simp only [beq_iff_eq, Bool.or_eq_true, hzero, ite_eq_left]
             exact congrArg some (ofUInt32_signedZero (Bool.xor dx.negative dy.negative))
-          · simp only [beq_iff_eq, Bool.or_eq_true, hzero, if_false]
+          · simp only [beq_iff_eq, Bool.or_eq_true, hzero, ite_false]
             exact congrArg some (ofUInt32_roundDyadic {
               negative := Bool.xor dx.negative dy.negative,
               significand := dx.significand * dy.significand,
@@ -450,16 +450,16 @@ theorem divFinite_eq (x y : Value) :
       | some dy =>
           dsimp only
           by_cases hyzero : dy.significand = 0
-          · simp only [beq_iff_eq, hyzero, if_pos]
+          · simp only [beq_iff_eq, hyzero, ite_eq_left]
             by_cases hxzero : dx.significand = 0
-            · simp only [hxzero, if_pos, ofUInt32_canonicalNaN]
-            · simp only [hxzero, if_false]
+            · simp only [hxzero, ite_eq_left, ofUInt32_canonicalNaN]
+            · simp only [hxzero, ite_false]
               exact congrArg some (ofUInt32_signedInf (Bool.xor dx.negative dy.negative))
-          · simp only [beq_iff_eq, hyzero, if_false]
+          · simp only [beq_iff_eq, hyzero, ite_false]
             by_cases hxzero : dx.significand = 0
-            · simp only [hxzero, if_pos]
+            · simp only [hxzero, ite_eq_left]
               exact congrArg some (ofUInt32_signedZero (Bool.xor dx.negative dy.negative))
-            · simp only [hxzero, if_false, ofUInt32_roundRatScaled]
+            · simp only [hxzero, ite_false, ofUInt32_roundRatScaled]
 
 /-- The native finite fused multiply-add result is exactly the generic finite result. -/
 theorem fmaFinite_eq (x y z : Value) :
