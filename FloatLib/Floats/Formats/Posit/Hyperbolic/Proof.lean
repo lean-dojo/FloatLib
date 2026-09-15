@@ -35,7 +35,7 @@ theorem tanhRat_eq_real (format : Format) (argument : Rat) :
 theorem artanhRat_eq_real (format : Format) (argument : Rat)
     (hlower : -1 < argument) (hupper : argument < 1) :
     artanhRat format argument = RealRounding.round format (Real.artanh (argument : ℝ)) := by
-  rw [artanhRat, dif_pos hlower, dif_pos hupper]
+  rw [artanhRat, dite_eq_left hlower, dite_eq_left hupper]
   exact ComparisonRounding.roundSigned_eq_real format _ _
     (prepareArtanh_eq_real argument _ hlower hupper)
 
@@ -70,7 +70,7 @@ theorem arsinhRat_eq_real (format : Format) (argument : Rat) :
 /-- Rational inverse hyperbolic cosine rounds its nonnegative real branch. -/
 theorem arcoshRat_eq_real (format : Format) (argument : Rat) (hdomain : 1 ≤ argument) :
     arcoshRat format argument = RealRounding.round format (Real.arcosh (argument : ℝ)) := by
-  rw [arcoshRat, if_pos hdomain]
+  rw [arcoshRat, ite_eq_left hdomain]
   exact ComparisonRounding.roundSigned_eq_real format _ _
     (fun boundary => prepareArcosh_eq_real argument _ boundary hdomain)
 

@@ -153,8 +153,8 @@ private theorem packExactDifference_eq_spec_subnormal
     rw [hposition, hleading] at hnative
     simpa using hnative
   unfold packExactDifference packExactDifferenceSpec
-  simp only [beq_iff_eq, hdifference, hzeroNat, if_false,
-    hsubnormal, hsubnormalNat, if_true]
+  simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
+    hsubnormal, hsubnormalNat, ite_true]
   have hexponentWord : (1 : UInt64) ≤ exponent := by
     apply UInt64.le_iff_toNat_le.mpr
     simp
@@ -359,8 +359,8 @@ private theorem packExactDifference_eq_spec_normal
     rw [hposition, hleading]
     simpa using h
   unfold packExactDifference packExactDifferenceSpec
-  simp only [beq_iff_eq, hdifference, hzeroNat, if_false,
-    hnormal, hnormalNat, if_false]
+  simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
+    hnormal, hnormalNat, ite_false]
   rw [encodedExponent_word difference exponent hdifference hdifferenceFit
       hexponentFinite hnormal,
     normalizedFraction_word difference hdifference hdifferenceFit]
@@ -396,7 +396,7 @@ private theorem packExactDifferenceSpec_eq_round
     · exact hdifferenceFit
     · exact hdifference
   unfold packExactDifferenceSpec FiniteProductRound.round
-  simp only [beq_iff_eq, hdifference, if_false]
+  simp only [beq_iff_eq, hdifference, ite_false]
   by_cases hsubnormal : difference.log2 + exponent < 53
   · have hgenericSubnormal :
         difference.log2 + (exponent + 1073) <
@@ -404,13 +404,13 @@ private theorem packExactDifferenceSpec_eq_round
             2 * FloatFormat.binary64.fracWidth - 1 := by
       simp only [binary64_bias, binary64_fracWidth]
       omega
-    rw [if_pos hsubnormal, if_pos hgenericSubnormal]
+    rw [ite_eq_left hsubnormal, ite_eq_left hgenericSubnormal]
     have hscaleNotSmall :
         ¬exponent + 1073 <
           FloatFormat.ieeeSubnormalAlignExp FloatFormat.binary64 := by
       simp only [binary64_align]
       omega
-    rw [if_neg hscaleNotSmall]
+    rw [ite_eq_right hscaleNotSmall]
     have hshift :
         exponent + 1073 -
             FloatFormat.ieeeSubnormalAlignExp FloatFormat.binary64 =
@@ -429,20 +429,20 @@ private theorem packExactDifferenceSpec_eq_round
       exact lt_of_lt_of_le
         (Nat.shiftLeft_lt (m := exponent - 1) Nat.lt_log2_self)
         (Nat.pow_le_pow_right (n := 2) (by decide) hbound)
-    simp only [hfractionPositive, if_false]
+    simp only [hfractionPositive, ite_false]
     have hfractionNotBase :
         difference <<< (exponent - 1) ≠
           Model.pow2 FloatFormat.binary64.fracWidth := by
       simp only [binary64_fracWidth, Model.pow2_eq_two_pow]
       exact ne_of_lt hfractionLt
-    simp only [hfractionNotBase, if_false]
+    simp only [hfractionNotBase, ite_false]
   · have hgenericNormal :
         ¬difference.log2 + (exponent + 1073) <
           FloatFormat.binary64.bias +
             2 * FloatFormat.binary64.fracWidth - 1 := by
       simp only [binary64_bias, binary64_fracWidth]
       omega
-    rw [if_neg hsubnormal, if_neg hgenericNormal]
+    rw [ite_eq_right hsubnormal, ite_eq_right hgenericNormal]
     have hleadingLe : difference.log2 ≤ 52 := by
       omega
     have hgenericRounded :
@@ -467,14 +467,14 @@ private theorem packExactDifferenceSpec_eq_round
         shiftLeft_sub_log2_lt_two_pow 52 difference hleadingLe
       simp only [binary64_fracWidth, Model.pow2_eq_two_pow]
       omega
-    simp only [hcarry, if_false]
+    simp only [hcarry, ite_false]
     have hoverflow :
         ¬3 * FloatFormat.binary64.bias +
               2 * FloatFormat.binary64.fracWidth - 2 <
             difference.log2 + (exponent + 1073) := by
       simp only [binary64_bias, binary64_fracWidth]
       omega
-    rw [if_neg hoverflow]
+    rw [ite_eq_right hoverflow]
     have hencoded :
         difference.log2 + (exponent + 1073) -
             (FloatFormat.binary64.bias +
@@ -728,7 +728,7 @@ theorem subSterbenz_refines (x y result : Value)
   by_cases hsame : xExponent = yExponent
   · simp [hsame] at hfast
     by_cases hle : yMantissa ≤ xMantissa
-    · rw [if_pos hle] at hfast
+    · rw [ite_eq_left hle] at hfast
       have hresult := Option.some.inj hfast
       subst result
       by_cases hequal : xMantissa = yMantissa
@@ -765,7 +765,7 @@ theorem subSterbenz_refines (x y result : Value)
           omega
         · exact hxExponentPositive
         · exact hxExponentFinite
-    · rw [if_neg hle] at hfast
+    · rw [ite_eq_right hle] at hfast
       have hresult := Option.some.inj hfast
       subst result
       have hltNat : xMantissa.toNat < yMantissa.toNat := by
@@ -796,7 +796,7 @@ theorem subSterbenz_refines (x y result : Value)
         xExponent = yExponent + 1 ∧ xMantissa ≤ yMantissa
     · have hleftCondition := hleft
       rcases hleft with ⟨hxAdjacent, hxyMantissa⟩
-      simp only [if_neg hsame, if_pos hleftCondition] at hfast
+      simp only [ite_eq_right hsame, ite_eq_left hleftCondition] at hfast
       have hresult := Option.some.inj hfast
       subst result
       have hxExponentNat :
@@ -857,8 +857,8 @@ theorem subSterbenz_refines (x y result : Value)
           yExponent = xExponent + 1 ∧ yMantissa ≤ xMantissa
       · have hrightCondition := hright
         rcases hright with ⟨hyAdjacent, hyxMantissa⟩
-        simp only [if_neg hsame, if_neg hleft,
-          if_pos hrightCondition] at hfast
+        simp only [ite_eq_right hsame, ite_eq_right hleft,
+          ite_eq_left hrightCondition] at hfast
         have hresult := Option.some.inj hfast
         subst result
         have hyExponentNat :

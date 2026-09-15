@@ -96,7 +96,7 @@ theorem roundFiniteToPrecision_spec
           format.minimumNormalExponent - Int.ofNat format.precision + 1 =
         format.quantumExponent value := rfl
   unfold roundFiniteToPrecision
-  simp only [beq_iff_eq, hzero, if_false]
+  simp only [beq_iff_eq, hzero, ite_false]
   rw [hq]
   split
   next _ shift heq =>
@@ -272,14 +272,14 @@ theorem roundFiniteToPrecision_exponent
             format.minimumNormalExponent - Int.ofNat format.precision + 1 =
           format.quantumExponent value := rfl
     unfold roundFiniteToPrecision at hresult ⊢
-    simp only [beq_iff_eq, hpos.ne', if_false] at hresult ⊢
+    simp only [beq_iff_eq, hpos.ne', ite_false] at hresult ⊢
     rw [hq] at hresult ⊢
     generalize value.exponent - format.quantumExponent value = e at hresult ⊢
     cases e with
     | ofNat shift => rfl
     | negSucc shift =>
         dsimp only at hresult ⊢
-        split <;> rename_i hr <;> simp only [hr, if_true] at hresult <;>
+        split <;> rename_i hr <;> simp only [hr, ite_true] at hresult <;>
           split <;> rename_i hl <;> simp_all
 
 open Internal in
@@ -321,7 +321,7 @@ theorem roundFiniteToPrecision_towardZero
     simp [hu]
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
       roundFiniteToPrecision_spec format .towardZero value hpos.ne'
-    simp only [roundAway, Bool.false_eq_true, if_false, ite_self] at hsig
+    simp only [roundAway, Bool.false_eq_true, ite_false, ite_self] at hsig
     rw [hY, hX, hsig, abs_signRat_mul _ _ _ hu, abs_signRat_mul _ _ _ hu]
     have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
@@ -378,7 +378,7 @@ theorem roundFiniteToPrecision_towardPositive
       mul_nonneg hf0 hu.le
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hY, hX, hsig]
       simp [hu]
     · have hf := fraction_pos rem d hremZero
@@ -387,12 +387,12 @@ theorem roundFiniteToPrecision_towardPositive
       cases hneg : value.negative
       · simp [roundAway, hremZero, hneg] at hsig
         rw [hY, hX, hsig, hneg]
-        simp only [signRat, Bool.false_eq_true, if_false, one_mul]
+        simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
         push_cast
         constructor <;> nlinarith
       · simp [roundAway, hremZero, hneg] at hsig
         rw [hY, hX, hsig, hneg]
-        simp only [signRat, if_true]
+        simp only [signRat, ite_true]
         constructor <;> nlinarith
 
 open Internal in
@@ -419,7 +419,7 @@ theorem roundFiniteToPrecision_towardNegative
       mul_nonneg hf0 hu.le
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hY, hX, hsig]
       simp [hu]
     · have hf := fraction_pos rem d hremZero
@@ -428,11 +428,11 @@ theorem roundFiniteToPrecision_towardNegative
       cases hneg : value.negative
       · simp [roundAway, hremZero, hneg] at hsig
         rw [hY, hX, hsig, hneg]
-        simp only [signRat, Bool.false_eq_true, if_false, one_mul]
+        simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
         constructor <;> nlinarith
       · simp [roundAway, hremZero, hneg] at hsig
         rw [hY, hX, hsig, hneg]
-        simp only [signRat, if_true]
+        simp only [signRat, ite_true]
         push_cast
         constructor <;> nlinarith
 
@@ -494,23 +494,23 @@ theorem roundFiniteToPrecision_nearestTiesToAway_abs_sub_le
     have hf1 := fraction_lt_one rem d hrem
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hY, hX, hsig]
       simp
       positivity
     · have hd := pos_of_rem_ne_zero rem d hrem hremZero
-      simp only [roundAway, hremZero, beq_iff_eq, if_false, decide_eq_true_eq] at hsig
+      simp only [roundAway, hremZero, beq_iff_eq, ite_false, decide_eq_true_eq] at hsig
       rw [hY, hX, hsig]
       by_cases hhalf : Nat.shiftLeft 1 (d - 1) ≤ rem
       · have hf := (half_le_iff rem d hd).1 hhalf
-        rw [if_pos hhalf]
+        rw [ite_eq_left hhalf]
         push_cast
         rw [abs_signRat_sub _ _ _ _ hu]
         apply abs_mul_le_half _ _ hu
         rw [abs_le]
         constructor <;> linarith
       · have hf := (half_le_iff rem d hd).not.1 hhalf
-        rw [if_neg hhalf, abs_signRat_sub _ _ _ _ hu]
+        rw [ite_eq_right hhalf, abs_signRat_sub _ _ _ _ hu]
         apply abs_mul_le_half _ _ hu
         rw [abs_le]
         constructor <;> linarith
@@ -526,7 +526,7 @@ theorem roundFiniteToPrecision_nearestTiesToAway_tie
   have hu := format.quantum_pos value
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
     roundFiniteToPrecision_tie_spec format .nearestTiesToAway value htie
-  simp only [roundAway, beq_iff_eq, hhalf, if_false, le_refl, decide_true, if_true] at hsig
+  simp only [roundAway, beq_iff_eq, hhalf, ite_false, le_refl, decide_true, ite_true] at hsig
   rw [hY, hX, hsig, abs_signRat_mul _ _ _ hu, abs_signRat_mul _ _ _ hu]
   push_cast
   rw [abs_of_nonneg (by positivity), abs_of_nonneg (by positivity)]
@@ -550,12 +550,12 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
     have hf1 := fraction_lt_one rem d hrem
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hY, hX, hsig]
       simp
       positivity
     · have hd := pos_of_rem_ne_zero rem d hrem hremZero
-      simp only [roundAway, hremZero, beq_iff_eq, if_false] at hsig
+      simp only [roundAway, hremZero, beq_iff_eq, ite_false] at hsig
       obtain ⟨half, hhalf⟩ : ∃ half, Nat.shiftLeft 1 (d - 1) = half := ⟨_, rfl⟩
       rw [hhalf] at hsig
       rw [hY, hX, abs_signRat_sub _ _ _ _ hu]
@@ -564,7 +564,7 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
       · have hf : (1 / 2 : Rat) < (rem : Rat) / 2 ^ d := by
           rw [← half_lt_iff rem d hd, hhalf]
           exact hlt
-        simp only [hlt, decide_true, Bool.true_or, if_true] at hsig
+        simp only [hlt, decide_true, Bool.true_or, ite_true] at hsig
         rw [hsig]
         push_cast
         rw [abs_le]
@@ -587,7 +587,7 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
             exact hle
           have hbeq : (rem == half) = false := beq_eq_false_iff_ne.mpr heq
           simp only [hlt, hbeq, decide_false, Bool.false_or, Bool.false_and,
-            Bool.false_eq_true, if_false] at hsig
+            Bool.false_eq_true, ite_false] at hsig
           rw [hsig, abs_le]
           constructor <;> linarith
 
@@ -612,13 +612,13 @@ theorem roundFiniteToPrecision_nearestTiesToEven_tie
   have hu := format.quantum_pos value
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
     roundFiniteToPrecision_tie_spec format .nearestTiesToEven value htie
-  simp only [roundAway, beq_iff_eq, hhalf, if_false, lt_self_iff_false, decide_false,
+  simp only [roundAway, beq_iff_eq, hhalf, ite_false, lt_self_iff_false, decide_false,
     Bool.false_or, beq_self_eq_true, Bool.true_and] at hsig
   refine ⟨lower, ?_, ?_⟩
   · rw [hX, abs_signRat_mul _ _ _ hu, abs_of_nonneg (by positivity)]
   · rw [hY, hsig, abs_signRat_mul _ _ _ hu]
     cases heven : format.lowerCodeIsEven (format.quantumExponent value) lower
-    · simp only [Bool.not_false, if_true]
+    · simp only [Bool.not_false, ite_true]
       push_cast
       rw [abs_of_nonneg (by positivity)]
       constructor
@@ -627,7 +627,7 @@ theorem roundFiniteToPrecision_nearestTiesToEven_tie
         linarith
       · intro h
         simp at h
-    · simp only [Bool.not_true, Bool.false_eq_true, if_false]
+    · simp only [Bool.not_true, Bool.false_eq_true, ite_false]
       rw [abs_of_nonneg (by positivity)]
       simp
 
@@ -641,8 +641,8 @@ theorem roundFiniteToPrecision_nearestTiesToEven_tie_even
     (format.roundFiniteToPrecision .nearestTiesToEven value).significand % 2 = 0 := by
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
     roundFiniteToPrecision_tie_spec format .nearestTiesToEven value htie
-  simp only [roundAway, beq_iff_eq, hhalf, if_false, lt_self_iff_false, decide_false,
-    Bool.false_or, beq_self_eq_true, Bool.true_and, lowerCodeIsEven, hprecision, if_true] at hsig
+  simp only [roundAway, beq_iff_eq, hhalf, ite_false, lt_self_iff_false, decide_false,
+    Bool.false_or, beq_self_eq_true, Bool.true_and, lowerCodeIsEven, hprecision, ite_true] at hsig
   rw [hsig]
   rcases Nat.mod_two_eq_zero_or_one lower with hl | hl <;> simp [hl, Nat.add_mod]
 
@@ -667,7 +667,7 @@ theorem roundFiniteToPrecision_toOdd_abs_sub_lt
     apply abs_mul_lt_of_lt_one _ _ hu
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hsig]
       simp
     · have hf := fraction_pos rem d hremZero
@@ -695,11 +695,11 @@ theorem roundFiniteToPrecision_toOdd_odd
       roundFiniteToPrecision_spec format .toOdd value hpos.ne'
     by_cases hremZero : rem = 0
     · subst hremZero
-      simp only [roundAway, beq_self_eq_true, if_true, Bool.false_eq_true] at hsig
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
       rw [hY, hX, hsig] at hinexact
       simp at hinexact
-    · simp only [roundAway, hremZero, beq_iff_eq, if_false, lowerCodeIsEven, hprecision,
-        if_true] at hsig
+    · simp only [roundAway, hremZero, beq_iff_eq, ite_false, lowerCodeIsEven, hprecision,
+        ite_true] at hsig
       rw [hsig]
       rcases Nat.mod_two_eq_zero_or_one lower with hl | hl <;> simp [hl, Nat.add_mod]
 

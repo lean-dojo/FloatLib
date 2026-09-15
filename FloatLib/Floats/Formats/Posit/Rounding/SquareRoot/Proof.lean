@@ -154,7 +154,7 @@ theorem roundSqrtCode_eq_roundPositiveCode
   unfold roundSqrtCode RealRounding.roundPositiveCode
   rw [← lowerSqrtCode_eq_realRounding_lowerCode format radicand hpos.le]
   dsimp only
-  simp only [not_le.mpr hpos, not_le.mpr hsqrtPos, if_false, hunderflow,
+  simp only [not_le.mpr hpos, not_le.mpr hsqrtPos, ite_false, hunderflow,
     hbelow, habove]
   split_ifs <;> first | rfl | (exfalso; exact ‹¬_› (hexact ‹_›))
 
@@ -206,7 +206,7 @@ theorem roundCode_eq_reference_of_nonnegative
     have hsignificandBool : (radicand.significand == 0) = false :=
       beq_eq_false_iff_ne.mpr hsignificand
     unfold roundCode Model.roundSqrtCode
-    simp only [hsignificandBool, Bool.false_eq_true, if_false,
+    simp only [hsignificandBool, Bool.false_eq_true, ite_false,
       not_le.mpr hpositive,
       FloatLib.Numerics.Dyadic.isLess_eq_decide,
       FloatLib.Numerics.Dyadic.isEqual_eq_decide,

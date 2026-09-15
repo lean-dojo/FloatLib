@@ -44,7 +44,7 @@ theorem roundRat_eq_real (format : Format) (base argument : Rat)
     (hbase : 1 < base) (hargument : 0 < argument) :
     roundRat format base argument =
       RealRounding.round format (Real.logb (base : ℝ) (argument : ℝ)) := by
-  rw [roundRat, if_neg (not_le_of_gt hargument)]
+  rw [roundRat, ite_eq_right (not_le_of_gt hargument)]
   exact ComparisonRounding.roundSigned_eq_real format _ _
     (fun candidate => compareTarget_eq_real base argument candidate _ hbase hargument)
 

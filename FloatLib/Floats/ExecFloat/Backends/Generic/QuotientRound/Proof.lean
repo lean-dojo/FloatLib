@@ -149,7 +149,7 @@ theorem normalSpec_eq_roundRatScaled_of_some
       have hnormalized :
           normalizedExponent = totalExponent := by
         simp only [normalizedExponent, hcarryValue, Bool.false_eq_true,
-          if_false]
+          ite_false]
       by_cases hoverflow :
           Int.ofNat fmt.ieeeMaxNormalExponent < normalizedExponent
       · rw [hnormalized] at hoverflow
@@ -163,7 +163,7 @@ theorem normalSpec_eq_roundRatScaled_of_some
         simp [hden, hnum, rationalExponent, totalExponent, hlow] at hresult'
         have hpackedRaw := hresult'.2.2
         simpa only [totalExponent, rationalExponent, roundedMantissa, shift,
-          Int.ofNat_eq_natCast, if_neg hcarryRawCast] using hpackedRaw
+          Int.ofNat_eq_natCast, ite_eq_right hcarryRawCast] using hpackedRaw
       have hieee :
           Model.ieeeRoundRatScaled fmt sign num den exponent hfmt =
             Model.ofFields fmt sign
@@ -197,13 +197,13 @@ theorem normalSpec_eq_roundRatScaled_of_some
                   Numerics.RationalBinary.floorLog2 num den).toNat) den ==
               Model.pow2 (fmt.fracWidth + 1)) = false :=
           beq_eq_false_iff_ne.mpr hcarryRaw
-        simp only [hdenBool, hnumBool, Bool.false_eq_true, if_false, hhigh',
+        simp only [hdenBool, hnumBool, Bool.false_eq_true, ite_false, hhigh',
           hnotUnder', hnotSub']
         rw [hscaleRaw]
         rw [hcarryBool]
-        simp only [Bool.false_eq_true, if_false, hoverflow', totalExponent,
+        simp only [Bool.false_eq_true, ite_false, hoverflow', totalExponent,
           rationalExponent, roundedMantissa, shift]
-      rw [Model.roundRatScaled, dif_pos hfmt]
+      rw [Model.roundRatScaled, dite_eq_left hfmt]
       exact hpacked.symm.trans hieee.symm
   | true =>
       have hcarry :
@@ -223,7 +223,7 @@ theorem normalSpec_eq_roundRatScaled_of_some
         simpa only [Int.ofNat_eq_natCast] using hcarryRaw
       have hnormalized :
           normalizedExponent = totalExponent + 1 := by
-        simp only [normalizedExponent, hcarryValue, if_true]
+        simp only [normalizedExponent, hcarryValue, ite_true]
       by_cases hoverflow :
           Int.ofNat fmt.ieeeMaxNormalExponent < normalizedExponent
       · have hresult' := hresult
@@ -232,7 +232,7 @@ theorem normalSpec_eq_roundRatScaled_of_some
             totalExponent + 1 ≤
               Int.ofNat fmt.ieeeMaxNormalExponent := by
           have hboundRaw := hresult'.2.1
-          rw [if_pos hcarryRawCast] at hboundRaw
+          rw [ite_eq_left hcarryRawCast] at hboundRaw
           simpa only [totalExponent, rationalExponent, Int.ofNat_eq_natCast] using
             hboundRaw
         rw [hnormalized] at hoverflow
@@ -254,7 +254,7 @@ theorem normalSpec_eq_roundRatScaled_of_some
             hcarryRaw
         simpa only [Nat.sub_self, totalExponent, rationalExponent,
           Int.ofNat_eq_natCast, Model.pow2_eq_two_pow,
-          if_pos hcarryRawPow] using hpackedRaw
+          ite_eq_left hcarryRawPow] using hpackedRaw
       have hieee :
           Model.ieeeRoundRatScaled fmt sign num den exponent hfmt =
             Model.ofFields fmt sign
@@ -293,13 +293,13 @@ theorem normalSpec_eq_roundRatScaled_of_some
                   Numerics.RationalBinary.floorLog2 num den).toNat) den ==
               2 ^ (fmt.fracWidth + 1)) = true := by
           simpa only [Model.pow2_eq_two_pow] using hcarryBool
-        simp only [hdenBool, hnumBool, Bool.false_eq_true, if_false, hhigh',
+        simp only [hdenBool, hnumBool, Bool.false_eq_true, ite_false, hhigh',
           hnotUnder', hnotSub']
         rw [hscaleRaw]
-        simp only [hcarryBoolPow, if_true, hoverflow', if_false,
+        simp only [hcarryBoolPow, ite_true, hoverflow', ite_false,
           Model.pow2_eq_two_pow, Nat.sub_self, totalExponent,
           rationalExponent]
-      rw [Model.roundRatScaled, dif_pos hfmt]
+      rw [Model.roundRatScaled, dite_eq_left hfmt]
       exact hpacked.symm.trans hieee.symm
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteQuotientRound

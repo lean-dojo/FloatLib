@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Numerics.Enclosure.Elementary.Transcendental
 public import Mathlib.NumberTheory.Zsqrtd.GaussianInt
+import Mathlib.Analysis.Complex.Basic
+import Mathlib.Data.Nat.Prime.Int
 
 /-!
 # Exponentials at purely imaginary rational arguments
@@ -89,7 +91,7 @@ theorem int_add_sum_exp_intCast_mul_I_ne_zero {ι : Type*} (s : Finset ι)
     have hdiv : (p : ℤ) ∣ n * a₀ := by
       refine ⟨-total.re, ?_⟩
       linear_combination hre
-    rcases Int.Prime.dvd_mul' hp hdiv with h | h
+    rcases (Nat.prime_iff_prime_int.mp hp).dvd_or_dvd hdiv with h | h
     · exact hn h
     · have := Nat.le_of_dvd (Int.natAbs_pos.mpr ha₀) (Int.natCast_dvd.mp h)
       omega

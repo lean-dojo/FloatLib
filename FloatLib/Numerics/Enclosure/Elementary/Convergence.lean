@@ -180,19 +180,19 @@ theorem tendsto_log_lo (x : ℚ) (hx : 0 < x) :
     Tendsto (fun n : Nat => ((log x n).lo : ℝ)) atTop
       (𝓝 (Real.log (x : ℝ))) := by
   by_cases hlt : x < 1
-  · simpa only [log, if_pos hlt, RationalInterval.neg, Rat.cast_neg,
+  · simpa only [log, ite_eq_left hlt, RationalInterval.neg, Rat.cast_neg,
       Rat.cast_inv, Real.log_inv, neg_neg] using
       (tendsto_logLarge_hi x⁻¹ (inv_pos.mpr hx)).neg
-  · simpa only [log, if_neg hlt] using tendsto_logLarge_lo x hx
+  · simpa only [log, ite_eq_right hlt] using tendsto_logLarge_lo x hx
 
 /-- The upper reduced-logarithm endpoints converge for every positive rational argument. -/
 theorem tendsto_log_hi (x : ℚ) (hx : 0 < x) :
     Tendsto (fun n : Nat => ((log x n).hi : ℝ)) atTop
       (𝓝 (Real.log (x : ℝ))) := by
   by_cases hlt : x < 1
-  · simpa only [log, if_pos hlt, RationalInterval.neg, Rat.cast_neg,
+  · simpa only [log, ite_eq_left hlt, RationalInterval.neg, Rat.cast_neg,
       Rat.cast_inv, Real.log_inv, neg_neg] using
       (tendsto_logLarge_lo x⁻¹ (inv_pos.mpr hx)).neg
-  · simpa only [log, if_neg hlt] using tendsto_logLarge_hi x hx
+  · simpa only [log, ite_eq_right hlt] using tendsto_logLarge_hi x hx
 
 end FloatLib.Numerics.Enclosure

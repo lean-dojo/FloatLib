@@ -171,7 +171,7 @@ theorem restoreSignWord_toNat
             rw [UInt64.le_iff_toNat_le, hmodulusWord]
             exact hpositiveLtModulus.le
           unfold restoreSignWord DyadicRounding.restoreSignCode
-          simp only [if_true, beq_iff_eq, hzero, if_false]
+          simp only [ite_true, beq_iff_eq, hzero, ite_false]
           rw [UInt64.toNat_sub_of_le _ _ hcodeLe, hmodulusWord]
           simp [hpositiveNonzero]
         · have hwidthEq : format.bits = 64 := by
@@ -184,7 +184,7 @@ theorem restoreSignWord_toNat
             rw [modulusWord_eq_ofNat_modulus format heligible,
               UInt64.toNat_ofNat', hmodulus, Nat.mod_self]
           unfold restoreSignWord DyadicRounding.restoreSignCode
-          simp only [if_true, beq_iff_eq, hzero, if_false]
+          simp only [ite_true, beq_iff_eq, hzero, ite_false]
           rw [UInt64.toNat_sub, hmodulusWord, hmodulus]
           rw [Nat.add_zero, Nat.mod_eq_of_lt]
           · simp [hpositiveNonzero]
@@ -225,7 +225,7 @@ theorem bitAt_eq_testBit (value : UInt64) (index : Nat) :
 theorem lowMask_toNat (width : Nat) (hwidth : width < 64) :
     (lowMask width).toNat = 2 ^ width - 1 := by
   unfold lowMask
-  rw [if_pos hwidth, UInt64.toNat_sub_of_le]
+  rw [ite_eq_left hwidth, UInt64.toNat_sub_of_le]
   · simp [Nat.mod_eq_of_lt hwidth, Nat.shiftLeft_eq]
     rw [Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) hwidth)]
   · simp [UInt64.le_iff_toNat_le, Nat.mod_eq_of_lt hwidth,
@@ -245,7 +245,7 @@ theorem lowBits_toNat_of_le (value : UInt64) (width : Nat)
     (lowBits value width).toNat = value.toNat % 2 ^ width := by
   rcases hwidth.lt_or_eq with hwidth | rfl
   · exact lowBits_toNat value width hwidth
-  · simp only [lowBits, lowMask, lt_self_iff_false, if_false,
+  · simp only [lowBits, lowMask, lt_self_iff_false, ite_false,
       UInt64.toNat_and]
     change value.toNat &&& 2 ^ 64 - 1 = value.toNat % 2 ^ 64
     exact Nat.and_two_pow_sub_one_eq_mod _ _

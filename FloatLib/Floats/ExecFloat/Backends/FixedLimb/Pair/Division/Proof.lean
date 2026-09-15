@@ -270,8 +270,8 @@ private theorem roundNormalSpec_eq_some_of_packed (h : Eligible fmt)
     have hresultPack :
         packNormal fmt sign (UInt64.ofNat resultExponent.toNat) (implicitMantissa fmt) =
           result := by
-      simpa only [normalizeCarry, hcarryTrue, if_true] using hpack
-    simp only [hroundedCarry, if_true]
+      simpa only [normalizeCarry, hcarryTrue, ite_true] using hpack
+    simp only [hroundedCarry, ite_true]
     have hresultExponentCarry :
         Int.ofNat xExponent - Int.ofNat yExponent +
             Int.ofNat (fmt.bias + fmt.fracWidth) - Int.ofNat shift + 1 =
@@ -299,7 +299,7 @@ private theorem roundNormalSpec_eq_some_of_packed (h : Eligible fmt)
     have hresultPack :
         packNormal fmt sign (UInt64.ofNat resultExponent.toNat) rounded = result := by
       simpa [normalizeCarry, hcarryFalse] using hpack
-    simp only [hroundedNe, if_false]
+    simp only [hroundedNe, ite_false]
     have hroundedUpper : rounded.toNat < 2 ^ (fmt.fracWidth + 1) := by
       rw [pow2_eq_two_pow] at hroundedNe
       exact lt_of_le_of_ne hroundedBounds.2 hroundedNe
@@ -434,12 +434,12 @@ private theorem candidateShift_toNat_eq (fmt : FloatFormat)
     shift = if den.toNat ≤ num.toNat then fmt.fracWidth else fmt.fracWidth + 1 := by
   by_cases hle : den.toNat ≤ num.toNat
   · have hc : candidateShift = CandidateShift.exact := by
-      simpa only [hle, if_true] using hcandidateShift
-    rw [hshiftCandidate, hc, if_pos hle]
+      simpa only [hle, ite_true] using hcandidateShift
+    rw [hshiftCandidate, hc, ite_eq_left hle]
     rfl
   · have hc : candidateShift = CandidateShift.extra := by
-      simpa only [hle, if_false] using hcandidateShift
-    rw [hshiftCandidate, hc, if_neg hle]
+      simpa only [hle, ite_false] using hcandidateShift
+    rw [hshiftCandidate, hc, ite_eq_right hle]
     rfl
 
 private theorem carry_eq_of_rounded_eq (h : Eligible fmt)
@@ -713,7 +713,7 @@ theorem divNormal_refines (h : Eligible fmt)
         (UInt128.less_eq_true_iff num den).2 (Nat.lt_of_not_ge hle)
       have hlowNative' := hlowNative
       simp [totalExponent, rationalExponent, hless] at hlowNative'
-      rw [if_neg hle]
+      rw [ite_eq_right hle]
       simp only [Int.ofNat_eq_natCast] at hlowNative' ⊢
       omega
   have hnormal := divNormal_eq_roundNormalSpec_of_some h x y result hresult
@@ -737,7 +737,7 @@ theorem divNormal_refines (h : Eligible fmt)
         Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat := by
     unfold FiniteKernel.scale
     simp only [beq_iff_eq, Nat.ne_of_gt hxExponentBounds.1,
-      Nat.ne_of_gt hyExponentBounds.1, if_false]
+      Nat.ne_of_gt hyExponentBounds.1, ite_false]
     simp only [Int.ofNat_eq_natCast, Nat.cast_sub hxExponentBounds.1,
       Nat.cast_sub hyExponentBounds.1]
     omega
@@ -758,7 +758,7 @@ theorem divNormal_refines (h : Eligible fmt)
     Nat.ne_of_gt (lt_of_lt_of_le (Nat.two_pow_pos _) hnumBounds.1)
   have hdenNe : den.toNat ≠ 0 :=
     Nat.ne_of_gt (lt_of_lt_of_le (Nat.two_pow_pos _) hdenBounds.1)
-  simp only [hnumNe, hdenNe, beq_iff_eq, if_false]
+  simp only [hnumNe, hdenNe, beq_iff_eq, ite_false]
   rw [hscale]
   exact hrounded.symm
 

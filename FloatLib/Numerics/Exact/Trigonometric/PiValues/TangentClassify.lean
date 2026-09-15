@@ -141,7 +141,6 @@ theorem irrational_tanPi_of_exact_none (argument : ℚ)
         nlinarith [Real.pi_pos]
       exact_mod_cast this
     norm_num [tanPiExact, hcenter] at hnone
-    cases hnone
   · have hsame : (centeredPi argument : ℚ) * Real.pi = 0 := by
       apply Real.tan_inj_of_lt_of_lt_pi_div_two hangle_lower hangle_upper
         (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
@@ -150,7 +149,6 @@ theorem irrational_tanPi_of_exact_none (argument : ℚ)
       have := (mul_eq_zero.mp hsame).resolve_right Real.pi_ne_zero
       exact_mod_cast this
     norm_num [tanPiExact, hcenter] at hnone
-    cases hnone
   · have hsame : (centeredPi argument : ℚ) * Real.pi = Real.pi / 4 := by
       apply Real.tan_inj_of_lt_of_lt_pi_div_two hangle_lower hangle_upper
         (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
@@ -161,6 +159,5 @@ theorem irrational_tanPi_of_exact_none (argument : ℚ)
       push_cast
       exact this
     norm_num [tanPiExact, hcenter] at hnone
-    cases hnone
 
 end FloatLib.Numerics.TrigonometricComparison

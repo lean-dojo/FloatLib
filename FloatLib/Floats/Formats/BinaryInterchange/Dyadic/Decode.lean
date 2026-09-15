@@ -303,7 +303,7 @@ theorem sign_eq_signBit_of_ieeeToDyadic?_some
   have hnan := isNaN_eq_false_of_ieeeToDyadic?_some hx
   have hinf := isInf_eq_false_of_ieeeToDyadic?_some hx
   unfold ieeeToDyadic? at hx
-  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, if_false] at hx
+  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, ite_false] at hx
   split at hx
   · split at hx
     · simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
@@ -318,7 +318,7 @@ theorem isZero_eq_true_of_ieeeToDyadic?_some_of_mant_eq_zero
   have hnan := isNaN_eq_false_of_ieeeToDyadic?_some hx
   have hinf := isInf_eq_false_of_ieeeToDyadic?_some hx
   unfold ieeeToDyadic? at hx
-  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, if_false] at hx
+  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, ite_false] at hx
   split at hx <;> rename_i hexponent
   · split at hx <;> rename_i hfraction
     · simp [IEEE.isZero, hexponent, hfraction]

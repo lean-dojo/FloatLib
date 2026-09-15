@@ -201,7 +201,7 @@ theorem finiteMantissa_toNat
       else Model.pow2 52 + fraction.toNat := by
   by_cases hexponent : exponent = 0
   · simp [finiteMantissa, hexponent]
-  · simp only [finiteMantissa, beq_iff_eq, hexponent, if_false, UInt64.toNat_or]
+  · simp only [finiteMantissa, beq_iff_eq, hexponent, ite_false, UInt64.toNat_or]
     rw [show (0x0010000000000000 : UInt64).toNat = 2 ^ 52 by decide]
     rw [Nat.or_two_pow_eq_add_of_lt hfraction]
     rw [Model.pow2_eq_two_pow, Nat.add_comm]
@@ -213,7 +213,7 @@ theorem finiteMantissa_bounds
     2 ^ 52 ≤ (finiteMantissa exponent fraction).toNat ∧
       (finiteMantissa exponent fraction).toNat < 2 ^ 53 := by
   rw [finiteMantissa_toNat exponent fraction hfraction]
-  simp only [if_neg hexponent, Model.pow2_eq_two_pow]
+  simp only [ite_eq_right hexponent, Model.pow2_eq_two_pow]
   omega
 
 /-- Every decoded binary64 significand, normal or subnormal, has at most 53 significant bits. -/
@@ -446,10 +446,10 @@ theorem roundNormalProduct_refines
           product.toNat.log2 +
             ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
     by_cases hcarryTrue : carry = true
-    · rw [if_pos (hcarry.mp hcarryTrue)]
+    · rw [ite_eq_left (hcarry.mp hcarryTrue)]
       simp [normalizedPosition, hcarryTrue, hpositionAdd, hposition]
     · have hcarryFalse : carry = false := Bool.eq_false_of_not_eq_true hcarryTrue
-      rw [if_neg (fun h => hcarryTrue (hcarry.mpr h))]
+      rw [ite_eq_right (fun h => hcarryTrue (hcarry.mpr h))]
       simp [normalizedPosition, hcarryFalse, hposition]
   have hoverflowGeneric :
       ¬3171 <
@@ -465,24 +465,24 @@ theorem roundNormalProduct_refines
     apply UInt64.lt_iff_toNat_lt.mpr
     simpa using h
   unfold FiniteProductRound.round
-  simp only [beq_iff_eq, hproductNe, if_false]
+  simp only [beq_iff_eq, hproductNe, ite_false]
   rw [show FloatFormat.binary64.bias + 2 * FloatFormat.binary64.fracWidth - 1 =
       1126 by decide]
-  rw [if_neg hnormal]
-  rw [show FloatFormat.binary64.fracWidth = 52 by decide, if_pos hfracLe]
+  rw [ite_eq_right hnormal]
+  rw [show FloatFormat.binary64.fracWidth = 52 by decide, ite_eq_left hfracLe]
   rw [← hrounded]
   rw [show 3 * FloatFormat.binary64.bias + 2 * 52 - 2 = 3171 by decide]
-  rw [if_neg hoverflowGeneric]
+  rw [ite_eq_right hoverflowGeneric]
   rw [show FloatFormat.binary64.bias + 2 * 52 - 2 = 1125 by decide]
   rw [hpow52]
   rw [hnormalized]
   by_cases hcarryTrue : carry = true
-  · rw [if_pos (hcarry.mp hcarryTrue)]
+  · rw [ite_eq_left (hcarry.mp hcarryTrue)]
     have hroundedCarry : rounded.toNat = 0x0020000000000000 := by
       simpa [hpow53] using hcarry.mp hcarryTrue
     simp [hcarryTrue, hroundedCarry, hpow53']
   · have hcarryFalse : carry = false := Bool.eq_false_of_not_eq_true hcarryTrue
-    rw [if_neg (fun h => hcarryTrue (hcarry.mpr h))]
+    rw [ite_eq_right (fun h => hcarryTrue (hcarry.mpr h))]
     have hroundedNot : rounded.toNat ≠ pow2 53 := by
       intro h
       apply hcarryTrue
@@ -620,11 +620,11 @@ theorem mulNormalLimb_refines
       result hround
   unfold mulFiniteImpl?
   simp only
-  rw [if_neg (by simp [xExponent, xBits, hxExceptional, yExponent, yBits,
+  rw [ite_eq_right (by simp [xExponent, xBits, hxExceptional, yExponent, yBits,
     hyExceptional])]
   simp only [Option.some.injEq]
   rw [finiteScale_toNat xExponent, finiteScale_toNat yExponent]
-  simp only [if_neg hxZero, if_neg hyZero]
+  simp only [ite_eq_right hxZero, ite_eq_right hyZero]
   simpa [xBits, yBits, xExponent, yExponent, xFraction, yFraction,
     xMantissa, yMantissa, finiteMantissa, hxZero, hyZero] using
       hrefines.symm
@@ -770,8 +770,8 @@ theorem mulFiniteImpl_eq (x y : Value) :
       · by_cases hsign : dx.sign = dy.sign <;>
           simp [hyZero, FiniteProductRound.round, zero, hsign]
       · simp only [hxZero, hyZero, beq_iff_eq, Bool.or_eq_true, or_false,
-          if_false]
-        rw [if_pos (by decide : FloatFormat.binary64.isIEEE = true)]
+          ite_false]
+        rw [ite_eq_left (by decide : FloatFormat.binary64.isIEEE = true)]
 
 /-- Native-storage finite division equals the width-generic compact kernel. -/
 theorem divFiniteImpl_eq (x y : Value) :

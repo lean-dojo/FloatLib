@@ -214,7 +214,7 @@ theorem toReal_posMaxFinite (fmt : FloatFormat) :
     fmt.maxFiniteFracField (Nat.ne_of_gt fmt.maxFiniteExpField_pos)
     fmt.maxFiniteExpField_lt_two_pow fmt.maxFiniteFracField_lt_two_pow
     (by simpa [posMaxFinite, maxFinite] using isFinite_posMaxFinite fmt)]
-  simp only [Bool.false_eq_true, if_false, one_mul]
+  simp only [Bool.false_eq_true, ite_false, one_mul]
   congr 1
 
 /--

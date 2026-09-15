@@ -77,14 +77,14 @@ theorem abs_sound_extended
       simpa using (leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
         A.hi (zero fmt true) hA.hi_isNaN_eq_false (isNaN_zero fmt true)).1 hneg
     have hxNonpos : x ≤ 0 := EReal.coe_nonpos.1 (hx.2.trans hhiNonpos)
-    rw [abs, if_pos hneg]
+    rw [abs, ite_eq_left hneg]
     simpa [abs_of_nonpos hxNonpos] using neg_sound_extended A hA hx
   · by_cases hpos : leB (zero fmt false) A.lo = true
     · have hloNonneg : 0 ≤ toEReal A.lo := by
         simpa using (leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
           (zero fmt false) A.lo (isNaN_zero fmt false) hA.lo_isNaN_eq_false).1 hpos
       have hxNonneg : 0 ≤ x := EReal.coe_nonneg.1 (hloNonneg.trans hx.1)
-      rw [abs, if_neg hneg, if_pos hpos]
+      rw [abs, ite_eq_right hneg, ite_eq_left hpos]
       simpa [abs_of_nonneg hxNonneg] using hx
     · have hloNaN := hA.lo_isNaN_eq_false
       have hhiNaN := hA.hi_isNaN_eq_false
@@ -97,7 +97,7 @@ theorem abs_sound_extended
           exact (EReal.neg_le_neg_iff.2 hx.1).trans (le_max_left _ _)
         · rw [abs_of_nonneg (le_of_not_ge hxNonpos)]
           exact hx.2.trans (le_max_right _ _)
-      rw [abs, if_neg hneg, if_neg hpos]
+      rw [abs, ite_eq_right hneg, ite_eq_right hpos]
       constructor
       · change toEReal (zero fmt false) ≤ ((|x| : ℝ) : EReal)
         rw [toEReal_zero]

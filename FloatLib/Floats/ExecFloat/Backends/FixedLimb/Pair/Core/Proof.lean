@@ -458,7 +458,7 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
       Nat.mod_eq_of_lt (by omega : k < 64), hexpShiftedWord, Nat.lor_assoc, hmiddle]
     cases sign
     · simp
-    · simp only [if_true]
+    · simp only [ite_true]
       rw [signMask_toNat h, ← hE, ← hF, show E + F - 64 = E + k by omega]
       exact two_pow_or_eq_add hmiddleLt
   have hhighLt :
@@ -555,10 +555,10 @@ theorem decode_of_normalExponent (h : Eligible fmt) (x : Model fmt)
   have hfinite : Model.isFinite x = true := by
     simp [Model.isFinite, h.encoding, Model.IEEE.isFinite, hexponentFiniteNat]
   unfold FiniteKernel.decode?
-  rw [if_neg (by simp [hfinite])]
+  rw [ite_eq_right (by simp [hfinite])]
   dsimp only
   unfold FiniteKernel.decodeMantissa
-  rw [if_neg (by simpa using hexponentZeroNat)]
+  rw [ite_eq_right (by simpa using hexponentZeroNat)]
   rw [← hexponent, ← hsign, hmantissa]
 
 /-- Interpret normal finite-kernel components as their exact dyadic value. -/

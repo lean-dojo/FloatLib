@@ -161,7 +161,7 @@ private theorem rootStep_spec
           else
             ⟨doubledRoot.setLowBit, UInt128.sub expanded trial⟩) =
           (⟨doubledRoot, expanded⟩ : RestoringRootState UInt128)
-      rw [if_pos hnativeBelow]
+      rw [ite_eq_left hnativeBelow]
     rw [hstep]
     have hsquare :
         state.root.toNat * 2 * (state.root.toNat * 2) =
@@ -213,7 +213,7 @@ private theorem rootStep_spec
           (⟨doubledRoot.setLowBit,
               UInt128.sub expanded trial⟩ :
             RestoringRootState UInt128)
-      rw [if_neg (by simpa only [hnativeBelow] using Bool.false_ne_true)]
+      rw [ite_eq_right (by simpa only [hnativeBelow] using Bool.false_ne_true)]
     rw [hstep]
     have hsquare :
         (state.root.toNat * 2 + 1) * (state.root.toNat * 2 + 1) =
@@ -550,9 +550,9 @@ theorem roundRoot_toNat
         radicand.toNat - Nat.sqrt radicand.toNat * Nat.sqrt radicand.toNat ≤
           Nat.sqrt radicand.toNat := by
       simpa only [hremainder, hroot] using hle
-    simp only [roundRoot, hnative, Bool.false_eq_true, if_false]
+    simp only [roundRoot, hnative, Bool.false_eq_true, ite_false]
     rw [hroot]
-    simp only [hsemantic, if_true]
+    simp only [hsemantic, ite_true]
   · have hnative :
         FloatLib.Numerics.FixedWord.UInt128.less state.root state.remainder = true := by
       apply (FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff _ _).2
@@ -563,8 +563,8 @@ theorem roundRoot_toNat
       intro h
       apply hle
       simpa only [hremainder, hroot] using h
-    simp only [roundRoot, hnative, if_true]
+    simp only [roundRoot, hnative, ite_true]
     rw [hincrement, hroot]
-    simp only [hsemantic, if_false]
+    simp only [hsemantic, ite_false]
 
 end FloatLib.Numerics.FixedWord.RestoringSquareRoot

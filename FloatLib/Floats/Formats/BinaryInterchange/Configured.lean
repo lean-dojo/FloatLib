@@ -17,6 +17,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Pr
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormattingProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Roundtrip
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances

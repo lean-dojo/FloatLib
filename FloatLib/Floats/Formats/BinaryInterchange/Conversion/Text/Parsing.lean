@@ -40,6 +40,10 @@ inductive ParseError where
   | unsupportedInfinity (negative : Bool)
   /-- The input requests a NaN from an encoding with no NaN representation. -/
   | unsupportedNaN
+  /-- The input exceeds the caller's byte limit before character scanning. -/
+  | inputTooLong (actual maximum : Nat)
+  /-- The adjusted decimal or binary exponent exceeds the caller's magnitude limit. -/
+  | exponentTooLarge (actual maximum : Nat)
   deriving Repr, DecidableEq
 
 /-- Concise human-readable explanation of a character-input failure. -/
@@ -49,6 +53,10 @@ def ParseError.message : ParseError → String
   | .unsupportedInfinity false => "the destination format has no positive infinity"
   | .unsupportedInfinity true => "the destination format has no negative infinity"
   | .unsupportedNaN => "the destination format has no NaN representation"
+  | .inputTooLong actual maximum =>
+      s!"floating-point input has {actual} bytes; limit is {maximum}"
+  | .exponentTooLarge actual maximum =>
+      s!"floating-point exponent magnitude is {actual}; limit is {maximum}"
 
 instance : ToString ParseError where
   toString := ParseError.message
@@ -138,9 +146,14 @@ def convertText (fmt : FloatFormat) (mode : IEEERoundingMode) :
       | none => .error (.unsupportedInfinity negative)
   | .nan negative signaling payload => convertNaNText fmt negative signaling payload
 
-/-- Parse decimal, hexadecimal, special or legacy input and report all five IEEE exceptions.
-The digit limit H is unbounded: finite input is converted from its complete exact value. -/
-def parseWithStatus (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
+namespace TextParser
+
+/--
+Implementation core for character input, reporting all five IEEE exceptions.
+Finite input is converted from its complete exact value without resource limits.
+The caller-facing entrypoint is `Model.parse` in `BoundedParsing`.
+-/
+def run (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
     Except ParseError (IEEEOutcome fmt) :=
   match readText input with
   | some value => convertText fmt mode value
@@ -151,14 +164,6 @@ def parseWithStatus (fmt : FloatFormat) (mode : IEEERoundingMode) (input : Strin
         | some value => convertText fmt mode value
         | none => .error (.invalidSyntax input)
 
-/-- Character input with the original value-only interface; `parseWithStatus` exposes exceptions. -/
-def parse (fmt : FloatFormat) (rounding : IEEERoundingMode) (input : String) :
-    Except ParseError (Model fmt) :=
-  (parseWithStatus fmt rounding input).map (·.value)
-
-/-- Nearest-even character input, the default used by ordinary floating-point conversion. -/
-def parseNearest (fmt : FloatFormat) (input : String) :
-    Except ParseError (Model fmt) :=
-  parse fmt .nearestEven input
+end TextParser
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

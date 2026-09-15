@@ -53,7 +53,7 @@ theorem roundedPair_quantum_le_of_valid (f : Format) (mode : RoundingMode) (s : 
     exact_mod_cast (mul_lt_mul_iff_left₀ hu).mp hcmp
   have hn : mode.roundAt s x (roundingQuantum f x) ≠ f.coefficientBound := Nat.ne_of_lt hc
   change (roundedPair f mode s x).2 ≤ q
-  simp only [roundedPair, f.carry_eq, if_neg hn]
+  simp only [roundedPair, f.carry_eq, ite_eq_right hn]
   exact hq
 
 /-- Exact finite projection raises none of the five default exception flags. -/

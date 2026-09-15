@@ -139,9 +139,9 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_subnormal_finite_ge
   constructor
   · rw [hround]
     by_cases hnormal : pow2 fmt.fracWidth ≤ rounded
-    · rw [if_pos hnormal]
+    · rw [ite_eq_left hnormal]
       exact isFinite_ofFields_minNormal fmt hfmt
-    · rw [if_neg hnormal]
+    · rw [ite_eq_right hnormal]
       exact isFinite_ofFields_subnormal fmt hfmt rounded
         (by
           simpa [pow2_eq_two_pow] using lt_of_not_ge hnormal)

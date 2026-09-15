@@ -534,13 +534,13 @@ theorem roundInteriorCode_eq_roundPositiveCode_positive
     hregime hrun hleadingWidth hexponent hlower hupper
     hdenominator hremainder]
   unfold Model.roundPositiveCode
-  rw [if_neg (not_le.mpr htargetPositive)]
-  rw [if_neg hnotUnderflow]
+  rw [ite_eq_right (not_le.mpr htargetPositive)]
+  rw [ite_eq_right hnotUnderflow]
   rw [lowerCodeForPositive_eq_lowerCandidateFromQuotient_positive
     format regime exponentField quotient remainder denominator leading
     hregime hrun hleadingWidth hexponent hlower hupper
     hdenominator hremainder]
-  rw [if_pos
+  rw [ite_eq_left
     (lowerCandidateFromFields_succ_lt_signMask_positive
       format regime exponentField
         (jamRemainder quotient remainder) leading
@@ -608,13 +608,13 @@ theorem roundInteriorCode_eq_roundPositiveCode_negative
     hregime hrun hleadingWidth hexponent hlower hupper
     hdenominator hremainder]
   unfold Model.roundPositiveCode
-  rw [if_neg (not_le.mpr htargetPositive)]
-  rw [if_neg hnotUnderflow]
+  rw [ite_eq_right (not_le.mpr htargetPositive)]
+  rw [ite_eq_right hnotUnderflow]
   rw [lowerCodeForPositive_eq_lowerCandidateFromQuotient_negative
     format regime exponentField quotient remainder denominator leading
     hregime hrun hleadingWidth hexponent hlower hupper
     hdenominator hremainder]
-  rw [if_pos
+  rw [ite_eq_left
     (lowerCandidateFromFields_succ_lt_signMask_negative
       format regime exponentField
         (jamRemainder quotient remainder) leading

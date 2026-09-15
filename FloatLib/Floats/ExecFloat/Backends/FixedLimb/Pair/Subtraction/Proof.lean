@@ -113,9 +113,10 @@ private theorem packNormalizedDifference_eq_round (h : Eligible fmt)
           exponent.toNat + difference.toNat.log2 - fmt.fracWidth := by
       omega
     unfold FiniteProductRound.round
-    simp only [beq_iff_eq, hdifference, if_false]
-    rw [if_neg hnormalBranch, hnormalizedForm, if_neg hcarry, if_neg hoverflow, hencoded,
-      if_neg hcarry]
+    simp only [beq_iff_eq, hdifference, ite_false]
+    rw [ite_eq_right hnormalBranch, hnormalizedForm, ite_eq_right hcarry,
+      ite_eq_right hoverflow, hencoded,
+      ite_eq_right hcarry]
   · rw [hencodedWord, fmt.two_pow_expWidth_eq_two_mul_bias_add_two]
     omega
   · rw [hnormalized]
@@ -158,13 +159,13 @@ private theorem decode_neg_of_normalExponent (h : Eligible fmt) (x : Model fmt)
   have hfinite : Model.isFinite (neg x) = true := by
     simp [Model.isFinite, h.encoding, Model.IEEE.isFinite, hexponentFiniteNat]
   unfold FiniteKernel.decode?
-  rw [if_neg (by simp [hfinite])]
+  rw [ite_eq_right (by simp [hfinite])]
   dsimp only
   rw [Model.expField_neg, Model.fracField_neg]
   unfold FiniteKernel.decodeMantissa
-  rw [if_neg (by simpa using hexponentZeroNat)]
+  rw [ite_eq_right (by simpa using hexponentZeroNat)]
   rw [Model.signBit_neg]
-  rw [if_pos (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt h.isIEEE)]
+  rw [ite_eq_left (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt h.isIEEE)]
   rw [← hexponent, ← hsign, hmantissa]
 
 private theorem addComponents_opposite_large_left (h : Eligible fmt)

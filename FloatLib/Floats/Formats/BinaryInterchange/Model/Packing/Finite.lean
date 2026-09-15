@@ -146,10 +146,10 @@ theorem unpack_pack_finite_normal
     cases sign <;> rfl
   unfold Float.Model.UnpackedFloat.pack
   rw [← hbiased]
-  simp only [not_le.mpr (Nat.lt_of_lt_of_le hnoOverflow le_rfl), if_false, hbits, if_true]
+  simp only [not_le.mpr (Nat.lt_of_lt_of_le hnoOverflow le_rfl), ite_false, hbits, ite_true]
   unfold Float.Model.UnpackedFloat.unpack
   simp only [unpackExponent_packComponents, unpackMantissa_packComponents,
-    unpackSign_packComponents, hbiasedNeAllOnes, hbiasedNeZero, if_false, hmantissaDecode, hsign]
+    unpackSign_packComponents, hbiasedNeAllOnes, hbiasedNeZero, ite_false, hmantissaDecode, hsign]
   congr
 
 /-- Packing a representable normal model value preserves its exact real value. -/
@@ -241,7 +241,7 @@ theorem unpack_pack_finite_subnormal
         mantissa := by
     simpa [FloatFormat.toModel] using hmantissaDecode
   unfold Float.Model.UnpackedFloat.pack
-  simp only [hnotInfRaw, if_false, hnotNormalRaw]
+  simp only [hnotInfRaw, ite_false, hnotNormalRaw]
   unfold Float.Model.UnpackedFloat.unpack
   simp only [unpackExponent_packComponents, unpackMantissa_packComponents,
     unpackSign_packComponents]

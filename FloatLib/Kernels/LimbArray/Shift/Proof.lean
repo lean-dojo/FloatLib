@@ -51,10 +51,10 @@ theorem shiftLeftLimb_testBit (v : LimbArray) (q r i m : Nat) (hr : r < 32) (hm 
       (decide (32 * q + r ≤ 32 * i + m) && (toNat v).testBit (32 * i + m - (32 * q + r))) := by
   unfold shiftLeftLimb
   by_cases hi : i < q
-  · rw [if_pos hi]
+  · rw [ite_eq_left hi]
     have : ¬ (32 * q + r ≤ 32 * i + m) := by omega
     simp [this]
-  · rw [if_neg hi]
+  · rw [ite_eq_right hi]
     dsimp only
     obtain ⟨j, rfl⟩ : ∃ j, i = q + j := ⟨i - q, by omega⟩
     rw [Nat.add_sub_cancel_left]
@@ -66,7 +66,7 @@ theorem shiftLeftLimb_testBit (v : LimbArray) (q r i m : Nat) (hr : r < 32) (hm 
         simp [hm, hrm]
       · simp [hrm]
     by_cases hcase : r == 0 || j == 0
-    · rw [if_pos hcase, hhigh]
+    · rw [ite_eq_left hcase, hhigh]
       rw [Bool.or_eq_true, beq_iff_eq, beq_iff_eq] at hcase
       rcases hcase with hr0 | hj0
       · subst hr0
@@ -82,7 +82,7 @@ theorem shiftLeftLimb_testBit (v : LimbArray) (q r i m : Nat) (hr : r < 32) (hm 
           omega
         · have hle : ¬ (32 * q + r ≤ 32 * (q + 0) + m) := by omega
           simp [hrm]
-    · rw [if_neg hcase]
+    · rw [ite_eq_right hcase]
       rw [Bool.or_eq_true, beq_iff_eq, beq_iff_eq, not_or] at hcase
       obtain ⟨hr0, hj0⟩ := hcase
       rw [UInt32.toNat_or, Nat.testBit_or, hhigh, uint32_shiftRight_testBit _ _ _ (by omega)]
@@ -113,9 +113,9 @@ theorem limb_shiftLeft (v : LimbArray) (k i : Nat) :
       change i < (shiftLeft v k).size
       rw [size_shiftLeft]
       exact hi
-    rw [limb_eq_getElem _ hi', if_pos hi]
+    rw [limb_eq_getElem _ hi', ite_eq_left hi]
     simp [shiftLeft]
-  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), if_neg hi]
+  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), ite_eq_right hi]
 
 /-- The left shift multiplies the value by `2^k`. -/
 @[simp, grind =] theorem toNat_shiftLeft (v : LimbArray) (k : Nat) : toNat (shiftLeft v k) = toNat v * 2 ^ k := by
@@ -127,8 +127,8 @@ theorem limb_shiftLeft (v : LimbArray) (k i : Nat) :
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
   rw [← hdecomp, ← limb_testBit _ _ _ hn, limb_shiftLeft]
   by_cases hi : n / 32 < v.size + k / 32 + 1
-  · rw [if_pos hi, shiftLeftLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
-  · rw [if_neg hi]
+  · rw [ite_eq_left hi, shiftLeftLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
+  · rw [ite_eq_right hi]
     have hbig : 32 * v.size ≤ 32 * (n / 32) + n % 32 - k := by omega
     have hfalse : (toNat v).testBit (32 * (n / 32) + n % 32 - k) = false := by
       apply Nat.testBit_lt_two_pow
@@ -155,12 +155,12 @@ theorem shiftRightLimb_testBit (v : LimbArray) (q r i m : Nat) (hr : r < 32) (hm
     · rw [limb_testBit_eq_false v (i + q) (r + m) (by omega)]
       simp [hsum]
   by_cases hr0 : r == 0
-  · rw [if_pos hr0, hlow]
+  · rw [ite_eq_left hr0, hlow]
     rw [beq_iff_eq] at hr0
     subst hr0
     simp [hm]
   · rw [beq_iff_eq] at hr0
-    rw [if_neg (by simpa using hr0), UInt32.toNat_or, Nat.testBit_or, hlow,
+    rw [ite_eq_right (by simpa using hr0), UInt32.toNat_or, Nat.testBit_or, hlow,
       uint32_shiftLeft_testBit (v.limb (i + q + 1)) (32 - r) m (by omega)]
     by_cases hsum : r + m < 32
     · have hhigh : ¬ (32 - r ≤ m) := by omega
@@ -186,9 +186,9 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
       change i < (shiftRight v k).size
       rw [size_shiftRight]
       exact hi
-    rw [limb_eq_getElem _ hi', if_pos hi]
+    rw [limb_eq_getElem _ hi', ite_eq_left hi]
     simp [shiftRight]
-  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), if_neg hi]
+  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), ite_eq_right hi]
 
 /-- The right shift divides the value by `2^k`. -/
 @[simp, grind =] theorem toNat_shiftRight (v : LimbArray) (k : Nat) : toNat (shiftRight v k) = toNat v / 2 ^ k := by
@@ -200,8 +200,8 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
   rw [← hdecomp, ← limb_testBit _ _ _ hn, limb_shiftRight]
   by_cases hi : n / 32 < v.size
-  · rw [if_pos hi, shiftRightLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
-  · rw [if_neg hi]
+  · rw [ite_eq_left hi, shiftRightLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
+  · rw [ite_eq_right hi]
     have hbig : 32 * v.size ≤ 32 * (n / 32) + n % 32 + k := by omega
     have hfalse : (toNat v).testBit (32 * (n / 32) + n % 32 + k) = false := by
       apply Nat.testBit_lt_two_pow
@@ -227,18 +227,18 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
     toNat (roundShiftRightEven v shift) = Numerics.roundShiftRightEven (toNat v) shift := by
   unfold roundShiftRightEven
   by_cases hshift : shift == 0
-  · rw [if_pos hshift]
+  · rw [ite_eq_left hshift]
     rw [beq_iff_eq] at hshift
     subst hshift
     simp
-  · rw [if_neg hshift]
+  · rw [ite_eq_right hshift]
     rw [beq_iff_eq] at hshift
     have hpos : 0 < shift := Nat.pos_of_ne_zero hshift
     rw [Numerics.roundShiftRightEven_eq_guard_sticky _ _ hpos, testBit_eq, testBit_eq,
       anyBelow_eq]
     by_cases hcond : (toNat v).testBit (shift - 1) &&
         (decide (toNat v % 2 ^ (shift - 1) ≠ 0) || (toNat v).testBit shift)
-    · rw [if_pos hcond, if_pos hcond]
+    · rw [ite_eq_left hcond, ite_eq_left hcond]
       have hne : toNat v ≠ 0 := by
         intro hzero
         rw [hzero] at hcond
@@ -266,6 +266,6 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
       · rw [size_shiftRight, toNat_shiftRight]
         simp only [pow_zero, Nat.mul_one, UInt32.toNat_one]
         omega
-    · rw [if_neg hcond, if_neg hcond, toNat_shiftRight, Nat.add_zero]
+    · rw [ite_eq_right hcond, ite_eq_right hcond, toNat_shiftRight, Nat.add_zero]
 
 end FloatLib.Numerics.LimbArray

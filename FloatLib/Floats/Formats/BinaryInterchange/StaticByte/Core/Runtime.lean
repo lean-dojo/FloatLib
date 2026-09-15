@@ -34,8 +34,8 @@ OCP, IEEE, ONNX, and custom format packages can share these carrier and refineme
 Each descriptor still determines its own exceptional-value policy.
 
 Lean represents subtypes identically to their data carrier, so `Code F` has the runtime
-representation of `UInt8`; its bound is proof-only. See Lean 4.33 `Init.Prelude`,
-<https://github.com/leanprover/lean4/blob/v4.33.0/src/Init/Prelude.lean#L648-L652>.
+representation of `UInt8`; its bound is proof-only. See Lean `Init.Prelude`,
+<https://github.com/leanprover/lean4/blob/v4.34.0/src/Init/Prelude.lean#L641-L643>.
 
 `benchmarks/scripts/checks/static-lowbit-codegen.sh` checks the intended allocation and
 specialization properties.

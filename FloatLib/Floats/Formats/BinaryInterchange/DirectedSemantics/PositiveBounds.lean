@@ -48,10 +48,10 @@ private theorem isFinite_roundSubnormalDown
         else
           ofFields fmt false 0 mantissa) = true := by
   by_cases hzero : mantissa = 0
-  · rw [if_pos hzero]
+  · rw [ite_eq_left hzero]
     exact isFinite_eq_true_of_isZero_eq_true _
       (isZero_zero fmt false)
-  · rw [if_neg hzero]
+  · rw [ite_eq_right hzero]
     exact isFinite_ofFields_ieee fmt hfmt false 0 mantissa
       fmt.expAllOnesNat_pos
 
@@ -66,9 +66,9 @@ private theorem isFinite_roundSubnormalUp
           ofFields fmt false 0 mantissa) = true := by
   by_cases hzero : mantissa = 0
   · simp [hzero, isFinite_posMinSubnormal]
-  · rw [if_neg hzero]
+  · rw [ite_eq_right hzero]
     by_cases hnormal : pow2 fmt.fracWidth ≤ mantissa
-    · rw [if_pos hnormal]
+    · rw [ite_eq_left hnormal]
       exact isFinite_ofFields_ieee fmt hfmt false 1 0
         (by
           have hfour : 4 ≤ 2 ^ fmt.expWidth := by
@@ -77,7 +77,7 @@ private theorem isFinite_roundSubnormalUp
                 fmt.expWidth_ge_two
           unfold FloatFormat.expAllOnesNat
           omega)
-    · rw [if_neg hnormal]
+    · rw [ite_eq_right hnormal]
       exact isFinite_ofFields_ieee fmt hfmt false 0 mantissa
         fmt.expAllOnesNat_pos
 
@@ -147,7 +147,7 @@ theorem toReal_roundDyadicPosDown_eq_roundAt_of_le_max
           ((mantissa.log2 : Int) + exponent)
           hroundedHigh hnormal hmax
       simp only [rounded] at hguard
-      simp only [hguard, Bool.false_eq_true, if_false]
+      simp only [hguard, Bool.false_eq_true, ite_false]
       rw [toReal_ofFields_normalized fmt rounded
         ((mantissa.log2 : Int) + exponent)
         hroundedLow hroundedHigh hnormal hmax
@@ -250,7 +250,7 @@ theorem isFinite_roundDyadicPosDown
             hnormal hmax hfractionLe
         rw [roundDyadicPosDown_eq_normal fmt mantissa exponent hnormal hmax]
         simp only [rounded] at hguard
-        simp only [hguard, Bool.false_eq_true, if_false]
+        simp only [hguard, Bool.false_eq_true, ite_false]
         exact
           isFinite_ofFields_of_normal_exponent fmt hfmt
             (rounded - pow2 fmt.fracWidth)
@@ -371,14 +371,14 @@ private theorem roundDyadicPosUp_normal_no_carry_finite_roundAt
   constructor
   · rw [hround]
     simp only [rounded] at hguard
-    simp only [hguard, Bool.false_eq_true, if_false]
+    simp only [hguard, Bool.false_eq_true, ite_false]
     exact
       isFinite_ofFields_normalized fmt hfmt rounded
         ((mantissa.log2 : Int) + exponent)
         hnormal hmax
   · rw [hround]
     simp only [rounded] at hguard
-    simp only [hguard, Bool.false_eq_true, if_false]
+    simp only [hguard, Bool.false_eq_true, ite_false]
     rw [toReal_ofFields_normalized fmt rounded
       ((mantissa.log2 : Int) + exponent)
       hroundedLow hroundedHigh' hnormal hmax

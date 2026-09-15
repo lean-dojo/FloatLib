@@ -35,16 +35,16 @@ theorem cexp_toDyadic? {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
   have hf := fracField_lt_pow2 x
   by_cases he : expField x = 0
   · by_cases hz : fracField x = 0
-    · simp only [he, hz, if_true, Option.some.injEq] at hshape
+    · simp only [he, hz, ite_true, Option.some.injEq] at hshape
       simp [hshape] at hm
-    · simp only [he, hz, if_true, if_false, Option.some.injEq] at hshape
+    · simp only [he, hz, ite_true, ite_false, Option.some.injEq] at hshape
       rw [hshape]
       have hl : (fracField x).log2 < fmt.fracWidth := by
         rw [Nat.log2_eq_log_two]
         exact (Nat.log_lt_iff_lt_pow (by decide) hz).mpr hf
       simp only [fexpOf, fltExp, Int.ofNat_eq_natCast]
       exact max_eq_right (by omega)
-  · simp only [he, if_false, Option.some.injEq] at hshape
+  · simp only [he, ite_false, Option.some.injEq] at hshape
     rw [hshape]
     have hm' : pow2 fmt.fracWidth + fracField x ≠ 0 := by
       have hp : 0 < pow2 fmt.fracWidth := by simp [pow2_eq_two_pow]

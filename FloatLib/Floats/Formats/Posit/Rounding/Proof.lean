@@ -45,7 +45,7 @@ theorem lowerCodeByBisection_lt_upper
   | succ fuel inductionHypothesis =>
       rw [lowerCodeByBisection]
       by_cases hnontrivial : lower + 1 < upper
-      · rw [if_pos hnontrivial]
+      · rw [ite_eq_left hnontrivial]
         let middle := (lower + upper) / 2
         have hlowerMiddle : lower < middle := by
           dsimp [middle]
@@ -54,13 +54,13 @@ theorem lowerCodeByBisection_lt_upper
           dsimp [middle]
           omega
         by_cases haccept : accept middle
-        · rw [if_pos haccept]
+        · rw [ite_eq_left haccept]
           exact inductionHypothesis middle upper hmiddleUpper
-        · rw [if_neg haccept]
+        · rw [ite_eq_right haccept]
           exact lt_trans
             (inductionHypothesis lower middle hlowerMiddle)
             hmiddleUpper
-      · rw [if_neg hnontrivial]
+      · rw [ite_eq_right hnontrivial]
         exact hlower
 
 /-- Bounded bisection never returns below its initial lower endpoint. -/
@@ -73,18 +73,18 @@ theorem lower_le_lowerCodeByBisection
   | succ fuel inductionHypothesis =>
       rw [lowerCodeByBisection]
       by_cases hnontrivial : lower + 1 < upper
-      · rw [if_pos hnontrivial]
+      · rw [ite_eq_left hnontrivial]
         let middle := (lower + upper) / 2
         have hlowerMiddle : lower < middle := by
           dsimp [middle]
           omega
         by_cases haccept : accept middle
-        · rw [if_pos haccept]
+        · rw [ite_eq_left haccept]
           exact hlowerMiddle.le.trans
             (inductionHypothesis middle upper)
-        · rw [if_neg haccept]
+        · rw [ite_eq_right haccept]
           exact inductionHypothesis lower middle
-      · rw [if_neg hnontrivial]
+      · rw [ite_eq_right hnontrivial]
 
 /--
 Bounded bisection is monotone under pointwise inclusion of accepted candidates.
@@ -105,7 +105,7 @@ theorem lowerCodeByBisection_mono_accept
   | succ fuel inductionHypothesis =>
       rw [lowerCodeByBisection, lowerCodeByBisection]
       by_cases hnontrivial : lower + 1 < upper
-      · rw [if_pos hnontrivial, if_pos hnontrivial]
+      · rw [ite_eq_left hnontrivial, ite_eq_left hnontrivial]
         let middle := (lower + upper) / 2
         have hlowerMiddle : lower < middle := by
           dsimp [middle]
@@ -125,13 +125,13 @@ theorem lowerCodeByBisection_mono_accept
         by_cases hleft : leftAccept middle
         · have hright : rightAccept middle = true :=
             haccept middle hleft
-          simp only [hleft, hright, if_true]
+          simp only [hleft, hright, ite_true]
           exact inductionHypothesis middle upper
         · have hleftFalse : leftAccept middle = false :=
             Bool.eq_false_of_not_eq_true hleft
-          simp only [hleftFalse, Bool.false_eq_true, if_false]
+          simp only [hleftFalse, Bool.false_eq_true, ite_false]
           by_cases hright : rightAccept middle
-          · simp only [hright, if_true]
+          · simp only [hright, ite_true]
             exact
               (lowerCodeByBisection_lt_upper
                 leftAccept fuel lower middle hlowerMiddle).le.trans
@@ -139,9 +139,9 @@ theorem lowerCodeByBisection_mono_accept
                   rightAccept fuel middle upper)
           · have hrightFalse : rightAccept middle = false :=
               Bool.eq_false_of_not_eq_true hright
-            simp only [hrightFalse, Bool.false_eq_true, if_false]
+            simp only [hrightFalse, Bool.false_eq_true, ite_false]
             exact inductionHypothesis lower middle
-      · rw [if_neg hnontrivial, if_neg hnontrivial]
+      · rw [ite_eq_right hnontrivial, ite_eq_right hnontrivial]
 
 /--
 Bounded bisection depends only on predicate values strictly inside its current interval.
@@ -162,7 +162,7 @@ theorem lowerCodeByBisection_congr
   | succ fuel inductionHypothesis =>
       rw [lowerCodeByBisection, lowerCodeByBisection]
       by_cases hnontrivial : lower + 1 < upper
-      · rw [if_pos hnontrivial, if_pos hnontrivial]
+      · rw [ite_eq_left hnontrivial, ite_eq_left hnontrivial]
         let middle := (lower + upper) / 2
         have hlowerMiddle : lower < middle := by
           dsimp [middle]
@@ -187,7 +187,7 @@ theorem lowerCodeByBisection_congr
                 rightAccept fuel lower middle
         rw [hmiddle]
         by_cases haccept : rightAccept middle
-        · simp only [haccept, if_true]
+        · simp only [haccept, ite_true]
           apply inductionHypothesis
           intro code hmiddleCode hcodeUpper
           exact hagrees code
@@ -195,13 +195,13 @@ theorem lowerCodeByBisection_congr
         · have hacceptFalse :=
             Bool.eq_false_of_not_eq_true haccept
           simp only [hacceptFalse,
-            Bool.false_eq_true, if_false]
+            Bool.false_eq_true, ite_false]
           apply inductionHypothesis
           intro code hlowerCode hcodeMiddle
           exact hagrees code hlowerCode
             (hcodeMiddle.trans hmiddleUpper)
-      · rw [if_neg hnontrivial,
-          if_neg hnontrivial]
+      · rw [ite_eq_right hnontrivial,
+          ite_eq_right hnontrivial]
 
 /--
 Bounded bisection exactly recovers a cutoff when the accepted codes form a natural-number prefix.
@@ -227,7 +227,7 @@ theorem lowerCodeByBisection_eq_cutoff
   | succ fuel inductionHypothesis =>
       rw [lowerCodeByBisection]
       by_cases hnontrivial : lower + 1 < upper
-      · rw [if_pos hnontrivial]
+      · rw [ite_eq_left hnontrivial]
         let middle := (lower + upper) / 2
         have hlowerMiddle : lower < middle := by
           dsimp [middle]
@@ -258,7 +258,7 @@ theorem lowerCodeByBisection_eq_cutoff
           · rw [Nat.pow_succ] at hspan
             dsimp [middle]
             omega
-      · rw [if_neg hnontrivial]
+      · rw [ite_eq_right hnontrivial]
         omega
 
 /--
@@ -342,11 +342,11 @@ theorem roundPositiveCode_eq_maxPositive_of_lowerCode
     roundPositiveCode format target =
       format.signMaskNat - 1 := by
   unfold roundPositiveCode
-  rw [if_neg (not_le_of_gt hpositive)]
-  rw [if_neg (not_lt_of_ge hminimum)]
+  rw [ite_eq_right (not_le_of_gt hpositive)]
+  rw [ite_eq_right (not_lt_of_ge hminimum)]
   dsimp only
   rw [hlower]
-  rw [if_neg]
+  rw [ite_eq_right]
   have hsignMaskPositive := format.signMaskNat_pos
   omega
 
@@ -426,18 +426,18 @@ theorem roundPositiveCode_nonnegativeRatAt
         format format.one_lt_signMaskNat hcode).2
         (by omega)
   unfold roundPositiveCode
-  rw [if_neg (not_le_of_gt htargetPos)]
-  rw [if_neg (not_lt_of_ge hminLe)]
+  rw [ite_eq_right (not_le_of_gt htargetPos)]
+  rw [ite_eq_right (not_lt_of_ge hminLe)]
   dsimp only
   rw [lowerCodeForPositive_nonnegativeRatAt
     format code hcode]
   by_cases hupper :
       code + 1 < format.signMaskNat
-  · rw [if_pos hupper]
-    rw [if_pos
+  · rw [ite_eq_left hupper]
+    rw [ite_eq_left
       (nonnegativeRatAt_lt_roundingThreshold
         format hcode)]
-  · rw [if_neg hupper]
+  · rw [ite_eq_right hupper]
 
 /-- Model-valued positive rounding exactly re-encodes every nonnegative finite code. -/
 theorem roundPositiveRat_nonnegativeRatAt
@@ -476,8 +476,8 @@ theorem roundRat_nonnegativeRatAt
       0 < nonnegativeRatAt format code :=
     nonnegativeRatAt_pos format hpos hcode
   unfold roundRat
-  rw [if_neg (ne_of_gt htargetPos)]
-  rw [if_neg (not_lt_of_ge htargetPos.le)]
+  rw [ite_eq_right (ne_of_gt htargetPos)]
+  rw [ite_eq_right (not_lt_of_ge htargetPos.le)]
   exact roundPositiveRat_nonnegativeRatAt
     format hcode
 

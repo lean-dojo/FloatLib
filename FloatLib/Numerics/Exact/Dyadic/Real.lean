@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Dyadic.Basic
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Rat.Cast.CharZero
 
 /-!

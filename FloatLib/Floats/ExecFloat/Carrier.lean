@@ -20,8 +20,8 @@ cannot disable code generation for the carrier.
 The nominal format tag is a proposition attached through `Subtype`. Lean specifies that a subtype
 is represented identically to its carrier in compiled code, so a static format using `UInt32`
 continues to cross generated entry points as a native 32-bit word. See the source documentation on
-`Subtype` in Lean 4.33's `Init.Prelude`:
-<https://github.com/leanprover/lean4/blob/v4.33.0/src/Init/Prelude.lean#L648-L652>.
+`Subtype` in Lean's `Init.Prelude`:
+<https://github.com/leanprover/lean4/blob/v4.34.0/src/Init/Prelude.lean#L641-L643>.
 Static format packages may therefore choose `UInt8`, `UInt32`, `UInt64`, fixed limb records, or
 another direct carrier, while dynamic packages may choose descriptor-bearing or runtime-sized
 storage without changing the universal API.

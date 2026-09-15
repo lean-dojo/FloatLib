@@ -35,7 +35,7 @@ def ftzThreshold (emin prec : ℤ) : ℤ := emin + prec - 1
 /-- Below the threshold, `ftzExp` selects the threshold itself. -/
 theorem ftzExp_eq_threshold {emin prec e : ℤ} (h : e ≤ ftzThreshold emin prec) :
     ftzExp emin prec e = ftzThreshold emin prec := by
-  rw [ftzExp, if_pos]
+  rw [ftzExp, ite_eq_left]
   · rfl
   · simp [ftzThreshold] at h ⊢
     linarith
@@ -43,7 +43,7 @@ theorem ftzExp_eq_threshold {emin prec e : ℤ} (h : e ≤ ftzThreshold emin pre
 /-- Above the threshold, `ftzExp` agrees with `e - prec`. -/
 theorem ftzExp_eq_sub {emin prec e : ℤ} (h : ftzThreshold emin prec < e) :
     ftzExp emin prec e = e - prec := by
-  rw [ftzExp, if_neg]
+  rw [ftzExp, ite_eq_right]
   simp [ftzThreshold] at h ⊢
   linarith
 

@@ -11,6 +11,7 @@ public import Mathlib.Data.Nat.Prime.Infinite
 public import Mathlib.Analysis.SpecificLimits.Normed
 public import Mathlib.RingTheory.Algebraic.Integral
 public import Mathlib.RingTheory.Localization.Integral
+import Mathlib.Data.Nat.Prime.Int
 
 /-!
 # Exponentials of nonzero rational arguments are transcendental
@@ -64,7 +65,7 @@ theorem int_add_sum_exp_intCast_ne_zero {ι : Type*} (s : Finset ι)
       refine ⟨-(∑ k ∈ s, a k * g.eval (argument k)), ?_⟩
       dsimp [z] at hz
       linear_combination hz
-    rcases Int.Prime.dvd_mul' hp hdiv with h | h
+    rcases (Nat.prime_iff_prime_int.mp hp).dvd_or_dvd hdiv with h | h
     · exact hn h
     · have := Nat.le_of_dvd (Int.natAbs_pos.mpr ha₀) (Int.natCast_dvd.mp h)
       omega

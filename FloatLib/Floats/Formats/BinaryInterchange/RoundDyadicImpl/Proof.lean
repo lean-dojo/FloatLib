@@ -64,7 +64,7 @@ private theorem ofModel_finite_subnormal_eq_ofFields
     simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]
     omega
   unfold ofModel ofModelBits Float.Model.UnpackedFloat.pack
-  simp only [hnotOverflow, if_false, hnotNormal]
+  simp only [hnotOverflow, ite_false, hnotNormal]
   rw [← ofModelBits_toModelBits (ofFields fmt negative 0 mantissa)]
   rw [toModelBits_ofFields]
   rfl
@@ -84,7 +84,7 @@ private theorem ofModel_finite_normal_eq_ofFields_raw
           (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat
         mantissa := by
   unfold ofModel ofModelBits Float.Model.UnpackedFloat.pack
-  simp only [hnoOverflow, if_false, hbits, if_true]
+  simp only [hnoOverflow, ite_false, hbits, ite_true]
   rw [← ofModelBits_toModelBits
     (ofFields fmt negative
       (exponent + (FloatFormat.toModel fmt).exponentBias +
@@ -108,7 +108,7 @@ private theorem ofModel_finite_overflow_eq_signedInfinity
           (.finite (modelSign negative) mantissa exponent (Nat.pos_of_ne_zero hm)) =
         ofModel fmt (.infinity (modelSign negative)) := by
     unfold ofModel ofModelBits Float.Model.UnpackedFloat.pack
-    simp only [hoverflow, if_true]
+    simp only [hoverflow, ite_true]
   rw [hpack]
   cases negative
   · exact (posInf_eq_ofModel_infinity fmt).symm
@@ -346,8 +346,8 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal
         (roundMantissaAtExponentEven_minSubnormal_eq_match
           fmt d.significand d.exponent).symm
     unfold ieeeRoundDyadicImpl
-    simp only [beq_iff_eq, hm, if_false]
-    rw [if_pos hsub]
+    simp only [beq_iff_eq, hm, ite_false]
+    rw [ite_eq_left hsub]
     exact congrArg
       (fun fraction : Nat =>
         if fraction = 0 then
@@ -421,8 +421,8 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
             (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
             (normalizedMantissa - pow2 fmt.fracWidth) := by
     unfold ieeeRoundDyadicImpl
-    simp only [beq_iff_eq, hm, if_false]
-    rw [if_neg (not_lt_of_ge hnormal)]
+    simp only [beq_iff_eq, hm, ite_false]
+    rw [ite_eq_right (not_lt_of_ge hnormal)]
     rfl
   rw [himpl]
   unfold ieeeRoundDyadic
@@ -443,8 +443,8 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
         fmt d.negative (pow2 fmt.fracWidth)
         (exponent + 1 - fmt.fracWidth)
         (by simp [pow2_eq_two_pow]) hmodelOverflow]
-      simp only [beq_iff_eq, if_true]
-      rw [if_pos hoverflow]
+      simp only [beq_iff_eq, ite_true]
+      rw [ite_eq_left hoverflow]
     · have hmax :
           exponent + 1 ≤
             Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) :=
@@ -457,8 +457,8 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
           simp only [pow2_eq_two_pow, pow_succ]
           omega)
         hminCarry hmax]
-      simp only [beq_iff_eq, if_true]
-      rw [if_neg (not_lt_of_ge hmax)]
+      simp only [beq_iff_eq, ite_true]
+      rw [ite_eq_right (not_lt_of_ge hmax)]
   · have hhigh : rounded < pow2 (fmt.fracWidth + 1) :=
       lt_of_le_of_ne hhighLe hcarry
     have hroundedNe : rounded ≠ 0 :=
@@ -474,15 +474,15 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
       rw [ofModel_finite_overflow_eq_signedInfinity
         fmt d.negative rounded (exponent - fmt.fracWidth)
         hroundedNe hmodelOverflow]
-      simp only [beq_iff_eq, hcarry, if_false]
-      rw [if_pos hoverflow]
+      simp only [beq_iff_eq, hcarry, ite_false]
+      rw [ite_eq_left hoverflow]
     · have hmax :
           exponent ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) :=
         le_of_not_gt hoverflow
       rw [ofModel_finite_normalized_eq_ofFields
         fmt d.negative rounded exponent hlow hhigh hnormal hmax]
-      simp only [beq_iff_eq, hcarry, if_false]
-      rw [if_neg (not_lt_of_ge hmax)]
+      simp only [beq_iff_eq, hcarry, ite_false]
+      rw [ite_eq_right (not_lt_of_ge hmax)]
 
 /--
 The direct integer dyadic rounder computes the same result as Lean's format-parameterized logical
@@ -555,8 +555,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
       have hgeneral :
           roundDyadicGeneral fmt d = nativeOverflow fmt d.negative := by
         unfold roundDyadicGeneral
-        simp only [beq_iff_eq, hm, if_false]
-        rw [if_pos hoverflow']
+        simp only [beq_iff_eq, hm, ite_false]
+        rw [ite_eq_left hoverflow']
       have himpl :
           ieeeRoundDyadicImpl fmt d =
             let carry := rounded == pow2 (fmt.fracWidth + 1)
@@ -572,8 +572,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
                 (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
                 (normalizedMantissa - pow2 fmt.fracWidth) := by
         unfold ieeeRoundDyadicImpl
-        simp only [beq_iff_eq, hm, if_false]
-        rw [if_neg (not_lt_of_ge hnormalIEEE')]
+        simp only [beq_iff_eq, hm, ite_false]
+        rw [ite_eq_right (not_lt_of_ge hnormalIEEE')]
         rfl
       rw [hgeneral, himpl,
         nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
@@ -583,10 +583,10 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
             Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) <
               totalExponent + 1 := by
           omega
-        simp only [hcarry, if_true]
-        rw [if_pos hoverflowCarry]
-      · simp only [hcarry, if_false]
-        rw [if_pos hoverflowIEEE]
+        simp only [hcarry, ite_true]
+        rw [ite_eq_left hoverflowCarry]
+      · simp only [hcarry, ite_false]
+        rw [ite_eq_left hoverflowIEEE]
     · have htotalMax : totalExponent ≤ fmt.maxNormalExponent :=
         le_of_not_gt hoverflow
       have hoverflow' :
@@ -630,8 +630,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
               else
                 ofFields fmt d.negative 0 fraction := by
           unfold roundDyadicGeneral
-          simp only [beq_iff_eq, hm, if_false]
-          rw [if_neg hoverflow', if_pos hsub', halign]
+          simp only [beq_iff_eq, hm, ite_false]
+          rw [ite_eq_right hoverflow', ite_eq_left hsub', halign]
           simp only [packRoundedSubnormal, beq_iff_eq, fraction]
           rfl
         have himpl :
@@ -643,8 +643,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
               else
                 ofFields fmt d.negative 0 fraction := by
           unfold ieeeRoundDyadicImpl
-          simp only [beq_iff_eq, hm, if_false]
-          rw [if_pos hsubIEEE']
+          simp only [beq_iff_eq, hm, ite_false]
+          rw [ite_eq_left hsubIEEE']
           rfl
         rw [hgeneral, himpl]
         by_cases hzero : fraction = 0
@@ -695,8 +695,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
               else
                 ofFields fmt d.negative encodedExponent encodedFraction := by
           unfold roundDyadicGeneral
-          simp only [beq_iff_eq, hm, if_false]
-          rw [if_neg hoverflow', if_neg hsub']
+          simp only [beq_iff_eq, hm, ite_false]
+          rw [ite_eq_right hoverflow', ite_eq_right hsub']
           simp only [packRoundedNormal, rounded, roundMantissaToLeadingBitEven, totalExponent,
             Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq, ite_or]
         have himpl :
@@ -715,8 +715,8 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
                     (normalizedExponent + Int.ofNat fmt.bias))
                   (normalizedMantissa - pow2 fmt.fracWidth) := by
           unfold ieeeRoundDyadicImpl
-          simp only [beq_iff_eq, hm, if_false]
-          rw [if_neg (not_lt_of_ge hnormalIEEE')]
+          simp only [beq_iff_eq, hm, ite_false]
+          rw [ite_eq_right (not_lt_of_ge hnormalIEEE')]
           rfl
         rw [hgeneral, himpl]
         simp only [beq_iff_eq]
@@ -736,9 +736,9 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
             have hnormalizedOverflowBool :
                 decide (fmt.maxNormalExponent < totalExponent + 1) = true :=
               decide_eq_true hnormalizedOverflow
-            simp only [hcarry, if_true, hnormalizedOverflowBool,
+            simp only [hcarry, ite_true, hnormalizedOverflowBool,
               Bool.true_or, nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
-            rw [if_pos hnormalizedOverflowIEEE]
+            rw [ite_eq_left hnormalizedOverflowIEEE]
           · have hnormalizedMax :
                 totalExponent + 1 ≤ fmt.maxNormalExponent :=
               le_of_not_gt hnormalizedOverflow
@@ -754,9 +754,9 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
             have hnormalizedOverflowBool :
                 decide (fmt.maxNormalExponent < totalExponent + 1) = false :=
               decide_eq_false hnormalizedOverflow
-            simp only [hcarry, if_true, hnormalizedOverflowBool,
-              Bool.false_or, hguard, Bool.false_eq_true, if_false]
-            rw [if_neg (not_lt_of_ge hnormalizedMaxIEEE)]
+            simp only [hcarry, ite_true, hnormalizedOverflowBool,
+              Bool.false_or, hguard, Bool.false_eq_true, ite_false]
+            rw [ite_eq_right (not_lt_of_ge hnormalizedMaxIEEE)]
             rw [hbias]
         · have hmantissaHigh :
               rounded < pow2 (fmt.fracWidth + 1) :=
@@ -772,9 +772,9 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
           have hoverflowBool :
               decide (fmt.maxNormalExponent < totalExponent) = false :=
             decide_eq_false hoverflow
-          simp only [hcarry, if_false, hoverflowBool, Bool.false_or,
-            hguard, Bool.false_eq_true, if_false]
-          rw [if_neg (not_lt_of_ge htotalMaxIEEE)]
+          simp only [hcarry, ite_false, hoverflowBool, Bool.false_or,
+            hguard, Bool.false_eq_true, ite_false]
+          rw [ite_eq_right (not_lt_of_ge htotalMaxIEEE)]
           rw [hbias]
 
 /--
@@ -785,7 +785,7 @@ theorem roundDyadicGeneral_eq_roundDyadic
     (fmt : FloatFormat) (d : Numerics.Dyadic) :
     roundDyadicGeneral fmt d = roundDyadic fmt d := by
   by_cases hfmt : fmt.isIEEE = true
-  · rw [roundDyadic, if_pos hfmt,
+  · rw [roundDyadic, ite_eq_left hfmt,
       ieeeRoundDyadic_eq_ieeeRoundDyadicImpl]
     exact roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE fmt d hfmt
   · have hfmtFalse : fmt.isIEEE = false :=

@@ -60,7 +60,7 @@ theorem toReal_ofFields_normalized
       fmt.maxFiniteExpField_lt_two_pow)
     (normalizedMantissa_sub_pow2_lt fmt mantissa hlow hhigh)
     hfinite]
-  simp only [Bool.false_eq_true, if_false, one_mul]
+  simp only [Bool.false_eq_true, ite_false, one_mul]
   rw [pow2_add_normalizedMantissa_sub fmt mantissa hlow]
   rw [decode_encodedExponent fmt exponent hmin]
 
@@ -76,7 +76,7 @@ theorem toReal_roundSubnormalDown
       (mantissa : ℝ) * bpow (fmt.minSubnormalExponent) := by
   by_cases hzero : mantissa = 0
   · simp [hzero]
-  · rw [if_neg hzero]
+  · rw [ite_eq_right hzero]
     rw [toReal_ofFields_subnormal fmt false mantissa hzero]
     · simp
     · simpa [pow2_eq_two_pow] using hhigh
@@ -103,11 +103,11 @@ theorem toReal_roundSubnormalUp
         else
           ofFields fmt false 0 mantissa) =
       (mantissa : ℝ) * bpow (fmt.minSubnormalExponent) := by
-  rw [if_neg hzero]
+  rw [ite_eq_right hzero]
   by_cases hnormal : pow2 fmt.fracWidth ≤ mantissa
   · have heq : mantissa = pow2 fmt.fracWidth :=
       Nat.le_antisymm hhigh hnormal
-    rw [if_pos hnormal, heq]
+    rw [ite_eq_left hnormal, heq]
     rw [show (1 : Nat) = Int.toNat
         (fmt.minNormalExponent + Int.ofNat fmt.exponentBias) by
       symm
@@ -155,7 +155,7 @@ theorem toReal_roundSubnormalUp
           (by simpa only [Nat.sub_self] using hfinite)
     rw [hpack]
     congr 1
-  · rw [if_neg hnormal]
+  · rw [ite_eq_right hnormal]
     rw [toReal_ofFields_subnormal fmt false mantissa hzero]
     · simp
     · simpa [pow2_eq_two_pow] using Nat.lt_of_not_ge hnormal

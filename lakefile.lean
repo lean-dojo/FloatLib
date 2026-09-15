@@ -36,7 +36,7 @@ package floatlib where
     ⟨`relaxedAutoImplicit, false⟩]
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @ "v4.33.1"
+  "https://github.com/leanprover-community/mathlib4" @ "v4.34.0"
 
 /--
 Reusable semantics and refinement proofs for numerical representations.

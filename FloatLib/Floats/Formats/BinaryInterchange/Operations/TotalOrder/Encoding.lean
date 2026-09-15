@@ -97,8 +97,8 @@ theorem exactValue_injective {fmt : FloatFormat} :
           simp [hx] at this
       | none =>
           cases hi : isInf x <;> cases hj : isInf y <;>
-            simp only [exactValue, hx, hy, hi, hj, Bool.false_eq_true, if_false,
-              if_true, ExactValue.nan.injEq, ExactValue.infinity.injEq,
+            simp only [exactValue, hx, hy, hi, hj, Bool.false_eq_true, ite_false,
+              ite_true, ExactValue.nan.injEq, ExactValue.infinity.injEq,
               reduceCtorEq] at h
           · have hxf : isFinite x = false := by
               simpa [hx] using (toDyadic?_isSome_eq_isFinite x).symm

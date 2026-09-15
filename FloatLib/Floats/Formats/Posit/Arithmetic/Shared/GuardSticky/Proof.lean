@@ -262,7 +262,7 @@ theorem fractionPrefix_toNat
       have hcountPower : 2 ^ count < 2 ^ capacity := Nat.pow_lt_pow_right (by decide) hcount
       unfold DirectDyadicPacking.fractionPrefix at hprefixBound
       simp only [Nat.shiftLeft_eq, one_mul] at hprefixBound
-      rw [if_neg hprefix] at hprefixBound
+      rw [ite_eq_right hprefix] at hprefixBound
       simpa only [Nat.shiftLeft_eq] using hprefixBound.trans hcountPower
     have hfitCarrier :
         toNat (carrier.fractionBelow significand leading) <<< (count - leading) < 2 ^ capacity := by
@@ -297,7 +297,7 @@ theorem tailPrefix_toNat
         DirectDyadicPacking.tailPrefix_lt_two_pow
           exponentField.toNat (toNat significand) leading count hexponent hlower hupper
       unfold DirectDyadicPacking.tailPrefix at htail
-      rw [if_neg hprefix] at htail
+      rw [ite_eq_right hprefix] at htail
       exact htail
     have hexponentFit :
         toNat (carrier.ofWord exponentField) <<< (count - 2) < 2 ^ capacity := by
@@ -460,7 +460,7 @@ theorem roundNormalizedPositive_toNat_eq_direct
   rw [← GuardStickyRounding.isLessPowerOfTwoAtLeading_leadingBit_eq_isLess_minPositive]
     at hnotUnderflow
   unfold DirectDyadicPacking.roundPositiveCode roundNormalizedPositive
-  simp only [hzero, Bool.false_or, Bool.false_eq_true, if_false, hnotUnderflow]
+  simp only [hzero, Bool.false_or, Bool.false_eq_true, ite_false, hnotUnderflow]
   simp only [DirectDyadicPacking.leadingBit_eq_log2, lawful.log2_eq]
   split_ifs with hregime hsaturated hsaturated
   · rw [lawful.lowOnes_toNat _ hpayload]

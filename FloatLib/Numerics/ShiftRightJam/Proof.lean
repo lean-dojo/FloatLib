@@ -65,7 +65,7 @@ theorem roundShiftRightEven_eq_guard_sticky (x s : Nat) (hs : 0 < s) :
         if x.testBit (s - 1) && (decide (x % 2 ^ (s - 1) ≠ 0) || x.testBit s) then 1 else 0 := by
   obtain ⟨t, rfl⟩ : ∃ t, s = t + 1 := ⟨s - 1, by omega⟩
   rw [roundShiftRightEven_def]
-  simp only [Nat.add_one_ne_zero, beq_iff_eq, if_false, Nat.shiftRight_eq', Nat.shiftLeft_eq',
+  simp only [Nat.add_one_ne_zero, beq_iff_eq, ite_false, Nat.shiftRight_eq', Nat.shiftLeft_eq',
     Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq, Nat.add_sub_cancel]
   have hremainder : x - x / 2 ^ (t + 1) * 2 ^ (t + 1) = x % 2 ^ (t + 1) := by
     have := Nat.div_add_mod' x (2 ^ (t + 1))
@@ -76,18 +76,18 @@ theorem roundShiftRightEven_eq_guard_sticky (x s : Nat) (hs : 0 < s) :
     Nat.testBit_eq_decide_div_mod_eq
   cases hguard : x.testBit t
   · simp only [Bool.false_eq_true, ↓reduceIte, Nat.mul_zero, Nat.add_zero, Bool.false_and]
-    rw [if_pos hlow]
+    rw [ite_eq_left hlow]
   · simp only [↓reduceIte, Nat.mul_one, Bool.true_and]
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     by_cases hsticky : x % 2 ^ t = 0
-    · rw [if_neg (by omega)]
+    · rw [ite_eq_right (by omega)]
       simp only [hsticky, ne_eq, not_true_eq_false, decide_false, Bool.false_or, hbitParity]
       by_cases hodd : x / 2 ^ (t + 1) % 2 = 1
-      · rw [if_neg (by omega)]
+      · rw [ite_eq_right (by omega)]
         simp [hodd]
-      · rw [if_pos (by omega)]
+      · rw [ite_eq_left (by omega)]
         simp [hodd]
-    · rw [if_pos (by omega)]
+    · rw [ite_eq_left (by omega)]
       simp [hsticky]
 
 /-- The nearest-even quotient is at most the successor of the truncated quotient. -/
@@ -118,10 +118,10 @@ theorem or_one_eq (q : Nat) : q ||| 1 = if q % 2 = 0 then q + 1 else q := by
   | succ i =>
       rw [testBit_one_succ, Bool.or_false]
       by_cases heven : q % 2 = 0
-      · rw [if_pos heven, Nat.testBit_add_one, Nat.testBit_add_one]
+      · rw [ite_eq_left heven, Nat.testBit_add_one, Nat.testBit_add_one]
         congr 1
         omega
-      · rw [if_neg heven]
+      · rw [ite_eq_right heven]
 
 /-- Jamming never decreases the truncated quotient. -/
 theorem div_two_pow_le_shiftRightJam (x j : Nat) : x / 2 ^ j ≤ shiftRightJam x j := by
@@ -242,8 +242,8 @@ theorem log2_shiftRightJam (x j : Nat) (hx : 2 ^ (j + 1) ≤ x) :
   unfold shiftRightJam
   dsimp only
   by_cases hexact : x % 2 ^ j = 0
-  · rw [if_pos (by rw [beq_iff_eq]; exact hexact)]
-  · rw [if_neg (by rw [beq_iff_eq]; exact hexact)]
+  · rw [ite_eq_left (by rw [beq_iff_eq]; exact hexact)]
+  · rw [ite_eq_right (by rw [beq_iff_eq]; exact hexact)]
     have hqne : x / 2 ^ j ≠ 0 := by omega
     have hor : (x / 2 ^ j ||| 1) = x / 2 ^ j ∨ (x / 2 ^ j ||| 1) = x / 2 ^ j + 1 := by
       by_cases hodd : x / 2 ^ j % 2 = 1

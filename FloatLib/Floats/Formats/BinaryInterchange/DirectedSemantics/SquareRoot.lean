@@ -127,7 +127,7 @@ private theorem sqrt_source_scaled (fmt : FloatFormat) (d : Numerics.Dyadic)
             FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix 1 at hb
         rw [Numerics.Dyadic.toReal]
         simp only [Numerics.Dyadic.cast_signedSignificand, hsign,
-          Bool.false_eq_true, if_false, one_mul]
+          Bool.false_eq_true, ite_false, one_mul]
         rw [hb]
         rw [show
           FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix 1 = (2 : ℝ) by
@@ -219,7 +219,7 @@ theorem toReal_nonneg_of_isFinite_of_signBit_eq_false
   have hxReal : toReal x = d.toReal := by
     simp [toReal_eq, hd]
   rw [hxReal, Numerics.Dyadic.toReal]
-  simp only [Numerics.Dyadic.cast_signedSignificand, hsign, Bool.false_eq_true, if_false, one_mul]
+  simp only [Numerics.Dyadic.cast_signedSignificand, hsign, Bool.false_eq_true, ite_false, one_mul]
   exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
 
 /-- Downward square root is non-NaN on finite nonnegative inputs. -/

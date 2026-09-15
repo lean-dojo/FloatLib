@@ -64,7 +64,7 @@ theorem sqrt_eq_dyadic (value : Model format) :
       by_cases hnegative :
           radicand.isLess FloatLib.Numerics.Dyadic.zero = true
       · simp [hnegative]
-      · simp only [hnegative, Bool.false_eq_true, if_false]
+      · simp only [hnegative, Bool.false_eq_true, ite_false]
         apply DirectDyadicSquareRoot.round_eq_dyadic_of_not_negative
         intro hlt
         apply hnegative

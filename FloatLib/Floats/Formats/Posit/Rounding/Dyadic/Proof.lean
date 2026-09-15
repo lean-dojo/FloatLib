@@ -154,7 +154,7 @@ theorem nonnegativeDyadicAt_one_eq_fields (format : Format) :
         simp only [Model.hasRegimeTerminator, hrun, decide_eq_true_eq]
         omega
       refine ⟨?_, by simp [Model.regimeValue, hregimeBit, hrun]⟩
-      simp only [Model.trailingBits, hrun, hterminator, if_true]
+      simp only [Model.trailingBits, hrun, hterminator, ite_true]
       omega
   obtain ⟨htrailing, hregimeValue⟩ := hfields
   have hused : value.usedExponentBits = 0 := by
@@ -256,7 +256,7 @@ theorem minPositive_exponent_le_scale_of_not_special
             format.payloadBits := by
         exact_mod_cast hfields
       simp only [Model.scale, Model.regimeValue, hbit,
-        Bool.false_eq_true, if_false, hstep, Int.ofNat_eq_natCast]
+        Bool.false_eq_true, ite_false, hstep, Int.ofNat_eq_natCast]
       omega
   | true =>
       have hfields :
@@ -270,7 +270,7 @@ theorem minPositive_exponent_le_scale_of_not_special
         exact_mod_cast hfields
       have hpayloadPosInt : (0 : Int) < format.payloadBits := by
         exact_mod_cast hpayloadPos
-      simp only [Model.scale, Model.regimeValue, hbit, if_true,
+      simp only [Model.scale, Model.regimeValue, hbit, ite_true,
         hstep, Int.ofNat_eq_natCast]
       omega
 
@@ -369,7 +369,7 @@ theorem roundPositiveCode_eq_reference_of_positive
     beq_eq_false_iff_ne.mpr hsignificand
   unfold roundPositiveCode Model.roundPositiveCode
   simp only [hsignificandBool, hnegative, Bool.false_or,
-    Bool.false_eq_true, if_false, not_le.mpr hpositive,
+    Bool.false_eq_true, ite_false, not_le.mpr hpositive,
     FloatLib.Numerics.Dyadic.isLess_eq_decide, decide_eq_true_eq,
     minPositive_toRat, chooseNearestCode_eq, roundingThreshold_toRat,
     lowerCodeForPositive_eq_reference]
@@ -505,7 +505,7 @@ theorem round_eq_roundRat (format : Format) (value : FloatLib.Numerics.Dyadic) :
         FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
           value hsignificand hnegative
       rw [round]
-      simp only [hsignificandBool, Bool.false_eq_true, if_false,
+      simp only [hsignificandBool, Bool.false_eq_true, ite_false,
         hnegative]
       rw [roundPositive_eq_reference_of_positive format (magnitude value)]
       · rw [magnitude_toRat, hnegative]
@@ -520,8 +520,8 @@ theorem round_eq_roundRat (format : Format) (value : FloatLib.Numerics.Dyadic) :
         rw [magnitude_toRat, hnegative] at hmagnitudePositive
         simpa using hmagnitudePositive
       rw [round]
-      simp only [hsignificandBool, Bool.false_eq_true, if_false,
-        hnegative, if_true]
+      simp only [hsignificandBool, Bool.false_eq_true, ite_false,
+        hnegative, ite_true]
       rw [roundPositive_eq_reference_of_positive format (magnitude value)]
       · rw [magnitude_toRat, hnegative]
         simp [Model.roundRat, hvalueNegative, hvalueNegative.ne]

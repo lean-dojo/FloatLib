@@ -153,7 +153,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     · have hevenBool : (genericPosition % 2 == 0) = true := by
         simpa only [beq_iff_eq] using heven
       rw [hevenBool]
-      simp only [if_true]
+      simp only [ite_true]
       have h47 : (47 : UInt64).toNat = 47 := by decide
       have hleadingWord : nativeLeading ≤ (47 : UInt64) := by
         apply UInt64.le_iff_toNat_le.mpr
@@ -163,7 +163,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     · have hevenBool : (genericPosition % 2 == 0) = false :=
         beq_eq_false_iff_ne.mpr heven
       rw [hevenBool]
-      simp only [Bool.false_eq_true, if_false]
+      simp only [Bool.false_eq_true, ite_false]
       have h46 : (46 : UInt64).toNat = 46 := by decide
       have hleadingWord : nativeLeading ≤ (46 : UInt64) := by
         apply UInt64.le_iff_toNat_le.mpr
@@ -222,8 +222,8 @@ private theorem sqrtPositiveFiniteCore_eq_spec
   have hrounded : nativeRounded.toNat = genericRounded := by
     dsimp only [nativeRounded, genericRounded]
     by_cases hle : nativeRemainder ≤ nativeRoot
-    · rw [if_pos hle, if_pos (hremainderLe.mp hle), hroot]
-    · rw [if_neg hle, if_neg ((not_congr hremainderLe).mp hle)]
+    · rw [ite_eq_left hle, ite_eq_left (hremainderLe.mp hle), hroot]
+    · rw [ite_eq_right hle, ite_eq_right ((not_congr hremainderLe).mp hle)]
       have hrootSuccFit : genericRoot + 1 < 2 ^ 64 := by
         have hpow : 2 ^ 24 < 2 ^ 64 :=
           Nat.pow_lt_pow_right (by decide) (by omega)
@@ -252,7 +252,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     dsimp only [nativeEncoded, genericEncoded]
     rw [hcarry]
     by_cases hgenericCarry : genericCarry = true
-    · simp only [hgenericCarry, if_true]
+    · simp only [hgenericCarry, ite_true]
       have hhalfLe :
           (genericPosition + 105) / 2 ≤ genericPosition + 105 :=
         Nat.div_le_self _ _
@@ -352,7 +352,7 @@ theorem sqrt_eq_generic_of_positive_finite
     have hmantissaNat : mantissa.toNat = 0 := congrArg UInt64.toNat h
     rw [finiteMantissa_toNat exponent fraction hfraction] at hmantissaNat
     by_cases hexponentZero : exponent = 0
-    · simp only [hexponentZero, if_true] at hmantissaNat
+    · simp only [hexponentZero, ite_true] at hmantissaNat
       have hfractionZero : fraction = 0 := by
         apply UInt32.toNat_inj.mp
         simpa using hmantissaNat
@@ -364,7 +364,7 @@ theorem sqrt_eq_generic_of_positive_finite
           Bool.true_and]
       rw [hzero] at hnonzero
       contradiction
-    · simp only [hexponentZero, if_false] at hmantissaNat
+    · simp only [hexponentZero, ite_false] at hmantissaNat
       simp [Model.pow2_eq_two_pow] at hmantissaNat
   have hsignNative : signBit bits = false := by
     simpa only [bits, signBit_eq] using hsign
@@ -380,7 +380,7 @@ theorem sqrt_eq_generic_of_positive_finite
              significand := mantissa.toNat
              exponent := Int.ofNat scale.toNat - 149 } : Numerics.Dyadic) := by
     rw [← toDyadic_eq x, toDyadic_eq_finiteComponents x]
-    simp only [bits, exponent, fraction, mantissa, scale, hexponentNative, if_false,
+    simp only [bits, exponent, fraction, mantissa, scale, hexponentNative, ite_false,
       hmantissa, hsignNative]
   have htoModel :
       Model.toModel x =

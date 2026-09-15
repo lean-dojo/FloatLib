@@ -133,7 +133,7 @@ theorem roundFiniteRatToPrecision_nonneg (format : Format) (mode : RoundingMode)
     rw [← Rat.num_nonneg] at hv
     omega
   simp only [RationalRounding.round, RationalRounding.roundAt, RationalRounding.signed,
-    hn, decide_false, Bool.false_eq_true, if_false]
+    hn, decide_false, Bool.false_eq_true, ite_false]
   positivity
 
 /-- The descriptor's closed finite interval is preserved by every supplied rounding mode. -/

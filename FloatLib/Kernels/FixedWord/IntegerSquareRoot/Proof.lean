@@ -92,13 +92,13 @@ namespace FloatLib.Numerics.FixedWord.IntegerSquareRoot
         (guess.toNat + value.toNat / guess.toNat) / 2 < guess.toNat := by
       rw [← hnext]
       exact UInt64.lt_iff_toNat_lt.mp hdecrease
-    rw [dif_pos hdecrease, dif_pos hdecreaseNat]
+    rw [dite_eq_left hdecrease, dite_eq_left hdecreaseNat]
     simpa only [next, hnext] using sqrtIter_toNat value next
   · have hnotDecreaseNat :
         ¬(guess.toNat + value.toNat / guess.toNat) / 2 < guess.toNat := by
       rw [← hnext]
       exact fun h ↦ hdecrease (UInt64.lt_iff_toNat_lt.mpr h)
-    rw [dif_neg hdecrease, dif_neg hnotDecreaseNat]
+    rw [dite_eq_right hdecrease, dite_eq_right hnotDecreaseNat]
 termination_by guess.toNat
 decreasing_by
   exact UInt64.lt_iff_toNat_lt.mp hdecrease
@@ -113,7 +113,7 @@ decreasing_by
     simp [sqrt, hsmall, hsmallNat]
   · have hlargeNat : ¬value.toNat ≤ 1 := by
       simpa [UInt64.le_iff_toNat_le] using hsmall
-    simp only [sqrt, hsmall, hlargeNat, if_false]
+    simp only [sqrt, hsmall, hlargeNat, ite_false]
     rw [sqrtIter_toNat]
     apply congrArg (Nat.sqrt.iter value.toNat)
     let shift := value.log2.toNat / 2 + 1

@@ -26,7 +26,7 @@ theorem compareLog_eq_real (argument boundary : ℚ) (hpositive : 0 < argument) 
   by_cases hone : argument = 1
   · subst argument
     simp [compareLog, cmp, cmpUsing]
-  · rw [compareLog, dif_neg hone]
+  · rw [compareLog, dite_eq_right hone]
     exact Enclosure.Comparison.compare_eq_real _ _ _ _
       (fun n => Enclosure.contains_log argument (2 ^ n) hpositive)
 
@@ -54,7 +54,7 @@ theorem prepareLog_eq_real (argument : ℚ) (levels : Nat) (hpositive : 0 < argu
   by_cases hone : argument = 1
   · subst argument
     simp [prepareLog, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
-  · rw [prepareLog, dif_neg hone, Enclosure.Comparison.Prepared.compare]
+  · rw [prepareLog, dite_eq_right hone, Enclosure.Comparison.Prepared.compare]
     apply Enclosure.Comparison.compare_eq_real
     intro n
     simp only [Enclosure.Comparison.cacheIntervals_apply]
@@ -69,7 +69,7 @@ theorem prepareExp_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     have hlt : (1 : ℝ) < boundary ↔ (1 : ℚ) < boundary := by exact_mod_cast Iff.rfl
     have hgt : (boundary : ℝ) < 1 ↔ boundary < (1 : ℚ) := by exact_mod_cast Iff.rfl
     simp [prepareExp, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing, hlt, hgt]
-  · rw [prepareExp, dif_neg hzero]
+  · rw [prepareExp, dite_eq_right hzero]
     split
     · rw [Enclosure.Comparison.Prepared.compare]
       apply Enclosure.Comparison.compare_eq_real

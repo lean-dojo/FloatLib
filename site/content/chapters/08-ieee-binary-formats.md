@@ -319,7 +319,7 @@ open FloatLib.Numerics.Representations
 #eval let o := ExecDType.intToFloatWithStatus FloatFormat.binary16 (FixedInt.ofInt (width := 32) 2049) .nearestEven
       ((ExecFloat.Binary.ofModel o.value : Binary16), o.status.inexact)
 -- (2048, true)
-#eval (ExecFloat.Binary.parseNearest "0.1" : Except Model.ParseError Binary32)
+#eval (ExecFloat.Binary.parse "0.1" : Except Model.ParseError Binary32)
 -- Except.ok 13421773 * 2^-27
 #eval Model.format (Model.canonicalNaN FloatFormat.binary32)
 -- "nan"
@@ -335,11 +335,31 @@ The nearest binary32 value to $\pi$ rounds to the 8-bit integer $3$ with inexact
 
 <a id="text-you-can-read-back"></a>
 
-### Exact and rounded text output
+### Parsing and printing
 
 Parsing `0.1` into binary32 gives $13421773 \cdot 2^{-27}$, the familiar `0x3dcccccd`. Printing that value exactly takes more than one decimal digit, because the stored binary fraction is slightly larger than $1/10$. `formatDecimal` writes its exact decimal expansion; `formatHex` writes an exact hexadecimal significand and binary exponent. Ordinary `#eval` display stays compact, using the significand-times-power-of-two form seen above.
 
-`ExecFloat.Binary.parse` and `parseNearest` accept decimal, hexadecimal, and the compact dyadic syntax. They read an exact value and round once into the destination. `parseWithStatus` also returns the five exception flags. Malformed input is an explicit parse error. Special spellings include infinity and signed quiet or signaling NaNs; the diagnostic NaN suffix records the complete fraction field.
+`ExecFloat.Binary.parse` accepts decimal, hexadecimal, and the compact dyadic syntax. We read the exact value and round once into the destination. Nearest-even is the default; `rounding := .towardZero` selects another direction. Set `status := true` to return the five exception flags with the value, or `limits := true` to check input size and exponent bounds before conversion. The bounds are adjustable through `maxBytes` and `maxExponent`, and accepted input is proved to keep the same value and flags. Malformed input is an explicit parse error. Special spellings include infinity and signed quiet or signaling NaNs; the diagnostic NaN suffix records the complete fraction field.
+
+```lean
+#eval (ExecFloat.Binary.parse "0.1" (rounding := .towardZero) :
+    Except Model.ParseError Binary32)
+-- Except.ok 3355443 * 2^-25
+#eval (ExecFloat.Binary.parse "-0" (limits := true) (maxBytes := 128) :
+    Except Model.ParseError Binary32).map (fun value => ExecFloat.Binary.formatFixed value 3)
+-- Except.ok "-0.000"
+#eval (ExecFloat.Binary.parse "0.1" (status := true)).map fun (value, status) =>
+    ((value : Binary32), status.inexact)
+-- Except.ok (13421773 * 2^-27, true)
+#eval ExecFloat.Binary.formatFixed (12.5 : Binary32) 3
+-- "12.500"
+#eval ExecFloat.Binary.formatScientific (12.5 : Binary32) 3
+-- "1.250e1"
+```
+
+For display, `formatFixed` and `formatScientific` take the number of digits after the decimal point. Both retain trailing zeros and round nearest-even; `formatDecimalWithStatus` lets us choose the rounding direction and inspect inexactness. The proofs connect the actual printed characters to the rounded decimal value. With nearest-even rounding, the error is at most half the last requested decimal unit.
+
+To use a parsed binary64 value as Lean's native `Float`, map `ExecFloat.Binary.toFloat` over the result.
 
 The round-trip theorems recover every finite IEEE word, including the sign of zero: hexadecimal output works with every input rounding mode, and exact decimal output has a nearest-even input theorem. The output is exact, so these are representation guarantees rather than promises to produce a short string.
 

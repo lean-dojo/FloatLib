@@ -328,7 +328,7 @@ theorem add_align_right_to_left_exponent
   have hself : Int.toNat (leftExponent - leftExponent) = 0 := by
     omega
   unfold add addFields
-  simp only [beq_iff_eq, hleft, hright, if_false, hexponents, if_true,
+  simp only [beq_iff_eq, hleft, hright, ite_false, hexponents, ite_true,
     haligned, le_refl, hself]
   rfl
 
@@ -527,7 +527,7 @@ private theorem add_toRat_of_significand_ne_zero_of_le
     exact (add_mul _ _ _).symm
   by_cases hsumZero : sum = 0
   · rw [hadd]
-    simp only [hsumZero, beq_self_eq_true, if_true]
+    simp only [hsumZero, beq_self_eq_true, ite_true]
     rw [hsum, hsumZero]
     simp [toRat, signedSignificand]
   · have hsumBool : (sum == 0) = false :=
@@ -539,7 +539,7 @@ private theorem add_toRat_of_significand_ne_zero_of_le
           Rat.ofInt sum * (2 : Rat) ^ left.exponent :=
       toRat_of_natAbs sum left.exponent
     rw [hadd]
-    simp only [hsumBool, Bool.false_eq_true, if_false]
+    simp only [hsumBool, Bool.false_eq_true, ite_false]
     rw [hresult, ← hsum]
 
 private theorem add_toRat_of_significand_ne_zero

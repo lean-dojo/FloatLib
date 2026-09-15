@@ -31,7 +31,7 @@ theorem nextUp_infinity_value (f : Format) (s : Bool) (c : Nat) (q : Int)
   · simp [nextUp, hc] at hout
   · obtain ⟨a, b, hp, ha, hapos, hbmin, hbmax, hfull, he⟩ :=
       neighbor_normalize f s c q hx hc
-    simp only [nextUp, if_neg hc, hp] at hout
+    simp only [nextUp, ite_eq_right hc, hp] at hout
     cases s
     · obtain ⟨rfl, rfl⟩ := neighborAbove_infinity f a b ha hbmax hout
       simpa [Datum.finiteValue] using he.symm

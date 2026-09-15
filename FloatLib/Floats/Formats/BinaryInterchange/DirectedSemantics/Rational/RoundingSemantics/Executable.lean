@@ -48,7 +48,7 @@ theorem toReal_roundRatScaled_false_eq_roundAt
   have hsubnormalLt := minSubnormalExponent_lt_minNormalExponent fmt
   have hround :=
     roundAt_scaledRat_eq fmt false numerator denominator exponent hnumerator hdenominator
-  simp only [Bool.false_eq_true, if_false, Int.ofNat_eq_natCast, Int.cast_natCast] at hround
+  simp only [Bool.false_eq_true, ite_false, Int.ofNat_eq_natCast, Int.cast_natCast] at hround
   rcases lt_or_ge fmt.maxNormalExponent
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent) with hoverflow | hmax
   · rw [roundRatScaled_false_eq_posInf_of_maxNormal_lt

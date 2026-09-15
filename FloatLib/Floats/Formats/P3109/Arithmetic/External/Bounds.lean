@@ -88,7 +88,7 @@ theorem abs_endpoint_toReal (format : FloatFormat) (hformat : format.isIEEE = tr
   rw [← Model.Dyadic.toReal_maxFiniteDyadic, ← endpoint_eq_maxFiniteDyadic format hformat]
   have hp : 0 ≤ (endpoint format false).toReal := by
     unfold endpoint Numerics.Dyadic.toReal Numerics.Dyadic.signedSignificand
-    simp only [Bool.false_eq_true, if_false]
+    simp only [Bool.false_eq_true, ite_false]
     exact mul_nonneg (Nat.cast_nonneg _) (le_of_lt (Model.bpow_pos _))
   cases negative
   · exact abs_of_nonneg hp

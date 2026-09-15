@@ -82,7 +82,6 @@ theorem irrational_cosPi_of_exact_none (argument : ℚ)
   all_goals
     change Int.fract argument = _ at h
     norm_num [cosPiExact, h] at hnone
-    cases hnone
 
 private theorem cosPi_complement (argument : ℚ) :
     Real.cos (((1 / 2 - argument : ℚ) : ℝ) * Real.pi) =

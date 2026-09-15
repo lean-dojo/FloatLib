@@ -97,7 +97,7 @@ theorem isNaN_roundDyadicDown_eq_false
       exact isNaN_roundDyadicPosDown_eq_false fmt d.significand d.exponent hfmt
     · rw [show roundDyadicDown fmt d =
           neg (roundDyadicPosUp fmt d.significand d.exponent) by
-        simp only [roundDyadicDown, beq_iff_eq, hmant, if_false, hsign, if_true,
+        simp only [roundDyadicDown, beq_iff_eq, hmant, ite_false, hsign, ite_true,
           roundDyadicPosUp]
         exact roundDyadicMagnitudeUp_true_eq_neg_false fmt d.significand d.exponent
           (by simp [hfmt]) (nativeOverflow_true_eq_neg_false_of_isIEEE fmt hfmt)]
@@ -117,7 +117,7 @@ theorem isNaN_roundDyadicUp_eq_false
       exact isNaN_roundDyadicPosUp_eq_false fmt d.significand d.exponent hfmt hmant
     · rw [show roundDyadicUp fmt d =
           neg (roundDyadicPosDown fmt d.significand d.exponent) by
-        simp only [roundDyadicUp, beq_iff_eq, hmant, if_false, hsign, if_true,
+        simp only [roundDyadicUp, beq_iff_eq, hmant, ite_false, hsign, ite_true,
           roundDyadicPosDown]
         exact roundDyadicMagnitudeDown_true_eq_neg_false fmt d.significand d.exponent
           (by simp [hfmt])]
@@ -140,7 +140,7 @@ theorem toEReal_roundDyadicDown_le (fmt : FloatFormat) (d : Numerics.Dyadic) :
         beq_eq_false_iff_ne.mpr hmant
       rw [show roundDyadicDown fmt d =
           neg (roundDyadicPosUp fmt d.significand d.exponent) by
-        simp only [roundDyadicDown, hmant', hsign, if_true,
+        simp only [roundDyadicDown, hmant', hsign, ite_true,
           roundDyadicPosUp]
         exact roundDyadicMagnitudeUp_true_eq_neg_false fmt d.significand d.exponent
           (by simp [hfmt]) (nativeOverflow_true_eq_neg_false_of_isIEEE fmt hfmt)]
@@ -169,7 +169,7 @@ theorem le_toEReal_roundDyadicUp (fmt : FloatFormat) (d : Numerics.Dyadic) :
         beq_eq_false_iff_ne.mpr hmant
       rw [show roundDyadicUp fmt d =
           neg (roundDyadicPosDown fmt d.significand d.exponent) by
-        simp only [roundDyadicUp, hmant', hsign, if_true,
+        simp only [roundDyadicUp, hmant', hsign, ite_true,
           roundDyadicPosDown]
         exact roundDyadicMagnitudeDown_true_eq_neg_false fmt d.significand d.exponent
           (by simp [hfmt])]

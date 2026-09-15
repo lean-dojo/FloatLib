@@ -51,11 +51,11 @@ theorem limb_setIfInBounds (arr : Array UInt32) (i : Nat) (x : UInt32) (j : Nat)
   · subst hij
     by_cases hi : i < arr.size
     · simp [hi]
-    · rw [if_pos rfl, if_neg hi, if_neg (by simp [hi])]
+    · rw [ite_eq_left rfl, ite_eq_right hi, ite_eq_right (by simp [hi])]
       change (0 : UInt32) = arr.getD i 0
       rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by omega)]
       rfl
-  · rw [if_neg hij, if_neg (by simp [hij]), ← Array.getD_eq_getD_getElem?]
+  · rw [ite_eq_right hij, ite_eq_right (by simp [hij]), ← Array.getD_eq_getD_getElem?]
 
 /-- Writing one limb in bounds keeps the limb count. -/
 @[simp] theorem size_setIfInBounds' (arr : Array UInt32) (i : Nat) (x : UInt32) :
@@ -68,7 +68,7 @@ theorem segment_setIfInBounds_of_le (arr : Array UInt32) (i : Nat) (x : UInt32) 
     segment (⟨arr.setIfInBounds i x⟩ : LimbArray) s n = segment (⟨arr⟩ : LimbArray) s n := by
   apply segment_congr
   intro k hk
-  rw [limb_setIfInBounds, if_neg (by omega)]
+  rw [limb_setIfInBounds, ite_eq_right (by omega)]
 
 /-- The low word of a `UInt64` is its value modulo the radix. -/
 theorem uint64_low_toNat (x : UInt64) : x.toUInt32.toNat = x.toNat % radix := by
@@ -128,12 +128,12 @@ theorem carryLoop_spec (count index : Nat) (carry : UInt32) (out : Array UInt32)
   | succ count ih =>
       unfold carryLoop
       by_cases hcarry : carry == 0
-      · rw [if_pos hcarry]
+      · rw [ite_eq_left hcarry]
         have : carry.toNat = 0 := by
           rw [beq_iff_eq] at hcarry
           simp [hcarry]
         simp [this]
-      · rw [if_neg hcarry]
+      · rw [ite_eq_right hcarry]
         set sum : UInt64 := (out.getD index 0).toUInt64 + carry.toUInt64 with hsum
         set out' := out.setIfInBounds index sum.toUInt32 with hout'
         have hlimb := uint32_toNat_lt (out.getD index 0)
@@ -162,13 +162,13 @@ theorem carryLoop_spec (count index : Nat) (carry : UInt32) (out : Array UInt32)
         obtain ⟨ihseg, ihlimb⟩ := ih (index + 1) (sum >>> 32).toUInt32 out' hsize' hfit'
         constructor
         · rw [segment_succ, ihseg, hsegOut', ihlimb index (Or.inl (by omega)), hout',
-            limb_setIfInBounds, if_pos ⟨rfl, hindex⟩, uint64_low_toNat, uint64_high_toNat,
+            limb_setIfInBounds, ite_eq_left ⟨rfl, hindex⟩, uint64_low_toNat, uint64_high_toNat,
             hsumNat, hseg, hlimbEq]
           have hdiv := Nat.mod_add_div ((out.getD index 0).toNat + carry.toNat) radix
           unfold radix at hdiv ⊢
           omega
         · intro i hi
-          rw [ihlimb i (by omega), hout', limb_setIfInBounds, if_neg (by omega)]
+          rw [ihlimb i (by omega), hout', limb_setIfInBounds, ite_eq_right (by omega)]
 
 /-- Adding a word at a limb position, when the sum fits the stored limbs. -/
 theorem toNat_addWordAt (v : LimbArray) (index : Nat) (w : UInt32)
@@ -293,9 +293,9 @@ theorem addLoop_spec (a b : LimbArray) (count index : Nat) (carry : UInt32)
       simp only [addLoop, segment_zero, Nat.zero_add]
       constructor
       · rw [segment_succ, segment_zero, Nat.mul_zero, Nat.add_zero, limb_setIfInBounds,
-          if_pos ⟨rfl, by omega⟩]
+          ite_eq_left ⟨rfl, by omega⟩]
       · intro i hi
-        rw [limb_setIfInBounds, if_neg (by omega)]
+        rw [limb_setIfInBounds, ite_eq_right (by omega)]
   | succ count ih =>
       unfold addLoop
       set sum : UInt64 := (a.limb index).toUInt64 + (b.limb index).toUInt64 + carry.toUInt64
@@ -321,14 +321,14 @@ theorem addLoop_spec (a b : LimbArray) (count index : Nat) (carry : UInt32)
       obtain ⟨ihseg, ihlimb⟩ := ih (index + 1) (sum >>> 32).toUInt32 out' hsize'
       constructor
       · rw [segment_succ, ihseg, ihlimb index (by omega), hout', limb_setIfInBounds,
-          if_pos ⟨rfl, by omega⟩, uint64_low_toNat, uint64_high_toNat, hsumNat,
+          ite_eq_left ⟨rfl, by omega⟩, uint64_low_toNat, uint64_high_toNat, hsumNat,
           segment_succ a, segment_succ b]
         have hdiv := Nat.mod_add_div
           ((a.limb index).toNat + (b.limb index).toNat + carry.toNat) radix
         unfold radix at hdiv ⊢
         omega
       · intro i hi
-        rw [ihlimb i (by omega), hout', limb_setIfInBounds, if_neg (by omega)]
+        rw [ihlimb i (by omega), hout', limb_setIfInBounds, ite_eq_right (by omega)]
 
 /-- A sum has one limb more than the wider operand, room for the final carry. -/
 @[simp] theorem size_add (a b : LimbArray) (carry : UInt32) :
@@ -410,12 +410,12 @@ theorem subLoop_spec (a b : LimbArray) (count index : Nat) (borrow : UInt32)
         · have h' : difference.toNat < radix := by
             rw [UInt64.lt_iff_toNat_lt, h4] at h
             exact h
-          rw [if_pos h, if_pos h']
+          rw [ite_eq_left h, ite_eq_left h']
           rfl
         · have h' : ¬ difference.toNat < radix := by
             rw [UInt64.lt_iff_toNat_lt, h4] at h
             exact h
-          rw [if_neg h, if_neg h']
+          rw [ite_eq_right h, ite_eq_right h']
           rfl
       have hstep : (a.limb index).toNat + radix * borrow'.toNat =
           difference.toUInt32.toNat + (b.limb index).toNat + borrow.toNat := by
@@ -436,12 +436,12 @@ theorem subLoop_spec (a b : LimbArray) (count index : Nat) (borrow : UInt32)
       obtain ⟨ihseg, ihlimb⟩ := ih (index + 1) borrow' out' hsize' hborrow'Le hle'
       constructor
       · have hlimbIndex : (⟨out'⟩ : LimbArray).limb index = difference.toUInt32 := by
-          rw [hout', limb_setIfInBounds, if_pos ⟨rfl, by omega⟩]
+          rw [hout', limb_setIfInBounds, ite_eq_left ⟨rfl, by omega⟩]
         rw [segment_succ, ihlimb index (by omega), hlimbIndex, segment_succ b, segment_succ a]
         unfold radix at hstep ⊢
         omega
       · intro i hi
-        rw [ihlimb i (by omega), hout', limb_setIfInBounds, if_neg (by omega)]
+        rw [ihlimb i (by omega), hout', limb_setIfInBounds, ite_eq_right (by omega)]
 
 /-- A difference has as many limbs as the wider operand. -/
 @[simp] theorem size_sub (a b : LimbArray) (borrow : UInt32) :
@@ -501,9 +501,9 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
       simp only [mulRow, segment_zero, Nat.mul_zero, Nat.zero_add, Nat.add_zero]
       constructor
       · rw [segment_succ, segment_zero, Nat.mul_zero, Nat.add_zero, limb_setIfInBounds,
-          if_pos ⟨rfl, by omega⟩]
+          ite_eq_left ⟨rfl, by omega⟩]
       · intro i hi
-        rw [limb_setIfInBounds, if_neg (by omega)]
+        rw [limb_setIfInBounds, ite_eq_right (by omega)]
   | succ count ih =>
       unfold mulRow
       set term : UInt64 :=
@@ -538,7 +538,7 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
         rw [hout', Array.size_setIfInBounds]
         omega
       have hslot' : (⟨out'⟩ : LimbArray).limb (offset + (j + 1) + count) = 0 := by
-        rw [hout', limb_setIfInBounds, if_neg (by omega)]
+        rw [hout', limb_setIfInBounds, ite_eq_right (by omega)]
         rw [show offset + (j + 1) + count = offset + j + (count + 1) by omega]
         exact hslot
       obtain ⟨ihseg, ihlimb⟩ := ih (j + 1) (term >>> 32).toUInt32 out' hsize' hslot'
@@ -550,7 +550,7 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
       constructor
       · rw [segment_succ, show offset + j + 1 = offset + (j + 1) by omega, ihseg, hsegOut',
           ihlimb (offset + j) (Or.inl (by omega)), hout', limb_setIfInBounds,
-          if_pos ⟨rfl, by omega⟩, uint64_low_toNat, uint64_high_toNat, htermNat,
+          ite_eq_left ⟨rfl, by omega⟩, uint64_low_toNat, uint64_high_toNat, htermNat,
           segment_succ (⟨out⟩ : LimbArray) (offset + j), segment_succ b j, hlimbEq]
         have hdiv := Nat.mod_add_div
           (m.toNat * (b.limb j).toNat + (out.getD (offset + j) 0).toNat + carry.toNat) radix
@@ -561,7 +561,7 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
         unfold radix at hdiv ⊢
         omega
       · intro i hi
-        rw [ihlimb i (by omega), hout', limb_setIfInBounds, if_neg (by omega)]
+        rw [ihlimb i (by omega), hout', limb_setIfInBounds, ite_eq_right (by omega)]
 
 /-- The schoolbook row loop writes into the output array without resizing it. -/
 theorem size_mulRows (a b : LimbArray) (count i : Nat) (out : Array UInt32) :

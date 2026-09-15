@@ -340,10 +340,10 @@ theorem compareNonnegative128ToWord_eq
         rightSignificand.toNat rightExponent := by
   unfold compareNonnegative128ToWord
   by_cases hhigh : leftSignificand.hi = 0
-  · simp only [beq_iff_eq, hhigh, if_true]
+  · simp only [beq_iff_eq, hhigh, ite_true]
     rw [compareNonnegative_eq]
     simp [UInt128.toNat, hhigh]
-  · simp only [beq_iff_eq, hhigh, if_false]
+  · simp only [beq_iff_eq, hhigh, ite_false]
     have hhighNat : leftSignificand.hi.toNat ≠ 0 := by
       intro hzero
       apply hhigh
@@ -369,9 +369,9 @@ theorem compareNonnegative128ToWord_eq
         ¬((leftSignificand.toNat == 0 &&
             rightSignificand.toNat == 0) = true) := by
       simp [hleftNonzero]
-    rw [if_neg hnotBoth]
+    rw [ite_eq_right hnotBoth]
     by_cases hright : rightSignificand = 0
-    · simp only [hright, if_true, UInt64.toNat_zero]
+    · simp only [hright, ite_true, UInt64.toNat_zero]
       split
       · simpa [Nat.shiftLeft_eq] using
           (Nat.compare_eq_gt.mpr hleftPositive).symm
@@ -379,9 +379,9 @@ theorem compareNonnegative128ToWord_eq
         apply Nat.compare_eq_gt.mpr
         exact Nat.pos_of_ne_zero
           (Nat.shiftLeft_eq_zero_iff.not.mpr hleftNonzero)
-    · simp only [hright, if_false]
+    · simp only [hright, ite_false]
       by_cases hexponents : leftExponent ≤ rightExponent
-      · simp only [hexponents, if_true]
+      · simp only [hexponents, ite_true]
         let shift := Int.toNat (rightExponent - leftExponent)
         change
           (if _hshift : shift < 128 then
@@ -420,7 +420,7 @@ theorem compareNonnegative128ToWord_eq
           exact lt_of_lt_of_le leftSignificand.toNat_lt
             (twoPow128_le_word_shift_of_large_shift
               rightSignificand shift hright (Nat.le_of_not_gt hshift))
-      · simp only [hexponents, if_false]
+      · simp only [hexponents, ite_false]
         symm
         apply Nat.compare_eq_gt.mpr
         have hpow : 1 ≤ 2 ^ Int.toNat (leftExponent - rightExponent) := by
@@ -458,21 +458,21 @@ theorem isLessPowerOfTwo_eq
   by_cases hzero : significand = 0
   · subst significand
     have honeZero : ((1 : Nat) == 0) = false := by decide
-    simp only [beq_self_eq_true, if_true, UInt64.toNat_zero,
-      Bool.true_and, honeZero, Bool.false_eq_true, if_false]
+    simp only [beq_self_eq_true, ite_true, UInt64.toNat_zero,
+      Bool.true_and, honeZero, Bool.false_eq_true, ite_false]
     split <;> simp [Nat.shiftLeft_eq, Nat.compare_eq_lt]
   · have hzeroNat : significand.toNat ≠ 0 := by
       intro hzeroNat
       apply hzero
       apply UInt64.toNat_inj.mp
       simpa using hzeroNat
-    simp only [beq_iff_eq, hzero, if_false]
+    simp only [beq_iff_eq, hzero, ite_false]
     have hboth :
         ¬((significand.toNat == 0 && (1 : Nat) == 0) = true) := by
       simp
-    rw [if_neg hboth]
+    rw [ite_eq_right hboth]
     by_cases hexponents : exponent ≤ power
-    · simp only [hexponents, if_true]
+    · simp only [hexponents, ite_true]
       let shift := Int.toNat (power - exponent)
       have hshift :
           Int.ofNat shift = power - exponent := by
@@ -489,7 +489,7 @@ theorem isLessPowerOfTwo_eq
       simp only [decide_eq_true_eq, beq_iff_eq, Nat.compare_eq_lt,
         hcondition, Nat.log2_lt hzeroNat]
       simp [shift, Nat.shiftLeft_eq]
-    · simp only [hexponents, if_false]
+    · simp only [hexponents, ite_false]
       have hlogNonnegative :
           0 ≤ Int.ofNat significand.toNat.log2 :=
         Int.natCast_nonneg _

@@ -450,7 +450,7 @@ private theorem scaledRatToReal_div_positiveDyadic
   have hpower : bpow value.exponent ≠ 0 :=
     ne_of_gt (bpow_pos value.exponent)
   simp only [scaledRatToReal, Numerics.Dyadic.toReal,
-    Numerics.Dyadic.signedSignificand, hvalueSign, Bool.false_eq_true, if_false]
+    Numerics.Dyadic.signedSignificand, hvalueSign, Bool.false_eq_true, ite_false]
   simp only [Nat.cast_mul]
   change
     (numerator : Real) / denominator * bpow exponent /

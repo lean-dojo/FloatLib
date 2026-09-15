@@ -179,14 +179,14 @@ private theorem roundSubnormalWord_eq
       (not_congr hzero).mp hfzero
     by_cases hfnormal : 0x800000 ≤ nativeFraction
     · have hgenericNormal := hnormal.mp hfnormal
-      simp only [beq_iff_eq, hfzero, hgenericNonzero, if_false,
-        hfnormal, if_true]
+      simp only [beq_iff_eq, hfzero, hgenericNonzero, ite_false,
+        hfnormal, ite_true]
       cases hdecision : Nat.decLe (Model.pow2 23) genericFraction with
       | isTrue _ => rfl
       | isFalse h => exact (h hgenericNormal).elim
     · have hgenericSubnormal : ¬Model.pow2 23 ≤ genericFraction :=
         (not_congr hnormal).mp hfnormal
-      simp only [beq_iff_eq, hfzero, hgenericNonzero, if_false,
+      simp only [beq_iff_eq, hfzero, hgenericNonzero, ite_false,
         hfnormal, hfraction]
       cases hdecision : Nat.decLe (Model.pow2 23) genericFraction with
       | isTrue h => exact (hgenericSubnormal h).elim
@@ -260,19 +260,19 @@ theorem roundRatScaledWord_eq
   have hfloor := floorLog2RatWord_eq num den hnumZero hdenZero
   unfold roundRatScaledWord NativeBinary32.roundRatScaled
   simp only [beq_iff_eq, hdenZero, hdenNatNonzero, hnumZero,
-    hnumNatNonzero, if_false]
+    hnumNatNonzero, ite_false]
   rw [hfloor]
   by_cases hoverflow :
       Numerics.RationalBinary.floorLog2 num.toNat den.toNat + exponent > 127
   · simp [hoverflow]
-  simp only [hoverflow, if_false]
+  simp only [hoverflow, ite_false]
   by_cases hunderflow :
       Numerics.RationalBinary.floorLog2 num.toNat den.toNat + exponent < -150
   · simp [hunderflow]
-  simp only [hunderflow, if_false]
+  simp only [hunderflow, ite_false]
   by_cases hsubnormal :
       Numerics.RationalBinary.floorLog2 num.toNat den.toNat + exponent < -126
-  · simp only [hsubnormal, if_true]
+  · simp only [hsubnormal, ite_true]
     have hhighWord :
         floorLog2RatWord num den + exponent < -126 := by
       simpa [hfloor] using hsubnormal
@@ -316,7 +316,7 @@ theorem roundRatScaledWord_eq
           simp [Numerics.RationalBinary.scaleByPowerOfTwo,
             Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq] <;>
             split <;> rfl
-  · simp only [hsubnormal, if_false]
+  · simp only [hsubnormal, ite_false]
     let rationalExponent :=
       Numerics.RationalBinary.floorLog2 num.toNat den.toNat
     let shift := Int.toNat (23 - rationalExponent)
@@ -399,7 +399,7 @@ theorem divFiniteImpl_eq (x y : Value) :
   have hyNatNonzero : yMantissa.toNat ≠ 0 :=
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxExceptional, hyExceptional, hxZero, hyZero, hxNatNonzero,
-    hyNatNonzero, if_false]
+    hyNatNonzero, ite_false]
   have hxMantissaLt :=
     finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
   have hyMantissaLt :=

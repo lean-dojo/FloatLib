@@ -37,7 +37,8 @@ theorem digitValue?_mem_naturalDigits {value : Nat} {character : Char}
   · simp [RadixText.naturalDigits, hzero] at hcharacter
     subst character
     exact ⟨0, by decide, by decide⟩
-  · simp only [RadixText.naturalDigits, if_neg hzero, List.mem_map, List.mem_reverse] at hcharacter
+  · simp only [RadixText.naturalDigits, ite_eq_right hzero, List.mem_map,
+    List.mem_reverse] at hcharacter
     obtain ⟨digit, hdigit, rfl⟩ := hcharacter
     have hlt := Nat.digits_lt_base (by decide : 1 < 10) hdigit
     exact ⟨digit, hlt, digitValue?_digitChar hlt⟩
@@ -92,7 +93,7 @@ theorem parseMagnitude_decimal (significand : Nat) (exponent : Int) :
   by_cases hexponent : exponent = 0
   · subst exponent
     simp [RadixText.parseMagnitude, parseExponent]
-  · rw [if_neg hexponent, RadixText.parseMagnitude,
+  · rw [ite_eq_right hexponent, RadixText.parseMagnitude,
       scanDigits_naturalDigits significand ('e' :: integerDigits exponent)
         (by simp [digitValue?])]
     simp [parseExponent]
@@ -103,7 +104,7 @@ theorem parseMagnitude_decimal (significand : Nat) (exponent : Int) :
   rcases value with ⟨negative, significand, exponent⟩
   cases negative with
   | false =>
-      simp only [Decimal.characters, Bool.false_eq_true, if_false, List.nil_append,
+      simp only [Decimal.characters, Bool.false_eq_true, ite_false, List.nil_append,
         parseCharacters, splitSign_naturalDigits]
       simp [parseMagnitude_decimal]
   | true =>

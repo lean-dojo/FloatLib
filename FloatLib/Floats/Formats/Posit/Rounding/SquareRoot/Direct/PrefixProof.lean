@@ -82,7 +82,7 @@ theorem toRat_eq_scaledRadicand_mul_scale_sq
           (radicand.exponent.ediv 2 - Int.ofNat precision) := by
   unfold FloatLib.Numerics.Dyadic.toRat
   simp only [FloatLib.Numerics.Dyadic.signedSignificand, hnegative,
-    Bool.false_eq_true, if_false, Rat.ofInt_eq_cast]
+    Bool.false_eq_true, ite_false, Rat.ofInt_eq_cast]
   unfold scaledRadicand
   rw [show
       radicand.significand.shiftLeft
@@ -269,7 +269,7 @@ theorem roundCode_eq_fraction
       hleadingWidth hlower hupper hdenominator hremainder
   unfold roundCode
   simp only [beq_eq_false_iff_ne.mpr hsignificand,
-    hnegative, Bool.false_or, Bool.false_eq_true, if_false]
+    hnegative, Bool.false_or, Bool.false_eq_true, ite_false]
   unfold rootPrefix prefixAtPrecision
   rw [StickyPrefix.jamRemainder_congr
     (truncatedRoot (prefixPrecision format) radicand)

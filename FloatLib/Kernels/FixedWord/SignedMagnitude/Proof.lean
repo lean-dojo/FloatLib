@@ -132,7 +132,7 @@ theorem signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
   cases leftNegative <;> cases rightNegative
   all_goals
     unfold addSignedMagnitudes signedMagnitudeDyadic Dyadic.addFields
-    simp only [hleftNat, hrightNat, beq_iff_eq, if_false, le_refl, if_true,
+    simp only [hleftNat, hrightNat, beq_iff_eq, ite_false, le_refl, ite_true,
       Bool.false_eq_true, Bool.true_eq_false, sub_self, Int.toNat_zero]
   · have hsum' := hsum rfl
     have hadd :

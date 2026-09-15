@@ -29,7 +29,7 @@ theorem carry_value (radix : Nat) (hradix : 0 < radix) (digits : ℕ+)
   have hr : (radix : ℚ) ≠ 0 := by exact_mod_cast hradix.ne'
   by_cases h : coefficient = radix ^ (digits : Nat)
   · have hp : (digits : Nat) - 1 + 1 = digits := Nat.sub_add_cancel digits.pos
-    simp only [carry, if_pos h]
+    simp only [carry, ite_eq_left h]
     rw [h]
     simp only [Nat.cast_pow, zpow_add_one₀ hr]
     have hpow : (radix : ℚ) ^ ((digits : Nat) - 1) * radix =
@@ -61,7 +61,7 @@ theorem scaled_lt (radix : Nat) (hradix : 1 < radix)
   · have he : ((digits : Nat) : Int) +
         significantQuantum radix coefficient quantum digits =
           ((Nat.log radix coefficient + 1 : Nat) : Int) + quantum := by
-      simp only [significantQuantum, if_neg hc]
+      simp only [significantQuantum, ite_eq_right hc]
       omega
     rw [div_lt_iff₀ (zpow_pos hr _), ← zpow_natCast, ← zpow_add₀ hr.ne',
       he, zpow_add₀ hr.ne', zpow_natCast]
@@ -79,7 +79,7 @@ theorem scaled_lower (radix : Nat) (hradix : 1 < radix)
   have he : (((digits : Nat) - 1 : Nat) : Int) +
       significantQuantum radix coefficient quantum digits =
         (Nat.log radix coefficient : Int) + quantum := by
-    simp only [significantQuantum, if_neg hc]
+    simp only [significantQuantum, ite_eq_right hc]
     omega
   rw [le_div_iff₀ (zpow_pos hr _), ← zpow_natCast, ← zpow_add₀ hr.ne',
     he, zpow_add₀ hr.ne', zpow_natCast]
@@ -131,7 +131,7 @@ theorem significant_exact (radix : Nat) (hradix : 1 < radix)
     simp [hz, hzero]
   · have hlog := Nat.log_lt_of_lt_pow hz hc
     have hq : significantQuantum radix coefficient quantum digits ≤ quantum := by
-      simp only [significantQuantum, if_neg hz]
+      simp only [significantQuantum, ite_eq_right hz]
       omega
     let q := significantQuantum radix coefficient quantum digits
     have hscale : (coefficient : ℚ) * (radix : ℚ) ^ quantum / (radix : ℚ) ^ q =

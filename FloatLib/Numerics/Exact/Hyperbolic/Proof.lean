@@ -184,7 +184,7 @@ private theorem prepareLog_swap (argument boundary : ℚ) (levels : Nat)
     (hpositive : 0 < argument) :
     ((ElementaryComparison.prepareLog argument levels hpositive).compare boundary).swap =
       ElementaryComparison.compareExp boundary argument := by
-  rw [ElementaryComparison.compareExp, dif_pos hpositive,
+  rw [ElementaryComparison.compareExp, dite_eq_left hpositive,
     ElementaryComparison.prepareLog_eq_real, ElementaryComparison.compareLog_eq_real]
 
 /-- Cached logarithmic bounds preserve the inverse hyperbolic sine comparator at positive inputs. -/
@@ -195,7 +195,7 @@ theorem prepareArsinhPositive_eq_compare (argument boundary : ℚ) (levels : Nat
   rw [prepareArsinhPositive, Enclosure.Comparison.Prepared.compare]
   split
   · rename_i hboundary
-    simp only [prepareLog_swap, compareArsinh, compareSinh, dif_pos hboundary,
+    simp only [prepareLog_swap, compareArsinh, compareSinh, dite_eq_left hboundary,
       compareSinhPositive, not_le_of_gt hpositive, ↓reduceIte]
   · rfl
 

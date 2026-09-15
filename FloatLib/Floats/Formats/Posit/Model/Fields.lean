@@ -197,11 +197,11 @@ theorem neg_four_payloadBits_le_scale (value : Model format) :
     rfl
   cases hbit : value.regimeBit with
   | false =>
-      simp only [scale, regimeValue, hbit, Bool.false_eq_true, if_false,
+      simp only [scale, regimeValue, hbit, Bool.false_eq_true, ite_false,
         hstep, Int.ofNat_eq_natCast]
       omega
   | true =>
-      simp only [scale, regimeValue, hbit, if_true,
+      simp only [scale, regimeValue, hbit, ite_true,
         hstep, Int.ofNat_eq_natCast]
       omega
 
@@ -226,11 +226,11 @@ theorem scale_lt_four_bits (value : Model format) :
     rfl
   cases hbit : value.regimeBit with
   | false =>
-      simp only [scale, regimeValue, hbit, Bool.false_eq_true, if_false,
+      simp only [scale, regimeValue, hbit, Bool.false_eq_true, ite_false,
         hstep, Int.ofNat_eq_natCast]
       omega
   | true =>
-      simp only [scale, regimeValue, hbit, if_true,
+      simp only [scale, regimeValue, hbit, ite_true,
         hstep, Int.ofNat_eq_natCast]
       omega
 

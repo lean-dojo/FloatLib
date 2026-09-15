@@ -34,7 +34,7 @@ theorem evaluateArgument_eq_real (prepare : Rat → Rat → Nat → Prepared)
     {format : Format} (x y : Model format) {a b : Rat}
     (hx : x.toRat? = some a) (hy : y.toRat? = some b) (horigin : ¬ (a = 0 ∧ b = 0)) :
     evaluateArgument prepare x y = RealRounding.round format (function a b) := by
-  simp only [evaluateArgument, hx, hy, if_neg horigin]
+  simp only [evaluateArgument, hx, hy, ite_eq_right horigin]
   exact ComparisonRounding.roundSigned_eq_real format _ _ (hprepare a b _)
 
 /-- A NaR first coordinate propagates. -/

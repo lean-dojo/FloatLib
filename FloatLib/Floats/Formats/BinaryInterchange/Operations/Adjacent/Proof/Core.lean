@@ -138,7 +138,7 @@ private theorem signMaskNat_lt_two_pow_bitWidth (fmt : FloatFormat) :
 
 @[simp] private theorem adjacencyRank_negZero (fmt : FloatFormat) :
     adjacencyRank (negZero fmt) = fmt.signMaskNat := by
-  simp only [adjacencyRank, signBit_negZero, if_true,
+  simp only [adjacencyRank, signBit_negZero, ite_true,
     toNatBits_negZero]
   have hwidth := two_mul_signMaskNat_eq_two_pow_bitWidth fmt
   omega
@@ -149,7 +149,7 @@ private theorem signMaskNat_lt_two_pow_bitWidth (fmt : FloatFormat) :
 
 @[simp] private theorem adjacencyRank_negMinSubnormal (fmt : FloatFormat) :
     adjacencyRank (negMinSubnormal fmt) = fmt.signMaskNat - 1 := by
-  simp only [adjacencyRank, signBit_negMinSubnormal, if_true,
+  simp only [adjacencyRank, signBit_negMinSubnormal, ite_true,
     toNatBits_negMinSubnormal]
   have hwidth := two_mul_signMaskNat_eq_two_pow_bitWidth fmt
   have hsignPos : 0 < fmt.signMaskNat := by
@@ -232,7 +232,7 @@ private theorem upperPositiveCode_eq_ofFields_allOnes
     FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
     FloatFormat.ofWordNat FloatFormat.bitWidth
   simp only [BitVec.ofNatLT_eq_ofNat, BitVec.toNat_ofNat,
-    Bool.false_eq_true, if_false, Nat.zero_or]
+    Bool.false_eq_true, ite_false, Nat.zero_or]
   simp only [Nat.and_self]
   rw [Nat.mod_eq_of_lt]
   · rw [shiftLeft_or_lowMask (2 ^ fmt.expWidth - 1) fmt.fracWidth]
@@ -286,7 +286,7 @@ private theorem topCode_eq_ofFields_allOnes
   unfold mkBitsImpl FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
     FloatFormat.ofWordNat FloatFormat.bitWidth
   simp only [BitVec.ofNatLT_eq_ofNat, BitVec.toNat_ofNat,
-    if_true, Nat.and_self]
+    ite_true, Nat.and_self]
   rw [Nat.or_assoc]
   rw [shiftLeft_or_lowMask (2 ^ fmt.expWidth - 1) fmt.fracWidth]
   rw [shiftLeft_eq_mul_pow
@@ -528,7 +528,7 @@ private theorem adjacencyRank_ofBits_add_one
     apply (signBit_eq_false_iff_toNatBits_lt_signMaskNat _).2
     rw [hnat]
     exact hraw
-  simp only [adjacencyRank, hsign, hsignNext, Bool.false_eq_true, if_false]
+  simp only [adjacencyRank, hsign, hsignNext, Bool.false_eq_true, ite_false]
   rw [hnat]
   omega
 
@@ -549,7 +549,7 @@ private theorem adjacencyRank_ofBits_sub_one
     apply (signBit_eq_true_iff_signMaskNat_le _).2
     rw [hnat]
     omega
-  simp only [adjacencyRank, hsign, hsignNext, if_true]
+  simp only [adjacencyRank, hsign, hsignNext, ite_true]
   rw [hnat]
   have hfit := toNatBits_lt_two_pow x
   omega
@@ -569,7 +569,7 @@ private theorem adjacencyRank_ofBits_sub_one_of_positive
       (signBit_eq_false_iff_toNatBits_lt_signMaskNat x).1 hsign
     omega
   simp only [adjacencyRank, hsign, hsignNext,
-    Bool.false_eq_true, if_false]
+    Bool.false_eq_true, ite_false]
   rw [hnat]
   omega
 
@@ -587,7 +587,7 @@ private theorem adjacencyRank_ofBits_add_one_of_negative
     apply (signBit_eq_true_iff_signMaskNat_le _).2
     rw [hnat]
     omega
-  simp only [adjacencyRank, hsign, hsignNext, if_true]
+  simp only [adjacencyRank, hsign, hsignNext, ite_true]
   rw [hnat]
   omega
 

@@ -152,13 +152,13 @@ private theorem roundDyadicToInt_towardZero_by_sign
       if value.negative then ⌈value.toReal⌉ else ⌊value.toReal⌋ := by
   rw [roundDyadicToInt_towardZero_kernel]
   cases hnegative : value.negative
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     have hsemantic :=
       floor_scaledDyadic false value.significand value.exponent 0
     simpa [floorRound, roundSignedMantissaAtExponentDown,
       Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
       hnegative, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hsemantic.symm
-  · simp only [if_true]
+  · simp only [ite_true]
     have hsemantic :=
       ceil_scaledDyadic true value.significand value.exponent 0
     simpa [ceilRound, roundSignedMantissaAtExponentUp,
@@ -216,24 +216,24 @@ theorem roundDyadicToInt_towardZero (value : Numerics.Dyadic) :
     · have hnonnegative : 0 ≤ value.toReal := by
         rw [Numerics.Dyadic.toReal]
         simp only [Numerics.Dyadic.signedSignificand, hnegative,
-          Bool.false_eq_true, if_false]
+          Bool.false_eq_true, ite_false]
         have hcoefficient :
             (0 : ℝ) ≤ ((Int.ofNat value.significand : Int) : ℝ) := by
           norm_cast
           exact Int.natCast_nonneg value.significand
         exact mul_nonneg hcoefficient (bpow_pos value.exponent).le
-      simp only [Bool.false_eq_true, if_false]
-      rw [if_pos hnonnegative]
+      simp only [Bool.false_eq_true, ite_false]
+      rw [ite_eq_left hnonnegative]
     · have hnegativeReal : value.toReal < 0 := by
         rw [Numerics.Dyadic.toReal]
-        simp only [Numerics.Dyadic.signedSignificand, hnegative, if_true]
+        simp only [Numerics.Dyadic.signedSignificand, hnegative, ite_true]
         have hcoefficient :
             ((-Int.ofNat value.significand : Int) : ℝ) < 0 := by
           norm_num
           exact Nat.pos_of_ne_zero hsignificand
         exact mul_neg_of_neg_of_pos hcoefficient (bpow_pos value.exponent)
-      simp only [if_true]
-      rw [if_neg (not_le.mpr hnegativeReal)]
+      simp only [ite_true]
+      rw [ite_eq_right (not_le.mpr hnegativeReal)]
 
 /-- A dyadic with a nonnegative exponent is already an integer. -/
 theorem dyadicIsIntegral_ofNat
@@ -509,16 +509,16 @@ private theorem roundDyadicToInt_representable
       have hreal : ((roundDyadicToInt mode exact : Int) : ℝ) = exact.toReal := by
         rw [hvalue, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hexp]
         cases exact.negative <;>
-          simp only [Bool.false_eq_true, if_false, if_true, Int.ofNat_eq_natCast,
+          simp only [Bool.false_eq_true, ite_false, ite_true, Int.ofNat_eq_natCast,
             zpow_natCast] <;>
           push_cast <;> ring
       refine ⟨exact.significand, k, ?_, hsig, by rw [hreal]; exact hxbound⟩
       show (roundDyadicToInt mode exact).natAbs = exact.significand * 2 ^ k
       rw [hvalue]
       cases exact.negative
-      · simp only [Bool.false_eq_true, if_false]
+      · simp only [Bool.false_eq_true, ite_false]
         rfl
-      · simp only [if_true, Int.natAbs_neg]
+      · simp only [ite_true, Int.natAbs_neg]
         rfl
 
 /--
@@ -556,7 +556,7 @@ theorem roundToIntegralExactWithStatus_finite_exact
   by_cases hzero : roundDyadicToInt mode exact = 0
   · have hbeq : (roundDyadicToInt mode exact == 0) = true := by
       simp [hzero]
-    simp only [hbeq, if_true]
+    simp only [hbeq, ite_true]
     have hfin : isFinite (zero fmt exact.negative) = true :=
       isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt exact.negative)
     refine ⟨hfin, ?_, ?_⟩
@@ -566,7 +566,7 @@ theorem roundToIntegralExactWithStatus_finite_exact
       exact hoverflow
   · have hbeq : (roundDyadicToInt mode exact == 0) = false := by
       simp [hzero]
-    simp only [hbeq, Bool.false_eq_true, if_false]
+    simp only [hbeq, Bool.false_eq_true, ite_false]
     obtain ⟨hfin, hval⟩ :=
       roundDyadicWithRounding_of_eq_mul_pow2 fmt hfmt mode _ m k hsig hm
         (by simpa [Numerics.Dyadic.ofScaledInt] using hexpMin) hbound'

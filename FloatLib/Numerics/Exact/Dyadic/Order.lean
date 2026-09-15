@@ -56,7 +56,7 @@ theorem toRat_pos_of_significand_ne_zero
     (hnegative : value.negative = false) :
     0 < value.toRat := by
   rw [toRat]
-  simp only [signedSignificand, hnegative, Bool.false_eq_true, if_false]
+  simp only [signedSignificand, hnegative, Bool.false_eq_true, ite_false]
   apply mul_pos
   · have hcast : (0 : Rat) < value.significand := by
       exact_mod_cast Nat.pos_of_ne_zero hsignificand
@@ -230,7 +230,7 @@ private theorem positive_toRat_bounds
   have hscale : 0 < (2 : Rat) ^ exponent :=
     zpow_pos (by norm_num) _
   rw [toRat]
-  simp only [signedSignificand, Bool.false_eq_true, if_false]
+  simp only [signedSignificand, Bool.false_eq_true, ite_false]
   constructor
   · rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
     simpa [mul_comm] using
@@ -290,25 +290,25 @@ theorem Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
   by_cases hleftRight :
       leftExponent + Int.ofNat leftSignificand.log2 <
         rightExponent + Int.ofNat rightSignificand.log2
-  · simp only [hleftRight, if_true]
+  · simp only [hleftRight, ite_true]
     rw [compareNonnegativeFields_eq_compareFields, compareFields_eq]
     exact
       ((compare_eq_lt_iff _ _).2
         (positive_toRat_lt_of_leading_lt
           leftSignificand rightSignificand leftExponent rightExponent
           hleft hright hleftRight)).symm
-  · simp only [hleftRight, if_false]
+  · simp only [hleftRight, ite_false]
     by_cases hrightLeft :
         rightExponent + Int.ofNat rightSignificand.log2 <
           leftExponent + Int.ofNat leftSignificand.log2
-    · simp only [hrightLeft, if_true]
+    · simp only [hrightLeft, ite_true]
       rw [compareNonnegativeFields_eq_compareFields, compareFields_eq]
       exact
         ((compare_eq_gt_iff _ _).2
           (positive_toRat_lt_of_leading_lt
             rightSignificand leftSignificand rightExponent leftExponent
             hright hleft hrightLeft)).symm
-    · simp only [hrightLeft, if_false]
+    · simp only [hrightLeft, ite_false]
       unfold compareNonnegativeFields
       simp [hleft, hright]
 

@@ -35,7 +35,7 @@ theorem ofNatBits_magnitudeBits (value : Model format) :
       have hsignCode : format.signMaskNat ≤ value.toNatBits := by
         simpa [signBit_eq_decide] using hsign
       have hpositive : 0 < value.toNatBits := lt_of_lt_of_le format.signMaskNat_pos hsignCode
-      simp only [hsign, if_true, magnitudeBits, neg]
+      simp only [hsign, ite_true, magnitudeBits, neg]
       rw [toNatBits_ofNatBits_of_lt _ (by omega),
         Nat.sub_sub_self hcode.le, ofNatBits_toNatBits]
 
@@ -73,7 +73,7 @@ theorem toRat?_eq_signed_magnitude (value : Model format) (hnar : value ≠ nar 
     simp [hmag]
   · have hn : value.isNaR = false := beq_eq_false_iff_ne.mpr hnar
     have hz : value.isZero = false := beq_eq_false_iff_ne.mpr hzero
-    simp only [toRat?, decodeExact, hn, hz, Bool.false_eq_true, if_false,
+    simp only [toRat?, decodeExact, hn, hz, Bool.false_eq_true, ite_false,
       ExactValue.toRat?]
     rw [decodeFields_toRat_eq_signed_magnitude value hnar hzero]
 
@@ -105,11 +105,11 @@ theorem roundRat_toRat? (value : Model format) (exact : Rat)
     (Nat.pos_of_ne_zero (magnitudeBits_ne_zero_of_ne_zero value hzero)) hbound
   cases hsign : value.signBit with
   | false =>
-      simp only [Bool.false_eq_true, if_false]
+      simp only [Bool.false_eq_true, ite_false]
       rw [roundRat_nonnegativeRatAt format hbound]
       simpa [hsign] using ofNatBits_magnitudeBits value
   | true =>
-      simp only [if_true]
+      simp only [ite_true]
       rw [roundRat_of_neg (neg_lt_zero.mpr hpositive), neg_neg,
         roundPositiveRat_nonnegativeRatAt format hbound]
       simpa [hsign] using ofNatBits_magnitudeBits value

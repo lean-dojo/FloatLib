@@ -137,10 +137,10 @@ theorem roundAlignedFieldsWord_toNat
   unfold roundAlignedFieldsWord
   by_cases hsame : leftNegative = rightNegative
   · subst rightNegative
-    simp only [beq_self_eq_true, if_true]
+    simp only [beq_self_eq_true, ite_true]
     by_cases hcarry :
         (FixedWord.add64 leftSignificand rightSignificand).carry = 0
-    · simp only [beq_iff_eq, hcarry, if_true]
+    · simp only [beq_iff_eq, hcarry, ite_true]
       have hadd :=
         FixedWord.add64_toNat leftSignificand rightSignificand
       simp only [hcarry, UInt64.toNat_zero, zero_mul, add_zero] at hadd
@@ -158,11 +158,11 @@ theorem roundAlignedFieldsWord_toNat
         roundCode_eq_signedMagnitudeDyadic]
       simpa [FixedWord.addSignedMagnitudes, FixedWord.add64] using
         congrArg (DirectDyadicPacking.roundCode format) hexact
-    · simp only [beq_iff_eq, hcarry, if_false]
+    · simp only [beq_iff_eq, hcarry, ite_false]
       exact roundWideFieldsWord_toNat format heligible
         leftNegative leftSignificand exponent
         leftNegative rightSignificand exponent
-  · simp only [beq_iff_eq, hsame, if_false]
+  · simp only [beq_iff_eq, hsame, ite_false]
     have hexact :=
       FixedWord.signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
         leftNegative rightNegative leftSignificand rightSignificand exponent
@@ -364,12 +364,12 @@ theorem roundFmaFieldsWord_toNat
   unfold roundFmaFieldsWord
   by_cases hhigh :
       (FixedWord.mul64 leftSignificand rightSignificand).hi = 0
-  · simp only [beq_iff_eq, hhigh, if_true]
+  · simp only [beq_iff_eq, hhigh, ite_true]
     rw [roundFieldsWord_toNat,
       FixedWord.mul64_lo_toNat_of_hi_eq_zero
         leftSignificand rightSignificand hhigh]
     rfl
-  · simp only [beq_iff_eq, hhigh, if_false]
+  · simp only [beq_iff_eq, hhigh, ite_false]
     exact roundWideFmaFieldsWord_toNat format heligible
       leftNegative leftSignificand leftExponent
       rightNegative rightSignificand rightExponent

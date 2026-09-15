@@ -128,7 +128,7 @@ theorem nextGreaterThan_orderIndex (value : ExecFloat.P3109 format)
   have hpow : 2 ^ format.bitWidth = format.modulus := rfl
   have hboundary := format.one_lt_signBoundary
   have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [isNaN] using hnan
-  simp only [nextGreaterThan, hnan, Bool.false_eq_true, if_false]
+  simp only [nextGreaterThan, hnan, Bool.false_eq_true, ite_false]
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
     (by_cases hunit : value.toNatBits = format.signBoundary + 1) <;>
@@ -151,7 +151,7 @@ theorem nextLessThan_orderIndex (value : ExecFloat.P3109 format)
   have hpow : 2 ^ format.bitWidth = format.modulus := rfl
   have hboundary := format.one_lt_signBoundary
   have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [isNaN] using hnan
-  simp only [nextLessThan, hnan, Bool.false_eq_true, if_false]
+  simp only [nextLessThan, hnan, Bool.false_eq_true, ite_false]
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
     (by_cases hz : value.toNatBits = 0) <;>
@@ -238,7 +238,7 @@ theorem nextGreaterThan_isNaN_iff (value : ExecFloat.P3109 format) :
     simp_all
   · intro hnone
     by_cases hnan : value.isNaN = true
-    · simp only [nextGreaterThan, hnan, if_true]
+    · simp only [nextGreaterThan, hnan, ite_true]
       simp [isNaN]
     · have hfinite : value.isNaN = false := Bool.eq_false_iff.mpr hnan
       have hbound := (orderIndex_bounds value hfinite).2
@@ -260,7 +260,7 @@ theorem nextLessThan_isNaN_iff (value : ExecFloat.P3109 format) :
     simp_all
   · intro hnone
     by_cases hnan : value.isNaN = true
-    · simp only [nextLessThan, hnan, if_true]
+    · simp only [nextLessThan, hnan, ite_true]
       simp [isNaN]
     · have hfinite : value.isNaN = false := Bool.eq_false_iff.mpr hnan
       have hbound := (orderIndex_bounds value hfinite).1

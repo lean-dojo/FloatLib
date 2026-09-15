@@ -59,6 +59,7 @@ theorem candidateCarrierLawful :
     GuardStickyCarrier.LawfulCandidateCarrier candidateCarrier FixedWord.UInt128.toNat 128 where
   bitAt_eq_testBit := NativeLimb.bitAt_eq_testBit
   hasLowBits_eq value width := by
+    dsimp only [candidateCarrier, hasLowBits]
     by_cases hremainder : value.toNat % 2 ^ width = 0
     · have hzeroNat :
           (NativeLimb.lowBits value width).toNat = 0 := by
@@ -87,7 +88,7 @@ theorem candidateCarrierLawful :
   shiftLeft_toNat value shift hshift hfit := by
     show (shiftLeft value shift).toNat = value.toNat <<< shift
     unfold shiftLeft
-    rw [if_pos hshift]
+    rw [ite_eq_left hshift]
     exact FixedWord.UInt128.shiftLeft_toNat value shift hshift hfit
   shiftRight_toNat value shift _ := by
     show (FixedWord.UInt128.shiftRight value shift).toNat = value.toNat >>> shift
@@ -170,27 +171,27 @@ theorem roundPositiveCodeWord_toNat_eq_direct
   · have hzeroNat : significand.toNat = 0 :=
       (NativeLimb.isZero_eq_true_iff significand).1 hzero
     unfold roundPositiveCodeWord
-    rw [if_pos hzero]
+    rw [ite_eq_left hzero]
     simp [DirectDyadicPacking.roundPositiveCode, hzeroNat]
     rfl
   · have hnonzero : significand.toNat ≠ 0 := by
       intro equality
       exact hzero ((NativeLimb.isZero_eq_true_iff significand).2 equality)
     unfold roundPositiveCodeWord
-    rw [if_neg hzero]
+    rw [ite_eq_right hzero]
     by_cases hunderflow :
         isLessMinPositive format significand exponent = true
-    · rw [if_pos hunderflow]
+    · rw [ite_eq_left hunderflow]
       rw [isLessMinPositive_eq] at hunderflow
       rw [DirectDyadicPacking.roundPositiveCode_eq_dyadic]
       unfold DyadicRounding.roundPositiveCode
       have hspecial :
           ¬(significand.toNat == 0 || false) = true := by
         simp [hnonzero]
-      rw [if_neg hspecial, if_pos hunderflow]
+      rw [ite_eq_right hspecial, ite_eq_left hunderflow]
       simp only [FloatLib.Numerics.FixedWord.UInt128.toNat,
         UInt64.toNat_zero, UInt64.toNat_one, zero_mul, add_zero]
-    · rw [if_neg hunderflow]
+    · rw [ite_eq_right hunderflow]
       apply GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
         format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
       rw [← isLessMinPositive_eq]
@@ -222,7 +223,7 @@ theorem restoreSignWord_toNat
   | false => rfl
   | true =>
       unfold restoreSignWord
-      simp only [if_true]
+      simp only [ite_true]
       by_cases hzero : NativeLimb.isZero positiveCode
       · have hzeroNat : positiveCode.toNat = 0 :=
           (NativeLimb.isZero_eq_true_iff positiveCode).1 hzero
@@ -231,7 +232,7 @@ theorem restoreSignWord_toNat
       · have hnonzero : positiveCode.toNat ≠ 0 := by
           intro equality
           exact hzero ((NativeLimb.isZero_eq_true_iff positiveCode).2 equality)
-        rw [if_neg hzero]
+        rw [ite_eq_right hzero]
         rw [NativeLimb.lowBits_complement_increment_toNat
           format positiveCode heligible
           (hpositive.trans format.signMaskNat_lt_modulus) hnonzero]

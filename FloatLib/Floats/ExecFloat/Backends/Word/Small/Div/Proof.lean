@@ -169,7 +169,7 @@ private theorem roundNormalNative_eq_spec
         floorLog2RatWord num den + exponent
   · simp only [hnumZero, hdenZero]
     simp only [hlow, hhigh, decide_false, decide_true, Bool.false_or,
-      Bool.or_true, if_true]
+      Bool.or_true, ite_true]
     rfl
   simp only [hlow, hhigh, decide_false, Bool.false_or]
   have htotalMin :
@@ -404,7 +404,7 @@ theorem divNormal_refines {fmt : FloatFormat}
   unfold FiniteKernel.div?
   rw [view.xDecode, view.yDecode]
   unfold FiniteKernel.divComponents
-  simp only [beq_iff_eq, hxMantissaNatNe, hyMantissaNatNe, if_false]
+  simp only [beq_iff_eq, hxMantissaNatNe, hyMantissaNatNe, ite_false]
   have hxOne : (1 : UInt64) ≤ view.xExponent :=
     UInt64.le_iff_toNat_le.mpr view.xExponentBounds.1
   have hyOne : (1 : UInt64) ≤ view.yExponent :=
@@ -413,13 +413,13 @@ theorem divNormal_refines {fmt : FloatFormat}
       FiniteKernel.scale view.xExponent.toNat =
         (view.xExponent - 1).toNat := by
     unfold FiniteKernel.scale
-    simp only [beq_iff_eq, view.xExponentBounds.1.ne', if_false]
+    simp only [beq_iff_eq, view.xExponentBounds.1.ne', ite_false]
     exact (UInt64.toNat_sub_of_le view.xExponent 1 hxOne).symm
   have hyScale :
       FiniteKernel.scale view.yExponent.toNat =
         (view.yExponent - 1).toNat := by
     unfold FiniteKernel.scale
-    simp only [beq_iff_eq, view.yExponentBounds.1.ne', if_false]
+    simp only [beq_iff_eq, view.yExponentBounds.1.ne', ite_false]
     exact (UInt64.toNat_sub_of_le view.yExponent 1 hyOne).symm
   rw [hxScale, hyScale]
   rw [← view.sign_eq]

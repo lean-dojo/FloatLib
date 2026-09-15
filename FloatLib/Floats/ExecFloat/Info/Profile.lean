@@ -10,6 +10,7 @@ public meta import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 public meta import Lean.Data.Options
 public import Lean.Exception
 public meta import Lean.Elab.Command
+public meta import Lean.OriginalConstKind
 public meta import FloatLib.Floats.ExecFloat.Carrier -- shake: keep
 
 /-!
@@ -179,8 +180,9 @@ meta def CoreOperationCoverage.none : CoreOperationCoverage :=
 meta def TheoremSurface.validateTheorems (surface : TheoremSurface) : Lean.Meta.MetaM Unit := do
   let environment ← Lean.getEnv
   for declaration in surface.declarations do
-    match environment.find? declaration with
-    | some (.thmInfo _) => pure ()
+    -- Module exports may hide theorem bodies, so check the original declaration kind.
+    match Lean.getOriginalConstKind? environment declaration with
+    | some .thm => pure ()
     | some _ =>
       throwError
         "internal `#float_info` profile error: `{declaration}` is listed as a theorem surface of \

@@ -144,7 +144,7 @@ private theorem roundRatMagnitudeDirectedScaled_pos_down_subnormal_finite_le
       fmt numerator denominator exponent hnumerator hdenominator hmax hlow hhigh
   dsimp only at hpos hlt hround
   have hvalue := toReal_roundSubnormalDown fmt _ hlt
-  rw [if_neg (Nat.one_le_iff_ne_zero.mp hpos)] at hvalue
+  rw [ite_eq_right (Nat.one_le_iff_ne_zero.mp hpos)] at hvalue
   rw [hround]
   refine ⟨isFinite_ofFields_subnormal fmt hfmt _ (by simpa [pow2_eq_two_pow] using hlt), ?_⟩
   rw [hvalue]

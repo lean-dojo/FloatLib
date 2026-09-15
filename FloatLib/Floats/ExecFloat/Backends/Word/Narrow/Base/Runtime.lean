@@ -26,7 +26,7 @@ proof developments.
 
 - IEEE Standard for Floating-Point Arithmetic, IEEE 754-2019, Clauses 3.4, 4.3.1, 5.4.1, and 6.2,
   <https://doi.org/10.1109/IEEESTD.2019.8766229>.
-- Lean 4.33, `Init.Data.Float.Model`, for the kernel-visible logical floating-point model used by
+- Lean, `Init.Data.Float.Model`, for the kernel-visible logical floating-point model used by
   the surrounding agreement development.
 -/
 

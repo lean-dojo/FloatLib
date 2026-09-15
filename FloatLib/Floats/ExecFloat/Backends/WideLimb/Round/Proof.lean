@@ -80,7 +80,7 @@ theorem rounded_bounds (S : Nat) (hS : S ≠ 0) :
   have hlow := Nat.log2_self_le hS
   have hhigh := Nat.lt_log2_self (n := S)
   by_cases hle : fmt.fracWidth ≤ S.log2
-  · simp only [rounded, hle, if_true]
+  · simp only [rounded, hle, ite_true]
     have hpos : 0 < 2 ^ (S.log2 - fmt.fracWidth) := Nat.two_pow_pos _
     have hdivLow : 2 ^ fmt.fracWidth ≤ S / 2 ^ (S.log2 - fmt.fracWidth) := by
       rw [Nat.le_div_iff_mul_le hpos, ← pow_add, Nat.add_sub_cancel' hle]
@@ -93,7 +93,7 @@ theorem rounded_bounds (S : Nat) (hS : S ≠ 0) :
     · exact le_trans hdivLow (div_two_pow_le_roundShiftRightEven _ _)
     · have := roundShiftRightEven_le_succ S (S.log2 - fmt.fracWidth)
       omega
-  · simp only [rounded, hle, if_false]
+  · simp only [rounded, hle, ite_false]
     have hlt : S.log2 < fmt.fracWidth := Nat.lt_of_not_le hle
     constructor
     · calc
@@ -134,9 +134,9 @@ theorem roundNormal?_map_toModel (hexp : fmt.expWidth ≤ 32) (sign : Bool) (S :
   rw [LimbArray.log2_eq S hS]
   dsimp only
   by_cases hsub : S.toNat.log2 + jam + scale < fmt.bias + 2 * fmt.fracWidth - 1
-  · rw [if_pos hsub, if_pos hsub]
+  · rw [ite_eq_left hsub, ite_eq_left hsub]
     rfl
-  · rw [if_neg hsub, if_neg hsub]
+  · rw [ite_eq_right hsub, ite_eq_right hsub]
     set roundedLimbs :=
       if fmt.fracWidth ≤ S.toNat.log2 then
         S.roundShiftRightEven (S.toNat.log2 - fmt.fracWidth)
@@ -166,9 +166,9 @@ theorem roundNormal?_map_toModel (hexp : fmt.expWidth ≤ 32) (sign : Bool) (S :
     by_cases hover : 3 * fmt.bias + 2 * fmt.fracWidth - 2 <
         (if rounded = 2 ^ (fmt.fracWidth + 1) then S.toNat.log2 + jam + scale + 1
           else S.toNat.log2 + jam + scale)
-    · rw [if_pos hover, if_pos hover]
+    · rw [ite_eq_left hover, ite_eq_left hover]
       rfl
-    · rw [if_neg hover, if_neg hover, Option.map_some]
+    · rw [ite_eq_right hover, ite_eq_right hover, Option.map_some]
       congr 1
       have hexpLt : (if rounded = 2 ^ (fmt.fracWidth + 1) then S.toNat.log2 + jam + scale + 1
           else S.toNat.log2 + jam + scale) - (fmt.bias + 2 * fmt.fracWidth - 2) <
@@ -217,22 +217,22 @@ theorem round_eq_of_roundJammed (sign : Bool) (exact jam scale : Nat) (hexact : 
     dsimp only at hres
     rw [hleading] at hres
     unfold FiniteProductRound.round
-    simp only [beq_iff_eq, hexact, if_false]
+    simp only [beq_iff_eq, hexact, ite_false]
     by_cases hsub : exact.log2 + scale < fmt.bias + 2 * fmt.fracWidth - 1
-    · rw [if_pos hsub] at hres
+    · rw [ite_eq_left hsub] at hres
       exact absurd hres (by simp)
-    · rw [if_neg hsub] at hres
-      rw [if_neg hsub]
+    · rw [ite_eq_right hsub] at hres
+      rw [ite_eq_right hsub]
       have hrounded :
           (if fmt.fracWidth ≤ S.log2 then Numerics.roundShiftRightEven S (S.log2 - fmt.fracWidth)
             else S * 2 ^ (fmt.fracWidth - S.log2)) =
           (if fmt.fracWidth ≤ exact.log2 then Numerics.roundShiftRightEven exact (exact.log2 - fmt.fracWidth)
             else exact <<< (fmt.fracWidth - exact.log2)) := by
         by_cases hle : fmt.fracWidth ≤ S.log2
-        · rw [if_pos hle, if_pos (by omega), hround hle]
+        · rw [ite_eq_left hle, ite_eq_left (by omega), hround hle]
         · obtain ⟨hSeq, hjam0⟩ := hshift hle
           rw [hjam0, Nat.add_zero] at hleading
-          rw [if_neg hle, if_neg (by omega), Nat.shiftLeft_eq, hleading, hSeq]
+          rw [ite_eq_right hle, ite_eq_right (by omega), Nat.shiftLeft_eq, hleading, hSeq]
       rw [hrounded] at hres
       rw [pow2_eq_two_pow, pow2_eq_two_pow]
       set rounded := (if fmt.fracWidth ≤ exact.log2 then
@@ -240,16 +240,16 @@ theorem round_eq_of_roundJammed (sign : Bool) (exact jam scale : Nat) (hexact : 
           else exact <<< (fmt.fracWidth - exact.log2)) with hroundedDef
       by_cases hover : 3 * fmt.bias + 2 * fmt.fracWidth - 2 <
           (if rounded = 2 ^ (fmt.fracWidth + 1) then exact.log2 + scale + 1 else exact.log2 + scale)
-      · rw [if_pos hover] at hres
+      · rw [ite_eq_left hover] at hres
         exact absurd hres (by simp)
-      · rw [if_neg hover] at hres
-        rw [if_neg hover]
+      · rw [ite_eq_right hover] at hres
+        rw [ite_eq_right hover]
         rw [Option.some.injEq] at hres
         rw [← hres]
         congr 1
         by_cases hcarry : rounded = 2 ^ (fmt.fracWidth + 1)
-        · rw [if_pos hcarry, hcarry, Nat.sub_self, pow_succ, Nat.mul_mod_right]
-        · rw [if_neg hcarry]
+        · rw [ite_eq_left hcarry, hcarry, Nat.sub_self, pow_succ, Nat.mul_mod_right]
+        · rw [ite_eq_right hcarry]
           have hbounds := rounded_bounds (fmt := fmt) exact hexact
           simp only at hbounds
           rw [Nat.shiftLeft_eq] at hroundedDef

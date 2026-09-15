@@ -7,7 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Rational.Runtime
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
+import Mathlib.Data.Rat.Cast.Lemmas
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 

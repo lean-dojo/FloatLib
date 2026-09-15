@@ -278,10 +278,10 @@ private theorem roundFmaFarAddNormal
     simp only [Int.ofNat_eq_natCast]
     omega
   unfold roundDyadic
-  simp only [beq_iff_eq, hcombinedNe, if_false,
-    hcombinedLeading, hcombinedNormal, hcombinedWidth, if_true,
+  simp only [beq_iff_eq, hcombinedNe, ite_false,
+    hcombinedLeading, hcombinedNormal, hcombinedWidth, ite_true,
     hcombinedShift, hround, hcarry]
-  rw [if_neg hcombinedOverflow, hcombinedExponent]
+  rw [ite_eq_right hcombinedOverflow, hcombinedExponent]
   rw [Model.pow2_eq_two_pow]
 
 private theorem roundFmaFarAddSubnormal
@@ -343,7 +343,7 @@ private theorem roundFmaFarAddSubnormal
     omega
   have hshift : gap - 1 + 1 = gap := by omega
   unfold roundDyadic
-  simp only [beq_iff_eq, hcombinedNe, if_false,
+  simp only [beq_iff_eq, hcombinedNe, ite_false,
     hcombinedSubnormal, hcombinedExponent]
   rw [hshift, hround]
   simp [hlargeNe, hlargePow]
@@ -496,7 +496,7 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
     rw [hproductDef, h]
     simp
   simp only [hxExceptional, hyExceptional, hzExceptional, hxZero, hyZero, hzZero,
-    hproductZero, or_false, if_false]
+    hproductZero, or_false, ite_false]
   have hxMantissaLt :=
     finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
   have hyMantissaLt :=
@@ -552,9 +552,9 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_ofNat]
     omega
   by_cases hscale : productScale ≤ zProductScale
-  · rw [if_pos hscale]
+  · rw [ite_eq_left hscale]
     by_cases hshift : zProductScale - productScale ≤ 39
-    · rw [if_pos hshift]
+    · rw [ite_eq_left hshift]
       have hround := roundFmaAlignedRight_eq
         (signBit (toUInt32 x) ^^ signBit (toUInt32 y))
         (signBit (toUInt32 z))
@@ -562,7 +562,7 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
         hproductZero hzZero hproductBound hzMantissaLt hproductScaleLe hscale hshift
       rw [hproductToNat, hproductExponent, hzExponentValue] at hround
       exact congrArg (fun bits => some (ofUInt32 bits)) hround
-    · rw [if_neg hshift]
+    · rw [ite_eq_right hshift]
       by_cases hfar : 48 < zProductScale - productScale
       · by_cases hsign :
           (signBit (toUInt32 x) ^^ signBit (toUInt32 y)) =
@@ -572,7 +572,7 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
                 ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
                   signBit (toUInt32 z))) = true := by
             simp [hfar, hsign]
-          rw [if_pos hcondition]
+          rw [ite_eq_left hcondition]
           have hscaleNat : productScale.toNat ≤ zProductScale.toNat :=
             UInt64.le_iff_toNat_le.mp hscale
           have hshiftToNat :
@@ -665,7 +665,7 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
                 ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
                   signBit (toUInt32 z))) = true := by
             simpa [hfar] using hsign
-          rw [if_neg hcondition]
+          rw [ite_eq_right hcondition]
           unfold fmaExactFinite?
           rw [hproductToNat, hproductExponent, hzExponentValue]
       · have hcondition :
@@ -673,12 +673,12 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
               ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
                 signBit (toUInt32 z))) = true := by
           simp [hfar]
-        rw [if_neg hcondition]
+        rw [ite_eq_right hcondition]
         unfold fmaExactFinite?
         rw [hproductToNat, hproductExponent, hzExponentValue]
-  · rw [if_neg hscale]
+  · rw [ite_eq_right hscale]
     by_cases hshift : productScale - zProductScale ≤ 15
-    · rw [if_pos hshift]
+    · rw [ite_eq_left hshift]
       have hround := roundFmaAlignedLeft_eq
         (signBit (toUInt32 x) ^^ signBit (toUInt32 y))
         (signBit (toUInt32 z))
@@ -686,7 +686,7 @@ theorem fmaFiniteImpl_eq (x y z : Value) :
         hproductZero hzZero hproductBound hzMantissaLt hzProductScaleLe hscale hshift
       rw [hproductToNat, hproductExponent, hzExponentValue] at hround
       exact congrArg (fun bits => some (ofUInt32 bits)) hround
-    · rw [if_neg hshift]
+    · rw [ite_eq_right hshift]
       unfold fmaExactFinite?
       rw [hproductToNat, hproductExponent, hzExponentValue]
 

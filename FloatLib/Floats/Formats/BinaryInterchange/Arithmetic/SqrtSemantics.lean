@@ -67,7 +67,7 @@ theorem accuracyRepresents_natSqrt (n : Nat) :
   have hsqrtSq : (Real.sqrt n) ^ 2 = n := by
     simp [Real.sq_sqrt (show (0 : ℝ) ≤ n by positivity)]
   by_cases hremainderZero : remainder = 0
-  · simp only [if_pos hremainderZero, accuracyRepresents]
+  · simp only [ite_eq_left hremainderZero, accuracyRepresents]
     have hnEq : n = root * root := by omega
     rw [hnEq]
     norm_num [Nat.cast_mul, Real.sqrt_sq_eq_abs]
@@ -79,7 +79,7 @@ theorem accuracyRepresents_natSqrt (n : Nat) :
       have hrootNonneg : (0 : ℝ) ≤ root := by positivity
       nlinarith [hsqrtSq, hnLtCast]
     by_cases hremainderLe : remainder ≤ root
-    · simp only [if_neg hremainderZero, if_pos hremainderLe, accuracyRepresents]
+    · simp only [ite_eq_right hremainderZero, ite_eq_left hremainderLe, accuracyRepresents]
       constructor
       · exact hrootLt
       · have hremainderCast : (remainder : ℝ) ≤ root := by exact_mod_cast hremainderLe
@@ -87,7 +87,7 @@ theorem accuracyRepresents_natSqrt (n : Nat) :
             (n : ℝ) = (root : ℝ) * root + remainder := by
           exact_mod_cast hnDecomp
         nlinarith [hsqrtSq]
-    · simp only [if_neg hremainderZero, if_neg hremainderLe, accuracyRepresents]
+    · simp only [ite_eq_right hremainderZero, ite_eq_right hremainderLe, accuracyRepresents]
       constructor
       · have hremainderLower : root + 1 ≤ remainder := by omega
         have hremainderCast : (root : ℝ) + 1 ≤ remainder := by
@@ -318,7 +318,7 @@ theorem isFinite_ofModel_finite_of_noOverflow
   simp only [isFinite, hencoding, IEEE.isFinite, bne_iff_ne, ne_eq]
   rw [← unpackExponent_toNat]
   unfold ofModel toModelBits ofModelBits Float.Model.UnpackedFloat.pack
-  simp only [hnoOverflow, if_false]
+  simp only [hnoOverflow, ite_false]
   split_ifs
   · rw [Float.Model.UnpackedFloat.unpackExponent_packComponents, BitVec.toNat_ofNat]
     change ¬ _ % 2 ^ fmt.expWidth = FloatFormat.expAllOnesNat fmt

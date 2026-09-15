@@ -215,7 +215,7 @@ theorem lowerCodeIsEven_eq (format : Format) (quantum : Int) (lower : Nat) :
       RationalRounding.codeEven format.precision format.exponentBias quantum lower := by
   unfold lowerCodeIsEven RationalRounding.codeEven
   by_cases hp : 1 < format.precision
-  · simp only [hp, if_pos]
+  · simp only [hp, ite_eq_left]
     rfl
   · simp only [hp]
     by_cases hz : lower = 0 <;> simp [hz]
@@ -228,7 +228,7 @@ theorem roundFiniteRatToPrecision_toRat (format : Format) (mode : RoundingMode) 
   · simp [hz, roundFiniteRatToPrecision, RationalRounding.round]
   have hn : value.num.natAbs ≠ 0 := by
     simpa only [Int.natAbs_ne_zero] using Rat.num_ne_zero.mpr hz
-  simp only [roundFiniteRatToPrecision, beq_iff_eq, hn, if_false]
+  simp only [roundFiniteRatToPrecision, beq_iff_eq, hn, ite_false]
   rw [RationalRounding.normalized_toRat]
   simp only [Internal.roundRationalAway, lowerCodeIsEven_eq]
   rw [RationalRounding.select_eq_roundedInteger]

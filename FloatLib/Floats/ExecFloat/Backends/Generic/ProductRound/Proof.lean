@@ -104,8 +104,8 @@ theorem normalSpec_refines
       hresult
   rw [← hresultEq]
   unfold round
-  simp only [beq_iff_eq, hproduct, if_false]
-  rw [if_neg hsubnormal, if_pos hleading, if_neg hoverflow]
+  simp only [beq_iff_eq, hproduct, ite_false]
+  rw [ite_eq_right hsubnormal, ite_eq_left hleading, ite_eq_right hoverflow]
 
 /--
 Significands at least `2 ^ fmt.fracWidth` satisfy the side conditions of `normalSpec_refines`.
@@ -222,12 +222,12 @@ theorem round_normalized_sum
         exponent + 1 := by
     omega
   unfold round
-  simp only [beq_iff_eq, hsumNe, if_false]
-  rw [if_neg hnormal, hleading]
-  rw [if_pos (show fmt.fracWidth ≤ fmt.fracWidth + 1 by omega)]
+  simp only [beq_iff_eq, hsumNe, ite_false]
+  rw [ite_eq_right hnormal, hleading]
+  rw [ite_eq_left (show fmt.fracWidth ≤ fmt.fracWidth + 1 by omega)]
   rw [show fmt.fracWidth + 1 - fmt.fracWidth = 1 by omega]
-  rw [if_neg hcarry, if_neg hoverflow, hencodedExponent]
-  rw [if_neg hcarry]
+  rw [ite_eq_right hcarry, ite_eq_right hoverflow, hencodedExponent]
+  rw [ite_eq_right hcarry]
 
 private theorem exponent_add_align (fmt : FloatFormat) (scale : Nat) :
     (Int.ofNat scale -
@@ -301,12 +301,12 @@ theorem round_eq_roundDyadic
             Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) } := by
   rw [roundDyadic_eq_roundDyadicImpl]
   unfold roundDyadicImpl
-  rw [if_pos hfmt]
+  rw [ite_eq_left hfmt]
   unfold round ieeeRoundDyadicImpl
   dsimp only
   by_cases hproduct : product = 0
   · simp [hproduct]
-  simp only [beq_iff_eq, hproduct, if_false]
+  simp only [beq_iff_eq, hproduct, ite_false]
   have hbias := fmt.bias_pos
   have halign : fmt.ieeeSubnormalAlignExp = fmt.bias + fmt.fracWidth - 1 := rfl
   let leading := product.log2
@@ -322,7 +322,7 @@ theorem round_eq_roundDyadic
       unfold FloatFormat.ieeeMinNormalExponent FloatFormat.ieeeSubnormalAlignExp
       simp only [Int.ofNat_eq_natCast, Nat.cast_mul, Nat.cast_ofNat]
       omega
-    rw [if_pos hsubnormal, if_pos hgenericSubnormal]
+    rw [ite_eq_left hsubnormal, ite_eq_left hgenericSubnormal]
     rw [exponent_add_align]
     let align := FloatFormat.ieeeSubnormalAlignExp fmt
     by_cases hscale : scale < align
@@ -348,7 +348,7 @@ theorem round_eq_roundDyadic
       rw [hexponent]
       simp only
       rw [hgapSucc]
-      rw [if_pos hscale]
+      rw [ite_eq_left hscale]
     · have hscaleLe : align ≤ scale := Nat.le_of_not_gt hscale
       have hexponent :
           Int.ofNat scale - Int.ofNat align =
@@ -357,7 +357,7 @@ theorem round_eq_roundDyadic
           (Int.ofNat_sub hscaleLe).symm
       rw [hexponent]
       simp only
-      rw [if_neg hscale]
+      rw [ite_eq_right hscale]
   · have hnormal : normalThreshold ≤ position :=
       Nat.le_of_not_gt hsubnormal
     have hgenericNormal :
@@ -369,7 +369,7 @@ theorem round_eq_roundDyadic
       unfold FloatFormat.ieeeMinNormalExponent FloatFormat.ieeeSubnormalAlignExp
       simp only [Int.ofNat_eq_natCast, Nat.cast_mul, Nat.cast_ofNat]
       omega
-    rw [if_neg hsubnormal, if_neg hgenericNormal]
+    rw [ite_eq_right hsubnormal, ite_eq_right hgenericNormal]
     let roundedMantissa :=
       if fmt.fracWidth ≤ leading then
         Numerics.roundShiftRightEven product (leading - fmt.fracWidth)
@@ -388,7 +388,7 @@ theorem round_eq_roundDyadic
     by_cases hcarry :
         roundedMantissa = pow2 (fmt.fracWidth + 1)
     · simp only [roundedMantissa, leading] at hcarry
-      simp only [hcarry, if_true]
+      simp only [hcarry, ite_true]
       have hnormalized :
           (Int.ofNat position -
                 Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt)) +
@@ -405,7 +405,7 @@ theorem round_eq_roundDyadic
                 Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
           exact
             (normalized_exponent_gt_max_iff fmt (position + 1)).2 hoverflow
-        rw [if_pos hoverflow, if_pos hgenericOverflow]
+        rw [ite_eq_left hoverflow, ite_eq_left hgenericOverflow]
       · have hnoOverflow : position + 1 ≤ overflowThreshold :=
           Nat.le_of_not_gt hoverflow
         have hgenericNoOverflow :
@@ -415,7 +415,7 @@ theorem round_eq_roundDyadic
           exact fun h =>
             hoverflow <|
               (normalized_exponent_gt_max_iff fmt (position + 1)).1 h
-        rw [if_neg hoverflow, if_neg hgenericNoOverflow]
+        rw [ite_eq_right hoverflow, ite_eq_right hgenericNoOverflow]
         congr 2
         change position + 1 - (fmt.bias + 2 * fmt.fracWidth - 2) =
           (Int.ofNat (position + 1) -
@@ -426,14 +426,14 @@ theorem round_eq_roundDyadic
           (Int.toNat_sub (position + 1)
             (fmt.bias + 2 * fmt.fracWidth - 2)).symm
     · simp only [roundedMantissa, leading] at hcarry
-      simp only [hcarry, if_false]
+      simp only [hcarry, ite_false]
       by_cases hoverflow : overflowThreshold < position
       · have hgenericOverflow :
             Int.ofNat position -
                   Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) >
                 Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
           exact (normalized_exponent_gt_max_iff fmt position).2 hoverflow
-        rw [if_pos hoverflow, if_pos hgenericOverflow]
+        rw [ite_eq_left hoverflow, ite_eq_left hgenericOverflow]
       · have hnoOverflow : position ≤ overflowThreshold :=
           Nat.le_of_not_gt hoverflow
         have hgenericNoOverflow :
@@ -442,7 +442,7 @@ theorem round_eq_roundDyadic
                 Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
           exact fun h =>
             hoverflow <| (normalized_exponent_gt_max_iff fmt position).1 h
-        rw [if_neg hoverflow, if_neg hgenericNoOverflow]
+        rw [ite_eq_right hoverflow, ite_eq_right hgenericNoOverflow]
         congr 2
         change position - (fmt.bias + 2 * fmt.fracWidth - 2) =
           (Int.ofNat position -

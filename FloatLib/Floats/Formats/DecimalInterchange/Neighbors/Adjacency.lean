@@ -59,7 +59,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
     have hpb : 0 < (10 : ℚ) ^ b := zpow_pos (by norm_num) _
     have han : (0 : ℚ) ≤ a := Nat.cast_nonneg _
     have hapos' : (0 : ℚ) < a := by exact_mod_cast hapos
-    simp only [nextUp, if_neg hc, hp] at hout
+    simp only [nextUp, ite_eq_right hc, hp] at hout
     cases s
     · simp only [Bool.false_eq_true, ↓reduceIte] at hout
       obtain ⟨t, d, r, hv, hvalue⟩ := finite_witness (neighborAbove f a b) v hout

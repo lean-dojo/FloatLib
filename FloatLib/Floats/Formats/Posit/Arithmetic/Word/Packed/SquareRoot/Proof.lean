@@ -89,7 +89,7 @@ private theorem roundFieldsWord_toNat_eq_direct_of_positive
     change (exponent % 2).toNat < 2
     omega
   unfold roundFieldsWord
-  simp only [beq_iff_eq, hsignificand, Bool.false_eq_true, if_false]
+  simp only [beq_iff_eq, hsignificand, Bool.false_eq_true, ite_false]
   rw [NativeWordLimb.roundCodeWordLow_toNat_eq_direct
     format heligible, jamRoot_toNat]
   set shift := (exponent.emod 2).toNat + 2 * format.payloadBits with hshift
@@ -172,7 +172,7 @@ theorem roundFieldsWord_toNat_eq_direct
           apply decide_eq_true
           unfold FloatLib.Numerics.Dyadic.toRat
             FloatLib.Numerics.Dyadic.signedSignificand
-          simp only [if_true]
+          simp only [ite_true]
           apply mul_neg_of_neg_of_pos
           · rw [Rat.ofInt_eq_cast]
             have hintPositive :

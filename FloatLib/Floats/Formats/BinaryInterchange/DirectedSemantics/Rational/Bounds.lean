@@ -32,13 +32,13 @@ noncomputable section
 @[simp] private theorem toEReal_posZero_eq_zero
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     toEReal (posZero fmt) = 0 := by
-  simpa only [Bool.false_eq_true, if_false] using
+  simpa only [Bool.false_eq_true, ite_false] using
     toEReal_signedZero fmt hfmt false
 
 @[simp] private theorem toEReal_negZero_eq_zero
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     toEReal (negZero fmt) = 0 := by
-  simpa only [if_pos rfl, if_true] using
+  simpa only [ite_eq_left rfl, ite_true] using
     toEReal_signedZero fmt hfmt true
 
 /-- Changing only the stored sign negates a directed rational magnitude result. -/
@@ -81,7 +81,7 @@ theorem roundRatMagnitudeDirectedScaled_neg
     simp only [hoverflow, neg_ofFields_of_supportsSignedZero fmt hsigned,
       Bool.not_false]
   simp only [roundRatMagnitudeDirectedScaled, hdenominator',
-    Bool.false_eq_true, if_false, if_true, neg_ite]
+    Bool.false_eq_true, ite_false, ite_true, neg_ite]
   simp only [hzero, hoverflow, neg_posMinSubnormal, ← hsubnormal, ← hnormal]
 
 /-- Downward rounding of a signed scaled rational is an extended-real lower bound. -/

@@ -33,10 +33,10 @@ theorem cast_sinCoefficient (n : Nat) :
   have hdecomp := Nat.mod_add_div n 2
   by_cases h : n % 2 = 0
   · have hn : n = 2 * (n / 2) := by omega
-    rw [sinCoefficient, if_pos h, hn, Real.iteratedDeriv_even_sin]
+    rw [sinCoefficient, ite_eq_left h, hn, Real.iteratedDeriv_even_sin]
     simp
   · have hn : n = 2 * (n / 2) + 1 := by omega
-    rw [sinCoefficient, if_neg h]
+    rw [sinCoefficient, ite_eq_right h]
     conv_rhs => rw [hn, Real.iteratedDeriv_odd_sin]
     simp
 
@@ -46,11 +46,11 @@ theorem cast_cosCoefficient (n : Nat) :
   have hdecomp := Nat.mod_add_div n 2
   by_cases h : n % 2 = 0
   · have hn : n = 2 * (n / 2) := by omega
-    rw [cosCoefficient, if_pos h]
+    rw [cosCoefficient, ite_eq_left h]
     conv_rhs => rw [hn, Real.iteratedDeriv_even_cos]
     simp
   · have hn : n = 2 * (n / 2) + 1 := by omega
-    rw [cosCoefficient, if_neg h, hn, Real.iteratedDeriv_odd_cos]
+    rw [cosCoefficient, ite_eq_right h, hn, Real.iteratedDeriv_odd_cos]
     simp
 
 private theorem taylor_eq_sum (f : ℝ → ℝ) (x : ℝ) (n : Nat)

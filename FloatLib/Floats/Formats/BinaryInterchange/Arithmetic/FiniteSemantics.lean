@@ -50,7 +50,7 @@ private theorem map_roundRat_eq_some_quantizedRatValue
   cases hround : Policy.roundRat fmt policy entropy sign num den with
   | none =>
       unfold Policy.roundRat at hround
-      rw [dif_neg hden] at hround
+      rw [dite_eq_right hden] at hround
       split at hround <;> simp at hround
   | some result =>
       unfold quantizedRatValue
@@ -166,7 +166,7 @@ theorem divFinite_refines (fmt : FloatFormat) (policy : QuantizationPolicy) (ent
     rfl
   rw [hrun]
   unfold divValue
-  rw [if_neg (by simpa using hy)]
+  rw [ite_eq_right (by simpa using hy)]
   cases hdiff : x.exponent - y.exponent with
   | ofNat shift =>
       exact map_roundRat_eq_some_quantizedRatValue fmt policy entropy

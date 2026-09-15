@@ -49,7 +49,7 @@ theorem roundToIntegralExact_finite (f : Format) (mode : RoundingMode)
       mode.roundAt s ((c : ℚ) * (10 : ℚ) ^ q) (max q 0) < f.coefficientBound :=
     ⟨hmin.trans (le_max_left ..), max_le hmax hzero,
       (integral_coefficient_le mode s c q).trans_lt hc⟩
-  simp only [roundToIntegralExact, quantizeMagnitude, if_pos hq]
+  simp only [roundToIntegralExact, quantizeMagnitude, ite_eq_left hq]
 
 /-- For a valid finite input, invalid occurs exactly when the preferred integral quantum
 cannot be represented. The coefficient bound never causes this failure. -/

@@ -13,7 +13,7 @@ public import Mathlib.Data.Nat.Bitwise
 /-!
 # Lean floating-point model bridge
 
-`Model fmt` retains the raw interchange bits, including noncanonical NaN payloads. Lean 4.33's
+`Model fmt` retains the raw interchange bits, including noncanonical NaN payloads. Lean's
 `Float.Model.UnpackedFloat` interprets those bits using the conventional IEEE bias and exceptional
 encodings for their field widths. This module connects the two without selecting binary32 or any
 other fixed format. Custom descriptor biases and encoding policies require separate semantic
@@ -224,7 +224,7 @@ sign, exponent, and mantissa rather than repeat bit-layout arguments for each fo
   intro i hi
   have hi0 : i = 0 := by omega
   subst i
-  simp only [BitVec.getLsbD_cast, BitVec.getLsbD_extractLsb]
+  simp only [BitVec.getLsbD_extractLsb']
   rw [BitVec.getLsbD_append]
   rw [BitVec.getLsbD_append]
   simp
@@ -234,14 +234,12 @@ theorem unpackMantissa_toNat {fmt : FloatFormat} (x : Model fmt) :
     (Float.Model.UnpackedFloat.unpackMantissa
       (spec := FloatFormat.toModel fmt) (toModelBits x)).toNat = fracField x := by
   unfold Float.Model.UnpackedFloat.unpackMantissa
-  rw [BitVec.toNat_cast, BitVec.extractLsb_toNat]
+  rw [BitVec.extractLsb'_toNat]
   unfold fracField FloatFormat.fracMask FloatFormat.ofWordNat FloatFormat.fracMaskNat
   rw [BitVec.toNat_and, BitVec.toNat_ofNat]
   cases fmt with
   | mk exponentWidth exponentWidthPos fractionWidth fractionWidthPos =>
     simp only [toModelBits, FloatFormat.toModel, FloatFormat.bitWidth]
-    have hwidth : fractionWidth - 1 - 0 + 1 = fractionWidth := by omega
-    rw [hwidth]
     change
       (x.bits.toNat >>> 0) % 2 ^ fractionWidth =
         x.bits.toNat &&&
@@ -272,17 +270,13 @@ theorem unpackExponent_toNat {fmt : FloatFormat} (x : Model fmt) :
     (Float.Model.UnpackedFloat.unpackExponent
       (spec := FloatFormat.toModel fmt) (toModelBits x)).toNat = expField x := by
   unfold Float.Model.UnpackedFloat.unpackExponent
-  rw [BitVec.toNat_cast, BitVec.extractLsb_toNat]
+  rw [BitVec.extractLsb'_toNat]
   unfold expField FloatFormat.expAllOnes FloatFormat.ofWordNat
     FloatFormat.expAllOnesNat
   rw [BitVec.toNat_and, BitVec.toNat_ushiftRight, BitVec.toNat_ofNat]
   cases fmt with
   | mk exponentWidth exponentWidthPos fractionWidth fractionWidthPos =>
     simp only [toModelBits, FloatFormat.toModel, FloatFormat.bitWidth]
-    have hwidth :
-        fractionWidth + exponentWidth - 1 - fractionWidth + 1 = exponentWidth := by
-      omega
-    rw [hwidth]
     change
       (x.bits.toNat >>> fractionWidth) % 2 ^ exponentWidth =
         (x.bits.toNat >>> fractionWidth) &&&
@@ -327,11 +321,10 @@ theorem unpackSign_eq_ofBool_msb {fmt : FloatFormat} (x : Model fmt) :
   intro i hi
   have hi0 : i = 0 := by omega
   subst i
-  simp only [BitVec.getLsbD_cast, BitVec.getLsbD_extractLsb, decide_true,
+  simp only [BitVec.getLsbD_extractLsb', decide_true,
     Bool.true_and, BitVec.getLsbD_ofBool]
   simp only [FloatFormat.toModel, toModelBits]
-  simp only [Nat.sub_self, Nat.zero_add, Nat.zero_lt_one, decide_true,
-    Bool.true_and, Nat.add_zero]
+  simp only [Nat.zero_lt_one, decide_true, Bool.true_and, Nat.add_zero]
   rw [show fmt.fracWidth + fmt.expWidth = fmt.bitWidth - 1 by
     unfold FloatFormat.bitWidth
     omega]

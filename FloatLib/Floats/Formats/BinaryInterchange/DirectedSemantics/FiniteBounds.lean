@@ -123,7 +123,7 @@ theorem toReal_roundDyadicPosDown_le_of_encoding_finite
         rw [roundDyadicPosDown_eq_normal
           fmt mantissa exponent hnormal hmax]
         simp only [rounded] at hguard
-        simp only [hguard, Bool.false_eq_true, if_false]
+        simp only [hguard, Bool.false_eq_true, ite_false]
         rw [toReal_ofFields_normalized fmt rounded
           ((mantissa.log2 : Int) + exponent)
           hroundedLow hroundedHigh hnormal hmax
@@ -233,7 +233,7 @@ theorem le_toReal_roundDyadicPosUp_of_encoding_finite
           rw [roundDyadicPosUp_eq_normal_of_no_carry
             fmt mantissa exponent hnormal hmax hcarry]
           simp only [rounded] at hguard
-          simp only [hguard, Bool.false_eq_true, if_false]
+          simp only [hguard, Bool.false_eq_true, ite_false]
           rw [toReal_ofFields_normalized fmt rounded
             ((mantissa.log2 : Int) + exponent)
             hroundedLow hroundedHigh hnormal hmax
@@ -282,7 +282,7 @@ theorem toReal_roundDyadicDown_le_of_encoding_finite
         (roundDyadicPosUp fmt d.significand d.exponent)
       rw [show roundDyadicDown fmt d =
           neg (roundDyadicPosUp fmt d.significand d.exponent) by
-        simp only [roundDyadicDown, beq_iff_eq, hmant, if_false, hsign, if_true,
+        simp only [roundDyadicDown, beq_iff_eq, hmant, ite_false, hsign, ite_true,
           roundDyadicPosUp]
         exact roundDyadicMagnitudeUp_true_eq_neg_false fmt d.significand d.exponent
           (supportsSignedZero_eq_true_of_encoding_finite fmt hfmt)
@@ -323,7 +323,7 @@ theorem le_toReal_roundDyadicUp_of_encoding_finite
         (roundDyadicPosDown fmt d.significand d.exponent)
       rw [show roundDyadicUp fmt d =
           neg (roundDyadicPosDown fmt d.significand d.exponent) by
-        simp only [roundDyadicUp, beq_iff_eq, hmant, if_false, hsign, if_true,
+        simp only [roundDyadicUp, beq_iff_eq, hmant, ite_false, hsign, ite_true,
           roundDyadicPosDown]
         exact roundDyadicMagnitudeDown_true_eq_neg_false fmt d.significand d.exponent
           (supportsSignedZero_eq_true_of_encoding_finite fmt hfmt)]

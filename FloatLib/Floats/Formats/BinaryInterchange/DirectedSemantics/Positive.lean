@@ -75,7 +75,7 @@ theorem roundMantissaAtExponentUp_ne_zero
   by_cases hle : exponent ≤ targetExponent
   · let shift := (targetExponent - exponent).toNat
     have hcover := le_shiftRightCeilPow2_mul_pow2 mantissa shift
-    simp only [roundMantissaAtExponentUp, hle, if_true]
+    simp only [roundMantissaAtExponentUp, hle, ite_true]
     intro hzero
     rw [hzero] at hcover
     simp at hcover
@@ -88,7 +88,7 @@ theorem roundMantissaAtExponentDown_le_up
     roundMantissaAtExponentDown mantissa exponent targetExponent ≤
       roundMantissaAtExponentUp mantissa exponent targetExponent := by
   by_cases hle : exponent ≤ targetExponent
-  · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, if_true]
+  · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, ite_true]
     exact shiftRight_le_shiftRightCeilPow2 _ _
   · simp [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle]
 
@@ -98,7 +98,7 @@ theorem roundMantissaAtExponentUp_le_down_add_one
     roundMantissaAtExponentUp mantissa exponent targetExponent ≤
       roundMantissaAtExponentDown mantissa exponent targetExponent + 1 := by
   by_cases hle : exponent ≤ targetExponent
-  · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, if_true]
+  · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, ite_true]
     exact shiftRightCeilPow2_le_shiftRight_add_one _ _
   · simp [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle]
 
@@ -217,7 +217,7 @@ theorem ceil_scaledMagnitude
         Numerics.Radix.toReal,
         pow2_eq_two_pow, div_eq_mul_inv]
     rw [hvalue]
-    simp only [roundMantissaAtExponentUp, if_pos hle]
+    simp only [roundMantissaAtExponentUp, ite_eq_left hle]
     rw [shiftRightCeilPow2_eq_div_add_one]
     have hpow2 : pow2 shift ≠ 0 := Nat.ne_of_gt (pow2_pos shift)
     simpa [ceilRound, shift, quotCeil, hpow2] using

@@ -56,7 +56,7 @@ theorem encode?_decode (encoding : Encoding) (f : Format) (word : BitVec f.bitWi
     encoding.encode? f (encoding.decode f word) = some (encoding.canonicalize f word) := by
   change (if (encoding.decode f word).Valid f then
     some (encoding.codec.encode f (encoding.decode f word)) else none) = _
-  rw [if_pos (encoding.decode_valid f word)]
+  rw [ite_eq_left (encoding.decode_valid f word)]
   rfl
 
 theorem decode_canonicalize (encoding : Encoding) (f : Format) (word : BitVec f.bitWidth) :
@@ -96,7 +96,7 @@ theorem transcode_transcode (source target : Encoding) (f : Format)
   by_cases h : source = target
   · subst target
     simp
-  · rw [transcode, if_neg (Ne.symm h), decode_transcode, if_neg h]
+  · rw [transcode, ite_eq_right (Ne.symm h), decode_transcode, ite_eq_right h]
     rfl
 
 end FloatLib.Floats.Formats.DecimalInterchange

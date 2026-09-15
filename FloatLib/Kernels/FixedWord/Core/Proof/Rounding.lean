@@ -28,7 +28,7 @@ namespace FloatLib.Numerics.FixedWord
       if exponent = 0 then 0 else exponent.toNat - 1 := by
   by_cases hexponent : exponent = 0
   · simp [finiteScale, hexponent]
-  · simp only [finiteScale, beq_iff_eq, hexponent, if_false]
+  · simp only [finiteScale, beq_iff_eq, hexponent, ite_false]
     rw [UInt64.toNat_sub_of_le]
     · simp
     · apply UInt64.le_iff_toNat_le.mpr
@@ -95,7 +95,7 @@ private theorem uint64_quotient_even_iff (value : UInt64) (shift : Nat)
         Numerics.shiftRightRemainder_eq_mod value.toNat shift
     unfold roundShiftRightEven
     rw [Numerics.roundShiftRightEven_def]
-    simp only [beq_iff_eq, hzero, hsmall, if_false, if_true]
+    simp only [beq_iff_eq, hzero, hsmall, ite_false, ite_true]
     simp only [UInt64.lt_iff_toNat_lt, hremainder, hhalf]
     split_ifs <;> simp_all <;> omega
   · have hlarge : 64 ≤ shift := Nat.le_of_not_gt hsmall
@@ -110,7 +110,7 @@ private theorem uint64_quotient_even_iff (value : UInt64) (shift : Nat)
             if 2 ^ 63 < value.toNat then 1 else 0 := by
         rw [Numerics.roundShiftRightEven_def]
         simp only [beq_iff_eq]
-        rw [if_neg (by decide : (64 : Nat) ≠ 0)]
+        rw [ite_eq_right (by decide : (64 : Nat) ≠ 0)]
         rw [show value.toNat.shiftRight 64 = 0 from hquotient]
         rw [show Nat.shiftLeft 0 64 = 0 by simp [Nat.shiftLeft_eq]]
         simp only [Nat.sub_zero, Nat.reduceSub, Nat.zero_mod]
@@ -132,11 +132,11 @@ private theorem uint64_quotient_even_iff (value : UInt64) (shift : Nat)
           Numerics.roundShiftRightEven value.toNat shift = 0 := by
         rw [Numerics.roundShiftRightEven_def]
         simp only [beq_iff_eq]
-        rw [if_neg hzero]
+        rw [ite_eq_right hzero]
         rw [show value.toNat.shiftRight shift = 0 from hquotient]
         rw [show Nat.shiftLeft 0 shift = 0 by simp [Nat.shiftLeft_eq]]
         simp only [Nat.sub_zero]
-        rw [if_pos hhalfBound]
+        rw [ite_eq_left hhalfBound]
       rw [hgeneric]
       unfold roundShiftRightEven
       simp [beq_iff_eq, hzero, hsmall, heq]
@@ -202,10 +202,9 @@ theorem roundQuotientEven_toNat (num den : UInt64)
       (num / den + 1).toNat =
         num.toNat / den.toNat + 1 := by
     rw [UInt64.toNat_add, hquotient]
-    norm_num
     exact Nat.mod_eq_of_lt hquotientFit
   unfold roundQuotientEven Numerics.roundQuotientEven
-  simp only [beq_iff_eq, hden, if_false]
+  simp only [beq_iff_eq, hden, ite_false]
   have heven :
       (num / den % 2 == 0) ↔
         (num.toNat / den.toNat) % 2 == 0 := by

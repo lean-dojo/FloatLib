@@ -51,7 +51,7 @@ theorem compareNonnegativeFields_eq_compareFields
   unfold compareNonnegativeFields compareFields
   split
   · rfl
-  · simp only [Bool.false_eq_true, if_false]
+  · simp only [Bool.false_eq_true, ite_false]
     split <;> rename_i hexponents
     · simp only [sub_self, Int.toNat_zero]
       let rightMagnitude :=
@@ -148,16 +148,16 @@ theorem isLessPowerOfTwoAtLeading_eq
   by_cases hzero : significand = 0
   · subst significand
     have honeZero : ((1 : Nat) == 0) = false := by decide
-    simp only [beq_self_eq_true, if_true, Bool.true_and, honeZero,
-      Bool.false_eq_true, if_false]
+    simp only [beq_self_eq_true, ite_true, Bool.true_and, honeZero,
+      Bool.false_eq_true, ite_false]
     split <;> simp [Nat.shiftLeft_eq, Nat.compare_eq_lt]
-  · simp only [beq_iff_eq, hzero, if_false]
+  · simp only [beq_iff_eq, hzero, ite_false]
     have hboth :
         ¬((significand == 0 && (1 : Nat) == 0) = true) := by
       simp
-    rw [if_neg hboth]
+    rw [ite_eq_right hboth]
     by_cases hexponents : exponent ≤ power
-    · simp only [hexponents, if_true]
+    · simp only [hexponents, ite_true]
       let shift := Int.toNat (power - exponent)
       have hshift :
           Int.ofNat shift = power - exponent := by
@@ -174,7 +174,7 @@ theorem isLessPowerOfTwoAtLeading_eq
       simp only [decide_eq_true_eq, beq_iff_eq, Nat.compare_eq_lt,
         hcondition, Nat.log2_lt hzero]
       simp [shift, Nat.shiftLeft_eq]
-    · simp only [hexponents, if_false]
+    · simp only [hexponents, ite_false]
       have hlogNonnegative :
           0 ≤ Int.ofNat significand.log2 :=
         Int.natCast_nonneg _

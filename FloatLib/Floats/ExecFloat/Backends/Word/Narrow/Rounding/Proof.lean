@@ -51,12 +51,12 @@ private theorem roundSubnormal_eq
     rw [← UInt64.toNat_inj]
     simp [hfraction, Model.pow2_eq_two_pow]
   by_cases hfzero : nativeFraction = 0
-  · rw [if_pos hfzero, if_pos (hfractionZero.mp hfzero)]
-  · rw [if_neg hfzero, if_neg (not_congr hfractionZero |>.mp hfzero)]
+  · rw [ite_eq_left hfzero, ite_eq_left (hfractionZero.mp hfzero)]
+  · rw [ite_eq_right hfzero, ite_eq_right (not_congr hfractionZero |>.mp hfzero)]
     by_cases hfnormal : nativeFraction = 0x800000
-    · rw [if_pos hfnormal, if_pos (hfractionNormal.mp hfnormal)]
-    · rw [if_neg hfnormal,
-        if_neg (not_congr hfractionNormal |>.mp hfnormal), hfraction]
+    · rw [ite_eq_left hfnormal, ite_eq_left (hfractionNormal.mp hfnormal)]
+    · rw [ite_eq_right hfnormal,
+        ite_eq_right (not_congr hfractionNormal |>.mp hfnormal), hfraction]
 
 private theorem roundNormal_eq
     (sign : Bool)
@@ -120,7 +120,7 @@ private theorem roundNormal_eq
     simp [hrounded, Model.pow2_eq_two_pow]
   by_cases hnativeCarry : nativeRounded = 0x1000000
   · have hgenericCarry := hcarry.mp hnativeCarry
-    simp only [if_pos hnativeCarry, if_pos hgenericCarry]
+    simp only [ite_eq_left hnativeCarry, ite_eq_left hgenericCarry]
     have hoverflow :
         nativePosition + 1 > (425 : UInt64) ↔
           genericTotal + 1 > 127 := by
@@ -132,9 +132,9 @@ private theorem roundNormal_eq
       simp only [Int.ofNat_eq_natCast]
       omega
     by_cases hnativeOverflow : nativePosition + 1 > (425 : UInt64)
-    · rw [if_pos hnativeOverflow, if_pos (hoverflow.mp hnativeOverflow)]
-    · rw [if_neg hnativeOverflow,
-        if_neg (not_congr hoverflow |>.mp hnativeOverflow)]
+    · rw [ite_eq_left hnativeOverflow, ite_eq_left (hoverflow.mp hnativeOverflow)]
+    · rw [ite_eq_right hnativeOverflow,
+        ite_eq_right (not_congr hoverflow |>.mp hnativeOverflow)]
       have hpositionLe : (171 : UInt64) ≤ nativePosition + 1 := by
         apply UInt64.le_iff_toNat_le.mpr
         rw [hpositionSucc]
@@ -158,7 +158,7 @@ private theorem roundNormal_eq
       norm_num [hminMantissa, Model.pow2_eq_two_pow]
   · have hgenericCarry : genericRounded ≠ Model.pow2 24 :=
       not_congr hcarry |>.mp hnativeCarry
-    simp only [if_neg hnativeCarry, if_neg hgenericCarry]
+    simp only [ite_eq_right hnativeCarry, ite_eq_right hgenericCarry]
     have hoverflow :
         nativePosition > (425 : UInt64) ↔ genericTotal > 127 := by
       change
@@ -169,9 +169,9 @@ private theorem roundNormal_eq
       simp only [Int.ofNat_eq_natCast]
       omega
     by_cases hnativeOverflow : nativePosition > (425 : UInt64)
-    · rw [if_pos hnativeOverflow, if_pos (hoverflow.mp hnativeOverflow)]
-    · rw [if_neg hnativeOverflow,
-        if_neg (not_congr hoverflow |>.mp hnativeOverflow)]
+    · rw [ite_eq_left hnativeOverflow, ite_eq_left (hoverflow.mp hnativeOverflow)]
+    · rw [ite_eq_right hnativeOverflow,
+        ite_eq_right (not_congr hoverflow |>.mp hnativeOverflow)]
       have hpositionLe : (171 : UInt64) ≤ nativePosition := by
         apply UInt64.le_iff_toNat_le.mpr
         rw [hposition]
@@ -231,10 +231,10 @@ theorem roundProduct_eq_roundDyadic
         (product.log2 + scale).toNat =
           product.toNat.log2 + scale.toNat := by
       rw [UInt64.toNat_add, hlog, Nat.mod_eq_of_lt hpositionBound]
-    rw [if_neg hzero]
-    simp only [hzeroNat, if_false]
+    rw [ite_eq_right hzero]
+    simp only [hzeroNat, ite_false]
     by_cases hsubnormal : product.log2 + scale < 172
-    · rw [if_pos hsubnormal]
+    · rw [ite_eq_left hsubnormal]
       have hsubnormalNat :
           product.toNat.log2 + scale.toNat < 172 := by
         have h := UInt64.lt_iff_toNat_lt.mp hsubnormal
@@ -249,7 +249,7 @@ theorem roundProduct_eq_roundDyadic
           exact_mod_cast hsubnormalNat
         simp only [Int.ofNat_eq_natCast]
         omega
-      rw [if_pos hsubnormalGeneric]
+      rw [ite_eq_left hsubnormalGeneric]
       let nativeFraction : UInt64 :=
         if scale < 149 then
           FloatLib.Numerics.FixedWord.roundShiftRightEven product (149 - scale).toNat
@@ -265,7 +265,7 @@ theorem roundProduct_eq_roundDyadic
       have hfraction : nativeFraction.toNat = genericFraction := by
         dsimp only [nativeFraction, genericFraction]
         by_cases hscaleSmall : scale < 149
-        · rw [if_pos hscaleSmall]
+        · rw [ite_eq_left hscaleSmall]
           have hscaleNat : scale.toNat < 149 := by
             simpa using UInt64.lt_iff_toNat_lt.mp hscaleSmall
           have hscaleWord : scale ≤ (149 : UInt64) := by
@@ -283,7 +283,7 @@ theorem roundProduct_eq_roundDyadic
           rw [hshift, FloatLib.Numerics.FixedWord.roundShiftRightEven_toNat, hexponent]
           congr 1
           omega
-        · rw [if_neg hscaleSmall]
+        · rw [ite_eq_right hscaleSmall]
           have hscaleNat : 149 ≤ scale.toNat := by
             have hnot : ¬scale.toNat < (149 : UInt64).toNat := by
               intro hlt
@@ -328,7 +328,7 @@ theorem roundProduct_eq_roundDyadic
             rw [hshift]
           rw [hnativeShift, hexponent]
       exact roundSubnormal_eq sign nativeFraction genericFraction hfraction
-    · rw [if_neg hsubnormal]
+    · rw [ite_eq_right hsubnormal]
       have hsubnormalNat :
           172 ≤ product.toNat.log2 + scale.toNat := by
         have h :
@@ -348,7 +348,7 @@ theorem roundProduct_eq_roundDyadic
           exact_mod_cast hsubnormalNat
         simp only [Int.ofNat_eq_natCast]
         omega
-      rw [if_neg hsubnormalGeneric]
+      rw [ite_eq_right hsubnormalGeneric]
       let nativeRounded : UInt64 :=
         if product.log2 < 23 then
           product <<< (23 - product.log2)
@@ -369,7 +369,7 @@ theorem roundProduct_eq_roundDyadic
             have h := UInt64.lt_iff_toNat_lt.mp hleadingSmall
             rw [hlog] at h
             simpa using h
-          rw [if_pos hleadingSmall, if_neg (Nat.not_le_of_lt hleadingSmallNat)]
+          rw [ite_eq_left hleadingSmall, ite_eq_right (Nat.not_le_of_lt hleadingSmallNat)]
           have hleadingWord : product.log2 ≤ (23 : UInt64) := by
             apply UInt64.le_iff_toNat_le.mpr
             rw [hlog, h23]
@@ -415,7 +415,7 @@ theorem roundProduct_eq_roundDyadic
             simpa using hlt
           have hleadingNat : 23 ≤ product.toNat.log2 :=
             Nat.le_of_not_gt hleadingSmallNat
-          rw [if_neg hleadingSmall, if_pos hleadingNat]
+          rw [ite_eq_right hleadingSmall, ite_eq_left hleadingNat]
           have hleadingWord : (23 : UInt64) ≤ product.log2 := by
             apply UInt64.le_iff_toNat_le.mpr
             rw [hlog, h23]

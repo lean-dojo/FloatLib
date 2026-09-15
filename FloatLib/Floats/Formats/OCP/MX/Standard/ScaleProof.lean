@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Runtime
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 
 /-!
@@ -102,13 +102,13 @@ theorem requestedExponent_bounds (profile : Profile) (input : Vector SignedRat 3
     largest.num.natAbs largest.den hnum (Nat.ne_of_gt largest.den_pos)
   change (2 : Real) ^ _ ≤ _ ∧ _ < (2 : Real) ^ _ at hbounds
   rw [hratio] at hbounds
-  simpa only [requestedExponent, if_neg hnonzero, sub_add_cancel, largest] using hbounds
+  simpa only [requestedExponent, ite_eq_right hnonzero, sub_add_cancel, largest] using hbounds
 
 /-- Out-of-range upper scales propagate a block NaN instead of constructing an invalid exponent. -/
 theorem selectScale_exponent?_of_overflow (profile : Profile) (input : Vector SignedRat 32)
     (h : 127 < requestedExponent profile input) :
     (selectScale profile input).exponent? = none := by
-  simp only [selectScale, if_pos h]
+  simp only [selectScale, ite_eq_left h]
   rfl
 
 /-- Finite scale selection clamps only at the lower E8M0 boundary. -/

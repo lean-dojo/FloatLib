@@ -72,7 +72,7 @@ theorem less_decodeNat_iff_orderIndex (format : Format) (left right : Nat)
     (by_cases hln : left = format.negativeInfinityBits) <;>
     (by_cases hrn : right = format.negativeInfinityBits) <;>
     simp_all only [decodeNat, orderIndex, nanBits, positiveInfinityBits, negativeInfinityBits,
-      reduceCtorEq, true_and, false_and, if_true, if_false,
+      reduceCtorEq, true_and, false_and, ite_true, ite_false,
       Arithmetic.toRat, Arithmetic.less, Dyadic.neg_toRat,
       decide_eq_true_eq, Bool.false_eq_true, neg_lt_neg_iff,
       format.decodePositiveFinite_strictMono.lt_iff_lt, positiveFinite_lt_negative,

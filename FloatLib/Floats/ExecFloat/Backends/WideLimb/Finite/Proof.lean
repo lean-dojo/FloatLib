@@ -66,9 +66,9 @@ theorem spec_mul_of_mul?_eq_some (x y r : Model fmt) (h : FiniteKernel.mul? x y 
           rw [hx, hy] at h
           dsimp only at h ⊢
           split at h <;> rename_i hcond
-          · rw [if_pos hcond]
+          · rw [ite_eq_left hcond]
             simpa using h
-          · rw [if_neg hcond]
+          · rw [ite_eq_right hcond]
             simpa using h
 
 /-- An accepted compact finite fused multiply-add is the reference fused multiply-add. -/
@@ -102,7 +102,7 @@ theorem spec_fma_of_fma?_eq_some (x y z r : Model fmt) (h : FiniteKernel.fma? x 
               have hyInf := isInf_eq_false_of_toDyadic?_some hy
               have hzInf := isInf_eq_false_of_toDyadic?_some hz
               simp only [chooseNaN3, hxNaN, hyNaN, hzNaN, hxSNaN, hySNaN, hzSNaN, hxInf, hyInf, hzInf,
-                Bool.false_eq_true, if_false, Bool.or_self]
+                Bool.false_eq_true, ite_false, Bool.or_self]
               simpa using h
 
 /-- Negating a conventional IEEE value flips only the decoded sign. -/

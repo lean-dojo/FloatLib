@@ -58,7 +58,7 @@ theorem floor_scaledDyadic
       simpa [roundSignedMantissaAtExponentDown] using
         floor_scaledMagnitude mantissa exponent targetExponent
   | true =>
-      simp only [roundSignedMantissaAtExponentDown, if_true]
+      simp only [roundSignedMantissaAtExponentDown, ite_true]
       rw [show
         (-1 : ℝ) * (mantissa : ℝ) *
             FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
@@ -84,7 +84,7 @@ theorem ceil_scaledDyadic
       simpa [roundSignedMantissaAtExponentUp] using
         ceil_scaledMagnitude mantissa exponent targetExponent
   | true =>
-      simp only [roundSignedMantissaAtExponentUp, if_true]
+      simp only [roundSignedMantissaAtExponentUp, ite_true]
       rw [show
         (-1 : ℝ) * (mantissa : ℝ) *
             FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix

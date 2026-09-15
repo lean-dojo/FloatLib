@@ -86,11 +86,11 @@ theorem withDyadicWordFieldsValid_toNat
           (continuation negative significand exponent).toNat := by
   unfold withDyadicWordFieldsValid withDyadicWordFieldsAt
   by_cases hnar : code == signMaskWord format
-  · simp only [hnar, if_true]
-  · simp only [hnar, Bool.false_eq_true, if_false]
+  · simp only [hnar, ite_true]
+  · simp only [hnar, Bool.false_eq_true, ite_false]
     by_cases hzero : code == 0
-    · simp only [hzero, if_true]
-    · simp only [hzero, Bool.false_eq_true, if_false,
+    · simp only [hzero, ite_true]
+    · simp only [hzero, Bool.false_eq_true, ite_false,
         withNonnegativeWordFieldsAtPayload_toNat]
 
 /-- Valid-word scalar elimination is exactly the total scalar decoder. -/

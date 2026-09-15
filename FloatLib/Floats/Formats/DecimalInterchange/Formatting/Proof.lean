@@ -41,8 +41,8 @@ theorem projectMagnitude_same_quantum (f : Format) (mode : RoundingMode)
   obtain ⟨d, r, hout⟩ : ∃ d r,
       (projectMagnitude f mode negative ((coefficient : ℚ) * (10 : ℚ) ^ quantum)
         quantum).value = .finite negative d r := by
-    simp only [projectMagnitude_eq, if_neg (not_lt.mpr hq), hv, ne_eq, not_true_eq_false,
-      decide_false, Bool.false_eq_true, if_false]
+    simp only [projectMagnitude_eq, ite_eq_right (not_lt.mpr hq), hv, ne_eq, not_true_eq_false,
+      decide_false, Bool.false_eq_true, ite_false]
     exact ⟨_, _, rfl⟩
   have hclosest := projectMagnitude_quantum_closest f mode negative coefficient quantum quantum
     hvalid d r hout coefficient quantum hvalid rfl
@@ -72,7 +72,7 @@ theorem convert_of_valid (f : Format) (mode : RoundingMode) (value : Datum)
       simp_all
   | infinity negative => rfl
   | nan negative signaling payload =>
-      exact if_pos hvalid
+      exact ite_eq_left hvalid
 
 /-- Decoding the exact character spelling recovers every field, without a format restriction. -/
 @[simp] theorem readCharacters_characters (value : Datum) :

@@ -28,7 +28,7 @@ theorem rSqrt_eq_roundPositive (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : 0 < q) :
     rSqrt value =
       RealRounding.roundPositive format (1 / Real.sqrt (q : ℝ)) := by
-  simp only [rSqrt, hvalue, if_neg (not_le.mpr hq)]
+  simp only [rSqrt, hvalue, ite_eq_right (not_le.mpr hq)]
   rw [roundSqrtRat_eq_roundPositive format q⁻¹ (inv_nonneg.mpr hq.le)]
   simp [Real.sqrt_inv, one_div]
 

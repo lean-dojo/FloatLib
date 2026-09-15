@@ -60,7 +60,7 @@ theorem sqrt_error_le_half (f : Format) (mode : RoundingMode)
         nlinarith
     subst s
     simp only [Bool.false_eq_true, ↓reduceIte, one_mul] at ha ⊢
-    simp only [sqrt, if_neg hc, Bool.false_eq_true, ↓reduceIte] at hfinite ⊢
+    simp only [sqrt, ite_eq_right hc, Bool.false_eq_true, ↓reduceIte] at hfinite ⊢
     exact sqrtMagnitude_error_le_half f mode hm ha _ hfinite
 
 end Arithmetic

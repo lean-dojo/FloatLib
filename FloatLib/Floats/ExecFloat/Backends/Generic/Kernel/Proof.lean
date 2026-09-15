@@ -54,7 +54,7 @@ theorem withFinite_eq {fmt : FloatFormat} {α : Type}
   by_cases hieee : fmt.isIEEE = true
   · have hencoding : fmt.encoding = .ieee :=
       ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
-    simp only [withFinite?, hieee, if_true]
+    simp only [withFinite?, hieee, ite_true]
     unfold decode? isFinite IEEE.isFinite
     rw [hencoding]
     simp only
@@ -89,7 +89,7 @@ theorem exponent_eq_scale (fmt : FloatFormat) (encoded : Nat) :
   · subst encoded
     unfold dyadicExponent scale FloatFormat.minSubnormalExponent
       FloatFormat.minNormalExponent
-    simp only [beq_self_eq_true, if_true, Int.ofNat_eq_natCast, Nat.cast_zero]
+    simp only [beq_self_eq_true, ite_true, Int.ofNat_eq_natCast, Nat.cast_zero]
     omega
   · have hone : 1 ≤ encoded := Nat.one_le_iff_ne_zero.mpr hzero
     have hpred : encoded - 1 + 1 = encoded := Nat.sub_add_cancel hone
@@ -97,7 +97,7 @@ theorem exponent_eq_scale (fmt : FloatFormat) (encoded : Nat) :
         ((encoded - 1 : Nat) : Int) + 1 = (encoded : Int) := by
       exact_mod_cast hpred
     unfold dyadicExponent scale
-    simp only [beq_iff_eq, hzero, if_false, Int.ofNat_eq_natCast]
+    simp only [beq_iff_eq, hzero, ite_false, Int.ofNat_eq_natCast]
     omega
 
 private theorem finiteScaleOffset_eq_ieeeAlign
@@ -228,9 +228,9 @@ theorem addComponentsImpl_eq
   unfold addComponentsImpl addComponents
   simp only [← roundDyadic_eq_roundDyadicImpl]
   by_cases hfmt : fmt.isIEEE = true
-  · rw [if_pos hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
+  · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaleDyadics_eq fmt hfmt]
-  · rw [if_neg hfmt]
+  · rw [ite_eq_right hfmt]
 
 /-- Compile finite addition through unsigned scale alignment on conventional IEEE formats. -/
 @[csimp] theorem addComponents_eq_addComponentsImpl :
@@ -296,7 +296,7 @@ theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
           by_cases hyZero : dy.mantissa = 0
           · simp [hyZero]
           · simp only [hxZero, hyZero, beq_iff_eq, Bool.or_eq_true, or_false,
-              if_false]
+              ite_false]
             rw [Components.toDyadic_exp_of_mantissa_ne_zero fmt dx hxZero,
               Components.toDyadic_exp_of_mantissa_ne_zero fmt dy hyZero]
             rw [exponent_add_eq_scales]
@@ -306,7 +306,7 @@ theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
                   finiteScaleOffset fmt =
                     FloatFormat.ieeeSubnormalAlignExp fmt := by
                 simp [finiteScaleOffset, FloatFormat.ieeeSubnormalAlignExp, hbias]
-              simp only [hieee, if_true, Option.some.injEq]
+              simp only [hieee, ite_true, Option.some.injEq]
               simpa only [hoffset] using
                 FiniteProductRound.round_eq_roundDyadic
                   fmt hieee (Bool.xor dx.sign dy.sign)
@@ -348,9 +348,9 @@ theorem div_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
           · simp [divComponents, hyZero]
           by_cases hxZero : dx.mantissa = 0
           · simp [divComponents, hyZero, hxZero]
-          · simp only [hyZero, hxZero, beq_iff_eq, if_false]
+          · simp only [hyZero, hxZero, beq_iff_eq, ite_false]
             unfold divComponents
-            simp only [hyZero, hxZero, beq_iff_eq, if_false]
+            simp only [hyZero, hxZero, beq_iff_eq, ite_false]
             rw [Components.toDyadic_exp_of_mantissa_ne_zero fmt dx hxZero,
               Components.toDyadic_exp_of_mantissa_ne_zero fmt dy hyZero]
             rw [exponent_sub_eq_scales]
@@ -408,9 +408,9 @@ theorem fmaComponentsImpl_eq
   unfold fmaComponentsImpl fmaComponents
   simp only [← roundDyadic_eq_roundDyadicImpl]
   by_cases hfmt : fmt.isIEEE = true
-  · rw [if_pos hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
+  · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaledProduct_eq fmt hfmt]
-  · rw [if_neg hfmt]
+  · rw [ite_eq_right hfmt]
 
 /--
 An aligned same-sign FMA reduces to one product-round call for every IEEE binary format.
@@ -447,19 +447,19 @@ theorem fmaComponents_sameSign_aligned
         ((xExponent - 1) + (yExponent - 1)) := by
   rw [← fmaComponentsImpl_eq]
   unfold fmaComponentsImpl
-  rw [if_pos hfmt]
+  rw [ite_eq_left hfmt]
   unfold FiniteScaleAdd.roundSum
   simp only [scale, hxExponent, hyExponent, hzExponent,
-    if_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
+    ite_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
     beq_iff_eq]
   have hscale :
       (xExponent - 1) + (yExponent - 1) ≤
         (zExponent - 1) + finiteScaleOffset fmt := by
     omega
-  simp only [or_self, if_false]
-  rw [if_pos hscale]
+  simp only [or_self, ite_false]
+  rw [ite_eq_left hscale]
   unfold FiniteScaleAdd.roundMagnitudes
-  simp only [beq_self_eq_true, if_true]
+  simp only [beq_self_eq_true, ite_true]
   unfold FiniteScaleAdd.roundMagnitude
   change
     FiniteProductRound.round fmt

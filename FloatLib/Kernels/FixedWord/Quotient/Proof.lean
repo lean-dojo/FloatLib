@@ -60,12 +60,12 @@ theorem natQuotientStep_spec (den : Nat) (state : QuotientState Nat)
       next.remainder < den ∧
       state.quotient ≤ next.quotient := by
   by_cases hbelow : 2 * state.remainder < den
-  · simp only [natQuotientStep, hbelow, if_true]
+  · simp only [natQuotientStep, hbelow, ite_true]
     refine ⟨?_, ?_, ?_⟩
     · ring
     · trivial
     · omega
-  · simp only [natQuotientStep, hbelow, if_false]
+  · simp only [natQuotientStep, hbelow, ite_false]
     have hge : den ≤ 2 * state.remainder := by omega
     refine ⟨?_, ?_, ?_⟩
     · rw [show (2 * state.quotient + 1) * den =
@@ -166,7 +166,7 @@ private theorem quotientStep_toNat (den : UInt64) (state : QuotientState UInt64)
         state.quotient.toNat + state.quotient.toNat < 2 ^ 64 := by
       have hbound :
           2 * state.quotient.toNat < 2 ^ 63 := by
-        simpa only [natQuotientStep, hbelow, if_true,
+        simpa only [natQuotientStep, hbelow, ite_true,
           QuotientState.toNat] using hnextFit
       nlinarith
     have hquotientDouble :
@@ -192,7 +192,7 @@ private theorem quotientStep_toNat (den : UInt64) (state : QuotientState UInt64)
         2 * state.quotient.toNat + 1 < 2 ^ 64 := by
       have hbound :
           2 * state.quotient.toNat + 1 < 2 ^ 63 := by
-        simpa only [natQuotientStep, hbelow, if_false,
+        simpa only [natQuotientStep, hbelow, ite_false,
           QuotientState.toNat] using hnextFit
       omega
     have hquotientDoubleFit :
@@ -305,7 +305,7 @@ theorem quotientStep128_toNat
         state.quotient.toNat + state.quotient.toNat < 2 ^ 128 := by
       have hbound :
           2 * state.quotient.toNat < 2 ^ 128 := by
-        simpa only [natQuotientStep, hbelow, if_true,
+        simpa only [natQuotientStep, hbelow, ite_true,
           QuotientState.toNat128] using hnextFit
       nlinarith
     have hquotientShiftFit :
@@ -333,10 +333,10 @@ theorem quotientStep128_toNat
                 doubledRemainder den⟩) =
           (⟨doubledQuotient, doubledRemainder⟩ :
             QuotientState FloatLib.Numerics.FixedWord.UInt128)
-      rw [if_pos hnativeBelow]
+      rw [ite_eq_left hnativeBelow]
     rw [hstep]
     simp only [QuotientState.toNat128, natQuotientStep,
-      hbelow, if_true]
+      hbelow, ite_true]
     rw [hquotientDouble, hremainderDouble]
   · have hnativeBelow :
         FloatLib.Numerics.FixedWord.UInt128.less
@@ -353,7 +353,7 @@ theorem quotientStep128_toNat
       omega
     have hnextQuotientFit :
         2 * state.quotient.toNat + 1 < 2 ^ 128 := by
-      simpa only [natQuotientStep, hbelow, if_false,
+      simpa only [natQuotientStep, hbelow, ite_false,
         QuotientState.toNat128] using hnextFit
     have hquotientDoubleFit :
         state.quotient.toNat + state.quotient.toNat < 2 ^ 128 := by
@@ -403,10 +403,10 @@ theorem quotientStep128_toNat
               FloatLib.Numerics.FixedWord.UInt128.sub
                 doubledRemainder den⟩ :
             QuotientState FloatLib.Numerics.FixedWord.UInt128)
-      rw [if_neg (by simpa only [hnativeBelow] using Bool.false_ne_true)]
+      rw [ite_eq_right (by simpa only [hnativeBelow] using Bool.false_ne_true)]
     rw [hstep]
     simp only [QuotientState.toNat128, natQuotientStep,
-      hbelow, if_false]
+      hbelow, ite_false]
     rw [hquotientSetLowBit, hremainderSubtract]
 
 /--
@@ -554,7 +554,7 @@ theorem floorLog2RatWord_eq (num den : UInt64)
     FloatLib.Numerics.RationalBinary.floorLog2
   rw [← hnumLog, ← hdenLog]
   by_cases hlogs : den.log2.toNat ≤ num.log2.toNat
-  · simp only [hlogs, if_true]
+  · simp only [hlogs, ite_true]
     let shift := num.log2.toNat - den.log2.toNat
     have hshiftLt : shift < 64 := by
       dsimp only [shift]
@@ -622,7 +622,7 @@ theorem floorLog2RatWord_eq (num den : UInt64)
       simpa [hnotGe]
   · have hlogsLt : num.log2.toNat < den.log2.toNat := by
       omega
-    simp only [hlogs, if_false]
+    simp only [hlogs, ite_false]
     let shift := den.log2.toNat - num.log2.toNat
     have hshiftPos : 0 < shift := by
       dsimp only [shift]
@@ -739,7 +739,7 @@ theorem floorLog2RatWord_log_bounds (num den : UInt64) :
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat := by
   unfold floorLog2RatWord
   by_cases hlogs : den.log2.toNat ≤ num.log2.toNat
-  · simp only [hlogs, if_true]
+  · simp only [hlogs, ite_true]
     have hdifference :
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat =
           Int.ofNat (num.log2.toNat - den.log2.toNat) := by
@@ -748,7 +748,7 @@ theorem floorLog2RatWord_log_bounds (num den : UInt64) :
     split <;> omega
   · have hlogsLt : num.log2.toNat < den.log2.toNat := by
       omega
-    simp only [hlogs, if_false]
+    simp only [hlogs, ite_false]
     have hdifference :
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat =
           -Int.ofNat (den.log2.toNat - num.log2.toNat) := by

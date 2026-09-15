@@ -534,7 +534,7 @@ theorem lowMaskWord_toNat (width : UInt64) (hwidth : width < 64) :
   have hpow : 2 ^ width.toNat < 2 ^ 64 :=
     Nat.pow_lt_pow_right (by decide) hwidthNat
   unfold lowMaskWord
-  rw [if_pos hwidth, UInt64.toNat_sub_of_le]
+  rw [ite_eq_left hwidth, UInt64.toNat_sub_of_le]
   · simp only [UInt64.toNat_shiftLeft, UInt64.toNat_one]
     rw [Nat.mod_eq_of_lt hwidthNat, Nat.shiftLeft_eq, one_mul]
     change 2 ^ width.toNat % 2 ^ 64 - 1 = 2 ^ width.toNat - 1
@@ -593,7 +593,7 @@ theorem uint64_lowBits_toNat (value : UInt64) (shift : Nat)
   have hbits :=
     lowBitsWord_toNat value (UInt64.ofNat shift) hshiftWordLe
   unfold lowBitsWord lowMaskWord at hbits
-  rw [if_pos hshiftWord] at hbits
+  rw [ite_eq_left hshiftWord] at hbits
   rw [hshiftNat] at hbits
   exact hbits
 
@@ -604,7 +604,7 @@ theorem shiftRightWord_toNat (value shift : UInt64) (hshift : shift < 64) :
   have hshiftNat : shift.toNat < 64 := by
     simpa [UInt64.lt_iff_toNat_lt] using hshift
   unfold shiftRightWord
-  rw [if_pos hshift, UInt64.toNat_shiftRight]
+  rw [ite_eq_left hshift, UInt64.toNat_shiftRight]
   rw [Nat.mod_eq_of_lt hshiftNat]
 
 /--

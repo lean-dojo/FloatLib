@@ -61,11 +61,11 @@ theorem align_toReal (f g : FloatRep β) :
   by_cases hfg : f.exponent ≤ g.exponent
   · constructor
     · simp [align, hfg]
-    · simp only [align, if_pos hfg, toReal, Int.cast_mul]
+    · simp only [align, ite_eq_left hfg, toReal, Int.cast_mul]
       rw [intPower_cast_eq_bpow β (sub_nonneg.mpr hfg),
         bpow.sub_exp, mul_assoc, div_mul_cancel₀ _ (bpow.ne_zero β _)]
   · constructor
-    · simp only [align, if_neg hfg, toReal, Int.cast_mul]
+    · simp only [align, ite_eq_right hfg, toReal, Int.cast_mul]
       rw [intPower_cast_eq_bpow β (sub_nonneg.mpr (le_of_not_ge hfg)),
         bpow.sub_exp, mul_assoc, div_mul_cancel₀ _ (bpow.ne_zero β _)]
     · simp [align, hfg]

@@ -90,7 +90,7 @@ theorem sinCosScaledWithResult_exponentBudget (fmt : FloatFormat) (config : Conf
   have hsmall : ¬ Int.ofNat (Nat.log2 value.significand) + value.exponent <
       -(Int.ofNat (fmt.fracWidth + 2)) :=
     not_lt_of_ge ((neg_nonpos.mpr (Int.natCast_nonneg _)).trans hlarge)
-  simp only [sinCosScaledWithResult, beq_iff_eq, hnonzero, hsmall, hbudget, if_false, if_true]
+  simp only [sinCosScaledWithResult, beq_iff_eq, hnonzero, hsmall, hbudget, ite_false, ite_true]
 
 /-- Reduce a dyadic argument, returning invalid results when the exponent budget is exceeded. -/
 def sinCosScaledWith (fmt : FloatFormat) (config : Config)

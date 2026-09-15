@@ -67,7 +67,7 @@ private theorem roundCodeNat_eq_signedMagnitudeDyadic128
     rw [hsigned]
     simp only [NativeLimbRounding.roundCodeNat, hzero,
       beq_self_eq_true, FloatLib.Numerics.Dyadic.zero_significand,
-      if_true]
+      ite_true]
   · rw [FixedWord.signedMagnitudeDyadic128_eq_of_toNat_ne_zero
       negative magnitude exponent hzero]
 
@@ -94,10 +94,10 @@ theorem roundAlignedFieldsWord_toNat
   unfold roundAlignedFieldsWord
   by_cases hsame : leftNegative = rightNegative
   · subst rightNegative
-    simp only [beq_self_eq_true, if_true]
+    simp only [beq_self_eq_true, ite_true]
     by_cases hcarry :
         (FixedWord.add128 leftSignificand rightSignificand).carry = 0
-    · simp only [beq_iff_eq, hcarry, if_true]
+    · simp only [beq_iff_eq, hcarry, ite_true]
       have hadd :=
         FixedWord.add128_toNat leftSignificand rightSignificand
       simp only [hcarry, UInt64.toNat_zero, zero_mul, add_zero] at hadd
@@ -114,11 +114,11 @@ theorem roundAlignedFieldsWord_toNat
       rw [roundCodeNat_eq_signedMagnitudeDyadic128]
       simpa [FixedWord.addSignedMagnitudes128] using
         congrArg (NativeLimbRounding.roundCodeNat format heligible) hexact
-    · simp only [beq_iff_eq, hcarry, if_false]
+    · simp only [beq_iff_eq, hcarry, ite_false]
       exact roundCapacityFieldsWord_toNat format heligible
         leftNegative leftSignificand exponent
         leftNegative rightSignificand exponent
-  · simp only [beq_iff_eq, hsame, if_false]
+  · simp only [beq_iff_eq, hsame, ite_false]
     have hexact :=
       FixedWord.signedMagnitudeDyadic128_addSignedMagnitudes128_eq_addFields
         leftNegative rightNegative leftSignificand rightSignificand exponent

@@ -102,9 +102,9 @@ theorem implements_run :
       | reject =>
           by_cases h : FixedInt.InRange width
               (Formats.FixedPoint.Bounded.coefficientOf radix fractionalDigits exact)
-          · simp only [run, quantizeFinite, ofRat?, if_pos h]
+          · simp only [run, quantizeFinite, ofRat?, ite_eq_left h]
             exact ⟨⟨h, coefficient_ofCoefficient_of_inRange _ h⟩, rfl⟩
-          · simp only [run, quantizeFinite, ofRat?, if_neg h]
+          · simp only [run, quantizeFinite, ofRat?, ite_eq_right h]
             exact ⟨rfl, h, rfl⟩
       | wrap => exact ⟨coefficient_ofRatWrapping exact, rfl⟩
       | saturate => exact ⟨coefficient_ofRatSaturating exact, rfl⟩

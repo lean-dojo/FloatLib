@@ -32,7 +32,7 @@ theorem prepareSin_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
   by_cases hzero : argument = 0
   · subst argument
     simp [prepareSin, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
-  · rw [prepareSin, dif_neg hzero]
+  · rw [prepareSin, dite_eq_right hzero]
     dsimp only [Enclosure.Comparison.Prepared.compare]
     apply Enclosure.Comparison.compare_eq_real
     intro n
@@ -48,7 +48,7 @@ theorem prepareCos_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     have hlt : (1 : ℝ) < boundary ↔ (1 : ℚ) < boundary := by exact_mod_cast Iff.rfl
     have hgt : (boundary : ℝ) < 1 ↔ boundary < (1 : ℚ) := by exact_mod_cast Iff.rfl
     simp [prepareCos, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing, hlt, hgt]
-  · rw [prepareCos, dif_neg hzero]
+  · rw [prepareCos, dite_eq_right hzero]
     dsimp only [Enclosure.Comparison.Prepared.compare]
     apply Enclosure.Comparison.compare_eq_real
     intro n
@@ -62,7 +62,7 @@ theorem prepareArctan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
   by_cases hzero : argument = 0
   · subst argument
     simp [prepareArctan, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
-  · rw [prepareArctan, dif_neg hzero]
+  · rw [prepareArctan, dite_eq_right hzero]
     dsimp only [Enclosure.Comparison.Prepared.compare]
     apply Enclosure.Comparison.compare_eq_real
     intro n
@@ -90,7 +90,7 @@ theorem prepareTan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
   by_cases hzero : argument = 0
   · subst argument
     simp [prepareTan, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
-  · rw [prepareTan, dif_neg hzero]
+  · rw [prepareTan, dite_eq_right hzero]
     dsimp only [Enclosure.Comparison.Prepared.compare]
     have hc := Enclosure.Comparison.compare_eq_real
       (Enclosure.Comparison.cacheIntervals

@@ -124,7 +124,7 @@ theorem decode_normal {fmt : FloatFormat}
     simp [Model.isFinite, hencoding, Model.IEEE.isFinite, bne]
   unfold FiniteKernel.decode?
   rw [hnonfinite]
-  simp only [beq_iff_eq, hgenericFinite, if_false,
+  simp only [beq_iff_eq, hgenericFinite, ite_false,
     FiniteKernel.decodeMantissa, hgenericNonzero]
   rw [← hexponent]
   simp only [Model.pow2_eq_two_pow]
@@ -293,11 +293,11 @@ theorem mul_refines
   unfold FiniteKernel.mul?
   rw [view.xDecode, view.yDecode]
   simp only
-  rw [if_neg (by simp [hxMantissaNe, hyMantissaNe])]
-  rw [if_pos hieee]
+  rw [ite_eq_right (by simp [hxMantissaNe, hyMantissaNe])]
+  rw [ite_eq_left hieee]
   apply congrArg some
   simp only [FiniteKernel.scale, beq_iff_eq,
-    view.xExponentBounds.1.ne', view.yExponentBounds.1.ne', if_false]
+    view.xExponentBounds.1.ne', view.yExponentBounds.1.ne', ite_false]
   rw [← view.sign_eq]
   exact hrefines.symm
 

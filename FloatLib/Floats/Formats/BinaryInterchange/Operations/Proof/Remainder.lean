@@ -110,7 +110,7 @@ private theorem remainderDyadic_toRat_of_exponent_le
         roundQuotientEven 0 divisor.significand = 0 := by
       simp [roundQuotientEven]
     rw [remainderDyadic,
-      if_pos (by simpa only [beq_iff_eq] using hzero)]
+      ite_eq_left (by simpa only [beq_iff_eq] using hzero)]
     simp [hzero, hroundZero]
   · let shift := Int.toNat (dividend.exponent - divisor.exponent)
     let modulus := 2 * divisor.significand
@@ -139,8 +139,8 @@ private theorem remainderDyadic_toRat_of_exponent_le
         (quotient_odd_iff_mod_twice_ge
           (Nat.shiftLeft dividend.significand shift)
           divisor.significand hdivisor).symm
-    rw [remainderDyadic, if_neg (by simpa only [beq_iff_eq] using hzero),
-      if_pos hexponents]
+    rw [remainderDyadic, ite_eq_right (by simpa only [beq_iff_eq] using hzero),
+      ite_eq_left hexponents]
     change
       (Operations.Internal.remainderFromDivision
           dividend.negative
@@ -180,7 +180,7 @@ private theorem remainderDyadic_toRat_of_exponent_lt
   dsimp only
   by_cases hzero : dividend.significand = 0
   · rw [remainderDyadic,
-      if_pos (by simpa only [beq_iff_eq] using hzero)]
+      ite_eq_left (by simpa only [beq_iff_eq] using hzero)]
     simp [hzero, roundQuotientEven]
   · let shift := Int.toNat (divisor.exponent - dividend.exponent)
     let scaledDivisor := Nat.shiftLeft divisor.significand shift
@@ -208,8 +208,8 @@ private theorem remainderDyadic_toRat_of_exponent_lt
         roundQuotientEven_eq_zero_of_twice_lt
           dividend.significand scaledDivisor htwiceLt
       rw [remainderDyadic,
-        if_neg (by simpa only [beq_iff_eq] using hzero),
-        if_neg (not_le_of_gt hexponents), if_pos hlarge]
+        ite_eq_right (by simpa only [beq_iff_eq] using hzero),
+        ite_eq_right (not_le_of_gt hexponents), ite_eq_left hlarge]
       change
         dividend.toRat =
           Rat.ofInt
@@ -228,8 +228,8 @@ private theorem remainderDyadic_toRat_of_exponent_lt
       rw [zero_mul, show Int.ofNat 0 = (0 : Int) by rfl, sub_zero]
       rfl
     · rw [remainderDyadic,
-        if_neg (by simpa only [beq_iff_eq] using hzero),
-        if_neg (not_le_of_gt hexponents)]
+        ite_eq_right (by simpa only [beq_iff_eq] using hzero),
+        ite_eq_right (not_le_of_gt hexponents)]
       change
         (if (2 * dividend.significand).log2 < shift then
             dividend
@@ -240,7 +240,7 @@ private theorem remainderDyadic_toRat_of_exponent_lt
               (dividend.significand % scaledDivisor)
               scaledDivisor dividend.exponent).toRat =
           _
-      rw [if_neg hlarge]
+      rw [ite_eq_right hlarge]
       exact
         remainderFromDivision_toRat
           dividend.negative dividend.significand scaledDivisor
@@ -287,11 +287,11 @@ theorem remainderDyadic_toRat
             (if dividend.negative then -coefficient else coefficient) *
           (2 : Rat) ^ dividend.exponent := by
   by_cases hexponents : divisor.exponent ≤ dividend.exponent
-  · rw [if_pos hexponents]
+  · rw [ite_eq_left hexponents]
     exact
       remainderDyadic_toRat_of_exponent_le
         dividend divisor hdivisor hexponents
-  · rw [if_neg hexponents]
+  · rw [ite_eq_right hexponents]
     exact
       remainderDyadic_toRat_of_exponent_lt
         dividend divisor hdivisor (lt_of_not_ge hexponents)
@@ -428,19 +428,19 @@ theorem remainderDyadic_eq_or_le
   by_cases hzero : dividend.significand = 0
   · exact Or.inl (remainderDyadic_of_significand_eq_zero dividend divisor hzero hdivisor)
   · unfold remainderDyadic
-    simp only [beq_iff_eq, hzero, if_false]
+    simp only [beq_iff_eq, hzero, ite_false]
     by_cases hexp : divisor.exponent ≤ dividend.exponent
-    · rw [if_pos hexp]
+    · rw [ite_eq_left hexp]
       refine Or.inr (Or.inl ⟨rfl, ?_⟩)
       exact remainderFromDivision_significand_le_denominator _ _ _ _ _
         (Nat.mod_lt _ (Nat.pos_of_ne_zero hdivisor)).le
-    · rw [if_neg hexp]
+    · rw [ite_eq_right hexp]
       by_cases hgap :
           (2 * dividend.significand).log2 <
             Int.toNat (divisor.exponent - dividend.exponent)
-      · rw [if_pos hgap]
+      · rw [ite_eq_left hgap]
         exact Or.inl rfl
-      · rw [if_neg hgap]
+      · rw [ite_eq_right hgap]
         exact Or.inr (Or.inr ⟨rfl, remainderFromDivision_significand_le_numerator _ _ _ _⟩)
 
 /-- At a fixed exponent, magnitude is monotone in the significand. -/
@@ -485,14 +485,14 @@ theorem remainderWithStatus_exact
   by_cases hzero : (remainderDyadic exactDividend exactDivisor hnonzero).significand = 0
   · have hbeq : ((remainderDyadic exactDividend exactDivisor hnonzero).significand == 0) = true := by
       simp [hzero]
-    simp only [hbeq, if_true]
+    simp only [hbeq, ite_true]
     refine ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt exactDividend.negative), ?_⟩
     rw [toReal_zero]
     simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
   · have hbeq :
         ((remainderDyadic exactDividend exactDivisor hnonzero).significand == 0) = false := by
       simp [hzero]
-    simp only [hbeq, Bool.false_eq_true, if_false]
+    simp only [hbeq, Bool.false_eq_true, ite_false]
     have hrep :
         (remainderDyadic exactDividend exactDivisor hnonzero).significand <
             2 ^ (fmt.fracWidth + 1) ∧

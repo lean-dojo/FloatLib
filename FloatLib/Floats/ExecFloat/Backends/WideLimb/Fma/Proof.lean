@@ -34,9 +34,9 @@ theorem fmaNormal?_refines (h : Eligible fmt) (x y z r : Value fmt)
   by_cases hcond : (expWord x == 0 || expWord x == expAllOnes fmt ||
       expWord y == 0 || expWord y == expAllOnes fmt ||
       expWord z == 0 || expWord z == expAllOnes fmt) = true
-  · rw [if_pos hcond] at hr
+  · rw [ite_eq_left hcond] at hr
     exact absurd hr (by simp)
-  · rw [if_neg hcond] at hr
+  · rw [ite_eq_right hcond] at hr
     simp only [Bool.or_eq_true, beq_iff_eq, not_or] at hcond
     obtain ⟨⟨⟨⟨⟨hx0, hxAll⟩, hy0⟩, hyAll⟩, hz0⟩, hzAll⟩ := hcond
     obtain ⟨hxe0, hxeFinite⟩ := normalExponent_of_expWord h x hx0 hxAll
@@ -63,11 +63,11 @@ theorem fmaNormal?_refines (h : Eligible fmt) (x y z r : Value fmt)
     simp only [Option.some.injEq]
     rw [← FiniteKernel.fmaComponentsImpl_eq]
     unfold FiniteKernel.fmaComponentsImpl
-    rw [if_pos h.isIEEE, hsum, hproduct]
+    rw [ite_eq_left h.isIEEE, hsum, hproduct]
     have hxe0' : (expField x == 0) = false := by simpa using hxe0
     have hye0' : (expField y == 0) = false := by simpa using hye0
     have hze0' : (expField z == 0) = false := by simpa using hze0
-    simp only [FiniteKernel.scale, hxe0', hye0', hze0', Bool.false_eq_true, if_false]
+    simp only [FiniteKernel.scale, hxe0', hye0', hze0', Bool.false_eq_true, ite_false]
     rfl
 
 /-- Wide-limb fused multiply-add is the reference fused multiply-add of the operand models. -/

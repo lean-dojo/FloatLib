@@ -110,7 +110,7 @@ private theorem jamState_toNat
           simpa [← UInt64.toNat_inj] using hlo
         omega
       simp only [hhi, beq_self_eq_true, Bool.true_and, hlo,
-        beq_iff_eq, if_false, hnonzero]
+        beq_iff_eq, ite_false, hnonzero]
       rw [UInt128.setLowBit_toNat]
   · have hnonzero : state.remainder.toNat ≠ 0 := by
       unfold UInt128.toNat
@@ -291,7 +291,7 @@ private theorem roundCodeWord_quotientPrefixWord_toNat
       hnumeratorNat hdenominatorNat
   rw [NativeWordLimb.roundCodeWordLow_toNat_eq_direct format heligible,
     DirectDyadicPacking.roundCode, DirectDyadicQuotient.roundPositiveCode, hprefix.1, hprefix.2,
-    if_neg, if_neg]
+    ite_eq_right, ite_eq_right]
   · simp only [DyadicRounding.magnitude]
     rw [quotientPrefix_eq_positiveFields]
   · simp [positiveDyadic, hnumeratorNat, hdenominatorNat]
@@ -313,7 +313,7 @@ theorem roundPositiveCode_eq
   · simp [hnumerator, DirectDyadicQuotient.roundPositiveCode, positiveDyadic]
   by_cases hdenominator : denominatorSignificand = 0
   · simp [hdenominator, DirectDyadicQuotient.roundPositiveCode, positiveDyadic]
-  rw [if_neg (by simp [hnumerator, hdenominator]),
+  rw [ite_eq_right (by simp [hnumerator, hdenominator]),
     roundCodeWord_quotientPrefixWord_toNat format heligible false
       numeratorSignificand numeratorExponent denominatorSignificand denominatorExponent
       hnumerator hdenominator]
@@ -362,7 +362,7 @@ theorem roundFields_eq
   · simp [hdenominator, hnumerator, hdenominatorNat]
   have hnumeratorNat : numeratorSignificand.toNat ≠ 0 :=
     (FixedWord.uint64_toNat_eq_zero numeratorSignificand).not.mpr hnumerator
-  simp only [hdenominator, hnumerator, hdenominatorNat, hnumeratorNat, beq_iff_eq, if_false]
+  simp only [hdenominator, hnumerator, hdenominatorNat, hnumeratorNat, beq_iff_eq, ite_false]
   rw [roundCodeWord_quotientPrefixWord_toNat format heligible _
     numeratorSignificand numeratorExponent denominatorSignificand denominatorExponent
     hnumerator hdenominator]

@@ -286,7 +286,7 @@ theorem addDyadicImpl_eq (a b : Numerics.Dyadic) :
   by_cases hb : b.significand = 0
   · simp [ha, hb]
   by_cases hexponent : a.exponent ≤ b.exponent
-  · simp only [ha, hb, hexponent, if_false, if_true]
+  · simp only [ha, hb, hexponent, ite_false, ite_true]
     have hshift :
         Nat.shiftLeft b.significand (b.exponent - a.exponent).toNat ≠ 0 := by
       simp [Nat.shiftLeft_eq, hb]
@@ -294,7 +294,7 @@ theorem addDyadicImpl_eq (a b : Numerics.Dyadic) :
       addDyadicMagnitudes_eq a.negative b.negative a.significand
         (Nat.shiftLeft b.significand (b.exponent - a.exponent).toNat) a.exponent
         ha hshift
-  · simp only [ha, hb, hexponent, if_false]
+  · simp only [ha, hb, hexponent, ite_false]
     have hshift :
         Nat.shiftLeft a.significand (a.exponent - b.exponent).toNat ≠ 0 := by
       simp [Nat.shiftLeft_eq, ha]

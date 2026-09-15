@@ -93,7 +93,7 @@ theorem significant_value (roundMagnitude : Bool → ℚ → Nat)
     (radixPair value).1 (radixPair value).2 digits
   cases hs : value.negative <;>
     simp only [significant, Dyadic.toRat, Dyadic.signedSignificand, hs,
-      Bool.false_eq_true, if_false, if_true,
+      Bool.false_eq_true, ite_false, ite_true,
       ← sixteen_zpow]
   · simpa [hs] using h
   · simpa [hs, neg_mul] using congrArg Neg.neg h
@@ -109,7 +109,7 @@ theorem significant_exact (roundMagnitude : Bool → ℚ → Nat)
     (radixPair_value value)
   cases hs : value.negative <;>
     simp only [significant, Dyadic.toRat, Dyadic.signedSignificand, hs,
-      Bool.false_eq_true, if_false, if_true,
+      Bool.false_eq_true, ite_false, ite_true,
       ← sixteen_zpow]
   · simpa [hs] using h
   · simpa [hs, neg_mul] using congrArg Neg.neg h

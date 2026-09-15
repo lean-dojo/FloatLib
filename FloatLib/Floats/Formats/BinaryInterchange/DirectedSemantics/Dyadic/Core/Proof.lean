@@ -36,7 +36,7 @@ theorem roundMantissaToLeadingBitDown_le_up (mantissa leadingBit : Nat) :
       roundMantissaToLeadingBitUp mantissa leadingBit := by
   by_cases hle : leadingBit ≤ mantissa.log2
   · simp only [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp,
-      if_pos hle]
+      ite_eq_left hle]
     exact shiftRight_le_shiftRightCeilPow2 _ _
   · simp [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp, hle]
 
@@ -112,7 +112,7 @@ theorem roundMantissaToLeadingBitUp_le_pow2_succ
       shiftRightCeilPow2_le_shiftRight_add_one mantissa
         (mantissa.log2 - leadingBit)
     simp only [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp, hle,
-      if_true] at hfloor ⊢
+      ite_true] at hfloor ⊢
     exact hceil.trans (Nat.succ_le_iff.mpr hfloor)
   · have hfloor :=
       roundMantissaToLeadingBitDown_lt_pow2_succ mantissa leadingBit
@@ -350,7 +350,7 @@ theorem roundDyadicPosDown_eq_posMaxFinite_of_overflow
         Int.ofNat mantissa.log2 + exponent := by
     simpa only [Int.ofNat_eq_natCast] using hoverflow
   unfold roundDyadicPosDown roundDyadicMagnitudeDown
-  rw [if_pos hoverflow']
+  rw [ite_eq_left hoverflow']
   rfl
 
 /-- Upward positive rounding returns the format's positive overflow value. -/
@@ -365,7 +365,7 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_overflow
         Int.ofNat mantissa.log2 + exponent := by
     simpa only [Int.ofNat_eq_natCast] using hoverflow
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_pos hoverflow']
+  rw [ite_eq_left hoverflow']
 
 /-- Downward positive rounding below the subnormal grid is format zero. -/
 theorem roundDyadicPosDown_eq_zero_of_underflow
@@ -388,7 +388,7 @@ theorem roundDyadicPosDown_eq_zero_of_underflow
         fmt.minSubnormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hunderflow
   unfold roundDyadicPosDown roundDyadicMagnitudeDown
-  rw [if_neg (not_lt_of_ge hmax'), if_pos hunderflow']
+  rw [ite_eq_right (not_lt_of_ge hmax'), ite_eq_left hunderflow']
 
 /-- Upward positive rounding below the subnormal grid is the smallest positive subnormal. -/
 theorem roundDyadicPosUp_eq_posMinSubnormal_of_underflow
@@ -411,7 +411,7 @@ theorem roundDyadicPosUp_eq_posMinSubnormal_of_underflow
         fmt.minSubnormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hunderflow
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_neg (not_lt_of_ge hmax'), if_pos hunderflow']
+  rw [ite_eq_right (not_lt_of_ge hmax'), ite_eq_left hunderflow']
   exact (posMinSubnormal_eq_ofFields fmt).symm
 
 /-- The executable downward subnormal branch is floor alignment to the minimum grid. -/
@@ -444,8 +444,8 @@ theorem roundDyadicPosDown_eq_subnormal
         fmt.minNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hhigh
   unfold roundDyadicPosDown roundDyadicMagnitudeDown
-  rw [if_neg (not_lt_of_ge hmax'), if_neg (not_lt_of_ge hlow'),
-    if_pos hhigh']
+  rw [ite_eq_right (not_lt_of_ge hmax'), ite_eq_right (not_lt_of_ge hlow'),
+    ite_eq_left hhigh']
   rw [roundMantissaAtExponentDown_eq_match]
   simp only [beq_iff_eq]
   rfl
@@ -485,8 +485,8 @@ theorem roundDyadicPosUp_eq_subnormal
         fmt.minNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hhigh
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_neg (not_lt_of_ge hmax'), if_neg (not_lt_of_ge hlow'),
-    if_pos hhigh']
+  rw [ite_eq_right (not_lt_of_ge hmax'), ite_eq_right (not_lt_of_ge hlow'),
+    ite_eq_left hhigh']
   rw [roundMantissaAtExponentUp_eq_match]
   simp only [packRoundedSubnormal, beq_iff_eq]
   rw [posMinSubnormal_eq_ofFields]
@@ -523,10 +523,10 @@ theorem roundDyadicPosDown_eq_normal
         fmt.maxNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hmax
   unfold roundDyadicPosDown roundDyadicMagnitudeDown
-  rw [if_neg (not_lt_of_ge hmax'),
-    if_neg (not_lt_of_ge
+  rw [ite_eq_right (not_lt_of_ge hmax'),
+    ite_eq_right (not_lt_of_ge
       ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    if_neg (not_lt_of_ge hnormal')]
+    ite_eq_right (not_lt_of_ge hnormal')]
   rfl
 
 /-- Without a carry, the upward normal branch packs the mantissa or returns the overflow value. -/
@@ -563,10 +563,10 @@ theorem roundDyadicPosUp_eq_normal_of_no_carry
         fmt.maxNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hmax
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_neg (not_lt_of_ge hmax'),
-    if_neg (not_lt_of_ge
+  rw [ite_eq_right (not_lt_of_ge hmax'),
+    ite_eq_right (not_lt_of_ge
       ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    if_neg (not_lt_of_ge hnormal')]
+    ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
         shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
@@ -574,8 +574,8 @@ theorem roundDyadicPosUp_eq_normal_of_no_carry
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
   rw [hrounded]
-  simp only [packRoundedNormal, hcarry, beq_iff_eq, if_false]
-  rw [if_neg (not_lt_of_ge hmax')]
+  simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_false]
+  rw [ite_eq_right (not_lt_of_ge hmax')]
   rfl
 
 /-- Upward positive rounding packs the renormalized mantissa after a finite carry. -/
@@ -611,10 +611,10 @@ theorem roundDyadicPosUp_eq_normal_of_carry
         fmt.maxNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hcarryMax
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_neg (not_lt_of_ge hmax'),
-    if_neg (not_lt_of_ge
+  rw [ite_eq_right (not_lt_of_ge hmax'),
+    ite_eq_right (not_lt_of_ge
       ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    if_neg (not_lt_of_ge hnormal')]
+    ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
         shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
@@ -622,8 +622,8 @@ theorem roundDyadicPosUp_eq_normal_of_carry
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
   rw [hrounded]
-  simp only [packRoundedNormal, hcarry, beq_iff_eq, if_true]
-  rw [if_neg (not_lt_of_ge hcarryMax')]
+  simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_true]
+  rw [ite_eq_right (not_lt_of_ge hcarryMax')]
   simp only [Nat.sub_self]
   have hencoded :
       Int.toNat
@@ -662,7 +662,7 @@ theorem roundDyadicPosUp_eq_normal_of_carry
     not_lt_of_ge hencoded
   have hfractionNot : ¬0 > fmt.maxFiniteFracField := by omega
   simp only [hencodedNot, hfractionNot, decide_false, Bool.and_false,
-    Bool.or_false, Bool.false_eq_true, if_false]
+    Bool.or_false, Bool.false_eq_true, ite_false]
   simp only [Int.ofNat_eq_natCast]
 
 /-- A normalization carry beyond the largest exponent produces the format's overflow value. -/
@@ -694,10 +694,10 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_carry_overflow
         Int.ofNat mantissa.log2 + exponent + 1 := by
     simpa only [Int.ofNat_eq_natCast] using hcarryOverflow
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [if_neg (not_lt_of_ge hmax'),
-    if_neg (not_lt_of_ge
+  rw [ite_eq_right (not_lt_of_ge hmax'),
+    ite_eq_right (not_lt_of_ge
       ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    if_neg (not_lt_of_ge hnormal')]
+    ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
         shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
@@ -705,8 +705,8 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_carry_overflow
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
   rw [hrounded]
-  simp only [packRoundedNormal, hcarry, beq_iff_eq, if_true]
-  rw [if_pos hcarryOverflow']
+  simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_true]
+  rw [ite_eq_left hcarryOverflow']
 
 /-! ## Subnormal-grid bounds -/
 
@@ -796,7 +796,7 @@ theorem roundMantissaAtExponentUp_minSubnormal_le_pow2
       rw [pow2_eq_two_pow, ← Nat.pow_add]
       exact hmLt
     have hround := shiftRightCeilPow2_le_shiftRight_add_one mantissa shift
-    simp only [roundMantissaAtExponentUp, hle, if_true]
+    simp only [roundMantissaAtExponentUp, hle, ite_true]
     change shiftRightCeilPow2 mantissa shift ≤ pow2 fmt.fracWidth
     exact hround.trans (Nat.succ_le_iff.mpr hq)
   · have hlt : fmt.minSubnormalExponent < exponent := lt_of_not_ge hle
@@ -816,7 +816,7 @@ theorem roundMantissaAtExponentUp_minSubnormal_le_pow2
       omega
     have hpow : 2 ^ (mantissa.log2 + 1 + shift) ≤ 2 ^ fmt.fracWidth :=
       Nat.pow_le_pow_right (by decide) hexponent
-    simp only [roundMantissaAtExponentUp, hle, if_false]
+    simp only [roundMantissaAtExponentUp, hle, ite_false]
     change mantissa <<< shift ≤ pow2 fmt.fracWidth
     simpa [pow2_eq_two_pow] using (hraw.trans_le hpow).le
 

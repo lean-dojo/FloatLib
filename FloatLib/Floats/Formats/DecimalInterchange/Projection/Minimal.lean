@@ -60,7 +60,7 @@ theorem projectMagnitude_inexact_quantum_minimal (f : Format) (mode : RoundingMo
       apply quantum_le_of_full_coefficient f _ d _ r _ hd.1 hvalue
       exact f.payloadBound_le_coefficientBound_sub_one
   · rename_i hq
-    simp only [if_neg hq] at hinexact
+    simp only [ite_eq_right hq] at hinexact
     simp only [hinexact, ite_true] at hout
     obtain ⟨_, rfl, rfl⟩ := Datum.finite.inj hout
     exact roundedPair_quantum_minimal f mode s hx d r hd.1 hd.2.1 hvalue

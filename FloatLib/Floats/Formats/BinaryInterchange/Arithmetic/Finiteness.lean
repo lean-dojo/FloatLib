@@ -212,10 +212,10 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
     (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
     isFinite (roundDyadic fmt d) = true := by
   rw [roundDyadic_eq_roundDyadicImpl]
-  simp only [roundDyadicImpl, hfmt, if_true]
+  simp only [roundDyadicImpl, hfmt, ite_true]
   by_cases hm : d.significand = 0
   · rw [ieeeRoundDyadicImpl]
-    simp only [beq_iff_eq, hm, if_true]
+    simp only [beq_iff_eq, hm, ite_true]
     exact isFinite_signedZero_ieee fmt hfmt d.negative
   · let k : Int := Int.ofNat d.significand.log2 + d.exponent
     have hkmax :
@@ -228,8 +228,8 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
             FloatFormat.ieeeMinNormalExponent fmt := by
         simpa [k] using hsub
       rw [ieeeRoundDyadicImpl]
-      simp only [beq_iff_eq, hm, if_false]
-      rw [if_pos hsub']
+      simp only [beq_iff_eq, hm, ite_false]
+      rw [ite_eq_left hsub']
       let fraction :=
         match d.exponent + Int.ofNat (FloatFormat.ieeeSubnormalAlignExp fmt) with
         | .ofNat shift => d.significand <<< shift
@@ -244,11 +244,11 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
               ofFields fmt d.negative 0 fraction) =
           true
       by_cases hzero : fraction = 0
-      · rw [if_pos hzero]
+      · rw [ite_eq_left hzero]
         exact isFinite_signedZero_ieee fmt hfmt d.negative
-      · rw [if_neg hzero]
+      · rw [ite_eq_right hzero]
         by_cases hminNormal : fraction = pow2 fmt.fracWidth
-        · rw [if_pos hminNormal]
+        · rw [ite_eq_left hminNormal]
           exact isFinite_ofFields_ieee fmt hfmt d.negative 1 0 (by
             have hfour : 4 ≤ 2 ^ fmt.expWidth := by
               simpa using
@@ -256,7 +256,7 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
                   fmt.expWidth_ge_two
             unfold FloatFormat.expAllOnesNat
             omega)
-        · rw [if_neg hminNormal]
+        · rw [ite_eq_right hminNormal]
           exact isFinite_ofFields_ieee fmt hfmt d.negative 0 _
             fmt.expAllOnesNat_pos
     · have hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤ k :=
@@ -288,8 +288,8 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
                 (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
                 (normalizedMantissa - pow2 fmt.fracWidth) := by
         unfold ieeeRoundDyadicImpl
-        simp only [beq_iff_eq, hm, if_false]
-        rw [if_neg (not_lt_of_ge hnormal'), hraw]
+        simp only [beq_iff_eq, hm, ite_false]
+        rw [ite_eq_right (not_lt_of_ge hnormal'), hraw]
         rfl
       rw [himpl]
       simp only [beq_iff_eq]
@@ -305,11 +305,11 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
         have hmaxCarry :
             k + 1 ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
           omega
-        rw [if_pos hcarry, if_neg (not_lt_of_ge hmaxCarry)]
+        rw [ite_eq_left hcarry, ite_eq_right (not_lt_of_ge hmaxCarry)]
         exact isFinite_ofFields_ieee fmt hfmt d.negative _ _
           (encodedExponent_lt_expAllOnesNat_ieee fmt (k + 1)
             (by omega) hmaxCarry)
-      · rw [if_neg hcarry, if_neg (not_lt_of_ge hkmax)]
+      · rw [ite_eq_right hcarry, ite_eq_right (not_lt_of_ge hkmax)]
         exact isFinite_ofFields_ieee fmt hfmt d.negative _ _
           (encodedExponent_lt_expAllOnesNat_ieee fmt k hnormal hkmax)
 

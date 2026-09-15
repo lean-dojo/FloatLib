@@ -104,7 +104,7 @@ theorem quantize_inexact_iff (f : Format) (mode : RoundingMode)
   dsimp only [quantizeMagnitude] at *
   split at hv
   · rename_i h
-    simp only [if_pos h, Datum.toRat?_eq, Option.some.injEq] at *
+    simp only [ite_eq_left h, Datum.toRat?_eq, Option.some.injEq] at *
     subst v
     cases s <;> simp [Datum.finiteValue]
   · simp [invalidResult, Datum.toRat?_eq] at hv

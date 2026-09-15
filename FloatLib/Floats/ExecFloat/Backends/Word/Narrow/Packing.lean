@@ -93,7 +93,7 @@ theorem mkBits_fields (bits : UInt32) :
         exact hsignBit
   · have hsignBool : (bits &&& 0x80000000 != 0) = true :=
       bne_iff_ne.mpr hsign
-    simp only [mkBits, signBit, hsignBool, if_true, UInt32.ofNat_toNat]
+    simp only [mkBits, signBit, hsignBool, ite_true, UInt32.ofNat_toNat]
     unfold expField fracField
     have hsignBit : bits.toBitVec.getLsbD 31 = true := by
       by_contra hbit

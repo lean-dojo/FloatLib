@@ -136,7 +136,7 @@ private theorem hasNonzeroBelow_eq_of_le128
   by_cases hsmall : width < 64
   · have hpositive : 0 < width := Nat.pos_of_ne_zero hzero
     unfold hasNonzeroBelow
-    simp only [beq_iff_eq, hzero, if_false, hsmall, if_true]
+    simp only [beq_iff_eq, hzero, ite_false, hsmall, ite_true]
     rw [low_pair_mod_two_pow_of_le64 value width hsmall.le]
     have hbits :=
       uint64_lowBits_toNat value.limb0 width hsmall
@@ -161,8 +161,8 @@ private theorem hasNonzeroBelow_eq_of_le128
     have hinnerPositive : 0 < inner := by omega
     have hinner : inner < 64 := by omega
     unfold hasNonzeroBelow
-    simp only [beq_iff_eq, hzero, if_false, hsmall, hword,
-      hbelow, if_true]
+    simp only [beq_iff_eq, hzero, ite_false, hsmall, hword,
+      hbelow, ite_true]
     rw [low_pair_mod_two_pow_of_gt64 value width hlarge hbelow.le]
     have hbits :=
       uint64_lowBits_toNat value.limb1 inner hinner
@@ -356,7 +356,7 @@ theorem hasNonzeroBelow_eq
         (Nat.pow_le_pow_right (by decide) (by omega))
     rw [Nat.mod_eq_of_lt hvalue]
     unfold hasNonzeroBelow
-    simp only [beq_iff_eq, show width ≠ 0 by omega, if_false,
+    simp only [beq_iff_eq, show width ≠ 0 by omega, ite_false,
       show ¬width < 64 by omega, show width ≠ 64 by omega,
       show ¬width < 128 by omega, show width ≠ 128 by omega,
       show ¬width < 192 by omega, show width ≠ 192 by omega,
@@ -396,8 +396,8 @@ theorem shiftRight128_toNat_of_lt64
   have hresult :
       (shiftRight128 value shift).toNat = quotient := by
     unfold shiftRight128 UInt128.toNat
-    simp only [beq_iff_eq, Nat.ne_of_gt hpositive, if_false,
-      hshift, if_true]
+    simp only [beq_iff_eq, Nat.ne_of_gt hpositive, ite_false,
+      hshift, ite_true]
     rw [hlow, hhigh, Nat.mod_eq_of_lt htopBits]
   have hremainder :
       value.limb0.toNat % 2 ^ shift < 2 ^ shift :=
@@ -446,8 +446,8 @@ theorem shiftRight128_toNat_of_eq64
     rw [show (2 : Nat) ^ 128 = 2 ^ 64 * 2 ^ 64 by norm_num]
     ring
   unfold shiftRight128 UInt128.toNat
-  simp only [OfNat.ofNat, Nat.reduceBEq, if_false,
-    Nat.reduceLT, if_true, Bool.false_eq_true]
+  simp only [OfNat.ofNat, Nat.reduceBEq, ite_false,
+    Nat.reduceLT, ite_true, Bool.false_eq_true]
   rw [Nat.shiftRight_eq_div_pow, hvalue]
   exact (low_add_upper_mul_pow_div value.limb0.toNat upper 64 hlow).symm
 
@@ -470,8 +470,8 @@ theorem shiftRight128_toNat (value : UInt256) (shift : Nat)
   have hnotSmall : ¬shift < 64 := by omega
   have hnotWord : shift ≠ 64 := by omega
   unfold shiftRight128 UInt128.toNat
-  simp only [hnonzero, beq_iff_eq, if_false, hnotSmall, hnotWord,
-    hshift, if_true]
+  simp only [hnonzero, beq_iff_eq, ite_false, hnotSmall, hnotWord,
+    hshift, ite_true]
   rw [hlow, hhighPair]
   unfold UInt256.toNat
   rw [Nat.shiftRight_eq_div_pow]
@@ -571,8 +571,8 @@ theorem shiftRight128_toNat_of_eq128 (value : UInt256) :
     rw [show (2 : Nat) ^ 192 = 2 ^ 64 * 2 ^ 128 by norm_num]
     ring
   unfold shiftRight128 UInt128.toNat
-  simp only [OfNat.ofNat, Nat.reduceBEq, if_false,
-    Nat.reduceLT, if_true, Bool.false_eq_true]
+  simp only [OfNat.ofNat, Nat.reduceBEq, ite_false,
+    Nat.reduceLT, ite_true, Bool.false_eq_true]
   rw [Nat.shiftRight_eq_div_pow, hvalue]
   exact (low_add_upper_mul_pow_div low upper 128 hlow).symm
 
@@ -624,12 +624,12 @@ private theorem shiftRight128_toNat_of_ge128
         value.limb3 inner hsmall,
         Nat.shiftRight_eq_div_pow]
     unfold shiftRight128 UInt128.toNat upper
-    simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, if_false,
+    simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, ite_false,
       show ¬128 + inner < 64 by omega,
       show 128 + inner ≠ 64 by omega,
       show ¬128 + inner < 128 by omega,
       show 128 + inner ≠ 128 by omega,
-      show 128 + inner < 192 by omega, if_true]
+      show 128 + inner < 192 by omega, ite_true]
     have hinnerSub : 128 + inner - 128 = inner := by omega
     rw [hinnerSub]
     rw [hlowShift, hhighShift]
@@ -685,13 +685,13 @@ private theorem shiftRight128_toNat_of_ge128
             value.limb3 tail htail,
             Nat.shiftRight_eq_div_pow]
         unfold shiftRight128 UInt128.toNat upper
-        simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, if_false,
+        simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, ite_false,
           show ¬128 + inner < 64 by omega,
           show 128 + inner ≠ 64 by omega,
           show ¬128 + inner < 128 by omega,
           show 128 + inner ≠ 128 by omega,
           show ¬128 + inner < 192 by omega,
-          show 128 + inner < 256 by omega, if_true,
+          show 128 + inner < 256 by omega, ite_true,
           UInt64.toNat_zero, zero_mul, add_zero]
         rw [show 128 + inner - 192 = tail by omega, hshifted,
           hinnerEq, pow_add, ← Nat.div_div_eq_div_mul]
@@ -709,7 +709,7 @@ private theorem shiftRight128_toNat_of_ge128
           exact hupper.trans_le
             (Nat.pow_le_pow_right (by decide) hlarge)
         unfold shiftRight128 UInt128.toNat
-        simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, if_false,
+        simp only [show 128 + inner ≠ 0 by omega, beq_iff_eq, ite_false,
           show ¬128 + inner < 64 by omega,
           show 128 + inner ≠ 64 by omega,
           show ¬128 + inner < 128 by omega,
@@ -825,9 +825,9 @@ theorem shiftRightJam128_toNat
   rw [hdiscarded]
   by_cases hexact : value.toNat % 2 ^ shift = 0
   · simp [hexact, hquotient]
-  · simp only [hexact, bne_iff_ne, ne_eq, not_false_eq_true, if_true]
+  · simp only [hexact, bne_iff_ne, ne_eq, not_false_eq_true, ite_true]
     rw [UInt128.setLowBit_toNat, hquotient]
-    rw [if_neg (by simpa only [beq_iff_eq] using hexact)]
+    rw [ite_eq_right (by simpa only [beq_iff_eq] using hexact)]
 
 /-- Four-to-two-limb normalization never discards more than 128 bits. -/
 theorem normalizationShift128_le (value : UInt256) :
@@ -1016,7 +1016,7 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
           value.toNat.shiftRight shift + 1 := by
     rw [FloatLib.Numerics.roundShiftRightEven_def]
     simp only [beq_iff_eq]
-    rw [if_neg (Nat.ne_of_gt (lt_trans (by norm_num : 0 < 64) hlarge))]
+    rw [ite_eq_right (Nat.ne_of_gt (lt_trans (by norm_num : 0 < 64) hlarge))]
     change
       value.toNat -
           (value.toNat.shiftRight shift).shiftLeft shift = remainder at hremainder
@@ -1053,7 +1053,7 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
         remainder < 2 ^ (inner - 1) * 2 ^ 64 := by
       unfold remainder
       nlinarith
-    rw [if_pos hless, if_pos hremainderLess]
+    rw [ite_eq_left hless, ite_eq_left hremainderLess]
     simpa using hquotient
   by_cases hgreater :
       value.limb1.toNat % 2 ^ inner > 2 ^ (inner - 1)
@@ -1064,9 +1064,9 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
     have hremainderNotLess :
         ¬remainder < 2 ^ (inner - 1) * 2 ^ 64 :=
       Nat.not_lt_of_ge (Nat.le_of_lt hremainderGreater)
-    rw [if_neg hless]
-    simp only [hgreater, decide_true, Bool.true_or, if_true]
-    rw [if_neg hremainderNotLess, if_pos hremainderGreater]
+    rw [ite_eq_right hless]
+    simp only [hgreater, decide_true, Bool.true_or, ite_true]
+    rw [ite_eq_right hremainderNotLess, ite_eq_left hremainderGreater]
     simpa using hincrement
   have hequal :
       value.limb1.toNat % 2 ^ inner = 2 ^ (inner - 1) := by
@@ -1110,10 +1110,10 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
     have hremainderNotLess :
         ¬remainder < 2 ^ (inner - 1) * 2 ^ 64 :=
       Nat.not_lt_of_ge (Nat.le_of_lt hremainderGreater)
-    rw [if_neg hless]
+    rw [ite_eq_right hless]
     simp only [hgreater, decide_false, Bool.false_or, bne_iff_ne]
-    rw [if_pos hlowZero]
-    rw [if_neg hremainderNotLess, if_pos hremainderGreater]
+    rw [ite_eq_left hlowZero]
+    rw [ite_eq_right hremainderNotLess, ite_eq_left hremainderGreater]
     simpa using hincrement
 
 end UInt256

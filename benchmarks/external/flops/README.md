@@ -14,8 +14,9 @@ bit-level kernels and refinement proofs. The
 ## Run it
 
 Use a Linux machine with Git, Python 3, `taskset`, and Lean's Elan toolchain manager.
-The script builds each library with its pinned Lean version: 4.33.1 for FloatLib and
-4.28.0 for this FLoPS revision. It downloads FLoPS and its Mathlib dependencies.
+The script builds each library with its pinned Lean version and downloads FLoPS and
+its Mathlib dependencies. The reported measurements used Lean 4.33.1 for FloatLib and
+4.28.0 for FLoPS.
 Choose local directories for source dependencies, builds, and the new result:
 
 ```bash

@@ -43,7 +43,7 @@ theorem streamPrefix_lt_two_pow_of_lt
     (hretained : retained ≤ width) :
     streamPrefix raw width retained < 2 ^ retained := by
   unfold streamPrefix
-  rw [if_pos hretained, Nat.div_lt_iff_lt_mul
+  rw [ite_eq_left hretained, Nat.div_lt_iff_lt_mul
     (Nat.two_pow_pos (width - retained))]
   rw [← Nat.pow_add, Nat.add_comm,
     Nat.sub_add_cancel hretained]
@@ -90,7 +90,7 @@ theorem streamMidpointRaw_eq_div
       streamPrefix raw width retained =
         raw / 2 ^ (width - retained) := by
     unfold streamPrefix
-    rw [if_pos hretained.le]
+    rw [ite_eq_left hretained.le]
   unfold streamMidpointRaw
   rw [hprefix]
   rw [show
@@ -222,7 +222,7 @@ theorem streamGuard_eq_decide_midpoint_le
   have hprefix :
       streamPrefix raw width retained = quotient := by
     unfold streamPrefix
-    rw [if_pos hretained.le]
+    rw [ite_eq_left hretained.le]
   have hmidpoint :
       streamMidpointRaw raw width retained =
         2 ^ shift * quotient + half := by
@@ -238,7 +238,7 @@ theorem streamGuard_eq_decide_midpoint_le
     rw [hmidpoint, hdecompose]
     omega
   unfold streamGuard
-  rw [if_pos hretained]
+  rw [ite_eq_left hretained]
   change
     raw.testBit (shift - 1) =
       decide (streamMidpointRaw raw width retained ≤ raw)

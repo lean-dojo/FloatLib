@@ -144,7 +144,7 @@ theorem div_error_le_half (f : Format) (mode : RoundingMode)
   have hc : cy ≠ 0 := by
     intro h
     simp [h] at hb
-  simp only [div, if_neg hc] at hfinite ⊢
+  simp only [div, ite_eq_right hc] at hfinite ⊢
   exact project_error_le_half f mode hm _ _ _ hfinite
 
 /-- FMA rounds the exact fused expression, including cancellation across the format range. -/

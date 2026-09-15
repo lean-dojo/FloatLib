@@ -162,7 +162,7 @@ theorem digits_bounds (β : Numerics.Radix) {n : ℤ} (hn : n ≠ 0) :
       n.natAbs < β.base ^ digits β n := by
   have habs : n.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hn
   have hbase : 1 < β.base := lt_of_lt_of_le Nat.one_lt_two β.base_valid
-  simp only [digits, if_neg hn]
+  simp only [digits, ite_eq_right hn]
   constructor
   · simpa using Nat.pow_log_le_self β.base habs
   · simpa [Nat.pow_succ] using Nat.lt_pow_succ_log_self hbase n.natAbs
@@ -216,7 +216,7 @@ theorem digits_mono_abs (β : Numerics.Radix) {n m : ℤ} (hn : n ≠ 0)
     simp only [Int.natAbs_zero] at hnm
     have hnabs : n.natAbs = 0 := Nat.eq_zero_of_le_zero hnm
     exact hn (Int.natAbs_eq_zero.mp hnabs)
-  simp only [digits, if_neg hn, if_neg hm]
+  simp only [digits, ite_eq_right hn, ite_eq_right hm]
   exact Nat.add_le_add_right (Nat.log_mono_right hnm) 1
 
 /-- A nonzero product uses at most the sum of the operand digit counts. -/
@@ -236,7 +236,7 @@ theorem digits_mul_le (β : Numerics.Radix) {n m : ℤ} (hn : n ≠ 0) (hm : m �
   have hlog : Nat.log β.base (n * m).natAbs <
       digits β n + digits β m :=
     Nat.log_lt_of_lt_pow (Int.natAbs_ne_zero.mpr hnm) hprod
-  simp only [digits, if_neg hnm]
+  simp only [digits, ite_eq_right hnm]
   exact Nat.add_one_le_iff.mpr hlog
 
 /-- A positive radix power has one more digit than its exponent. -/
@@ -245,7 +245,7 @@ theorem digits_power (β : Numerics.Radix) (k : ℕ) :
   have hbase : 1 < β.base := lt_of_lt_of_le Nat.one_lt_two β.base_valid
   have hpow : β.base ^ k ≠ 0 := pow_ne_zero _ (Nat.ne_of_gt (Nat.zero_lt_of_lt β.base_valid))
   have hpowInt : Int.ofNat (β.base ^ k) ≠ 0 := Int.ofNat_ne_zero.mpr hpow
-  rw [digits, if_neg hpowInt]
+  rw [digits, ite_eq_right hpowInt]
   simp [Nat.log_pow hbase]
 
 end FloatLib.Floats.Formats.Flocq

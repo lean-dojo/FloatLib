@@ -81,10 +81,10 @@ theorem tendsto_atanUnit_lo (x : ℚ) (hx : 0 ≤ x) (hone : x ≤ 1) :
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1 / 2
   · have hsmall : |x| < 1 := by rw [abs_of_nonneg hx]; linarith
-    simpa only [atanUnit, if_pos h] using tendsto_atanSmall_lo x hsmall
+    simpa only [atanUnit, ite_eq_left h] using tendsto_atanSmall_lo x hsmall
   · have ht : |(x - 1) / (x + 1)| < 1 :=
       (abs_atan_unit_argument_le x (by linarith) hone).trans_lt (by norm_num)
-    simpa only [atanUnit, if_neg h, RationalInterval.add, Rat.cast_add,
+    simpa only [atanUnit, ite_eq_right h, RationalInterval.add, Rat.cast_add,
       atan_unit_identity x hx] using tendsto_piQuarter_lo.add
         (tendsto_atanSmall_lo ((x - 1) / (x + 1)) ht)
 
@@ -94,10 +94,10 @@ theorem tendsto_atanUnit_hi (x : ℚ) (hx : 0 ≤ x) (hone : x ≤ 1) :
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1 / 2
   · have hsmall : |x| < 1 := by rw [abs_of_nonneg hx]; linarith
-    simpa only [atanUnit, if_pos h] using tendsto_atanSmall_hi x hsmall
+    simpa only [atanUnit, ite_eq_left h] using tendsto_atanSmall_hi x hsmall
   · have ht : |(x - 1) / (x + 1)| < 1 :=
       (abs_atan_unit_argument_le x (by linarith) hone).trans_lt (by norm_num)
-    simpa only [atanUnit, if_neg h, RationalInterval.add, Rat.cast_add,
+    simpa only [atanUnit, ite_eq_right h, RationalInterval.add, Rat.cast_add,
       atan_unit_identity x hx] using tendsto_piQuarter_hi.add
         (tendsto_atanSmall_hi ((x - 1) / (x + 1)) ht)
 
@@ -112,9 +112,9 @@ theorem tendsto_atanNonnegative_lo (x : ℚ) (hx : 0 ≤ x) :
     Tendsto (fun n : Nat => ((atanNonnegative x n).lo : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1
-  · simpa only [atanNonnegative, if_pos h] using tendsto_atanUnit_lo x hx h
+  · simpa only [atanNonnegative, ite_eq_left h] using tendsto_atanUnit_lo x hx h
   · have hi : x⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (by linarith)
-    simpa only [atanNonnegative, if_neg h, RationalInterval.sub, RationalInterval.add,
+    simpa only [atanNonnegative, ite_eq_right h, RationalInterval.sub, RationalInterval.add,
       RationalInterval.neg, RationalInterval.scaleNonnegative, Rat.cast_add, Rat.cast_neg,
       Rat.cast_mul, Rat.cast_ofNat, ← sub_eq_add_neg, Rat.cast_sub,
       atan_inversion_identity x (by linarith)] using
@@ -126,9 +126,9 @@ theorem tendsto_atanNonnegative_hi (x : ℚ) (hx : 0 ≤ x) :
     Tendsto (fun n : Nat => ((atanNonnegative x n).hi : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1
-  · simpa only [atanNonnegative, if_pos h] using tendsto_atanUnit_hi x hx h
+  · simpa only [atanNonnegative, ite_eq_left h] using tendsto_atanUnit_hi x hx h
   · have hi : x⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (by linarith)
-    simpa only [atanNonnegative, if_neg h, RationalInterval.sub, RationalInterval.add,
+    simpa only [atanNonnegative, ite_eq_right h, RationalInterval.sub, RationalInterval.add,
       RationalInterval.neg, RationalInterval.scaleNonnegative, Rat.cast_add, Rat.cast_neg,
       Rat.cast_mul, Rat.cast_ofNat, ← sub_eq_add_neg, Rat.cast_sub,
       atan_inversion_identity x (by linarith)] using
@@ -140,17 +140,17 @@ theorem tendsto_atan_lo (x : ℚ) :
     Tendsto (fun n : Nat => ((atan x n).lo : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x < 0
-  · simpa only [atan, if_pos h, RationalInterval.neg, Rat.cast_neg,
+  · simpa only [atan, ite_eq_left h, RationalInterval.neg, Rat.cast_neg,
       Real.arctan_neg, neg_neg] using (tendsto_atanNonnegative_hi (-x) (by linarith)).neg
-  · simpa only [atan, if_neg h] using tendsto_atanNonnegative_lo x (by linarith)
+  · simpa only [atan, ite_eq_right h] using tendsto_atanNonnegative_lo x (by linarith)
 
 /-- The upper enclosure endpoints converge for every rational arctangent input. -/
 theorem tendsto_atan_hi (x : ℚ) :
     Tendsto (fun n : Nat => ((atan x n).hi : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x < 0
-  · simpa only [atan, if_pos h, RationalInterval.neg, Rat.cast_neg,
+  · simpa only [atan, ite_eq_left h, RationalInterval.neg, Rat.cast_neg,
       Real.arctan_neg, neg_neg] using (tendsto_atanNonnegative_lo (-x) (by linarith)).neg
-  · simpa only [atan, if_neg h] using tendsto_atanNonnegative_hi x (by linarith)
+  · simpa only [atan, ite_eq_right h] using tendsto_atanNonnegative_hi x (by linarith)
 
 end FloatLib.Numerics.Enclosure

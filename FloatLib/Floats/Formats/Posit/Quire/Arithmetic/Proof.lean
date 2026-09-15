@@ -78,7 +78,7 @@ variable {format : Format}
     omega
   unfold qNegate
   rw [isNaR_zero]
-  simp only [Bool.false_eq_true, if_false, coefficient_zero, neg_zero]
+  simp only [Bool.false_eq_true, ite_false, coefficient_zero, neg_zero]
   simp [ofCoefficient, hzero, zero]
 
 /-- Quire absolute value fixes NaR. -/
@@ -349,7 +349,7 @@ theorem coefficient_qNegate_of_ordinary
     (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
   unfold qNegate
   rw [hnar]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   exact coefficient_ofCoefficient_of_ordinary
     (ordinaryCoefficient_neg hvalue)
 
@@ -365,7 +365,7 @@ theorem toRat?_qNegate_of_ordinary
     (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
   unfold qNegate
   rw [hnar]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   rw [toRat?_ofCoefficient_of_ordinary
     (ordinaryCoefficient_neg hvalue)]
   simp
@@ -384,7 +384,7 @@ theorem coefficient_qAddQ_of_ordinary
   have hrightNaR : right.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
   unfold qAddQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, if_false]
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
   exact coefficient_ofCoefficient_of_ordinary hresult
 
 /-- Successful exact quire addition refines rational addition at the shared fixed scale. -/
@@ -405,7 +405,7 @@ theorem toRat?_qAddQ_of_ordinary
   have hrightNaR : right.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
   unfold qAddQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, if_false]
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
   rw [toRat?_ofCoefficient_of_ordinary hresult]
   simp only [Rat.ofInt_eq_cast, Int.cast_add]
   rw [add_mul]
@@ -424,7 +424,7 @@ theorem coefficient_qSubQ_of_ordinary
   have hrightNaR : right.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
   unfold qSubQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, if_false]
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
   exact coefficient_ofCoefficient_of_ordinary hresult
 
 /-- Successful exact quire subtraction refines rational subtraction at the shared fixed scale. -/
@@ -445,7 +445,7 @@ theorem toRat?_qSubQ_of_ordinary
   have hrightNaR : right.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
   unfold qSubQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, if_false]
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
   rw [toRat?_ofCoefficient_of_ordinary hresult]
   simp only [Rat.ofInt_eq_cast, Int.cast_sub]
   rw [sub_mul]
@@ -468,8 +468,8 @@ theorem addDyadic_eq_nar_of_exponent_lt
     addDyadic accumulator increment = nar format := by
   unfold addDyadic
   by_cases hnar : accumulator.isNaR = true
-  · rw [if_pos hnar]
-  · rw [if_neg hnar, if_pos hexponent]
+  · rw [ite_eq_left hnar]
+  · rw [ite_eq_right hnar, ite_eq_left hexponent]
 
 /--
 Once the accumulator is ordinary and the increment is aligned, the kernel is exactly
@@ -487,7 +487,7 @@ theorem addDyadic_eq_ofCoefficient
   have hnar : accumulator.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false accumulator).mp haccumulator
   unfold addDyadic
-  rw [hnar, if_neg (not_lt.mpr hscale)]
+  rw [hnar, ite_eq_right (not_lt.mpr hscale)]
   simp
 
 /-- An aligned increment whose exact coefficient sum overflows produces quire NaR. -/

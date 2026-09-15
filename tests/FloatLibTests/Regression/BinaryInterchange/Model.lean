@@ -9,7 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Matmul
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Parsing
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
@@ -263,7 +263,7 @@ def failedWith {fmt : FloatFormat} (result : Except Model.ParseError (Model fmt)
   | .error actual => decide (actual = expected)
 
 def formatRoundTrips {fmt : FloatFormat} (value : Model fmt) : Bool :=
-  match Model.parseNearest fmt (Model.format value) with
+  match Model.parse fmt (Model.format value) with
   | .error _ => false
   | .ok parsed =>
       if Model.isNaN value then Model.isNaN parsed
@@ -272,22 +272,22 @@ def formatRoundTrips {fmt : FloatFormat} (value : Model fmt) : Bool :=
 def failExactParsing : Thunk Nat := ⟨fun _ =>
   let finite := FloatFormat.e2m1
   let checks :=
-    [ parsedAs (Model.parseNearest f32 " 1.5 ")
+    [ parsedAs (Model.parse f32 " 1.5 ")
         (Model.ofNatBits (fmt := f32) 0x3fc00000)
-    , parsedAs (Model.parse f32 .towardZero "0.1")
+    , parsedAs (Model.parse f32 "0.1" (rounding := .towardZero))
         (Model.ofNatBits (fmt := f32) 0x3dcccccc)
-    , parsedAs (Model.parse f32 .towardNegativeInfinity "-0.1")
+    , parsedAs (Model.parse f32 "-0.1" (rounding := .towardNegativeInfinity))
         (Model.ofNatBits (fmt := f32) 0xbdcccccd)
-    , parsedAs (Model.parseNearest f32 "3 * 2^-1")
+    , parsedAs (Model.parse f32 "3 * 2^-1")
         (Model.ofNatBits (fmt := f32) 0x3fc00000)
-    , parsedAs (Model.parseNearest f32 "inf") (Model.posInf f32)
-    , parsedAs (Model.parseNearest f32 "-inf") (Model.negInf f32)
-    , parsedAs (Model.parseNearest f32 "nan") (Model.canonicalNaN f32)
-    , failedWith (Model.parseNearest f32 "   ") .emptyInput
-    , failedWith (Model.parseNearest f32 "1.2.3") (.invalidSyntax "1.2.3")
-    , failedWith (Model.parseNearest finite "inf") (.unsupportedInfinity false)
-    , failedWith (Model.parseNearest finite "-inf") (.unsupportedInfinity true)
-    , failedWith (Model.parseNearest finite "nan") .unsupportedNaN
+    , parsedAs (Model.parse f32 "inf") (Model.posInf f32)
+    , parsedAs (Model.parse f32 "-inf") (Model.negInf f32)
+    , parsedAs (Model.parse f32 "nan") (Model.canonicalNaN f32)
+    , failedWith (Model.parse f32 "   ") .emptyInput
+    , failedWith (Model.parse f32 "1.2.3") (.invalidSyntax "1.2.3")
+    , failedWith (Model.parse finite "inf") (.unsupportedInfinity false)
+    , failedWith (Model.parse finite "-inf") (.unsupportedInfinity true)
+    , failedWith (Model.parse finite "nan") .unsupportedNaN
     ]
   countFailures checks + countWhereFailures f16Samples formatRoundTrips⟩
 

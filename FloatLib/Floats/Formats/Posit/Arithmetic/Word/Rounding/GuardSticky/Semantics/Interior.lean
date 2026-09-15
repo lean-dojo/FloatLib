@@ -177,7 +177,7 @@ private theorem roundInteriorCode_eq_chooseNearest_of_semantics
   · have hguard :
         streamGuard raw width retained = false := by
       unfold streamGuard
-      rw [if_neg (by omega)]
+      rw [ite_eq_right (by omega)]
     have hsticky :
         streamSticky raw width retained = false := by
       unfold streamSticky
@@ -456,12 +456,12 @@ theorem roundInteriorCode_eq_roundPositiveCode_positive
     have hpower := Nat.two_pow_pos leading
     omega
   simp only [beq_eq_false_iff_ne.mpr hsignificand, Bool.false_or,
-    Bool.false_eq_true, if_false]
-  rw [if_neg (by simpa using hnotUnderflow)]
+    Bool.false_eq_true, ite_false]
+  rw [ite_eq_right (by simpa using hnotUnderflow)]
   rw [lowerCodeForPositive_eq_lowerCandidateFromFields_positive
     format targetExponent regime exponentField significand leading
     hregime hrun hexponent hlower hupper hscale]
-  rw [if_pos (lowerCandidateFromFields_succ_lt_signMask_positive
+  rw [ite_eq_left (lowerCandidateFromFields_succ_lt_signMask_positive
     format regime exponentField significand leading
     hregime hrun hexponent hlower hupper)]
 
@@ -503,12 +503,12 @@ theorem roundInteriorCode_eq_roundPositiveCode_negative
     have hpower := Nat.two_pow_pos leading
     omega
   simp only [beq_eq_false_iff_ne.mpr hsignificand, Bool.false_or,
-    Bool.false_eq_true, if_false]
-  rw [if_neg (by simpa using hnotUnderflow)]
+    Bool.false_eq_true, ite_false]
+  rw [ite_eq_right (by simpa using hnotUnderflow)]
   rw [lowerCodeForPositive_eq_lowerCandidateFromFields_negative
     format targetExponent regime exponentField significand leading
     hregime hrun hexponent hlower hupper hscale]
-  rw [if_pos (lowerCandidateFromFields_succ_lt_signMask_negative
+  rw [ite_eq_left (lowerCandidateFromFields_succ_lt_signMask_negative
     format regime exponentField significand leading
     hregime hrun hexponent hlower hupper)]
 

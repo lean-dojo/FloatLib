@@ -100,10 +100,10 @@ private theorem roundPositiveCode_eq_maxPositive_of_saturated
         exponentField leading hregime hsaturated hlowerRat hscale
   unfold DyadicRounding.roundPositiveCode
   simp only [beq_eq_false_iff_ne.mpr hsignificand, Bool.false_or,
-    Bool.false_eq_true, if_false]
-  rw [if_neg (by simpa using hnotUnderflow)]
+    Bool.false_eq_true, ite_false]
+  rw [ite_eq_right (by simpa using hnotUnderflow)]
   rw [hlowerCode]
-  rw [if_neg]
+  rw [ite_eq_right]
   have hpositive := format.signMaskNat_pos
   omega
 
@@ -146,7 +146,7 @@ theorem roundPositiveCode_eq_dyadic
   obtain ⟨negative, significand, exponent⟩ := target
   by_cases hspecial : (significand == 0 || negative) = true
   · simp only [roundPositiveCode, DyadicRounding.roundPositiveCode, hspecial,
-      if_true]
+      ite_true]
   simp only [Bool.or_eq_true, beq_iff_eq, not_or, Bool.not_eq_true] at hspecial
   obtain ⟨hsignificand, hnegative⟩ := hspecial
   subst hnegative
@@ -174,15 +174,15 @@ theorem roundPositiveCode_eq_dyadic
   dsimp only at hmin
   unfold roundPositiveCode
   dsimp only
-  rw [if_neg (by simpa using hsignificand), hmin]
+  rw [ite_eq_right (by simpa using hsignificand), hmin]
   by_cases hunderflow :
       (⟨false, significand, exponent⟩ : FloatLib.Numerics.Dyadic).isLess
         (DyadicRounding.minPositive format) = true
-  · rw [if_pos hunderflow]
+  · rw [ite_eq_left hunderflow]
     unfold DyadicRounding.roundPositiveCode
-    rw [if_neg (by simpa using hsignificand), if_pos hunderflow]
+    rw [ite_eq_right (by simpa using hsignificand), ite_eq_left hunderflow]
   have hnotUnderflow := Bool.eq_false_iff.mpr hunderflow
-  rw [if_neg hunderflow]
+  rw [ite_eq_right hunderflow]
   split_ifs with hregime hsaturated hsaturated
   · exact (roundPositiveCode_eq_maxPositive_of_saturated format exponent _ _
       significand _ hregime hsaturated hlower hscale hnotUnderflow).symm
@@ -208,7 +208,7 @@ private theorem fractionPrefix_eq_div_sub
     fractionPrefix significand leading count =
       significand / 2 ^ (leading - count) - 2 ^ count := by
   unfold fractionPrefix
-  rw [if_pos hcount, Nat.shiftRight_eq_div_pow]
+  rw [ite_eq_left hcount, Nat.shiftRight_eq_div_pow]
   simp only [Nat.shiftLeft_eq, one_mul]
   have hpower :
       2 ^ leading = 2 ^ (leading - count) * 2 ^ count := by
@@ -277,8 +277,8 @@ private theorem tailPrefix_shiftRightJam
         significand (shift + window) count := by
   unfold tailPrefix
   by_cases hexponent : count ≤ 2
-  · rw [if_pos hexponent, if_pos hexponent]
-  · rw [if_neg hexponent, if_neg hexponent]
+  · rw [ite_eq_left hexponent, ite_eq_left hexponent]
+  · rw [ite_eq_right hexponent, ite_eq_right hexponent]
     rw [fractionPrefix_shiftRightJam
       significand shift window (count - 2)
       (by omega) hjamLower hlower]
@@ -293,12 +293,12 @@ private theorem tailBit_shiftRightJam
         significand (shift + window) index := by
   unfold GuardStickyRounding.tailBit
   by_cases hexponent : index < 2
-  · rw [if_pos hexponent, if_pos hexponent]
-  · rw [if_neg hexponent, if_neg hexponent]
+  · rw [ite_eq_left hexponent, ite_eq_left hexponent]
+  · rw [ite_eq_right hexponent, ite_eq_right hexponent]
     dsimp only
     have hjamFraction : index - 2 < window := by omega
     have hvalueFraction : index - 2 < shift + window := by omega
-    rw [if_pos hjamFraction, if_pos hvalueFraction]
+    rw [ite_eq_left hjamFraction, ite_eq_left hvalueFraction]
     have hposition : 0 < window - (index - 2) - 1 := by omega
     rw [FloatLib.Numerics.shiftRightJam_testBit
       significand shift (window - (index - 2) - 1) hposition]
@@ -317,7 +317,7 @@ private theorem tailHasNonzeroAfter_shiftRightJam
   by_cases hzero : retained = 0
   · subst retained
     unfold GuardStickyRounding.tailHasNonzeroAfter
-    simp only [Nat.zero_add, Nat.reduceLT, if_true, Nat.reduceSub]
+    simp only [Nat.zero_add, Nat.reduceLT, ite_true, Nat.reduceSub]
     apply congrArg (fun suffixNonzero =>
       exponentField % 2 != 0 || suffixNonzero)
     apply Bool.eq_iff_iff.mpr
@@ -326,13 +326,13 @@ private theorem tailHasNonzeroAfter_shiftRightJam
       significand shift window (by omega)
   · unfold GuardStickyRounding.tailHasNonzeroAfter
     have hconsumed : ¬retained + 1 < 2 := by omega
-    simp only [if_neg hconsumed]
+    simp only [ite_eq_right hconsumed]
     have hconsumedFraction : retained + 1 - 2 = retained - 1 := by
       omega
     rw [hconsumedFraction]
     have hjamFraction : retained - 1 < window := by omega
     have hvalueFraction : retained - 1 < shift + window := by omega
-    simp only [if_pos hjamFraction, if_pos hvalueFraction]
+    simp only [ite_eq_left hjamFraction, ite_eq_left hvalueFraction]
     let extra := window - (retained - 1)
     have hextra : 0 < extra := by
       dsimp [extra]
@@ -372,7 +372,7 @@ private theorem lowerCandidateFromFields_shiftRightJam
         format.payloadBits - run - 1 ≤ window - 2 := by
       dsimp [run]
       omega
-    simp only [lowerCandidateFromFields, if_pos hregime]
+    simp only [lowerCandidateFromFields, ite_eq_left hregime]
     rw [tailPrefix_shiftRightJam exponentField significand shift
       window (format.payloadBits - run - 1)
       hwindow htrailing hjamLower hlower]
@@ -385,7 +385,7 @@ private theorem lowerCandidateFromFields_shiftRightJam
     have htrailing :
         format.payloadBits - run - 1 ≤ window - 2 := by
       omega
-    simp only [lowerCandidateFromFields, if_neg hregime]
+    simp only [lowerCandidateFromFields, ite_eq_right hregime]
     rw [tailPrefix_shiftRightJam exponentField significand shift
       window (format.payloadBits - run - 1)
       hwindow htrailing hjamLower hlower]

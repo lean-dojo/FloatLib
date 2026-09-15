@@ -174,7 +174,7 @@ theorem roundQuotDirected_eq_of_rat_eq
     roundQuotDirected roundUp numerator denominator =
       roundQuotDirected roundUp numerator' denominator' := by
   cases roundUp
-  · simp only [roundQuotDirected, Bool.false_eq_true, if_false]
+  · simp only [roundQuotDirected, Bool.false_eq_true, ite_false]
     apply Int.ofNat_inj.mp
     calc
       Int.ofNat (numerator / denominator) =
@@ -184,7 +184,7 @@ theorem roundQuotDirected_eq_of_rat_eq
         congrArg Int.floor hvalue
       _ = Int.ofNat (numerator' / denominator') :=
         floor_real_nat_div numerator' denominator'
-  · simp only [roundQuotDirected, if_true]
+  · simp only [roundQuotDirected, ite_true]
     apply Int.ofNat_inj.mp
     calc
       Int.ofNat (quotCeil numerator denominator) =
@@ -259,7 +259,7 @@ theorem roundQuotDirected_le_of_lt_mul
   | false =>
       simpa [roundQuotDirected] using hfloor.le
   | true =>
-      simp only [roundQuotDirected, if_true]
+      simp only [roundQuotDirected, ite_true]
       exact (quotCeil_le_div_add_one numerator denominator).trans (by omega)
 
 /-- A real power-of-two lower bound survives either directed integer rounding. -/

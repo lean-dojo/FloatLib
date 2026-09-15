@@ -106,7 +106,7 @@ private theorem rootStep_spec
     norm_num at hroot ⊢
     omega
   by_cases hle : state.root * 4 + 1 ≤ state.remainder * 4 + digit
-  · rw [if_pos hle]
+  · rw [ite_eq_left hle]
     have hleNat : state.root.toNat * 4 + 1 ≤
         state.remainder.toNat * 4 + digit.toNat := by
       simpa [UInt64.le_iff_toNat_le, htrial, hexpanded] using hle
@@ -132,7 +132,7 @@ private theorem rootStep_spec
       omega
     · rw [hrootOdd, hremainderSub]
       omega
-  · rw [if_neg hle]
+  · rw [ite_eq_right hle]
     have hltNat :
         state.remainder.toNat * 4 + digit.toNat <
           state.root.toNat * 4 + 1 := by
@@ -160,7 +160,7 @@ private theorem shiftedRadicand_toNat
       mantissa.toNat <<< shift := by
   unfold shiftedRadicand FloatLib.Numerics.FixedWord.UInt128.toNat
   by_cases hsmall : shift < 64
-  · rw [if_pos hsmall]
+  · rw [ite_eq_left hsmall]
     have hshiftSize : shift < 2 ^ 64 :=
       lt_trans hsmall (by norm_num)
     have hcomplement : 64 - shift < 64 := by omega
@@ -191,7 +191,7 @@ private theorem shiftedRadicand_toNat
         (by positivity)
     rw [hlo, hhi, ← hquotient, Nat.shiftLeft_eq]
     exact Nat.mod_add_div' (mantissa.toNat * 2 ^ shift) (2 ^ 64)
-  · rw [if_neg hsmall]
+  · rw [ite_eq_right hsmall]
     have hlarge : 64 ≤ shift := Nat.le_of_not_gt hsmall
     have hinner : shift - 64 < 64 := by omega
     have hinnerSize : shift - 64 < 2 ^ 64 :=
@@ -520,8 +520,8 @@ private theorem sqrtPositiveFiniteCore_eq_spec
   have hrounded : nativeRounded.toNat = genericRounded := by
     dsimp only [nativeRounded, genericRounded]
     by_cases hle : nativeRemainder ≤ nativeRoot
-    · rw [if_pos hle, if_pos (hremainderLe.mp hle), hroot]
-    · rw [if_neg hle, if_neg ((not_congr hremainderLe).mp hle)]
+    · rw [ite_eq_left hle, ite_eq_left (hremainderLe.mp hle), hroot]
+    · rw [ite_eq_right hle, ite_eq_right ((not_congr hremainderLe).mp hle)]
       have hrootSuccFit : genericRoot + 1 < 2 ^ 64 := by
         have hpow : 2 ^ 53 < 2 ^ 64 :=
           Nat.pow_lt_pow_right (by decide) (by omega)
@@ -550,7 +550,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     dsimp only [nativeEncoded, genericEncoded]
     rw [hcarry]
     by_cases hgenericCarry : genericCarry = true
-    · simp only [hgenericCarry, if_true]
+    · simp only [hgenericCarry, ite_true]
       have hencodedFit :
           (genericPosition + 972) / 2 + 1 < 2 ^ 64 := by
         omega
@@ -673,7 +673,7 @@ theorem sqrt_eq_generic_of_positive_finite
     have hmantissaNat : mantissa.toNat = 0 := congrArg UInt64.toNat h
     rw [finiteMantissa_toNat exponent fraction hfraction] at hmantissaNat
     by_cases hexponentZero : exponent = 0
-    · simp only [hexponentZero, if_true] at hmantissaNat
+    · simp only [hexponentZero, ite_true] at hmantissaNat
       have hfractionZero : fraction = 0 := by
         apply UInt64.toNat_inj.mp
         simpa using hmantissaNat
@@ -690,7 +690,7 @@ theorem sqrt_eq_generic_of_positive_finite
           simp [bits, fraction, hfractionZero]
       rw [hzero] at hnonzero
       contradiction
-    · simp only [hexponentZero, if_false] at hmantissaNat
+    · simp only [hexponentZero, ite_false] at hmantissaNat
       simp [Model.pow2_eq_two_pow] at hmantissaNat
   have hsignNative : signBit bits = false := by
     simpa only [bits, signBit_eq] using hsign
@@ -721,7 +721,7 @@ theorem sqrt_eq_generic_of_positive_finite
     rw [FiniteKernel.toDyadic_eq_decode, ← decode_eq]
     unfold decode?
     simp only [bits, exponent, hexponentNative, beq_iff_eq,
-      if_false, hsignNative]
+      ite_false, hsignNative]
     change
       (some ({
         sign := false
@@ -733,7 +733,7 @@ theorem sqrt_eq_generic_of_positive_finite
              significand := mantissa.toNat
              exponent := Int.ofNat scale.toNat - 1074 } : Numerics.Dyadic)
     simp only [Option.map_some, FiniteKernel.Components.toDyadic,
-      hmantissaNat, beq_iff_eq, if_false]
+      hmantissaNat, beq_iff_eq, ite_false]
     rw [FiniteKernel.exponent_eq_scale, hscale]
     rw [show FiniteKernel.finiteScaleOffset FloatFormat.binary64 = 1074 by
       decide]

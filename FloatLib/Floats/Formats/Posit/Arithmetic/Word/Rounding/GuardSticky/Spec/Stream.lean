@@ -127,11 +127,11 @@ theorem roundStreamPrefix_eq_roundShiftRightEven
         raw % 2 ^ (shift + 1) =
           raw % 2 ^ shift + 2 ^ shift * (raw / 2 ^ shift % 2) := by
       rw [Nat.pow_succ, Nat.mod_mul]
-    rw [roundStreamPrefix, streamPrefix, streamGuard, streamSticky, if_pos hretained,
-      if_pos hlt, show width - retained - 1 = shift by omega, hshift,
+    rw [roundStreamPrefix, streamPrefix, streamGuard, streamSticky, ite_eq_left hretained,
+      ite_eq_left hlt, show width - retained - 1 = shift by omega, hshift,
       FloatLib.Numerics.roundShiftRightEven_def, Nat.testBit_eq_decide_div_mod_eq]
     simp only [Nat.shiftRight_eq', Nat.shiftLeft_eq', Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq,
-      ← Nat.mod_eq_sub_div_mul, hmod, Nat.add_one_ne_zero, beq_iff_eq, if_false,
+      ← Nat.mod_eq_sub_div_mul, hmod, Nat.add_one_ne_zero, beq_iff_eq, ite_false,
       Nat.add_sub_cancel]
     rcases Nat.mod_two_eq_zero_or_one (raw / 2 ^ shift) with hguard | hguard <;>
       rcases Nat.mod_two_eq_zero_or_one (raw / 2 ^ (shift + 1)) with hparity | hparity <;>

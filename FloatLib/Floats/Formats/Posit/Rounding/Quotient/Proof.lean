@@ -76,7 +76,7 @@ theorem roundPositiveCode_eq_reference
     beq_eq_false_iff_ne.mpr hdenominatorSignificand
   unfold roundPositiveCode roundFromLowerCode Model.roundPositiveCode
   simp only [hnumeratorBool, hnumeratorNegative, hdenominatorBool,
-    hdenominatorNegative, Bool.false_or, Bool.false_eq_true, if_false,
+    hdenominatorNegative, Bool.false_or, Bool.false_eq_true, ite_false,
     not_le.mpr hquotientPositive,
     FloatLib.Numerics.Dyadic.isLess_eq_decide,
     FloatLib.Numerics.Dyadic.mul_toRat,
@@ -114,12 +114,12 @@ private theorem roundRat_signed_div (format : Format) {left right : Rat}
   have hquotient : 0 < left / right := div_pos hleft hright
   have hpositive :
       Model.roundRat format (left / right) = Model.roundPositiveRat format (left / right) := by
-    rw [Model.roundRat, if_neg hquotient.ne', if_neg (not_lt.mpr hquotient.le)]
+    rw [Model.roundRat, ite_eq_right hquotient.ne', ite_eq_right (not_lt.mpr hquotient.le)]
   have hnegative :
       Model.roundRat format (-(left / right)) =
         Model.neg (Model.roundPositiveRat format (left / right)) := by
-    rw [Model.roundRat, if_neg (neg_ne_zero.mpr hquotient.ne'),
-      if_pos (neg_lt_zero.mpr hquotient), neg_neg]
+    rw [Model.roundRat, ite_eq_right (neg_ne_zero.mpr hquotient.ne'),
+      ite_eq_left (neg_lt_zero.mpr hquotient), neg_neg]
   cases leftNegative <;> cases rightNegative <;> simp [div_neg, neg_div, hpositive, hnegative]
 
 /-- The exact rational value of a dyadic is its magnitude's value with the sign flag applied. -/
@@ -168,7 +168,7 @@ theorem roundSignedWith_eq_reference
     simpa using hdenominator
   rw [roundSignedWith]
   simp only [beq_eq_false_iff_ne.mpr hdenominator, beq_eq_false_iff_ne.mpr hnumerator,
-    Bool.false_eq_true, if_false, hdenominatorRat]
+    Bool.false_eq_true, ite_false, hdenominatorRat]
   rw [hmagnitude _ _ hnumeratorMagnitude rfl hdenominatorMagnitude rfl,
     toRat_eq_signed_magnitude numerator, toRat_eq_signed_magnitude denominator,
     roundRat_signed_div format

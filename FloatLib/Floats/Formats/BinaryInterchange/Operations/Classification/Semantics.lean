@@ -64,7 +64,7 @@ theorem isNormal_iff_le_abs_toRat {x : Model fmt} {d : Numerics.Dyadic}
   simp only [isNormal_iff_fields, hf, true_and]
   rw [abs_toRat_eq_fields hx]
   by_cases he : expField x = 0
-  · simp only [he, ne_eq, not_true_eq_false, if_true, false_iff, not_le]
+  · simp only [he, ne_eq, not_true_eq_false, ite_true, false_iff, not_le]
     have hfrac : (fracField x : ℚ) < (2 : ℚ) ^ fmt.fracWidth := by
       exact_mod_cast fracField_lt_pow2 x
     calc
@@ -72,7 +72,7 @@ theorem isNormal_iff_le_abs_toRat {x : Model fmt} {d : Numerics.Dyadic}
           (2 : ℚ) ^ fmt.fracWidth * (2 : ℚ) ^ fmt.minSubnormalExponent :=
         mul_lt_mul_of_pos_right hfrac (zpow_pos (by norm_num) _)
       _ = (2 : ℚ) ^ fmt.minNormalExponent := normal_scale fmt _
-  · simp only [he, ne_eq, not_false_eq_true, if_false, true_iff]
+  · simp only [he, ne_eq, not_false_eq_true, ite_false, true_iff]
     have hemin : fmt.minNormalExponent ≤ (expField x : ℤ) - fmt.exponentBias := by
       change 1 - (fmt.exponentBias : ℤ) ≤ (expField x : ℤ) - fmt.exponentBias
       omega

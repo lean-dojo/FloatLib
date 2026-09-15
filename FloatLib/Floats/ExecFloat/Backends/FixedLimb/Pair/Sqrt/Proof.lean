@@ -230,7 +230,7 @@ private theorem exponentShift_eq_modelShift
     have hmod : exponent.toNat % 2 = 1 := by
       rw [← hand, hoddEq]
       decide
-    rw [if_pos hodd]
+    rw [ite_eq_left hodd]
     omega
   · have hmod : exponent.toNat % 2 = 0 := by
       have hnotOne : exponent.toNat % 2 ≠ 1 := by
@@ -241,7 +241,7 @@ private theorem exponentShift_eq_modelShift
         rw [hand, hone]
         decide
       omega
-    rw [if_neg hodd]
+    rw [ite_eq_right hodd]
     omega
 
 private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
@@ -391,9 +391,9 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
   have hgenericNormalizedUpper : genericNormalized < 2 ^ (fmt.fracWidth + 1) := by
     dsimp only [genericNormalized]
     by_cases hgenericCarry : genericCarry
-    · simp only [hgenericCarry, if_true, pow2_eq_two_pow]
+    · simp only [hgenericCarry, ite_true, pow2_eq_two_pow]
       exact Nat.pow_lt_pow_right (by decide) (Nat.lt_succ_self _)
-    · simp only [hgenericCarry, if_false]
+    · simp only [hgenericCarry, ite_false]
       exact lt_of_le_of_ne hgenericRoundedUpper
         (by
           intro heq
@@ -423,7 +423,7 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
       resultExponent.toNat = (exponent.toNat + fmt.bias) / 2 + if carry then 1 else 0 := by
     by_cases hnativeCarry : carry = true
     · dsimp only [resultExponent]
-      simp only [hnativeCarry, if_true]
+      simp only [hnativeCarry, ite_true]
       rw [UInt64.toNat_add, hexponentHalf]
       rw [show (1 : UInt64).toNat = 1 by decide]
       apply Nat.mod_eq_of_lt

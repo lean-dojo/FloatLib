@@ -182,12 +182,12 @@ theorem exactTailRaw_jamRemainder
   rw [jamRemainder_eq, jamRemainder_eq, hrawParity]
   by_cases hremainder : remainder = 0
   · simp [hremainder]
-  · rw [if_neg hremainder, if_neg hremainder]
+  · rw [ite_eq_right hremainder, ite_eq_right hremainder]
     by_cases hquotientEven : quotient % 2 = 0
-    · rw [if_pos hquotientEven, if_pos hquotientEven]
+    · rw [ite_eq_left hquotientEven, ite_eq_left hquotientEven]
       unfold exactTailRaw fractionRaw
       omega
-    · rw [if_neg hquotientEven, if_neg hquotientEven]
+    · rw [ite_eq_right hquotientEven, ite_eq_right hquotientEven]
 
 /-- A zero-padded midpoint is even whenever at least one padding bit remains. -/
 theorem streamMidpointRaw_mod_two
@@ -223,13 +223,13 @@ theorem paddedStreamPrefix_jamRemainder_le
     rw [hshiftEq, pow_succ]
     simp
   unfold streamPrefix
-  rw [if_pos hretained.le, jamRemainder_eq]
+  rw [ite_eq_left hretained.le, jamRemainder_eq]
   by_cases hremainder : remainder = 0
-  · rw [if_pos hremainder]
+  · rw [ite_eq_left hremainder]
     exact Nat.div_mul_le_self quotient (2 ^ (width - retained))
-  · rw [if_neg hremainder]
+  · rw [ite_eq_right hremainder]
     by_cases hquotientEven : quotient % 2 = 0
-    · rw [if_pos hquotientEven]
+    · rw [ite_eq_left hquotientEven]
       have hle :=
         Nat.div_mul_le_self (quotient + 1) (2 ^ (width - retained))
       have hleftEven :
@@ -239,7 +239,7 @@ theorem paddedStreamPrefix_jamRemainder_le
       have hsuccessorOdd : (quotient + 1) % 2 = 1 := by
         omega
       omega
-    · rw [if_neg hquotientEven]
+    · rw [ite_eq_right hquotientEven]
       exact Nat.div_mul_le_self quotient (2 ^ (width - retained))
 
 /--
@@ -283,7 +283,7 @@ theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
     rw [jamRemainder_eq]
     by_cases hremainderZero : remainder = 0
     · simp [hremainderZero]
-    · rw [if_neg hremainderZero]
+    · rw [ite_eq_right hremainderZero]
       by_cases hquotientEven : quotient % 2 = 0
       · simp [hquotientEven]
       · simp [hquotientEven]
@@ -300,7 +300,7 @@ theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
         (((jammed / 2 ^ shift + 1) * 2 ^ shift : Nat) : Rat) := by
     exact_mod_cast hquotientSuccessorLe
   unfold streamPrefix
-  rw [if_pos hretained.le]
+  rw [ite_eq_left hretained.le]
   dsimp [jammed, shift] at *
   linarith
 
