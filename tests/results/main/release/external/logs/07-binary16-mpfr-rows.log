@@ -1,0 +1,6 @@
+Build completed successfully (5143 jobs).
+binary16 add shard 32768/65536: pairs [2147483648, 2147549184)
+binary16 add shard 32768/65536 passed: 65536 ordered pairs
+Build completed successfully (5143 jobs).
+binary16 mul shard 32000/65536: pairs [2097152000, 2097217536)
+binary16 mul shard 32000/65536 passed: 65536 ordered pairs

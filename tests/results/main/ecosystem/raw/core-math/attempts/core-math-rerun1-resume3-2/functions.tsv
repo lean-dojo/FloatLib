@@ -1,0 +1,4 @@
+binary64	atan2	PASS
+binaryb16	atan2_bf16	PASS
+binaryb16	hypot_bf16	PASS
+binaryb16	sinh_bf16	PASS

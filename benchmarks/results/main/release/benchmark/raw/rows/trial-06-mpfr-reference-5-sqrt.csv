@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+MPFR,binary-reference,mpfr-binary5-p3-e2,5,sqrt,software-reference,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,result-dependent-fixture-chain,3689300,200162764,1547123465229480441,3013866838283247096,256,16772054911505907060,7622866365203817874

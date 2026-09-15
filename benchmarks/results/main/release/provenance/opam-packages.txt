@@ -1,0 +1,44 @@
+# Packages matching: installed
+# Name               # Installed    # Synopsis
+base                 v0.15.1        Full standard library replacement for OCaml
+base-bigarray        base
+base-threads         base
+base-unix            base
+cmdliner             2.1.0          Declarative definition of command line interfaces for OCaml
+conf-g++             1.0            Virtual package relying on the g++ compiler (for C++)
+conf-gmp             5              Virtual package relying on a GMP lib system installation
+conf-linux-libc-dev  0              Virtual package relying on the installation of the Linux kernel headers files
+conf-pkg-config      4              Check if pkg-config is installed and create an opam switch local pkgconfig folder
+coq                  8.20.1         pinned to version 8.20.1
+coq-bignums          9.0.0+coq8.20  Bignums, the Coq library of arbitrarily large numbers
+coq-core             8.20.1         pinned to version 8.20.1
+coq-flocq            4.2.2          A formalization of floating-point arithmetic for the Coq system
+coq-serapi           8.20.0+0.20.0  Serialization library and protocol for machine interaction with the Coq proof assistant
+coq-stdlib           8.20.1         pinned to version 8.20.1
+coqide-server        8.20.1         pinned to version 8.20.1
+cppo                 1.8.0          Code preprocessor like cpp for OCaml
+csexp                1.5.2          Parsing and printing of S-expressions in Canonical form
+dune                 3.17.2         pinned to version 3.17.2
+dune-configurator    3.18.2         Helper library for gathering system configuration
+num                  1.5-1          pinned to version 1.5-1
+ocaml                4.13.1         The OCaml compiler (virtual package)
+ocaml-compiler-libs  v0.12.4        OCaml compiler libraries repackaged
+ocaml-config         2              OCaml Switch Configuration
+ocaml-option-flambda 1              Set OCaml to be compiled with flambda activated
+ocaml-variants       4.13.1+options Official release of OCaml 4.13.1
+ocamlfind            1.9.6          pinned to version 1.9.6
+opam-depext          1.2.3          Install OS distribution packages
+parsexp              v0.15.0        S-expression parsing library
+ppx_compare          v0.15.0        Generation of comparison functions from types
+ppx_derivers         1.2.1          Shared [@@deriving] plugin registry
+ppx_deriving         6.0.3          Type-driven code generation for OCaml
+ppx_deriving_yojson  3.9.1          JSON codec generator for OCaml
+ppx_hash             v0.15.0        A ppx rewriter that generates hash functions from type expressions and definitions
+ppx_import           1.12.0         A syntax extension for importing declarations from interface files
+ppx_sexp_conv        v0.15.1        [@@deriving] plugin to generate S-expression conversion functions
+ppxlib               0.35.0         Standard infrastructure for ppx rewriters
+sexplib              v0.15.1        Library for serializing OCaml values to and from S-expressions
+sexplib0             v0.15.1        Library containing the definition of S-expressions and some base converters
+stdlib-shims         0.3.0          Backport some of the new stdlib features to older compiler
+yojson               3.0.0          Yojson is an optimized parsing and printing library for the JSON format
+zarith               1.14           pinned to version 1.14

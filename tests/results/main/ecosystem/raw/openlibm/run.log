@@ -1,0 +1,1166 @@
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:3 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1530 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:7 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1240 kB]
+Get:8 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:9 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1791 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1564 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2151 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1908 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Fetched 32.6 MB in 4s (7770 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bash is already the newest version (5.2.21-2ubuntu4).
+The following additional packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu bzip2 cmake-data cpp
+  cpp-13 cpp-13-x86-64-linux-gnu cpp-x86-64-linux-gnu dpkg-dev g++ g++-13
+  g++-13-x86-64-linux-gnu g++-x86-64-linux-gnu gcc gcc-13 gcc-13-base
+  gcc-13-x86-64-linux-gnu gcc-x86-64-linux-gnu git-man libarchive13t64
+  libasan8 libatomic1 libbinutils libbrotli1 libc-bin libc-dev-bin libc6
+  libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libcurl3t64-gnutls
+  libcurl4t64 libdpkg-perl liberror-perl libexpat1 libgcc-13-dev
+  libgdbm-compat4t64 libgdbm6t64 libgomp1 libgprofng0 libgssapi-krb5-2
+  libhwasan0 libicu74 libisl23 libitm1 libjansson4 libjsoncpp25 libk5crypto3
+  libkeyutils1 libkrb5-3 libkrb5support0 libldap2 liblsan0 libmpc3 libmpfr6
+  libnghttp2-14 libperl5.38t64 libpkgconf3 libpsl5t64 libpython3-stdlib
+  libpython3.12-minimal libpython3.12-stdlib libquadmath0 libreadline8t64
+  librhash0 librtmp1 libsasl2-2 libsasl2-modules-db libsframe1 libsqlite3-0
+  libssh-4 libstdc++-13-dev libtsan2 libubsan1 libuv1t64 libxml2
+  linux-libc-dev lto-disabled-list media-types netbase openssl patch perl
+  perl-modules-5.38 pkgconf pkgconf-bin python3-minimal python3-pip-whl
+  python3-pkg-resources python3-setuptools python3-setuptools-whl
+  python3-wheel python3.12 python3.12-minimal python3.12-venv readline-common
+  rpcsvc-proto tzdata xz-utils
+Suggested packages:
+  binutils-doc gprofng-gui bzip2-doc cmake-doc cmake-format elpa-cmake-mode
+  cpp-doc gcc-13-locales cpp-13-doc debian-keyring g++-multilib
+  g++-13-multilib gcc-13-doc gcc-multilib manpages-dev autoconf automake
+  libtool flex bison gdb gcc-doc gcc-13-multilib gdb-x86-64-linux-gnu
+  gettext-base git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui
+  gitk gitweb git-cvs git-mediawiki git-svn lrzip manpages glibc-doc locales
+  libnss-nis libnss-nisplus gnupg | sq | sqop | pgpainless-cli
+  | sequoia-chameleon-gnupg bzr gdbm-l10n krb5-doc krb5-user libstdc++-13-doc
+  make-doc ed diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl libtap-harness-archive-perl python3-doc
+  python3-tk python-setuptools-doc python3.12-doc binfmt-support readline-doc
+Recommended packages:
+  fakeroot gnupg | sq | sqop | pgpainless-cli | sequoia-chameleon-gnupg
+  libalgorithm-merge-perl less ssh-client manpages manpages-dev libc-devtools
+  libfile-fcntllock-perl liblocale-gettext-perl krb5-locales libldap-common
+  publicsuffix libsasl2-modules python3-dev
+The following NEW packages will be installed:
+  binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+  ca-certificates cmake cmake-data cpp cpp-13 cpp-13-x86-64-linux-gnu
+  cpp-x86-64-linux-gnu curl dpkg-dev g++ g++-13 g++-13-x86-64-linux-gnu
+  g++-x86-64-linux-gnu gcc gcc-13 gcc-13-base gcc-13-x86-64-linux-gnu
+  gcc-x86-64-linux-gnu git git-man libarchive13t64 libasan8 libatomic1
+  libbinutils libbrotli1 libc-dev-bin libc6-dev libcc1-0 libcrypt-dev
+  libctf-nobfd0 libctf0 libcurl3t64-gnutls libcurl4t64 libdpkg-perl
+  liberror-perl libexpat1 libgcc-13-dev libgdbm-compat4t64 libgdbm6t64
+  libgomp1 libgprofng0 libgssapi-krb5-2 libhwasan0 libicu74 libisl23 libitm1
+  libjansson4 libjsoncpp25 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+  libldap2 liblsan0 libmpc3 libmpfr6 libnghttp2-14 libperl5.38t64 libpkgconf3
+  libpsl5t64 libpython3-stdlib libpython3.12-minimal libpython3.12-stdlib
+  libquadmath0 libreadline8t64 librhash0 librtmp1 libsasl2-2
+  libsasl2-modules-db libsframe1 libsqlite3-0 libssh-4 libstdc++-13-dev
+  libtsan2 libubsan1 libuv1t64 libxml2 linux-libc-dev lto-disabled-list make
+  media-types netbase ninja-build openssl patch perl perl-modules-5.38
+  pkg-config pkgconf pkgconf-bin python3 python3-minimal python3-pip
+  python3-pip-whl python3-pkg-resources python3-setuptools
+  python3-setuptools-whl python3-venv python3-wheel python3.12
+  python3.12-minimal python3.12-venv readline-common rpcsvc-proto time tzdata
+  xz-utils
+The following packages will be upgraded:
+  libc-bin libc6
+2 upgraded, 112 newly installed, 0 to remove and 1 not upgraded.
+Need to get 129 MB of archives.
+After this operation, 467 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-minimal amd64 3.12.3-1ubuntu0.17 [839 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libexpat1 amd64 2.6.1-2ubuntu0.4 [88.2 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12-minimal amd64 3.12.3-1ubuntu0.17 [2335 kB]
+Get:4 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6 amd64 2.39-0ubuntu8.9 [3264 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-minimal amd64 3.12.3-0ubuntu2.1 [27.4 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 media-types all 10.1.0 [27.5 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/main amd64 netbase all 6.4 [13.1 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 tzdata all 2026c-0ubuntu0.24.04.1 [280 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 readline-common all 8.2-4build1 [56.5 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 libreadline8t64 amd64 8.2-4build1 [153 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsqlite3-0 amd64 3.45.1-1ubuntu2.7 [701 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3.12-stdlib amd64 3.12.3-1ubuntu0.17 [2071 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3.12 amd64 3.12.3-1ubuntu0.17 [651 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpython3-stdlib amd64 3.12.3-0ubuntu2.1 [10.1 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3 amd64 3.12.3-0ubuntu2.1 [23.0 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.4 [3110 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm6t64 amd64 1.23-5.1build1 [34.4 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:19 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.4 [4870 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 perl amd64 5.38.2-3.2ubuntu0.4 [231 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 openssl amd64 3.0.13-0ubuntu3.15 [1003 kB]
+Get:22 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260601~24.04.1 [139 kB]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.8 [34.7 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libk5crypto3 amd64 1.20.1-6ubuntu2.8 [81.9 kB]
+Get:25 http://archive.ubuntu.com/ubuntu noble/main amd64 libkeyutils1 amd64 1.6.3-3build1 [9490 B]
+Get:26 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5-3 amd64 1.20.1-6ubuntu2.8 [348 kB]
+Get:27 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgssapi-krb5-2 amd64 1.20.1-6ubuntu2.8 [143 kB]
+Get:28 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libicu74 amd64 74.2-1ubuntu3.1 [10.9 MB]
+Get:29 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libxml2 amd64 2.9.14+dfsg-1.3ubuntu3.8 [764 kB]
+Get:30 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-pkg-resources all 68.1.2-2ubuntu1.2 [168 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:32 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:33 http://archive.ubuntu.com/ubuntu noble/main amd64 libpsl5t64 amd64 0.21.2-1.1build1 [57.1 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble/main amd64 libuv1t64 amd64 1.48.0-1.1build1 [97.3 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble/main amd64 time amd64 1.9-0.2build1 [45.2 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-common amd64 2.42-4ubuntu2.10 [240 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsframe1 amd64 2.42-4ubuntu2.10 [15.7 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libbinutils amd64 2.42-4ubuntu2.10 [577 kB]
+Get:40 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf-nobfd0 amd64 2.42-4ubuntu2.10 [98.0 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libctf0 amd64 2.42-4ubuntu2.10 [94.5 kB]
+Get:42 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgprofng0 amd64 2.42-4ubuntu2.10 [849 kB]
+Get:43 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.42-4ubuntu2.10 [2463 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils amd64 2.42-4ubuntu2.10 [18.2 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 linux-libc-dev amd64 6.8.0-139.139 [1527 kB]
+Get:46 http://archive.ubuntu.com/ubuntu noble/main amd64 libcrypt-dev amd64 1:4.4.36-4build1 [112 kB]
+Get:47 http://archive.ubuntu.com/ubuntu noble/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu7 [67.4 kB]
+Get:48 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-base amd64 13.3.0-6ubuntu2~24.04.1 [51.6 kB]
+Get:49 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libisl23 amd64 0.26-3build1.1 [680 kB]
+Get:50 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpfr6 amd64 4.2.1-1build1.1 [353 kB]
+Get:51 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libmpc3 amd64 1.3.1-1build1.1 [54.6 kB]
+Get:52 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [10.7 MB]
+Get:53 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13 amd64 13.3.0-6ubuntu2~24.04.1 [1042 B]
+Get:54 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5326 B]
+Get:55 http://archive.ubuntu.com/ubuntu noble/main amd64 cpp amd64 4:13.2.0-7ubuntu1 [22.4 kB]
+Get:56 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcc1-0 amd64 14.2.0-4ubuntu2~24.04.1 [48.0 kB]
+Get:57 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1 amd64 14.2.0-4ubuntu2~24.04.1 [148 kB]
+Get:58 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1 amd64 14.2.0-4ubuntu2~24.04.1 [29.7 kB]
+Get:59 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1 amd64 14.2.0-4ubuntu2~24.04.1 [10.5 kB]
+Get:60 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8 amd64 14.2.0-4ubuntu2~24.04.1 [3027 kB]
+Get:61 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0 amd64 14.2.0-4ubuntu2~24.04.1 [1322 kB]
+Get:62 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2 amd64 14.2.0-4ubuntu2~24.04.1 [2772 kB]
+Get:63 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1 amd64 14.2.0-4ubuntu2~24.04.1 [1184 kB]
+Get:64 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0 amd64 14.2.0-4ubuntu2~24.04.1 [1641 kB]
+Get:65 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libquadmath0 amd64 14.2.0-4ubuntu2~24.04.1 [153 kB]
+Get:66 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2681 kB]
+Get:67 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [21.1 MB]
+Get:68 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13 amd64 13.3.0-6ubuntu2~24.04.1 [494 kB]
+Get:69 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1212 B]
+Get:70 http://archive.ubuntu.com/ubuntu noble/main amd64 gcc amd64 4:13.2.0-7ubuntu1 [5018 B]
+Get:71 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [2420 kB]
+Get:72 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [12.2 MB]
+Get:73 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13 amd64 13.3.0-6ubuntu2~24.04.1 [16.0 kB]
+Get:74 http://archive.ubuntu.com/ubuntu noble/main amd64 g++-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [964 B]
+Get:75 http://archive.ubuntu.com/ubuntu noble/main amd64 g++ amd64 4:13.2.0-7ubuntu1 [1100 B]
+Get:76 http://archive.ubuntu.com/ubuntu noble/main amd64 make amd64 4.3-4.1build2 [180 kB]
+Get:77 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdpkg-perl all 1.22.6ubuntu6.6 [268 kB]
+Get:78 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 bzip2 amd64 1.0.8-5.1ubuntu0.1 [34.6 kB]
+Get:79 http://archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:80 http://archive.ubuntu.com/ubuntu noble/main amd64 lto-disabled-list all 47 [12.4 kB]
+Get:81 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 dpkg-dev all 1.22.6ubuntu6.6 [1074 kB]
+Get:82 http://archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:83 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libarchive13t64 amd64 3.7.2-2ubuntu0.8 [383 kB]
+Get:84 http://archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:85 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:86 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:87 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:88 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:89 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:90 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.13 [343 kB]
+Get:91 http://archive.ubuntu.com/ubuntu noble/main amd64 libjsoncpp25 amd64 1.9.5-6build1 [82.8 kB]
+Get:92 http://archive.ubuntu.com/ubuntu noble/main amd64 librhash0 amd64 1.4.3-3build1 [129 kB]
+Get:93 http://archive.ubuntu.com/ubuntu noble/main amd64 cmake-data all 3.28.3-1build7 [2155 kB]
+Get:94 http://archive.ubuntu.com/ubuntu noble/main amd64 cmake amd64 3.28.3-1build7 [11.2 MB]
+Get:95 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 curl amd64 8.5.0-2ubuntu10.13 [226 kB]
+Get:96 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.13 [335 kB]
+Get:97 http://archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:98 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:99 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:100 http://archive.ubuntu.com/ubuntu noble/main amd64 libpkgconf3 amd64 1.8.1-2build1 [30.7 kB]
+Get:101 http://archive.ubuntu.com/ubuntu noble/universe amd64 ninja-build amd64 1.11.1-2 [129 kB]
+Get:102 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf-bin amd64 1.8.1-2build1 [20.7 kB]
+Get:103 http://archive.ubuntu.com/ubuntu noble/main amd64 pkgconf amd64 1.8.1-2build1 [16.8 kB]
+Get:104 http://archive.ubuntu.com/ubuntu noble/main amd64 pkg-config amd64 1.8.1-2build1 [7264 B]
+Get:105 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-setuptools all 68.1.2-2ubuntu1.2 [397 kB]
+Get:106 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-bin amd64 2.39-0ubuntu8.9 [682 kB]
+Get:107 http://archive.ubuntu.com/ubuntu noble/universe amd64 python3-wheel all 0.42.0-2 [53.1 kB]
+Get:108 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc-dev-bin amd64 2.39-0ubuntu8.9 [20.4 kB]
+Get:109 http://security.ubuntu.com/ubuntu noble-security/main amd64 libc6-dev amd64 2.39-0ubuntu8.9 [2126 kB]
+Get:110 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip all 24.0+dfsg-1ubuntu1.3 [1320 kB]
+Get:111 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-pip-whl all 24.0+dfsg-1ubuntu1.3 [1707 kB]
+Get:112 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-setuptools-whl all 68.1.2-2ubuntu1.2 [716 kB]
+Get:113 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3.12-venv amd64 3.12.3-1ubuntu0.17 [5684 B]
+Get:114 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 python3-venv amd64 3.12.3-0ubuntu2.1 [1032 B]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 129 MB in 1s (114 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc6_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6:amd64 (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc6:amd64 (2.39-0ubuntu8.9) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libc-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-bin (2.39-0ubuntu8.9) over (2.39-0ubuntu8.8) ...
+Setting up libc-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package libpython3.12-minimal:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4381 files and directories currently installed.)
+Preparing to unpack .../libpython3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libexpat1:amd64.
+Preparing to unpack .../libexpat1_2.6.1-2ubuntu0.4_amd64.deb ...
+Unpacking libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Selecting previously unselected package python3.12-minimal.
+Preparing to unpack .../python3.12-minimal_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Setting up libpython3.12-minimal:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up libexpat1:amd64 (2.6.1-2ubuntu0.4) ...
+Setting up python3.12-minimal (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4700 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_10.1.0_all.deb ...
+Unpacking media-types (10.1.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package tzdata.
+Preparing to unpack .../3-tzdata_2026c-0ubuntu0.24.04.1_all.deb ...
+Unpacking tzdata (2026c-0ubuntu0.24.04.1) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-4build1_all.deb ...
+Unpacking readline-common (8.2-4build1) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-4build1_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-4build1) ...
+Selecting previously unselected package libsqlite3-0:amd64.
+Preparing to unpack .../6-libsqlite3-0_3.45.1-1ubuntu2.7_amd64.deb ...
+Unpacking libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Selecting previously unselected package libpython3.12-stdlib:amd64.
+Preparing to unpack .../7-libpython3.12-stdlib_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3.12.
+Preparing to unpack .../8-python3.12_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12 (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../9-libpython3-stdlib_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up python3-minimal (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package python3.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5706 files and directories currently installed.)
+Preparing to unpack .../00-python3_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3 (3.12.3-0ubuntu2.1) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../01-perl-modules-5.38_5.38.2-3.2ubuntu0.4_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package libgdbm6t64:amd64.
+Preparing to unpack .../02-libgdbm6t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm6t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../03-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../04-libperl5.38t64_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../05-perl_5.38.2-3.2ubuntu0.4_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.4) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../06-openssl_3.0.13-0ubuntu3.15_amd64.deb ...
+Unpacking openssl (3.0.13-0ubuntu3.15) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../07-ca-certificates_20260601~24.04.1_all.deb ...
+Unpacking ca-certificates (20260601~24.04.1) ...
+Selecting previously unselected package libkrb5support0:amd64.
+Preparing to unpack .../08-libkrb5support0_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libk5crypto3:amd64.
+Preparing to unpack .../09-libk5crypto3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libkeyutils1:amd64.
+Preparing to unpack .../10-libkeyutils1_1.6.3-3build1_amd64.deb ...
+Unpacking libkeyutils1:amd64 (1.6.3-3build1) ...
+Selecting previously unselected package libkrb5-3:amd64.
+Preparing to unpack .../11-libkrb5-3_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libgssapi-krb5-2:amd64.
+Preparing to unpack .../12-libgssapi-krb5-2_1.20.1-6ubuntu2.8_amd64.deb ...
+Unpacking libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Selecting previously unselected package libicu74:amd64.
+Preparing to unpack .../13-libicu74_74.2-1ubuntu3.1_amd64.deb ...
+Unpacking libicu74:amd64 (74.2-1ubuntu3.1) ...
+Selecting previously unselected package libxml2:amd64.
+Preparing to unpack .../14-libxml2_2.9.14+dfsg-1.3ubuntu3.8_amd64.deb ...
+Unpacking libxml2:amd64 (2.9.14+dfsg-1.3ubuntu3.8) ...
+Selecting previously unselected package python3-pkg-resources.
+Preparing to unpack .../15-python3-pkg-resources_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../16-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../17-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libpsl5t64:amd64.
+Preparing to unpack .../18-libpsl5t64_0.21.2-1.1build1_amd64.deb ...
+Unpacking libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Selecting previously unselected package libuv1t64:amd64.
+Preparing to unpack .../19-libuv1t64_1.48.0-1.1build1_amd64.deb ...
+Unpacking libuv1t64:amd64 (1.48.0-1.1build1) ...
+Selecting previously unselected package time.
+Preparing to unpack .../20-time_1.9-0.2build1_amd64.deb ...
+Unpacking time (1.9-0.2build1) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../21-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package binutils-common:amd64.
+Preparing to unpack .../22-binutils-common_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libsframe1:amd64.
+Preparing to unpack .../23-libsframe1_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libbinutils:amd64.
+Preparing to unpack .../24-libbinutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf-nobfd0:amd64.
+Preparing to unpack .../25-libctf-nobfd0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libctf0:amd64.
+Preparing to unpack .../26-libctf0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libctf0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libgprofng0:amd64.
+Preparing to unpack .../27-libgprofng0_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils-x86-64-linux-gnu.
+Preparing to unpack .../28-binutils-x86-64-linux-gnu_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Selecting previously unselected package binutils.
+Preparing to unpack .../29-binutils_2.42-4ubuntu2.10_amd64.deb ...
+Unpacking binutils (2.42-4ubuntu2.10) ...
+Selecting previously unselected package libc-dev-bin.
+Preparing to unpack .../30-libc-dev-bin_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc-dev-bin (2.39-0ubuntu8.9) ...
+Selecting previously unselected package linux-libc-dev:amd64.
+Preparing to unpack .../31-linux-libc-dev_6.8.0-139.139_amd64.deb ...
+Unpacking linux-libc-dev:amd64 (6.8.0-139.139) ...
+Selecting previously unselected package libcrypt-dev:amd64.
+Preparing to unpack .../32-libcrypt-dev_1%3a4.4.36-4build1_amd64.deb ...
+Unpacking libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Selecting previously unselected package rpcsvc-proto.
+Preparing to unpack .../33-rpcsvc-proto_1.4.2-0ubuntu7_amd64.deb ...
+Unpacking rpcsvc-proto (1.4.2-0ubuntu7) ...
+Selecting previously unselected package libc6-dev:amd64.
+Preparing to unpack .../34-libc6-dev_2.39-0ubuntu8.9_amd64.deb ...
+Unpacking libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Selecting previously unselected package gcc-13-base:amd64.
+Preparing to unpack .../35-gcc-13-base_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package libisl23:amd64.
+Preparing to unpack .../36-libisl23_0.26-3build1.1_amd64.deb ...
+Unpacking libisl23:amd64 (0.26-3build1.1) ...
+Selecting previously unselected package libmpfr6:amd64.
+Preparing to unpack .../37-libmpfr6_4.2.1-1build1.1_amd64.deb ...
+Unpacking libmpfr6:amd64 (4.2.1-1build1.1) ...
+Selecting previously unselected package libmpc3:amd64.
+Preparing to unpack .../38-libmpc3_1.3.1-1build1.1_amd64.deb ...
+Unpacking libmpc3:amd64 (1.3.1-1build1.1) ...
+Selecting previously unselected package cpp-13-x86-64-linux-gnu.
+Preparing to unpack .../39-cpp-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-13.
+Preparing to unpack .../40-cpp-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package cpp-x86-64-linux-gnu.
+Preparing to unpack .../41-cpp-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package cpp.
+Preparing to unpack .../42-cpp_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libcc1-0:amd64.
+Preparing to unpack .../43-libcc1-0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgomp1:amd64.
+Preparing to unpack .../44-libgomp1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libitm1:amd64.
+Preparing to unpack .../45-libitm1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libatomic1:amd64.
+Preparing to unpack .../46-libatomic1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libasan8:amd64.
+Preparing to unpack .../47-libasan8_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package liblsan0:amd64.
+Preparing to unpack .../48-liblsan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libtsan2:amd64.
+Preparing to unpack .../49-libtsan2_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libubsan1:amd64.
+Preparing to unpack .../50-libubsan1_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libhwasan0:amd64.
+Preparing to unpack .../51-libhwasan0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libquadmath0:amd64.
+Preparing to unpack .../52-libquadmath0_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgcc-13-dev:amd64.
+Preparing to unpack .../53-libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13-x86-64-linux-gnu.
+Preparing to unpack .../54-gcc-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-13.
+Preparing to unpack .../55-gcc-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gcc-x86-64-linux-gnu.
+Preparing to unpack .../56-gcc-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gcc.
+Preparing to unpack .../57-gcc_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package libstdc++-13-dev:amd64.
+Preparing to unpack .../58-libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13-x86-64-linux-gnu.
+Preparing to unpack .../59-g++-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-13.
+Preparing to unpack .../60-g++-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package g++-x86-64-linux-gnu.
+Preparing to unpack .../61-g++-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++.
+Preparing to unpack .../62-g++_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++ (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package make.
+Preparing to unpack .../63-make_4.3-4.1build2_amd64.deb ...
+Unpacking make (4.3-4.1build2) ...
+Selecting previously unselected package libdpkg-perl.
+Preparing to unpack .../64-libdpkg-perl_1.22.6ubuntu6.6_all.deb ...
+Unpacking libdpkg-perl (1.22.6ubuntu6.6) ...
+Selecting previously unselected package bzip2.
+Preparing to unpack .../65-bzip2_1.0.8-5.1ubuntu0.1_amd64.deb ...
+Unpacking bzip2 (1.0.8-5.1ubuntu0.1) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../66-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Selecting previously unselected package lto-disabled-list.
+Preparing to unpack .../67-lto-disabled-list_47_all.deb ...
+Unpacking lto-disabled-list (47) ...
+Selecting previously unselected package dpkg-dev.
+Preparing to unpack .../68-dpkg-dev_1.22.6ubuntu6.6_all.deb ...
+Unpacking dpkg-dev (1.22.6ubuntu6.6) ...
+Selecting previously unselected package build-essential.
+Preparing to unpack .../69-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package libarchive13t64:amd64.
+Preparing to unpack .../70-libarchive13t64_3.7.2-2ubuntu0.8_amd64.deb ...
+Unpacking libarchive13t64:amd64 (3.7.2-2ubuntu0.8) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../71-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../72-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../73-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../74-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../75-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../76-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../77-libcurl4t64_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libjsoncpp25:amd64.
+Preparing to unpack .../78-libjsoncpp25_1.9.5-6build1_amd64.deb ...
+Unpacking libjsoncpp25:amd64 (1.9.5-6build1) ...
+Selecting previously unselected package librhash0:amd64.
+Preparing to unpack .../79-librhash0_1.4.3-3build1_amd64.deb ...
+Unpacking librhash0:amd64 (1.4.3-3build1) ...
+Selecting previously unselected package cmake-data.
+Preparing to unpack .../80-cmake-data_3.28.3-1build7_all.deb ...
+Unpacking cmake-data (3.28.3-1build7) ...
+Selecting previously unselected package cmake.
+Preparing to unpack .../81-cmake_3.28.3-1build7_amd64.deb ...
+Unpacking cmake (3.28.3-1build7) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../82-curl_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../83-libcurl3t64-gnutls_8.5.0-2ubuntu10.13_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../84-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../85-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../86-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package libpkgconf3:amd64.
+Preparing to unpack .../87-libpkgconf3_1.8.1-2build1_amd64.deb ...
+Unpacking libpkgconf3:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package ninja-build.
+Preparing to unpack .../88-ninja-build_1.11.1-2_amd64.deb ...
+Unpacking ninja-build (1.11.1-2) ...
+Selecting previously unselected package pkgconf-bin.
+Preparing to unpack .../89-pkgconf-bin_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf-bin (1.8.1-2build1) ...
+Selecting previously unselected package pkgconf:amd64.
+Preparing to unpack .../90-pkgconf_1.8.1-2build1_amd64.deb ...
+Unpacking pkgconf:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package pkg-config:amd64.
+Preparing to unpack .../91-pkg-config_1.8.1-2build1_amd64.deb ...
+Unpacking pkg-config:amd64 (1.8.1-2build1) ...
+Selecting previously unselected package python3-setuptools.
+Preparing to unpack .../92-python3-setuptools_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3-wheel.
+Preparing to unpack .../93-python3-wheel_0.42.0-2_all.deb ...
+Unpacking python3-wheel (0.42.0-2) ...
+Selecting previously unselected package python3-pip.
+Preparing to unpack .../94-python3-pip_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-pip-whl.
+Preparing to unpack .../95-python3-pip-whl_24.0+dfsg-1ubuntu1.3_all.deb ...
+Unpacking python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Selecting previously unselected package python3-setuptools-whl.
+Preparing to unpack .../96-python3-setuptools-whl_68.1.2-2ubuntu1.2_all.deb ...
+Unpacking python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Selecting previously unselected package python3.12-venv.
+Preparing to unpack .../97-python3.12-venv_3.12.3-1ubuntu0.17_amd64.deb ...
+Unpacking python3.12-venv (3.12.3-1ubuntu0.17) ...
+Selecting previously unselected package python3-venv.
+Preparing to unpack .../98-python3-venv_3.12.3-0ubuntu2.1_amd64.deb ...
+Unpacking python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up media-types (10.1.0) ...
+Setting up time (1.9-0.2build1) ...
+Setting up python3-setuptools-whl (68.1.2-2ubuntu1.2) ...
+Setting up libkeyutils1:amd64 (1.6.3-3build1) ...
+Setting up lto-disabled-list (47) ...
+Setting up libgdbm6t64:amd64 (1.23-5.1build1) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsqlite3-0:amd64 (3.45.1-1ubuntu2.7) ...
+Setting up libuv1t64:amd64 (1.48.0-1.1build1) ...
+Setting up binutils-common:amd64 (2.42-4ubuntu2.10) ...
+Setting up libpsl5t64:amd64 (0.21.2-1.1build1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up linux-libc-dev:amd64 (6.8.0-139.139) ...
+Setting up libctf-nobfd0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgomp1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up bzip2 (1.0.8-5.1ubuntu0.1) ...
+Setting up libsframe1:amd64 (2.42-4ubuntu2.10) ...
+Setting up ninja-build (1.11.1-2) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up libkrb5support0:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up tzdata (2026c-0ubuntu0.24.04.1) ...
+
+Current default time zone: 'Etc/UTC'
+Local time is now:      Thu Sep 10 15:11:29 UTC 2026.
+Universal Time is now:  Thu Sep 10 15:11:29 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libpkgconf3:amd64 (1.8.1-2build1) ...
+Setting up rpcsvc-proto (1.4.2-0ubuntu7) ...
+Setting up gcc-13-base:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up make (4.3-4.1build2) ...
+Setting up libmpfr6:amd64 (4.2.1-1build1.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.4) ...
+Setting up libquadmath0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libmpc3:amd64 (1.3.1-1build1.1) ...
+Setting up libatomic1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up patch (2.7.6-7build3) ...
+Setting up libjsoncpp25:amd64 (1.9.5-6build1) ...
+Setting up pkgconf-bin (1.8.1-2build1) ...
+Setting up libk5crypto3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libubsan1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libicu74:amd64 (74.2-1ubuntu3.1) ...
+Setting up libhwasan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up librhash0:amd64 (1.4.3-3build1) ...
+Setting up libcrypt-dev:amd64 (1:4.4.36-4build1) ...
+Setting up libasan8:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up netbase (6.4) ...
+Setting up cmake-data (3.28.3-1build7) ...
+Setting up libkrb5-3:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.4) ...
+Setting up libtsan2:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libbinutils:amd64 (2.42-4ubuntu2.10) ...
+Setting up libisl23:amd64 (0.26-3build1.1) ...
+Setting up libc-dev-bin (2.39-0ubuntu8.9) ...
+Setting up openssl (3.0.13-0ubuntu3.15) ...
+Setting up readline-common (8.2-4build1) ...
+Setting up libxml2:amd64 (2.9.14+dfsg-1.3ubuntu3.8) ...
+Setting up libcc1-0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up liblsan0:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libitm1:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libctf0:amd64 (2.42-4ubuntu2.10) ...
+Setting up cpp-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up pkgconf:amd64 (1.8.1-2build1) ...
+Setting up ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+121 added, 0 removed; done.
+Setting up perl (5.38.2-3.2ubuntu0.4) ...
+Setting up libgprofng0:amd64 (2.42-4ubuntu2.10) ...
+Setting up libgssapi-krb5-2:amd64 (1.20.1-6ubuntu2.8) ...
+Setting up pkg-config:amd64 (1.8.1-2build1) ...
+Setting up libdpkg-perl (1.22.6ubuntu6.6) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libreadline8t64:amd64 (8.2-4build1) ...
+Setting up libgcc-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libc6-dev:amd64 (2.39-0ubuntu8.9) ...
+Setting up libarchive13t64:amd64 (3.7.2-2ubuntu0.8) ...
+Setting up libstdc++-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up binutils-x86-64-linux-gnu (2.42-4ubuntu2.10) ...
+Setting up cpp-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libpython3.12-stdlib:amd64 (3.12.3-1ubuntu0.17) ...
+Setting up cpp-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up python3-pip-whl (24.0+dfsg-1ubuntu1.3) ...
+Setting up gcc-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3.12 (3.12.3-1ubuntu0.17) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.13) ...
+Setting up binutils (2.42-4ubuntu2.10) ...
+Setting up dpkg-dev (1.22.6ubuntu6.6) ...
+Setting up liberror-perl (0.17029-2) ...
+Setting up gcc-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Setting up cpp (4:13.2.0-7ubuntu1) ...
+Setting up cmake (3.28.3-1build7) ...
+Setting up curl (8.5.0-2ubuntu10.13) ...
+Setting up libpython3-stdlib:amd64 (3.12.3-0ubuntu2.1) ...
+Setting up g++-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gcc-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3.12-venv (3.12.3-1ubuntu0.17) ...
+Setting up python3 (3.12.3-0ubuntu2.1) ...
+Setting up python3-wheel (0.42.0-2) ...
+Setting up gcc (4:13.2.0-7ubuntu1) ...
+Setting up python3-venv (3.12.3-0ubuntu2.1) ...
+Setting up g++-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up python3-pkg-resources (68.1.2-2ubuntu1.2) ...
+Setting up g++-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up python3-setuptools (68.1.2-2ubuntu1.2) ...
+Setting up python3-pip (24.0+dfsg-1ubuntu1.3) ...
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+Setting up build-essential (12.10ubuntu1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for ca-certificates (20260601~24.04.1) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+gcc is already the newest version (4:13.2.0-7ubuntu1).
+gcc set to manually installed.
+g++ is already the newest version (4:13.2.0-7ubuntu1).
+g++ set to manually installed.
+The following additional packages will be installed:
+  gfortran-13 gfortran-13-x86-64-linux-gnu gfortran-x86-64-linux-gnu
+  libgfortran-13-dev libgfortran5
+Suggested packages:
+  gfortran-multilib gfortran-doc gfortran-13-multilib gfortran-13-doc
+  libcoarrays-dev
+The following NEW packages will be installed:
+  gfortran gfortran-13 gfortran-13-x86-64-linux-gnu gfortran-x86-64-linux-gnu
+  libgfortran-13-dev libgfortran5
+0 upgraded, 6 newly installed, 0 to remove and 1 not upgraded.
+Need to get 13.3 MB of archives.
+After this operation, 42.1 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgfortran5 amd64 14.2.0-4ubuntu2~24.04.1 [916 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgfortran-13-dev amd64 13.3.0-6ubuntu2~24.04.1 [928 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gfortran-13-x86-64-linux-gnu amd64 13.3.0-6ubuntu2~24.04.1 [11.4 MB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 gfortran-13 amd64 13.3.0-6ubuntu2~24.04.1 [13.9 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble/main amd64 gfortran-x86-64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1024 B]
+Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 gfortran amd64 4:13.2.0-7ubuntu1 [1176 B]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 13.3 MB in 0s (59.9 MB/s)
+Selecting previously unselected package libgfortran5:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 17799 files and directories currently installed.)
+Preparing to unpack .../0-libgfortran5_14.2.0-4ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgfortran5:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Selecting previously unselected package libgfortran-13-dev:amd64.
+Preparing to unpack .../1-libgfortran-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking libgfortran-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-13-x86-64-linux-gnu.
+Preparing to unpack .../2-gfortran-13-x86-64-linux-gnu_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gfortran-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-13.
+Preparing to unpack .../3-gfortran-13_13.3.0-6ubuntu2~24.04.1_amd64.deb ...
+Unpacking gfortran-13 (13.3.0-6ubuntu2~24.04.1) ...
+Selecting previously unselected package gfortran-x86-64-linux-gnu.
+Preparing to unpack .../4-gfortran-x86-64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gfortran-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package gfortran.
+Preparing to unpack .../5-gfortran_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gfortran (4:13.2.0-7ubuntu1) ...
+Setting up libgfortran5:amd64 (14.2.0-4ubuntu2~24.04.1) ...
+Setting up libgfortran-13-dev:amd64 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gfortran-13-x86-64-linux-gnu (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gfortran-13 (13.3.0-6ubuntu2~24.04.1) ...
+Setting up gfortran-x86-64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up gfortran (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/gfortran to provide /usr/bin/f95 (f95) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/f95.1.gz because associated file /usr/share/man/man1/gfortran.1.gz (of link group f95) doesn't exist
+update-alternatives: using /usr/bin/gfortran to provide /usr/bin/f77 (f77) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/f77.1.gz because associated file /usr/share/man/man1/gfortran.1.gz (of link group f77) doesn't exist
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Cloning into '/work/openlibm/src'...
+HEAD is now at 5fe3997 riscv64: Keep hard-float fenv functions private (#360)
+5fe399749f9276eaa0b8403e507470da05cbbb3f
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/common.c -o src/common.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_acos.c -o src/e_acos.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_acosf.c -o src/e_acosf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_acosh.c -o src/e_acosh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_acoshf.c -o src/e_acoshf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_asin.c -o src/e_asin.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_asinf.c -o src/e_asinf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_atan2.c -o src/e_atan2.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_atan2f.c -o src/e_atan2f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_atanh.c -o src/e_atanh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_atanhf.c -o src/e_atanhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_cosh.c -o src/e_cosh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_coshf.c -o src/e_coshf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_exp.c -o src/e_exp.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_expf.c -o src/e_expf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_hypot.c -o src/e_hypot.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_hypotf.c -o src/e_hypotf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_j0.c -o src/e_j0.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_j0f.c -o src/e_j0f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_j1.c -o src/e_j1.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_j1f.c -o src/e_j1f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_jn.c -o src/e_jn.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_jnf.c -o src/e_jnf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_lgamma.c -o src/e_lgamma.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_lgamma_r.c -o src/e_lgamma_r.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_lgammaf.c -o src/e_lgammaf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_lgammaf_r.c -o src/e_lgammaf_r.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_log.c -o src/e_log.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_log10.c -o src/e_log10.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_log10f.c -o src/e_log10f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_log2.c -o src/e_log2.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_log2f.c -o src/e_log2f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_logf.c -o src/e_logf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_pow.c -o src/e_pow.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_powf.c -o src/e_powf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_rem_pio2.c -o src/e_rem_pio2.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_rem_pio2f.c -o src/e_rem_pio2f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_sinh.c -o src/e_sinh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_sinhf.c -o src/e_sinhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_cos.c -o src/k_cos.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_exp.c -o src/k_exp.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_expf.c -o src/k_expf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_rem_pio2.c -o src/k_rem_pio2.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_sin.c -o src/k_sin.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_tan.c -o src/k_tan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_cosf.c -o src/k_cosf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_sinf.c -o src/k_sinf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/k_tanf.c -o src/k_tanf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_asinh.c -o src/s_asinh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_asinhf.c -o src/s_asinhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_atan.c -o src/s_atan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_atanf.c -o src/s_atanf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_carg.c -o src/s_carg.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cargf.c -o src/s_cargf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cbrt.c -o src/s_cbrt.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cbrtf.c -o src/s_cbrtf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ceil.c -o src/s_ceil.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ceilf.c -o src/s_ceilf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_copysign.c -o src/s_copysign.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_copysignf.c -o src/s_copysignf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cos.c -o src/s_cos.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cosf.c -o src/s_cosf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csqrt.c -o src/s_csqrt.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csqrtf.c -o src/s_csqrtf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_erf.c -o src/s_erf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_erff.c -o src/s_erff.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_exp2.c -o src/s_exp2.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_exp2f.c -o src/s_exp2f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_expm1.c -o src/s_expm1.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_expm1f.c -o src/s_expm1f.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fabs.c -o src/s_fabs.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fabsf.c -o src/s_fabsf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fdim.c -o src/s_fdim.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_floor.c -o src/s_floor.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_floorf.c -o src/s_floorf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmax.c -o src/s_fmax.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmaxf.c -o src/s_fmaxf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmin.c -o src/s_fmin.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fminf.c -o src/s_fminf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fpclassify.c -o src/s_fpclassify.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_frexp.c -o src/s_frexp.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_frexpf.c -o src/s_frexpf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ilogb.c -o src/s_ilogb.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ilogbf.c -o src/s_ilogbf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_isinf.c -o src/s_isinf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_isfinite.c -o src/s_isfinite.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_isnormal.c -o src/s_isnormal.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_isnan.c -o src/s_isnan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_log1p.c -o src/s_log1p.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_log1pf.c -o src/s_log1pf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_logb.c -o src/s_logb.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_logbf.c -o src/s_logbf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_modf.c -o src/s_modf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_modff.c -o src/s_modff.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nextafter.c -o src/s_nextafter.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nextafterf.c -o src/s_nextafterf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nexttowardf.c -o src/s_nexttowardf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_rint.c -o src/s_rint.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_rintf.c -o src/s_rintf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_round.c -o src/s_round.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_roundf.c -o src/s_roundf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_scalbln.c -o src/s_scalbln.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_signbit.c -o src/s_signbit.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_signgam.c -o src/s_signgam.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sin.c -o src/s_sin.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sincos.c -o src/s_sincos.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sinf.c -o src/s_sinf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sincosf.c -o src/s_sincosf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tan.c -o src/s_tan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tanf.c -o src/s_tanf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tanh.c -o src/s_tanh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tanhf.c -o src/s_tanhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tgammaf.c -o src/s_tgammaf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_trunc.c -o src/s_trunc.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_truncf.c -o src/s_truncf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cpow.c -o src/s_cpow.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cpowf.c -o src/s_cpowf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/w_cabs.c -o src/w_cabs.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/w_cabsf.c -o src/w_cabsf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fma.c -o src/s_fma.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmaf.c -o src/s_fmaf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_lround.c -o src/s_lround.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_lroundf.c -o src/s_lroundf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_llround.c -o src/s_llround.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_llroundf.c -o src/s_llroundf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nearbyint.c -o src/s_nearbyint.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nan.c -o src/s_nan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_copysignl.c -o src/s_copysignl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fabsl.c -o src/s_fabsl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_modfl.c -o src/s_modfl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_acosl.c -o src/e_acosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_asinl.c -o src/e_asinl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_atan2l.c -o src/e_atan2l.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmaxl.c -o src/s_fmaxl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fminl.c -o src/s_fminl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ilogbl.c -o src/s_ilogbl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_hypotl.c -o src/e_hypotl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/e_lgammal.c -o src/e_lgammal.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_atanl.c -o src/s_atanl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ceill.c -o src/s_ceill.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cosl.c -o src/s_cosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cprojl.c -o src/s_cprojl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csqrtl.c -o src/s_csqrtl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_floorl.c -o src/s_floorl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_fmal.c -o src/s_fmal.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_frexpl.c -o src/s_frexpl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nexttoward.c -o src/s_nexttoward.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_roundl.c -o src/s_roundl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_lroundl.c -o src/s_lroundl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_llroundl.c -o src/s_llroundl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cpowl.c -o src/s_cpowl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cargl.c -o src/s_cargl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sinl.c -o src/s_sinl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_sincosl.c -o src/s_sincosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_tanl.c -o src/s_tanl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_truncl.c -o src/s_truncl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/w_cabsl.c -o src/w_cabsl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_nextafterl.c -o src/s_nextafterl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/polevll.c -o src/polevll.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casinl.c -o src/s_casinl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ctanl.c -o src/s_ctanl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cimagl.c -o src/s_cimagl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_conjl.c -o src/s_conjl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_creall.c -o src/s_creall.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacoshl.c -o src/s_cacoshl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catanhl.c -o src/s_catanhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casinhl.c -o src/s_casinhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catanl.c -o src/s_catanl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csinl.c -o src/s_csinl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacosl.c -o src/s_cacosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cexpl.c -o src/s_cexpl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csinhl.c -o src/s_csinhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ccoshl.c -o src/s_ccoshl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_clogl.c -o src/s_clogl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ctanhl.c -o src/s_ctanhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ccosl.c -o src/s_ccosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cbrtl.c -o src/s_cbrtl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ccosh.c -o src/s_ccosh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ccoshf.c -o src/s_ccoshf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cexp.c -o src/s_cexp.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cexpf.c -o src/s_cexpf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cimag.c -o src/s_cimag.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cimagf.c -o src/s_cimagf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_conj.c -o src/s_conj.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_conjf.c -o src/s_conjf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cproj.c -o src/s_cproj.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cprojf.c -o src/s_cprojf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_creal.c -o src/s_creal.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_crealf.c -o src/s_crealf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csinh.c -o src/s_csinh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_csinhf.c -o src/s_csinhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ctanh.c -o src/s_ctanh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_ctanhf.c -o src/s_ctanhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacos.c -o src/s_cacos.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacosf.c -o src/s_cacosf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacosh.c -o src/s_cacosh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_cacoshf.c -o src/s_cacoshf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casin.c -o src/s_casin.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casinf.c -o src/s_casinf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casinh.c -o src/s_casinh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_casinhf.c -o src/s_casinhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catan.c -o src/s_catan.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catanf.c -o src/s_catanf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catanh.c -o src/s_catanh.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_catanhf.c -o src/s_catanhf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_clog.c -o src/s_clog.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c src/s_clogf.c -o src/s_clogf.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c amd64/fenv.c -o amd64/fenv.c.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_remainder.S -o amd64/e_remainder.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_remainderf.S -o amd64/e_remainderf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_remainderl.S -o amd64/e_remainderl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_sqrt.S -o amd64/e_sqrt.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_sqrtf.S -o amd64/e_sqrtf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_sqrtl.S -o amd64/e_sqrtl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_llrint.S -o amd64/s_llrint.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_llrintf.S -o amd64/s_llrintf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_llrintl.S -o amd64/s_llrintl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_logbl.S -o amd64/s_logbl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_lrint.S -o amd64/s_lrint.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_lrintf.S -o amd64/s_lrintf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_lrintl.S -o amd64/s_lrintl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_remquo.S -o amd64/s_remquo.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_remquof.S -o amd64/s_remquof.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_remquol.S -o amd64/s_remquol.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_rintl.S -o amd64/s_rintl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_scalbn.S -o amd64/s_scalbn.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_scalbnf.S -o amd64/s_scalbnf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/s_scalbnl.S -o amd64/s_scalbnl.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_fmod.S -o amd64/e_fmod.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_fmodf.S -o amd64/e_fmodf.S.o
+gcc   -m64 -m64 -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -I/work/openlibm/src/ld80 -c amd64/e_fmodl.S -o amd64/e_fmodl.S.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c bsdsrc/b_exp.c -o bsdsrc/b_exp.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c bsdsrc/b_log.c -o bsdsrc/b_log.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c bsdsrc/b_tgamma.c -o bsdsrc/b_tgamma.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/invtrig.c -o ld80/invtrig.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_acoshl.c -o ld80/e_acoshl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_powl.c -o ld80/e_powl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/k_tanl.c -o ld80/k_tanl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_exp2l.c -o ld80/s_exp2l.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_atanhl.c -o ld80/e_atanhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_lgammal_r.c -o ld80/e_lgammal_r.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_sinhl.c -o ld80/e_sinhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_asinhl.c -o ld80/s_asinhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_expm1l.c -o ld80/s_expm1l.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_coshl.c -o ld80/e_coshl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_log10l.c -o ld80/e_log10l.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_tgammal.c -o ld80/e_tgammal.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_expl.c -o ld80/e_expl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_log2l.c -o ld80/e_log2l.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/k_cosl.c -o ld80/k_cosl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_log1pl.c -o ld80/s_log1pl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_tanhl.c -o ld80/s_tanhl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/e_logl.c -o ld80/e_logl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/k_sinl.c -o ld80/k_sinl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_erfl.c -o ld80/s_erfl.c.o
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80 -c ld80/s_nanl.c -o ld80/s_nanl.c.o
+ar -rcs libopenlibm.a src/common.c.o src/e_acos.c.o src/e_acosf.c.o src/e_acosh.c.o src/e_acoshf.c.o src/e_asin.c.o src/e_asinf.c.o src/e_atan2.c.o src/e_atan2f.c.o src/e_atanh.c.o src/e_atanhf.c.o src/e_cosh.c.o src/e_coshf.c.o src/e_exp.c.o src/e_expf.c.o src/e_hypot.c.o src/e_hypotf.c.o src/e_j0.c.o src/e_j0f.c.o src/e_j1.c.o src/e_j1f.c.o src/e_jn.c.o src/e_jnf.c.o src/e_lgamma.c.o src/e_lgamma_r.c.o src/e_lgammaf.c.o src/e_lgammaf_r.c.o src/e_log.c.o src/e_log10.c.o src/e_log10f.c.o src/e_log2.c.o src/e_log2f.c.o src/e_logf.c.o src/e_pow.c.o src/e_powf.c.o src/e_rem_pio2.c.o src/e_rem_pio2f.c.o src/e_sinh.c.o src/e_sinhf.c.o src/k_cos.c.o src/k_exp.c.o src/k_expf.c.o src/k_rem_pio2.c.o src/k_sin.c.o src/k_tan.c.o src/k_cosf.c.o src/k_sinf.c.o src/k_tanf.c.o src/s_asinh.c.o src/s_asinhf.c.o src/s_atan.c.o src/s_atanf.c.o src/s_carg.c.o src/s_cargf.c.o src/s_cbrt.c.o src/s_cbrtf.c.o src/s_ceil.c.o src/s_ceilf.c.o src/s_copysign.c.o src/s_copysignf.c.o src/s_cos.c.o src/s_cosf.c.o src/s_csqrt.c.o src/s_csqrtf.c.o src/s_erf.c.o src/s_erff.c.o src/s_exp2.c.o src/s_exp2f.c.o src/s_expm1.c.o src/s_expm1f.c.o src/s_fabs.c.o src/s_fabsf.c.o src/s_fdim.c.o src/s_floor.c.o src/s_floorf.c.o src/s_fmax.c.o src/s_fmaxf.c.o src/s_fmin.c.o src/s_fminf.c.o src/s_fpclassify.c.o src/s_frexp.c.o src/s_frexpf.c.o src/s_ilogb.c.o src/s_ilogbf.c.o src/s_isinf.c.o src/s_isfinite.c.o src/s_isnormal.c.o src/s_isnan.c.o src/s_log1p.c.o src/s_log1pf.c.o src/s_logb.c.o src/s_logbf.c.o src/s_modf.c.o src/s_modff.c.o src/s_nextafter.c.o src/s_nextafterf.c.o src/s_nexttowardf.c.o src/s_rint.c.o src/s_rintf.c.o src/s_round.c.o src/s_roundf.c.o src/s_scalbln.c.o src/s_signbit.c.o src/s_signgam.c.o src/s_sin.c.o src/s_sincos.c.o src/s_sinf.c.o src/s_sincosf.c.o src/s_tan.c.o src/s_tanf.c.o src/s_tanh.c.o src/s_tanhf.c.o src/s_tgammaf.c.o src/s_trunc.c.o src/s_truncf.c.o src/s_cpow.c.o src/s_cpowf.c.o src/w_cabs.c.o src/w_cabsf.c.o src/s_fma.c.o src/s_fmaf.c.o src/s_lround.c.o src/s_lroundf.c.o src/s_llround.c.o src/s_llroundf.c.o src/s_nearbyint.c.o src/s_nan.c.o src/s_copysignl.c.o src/s_fabsl.c.o src/s_modfl.c.o src/e_acosl.c.o src/e_asinl.c.o src/e_atan2l.c.o src/s_fmaxl.c.o src/s_fminl.c.o src/s_ilogbl.c.o src/e_hypotl.c.o src/e_lgammal.c.o src/s_atanl.c.o src/s_ceill.c.o src/s_cosl.c.o src/s_cprojl.c.o src/s_csqrtl.c.o src/s_floorl.c.o src/s_fmal.c.o src/s_frexpl.c.o src/s_nexttoward.c.o src/s_roundl.c.o src/s_lroundl.c.o src/s_llroundl.c.o src/s_cpowl.c.o src/s_cargl.c.o src/s_sinl.c.o src/s_sincosl.c.o src/s_tanl.c.o src/s_truncl.c.o src/w_cabsl.c.o src/s_nextafterl.c.o src/polevll.c.o src/s_casinl.c.o src/s_ctanl.c.o src/s_cimagl.c.o src/s_conjl.c.o src/s_creall.c.o src/s_cacoshl.c.o src/s_catanhl.c.o src/s_casinhl.c.o src/s_catanl.c.o src/s_csinl.c.o src/s_cacosl.c.o src/s_cexpl.c.o src/s_csinhl.c.o src/s_ccoshl.c.o src/s_clogl.c.o src/s_ctanhl.c.o src/s_ccosl.c.o src/s_cbrtl.c.o src/s_ccosh.c.o src/s_ccoshf.c.o src/s_cexp.c.o src/s_cexpf.c.o src/s_cimag.c.o src/s_cimagf.c.o src/s_conj.c.o src/s_conjf.c.o src/s_cproj.c.o src/s_cprojf.c.o src/s_creal.c.o src/s_crealf.c.o src/s_csinh.c.o src/s_csinhf.c.o src/s_ctanh.c.o src/s_ctanhf.c.o src/s_cacos.c.o src/s_cacosf.c.o src/s_cacosh.c.o src/s_cacoshf.c.o src/s_casin.c.o src/s_casinf.c.o src/s_casinh.c.o src/s_casinhf.c.o src/s_catan.c.o src/s_catanf.c.o src/s_catanh.c.o src/s_catanhf.c.o src/s_clog.c.o src/s_clogf.c.o amd64/fenv.c.o amd64/e_remainder.S.o amd64/e_remainderf.S.o amd64/e_remainderl.S.o amd64/e_sqrt.S.o amd64/e_sqrtf.S.o amd64/e_sqrtl.S.o amd64/s_llrint.S.o amd64/s_llrintf.S.o amd64/s_llrintl.S.o amd64/s_logbl.S.o amd64/s_lrint.S.o amd64/s_lrintf.S.o amd64/s_lrintl.S.o amd64/s_remquo.S.o amd64/s_remquof.S.o amd64/s_remquol.S.o amd64/s_rintl.S.o amd64/s_scalbn.S.o amd64/s_scalbnf.S.o amd64/s_scalbnl.S.o amd64/e_fmod.S.o amd64/e_fmodf.S.o amd64/e_fmodl.S.o bsdsrc/b_exp.c.o bsdsrc/b_log.c.o bsdsrc/b_tgamma.c.o ld80/invtrig.c.o ld80/e_acoshl.c.o ld80/e_powl.c.o ld80/k_tanl.c.o ld80/s_exp2l.c.o ld80/e_atanhl.c.o ld80/e_lgammal_r.c.o ld80/e_sinhl.c.o ld80/s_asinhl.c.o ld80/s_expm1l.c.o ld80/e_coshl.c.o ld80/e_log10l.c.o ld80/e_tgammal.c.o ld80/e_expl.c.o ld80/e_log2l.c.o ld80/k_cosl.c.o ld80/s_log1pl.c.o ld80/s_tanhl.c.o ld80/e_logl.c.o ld80/k_sinl.c.o ld80/s_erfl.c.o ld80/s_nanl.c.o
+gcc -shared src/common.c.o src/e_acos.c.o src/e_acosf.c.o src/e_acosh.c.o src/e_acoshf.c.o src/e_asin.c.o src/e_asinf.c.o src/e_atan2.c.o src/e_atan2f.c.o src/e_atanh.c.o src/e_atanhf.c.o src/e_cosh.c.o src/e_coshf.c.o src/e_exp.c.o src/e_expf.c.o src/e_hypot.c.o src/e_hypotf.c.o src/e_j0.c.o src/e_j0f.c.o src/e_j1.c.o src/e_j1f.c.o src/e_jn.c.o src/e_jnf.c.o src/e_lgamma.c.o src/e_lgamma_r.c.o src/e_lgammaf.c.o src/e_lgammaf_r.c.o src/e_log.c.o src/e_log10.c.o src/e_log10f.c.o src/e_log2.c.o src/e_log2f.c.o src/e_logf.c.o src/e_pow.c.o src/e_powf.c.o src/e_rem_pio2.c.o src/e_rem_pio2f.c.o src/e_sinh.c.o src/e_sinhf.c.o src/k_cos.c.o src/k_exp.c.o src/k_expf.c.o src/k_rem_pio2.c.o src/k_sin.c.o src/k_tan.c.o src/k_cosf.c.o src/k_sinf.c.o src/k_tanf.c.o src/s_asinh.c.o src/s_asinhf.c.o src/s_atan.c.o src/s_atanf.c.o src/s_carg.c.o src/s_cargf.c.o src/s_cbrt.c.o src/s_cbrtf.c.o src/s_ceil.c.o src/s_ceilf.c.o src/s_copysign.c.o src/s_copysignf.c.o src/s_cos.c.o src/s_cosf.c.o src/s_csqrt.c.o src/s_csqrtf.c.o src/s_erf.c.o src/s_erff.c.o src/s_exp2.c.o src/s_exp2f.c.o src/s_expm1.c.o src/s_expm1f.c.o src/s_fabs.c.o src/s_fabsf.c.o src/s_fdim.c.o src/s_floor.c.o src/s_floorf.c.o src/s_fmax.c.o src/s_fmaxf.c.o src/s_fmin.c.o src/s_fminf.c.o src/s_fpclassify.c.o src/s_frexp.c.o src/s_frexpf.c.o src/s_ilogb.c.o src/s_ilogbf.c.o src/s_isinf.c.o src/s_isfinite.c.o src/s_isnormal.c.o src/s_isnan.c.o src/s_log1p.c.o src/s_log1pf.c.o src/s_logb.c.o src/s_logbf.c.o src/s_modf.c.o src/s_modff.c.o src/s_nextafter.c.o src/s_nextafterf.c.o src/s_nexttowardf.c.o src/s_rint.c.o src/s_rintf.c.o src/s_round.c.o src/s_roundf.c.o src/s_scalbln.c.o src/s_signbit.c.o src/s_signgam.c.o src/s_sin.c.o src/s_sincos.c.o src/s_sinf.c.o src/s_sincosf.c.o src/s_tan.c.o src/s_tanf.c.o src/s_tanh.c.o src/s_tanhf.c.o src/s_tgammaf.c.o src/s_trunc.c.o src/s_truncf.c.o src/s_cpow.c.o src/s_cpowf.c.o src/w_cabs.c.o src/w_cabsf.c.o src/s_fma.c.o src/s_fmaf.c.o src/s_lround.c.o src/s_lroundf.c.o src/s_llround.c.o src/s_llroundf.c.o src/s_nearbyint.c.o src/s_nan.c.o src/s_copysignl.c.o src/s_fabsl.c.o src/s_modfl.c.o src/e_acosl.c.o src/e_asinl.c.o src/e_atan2l.c.o src/s_fmaxl.c.o src/s_fminl.c.o src/s_ilogbl.c.o src/e_hypotl.c.o src/e_lgammal.c.o src/s_atanl.c.o src/s_ceill.c.o src/s_cosl.c.o src/s_cprojl.c.o src/s_csqrtl.c.o src/s_floorl.c.o src/s_fmal.c.o src/s_frexpl.c.o src/s_nexttoward.c.o src/s_roundl.c.o src/s_lroundl.c.o src/s_llroundl.c.o src/s_cpowl.c.o src/s_cargl.c.o src/s_sinl.c.o src/s_sincosl.c.o src/s_tanl.c.o src/s_truncl.c.o src/w_cabsl.c.o src/s_nextafterl.c.o src/polevll.c.o src/s_casinl.c.o src/s_ctanl.c.o src/s_cimagl.c.o src/s_conjl.c.o src/s_creall.c.o src/s_cacoshl.c.o src/s_catanhl.c.o src/s_casinhl.c.o src/s_catanl.c.o src/s_csinl.c.o src/s_cacosl.c.o src/s_cexpl.c.o src/s_csinhl.c.o src/s_ccoshl.c.o src/s_clogl.c.o src/s_ctanhl.c.o src/s_ccosl.c.o src/s_cbrtl.c.o src/s_ccosh.c.o src/s_ccoshf.c.o src/s_cexp.c.o src/s_cexpf.c.o src/s_cimag.c.o src/s_cimagf.c.o src/s_conj.c.o src/s_conjf.c.o src/s_cproj.c.o src/s_cprojf.c.o src/s_creal.c.o src/s_crealf.c.o src/s_csinh.c.o src/s_csinhf.c.o src/s_ctanh.c.o src/s_ctanhf.c.o src/s_cacos.c.o src/s_cacosf.c.o src/s_cacosh.c.o src/s_cacoshf.c.o src/s_casin.c.o src/s_casinf.c.o src/s_casinh.c.o src/s_casinhf.c.o src/s_catan.c.o src/s_catanf.c.o src/s_catanh.c.o src/s_catanhf.c.o src/s_clog.c.o src/s_clogf.c.o amd64/fenv.c.o amd64/e_remainder.S.o amd64/e_remainderf.S.o amd64/e_remainderl.S.o amd64/e_sqrt.S.o amd64/e_sqrtf.S.o amd64/e_sqrtl.S.o amd64/s_llrint.S.o amd64/s_llrintf.S.o amd64/s_llrintl.S.o amd64/s_logbl.S.o amd64/s_lrint.S.o amd64/s_lrintf.S.o amd64/s_lrintl.S.o amd64/s_remquo.S.o amd64/s_remquof.S.o amd64/s_remquol.S.o amd64/s_rintl.S.o amd64/s_scalbn.S.o amd64/s_scalbnf.S.o amd64/s_scalbnl.S.o amd64/e_fmod.S.o amd64/e_fmodf.S.o amd64/e_fmodl.S.o bsdsrc/b_exp.c.o bsdsrc/b_log.c.o bsdsrc/b_tgamma.c.o ld80/invtrig.c.o ld80/e_acoshl.c.o ld80/e_powl.c.o ld80/k_tanl.c.o ld80/s_exp2l.c.o ld80/e_atanhl.c.o ld80/e_lgammal_r.c.o ld80/e_sinhl.c.o ld80/s_asinhl.c.o ld80/s_expm1l.c.o ld80/e_coshl.c.o ld80/e_log10l.c.o ld80/e_tgammal.c.o ld80/e_expl.c.o ld80/e_log2l.c.o ld80/k_cosl.c.o ld80/s_log1pl.c.o ld80/s_tanhl.c.o ld80/e_logl.c.o ld80/k_sinl.c.o ld80/s_erfl.c.o ld80/s_nanl.c.o  -m64 -Wl,-soname,libopenlibm.so.4 -o libopenlibm.so.4.0
+ln -sf libopenlibm.so.4.0 libopenlibm.so.4
+ln -sf libopenlibm.so.4.0 libopenlibm.so
+make -C test test-double
+make[1]: Entering directory '/work/openlibm/src/test'
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 test-double.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -o test-double
+In file included from /usr/include/stdio.h:980,
+                 from libm-test.c:139,
+                 from test-double.c:34:
+In function 'fprintf',
+    inlined from 'print_ulps.part.0' at libm-test.c:298:7:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+In file included from /usr/include/stdio.h:964:
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_ulps.part.0':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_ulps.part.0' at libm-test.c:299:7:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_ulps.part.0':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_function_ulps' at libm-test.c:310:7,
+    inlined from 'print_max_error.constprop' at libm-test.c:357:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_max_error.constprop':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_function_ulps' at libm-test.c:311:7,
+    inlined from 'print_max_error.constprop' at libm-test.c:357:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_max_error.constprop':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+libm-test.c: In function 'main':
+libm-test.c:4514:5: warning: argument 1 null where non-null expected [-Wnonnull]
+ 4514 |     fclose (ulps_file);
+      |     ^~~~~~~~~~~~~~~~~~
+/usr/include/stdio.h:184:12: note: in a call to function 'fclose' declared 'nonnull'
+  184 | extern int fclose (FILE *__stream) __nonnull ((1));
+      |            ^~~~~~
+make[1]: Leaving directory '/work/openlibm/src/test'
+make -C test test-float
+make[1]: Entering directory '/work/openlibm/src/test'
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 test-float.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -o test-float
+In file included from /usr/include/stdio.h:980,
+                 from libm-test.c:139,
+                 from test-float.c:34:
+In function 'fprintf',
+    inlined from 'print_ulps.part.0' at libm-test.c:298:7:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+In file included from /usr/include/stdio.h:964:
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_ulps.part.0':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_ulps.part.0' at libm-test.c:299:7:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_ulps.part.0':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_function_ulps' at libm-test.c:310:7,
+    inlined from 'print_max_error.constprop' at libm-test.c:357:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_max_error.constprop':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+In function 'fprintf',
+    inlined from 'print_function_ulps' at libm-test.c:311:7,
+    inlined from 'print_max_error.constprop' at libm-test.c:357:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:79:10: warning: argument 1 null where non-null expected [-Wnonnull]
+   79 |   return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   80 |                         __va_arg_pack ());
+      |                         ~~~~~~~~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h: In function 'print_max_error.constprop':
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:49:12: note: in a call to function '__fprintf_chk' declared 'nonnull'
+   49 | extern int __fprintf_chk (FILE *__restrict __stream, int __flag,
+      |            ^~~~~~~~~~~~~
+libm-test.c: In function 'main':
+libm-test.c:4514:5: warning: argument 1 null where non-null expected [-Wnonnull]
+ 4514 |     fclose (ulps_file);
+      |     ^~~~~~~~~~~~~~~~~~
+/usr/include/stdio.h:184:12: note: in a call to function 'fclose' declared 'nonnull'
+  184 | extern int fclose (FILE *__stream) __nonnull ((1));
+      |            ^~~~~~
+make[1]: Leaving directory '/work/openlibm/src/test'
+test/test-double
+testing double (without inline functions)
+
+Test suite completed:
+  1118 test cases plus 932 tests for exception flags executed.
+  All tests passed successfully.
+test/test-float
+testing float (without inline functions)
+
+Test suite completed:
+  1101 test cases plus 923 tests for exception flags executed.
+  All tests passed successfully.
+make test-regression
+make[1]: Entering directory '/work/openlibm/src'
+make -C test regression-build
+make[2]: Entering directory '/work/openlibm/src/test'
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 regression/test-211.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -lm -pthread -o regression/test-211
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 regression/test-222.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -lm -pthread -o regression/test-222
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 regression/test-252.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -lm -pthread -o regression/test-252
+gcc   -fno-gnu89-inline -fno-builtin -O3 -fPIC -m64 -std=c99 -Wall -I/work/openlibm/src -I/work/openlibm/src/include -I/work/openlibm/src/amd64 -I/work/openlibm/src/src -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration -I/work/openlibm/src/ld80  -m64 regression/test-334.c -D__BSD_VISIBLE -I ../include -I../src -L.. -lopenlibm -Wl,-rpath=/work/openlibm/src -lm -pthread -o regression/test-334
+make[2]: Leaving directory '/work/openlibm/src/test'
+  PASS test/regression/test-211
+  PASS test/regression/test-222
+  SKIP test/regression/test-252
+  PASS test/regression/test-334
+regression: 3 passed, 1 skipped, 0 failed
+make[1]: Leaving directory '/work/openlibm/src'
+status=0
+finished=2026-09-10T15:11:37Z

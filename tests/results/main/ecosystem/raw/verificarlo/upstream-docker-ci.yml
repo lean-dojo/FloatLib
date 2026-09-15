@@ -1,0 +1,103 @@
+name: docker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+  release:
+    types: [published]
+
+jobs:
+  docker-default:
+    runs-on: ubuntu-22.04
+    env:
+      TEST_TAG: verificarlo/verificarlo:test
+      LATEST_TAG: ${{ github.repository }}:latest
+      RELEASE_TAG: ${{ github.repository }}:${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        if: github.event_name == 'release'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.TEST_TAG }}
+      - name: Test
+        run: |
+          docker run --rm ${{ env.TEST_TAG }} /bin/bash -c "make -C /build/verificarlo installcheck"
+      - name: Verify uv is used for the Python install when available
+        run: |
+          docker run -d --name uv-check ${{ env.TEST_TAG }} sleep infinity
+          docker exec uv-check pip install --break-system-packages uv
+          docker exec uv-check bash -c "command -v uv"
+          # Re-run configure so AC_PATH_PROG([UV], ...) picks up the uv we
+          # just installed (--recheck only refreshes config.status; a plain
+          # config.status run is still needed to regenerate the Makefile).
+          docker exec -w /build/verificarlo uv-check bash -c "./config.status --recheck && ./config.status"
+          docker exec -w /build/verificarlo uv-check bash -c "grep -qE '^UV = .+uv$' Makefile"
+          docker exec -w /build/verificarlo uv-check bash -c "set -o pipefail; make install-exec-hook 2>&1 | tee /tmp/install.log"
+          docker exec uv-check bash -c "grep -qE 'uv pip install( --system.*)? \.' /tmp/install.log"
+      - name: Clean up uv-check container
+        if: always()
+        run: docker rm -f uv-check || true
+      - name: Build and push
+        if: github.event_name == 'release'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.LATEST_TAG }}
+            ${{ env.RELEASE_TAG }}
+
+  docker:
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu:24.04
+            llvm: 17
+            gcc: 13
+          - os: ubuntu:24.04
+            llvm: 18
+            gcc: 13
+          - os: ubuntu:24.04
+            llvm: 19
+            gcc: 13
+          - os: ubuntu:24.04
+            llvm: 20
+            gcc: 13
+    runs-on: ubuntu-22.04
+    env:
+      TEST_TAG: verificarlo/verificarlo:test-llvm-${{ matrix.llvm }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.TEST_TAG }}
+          build-args: |
+            UBUNTU_VERSION=${{ matrix.os }}
+            LLVM_VERSION=${{ matrix.llvm }}
+            GCC_VERSION=${{ matrix.gcc }}
+      - name: Test
+        run: |
+          docker run --rm ${{ env.TEST_TAG }} /bin/bash -c "make -C /build/verificarlo installcheck"

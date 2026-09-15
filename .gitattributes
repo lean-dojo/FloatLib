@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Evidence manifests hash the original bytes, including their line endings.
+/benchmarks/results/main/** -text
+/tests/results/main/** -text

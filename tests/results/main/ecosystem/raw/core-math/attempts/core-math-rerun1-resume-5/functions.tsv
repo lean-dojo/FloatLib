@@ -1,0 +1,15 @@
+binary32	exp2f	PASS
+binary32	rsqrtf	PASS
+binary32	tanpif	PASS
+binary64	asinpi	PASS
+binary64	cos	PASS
+binary64	exp10m1	PASS
+binary64	log10	PASS
+binary64	sin	PASS
+binary64	tgamma	PASS
+binaryb16	atan_bf16	PASS
+binaryb16	cos_bf16	PASS
+binaryb16	exp10m1_bf16	PASS
+binaryb16	log10_bf16	PASS
+binaryb16	sin_bf16	PASS
+binaryb16	tanpi_bf16	PASS

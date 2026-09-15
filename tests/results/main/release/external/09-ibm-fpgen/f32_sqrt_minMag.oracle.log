@@ -1,0 +1,1 @@
+RESULT format=f32 operation=sqrt rounding=minMag cases=6 value_mismatches=0 flag_mismatches=0 parse_errors=0

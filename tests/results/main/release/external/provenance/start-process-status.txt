@@ -1,0 +1,57 @@
+Name:	cp
+Umask:	0022
+State:	R (running)
+Tgid:	215
+Ngid:	0
+Pid:	215
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	256
+Groups:	0 
+NStgid:	215
+NSpid:	215
+NSpgid:	1
+NSsid:	1
+VmPeak:	    5528 kB
+VmSize:	    5528 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    1348 kB
+VmRSS:	    1348 kB
+RssAnon:	     196 kB
+RssFile:	    1152 kB
+RssShmem:	       0 kB
+VmData:	     480 kB
+VmStk:	     152 kB
+VmExe:	     892 kB
+VmLib:	    2268 kB
+VmPTE:	      48 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+CoreDumping:	0
+THP_enabled:	1
+Threads:	1
+SigQ:	1/30446
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	0000000000000000
+CapInh:	0000000000000000
+CapPrm:	00000000a80425fb
+CapEff:	00000000a80425fb
+CapBnd:	00000000a80425fb
+CapAmb:	0000000000000000
+NoNewPrivs:	0
+Seccomp:	0
+Seccomp_filters:	0
+Speculation_Store_Bypass:	thread vulnerable
+SpeculationIndirectBranch:	conditional enabled
+Cpus_allowed:	ffffffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff
+Cpus_allowed_list:	0-191
+Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000003
+Mems_allowed_list:	0-1
+voluntary_ctxt_switches:	0
+nonvoluntary_ctxt_switches:	0

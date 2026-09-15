@@ -1,0 +1,50 @@
+## main...origin/main
+ M .gitignore
+ M benchmarks/c/exact_format_mpfr.c
+ M benchmarks/c/exact_format_native.c
+ M benchmarks/c/include/ieee_fixtures.h
+ M benchmarks/c/native_float_mpfr.c
+ M benchmarks/c/softfloat_ieee.c
+ M benchmarks/cpp/universal_posit.cpp
+ M benchmarks/docs/Calibration.md
+ M benchmarks/docs/Comparison.md
+ M benchmarks/docs/External.md
+ M benchmarks/lean/LeanFloatBenchmarks/Public/FormatComparison.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Public/Sweep.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Support/ExactWorkload.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Support/Sink.lean
+ M benchmarks/plots/format_comparison.py
+ M benchmarks/python/cpython_float.py
+ M benchmarks/rocq/FlocqKernel.v
+ M benchmarks/rocq/flocq_bench.ml
+ M benchmarks/rocq/flocq_format_bench.ml
+ M benchmarks/scripts/external.sh
+ M benchmarks/scripts/format-comparison.sh
+ M tests/EXTERNAL.md
+ M tests/LeanFloatTests/Oracle/TestFloat.lean
+ M tests/Oracle.lean
+ M tests/oracles/check.sh
+ M tests/oracles/format-standards.sh
+ M tests/oracles/testfloat.sh
+?? benchmarks/c/benchmark_mpfr_protocol.h
+?? benchmarks/c/benchmark_protocol.h
+?? site/data/
+?? tests/LeanFloatTests/Oracle/Posit.lean
+?? tests/LeanFloatTests/Oracle/SMT.lean
+?? tests/LeanFloatTests/Oracle/Transcendentals.lean
+?? tests/oracles/ibm_fpgen.py
+?? tests/oracles/ibm_fpgen.sh
+?? tests/oracles/ibm_fpgen_test.py
+?? tests/oracles/rlibm_bridge.cpp
+?? tests/oracles/smt_fp.py
+?? tests/oracles/smt_fp.sh
+?? tests/oracles/smt_fp_lakefile.lean
+?? tests/oracles/smt_fp_test.py
+?? tests/oracles/softposit.sh
+?? tests/oracles/softposit_emitter.c
+?? tests/oracles/softposit_protocol_test.py
+?? tests/oracles/transcendental_compare.sh
+?? tests/oracles/transcendental_lakefile.lean
+?? tests/oracles/transcendental_mpfr.c
+?? tests/oracles/transcendental_report.py
+?? tests/oracles/transcendental_test.py

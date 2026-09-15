@@ -1,0 +1,3 @@
+cancelled_utc=2026-09-10T22:06:55Z
+job=floatlean-flit-rerun2
+reason=The run was healthy but could not finish before its 12-hour deadline. FLiT was calibrating timings serially for 140 compiler configurations even though this campaign only uses the output-variation results. The base lane had completed 13 configurations, OpenMPI had completed 4, and MPICH was still compiling. Their logs remain retained. Rerun 3 disables timing calibration, keeps the same complete GCC and Clang configuration matrix, imports every comparison into FLiT's SQLite database, and retains the raw outputs.

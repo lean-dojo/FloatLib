@@ -1,0 +1,1 @@
+RESULT format=f32 operation=mul rounding=minMag cases=169 value_mismatches=0 flag_mismatches=0 parse_errors=0

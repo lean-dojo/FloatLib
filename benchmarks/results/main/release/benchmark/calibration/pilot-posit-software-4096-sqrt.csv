@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,posit,posit4096,4096,sqrt,proved-software,posit width-generic integer-root prefix,result-dependent-fixture-chain,5,394498,13318982325964473369,13229619995401682952,0,0,0

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloatLib: verified floating point in Lean 4</title>
+    <meta name="description" content="A guide to FloatLib, a floating point library for Lean 4 whose executable arithmetic is proved to agree with its mathematical specification.">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/mathjax.css">
+    <script>
+      // Apply the stored theme before the first paint so the page does not flash.
+      (function () {
+        try {
+          // A ?theme=light|dark query pins the theme for this page load (useful for links and
+          // screenshots); otherwise the stored choice applies, then the system scheme.
+          var requested = new URLSearchParams(location.search).get('theme');
+          var stored = localStorage.getItem('floatlib-theme');
+          var theme = requested === 'light' || requested === 'dark' ? requested : stored;
+          if (theme === 'light' || theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', theme);
+          }
+        } catch (error) { /* localStorage may be unavailable; fall back to the system scheme */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

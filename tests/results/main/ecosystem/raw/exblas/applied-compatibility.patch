@@ -1,0 +1,35 @@
+diff --git a/src/common/vectorf256.h b/src/common/vectorf256.h
+index a03c821..5c6bc9f 100644
+--- a/src/common/vectorf256.h
++++ b/src/common/vectorf256.h
+@@ -700,7 +700,7 @@ static inline Vec8f operator - (float a, Vec8f const & b) {
+ // vector operator - : unary minus
+ // Change sign bit, even for 0, INF and NAN
+ static inline Vec8f operator - (Vec8f const & a) {
+-    return _mm256_xor_ps(a, constant8f<0x80000000,0x80000000,0x80000000,0x80000000,0x80000000,0x80000000,0x80000000,0x80000000> ());
++    return _mm256_xor_ps(a, constant8f<(-2147483647-1),(-2147483647-1),(-2147483647-1),(-2147483647-1),(-2147483647-1),(-2147483647-1),(-2147483647-1),(-2147483647-1)> ());
+ }
+ 
+ // vector operator -= : subtract
+@@ -1360,7 +1360,7 @@ static inline Vec4d operator - (double a, Vec4d const & b) {
+ // vector operator - : unary minus
+ // Change sign bit, even for 0, INF and NAN
+ static inline Vec4d operator - (Vec4d const & a) {
+-    return _mm256_xor_pd(a, _mm256_castps_pd(constant8f<0,0x80000000,0,0x80000000,0,0x80000000,0,0x80000000> ()));
++    return _mm256_xor_pd(a, _mm256_castps_pd(constant8f<0,(-2147483647-1),0,(-2147483647-1),0,(-2147483647-1),0,(-2147483647-1)> ()));
+ }
+ 
+ // vector operator -= : subtract
+diff --git a/src/common/vectori256.h b/src/common/vectori256.h
+index 0ee9885..8bbf3f7 100644
+--- a/src/common/vectori256.h
++++ b/src/common/vectori256.h
+@@ -4273,7 +4273,7 @@ static inline Vec8i compress (Vec4q const & low, Vec4q const & high) {
+ // Signed, with saturation
+ static inline Vec8i compress_saturated (Vec4q const & low, Vec4q const & high) {
+     Vec4q maxval = constant8i<0,0x7FFFFFFF,0,0x7FFFFFFF,0,0x7FFFFFFF,0,0x7FFFFFFF>();
+-    Vec4q minval = constant8i<80000000,0xFFFFFFFF,80000000,0xFFFFFFFF,80000000,0xFFFFFFFF,80000000,0xFFFFFFFF>();
++    Vec4q minval = constant8i<80000000,-1,80000000,-1,80000000,-1,80000000,-1>();
+     Vec4q low1   = min(low,maxval);
+     Vec4q high1  = min(high,maxval);
+     Vec4q low2   = max(low1,minval);

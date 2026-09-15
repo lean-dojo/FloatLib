@@ -1,0 +1,15 @@
+suite	repository	revision
+FloatLean	https://github.com/wadkisson/FloatLibrary.git	332491fd0acb7702b5730aa96bf5927063583d92
+FPBench	https://github.com/FPBench/FPBench.git	a6621d5f86276859bc01cc7b9c238dee73ff5dbe
+CORE-MATH	https://gitlab.inria.fr/core-math/core-math.git	68b034fbe9512781352d28f2dc9795c1686fe8e9
+SoftPosit	https://gitlab.com/cerlane/SoftPosit.git	17d5628185b31828b10c1f910c9bf65737e83640
+FLiT	https://github.com/PRUNERS/FLiT.git	27b6061b9d2302fa8c3252fe770287bb4d07905b
+ExBLAS	https://github.com/riakymch/exblas.git	856130ebcfe906f519a623d57d1359e744e29042
+Daisy	https://github.com/malyzajko/daisy.git	6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+FPTaylor	https://github.com/soarlab/FPTaylor.git	b5a77cae348400f21f83512210d9f43c4bffb381
+Herbie	https://github.com/herbie-fp/herbie.git	52cba77bdd002d6a71feecc2e57631c8d462b4b2
+IBM-FPgen-vectors	https://github.com/sergev/ieee754-test-suite.git	12e883a0c7b826976a8f1243318ac4b7626a0ffc
+ReproBLAS	https://github.com/peterahrens/ReproBLAS.git	dfb815058dd34b88caba2513cce63bc2e89f951f
+RLIBM-ALL	https://github.com/rutgers-apl/rlibm-all.git	90431a000071e415abf0f403b6125c385551e346
+Verificarlo	https://github.com/verificarlo/verificarlo.git	c5d1bf798a5ec617c138aa5e6629e1923411d3c8
+OpenLibm	https://github.com/JuliaMath/openlibm.git	5fe399749f9276eaa0b8403e507470da05cbbb3f

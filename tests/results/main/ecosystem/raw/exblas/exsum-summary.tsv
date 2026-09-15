@@ -1,0 +1,5 @@
+case	exit_status	exact_superacc_mpfr	all_expansions
+24	0	pass	pass
+24 2 0 n	0	pass	pass
+24 50 0 n	0	pass	fail
+24 1e+50 0 i	0	pass	pass

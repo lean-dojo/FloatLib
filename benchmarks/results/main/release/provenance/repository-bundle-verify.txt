@@ -1,0 +1,18 @@
+/efs/robert/pde/FloatLibrary-campaigns/20260911T123411Z/source/FloatLibrary-repository.bundle is okay
+The bundle contains these 14 refs:
+18e27a6481ac7120a8e2445a6990d64d53bcfcb2 refs/heads/backup/robert-float-pre-latest-main-sync-20260904-18e27a6
+18e27a6481ac7120a8e2445a6990d64d53bcfcb2 refs/heads/backup/robert-float-pre-main-sync-20260904-18e27a6
+35dbf5486ac12fdd6b9f8025aecc8dda743ca0e8 refs/heads/backup/robert-float-pre-sync-20260904
+332491fd0acb7702b5730aa96bf5927063583d92 refs/heads/main
+6e98477692f2a3d0a97db97507256d34aeba6831 refs/heads/robert-float
+332491fd0acb7702b5730aa96bf5927063583d92 refs/remotes/origin/HEAD
+332491fd0acb7702b5730aa96bf5927063583d92 refs/remotes/origin/main
+6e98477692f2a3d0a97db97507256d34aeba6831 refs/remotes/origin/robert-float
+48d9d516d6366532eb78655cc85bcf99e2a90003 refs/remotes/origin/website-and-paper
+fa66df63ac5fb196371d327cb830822ca02189f8 refs/stash
+332491fd0acb7702b5730aa96bf5927063583d92 HEAD
+fd39a4a0dc01fb80aa89cc5f4dc85f003fc98d71 worktrees/floatlibrary-nativefpu-tree-qDyWPy/HEAD
+332491fd0acb7702b5730aa96bf5927063583d92 worktrees/floatlean-perf-harness-332491f/HEAD
+332491fd0acb7702b5730aa96bf5927063583d92 worktrees/floatlean-main-332491f/HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1

@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-core-math-shards
+  labels:
+    app: floatlean-core-math-shards
+    campaign: "20260910t150728z"
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 5
+  backoffLimitPerIndex: 0
+  maxFailedIndexes: 5
+  activeDeadlineSeconds: 129600
+  template:
+    metadata:
+      labels:
+        app: floatlean-core-math-shards
+        campaign: "20260910t150728z"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: campaign
+                    operator: In
+                    values: ["20260910t150728z"]
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: suite
+          image: ubuntu:24.04
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-lc"]
+          args:
+            - |
+              exec /bin/bash /efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/control/run-core-math-shard.sh
+          env:
+            - name: SHARD_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+            - name: SHARD_COUNT
+              value: "5"
+            - name: CPU_LIMIT
+              value: "180"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "180"
+              memory: 300Gi
+            limits:
+              cpu: "180"
+              memory: 300Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc

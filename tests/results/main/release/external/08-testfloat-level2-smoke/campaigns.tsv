@@ -1,0 +1,3 @@
+operation	f16	add	rnear_even	near_even	none
+operation	f32	sqrt	rmax	max	none
+conversion	f32	bf16	rnear_even	near_even	none

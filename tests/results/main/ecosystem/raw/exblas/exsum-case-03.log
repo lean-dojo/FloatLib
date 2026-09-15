@@ -1,0 +1,10 @@
+16777216 50.000000 
+  exsum with superacc = 1.819919816617704e+115
+  exsum with FPE2 and superacc = 1.788655343999409e+121
+  exsum with FPE4 and superacc = 1.157956000135394e+128
+  exsum with FPE4 early-exit and superacc = 1.157956000135394e+128
+  exsum with FPE6 early-exit and superacc = 5.003715964726847e+134
+  exsum with FPE8 early-exit and superacc = 1.171217454111903e+141
+  exsum with MPFR = 1.819919816617704e+115
+FAILED: 982819.961488073 	 6362675924301.199 	 6362675924301.199 	 2.7494156165771e+19 	 6.435544266387483e+25
+TestFailed!

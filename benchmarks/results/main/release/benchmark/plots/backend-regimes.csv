@@ -1,0 +1,155 @@
+series,operation,regimeMarker,firstTotalBits,lastTotalBits,backend,formats,trials
+ExecFloat Posit proved software,add,R001,2,8,posit exhaustive encoded-value table,posit2;posit3;posit4;posit5;posit6;posit7;posit8,9
+ExecFloat Posit proved software,add,R002,16,64,posit direct packed-word exact sum,posit16;posit32;posit64,9
+ExecFloat Posit proved software,add,R003,128,128,posit direct packed-pair exact sum,posit128,9
+ExecFloat Posit proved software,add,R004,256,4096,posit direct exact-dyadic sum,posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (software),add,R005,5,5,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<5; es=2>,posit5-es2,9
+Stillwater Universal Posit (software),add,R006,6,6,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<6; es=2>,posit6-es2,9
+Stillwater Universal Posit (software),add,R007,7,7,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<7; es=2>,posit7-es2,9
+Stillwater Universal Posit (software),add,R008,8,8,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<8; es=2>,posit8-es2,9
+Stillwater Universal Posit (software),add,R009,16,16,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<16; es=2>,posit16-es2,9
+Stillwater Universal Posit (software),add,R010,32,32,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<32; es=2>,posit32-es2,9
+Stillwater Universal Posit (software),add,R011,64,64,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<64; es=2>,posit64-es2,9
+Stillwater Universal Posit (software),add,R012,128,128,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<128; es=2>,posit128-es2,9
+Stillwater Universal Posit (software),add,R013,256,256,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<256; es=2>,posit256-es2,9
+Stillwater Universal Posit (software),add,R014,512,512,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<512; es=2>,posit512-es2,9
+Stillwater Universal Posit (software),add,R015,1024,1024,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<1024; es=2>,posit1024-es2,9
+Stillwater Universal Posit (software),add,R016,2048,2048,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<2048; es=2>,posit2048-es2,9
+Stillwater Universal Posit (software),add,R017,4096,4096,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,posit4096-es2,9
+ExecFloat binary proved software,add,R018,4,8,binary-interchange addition exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3;binary8-e4m3,9
+ExecFloat binary proved software,add,R019,16,16,binary-interchange addition native-word kernel,binary16,9
+ExecFloat binary proved software,add,R020,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,add,R021,128,128,binary-interchange addition fixed-limb kernel,binary128,9
+ExecFloat binary proved software,add,R022,256,4096,binary-interchange addition exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,add,R023,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,add,R024,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),add,R025,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,add,R026,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,add,R027,64,64,C double host FPU,binary64,9
+CPython float64 runtime,add,R028,64,64,CPython 3.11.2 float expression; interpreter and object overhead included,python-float64,9
+ExecFloat Posit proved software,sub,R029,2,8,posit exhaustive encoded-value table,posit2;posit3;posit4;posit5;posit6;posit7;posit8,9
+ExecFloat Posit proved software,sub,R030,16,64,posit direct packed-word exact difference,posit16;posit32;posit64,9
+ExecFloat Posit proved software,sub,R031,128,128,posit direct packed-pair exact difference,posit128,9
+ExecFloat Posit proved software,sub,R032,256,4096,posit direct exact-dyadic difference,posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (software),sub,R033,5,5,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<5; es=2>,posit5-es2,9
+Stillwater Universal Posit (software),sub,R034,6,6,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<6; es=2>,posit6-es2,9
+Stillwater Universal Posit (software),sub,R035,7,7,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<7; es=2>,posit7-es2,9
+Stillwater Universal Posit (software),sub,R036,8,8,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<8; es=2>,posit8-es2,9
+Stillwater Universal Posit (software),sub,R037,16,16,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<16; es=2>,posit16-es2,9
+Stillwater Universal Posit (software),sub,R038,32,32,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<32; es=2>,posit32-es2,9
+Stillwater Universal Posit (software),sub,R039,64,64,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<64; es=2>,posit64-es2,9
+Stillwater Universal Posit (software),sub,R040,128,128,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<128; es=2>,posit128-es2,9
+Stillwater Universal Posit (software),sub,R041,256,256,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<256; es=2>,posit256-es2,9
+Stillwater Universal Posit (software),sub,R042,512,512,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<512; es=2>,posit512-es2,9
+Stillwater Universal Posit (software),sub,R043,1024,1024,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<1024; es=2>,posit1024-es2,9
+Stillwater Universal Posit (software),sub,R044,2048,2048,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<2048; es=2>,posit2048-es2,9
+Stillwater Universal Posit (software),sub,R045,4096,4096,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,posit4096-es2,9
+ExecFloat binary proved software,sub,R046,4,8,binary-interchange subtraction exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3;binary8-e4m3,9
+ExecFloat binary proved software,sub,R047,16,16,binary-interchange subtraction native-word kernel,binary16,9
+ExecFloat binary proved software,sub,R048,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,sub,R049,128,128,binary-interchange subtraction fixed-limb kernel,binary128,9
+ExecFloat binary proved software,sub,R050,256,4096,binary-interchange subtraction exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,sub,R051,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,sub,R052,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),sub,R053,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,sub,R054,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,sub,R055,64,64,C double host FPU,binary64,9
+CPython float64 runtime,sub,R056,64,64,CPython 3.11.2 float expression; interpreter and object overhead included,python-float64,9
+ExecFloat Posit proved software,mul,R057,2,8,posit exhaustive encoded-value table,posit2;posit3;posit4;posit5;posit6;posit7;posit8,9
+ExecFloat Posit proved software,mul,R058,16,64,posit direct packed-word exact product,posit16;posit32;posit64,9
+ExecFloat Posit proved software,mul,R059,128,128,posit direct packed-pair exact product,posit128,9
+ExecFloat Posit proved software,mul,R060,256,4096,posit direct exact-dyadic product,posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (software),mul,R061,5,5,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<5; es=2>,posit5-es2,9
+Stillwater Universal Posit (software),mul,R062,6,6,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<6; es=2>,posit6-es2,9
+Stillwater Universal Posit (software),mul,R063,7,7,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<7; es=2>,posit7-es2,9
+Stillwater Universal Posit (software),mul,R064,8,8,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<8; es=2>,posit8-es2,9
+Stillwater Universal Posit (software),mul,R065,16,16,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<16; es=2>,posit16-es2,9
+Stillwater Universal Posit (software),mul,R066,32,32,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<32; es=2>,posit32-es2,9
+Stillwater Universal Posit (software),mul,R067,64,64,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<64; es=2>,posit64-es2,9
+Stillwater Universal Posit (software),mul,R068,128,128,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<128; es=2>,posit128-es2,9
+Stillwater Universal Posit (software),mul,R069,256,256,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<256; es=2>,posit256-es2,9
+Stillwater Universal Posit (software),mul,R070,512,512,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<512; es=2>,posit512-es2,9
+Stillwater Universal Posit (software),mul,R071,1024,1024,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<1024; es=2>,posit1024-es2,9
+Stillwater Universal Posit (software),mul,R072,2048,2048,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<2048; es=2>,posit2048-es2,9
+Stillwater Universal Posit (software),mul,R073,4096,4096,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,posit4096-es2,9
+ExecFloat binary proved software,mul,R074,4,8,binary-interchange multiplication exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3;binary8-e4m3,9
+ExecFloat binary proved software,mul,R075,16,16,binary-interchange multiplication native-word kernel,binary16,9
+ExecFloat binary proved software,mul,R076,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,mul,R077,128,128,binary-interchange multiplication fixed-limb kernel,binary128,9
+ExecFloat binary proved software,mul,R078,256,4096,binary-interchange multiplication exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,mul,R079,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,mul,R080,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),mul,R081,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,mul,R082,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,mul,R083,64,64,C double host FPU,binary64,9
+CPython float64 runtime,mul,R084,64,64,CPython 3.11.2 float expression; interpreter and object overhead included,python-float64,9
+ExecFloat Posit proved software,div,R085,2,8,posit exhaustive encoded-value table,posit2;posit3;posit4;posit5;posit6;posit7;posit8,9
+ExecFloat Posit proved software,div,R086,16,64,posit direct packed-word exact quotient,posit16;posit32;posit64,9
+ExecFloat Posit proved software,div,R087,128,4096,posit width-generic quotient-prefix,posit128;posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (software),div,R088,5,5,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<5; es=2>,posit5-es2,9
+Stillwater Universal Posit (software),div,R089,6,6,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<6; es=2>,posit6-es2,9
+Stillwater Universal Posit (software),div,R090,7,7,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<7; es=2>,posit7-es2,9
+Stillwater Universal Posit (software),div,R091,8,8,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<8; es=2>,posit8-es2,9
+Stillwater Universal Posit (software),div,R092,16,16,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<16; es=2>,posit16-es2,9
+Stillwater Universal Posit (software),div,R093,32,32,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<32; es=2>,posit32-es2,9
+Stillwater Universal Posit (software),div,R094,64,64,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<64; es=2>,posit64-es2,9
+Stillwater Universal Posit (software),div,R095,128,128,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<128; es=2>,posit128-es2,9
+Stillwater Universal Posit (software),div,R096,256,256,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<256; es=2>,posit256-es2,9
+Stillwater Universal Posit (software),div,R097,512,512,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<512; es=2>,posit512-es2,9
+Stillwater Universal Posit (software),div,R098,1024,1024,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<1024; es=2>,posit1024-es2,9
+Stillwater Universal Posit (software),div,R099,2048,2048,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<2048; es=2>,posit2048-es2,9
+Stillwater Universal Posit (software),div,R100,4096,4096,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,posit4096-es2,9
+ExecFloat binary proved software,div,R101,4,8,binary-interchange division exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3;binary8-e4m3,9
+ExecFloat binary proved software,div,R102,16,16,binary-interchange division native-word kernel,binary16,9
+ExecFloat binary proved software,div,R103,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,div,R104,128,128,binary-interchange division fixed-limb kernel,binary128,9
+ExecFloat binary proved software,div,R105,256,4096,binary-interchange division exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,div,R106,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,div,R107,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),div,R108,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,div,R109,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,div,R110,64,64,C double host FPU,binary64,9
+CPython float64 runtime,div,R111,64,64,CPython 3.11.2 float expression; interpreter and object overhead included,python-float64,9
+ExecFloat Posit proved software,sqrt,R112,2,8,posit exhaustive encoded-value table,posit2;posit3;posit4;posit5;posit6;posit7;posit8,9
+ExecFloat Posit proved software,sqrt,R113,16,64,posit direct packed-word exact square root,posit16;posit32;posit64,9
+ExecFloat Posit proved software,sqrt,R114,128,128,posit direct packed-pair exact square root,posit128,9
+ExecFloat Posit proved software,sqrt,R115,256,4096,posit width-generic integer-root prefix,posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (hardware-assisted),sqrt,R116,5,32,Universal 26e69f5487b2e592b82002751d900a2437641fad posit-to-binary64 hardware sqrt,posit5-es2;posit6-es2;posit7-es2;posit8-es2;posit16-es2;posit32-es2,9
+ExecFloat binary proved software,sqrt,R117,4,8,binary-interchange square root exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3;binary8-e4m3,9
+ExecFloat binary proved software,sqrt,R118,16,16,binary-interchange square root native-word kernel,binary16,9
+ExecFloat binary proved software,sqrt,R119,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,sqrt,R120,128,128,binary-interchange square root fixed-limb kernel,binary128,9
+ExecFloat binary proved software,sqrt,R121,256,4096,binary-interchange square root exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,sqrt,R122,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,sqrt,R123,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),sqrt,R124,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,sqrt,R125,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,sqrt,R126,64,64,C double host FPU,binary64,9
+CPython float64 runtime,sqrt,R127,64,64,CPython 3.11.2 float expression; interpreter and object overhead included,python-float64,9
+ExecFloat Posit proved software,fma,R128,2,64,posit direct packed-word exact fused accumulation,posit2;posit3;posit4;posit5;posit6;posit7;posit8;posit16;posit32;posit64,9
+ExecFloat Posit proved software,fma,R129,128,128,posit direct packed-pair exact fused accumulation,posit128,9
+ExecFloat Posit proved software,fma,R130,256,4096,posit direct exact-dyadic fused accumulation,posit256;posit512;posit1024;posit2048;posit4096,9
+Stillwater Universal Posit (software),fma,R131,5,5,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<5; es=2>,posit5-es2,9
+Stillwater Universal Posit (software),fma,R132,6,6,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<6; es=2>,posit6-es2,9
+Stillwater Universal Posit (software),fma,R133,7,7,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<7; es=2>,posit7-es2,9
+Stillwater Universal Posit (software),fma,R134,8,8,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<8; es=2>,posit8-es2,9
+Stillwater Universal Posit (software),fma,R135,16,16,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<16; es=2>,posit16-es2,9
+Stillwater Universal Posit (software),fma,R136,32,32,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<32; es=2>,posit32-es2,9
+Stillwater Universal Posit (software),fma,R137,64,64,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<64; es=2>,posit64-es2,9
+Stillwater Universal Posit (software),fma,R138,128,128,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<128; es=2>,posit128-es2,9
+Stillwater Universal Posit (software),fma,R139,256,256,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<256; es=2>,posit256-es2,9
+Stillwater Universal Posit (software),fma,R140,512,512,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<512; es=2>,posit512-es2,9
+Stillwater Universal Posit (software),fma,R141,1024,1024,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<1024; es=2>,posit1024-es2,9
+Stillwater Universal Posit (software),fma,R142,2048,2048,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<2048; es=2>,posit2048-es2,9
+Stillwater Universal Posit (software),fma,R143,4096,4096,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,posit4096-es2,9
+ExecFloat binary proved software,fma,R144,4,7,binary-interchange fused multiply-add exhaustive table,binary4-e2m1;binary5-e2m2;binary6-e3m2;binary7-e3m3,9
+ExecFloat binary proved software,fma,R145,8,8,binary-interchange fused multiply-add exact baseline,binary8-e4m3,9
+ExecFloat binary proved software,fma,R146,16,16,binary-interchange fused multiply-add native-word kernel,binary16,9
+ExecFloat binary proved software,fma,R147,32,64,configured proved word kernel,binary32;binary64,9
+ExecFloat binary proved software,fma,R148,128,128,binary-interchange fused multiply-add fixed-limb kernel,binary128,9
+ExecFloat binary proved software,fma,R149,256,4096,binary-interchange fused multiply-add exact baseline,binary256-custom-e19m236;binary512-custom-e19m492;binary1024-custom-e19m1004;binary2048-custom-e19m2028;binary4096-custom-e19m4076,9
+Berkeley SoftFloat IEEE software,fma,R150,32,64,SoftFloat 3e,binary32;binary64,9
+MPFR (binary) software reference,fma,R151,4,4096,MPFR 4.2.0 RNDN with matched exponent range and gradual underflow,mpfr-binary4-p2-e2;mpfr-binary5-p3-e2;mpfr-binary6-p3-e3;mpfr-binary7-p4-e3;mpfr-binary8-p4-e4;mpfr-binary16-p11-e5;mpfr-binary32-p24-e8;mpfr-binary64-p53-e11;mpfr-binary128-p113-e15;mpfr-binary256-p237-e19;mpfr-binary512-p493-e19;mpfr-binary1024-p1005-e19;mpfr-binary2048-p2029-e19;mpfr-binary4096-p4077-e19,9
+Flocq binary reference (precision model),fma,R152,4,4096,Flocq 4.2.2 extracted OCaml Zarith,flocq-p2;flocq-p3;flocq-p3;flocq-p4;flocq-p4;flocq-p11;flocq-p24;flocq-p53;flocq-p113;flocq-p237;flocq-p493;flocq-p1005;flocq-p2029;flocq-p4077,9
+Native C IEEE FPU,fma,R153,32,32,C float host FPU,binary32,9
+Native C IEEE FPU,fma,R154,64,64,C double host FPU,binary64,9

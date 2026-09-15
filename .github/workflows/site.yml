@@ -1,0 +1,151 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+env:
+  FLOATLIB_BUILD_DIR: ${{ github.workspace }}/.lake/build
+  OUT_DIR: ${{ github.workspace }}/_out/site
+
+jobs:
+  setup:
+    name: Check Pages setup
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      - name: Check the publishing source
+        id: pages
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let enabled = false;
+            try {
+              const { data } = await github.request(
+                'GET /repos/{owner}/{repo}/pages', context.repo
+              );
+              enabled = data.build_type === 'workflow';
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            core.setOutput('enabled', enabled);
+            if (!enabled) {
+              core.notice('Enable GitHub Pages and select GitHub Actions as its source.');
+              await core.summary
+                .addHeading('Enable GitHub Pages to publish the website')
+                .addRaw(
+                  'In Settings → Pages, select GitHub Actions as the publishing source, ' +
+                  'then run Actions → Website → Run workflow. ' +
+                  'The build and deployment are skipped until Pages is configured.'
+                )
+                .write();
+            }
+
+  build:
+    name: Build the checked website
+    needs: setup
+    if: needs.setup.outputs.enabled == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Prepare the runner
+        run: |
+          set -euo pipefail
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift
+          sudo apt-get update
+          sudo apt-get install --yes rsync ripgrep
+          sudo fallocate -l 8G /swapfile-floatlib-site
+          sudo chmod 600 /swapfile-floatlib-site
+          sudo mkswap /swapfile-floatlib-site
+          sudo swapon /swapfile-floatlib-site
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install website dependencies
+        run: |
+          python3 -m pip install matplotlib==3.11.0
+          npm install --global corepack@0.35.0
+
+      - name: Install the Lean toolchain
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-mathlib-cache: false
+          use-github-cache: false
+
+      - name: Restore compiled Lean dependencies and library
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake/packages
+            ${{ env.FLOATLIB_BUILD_DIR }}
+          key: floatlib-site-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            floatlib-site-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
+
+      - name: Build FloatLib
+        run: |
+          set -euo pipefail
+          source tests/lib/lake.sh
+          floatlib_lake exe cache get
+          olean_count="$(find .lake/packages -name '*.olean' -print | wc -l)"
+          if [ "$olean_count" -lt 1000 ]; then
+            echo "The Mathlib cache is missing; refusing to compile it from source." >&2
+            exit 1
+          fi
+          floatlib_lake build FloatLib
+
+      - name: Check examples and build the website
+        run: bash site/build.sh --require-clean
+
+      - name: Upload the website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ env.OUT_DIR }}
+
+  deploy:
+    name: Publish to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy the website
+        id: deployment
+        uses: actions/deploy-pages@v4

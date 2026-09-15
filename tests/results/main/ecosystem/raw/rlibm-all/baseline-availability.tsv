@@ -1,0 +1,5 @@
+baseline	status	reason
+intel	UNAVAILABLE	classic ICC and libimf absent
+crlibm	UNAVAILABLE	header and static archive absent from pinned revision
+glibc-sinpi-cospi	UNSUPPORTED	no upstream harness
+crlibm-exp2-exp10	UNSUPPORTED	no upstream Makefile targets

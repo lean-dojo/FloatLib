@@ -1,0 +1,12 @@
+binary32	erff	PASS
+binary32	log1pf	PASS
+binary32	sinpif	PASS
+binary64	acospi	PASS
+binary64	atanh	PASS
+binary64	erfc	PASS
+binary64	hypot	PASS
+binary64	log2p1	PASS
+binary64	tan	PASS
+binaryb16	asin_bf16	PASS
+binaryb16	atanpi_bf16	PASS
+binaryb16	erfc_bf16	PASS

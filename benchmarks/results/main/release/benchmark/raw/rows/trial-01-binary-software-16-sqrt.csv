@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,binary-interchange,binary16,16,sqrt,proved-software,binary-interchange square root native-word kernel,result-dependent-fixture-chain,199378,200019060,13743508889826574281,1794201660863734602,256,6810241611482138117,15355967655783802056

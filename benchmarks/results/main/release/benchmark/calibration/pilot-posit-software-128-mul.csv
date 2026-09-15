@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,posit,posit128,128,mul,proved-software,posit direct packed-pair exact product,result-dependent-fixture-chain,5000,6108303,6203452107824050829,2023113292284750610,0,0,0

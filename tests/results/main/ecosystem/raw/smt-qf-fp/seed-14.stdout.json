@@ -1,0 +1,46 @@
+{
+  "adapter": "smt_fp",
+  "counts": {
+    "bit_mismatches": 0,
+    "exact_bit_cases": 7724,
+    "generated": 9060,
+    "mismatches": 0,
+    "missing_floatlean": 0,
+    "nan_class_cases": 1336,
+    "nan_class_mismatches": 0,
+    "protocol_errors": 0,
+    "tool_failures": 0
+  },
+  "formats": [
+    "f16",
+    "f32",
+    "f64"
+  ],
+  "mismatch_samples": [],
+  "nan_policy": "QF_FP has one abstract NaN; compare NaN class, not payload or signaling bit.",
+  "operations": [
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "sqrt",
+    "fma",
+    "cast"
+  ],
+  "random_per_format": 64,
+  "results": "/efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/results/smt-qf-fp-rerun3/seed-14",
+  "rounding_modes": [
+    "rne",
+    "rtz",
+    "rtp",
+    "rtn"
+  ],
+  "seed": 1592614652,
+  "solver": {
+    "logic": "QF_FP",
+    "name": "Z3",
+    "path": "/usr/bin/z3",
+    "version": "Z3 version 4.8.12 - 64 bit"
+  },
+  "status": "pass"
+}

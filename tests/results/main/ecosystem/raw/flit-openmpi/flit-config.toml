@@ -1,0 +1,41 @@
+[[compiler]]
+binary = "g++"
+name = "g++"
+type = "gcc"
+fixed_compile_flags = ""
+fixed_link_flags = ""
+optimization_levels = [ "-O0", "-O1", "-O2", "-O3",]
+switches_list = [ "-fassociative-math", "-fcx-fortran-rules", "-fcx-limited-range", "-fexcess-precision=fast", "-ffinite-math-only", "-ffloat-store", "-ffp-contract=on", "-fmerge-all-constants", "-fno-trapping-math", "-freciprocal-math", "-frounding-math", "-fsignaling-nans", "-funsafe-math-optimizations", "-mavx", "-mavx2 -mfma", "-mfpmath=sse -mtune=native", "",]
+
+[[compiler]]
+binary = "clang++"
+name = "clang++"
+type = "clang"
+fixed_compile_flags = ""
+fixed_link_flags = ""
+optimization_levels = [ "-O0", "-O1", "-O2", "-O3",]
+switches_list = [ "-fassociative-math", "-fexcess-precision=fast", "-fexcess-precision=standard", "-ffinite-math-only", "-ffloat-store", "-ffp-contract=on", "-fmerge-all-constants", "-fno-trapping-math", "-freciprocal-math", "-frounding-math", "-fsignaling-nans", "-fsingle-precision-constant", "-funsafe-math-optimizations", "-march=core-avx2", "-mavx", "-mavx2 -mfma", "-mfpmath=sse -mtune=native", "",]
+
+[host]
+flit_path = "/work/flit-openmpi-rerun5/install/share/flit/scripts/flit.py"
+config_dir = "/work/flit-openmpi-rerun5/install/share/flit/config"
+
+[database]
+type = "sqlite"
+filepath = "results.sqlite"
+
+[run]
+timing = false
+timing_loops = -1
+timing_repeats = 3
+enable_mpi = true
+
+[dev_build]
+compiler_name = "g++"
+optimization_level = "-O2"
+switches = "-funsafe-math-optimizations"
+
+[ground_truth]
+compiler_name = "g++"
+optimization_level = "-O0"
+switches = ""

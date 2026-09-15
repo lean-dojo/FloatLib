@@ -1,0 +1,6 @@
+campaign_id=20260910T190535Z
+run_mode=conformance
+run_exit_code=1
+finished_utc=2026-09-10T20:07:28Z
+pod_name=floatlean-conf-20260910-190535-qnx96
+node_name=ip-10-2-13-41.ec2.internal

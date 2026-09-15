@@ -1,0 +1,15 @@
+binary32	exp10m1f	PASS
+binary32	log2p1f	PASS
+binary32	tanhf	PASS
+binary64	asinh	PASS
+binary64	cbrt	PASS
+binary64	exp10	PASS
+binary64	log	PASS
+binary64	rsqrt	PASS
+binary64	tanpi	PASS
+binaryb16	asinpi_bf16	PASS
+binaryb16	compound_bf16	FAIL(2)
+binaryb16	exp10_bf16	PASS
+binaryb16	log_bf16	PASS
+binaryb16	rsqrt_bf16	PASS
+binaryb16	tanh_bf16	PASS

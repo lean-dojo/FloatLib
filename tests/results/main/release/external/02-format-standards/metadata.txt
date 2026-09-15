@@ -1,0 +1,9 @@
+timestamp_utc=2026-09-10T19:25:22Z
+lean_revision=332491fd0acb7702b5730aa96bf5927063583d92
+p3109_revision=34f5964d9bb2382b2665d15467fc3517b990b308
+onnx_version=1.22.0
+numpy_version=2.4.6
+p3109_maximum_width=16
+workers=90
+cpu_set=none
+worktree_diff_sha256=336e6e715351a925c81755fd0a7348f16b72133d4faf6e673df57385ecbe4e3f

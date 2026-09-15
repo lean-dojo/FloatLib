@@ -1,0 +1,7 @@
+case	file	line	source
+1	Rounding.fptest	505	b32V > x +1.2F0CB2P110 -> +1.15B000P55 
+2	Rounding.fptest	510	b32V > +1.090762P14 -> +1.047000P7 
+3	Rounding.fptest	511	b32V > +1.5475B7P72 -> +1.24E89DP36 x
+4	Rounding.fptest	512	b32V > +1.062D9AP68 -> +1.030D7CP34 x
+5	Rounding.fptest	513	b32V > +1.54DB22P-83 -> +1.696EF1P-42 x
+6	Rounding.fptest	514	b32V > +1.7DFD17P105 -> +1.7EFE0AP52 x

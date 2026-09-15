@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-verificarlo-rerun2
+  labels:
+    app: floatlean-external-ecosystem
+    campaign: "20260910t150728z"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 86400
+  template:
+    metadata:
+      labels:
+        app: floatlean-external-ecosystem
+        campaign: "20260910t150728z"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: floatlean-external-ecosystem
+                  campaign: "20260910t150728z"
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: verificarlo
+          image: ubuntu:24.04@sha256:a61567bd31828687156d735ea8eb01ba4e37636e225dd6a48ba94136a70d9d61
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-lc"]
+          args:
+            - exec /bin/bash /efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/control/run-verificarlo-rerun2.sh
+          env:
+            - name: BUILD_JOBS
+              value: "180"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "180"
+              memory: 300Gi
+            limits:
+              cpu: "180"
+              memory: 300Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc

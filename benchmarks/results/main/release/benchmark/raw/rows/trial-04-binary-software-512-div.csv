@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+ExecFloat,binary-interchange,binary512-custom-e19m492,512,div,proved-software,binary-interchange division exact baseline,result-dependent-fixture-chain,53945,193938491,6031131514200487383,519717849030286832,256,62298687186005074,17373276729749537051

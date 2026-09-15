@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  # CI is paused. Keep the workflow available for manual use after re-enabling it.
+  workflow_dispatch:
+
+concurrency:
+  group: floatlib-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Absolute so `lake exe cache get` and every later `-KbuildDir` see the same path.
+  # A relative `.lake/build` here plus an absolute path from tests/lib/lake.sh makes
+  # Lake miss the mathlib oleans and compile Mathlib from source until the job times out.
+  FLOATLIB_BUILD_DIR: ${{ github.workspace }}/.lake/build
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      # Mathlib oleans are several GiB. Drop unused hosted-image SDKs before Lake, not after.
+      - name: Free disk on the hosted runner
+        run: |
+          set -euo pipefail
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift
+          sudo docker image prune --all --force || true
+          df -h
+
+      - name: Install independent-oracle dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libmpfr-dev pkg-config ripgrep
+
+      # Toolchain only. Do not let lean-action run `lake exe cache get` or cache `.lake`:
+      # those use Lake's default buildDir, which does not match FLOATLIB_BUILD_DIR.
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-mathlib-cache: false
+          use-github-cache: false
+
+      - name: Restore the mathlib cache
+        run: |
+          set -euo pipefail
+          if [ ! -f lake-manifest.json ]; then
+            echo "lake-manifest.json is missing" >&2
+            exit 1
+          fi
+          # shellcheck source=tests/lib/lake.sh
+          source tests/lib/lake.sh
+          floatlib_lake exe cache get
+          df -h
+          # Cache writes into `.lake/packages/<dep>/.lake/build`, not FLOATLIB_BUILD_DIR.
+          # `find missing-dir …` exits 1; with `pipefail` that aborted the step after a
+          # successful decompress.
+          olean_roots=()
+          if [ -d .lake/packages ]; then
+            olean_roots+=(.lake/packages)
+          fi
+          if [ -d "$FLOATLIB_BUILD_DIR" ]; then
+            olean_roots+=("$FLOATLIB_BUILD_DIR")
+          fi
+          if [ "${#olean_roots[@]}" -eq 0 ]; then
+            echo "no Lake artifact directories after cache get" >&2
+            exit 1
+          fi
+          olean_count="$(find "${olean_roots[@]}" -name '*.olean' -print | wc -l | tr -d ' ')"
+          echo "olean files after cache get: ${olean_count}"
+          if [ "${olean_count}" -lt 1000 ]; then
+            echo "mathlib cache restore did not produce oleans; refusing to compile Mathlib from source" >&2
+            exit 1
+          fi
+
+      - name: Verify library, conformance, and native regressions
+        run: bash tests/verify.sh
+
+      # Smoke oracles only. Not TestFloat, P3109 tables, Arb, or check.sh --profile release.
+      - name: Cross-check primitives, reductions, and binary16 against MPFR
+        run: |
+          tests/oracles/mpfr.sh
+          tests/oracles/binary16-exhaustive.sh add 32768 65536
+          tests/oracles/binary16-exhaustive.sh mul 32000 65536
+
+      # Linking execFloatSweep can exceed the hosted runner's RAM. Extra swap is only for
+      # that peak; it does not change the executable. Use a private path: ubuntu-latest
+      # already has /swapfile, and fallocate refuses a busy file.
+      - name: Add swap for the benchmark executable link
+        run: |
+          set -euo pipefail
+          df -h
+          avail_kib="$(df -Pk / | awk 'NR==2 {print $4}')"
+          headroom_kib="$((2 * 1024 * 1024))"
+          max_kib="$((8 * 1024 * 1024))"
+          min_kib="$((2 * 1024 * 1024))"
+          usable_kib="$((avail_kib - headroom_kib))"
+          if [ "$usable_kib" -gt "$max_kib" ]; then
+            swap_kib="$max_kib"
+          else
+            swap_kib="$usable_kib"
+          fi
+          if [ "$swap_kib" -lt "$min_kib" ]; then
+            echo "not enough free disk for swap (available ${avail_kib} KiB)" >&2
+            exit 1
+          fi
+          sudo fallocate -l "${swap_kib}KiB" /swapfile-floatlib
+          sudo chmod 600 /swapfile-floatlib
+          sudo mkswap /swapfile-floatlib
+          sudo swapon /swapfile-floatlib
+          free -h
+          swapon --show
+
+      - name: Check the benchmark workspace and command interface
+        run: bash benchmarks/scripts/checks/harness.sh
+
+      - name: Validate the website's Lean examples and theorem links
+        run: |
+          bash site/tooling/export.sh
+          python3 site/tooling/check_chapters.py --strict

@@ -1,0 +1,4 @@
+    PID    PPID PSR STAT     ELAPSED %CPU %MEM COMMAND
+      1       0  90 Ss         00:20  0.0  0.0 /bin/bash /efs/robert/pde/FloatLibrary-campaigns/20260911T123411Z/jobs/run-entrypoint.sh
+     13       1 160 S          00:20  0.0  0.0 tee -a /efs/robert/pde/FloatLibrary-campaigns/20260911T123411Z/logs/benchmark.log
+   5477       1  50 R          00:00  0.0  0.0 ps -eo pid,ppid,psr,stat,etime,pcpu,pmem,args

@@ -1,0 +1,7 @@
+timestamp_utc=2026-09-10T19:18:43Z
+head_revision=332491fd0acb7702b5730aa96bf5927063583d92
+profile=release
+workers=90
+cpu_set=none
+leanfloat_build_dir=/work/floatlean-conformance/build
+worktree_diff_sha256=336e6e715351a925c81755fd0a7348f16b72133d4faf6e673df57385ecbe4e3f

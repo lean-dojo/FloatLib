@@ -1,0 +1,266 @@
+{
+  "counters": {
+    "case_records": 130471,
+    "decimal": 37296,
+    "emitted": 81513,
+    "files": 33,
+    "lines": 130594,
+    "no_result": 4314,
+    "non_case_lines": 123,
+    "trap_produced": 3336,
+    "unsupported": 4012,
+    "unsupported_nan_precedence": 92,
+    "unsupported_nan_sign": 6,
+    "unsupported_operation": 0,
+    "unsupported_rounding_mode": 0,
+    "unsupported_underflow_convention": 3914
+  },
+  "groups": [
+    {
+      "cases": 41,
+      "format": "f32",
+      "operation": "abs",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 166,
+      "format": "f32",
+      "operation": "add",
+      "rounding": "max"
+    },
+    {
+      "cases": 156,
+      "format": "f32",
+      "operation": "add",
+      "rounding": "min"
+    },
+    {
+      "cases": 141,
+      "format": "f32",
+      "operation": "add",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 18186,
+      "format": "f32",
+      "operation": "add",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 41,
+      "format": "f32",
+      "operation": "copy",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 134,
+      "format": "f32",
+      "operation": "div",
+      "rounding": "max"
+    },
+    {
+      "cases": 136,
+      "format": "f32",
+      "operation": "div",
+      "rounding": "min"
+    },
+    {
+      "cases": 136,
+      "format": "f32",
+      "operation": "div",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 1444,
+      "format": "f32",
+      "operation": "div",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isFinite",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isInf",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isNaN",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isNormal",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isSNaN",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isSubnormal",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 42,
+      "format": "f32",
+      "operation": "isZero",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 920,
+      "format": "f32",
+      "operation": "maxNum",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 921,
+      "format": "f32",
+      "operation": "maxNumMag",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 1840,
+      "format": "f32",
+      "operation": "minNum",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 186,
+      "format": "f32",
+      "operation": "mul",
+      "rounding": "max"
+    },
+    {
+      "cases": 170,
+      "format": "f32",
+      "operation": "mul",
+      "rounding": "min"
+    },
+    {
+      "cases": 169,
+      "format": "f32",
+      "operation": "mul",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 1314,
+      "format": "f32",
+      "operation": "mul",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 248,
+      "format": "f32",
+      "operation": "mulAdd",
+      "rounding": "max"
+    },
+    {
+      "cases": 200,
+      "format": "f32",
+      "operation": "mulAdd",
+      "rounding": "min"
+    },
+    {
+      "cases": 200,
+      "format": "f32",
+      "operation": "mulAdd",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 35606,
+      "format": "f32",
+      "operation": "mulAdd",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 41,
+      "format": "f32",
+      "operation": "neg",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 36,
+      "format": "f32",
+      "operation": "signBit",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 6,
+      "format": "f32",
+      "operation": "sqrt",
+      "rounding": "max"
+    },
+    {
+      "cases": 6,
+      "format": "f32",
+      "operation": "sqrt",
+      "rounding": "min"
+    },
+    {
+      "cases": 6,
+      "format": "f32",
+      "operation": "sqrt",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 100,
+      "format": "f32",
+      "operation": "sqrt",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 161,
+      "format": "f32",
+      "operation": "sub",
+      "rounding": "max"
+    },
+    {
+      "cases": 145,
+      "format": "f32",
+      "operation": "sub",
+      "rounding": "min"
+    },
+    {
+      "cases": 158,
+      "format": "f32",
+      "operation": "sub",
+      "rounding": "minMag"
+    },
+    {
+      "cases": 18127,
+      "format": "f32",
+      "operation": "sub",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 39,
+      "format": "f32",
+      "operation": "to_f128",
+      "rounding": "near_even"
+    },
+    {
+      "cases": 39,
+      "format": "f32",
+      "operation": "to_f64",
+      "rounding": "near_even"
+    }
+  ],
+  "pinned_revision": "12e883a0c7b826976a8f1243318ac4b7626a0ffc",
+  "semantic_overlap": {
+    "nan_precedence": "rows using IBM's quiet-NaN-first exception precedence are omitted",
+    "nan_sign": "Q and S rows are omitted when the operation observes an unspecified sign",
+    "underflow": "only v (tininess after rounding) is comparable; u and w rows are omitted"
+  }
+}

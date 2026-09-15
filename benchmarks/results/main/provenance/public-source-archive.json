@@ -1,0 +1,8 @@
+{
+  "archive": "FloatLib-source-public.tar.gz",
+  "sha256": "cb642547e1752b8a38c4d2e3ac096d283159a4a8ee3af61f5494a00ffd7bc0d3",
+  "original_archive_sha256": "ba661bcc49d54d9401af03dce2f9e84ddf657c28a35cd4296c1b22d974d023f5",
+  "omitted_files": {
+    "tests/results/main/provenance/FloatLibrary-repository.bundle": "9cd706937e16836cae4283b861b8965664d6377f4b26cc105c316993e45bc063"
+  }
+}

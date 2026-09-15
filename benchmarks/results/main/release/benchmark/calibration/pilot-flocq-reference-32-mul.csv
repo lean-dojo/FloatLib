@@ -1,0 +1,2 @@
+implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
+Flocq,binary-reference,flocq-p24,32,mul,software-reference,Flocq 4.2.2 extracted OCaml Zarith,result-dependent-fixture-chain,25000,43107864,7274982797022784113,-8527040515737290942,0,0,0

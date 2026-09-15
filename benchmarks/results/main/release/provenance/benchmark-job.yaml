@@ -1,0 +1,87 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-bench-20260911-123411-r4
+  namespace: default
+  labels:
+    app.kubernetes.io/name: floatlean-benchmark
+    floatlean.org/campaign: "20260911T123411Z"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 259200
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: floatlean-benchmark
+        floatlean.org/campaign: "20260911T123411Z"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        node.kubernetes.io/instance-type: c7i.48xlarge
+      containers:
+        - name: benchmark
+          image: coqorg/coq@sha256:e50d77c4c5a9aa0d76ae1b343d79c5f922da3a75054b79c5dc635895438e4674
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - /bin/bash
+            - -lc
+          args:
+            - |
+              set -euo pipefail
+              runner="$CAMPAIGN_ROOT/jobs/run-entrypoint.sh"
+              actual="$(sha256sum "$runner" | awk '{print $1}')"
+              test "$actual" = "$RUNNER_SHA256"
+              exec /bin/bash "$runner"
+          env:
+            - name: CAMPAIGN_ROOT
+              value: /efs/robert/pde/FloatLibrary-campaigns/20260911T123411Z
+            - name: CAMPAIGN_ID
+              value: "20260911T123411Z"
+            - name: RUN_MODE
+              value: benchmark
+            - name: RUNNER_SHA256
+              value: beea87be1f14aa54d761ea3903d3df6f66cccb4fdf45de9ab7b847e7194b651c
+            - name: SOURCE_ARCHIVE_SHA256
+              value: ba661bcc49d54d9401af03dce2f9e84ddf657c28a35cd4296c1b22d974d023f5
+            - name: REPOSITORY_BUNDLE_SHA256
+              value: 4be012648045e1f7a0e50e21269f963e67d856d81976b438394e23b1620893b5
+            - name: SOURCE_FILE_HASHES_SHA256
+              value: 076728ec9357c8651cd72f665c61d39e33d11bfcd4ec59f29614c8faea83e846
+            - name: SOURCE_FILE_LIST_SHA256
+              value: 28fd93f64a781ac3d255794131868c1bc49c6368a570d2b8f939bc65b657dd4f
+            - name: WORKTREE_STATUS_SHA256
+              value: 6f43c57c99718b9be6b4761918441a30dcbabbb986858a1e2457f84938693424
+            - name: WORKTREE_PATCH_SHA256
+              value: 4bd32447cd94fc3bccd627609271d0bc4214ff7b0fe3dc1cb2db5fc8efcbb303
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "189"
+              memory: 300Gi
+              ephemeral-storage: 60Gi
+            limits:
+              cpu: "189"
+              memory: 300Gi
+              ephemeral-storage: 60Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc
+        - name: work
+          emptyDir:
+            sizeLimit: 60Gi

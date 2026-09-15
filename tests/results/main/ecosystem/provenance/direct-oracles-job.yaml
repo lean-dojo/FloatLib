@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-direct-oracles
+  labels:
+    app: floatlean-external-ecosystem
+    campaign: "20260910t150728z"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 43200
+  template:
+    metadata:
+      labels:
+        app: floatlean-external-ecosystem
+        campaign: "20260910t150728z"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: floatlean-external-ecosystem
+                  campaign: "20260910t150728z"
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: direct-oracles
+          image: ubuntu:24.04
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-lc"]
+          args:
+            - exec /bin/bash /efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/control/run-direct-oracles.sh
+          env:
+            - name: JOBS
+              value: "180"
+            - name: PARALLEL_JOBS
+              value: "80"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "180"
+              memory: 300Gi
+            limits:
+              cpu: "180"
+              memory: 300Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc

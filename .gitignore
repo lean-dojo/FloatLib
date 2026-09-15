@@ -1,0 +1,51 @@
+# Lean and native build output
+.lake
+build/
+lake-packages/
+_out/
+*.olean
+*.ilean
+*.o
+*.a
+*.so
+*.dylib
+
+# Website and Python output
+/site/data/
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+.cache/
+.pytest_cache/
+.ruff_cache/
+
+# Local settings and manuscripts
+.DS_Store
+.claude/
+.vscode/
+.env
+.env.*
+!.env.example
+/paper/
+/papers/
+
+# Keep complete published evidence, including the recorded comparison providers.
+/benchmarks/results/*
+!/benchmarks/results/main/
+!/benchmarks/results/main/**
+!/benchmarks/results/p3109-flops/
+/benchmarks/results/p3109-flops/*
+!/benchmarks/results/p3109-flops/results.json
+!/benchmarks/results/tensorlib/
+/benchmarks/results/tensorlib/*
+!/benchmarks/results/tensorlib/results.json
+/tests/results/*
+!/tests/results/main/
+!/tests/results/main/**
+
+# Repository-history backups can contain unpublished manuscripts.
+*.bundle
+# The original benchmark source archive also embeds a history bundle.
+/benchmarks/results/main/provenance/FloatLib-source.tar.gz

@@ -1,0 +1,6 @@
+campaign_id=20260911T123411Z
+run_mode=benchmark
+run_exit_code=0
+finished_utc=2026-09-11T14:38:01Z
+pod_name=floatlean-bench-20260911-123411-r4-rnqhf
+node_name=ip-10-2-15-61.ec2.internal

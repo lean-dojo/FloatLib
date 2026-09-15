@@ -1,0 +1,112 @@
+/-
+Copyright (c) 2026 FloatLib
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Kernels.FixedWord.Difference.Runtime
+public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
+
+/-!
+# Fixed-word restoring square-root runtime
+
+The restoring loop consumes a four-word radicand two bits at a time and retains the root and
+remainder in two words. `RestoringSqrt.Proof` proves exactness under the digit-count and capacity
+bounds stated below.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Numerics.FixedWord.RestoringSquareRoot
+
+/-- Shift a two-word value left by one bit, discarding overflow. -/
+@[inline] def shiftLeftOne
+    (value : FloatLib.Numerics.FixedWord.UInt128) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  {
+    hi := (value.hi <<< 1) ||| (value.lo >>> 63)
+    lo := value.lo <<< 1
+  }
+
+/-- Shift a two-word value left by two bits, discarding overflow. -/
+@[inline] def shiftLeftTwo
+    (value : FloatLib.Numerics.FixedWord.UInt128) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  {
+    hi := (value.hi <<< 2) ||| (value.lo >>> 62)
+    lo := value.lo <<< 2
+  }
+
+/-- Read base-four digit `index` from a four-word radicand, for `index < 128`. -/
+@[inline] def digitAt
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) (index : Nat) : UInt64 :=
+  if index < 32 then
+    (radicand.limb0 >>> UInt64.ofNat (2 * index)) &&& 3
+  else if index < 64 then
+    (radicand.limb1 >>> UInt64.ofNat (2 * (index - 32))) &&& 3
+  else if index < 96 then
+    (radicand.limb2 >>> UInt64.ofNat (2 * (index - 64))) &&& 3
+  else
+    (radicand.limb3 >>> UInt64.ofNat (2 * (index - 96))) &&& 3
+
+/-- One base-four restoring square-root step. -/
+@[inline] def rootStep (digit : UInt64)
+    (state : RestoringRootState FloatLib.Numerics.FixedWord.UInt128) :
+    RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
+  let expandedBase := shiftLeftTwo state.remainder
+  let expanded : FloatLib.Numerics.FixedWord.UInt128 :=
+    { expandedBase with lo := expandedBase.lo ||| digit }
+  let trialBase := shiftLeftTwo state.root
+  let trial : FloatLib.Numerics.FixedWord.UInt128 :=
+    trialBase.setLowBit
+  let doubledRoot := shiftLeftOne state.root
+  if FloatLib.Numerics.FixedWord.UInt128.less expanded trial then
+    {
+      root := doubledRoot
+      remainder := expanded
+    }
+  else
+    {
+      root := doubledRoot.setLowBit
+      remainder := FloatLib.Numerics.FixedWord.UInt128.sub expanded trial
+    }
+
+/-- Consume base-four digits from most significant to least significant. -/
+@[inline] def rootLoop
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) :
+    Nat → RestoringRootState FloatLib.Numerics.FixedWord.UInt128 →
+      RestoringRootState FloatLib.Numerics.FixedWord.UInt128
+  | 0, state => state
+  | steps + 1, state =>
+      rootLoop radicand steps (rootStep (digitAt radicand steps) state)
+
+/--
+Compute the floor root and exact square remainder from the requested base-four digits.
+
+The digit count fixes the verified capacity: `rootAndRemainder_spec` covers radicands below
+`2^(2 * steps)` for any digit count from 64 to 125. Larger radicands lose their leading digits,
+so the result need not be the root of the original radicand.
+-/
+@[inline] def rootAndRemainder
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) (steps : Nat) :
+    RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
+  rootLoop radicand steps
+    { root := ⟨0, 0⟩, remainder := ⟨0, 0⟩ }
+
+/--
+Round a floor root to the nearest integer root.
+
+The root increments exactly when the remainder exceeds the root, which is the midpoint test for
+the square. `roundRoot_toNat` verifies this for every digit count from 64 to 125.
+-/
+@[inline] def roundRoot
+    (state : RestoringRootState FloatLib.Numerics.FixedWord.UInt128) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  if FloatLib.Numerics.FixedWord.UInt128.less state.root state.remainder then
+    state.root.increment
+  else
+    state.root
+
+end FloatLib.Numerics.FixedWord.RestoringSquareRoot

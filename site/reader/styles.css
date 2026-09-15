@@ -1,0 +1,673 @@
+/* FloatLib reader. Restrained and readable, after the Conway proof guide: one serif stack for
+   prose, one monospace for Lean, a narrow measure, no decoration for its own sake. Colours are
+   custom properties so dark mode is a second set of values, not a second stylesheet. */
+
+:root {
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "STIX Two Text", Georgia,
+    "Times New Roman", "DejaVu Serif", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Cantarell, "DejaVu Sans",
+    Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  /* The root font size is 16px, so 46.5rem is 744px. Measured on this guide's own prose at 17px,
+     that is 100 characters per line in Palatino-metric faces (7.4px per character; P052 stands
+     in for Palatino here), 110 in the Times-metric fallbacks and 86 in DejaVu Serif. Block
+     furniture may be wider than the text, centred on it: tables grow to their content up to
+     --code-wide, a Lean block whose longest line does not fit the measure snaps to --code-wide
+     (two right edges on a page, not one per block), figures up to --measure-wide. --reader-avail
+     is the width the reader column actually has (the 20px covers a classic scrollbar, which
+     100vw includes).
+
+     Everything here is in rem and the root font size below grows with the viewport, so on a
+     wide monitor the type, the measure, the wide stops and the sidebar all grow together: the
+     column keeps its 100 characters per line at a size that suits the viewing distance instead
+     of staying a fixed strip at the left of a 2560px screen. The column is centred in the
+     reader area (.page), with wide blocks centred on the column. */
+  --measure: 46.5rem;
+  --measure-wide: 54rem;
+  --code-wide: 62rem;
+  --contents-width: clamp(17.5rem, 22vw, 20.625rem);
+  --reader-pad: clamp(1.5rem, 6vw, 5rem);
+  --reader-avail: calc(100vw - var(--contents-width) - 2 * var(--reader-pad) - 20px);
+
+  --paper: #ffffff;
+  --paper-2: #f6f6f4;
+  --ink: #1b1b1b;
+  --ink-2: #3a3a3a;
+  --muted: #616161;
+  --line: #d9d9d6;
+  --line-2: #e8e8e5;
+  --link: #0b57a4;
+  --link-under: #9fbde0;
+  --focus: #0b57a4;
+  --select-paper: #fff3b2;
+  --code-paper: #f7f8f9;
+  --code-line: #d7dbdf;
+  --shadow: 0 8px 26px rgba(0, 0, 0, .12);
+  --warning: #9a3412;
+
+  --lean-kw: #8a1a7c;
+  --lean-sort: #075985;
+  --lean-str: #0b6e4f;
+  --lean-num: #0b6e4f;
+  --lean-comment: #687078;
+  --lean-attr: #7c3e00;
+  --lean-cmd: #005cc5;
+  --lean-sorry: #c62828;
+  --lean-ref: #0b57a4;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #15171a;
+    --paper-2: #1c1f23;
+    --ink: #e4e4e1;
+    --ink-2: #cfcfcb;
+    --muted: #9c9c98;
+    --line: #34383d;
+    --line-2: #272b30;
+    --link: #8ab4f8;
+    --link-under: #4a6a99;
+    --focus: #8ab4f8;
+    --select-paper: #3b3416;
+    --code-paper: #1b1e22;
+    --code-line: #33383e;
+    --shadow: 0 8px 26px rgba(0, 0, 0, .5);
+    --warning: #f6ad7b;
+    --lean-kw: #d69ad2;
+    --lean-sort: #7cc4ff;
+    --lean-str: #7fd1b0;
+    --lean-num: #7fd1b0;
+    --lean-comment: #8b949e;
+    --lean-attr: #e0a86b;
+    --lean-cmd: #79b8ff;
+    --lean-sorry: #ff7b72;
+    --lean-ref: #8ab4f8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #15171a;
+  --paper-2: #1c1f23;
+  --ink: #e4e4e1;
+  --ink-2: #cfcfcb;
+  --muted: #9c9c98;
+  --line: #34383d;
+  --line-2: #272b30;
+  --link: #8ab4f8;
+  --link-under: #4a6a99;
+  --focus: #8ab4f8;
+  --select-paper: #3b3416;
+  --code-paper: #1b1e22;
+  --code-line: #33383e;
+  --shadow: 0 8px 26px rgba(0, 0, 0, .5);
+  --warning: #f6ad7b;
+  --lean-kw: #d69ad2;
+  --lean-sort: #7cc4ff;
+  --lean-str: #7fd1b0;
+  --lean-num: #7fd1b0;
+  --lean-comment: #8b949e;
+  --lean-attr: #e0a86b;
+  --lean-cmd: #79b8ff;
+  --lean-sorry: #ff7b72;
+  --lean-ref: #8ab4f8;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+/* 16px up to a 1280px viewport (laptops keep the layout they had), then 0.4px per 100px of
+   width: 18.6px at 1920px and 20px from 2280px on. Media queries below are in px and do not
+   move with this. */
+html { -webkit-text-size-adjust: 100%; font-size: clamp(16px, 10.9px + 0.4vw, 20px); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+button, input, kbd { font: inherit; }
+a { color: var(--link); text-decoration-color: var(--link-under); text-underline-offset: 2px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-color: currentColor; }
+button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+[hidden] { display: none !important; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+code, pre, kbd { font-family: var(--mono); }
+code { font-size: .88em; }
+.muted { color: var(--muted); }
+.warning { color: var(--warning); }
+.boot-message { max-width: 40rem; margin: 3rem auto; padding: 0 1.5rem; font-family: var(--sans); color: var(--muted); }
+
+/* ------------------------------------------------------------------------------------------ */
+/* Shell */
+
+.page-shell {
+  display: grid;
+  grid-template-columns: var(--contents-width) minmax(0, 1fr);
+  align-items: start;
+}
+.reader {
+  grid-column: 2;
+  width: 100%;
+  min-width: 0; /* a grid item's automatic minimum would let wide code blocks widen the page */
+  min-height: 100vh;
+  padding: 48px var(--reader-pad) 96px;
+}
+.page { max-width: var(--measure); margin: 0 auto; }
+.page-header { margin: 0 0 30px; }
+.page-header h1 { margin: 0 0 14px; font-size: 2rem; font-weight: 600; line-height: 1.18; letter-spacing: -.01em; }
+.eyebrow { margin: 0 0 8px; color: var(--muted); font: 600 0.75rem/1.4 var(--sans); letter-spacing: .04em; text-transform: uppercase; }
+.eyebrow a { color: inherit; }
+.lede { margin: 0; color: var(--ink-2); font-size: 1.1562rem; line-height: 1.5; }
+.dependency-page { max-width: var(--code-wide); }
+.dependency-page .page-header p, .graph-explanation { max-width: var(--measure); }
+.graph-tabs { display: flex; flex-wrap: wrap; gap: 8px 22px; border-bottom: 1px solid var(--line); }
+.graph-tabs a { padding: 8px 0; font-family: var(--sans); text-decoration: none; }
+.graph-tabs a[aria-current] { color: var(--ink); border-bottom: 2px solid var(--link); }
+.graph-reading { max-width: var(--measure); }
+.graph-reading summary { color: var(--link); cursor: pointer; }
+.graph-controls { display: flex; flex-wrap: wrap; gap: 16px; margin: 24px 0 12px; }
+.graph-controls label { display: flex; flex: 1 1 220px; min-width: 0; flex-direction: column; gap: 6px; font: .875rem var(--sans); }
+.graph-controls input, .graph-controls select {
+  min-width: 0; width: 100%; padding: 9px 10px; border: 1px solid var(--line);
+  border-radius: 3px; background: var(--paper); color: var(--ink); font: inherit;
+}
+.graph-selection { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; font: .875rem var(--sans); }
+.graph-selection input { margin-right: 8px; }
+.graph-count { color: var(--muted); font: .8125rem/1.6 var(--sans); }
+.dependency-drawing { position: relative; border: 1px solid var(--line); background: var(--paper-2); border-radius: 4px; overflow: hidden; }
+.dependency-drawing svg { display: block; width: 100%; height: clamp(350px, 65vh, 700px); touch-action: none; cursor: grab; }
+.dependency-drawing.is-detailed svg { height: clamp(300px, 45vh, 450px); }
+.dependency-drawing.is-tall svg { height: 650px; }
+.dependency-drawing svg:active { cursor: grabbing; }
+.graph-zoom { position: absolute; display: flex; gap: 4px; top: 10px; left: 10px; z-index: 1; }
+.graph-zoom button {
+  min-width: 36px; min-height: 36px; padding: 5px 10px; border: 1px solid var(--line);
+  border-radius: 3px; background: var(--paper); color: var(--ink); cursor: pointer; font: .8125rem var(--sans);
+}
+.dependency-edges { fill: none; stroke: var(--muted); color: var(--muted); stroke-width: .8; }
+.dependency-edges path { opacity: .25; }
+.dependency-edges .is-connected { stroke: var(--link); color: var(--link); stroke-width: 1.5; opacity: .65; }
+.dependency-edges .is-meta { stroke-dasharray: 4 3; }
+.dependency-node { cursor: pointer; }
+.dependency-node circle { stroke-width: 1; }
+.dependency-node:hover circle { stroke: var(--ink); stroke-width: 2; }
+.dependency-node text { fill: var(--ink); font: 9px var(--mono); }
+.graph-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0; list-style: none; font: .75rem/1.4 var(--sans); }
+.graph-legend li { display: flex; align-items: center; gap: 6px; }
+.graph-legend span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.graph-detail { margin-top: 32px; border-top: 1px solid var(--line); padding-top: 22px; }
+.graph-detail h2 { font: 1rem/1.6 var(--mono); overflow-wrap: anywhere; }
+.graph-relations { padding-left: 18px; font: .75rem/1.6 var(--mono); }
+.graph-relations li { padding-bottom: 6px; overflow-wrap: anywhere; }
+.graph-matches { padding: 4px 16px 12px; background: var(--paper-2); border: 1px solid var(--line); }
+.graph-matches p { font: .8125rem var(--sans); }
+.graph-matches ul { max-height: 220px; overflow-y: auto; list-style: none; margin: 0; padding: 0; }
+.graph-matches button { padding: 6px 0; border: 0; background: none; color: var(--link); text-align: left; cursor: pointer; font: .75rem/1.5 var(--mono); overflow-wrap: anywhere; }
+/* The authors under the overview's lede: names in the text face, affiliations smaller and muted. */
+.byline { margin: 18px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 28px; font-size: 1rem; line-height: 1.4; }
+.byline li { display: grid; }
+.byline .affiliation { color: var(--muted); font: 0.8125rem/1.4 var(--sans); }
+h2 { margin: 2.2em 0 .6em; font-size: 1.375rem; font-weight: 600; line-height: 1.25; }
+h3 { margin: 1.8em 0 .5em; font-size: 1.125rem; font-weight: 600; line-height: 1.3; }
+section > h2:first-child { margin-top: 2em; }
+
+/* Sidebar */
+.contents {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: grid;
+  height: 100vh;
+  height: 100dvh;
+  grid-column: 1;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 16px 20px 14px;
+  border-right: 1px solid var(--line);
+  background: var(--paper);
+  font-family: var(--sans);
+  scrollbar-width: thin;
+}
+.site-heading { margin: 0 8px 14px; }
+.site-title { display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; }
+.site-logo { display: block; flex: 0 0 auto; width: 3rem; height: auto; border-radius: 3px; }
+.site-title small { white-space: nowrap; color: var(--muted); font: 500 0.75rem/1.4 var(--sans); }
+.contents-menu { display: grid; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; }
+.mobile-menu-toggle { display: none; }
+.reader-search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 16px);
+  margin: 0 8px 12px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-align: left;
+}
+.reader-search:hover { border-color: var(--muted); color: var(--ink); }
+.reader-search kbd { padding: 0 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font-size: 0.625rem; }
+.contents-label { margin: 6px 8px 3px; color: var(--muted); font-size: 0.625rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.contents-label:first-child { margin-top: 0; }
+/* When the chapter list is taller than its box, While it can still scroll down, the Sidebar sets has-more-below and
+   --fade-from (the top of the first row that is cut off), and the list fades out from there:
+   a row is either fully legible or visibly fading, never a light grey link that looks disabled.
+   At the end of the list the mask is gone. Rows are tight (Conway uses 11px names) so that on a
+   900px-tall window everything but the last few entries is visible at once. */
+.contents-nav {
+  display: grid;
+  gap: 0;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+.contents-nav.has-more-below { mask-image: linear-gradient(to bottom, #000 var(--fade-from, calc(100% - 10px)), transparent); }
+.nav-link {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 7px;
+  align-items: baseline;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.nav-link:hover { color: var(--link); background: var(--paper-2); }
+.nav-link.is-active { color: var(--ink); background: var(--paper-2); font-weight: 600; }
+.nav-number { color: var(--muted); font: 0.6562rem/1.4 var(--mono); }
+.nav-name { font-size: 0.7188rem; line-height: 1.35; }
+/* A hairline appears between the list and the footer while the list can still scroll, so a
+   clipped last row reads as "more below" even where scrollbars are hidden. */
+.contents-footer { margin: 10px 8px 0; padding-top: 10px; border-top: 1px solid transparent; }
+.contents-nav.has-more-below + .contents-footer { border-top-color: var(--line); }
+.theme-toggle {
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 0.7188rem;
+}
+.theme-toggle:hover { border-color: var(--muted); color: var(--ink); }
+.site-provenance { margin: 12px 0 0; color: var(--muted); font-size: 0.6562rem; line-height: 1.45; }
+/* The uncommitted-files note is provenance, not a fault of the page, so it keeps the footer's
+   muted colour; the warning colour is reserved for the per-declaration notes on node pages. */
+.site-provenance .uncommitted { color: inherit; }
+.site-provenance a { color: inherit; }
+
+/* ------------------------------------------------------------------------------------------ */
+/* Prose */
+
+.prose p { margin: 0 0 1.05em; }
+.prose h2 { margin-top: 2.1em; }
+.prose h2 + p, .prose h3 + p { margin-top: 0; }
+.prose ul, .prose ol { margin: 0 0 1.05em; padding-left: 1.6em; }
+.prose li { margin: .25em 0; }
+.prose blockquote { margin: 1.2em 0; padding: .1em 0 .1em 1.2em; border-left: 2px solid var(--line); color: var(--ink-2); }
+.prose hr { margin: 2.4em 0; border: 0; border-top: 1px solid var(--line); }
+/* The build wraps every table in .table-scroll, which scrolls sideways when the columns do not
+   fit; the reader adds has-more-right while there is content beyond the right edge. */
+.prose .table-scroll { margin: 1.2em 0 1.6em; overflow-x: auto; }
+/* A table is as wide as its content: at least the column, at most --code-wide or what the
+   reader has. Only a table that does not fit even then scrolls (with the right-edge fade). */
+.prose .table-scroll {
+  width: max-content;
+  min-width: 100%;
+  max-width: min(var(--code-wide), var(--reader-avail));
+  /* centred on the column like the other wide blocks; its width is its content's, which no CSS
+     length can name, so it starts at the column's midpoint and moves back half its own width */
+  margin-left: 50%;
+  translate: -50% 0;
+}
+.prose .table-scroll.has-more-right { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.prose table { width: 100%; margin: 0; border-collapse: collapse; font-size: 0.9375rem; line-height: 1.45; }
+.prose th, .prose td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.prose th { border-bottom-color: var(--ink-2); font-family: var(--sans); font-size: 0.7812rem; font-weight: 600; letter-spacing: .02em; }
+/* The build puts a <wbr> after the joints of inline code (the slashes, dots, underscores and
+   hyphens of a path or a Lean name), so a long path wraps as `Formats/` `BinaryInterchange/`
+   rather than mid-word. break-word stays as the safety net: it splits a word only when that word
+   has no joint and still does not fit a line by itself. */
+.prose code:not(pre code) { padding: 0 .15em; border-radius: 3px; background: var(--code-paper); overflow-wrap: break-word; }
+/* A span of at most 32 characters (the build marks it) fits any line alone, so it moves whole
+   rather than breaking after a hyphen or a dot at a line end. */
+.prose code.is-short { white-space: nowrap; }
+.prose { overflow-wrap: break-word; }
+/* In a table cell a path wraps at its joints too. Never-wrapping code forced the other columns
+   down to a few words per line; a path split at arbitrary letters was the alternative, which is
+   why break-word is off here and the table scrolls instead when a jointless token is too wide. */
+.prose table code { overflow-wrap: normal; white-space: normal; }
+.prose mjx-container.is-wide { display: block; max-width: 100%; margin: .5em 0; overflow-x: auto; overflow-y: hidden; text-align: left; }
+.prose img { max-width: 100%; height: auto; }
+/* Plots are wider than the measure, so a figure may spill into the right margin on wide screens,
+   up to --measure-wide, and each one links to the
+   full-size file. The white plate with a border is deliberate: the PNGs have opaque white
+   backgrounds, which in dark mode should read as a mounted print rather than a glitch. */
+.figure {
+  width: max(100%, min(var(--measure-wide), var(--reader-avail)));
+  margin: 1.6em 0 2em calc((100% - max(100%, min(var(--measure-wide), var(--reader-avail)))) / 2);
+}
+.figure > a { display: block; }
+.figure img { display: block; max-width: 100%; height: auto; padding: 8px; border: 1px solid var(--line); background: #fff; }
+.figure-full { margin-left: .5em; white-space: nowrap; }
+.figure-number { white-space: nowrap; }
+.figure figcaption { margin-top: .6em; color: var(--muted); font-family: var(--sans); font-size: 0.8438rem; line-height: 1.45; }
+.node-link code { color: var(--link); background: transparent !important; padding: 0 !important; }
+.node-link-missing { color: var(--ink-2); }
+.math-display { margin: 1em 0 1.2em; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+/* A display equation wider than the column scrolls like a table and carries the same
+   right-edge fade while there is more to the right (hidden scrollbars give no other cue). */
+.math-display.has-more-right { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+mjx-container[jax="CHTML"][display="true"] { margin: 0 !important; }
+.math-display-inline { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
+.code-block {
+  margin: 1.2em 0 1.5em;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border: 1px solid var(--code-line);
+  border-radius: 3px;
+  background: var(--code-paper);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.code-block code { font-size: inherit; }
+.command-block { margin: 1.2em 0 1.5em; border: 1px solid var(--code-line); border-radius: 3px; background: var(--code-paper); }
+.command-block .code-block { margin: 0; border: 0; }
+
+/* Landing */
+.landing-section { margin-top: 2.6em; }
+.chapter-index { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.chapter-index li { padding: 14px 0 15px; border-bottom: 1px solid var(--line); }
+.chapter-index-link { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: baseline; color: inherit; text-decoration: none; }
+.chapter-index-link:hover .chapter-index-title { color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
+.chapter-index-number { color: var(--muted); font: 0.6875rem/1.5 var(--mono); }
+.chapter-index-title { font-size: 1.1875rem; line-height: 1.25; }
+/* Chapter */
+.chapter-body h2, .chapter-body h3, .chapter-body p[id] { scroll-margin-top: 20px; }
+.chapter-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--sans); }
+.chapter-pager a { display: grid; gap: 3px; color: inherit; text-decoration: none; }
+.chapter-pager a:hover span { color: var(--link); }
+.chapter-pager small { color: var(--muted); font-size: 0.6875rem; letter-spacing: .04em; text-transform: uppercase; }
+.chapter-pager span { font: 1rem/1.3 var(--serif); }
+.pager-next { text-align: right; }
+
+/* Node page */
+.node-name { margin: 0 0 6px; overflow-wrap: anywhere; }
+.node-name code { font-size: 0.875rem; color: var(--ink-2); }
+.node-meta { margin: 0; color: var(--muted); font: 0.8125rem/1.6 var(--sans); overflow-wrap: anywhere; }
+.node-meta code { font-size: 0.75rem; }
+.node-meta .uncommitted { color: var(--warning); }
+.node-page section > h2 { margin-top: 1.9em; font-size: 1.1875rem; }
+.two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.two-columns section > h2 { margin-top: 1.9em; }
+.node-list, .plain-list { margin: 0; padding: 0; list-style: none; }
+.node-list li { padding: 7px 0; border-bottom: 1px solid var(--line-2); font-size: 0.9688rem; line-height: 1.4; }
+.node-list-name { display: block; overflow: hidden; color: var(--muted); font-size: 0.7188rem; text-overflow: ellipsis; white-space: nowrap; }
+.plain-list li { padding: 5px 0; }
+.axioms { margin: 0; line-height: 1.8; }
+.axioms code { margin-right: 8px; padding: .05em .4em; border-radius: 3px; background: var(--code-paper); }
+.axioms code.is-unusual { color: var(--warning); outline: 1px solid var(--warning); }
+.docstring { color: var(--ink-2); }
+
+/* References */
+.reference-list { margin: 0; padding-left: 1.6em; }
+.reference-list li { margin: 0 0 16px; padding: 4px 6px; border-radius: 3px; font-size: 1rem; line-height: 1.5; scroll-margin-top: 20px; overflow-wrap: anywhere; }
+.reference-list li.is-targeted { background: var(--select-paper); }
+
+/* ------------------------------------------------------------------------------------------ */
+/* Lean blocks (shared by the build-time chapter output and the LeanBlock component) */
+
+.lean-block {
+  margin: 1.2em 0 1.6em;
+  border: 1px solid var(--code-line);
+  border-radius: 3px;
+  background: var(--code-paper);
+  font-family: var(--mono);
+}
+/* Two widths, not one per block. A block starts at the measure; when a line (code or comment)
+   does not fit there, the reader gives it `is-wide` (fitLeanBlock in overflow.ts) and it snaps
+   to --code-wide or what the reader has, so a 100-column line is visible whole on a desktop
+   screen and the right edges down a page line up at two stops. Only a line wider than that still
+   scrolls (with the fade) or, for a wrapped statement, wraps. */
+.page .lean-block.is-wide {
+  width: max(100%, min(var(--code-wide), var(--reader-avail)));
+  /* centred on the column: half the overhang goes to each side, so the wide stop has one left
+     edge and one right edge down the page, both symmetric about the text */
+  margin-left: calc((100% - max(100%, min(var(--code-wide), var(--reader-avail)))) / 2);
+}
+.lean-block-bar {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  min-height: 28px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--code-line);
+  color: var(--muted);
+  font: 600 0.6562rem/1.4 var(--sans);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lean-block-label { min-width: 0; flex: 1 1 auto; overflow: hidden; color: var(--muted); font: 0.6875rem/1.4 var(--mono); letter-spacing: 0; text-transform: none; text-overflow: ellipsis; white-space: nowrap; }
+.lean-block-actions { display: flex; gap: 12px; margin-left: auto; letter-spacing: 0; text-transform: none; }
+.lean-block-actions a, .lean-block-actions button { padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 0.6875rem/1.4 var(--sans); text-decoration: none; }
+.lean-block-actions a:hover, .lean-block-actions button:hover { color: var(--link); }
+.lean-block pre {
+  margin: 0;
+  padding: 11px 14px 12px;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  tab-size: 2;
+}
+/* While a block can still scroll to the right its edge fades, the same cue tables use; the
+   reader toggles the class (overflow.ts). */
+.lean-block pre.has-more-right { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.lean-block code { display: block; font-size: inherit; white-space: pre; }
+/* One block per line; min-height keeps empty lines their height without a filler character. */
+.lean-line { display: block; min-width: max-content; min-height: 1.5em; }
+/* A line that is only a comment (a `-- result` under #eval, a docstring line) takes part in the
+   block's sizing like any other line, so a 90-character docstring line widens the block rather
+   than wrapping inside the measure with two words orphaned. Once the block is at its wide stop
+   (`is-wide`) a comment that still does not fit wraps within the visible width with a hanging
+   indent of the comment marker, so what the code printed stays readable even when the code
+   itself is wider than the block and scrolls. The highlighter puts a <wbr> after the dots and
+   underscores inside names in comments, so a printed identifier wraps at its joints; break-word
+   is only the fallback for a jointless token wider than the block. */
+.lean-block.is-wide .lean-line.is-comment {
+  min-width: 0;
+  padding-left: 3ch;
+  text-indent: -3ch;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.lean-block.is-wide.has-line-numbers .lean-line.is-comment { padding-left: calc(4.2em + 3ch); text-indent: calc(-4.2em - 3ch); }
+/* Statement blocks wrap instead of scrolling: a signature is the primary content of a node page
+   and hidden scrollbars give no cue that more text exists. The block takes the wide stop as soon
+   as one pretty-printed line would wrap at the measure (fitLeanBlock checks the line boxes), so
+   on a desktop screen most statements read as printed and only the longest lines wrap.
+   Continuation lines hang by two characters, so a wrapped binder is visibly part of the line
+   above. Words break only at spaces and at the <wbr> the highlighter puts after dots and
+   underscores inside identifiers, so a name wraps at its joints (`Configured.` / `StoragePlan`)
+   rather than mid-word; a single token wider than the block scrolls with the fade cue instead. */
+.lean-block.is-wrap code { white-space: pre-wrap; overflow-wrap: normal; word-break: normal; }
+.lean-block.is-wrap .lean-line { min-width: 0; padding-left: 2ch; text-indent: -2ch; }
+.lean-line-number { display: inline-block; width: 3.2em; margin-right: 1em; color: var(--muted); text-align: right; user-select: none; }
+.lean-block-expand {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  border: 0;
+  border-top: 1px solid var(--code-line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 600 0.6875rem/1.4 var(--sans);
+  text-align: left;
+}
+.lean-block-expand:hover { color: var(--link); }
+.lean-kw { color: var(--lean-kw); }
+.lean-sort { color: var(--lean-sort); }
+.lean-str { color: var(--lean-str); }
+.lean-num { color: var(--lean-num); }
+.lean-comment, .lean-doc { color: var(--lean-comment); }
+.lean-attr { color: var(--lean-attr); }
+.lean-cmd { color: var(--lean-cmd); font-weight: 600; }
+.lean-sorry { color: var(--lean-sorry); font-weight: 700; }
+.lean-ref { color: var(--lean-ref); text-decoration: underline; text-decoration-color: var(--link-under); text-underline-offset: 2px; }
+.lean-ref:hover { text-decoration-color: currentColor; }
+
+/* ------------------------------------------------------------------------------------------ */
+/* Search */
+
+.search-backdrop {
+  --search-margin: clamp(20px, 6vh, 64px);
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  place-items: start center;
+  padding: var(--search-margin) 20px;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  font-family: var(--sans);
+}
+.search-backdrop[open] { display: grid; }
+.search-backdrop::backdrop { background: transparent; }
+.search-dialog {
+  display: flex;
+  width: min(640px, calc(100vw - 40px));
+  max-height: min(700px, calc(100vh - var(--search-margin) * 2));
+  flex-direction: column;
+  overflow: hidden;
+  padding: 22px 26px 26px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.dialog-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; }
+.dialog-heading label { font: 600 1.125rem/1.3 var(--serif); }
+.dialog-close { padding: 0; border: 0; border-bottom: 1px solid var(--muted); background: transparent; color: var(--ink-2); cursor: pointer; font-size: 0.75rem; }
+.dialog-close:hover { color: var(--link); border-color: var(--link); }
+.search-dialog > input {
+  width: 100%;
+  margin: 18px 0 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--muted);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 1.0625rem/1.3 var(--serif);
+}
+.search-results { min-height: 0; flex: 1 1 auto; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.search-results button { display: block; width: 100%; padding: 10px 8px; border: 0; border-bottom: 1px solid var(--line-2); background: none; color: inherit; cursor: pointer; text-align: left; }
+.search-results button:hover, .search-results button[aria-selected="true"] { background: var(--paper-2); }
+.search-results small, .search-results strong { display: block; }
+.search-results small { margin-bottom: 2px; color: var(--muted); font-size: 0.6875rem; }
+.search-results strong { font: 500 0.9688rem/1.3 var(--serif); }
+.search-empty { padding: 16px 8px; color: var(--muted); font-style: italic; }
+
+/* ------------------------------------------------------------------------------------------ */
+/* Narrow screens */
+
+@media (max-width: 900px) {
+  :root { --contents-width: 0px; --reader-pad: 22px; }
+  html { scroll-padding-top: 62px; }
+  .page-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
+  .contents {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: auto;
+    min-height: 72px;
+    grid-column: 1;
+    grid-row: 1;
+    align-items: center;
+    justify-content: space-between;
+    overflow: visible;
+    padding: 8px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .site-heading { margin: 0; }
+  .site-logo { width: 44px; }
+  .mobile-menu-toggle {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-content: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .mobile-menu-toggle > span:not(.visually-hidden) { display: block; width: 20px; height: 1.5px; background: currentColor; transition: transform 120ms ease, opacity 120ms ease; }
+  .contents.is-open .mobile-menu-toggle > span:nth-last-child(3) { transform: translateY(5.5px) rotate(45deg); }
+  .contents.is-open .mobile-menu-toggle > span:nth-last-child(2) { opacity: 0; }
+  .contents.is-open .mobile-menu-toggle > span:last-child { transform: translateY(-5.5px) rotate(-45deg); }
+  .contents-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none;
+    max-height: calc(100dvh - 72px);
+    padding: 12px 16px 18px;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    box-shadow: var(--shadow);
+  }
+  .contents.is-open .contents-menu { display: block; }
+  .reader-search { width: 100%; margin: 0 0 10px; }
+  .contents-nav { overflow: visible; padding-bottom: 0; mask-image: none; }
+  .contents-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0 0; }
+  .site-provenance { margin: 0; text-align: right; }
+  .reader { grid-column: 1; grid-row: 2; }
+  .reader { min-height: 0; padding: 30px var(--reader-pad) 70px; }
+  .page-header h1 { font-size: 1.6875rem; }
+  .two-columns { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 480px) {
+  :root { --reader-pad: 18px; }
+  body { font-size: 1.0312rem; }
+  .reader { padding: 26px var(--reader-pad) 60px; }
+  .byline { flex-direction: column; gap: 10px; }
+  .chapter-pager { grid-template-columns: 1fr; }
+  .pager-next { text-align: left; }
+  .lean-block pre { font-size: 0.75rem; }
+  .lean-line-number { width: 2.6em; margin-right: .8em; }
+  .lean-block.is-wide.has-line-numbers .lean-line.is-comment { padding-left: calc(3.4em + 3ch); text-indent: calc(-3.4em - 3ch); }
+  .prose table { font-size: 0.8125rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

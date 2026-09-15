@@ -1,0 +1,116 @@
+## main...origin/main
+ M .gitignore
+ M CONTRIBUTING.md
+ M README.md
+ M benchmarks/README.md
+ M benchmarks/c/exact_format_mpfr.c
+ M benchmarks/c/exact_format_native.c
+ M benchmarks/c/include/ieee_fixtures.h
+ D benchmarks/c/native_float_mpfr.c
+ M benchmarks/c/softfloat_ieee.c
+ M benchmarks/cpp/universal_posit.cpp
+ M benchmarks/docs/Calibration.md
+ M benchmarks/docs/Comparison.md
+ M benchmarks/docs/External.md
+ M benchmarks/lean/LeanFloatBenchmarks/Public/FormatComparison.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Public/Sweep.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Support/ExactWorkload.lean
+ M benchmarks/lean/LeanFloatBenchmarks/Support/Sink.lean
+ M benchmarks/plots/format_comparison.py
+ D benchmarks/plots/plot.py
+ D benchmarks/plots/plot_formats.py
+ M benchmarks/python/cpython_float.py
+ M benchmarks/rocq/FlocqKernel.v
+ D benchmarks/rocq/flocq_bench.ml
+ M benchmarks/rocq/flocq_format_bench.ml
+ D benchmarks/scripts/external.sh
+ M benchmarks/scripts/format-comparison.sh
+ D benchmarks/scripts/rocq.sh
+ D benchmarks/scripts/run.sh
+ M benchmarks/scripts/verify-main-result.sh
+ M blueprint/LeanFloatBlueprint/Guide/Performance.lean
+ M site/SITE_SPEC.md
+ M site/build.sh
+ D site/content/assets/ch11-oracle-coverage.png
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/backend-selection.csv
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/finish-time-utc.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/loadavg-after.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/loadavg-before.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/lscpu.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/os-release.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/environment/start-time-utc.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/metadata.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final/resources/process.csv
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/backend-selection.csv
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/finish-time-utc.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/loadavg-after.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/loadavg-before.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/lscpu.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/os-release.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/environment/start-time-utc.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/metadata.txt
+ D site/content/assets/data/pass5-final-metadata/pass5-final2/resources/process.csv
+ D site/content/assets/data/pass5-final-ratios.csv
+ D site/content/assets/data/pass5-final-summary.csv
+ D site/content/assets/data/pass5-final2-summary.csv
+ M site/content/assets/data/plot_format_comparison.py
+ D site/content/assets/data/plot_pass5_before_after.py
+ M site/content/assets/figures/ch10_external_ratios.py
+ D site/content/assets/figures/ch11_oracle_coverage.py
+ M site/content/assets/figures/ch11_universal_preflight.py
+ M site/content/assets/figures/ch17_host_vs_software.py
+ D site/content/assets/pass5-before-after.png
+ M site/content/chapters/02-why-verifying-floating-point-is-hard.md
+ M site/content/chapters/04-a-short-history-of-floating-point.md
+ M site/content/chapters/10-performance.md
+ M site/content/chapters/11-validation-against-the-outside-world.md
+ M site/content/chapters/14-posits-and-the-quire.md
+ M site/content/chapters/17-comparing-with-lean-native-floats.md
+ M site/content/chapters/19-a-tour-of-the-codebase.md
+ M site/content/chapters/20-references.md
+ M site/content/landing.md
+ M site/content/references.json
+ M site/reader/build.sh
+ M tests/EXTERNAL.md
+ M tests/LeanFloatTests/Conformance/Posit/ExecutionBoundaries.lean
+ M tests/LeanFloatTests/Oracle/TestFloat.lean
+ M tests/Oracle.lean
+ M tests/README.md
+ M tests/checks/architecture.sh
+ M tests/checks/trust-surface.sh
+ M tests/oracles/check.sh
+ M tests/oracles/format-standards.sh
+ M tests/oracles/testfloat.sh
+?? benchmarks/c/benchmark_mpfr_protocol.h
+?? benchmarks/c/benchmark_protocol.h
+?? benchmarks/rocq/monotonic_clock.c
+?? benchmarks/scripts/verify_binary_agreement.py
+?? benchmarks/scripts/verify_release_matrix.py
+?? scripts/
+?? tests/LeanFloatTests/Oracle/Posit.lean
+?? tests/LeanFloatTests/Oracle/SMT.lean
+?? tests/LeanFloatTests/Oracle/Transcendentals.lean
+?? tests/oracles/SMTFP/
+?? tests/oracles/Transcendental/
+?? tests/oracles/ibm_fpgen.py
+?? tests/oracles/ibm_fpgen.sh
+?? tests/oracles/ibm_fpgen_test.py
+?? tests/oracles/render_ecosystem_result.py
+?? tests/oracles/render_release_result.py
+?? tests/oracles/rlibm_bridge.cpp
+?? tests/oracles/smt_fp.py
+?? tests/oracles/smt_fp.sh
+?? tests/oracles/smt_fp_test.py
+?? tests/oracles/softposit.sh
+?? tests/oracles/softposit_emitter.c
+?? tests/oracles/softposit_protocol_test.py
+?? tests/oracles/transcendental_compare.sh
+?? tests/oracles/transcendental_mpfr.c
+?? tests/oracles/transcendental_report.py
+?? tests/oracles/transcendental_test.py
+?? tests/oracles/verify-main-result.sh
+?? tests/oracles/verify_campaign_provenance.py
+?? tests/oracles/verify_release_evidence.py
+?? tests/oracles/verify_result_manifest.py
+?? tests/oracles/write_result_manifest.py
+?? tests/results/

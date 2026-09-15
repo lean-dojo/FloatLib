@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-core-math-resume3
+  namespace: default
+  labels:
+    app: floatlean-core-math-resume3
+spec:
+  completions: 6
+  parallelism: 6
+  completionMode: Indexed
+  backoffLimit: 0
+  activeDeadlineSeconds: 86400
+  template:
+    metadata:
+      labels:
+        app: floatlean-core-math-resume3
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        node.kubernetes.io/instance-type: c7i.48xlarge
+      containers:
+        - name: core-math
+          image: ubuntu:24.04@sha256:a61567bd31828687156d735ea8eb01ba4e37636e225dd6a48ba94136a70d9d61
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - /bin/bash
+            - -lc
+          args:
+            - |
+              set -euo pipefail
+              export WORKER_INDEX="${JOB_COMPLETION_INDEX}"
+              exec /bin/bash /efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/control/run-core-math-resume3.sh
+          env:
+            - name: WORKER_COUNT
+              value: "6"
+            - name: CPU_LIMIT
+              value: "180"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "180"
+              memory: 120Gi
+              ephemeral-storage: 60Gi
+            limits:
+              cpu: "180"
+              memory: 120Gi
+              ephemeral-storage: 60Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc
+        - name: work
+          emptyDir:
+            sizeLimit: 60Gi

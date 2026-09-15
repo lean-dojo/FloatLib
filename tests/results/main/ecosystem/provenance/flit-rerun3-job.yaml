@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: floatlean-flit-rerun3
+  namespace: default
+  labels:
+    app: floatlean-flit-rerun3
+    campaign: "20260910t150728z"
+spec:
+  completionMode: Indexed
+  completions: 3
+  parallelism: 3
+  backoffLimitPerIndex: 0
+  maxFailedIndexes: 3
+  activeDeadlineSeconds: 21600
+  template:
+    metadata:
+      labels:
+        app: floatlean-flit-rerun3
+        campaign: "20260910t150728z"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        node.kubernetes.io/instance-type: c7i.48xlarge
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: floatlean-flit-rerun3
+                  campaign: "20260910t150728z"
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: flit
+          image: ubuntu:22.04@sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-lc"]
+          args:
+            - |
+              variants=(base openmpi mpich)
+              export FLIT_VARIANT="${variants[$JOB_INDEX]}"
+              exec /bin/bash /efs/robert/floatlean-results/332491fd0acb7702b5730aa96bf5927063583d92/20260910T150728Z/ecosystem/control/run-flit-rerun3.sh
+          env:
+            - name: JOB_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+            - name: FLIT_RUN_JOBS
+              value: "32"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: "180"
+              memory: 300Gi
+              ephemeral-storage: 80Gi
+            limits:
+              cpu: "180"
+              memory: 300Gi
+              ephemeral-storage: 80Gi
+          volumeMounts:
+            - name: efs
+              mountPath: /efs
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: efs
+          persistentVolumeClaim:
+            claimName: efs-pvc
+        - name: work
+          emptyDir:
+            sizeLimit: 80Gi
