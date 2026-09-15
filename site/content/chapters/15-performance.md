@@ -548,7 +548,13 @@ assigning them the same numbers.
 
 ## Lean's model and its compiled operations
 
-In Lean 4.34.0, `Float32` contains a `Float32.Model`, which holds a `UInt32`
+We're glad to see Lean exposing more of its floating-point model for proofs.
+Lean 4.33 introduced the logical models; **Lean 4.34** connects the signed integer
+conversions to them and exposes integer constructors and named `nan` and `inf` constants
+[@lean434Release]. We use them to connect ordinary signed casts to the rounding and conversion
+specifications already used by FloatLib.
+
+In Lean 4.34, `Float32` contains a `Float32.Model`, which holds a `UInt32`
 word and a validity proof. Its NaN representation is canonical: different NaN payloads do not
 remain distinct model values. `Float` has the corresponding structure over `UInt64`.
 
@@ -725,8 +731,8 @@ operands in software changes the outcome of the comparison.
 [[FloatLib.Floats.ExecFloat.Binary.ofFloat32]] imports a native value's `toBits` word through
 `ofBits32`. [[FloatLib.Floats.ExecFloat.Binary.toFloat32]] exports the FloatLib word through
 `Float32.ofBits`. The binary64 functions `ofFloat` and `toFloat` follow the same pattern.
-The [native conversion proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/IEEE754/Native.lean) state precisely what these conversions
-preserve:
+The native conversion proofs show that importing a native value keeps its stored word,
+and exporting it again recovers the value:
 
 ```lean
 example (x : Float32) :
@@ -736,6 +742,14 @@ example (x : Float32) :
 example (x : Float) :
     ExecFloat.Binary.toBits64 (ExecFloat.Binary.ofFloat x) = x.toBits :=
   ExecFloat.Binary.toBits64_ofFloat x
+
+example (x : Float32) :
+    ExecFloat.Binary.toFloat32 (ExecFloat.Binary.ofFloat32 x) = x :=
+  ExecFloat.Binary.toFloat32_ofFloat32 x
+
+example (x : Float) :
+    ExecFloat.Binary.toFloat (ExecFloat.Binary.ofFloat x) = x :=
+  ExecFloat.Binary.toFloat_ofFloat x
 
 example (v : Binary32) :
     ExecFloat.Binary.ofBits32 (ExecFloat.Binary.toBits32 v) = v :=
@@ -749,25 +763,68 @@ example (v : Binary32) :
 -- "0x7fc00000"
 ```
 
-The last theorem describes a round trip entirely inside FloatLib, through
-[[FloatLib.Floats.ExecFloat.Binary.ofBits32]] and [[FloatLib.Floats.ExecFloat.Binary.toBits32]].
-Payloads survive that round trip. The evaluations then exercise both boundaries: the finite
-word `0x3fc00000` exports as 1.5, and the signaling word `0x7f812345` survives FloatLib's own bit
-conversion unchanged. Exporting that same signaling word through `toFloat32` produces
-`0x7fc00000`.
+[[FloatLib.Floats.ExecFloat.Binary.toFloat32_ofFloat32]] covers every native value, including
+both signed zeros, infinities, and Lean's canonical NaN. Its proof uses the shared packing
+invariant: unpacking and repacking a valid word recovers that word. We prove this once for
+arbitrary exponent and fraction widths, then specialize it to binary32 and binary64.
 
-A trip through `Float32` has the canonicalization stated by
-[[FloatLib.Floats.ExecFloat.Binary.ofFloat32_toFloat32]]; it is not an identity on all FloatLib
-words. The theorem describes Lean's logical definitions; the evaluations show what happens at runtime
-for these finite and NaN inputs. FloatLib's internal round trip keeps every bit, while conversion
-to a native float discards the NaN payload.
+Starting from a FloatLib word is different. The last theorem keeps every bit through
+`ofBits32` and `toBits32`, including a NaN payload. Exporting the signaling word `0x7f812345`
+through `toFloat32` instead produces the canonical quiet NaN `0x7fc00000`, as specified by
+[[FloatLib.Floats.ExecFloat.Binary.ofFloat32_toFloat32]]. The finite word `0x3fc00000` exports
+as 1.5 without changing its bits.
 
-The direction of the first theorem is easy to miss. It starts with `x : Float32`, after any
-native canonicalization has already occurred, and proves that importing `x` preserves
-`x.toBits`. It cannot recover the payload of a raw word used earlier to construct `x`.
-For the finite value 1.5, no information is discarded and the paths agree. For a signaling
-NaN, the difference between starting with a raw word and starting with a `Float32` is the
-whole issue.
+### Integer conversions in Lean 4.34
+
+The newly exposed integer constructors round once to nearest-even. We connect their shared
+model operation to FloatLib's existing conversion specification, including the result word
+and rounding status. That argument applies to every conventional IEEE descriptor; the
+native `Int8`, `Int16`, `Int32`, `Int64`, and `ISize` casts specialize it to the two host widths.
+For example, an `Int64` may need rounding when converted to binary32:
+
+```lean
+open FloatLib.Numerics.Representations in
+example (n : Int64) :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.ofFloat32 n.toFloat32) =
+      ExecDType.intToFloat FloatFormat.binary32
+        (⟨n.toBitVec⟩ : FixedInt 64) .nearestEven :=
+  ExecFloat.Binary.toModel_ofFloat32_int64ToFloat32 n
+
+example (n : Int) :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.ofFloat n.toFloat) =
+      Model.roundDyadic FloatFormat.binary64 (FloatLib.Numerics.Dyadic.ofScaledInt n 0) :=
+  ExecFloat.Binary.toModel_ofFloat_intToFloat n
+
+example :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.ofFloat32 Float32.nan) =
+      Model.canonicalNaN FloatFormat.binary32 :=
+  ExecFloat.Binary.toModel_ofFloat32_nan
+```
+
+The exposed `Float.ofNat` and `Float.ofInt` constructors, their binary32 counterparts, and
+the new `Int.toFloat` and `Int.toFloat32` names accept unbounded integers. Their bridge proofs
+cover both the small-literal path and general integer rounding, so an input larger than a
+machine word retains its full magnitude until the final rounding.
+
+Conversion back to a signed integer has a different rule: truncate toward zero, then
+saturate to the destination's range. Lean maps NaN to zero and each infinity to the signed
+endpoint. The range check therefore concerns the truncated integer: `127.75` still converts
+to `Int8` value 127.
+
+```lean
+example : (Float32.ofBits 0xbfe00000).toInt8 = (-1 : Int8) := by decide
+example : (Float32.ofBits 0x42ff8000).toInt8 = (127 : Int8) := by decide
+example : Float32.nan.toInt8 = (0 : Int8) := by decide
+example : Float32.inf.toInt8 = (127 : Int8) := by decide
+```
+
+FloatLib's `ExecDType.floatToIntSaturating` follows that native policy using the existing
+exact decoder and integral rounder. Its agreement theorems also connect it to the checked
+`ExecDType.floatToInt`: both return the same integer when the truncated value fits.
+The checked operation returns an error for overflow, infinity, or NaN, which is useful
+when a caller wants to handle those inputs explicitly.
+
+### Arithmetic through the same model
 
 The arithmetic bridge is broader than the two host widths. Lean's `UnpackedFloat` algorithms
 take a format argument, so FloatLib can relate them to every descriptor satisfying its IEEE
@@ -777,49 +834,56 @@ identifies the exact dyadic value read by the two models.
 [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_eq_unpackedToReal_toModel]] lifts that
 agreement to real values.
 
-For addition,
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_ofModel_add_finite_eq_roundAt]] connects
-Lean's model to FloatLib's independent nearest-even `roundAt` specification under its finite,
-nonzero operand and finite-result hypotheses. Corresponding multiplication and division
-lemmas appear in the [arithmetic model comparison](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Arithmetic/LeanModel.lean). These statements compare real semantics, so they
-do not identify signed zeros or NaN payloads.
+Addition and subtraction agree on the complete result word whenever both operands are
+finite. These hypotheses allow signed zeros, and the result may be zero, subnormal, or
+infinite. We can apply the addition theorem directly to ordinary Lean expressions:
 
-In the finite case, we can read the addition conclusion schematically as
+```lean
+example (x y : Float32) (hx : x.isFinite = true) (hy : y.isFinite = true) :
+    ExecFloat.Binary.ofFloat32 (x + y) =
+      ExecFloat.Binary.ofFloat32 x + ExecFloat.Binary.ofFloat32 y :=
+  ExecFloat.Binary.ofFloat32_add_of_isFinite x y hx hy
+```
 
-$$
-\begin{aligned}
-&\operatorname{value}(\operatorname{modelAdd}(x,y))\\
-&\quad= \operatorname{roundAt}_{\mathrm{fmt}}
-  \bigl(\operatorname{value}(x)+\operatorname{value}(y)\bigr).
-\end{aligned}
-$$
+[[FloatLib.Floats.ExecFloat.Binary.ofFloat32_add_of_isFinite]] connects the native expression
+on the left to the configured software addition on the right. The corresponding subtraction
+and binary64 theorems have the same finite-input conditions. Unlike equality of decoded real
+values, this word equality distinguishes positive and negative zero.
 
-Here `value` means decoding to a real number after the required model conversions.
-`roundAt` selects the nearest-even representable real value. The right side first forms the
-exact real sum and then rounds it; it does not assert that the sum was exactly representable.
-In the earlier cancellation example, the call on $y=-2^{25}$ and $z=1$ meets the finite,
-nonzero-input conditions and has a finite result. Its exact sum is $-33554431$, and the
-rounded real value is $-33554432$, just as the executable example showed.
+The real-valued addition theorem
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_ofModel_add_finite_eq_roundAt]]
+provides a complementary conclusion: under its nonzero finite-input and finite-result
+hypotheses, Lean's rounded sum has value
+$\operatorname{roundAt}_{\mathrm{fmt}}(\operatorname{value}(x)+\operatorname{value}(y))$.
+In our earlier cancellation example, adding $y=-2^{25}$ and $z=1$ therefore rounds the exact
+sum $-33554431$ to $-33554432$.
 
-Those hypotheses also say where this theorem stops. A call with a zero operand or an
-overflowing result needs a separate argument. Even when the decoded result is zero, equality
-of real values cannot determine its sign bit: positive and negative zero both decode to 0.
-The multiplication lemma additionally requires that its provisional product exponent satisfy
-Lean's `roundWithAccuracy` precondition. Division has the analogous exponent condition and a
-nonzero provisional quotient condition from `divCore`. You need to prove these conditions before applying either lemma.
+Square root agrees for **every input**, including negative zero, negative arguments,
+infinities, and NaNs. We can perform the certified software operation and then export the
+result, or export first and take Lean's logical square root:
 
-Square root has a more direct connection:
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt_eq_model]] equates FloatLib's square
-root with the repacked Lean model result for positive finite values.
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.NativeModelSqrt.unpackedSqrt_eq_sqrt]] supports
-compiling Lean's model square root through FloatLib's proved integer kernel. This concerns the
-logical model's square-root implementation; it does not prove the host `sqrtf` instruction or
-library call correct.
+```lean
+example (x : Binary32) :
+    ExecFloat.Binary.toFloat32 (ExecFloat.sqrt x) =
+      (ExecFloat.Binary.toFloat32 x).sqrt :=
+  ExecFloat.Binary.toFloat32_sqrt x
+```
 
-An all-input packed-word equality between raw `Float32.Model.add` and FloatLib addition would
-conflict with their different NaN policies. The guarded host functions also have no packed-word
-refinement theorem and remain outside the certified planner. Even an additional theorem about
-the guarded logical definitions would leave the external runtime boundary to be justified.
+[[FloatLib.Floats.ExecFloat.Binary.toFloat32_sqrt]] and its binary64 counterpart follow from
+one theorem for every conventional IEEE descriptor. The native boundary canonicalizes NaNs;
+all other result bits, including the sign of zero, agree.
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.NativeModelSqrt.unpackedSqrt_eq_sqrt]] also
+lets the compiler evaluate Lean's model square root through FloatLib's proved integer kernel.
+
+The [multiplication and division comparisons](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Arithmetic/LeanModel.lean)
+have narrower hypotheses. Multiplication requires a provisional exponent satisfying Lean's
+`roundWithAccuracy` precondition. Division also requires a nonzero provisional quotient from
+`divCore`. Their real-valued conclusions apply once those conditions and the stated finite
+conditions have been established.
+
+All these proofs concern Lean's logical definitions. Compiled native calls still use external
+runtime functions and hardware instructions. The optional guarded host operations below retain
+that trust boundary.
 
 ## Formats, rounding directions, and status
 
@@ -950,10 +1014,10 @@ Here we use [[FloatLib.Floats.Formats.BinaryInterchange.Configured.Backend.wordA
 binary32; the same certificate covers other configured formats and carriers. It certifies the
 software word kernel, not the processor's floating-point addition.
 
-The `#float_info Float32` query reports the native type's storage and conversion boundary. Its
-arithmetic section reports no FloatLib proof-backed operations; it does not transfer the
-configured `add_eq_spec` theorem to Lean's raw host addition. The report and the theorem thus
-refer to different arithmetic interfaces even though both use binary32 values.
+The `#float_info Float32` query collects the native conversion and logical-model theorems,
+with their input conditions, alongside the configured software certificates. It also records
+which operations depend on the compiler and host runtime, so we can distinguish the theorem
+we are applying from the implementation that executes a native call.
 
 ## Opting into guarded host operations
 

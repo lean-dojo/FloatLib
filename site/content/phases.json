@@ -1494,6 +1494,22 @@
           "title": "A compiler substitution: posit addition"
         },
         {
+          "name": "FloatLib.Floats.ExecFloat.Binary.toFloat32_ofFloat32",
+          "title": "Native values round-trip through FloatLib"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_ofFloat32_int64ToFloat32",
+          "title": "Lean signed casts use our integer rounder"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.toFloat32_sqrt",
+          "title": "Native square root agrees for every input"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.ofFloat32_add_of_isFinite",
+          "title": "Native addition agrees for finite inputs"
+        },
+        {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.ieeeToDyadic?_eq_unpackedToDyadic?_toModel",
           "title": "Our decoder agrees with Lean's float model"
         },

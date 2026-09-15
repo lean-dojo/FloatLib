@@ -111,6 +111,8 @@ We would like to bring verified arithmetic closer to MPFR's speed. The
 [benchmarks](site/content/chapters/15-performance.md) compare scalar operations from 2 to
 4,096 bits, so you can see where the kernels do well and where we still have work to do.
 Lean checks the proofs before execution and erases them during compilation.
+We also ran `leanchecker` to replay the compiled FloatLib declarations through
+Lean's kernel.
 
 The saved FloatLib runs matched Berkeley TestFloat on **more than 102 million cases** for the IEEE
 formats and operations we checked. Comparisons also cover MPFR, decimal arithmetic,

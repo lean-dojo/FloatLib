@@ -248,6 +248,14 @@
     "url": "https://lean-lang.org/doc/reference/latest/"
   },
   {
+    "key": "lean434Release",
+    "authors": "Lean FRO and contributors",
+    "title": "Lean 4.34.0 release notes",
+    "venue": "The Lean Language Reference",
+    "year": "2026",
+    "url": "https://lean-lang.org/doc/reference/latest/releases/v4.34.0/"
+  },
+  {
     "key": "gustafsonYonemoto2017",
     "authors": "John L. Gustafson and Isaac Yonemoto",
     "title": "Beating Floating Point at its Own Game: Posit Arithmetic",

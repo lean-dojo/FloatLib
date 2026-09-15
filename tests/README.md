@@ -16,6 +16,16 @@ compiler equality proofs and the public root's dependencies. Arb runs when
 `python-flint` is installed; otherwise the verifier reports that it was skipped. Any failed
 check fails the command.
 
+To also replay the compiled FloatLib declarations through Lean's kernel:
+
+```bash
+FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh
+```
+
+This runs `leanchecker`, which loads the stored declarations and checks them again with
+the same kernel used during compilation. Loading the dependency environments can use
+hundreds of GiB of memory, so this extra check is opt-in.
+
 For just the proofs and native regressions, or to choose a native suite:
 
 ```bash

@@ -341,6 +341,30 @@ format the kernel is eligible for.
 | `Model.WideLimb.toModel_add`, `toModel_sub`, `toModel_mul`, `toModel_fma` | On the 32-bit limb carrier of `ExecFloat.BinaryLimbs`, for every IEEE layout wider than 128 bits with an exponent field of at most 32 bits, the limb-array operation decodes to `Model.Spec.add`, `sub`, `mul`, and `fma`; division and square root use the exact baseline. |
 | `Model.NativeSmallWordAdd.addFinite_refines` | The all-`UInt64` addition and subtraction kernel for IEEE layouts within one machine word refines the exact finite kernel whenever it accepts. |
 
+## Lean's native float model
+
+Import `FloatLib.Floats.Formats.IEEE754`, or the usual `FloatLib` root. We're glad Lean 4.34
+exposes more of its float model: we can now connect its signed integer casts and integer
+constructors to our rounding specifications. The arithmetic bridges also relate ordinary
+Lean expressions to FloatLib's configured operations.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `ExecFloat.Binary.toFloat32_ofFloat32`, `toFloat_ofFloat` | Every native value survives importing into FloatLib and exporting again. |
+| `ExecFloat.Binary.toModel_ofFloat32_nan`, `toModel_ofFloat_nan` | Lean's named NaN constants import as FloatLib's canonical NaN. Corresponding `inf` theorems identify positive infinity. |
+| `Model.ofInt_conversion_spec` | Lean's integer constructor satisfies FloatLib's complete default conversion specification for any conventional IEEE descriptor. |
+| `ExecFloat.Binary.toModel_ofFloat_ofNat`, `toModel_ofFloat32_ofNat` | Native natural constructors round the entire unbounded input with FloatLib's rational rounder. |
+| `ExecFloat.Binary.toModel_ofFloat_intToFloat`, `toModel_ofFloat32_intToFloat32` | Unbounded `Int` casts agree with FloatLib's dyadic rounder, including negative values and overflow. |
+| `ExecFloat.Binary.toModel_ofFloat32_int64ToFloat32`, `toModel_ofFloat_int64ToFloat` | Signed integer casts agree with FloatLib's nearest-even integer conversion. The other native signed widths have corresponding lemmas. |
+| `ExecFloat.Binary.float32ToInt8_eq_floatToIntSaturating`, `floatToInt8_eq_floatToIntSaturating` | Native signed casts truncate toward zero and saturate; NaN maps to zero. The other signed widths have corresponding lemmas. |
+| `ExecFloat.Binary.ofFloat32_add_of_isFinite`, `ofFloat_add_of_isFinite` | On finite operands, importing a native sum equals adding the imports, including signed zeros and overflow. Corresponding subtraction lemmas have the same scope. |
+| `Model.canonicalizeModel_sqrt_eq_model` | For every conventional IEEE input, square root agrees with Lean's model after NaN canonicalization. |
+| `ExecFloat.Binary.toFloat32_sqrt`, `toFloat_sqrt` | Configured square root commutes with native export on every input. |
+
+The `Model` names here belong to `Formats.BinaryInterchange.Model`. These are equalities with
+Lean's logical definitions; execution of native calls also trusts the compiler, runtime,
+and hardware. Our software operations retain their existing refinement certificates.
+
 ## Configured binary transcendentals
 
 We provide these functions through the optional

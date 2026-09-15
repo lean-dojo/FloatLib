@@ -6,7 +6,9 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.IEEE754.Native
+public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
+public import FloatLib.Floats.Formats.IEEE754.Native.Integer
+public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Proof
 public import FloatLib.Floats.ExecFloat.Info
@@ -15,10 +17,10 @@ public import FloatLib.Floats.ExecFloat.Info
 # Inspection of Lean's native runtime floats
 
 `#float_info` reports native storage, arithmetic, and conversions for Lean's `Float32` and
-binary64 `Float`. It lists conversion equations and certified software refinements for their
-configured software counterparts. Correctness of Lean's native arithmetic, including explicit
-calls through `Configured.NativeFPU.Unchecked`, depends on Lean's compiler, runtime, and host
-hardware.
+binary64 `Float`. It lists the Lean 4.34 logical-model bridges with their input conditions and
+the certified software refinements for their configured counterparts. Execution of native
+arithmetic, including explicit calls through `Configured.NativeFPU.Unchecked`, also depends on
+Lean's compiler, runtime, and host hardware.
 -/
 
 public meta section
@@ -36,6 +38,9 @@ private meta def theoremSurfaces (bits : Nat) : List TheoremSurface :=
       , [ ``Binary.toBits32_ofFloat32
         , ``Binary.toModel_toFloat32
         , ``Binary.ofFloat32_toFloat32
+        , ``Binary.toFloat32_ofFloat32
+        , ``Binary.toModel_ofFloat32_nan
+        , ``Binary.toModel_ofFloat32_inf
         , ``Binary.nativeFloat32ExactDecoder_run ]
       , [ ``Backend.wordAdd_eq_spec
         , ``Backend.wordSub_eq_spec
@@ -48,6 +53,9 @@ private meta def theoremSurfaces (bits : Nat) : List TheoremSurface :=
       , [ ``Binary.toBits64_ofFloat
         , ``Binary.toModel_toFloat
         , ``Binary.ofFloat_toFloat
+        , ``Binary.toFloat_ofFloat
+        , ``Binary.toModel_ofFloat_nan
+        , ``Binary.toModel_ofFloat_inf
         , ``Binary.nativeFloatExactDecoder_run ]
       , [ ``Backend.wordAdd_eq_spec
         , ``Backend.wordSub_eq_spec
@@ -56,11 +64,40 @@ private meta def theoremSurfaces (bits : Nat) : List TheoremSurface :=
         , ``Backend.wordSqrt_eq_spec
         , ``NativeFPU.softwareFma64_eq_spec ] )
   let width := if bits = 32 then 32 else 64
+  let integerConversions := if bits = 32 then
+    [ ``Binary.toModel_ofFloat32_ofNat
+    , ``Binary.toModel_ofFloat32_intToFloat32
+    , ``Binary.toModel_ofFloat32_int64ToFloat32
+    , ``Binary.float32ToInt8_eq_floatToIntSaturating ]
+    else
+    [ ``Binary.toModel_ofFloat_ofNat
+    , ``Binary.toModel_ofFloat_intToFloat
+    , ``Binary.toModel_ofFloat_int64ToFloat
+    , ``Binary.floatToInt8_eq_floatToIntSaturating ]
+  let addSub := if bits = 32 then
+    [``Binary.ofFloat32_add_of_isFinite, ``Binary.ofFloat32_sub_of_isFinite]
+    else [``Binary.ofFloat_add_of_isFinite, ``Binary.ofFloat_sub_of_isFinite]
+  let sqrt := if bits = 32 then [``Binary.toFloat32_sqrt] else [``Binary.toFloat_sqrt]
   [ { topic := s!"native binary{width} conversion boundary"
       declarations := conversions
       applicability := .verifiedForType
       scope :=
         s!"every Lean {name} value; direct configured-to-native round trips follow Lean's logical canonical-NaN model" }
+  , { topic := s!"native binary{width} integer conversion models"
+      declarations := integerConversions
+      applicability := .verifiedForType
+      scope :=
+        "unbounded constructors and representative signed casts: integers round to nearest-even; float-to-integer casts truncate, saturate, and map NaN to zero" }
+  , { topic := s!"native binary{width} addition and subtraction models"
+      declarations := addSub
+      applicability := .verifiedForType
+      scope :=
+        "both operands finite, including signed zeros; the complete result word agrees, including overflow" }
+  , { topic := s!"native binary{width} square-root model"
+      declarations := sqrt
+      applicability := .verifiedForType
+      scope :=
+        "every input word; export canonicalizes NaNs and preserves all other result bits" }
   , { topic := s!"configured binary{width} certified software arithmetic"
       declarations := arithmetic
       applicability := .verifiedForType
@@ -90,7 +127,7 @@ meta def profile (bits exponentBits fractionBits : Nat) (name storage : String) 
     ]
   rounding :=
     [ ⟨"native arithmetic",
-        "runtime/compiler implementation of the fixed IEEE width; not a FloatLib refinement theorem"⟩
+        "nearest-even in Lean's logical model; compiled calls use the platform runtime"⟩
     , ⟨"conversion into ExecFloat",
         "exact interchange decoding followed by explicit destination rounding only when another type is requested"⟩
     ]
@@ -101,11 +138,11 @@ meta def profile (bits exponentBits fractionBits : Nat) (name storage : String) 
     , ⟨"interchange boundary",
         s!"public {name}.toBits and {name}.ofBits operations"⟩
     , ⟨"proof boundary",
-        "FloatLib proves its conversion-side model equations; native arithmetic correctness is trusted externally"⟩
+        "conversion and selected arithmetic model equations are proved; native compilation and hardware remain external"⟩
     ]
   theoremSurfaces := theoremSurfaces bits
   nonclaims :=
-    [ "native arithmetic is linked to ExecFloat.Spec by a Lean theorem"
+    [ "every native arithmetic operation has an unconditional FloatLib model bridge"
     , "NaN payloads are preserved through native-value conversion"
     , "this runtime type is a FloatLib destination quantizer or participates in implicit promotion"
     , "platform rounding-mode state, exception flags, or compiler lowering are verified by this report"
