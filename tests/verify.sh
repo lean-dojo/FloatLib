@@ -14,12 +14,12 @@ floatlib_test_lake test
 floatlib_lake lint
 
 if [[ "${FLOATLIB_RUN_INDEPENDENT_CHECKER:-0}" == "1" ]]; then
-  # This rechecks the public compiled environment with Lean's independent kernel checker. The
-  # complete mathlib closure can require hundreds of GiB, so ordinary development runs opt in.
+  # Replay compiled FloatLib declarations through Lean's kernel after elaboration. Loading the
+  # dependency environments can require hundreds of GiB, so ordinary development runs opt in.
   floatlib_lake env leanchecker FloatLib
 else
   printf '%s\n' \
-    'Skipping independent leanchecker pass; set FLOATLIB_RUN_INDEPENDENT_CHECKER=1 for releases.'
+    'Skipping kernel replay; set FLOATLIB_RUN_INDEPENDENT_CHECKER=1 to run leanchecker.'
 fi
 
 "$ROOT/tests/checks/architecture.sh"

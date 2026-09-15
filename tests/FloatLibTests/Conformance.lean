@@ -10,6 +10,7 @@ public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
 public import FloatLibTests.Conformance.BinaryInterchange.ExactAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecComplexAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecFloatAutomation
+public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
 public import FloatLibTests.Conformance.Execution.AutomaticDispatch
 public import FloatLibTests.Conformance.Execution.Capabilities
 public import FloatLibTests.Conformance.Execution.Certificates

@@ -33,8 +33,13 @@ The conversion boundary is explicit:
 The conversions themselves do not choose an arithmetic backend. Configured binary32 and binary64
 arithmetic uses proved software kernels by default. Applications may call
 `Configured.NativeFPU.Unchecked` explicitly for guarded host arithmetic, but those functions are
-outside the proof-carrying planner because exact packed-word equality with the software
-specification has not been proved.
+outside the proof-carrying planner and depend on the compiler and host runtime.
+
+Lean 4.34 exposes more definitions in its logical float model. The companion `Native.Integer`
+module connects integer conversion to FloatLib's rounding specifications. `Native.AddSub` proves
+agreement for finite operands, and `Native.Sqrt` covers every input after NaN canonicalization.
+Import `FloatLib.Floats.Formats.IEEE754` or `FloatLib` to include these proofs alongside the
+conversions.
 
 ## References
 

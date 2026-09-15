@@ -10,6 +10,7 @@ public import FloatLib
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.Quotient.Compiler
+public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
 public import FloatLibTests.Conformance.Execution.Certificates
 public import FloatLibTests.Conformance.Posit.Quire
 public meta import Lean.Compiler.CSimpAttr
@@ -26,8 +27,8 @@ module belongs to `FloatLib`, including private declarations available in this e
 Only propositional extensionality, quotient soundness, and classical choice are accepted.
 The imports cover the public root and the optional configured binary transcendental operations.
 The quotient compiler certificate is loaded explicitly because its clients import it privately.
-Unimported modules are outside this check. Symbolic certificate and quire regression declarations
-are checked separately because they belong to `FloatLibTests`.
+Unimported modules are outside this check. Symbolic certificate, quire, and native-model regression
+declarations are checked separately because they belong to `FloatLibTests`.
 
 The production traversal includes `@[csimp]` equality proofs. For the sole permitted
 `@[implemented_by]` declaration, the audit also reads Lean's actual attribute and checks that its
@@ -51,6 +52,24 @@ private def allowedKernelAxioms : Array Lean.Name :=
 
 private def auditedTestDeclarations : Array Lean.Name :=
   #[
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_roundtrip,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_roundtrip,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_nan_canonicalized,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.integer_conversion_spec,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.int64_to_native32_tie_down,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.int64_to_native32_tie_up,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.nat_to_native32_large_tie,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.int_to_native64_large_negative_tie,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_int8_boundary_fraction,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_int8_saturates,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_int8_negative_infinity,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_int8_nan,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_sqrt_commutes,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_commutes,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_negative_zero,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_sqrt_negative_one,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_add_sub_commute,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_add_overflow,
     ``FloatLibTests.Conformance.Execution.Certificates.descriptor,
     ``FloatLibTests.Conformance.Execution.Certificates.staticByte,
     ``FloatLibTests.Conformance.Execution.Certificates.ocpE4M3FN,

@@ -98,7 +98,7 @@ private theorem sign_toBitVec_ofBitVec (bits : BitVec 1) :
   · simp [hbits, Sign.ofBitVec, Sign.toBitVec]
 
 /-- Splitting and recombining Lean-model components preserves the packed bit vector. -/
-private theorem packComponents_unpackComponents (spec : Float.Model.Format)
+theorem packComponents_unpackComponents (spec : Float.Model.Format)
     (bits : BitVec spec.numBits) :
     packComponents spec (Sign.ofBitVec (unpackSign bits))
         (unpackExponent bits) (unpackMantissa bits) = bits := by
