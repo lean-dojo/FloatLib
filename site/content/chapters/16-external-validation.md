@@ -97,6 +97,11 @@ automation: which expressions they accept, which input assumptions they need, an
 tight a bound they prove. FloatLib's operation refinements and rounding theorems supply
 ingredients for such arguments; they do not by themselves constitute the same automation.
 
+**LeanCert** uses interval arithmetic and Taylor models to automate proofs of bounds,
+roots, and integrals for real-valued functions in Lean [@leanCert]. Both libraries
+provide proved interval enclosures; FloatLib focuses on customizable numerical formats,
+rounding rules, and certified executable arithmetic.
+
 ### Symbolic arithmetic and tensors
 
 **SymFPU** implements SMT-LIB floating-point operations using bit-vector operations
