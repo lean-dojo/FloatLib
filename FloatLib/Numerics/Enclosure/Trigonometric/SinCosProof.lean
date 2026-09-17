@@ -10,7 +10,6 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import Mathlib.Analysis.Calculus.Taylor
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
-import Mathlib.Tactic.Ring
 
 /-!
 # Global rational sine and cosine bounds

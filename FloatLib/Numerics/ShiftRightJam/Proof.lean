@@ -8,7 +8,8 @@ module
 
 public import FloatLib.Numerics.Quantization.Deterministic
 public import FloatLib.Numerics.ShiftRightJam
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.Inv
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Nearest-even rounding through guard and sticky bits

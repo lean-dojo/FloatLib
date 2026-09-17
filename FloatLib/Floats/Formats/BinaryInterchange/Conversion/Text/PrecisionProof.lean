@@ -9,7 +9,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatti
 public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 public import FloatLib.Numerics.Exact.DecimalText.PrecisionProof
 public import FloatLib.Numerics.Exact.HexText.Proof
-import Mathlib.Tactic.Linarith
 
 /-! # Requested-precision guarantees for binary character output
 

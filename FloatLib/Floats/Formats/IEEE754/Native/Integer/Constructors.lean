@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.FromInt
 public import FloatLib.Numerics.ShiftRightJam.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Finite
 import all Init.Data.OfScientific
 import all Init.Data.Float.Float
 import all Init.Data.Float.Float32

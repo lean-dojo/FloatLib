@@ -8,7 +8,6 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Steps
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Proof
-import Mathlib.Tactic.Linarith
 
 /-!
 # Neighbor range, status and cohort guarantees

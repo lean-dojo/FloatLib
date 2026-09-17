@@ -6,7 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.RadixText.Runtime
-import Mathlib.Tactic.Ring
 import all Init.Data.Repr
 
 /-!

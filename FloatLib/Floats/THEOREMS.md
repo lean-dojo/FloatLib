@@ -394,6 +394,25 @@ current transcendental kernels approximates and rounds at each function boundary
 rounding a whole transcendental composition requires a certified real enclosure or another
 exact-real procedure; it cannot be obtained by treating the expression as rational arithmetic.
 
+## Repeatedly rounded reductions
+
+`FloatLib.Numerics.Reduction.Tree` describes nonempty binary evaluation schedules.
+`FloatLib.Numerics.Reduction.Error` proves bounds from local error assumptions at the actual
+operand pairs. These modules are independent of any format or tensor library.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Numerics.ReductionTree.abs_eval_sub_exact_le_errorBudget` | The total error is at most the sum of allowances at the internal nodes. |
+| `Numerics.ReductionTree.abs_eval_sub_exact_le_nodeCount` | A uniform absolute allowance is paid once per addition. |
+| `Numerics.ReductionTree.abs_eval_sub_exact_le_mixedBudget` | Relative and absolute local errors give a recursive bound using exact subtree sums. |
+| `Numerics.ReductionTree.abs_eval_sub_exact_le_geometric` | Under local relative bounds, leaf count and absolute-input scale give a schedule-independent geometric enclosure. |
+| `Model.ReductionTree.abs_toReal_eval_sub_sum_le` | Every finite IEEE reduction tree has a sum-of-half-ULPs bound, including subnormal intermediate results. |
+| `Model.ReductionTree.abs_toReal_eval_sub_eval_le` | Two finite schedules over the same input occurrences differ by at most their combined budgets. |
+
+The model results live in `BinaryInterchange.Reduction.Tree`. They require finite leaves and
+finite intermediate additions. They do not identify arbitrary native CPU or GPU reductions
+with a particular tree; a downstream execution proof must establish that connection.
+
 ## Correctly rounded reductions
 
 Import
@@ -646,6 +665,23 @@ The dot products accept different element profiles on their two sides. Exact acc
 FloatLib's choice of the internal precision permitted by MX; the scale-selection theorem does
 not claim global optimality over other shared scales.
 
+`Numerics.Interval α` stores arbitrary endpoint representations. Its partial arithmetic uses
+`Numerics.OutwardRounding α β`: a scalar decoder and a certified partial enclosure function.
+The generic corner bounds apply over any ordered field. Successful finite operations preserve
+containment; unavailable enclosures, exceptional inputs, and zero-crossing division return
+`none`. Concrete binary, decimal, and posit adapters use exact rational scalar arithmetic.
+`Interval.ContainsReal` interprets those rational endpoints in the reals; the
+`containsReal_add?`, `containsReal_sub?`, `containsReal_mul?`, and `containsReal_div?` theorems
+cover arbitrary real members, not only rational inputs.
+
+Configured binary endpoints are available through
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval`. The
+`ExecFloat.Binary.Interval.toModel_ofModel` and `ofModel_toModel` theorems preserve complete
+endpoint encodings. The `toModel_*` lemmas identify every configured operation with the existing
+model operation. Its `add_sound`, `sub_sound`, `mul_sound`, and `div_sound` theorems transport
+the model's real-enclosure guarantees, including their descriptor and validity hypotheses.
+Range-checked finite-encoding results remain separate from IEEE extended-real results.
+
 Import `FloatLib.Floats.Interval` for enclosure proofs:
 
 | Theorem | Informal statement |
@@ -762,6 +798,27 @@ supplied stochastic word. These are deterministic statements about that word as 
 The raw-word constructor lets us read file formats, implement wire protocols, and compare
 conformance tables. Literals, conversions, and named constructors give ordinary programs
 a more direct way to express numerical values.
+
+## Real and executable affine quantization
+
+`FloatLib.Numerics.Quantization.Affine.Real` provides `RealAffineQuantizer` and embeds the
+executable rational `AffineQuantizer` into it with `AffineQuantizer.toReal`. The real API accepts
+an integer rounding function explicitly. Monotonicity, integer identity, and a local error bound
+are separate hypotheses, needed only by the corresponding theorem.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `RealAffineQuantizer.quantize_monotone` | A monotone rounder gives monotone quantization, including saturation. |
+| `RealAffineQuantizer.quantize_dequantize` | Integer-preserving rounding returns every in-range reconstructed code. |
+| `RealAffineQuantizer.dequantize_rawCode_error_le` | The grid scale multiplies the integer-rounding error. |
+| `RealAffineQuantizer.dequantize_quantize_error_le_half` | Nearest rounding reconstructs within half a grid step when clipping is inactive. |
+| `AffineQuantizer.toReal_quantize` | Agreement of rational and real integer rounding lifts to the complete saturated operation. |
+| `Flocq.nearestEven_ratCast` | Real and executable rational nearest-even rounding choose the same integer, including ties. |
+| `Flocq.affine_toReal_quantize` | The executable rational quantizer agrees with its real nearest-even specification. |
+| `Flocq.affine_toReal_roundedValue` | Reconstruction also commutes with the rational-to-real embedding. |
+
+The nearest-even connection is in `FloatLib.Floats.Formats.Flocq.Theory.Rounding.Affine`.
+Clients needing only executable rational quantization can still import `Numerics.Quantization.Affine`.
 
 ## Theorem names and lookup
 

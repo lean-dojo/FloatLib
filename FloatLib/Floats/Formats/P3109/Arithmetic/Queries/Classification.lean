@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Neighbors
-import Mathlib.Tactic.SplitIfs
 
 /-!
 # Exact meanings of P3109 value queries

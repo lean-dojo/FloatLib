@@ -27,6 +27,7 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Generic
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Magnitude
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 public import FloatLib.Floats.Formats.Flocq.Theory.NumericalSystem
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Affine
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Away
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Double

@@ -8,9 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Runtime
 public import Mathlib.Data.Rat.Floor
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.SplitIfs
 
 /-!
 # Rational meaning of P3109 rounding decisions

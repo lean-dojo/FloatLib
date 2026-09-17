@@ -6,7 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Proof
-import Mathlib.Tactic.Linarith
 
 /-!
 # Adjacency of the public decimal neighbor operations

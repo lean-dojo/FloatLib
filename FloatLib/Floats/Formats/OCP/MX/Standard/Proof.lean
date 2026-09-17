@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.OCP.MX.Standard.ElementProof
 public import FloatLib.Floats.Formats.OCP.MX.Standard.ScaleProof
-import Init.Data.Vector.Monadic
 
 /-!
 # Exact decoding and destination quantization of standard MX blocks

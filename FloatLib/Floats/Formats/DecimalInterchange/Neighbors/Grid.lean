@@ -8,8 +8,6 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 
 /-!
 # Decimal grid gaps

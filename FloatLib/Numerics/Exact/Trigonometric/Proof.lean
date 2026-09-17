@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Exact.Trigonometric.Runtime
 import FloatLib.Numerics.Order.Comparison
-import Mathlib.Tactic.Linarith
 
 /-!
 # Exact real semantics of ordinary trigonometric comparisons

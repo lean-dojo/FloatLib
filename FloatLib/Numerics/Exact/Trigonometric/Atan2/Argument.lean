@@ -9,7 +9,6 @@ module
 public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Enclosure.Runtime
 public import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
-import Mathlib.Tactic.Linarith
 
 /-!
 # Principal-branch identities for the complex argument

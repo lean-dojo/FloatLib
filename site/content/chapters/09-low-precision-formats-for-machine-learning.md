@@ -412,6 +412,40 @@ Directed and stochastic policies over the non-IEEE scalar formats have executabl
 
 <a id="finding-the-low-precision-implementations"></a>
 
+## Affine integer quantization
+
+An integer quantizer stores a code $k$ and reconstructs the value $s(k-z)$, where $s>0$ is a scale and $z$ is the zero point. To encode $x$, it rounds $x/s$ to an integer, adds $z$, and clips the result to the storage interval. FloatLib's executable `AffineQuantizer` uses exact rational inputs and scales, so a host floating-point conversion does not change a tie before the integer rounder sees it.
+
+```lean standalone
+import FloatLib
+
+open FloatLib.Numerics.Quantization
+open FloatLib.Floats.Formats.Flocq
+
+def quarterGrid : AffineQuantizer where
+  scale := 1 / 4
+  zeroPoint := 0
+  qmin := -128
+  qmax := 127
+  scale_pos := by norm_num
+  codeRange := by norm_num
+
+#eval quarterGrid.quantize (3 / 8)
+-- 2
+#eval quarterGrid.quantize (-3 / 8)
+-- -2
+#eval quarterGrid.quantize 100
+-- 127
+
+example (x : ℚ) :
+    quarterGrid.toReal.quantize nearestEven (x : ℝ) = quarterGrid.quantize x :=
+  affine_toReal_quantize quarterGrid x
+```
+
+The first two inputs lie halfway between grid points; nearest-even selects codes $2$ and $-2$. The third input exceeds the code range and is clipped. The final theorem connects the whole executable operation, including clipping, to its real-valued specification.
+
+[[FloatLib.Numerics.Quantization.RealAffineQuantizer]] also accepts irrational scales and inputs, and takes its integer rounding function as an argument. Its order theorem needs a monotone rounder; its code round-trip theorem needs a rounder that fixes integers. With a nearest rounder, reconstruction differs from the input by at most $s/2$ when clipping is inactive. This last condition matters: a clipped input can be arbitrarily far from the largest reconstructed value. [[FloatLib.Floats.Formats.Flocq.affine_toReal_quantize]] proves that the rational implementation and real nearest-even specification agree for every rational input.
+
 ## Using the low-precision types
 
 Use the named FP8, FP6, and FP4 types for individual values. For a block, [[FloatLib.Floats.Formats.OCP.MX.E8M0]] supplies the shared scale, and the [standard block implementation](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/OCP/MX/Standard) provides the six 32-element formats. Its quantizer follows the [scale rule above](#/chapter/low-precision-formats-for-machine-learning/choosing-a-scale-for-32-lanes); the minimum-error theorem compares element choices at that selected scale.

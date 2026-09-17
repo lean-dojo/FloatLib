@@ -10,7 +10,6 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Round.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
 public import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.Ring
 
 /-!
 # Verified wide-limb normal rounding

@@ -6,8 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Grid
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 
 /-!
 # Successor and predecessor on a normalized decimal grid

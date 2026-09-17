@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
-import Mathlib.Tactic.Linarith
 
 /-! # Uniqueness of finite binary representations
 

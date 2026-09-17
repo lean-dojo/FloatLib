@@ -6,7 +6,7 @@ import { DottedName, shortName, type SiteIndex } from './data';
 import {
   chapterPath, graphPath, href, landingPath, nodePath, parseRoute, referencesPath, type Route,
 } from './routes';
-import { fitLeanBlocks, updateOverflow } from './overflow';
+import { updateOverflow } from './overflow';
 import { useTheme } from './theme';
 import { useCopyButtons } from './useCopyButtons';
 import type { Chapter, SiteNode } from './types';
@@ -179,9 +179,8 @@ function Landing({ index }: { index: SiteIndex }) {
   </article>;
 }
 
-// Three layout decisions that CSS alone cannot make. An inline formula wider than its paragraph
+// An inline formula wider than its paragraph
 // cannot wrap, so on narrow screens it becomes a scrollable block instead of widening the page.
-// A Lean block whose longest line does not fit the measure moves to the wide stop (fitLeanBlocks).
 // A table or a Lean block wider than the column scrolls inside its wrapper, and the wrapper gets
 // a right-edge fade while there is content beyond the edge (hidden scrollbars give no other cue).
 // All are checked after render, on resize, and (for the scrolling wrappers) on scroll. This
@@ -193,7 +192,6 @@ function markOverflow(root: HTMLElement | null): void {
     const parent = element.parentElement;
     if (parent && element.getBoundingClientRect().width > parent.clientWidth) element.classList.add('is-wide');
   }
-  fitLeanBlocks(root);
   for (const wrapper of root.querySelectorAll<HTMLElement>('.table-scroll, .lean-block pre, .math-display')) {
     if (!wrapper.dataset.scrollWatched) {
       wrapper.dataset.scrollWatched = 'true';

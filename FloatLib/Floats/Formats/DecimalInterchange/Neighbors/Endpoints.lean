@@ -6,7 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Adjacency
-import Mathlib.Tactic.Linarith
 
 /-!
 # Infinite endpoints of decimal adjacency

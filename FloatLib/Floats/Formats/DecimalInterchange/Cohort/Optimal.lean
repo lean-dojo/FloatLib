@@ -6,7 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 
 /-!

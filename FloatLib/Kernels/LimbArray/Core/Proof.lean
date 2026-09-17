@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Kernels.LimbArray.Core.Runtime
 public import Mathlib.Data.Nat.Digits.Defs
-import Mathlib.Tactic.Ring
-import Mathlib.Data.Nat.Bitwise
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
 

@@ -16,9 +16,11 @@ public import FloatLib.Numerics.IEEEComparison
 public import FloatLib.Numerics.IEEEStatus.Proof
 public import FloatLib.Numerics.Operation
 public import FloatLib.Numerics.Quantization
+public import FloatLib.Numerics.Quantization.Affine.Real
 public import FloatLib.Numerics.Quantization.Automation
 public import FloatLib.Numerics.Quantization.Spec
 public import FloatLib.Numerics.Reduction
+public import FloatLib.Numerics.Reduction.Error
 public import FloatLib.Numerics.Representations
 public import FloatLib.Numerics.ShiftRightJam.Proof
 

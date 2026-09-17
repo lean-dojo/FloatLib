@@ -9,16 +9,21 @@ module
 public import FloatLib.Numerics.Enclosure.Elementary.Convergence
 public import FloatLib.Numerics.Enclosure.Elementary.ComplexTranscendental
 public import FloatLib.Numerics.Enclosure.Elementary.TrigonometricIrrational
+public import FloatLib.Numerics.Enclosure.Interval.Proof
+public import FloatLib.Numerics.Enclosure.Interval.Real
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import FloatLib.Numerics.Enclosure.Trigonometric.Convergence
 public import FloatLib.Numerics.Enclosure.Trigonometric.Termination
 
 /-!
-# Executable analytic enclosures
+# Executable interval and analytic enclosures
 
 Rational interval arithmetic and exponential, logarithmic, and trigonometric kernels, with
 proofs that their computed endpoints enclose the exact real values. Concrete numerical formats
 can refine these bounds until they determine a rounding decision.
+
+`Interval` also accepts arbitrary endpoint representations. Partial outward-rounding contracts
+separate the common ordered-field enclosure proofs from a format's range and encoding.
 -/
 
 @[expose] public section

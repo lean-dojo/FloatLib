@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Runtime
 public import FloatLib.Floats.Formats.P3109.Order
-import Mathlib.Tactic.Linarith
 
 /-!
 # Integer indices for P3109 numerical order

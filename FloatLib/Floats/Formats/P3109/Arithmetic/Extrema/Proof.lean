@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
-import Mathlib.Tactic.SplitIfs
-import Mathlib.Tactic.Linarith
 
 /-!
 # Mathematical order and extrema for P3109

@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Proof
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic.Cases
 
 /-!
 # Mathematical semantics of P3109 rational arithmetic
