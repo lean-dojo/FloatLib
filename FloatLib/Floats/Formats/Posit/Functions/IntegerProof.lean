@@ -9,7 +9,7 @@ public import FloatLib.Floats.Formats.Posit.Functions.Basic
 public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
 import FloatLib.Floats.Formats.Posit.Cast.Widening
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Candidates
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 
 /-!

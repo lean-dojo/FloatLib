@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer
 public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Proof
 public import FloatLib.Floats.ExecFloat.Info
 

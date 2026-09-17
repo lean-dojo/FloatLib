@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Trigonometric.AtanProof
 public import FloatLib.Numerics.Enclosure.Rational.Convergence
-import Mathlib.Analysis.SpecificLimits.Basic
 
 /-!
 # Convergence of rational arctangent bounds

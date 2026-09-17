@@ -9,8 +9,6 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Kernels.LimbArray.Shift.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
-import Mathlib.Tactic.Ring
 
 /-!
 # Wide-limb storage

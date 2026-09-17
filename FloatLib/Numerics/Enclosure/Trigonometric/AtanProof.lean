@@ -9,9 +9,6 @@ module
 public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import Mathlib.Analysis.SpecialFunctions.Complex.Arctan
-import Mathlib.Analysis.SpecificLimits.Normed
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 
 /-!
 # Containment for rational arctangent enclosures

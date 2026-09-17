@@ -7,10 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction.Tree
 
 /-!
-# Correctly rounded configured binary reductions
+# Configured binary reductions
 
 Public entry point for executable configured `sum` and `dot` operations and their refinement
-theorems. Execution-only consumers may import `Configured.Reduction.Runtime`.
+theorems, together with error bounds for user-selected trees of rounded additions.
+Execution-only consumers of exact accumulation may import `Configured.Reduction.Runtime`.
 -/

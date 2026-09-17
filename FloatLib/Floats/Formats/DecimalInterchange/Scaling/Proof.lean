@@ -9,7 +9,6 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
-import Mathlib.Tactic.Ring
 
 /-!
 # Exponent-operation semantics

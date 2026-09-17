@@ -16,6 +16,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Pr
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormattingProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Roundtrip
@@ -53,7 +54,10 @@ is separated further:
 * `Configured.Parsing` accepts exact decimal and radix-two character input without a host float;
 * `Configured.Formatting` writes decimal or hexadecimal text at exact or requested precision;
   the text conversion proofs establish rounding bounds and exact round trips; and
-* `Configured.Reduction` provides exact accumulation with one final rounding.
+* `Configured.Reduction` provides exact accumulation with one final rounding and error bounds
+  for trees of separately rounded additions;
+* `Configured.Interval` provides outward-rounded intervals with configured endpoints, reusing
+  the model interval arithmetic and enclosure proofs.
 
 `Configured.Transcendentals` is a named import, not part of this module: it lifts the
 deterministic elementary-function kernels to this type. `import FloatLib` does not install

@@ -7,8 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.SplitIfs
 
 /-!
 # Deterministic rational precision-rounding guarantees

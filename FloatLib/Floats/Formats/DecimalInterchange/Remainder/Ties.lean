@@ -6,7 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Proof
-import Mathlib.Tactic.Linarith
 
 /-!
 # Midpoint parity of the delivered remainder

@@ -144,45 +144,80 @@ In `thirdDown`, `.1` selects the rounded number and `.2` selects the status, so 
 
 ## An interval from two directed roundings
 
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.Interval]] holds two endpoints of one descriptor. `Interval.ofBounds` builds an interval from two words, falling back to the whole range when the pair is unordered or a NaN. Intervals use the descriptor model directly: `toModel` converts the configured words for interval operations, and `ofModel` converts endpoints back for printing. Below, the two endpoints of each interval are the same quotient rounded toward $-\infty$ and toward $+\infty$, and `Interval.add` adds lower endpoints downward and upper endpoints upward.
+[[FloatLib.Floats.ExecFloat.Binary.Interval]] keeps both endpoints in the configured scalar type. `Interval.ofBounds` builds an interval from two values, falling back to the whole range when the pair is unordered or a NaN. Its operations use the existing descriptor-model interval arithmetic; the conversion is handled inside the library. Below, the two endpoints of each interval are the same quotient rounded toward $-\infty$ and toward $+\infty$, and `Interval.add` adds lower endpoints downward and upper endpoints upward.
 
 ```lean
-open Formats.BinaryInterchange in
-def enclose (lo hi : Binary32) : Model.Interval FloatFormat.binary32 :=
-  Model.Interval.ofBounds (ExecFloat.Binary.toModel lo) (ExecFloat.Binary.toModel hi)
+open ExecFloat.Binary (Interval)
 
-open Formats.BinaryInterchange in
-def endpoints (I : Model.Interval FloatFormat.binary32) : Binary32 × Binary32 :=
-  (ExecFloat.Binary.ofModel I.lo, ExecFloat.Binary.ofModel I.hi)
+def enclose (lo hi : Binary32) := Interval.ofBounds lo hi
 
 def oneThird := enclose (ExecFloat.Binary.div 1 3 (rounding := -∞))
   (ExecFloat.Binary.div 1 3 (rounding := +∞))
 def twoThirds := enclose (ExecFloat.Binary.div 2 3 (rounding := -∞))
   (ExecFloat.Binary.div 2 3 (rounding := +∞))
 
-open Formats.BinaryInterchange in
-def total := Model.Interval.add oneThird twoThirds
+def total := Interval.add oneThird twoThirds
 
-#eval endpoints oneThird
+#eval (oneThird.lo, oneThird.hi)
 -- (5592405 * 2^-24, 11184811 * 2^-25)
-#eval endpoints twoThirds
+#eval (twoThirds.lo, twoThirds.hi)
 -- (5592405 * 2^-23, 11184811 * 2^-24)
-#eval endpoints total
+#eval (total.lo, total.hi)
 -- (16777215 * 2^-24, 8388609 * 2^-23)
 
-open Formats.BinaryInterchange in
 example {x y : ℝ}
-    (hA : Model.Interval.Valid oneThird) (hB : Model.Interval.Valid twoThirds)
-    (hx : Model.Interval.RealMem oneThird x) (hy : Model.Interval.RealMem twoThirds y) :
-    Model.Interval.ERealMem (Model.Interval.add oneThird twoThirds) ((x + y : ℝ) : EReal) :=
-  Model.Interval.add_sound oneThird twoThirds (by decide) hA hB hx hy
+    (hA : Interval.Valid oneThird) (hB : Interval.Valid twoThirds)
+    (hx : Interval.RealMem oneThird x) (hy : Interval.RealMem twoThirds y) :
+    Interval.ERealMem (Interval.add oneThird twoThirds) ((x + y : ℝ) : EReal) :=
+  Interval.add_sound oneThird twoThirds (by decide) hA hB hx hy
 ```
 
 The two lower endpoints add exactly, $5592405 \cdot 2^{-24} + 5592405 \cdot 2^{-23} = 16777215 \cdot 2^{-24} = 1 - 2^{-24}$, while the two upper endpoints sum to $1 + 2^{-25}$, which binary32 cannot hold, so upward rounding gives $1 + 2^{-23}$. The enclosure $[1 - 2^{-24}, 1 + 2^{-23}]$ contains $1 = \tfrac13 + \tfrac23$, as it must.
 
-The theorem at the end is [[FloatLib.Floats.Formats.BinaryInterchange.Model.Interval.add_sound]] applied to these two intervals: whenever both are valid (finite, ordered endpoints) and enclose reals $x$ and $y$, the sum interval encloses $x + y$. The statement uses the extended reals to allow an upper endpoint to overflow to $+\infty$. Here the validity and membership facts are left as hypotheses; the directed-rounding bounds of [chapter 08](#/chapter/ieee-binary-formats), `toEReal_divDown_le` and its upward counterpart, establish them for these particular words. The `by decide` settles only the descriptor hypothesis.
+The theorem at the end is [[FloatLib.Floats.ExecFloat.Binary.Interval.add_sound]] applied to these two intervals: whenever both are valid (finite, ordered endpoints) and enclose reals $x$ and $y$, the sum interval encloses $x + y$. It follows from [[FloatLib.Floats.Formats.BinaryInterchange.Model.Interval.add_sound]] by decoding the endpoints. The statement uses the extended reals to allow an upper endpoint to overflow to $+\infty$. Here the validity and membership facts are left as hypotheses; the directed-rounding bounds of [chapter 08](#/chapter/ieee-binary-formats), `toEReal_divDown_le` and its upward counterpart, establish them for these particular words. The `by decide` settles only the descriptor hypothesis.
 
-The type `Model.Interval FloatFormat.binary32` keeps both endpoints at the same format. `RealMem oneThird x` then states that the decoded endpoints bracket `x`; it does not force `x` to be representable. That is how an interval with binary endpoints can make a claim about the exact real one third. The `open ... in` lines shorten model names only for the following declaration, leaving the rest of the file's namespace choices unchanged.
+The scalar arguments to `enclose` determine the interval's format and storage plan. The same operations work with other configured widths. `RealMem oneThird x` states that the decoded endpoints bracket `x`; it does not force `x` to be representable. That is how an interval with binary endpoints can make a claim about the exact real one third. `Model.Interval` remains available when a program already works with descriptor-model values.
+
+### Choosing a different endpoint format
+
+The shared type [[FloatLib.Numerics.Interval]] is an endpoint pair `Interval α`. The type `α` can be binary, decimal, posit, or a representation supplied by your program. It does not require a particular radix or assume that the format has infinities. Constructing a pair preserves its values; `Interval.ofBounds?` additionally checks that they decode to ordered finite bounds.
+
+Arithmetic uses [[FloatLib.Numerics.OutwardRounding]], which supplies a decoder and a function that tries to enclose an exact scalar. The scalar type is also a parameter: the common interval proofs are not restricted to rationals or binary floats. Concrete binary, decimal, and posit adapters use exact rationals so their finite interval calculations can execute.
+
+These finite operations return `Option`: `some bounds` comes with an enclosure theorem, while `none` means the operation could not produce finite enclosing endpoints. A denominator interval crossing zero or an overflowing posit calculation can therefore fail explicitly. The binary-specific API above also supports infinite endpoints and retains its existing whole-range fallback. Saturating to the largest finite number would not be a sound upper bound for a larger exact result.
+
+Here is one function used with both decimal and posit endpoints. It encloses two rational inputs, adds the intervals, and decodes the resulting bounds for inspection:
+
+```lean standalone
+import FloatLib
+
+open FloatLib
+
+def enclosedSum? {α : Type} (R : Numerics.OutwardRounding α ℚ)
+    (x y : ℚ) : Option (ℚ × ℚ) := do
+  let a ← R.enclose? x
+  let b ← R.enclose? y
+  let result ← Numerics.Interval.add? R a b
+  let lo ← R.decode result.lo
+  let hi ← R.decode result.hi
+  pure (lo, hi)
+
+def decimalRounder :=
+  Floats.Formats.DecimalInterchange.intervalRounding .decimal32 .bid
+
+def positRounder : Numerics.OutwardRounding (Floats.ExecFloat.Posit 8) ℚ :=
+  Floats.ExecFloat.Posit.intervalRounding
+
+#eval enclosedSum? decimalRounder (1 / 10) (1 / 5) == some (3 / 10, 3 / 10)
+-- true
+
+#eval enclosedSum? positRounder 1 2 == some (3, 3)
+-- true
+```
+
+Changing the rounder changes the stored format, not the interval algorithm. Decimal's `.bid` selects the encoding; `.dpd` uses the other IEEE decimal encoding. A custom endpoint type supplies the same small contract and can use these operations without adding another format case to the library.
+
+Rational endpoint calculations also describe intervals of arbitrary real numbers. [[FloatLib.Numerics.Interval.ContainsReal]] interprets the finite bounds in $\mathbb{R}$, and [[FloatLib.Numerics.Interval.containsReal_mul?]] proves that a successful interval multiplication encloses the product of any two real members. The members themselves need not be rational or representable in the endpoint format.
 
 <a id="reductions-that-round-once"></a>
 

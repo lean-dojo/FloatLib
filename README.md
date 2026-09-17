@@ -84,6 +84,13 @@ exception flags, intervals, and accumulation. You can also start from one of the
   exact-subtraction lemma connect the real-valued theory to executable arithmetic.
   Mixed-precision bounds account for casts, products, and accumulator updates under
   their stated finiteness assumptions.
+- **Intervals and affine quantization.** A shared interval API accepts binary, decimal, posit,
+  and custom endpoints, with explicit outward-rounding contracts. Affine quantization has
+  a real-valued specification with an explicit rounding rule and a proof connecting
+  nearest-even quantization to the executable rational implementation.
+- **Repeatedly rounded sums.** Reduction trees describe a chosen order of additions.
+  Error bounds account for rounding at each node, including absolute-error terms near
+  underflow. These are separate from the exact accumulators that round only once.
 - **Elementary functions and complex numbers.** Posit elementary functions have proofs
   identifying the correctly rounded real result. Binary elementary functions are
   deterministic approximations, available through the opt-in

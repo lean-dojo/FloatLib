@@ -10,8 +10,6 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
 public import FloatLib.Numerics.Exact.Dyadic.Order
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
 
 /-!
 # Precision and range of external P3109 results

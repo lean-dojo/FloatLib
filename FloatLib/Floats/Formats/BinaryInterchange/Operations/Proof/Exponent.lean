@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 /-!
 # Exponent-operation contracts

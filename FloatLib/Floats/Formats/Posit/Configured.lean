@@ -24,6 +24,7 @@ public import FloatLib.Floats.Formats.Posit.Configured.Plan.Dispatch
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Type
 public import FloatLib.Floats.Formats.Posit.Configured.Instances
+public import FloatLib.Floats.Formats.Posit.Configured.Interval
 
 /-!
 # Configured posit `ExecFloat` values

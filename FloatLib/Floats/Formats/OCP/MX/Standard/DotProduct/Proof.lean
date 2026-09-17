@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.OCP.MX.Standard.DotProduct.Runtime
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
-import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Numerical correctness of exact MX dot products

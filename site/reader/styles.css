@@ -8,26 +8,12 @@
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Cantarell, "DejaVu Sans",
     Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
-  /* The root font size is 16px, so 46.5rem is 744px. Measured on this guide's own prose at 17px,
-     that is 100 characters per line in Palatino-metric faces (7.4px per character; P052 stands
-     in for Palatino here), 110 in the Times-metric fallbacks and 86 in DejaVu Serif. Block
-     furniture may be wider than the text, centred on it: tables grow to their content up to
-     --code-wide, a Lean block whose longest line does not fit the measure snaps to --code-wide
-     (two right edges on a page, not one per block), figures up to --measure-wide. --reader-avail
-     is the width the reader column actually has (the 20px covers a classic scrollbar, which
-     100vw includes).
-
-     Everything here is in rem and the root font size below grows with the viewport, so on a
-     wide monitor the type, the measure, the wide stops and the sidebar all grow together: the
-     column keeps its 100 characters per line at a size that suits the viewing distance instead
-     of staying a fixed strip at the left of a 2560px screen. The column is centred in the
-     reader area (.page), with wide blocks centred on the column. */
-  --measure: 46.5rem;
-  --measure-wide: 54rem;
+  /* Prose, code, tables, and figures share one centred column. Long source lines and tables
+     scroll inside that column; only the dependency graph uses the wider canvas. */
+  --measure: 52rem;
   --code-wide: 62rem;
   --contents-width: clamp(17.5rem, 22vw, 20.625rem);
   --reader-pad: clamp(1.5rem, 6vw, 5rem);
-  --reader-avail: calc(100vw - var(--contents-width) - 2 * var(--reader-pad) - 20px);
 
   --paper: #ffffff;
   --paper-2: #f6f6f4;
@@ -329,18 +315,7 @@ section > h2:first-child { margin-top: 2em; }
 .prose hr { margin: 2.4em 0; border: 0; border-top: 1px solid var(--line); }
 /* The build wraps every table in .table-scroll, which scrolls sideways when the columns do not
    fit; the reader adds has-more-right while there is content beyond the right edge. */
-.prose .table-scroll { margin: 1.2em 0 1.6em; overflow-x: auto; }
-/* A table is as wide as its content: at least the column, at most --code-wide or what the
-   reader has. Only a table that does not fit even then scrolls (with the right-edge fade). */
-.prose .table-scroll {
-  width: max-content;
-  min-width: 100%;
-  max-width: min(var(--code-wide), var(--reader-avail));
-  /* centred on the column like the other wide blocks; its width is its content's, which no CSS
-     length can name, so it starts at the column's midpoint and moves back half its own width */
-  margin-left: 50%;
-  translate: -50% 0;
-}
+.prose .table-scroll { width: 100%; max-width: 100%; margin: 1.2em 0 1.6em; overflow-x: auto; }
 .prose .table-scroll.has-more-right { mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
 .prose table { width: 100%; margin: 0; border-collapse: collapse; font-size: 0.9375rem; line-height: 1.45; }
 .prose th, .prose td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -360,13 +335,11 @@ section > h2:first-child { margin-top: 2em; }
 .prose table code { overflow-wrap: normal; white-space: normal; }
 .prose mjx-container.is-wide { display: block; max-width: 100%; margin: .5em 0; overflow-x: auto; overflow-y: hidden; text-align: left; }
 .prose img { max-width: 100%; height: auto; }
-/* Plots are wider than the measure, so a figure may spill into the right margin on wide screens,
-   up to --measure-wide, and each one links to the
-   full-size file. The white plate with a border is deliberate: the PNGs have opaque white
-   backgrounds, which in dark mode should read as a mounted print rather than a glitch. */
+/* Figures stay within the text column and link to the full-size file. Keep their white
+   backgrounds in dark mode to match the opaque PNGs. */
 .figure {
-  width: max(100%, min(var(--measure-wide), var(--reader-avail)));
-  margin: 1.6em 0 2em calc((100% - max(100%, min(var(--measure-wide), var(--reader-avail)))) / 2);
+  width: 100%;
+  margin: 1.6em 0 2em;
 }
 .figure > a { display: block; }
 .figure img { display: block; max-width: 100%; height: auto; padding: 8px; border: 1px solid var(--line); background: #fff; }
@@ -445,17 +418,6 @@ mjx-container[jax="CHTML"][display="true"] { margin: 0 !important; }
   background: var(--code-paper);
   font-family: var(--mono);
 }
-/* Two widths, not one per block. A block starts at the measure; when a line (code or comment)
-   does not fit there, the reader gives it `is-wide` (fitLeanBlock in overflow.ts) and it snaps
-   to --code-wide or what the reader has, so a 100-column line is visible whole on a desktop
-   screen and the right edges down a page line up at two stops. Only a line wider than that still
-   scrolls (with the fade) or, for a wrapped statement, wraps. */
-.page .lean-block.is-wide {
-  width: max(100%, min(var(--code-wide), var(--reader-avail)));
-  /* centred on the column: half the overhang goes to each side, so the wide stop has one left
-     edge and one right edge down the page, both symmetric about the text */
-  margin-left: calc((100% - max(100%, min(var(--code-wide), var(--reader-avail)))) / 2);
-}
 .lean-block-bar {
   display: flex;
   gap: 12px;
@@ -486,26 +448,18 @@ mjx-container[jax="CHTML"][display="true"] { margin: 0 !important; }
 .lean-block code { display: block; font-size: inherit; white-space: pre; }
 /* One block per line; min-height keeps empty lines their height without a filler character. */
 .lean-line { display: block; min-width: max-content; min-height: 1.5em; }
-/* A line that is only a comment (a `-- result` under #eval, a docstring line) takes part in the
-   block's sizing like any other line, so a 90-character docstring line widens the block rather
-   than wrapping inside the measure with two words orphaned. Once the block is at its wide stop
-   (`is-wide`) a comment that still does not fit wraps within the visible width with a hanging
-   indent of the comment marker, so what the code printed stays readable even when the code
-   itself is wider than the block and scrolls. The highlighter puts a <wbr> after the dots and
-   underscores inside names in comments, so a printed identifier wraps at its joints; break-word
-   is only the fallback for a jointless token wider than the block. */
-.lean-block.is-wide .lean-line.is-comment {
+/* Comments and printed results wrap within the box; source lines preserve Lean's indentation
+   and scroll. The highlighter adds break opportunities at the joints of printed names. */
+.lean-block .lean-line.is-comment {
   min-width: 0;
   padding-left: 3ch;
   text-indent: -3ch;
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
-.lean-block.is-wide.has-line-numbers .lean-line.is-comment { padding-left: calc(4.2em + 3ch); text-indent: calc(-4.2em - 3ch); }
+.lean-block.has-line-numbers .lean-line.is-comment { padding-left: calc(4.2em + 3ch); text-indent: calc(-4.2em - 3ch); }
 /* Statement blocks wrap instead of scrolling: a signature is the primary content of a node page
-   and hidden scrollbars give no cue that more text exists. The block takes the wide stop as soon
-   as one pretty-printed line would wrap at the measure (fitLeanBlock checks the line boxes), so
-   on a desktop screen most statements read as printed and only the longest lines wrap.
+   and should remain readable within the same column as its explanation.
    Continuation lines hang by two characters, so a wrapped binder is visibly part of the line
    above. Words break only at spaces and at the <wbr> the highlighter puts after dots and
    underscores inside identifiers, so a name wraps at its joints (`Configured.` / `StoragePlan`)
@@ -665,7 +619,7 @@ mjx-container[jax="CHTML"][display="true"] { margin: 0 !important; }
   .pager-next { text-align: left; }
   .lean-block pre { font-size: 0.75rem; }
   .lean-line-number { width: 2.6em; margin-right: .8em; }
-  .lean-block.is-wide.has-line-numbers .lean-line.is-comment { padding-left: calc(3.4em + 3ch); text-indent: calc(-3.4em - 3ch); }
+  .lean-block.has-line-numbers .lean-line.is-comment { padding-left: calc(3.4em + 3ch); text-indent: calc(-3.4em - 3ch); }
   .prose table { font-size: 0.8125rem; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -13,6 +13,7 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Posit.Configured.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Environment.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.Words
+public import FloatLib.Floats.Formats.DecimalInterchange.Interval
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Endpoints
 public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Ties
 public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Semantics

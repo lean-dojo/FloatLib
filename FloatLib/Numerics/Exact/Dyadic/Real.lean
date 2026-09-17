@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Exact.Dyadic.Basic
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Data.Rat.Cast.CharZero
 
 /-!
 # Real values of exact dyadics

@@ -10,9 +10,6 @@ public import FloatLib.Numerics.Enclosure.Elementary.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import Mathlib.Analysis.Complex.Exponential
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
 
 /-!
 # Proved exponential and logarithm enclosures

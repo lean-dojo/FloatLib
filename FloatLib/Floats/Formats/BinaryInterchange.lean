@@ -45,6 +45,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Interval
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Agreement
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Profile
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
 # Binary-interchange formats

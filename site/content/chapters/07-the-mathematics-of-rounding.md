@@ -286,6 +286,38 @@ For a concrete cancellation, take exact signed-rational operands with values one
 
 Reductions accumulate the exact sum of every finite input as a dyadic and invoke the descriptor rounder once at the end; the [reduction theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Reduction/Proof.lean) `Model.Reduction.sumWithStatus_eq_round_of_finite_nonzero` states this for every array of finite inputs whose exact sum is nonzero. A cast rounds the value it receives ([[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]]). If that value is already the rounded result of an operation, the composition contains two roundings, as in the binary64-to-binary32 example.
 
+## When every addition rounds
+
+Many reductions round each intermediate addition. Their error depends on the evaluation order: $(a+b)+c$ and $a+(b+c)$ can lose different small terms. [[FloatLib.Numerics.ReductionTree]] records the input occurrences at its leaves and the combining operations at its internal nodes. It represents a nonempty reduction; an empty reduction needs a separately chosen identity.
+
+You choose both the grouping and the order of the inputs. These two trees use the same values but put the cancellation at different points:
+
+```lean
+open FloatLib.Numerics (ReductionTree)
+
+abbrev Binary16 := ExecFloat.Binary 5 10
+
+def leftSum : ReductionTree Binary16 :=
+  .node (.node (.leaf 2048) (.leaf 1)) (.leaf (-2048))
+
+def reorderedSum : ReductionTree Binary16 :=
+  .node (.node (.leaf 2048) (.leaf (-2048))) (.leaf 1)
+
+#eval leftSum.eval (· + ·) id
+-- 0
+
+#eval reorderedSum.eval (· + ·) id
+-- 1
+```
+
+The first tree loses the `1` when it rounds `2048 + 1`; the second cancels the large values first. Balanced and other custom trees use the same constructors. Leaves can also be input indices, with a function supplying their values, so the schedule need not contain a copy of the data.
+
+At a node with computed operands $x$ and $y$, suppose the new addition introduces at most $e(x,y)$ absolute error. The theorem [[FloatLib.Numerics.ReductionTree.abs_eval_sub_exact_le_errorBudget]] bounds the complete reduction by the sum of these local allowances. The hypothesis is required only at operand pairs that occur in that tree. A uniform allowance $\delta$ gives $(n-1)\delta$ for $n$ inputs. A mixed allowance $u(|x|+|y|)+\delta$ also has a recursive bound in terms of exact subtree sums; its absolute term can account for underflow.
+
+For IEEE descriptor models, [[FloatLib.Floats.Formats.BinaryInterchange.Model.ReductionTree.abs_toReal_eval_sub_sum_le]] obtains each allowance from the existing half-ULP addition theorem. It requires finite inputs and finite intermediate results, but no normal-range assumption. A companion theorem bounds the difference between two finite evaluation schedules with the same input occurrences by their combined budgets.
+
+The exact accumulators in the previous section follow a different algorithm. They retain every finite contribution until the final rounding, so the repeatedly-rounded theorem neither replaces nor weakens their one-rounding guarantee.
+
 ## How a kernel decides to round
 
 An executable kernel decides rounding from an integer quotient and information about the discarded part, without computing logarithms over $\mathbb{R}$. It needs only enough information to locate the exact result between adjacent grid points $d < u$. In the [bracket model](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Calculation/Bracket.lean), `Location` records either an exact result, meaning $x = d$, or an inexact result, recording whether $x$ is below, at, or above the midpoint. The proposition `Inbetween` states that the recorded location is correct. This follows Flocq's bracket calculus and describes what the guard, round, and sticky bits of a hardware implementation encode.

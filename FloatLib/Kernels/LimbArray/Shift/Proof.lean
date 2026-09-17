@@ -9,7 +9,6 @@ module
 public import FloatLib.Kernels.LimbArray.Shift.Runtime
 public import FloatLib.Kernels.LimbArray.Arithmetic.Proof
 public import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.Ring
 
 /-!
 # Limb arrays: value semantics of the shifts

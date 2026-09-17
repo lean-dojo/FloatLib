@@ -8,7 +8,6 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
-import Mathlib.Tactic.Linarith
 
 /-!
 # Scaling accuracy and cohort independence of exponent queries

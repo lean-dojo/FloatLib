@@ -104,6 +104,18 @@
         {
           "name": "FloatLib.Numerics.roundRatEven_error_le_half",
           "title": "Rational rounding is within one half"
+        },
+        {
+          "name": "FloatLib.Numerics.ReductionTree",
+          "title": "A parenthesized reduction"
+        },
+        {
+          "name": "FloatLib.Numerics.ReductionTree.abs_eval_sub_exact_le_errorBudget",
+          "title": "Local rounding errors bound the complete sum"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.ReductionTree.abs_toReal_eval_sub_sum_le",
+          "title": "Finite binary sums have a half-ULP error budget"
         }
       ]
     },
@@ -548,6 +560,30 @@
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Interval.add_sound",
           "title": "Interval addition is sound"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.Interval",
+          "title": "Intervals with configured endpoints"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval",
+          "title": "Intervals with arbitrary endpoint representations"
+        },
+        {
+          "name": "FloatLib.Numerics.OutwardRounding",
+          "title": "Certified partial outward rounding"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.ContainsReal",
+          "title": "Real membership with encoded rational endpoints"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.containsReal_mul?",
+          "title": "Executable interval multiplication encloses real products"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.Interval.add_sound",
+          "title": "Configured interval addition encloses the exact sum"
         }
       ]
     },
@@ -1450,6 +1486,14 @@
         {
           "name": "FloatLib.Numerics.Quantization.AffineQuantizer.quantize_dequantize",
           "title": "The affine round trip returns the code"
+        },
+        {
+          "name": "FloatLib.Numerics.Quantization.RealAffineQuantizer",
+          "title": "Affine quantization with real scales and inputs"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Flocq.affine_toReal_quantize",
+          "title": "Executable affine quantization agrees with the real specification"
         }
       ]
     },

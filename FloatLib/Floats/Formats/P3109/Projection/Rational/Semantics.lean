@@ -9,8 +9,6 @@ module
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Selection
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 public import FloatLib.Numerics.Exact.Dyadic.Order
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
 
 /-!
 # Exact rational meaning of report precision rounding

@@ -9,7 +9,6 @@ module
 public import FloatLib.Kernels.LimbArray.Arithmetic.Runtime
 public import FloatLib.Kernels.LimbArray.Core.Proof
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
-import Mathlib.Tactic.Ring
 
 /-!
 # Limb arrays: value semantics of the arithmetic kernels

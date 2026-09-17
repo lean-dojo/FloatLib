@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Order
-import Mathlib.Tactic.SplitIfs
 
 /-!
 # Correctness of P3109 neighboring values

@@ -7,10 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Tree
 
 /-!
-# Correctly rounded binary reductions
+# Binary reductions and their error bounds
 
 Exact-accumulation reduction kernels are exported together with their correctness proofs.
-Runtime-only consumers should import `Reduction.Runtime`.
+`Reduction.Tree` bounds the accumulated error when each addition rounds separately.
+Runtime-only consumers of exact accumulation should import `Reduction.Runtime`.
 -/

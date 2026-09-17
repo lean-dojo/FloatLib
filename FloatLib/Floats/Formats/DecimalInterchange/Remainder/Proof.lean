@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Integer
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
-import Mathlib.Tactic.Ring
 
 /-!
 # Remainder representability and exact value

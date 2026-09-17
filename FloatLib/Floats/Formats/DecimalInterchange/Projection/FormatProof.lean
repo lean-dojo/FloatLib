@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Format
 public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
-import Mathlib.Data.Nat.Basic
 
 /-!
 # Decimal coefficient bounds

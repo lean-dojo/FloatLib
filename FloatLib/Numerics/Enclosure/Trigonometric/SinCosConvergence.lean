@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Trigonometric.SinCosProof
 public import FloatLib.Numerics.Enclosure.Rational.Convergence
-import Mathlib.Analysis.SpecificLimits.Normed
 
 /-!
 # Convergence of global rational sine and cosine bounds
