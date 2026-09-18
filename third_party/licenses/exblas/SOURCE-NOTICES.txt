@@ -1,0 +1,58 @@
+ExBLAS source excerpts in the retained run log
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  src/cpu/blas1/ExSUM.FPE.hpp
+
+/*
+ *  Copyright (c) 2016 Inria and University Pierre and Marie Curie
+ *  All rights reserved.
+ */
+
+/**
+ *  \file cpu/blas1/ExSUM.FPE.hpp
+ *  \brief Provides a set of routines concerning floating-point expansions
+ *
+ *  \authors
+ *    Developers : \n
+ *        Roman Iakymchuk  -- roman.iakymchuk@lip6.fr \n
+ *        Sylvain Collange -- sylvain.collange@inria.fr \n
+ */
+#ifndef EXSUM_FPE_HPP_
+
+
+========================================================================
+Source paths:
+  src/cpu/blas1/ExSUM.cpp
+  src/cpu/blas1/superaccumulator.cpp
+
+/*
+ *  Copyright (c) 2016 Inria and University Pierre and Marie Curie
+ *  All rights reserved.
+ */
+
+========================================================================
+Source paths:
+  src/cpu/blas1/superaccumulator.hpp
+
+/*
+ *  Copyright (c) 2016 Inria and University Pierre and Marie Curie
+ *  All rights reserved.
+ */
+
+/**
+ *  \file cpu/blas1/superaccumulator.hpp
+ *  \brief Provides a class to work with superaccumulators
+ *
+ *  \authors
+ *    Developers : \n
+ *        Roman Iakymchuk  -- roman.iakymchuk@lip6.fr \n
+ *        Sylvain Collange -- sylvain.collange@inria.fr \n
+ */
+
+#ifndef SUPERACCUMULATOR_HPP_INCLUDED
+

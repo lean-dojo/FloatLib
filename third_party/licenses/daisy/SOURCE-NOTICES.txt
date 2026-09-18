@@ -1,0 +1,65 @@
+Daisy 6a6f47abdd231d3009444e9e1b8ce9febc28c27e: all 38 Scala source files named in retained compiler diagnostics
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  src/main/scala/daisy/analysis/AbsErrorPhase.scala
+  src/main/scala/daisy/analysis/DataflowPhase.scala
+  src/main/scala/daisy/analysis/DataflowSubdivisionPhase.scala
+  src/main/scala/daisy/analysis/DynamicPhase.scala
+  src/main/scala/daisy/analysis/ModularRoundOffErrorEvalPhase.scala
+  src/main/scala/daisy/analysis/RangePhase.scala
+  src/main/scala/daisy/analysis/RelativeErrorPhase.scala
+  src/main/scala/daisy/analysis/SpecsProcessingPhase.scala
+  src/main/scala/daisy/analysis/TaylorErrorPhase.scala
+  src/main/scala/daisy/backend/CodeGenerationPhase.scala
+  src/main/scala/daisy/frontend/SpecGenerationPhase.scala
+  src/main/scala/daisy/opt/ApproxPhase.scala
+  src/main/scala/daisy/opt/RewritingOptimizationPhase.scala
+  src/main/scala/daisy/tools/MPFRFloat.scala
+  src/main/scala/daisy/tools/SMTRange.scala
+  src/main/scala/daisy/tools/Taylor.scala
+  src/main/scala/daisy/transform/CompilerOptimizationPhase.scala
+  src/main/scala/daisy/transform/TACTransformerPhase.scala
+  src/main/scala/daisy/transform/UnrollPhase.scala
+
+// Copyright 2017 MPI-SWS, Saarbruecken, Germany
+
+
+========================================================================
+Source paths:
+  src/main/scala/daisy/analysis/FunctionCallPhase.scala
+
+// Copyright 2021 MPI-SWS, Saarbruecken, Germany
+
+
+========================================================================
+Source paths:
+  src/main/scala/daisy/backend/InfoPhase.scala
+  src/main/scala/daisy/frontend/CExtractionPhase.scala
+  src/main/scala/daisy/frontend/CodeExtraction.scala
+  src/main/scala/daisy/frontend/ExtractionPhase.scala
+  src/main/scala/daisy/solvers/DRealSolver.scala
+  src/main/scala/daisy/solvers/Solver.scala
+  src/main/scala/daisy/utils/ScalaPrinter.scala
+
+// Original work Copyright 2009-2016 EPFL, Lausanne
+// Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
+
+
+Inspected files without an individual copyright/license preamble
+(covered by the accompanying upstream project license where applicable):
+  src/main/scala/daisy/analysis/FPTaylorPhase.scala
+  src/main/scala/daisy/analysis/FPTaylorPhaseOriginal.scala
+  src/main/scala/daisy/analysis/TaylorAbstractPhase.scala
+  src/main/scala/daisy/experiments/BenchmarkingPhase.scala
+  src/main/scala/daisy/experiments/CostFunctionEvaluationExperiment.scala
+  src/main/scala/daisy/experiments/MixedPrecisionExperimentGenerationPhase.scala
+  src/main/scala/daisy/opt/MetalibmPhase.scala
+  src/main/scala/daisy/opt/MixedPrecisionOptimizationPhase.scala
+  src/main/scala/daisy/transform/ConstantTransformerPhase.scala
+  src/main/scala/daisy/transform/DecompositionPhase.scala
+  src/main/scala/daisy/transform/PowTransformerPhase.scala

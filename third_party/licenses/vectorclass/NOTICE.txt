@@ -1,0 +1,24 @@
+Agner Fog Vector Class Library 1.02 Beta (2012)
+SPDX-License-Identifier for this distribution: GPL-3.0-only
+
+Upstream: riakymch/exblas, commit
+856130ebcfe906f519a623d57d1359e744e29042, src/common/.
+Retained material: tests/results/main/ecosystem/raw/exblas/applied-compatibility.patch
+and its identical member in the benchmark public source archive.
+
+The pinned vectorclass.h umbrella header explicitly states GNU General
+Public License 3.0 and has no or-later clause. The two patched headers,
+vectorf256.h and vectori256.h, state GNU General Public License without a
+version. All three complete original notice preambles are preserved in
+SOURCE-NOTICES.txt. GPLv3 is used for these retained excerpts, consistently
+with the explicit umbrella notice and GPLv3 section 14's rule permitting
+a published version when no version is specified. No or-later grant is
+asserted for the version-3.0 umbrella header.
+
+GPL-3.0.txt contains the complete GNU GPLv3 text, including section 14.
+Its source and hash are recorded in ../../SOURCES.json.
+
+FloatLib's patch changes integer constant spellings; its hunks identify the
+modified lines. The original notice headers are in SOURCE-NOTICES.txt.
+These Vector Class excerpts use GPL-3.0-only, separately from ExBLAS's
+top-level BSD-style license.

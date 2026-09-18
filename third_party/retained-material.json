@@ -1,0 +1,806 @@
+{
+  "audited_commit": "52ab504bfcd8e5395b29a4f64b617b401e5d16ac",
+  "purpose": "Included files, hashes, and corresponding third-party notices.",
+  "artifacts": [
+    {
+      "path": "benchmarks/results/main/provenance/FloatLib-source-public.tar.gz",
+      "bytes": 29130084,
+      "sha256": "cb642547e1752b8a38c4d2e3ac096d283159a4a8ee3af61f5494a00ffd7bc0d3",
+      "notice_packages": [
+        "third_party/archives/benchmark-source.md"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/exblas/applied-compatibility.patch",
+      "bytes": 1995,
+      "sha256": "64c743959f8a141fe8521e8ca86896af0013982a32d08833874e8f9e9bcf69ac",
+      "notice_packages": [
+        "vectorclass",
+        "exblas"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-base/flit-config.toml",
+      "bytes": 1553,
+      "sha256": "035ed40efc6ccc9369c4dd1c888688fba8435ab482d244f96bd0a70880b901dc",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-base/results.sqlite",
+      "bytes": 3342336,
+      "sha256": "1ecc7956f37aaa7eeed9ad6aa61426f841407e703cdb7f1ff5a5e149718749f9",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-mpich/flit-config.toml",
+      "bytes": 1554,
+      "sha256": "ea1034bdd0caa73daae71ad6ab10177d5eca9f12e2828dfc3e88198e4de072d6",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-mpich/results.sqlite",
+      "bytes": 3338240,
+      "sha256": "755bb71ec9e3a129d53e51015a64be4869c373d1034cb070ad7f3168d20c9172",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-openmpi/flit-config.toml",
+      "bytes": 1558,
+      "sha256": "3d829aa9885afd8bed91483c0222b631a1c90cd665784273faf13711212c5d19",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/flit-openmpi/results.sqlite",
+      "bytes": 3342336,
+      "sha256": "15f2764689c73ea20e55386c122e0e32d7fab49c9c9c3f90107ec81c6e192f42",
+      "notice_packages": [
+        "flit"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/fpbench/filter.expected.raw.txt",
+      "bytes": 2166,
+      "sha256": "cafe557fc510612c9de2f01447d905f495932d39995a24b76a254f6f53b7fadf",
+      "notice_packages": [
+        "fpbench"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/transcendental-direct/comparison/providers/core-math.so",
+      "bytes": 158256,
+      "sha256": "61ef00066cec4fd3f22eb0f98724b96865e356120998294f07e08c22a305a725",
+      "notice_packages": [
+        "core-math"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/transcendental-direct/comparison/providers/openlibm.so",
+      "bytes": 225200,
+      "sha256": "87573ca6424c411c296ecefe105929cbabf17f2cd6026bd28b186bcbdd037ef0",
+      "notice_packages": [
+        "openlibm"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/transcendental-direct/comparison/providers/rlibm.so",
+      "bytes": 65440,
+      "sha256": "6dbf731b966304ea059d964940c9c51a8d3545451523c405b37ea68a4c424ba1",
+      "notice_packages": [
+        "rlibm-all"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/verificarlo/upstream-Dockerfile",
+      "bytes": 3303,
+      "sha256": "dba91e7472d9df9723140e758ea93b6728eeb59eb018c19ee3485368dd85424c",
+      "notice_packages": [
+        "verificarlo"
+      ]
+    },
+    {
+      "path": "tests/results/main/ecosystem/raw/verificarlo/upstream-docker-ci.yml",
+      "bytes": 3521,
+      "sha256": "3439b39fe7b88a7817485007caf2bcf0b7b6df157c45e7b6680a82d0a4c4f92c",
+      "notice_packages": [
+        "verificarlo"
+      ]
+    },
+    {
+      "path": "tests/results/main/provenance/FloatLib-source.tar.gz",
+      "bytes": 9890569,
+      "sha256": "8f5e4316b181b7d96cc676625413f00ec8660772f665c473f1bff8fb37230e3e",
+      "notice_packages": [
+        "third_party/archives/test-source.md"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_abs_near_even.map.tsv",
+      "bytes": 2799,
+      "sha256": "dcaa4e8aa07641a83d1a328c5ad51fc431e2d8604ad042bb569859ada08bbf8b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_abs_near_even.stream",
+      "bytes": 821,
+      "sha256": "3f10a971eea2af2c1414c14efea69b48c09054bcae5edb2a71d574796e274bdf",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_max.map.tsv",
+      "bytes": 13563,
+      "sha256": "59afbc2c3a53fe4b95b744a788862a30cff0a2384d4198cd4879eb60b5a45db5",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_max.stream",
+      "bytes": 4814,
+      "sha256": "17746c4d5d29ab19e35f2130e89bc22acf2ab79e0c40933794ce5922b4ad2127",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_min.map.tsv",
+      "bytes": 12779,
+      "sha256": "43c84990a31db70bd55ce1892a22e2b193a6ad1b2cf043ec661b10d733e6fdc6",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_min.stream",
+      "bytes": 4524,
+      "sha256": "0f688239e31a62d1055b43cbaff1407480a0a4ab12d936e527a4437a7777fe09",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_minMag.map.tsv",
+      "bytes": 11386,
+      "sha256": "777e4ef4822ddfb02640f33036a60d045f26bc0312d9faf5ca65b3bcd435d0b2",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_minMag.stream",
+      "bytes": 4089,
+      "sha256": "e01cda61a5df35e98b7fbd173cc7f1f61bb9ffa642eb8ac7bfa9942ed13880a1",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_near_even.map.tsv",
+      "bytes": 1910875,
+      "sha256": "a6793ca59df32ccc1000204f959937fa1a3992e4ea57aa7bc0444d6dd9963981",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_add_near_even.stream",
+      "bytes": 527435,
+      "sha256": "bfb55086e79922a1ee697958c3c6b6bc5909f0c8f59c2e9f56afc283216dbe07",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_copy_near_even.map.tsv",
+      "bytes": 2844,
+      "sha256": "cad29e479354d0c7920e04ba73e44ae20ca61dc9e98a0a78787e23638ed72a6b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_copy_near_even.stream",
+      "bytes": 821,
+      "sha256": "efc1e6bc01927b9e317d95c2c1790e9ef05498181083f48f710346a696f25032",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_max.map.tsv",
+      "bytes": 10939,
+      "sha256": "2aa2174a75d8060d1b85a4819e8465febb6c5e8dcce7869d8cfc74b37b46129f",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_max.stream",
+      "bytes": 3886,
+      "sha256": "b1b276fc64e516230734ae0633ebd5f0fb511be0323f04cf224d4f7724040ab9",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_min.map.tsv",
+      "bytes": 11078,
+      "sha256": "eeec3bb837fd3810661bd5f688faf1e8e26ba9562ecbfe8545a1421a7cd45e6a",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_min.stream",
+      "bytes": 3944,
+      "sha256": "246c618636b31dcefc0393ca434db42ab60062cd8a0337a8d33f5f7ba8f5e217",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_minMag.map.tsv",
+      "bytes": 11185,
+      "sha256": "8e2e3a4ab2e069fc1341f1b1dfca4a91e1e0a17996a542096031adaa632bfa62",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_minMag.stream",
+      "bytes": 3944,
+      "sha256": "f3673fc4e77ad8a5e8543d7d652066851d98f06170d279c6da7cd85758cffb18",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_near_even.map.tsv",
+      "bytes": 122116,
+      "sha256": "c4d22b47fde2d19817ad4b43ced256d2507540cc3cd3d7ef2c21d8e2790eb1d8",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_div_near_even.stream",
+      "bytes": 41953,
+      "sha256": "38797e4ed4aa7512d9a632e74359264bd52bf06b994a74c86d6c68004ee24b88",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isFinite_near_even.map.tsv",
+      "bytes": 2561,
+      "sha256": "3ac681eeb2a4a841ff2f2e4a20dee8f0331579015c99b3b20270de97f1e6ee60",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isFinite_near_even.stream",
+      "bytes": 546,
+      "sha256": "20171d561832709dc734df21dcdd0ecc349ceb45f9035896249b9dfbaf70e16b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isInf_near_even.map.tsv",
+      "bytes": 2567,
+      "sha256": "a17d8a5f52e40eb63b79369077a7553a822de733bc0a4d2be979548a15e38f45",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isInf_near_even.stream",
+      "bytes": 546,
+      "sha256": "5ab5301481da6ff68e6bd0298291fab46697f43e00284cc250d4cc3036fd76d7",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isNaN_near_even.map.tsv",
+      "bytes": 2599,
+      "sha256": "8ab75b31deced7e3759c3e29d474921c9a6c7468ee26dafe33341bc1e59e9578",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isNaN_near_even.stream",
+      "bytes": 546,
+      "sha256": "fa895f8a627d2f6ec4796ac9b9c341eac5c5a7399b81cbc1929b91afe0b69511",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isNormal_near_even.map.tsv",
+      "bytes": 2609,
+      "sha256": "caeb7ffbb70380fd1c9d4d68489066221e50bcdc6e538cacae06effa51be6575",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isNormal_near_even.stream",
+      "bytes": 546,
+      "sha256": "f370bf7fe5bfedf805aa00350ab52adc88425368501b95470f606d53562081ca",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isSNaN_near_even.map.tsv",
+      "bytes": 2652,
+      "sha256": "dcd5947a1f93b04cbd0fdb67e75faa6377453deb01bdf5642b58e2f5fc12e5dd",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isSNaN_near_even.stream",
+      "bytes": 546,
+      "sha256": "8b8a4810f928ad638ddb9f1f1f976bb153fdcbaaa46db1c3b04a523144acb701",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isSubnormal_near_even.map.tsv",
+      "bytes": 2609,
+      "sha256": "e8b2193e4dd3d9f44b4a1c2c692bebd9bdfd6ea7fa8213d495089bbbe4b31943",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isSubnormal_near_even.stream",
+      "bytes": 546,
+      "sha256": "63b6c8ea9ecb4d9a9b1e45af2ec4e4fd6be539850b012725ab015e7d30081e6b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isZero_near_even.map.tsv",
+      "bytes": 2612,
+      "sha256": "0ff98fa33ebd13be01610c40fceb20202a5131750651c49345353538aab272b7",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_isZero_near_even.stream",
+      "bytes": 546,
+      "sha256": "bc69651550309375179b4e94fc182607312a5189dce04bce860326c4de56d9a0",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_maxNumMag_near_even.map.tsv",
+      "bytes": 78901,
+      "sha256": "eda953dba2bd9a0a257ed8fff683618496d1856e8d261725000662831bf8cd9b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_maxNumMag_near_even.stream",
+      "bytes": 26750,
+      "sha256": "50fa90ca47f4d1ce6fac3cbd7ea8a0b463f0ec66869cd3ea3a0c713d92e40774",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_maxNum_near_even.map.tsv",
+      "bytes": 79006,
+      "sha256": "9f89765d92fb655d8ba1f1f0674365ab7170b93ce630f494d5663f99e932bc8f",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_maxNum_near_even.stream",
+      "bytes": 26721,
+      "sha256": "2b7707876d99407582481090c2d38fc8ec6d8eea95577110ea695d268916d08f",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_minNum_near_even.map.tsv",
+      "bytes": 159095,
+      "sha256": "880a8834135844600fd59ed1da9bd874933cd33237999120a53bcfed7c19111e",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_minNum_near_even.stream",
+      "bytes": 53442,
+      "sha256": "57ef113207e23277970127aa7a8e3be17b4d43cf1c46de67b0fce0b4a85bce8b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_max.map.tsv",
+      "bytes": 24597,
+      "sha256": "6168b5cd19fd6f66a29a137f2b0442cbd08d680ddad294d6a351061fa10811f9",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_max.stream",
+      "bytes": 9424,
+      "sha256": "7ac785b1426a3ca83eba92eba9a58f60dc953e0c7a2c19117b34f3deecd378f1",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_min.map.tsv",
+      "bytes": 19665,
+      "sha256": "9fac3960e97316df5d3908467b8e278d90902ebc3540a51c29938c49c581a1e6",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_min.stream",
+      "bytes": 7600,
+      "sha256": "184e802825407121fb4014d0dc1c9f7e653f1566b72f103e7c6e0625c0d3d1c8",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_minMag.map.tsv",
+      "bytes": 19761,
+      "sha256": "14ed9edc5e15070b34290498fe5e63ea82104403ffa473a0f1c0eccb16ebca65",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_minMag.stream",
+      "bytes": 7600,
+      "sha256": "cb125eb7d0714823c66609d621347befd9feea6fa0cd49307e018ab59c71b78e",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_near_even.map.tsv",
+      "bytes": 4104853,
+      "sha256": "1c501fb32a625c97be9b4dc190ff2fbd5a249a8a77df3b3ec1df8c3956b4ee2b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mulAdd_near_even.stream",
+      "bytes": 1354428,
+      "sha256": "676aee04d20d32b0b098f64078ff0be81995c3810af88d96abfc753a4f6a9bce",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_max.map.tsv",
+      "bytes": 15124,
+      "sha256": "8fe9c3af972fdcd9f38adc26da6ae15ffe59246f0ef2cf106a2cad24f2c06b71",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_max.stream",
+      "bytes": 5394,
+      "sha256": "52a43d713f1fd2da7f531f39a7d412a501e92ba5143779b0d36a8d6ca7253a2b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_min.map.tsv",
+      "bytes": 13709,
+      "sha256": "fb0fb01c65abccdad40a5fc068009f0fee57bac328fcd048b175b9dd0de1c3c8",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_min.stream",
+      "bytes": 4930,
+      "sha256": "bd675853169f281a53986e468171e79bdddf7336a3d99a91a3bdb560707efa99",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_minMag.map.tsv",
+      "bytes": 13780,
+      "sha256": "4d1d0e4b78319a963d630bb0212601b198365a20cd1d81e1cc7fc41e3a3e5922",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_minMag.stream",
+      "bytes": 4901,
+      "sha256": "510cbe3cb24d11a9198d2333dd53f6eb73f819550e792f2bdd4d2719709aaecd",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_near_even.map.tsv",
+      "bytes": 109625,
+      "sha256": "5ba2f75358c01c0e894cb706aa9d91a46c5141524a42d28069d842f42426f1f2",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_mul_near_even.stream",
+      "bytes": 38178,
+      "sha256": "105e7a91cdc93d2cd7eaed3ba3a78cf3224e7e2ad58d2596f7b1af1473fe395d",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_neg_near_even.map.tsv",
+      "bytes": 2809,
+      "sha256": "50891ffbe927d6d8cdecadbf9d0211c89f5ceb9d3f58af76badee2add87cfb6e",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_neg_near_even.stream",
+      "bytes": 821,
+      "sha256": "df68e8b35e6ac25f9c6ec488db4457fef40aff90c6deffa4b2038c57951149c3",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_signBit_near_even.map.tsv",
+      "bytes": 2293,
+      "sha256": "1f88ee445f12c3dc9c9259c7bbb8004af4f727252e223f4bff5d61ed90dca1aa",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_signBit_near_even.stream",
+      "bytes": 468,
+      "sha256": "0b662caee91d7d0aa006f4ac37958e6cc5b9d34d0e891297934a3bda4873bf92",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_max.map.tsv",
+      "bytes": 385,
+      "sha256": "5cdf39a53742e0ff5ad7613a03e4c26c96142b480349a0caf8c92c3cb6ca9454",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_max.stream",
+      "bytes": 120,
+      "sha256": "97c66bd75249f098303173c801ed50ca972bcdfe595756cd15ec6a7487e439bb",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_min.map.tsv",
+      "bytes": 384,
+      "sha256": "17df44d8f9e3a138a51d4fc4d88ba824c5789141b74d511376960d36032998cd",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_min.stream",
+      "bytes": 120,
+      "sha256": "6513762abb339f04bd47d4249f4aa08d5ccece1124ff3406b60842a940589d63",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_minMag.map.tsv",
+      "bytes": 389,
+      "sha256": "8459fc65d7856733f3ace767d39866d643b99bd1a1131ee81d589a573d19bfec",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_minMag.stream",
+      "bytes": 120,
+      "sha256": "21277717147285797477869fc0484636c5ed76fd265b0e16e5838e19d3e58071",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_near_even.map.tsv",
+      "bytes": 7043,
+      "sha256": "d7729b1937f4979c3ba69f6f2659182fc2e38673e136b35be138eeb576ca3a46",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sqrt_near_even.stream",
+      "bytes": 2027,
+      "sha256": "0f3bfeaa7ac380b1a67e49a238d2aa1e6b135de96cdee3ec2eb9ba5ae0637b1b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_max.map.tsv",
+      "bytes": 13228,
+      "sha256": "cf15f1c0ef0e8c244e977e6c3bd821249978ef7d5651fb0a9baeebb7303cded5",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_max.stream",
+      "bytes": 4669,
+      "sha256": "3b3450a320c5965523e68fdc8fcb33fd786e5c412defdc04ec1b12a80a93c2e0",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_min.map.tsv",
+      "bytes": 11702,
+      "sha256": "205499a5dc8bfa57989e5e560c0e50ba6c4086d9d143bfde139e3e1bcb7a3ac3",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_min.stream",
+      "bytes": 4205,
+      "sha256": "a577d40c715003d02271ec1ce4039bd00d3e556fa99c7a296939ceded478d672",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_minMag.map.tsv",
+      "bytes": 13180,
+      "sha256": "4cb46123a8b68d7086506f1a748cb36dd3a862c334ebde8b2d53946eedd08719",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_minMag.stream",
+      "bytes": 4582,
+      "sha256": "95e5c68b02f1eaab84863d896870a034fb1497d6abad98988cfa6cd344959e43",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_near_even.map.tsv",
+      "bytes": 1915269,
+      "sha256": "b42996bffb7d09d5258dd67f50a6a078b00b7838a54c5630e2b6ecf5bdb7c470",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_sub_near_even.stream",
+      "bytes": 525725,
+      "sha256": "6732f3d06b61f5a09c52d2cec75c5b48db639db791e8f41df450703fefae0561",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_to_f128_near_even.map.tsv",
+      "bytes": 3629,
+      "sha256": "0e453e56e382cd09f8863b3c786dda99994bc76d244cc07c95a9b3e4702b505b",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_to_f128_near_even.stream",
+      "bytes": 1717,
+      "sha256": "4cc0e5fc1f3342ac8074e33b5b5ee127ea4d47dbfa6c68d5af34243e5d2e0d97",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_to_f64_near_even.map.tsv",
+      "bytes": 3166,
+      "sha256": "a6738a99d3d7e3a516c5058e2dc9dc5ca6d9dcac1453389122af4201dc01423c",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/09-ibm-fpgen/f32_to_f64_near_even.stream",
+      "bytes": 1093,
+      "sha256": "870be447599b2eed71f752821873561f2b24a67b7637f6cccea0e0e8413be395",
+      "notice_packages": [
+        "ibm-fpgen"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/12-transcendentals/providers/core-math.so",
+      "bytes": 154288,
+      "sha256": "d83b4ae16d71c33e067df15adf8c518b06db23964c57f30a0b4613e60f778221",
+      "notice_packages": [
+        "core-math"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/12-transcendentals/providers/openlibm.so",
+      "bytes": 222000,
+      "sha256": "57e4a627a02fe3c31521b332456f533c9eea2696935d2ee0170ae6ad95ac7b2b",
+      "notice_packages": [
+        "openlibm"
+      ]
+    },
+    {
+      "path": "tests/results/main/release/external/12-transcendentals/providers/rlibm.so",
+      "bytes": 66024,
+      "sha256": "e9b8b7a4402fa864f01f45b3e5467ed1dac714a05af214d61df6c527ce20e668",
+      "notice_packages": [
+        "rlibm"
+      ]
+    }
+  ],
+  "log_notice_packages": {
+    "core-math": "third_party/licenses/core-math",
+    "openlibm": "third_party/licenses/openlibm",
+    "rlibm-all": "third_party/licenses/rlibm-all",
+    "verificarlo": "third_party/licenses/verificarlo",
+    "flit": "third_party/licenses/flit",
+    "daisy": "third_party/licenses/daisy",
+    "fptaylor": "third_party/licenses/fptaylor",
+    "ocaml-interval": "third_party/licenses/ocaml-interval",
+    "reproblas": "third_party/licenses/reproblas",
+    "exblas": "third_party/licenses/exblas",
+    "tbb": "third_party/licenses/tbb",
+    "glibc": "third_party/licenses/glibc"
+  },
+  "ibm_permission": "unverified"
+}

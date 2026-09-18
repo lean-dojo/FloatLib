@@ -1,0 +1,160 @@
+IBM FPgen original test-file preambles
+
+These original notices are preserved for attribution. They do not constitute
+a verified redistribution permission. No additional vector cases are copied.
+
+Source: Add-Cancellation-And-Subnorm-Result.fptest
+Floating point tests: Add: Cancellation and subnorm result
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Add-Cancellation.fptest
+Floating point tests: Add: Cancellation
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Add-Shift-And-Special-Significands.fptest
+Floating point tests: Add: Shift and special significands
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Add-Shift.fptest
+Floating point tests: Add: Shift
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Basic-Types-Inputs.fptest
+Floating point tests: Basic types inputs
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Basic-Types-Intermediate.fptest
+Floating point tests: Basic types intermediate
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Compare-Different-Input-Field-Relations.fptest
+Floating point tests: Compare: Different input field relations
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Corner-Rounding.fptest
+Floating point tests: Corner rounding
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Decimal-Basic-Types-Inputs.fptest
+Decimal floating point tests: Basic types inputs
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Basic-Types-Intermediate.fptest
+Decimal floating point tests: Basic types intermediate result
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Clamping.fptest
+Decimal floating point tests: Clamping
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Mul-Trailing-Zeros.fptest
+Decimal floating point tests: Mul Trailing Zeros
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Overflow.fptest
+Decimal floating point tests: Overflow
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Rounding.fptest
+Decimal floating point tests: Rounding
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Trailing-And-Leading-Zeros-Input.fptest
+Decimal floating point tests: Trailing and Leading Zeros Input
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Trailing-And-Leading-Zeros-Result.fptest
+Decimal floating point tests: Trailing and Leading Zeros Result
+Copyright of IBM Corp. 2007
+
+Source: Decimal-Underflow.fptest
+Decimal floating point tests: Underflow
+Copyright of IBM Corp. 2007
+
+Source: Divide-Divide-By-Zero-Exception.fptest
+Floating point tests: Divide: Divide by zero exception
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Divide-Trailing-Zeros.fptest
+Floating point tests: Divide: Special results
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Hamming-Distance.fptest
+Floating point tests: Hamming distance
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Input-Special-Significand.fptest
+Floating point tests: Input special significand
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Cancellation-And-Subnorm-Result.fptest
+Floating point tests: Multiply-Add: Cancellation and subnorm result
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Cancellation.fptest
+Floating point tests: Multiply-Add: Cancellation
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Shift-And-Special-Significands.fptest
+Floating point tests: Multiply-Add: Shift and special significands
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Shift.fptest
+Floating point tests: Multiply-Add: Shift
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Special-Events-Inexact.fptest
+Floating point tests: Multiply-Add: Special events inexact
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Special-Events-Overflow.fptest
+Floating point tests: Multiply-Add: Special events overflow
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: MultiplyAdd-Special-Events-Underflow.fptest
+Floating point tests: Multiply-Add: Special events underflow
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Overflow.fptest
+Floating point tests: Overflow
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Rounding.fptest
+Floating point tests: Rounding
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Sticky-Bit-Calculation.fptest
+Floating point tests: Sticky bit calculation
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Underflow.fptest
+Floating point tests: Underflow.fptest
+Copyright of IBM Corp. 2005
+---------------------------
+
+Source: Vicinity-Of-Rounding-Boundaries.fptest
+Floating point tests: Vicinity of rounding boundaries
+Copyright of IBM Corp. 2005
+---------------------------

@@ -1,0 +1,17 @@
+IBM FPgen / IEEE floating-point test suite
+
+Redistribution permission: unverified.
+
+Retained material: tests/results/main/release/external/09-ibm-fpgen/
+*.map.tsv and *.stream, and the corresponding members of
+benchmarks/results/main/provenance/FloatLib-source-public.tar.gz.
+The maps retain original source records; streams re-encode those records.
+The 33 original file notices are preserved in ORIGINAL-NOTICES.txt.
+
+Source mirror: https://github.com/sergev/ieee754-test-suite
+Commit: 12e883a0c7b826976a8f1243318ac4b7626a0ffc
+Original source: IBM Corporation / IBM FPgen.
+
+No express redistribution grant was found in the mirror README, original
+test-file notices, or accompanying IBM test-suite PDF. A basis for
+redistributing these records remains to be established.

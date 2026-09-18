@@ -1,0 +1,3376 @@
+{
+  "prepared": "2026-09-17",
+  "audited_commit": "52ab504bfcd8e5395b29a4f64b617b401e5d16ac",
+  "description": "license texts are unchanged; source comment blocks preserve original text with attribution labels and lossless encoding conversion where specified; hashes are SHA-256",
+  "files": [
+    {
+      "file": "third_party/licenses/openlibm/LICENSE.md",
+      "sha256": "b1843fbf5b03f519a5f0a44fce751bdd1022ae7148614923f9d6293e17a18b17",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/LICENSE.md",
+          "sha256": "b1843fbf5b03f519a5f0a44fce751bdd1022ae7148614923f9d6293e17a18b17",
+          "bytes": 5857
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/rlibm/LICENSE",
+      "sha256": "968c2ff39e357e37128b620b7874776ea8061a37d033fd6e74ad1b1ce6b4bc99",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/rutgers-apl/rlibm/8533ec0db38b2f3ab55c1b296ddaec80d578e251/LICENSE",
+          "sha256": "968c2ff39e357e37128b620b7874776ea8061a37d033fd6e74ad1b1ce6b4bc99",
+          "bytes": 1353
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/rlibm-all/LICENSE",
+      "sha256": "03b7fafce4cffd2f77a226d35045357fb5958ba74f25eba12d7bf61ed3cd4622",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/rutgers-apl/rlibm-all/90431a000071e415abf0f403b6125c385551e346/LICENSE",
+          "sha256": "03b7fafce4cffd2f77a226d35045357fb5958ba74f25eba12d7bf61ed3cd4622",
+          "bytes": 1071
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/fpbench/LICENSE.txt",
+      "sha256": "4df891a3df975082c5f8735f158215c5e72d0f4b04ccbec00ad84224da8ecd6a",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/FPBench/FPBench/a6621d5f86276859bc01cc7b9c238dee73ff5dbe/LICENSE.txt",
+          "sha256": "4df891a3df975082c5f8735f158215c5e72d0f4b04ccbec00ad84224da8ecd6a",
+          "bytes": 1069
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/verificarlo/COPYING",
+      "sha256": "6d31e7be06ce4665173c5e5e2f5818b7c58a193366c2d19dbf2d0f57d3c64a23",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/verificarlo/verificarlo/c5d1bf798a5ec617c138aa5e6629e1923411d3c8/COPYING",
+          "sha256": "6d31e7be06ce4665173c5e5e2f5818b7c58a193366c2d19dbf2d0f57d3c64a23",
+          "bytes": 15547
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/flit/LICENSE",
+      "sha256": "c9b80c6a0b73bc4f80cfe1917d00a03d728985e323419c49e609aef217307f34",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/PRUNERS/FLiT/27b6061b9d2302fa8c3252fe770287bb4d07905b/LICENSE",
+          "sha256": "c9b80c6a0b73bc4f80cfe1917d00a03d728985e323419c49e609aef217307f34",
+          "bytes": 3355
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/daisy/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/daisy/LEON_LICENSE",
+      "sha256": "3674028874f3c9fff38f6d9d52a8280898a54864af47804737354a9e4bb437f9",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/LEON_LICENSE",
+          "sha256": "3674028874f3c9fff38f6d9d52a8280898a54864af47804737354a9e4bb437f9",
+          "bytes": 1699
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/reproblas/LICENSE",
+      "sha256": "ed46aa70c6880a23226fdd9ea1ca368498ca7dbfb53e031ef08a8ce6b7edb455",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/peterahrens/ReproBLAS/dfb815058dd34b88caba2513cce63bc2e89f951f/LICENSE",
+          "sha256": "ed46aa70c6880a23226fdd9ea1ca368498ca7dbfb53e031ef08a8ce6b7edb455",
+          "bytes": 1505
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/fptaylor/LICENSE",
+      "sha256": "c17eafd1950f396146127b0670c2220dd1117fb10236a6c97660a73c4aef446f",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/LICENSE",
+          "sha256": "c17eafd1950f396146127b0670c2220dd1117fb10236a6c97660a73c4aef446f",
+          "bytes": 1096
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/exblas/LICENSE",
+      "sha256": "eb068bbbfb581786d7279b7da86a9a00453deea58c0b19a590e6d680b17a1359",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/LICENSE",
+          "sha256": "eb068bbbfb581786d7279b7da86a9a00453deea58c0b19a590e6d680b17a1359",
+          "bytes": 1905
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/vectorclass/GPL-3.0.txt",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/INTERVAL/COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "bytes": 35147
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/ocaml-interval/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/INTERVAL/COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "bytes": 35147
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/ocaml-interval/COPYING.LESSER",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/INTERVAL/COPYING.LESSER",
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+          "bytes": 7651
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/glibc/COPYING.LIB",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/COPYING.LIB",
+          "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+          "bytes": 26530
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/openlibm/TESTS-COPYING.LIB",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/COPYING.LIB",
+          "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+          "bytes": 26530
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/tbb/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/oneapi-src/oneTBB/v2020.3/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/conway/LICENSE",
+      "sha256": "ecf91e87169b81ff0839bb010c94712b83655afa9291a95922b4a3b143a0df3c",
+      "kind": "complete upstream license, unchanged",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/gaearon/conway-refinement/264445c93b78554c408e99e4e7f663693b4e91ab/LICENSE",
+          "sha256": "ecf91e87169b81ff0839bb010c94712b83655afa9291a95922b4a3b143a0df3c",
+          "bytes": 11341
+        }
+      ]
+    },
+    {
+      "file": "third_party/licenses/core-math/SOURCE-NOTICES.txt",
+      "sha256": "f5e4a328d8c19beda01052e2a310cce661a7fbb1c4e052568198c3223f6cbb7c",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "core-math-32-cos.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/cos/cosf.c",
+          "sha256": "3ea4c6d03d32e225a8fd31ee37eb785cefda0f8940c4e826352fc9103a275dcf",
+          "bytes": 7777,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-cosh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/cosh/coshf.c",
+          "sha256": "d9f8654839a7f07caa68bdf8c017adc6d3e33a05334882140edd38320804ba02",
+          "bytes": 5491,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-exp.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/exp/expf.c",
+          "sha256": "598f2e509a1296fa0e4a239e2499e7bb1753fee29a056ce92d7a930b96279e90",
+          "bytes": 4992,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-log.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/log/logf.c",
+          "sha256": "92c878fb172d9125fb6a20e04fb2fa84f03bc4decb4f483d74bc6d13dae26067",
+          "bytes": 6131,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-sin.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/sin/sinf.c",
+          "sha256": "f27c4baa849b1d9982153c69719c912a3058bc9d86d7d01e7385e2aee56c4278",
+          "bytes": 8403,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-sinh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/sinh/sinhf.c",
+          "sha256": "8a52e5358ff56a2bd1bc2a7b9453eea4a102608ebaab83181ef1d753ee3310f6",
+          "bytes": 6535,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-32-tanh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/tanh/tanhf.c",
+          "sha256": "a60f385ebc85ce3e59d0b7a13e991a3724030c40b67e2ef68b59ce3e299aac71",
+          "bytes": 3592,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-cos.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/cos/cos.c",
+          "sha256": "04bffbc8b483c886f78f2c9ab3f2a1ca318dda78ab637a2983a4a9d82374e9d9",
+          "bytes": 99266,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-cosh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/cosh/cosh.c",
+          "sha256": "1a3394bc59cfc8aa6b684ad363cfa9d645576e70e5db106775513bff35524c1c",
+          "bytes": 18535,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-exp.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/exp/exp.c",
+          "sha256": "024b63b3433b455be57a6523f3acf3c82e7db1edf2cee414dc03d01be4359c63",
+          "bytes": 19071,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-log.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/log/log.c",
+          "sha256": "5f923601d1d0aab2e42136f5432794ecfcf4c23568f273ad8d32921bd1832bcf",
+          "bytes": 36179,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-sin.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/sin/sin.c",
+          "sha256": "e97d6d5a88119a6a5a2d12df624cdbac7969eefb15898d959965f932e391200c",
+          "bytes": 99883,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-sinh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/sinh/sinh.c",
+          "sha256": "08ab3e040ba23221db02fe19652191958f5b025fba2c93659dcda112fc3d5bf4",
+          "bytes": 20738,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-64-tanh.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/tanh/tanh.c",
+          "sha256": "e89441340424ea7d137269ce4626b9c1426c37fade09c0853c0ffcca606fb111",
+          "bytes": 19315,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-math-dint.h",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary64/log/dint.h",
+          "sha256": "0da80a15d311bb1e550035f98edc2266ef31828cd423aec3a2e4507d2dad5e0e",
+          "bytes": 43432,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-log__src__binary16__compound__compoundf16_mpfr.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary16/compound/compoundf16_mpfr.c",
+          "sha256": "e885bee4b4f3756b43f2bf80b6e358abf8623352bbee93582684221cf0ee0af6",
+          "bytes": 2136,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-log__src__binary32__compound__compoundf_mpfr.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/compound/compoundf_mpfr.c",
+          "sha256": "0bc54658d9d11c0225a2ba4b7f8bc72217c2ec6955ef6eb778ce5ce3e66e771a",
+          "bytes": 2183,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-log__src__binary32__support__check_worst.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binary32/support/check_worst.c",
+          "sha256": "f56138aef2f70eb3051b66db39b9f5a1e8472ef39613fd288d4ee7d6acb53919",
+          "bytes": 19902,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "core-log__src__binaryb16__compound__compound_bf16_mpfr.c",
+          "url": "https://gitlab.inria.fr/core-math/core-math/-/raw/68b034fbe9512781352d28f2dc9795c1686fe8e9/src/binaryb16/compound/compound_bf16_mpfr.c",
+          "sha256": "5029a36bde846b07a944eb2c89067e24b92b4d533b56402c9ce2742a0aa5b733",
+          "bytes": 2166,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": [
+        "core-log__src__binary32__compound__function_under_test.h"
+      ]
+    },
+    {
+      "file": "third_party/licenses/openlibm/SOURCE-NOTICES.txt",
+      "sha256": "4a82ba4df03164be78c8a08e0d12597ae7f6a1b115dd0b14d5131e341dc56ab0",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "amd64/bsd_asm.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/bsd_asm.h",
+          "sha256": "357c094acf80ce9719b74adbc43c6bcef4cf2bff120fd398c6ad75df627dde0d",
+          "bytes": 3648,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/bsd_fpu.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/bsd_fpu.h",
+          "sha256": "0c1b8ec5f34269c00d159f23380a3089369ed01e18b29e233a8acd6df9b5fa77",
+          "bytes": 6925,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/bsd_ieeefp.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/bsd_ieeefp.h",
+          "sha256": "e26fa44b123585b02bc941cc6c7b3496a993303c99bf8aaf10904161b07c4282",
+          "bytes": 7988,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_fmod.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_fmod.S",
+          "sha256": "be7a9a09b1e94d9679c31a76e3c760fee27ec96dfc2435d20be06f9f2e396ded",
+          "bytes": 2117,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_fmodf.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_fmodf.S",
+          "sha256": "6edad1d9584347cfb103076a35b384998e7e4d0d92071e9fe3d08b0ae22e48cf",
+          "bytes": 419,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_fmodl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_fmodl.S",
+          "sha256": "d5fc1d3af565d70dbf8918cebff05dd68548ebcd4428b82f5a844f1b6366df40",
+          "bytes": 2037,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_remainder.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_remainder.S",
+          "sha256": "c46b8d34878e8a5d41ac2402167f00edc4e6bff06a7c03cfcf9c10a371a3e3ca",
+          "bytes": 606,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_remainderf.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_remainderf.S",
+          "sha256": "6cc1cbd2714745b33dbf7e30cb262d501d47ce88ddf3a02253d811df3f510eea",
+          "bytes": 588,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_remainderl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_remainderl.S",
+          "sha256": "a59abcdcd40d7cb950413997ca677644ac6812273d3b718aa78c0c132c8bc6b6",
+          "bytes": 588,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_sqrt.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_sqrt.S",
+          "sha256": "05793e0dd6607c44758498965e69c4bf249710761ec03021b839d0486b8ec6b5",
+          "bytes": 1639,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_sqrtf.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_sqrtf.S",
+          "sha256": "7514801e6804c8fddbe3514abaf0c34d23a417a52296d30989f5c00bc5d916ed",
+          "bytes": 1641,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/e_sqrtl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/e_sqrtl.S",
+          "sha256": "e18a44c5dda441d3b86fc3ebab66ae0ab9c173f773b3c15e54ceb20ef6ae99c8",
+          "bytes": 1753,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/fenv.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/fenv.c",
+          "sha256": "343efedf35fcc91a1fbb629ad1bc6131418eea0a5dfea9c780e0005fed570f4c",
+          "bytes": 4131,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_llrintl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_llrintl.S",
+          "sha256": "6c25946262dc039e355e420593ca614ec32aeaa8b5f7ee5129afea514049d301",
+          "bytes": 1716,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_logbl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_logbl.S",
+          "sha256": "76d476d4f4889119222635a98ecd213ba58fd32af1f86469be493e7dc894aa66",
+          "bytes": 472,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_lrint.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_lrint.S",
+          "sha256": "c4e50ab1a109b38feb5301b54094bfa9c7ae508bac9494869973da03f0c8d27b",
+          "bytes": 1692,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_lrintf.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_lrintf.S",
+          "sha256": "e3f5c855723f49fd4d9859e2e9fceb5d94d243c663574c29c7e74fb8849bfc15",
+          "bytes": 1695,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_lrintl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_lrintl.S",
+          "sha256": "b3c58c8c9f9ff85b4db9a6a777f8699ee110fb7a6eb82aeda121bae442842ae1",
+          "bytes": 1709,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_remquo.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_remquo.S",
+          "sha256": "eb68f0e1e7ad60b60ca9c095d412e08564536dee5b224093c0103810d91467f7",
+          "bytes": 2371,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_remquof.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_remquof.S",
+          "sha256": "fd57b76c1320929d4eab3825baa8c22fe50d13593f44cb437b5a0be0b258b6bc",
+          "bytes": 2371,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_remquol.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_remquol.S",
+          "sha256": "07924a9ac390b8c42f1f024ec7eb29b1c0983eb3b5babd3ef8046a2c4ce211c3",
+          "bytes": 2453,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_rintl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_rintl.S",
+          "sha256": "34a4c46f3f7fd93ac8b23406e3ec5e66c4a2550889b3fcce7a76540efd93d3fc",
+          "bytes": 369,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_scalbn.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_scalbn.S",
+          "sha256": "58d9efebf25164924e6fc21b7a912dc274e64477db11ebe33cd78d7a28a82d9e",
+          "bytes": 1949,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_scalbnf.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_scalbnf.S",
+          "sha256": "127287eb5ebe5b3235e14be4eb39fc8f78960dcfc638d59487751ad1d80b1093",
+          "bytes": 1954,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "amd64/s_scalbnl.S",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/amd64/s_scalbnl.S",
+          "sha256": "a327c377a50dd78e69e838cd214146fd11ccc4e054f912841f03f7971f4e1d56",
+          "bytes": 822,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "bsdsrc/b_exp.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/bsdsrc/b_exp.c",
+          "sha256": "e56d612e8af2040fa5123a1e9a1c7af54761fdabe1e9f96d7520a69084dc3f88",
+          "bytes": 5137,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "bsdsrc/b_log.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/bsdsrc/b_log.c",
+          "sha256": "f307c17b3d9959eba1539a6c240d01bf2d567df86c66326033513268ad62acd9",
+          "bytes": 13806,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "bsdsrc/b_tgamma.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/bsdsrc/b_tgamma.c",
+          "sha256": "f8086464c1f3f22ac14c2f94050fb4b584e23dfecb56cda4a19193dd54159a6c",
+          "bytes": 8907,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "bsdsrc/mathimpl.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/bsdsrc/mathimpl.h",
+          "sha256": "037df16fcbd5fb08b2a405f0f5599ba8b39456082d9e1eb20b07050c96eb559c",
+          "bytes": 2549,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_complex.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_complex.h",
+          "sha256": "fe9cd6b24c166532b4c5a13cf98f3dbab66c3f93f6c68e4cc0dae09795cc19cd",
+          "bytes": 6000,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv.h",
+          "sha256": "07e8af057dc146a44d07e5afffc953cec665f20f1bd52cd7fe9f5f2a4eccc7ab",
+          "bytes": 722,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_aarch64.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_aarch64.h",
+          "sha256": "fb877dc143347dca7efffd17b5dabef0986097106c8bd608e65037548100059d",
+          "bytes": 5476,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_amd64.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_amd64.h",
+          "sha256": "31b03f8407db68f35024c628c9884aec93dc3a16c60604b800a563289c775daa",
+          "bytes": 6193,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_arm.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_arm.h",
+          "sha256": "f1acb56aa91e60d53b6edb8688ef16468199770a70b53710f32242c9657c529d",
+          "bytes": 5247,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_i387.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_i387.h",
+          "sha256": "a0924621bd914e105aedc2e65103af8fe1b4bce2239b632eeeb7cc4dad8533fb",
+          "bytes": 7126,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_loongarch64.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_loongarch64.h",
+          "sha256": "ca77cd2a46690d8aeebbf7dee87881b3cef0103f93eb7b9e3fe06900216d74f8",
+          "bytes": 4988,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_mips.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_mips.h",
+          "sha256": "16b242b1b8fc6ff19158dbbbaf8a102177910e00dd536696b166af2700c9ff03",
+          "bytes": 5969,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_powerpc.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_powerpc.h",
+          "sha256": "6f99aa78a2d5ce041be267b05ee7c184697335f35e2c07c51253ce9a8466d2b5",
+          "bytes": 6850,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_riscv.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_riscv.h",
+          "sha256": "6131ed64b0b13b6a6533947609868a1de98e228591e18c0fd6dd50d7e77790e1",
+          "bytes": 5873,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_fenv_s390.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_fenv_s390.h",
+          "sha256": "2b12a2579deefc539fa9b733d402359cf745667f1f6dac9d99bf1e749276e0a4",
+          "bytes": 5215,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "include/openlibm_math.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/include/openlibm_math.h",
+          "sha256": "0330f443aadc9016e6722912f83f1512fea7da9e533d09e8ea890c94879b964f",
+          "bytes": 16233,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_acoshl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_acoshl.c",
+          "sha256": "d03f679af54cf82c13c6a046ad3939b719241d028b1c2d5acee5835bf62f68a7",
+          "bytes": 1542,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_atanhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_atanhl.c",
+          "sha256": "49080ed43d21c13269a5d33b2234e427719a363b2f9c7d8728531d0127d293d7",
+          "bytes": 1601,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_coshl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_coshl.c",
+          "sha256": "ee5772e5e32ca0415afa68e4e89f44e1091e4f8b2fa18b75c0b2a7ada0b444fa",
+          "bytes": 2366,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_expl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_expl.c",
+          "sha256": "91d6bcfab4374422db4721c59d5483c65fbe3315ae89816a4ec8f4780956d3dc",
+          "bytes": 3523,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_fmodl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_fmodl.c",
+          "sha256": "9ac611fb1f9762b034299c9ed65cc7aee3ea15f765e3f5fe15b4560ebb054c6b",
+          "bytes": 3903,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_hypotl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_hypotl.c",
+          "sha256": "870ed7295a68d0b5a2478ad252b0365dde3cec610879787ed2f13ae7c5b2fa2f",
+          "bytes": 3328,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_lgammal_r.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_lgammal_r.c",
+          "sha256": "a1e90dfe2c26e4917d77e446b6bf8a028943db31bf233df749ece2123e93462a",
+          "bytes": 12582,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_log10l.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_log10l.c",
+          "sha256": "cb78df04a2e735b19b6d629aeb2120e4ae134193fd8dc90ca1bddf0fbd04371b",
+          "bytes": 4663,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_log2l.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_log2l.c",
+          "sha256": "807c41f7c25c1b1b63f9ae4a7f4f709a0ed7f88ee5825a995596de54f26d1e4c",
+          "bytes": 4486,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_logl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_logl.c",
+          "sha256": "95442ffb8b5beaca799a7176371324698801d6524907a30dabb90e701cd435d4",
+          "bytes": 4471,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_powl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_powl.c",
+          "sha256": "ea455582e3f48c14cc65ddcbc6e528e50c5f3349b9d26bead72b744c0c0b8a1f",
+          "bytes": 13925,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_rem_pio2l.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_rem_pio2l.h",
+          "sha256": "2fe6db6c2de3d4f81d78f17bf450cefaa62e2fb065f498a7306a45cbc54a714f",
+          "bytes": 4722,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_sinhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_sinhl.c",
+          "sha256": "5c576f05fb975dbd50015e34d1c4b9ecb764fb4ccf9c08e4251edbc93c6a880c",
+          "bytes": 2154,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/e_tgammal.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/e_tgammal.c",
+          "sha256": "7487c47e6926b6b738c86c08b5ec3ddaaab53c710cbf1f5912cb3d99bd399394",
+          "bytes": 6581,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/invtrig.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/invtrig.c",
+          "sha256": "1110ced9dfbc444c6b1fabb2cd5342bd1495ff61ced8f0127d601dbd22eeab8c",
+          "bytes": 2824,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/invtrig.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/invtrig.h",
+          "sha256": "38cda8523ae43fd5d338a173c86449f345f26627d07bad39ca36885aa2d8b95b",
+          "bytes": 3288,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/k_cosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/k_cosl.c",
+          "sha256": "c8720d89877fff6e4b6c2e403c56b0b39480f87404253ec63e1a33892041eda2",
+          "bytes": 2911,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/k_sinl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/k_sinl.c",
+          "sha256": "8dc87933c8b9eddb1a5dedd6140185bec4b9cf166111e18852cf8e6c0025980c",
+          "bytes": 2011,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/k_tanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/k_tanl.c",
+          "sha256": "bfcc5a81f3ce21bd846dd93d74cc49c52a8fa4ee7df7c0401eaf30a92966c417",
+          "bytes": 4184,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_asinhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_asinhl.c",
+          "sha256": "46f0affedd1ab730e3536a26d0d6cd7431724ea0f8fe8844c9bdb1ef9a53ad5a",
+          "bytes": 1573,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_ceill.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_ceill.c",
+          "sha256": "756fde910f21d7fea2c95c81bc3d7a77ba9a5c4912db9b110391197a92f77ab1",
+          "bytes": 1826,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_erfl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_erfl.c",
+          "sha256": "7df5dc99165f872cd5c9da36b429f2896bc80e0b2cd961c9d262db7d028bc309",
+          "bytes": 13940,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_exp2l.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_exp2l.c",
+          "sha256": "e41d6b21a99f4eaa2a9ff687ea0bb24b0e7a2b8736ec930cbef1534e03de0f18",
+          "bytes": 11027,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_expm1l.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_expm1l.c",
+          "sha256": "ca65e1da649e6e31e8838410d00a0bb2202a8bf59163b0641085abdddadb198d",
+          "bytes": 3604,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_floorl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_floorl.c",
+          "sha256": "d6862591e6522106ec1ebb2ed81da7a36e598b9ad0be0ce39ea3df26997dee6a",
+          "bytes": 1796,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_log1pl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_log1pl.c",
+          "sha256": "a05084c5300ddb57a564e63eff34f7fd787a57f998e64257c3b456d6dc0976ee",
+          "bytes": 4240,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_modfl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_modfl.c",
+          "sha256": "cb5ca0319ce15a2e246194711054bf35d628a8fb6666bc2cb2dc2ae4c22e8d49",
+          "bytes": 1825,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_nanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_nanl.c",
+          "sha256": "fc2ea4081d7b7848e05ea1768db0d47302c07b8c9f352961cbce833783c8b386",
+          "bytes": 1726,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_nextafterl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_nextafterl.c",
+          "sha256": "c8257d0bee696af37514a5c3e8d5314f0b0a83096cc5127f65353928f8e5747f",
+          "bytes": 2316,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_nexttoward.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_nexttoward.c",
+          "sha256": "17f2f901b2861c147e6b714aeee02bce06393333aa3827ce9bb7b5b3c98853ec",
+          "bytes": 2205,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_nexttowardf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_nexttowardf.c",
+          "sha256": "65f91f37976cd53df9cb4380d971efb89602d386052b21e327817f9aa33732a0",
+          "bytes": 1739,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_remquol.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_remquol.c",
+          "sha256": "3bf2777737f34b1601eea5acda69b405d6f98705b9f35d66101a043aa6ff5c86",
+          "bytes": 4217,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_tanhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_tanhl.c",
+          "sha256": "52fda719634ec6c18503f254282851a8710961e0ad77ace352495c2bbd10ac3a",
+          "bytes": 2098,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "ld80/s_truncl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/ld80/s_truncl.c",
+          "sha256": "3484c68394a83edfba48dc0841a0cb28a725fd6c857ecebe350cac666c433116",
+          "bytes": 1684,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/aarch64_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/aarch64_fpmath.h",
+          "sha256": "1f38b5ed74fb2b64bf217856c7bae8be3ac4c7c8ff8e2bbc488dff41326b432c",
+          "bytes": 2162,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/amd64_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/amd64_fpmath.h",
+          "sha256": "7b03076c9b5e0701bb7d040ed498e4c2ffc499d98bdc6fb2eb13610369d9a168",
+          "bytes": 2031,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/bsd_cdefs.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/bsd_cdefs.h",
+          "sha256": "7f75e9e60cdd0f50be5ebdb511991da8b37f4fcdd9e3fb204ebe716fcc4330f0",
+          "bytes": 3825,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_acos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_acos.c",
+          "sha256": "16487816411d2c9179ec3218f0c909d2aecd1f780b9f03a1bea1995f82b831d2",
+          "bytes": 3558,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_acosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_acosf.c",
+          "sha256": "daaf0fdc152329ff537e3a458c2f34e0645695dbea8ebaec4ce4461df702334c",
+          "bytes": 2133,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_acosh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_acosh.c",
+          "sha256": "c2148cbb765d5c63cdddb94cbc466f31c422ecf43db7583119d906c617d71370",
+          "bytes": 1770,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_acoshf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_acoshf.c",
+          "sha256": "c35703c6359c3274ee21854f8a76537f62566ab8d0417aeaaa8e913a00ab5cdb",
+          "bytes": 1396,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_acosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_acosl.c",
+          "sha256": "83ef124d96e4c56d1b0ef02c19d9af2f7fb9d3e9f503d056f7781547b7060522",
+          "bytes": 2300,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_asin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_asin.c",
+          "sha256": "87820acf0d37ab8c16790a77d71d619cd71d83b797e8384f65f7cc844ac8bf55",
+          "bytes": 3738,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_asinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_asinf.c",
+          "sha256": "222a70a736c1b8804a045a0a6a2692e59064e592d1f6d1d00b4aec569388475f",
+          "bytes": 1706,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_asinl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_asinl.c",
+          "sha256": "e14a80ee781d430d0b124c01dcc5774a359288477170c2e3e7bea919119db04e",
+          "bytes": 1984,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_atan2.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_atan2.c",
+          "sha256": "56780ad4087137c9e745b12fe9fd1b87bc36b8c85ea8d40b0c7fec316491ed52",
+          "bytes": 3913,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_atan2f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_atan2f.c",
+          "sha256": "717710f22714004debf11745f436056adf017dcf82650410f8aa954b1e6611e7",
+          "bytes": 2772,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_atan2l.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_atan2l.c",
+          "sha256": "50ac4dce37d78393a3884e3b89b1613d04a5d26c2940982dffbfe8a64d967b6b",
+          "bytes": 3586,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_atanh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_atanh.c",
+          "sha256": "251c2115e236a51393ccf92edab364cc741c6f650ac3936f22c1e7088e07416c",
+          "bytes": 1776,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_atanhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_atanhf.c",
+          "sha256": "ae5532ecb72b4ac2be44081119227eec26c645f88e176c2fc22227c167f0377b",
+          "bytes": 1236,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_cosh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_cosh.c",
+          "sha256": "8eed480b4e3eae08b480200bf3adc8584f4f7c24e90e081edb6f0e5f8cadc6aa",
+          "bytes": 2364,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_coshf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_coshf.c",
+          "sha256": "b8c5f8677ac6c6445621415b6b69028822a44df2b3b76d69ae55bd22f8ab5df4",
+          "bytes": 1575,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_exp.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_exp.c",
+          "sha256": "870c86c084296ef8838377c53ffc32cf0131e559e5188d400c0c2199b57670ca",
+          "bytes": 5617,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_expf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_expf.c",
+          "sha256": "f661c4664b285c0c2516024a7d1e3f671e9e4675333f1f97b6b434fa78bec1ba",
+          "bytes": 2841,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_fmod.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_fmod.c",
+          "sha256": "0ebe01d28c7c2756efa99eef9cd8d5ec66a843bc12c2a3c5639639d522c0fe67",
+          "bytes": 3396,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_fmodf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_fmodf.c",
+          "sha256": "afd46014c2563464875787c69031789e4844c067faf2099711c77bab5a67d0d7",
+          "bytes": 2721,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_fmodl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_fmodl.c",
+          "sha256": "d491ef62df62341d4420467b649d7e04a886810e59e010e632a84129d89bfc75",
+          "bytes": 3931,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_hypot.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_hypot.c",
+          "sha256": "3a3a3d70f8487876090b0f36d06cccfbe5f8fdbf42d20f0dd2f0ed1fcfa2cdc9",
+          "bytes": 3449,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_hypotf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_hypotf.c",
+          "sha256": "cfe3b12f0b19d689334d7041d9e71dcae1898bab701218a7aa3451b04c8714d4",
+          "bytes": 2301,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_hypotl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_hypotl.c",
+          "sha256": "14c9fb6dd5f2622f9675090c7221a8148cabf9b7f762455f2a8c6f8e8955923e",
+          "bytes": 3330,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_j0.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_j0.c",
+          "sha256": "1b4b56f57de78647b314c489544fbfaa7d856340f8cec304d10ac4afefbc04e9",
+          "bytes": 14851,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_j0f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_j0f.c",
+          "sha256": "60d37798634d2ac78aeddb15372de2de2c0fb8074839bb2ad1963a52b8383920",
+          "bytes": 10544,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_j1.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_j1.c",
+          "sha256": "6121e361710470e7dcd1b24920be69c066ae39253814aa2cb78c473e86ccf245",
+          "bytes": 14619,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_j1f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_j1f.c",
+          "sha256": "c1bef8f6c911fa3223536d70ba3894f7d161d0721724f2444355724960312571",
+          "bytes": 10238,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_jn.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_jn.c",
+          "sha256": "8f45f33e92045b7f3123712086a65dce62cd642a9d9888e0a3e52e9eecd9747f",
+          "bytes": 7268,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_jnf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_jnf.c",
+          "sha256": "17767944c1c69b26eff702132f93d35b95b16684e1bab9b9f5ed1e67156203b4",
+          "bytes": 4902,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_lgamma.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_lgamma.c",
+          "sha256": "ce725084d37c31adf3d678bf99bd005a4358367ecfb918436a225e1ec0b3f0a9",
+          "bytes": 857,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_lgamma_r.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_lgamma_r.c",
+          "sha256": "d1eb37f60a4d74cf56b678acf3af5e3c844b24bbbaf47cffb8c0aedf44f24fce",
+          "bytes": 11154,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_lgammaf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_lgammaf.c",
+          "sha256": "bcde83654c4ae2f8ebac243916bd9524f166c19c89ebc6f0fd2fc588acd86e5c",
+          "bytes": 948,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_lgammaf_r.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_lgammaf_r.c",
+          "sha256": "3b069c26aff3b4f8086c0ad34285829bba7047e88c5fe1e28648509692897472",
+          "bytes": 7410,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_log.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_log.c",
+          "sha256": "8996b789a4cbbcef7cf7d568c1be558ce9110900a40ca6c46fb4ed46c343cafd",
+          "bytes": 4589,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_log10.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_log10.c",
+          "sha256": "96346b524dda8bcecd4ee690577efee9b4a5e4fca83b00e7adf2eeb2430c0989",
+          "bytes": 2627,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_log10f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_log10f.c",
+          "sha256": "53d77e1cdf4b18b4b136b7ed2ff3d0321049126fd399e278d7e50050afcec9d7",
+          "bytes": 2062,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_log2.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_log2.c",
+          "sha256": "bda62faa51891879040614ea0762d335e9f2c96397cefcd5d8268b3bee5e3acb",
+          "bytes": 3785,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_log2f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_log2f.c",
+          "sha256": "e9f2b967fd97ddd3be89e542d292253a093facf11e37fe6ecd1d07be055f2222",
+          "bytes": 2508,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_logf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_logf.c",
+          "sha256": "03362a52e79f189b12cd09d691b89887969f2afd7007d93c1ebe944e8a3fc117",
+          "bytes": 2475,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_pow.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_pow.c",
+          "sha256": "13c580f60a6e2f48ef36ff1e9c46cdd394c9cd9c0fceb18f2526404fcb949ec7",
+          "bytes": 10330,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_powf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_powf.c",
+          "sha256": "cbd255ec20f69ad54a111690261a6c994fffa71c3bdd23c73dccdffcd2e9cf14",
+          "bytes": 7612,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_rem_pio2.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_rem_pio2.c",
+          "sha256": "70218a9f96dde3f3045521600330d9c46040212c617a1bfd539cc1e766e6660b",
+          "bytes": 5016,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_rem_pio2f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_rem_pio2f.c",
+          "sha256": "f9b7bfdf4ccd060abfaf1e49737824eb6c3d49fb50320872fb687bf40728f1e0",
+          "bytes": 2211,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_remainder.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_remainder.c",
+          "sha256": "1e92f4dee7eb7e963b71ab6c13941f6fd1c51d3d1707afc61e2996b8f1eeb424",
+          "bytes": 1914,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_remainderf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_remainderf.c",
+          "sha256": "d3522503255a0944ad9e3a92f715b457fae9becd8a04fe37c81a1d9a16d9dc8b",
+          "bytes": 1555,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_remainderl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_remainderl.c",
+          "sha256": "a7872185e5aaa413c684b731b2ac41fa2768da322df8a76ec5a96b24c85584cb",
+          "bytes": 1661,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_sinh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_sinh.c",
+          "sha256": "54200dd914722f8305c04142955d027bc83630321b31ca2fa26bce7f38163ec1",
+          "bytes": 2176,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_sinhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_sinhf.c",
+          "sha256": "2068ed4ec8f5ef9954b1129df7cd7486858696a53dae493fb73aba4ddb012126",
+          "bytes": 1559,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_sqrt.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_sqrt.c",
+          "sha256": "e23b83b4425e4aa7833a80c0e7c1ffe6b6aeb73cca380a979ed8fdf02237f8ed",
+          "bytes": 14554,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_sqrtf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_sqrtf.c",
+          "sha256": "fd214f58d47f48579538974779bda4293e75588dcf7b9d9b131f65d4c1d5e289",
+          "bytes": 1925,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/e_sqrtl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/e_sqrtl.c",
+          "sha256": "5c3ba6ffa0f1ccbb0f5715e16b5855f642baf35b646d7ab9a19fe378f4439d0a",
+          "bytes": 4480,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/fpmath.h",
+          "sha256": "49bce4b53605cf4886fa6d4abe7e5b18cb5d61a235d9a0f203d131cc770c731b",
+          "bytes": 3705,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/i386_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/i386_fpmath.h",
+          "sha256": "06add276f04f8b1fbc37ff0a6965d792a5f7c4457d68885da1852e0441390155",
+          "bytes": 2008,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_cos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_cos.c",
+          "sha256": "3d7fce5fa51a8469bf69ff3757109986872f889b73efecd2a9787f0584797cb3",
+          "bytes": 2902,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_cosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_cosf.c",
+          "sha256": "f4573d505ef62dc48c5c12de624f1b8afadc74019d5d907e56d7ad96a5653c3f",
+          "bytes": 1361,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_exp.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_exp.c",
+          "sha256": "dba02ac48adf69aef595a33e78c381fb3e5add695e6b9d11afb4231f73b0ec8b",
+          "bytes": 3682,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_expf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_expf.c",
+          "sha256": "45b162a4135c3f3ca603e31a0ed2ec1a6a5bc7bc7436e2fc17bdb5ca57c2e884",
+          "bytes": 2780,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_log.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_log.h",
+          "sha256": "739f9832a62c487c2b511ab6dca4a728ecc1cfec2bf896cc828fbd964f77ca13",
+          "bytes": 3482,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_logf.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_logf.h",
+          "sha256": "cb4c1e936074360dd45d13d9c424ec5736770df4aed10ecd0342686c4e8754f4",
+          "bytes": 1059,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_rem_pio2.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_rem_pio2.c",
+          "sha256": "ade789bf2edce95bcbe7582caf9978c4b0759891c1f5e4fca9278bd4715de2a8",
+          "bytes": 15979,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_sin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_sin.c",
+          "sha256": "1c9ab096c98e3f589aeb7a14619fb82e4b63e82f6ee9be8349af8c96de2a3e7a",
+          "bytes": 2412,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_sinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_sinf.c",
+          "sha256": "a72673e905154191eb5ffac22e7565b36c213f2f062bac3be35ef565db760299",
+          "bytes": 1345,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_tan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_tan.c",
+          "sha256": "064042ee5d51dd4aa7ecfb21ea20e941565a21475d156a80ecacb1db0aa3771a",
+          "bytes": 4104,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/k_tanf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/k_tanf.c",
+          "sha256": "a9c3887f7ecc96b069e564408e8eb482fe6b181641639175d7a3fb017bef4e8d",
+          "bytes": 2122,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/loongarch64_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/loongarch64_fpmath.h",
+          "sha256": "a44eef40878ae07028ffd9d9ce42517dbeb6e640e83042f3df78c9cc39479f21",
+          "bytes": 1974,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/math_private.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/math_private.h",
+          "sha256": "7be165cf6b3e18967db4fba46fff1f59e5164fb93947b08b4ebc6407d5125445",
+          "bytes": 9327,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/math_private_openbsd.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/math_private_openbsd.h",
+          "sha256": "c27fb884f372de93426727e6674f592bf29c21b2c72463a6ce4bc47f57c7ba2c",
+          "bytes": 4881,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/mips_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/mips_fpmath.h",
+          "sha256": "04719bf260823adf48dafeee2bb97bc4982b5cacc7da5b2352268064a2e633c0",
+          "bytes": 1947,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/polevll.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/polevll.c",
+          "sha256": "e02aaf265365dbdd9f89c39352232e3a992b79d432125a69b74f5cb4db5739db",
+          "bytes": 2395,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/powerpc_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/powerpc_fpmath.h",
+          "sha256": "07e6d13e54257f1e37a733e9978eaee65257fe056c51310a636c658fb8a32336",
+          "bytes": 1810,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/riscv_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/riscv_fpmath.h",
+          "sha256": "ee4a33017f7b60e41ae3e96cf2efb01e8443df39b58a076e353dbf14977123f7",
+          "bytes": 2117,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s390_fpmath.h",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s390_fpmath.h",
+          "sha256": "d5eed9f7ad4a09ea787ac1da27f082f9c283c735e423eb7237a7297a8b080d0b",
+          "bytes": 1842,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_asinh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_asinh.c",
+          "sha256": "9f05b813e32cfcff59fc312aaac010db4c56f4c9845a8571e034cb7f2379c662",
+          "bytes": 1781,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_asinhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_asinhf.c",
+          "sha256": "05228cfeb5417819102da139a52714170444cd54581b2eb89b39acd22244bf52",
+          "bytes": 1445,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_atan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_atan.c",
+          "sha256": "2e987a843fa83c0a3d96dbca9a041a917b4c50449bdb3605142bca1697ff9075",
+          "bytes": 4276,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_atanf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_atanf.c",
+          "sha256": "c9ad1f87c8829ebd2f6fac618ec8ce5c3732315e080d4bc107e19c7e8d10c946",
+          "bytes": 2573,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_atanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_atanl.c",
+          "sha256": "fb4a59d7e80b8753ec12bd154a6aecdd20cd469a91ff0b39024fba3f3e90f452",
+          "bytes": 2468,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cabs.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cabs.c",
+          "sha256": "81a99e0327f72e914ea3d243f47ea29eb2560e0b82d8bf8615fbcb81386ab464",
+          "bytes": 1157,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cabsf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cabsf.c",
+          "sha256": "cd10d6ff932397a7ac664775a6711a202b7526060550cb561933d18fd870e0de",
+          "bytes": 997,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cabsl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cabsl.c",
+          "sha256": "20e86c38fa5bfcfc47ee75759681442768c732f40a1db192117ce08443f78238",
+          "bytes": 1010,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacos.c",
+          "sha256": "d3b1c0a4cef146ce491a32a1a36cc4816407f5e61833e03f40eeb0f4975ab568",
+          "bytes": 1688,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacosf.c",
+          "sha256": "61662f41b031527a13af30e812c30c6b35d91a13010382ed80bae137558f1150",
+          "bytes": 1465,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacosh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacosh.c",
+          "sha256": "997531150d751427c2244a6e95c784833e384f2edc12f0a7c356aca11c5beb6a",
+          "bytes": 1578,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacoshf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacoshf.c",
+          "sha256": "54f2faae2d5d34fd9a9d5ba441227945f8e142c6415ecf05881549eb50886cc9",
+          "bytes": 1414,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacoshl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacoshl.c",
+          "sha256": "831d0098c56f5212cf6a067a9ea78d101104dd155d1cda9d97f57f00f1256629",
+          "bytes": 1444,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cacosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cacosl.c",
+          "sha256": "6798d864bec72e602ccee341f132e8dc4bd4558247005d210ae424c3033be76e",
+          "bytes": 1637,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_carg.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_carg.c",
+          "sha256": "3464a1da6b1f49039a55f641ef10c55665d68b4b8f9eb46ae32bc829b17742da",
+          "bytes": 1659,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cargf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cargf.c",
+          "sha256": "a8941734bd0ea1de9e626167f750360e68a6a30c0ef2e1b1be7609fa7d2e5f59",
+          "bytes": 1662,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cargl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cargl.c",
+          "sha256": "5c44d5cc2ad58cdeb0d7c842094bd400b757594ebb18edd4591e5bc5a5e67b4b",
+          "bytes": 1679,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casin.c",
+          "sha256": "877f90e41f9765151c2b2b300fb321856bd0ce5758ca6e563e334c0c13c4c5d8",
+          "bytes": 2889,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casinf.c",
+          "sha256": "a2a7cc744c96c7c549923b9eb71696f69f527c767920fbf0a3e4d3622b4d2f27",
+          "bytes": 2693,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casinh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casinh.c",
+          "sha256": "a862f9aed2fea0784053a755aa8c37623e6022fdcd96520d6e9e77fc913c2306",
+          "bytes": 1591,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casinhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casinhf.c",
+          "sha256": "872b8babe190bfa677070c7ac5974b761c3f571c4342aa08f1535bf47e71ba4d",
+          "bytes": 1428,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casinhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casinhl.c",
+          "sha256": "fbe7b080e4c3018ce554e1fbae704ec6489c90b5c87289097f6a06a5b789b940",
+          "bytes": 1458,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_casinl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_casinl.c",
+          "sha256": "44cc490656abdcd807b0311bc3af003bb333ea038b1032a00aeee7c61f3896a9",
+          "bytes": 2970,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catan.c",
+          "sha256": "393d02ba4e6ec523627560e0c0226759536b12120c1af5e35a2c828492351c65",
+          "bytes": 2959,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catanf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catanf.c",
+          "sha256": "759bd03d22e8a0e7def3e63e38c48aa8242b399333e609c7f87de047a9eb7219",
+          "bytes": 2576,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catanh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catanh.c",
+          "sha256": "f8dda462be9deae457b2238af4432ef2e54465d6fc88bfb2b9205b3ea6ca42f8",
+          "bytes": 1608,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catanhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catanhf.c",
+          "sha256": "6867cadd29d064adeb377eb2bd552e1a5f2e93749546bc3b1ba64a87ecb3c0ec",
+          "bytes": 1445,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catanhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catanhl.c",
+          "sha256": "1d5d4d5c0f97cd978498f2867d808b28b39d1e8c7619256dfc5d778a7a2f81b0",
+          "bytes": 1475,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_catanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_catanl.c",
+          "sha256": "8057e236e6474909f38e1c3f006449bba8537e3017a91b1b9628d88f0b8feff2",
+          "bytes": 2996,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cbrt.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cbrt.c",
+          "sha256": "1d5d0f3219c5ffaf844c673ebd17c6bca77a3e4f027fd142c510989fd3a6e95b",
+          "bytes": 4207,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cbrtf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cbrtf.c",
+          "sha256": "8653b50c7ddd4eb3c7e2f86bc17fc70d5cec60f340cd193a2da8567d11b35e63",
+          "bytes": 1991,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cbrtl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cbrtl.c",
+          "sha256": "3846994c6a22fc67b5cf8218197e9c34964bbe3d1e819407bed916bcd6fd7a4c",
+          "bytes": 3791,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccos.c",
+          "sha256": "d44a7141082575adf8127d27942e46affaf84a8762403809691f14b9f155280d",
+          "bytes": 2006,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccosf.c",
+          "sha256": "c99ccb40000c0003666143d8671ffaa9f6549383eb6a99408929f995dbf919f6",
+          "bytes": 1795,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccosh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccosh.c",
+          "sha256": "ecf5276a9296bfdca3a85c361f9a1d707682864e94ebca6b1cd370db8beb8265",
+          "bytes": 5050,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccoshf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccoshf.c",
+          "sha256": "b56a3f69c7d414c0908dd9d8e458a2a94fef0d33c3a8f92847bb0dc64c785e32",
+          "bytes": 3295,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccoshl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccoshl.c",
+          "sha256": "ae88b90f9a367974e00dd75ea0f9016f4d21d367abeddb37583e456a15958929",
+          "bytes": 1537,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ccosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ccosl.c",
+          "sha256": "87310946afdf668c56b449bf4afdc6687083fc6f4a80d03e09954bfaad03a881",
+          "bytes": 1877,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ceil.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ceil.c",
+          "sha256": "7cf460d28b750b22e36fcf493a6ab0b7ea227ddc835d07308c3e8535592eb889",
+          "bytes": 1866,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ceilf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ceilf.c",
+          "sha256": "04926346243addb18a5d185c8765f671a9f8af4b964cc48d866a49db74e5c31e",
+          "bytes": 1361,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ceill.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ceill.c",
+          "sha256": "a1687aedf6efb3877c786ffdcf759141317ac2468d0cea45254275a4985bf306",
+          "bytes": 2558,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cexp.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cexp.c",
+          "sha256": "3dbc390ce6faafac7d9fd19cf956049f92c14a5c6a2aab08ed200622fd233f2a",
+          "bytes": 3003,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cexpf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cexpf.c",
+          "sha256": "62909e2fa6aade18cabf59fa8f6e116d9854ab0744c37df7c0315771c3025a29",
+          "bytes": 2969,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cexpl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cexpl.c",
+          "sha256": "fdd36d65be0c4f7f859e4de8370dd25d4a2b6d8746995ce0a3ec4c9cf4cf43fa",
+          "bytes": 1719,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cimag.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cimag.c",
+          "sha256": "9f2562eb77defef27cf3ad99c91de8a931b234d8b3cdfcf588a5c8b0cd4c0d82",
+          "bytes": 1560,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cimagf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cimagf.c",
+          "sha256": "fc2f575317d5bc411b7b164b2d94cef24cdb1c1e016e7d37a299cf2b8992a9f2",
+          "bytes": 1560,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cimagl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cimagl.c",
+          "sha256": "dc0aabe986f93e4191b8e72fe3b4386661fc513ef57c59961190ae36e4422162",
+          "bytes": 1572,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_clog.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_clog.c",
+          "sha256": "e75d99793ba5bea953cbd25ed0bce64a754cc78423bf4573b8809eef859dda47",
+          "bytes": 2089,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_clogf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_clogf.c",
+          "sha256": "95ba8515dbe664652352175e4a06db7e83c1e3d144244b8c92854582735284c0",
+          "bytes": 1799,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_clogl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_clogl.c",
+          "sha256": "0c762c0108a1a400dea1b7649d3a561ec9bfc3d6493e2e8b72ff00e02d95b586",
+          "bytes": 1963,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_conj.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_conj.c",
+          "sha256": "647cc1630cb1b655c0aabdebe3ddf5ecf5acc9fc05a602492b28699c6ca35825",
+          "bytes": 1583,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_conjf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_conjf.c",
+          "sha256": "32855fabb51e9604b1e4f01f1ae66fee58d304ccde16650001b030242ac38211",
+          "bytes": 1586,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_conjl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_conjl.c",
+          "sha256": "6907451bce81bcdb79d2f110d327da5f26caa5ceb8b1925c13e54a6a13de498a",
+          "bytes": 1598,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_copysign.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_copysign.c",
+          "sha256": "63c7a66c6b27b9a3eb790eab9701bfa08c24630c0c6cd425f59d3537df2baa25",
+          "bytes": 904,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_copysignf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_copysignf.c",
+          "sha256": "4ba4b20f5ef8a72849d2d23ca66a2b8bcabc4188228e8a221244f9c9b36d4093",
+          "bytes": 1002,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_copysignl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_copysignl.c",
+          "sha256": "9578cde6ca70c857e85da174faed63603c64e1847ffa7a9dfaffd7c1e3b23b67",
+          "bytes": 1675,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cos.c",
+          "sha256": "e3e86b502f3629cd6cb14f83585266b43e2595646ad62fbbbebd0a349c34458c",
+          "bytes": 2346,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cosf.c",
+          "sha256": "15c25d9d9b2ddb1d5363336d106c42461d191ebecc92ae8ddb99d7af412a93b9",
+          "bytes": 2349,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cosl.c",
+          "sha256": "be7d24eaed387cbf1b7b973d84df224a97fdc74fba14b64413f363d56ba3d2ed",
+          "bytes": 2601,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cpow.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cpow.c",
+          "sha256": "4f91b0f206d2947acdc12609dd54b4a642d29c9b431705f6e0a8ef1d6f616ad6",
+          "bytes": 2007,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cpowf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cpowf.c",
+          "sha256": "bf8f84c90991d5999a869e9f597b1779f60ac5b87b1d1ce09aab306b70faadd0",
+          "bytes": 1882,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cpowl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cpowl.c",
+          "sha256": "ced67fa32286c900d90f4a84727ee61cc4b8f4e7548bf7534e4bd5654c4e0096",
+          "bytes": 1918,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cproj.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cproj.c",
+          "sha256": "ab053f9fb9545cb4b8131e110b8766303b580dfe0760fcb888e232fcb0b62a11",
+          "bytes": 1820,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cprojf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cprojf.c",
+          "sha256": "0fcf16620322437f34390a46d4772630b9c18ab6dfd1441ce1a907d556e69ec9",
+          "bytes": 1753,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_cprojl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_cprojl.c",
+          "sha256": "90816bb521e1e92ca6f7cac250d4f2358ed4c3b66fd4a88bc77cd1ddf062583c",
+          "bytes": 1765,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_creal.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_creal.c",
+          "sha256": "872b29d9b1fc5da0e9f35c9833700fc5a7daaa6c8abd61352f2bf3801488fa78",
+          "bytes": 1553,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_crealf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_crealf.c",
+          "sha256": "b6facf591f7d1dace521f3180b421015d44cf1bc1c0ba174ec7ade45b5b2d9c9",
+          "bytes": 1553,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_creall.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_creall.c",
+          "sha256": "2ab8c09dc8d2a077ccbc8416bb31a6245a42fc5d9b0bbccfba65f2b54e31d3e1",
+          "bytes": 1565,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csin.c",
+          "sha256": "e971c8719342d5e33cccfca046b870c38ec6858727e707e884dde91323e1bf92",
+          "bytes": 2067,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csinf.c",
+          "sha256": "57602f9f2cfd3913d0fd18cb2ae7c130afc51f0a9b4eb0bb250d78533f03bccb",
+          "bytes": 1786,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csinh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csinh.c",
+          "sha256": "9c40cdd1d832f4ed579a01d00eca228450cc8d71822f656ae619ff331f833bd3",
+          "bytes": 5074,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csinhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csinhf.c",
+          "sha256": "2c6d17ba531d3bee3ef3d3a91b4e67bccab2330ca4b2aba8bae70212ef23f54d",
+          "bytes": 3292,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csinhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csinhl.c",
+          "sha256": "f64f91dd9b1dcbd78f90ab18c2b46e48dbc2813f136eaf662ee052025576b22e",
+          "bytes": 1569,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csinl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csinl.c",
+          "sha256": "3447a0e06bfbed08606826792f1c1273eaf12c9598e28e860010dd5b82b8ddce",
+          "bytes": 1915,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csqrt.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csqrt.c",
+          "sha256": "03435bff0ebf21f2d1c9e6116e20819c4732a4d203d508f386fd9fc586dfd6c2",
+          "bytes": 3410,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csqrtf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csqrtf.c",
+          "sha256": "b0988984c8518395ba70c789ee2766900e35ca0b9a8451706a1c8d3b6853b305",
+          "bytes": 3084,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_csqrtl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_csqrtl.c",
+          "sha256": "4230df501bab0a76d59a39fb48c018239238265a872c397f691b72d59237a690",
+          "bytes": 3328,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctan.c",
+          "sha256": "06837018a42eccef362c6cc8331227098bdcca96c04f1f3c7c18cc8c4fa7866c",
+          "bytes": 3190,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctanf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctanf.c",
+          "sha256": "6a226bfe8b1a7f8d6d48df5263f1112d13332d17a131a2471190bf1c5e911b9b",
+          "bytes": 2883,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctanh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctanh.c",
+          "sha256": "1ff8066790202fc75e9036ccf4c85500699b8895607164aa91c3176a0dc94549",
+          "bytes": 4402,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctanhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctanhf.c",
+          "sha256": "9ed1aebfe61b52e12b6ed01570303f7b5501b1b84d49a864f98d45c3011584d0",
+          "bytes": 2544,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctanhl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctanhl.c",
+          "sha256": "354e3d903b676aa4c2eae7ea0057dd6911275b7d97b20412c8a68b420ed4cfe3",
+          "bytes": 1592,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ctanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ctanl.c",
+          "sha256": "974c30b32737d51d0553cb91a1bad7623bbb0190eece54dfd5b1b771d04854fc",
+          "bytes": 3432,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_erf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_erf.c",
+          "sha256": "cb18b704055a0081e61bd6ae2e3c4aadf0078d9af5ab621170dc2d0e1207fb1c",
+          "bytes": 11311,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_erff.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_erff.c",
+          "sha256": "2d2d81f155a191b7331f33c3fb0e3f3790f1c4576c18aaf94594c23fcf544e6b",
+          "bytes": 5922,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_exp2.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_exp2.c",
+          "sha256": "c517560ccaed663f9630598aa3a574cc4bea99e45b701691c014ef60424d2b7a",
+          "bytes": 14409,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_exp2f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_exp2f.c",
+          "sha256": "918d3da38eef5a0fec0fb124b0761357d83c59bcdfab3e5a4954d68edc5c9f2b",
+          "bytes": 4278,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_expm1.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_expm1.c",
+          "sha256": "da4d89a2060253bd4b6a63b3c0357ce16f569f68512cc54c6563ea639c21ec8d",
+          "bytes": 7420,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_expm1f.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_expm1f.c",
+          "sha256": "466bc1b385a45efb65610535aaa015290baa5ffc7fe96f20c8969502544789e5",
+          "bytes": 3556,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fabs.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fabs.c",
+          "sha256": "415e917c6f14d72a76706714cbd37a1e0e4cd5baf3a79978c3d9c820351227af",
+          "bytes": 654,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fabsf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fabsf.c",
+          "sha256": "88ea140b7b74451632640592a50d0858f8099c83c0737b8d4d4e2e9c350090e2",
+          "bytes": 857,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fabsl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fabsl.c",
+          "sha256": "a5bc597cf41292e5395b2e810ec66a256a6520153c723c9bb457da91e6ebcd88",
+          "bytes": 1790,
+          "source_encoding": "ISO-8859-1, losslessly transcoded to UTF-8"
+        },
+        {
+          "path": "src/s_fdim.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fdim.c",
+          "sha256": "9ea59dd80ffc29f8e3801e9caa0046692efdbd39a3cd3c7bbebc4555bac4971a",
+          "bytes": 1832,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_floor.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_floor.c",
+          "sha256": "27e086e84c6f5264530025d72dca9fdbee455a0696c234f6fceedb97f021b9d1",
+          "bytes": 1878,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_floorf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_floorf.c",
+          "sha256": "4ef9dafbf14cb7ff23913c2f09b2f3060b0d79f684d25466e359f1b06829a518",
+          "bytes": 1538,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_floorl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_floorl.c",
+          "sha256": "e10fa3eed6a7d2d32e1870b8f9ecf92ca0b8f2d24de689135fdf73aa39b36beb",
+          "bytes": 2555,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fma.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fma.c",
+          "sha256": "119d8652ad3bfc338f4e6e059a4fb31acc889d0396b175be2d26d532f460636b",
+          "bytes": 8051,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmaf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmaf.c",
+          "sha256": "ea67773ba9799ea897a14afb3321551a1e48f6114f7a649d84e3f3449915d996",
+          "bytes": 2675,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmal.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmal.c",
+          "sha256": "48ee4a395d64b5449b1fddf49a3781fbedd5adbd26cc6589ad22e1801bf7754f",
+          "bytes": 7506,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmax.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmax.c",
+          "sha256": "f2124f24b046080a0fb087744b34461c448143b8e3d17525c606e10c7b56fe84",
+          "bytes": 2035,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmaxf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmaxf.c",
+          "sha256": "fe0ce2307540efe36ae1caec2312d6a88fcb4afde3f19384c5c44f2a5dcd0d8c",
+          "bytes": 1992,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmaxl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmaxl.c",
+          "sha256": "7341354b44335b0a413da1f5dc53a73d980f19fc86b86b796822afa2d464299f",
+          "bytes": 2097,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fmin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fmin.c",
+          "sha256": "602666ffdb66340f2b1c8abcf6a1984e1f879f81fe103fbd4ec93d2aa5e4f989",
+          "bytes": 2035,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fminf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fminf.c",
+          "sha256": "86cfc1cd2247d1f29e6d0223c5ed21581cc1364fd02c32158c00c3b500be0e2b",
+          "bytes": 1992,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fminl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fminl.c",
+          "sha256": "8a5066224df1ee2b96efe4e1943cfda85fb1710e360c079aa3bc7a91d2ccf50a",
+          "bytes": 2097,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_fpclassify.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_fpclassify.c",
+          "sha256": "d1de608b1030939f985bcad3a5499737e100375b4fb2dc4cff17ae1ac5c2ec54",
+          "bytes": 2568,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_frexp.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_frexp.c",
+          "sha256": "87512b7faf236e28b8593e4c5fc35cc0af680ac0a10cbed363b2ff8f37e956fe",
+          "bytes": 1439,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_frexpf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_frexpf.c",
+          "sha256": "8496ab54966e17ddd3507be6cc6849d9cc966b8885a26c4c57929c5fb01db6e1",
+          "bytes": 1142,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_frexpl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_frexpl.c",
+          "sha256": "832af7e6704b35244afa635a691ecadd1e4c455f54caa0ecf547953d345ad4ad",
+          "bytes": 2104,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ilogb.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ilogb.c",
+          "sha256": "f89546a1c7c1ad2a88a1e10ce796481de680c6e2c6a82335bfb216ed6f89b3ca",
+          "bytes": 1255,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ilogbf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ilogbf.c",
+          "sha256": "4e2cf2e9fe7e32ef14f3bf61fb3828d9555da579b7e230f1b5b12f4b675d2353",
+          "bytes": 1067,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_ilogbl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_ilogbl.c",
+          "sha256": "4f37a186aae787a77c2b446c4c937de0045d978cb6380ae3ddaf9671aa045c71",
+          "bytes": 1352,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_isfinite.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_isfinite.c",
+          "sha256": "991804f22e61e649848ff88cef700e4c1cddf0237f2724a9c2c87bebe4bc0662",
+          "bytes": 1884,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_isinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_isinf.c",
+          "sha256": "0d02aa42cfc390d55f2d7bc8c1b676fa6dbcb6c5ecb9d573085885293a2f0bf1",
+          "bytes": 1993,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_isnan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_isnan.c",
+          "sha256": "7c16e37d593df8ef1ef14fbbf5136b34cd73b0c79e9888c84002048675b6ff30",
+          "bytes": 2073,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_isnormal.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_isnormal.c",
+          "sha256": "1710e4e46f87f62d15f813f9aa3b18ccd1fa8e8372c492c3d9c6bb3be391e35e",
+          "bytes": 1941,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_log1p.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_log1p.c",
+          "sha256": "ecfe40ddb4e7063ca176992a333411a6d1e778fa418891ab396f57ea320db04e",
+          "bytes": 5798,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_log1pf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_log1pf.c",
+          "sha256": "c6831667e030d361b0d9e406497bf119d63b8905b2085b43a8c76bceafa4eae7",
+          "bytes": 3272,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_logb.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_logb.c",
+          "sha256": "3359764f0f3921f1cd2783db7f304f7818c9f12ff2bce2382b838d4b43809a41",
+          "bytes": 1253,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_logbf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_logbf.c",
+          "sha256": "03ec63722254f27b4862b9aad50da9d2772290ba17fd7387a8a0cafba874e6d4",
+          "bytes": 1115,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_logbl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_logbl.c",
+          "sha256": "1e88b6574b5a3a9596074195882fc42f45aa47742d5cdeabde044f941b788e02",
+          "bytes": 1274,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_lrint.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_lrint.c",
+          "sha256": "c7594083f2782a86a4c483851f427dec440d6492217da0a7952e9589b5fcbcdf",
+          "bytes": 2223,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_lround.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_lround.c",
+          "sha256": "b17d45701b3fff59ff95aabb8ea0d3e9d56374031705563e2169eb9ea63eed6b",
+          "bytes": 2560,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_modf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_modf.c",
+          "sha256": "d948ae9a289ba3e2ac38da302aac2794fe1464c42d986be58b5095a0ed49a4db",
+          "bytes": 1897,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_modff.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_modff.c",
+          "sha256": "09b2f633d6b5f0147a6abcbf33e42dba194f0a5d15d4216ed250f72276512930",
+          "bytes": 1517,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_modfl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_modfl.c",
+          "sha256": "4c7ace57077b06521939a7e222a9949906c451fb6f0a1fa816a90241902e9a9c",
+          "bytes": 3533,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nan.c",
+          "sha256": "27be217727a8eb34600031fada1200bb7e967606d332e5466e6a660ed24631f5",
+          "bytes": 3805,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nearbyint.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nearbyint.c",
+          "sha256": "8a67121ebb776b136c61a6fc5dac8e9ddc9496f351cff9ae91fe85979011e44f",
+          "bytes": 2157,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nextafter.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nextafter.c",
+          "sha256": "8d1676cd4260408218e43de088c923a7616e68dc8da88c5a566334fef1c1ad9f",
+          "bytes": 2197,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nextafterf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nextafterf.c",
+          "sha256": "e2432afb2fad51318fe2edf25b45c1558d13c8004985a629f134354a7c88676f",
+          "bytes": 1748,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nextafterl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nextafterl.c",
+          "sha256": "b827b06310669da618a544030926dcdddd854d2369b4f7693c44007a6838f6f5",
+          "bytes": 2173,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nexttoward.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nexttoward.c",
+          "sha256": "b25261220e7bb6d298e722b7bc577723cd7cd5ea65dd7050b04858add0be3bad",
+          "bytes": 1896,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_nexttowardf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_nexttowardf.c",
+          "sha256": "ca563555f89b705c2ed872d4ac486bddbdef5bd24776a8f2165ab46fe1169355",
+          "bytes": 1587,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_remquo.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_remquo.c",
+          "sha256": "af47454e098b469c4dd336afa503b0597eca02fbc30a09b7e87d82cc123e7134",
+          "bytes": 4019,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_remquof.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_remquof.c",
+          "sha256": "061d7a7d6e5e1f5104ac0380dbc01efd8db2bd159599d70eb017420bf2124db3",
+          "bytes": 3163,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_remquol.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_remquol.c",
+          "sha256": "cf4c44ce53004936ef13838135bbdf317dea41e236a02b6f75e780f2a18c4780",
+          "bytes": 4617,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_rint.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_rint.c",
+          "sha256": "ddb61aed92c6cde610d32aa1be480bd506643879d7d63c3cabb56aeca7568aa6",
+          "bytes": 2486,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_rintf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_rintf.c",
+          "sha256": "d28a24cc834fa4bac8a5cefdf27be52da4c5c92d9e3e0efd05de2d5b9556ea65",
+          "bytes": 1337,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_rintl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_rintl.c",
+          "sha256": "2cc0d2b21952a52280ee46055c5f2f281898287f5160c462b09646bced18e0f8",
+          "bytes": 3494,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_round.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_round.c",
+          "sha256": "fe07e78825657cf873881bec20af8897939829482e0919a4c5701b28450d1d92",
+          "bytes": 1823,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_roundf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_roundf.c",
+          "sha256": "db4bb98870e07298e45575d839a1f8069d424a34cb7b47e11b5092e8631005bf",
+          "bytes": 1758,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_roundl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_roundl.c",
+          "sha256": "25ebdde7137516e53ea235a55b9d77a8a38512274be344f8a77e037f464ebc91",
+          "bytes": 1776,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_scalbln.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_scalbln.c",
+          "sha256": "b7d9e5ae3d28128df916580e787b4d9ecd4995de717a95c4be290f42ff74b83b",
+          "bytes": 2136,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_scalbn.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_scalbn.c",
+          "sha256": "f528db57150cb0457e3ab9ddb24c6b38e33fa06814cf2f9005653f354eb216d1",
+          "bytes": 2001,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_scalbnf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_scalbnf.c",
+          "sha256": "5dfc1e4a24ad34ec4e6a5dccc436c95ec86b594c77cafafc2054c301796df8d5",
+          "bytes": 1722,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_scalbnl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_scalbnl.c",
+          "sha256": "a34354b08ff5e784e7db4a5745edde9b6114f2d65559305eb0a0e208d78828d8",
+          "bytes": 1978,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_signbit.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_signbit.c",
+          "sha256": "a733c723e23f81093bf49457adddd5509f78dd653dd69a062fb9694e4299148e",
+          "bytes": 1860,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sin.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sin.c",
+          "sha256": "c6a867fea444a062615ea521c6f307531baf35d03b039615cb7fcdaf3775e6ee",
+          "bytes": 2330,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sincos.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sincos.c",
+          "sha256": "3a872d76c10007b8b2646a18a282fc7c9af3e634a1bb23866c7152827d44de7d",
+          "bytes": 4980,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sincosf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sincosf.c",
+          "sha256": "fb7f22dd91c4c3d02d3822b9f9232fe79b61abe65a7264bc1c7d29198f516325",
+          "bytes": 4066,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sincosl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sincosl.c",
+          "sha256": "8b889da5a050f777e1224ab9712b4ca36070ae4024a1c6f694d15e8011bf29a5",
+          "bytes": 721,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sinf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sinf.c",
+          "sha256": "cf258aa031a12689f5508a2d67f200e58ed2cfd4c387c8603f008b2ec59a1016",
+          "bytes": 2334,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_sinl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_sinl.c",
+          "sha256": "21c8d9250401fb846badbddf8e9e9e40b734d451a5e607c12bcd6050059951e8",
+          "bytes": 2536,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tan.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tan.c",
+          "sha256": "e2f7ff6a0ae13c287d53b401d1c395936701f28ea8a368cd1e8ab65103414ee7",
+          "bytes": 2170,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tanf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tanf.c",
+          "sha256": "a7506a558bae10eaca5e8c2e17de1349f5399b74a07075a93e4a1e4f5858d18d",
+          "bytes": 2115,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tanh.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tanh.c",
+          "sha256": "4a1d91c374982102e1ddddf6e9867003a69fcccb310ea0dd11decb1e5c1b53fc",
+          "bytes": 2141,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tanhf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tanhf.c",
+          "sha256": "b8a98051783c0abbf544b7644b6d8351593f76d5ea0a45fb52a2ba97ce588d84",
+          "bytes": 1485,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tanl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tanl.c",
+          "sha256": "7e57baf7a32a7ff6e918895991503fd2b4b8a16cddc78a839fbf4e8e237eb277",
+          "bytes": 2649,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_tgammaf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_tgammaf.c",
+          "sha256": "3f7ba797ca5bda5e27477c5bc5f5504387c34bd57d6b3d69c9068f376de27d09",
+          "bytes": 1856,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_trunc.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_trunc.c",
+          "sha256": "26a7f3f531b95c79aee1c94cd47acb93aa0963332cf20402d99f6df23438693e",
+          "bytes": 1636,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_truncf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_truncf.c",
+          "sha256": "6d3b812ee6b32fdda944f01ca088e754e649bc89b14bc1dc737e1147e1141d36",
+          "bytes": 1329,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/s_truncl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/s_truncl.c",
+          "sha256": "5ffabb399267ecd8f83ae5012eeca9270abc174511d1e6f32287f3f7fe743395",
+          "bytes": 1764,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/w_cabs.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/w_cabs.c",
+          "sha256": "707c6f7cee1de984123caeead1ac914dd59df93afcf62be762ab2713c3a0cf35",
+          "bytes": 498,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/w_cabsf.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/w_cabsf.c",
+          "sha256": "68678dcd5d4a2c422e8aeb6072d28d2c70bc7de2c152cb5f51de567804c03449",
+          "bytes": 304,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/w_cabsl.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/src/w_cabsl.c",
+          "sha256": "c873709ac1d1a2be5ad23afb1bd4902575a5f40893efb8fbbbd934f070184e33",
+          "bytes": 484,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": [
+        "amd64/s_llrint.S",
+        "amd64/s_llrintf.S",
+        "include/openlibm.h",
+        "include/openlibm_defs.h",
+        "src/cdefs-compat.h",
+        "src/common.c",
+        "src/e_lgammal.c",
+        "src/s_llrint.c",
+        "src/s_llrintf.c",
+        "src/s_llrintl.c",
+        "src/s_llround.c",
+        "src/s_llroundf.c",
+        "src/s_llroundl.c",
+        "src/s_lrintf.c",
+        "src/s_lrintl.c",
+        "src/s_lroundf.c",
+        "src/s_lroundl.c",
+        "src/s_signgam.c",
+        "src/types-compat.h"
+      ]
+    },
+    {
+      "file": "third_party/licenses/openlibm/TEST-SOURCE-NOTICES.txt",
+      "sha256": "209cac5f207cef84a1802d0f14f71c7807f24539ab83620c582c92d94016e554",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "test/libm-test.c",
+          "url": "https://raw.githubusercontent.com/JuliaMath/openlibm/5fe399749f9276eaa0b8403e507470da05cbbb3f/test/libm-test.c",
+          "sha256": "c39624a8fe90eaa54d2dc107a669f835ac618bf481fdc4479f43ecb7510a2ece",
+          "bytes": 256625,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/vectorclass/SOURCE-NOTICES.txt",
+      "sha256": "b15fd9e325427bcfa5d8e4ca9c4f997578319e02111ea72e412bc350a55ae322",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "src/common/vectorclass.h",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/common/vectorclass.h",
+          "sha256": "32c6af770855af3f6225ef45abfff23bd5d8b5120540aac19df730579a5e4caf",
+          "bytes": 1943,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/common/vectorf256.h",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/common/vectorf256.h",
+          "sha256": "068fbf4083ed5e46641d6fc3fb737a61732a2fa93acbb7541a43ea001eccee1c",
+          "bytes": 104524,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/common/vectori256.h",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/common/vectori256.h",
+          "sha256": "2dde9d6e5755e81334d5b66da3201be7b22a54c3143374f45d2d1eccb0b4a356",
+          "bytes": 210981,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/exblas/SOURCE-NOTICES.txt",
+      "sha256": "a4ddd12c3f9a2763365cfd8a4b9983cfc2088368f3ef8995fa3927cd83b6db23",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "src/cpu/blas1/ExSUM.FPE.hpp",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/cpu/blas1/ExSUM.FPE.hpp",
+          "sha256": "d921188744cb891fa316b1b5d2317c144e731a8bf1b77f301a28439f4941d03a",
+          "bytes": 10851,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/cpu/blas1/ExSUM.cpp",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/cpu/blas1/ExSUM.cpp",
+          "sha256": "ee4378957cf06f6e061c579b56a671f43f3601a775a3586e14674bd2bbde2538",
+          "bytes": 7670,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/cpu/blas1/superaccumulator.cpp",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/cpu/blas1/superaccumulator.cpp",
+          "sha256": "6d92e3a7da7c3e32b481fd4fc58c22f706f8660ac3d05c398bb2f306fc61e542",
+          "bytes": 4707,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/cpu/blas1/superaccumulator.hpp",
+          "url": "https://raw.githubusercontent.com/riakymch/exblas/856130ebcfe906f519a623d57d1359e744e29042/src/cpu/blas1/superaccumulator.hpp",
+          "sha256": "603f8f2f66cd774b5c3cc06bfb01a8e50509f64d95752c47207b3da99c1182bf",
+          "bytes": 5334,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/daisy/SOURCE-NOTICES.txt",
+      "sha256": "f58d7cfd287036763ff1bbc5c060807c8c8d3d12610455bfa0b018326e8dd4a4",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "src/main/scala/daisy/analysis/AbsErrorPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/AbsErrorPhase.scala",
+          "sha256": "5429fcb565eca0a39c39e3109539b7fd3424b4df3e36921ec4c5f60312e54f7e",
+          "bytes": 3959,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/DataflowPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/DataflowPhase.scala",
+          "sha256": "443d8dd2e25bde416d9a44dc573433e8fa234a32b39e80713e16d62252140fe8",
+          "bytes": 10983,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/DataflowSubdivisionPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/DataflowSubdivisionPhase.scala",
+          "sha256": "b6e147bcbc3dc128478ac0d1c3460343a5b34c9e9c852af8b887fb8abdd66d28",
+          "bytes": 7542,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/DynamicPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/DynamicPhase.scala",
+          "sha256": "e1a9099d1cb17a28f78c70b2b674eff11f507d7a988fcb21c1506fc09bb9a793",
+          "bytes": 10668,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/FunctionCallPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/FunctionCallPhase.scala",
+          "sha256": "bd2d4cb133ff15ae8ed045851d4a95dd11a77cbccc868818c2a80a443fe7eb52",
+          "bytes": 3991,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/ModularRoundOffErrorEvalPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/ModularRoundOffErrorEvalPhase.scala",
+          "sha256": "02dabf148e84f31b217d8d9e04832861e786cc2cc26bd064fc08b1487fd5dd71",
+          "bytes": 30280,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/RangePhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/RangePhase.scala",
+          "sha256": "d7ac43eb377fad78353429ea0ce65d1fdb07468af36104007e8e495484070976",
+          "bytes": 2805,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/RelativeErrorPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/RelativeErrorPhase.scala",
+          "sha256": "638824bf6dfaaaecca39dff9757747209f2f919b993c5e8ff725e7db596dc344",
+          "bytes": 17487,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/SpecsProcessingPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/SpecsProcessingPhase.scala",
+          "sha256": "569bc61dcc6f8887c5b29a655fc61f48bd6eb19d8afca520222f26d3272f9b09",
+          "bytes": 21174,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/analysis/TaylorErrorPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/analysis/TaylorErrorPhase.scala",
+          "sha256": "3c110e627a2b96c36d01a2077db5a13a17291dcc0c5621f8d556991002c4dfd8",
+          "bytes": 6560,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/backend/CodeGenerationPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/backend/CodeGenerationPhase.scala",
+          "sha256": "c4d1638a1ba5fd9464c263ae02ae605af640c4ff73f31844727df74891896a66",
+          "bytes": 43307,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/backend/InfoPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/backend/InfoPhase.scala",
+          "sha256": "d5f81a112677a0547e429fb6b53b1907385e2dc8864232cba3455e30abf8afa3",
+          "bytes": 16031,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/frontend/CExtractionPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/frontend/CExtractionPhase.scala",
+          "sha256": "8fd7c469d76645b84297f64d8d5859cebcd8677025c5b5eccb6c2548c0faaa14",
+          "bytes": 1051,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/frontend/CodeExtraction.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/frontend/CodeExtraction.scala",
+          "sha256": "50cfdcb69f37feccf2173dec1ecf1185e8641495c348b90d8d9d61cdc372fd62",
+          "bytes": 40146,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/frontend/ExtractionPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/frontend/ExtractionPhase.scala",
+          "sha256": "71cc017b6622dca4aa9dbebc51549d71f06386770bc3f9315706423f4cff426e",
+          "bytes": 2500,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/frontend/SpecGenerationPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/frontend/SpecGenerationPhase.scala",
+          "sha256": "46e587e081757a065c2b3a754518a33c25696dedbfb88906412c4fdfc06373de",
+          "bytes": 3048,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/opt/ApproxPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/opt/ApproxPhase.scala",
+          "sha256": "107854d1c9cf67b1d1cc3a098ade9d91c8a7392b245ab950feb01d5dd5ae9f5a",
+          "bytes": 30281,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/opt/RewritingOptimizationPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/opt/RewritingOptimizationPhase.scala",
+          "sha256": "75377ed8f7ec3f85cabff8196f552e385ff47c694203eb81aabf5ba61a16da38",
+          "bytes": 5025,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/solvers/DRealSolver.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/solvers/DRealSolver.scala",
+          "sha256": "7512a3107510026bc8ca6a512dcb3720aecec475ab460fa0f9b03a563a58db31",
+          "bytes": 2179,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/solvers/Solver.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/solvers/Solver.scala",
+          "sha256": "a583dda8c9555d0d5e44886dd73722c8c62c582df6dd5dd57b2c9436654b9549",
+          "bytes": 20946,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/tools/MPFRFloat.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/tools/MPFRFloat.scala",
+          "sha256": "96a533bc97182ec15199a9df812fc8d95b9c1224ad09599ebbf77b97af77acc4",
+          "bytes": 7999,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/tools/SMTRange.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/tools/SMTRange.scala",
+          "sha256": "d5bfb317f266e7e988cbc31c33af9c1e0b424a02ca3cd809d2e2557ff664de27",
+          "bytes": 17583,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/tools/Taylor.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/tools/Taylor.scala",
+          "sha256": "27ed7c252b2b3d1c4805ec4ff2c0f07e12db10020f70dabd608d3b63a77f23e9",
+          "bytes": 7047,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/transform/CompilerOptimizationPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/transform/CompilerOptimizationPhase.scala",
+          "sha256": "fadce2b5aebf4d3de43b8fd57889dee720126ab2d12143cd907a9e64470653cc",
+          "bytes": 9497,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/transform/TACTransformerPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/transform/TACTransformerPhase.scala",
+          "sha256": "e50974d83371a58d57ba66c4ba1f5fd6f21c1cee8f6b316a221ee087ab57e7e9",
+          "bytes": 4284,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/transform/UnrollPhase.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/transform/UnrollPhase.scala",
+          "sha256": "8ca4288f067c7970e011349f7cb764a6c1efb8e7f9307193a41db416ef0a225b",
+          "bytes": 14294,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/main/scala/daisy/utils/ScalaPrinter.scala",
+          "url": "https://raw.githubusercontent.com/malyzajko/daisy/6a6f47abdd231d3009444e9e1b8ce9febc28c27e/src/main/scala/daisy/utils/ScalaPrinter.scala",
+          "sha256": "ed39a8fb0722b94218fd86698b51508355ecaa11364a1cea4790c949d440c63d",
+          "bytes": 22299,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": [
+        "src/main/scala/daisy/analysis/FPTaylorPhase.scala",
+        "src/main/scala/daisy/analysis/FPTaylorPhaseOriginal.scala",
+        "src/main/scala/daisy/analysis/TaylorAbstractPhase.scala",
+        "src/main/scala/daisy/experiments/BenchmarkingPhase.scala",
+        "src/main/scala/daisy/experiments/CostFunctionEvaluationExperiment.scala",
+        "src/main/scala/daisy/experiments/MixedPrecisionExperimentGenerationPhase.scala",
+        "src/main/scala/daisy/opt/MetalibmPhase.scala",
+        "src/main/scala/daisy/opt/MixedPrecisionOptimizationPhase.scala",
+        "src/main/scala/daisy/transform/ConstantTransformerPhase.scala",
+        "src/main/scala/daisy/transform/DecompositionPhase.scala",
+        "src/main/scala/daisy/transform/PowTransformerPhase.scala"
+      ]
+    },
+    {
+      "file": "third_party/licenses/flit/SOURCE-NOTICES.txt",
+      "sha256": "0a8943b8e003bb6863b0a72a968da05e89c2f2e6f72940621ec4edce929342e5",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "flit-tables-sqlite.sql",
+          "url": "https://raw.githubusercontent.com/PRUNERS/FLiT/27b6061b9d2302fa8c3252fe770287bb4d07905b/data/db/tables-sqlite.sql",
+          "sha256": "9361a9cf98e62283d91977ff9f6e81148b3e4213c8ed309ea3d7f994a4acd797",
+          "bytes": 5609,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "flit-default-toml",
+          "url": "https://raw.githubusercontent.com/PRUNERS/FLiT/27b6061b9d2302fa8c3252fe770287bb4d07905b/scripts/flitcli/config/flit-default.toml.in",
+          "sha256": "936bc9f58e67c3f18472704894ceafa665b529ebde333752d609b34c681e8279",
+          "bytes": 9016,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "flit-simple_convex_hull.cpp",
+          "url": "https://raw.githubusercontent.com/PRUNERS/FLiT/27b6061b9d2302fa8c3252fe770287bb4d07905b/litmus-tests/tests/simple_convex_hull.cpp",
+          "sha256": "a2a753a1926a30b49b0d8e38d0e0fbcf4c45f8005056c7e208528b32a399bce2",
+          "bytes": 15236,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "flit-Paranoia.cpp",
+          "url": "https://raw.githubusercontent.com/PRUNERS/FLiT/27b6061b9d2302fa8c3252fe770287bb4d07905b/litmus-tests/tests/Paranoia.cpp",
+          "sha256": "a4744a5e673a5d6e8b7309bd55c7b755470fdbf21d9d213ba12cbc1809876825",
+          "bytes": 75658,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/fptaylor/SOURCE-NOTICES.txt",
+      "sha256": "b4e5d2738b9d7e477d9dfa6548ab4580f6342573efd04b7f1756076280f22a36",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "lib.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/lib.ml",
+          "sha256": "3a8f18a1b6d04b1560a3adf8ca3690b8d22b95562970c966cbbf57344bd5d6ac",
+          "bytes": 6206,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "expr.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/expr.ml",
+          "sha256": "3ebdb92d3eeb995e456eb519d97f6ce37acf4b0ae5b56e18e47e093ea349249b",
+          "bytes": 7926,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "fptaylor.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/fptaylor.ml",
+          "sha256": "edbf60f920faa138a92f52dc371ee0bcfd2557a7a55664a745ae74a154334b11",
+          "bytes": 26972,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "log.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/log.ml",
+          "sha256": "f79ae25e9942789bdfb31771c0e548deaf9dbe6f047d594a27017e0f41b998c5",
+          "bytes": 2939,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "main.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/main.ml",
+          "sha256": "c810759f0f32fb81d68b517c5eb1ccceacdccdcd4f0bc7c77d68a95651410f44",
+          "bytes": 1342,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/ocaml-interval/SOURCE-NOTICES.txt",
+      "sha256": "9e950ebf7a608e3f3f97f1e5a0e0719b8edae85aa68a816094047997435e8fae",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "INTERVAL/fpu.ml",
+          "url": "https://raw.githubusercontent.com/soarlab/FPTaylor/b5a77cae348400f21f83512210d9f43c4bffb381/INTERVAL/fpu.ml",
+          "sha256": "9d19f3764000b9cb330ac41985f00949b3e34bd74e31815ccaf42cde05e7b4b6",
+          "bytes": 6058,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/verificarlo/SOURCE-NOTICES.txt",
+      "sha256": "ad01694d5c20a0c9913112d50c6adc4cb699ec78cc01777706bf348d5cff3f43",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "src/backends/interflop-backend-vprec/common/vprec_tools.c",
+          "url": "https://raw.githubusercontent.com/verificarlo/verificarlo/c5d1bf798a5ec617c138aa5e6629e1923411d3c8/src/backends/interflop-backend-vprec/common/vprec_tools.c",
+          "sha256": "e96cdd053ec018355e57bc1bdaf38086f944df48b18f8e4097753bc0b0c4690d",
+          "bytes": 14215,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "src/vfcwrapper/backends.c",
+          "url": "https://raw.githubusercontent.com/verificarlo/verificarlo/c5d1bf798a5ec617c138aa5e6629e1923411d3c8/src/vfcwrapper/backends.c",
+          "sha256": "8c4dc50d76ab80ab6de25fc9ca80c2711817f8d8d0bbf8751b9644effb2e65a8",
+          "bytes": 16975,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/tbb/SOURCE-NOTICES.txt",
+      "sha256": "26463a2d08577b907b048db67222f60273258c103a9e4bce081378a374e1b374",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "include/tbb/task_scheduler_init.h",
+          "url": "https://raw.githubusercontent.com/oneapi-src/oneTBB/v2020.3/include/tbb/task_scheduler_init.h",
+          "sha256": "1a6f7464a23f2a49bd074c2d72103735e04dd46d3d00051339c77dd1c2ce90c2",
+          "bytes": 7855,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/glibc/SOURCE-NOTICES.txt",
+      "sha256": "549f0ed9be7bc95e0c261bdd73a94ab069abea9e42956592e49958f291fb9a26",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [
+        {
+          "path": "glibc-2.35__libio__bits__stdio2.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.35/libio/bits/stdio2.h",
+          "sha256": "2b64e351461df7276669fe8fa7999fd3f0ef331bc328865e6d9e9a5f7ebe0537",
+          "bytes": 12942,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.35__libio__stdio.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.35/libio/stdio.h",
+          "sha256": "3740b475b7236024022927f9f3097a4bf6effc46a8e47ef03b1ee1e0b4f3cdfa",
+          "bytes": 31176,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.35__string__bits__string_fortified.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.35/string/bits/string_fortified.h",
+          "sha256": "67983b4ab6eab6647f09bbde12ee2fb0c5f26205d24671958180042dbbb092da",
+          "bytes": 4347,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.39__libio__bits__stdio2-decl.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/libio/bits/stdio2-decl.h",
+          "sha256": "c3acb8208277348f1e7df5b44ca92a253947041a6c79e5a04db9d5ffa96327db",
+          "bytes": 6309,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.39__libio__bits__stdio2.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/libio/bits/stdio2.h",
+          "sha256": "e553964cc1a45a330dc65224bae4e81299a6c4662985926f80151b4ea902cbf6",
+          "bytes": 8202,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.39__libio__stdio.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/libio/stdio.h",
+          "sha256": "b4f6709d12c8493e2a42f740845abe2994deb27fc78fb85fcaa6e27228a87d62",
+          "bytes": 34649,
+          "source_encoding": "UTF-8"
+        },
+        {
+          "path": "glibc-2.39__string__bits__string_fortified.h",
+          "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/string/bits/string_fortified.h",
+          "sha256": "0cfa3c530938891615ab64ab5dfb72ebd8d02077d29d4410774b8a8ceff628fb",
+          "bytes": 5625,
+          "source_encoding": "UTF-8"
+        }
+      ],
+      "files_without_individual_notice": []
+    },
+    {
+      "file": "third_party/licenses/reproblas/SOURCE-NOTICES.txt",
+      "sha256": "baf79dd9768b157a05ad4ee57d10e087511afe4dcba5ce56cde26f12661a81bf",
+      "kind": "verbatim copyright/license comment blocks with source labels",
+      "sources": [],
+      "files_without_individual_notice": [
+        "tests/accs/acc_rcsum.c",
+        "tests/accs/acc_rdsum.c",
+        "tests/accs/acc_rssum.c",
+        "tests/accs/acc_rzsum.c",
+        "tests/accs/acc_vecvec_fill_header.h",
+        "tests/benchs/bench_camax.c",
+        "tests/benchs/bench_camaxm.c",
+        "tests/benchs/bench_cbcbadd.c",
+        "tests/benchs/bench_cciconv.c",
+        "tests/benchs/bench_csum.c",
+        "tests/benchs/bench_damax.c",
+        "tests/benchs/bench_damaxm.c",
+        "tests/benchs/bench_dbdbadd.c",
+        "tests/benchs/bench_ddbconv.c",
+        "tests/benchs/bench_dsum.c",
+        "tests/benchs/bench_matmat_fill_header.h",
+        "tests/benchs/bench_matvec_fill_header.h",
+        "tests/benchs/bench_rcdotc.c",
+        "tests/benchs/bench_rcdotu.c",
+        "tests/benchs/bench_rcgemm.c",
+        "tests/benchs/bench_rcgemv.c",
+        "tests/benchs/bench_rcsum.c",
+        "tests/benchs/bench_rdasum.c",
+        "tests/benchs/bench_rddot.c",
+        "tests/benchs/bench_rdgemm.c",
+        "tests/benchs/bench_rdgemv.c",
+        "tests/benchs/bench_rdnrm2.c",
+        "tests/benchs/bench_rdsum.c",
+        "tests/benchs/bench_rdzasum.c",
+        "tests/benchs/bench_rdznrm2.c",
+        "tests/benchs/bench_rsasum.c",
+        "tests/benchs/bench_rscasum.c",
+        "tests/benchs/bench_rscnrm2.c",
+        "tests/benchs/bench_rsdot.c",
+        "tests/benchs/bench_rsgemm.c",
+        "tests/benchs/bench_rsgemv.c",
+        "tests/benchs/bench_rsnrm2.c",
+        "tests/benchs/bench_rssum.c",
+        "tests/benchs/bench_rzdotc.c",
+        "tests/benchs/bench_rzdotu.c",
+        "tests/benchs/bench_rzgemm.c",
+        "tests/benchs/bench_rzgemv.c",
+        "tests/benchs/bench_rzsum.c",
+        "tests/benchs/bench_samax.c",
+        "tests/benchs/bench_samaxm.c",
+        "tests/benchs/bench_sbsbadd.c",
+        "tests/benchs/bench_ssbconv.c",
+        "tests/benchs/bench_ssum.c",
+        "tests/benchs/bench_vecvec_fill_header.h",
+        "tests/benchs/bench_zamax.c",
+        "tests/benchs/bench_zamaxm.c",
+        "tests/benchs/bench_zbzbadd.c",
+        "tests/benchs/bench_zsum.c",
+        "tests/benchs/bench_zziconv.c",
+        "tests/checks/corroborate_rcgemm.c",
+        "tests/checks/corroborate_rcgemv.c",
+        "tests/checks/corroborate_rdgemm.c",
+        "tests/checks/corroborate_rdgemv.c",
+        "tests/checks/corroborate_rsgemm.c",
+        "tests/checks/corroborate_rsgemv.c",
+        "tests/checks/corroborate_rzgemm.c",
+        "tests/checks/corroborate_rzgemv.c",
+        "tests/checks/validate_internal_caugsum.c",
+        "tests/checks/validate_internal_daugsum.c",
+        "tests/checks/validate_internal_saugsum.c",
+        "tests/checks/validate_internal_zaugsum.c",
+        "tests/checks/validate_xblas_cdot.c",
+        "tests/checks/validate_xblas_ddot.c",
+        "tests/checks/validate_xblas_sdot.c",
+        "tests/checks/validate_xblas_zdot.c",
+        "tests/checks/verify_caugsum.c",
+        "tests/checks/verify_daugsum.c",
+        "tests/checks/verify_dbdssq.c",
+        "tests/checks/verify_dbzssq.c",
+        "tests/checks/verify_saugsum.c",
+        "tests/checks/verify_sbcssq.c",
+        "tests/checks/verify_sbsssq.c",
+        "tests/checks/verify_zaugsum.c",
+        "tests/checks/wrap_caugsum.h",
+        "tests/checks/wrap_daugsum.h",
+        "tests/checks/wrap_saugsum.h",
+        "tests/checks/wrap_zaugsum.h",
+        "tests/common/test_matmat_fill_header.h",
+        "tests/common/test_matvec_fill_header.h",
+        "tests/common/test_opt.c",
+        "tests/common/test_vecvec_fill_header.h",
+        "tests/common/test_vecvec_header.h"
+      ]
+    },
+    {
+      "file": "third_party/licenses/ibm-fpgen/ORIGINAL-NOTICES.txt",
+      "sha256": "4923f01e93a974f167ef2c2d0fddc4d28c6cc8b723d5e5a4f7560cfc421463d4",
+      "kind": "verbatim original test-file preambles with source labels",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Add-Cancellation-And-Subnorm-Result.fptest",
+          "sha256": "909043683f56020f23ab30af35d3e6e843c965103297c90dc63e3fa2da2a4176",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Add-Cancellation.fptest",
+          "sha256": "cb330f12787f51a061ee30f7342e28a7c4482915663ec1505da1d444ffcb071e",
+          "bytes": 2894,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Add-Shift-And-Special-Significands.fptest",
+          "sha256": "acf8f4536c739cc8fff19f46a1d29d1a7ecc77982888ab433f98bd5717fef278",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Add-Shift.fptest",
+          "sha256": "5b2cb2da089c45983368f8068a50656b765664440d0b71c183da7dfd6340b4af",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Basic-Types-Inputs.fptest",
+          "sha256": "38d73055a43edd6e312c0c0bca7129a4cc4451d35227a992f325c85d4687a812",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Basic-Types-Intermediate.fptest",
+          "sha256": "68374821392d582b08e2d1f9b9dd262dc9c927cfc5b88113c97af1ced2ed2246",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Compare-Different-Input-Field-Relations.fptest",
+          "sha256": "1e48530bc909071aa520f06075a8262e48d1143fa0f910179195ae37ecb36286",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Corner-Rounding.fptest",
+          "sha256": "c7956b7c8a6a3d6f3bd54d7272836b92250bf7695cffbab3244fe4ad6ba030ed",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Basic-Types-Inputs.fptest",
+          "sha256": "886dcfa59845ff89f5baf4bfb40da5def080f4e9eebfd8b73f77b26e2fe32e55",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Basic-Types-Intermediate.fptest",
+          "sha256": "5f96c0cb846edea725a749b5acb7d208b8a0cceea3781498d4243eb269de5845",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Clamping.fptest",
+          "sha256": "f07f20062b3e36f308263a0a8c74b3cbc087db59b931117a6b4044dc09ddad9d",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Mul-Trailing-Zeros.fptest",
+          "sha256": "6968e7bfde40a27bf699a5bb6ed7b0c5036f04b80832018c62d89802d13df9fa",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Overflow.fptest",
+          "sha256": "2f9e367d383af78ff9e7c71552ec84afccae2d28582e3367a1308fa4ab6839af",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Rounding.fptest",
+          "sha256": "7333d6444517b275405f52f1ce151fffa794ee12630ad75f4a09acd04d7d5587",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Trailing-And-Leading-Zeros-Input.fptest",
+          "sha256": "ffa1d21e8bc81bff12f9c73eb4a92fcc9299b1353e1939b959484d850ac3d9e2",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Trailing-And-Leading-Zeros-Result.fptest",
+          "sha256": "9d4f4f7faed82418df54472a39d2b151596d554452c401fff9a63548b8a80458",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Decimal-Underflow.fptest",
+          "sha256": "e652c570aa64718987e93f0dba32a48d727acc7ea19629255dd6c699f7ae6219",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Divide-Divide-By-Zero-Exception.fptest",
+          "sha256": "432aa46003ec9b8168c4d28efdd993c64d17bae3ada002c843eeb3b1db14a82e",
+          "bytes": 1130,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Divide-Trailing-Zeros.fptest",
+          "sha256": "f3d3da5801d37d542dad7604a518aeaf3264d6db4c8102912d932e4512011784",
+          "bytes": 1784,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Hamming-Distance.fptest",
+          "sha256": "2f1675a264290f50f1580a39c32b7a7c08001bc5d6f102bbb3f8cc7a0949d39d",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Input-Special-Significand.fptest",
+          "sha256": "1d13546a24ee4cb60caa5ec576ae08b7085d1b5ae9767c481ddaa43eb3907529",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Cancellation-And-Subnorm-Result.fptest",
+          "sha256": "5972731a08f8dc90611f8fcab37cd5ff50657d6acd45dee2829cbf2a35ed2329",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Cancellation.fptest",
+          "sha256": "de24d5bd3060c26b47473a2688d331f91373712caf4a9b7c31f9126cf14aef0e",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Shift-And-Special-Significands.fptest",
+          "sha256": "1d8882596d522725d897b47205a85000b6383644d2bcc00d2a26480318609002",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Shift.fptest",
+          "sha256": "b6778ddbbdf5e50d9afd957b1006ef088e235d7e4f76fe53c7f4d203adf7d851",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Special-Events-Inexact.fptest",
+          "sha256": "1fa0889dcdd2f56915fd4d32d8f1bfa22302aaad2199287ea2fc45daf8154842",
+          "bytes": 865,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Special-Events-Overflow.fptest",
+          "sha256": "0be4622200ddbba7ddf59dbf24e94cbf2fd69a93969d2c92ea6b869f42f337fe",
+          "bytes": 1509,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/MultiplyAdd-Special-Events-Underflow.fptest",
+          "sha256": "8f621d42b97328531677d5ed2513943e1821d16690fe636cf183c68a63a674b1",
+          "bytes": 2952,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Overflow.fptest",
+          "sha256": "593ebc0687054d85853c7788233db1c3faf23e9e215a49727001ab82c55b3de8",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Rounding.fptest",
+          "sha256": "8fe9b4cfa6fbd98b1e3b5e987ff11cb0f86be37a1acb5f0bd164a20b3ca9e68b",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Sticky-Bit-Calculation.fptest",
+          "sha256": "d20686b202b72960c664a5ae88ca5c3f43b9bbdecfefb4a96c594eb0e12aaec0",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Underflow.fptest",
+          "sha256": "5c5b49506ea8bac5a4521f73ab6364fb2b2d5173832a6d752ecd1d0dc3cc07ea",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/sergev/ieee754-test-suite/12e883a0c7b826976a8f1243318ac4b7626a0ffc/Vicinity-Of-Rounding-Boundaries.fptest",
+          "sha256": "8f6c5fd645b1cf537b3f251751be51f27e5769c151e7452c2f68c2e4074fb8e1",
+          "bytes": 4096,
+          "scope": "hash of first up to 4096 bytes retrieved; only the pre-case notice is reproduced"
+        }
+      ]
+    }
+  ]
+}

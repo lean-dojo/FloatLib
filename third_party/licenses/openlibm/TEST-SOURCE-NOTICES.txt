@@ -1,0 +1,125 @@
+OpenLibm test-source excerpts in logs; separate from the retained library binaries
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  test/libm-test.c
+
+/* Copyright (C) 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+   Contributed by Andreas Jaeger <aj@arthur.rhein-neckar.de>, 1997.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+   02111-1307 USA.  */
+
+/* Part of testsuite for libm.
+
+   This file is processed by a perl script.  The resulting file has to
+   be included by a master file that defines:
+
+   Makros:
+   FUNC(function): converts general function name (like cos) to
+   name with correct suffix (e.g. cosl or cosf)
+   MATHCONST(x):   like FUNC but for constants (e.g convert 0.0 to 0.0L)
+   FLOAT:	   floating point type to test
+   - TEST_MSG:	   informal message to be displayed
+   CHOOSE(Clongdouble,Cdouble,Cfloat,Cinlinelongdouble,Cinlinedouble,Cinlinefloat):
+   chooses one of the parameters as delta for testing
+   equality
+   PRINTF_EXPR	   Floating point conversion specification to print a variable
+   of type FLOAT with printf.  PRINTF_EXPR just contains
+   the specifier, not the percent and width arguments,
+   e.g. "f".
+   PRINTF_XEXPR	   Like PRINTF_EXPR, but print in hexadecimal format.
+   PRINTF_NEXPR Like PRINTF_EXPR, but print nice.  */
+
+/* This testsuite has currently tests for:
+   acos, acosh, asin, asinh, atan, atan2, atanh,
+   cbrt, ceil, copysign, cos, cosh, erf, erfc, exp, exp10, exp2, expm1,
+   fabs, fdim, floor, fma, fmax, fmin, fmod, fpclassify,
+   frexp, gamma, hypot,
+   ilogb, isfinite, isinf, isnan, isnormal,
+   isless, islessequal, isgreater, isgreaterequal, islessgreater, isunordered,
+   j0, j1, jn,
+   ldexp, lgamma, log, log10, log1p, log2, logb,
+   modf, nearbyint, nextafter,
+   pow, remainder, remquo, rint, lrint, llrint,
+   round, lround, llround,
+   scalb, scalbn, scalbln, signbit, sin, sincos, sinh, sqrt, tan, tanh, tgamma, trunc,
+   y0, y1, yn
+
+   and for the following complex math functions:
+   cabs, cacos, cacosh, carg, casin, casinh, catan, catanh,
+   ccos, ccosh, cexp, clog, cpow, cproj, csin, csinh, csqrt, ctan, ctanh.
+
+   At the moment the following functions aren't tested:
+   drem, significand, nan
+
+   Parameter handling is primitive in the moment:
+   --verbose=[0..3] for different levels of output:
+   0: only error count
+   1: basic report on failed tests (default)
+   2: full report on all tests
+   -v for full output (equals --verbose=3)
+   -u for generation of an ULPs file
+ */
+
+/* "Philosophy":
+
+   This suite tests some aspects of the correct implementation of
+   mathematical functions in libm.  Some simple, specific parameters
+   are tested for correctness but there's no exhaustive
+   testing.  Handling of specific inputs (e.g. infinity, not-a-number)
+   is also tested.  Correct handling of exceptions is checked
+   against.  These implemented tests should check all cases that are
+   specified in ISO C99.
+
+   Exception testing: At the moment only divide-by-zero and invalid
+   exceptions are tested.  Overflow/underflow and inexact exceptions
+   aren't checked at the moment.
+
+   NaN values: There exist signalling and quiet NaNs.  This implementation
+   only uses signalling NaN as parameter but does not differenciate
+   between the two kinds of NaNs as result.
+
+   Inline functions: Inlining functions should give an improvement in
+   speed - but not in precission.  The inlined functions return
+   reasonable values for a reasonable range of input values.  The
+   result is not necessarily correct for all values and exceptions are
+   not correctly raised in all cases.  Problematic input and return
+   values are infinity, not-a-number and minus zero.  This suite
+   therefore does not check these specific inputs and the exception
+   handling for inlined mathematical functions - just the "reasonable"
+   values are checked.
+
+   Beware: The tests might fail for any of the following reasons:
+   - Tests are wrong
+   - Functions are wrong
+   - Floating Point Unit not working properly
+   - Compiler has errors
+
+   With e.g. gcc 2.7.2.2 the test for cexp fails because of a compiler error.
+
+
+   To Do: All parameter should be numbers that can be represented as
+   exact floating point values.  Currently some values cannot be represented
+   exactly and therefore the result is not the expected result.
+*/
+
+#ifndef _GNU_SOURCE
+

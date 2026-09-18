@@ -1,0 +1,92 @@
+FPTaylor b5a77cae348400f21f83512210d9f43c4bffb381: source names in retained diagnostics
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  lib.ml
+
+(* ========================================================================== *)
+(*      FPTaylor: A Tool for Rigorous Estimation of Round-off Errors          *)
+(*                                                                            *)
+(*      Author: Alexey Solovyev, University of Utah                           *)
+(*                                                                            *)
+(*      This file is distributed under the terms of the MIT license           *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Auxiliary functions                                                        *)
+(* Some code is from HOL Light (lib.ml), the Flyspeck project, and nlcertify  *)
+(* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
+(* "Set" operations on lists.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+========================================================================
+Source paths:
+  expr.ml
+
+(* ========================================================================== *)
+(*      FPTaylor: A Tool for Rigorous Estimation of Round-off Errors          *)
+(*                                                                            *)
+(*      Author: Alexey Solovyev, University of Utah                           *)
+(*                                                                            *)
+(*      This file is distributed under the terms of the MIT license           *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Symbolic expressions                                                       *)
+(* -------------------------------------------------------------------------- *)
+
+(* Operations *)
+
+========================================================================
+Source paths:
+  fptaylor.ml
+
+(* ========================================================================== *)
+(*      FPTaylor: A Tool for Rigorous Estimation of Round-off Errors          *)
+(*                                                                            *)
+(*      Author: Alexey Solovyev, University of Utah                           *)
+(*                                                                            *)
+(*      This file is distributed under the terms of the MIT license           *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Main FPTaylor functions                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+========================================================================
+Source paths:
+  log.ml
+
+(* ========================================================================== *)
+(*      FPTaylor: A Tool for Rigorous Estimation of Round-off Errors          *)
+(*                                                                            *)
+(*      Author: Alexey Solovyev, University of Utah                           *)
+(*                                                                            *)
+(*      This file is distributed under the terms of the MIT license           *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Logging functions                                                          *)
+(* -------------------------------------------------------------------------- *)
+
+========================================================================
+Source paths:
+  main.ml
+
+(* ========================================================================== *)
+(*      FPTaylor: A Tool for Rigorous Estimation of Round-off Errors          *)
+(*                                                                            *)
+(*      Author: Alexey Solovyev, University of Utah                           *)
+(*                                                                            *)
+(*      This file is distributed under the terms of the MIT license           *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* FPTaylor's main function                                                   *)
+(* -------------------------------------------------------------------------- *)

@@ -1,0 +1,95 @@
+ReproBLAS dfb815058dd34b88caba2513cce63bc2e89f951f: source files named in retained diagnostics
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+Inspected files without an individual copyright/license preamble
+(covered by the accompanying upstream project license where applicable):
+  tests/accs/acc_rcsum.c
+  tests/accs/acc_rdsum.c
+  tests/accs/acc_rssum.c
+  tests/accs/acc_rzsum.c
+  tests/accs/acc_vecvec_fill_header.h
+  tests/benchs/bench_camax.c
+  tests/benchs/bench_camaxm.c
+  tests/benchs/bench_cbcbadd.c
+  tests/benchs/bench_cciconv.c
+  tests/benchs/bench_csum.c
+  tests/benchs/bench_damax.c
+  tests/benchs/bench_damaxm.c
+  tests/benchs/bench_dbdbadd.c
+  tests/benchs/bench_ddbconv.c
+  tests/benchs/bench_dsum.c
+  tests/benchs/bench_matmat_fill_header.h
+  tests/benchs/bench_matvec_fill_header.h
+  tests/benchs/bench_rcdotc.c
+  tests/benchs/bench_rcdotu.c
+  tests/benchs/bench_rcgemm.c
+  tests/benchs/bench_rcgemv.c
+  tests/benchs/bench_rcsum.c
+  tests/benchs/bench_rdasum.c
+  tests/benchs/bench_rddot.c
+  tests/benchs/bench_rdgemm.c
+  tests/benchs/bench_rdgemv.c
+  tests/benchs/bench_rdnrm2.c
+  tests/benchs/bench_rdsum.c
+  tests/benchs/bench_rdzasum.c
+  tests/benchs/bench_rdznrm2.c
+  tests/benchs/bench_rsasum.c
+  tests/benchs/bench_rscasum.c
+  tests/benchs/bench_rscnrm2.c
+  tests/benchs/bench_rsdot.c
+  tests/benchs/bench_rsgemm.c
+  tests/benchs/bench_rsgemv.c
+  tests/benchs/bench_rsnrm2.c
+  tests/benchs/bench_rssum.c
+  tests/benchs/bench_rzdotc.c
+  tests/benchs/bench_rzdotu.c
+  tests/benchs/bench_rzgemm.c
+  tests/benchs/bench_rzgemv.c
+  tests/benchs/bench_rzsum.c
+  tests/benchs/bench_samax.c
+  tests/benchs/bench_samaxm.c
+  tests/benchs/bench_sbsbadd.c
+  tests/benchs/bench_ssbconv.c
+  tests/benchs/bench_ssum.c
+  tests/benchs/bench_vecvec_fill_header.h
+  tests/benchs/bench_zamax.c
+  tests/benchs/bench_zamaxm.c
+  tests/benchs/bench_zbzbadd.c
+  tests/benchs/bench_zsum.c
+  tests/benchs/bench_zziconv.c
+  tests/checks/corroborate_rcgemm.c
+  tests/checks/corroborate_rcgemv.c
+  tests/checks/corroborate_rdgemm.c
+  tests/checks/corroborate_rdgemv.c
+  tests/checks/corroborate_rsgemm.c
+  tests/checks/corroborate_rsgemv.c
+  tests/checks/corroborate_rzgemm.c
+  tests/checks/corroborate_rzgemv.c
+  tests/checks/validate_internal_caugsum.c
+  tests/checks/validate_internal_daugsum.c
+  tests/checks/validate_internal_saugsum.c
+  tests/checks/validate_internal_zaugsum.c
+  tests/checks/validate_xblas_cdot.c
+  tests/checks/validate_xblas_ddot.c
+  tests/checks/validate_xblas_sdot.c
+  tests/checks/validate_xblas_zdot.c
+  tests/checks/verify_caugsum.c
+  tests/checks/verify_daugsum.c
+  tests/checks/verify_dbdssq.c
+  tests/checks/verify_dbzssq.c
+  tests/checks/verify_saugsum.c
+  tests/checks/verify_sbcssq.c
+  tests/checks/verify_sbsssq.c
+  tests/checks/verify_zaugsum.c
+  tests/checks/wrap_caugsum.h
+  tests/checks/wrap_daugsum.h
+  tests/checks/wrap_saugsum.h
+  tests/checks/wrap_zaugsum.h
+  tests/common/test_matmat_fill_header.h
+  tests/common/test_matvec_fill_header.h
+  tests/common/test_opt.c
+  tests/common/test_vecvec_fill_header.h
+  tests/common/test_vecvec_header.h

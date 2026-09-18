@@ -1,0 +1,6 @@
+RLIBM release-provider notice
+
+Upstream: rutgers-apl/rlibm
+Commit: 8533ec0db38b2f3ab55c1b296ddaec80d578e251
+Artifact: tests/results/main/release/external/12-transcendentals/providers/rlibm.so
+License: BSD-2-Clause; complete original LICENSE is adjacent.

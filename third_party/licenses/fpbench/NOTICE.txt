@@ -1,0 +1,7 @@
+FPBench a6621d5f86276859bc01cc7b9c238dee73ff5dbe
+
+Copyright 2021 FPBench Project Contributors.
+LICENSE.txt contains the upstream MIT license. It covers the FPCore fixture
+tests/results/main/ecosystem/raw/fpbench/filter.expected.raw.txt, a UTF-16
+copy of tests/scripts/test-filter.out.txt, and its copy in the benchmark
+public source archive.

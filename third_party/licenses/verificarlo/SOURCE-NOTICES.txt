@@ -1,0 +1,53 @@
+Verificarlo c5d1bf798a5ec617c138aa5e6629e1923411d3c8: diagnostic source excerpts
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  src/backends/interflop-backend-vprec/common/vprec_tools.c
+
+/*****************************************************************************\
+ *                                                                           *\
+ *  This file is part of the Verificarlo project,                            *\
+ *  under the Apache License v2.0 with LLVM Exceptions.                      *\
+ *  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception.                 *\
+ *  See https://llvm.org/LICENSE.txt for license information.                *\
+ *                                                                           *\
+ *                                                                           *\
+ *  Copyright (c) 2015                                                       *\
+ *     Universite de Versailles St-Quentin-en-Yvelines                       *\
+ *     CMLA, Ecole Normale Superieure de Cachan                              *\
+ *                                                                           *\
+ *  Copyright (c) 2018                                                       *\
+ *     Universite de Versailles St-Quentin-en-Yvelines                       *\
+ *                                                                           *\
+ *  Copyright (c) 2019-2026                                                  *\
+ *     Verificarlo Contributors                                              *\
+ *                                                                           *\
+ ****************************************************************************/
+
+========================================================================
+Source paths:
+  src/vfcwrapper/backends.c
+
+/*****************************************************************************\
+ *                                                                           *\
+ *  This file is part of the Verificarlo project,                            *\
+ *  under the Apache License v2.0 with LLVM Exceptions.                      *\
+ *  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception.                 *\
+ *  See https://llvm.org/LICENSE.txt for license information.                *\
+ *                                                                           *\
+ *                                                                           *\
+ *  Copyright (c) 2015                                                       *\
+ *     Universite de Versailles St-Quentin-en-Yvelines                       *\
+ *     CMLA, Ecole Normale Superieure de Cachan                              *\
+ *                                                                           *\
+ *  Copyright (c) 2018                                                       *\
+ *     Universite de Versailles St-Quentin-en-Yvelines                       *\
+ *                                                                           *\
+ *  Copyright (c) 2019-2024                                                  *\
+ *     Verificarlo Contributors                                              *\
+ *                                                                           *\
+ ****************************************************************************/

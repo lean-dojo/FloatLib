@@ -1,0 +1,7 @@
+ExBLAS 856130ebcfe906f519a623d57d1359e744e29042
+
+LICENSE is the complete top-level ExBLAS license. SOURCE-NOTICES.txt
+preserves notices from its source lines echoed in raw/exblas/run.log.
+Agner Fog's Vector Class material in applied-compatibility.patch has a
+separate GPL-3.0-only notice package at ../vectorclass/. The Intel TBB
+header excerpt is covered by ../tbb/.
