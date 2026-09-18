@@ -16,6 +16,17 @@ trials. It needs Git, Python 3, and Matplotlib, but does not compile FloatLib or
 operations again. The [results README](../results/main/README.md) describes the files behind the
 [performance chapter](../../site/content/chapters/15-performance.md).
 
+The matched Flocq comparison has its own data and figure:
+
+```bash
+python3 benchmarks/plots/flocq_matched.py \
+  --out "${TMPDIR:-/tmp}/floatlib-flocq-matched.png"
+```
+
+This also checks the raw timing selection and complete numerical values. The
+[matched result README](../results/flocq-matched/README.md) describes its fixture-chain
+measurements and the complete-block square-root supplement.
+
 The data belongs to the source and environment recorded with it. Rebuilding the figures lets us
 check the calculation of the plotted numbers; measuring an implementation change needs a new
 run. When Matplotlib versions differ, the verifier compares the tables exactly and checks that
@@ -66,6 +77,22 @@ The Python expression selects the first CPU available to the process. You can se
 at least seven trials, and calibrated iteration counts. Each measured interval must last at
 least 50 ms by default; calibration aims for 200 ms.
 
+For a matched binary fixture-chain comparison with just FloatLib, Flocq, and MPFR:
+
+```bash
+FORMAT_COMPARE_PROFILE=flocq \
+FORMAT_COMPARE_DEVELOPMENT_ONLY=0 \
+FORMAT_COMPARE_CPU="$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')" \
+benchmarks/scripts/format-comparison.sh 9 /path/to/results/flocq-comparison
+```
+
+This profile measures all six operations at the 11 widths supported by all three adapters,
+from 6 to 4,096 bits. It keeps the same trial, duration, and agreement checks as the full
+comparison, without building the other providers.
+This command measures the chain at every width. It does not run the separate
+complete-block square-root workload used for nine entries in the
+[saved Flocq figure](../results/flocq-matched/README.md).
+
 Pinning reduces noise from moving between CPUs. An otherwise quiet machine still matters:
 shared caches, memory bandwidth, frequency changes, and other processes can affect the result.
 Keep the recorded source, compiler, and machine details beside any numbers you compare.
@@ -91,9 +118,8 @@ for checking the harness before spending time on the full comparison.
 
 We start with the exact rational inputs in
 [`ExactWorkload.lean`](../lean/FloatLibBenchmarks/Support/ExactWorkload.lean). The comparable
-binary adapters round each value once into the destination format before timing. Flocq uses
-a different conversion, explained under [implementations](#implementations). Square-root
-inputs are nonnegative.
+binary adapters, including Flocq, round each value once into the destination format before
+timing. Square-root inputs are nonnegative.
 
 The timed loop forms a scalar dependency chain: each result chooses the next member of a
 16-value input set. We adapted the dependency-chain technique from
@@ -110,8 +136,9 @@ the loop's final checksum and a digest of the chosen input indices. Different lo
 can produce different final checksums even when every operation agrees, so we check agreement
 with a separate, untimed prefix of 256 operations.
 
-FloatLib and MPFR must agree on that prefix at every binary width. Native C and SoftFloat join
-the check at binary32 and binary64; CPython joins for the binary64 operations it provides.
+FloatLib, MPFR, and enabled Flocq rows must agree on that prefix at every shared binary width.
+Native C and SoftFloat join the check at binary32 and binary64; CPython joins for the
+binary64 operations it provides.
 The runner checks both the result checksum and the input trace, and rejects missing or
 disagreeing prefixes.
 
@@ -128,10 +155,25 @@ Configured binary formats begin at four bits:
 - Widths 4 through 8 use E2M1, E2M2, E3M2, E3M3, and E4M3.
 - Widths 16, 32, 64, and 128 use the IEEE interchange layouts.
 - Widths 256 and above use 19 exponent bits.
-- Optional widths 24 and 48 use E8M15 and E11M36. They have no equal-width posit or external row.
+- Optional widths 24, 48, 96, and 112 use E8M15, E11M36, E15M80, and E15M96.
+  They have no equal-width posit or external row.
 
 The eight-bit point is called E4M3 because IEEE 754 does not define a binary8 interchange
 format.
+
+For an optional binary-only point, invoke the Lean executable directly:
+
+```bash
+source tests/lib/lake.sh
+floatlib_benchmark_lake build execFloatFormatComparison
+FORMAT_COMPARE_FAMILY=binary-interchange FORMAT_COMPARE_WIDTH=96 \
+  FORMAT_COMPARE_ITERATIONS=10000 \
+  "$(floatlib_build_path bin/execFloatFormatComparison)"
+```
+
+This emits the six operation rows for the chosen width. The comparison script also accepts
+these widths as standalone binary rows. It checks cross-adapter agreement for requested
+FloatLib/MPFR pairs and rejects missing requested rows.
 
 MPFR and Flocq use the significand precision of the binary format at the same storage width.
 That gives us a binary comparison point. A posit's precision changes with its magnitude, so
@@ -150,7 +192,7 @@ with:
 | Native C | Host floating-point arithmetic at binary32 and binary64 |
 | [CPython float64](https://docs.python.org/3/c-api/float.html) | Ordinary Python floating-point calls, including interpreter and object overhead |
 | [Stillwater Universal](https://github.com/stillwater-sc/universal) | Posit arithmetic for the format-operation pairs that agree with the benchmark vectors |
-| [Flocq](https://flocq.gitlabpages.inria.fr/) | Extracted arithmetic at a fixed significand precision |
+| [Flocq](https://flocq.gitlabpages.inria.fr/) | Extracted OCaml/Zarith arithmetic with matching binary precision and exponent bounds |
 
 CPython FMA appears only when the interpreter provides `math.fma`. We do not substitute
 `x * y + z`, which rounds differently.
@@ -163,14 +205,21 @@ FORMAT_COMPARE_INCLUDE_FLOCQ=1 \
 benchmarks/scripts/format-comparison.sh
 ```
 
-When enabled, Flocq must produce a row at every configured precision. Its model fixes
-significand precision without reproducing every binary format's exponent range and
-exceptional values. It also rounds an input fraction's numerator and denominator separately
-before dividing, which can change the starting value at low precision. Its curve therefore
-gives useful arithmetic-cost context, but its input trace need not match the other binary
-adapters. The [performance chapter](../../site/content/chapters/15-performance.md#how-we-ran-the-external-implementations)
-works through an example and explains extraction and compilation. If you supply an executable,
-the runner records its hash; keep its build recipe and dependency versions with your results.
+The Flocq wrapper rounds exact input fractions with its proved `Bdiv_correct_aux` helper,
+then calls its certified binary operations. Precision, exponent bounds, nearest-even rounding,
+and gradual underflow match FloatLib and MPFR. Flocq's `BinarySingleNaN` interface requires
+`precision < emax`, which excludes the custom 4-, 5-, and 7-bit layouts from this comparison.
+Its single NaN does not preserve payloads; the benchmark checks arithmetic values.
+
+Each campaign computes Flocq's 256-step agreement prefix once per format and operation, then
+reuses it outside timing across calibration and trials. The cache starts empty and is tied to
+the compiled executable's SHA-256. This avoids repeating expensive wide square-root checks.
+
+The website uses the [matched results](../results/flocq-matched/README.md) for Flocq.
+The [main archive](../results/main/README.md) retains its original Flocq rows, which use
+different input preparation and exponent bounds; those rows are excluded from the website
+curves. A supplied executable's hash is recorded alongside its results; keep its build
+recipe and dependency versions too.
 
 Before timing Universal, the C++ adapter checks all 16 operation results against fixed-width
 bit vectors generated by FloatLib. Unsupported or disagreeing format-operation pairs are

@@ -18,8 +18,9 @@ Single-step rounding in FloatLib’s Flocq-style model satisfies absolute and re
 `Theory.Rounding.Core` proves a half-ULP bound for every rounding function satisfying
 `ValidRndToNearest`.
 
-The half-ULP bound yields relative-error forms, including the $\operatorname{fl}(x)=x(1+\delta)$ factorization. To bound the error of a single
-rounded operation such as `round rnd (x + y)`, apply `error_bound_ulp` at the exact expression.
+The half-ULP bound yields relative-error forms, including the
+$\operatorname{fl}(x)=x(1+\delta)$ factorization. To bound the error of a single rounded operation
+such as `round rnd (x + y)`, apply `error_bound_ulp` at the exact expression.
 
 Bounds for dot products, matrix operations, and backward stability require a concrete evaluation
 order and format hypotheses. They belong with the corresponding algorithm rather than in this

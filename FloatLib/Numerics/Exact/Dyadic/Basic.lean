@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Data.Rat.Cast.Order
+public import Init.Data.Dyadic.Basic
 
 /-!
 # Exact dyadic values
@@ -18,6 +19,7 @@ Lean core's `_root_.Dyadic`, defined in `Init.Data.Dyadic.Basic`, normalizes non
 an odd integer times a power of two and has a single zero. The FloatLib record retains an
 unnormalized significand and scale, together with a separate sign for IEEE signed-zero rules.
 Its `toRat` identifies both zero signs; formats with a single zero discard that sign on encoding.
+`toCore` converts to Lean's normalized carrier and preserves the rational value.
 
 The carrier provides integer conversions and rational denotation. Arithmetic and order follow in
 their respective modules.
@@ -92,6 +94,16 @@ Fixed-point accumulators use this conversion before rounding, without rational n
 /-- Exact rational denotation of a dyadic value. -/
 @[inline] def toRat (value : Dyadic) : Rat :=
   Rat.ofInt value.signedSignificand * (2 : Rat) ^ value.exponent
+
+/-- Normalize into Lean's dyadic carrier, identifying the two representations of zero. -/
+def toCore (value : Dyadic) : _root_.Dyadic :=
+  _root_.Dyadic.ofIntWithPrec value.signedSignificand (-value.exponent)
+
+/-- Converting to Lean's normalized dyadics preserves the exact rational value. -/
+@[simp, grind =] theorem toRat_toCore (value : Dyadic) :
+    value.toCore.toRat = value.toRat := by
+  simp only [toCore, _root_.Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow, neg_neg,
+    toRat, Rat.ofInt_eq_cast]
 
 /-- A dyadic with a clear sign field denotes its magnitude times its power-of-two scale. -/
 theorem toRat_mk_false (significand : Nat) (exponent : Int) :

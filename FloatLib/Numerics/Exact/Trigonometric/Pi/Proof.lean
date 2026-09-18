@@ -22,8 +22,8 @@ public section
 
 namespace FloatLib.Numerics.TrigonometricComparison
 
-private theorem cmp_ratCast (a b : ℚ) : cmp a b = cmp (a : ℝ) (b : ℝ) := by
-  simp [cmp, cmpUsing]
+private theorem cmp_ratCast (a b : ℚ) : cmp a b = cmp (a : ℝ) (b : ℝ) :=
+  ((Rat.cast_strictMono (K := ℝ)).cmp_map_eq a b).symm
 
 /-- Prepared pi-scaled sine comparisons agree with the exact real ordering at every cache size. -/
 theorem prepareSinPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :

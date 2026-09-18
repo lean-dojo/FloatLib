@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit trigonometric operations
 
-The configured operations lift the correctly rounded model functions through the lawful
-storage codec. Changing the carrier introduces no additional numerical rounding.
+Sine, cosine, and tangent take radian arguments; their inverses return principal angles.
+Each call lifts the correctly rounded model result through the lawful storage codec without
+further numerical rounding.
 -/
 
 @[expose] public section

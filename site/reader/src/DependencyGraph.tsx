@@ -193,8 +193,7 @@ export default function DependencyGraph({ index, view, selected }: {
     </li>)}</ul> : <p className="muted">None in this graph.</p>;
   return <article className="page dependency-page">
     <header className="page-header"><h1>Dependency graph</h1>
-      <p>We think it’s pretty cool to see the library like this :) Pick a node and follow the
-        connections back to the pieces it uses.</p>
+      <p>Pick a node and follow the connections back to the pieces it uses.</p>
     </header>
     <nav className="graph-tabs" aria-label="Graph type">
       <a href={href(graphPath())} aria-current={view === 'modules' ? 'page' : undefined}>All library modules</a>

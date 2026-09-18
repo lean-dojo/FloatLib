@@ -24,7 +24,7 @@ namespace Packing.Internal
 
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
-noncomputable section
+section
 
 /-- An in-range IEEE subnormal fraction field denotes a finite value. -/
 theorem isFinite_ofFields_subnormal

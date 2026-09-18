@@ -87,14 +87,14 @@ private theorem spec_div_eq_word :
                   simp [generic, FiniteKernel.divRuntime_eq, hrefines]
                 _ = Spec.div x y := generic_eq_spec x y
             simp [word, h32, h64, hpair, hfast, hquotient]
-      · by_cases heligible : NativeSmallWord.Eligible fmt
+      · by_cases heligible : NativeSmallWord.StorageEligible fmt
         · cases hnative : NativeSmallWordDiv.divNormal? x y with
           | none =>
               simp [word, h32, h64, hpair, heligible, hnative,
                 generic_eq_spec]
           | some quotient =>
               have hrefines :=
-                NativeSmallWordDiv.divNormal_refines
+                NativeSmallWordDiv.divNormal_refines_of_storage
                   heligible x y quotient hnative
               have hquotient : quotient = Spec.div x y := by
                 calc

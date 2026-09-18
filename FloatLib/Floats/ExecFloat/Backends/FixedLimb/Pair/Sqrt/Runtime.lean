@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
 public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
+import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 
 /-!
 # Two-word square-root runtime

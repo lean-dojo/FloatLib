@@ -37,45 +37,24 @@ namespace FloatLib.Numerics.FixedWord.IntegerSquareRoot
     simp [Nat.shiftRight_eq_div_pow]
   have hcarry :
       (left &&& right &&& 1).toNat =
-        (left.toNat % 2) * (right.toNat % 2) := by
+        if 2 ≤ left.toNat % 2 + right.toNat % 2 then 1 else 0 := by
     simp only [UInt64.toNat_and, UInt64.reduceToNat, Nat.and_one_is_mod]
-    rw [show (2 : Nat) = 2 ^ 1 by norm_num, Nat.and_mod_two_pow]
+    rw [show (2 : Nat) = 2 ^ 1 by decide, Nat.and_mod_two_pow]
     rcases Nat.mod_two_eq_zero_or_one left.toNat with hleft | hleft <;>
       rcases Nat.mod_two_eq_zero_or_one right.toNat with hright | hright <;>
       simp_all
-  have hleftBound : left.toNat / 2 < 2 ^ 63 := by
-    rw [Nat.div_lt_iff_lt_mul (by decide)]
-    simpa [pow_succ] using left.toNat_lt
-  have hrightBound : right.toNat / 2 < 2 ^ 63 := by
-    rw [Nat.div_lt_iff_lt_mul (by decide)]
-    simpa [pow_succ] using right.toNat_lt
-  have hcarryBound :
-      (left.toNat % 2) * (right.toNat % 2) ≤ 1 := by
-    rcases Nat.mod_two_eq_zero_or_one left.toNat with hleft | hleft <;>
-      rcases Nat.mod_two_eq_zero_or_one right.toNat with hright | hright <;>
-      simp_all
+  have hleft := left.toNat_lt
+  have hright := right.toNat_lt
   have hfirstFit :
       left.toNat / 2 + right.toNat / 2 < 2 ^ 64 := by
     omega
   have hfullFit :
       left.toNat / 2 + right.toNat / 2 +
-          (left.toNat % 2) * (right.toNat % 2) < 2 ^ 64 := by
-    omega
-  have hleftDecomp := Nat.mod_add_div left.toNat 2
-  have hrightDecomp := Nat.mod_add_div right.toNat 2
+        (if 2 ≤ left.toNat % 2 + right.toNat % 2 then 1 else 0) < 2 ^ 64 := by
+    split <;> omega
   unfold average
-  rw [UInt64.toNat_add, UInt64.toNat_add, hleftHalf, hrightHalf, hcarry]
-  rw [Nat.mod_eq_of_lt hfirstFit, Nat.mod_eq_of_lt hfullFit]
-  have hsum :
-      left.toNat + right.toNat =
-        2 * (left.toNat / 2 + right.toNat / 2) +
-          (left.toNat % 2 + right.toNat % 2) := by
-    omega
-  rw [hsum]
-  rcases Nat.mod_two_eq_zero_or_one left.toNat with hleft | hleft <;>
-    rcases Nat.mod_two_eq_zero_or_one right.toNat with hright | hright <;>
-    rw [Nat.mul_add_div (by decide : 0 < 2)] <;>
-    simp_all
+  rw [UInt64.toNat_add, UInt64.toNat_add, hleftHalf, hrightHalf, hcarry,
+    Nat.mod_eq_of_lt hfirstFit, Nat.mod_eq_of_lt hfullFit, Nat.add_div (by decide)]
 
 /-- The native Newton iteration is exactly Lean's natural-number iteration. -/
 @[simp, grind =] theorem sqrtIter_toNat (value guess : UInt64) :
@@ -141,7 +120,7 @@ theorem sqrtNat_eq_sqrt (value : Nat) :
   dsimp only
   split
   next hfit =>
-    rw [sqrt_toNat, UInt64.toNat_ofNat', Nat.mod_eq_of_lt hfit]
+    rw [sqrt_toNat, UInt64.toNat_ofNat_of_lt' hfit]
   next _ =>
     exact (Nat.sqrt.eq_1 value).symm
 

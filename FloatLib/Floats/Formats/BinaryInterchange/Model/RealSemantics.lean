@@ -22,7 +22,7 @@ intermediate and one rounding step.
 
 @[expose] public section
 
-noncomputable section
+section
 
 open FloatLib.Floats.Formats.Flocq
 

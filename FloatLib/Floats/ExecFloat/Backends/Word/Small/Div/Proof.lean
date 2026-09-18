@@ -16,11 +16,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Proof
 # Correctness of native one-word finite division
 
 The one-word quotient kernel computes only cases whose normalized quotient and rounding evidence
-fit its fixed-width budget. The refinement relates its logarithms, restoring quotient, guard/sticky
-information, and packed result to the complete format-generic quotient rounder.
+fit its fixed-width budget. Every IEEE descriptor stored in one word meets this budget:
+the sign and at least two exponent bits leave at most 61 fraction bits. The refinement relates its
+logarithms, restoring quotient, guard/sticky information, and packed result to the complete
+format-generic quotient rounder.
 
-Under `NativeSmallWord.Eligible`, `divNormal_refines` identifies every accepted result with
-`FiniteKernel.div?`. Declined inputs are handled by the dispatcher's exact generic fallback.
+Under `NativeSmallWord.StorageEligible`, `divNormal_refines_of_storage` identifies every accepted
+result with `FiniteKernel.div?`. Declined inputs use the dispatcher's exact generic fallback.
 -/
 
 @[expose] public section
@@ -31,36 +33,40 @@ namespace Model.NativeSmallWordDiv
 open FloatLib.Numerics.FixedWord.RestoringQuotient
 
 private theorem encodedExponent_fit
-    (fmt : FloatFormat) (hexpWidth : fmt.expWidth ≤ 30)
+    (fmt : FloatFormat) (hwidth : fmt.bitWidth ≤ 64)
     (exponent : Int)
     (hmin : fmt.ieeeMinNormalExponent ≤ exponent)
     (hmax : exponent ≤ Int.ofNat fmt.ieeeMaxNormalExponent) :
     Int.toNat (exponent + Int.ofNat fmt.bias) < 2 ^ 64 := by
   unfold FloatFormat.ieeeMinNormalExponent at hmin
   unfold FloatFormat.ieeeMaxNormalExponent at hmax
+  have hexpWidth : fmt.expWidth ≤ 62 := by
+    have hfracPos := fmt.fracWidth_pos
+    unfold FloatFormat.bitWidth at hwidth
+    omega
   have hpow :
-      2 ^ fmt.expWidth ≤ 2 ^ 30 :=
+      2 ^ fmt.expWidth ≤ 2 ^ 62 :=
     Nat.pow_le_pow_right (by decide) hexpWidth
-  have hbias : fmt.bias < 2 ^ 30 :=
+  have hbias : fmt.bias < 2 ^ 62 :=
     (FloatFormat.bias_lt_pow_expWidth fmt).trans_le hpow
   have hnonnegative : 0 ≤ exponent + Int.ofNat fmt.bias := by
     omega
   have hbiasInt :
-      Int.ofNat fmt.bias < Int.ofNat (2 ^ 30) :=
+      Int.ofNat fmt.bias < Int.ofNat (2 ^ 62) :=
     Int.ofNat_lt.mpr hbias
   have hupper :
-      exponent + Int.ofNat fmt.bias < Int.ofNat (2 ^ 31) := by
+      exponent + Int.ofNat fmt.bias < Int.ofNat (2 ^ 63) := by
     calc
       exponent + Int.ofNat fmt.bias
           ≤ Int.ofNat fmt.bias + Int.ofNat fmt.bias :=
         by
           simpa [add_comm] using
             add_le_add_right hmax (Int.ofNat fmt.bias)
-      _ < Int.ofNat (2 ^ 30) + Int.ofNat (2 ^ 30) :=
+      _ < Int.ofNat (2 ^ 62) + Int.ofNat (2 ^ 62) :=
         add_lt_add hbiasInt hbiasInt
-      _ = Int.ofNat (2 ^ 31) := by norm_num
+      _ = Int.ofNat (2 ^ 63) := by norm_num
   have htoNat :
-      Int.toNat (exponent + Int.ofNat fmt.bias) < 2 ^ 31 := by
+      Int.toNat (exponent + Int.ofNat fmt.bias) < 2 ^ 63 := by
     rw [← Int.ofNat_lt]
     rw [Int.toNat_of_nonneg hnonnegative]
     exact hupper
@@ -118,8 +124,7 @@ theorem roundNormalNative_eq_bounds
 private theorem roundNormalNative_eq_spec
     (fmt : FloatFormat)
     (hwidth : fmt.bitWidth ≤ 64)
-    (hexpWidth : fmt.expWidth ≤ 30)
-    (hfracWidth : fmt.fracWidth ≤ 30)
+    (hfracWidth : fmt.fracWidth ≤ 61)
     (sign : Bool) (num den : UInt64) (exponent : Int)
     (hnum : num ≠ 0) (hden : den ≠ 0)
     (hnumFit : num.toNat < 2 ^ (fmt.fracWidth + 1))
@@ -142,7 +147,7 @@ private theorem roundNormalNative_eq_spec
       fmt num den hnum hnumFit
   have hdenFit63 : den.toNat < 2 ^ 63 := by
     have hpow :
-        2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 31 :=
+        2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 63 :=
       Nat.pow_le_pow_right (by decide) (by omega)
     exact hdenFit.trans_le (hpow.trans (by norm_num))
   have hquotient :=
@@ -196,7 +201,7 @@ private theorem roundNormalNative_eq_spec
       nativeMantissa = NativeSmallWord.carryBit fmt ↔
         genericMantissa = Model.pow2 (fmt.fracWidth + 1) := by
     rw [← UInt64.toNat_inj, hmantissa,
-      NativeSmallWord.carryBit_toNat fmt hfracWidth]
+      NativeSmallWord.carryBit_toNat_of_width fmt hwidth (by omega)]
     simp only [Model.pow2_eq_two_pow]
   have hbounds :
       2 ^ fmt.fracWidth ≤ genericMantissa ∧
@@ -236,7 +241,7 @@ private theorem roundNormalNative_eq_spec
             floorLog2RatWord num den + exponent + 1 ≤
               Int.ofNat fmt.ieeeMaxNormalExponent := by
           omega
-        exact encodedExponent_fit fmt hexpWidth
+        exact encodedExponent_fit fmt hwidth
           (floorLog2RatWord num den + exponent + 1)
           hcarryMin hcarryMax
       have hencodedWord :
@@ -277,14 +282,14 @@ private theorem roundNormalNative_eq_spec
     have hbaseLe :
         NativeSmallWord.hiddenBit fmt ≤ nativeMantissa := by
       apply UInt64.le_iff_toNat_le.mpr
-      rw [NativeSmallWord.hiddenBit_toNat fmt hfracWidth, hmantissa]
+      rw [NativeSmallWord.hiddenBit_toNat_of_width fmt hwidth, hmantissa]
       exact hbounds.1
     have hfractionFit :
         genericMantissa - 2 ^ fmt.fracWidth < 2 ^ 64 := by
       have hupper : genericMantissa ≤ 2 ^ (fmt.fracWidth + 1) :=
         hbounds.2
       have hpow :
-          2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 31 :=
+          2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 63 :=
         Nat.pow_le_pow_right (by decide) (by omega)
       omega
     have hfraction :
@@ -293,7 +298,7 @@ private theorem roundNormalNative_eq_spec
             (genericMantissa - 2 ^ fmt.fracWidth) := by
       apply UInt64.toNat_inj.mp
       rw [UInt64.toNat_sub_of_le _ _ hbaseLe,
-        NativeSmallWord.hiddenBit_toNat fmt hfracWidth, hmantissa]
+        NativeSmallWord.hiddenBit_toNat_of_width fmt hwidth, hmantissa]
       exact (UInt64.toNat_ofNat_of_lt hfractionFit).symm
     simp only [shift, nativeMantissa, genericMantissa,
       hnativeCarryBool, hgenericCarryBool]
@@ -304,7 +309,7 @@ private theorem roundNormalNative_eq_spec
           Int.toNat
               (floorLog2RatWord num den + exponent +
                 Int.ofNat fmt.bias) < 2 ^ 64 := by
-        exact encodedExponent_fit fmt hexpWidth
+        exact encodedExponent_fit fmt hwidth
           (floorLog2RatWord num den + exponent)
           htotalMin htotalMax
       have hencodedWord :
@@ -336,13 +341,17 @@ private theorem roundNormalNative_eq_spec
       congr 3
       exact UInt64.toNat_ofNat_of_lt hfractionFit
 
-/-- A successful one-word normal division is exactly the compact finite division kernel. -/
-theorem divNormal_refines {fmt : FloatFormat}
-    (heligible : NativeSmallWord.Eligible fmt)
+/-- Restoring division refines the finite kernel for every descriptor within its word capacity. -/
+theorem divNormal_refines_of_storage {fmt : FloatFormat}
+    (heligible : NativeSmallWord.StorageEligible fmt)
     (x y result : Model fmt)
     (hresult : divNormal? x y = some result) :
     FiniteKernel.div? x y = some result := by
-  rcases heligible with ⟨hieee, hwidth, hexpWidth, hfracWidth⟩
+  rcases heligible with ⟨hieee, hwidth⟩
+  have hfracWidth : fmt.fracWidth ≤ 61 := by
+    have hexp := fmt.expWidth_ge_two
+    unfold FloatFormat.bitWidth at hwidth
+    omega
   rcases NativeNormalPair.view_of_success hieee hwidth x y
       (fun sign xExponent yExponent xMantissa yMantissa =>
         roundNormalNative? fmt sign xMantissa yMantissa
@@ -378,7 +387,7 @@ theorem divNormal_refines {fmt : FloatFormat}
       FiniteQuotientRound.normalSpec? fmt view.sign
           view.xMantissa.toNat view.yMantissa.toNat exponent =
         some result := by
-    rw [← roundNormalNative_eq_spec fmt hwidth hexpWidth hfracWidth
+    rw [← roundNormalNative_eq_spec fmt hwidth hfracWidth
       view.sign view.xMantissa view.yMantissa exponent
       hxMantissaNe hyMantissaNe
       view.xMantissaBounds.2 view.yMantissaBounds.2]
@@ -426,6 +435,16 @@ theorem divNormal_refines {fmt : FloatFormat}
   change some (Model.roundRatScaled fmt view.sign
     view.xMantissa.toNat view.yMantissa.toNat exponent) = some result
   exact congrArg some hrounded.symm
+
+/-- The shared small-word capacity is sufficient for native normal division. -/
+theorem divNormal_refines {fmt : FloatFormat}
+    (heligible : NativeSmallWord.Eligible fmt)
+    (x y result : Model fmt)
+    (hresult : divNormal? x y = some result) :
+    FiniteKernel.div? x y = some result := by
+  exact divNormal_refines_of_storage
+    ⟨heligible.1, heligible.2.1⟩
+    x y result hresult
 
 end Model.NativeSmallWordDiv
 end FloatLib.Floats.Formats.BinaryInterchange

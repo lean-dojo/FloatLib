@@ -185,16 +185,8 @@ private theorem sqrtPositiveFiniteCore_eq_spec
   have hscaledFit : genericScaled < 2 ^ 64 :=
     lt_trans hscaledLt (Nat.pow_lt_pow_right (by decide) (by omega))
   have hscaled : nativeScaled.toNat = genericScaled := by
-    dsimp only [nativeScaled]
-    rw [UInt64.toNat_shiftLeft]
-    have hnativeShiftLt : nativeShift.toNat < 64 := by
-      rw [hshift]
-      exact hshiftLt
-    have hshiftMod : nativeShift.toNat % 64 = genericShift := by
-      rw [Nat.mod_eq_of_lt hnativeShiftLt, hshift]
-    rw [hshiftMod]
-    change genericScaled % 2 ^ 64 = genericScaled
-    exact Nat.mod_eq_of_lt hscaledFit
+    simpa only [nativeScaled, genericScaled, ← hshift, UInt64.ofNat_toNat] using
+      FloatLib.Numerics.FixedWord.shiftLeft_toNat mantissa genericShift hshiftLt hscaledFit
   have hroot : nativeRoot.toNat = genericRoot := by
     dsimp only [nativeRoot, genericRoot]
     rw [FloatLib.Numerics.FixedWord.IntegerSquareRoot.sqrt_toNat, hscaled]

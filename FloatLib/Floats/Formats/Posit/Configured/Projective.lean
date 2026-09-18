@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Semantics.Projective
 public import FloatLib.Floats.Formats.Posit.Configured
-public import FloatLib.Floats.Formats.Posit.Configured.Real -- shake: keep
 
 /-!
 # Optional projective views of configured posits

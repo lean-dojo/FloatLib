@@ -12,7 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Automation
 # Regression checks for complex numerical automation
 
 The examples ensure complex values use the common operation contracts while retaining their
-explicit componentwise and six-rounding-site semantics.
+explicit componentwise and six-rounding-site semantics. Magnitude checks distinguish quiet and
+signaling NaNs when the other component is infinite.
 -/
 
 @[expose] public section
@@ -51,5 +52,25 @@ example {left right : ℂ}
     (hfinite : MulFinite x.1 y.1) :
     At customFormat (roundedMul customFormat left right) :=
   numerics_refine (ExecComplex.mul x.1 y.1)
+
+-- A quiet NaN does not hide an infinite component, in either position or sign.
+example :
+    ([-1, 1] : List Int).all (fun sign =>
+      let infinity := if sign < 0 then Model.negInf customFormat else Model.posInf customFormat
+      let quiet := Model.canonicalNaN customFormat
+      Model.isInf (magnitude ⟨infinity, quiet⟩) &&
+        !(Model.signBit (magnitude ⟨infinity, quiet⟩)) &&
+        Model.isInf (magnitude ⟨quiet, infinity⟩) &&
+        !(Model.signBit (magnitude ⟨quiet, infinity⟩))) = true := by
+  decide
+
+-- Signaling NaNs remain invalid; without an infinite component, quiet NaNs propagate too.
+example :
+    let signaling := Model.ofFields customFormat false customFormat.expAllOnesNat 1
+    let quiet := Model.canonicalNaN customFormat
+    Model.isNaN (magnitude ⟨Model.posInf customFormat, signaling⟩) &&
+      Model.isNaN (magnitude ⟨signaling, Model.negInf customFormat⟩) &&
+      Model.isNaN (magnitude ⟨Model.posZero customFormat, quiet⟩) = true := by
+  decide
 
 end FloatLibTests.Conformance.BinaryInterchange.ExecComplexAutomation

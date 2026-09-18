@@ -286,4 +286,149 @@ example :
       .success ExecFloat.Posit.nar { mappedSpecial := true } := by
   native_decide
 
+/-! ## Binary conversion overflow and descriptor boundaries -/
+
+open Formats.BinaryInterchange
+
+-- Half an ulp above binary32's largest finite value.
+private def binary32OverflowMidpoint : Rat := 2 ^ 128 - 2 ^ 103
+
+/-- Retain the configured conversion's bits and every status flag. -/
+private def binary32Conversion (rounding : RoundingMode) (exact : Rat)
+    (entropy : Nat := 0) : ExecFloat.ConversionOutcome Nat :=
+  (ExecFloat.convertWith (target := Binary32) exact
+    ({ quantization := { rounding }, entropy } : ExecFloat.Binary.Conversion.Context)).map
+      ExecFloat.Binary.toNatBits
+
+-- Exceeding maxFinite does not itself signal overflow. The midpoint rounds to infinity.
+example :
+    [ binary32Conversion .nearestEven (binary32OverflowMidpoint - 1)
+    , binary32Conversion .nearestEven binary32OverflowMidpoint
+    , binary32Conversion .nearestEven (binary32OverflowMidpoint + 1)
+    , binary32Conversion .nearestEven (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .nearestEven (-binary32OverflowMidpoint)
+    ] =
+      [ .success 0x7f7fffff { inexact := true }
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0xff7fffff { inexact := true }
+      , .success 0xff800000 { inexact := true, overflow := true }
+      ] := by
+  decide +kernel
+
+-- Directed overflow depends on the sign and direction. Truncation overflows at 2^128,
+-- even though its delivered value remains maxFinite.
+example :
+    [ binary32Conversion .towardZero (binary32OverflowMidpoint - 1)
+    , binary32Conversion .towardZero (2 ^ 128 - 1)
+    , binary32Conversion .towardZero (2 ^ 128)
+    , binary32Conversion .towardPositive (binary32OverflowMidpoint - 1)
+    , binary32Conversion .towardPositive (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .towardNegative (binary32OverflowMidpoint - 1)
+    , binary32Conversion .towardNegative (-(binary32OverflowMidpoint - 1))
+    ] =
+      [ .success 0x7f7fffff { inexact := true }
+      , .success 0x7f7fffff { inexact := true }
+      , .success 0x7f7fffff { inexact := true, overflow := true }
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0xff7fffff { inexact := true }
+      , .success 0x7f7fffff { inexact := true }
+      , .success 0xff800000 { inexact := true, overflow := true }
+      ] := by
+  decide +kernel
+
+-- The policies without an IEEE rounding-mode constructor also classify overflow after rounding.
+-- These entropy values select opposite sides of the same stochastic rounding interval.
+example :
+    [ binary32Conversion .nearestAway (binary32OverflowMidpoint - 1)
+    , binary32Conversion .nearestAway binary32OverflowMidpoint
+    , binary32Conversion .stochastic (binary32OverflowMidpoint - 1) 0
+    , binary32Conversion .stochastic (binary32OverflowMidpoint - 1) (2 ^ 103)
+    ] =
+      [ .success 0x7f7fffff { inexact := true }
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0x7f7fffff { inexact := true }
+      ] := by
+  decide +kernel
+
+/-- Retain a model cast's destination bits and all five exception indicators. -/
+private def binary32Cast (format : FloatFormat) (bits : Nat)
+    (rounding : Model.IEEERoundingMode := .nearestEven) : Nat × Model.IEEEStatus :=
+  let outcome := Model.castWithStatus FloatFormat.binary32 format (Model.ofNatBits bits) rounding
+  (outcome.value.toNatBits, outcome.status)
+
+-- Infinity follows the destination's native overflow behavior in every rounding mode.
+example :
+    [.nearestEven, .towardZero, .towardPositiveInfinity, .towardNegativeInfinity].map
+      (fun mode =>
+        [ binary32Cast FloatFormat.e4m3fn 0x7f800000 mode
+        , binary32Cast FloatFormat.e4m3fn 0xff800000 mode
+        , binary32Cast FloatFormat.e4m3fnuz 0x7f800000 mode
+        , binary32Cast FloatFormat.e4m3fnuz 0xff800000 mode
+        ]) =
+      List.replicate 4
+        [ (0x7f, { overflow := true, inexact := true })
+        , (0x7f, { overflow := true, inexact := true })
+        , (0x80, { overflow := true, inexact := true })
+        , (0x80, { overflow := true, inexact := true })
+        ] := by
+  decide +kernel
+
+-- Finite overflow, here from binary32's representations of ±10^10, selects the same NaNs.
+example :
+    [ binary32Cast FloatFormat.e4m3fn 0x501502f9
+    , binary32Cast FloatFormat.e4m3fn 0xd01502f9
+    , binary32Cast FloatFormat.e4m3fnuz 0x501502f9
+    , binary32Cast FloatFormat.e4m3fnuz 0xd01502f9
+    ] =
+      [ (0x7f, { overflow := true, inexact := true })
+      , (0x7f, { overflow := true, inexact := true })
+      , (0x80, { overflow := true, inexact := true })
+      , (0x80, { overflow := true, inexact := true })
+      ] := by
+  decide +kernel
+
+-- IEEE infinity remains exact; a fully finite encoding selects its signed endpoint.
+example :
+    [ binary32Cast FloatFormat.binary16 0x7f800000
+    , binary32Cast FloatFormat.binary16 0xff800000
+    , binary32Cast (FloatFormat.custom 4 3 7 .finite) 0x7f800000
+    , binary32Cast (FloatFormat.custom 4 3 7 .finite) 0xff800000
+    ] =
+      [ (0x7c00, {})
+      , (0xfc00, {})
+      , (0x7f, { overflow := true, inexact := true })
+      , (0xff, { overflow := true, inexact := true })
+      ] := by
+  decide +kernel
+
+private def customBias : FloatFormat := FloatFormat.custom 8 23 100 .ieee
+
+example : customBias.isIEEE = false := by decide
+
+-- The general rational rounder uses the declared bias, including signed and scaled inputs.
+example :
+    [ Model.toRat? (Model.roundRatScaled customBias false 1 3 0)
+    , Model.toRat? (Model.roundRatScaled customBias true 1 3 0)
+    , Model.toRat? (Model.roundRatScaled customBias false 1 3 5)
+    ] =
+      [ some (11184811 / 33554432)
+      , some (-11184811 / 33554432)
+      , some (11184811 / 1048576)
+      ] := by
+  decide +kernel
+
+-- The specialized helper cannot bypass its conventional-IEEE precondition.
+/--
+error: Type mismatch
+  Model.ieeeRoundRatScaled customBias false 1 3 0
+has type
+  customBias.isIEEE = true → Model customBias
+but is expected to have type
+  Model customBias
+-/
+#guard_msgs (substring := true) in
+#check (Model.ieeeRoundRatScaled customBias false 1 3 0 : Model customBias)
+
 end FloatLibTests.Conformance.Formats.Conversion

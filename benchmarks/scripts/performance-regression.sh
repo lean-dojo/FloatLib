@@ -16,17 +16,22 @@ runs="${PERF_RUNS:-5}"
 compile_runs="${PERF_COMPILE_RUNS:-3}"
 cpu="${PERF_CPU:-}"
 skip_codegen="${PERF_SKIP_CODEGEN:-0}"
+full="${PERF_FULL:-0}"
 
 usage() {
-  echo "usage: $0 [check|record] [new-output-directory]"
+  echo "usage: $0 [check|record] [new-output-directory] | validate baseline-directory"
   echo "  record writes baseline.csv and environment.env for review"
   echo "  check requires PERF_BASELINE_DIR pointing to a reviewed baseline directory"
+  echo "  validate checks baseline schema and workload settings without compiling"
+  echo "  PERF_FORMAT / PERF_OPERATION / PERF_INPUT_CLASS select runtime rows for check"
+  echo "  PERF_ITERATIONS / PERF_WARMUP_ITERATIONS set positive counts (must match baseline)"
+  echo "  PERF_FULL=1 requires unfiltered coverage and all generated-code checks"
 }
 if [[ "$#" -eq 1 && ("$mode" == --help || "$mode" == -h) ]]; then
   usage
   exit 0
 fi
-if [[ "$#" -gt 2 || ("$mode" != check && "$mode" != record) ]]; then
+if [[ "$#" -gt 2 || ("$mode" != check && "$mode" != record && "$mode" != validate) ]]; then
   usage >&2
   exit 2
 fi
@@ -36,6 +41,10 @@ for count in "$runs" "$compile_runs"; do
     exit 2
   fi
 done
+if [[ "$full" != 0 && "$full" != 1 ]]; then
+  echo "PERF_FULL must be 0 or 1: $full" >&2
+  exit 2
+fi
 if [[ "$skip_codegen" != 0 && "$skip_codegen" != 1 ]]; then
   echo "PERF_SKIP_CODEGEN must be 0 or 1: $skip_codegen" >&2
   exit 2
@@ -47,7 +56,7 @@ if [[ -n "$cpu" ]]; then
     exit 2
   fi
 fi
-if [[ -e "$output" || -L "$output" ]]; then
+if [[ "$mode" != validate && ( -e "$output" || -L "$output" ) ]]; then
   echo "output path already exists; choose a new directory: $output" >&2
   exit 2
 fi
@@ -57,27 +66,59 @@ performance_data() {
   python3 - "$@" <<'PY'
 import csv
 import math
+import os
+import re
 import statistics
 import sys
 from pathlib import Path
 
-FORMATS = {"binary32": 32, "binary64": 64, "binary128": 128, "posit32": 32, "binary256": 256}
+SCHEMA = "2"
+COMPILE_FORMATS = {"binary32": 32, "binary64": 64, "binary128": 128, "posit32": 32, "binary256": 256}
+FORMATS = {"binary16": 16, "binary32": 32, "binary64": 64, "binary128": 128,
+           "binary256": 256, "descriptor24": 24, "descriptor48": 48, "descriptor64": 64,
+           "posit16": 16, "posit32": 32, "posit65": 65}
+OPERATIONS = ["add", "sub", "mul", "div", "sqrt", "fma"]
+CLASSES = ["ordinary", "zero", "subnormal", "cancel", "gap", "tie"]
 BUDGETS = {
     "compile-nanos": 1.30,
     "generated-c-body-bytes": 1.15,
-    "runtime-nanos-per-add": 1.35,
+    "runtime-nanos-per-operation": 1.35,
 }
-BASELINE_HEADER = ["metric", "subject", "baseline", "maxRatio"]
+BASELINE_HEADER = ["schema", "metric", "subject", "baseline", "maxRatio",
+                   "iterations", "warmupIterations", "sink", "backend"]
+RUNTIME_HEADER = ["schema", "format", "totalBits", "operation", "inputClass", "backend",
+                  "iterations", "warmupIterations", "totalNanos", "sink"]
 ENVIRONMENT_KEYS = {
     "lean", "ccCommand", "ccPath", "cc", "arch", "cpu", "cpuCount", "cpuAffinity",
 }
+
+
+def classes_for(name, operation):
+    classes = ["ordinary"]
+    binary = name in {"binary32", "binary256", "descriptor24"}
+    if binary or name in {"posit32", "posit65"}:
+        classes.append("zero")
+        if binary:
+            classes.append("subnormal")
+        if operation in {"add", "sub", "fma"}:
+            classes.extend(["cancel", "gap"])
+        if binary and operation != "sqrt":
+            classes.append("tie")
+    return classes
+
+
+SUBJECTS = {f"{name}/{operation}/{kind}": (name, operation, kind)
+            for name in FORMATS for operation in OPERATIONS
+            for kind in classes_for(name, operation)}
+EXPECTED = {(metric, name) for metric in ["compile-nanos", "generated-c-body-bytes"]
+            for name in COMPILE_FORMATS} | {("runtime-nanos-per-operation", s) for s in SUBJECTS}
 
 
 def read_rows(path, header):
     with path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream, strict=True)
         if reader.fieldnames != header:
-            raise ValueError(f"{path}: expected CSV header {header}")
+            raise ValueError(f"{path}: expected CSV header {header}; old baselines require re-recording")
         rows = list(reader)
     for row in rows:
         if None in row or any(value is None or value == "" for value in row.values()):
@@ -92,32 +133,87 @@ def positive_number(text, context):
     return value
 
 
+def natural(text, context):
+    if not re.fullmatch(r"0|[1-9][0-9]*", text):
+        raise ValueError(f"{context}: expected a canonical natural number, got {text!r}")
+    return int(text)
+
+
 def positive_integer(text, context):
-    value = int(text)
-    if value <= 0:
-        raise ValueError(f"{context}: expected a positive integer, got {text!r}")
+    value = natural(text, context)
+    if value == 0:
+        raise ValueError(f"{context}: expected a positive integer")
     return value
 
 
-def read_baseline(directory):
+def sink_value(text, context):
+    value = natural(text, context)
+    if value >= 2**64:
+        raise ValueError(f"{context}: invalid UInt64 sink")
+    return value
+
+
+def default_iterations(name):
+    if name in {"binary16", "binary32", "binary64"}:
+        return 100000
+    if name in {"posit16", "posit32"}:
+        return 20000
+    return 10000 if name == "binary128" else 5000
+
+
+def selection():
+    choices = [os.environ.get(key) for key in ["PERF_FORMAT", "PERF_OPERATION", "PERF_INPUT_CLASS"]]
+    for key, value, allowed in zip(["PERF_FORMAT", "PERF_OPERATION", "PERF_INPUT_CLASS"], choices,
+                                   [FORMATS, OPERATIONS, CLASSES]):
+        if value is not None and value not in allowed:
+            raise ValueError(f"invalid {key}: {value!r}")
+    selected = {subject for subject, parts in SUBJECTS.items()
+                if all(value is None or value == part for value, part in zip(choices, parts))}
+    if not selected:
+        raise ValueError("performance filters select no rows")
+    for key in ["PERF_ITERATIONS", "PERF_WARMUP_ITERATIONS"]:
+        if key in os.environ:
+            positive_integer(os.environ[key], key)
+    return selected
+
+
+def settings(subject):
+    name = SUBJECTS[subject][0]
+    return (positive_integer(os.environ.get("PERF_ITERATIONS", str(default_iterations(name))),
+                             "PERF_ITERATIONS"),
+            positive_integer(os.environ.get("PERF_WARMUP_ITERATIONS", "256"),
+                             "PERF_WARMUP_ITERATIONS"))
+
+
+def read_baseline(directory, selected):
     path = directory / "baseline.csv"
     baseline = {}
     for row in read_rows(path, BASELINE_HEADER):
         key = row["metric"], row["subject"]
-        if key in baseline:
-            raise ValueError(f"{path}: duplicate metric {key}")
+        if row["schema"] != SCHEMA:
+            raise ValueError(f"{path}: unsupported schema {row['schema']!r}; record a new baseline")
+        if key not in EXPECTED or key in baseline:
+            raise ValueError(f"{path}: unexpected or duplicate metric {key}")
         reference = positive_number(row["baseline"], f"{path}: {key} baseline")
         budget = positive_number(row["maxRatio"], f"{path}: {key} maxRatio")
         if not math.isfinite(reference * budget):
             raise ValueError(f"{path}: {key} budget product is not finite")
-        baseline[key] = reference, budget
-    expected = {(metric, name) for metric in BUDGETS for name in FORMATS}
-    if baseline.keys() != expected:
-        raise ValueError(
-            f"{path}: baseline metric mismatch; "
-            f"missing={sorted(expected - baseline.keys())}, "
-            f"extra={sorted(baseline.keys() - expected)}"
-        )
+        if key[0] == "runtime-nanos-per-operation":
+            iterations = positive_integer(row["iterations"], str(path))
+            warmup = positive_integer(row["warmupIterations"], str(path))
+            sink = sink_value(row["sink"], str(path))
+            if not row["backend"].strip() or row["backend"] == "-":
+                raise ValueError(f"{path}: runtime metrics require a backend name")
+            if key[1] in selected and (iterations, warmup) != settings(key[1]):
+                raise ValueError(f"{path}: workload settings mismatch for {key[1]}")
+            identity = (iterations, warmup, sink)
+        else:
+            if any(row[key] != "-" for key in ["iterations", "warmupIterations", "sink", "backend"]):
+                raise ValueError(f"{path}: compile metrics require '-' runtime fields")
+            identity = ("-", "-", "-")
+        baseline[key] = reference, budget, identity, row["backend"]
+    if baseline.keys() != EXPECTED:
+        raise ValueError(f"{path}: baseline metric mismatch; missing={sorted(EXPECTED - baseline.keys())}")
     return baseline
 
 
@@ -134,103 +230,124 @@ def validate_environment(directory):
     positive_integer(fields["cpuCount"], f"{path}: cpuCount")
 
 
-def measurements(output, runs, compile_runs):
+def measurements(output, runs, compile_runs, selected):
     rows = []
     path = output / "raw/compile-nanos.csv"
-    compile_samples = {name: {} for name in FORMATS}
+    compile_samples = {name: {} for name in COMPILE_FORMATS}
     for row in read_rows(path, ["format", "trial", "nanos"]):
         name = row["format"]
         trial = positive_integer(row["trial"], str(path))
-        if name not in FORMATS or trial > compile_runs or trial in compile_samples[name]:
+        if name not in COMPILE_FORMATS or trial > compile_runs or trial in compile_samples[name]:
             raise ValueError(f"{path}: unexpected or duplicate compile trial {name}, {trial}")
         compile_samples[name][trial] = positive_integer(row["nanos"], str(path))
     for name, samples in compile_samples.items():
         if len(samples) != compile_runs:
             raise ValueError(f"{path}: {name} expected {compile_runs} compile trials")
-        rows.append(("compile-nanos", name, statistics.median(samples.values())))
+        rows.append(("compile-nanos", name, statistics.median(samples.values()), "-", "-", "-", "-"))
 
     path = output / "raw/code-size.csv"
     sizes = {}
     for row in read_rows(path, ["format", "bytes"]):
         name = row["format"]
-        if name not in FORMATS or name in sizes:
+        if name not in COMPILE_FORMATS or name in sizes:
             raise ValueError(f"{path}: unexpected or duplicate code-size row {name}")
         sizes[name] = positive_integer(row["bytes"], str(path))
-    if sizes.keys() != FORMATS.keys():
+    if sizes.keys() != COMPILE_FORMATS.keys():
         raise ValueError(f"{path}: missing code-size rows")
-    rows.extend(("generated-c-body-bytes", name, sizes[name]) for name in FORMATS)
+    rows.extend(("generated-c-body-bytes", name, sizes[name], "-", "-", "-", "-")
+                for name in COMPILE_FORMATS)
 
-    path = output / "raw/runtime.csv"
-    runtime = {name: [] for name in FORMATS}
-    header = ["format", "totalBits", "backend", "iterations", "totalNanos", "sink"]
-    for row in read_rows(path, header):
-        name = row["format"]
-        if name not in FORMATS or int(row["totalBits"]) != FORMATS[name]:
-            raise ValueError(f"{path}: unexpected runtime format or width {name}")
-        if not 0 <= int(row["sink"]) < 2**64:
-            raise ValueError(f"{path}: invalid result sink")
-        positive_integer(row["iterations"], str(path))
-        positive_integer(row["totalNanos"], str(path))
-        runtime[name].append(row)
-    for name, samples in runtime.items():
-        if len(samples) != runs:
-            raise ValueError(f"{path}: {name} expected {runs} runtime rows, got {len(samples)}")
-        identities = {
-            (row["totalBits"], row["backend"], row["iterations"], row["sink"])
-            for row in samples
-        }
+    runtime = {subject: [] for subject in sorted(selected)}
+    for trial in range(1, runs + 1):
+        path = output / f"raw/runtime-{trial}.csv"
+        seen = set()
+        for row in read_rows(path, RUNTIME_HEADER):
+            subject = "/".join(row[key] for key in ["format", "operation", "inputClass"])
+            if row["schema"] != SCHEMA or subject not in selected or subject in seen:
+                raise ValueError(f"{path}: unexpected schema, row, or duplicate {subject}")
+            seen.add(subject)
+            if natural(row["totalBits"], str(path)) != FORMATS[row["format"]]:
+                raise ValueError(f"{path}: invalid width for {subject}")
+            iterations = positive_integer(row["iterations"], str(path))
+            warmup = positive_integer(row["warmupIterations"], str(path))
+            if (iterations, warmup) != settings(subject):
+                raise ValueError(f"{path}: workload settings mismatch for {subject}")
+            sink = sink_value(row["sink"], str(path))
+            nanos = positive_integer(row["totalNanos"], str(path))
+            if not row["backend"].strip() or row["backend"] == "-":
+                raise ValueError(f"{path}: runtime metrics require a backend name")
+            runtime[subject].append((row["backend"], iterations, warmup, sink, nanos))
+        if seen != selected:
+            raise ValueError(f"{path}: missing runtime rows {sorted(selected - seen)}")
+    for subject, samples in runtime.items():
+        identities = {sample[:4] for sample in samples}
         if len(identities) != 1:
-            raise ValueError(f"{path}: {name} runtime identity changed between trials")
-        times = [int(row["totalNanos"]) / int(row["iterations"]) for row in samples]
-        rows.append(("runtime-nanos-per-add", name, statistics.median(times)))
-    for metric, name, value in rows:
-        positive_number(value, f"{metric}, {name}")
+            raise ValueError(f"{output}: {subject} runtime identity changed between trials")
+        backend, iterations, warmup, sink = identities.pop()
+        value = statistics.median(sample[4] / iterations for sample in samples)
+        rows.append(("runtime-nanos-per-operation", subject, value, iterations, warmup, sink, backend))
+    for metric, subject, value, *_ in rows:
+        positive_number(value, f"{metric}, {subject}")
     return rows
 
 
 def main():
     action = sys.argv[1]
+    selected = selection()
+    if action == "selection":
+        if sys.argv[2] == "record" and selected != SUBJECTS.keys():
+            raise ValueError("record requires full runtime coverage; unset PERF_FORMAT/OPERATION/INPUT_CLASS")
+        if os.environ.get("PERF_FULL", "0") == "1" and (
+                selected != SUBJECTS.keys() or os.environ.get("PERF_SKIP_CODEGEN", "0") != "0"):
+            raise ValueError("PERF_FULL=1 requires all runtime rows and generated-code checks")
+        return
     if action == "validate":
         directory = Path(sys.argv[2])
-        read_baseline(directory)
+        read_baseline(directory, selected)
         validate_environment(directory)
         return
 
     output = Path(sys.argv[2])
     baseline_dir = Path(sys.argv[3])
     mode = sys.argv[4]
-    rows = measurements(output, int(sys.argv[5]), int(sys.argv[6]))
+    rows = measurements(output, int(sys.argv[5]), int(sys.argv[6]), selected)
+    full = selected == SUBJECTS.keys() and os.environ.get("PERF_SKIP_CODEGEN", "0") == "0"
+    coverage = f"{'FULL' if full else 'PARTIAL'} gate: {len(selected)}/{len(SUBJECTS)} runtime rows"
+    with (output / "coverage.txt").open("w") as stream:
+        stream.write(f"schema={SCHEMA}\n{coverage}\ncodegen={os.environ.get('PERF_SKIP_CODEGEN', '0') == '0'}\n")
+    print(coverage)
     if mode == "record":
         path = output / "baseline.csv"
         with path.open("w", newline="") as stream:
             writer = csv.writer(stream)
             writer.writerow(BASELINE_HEADER)
-            writer.writerows(
-                (metric, name, value, BUDGETS[metric]) for metric, name, value in rows
-            )
-        read_baseline(output)
+            writer.writerows((SCHEMA, metric, subject, value, BUDGETS[metric], *identity)
+                             for metric, subject, value, *identity in rows)
+        read_baseline(output, selected)
         validate_environment(output)
         print(f"baseline for review: {path}")
         print(f"baseline environment: {output / 'environment.env'}")
         print("Review both files before selecting this directory with PERF_BASELINE_DIR.")
         return
 
-    baseline = read_baseline(baseline_dir)
+    baseline = read_baseline(baseline_dir, selected)
     with (output / "measurements.csv").open("w", newline="") as stream:
         writer = csv.writer(stream)
-        writer.writerow(["metric", "subject", "value"])
+        writer.writerow(["metric", "subject", "value", "iterations", "warmupIterations", "sink", "backend"])
         writer.writerows(rows)
     failed = False
-    print("metric,subject,current,baseline,maxAllowed,ratio,status")
-    for metric, name, value in rows:
-        reference, budget = baseline[metric, name]
+    writer = csv.writer(sys.stdout, lineterminator="\n")
+    writer.writerow(["metric", "subject", "current", "baseline", "maxAllowed", "ratio", "status",
+                     "baselineBackend", "currentBackend"])
+    for metric, subject, value, iterations, warmup, sink, backend in rows:
+        reference, budget, reference_identity, reference_backend = baseline[metric, subject]
+        if (iterations, warmup, sink) != reference_identity:
+            raise ValueError(f"runtime sink or workload settings changed for {subject}; investigate before re-recording")
         maximum = reference * budget
         status = "pass" if value <= maximum else "FAIL"
         failed |= status == "FAIL"
-        print(
-            f"{metric},{name},{value:.3f},{reference:.3f},"
-            f"{maximum:.3f},{value / reference:.3f},{status}"
-        )
+        writer.writerow([metric, subject, f"{value:.3f}", f"{reference:.3f}", f"{maximum:.3f}",
+                         f"{value / reference:.3f}", status, reference_backend, backend])
     raise SystemExit(1 if failed else 0)
 
 
@@ -240,6 +357,17 @@ except (OSError, ValueError, OverflowError, csv.Error) as error:
     raise SystemExit(f"performance data: {error}")
 PY
 }
+
+performance_data selection "$mode"
+if [[ "$mode" == validate ]]; then
+  if [[ "$#" != 2 ]]; then
+    usage >&2
+    exit 2
+  fi
+  performance_data validate "$2"
+  echo "baseline schema and workload settings validated: $2"
+  exit 0
+fi
 
 if [[ "$mode" == check ]]; then
   if [[ -z "$baseline_dir" ]]; then
@@ -258,12 +386,22 @@ mkdir -p "$output/raw" "$output/compile"
 output="$(cd "$output" && pwd -P)"
 compile_template="$root/benchmarks/lean/FloatLibBenchmarks/Public/PerformanceCompileProbe.lean.in"
 environment="$output/environment.env"
-compiler="${CC:-cc}"
 
 cd "$root"
 floatlib_benchmark_lake build FloatLibBenchmarks.Public.PerformanceRegression
 lean_path="$(floatlib_benchmark_lake env printenv LEAN_PATH | tail -n 1)"
 lean_executable="$(floatlib_benchmark_lake env which lean | tail -n 1)"
+lean_prefix="$("$lean_executable" --print-prefix)"
+# Match Lake's compiler selection; bundled and custom compilers use different default flags.
+compiler_kind=custom
+if [[ ${LEAN_CC+x} ]]; then
+  compiler="$LEAN_CC"
+elif [[ -e "$lean_prefix/bin/clang" ]]; then
+  compiler="$lean_prefix/bin/clang"
+  compiler_kind=bundled
+else
+  compiler="${CC-cc}"
+fi
 compiler_executable="$(command -v "$compiler")"
 if [[ -n "$cpu" ]]; then
   actual_affinity="$(
@@ -275,10 +413,10 @@ else
 fi
 
 {
-  echo "lean=$($lean_executable --version | head -n 1)"
-  echo "ccCommand=$compiler"
+  echo "lean=$("$lean_executable" --version | head -n 1)"
+  echo "ccCommand=$compiler_kind:$compiler"
   echo "ccPath=$compiler_executable"
-  echo "cc=$($compiler_executable --version | head -n 1)"
+  echo "cc=$("$compiler_executable" --version | head -n 1)"
   echo "arch=$(uname -m)"
   echo "cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -n 1)"
   echo "cpuCount=$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc)"
@@ -422,27 +560,14 @@ if [[ ! -x "$executable" ]]; then
   exit 1
 fi
 
-declare -A iterations=(
-  [binary32]=1000000
-  [binary64]=1000000
-  [binary128]=100000
-  [posit32]=500000
-  [binary256]=50000
-)
-printf '%s\n' "format,totalBits,backend,iterations,totalNanos,sink" \
-  >"$output/raw/runtime.csv"
+# One process per trial; the executable reverses formats, operations, and classes on even trials.
+# Save complete CSV output so malformed headers, dropped rows, and duplicates cannot be hidden.
 for ((trial = 1; trial <= runs; ++trial)); do
-  order=("${formats[@]}")
-  if ((trial % 2 == 0)); then
-    order=(binary256 posit32 binary128 binary64 binary32)
+  command=(env "PERF_REVERSE=$((1 - trial % 2))" "$executable")
+  if [[ -n "$cpu" ]]; then
+    command=(taskset --cpu-list "$cpu" "${command[@]}")
   fi
-  for format in "${order[@]}"; do
-    command=(env "PERF_FORMAT=$format" "PERF_ITERATIONS=${iterations[$format]}" "$executable")
-    if [[ -n "$cpu" ]]; then
-      command=(taskset --cpu-list "$cpu" "${command[@]}")
-    fi
-    "${command[@]}" | tail -n 1 >>"$output/raw/runtime.csv"
-  done
+  "${command[@]}" >"$output/raw/runtime-$trial.csv"
 done
 
 performance_data summarize "$output" "$baseline_dir" "$mode" "$runs" "$compile_runs"

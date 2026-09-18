@@ -10,7 +10,7 @@ import math
 import re
 import statistics
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import matplotlib
@@ -139,6 +139,13 @@ class Key:
     execution_class: str
 
 
+def normalize_digest(value: int) -> int:
+    """Compare signed OCaml and unsigned adapter output as 64-bit patterns."""
+    if not -(1 << 63) <= value < (1 << 64):
+        raise ValueError(f"digest outside signed/unsigned 64-bit range: {value}")
+    return value & ((1 << 64) - 1)
+
+
 @dataclass(frozen=True)
 class Metadata:
     backend: str
@@ -149,6 +156,18 @@ class Metadata:
     agreement_iterations: int
     agreement_sink: int
     agreement_fixture_trace_digest: int
+
+    def normalized_digests(self) -> Metadata:
+        # Preserve the captured decimal representations in rendered tables.
+        return replace(
+            self,
+            sink=normalize_digest(self.sink),
+            fixture_trace_digest=normalize_digest(self.fixture_trace_digest),
+            agreement_sink=normalize_digest(self.agreement_sink),
+            agreement_fixture_trace_digest=normalize_digest(
+                self.agreement_fixture_trace_digest
+            ),
+        )
 
 
 @dataclass(frozen=True)
@@ -295,11 +314,7 @@ def read_trials(
                 )
                 if total_bits <= 0 or iterations <= 0 or total_nanos <= 0:
                     raise ValueError(f"invalid timing row in {path}: {row}")
-                if (
-                    agreement_iterations < 0
-                    or agreement_sink < 0
-                    or agreement_fixture_trace_digest < 0
-                ):
+                if agreement_iterations < 0:
                     raise ValueError(f"invalid agreement row in {path}: {row}")
                 family = row["family"]
                 execution_class = row["executionClass"]
@@ -329,7 +344,10 @@ def read_trials(
                         agreement_fixture_trace_digest,
                 )
                 previous_metadata = metadata.setdefault(key, current_metadata)
-                if previous_metadata != current_metadata:
+                if (
+                    previous_metadata.normalized_digests()
+                    != current_metadata.normalized_digests()
+                ):
                     raise ValueError(
                         f"metadata, iteration count, or sink changed for {key}: "
                         f"{previous_metadata!r} versus {current_metadata!r}"

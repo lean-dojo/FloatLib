@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Draw chapter 15's equal-width figures from the release benchmark.
 
-The figures compare our proved binary and posit kernels with MPFR, Berkeley SoftFloat, extracted
-Flocq, Stillwater Universal, native C, and CPython through a common scalar harness. Flocq is a
-precision-model comparison whose input rounding and fixture traces need not match. The data comes from
+The figures compare our proved binary and posit kernels with MPFR, Berkeley SoftFloat,
+Stillwater Universal, native C, and CPython through a common scalar harness. Flocq has a
+separate matched comparison; its old wrapper's rows are not plotted here. The data comes from
 ``benchmarks/results/main/release/benchmark/plots/summary.csv``. The benchmark verifier
 regenerates that CSV from all nine raw trials before accepting the bundle.
 
 The focused figures pair mul with fma and div with sqrt. The reader shows a figure at most about
 900 pixels wide, where six panels leave the tick labels and legend unreadable. The six-panel
 overview, format-comparison-main.png, includes addition and subtraction for readers who want
-every operation on one page. A second six-panel figure stops at 16 bits. We added that view because the
-full 2-to-4096-bit axis cannot label 5, 6, and 7 bits legibly, and those are real measurements
-rather than decorative points we are willing to hide.
+every operation on one page. A second six-panel figure stops at 16 bits so it can label every
+measured width. The full 2-to-4096-bit axis cannot label 5, 6, and 7 bits legibly.
 
 Tick policy: the full-range x axis is log base 2 and labels powers of two. Every measured point
 still appears, including 3, 5, 6, and 7 bits. The low-width figure labels every point. Lines connect
@@ -58,7 +57,7 @@ PAIRS = (
 )
 
 # Each series has a distinct marker and line style as well as a colour. FloatLib's two curves
-# are heavier, with their own legend row. Grey keeps extracted Flocq distinct from green posits.
+# are heavier, with their own legend row.
 SERIES = (
     ("ExecFloat binary proved software", "FloatLib binary (proved)",
      dict(color="#2a78d6", marker="s", linestyle="-", linewidth=2.6, markersize=7, zorder=5)),
@@ -66,8 +65,6 @@ SERIES = (
      dict(color="#7c3aed", marker="v", linestyle="-.", linewidth=1.8, markersize=6, zorder=3)),
     ("MPFR (binary) software reference", "MPFR",
      dict(color="#eb6834", marker="^", linestyle=":", linewidth=1.8, markersize=6, zorder=3)),
-    ("Flocq binary reference (precision model)", "extracted Flocq*",
-     dict(color="#60646c", marker="D", linestyle=":", linewidth=1.8, markersize=5.5, zorder=3)),
     ("Native C IEEE FPU", "native C FPU",
      dict(color="#eda100", marker="v", linestyle="-.", linewidth=1.8, markersize=7, zorder=3)),
     ("CPython float64 runtime", "CPython float",
@@ -250,8 +247,7 @@ def add_figure_heading(fig, title: str, *, title_y: float = 0.985) -> None:
     fig.text(
         0.5,
         0.015,
-        "Markers are measurements. Lines connect measured widths.\n"
-        "*Flocq uses different input rounding; see the performance chapter.",
+        "Markers are measurements. Lines connect measured widths.",
         ha="center",
         va="bottom",
         fontsize=9,
@@ -307,7 +303,6 @@ def draw_low_width(table, out_dir: Path) -> Path:
         "ExecFloat binary proved software",
         "ExecFloat Posit proved software",
         "MPFR (binary) software reference",
-        "Flocq binary reference (precision model)",
         "Stillwater Universal Posit (software)",
         "Stillwater Universal Posit (hardware-assisted)",
     }
@@ -352,7 +347,6 @@ def draw_low_width(table, out_dir: Path) -> Path:
             "ExecFloat binary proved software": "FloatLib binary",
             "ExecFloat Posit proved software": "FloatLib posit",
             "MPFR (binary) software reference": "MPFR",
-            "Flocq binary reference (precision model)": "extracted Flocq*",
             "Stillwater Universal Posit (software)": "Stillwater posit",
             "Stillwater Universal Posit (hardware-assisted)":
                 "Stillwater posit (host sqrt)",

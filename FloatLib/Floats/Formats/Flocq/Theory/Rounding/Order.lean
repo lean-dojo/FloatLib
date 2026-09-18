@@ -47,13 +47,7 @@ theorem round_mono_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
   have hy : 0 < y := hx.trans_le hxy
   let ex := magnitude β x
   let ey := magnitude β y
-  have hmag : ex ≤ ey := by
-    have hxLower := (magnitude_spec β x hx.ne').1
-    have hyUpper := (magnitude_spec β y hy.ne').2
-    have hpowers : bpow β (ex - 1) < bpow β ey := by
-      exact hxLower.trans (by simpa [abs_of_pos hx, abs_of_pos hy] using hxy) |>.trans_lt hyUpper
-    have : ex - 1 < ey := (bpow_lt_bpow_iff β _ _).mp hpowers
-    linarith
+  have hmag : ex ≤ ey := magnitude_mono_pos β hx hxy
   by_cases hySmall : ey ≤ fexp ey
   · have hconst := ((ValidExp.flocq_valid (fexp := fexp) ey).2 hySmall).2
     have hf : fexp ex = fexp ey := hconst ex (hmag.trans hySmall)

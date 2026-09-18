@@ -134,39 +134,9 @@ private theorem decode_neg_of_normalExponent (h : Eligible fmt) (x : Model fmt)
         mantissa :=
           (normalMantissa fmt (fracHigh fmt (toWords x).hi)
             (toWords x).lo).toNat } := by
-  have hexponent :
-      (expField fmt (toWords x).hi).toNat = Model.expField x :=
-    expField_toNat h x
-  have hsign :
-      signBit fmt (toWords x).hi = Model.signBit x :=
-    signBit_eq h x
-  have hfraction := fraction_toNat h x
-  have hhigh := fracHigh_lt h (toWords x).hi
-  have hmantissa :
-      (normalMantissa fmt (fracHigh fmt (toWords x).hi)
-          (toWords x).lo).toNat =
-        pow2 fmt.fracWidth + Model.fracField x := by
-    rw [normalMantissa_toNat h _ _ hhigh, ← hfraction, pow2_eq_two_pow]
-    ring
-  have hexponentBounds :=
-    normalExponent_bounds h x hexponentZero hexponentFinite
-  have hexponentZeroNat : Model.expField x ≠ 0 := by
-    rw [← hexponent]
-    exact hexponentBounds.1.ne'
-  have hexponentFiniteNat : Model.expField x ≠ fmt.expAllOnesNat := by
-    rw [← hexponent]
-    exact Nat.ne_of_lt hexponentBounds.2
-  have hfinite : Model.isFinite (neg x) = true := by
-    simp [Model.isFinite, h.encoding, Model.IEEE.isFinite, hexponentFiniteNat]
-  unfold FiniteKernel.decode?
-  rw [ite_eq_right (by simp [hfinite])]
-  dsimp only
-  rw [Model.expField_neg, Model.fracField_neg]
-  unfold FiniteKernel.decodeMantissa
-  rw [ite_eq_right (by simpa using hexponentZeroNat)]
-  rw [Model.signBit_neg]
-  rw [ite_eq_left (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt h.isIEEE)]
-  rw [← hexponent, ← hsign, hmantissa]
+  rw [FiniteKernel.decode?_neg h.isIEEE,
+    decode_of_normalExponent h x hexponentZero hexponentFinite]
+  rfl
 
 private theorem addComponents_opposite_large_left (h : Eligible fmt)
     (sign : Bool) (large small exponent : Nat)

@@ -12,6 +12,11 @@ The comparison includes:
 - native C and Berkeley SoftFloat at binary32 and binary64; and
 - CPython binary64 for the five operations available in the recorded interpreter.
 
+The Flocq rows in this archive match significand precision only: their wrapper fixes
+`emax` at 16,384 and rounds the numerator and denominator separately before dividing.
+They do not establish agreement with FloatLib's inputs or result-dependent sequence.
+The website excludes these rows and uses the [matched Flocq comparison](../flocq-matched/README.md).
+
 Every adapter uses the same result-dependent fixture chain. This keeps each
 operation observable to the optimizer and makes the next input depend on the
 previous result. Alongside the individual trials, we record calibration, trial order,

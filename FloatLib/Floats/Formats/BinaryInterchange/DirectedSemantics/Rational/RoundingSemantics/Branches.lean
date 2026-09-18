@@ -26,7 +26,7 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Numerics
 
-noncomputable section
+section
 
 /-! ## Positive packing branches -/
 

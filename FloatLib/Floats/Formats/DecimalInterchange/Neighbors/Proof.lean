@@ -77,7 +77,7 @@ theorem nextDown_valid (f : Format) (x : Datum) (hx : x.Valid f) :
     simpa [Datum.negate_eq_withSign] using hx
   simpa [nextDown, Datum.negate_eq_withSign] using nextUp_valid f x.negate hn
 
-/-- Neighbor steps are quiet even at subnormal, zero and infinite range boundaries. -/
+/-- Neighbor steps raise `invalid` exactly for signaling NaNs and leave all other flags clear. -/
 theorem nextUp_status (f : Format) (x : Datum) :
     (nextUp f x).status = { invalid := x.isSignaling } := by
   cases x with

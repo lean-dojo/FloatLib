@@ -46,7 +46,7 @@ inductive Profile where
 
 namespace Profile
 
-/-- Number of stored bits per element; the shared scale always occupies eight bits. -/
+/-- Number of stored bits per element. -/
 def width : Profile → Nat
   | .e5m2 | .e4m3 | .int8 => 8
   | .e3m2 | .e2m3 => 6
@@ -105,7 +105,7 @@ end Element
 
 /-- OCP MX 1.0 concrete blocks have one scale and exactly 32 elements of one profile. -/
 structure Block (profile : Profile) where
-  /-- Shared E8M0 scale; every byte, including NaN, is an admissible encoding. -/
+  /-- Shared eight-bit E8M0 scale; every byte, including NaN, is an admissible encoding. -/
   scale : E8M0
   /-- Element count and storage width are part of the type. -/
   values : Vector (Element profile) 32

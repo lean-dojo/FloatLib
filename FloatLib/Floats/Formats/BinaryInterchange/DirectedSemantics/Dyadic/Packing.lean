@@ -27,7 +27,7 @@ namespace Model
 
 open FloatLib.Floats
 
-noncomputable section
+section
 
 /-! ## Field-packing semantics -/
 

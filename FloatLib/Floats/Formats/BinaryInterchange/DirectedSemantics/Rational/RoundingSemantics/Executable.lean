@@ -29,7 +29,7 @@ open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics
 open Directed.Internal
 
-noncomputable section
+section
 
 /-! ## Executable packing semantics -/
 

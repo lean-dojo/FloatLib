@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit pi-scaled trigonometric operations
 
-The configured operations lift the correctly rounded model functions through the lawful
-storage codec. Changing the carrier introduces no additional numerical rounding.
+The `sinPi`, `cosPi`, and `tanPi` specifications use pi times the input; inverse operations
+return principal angles divided by pi. Each call encodes the model result through the lawful
+storage codec without further rounding.
 -/
 
 @[expose] public section

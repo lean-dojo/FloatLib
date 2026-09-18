@@ -77,8 +77,8 @@ theorem roundPositiveCode_eq_reference
   unfold roundPositiveCode roundFromLowerCode Model.roundPositiveCode
   simp only [hnumeratorBool, hnumeratorNegative, hdenominatorBool,
     hdenominatorNegative, Bool.false_or, Bool.false_eq_true, ite_false,
-    not_le.mpr hquotientPositive,
-    FloatLib.Numerics.Dyadic.isLess_eq_decide,
+    not_le.mpr hquotientPositive]
+  simp only [FloatLib.Numerics.Dyadic.isLess_eq_decide,
     FloatLib.Numerics.Dyadic.mul_toRat,
     DyadicRounding.minPositive_toRat,
     DyadicRounding.roundingThreshold_toRat,

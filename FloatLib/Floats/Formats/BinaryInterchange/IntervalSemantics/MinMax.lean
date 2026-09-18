@@ -22,7 +22,7 @@ and division.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 namespace Interval
 

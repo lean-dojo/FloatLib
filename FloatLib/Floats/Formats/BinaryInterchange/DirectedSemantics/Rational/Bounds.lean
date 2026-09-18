@@ -27,7 +27,7 @@ bounds in `EReal`, and establish that a nonzero denominator never produces NaN.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 @[simp] private theorem toEReal_posZero_eq_zero
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :

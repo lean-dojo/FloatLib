@@ -49,7 +49,7 @@ abbrev Binary64 :=
 
 The library prints values as an integer times a power of two, and $8388609$ is $2^{23} + 1$, so the neighbour of one is $1 + 2^{-23}$; the spacing there is $2^{-23}$ and $10^{-8}$ is about $0.084$ of it. The increment lies below the midpoint of that gap, so nearest rounding returns one.
 
-Try increasing the increment until the sum changes :) Then use the printed neighbour to explain where that change happens.
+Increasing the increment past half the distance to the printed neighbour changes the rounded sum.
 
 ## A grid described by an exponent function
 
@@ -259,7 +259,7 @@ Here `a` is $2^{-29}$, `b` is $2^{-24}$, and `c` is $1 + 2^{-24}$. Follow the ro
 
 On fixed binary grids, round to odd can preserve the information that nearest rounding loses in this example. It leaves an exact integer alone and otherwise chooses the odd integer neighbour. With at least two extra binary digits, an inexact fine-grid result cannot be a coarse-grid midpoint: those midpoints have even indices on the fine grid. The theorem `nearestEven_roundOdd_binary_extra` shows that with at least two extra binary digits, round to odd followed by nearest even equals nearest even directly on the integer grid, and [[FloatLib.Floats.Formats.Flocq.roundAtScale_nearestEven_after_odd_binary_extra]] extends this to any fixed grid of positive step.
 
-Both grids must be fixed, so the result covers fixed point and affine quantization; no exponent dependent floating-point version is proved. Round to odd itself lands on the grid (`generic_format_round_odd`) and satisfies the specification `round_odd_point`: an inexact result is a directed neighbour with an odd mantissa. The theorem takes the number of extra digits beyond the mandatory two as a parameter; with zero extra digits, so a fine step of $\mathrm{step}/2^{0+2}$, it reads:
+Both grids must be fixed, so the result covers fixed point and affine quantization; no exponent dependent floating-point version is proved. Round to odd itself lands on the grid (`generic_format_round_odd`) and satisfies the specification `round_odd_point`: an inexact result is a directed neighbour with an odd mantissa at the input’s selected grid exponent. The theorem takes the number of extra digits beyond the mandatory two as a parameter; with zero extra digits, so a fine step of $\mathrm{step}/2^{0+2}$, it reads:
 
 ```lean
 example (step x : ℝ) (hstep : 0 < step) :
@@ -324,6 +324,9 @@ An executable kernel decides rounding from an integer quotient and information a
 
 Every rounding mode is then a function from a location to one boolean, whether to increment the mantissa. `roundUpLocation` increments unless the location is exact; `roundNearestLocation` increments above the midpoint, never below it, and at the midpoint defers to a tie rule, which for `nearestEvenChoice` is to increment exactly when the lower mantissa is odd. `inbetweenInt_floor`, `inbetweenInt_ceil`, and `inbetweenInt_nearestEven` prove that these decisions agree with `floorRound`, `ceilRound`, and `nearestEven` on the real line. Kernels see the exact value at a finer scale and must truncate, which changes the location; `refineLocation_correct` shows how a location in one cell of a subdivided interval determines the location in the whole, and the [truncation theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Calculation/Round.lean) `roundTruncatedNearestEven_correct` proves that nearest-even selection after truncation is `round nearestEven x`. Composing the bracket and truncation theorems establishes the rounding refinement that [chapter 13](#/chapter/kernels-fixed-word-algorithms) and [chapter 14](#/chapter/backends-and-the-planner) rely on.
 
+<a id="finding-the-rounding-theory"></a>
+<a id="using-the-rounding-theorems"></a>
+
 ## Connecting the grid to packed formats
 
 The generic theory becomes a format in the library's own sense through an [`EncodedFormat` instance](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/GenericFormat.lean) whose codes are canonical mantissa and exponent pairs, and [[FloatLib.Floats.Formats.Flocq.representable_iff_genericFormat]] identifies representability in the common numerical system interface with `genericFormat`.
@@ -336,12 +339,6 @@ The rounded-real grid is unbounded above: `fltExp` has no upper bound, so there 
 
 ## Relationship to Flocq
 
-The definitions follow Flocq: `bpow`, `magnitude`, `cexp`, `genericFormat`, `ValidExp`, `ulp`, the point predicates, `Znearest` as `nearestChoice`, and the bracket calculus all have direct counterparts. The docstrings name the Coq files they follow, and the proofs are written in Lean against Mathlib.
+The definitions follow Flocq: `bpow`, `magnitude`, `cexp`, `genericFormat`, `ValidExp`, `ulp`, the point predicates, `Znearest` as `nearestChoice`, and the bracket calculus all have direct counterparts. The generic-format, ulp, and neighbour modules name the corresponding Coq files in their docstrings; the proofs are written in Lean against Mathlib.
 
 This is not a port of the whole Flocq library. It does not reproduce Flocq's proofs about individual arithmetic algorithms, discussed in Boldo and Melquiond's book [@boldoMelquiondBook], its support for executable computation beyond bracket refinement and truncation, or its Coq-specific application modules.
-
-<a id="finding-the-rounding-theory"></a>
-
-## Using the rounding theorems
-
-To use the theory in a proof, start with [[FloatLib.Floats.Formats.Flocq.genericFormat]] for representability and [[FloatLib.Floats.Formats.Flocq.round]] for rounding. [[FloatLib.Floats.Formats.Flocq.error_bound_ulp]] bounds a nearest rounding's error; [[FloatLib.Floats.Formats.Flocq.generic_format_FLX_sterbenz]] proves exact subtraction under the Sterbenz hypotheses. For a code type whose meaning is given by the common numerical system interface, [[FloatLib.Floats.Formats.Flocq.representable_iff_genericFormat]] connects that notion of representation to the grid.

@@ -339,6 +339,7 @@ function ReferencesPage({ index, selected }: { index: SiteIndex; selected?: stri
           : <cite>{reference.title}</cite>}
         {reference.venue && <span>, {reference.venue}</span>}
         {reference.year && <span> ({reference.year})</span>}.
+        {reference.accessed && <span> Accessed <time dateTime={reference.accessed}>{reference.accessed}</time>.</span>}
       </li>)}
     </ol> : <p className="muted">No references are available yet.</p>}
   </article>;

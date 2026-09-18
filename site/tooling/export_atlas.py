@@ -569,7 +569,7 @@ def report(data: dict, warnings: list[str], out_path: Path) -> None:
         print(f"  working tree: {source['dirtyFiles']} library files {provenance}; "
               f"{dirty_count} nodes are marked dirty "
               f"({no_url} without a GitHub URL, {file_only} with a file-only URL)")
-        print("  PUBLISHING NOTE: this export flags itself as uncommitted on every page; commit the "
+        print("  PUBLISHING NOTE: this export includes uncommitted library changes; commit the "
               "tree and re-export before publishing")
     for warning in warnings:
         print(f"  warning: {warning}")

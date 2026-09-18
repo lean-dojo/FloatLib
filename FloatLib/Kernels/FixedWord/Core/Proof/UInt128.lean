@@ -60,9 +60,7 @@ theorem toNat_ofNat (value : Nat) (hvalue : value < 2 ^ 128) :
     rw [Nat.shiftRight_eq_div_pow, Nat.div_lt_iff_lt_mul (by positivity)]
     simpa [show 128 = 64 + 64 by omega, pow_add, Nat.mul_comm] using hvalue
   unfold ofNat UInt128.toNat
-  simp only [UInt64.toNat_ofNat']
-  rw [Nat.mod_eq_of_lt hhigh]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [UInt64.toNat_ofNat_of_lt' hhigh, UInt64.toNat_ofNat', Nat.shiftRight_eq_div_pow]
   calc
     value % 2 ^ 64 + value / 2 ^ 64 * 2 ^ 64 =
         value % 2 ^ 64 + 2 ^ 64 * (value / 2 ^ 64) := by

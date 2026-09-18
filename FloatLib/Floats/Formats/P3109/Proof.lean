@@ -136,7 +136,7 @@ theorem nanBits_pos (format : Format) :
       simp [nanBits, hs]
       omega
 
-/-- The extended-domain positive-infinity code is never the all-zero code. -/
+/-- `positiveInfinityBits` is nonzero for every descriptor. -/
 theorem positiveInfinityBits_pos (format : Format) :
     0 < format.positiveInfinityBits := by
   cases hs : format.signedness with
@@ -149,7 +149,7 @@ theorem positiveInfinityBits_pos (format : Format) :
       simp [positiveInfinityBits, hs]
       omega
 
-/-- The signed extended-domain negative-infinity code is never the all-zero code. -/
+/-- `negativeInfinityBits` is nonzero for every descriptor. -/
 theorem negativeInfinityBits_pos (format : Format) :
     0 < format.negativeInfinityBits := by
   have hmodulus := format.two_lt_modulus
@@ -168,7 +168,7 @@ theorem nanBits_lt_modulus (format : Format) :
       simp [nanBits, hs]
       omega
 
-/-- The positive-infinity code, when active, fits in the declared code space. -/
+/-- `positiveInfinityBits` fits in the declared code space for every descriptor. -/
 theorem positiveInfinityBits_lt_modulus (format : Format) :
     format.positiveInfinityBits < format.modulus := by
   cases hs : format.signedness with
@@ -181,7 +181,7 @@ theorem positiveInfinityBits_lt_modulus (format : Format) :
       simp [positiveInfinityBits, hs]
       omega
 
-/-- The negative-infinity code, when active, fits in the declared code space. -/
+/-- `negativeInfinityBits` fits in the declared code space for every descriptor. -/
 theorem negativeInfinityBits_lt_modulus (format : Format) :
     format.negativeInfinityBits < format.modulus := by
   have hmodulus : 0 < format.modulus := by

@@ -155,6 +155,7 @@ Import `FloatLib.Floats.Formats.BinaryInterchange.Conversion`.
 | `cast_eq_roundAt` | A finite IEEE cast is one nearest-even rounding in the destination format. |
 | `cast_exact_of_gridExtension` | A finite cast is exact when the destination contains the source's dyadic grid. |
 | `cast_exact_of_compatibleWidening` | Increasing only fraction width while preserving exponent semantics and encoding is exact. |
+| `castWithRounding_eq_widenExact_of_compatibleWidening` | Every rounding mode gives the same widened encoding for a finite value with compatible exponent fields and encoding. |
 | `toReal_widenExact` | The direct widening constructor preserves the decoded real value, including zeros and subnormals. |
 
 `cast_exact_of_gridExtension` is the general theorem behind standard widenings such as binary32

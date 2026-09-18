@@ -32,7 +32,7 @@ open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics
 open Directed.Internal
 
-noncomputable section
+section
 
 /-- A quotient at or below one half rounds to the even integer zero. -/
 theorem roundQuotientEven_eq_zero_of_two_mul_le

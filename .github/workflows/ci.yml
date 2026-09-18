@@ -92,9 +92,15 @@ jobs:
       # Smoke oracles only. Not TestFloat, P3109 tables, Arb, or check.sh --profile release.
       - name: Cross-check primitives, reductions, and binary16 against MPFR
         run: |
+          set -euo pipefail
           tests/oracles/mpfr.sh
-          tests/oracles/binary16-exhaustive.sh add 32768 65536
-          tests/oracles/binary16-exhaustive.sh mul 32000 65536
+          # Each row fixes the left operand and covers all 65,536 right encodings:
+          # min subnormal, near 1/3, just below -1, and max finite (524,288 pairs total).
+          for operation in add mul; do
+            for left_word in 0x0001 0x3555 0xbc01 0x7bff; do
+              tests/oracles/binary16-exhaustive.sh "$operation" "$((left_word))" 65536
+            done
+          done
 
       # Linking execFloatSweep can exceed the hosted runner's RAM. Extra swap is only for
       # that peak; it does not change the executable. Use a private path: ubuntu-latest

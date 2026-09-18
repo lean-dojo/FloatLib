@@ -71,7 +71,7 @@ theorem bias_lt_pow_expWidth (fmt : FloatFormat) :
 /--
 Whether the descriptor has the conventional IEEE bias and exceptional-value encoding.
 
-This predicate applies at arbitrary widths; it does not assert that IEEE 754 specifies the layout.
+Custom widths can satisfy this predicate as well as the named IEEE 754 layouts.
 -/
 @[inline] def isIEEE (fmt : FloatFormat) : Bool :=
   fmt.encoding == .ieee && fmt.exponentBias == fmt.bias

@@ -54,14 +54,14 @@ namespace ByteCode
 @[always_inline, inline] def ofNat {bound : Nat} (bits : Nat)
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 8) : ByteCode bound :=
   ⟨UInt8.ofNat bits, by
-    rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+    rw [UInt8.toNat_ofNat_of_lt' hcapacity]
     exact hbound⟩
 
 /-- Reading a byte immediately after packing returns the supplied encoding. -/
 @[simp, grind =] theorem toNat_ofNat {bound bits : Nat}
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 8) :
     (ofNat bits hbound hcapacity).1.toNat = bits := by
-  simp only [ofNat, UInt8.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+  exact UInt8.toNat_ofNat_of_lt' hcapacity
 
 end ByteCode
 
@@ -71,14 +71,14 @@ namespace Word16Code
 @[always_inline, inline] def ofNat {bound : Nat} (bits : Nat)
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 16) : Word16Code bound :=
   ⟨UInt16.ofNat bits, by
-    rw [UInt16.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+    rw [UInt16.toNat_ofNat_of_lt' hcapacity]
     exact hbound⟩
 
 /-- Reading a 16-bit word immediately after packing returns the supplied encoding. -/
 @[simp, grind =] theorem toNat_ofNat {bound bits : Nat}
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 16) :
     (ofNat bits hbound hcapacity).1.toNat = bits := by
-  simp only [ofNat, UInt16.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+  exact UInt16.toNat_ofNat_of_lt' hcapacity
 
 end Word16Code
 
@@ -88,14 +88,14 @@ namespace Word32Code
 @[always_inline, inline] def ofNat {bound : Nat} (bits : Nat)
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 32) : Word32Code bound :=
   ⟨UInt32.ofNat bits, by
-    rw [UInt32.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+    rw [UInt32.toNat_ofNat_of_lt' hcapacity]
     exact hbound⟩
 
 /-- Reading a 32-bit word immediately after packing returns the supplied encoding. -/
 @[simp, grind =] theorem toNat_ofNat {bound bits : Nat}
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 32) :
     (ofNat bits hbound hcapacity).1.toNat = bits := by
-  simp only [ofNat, UInt32.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+  exact UInt32.toNat_ofNat_of_lt' hcapacity
 
 end Word32Code
 
@@ -105,14 +105,14 @@ namespace Word64Code
 @[always_inline, inline] def ofNat {bound : Nat} (bits : Nat)
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 64) : Word64Code bound :=
   ⟨UInt64.ofNat bits, by
-    rw [UInt64.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+    rw [UInt64.toNat_ofNat_of_lt' hcapacity]
     exact hbound⟩
 
 /-- Reading a 64-bit word immediately after packing returns the supplied encoding. -/
 @[simp, grind =] theorem toNat_ofNat {bound bits : Nat}
     (hbound : bits < bound) (hcapacity : bits < 2 ^ 64) :
     (ofNat bits hbound hcapacity).1.toNat = bits := by
-  simp only [ofNat, UInt64.toNat_ofNat', Nat.mod_eq_of_lt hcapacity]
+  exact UInt64.toNat_ofNat_of_lt' hcapacity
 
 end Word64Code
 

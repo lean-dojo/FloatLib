@@ -29,7 +29,7 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-! ## Executable power-of-two comparisons -/
 
@@ -286,6 +286,26 @@ theorem floorLog2_bounds
         else initialExponent) = lowerExponent by rfl]
     simp [hfinalFalse]
   simpa [hfloor, ratio] using And.intro hlower hupper
+
+/-- The shift-based rational logarithm agrees with Mathlib's integer logarithm on positive inputs. -/
+theorem floorLog2_eq_int_log (numerator denominator : Nat)
+    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.floorLog2 numerator denominator =
+      Int.log 2 ((numerator : ℝ) / denominator) := by
+  have hratio : 0 < (numerator : ℝ) / denominator :=
+    div_pos (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hnumerator))
+      (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hdenominator))
+  have h := floorLog2_bounds numerator denominator hnumerator hdenominator
+  change (2 : ℝ) ^ _ ≤ _ ∧ _ < (2 : ℝ) ^ _ at h
+  have hl := (Int.zpow_le_iff_le_log (by decide : 1 < 2) hratio).mp h.1
+  have hu := (Int.lt_zpow_iff_log_lt (by decide : 1 < 2) hratio).mp h.2
+  omega
+
+/-- Viewing a positive natural number as a quotient by one preserves its floor binary logarithm. -/
+theorem floorLog2_den_one (n : Nat) (hn : n ≠ 0) :
+    Numerics.RationalBinary.floorLog2 n 1 = (n.log2 : Int) := by
+  simpa only [Nat.cast_one, div_one, Int.log_natCast, Nat.log2_eq_log_two,
+    Int.ofNat_eq_natCast] using floorLog2_eq_int_log n 1 hn (by decide)
 
 /-- A binary interval characterization determines `Numerics.RationalBinary.floorLog2`. -/
 theorem floorLog2_eq_of_bounds

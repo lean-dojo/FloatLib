@@ -127,10 +127,8 @@ def MulFinite {fmt : FloatFormat} (x y : ExecComplex fmt) : Prop :=
   isFinite (x * y) = true
 
 /--
-Executable complex multiplication agrees with its six-step rounded real semantics.
-
-This theorem is format-generic and keeps every intermediate rounding visible. In particular, it
-does not assert equality with exact multiplication in `ℂ`, which would be false in general.
+For an IEEE descriptor and finite inputs, intermediate values, and result, complex multiplication
+agrees with `roundedMul`: four rounded products followed by a rounded subtraction and addition.
 -/
 theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
     (hfmt : fmt.isIEEE = true)
@@ -232,7 +230,7 @@ theorem isFinite_magnitudeScale {fmt : FloatFormat} (z : ExecComplex fmt)
   unfold magnitudeScale
   split <;> simp_all
 
-/-- The common magnitude scale is exactly the larger absolute component. -/
+/-- For a finite IEEE complex value, the common scale is the larger absolute component. -/
 theorem toReal_magnitudeScale {fmt : FloatFormat} (z : ExecComplex fmt)
     (hfmt : fmt.isIEEE = true) (hz : isFinite z = true) :
     Model.toReal (magnitudeScale z) = max |(toComplex z).re| |(toComplex z).im| := by

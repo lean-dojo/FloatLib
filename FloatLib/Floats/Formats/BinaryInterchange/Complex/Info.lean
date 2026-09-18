@@ -13,10 +13,9 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
 /-!
 # Proof-aware inspection of binary complex values
 
-This module registers `ExecComplex fmt` with `#float_info`. The report describes its component
-format, sign operations, arithmetic, squared magnitude, and scaled magnitude. It links the
-operation theorems and lists their finite-intermediate hypotheses. The rounded operations are
-not identified with exact complex field operations, and no scalar conversion policy is installed.
+`#float_info` reports the component format, sign operations, arithmetic, squared magnitude,
+and scaled magnitude of `ExecComplex fmt`. The linked theorems describe intermediate rounding
+and list the required finiteness hypotheses.
 -/
 
 public meta section

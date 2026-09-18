@@ -19,10 +19,25 @@ target_nanos="${FORMAT_COMPARE_TARGET_NANOS:-200000000}"
 calibrate="${FORMAT_COMPARE_CALIBRATE:-1}"
 development_only="${FORMAT_COMPARE_DEVELOPMENT_ONLY:-1}"
 skip_build="${FORMAT_COMPARE_SKIP_BUILD:-0}"
-include_flocq="${FORMAT_COMPARE_INCLUDE_FLOCQ:-0}"
-include_universal="${FORMAT_COMPARE_INCLUDE_UNIVERSAL:-1}"
-include_python="${FORMAT_COMPARE_INCLUDE_PYTHON:-1}"
-include_softfloat="${FORMAT_COMPARE_INCLUDE_SOFTFLOAT:-1}"
+profile="${FORMAT_COMPARE_PROFILE:-release}"
+case "$profile" in
+  release)
+    default_flocq=0
+    default_other_providers=1
+    ;;
+  flocq)
+    default_flocq=1
+    default_other_providers=0
+    ;;
+  *)
+    echo "unsupported FORMAT_COMPARE_PROFILE: $profile (expected release or flocq)" >&2
+    exit 2
+    ;;
+esac
+include_flocq="${FORMAT_COMPARE_INCLUDE_FLOCQ:-$default_flocq}"
+include_universal="${FORMAT_COMPARE_INCLUDE_UNIVERSAL:-$default_other_providers}"
+include_python="${FORMAT_COMPARE_INCLUDE_PYTHON:-$default_other_providers}"
+include_softfloat="${FORMAT_COMPARE_INCLUDE_SOFTFLOAT:-$default_other_providers}"
 benchmark_cpu="${FORMAT_COMPARE_CPU:-}"
 runtime_tmp="${FORMAT_COMPARE_TMPDIR:-${TMPDIR:-/tmp}}"
 build_dir="$runtime_tmp/floatlib-format-comparison-${UID:-user}-$timestamp"
@@ -82,6 +97,12 @@ for flag in \
     exit 2
   fi
 done
+if [[ "$profile" == flocq &&
+      ( "$include_flocq" != 1 || "$include_universal" != 0 ||
+        "$include_python" != 0 || "$include_softfloat" != 0 ) ]]; then
+  echo "the flocq profile requires Flocq enabled and Universal, CPython, and SoftFloat disabled" >&2
+  exit 2
+fi
 if [[ "$development_only" == 0 ]]; then
   # These are positive decimal strings. Compare lengths first to avoid shell overflow.
   if [[ ${#minimum_publication_nanos} -lt 8 ||
@@ -132,23 +153,25 @@ if [[ "$development_only" == 0 ]]; then
       "development runs may leave it unset or use a CPU list" >&2
     exit 2
   fi
-  for required_lane in \
-    include_flocq \
-    include_universal \
-    include_python \
-    include_softfloat; do
-    if [[ "${!required_lane}" != 1 ]]; then
-      echo "public benchmark runs require $required_lane=1" >&2
-      exit 2
-    fi
-  done
+  if [[ "$profile" == release ]]; then
+    for required_lane in \
+      include_flocq \
+      include_universal \
+      include_python \
+      include_softfloat; do
+      if [[ "${!required_lane}" != 1 ]]; then
+        echo "public release benchmark runs require $required_lane=1" >&2
+        exit 2
+      fi
+    done
+  fi
   for matrix_override in \
     FORMAT_COMPARE_LANES \
     FORMAT_COMPARE_WIDTHS \
     FORMAT_COMPARE_OPERATIONS; do
     if [[ -n "${!matrix_override:-}" ]]; then
       echo \
-        "public benchmark runs use the complete release matrix and do not accept " \
+        "public benchmark runs use the complete $profile profile matrix and do not accept " \
         "$matrix_override" >&2
       exit 2
     fi
@@ -215,10 +238,12 @@ mkdir -p \
 if [[ "$skip_build" == 0 ]]; then
   (
     cd "$root"
-    floatlib_benchmark_lake build \
-      execFloatFormatComparison \
-      execFloatPositVectors \
-      execFloatSelectionMatrix
+    build_targets=(execFloatFormatComparison)
+    if [[ "$profile" == release ]]; then
+      build_targets+=(execFloatPositVectors)
+    fi
+    build_targets+=(execFloatSelectionMatrix)
+    floatlib_benchmark_lake build "${build_targets[@]}"
   )
 fi
 
@@ -387,9 +412,11 @@ if [[ "$include_flocq" == 1 ]]; then
         >&2
       exit 2
     fi
-    docker build \
-      --tag "$flocq_image" \
-      "$root/benchmarks/rocq" >/dev/null
+    if ! docker image inspect "$flocq_image" >/dev/null 2>&1; then
+      docker build \
+        --tag "$flocq_image" \
+        "$root/benchmarks/rocq" >/dev/null
+    fi
     docker run --rm \
       --cpuset-cpus "$flocq_cpu_set" \
       --user "$(id -u):$(id -g)" \
@@ -410,11 +437,21 @@ if [[ "$include_flocq" == 1 ]]; then
           -o flocq_format_bench
       '
   fi
+  # Each campaign starts empty; the wrapper memoizes the real agreement prefix.
+  flocq_cache_dir="$(cd "$flocq_build_dir" && pwd)/agreement-cache"
+  mkdir "$flocq_cache_dir"
+  flocq_binary_sha256="$(sha256sum "$flocq_build_dir/flocq_format_bench" | awk '{print $1}')"
 fi
 
-widths=(2 3 4 5 6 7 8 16 32 64 128 256 512 1024 2048 4096)
+if [[ "$profile" == flocq ]]; then
+  # BinarySingleNaN.Prec_lt_emax requires prec < emax; widths 4, 5 and 7 fail it.
+  widths=(6 8 16 32 64 128 256 512 1024 2048 4096)
+  lanes=(binary-software mpfr-reference)
+else
+  widths=(2 3 4 5 6 7 8 16 32 64 128 256 512 1024 2048 4096)
+  lanes=(posit-software binary-software binary-native-c mpfr-reference)
+fi
 operations=(add sub mul div sqrt fma)
-lanes=(posit-software binary-software binary-native-c mpfr-reference)
 if [[ "$include_softfloat" == 1 ]]; then
   lanes+=(softfloat-reference)
 fi
@@ -478,6 +515,15 @@ if [[ -n "${FORMAT_COMPARE_OPERATIONS:-}" ]]; then
 fi
 
 for width in "${widths[@]}"; do
+  if [[ "$profile" == flocq ]]; then
+    case "$width" in
+      6|8|16|32|64|128|256|512|1024|2048|4096) ;;
+      *)
+        echo "the flocq profile requires a supported binary width with prec < emax: $width" >&2
+        exit 2
+        ;;
+    esac
+  fi
   case "$width" in
     2|3|4|5|6|7|8|16|24|32|48|64|96|112|128|256|512|1024|2048|4096)
       ;;
@@ -495,6 +541,13 @@ for operation in "${operations[@]}"; do
     exit 2
   fi
 done
+
+binary_only_width() {
+  case "${1:?width is required}" in
+    24|48|96|112) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
 declare -A universal_available
 if [[ "$include_universal" == 1 ]]; then
@@ -560,7 +613,7 @@ if [[ "$include_universal" == 1 ]]; then
     >"$output/environment/external-posit-conformance.csv"
   for width in "${widths[@]}"; do
     # Universal's generic es=2 FMA requires at least five encoded bits.
-    if ((width < 5)); then
+    if ((width < 5)) || binary_only_width "$width"; then
       continue
     fi
     vector_file="$build_dir/posit-vectors-$width.csv"
@@ -598,9 +651,8 @@ lane_available() {
   local lane="${1:?lane is required}"
   local width="${2:?width is required}"
   local operation="${3:?operation is required}"
-  # Widths 24 and 48 exist only as configured binary rows; no posit, native, or external
-  # reference implementation is compiled for them.
-  if [[ "$width" == 24 || "$width" == 48 ]] && [[ "$lane" != binary-software ]]; then
+  # Optional widths exist only as configured binary rows.
+  if binary_only_width "$width" && [[ "$lane" != binary-software ]]; then
     return 1
   fi
   case "$lane" in
@@ -623,8 +675,12 @@ lane_available() {
       ((width >= 5)) &&
         [[ "${universal_available["$width:$operation"]:-0}" == 1 ]]
       ;;
-    mpfr-reference|flocq-reference)
+    mpfr-reference)
       ((width >= 4))
+      ;;
+    flocq-reference)
+      # The certified BinarySingleNaN API requires prec < emax.
+      ((width >= 4)) && [[ "$width" != 4 && "$width" != 5 && "$width" != 7 ]]
       ;;
     *)
       return 0
@@ -725,6 +781,10 @@ run_lane() {
       )
       ;;
     flocq-reference)
+      if [[ "$(sha256sum "$flocq_build_dir/flocq_format_bench" | awk '{print $1}')" != "$flocq_binary_sha256" ]]; then
+        echo "Flocq executable changed after its agreement cache was initialized" >&2
+        exit 1
+      fi
       local flocq_warmup_iterations="$warmup_iterations"
       local flocq_warmup_cap
       if ((width <= 128)); then
@@ -745,6 +805,9 @@ run_lane() {
           "FORMAT_COMPARE_WIDTH=$width"
           "FORMAT_COMPARE_OPERATION=$operation"
           "FORMAT_COMPARE_WARMUP_ITERATIONS=$flocq_warmup_iterations"
+          "FORMAT_COMPARE_AGREEMENT_ITERATIONS=$agreement_iterations"
+          "FORMAT_COMPARE_FLOCQ_CACHE=$flocq_cache_dir"
+          "FORMAT_COMPARE_FLOCQ_BINARY_SHA256=$flocq_binary_sha256"
           ${iterations:+"FORMAT_COMPARE_ITERATIONS=$iterations"}
           "$flocq_build_dir/flocq_format_bench"
         )
@@ -755,10 +818,14 @@ run_lane() {
           --user "$(id -u):$(id -g)"
           --env HOME=/home/coq
           --volume "$flocq_build_dir:/build:ro"
+          --volume "$flocq_cache_dir:/build/agreement-cache:rw"
           --workdir /build
           --env "FORMAT_COMPARE_WIDTH=$width"
           --env "FORMAT_COMPARE_OPERATION=$operation"
           --env "FORMAT_COMPARE_WARMUP_ITERATIONS=$flocq_warmup_iterations"
+          --env "FORMAT_COMPARE_AGREEMENT_ITERATIONS=$agreement_iterations"
+          --env "FORMAT_COMPARE_FLOCQ_CACHE=/build/agreement-cache"
+          --env "FORMAT_COMPARE_FLOCQ_BINARY_SHA256=$flocq_binary_sha256"
         )
         if [[ -n "$iterations" ]]; then
           command+=(--env "FORMAT_COMPARE_ITERATIONS=$iterations")
@@ -897,6 +964,13 @@ if ((${#scheduled_rows[@]} == 0)); then
   echo "the requested benchmark matrix contains no runnable cells" >&2
   exit 2
 fi
+requested_matrix="$output/environment/requested-matrix.csv"
+{
+  printf '%s\n' "lane,totalBits,operation"
+  for row in "${rows[@]}"; do
+    printf '%s\n' "${row//:/,}"
+  done
+} >"$requested_matrix"
 printf '%s\n' "trial,orderIndex,lane,totalBits,operation" \
   >"$output/environment/trial-order.csv"
 
@@ -946,28 +1020,38 @@ for ((trial = 1; trial <= runs; ++trial)); do
   done
 done
 
-agreement_widths=()
-for width in "${widths[@]}"; do
-  if lane_available binary-software "$width" add &&
-      lane_available mpfr-reference "$width" add; then
-    agreement_widths+=("$width")
-  fi
-done
-agreement_width_args=()
-if ((${#agreement_widths[@]} > 0)); then
-  agreement_width_args=(--widths "${agreement_widths[@]}")
+# Publication checks require the full binary grid independently of emitted rows.
+agreement_grid=()
+if [[ "$development_only" == 0 ]]; then
+  agreement_grid=(--widths)
+  for width in "${widths[@]}"; do
+    if ((width >= 4)); then
+      agreement_grid+=("$width")
+    fi
+  done
 fi
+agreement_softfloat=0
+agreement_python=0
+agreement_flocq=0
+for lane in "${lanes[@]}"; do
+  case "$lane" in
+    softfloat-reference) agreement_softfloat=1 ;;
+    cpython-float64) agreement_python=1 ;;
+    flocq-reference) agreement_flocq=1 ;;
+  esac
+done
 python3 "$root/benchmarks/scripts/verify_binary_agreement.py" \
   "$output/raw" \
   "$output/environment/binary-agreement.txt" \
-  --softfloat "$include_softfloat" \
-  --python "$include_python" \
+  --softfloat "$agreement_softfloat" \
+  --python "$agreement_python" \
   --python-has-fma "$python_has_fma" \
-  --flocq "$include_flocq" \
+  --flocq "$agreement_flocq" \
   --trials "$runs" \
   --agreement-iterations "$agreement_iterations" \
   --operations "${operations[@]}" \
-  "${agreement_width_args[@]}"
+  --requested-matrix "$requested_matrix" \
+  "${agreement_grid[@]}"
 
 date -u +%Y-%m-%dT%H:%M:%SZ >"$output/environment/finish-time-utc.txt"
 cp /proc/loadavg "$output/environment/loadavg-after.txt"
@@ -980,6 +1064,7 @@ python3 "$root/benchmarks/plots/format_comparison.py" \
 {
   echo "timestampUTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "runs=$runs"
+  echo "profile=$profile"
   echo "measurementMethod=$measurement_method"
   echo "minimumPublicationTrials=$minimum_publication_runs"
   echo "minimumPublicationNanos=$minimum_publication_nanos"
@@ -1035,7 +1120,13 @@ python3 "$root/benchmarks/plots/format_comparison.py" \
     echo "flocqImage=$flocq_image"
     echo "flocqVersion=4.2.2"
     echo "flocqExtraction=OCaml Zarith"
+    echo "flocqUnsupportedWidths=4 5 7"
+    echo "flocqWidthConstraint=prec < emax (BinarySingleNaN.Prec_lt_emax)"
     echo "flocqRunner=$flocq_runner"
+    echo "flocqAgreementCacheMode=fresh-campaign-shared-prefix"
+    echo "flocqAgreementCacheBinarySha256=$flocq_binary_sha256"
+    echo "flocqAgreementCacheKey=compiledBinarySha256,totalBits,precision,emax,operation,agreementIterations"
+    echo "flocqAgreementPrefixComputation=once per executable/format/operation; shared by calibration and trials"
     if [[ "$flocq_runner" == external-binary ]]; then
       echo "flocqSuppliedBinary=$flocq_external_binary"
       echo "flocqSuppliedBinarySha256=$(

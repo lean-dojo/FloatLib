@@ -25,6 +25,28 @@ test('declaration links preserve question marks and Unicode', () => {
   });
 });
 
+test('bookmarks from before the library rename keep their selected name', () => {
+  const id = 'FloatLib.Numerics.IEEEStatus.union';
+  assert.deepEqual(parseRoute('#/node/LeanFloat.Numerics.IEEEStatus.union'), {
+    kind: 'node', id,
+  });
+  assert.deepEqual(parseRoute('#/node/LeanFloat.Numerics.%CE%B1%3F'), {
+    kind: 'node', id: 'FloatLib.Numerics.α?',
+  });
+  for (const path of ['/map', '/map/rounding', '/graph?view=declarations']) {
+    const separator = path.includes('?') ? '&' : '?';
+    assert.deepEqual(parseRoute(`#${path}${separator}node=LeanFloat.Numerics.IEEEStatus.union`), {
+      kind: 'graph', view: 'declarations', selected: id,
+    });
+  }
+  assert.deepEqual(parseRoute('#/graph?node=LeanFloat.Numerics'), {
+    kind: 'graph', view: 'modules', selected: 'FloatLib.Numerics',
+  });
+  assert.deepEqual(parseRoute('#/node/LeanFloater.example'), {
+    kind: 'node', id: 'LeanFloater.example',
+  });
+});
+
 test('map bookmarks open the declaration graph and preserve the selected declaration', () => {
   for (const hash of ['#/map', '#/map/', '#/map/rounding', '#/map/rounding/', '#/map?node=']) {
     assert.deepEqual(parseRoute(hash), { kind: 'graph', view: 'declarations', selected: undefined });

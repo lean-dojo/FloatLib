@@ -22,6 +22,7 @@ public import FloatLib.Floats.Formats.Posit.Configured
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Instances
+public import FloatLib.Floats.Formats.Posit.Configured.Real
 public import FloatLib.Floats.Formats.Posit.Configured.Projective
 public import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Convergence
 public import FloatLib.Floats.Formats.Posit.Quire.Configured.Proof

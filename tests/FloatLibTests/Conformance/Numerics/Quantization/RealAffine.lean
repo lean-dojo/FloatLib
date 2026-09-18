@@ -7,13 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Affine
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Odd
 
 /-!
 # Real affine quantization and executable refinement
 
 These examples exercise arbitrary valid rounding rules, exact rational embedding, both signs of
-nearest-even ties, and saturation at both endpoints. Finite checks use kernel reduction rather
-than native proof evaluation.
+nearest-even ties, and saturation at both endpoints. Round-to-odd checks distinguish parity at the
+selected grid exponent from parity at an arbitrary exponent. Finite checks use kernel reduction.
 -/
 
 @[expose] public section
@@ -62,5 +63,29 @@ example (q : RealAffineQuantizer) (rnd : ℝ → ℤ) (x ε : ℝ)
     (hround : |(rnd (x / q.scale) : ℝ) - x / q.scale| ≤ ε) :
     |q.dequantize (q.rawCode rnd x) - x| ≤ q.scale * ε :=
   q.dequantize_rawCode_error_le rnd x ε hround
+
+private def integerGrid (x : ℝ) : Prop := ∃ n : ℤ, x = n
+
+-- Although 2 = 1 · 2^1, its mantissa is even on the integer grid selected for 5/2.
+example : ¬ RoundOddPoint binaryRadix integerGrid 0 (5 / 2) 2 := by
+  rintro ⟨_, h | ⟨_, m, hm, hodd⟩⟩
+  · norm_num at h
+  · have hm' : m = 2 := by
+      exact_mod_cast (by simpa [bpow] using hm.symm : (m : ℝ) = 2)
+    subst m
+    obtain ⟨k, hk⟩ := hodd
+    omega
+
+example : RoundOddPoint binaryRadix integerGrid 0 (5 / 2) 3 := by
+  refine ⟨⟨3, by norm_num⟩, Or.inr ⟨Or.inr ?_, ⟨3, by norm_num [bpow], by decide⟩⟩⟩
+  refine ⟨⟨3, by norm_num⟩, by norm_num, ?_⟩
+  rintro g ⟨n, rfl⟩ hg
+  have hn : (2 : ℤ) < n := by
+    exact_mod_cast (show (2 : ℝ) < n by linarith)
+  exact_mod_cast (show (3 : ℤ) ≤ n by omega)
+
+-- Exact inputs retain their value even when their mantissa is even.
+example : RoundOddPoint binaryRadix integerGrid 0 2 2 := by
+  exact ⟨⟨2, by norm_num⟩, Or.inl rfl⟩
 
 end FloatLibTests.Conformance.Numerics.Quantization.RealAffine

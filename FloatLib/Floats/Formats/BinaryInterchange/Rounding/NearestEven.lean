@@ -129,88 +129,18 @@ theorem floor_real_nat_div (num den : Nat) :
 private theorem div_lt_half_iff (remainder den : Nat) (hden : den ≠ 0) :
     ((remainder : ℝ) / (den : ℝ) < (2⁻¹ : ℝ)) ↔
       2 * remainder < den := by
-  have hdenPos : (0 : ℝ) < (den : ℝ) := by
-    exact_mod_cast Nat.pos_of_ne_zero hden
-  have htwoPos : (0 : ℝ) < (2 : ℝ) := by norm_num
-  have hdivision :
-      ((remainder : ℝ) / (den : ℝ) < (2⁻¹ : ℝ)) ↔
-        (remainder : ℝ) < (2⁻¹ : ℝ) * (den : ℝ) := by
-    simpa using div_lt_iff₀ hdenPos
-  have hscale :
-      (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) = (den : ℝ) := by
-    ring
-  constructor
-  · intro h
-    have hremainder :
-        (remainder : ℝ) < (2⁻¹ : ℝ) * (den : ℝ) :=
-      hdivision.mp h
-    have hscaled :
-        (2 : ℝ) * (remainder : ℝ) <
-          (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) :=
-      mul_lt_mul_of_pos_left hremainder htwoPos
-    have hscaled' :
-        (2 : ℝ) * (remainder : ℝ) < (den : ℝ) := by
-      simpa [hscale] using hscaled
-    have hcast : ((2 * remainder : Nat) : ℝ) < (den : ℝ) := by
-      simpa [Nat.cast_mul] using hscaled'
-    exact_mod_cast hcast
-  · intro h
-    have hcast : ((2 * remainder : Nat) : ℝ) < (den : ℝ) := by
-      exact_mod_cast h
-    have hscaled :
-        (2 : ℝ) * (remainder : ℝ) < (den : ℝ) := by
-      simpa [Nat.cast_mul] using hcast
-    have hscaled' :
-        (2 : ℝ) * (remainder : ℝ) <
-          (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) := by
-      simpa [hscale] using hscaled
-    have hremainder :
-        (remainder : ℝ) < (2⁻¹ : ℝ) * (den : ℝ) :=
-      (mul_lt_mul_iff_right₀ htwoPos).mp hscaled'
-    exact hdivision.mpr hremainder
+  have hdenPos : (0 : ℝ) < den := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hden)
+  rw [div_lt_iff₀ hdenPos, inv_mul_eq_div, lt_div_iff₀ (by norm_num : (0 : ℝ) < 2)]
+  norm_cast
+  omega
 
 private theorem half_lt_div_iff (remainder den : Nat) (hden : den ≠ 0) :
     ((2⁻¹ : ℝ) < (remainder : ℝ) / (den : ℝ)) ↔
       den < 2 * remainder := by
-  have hdenPos : (0 : ℝ) < (den : ℝ) := by
-    exact_mod_cast Nat.pos_of_ne_zero hden
-  have htwoPos : (0 : ℝ) < (2 : ℝ) := by norm_num
-  have hdivision :
-      ((2⁻¹ : ℝ) < (remainder : ℝ) / (den : ℝ)) ↔
-        (2⁻¹ : ℝ) * (den : ℝ) < (remainder : ℝ) := by
-    simpa using lt_div_iff₀ hdenPos
-  have hscale :
-      (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) = (den : ℝ) := by
-    ring
-  constructor
-  · intro h
-    have hremainder :
-        (2⁻¹ : ℝ) * (den : ℝ) < (remainder : ℝ) :=
-      hdivision.mp h
-    have hscaled :
-        (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) <
-          (2 : ℝ) * (remainder : ℝ) :=
-      mul_lt_mul_of_pos_left hremainder htwoPos
-    have hscaled' :
-        (den : ℝ) < (2 : ℝ) * (remainder : ℝ) := by
-      simpa [hscale] using hscaled
-    have hcast : (den : ℝ) < ((2 * remainder : Nat) : ℝ) := by
-      simpa [Nat.cast_mul] using hscaled'
-    exact_mod_cast hcast
-  · intro h
-    have hcast : (den : ℝ) < ((2 * remainder : Nat) : ℝ) := by
-      exact_mod_cast h
-    have hscaled :
-        (den : ℝ) < (2 : ℝ) * (remainder : ℝ) := by
-      simpa [Nat.cast_mul] using hcast
-    have hscaled' :
-        (2 : ℝ) * ((2⁻¹ : ℝ) * (den : ℝ)) <
-          (2 : ℝ) * (remainder : ℝ) := by
-      simpa [hscale] using hscaled
-    have hremainder :
-        (2⁻¹ : ℝ) * (den : ℝ) < (remainder : ℝ) :=
-      (mul_lt_mul_iff_right₀ htwoPos).mp hscaled'
-    exact hdivision.mpr hremainder
+  have hdenPos : (0 : ℝ) < den := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hden)
+  rw [lt_div_iff₀ hdenPos, inv_mul_eq_div, div_lt_iff₀ (by norm_num : (0 : ℝ) < 2)]
+  norm_cast
+  omega
 
 /-- Nearest-even rounding of a nonnegative rational agrees with `roundQuotientEven`. -/
 theorem nearestEven_div_eq_roundQuotientEven

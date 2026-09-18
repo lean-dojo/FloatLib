@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import Mathlib.Order.Bounds.Defs
 public import Mathlib.Order.Defs.PartialOrder
 public import FloatLib.Numerics.Core.System
 
@@ -39,6 +40,30 @@ def UpperNeighbor (system : NumericalSystem) [Preorder system.Scalar]
       input ≤ output ∧
       ∀ candidate,
         system.Representable candidate → input ≤ candidate → output ≤ candidate
+
+/-- Lower neighbors are greatest elements of the representable values below the input. -/
+theorem lowerNeighbor_iff_isGreatest (system : NumericalSystem) [Preorder system.Scalar]
+    (input : system.Scalar) (code : system.Code) :
+    LowerNeighbor system input code ↔
+      ∃ output, system.Represents code output ∧
+        IsGreatest {y | system.Representable y ∧ y ≤ input} output := by
+  constructor
+  · rintro ⟨output, hrep, hle, hgreatest⟩
+    exact ⟨output, hrep, ⟨⟨⟨code, hrep⟩, hle⟩, fun _ h => hgreatest _ h.1 h.2⟩⟩
+  · rintro ⟨output, hrep, ⟨hmem, hgreatest⟩⟩
+    exact ⟨output, hrep, hmem.2, fun _ hrep hle => hgreatest ⟨hrep, hle⟩⟩
+
+/-- Upper neighbors are least elements of the representable values above the input. -/
+theorem upperNeighbor_iff_isLeast (system : NumericalSystem) [Preorder system.Scalar]
+    (input : system.Scalar) (code : system.Code) :
+    UpperNeighbor system input code ↔
+      ∃ output, system.Represents code output ∧
+        IsLeast {y | system.Representable y ∧ input ≤ y} output := by
+  constructor
+  · rintro ⟨output, hrep, hle, hleast⟩
+    exact ⟨output, hrep, ⟨⟨⟨code, hrep⟩, hle⟩, fun _ h => hleast _ h.1 h.2⟩⟩
+  · rintro ⟨output, hrep, ⟨hmem, hleast⟩⟩
+    exact ⟨output, hrep, hmem.2, fun _ hrep hle => hleast ⟨hrep, hle⟩⟩
 
 /-- Two codes bracket an input by its lower and upper representable neighbors. -/
 def Brackets (system : NumericalSystem) [Preorder system.Scalar]

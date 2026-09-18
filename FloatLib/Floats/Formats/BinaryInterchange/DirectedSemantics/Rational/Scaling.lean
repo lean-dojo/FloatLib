@@ -27,14 +27,14 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-- Exact nonnegative real value represented by a scaled natural rational. -/
-def scaledRatToReal (numerator denominator : Nat) (exponent : Int) : Real :=
+noncomputable def scaledRatToReal (numerator denominator : Nat) (exponent : Int) : Real :=
   (numerator : Real) / (denominator : Real) * bpow exponent
 
 /-- Apply a stored sign bit to the exact value of a scaled natural rational. -/
-def signedScaledRatToReal (sign : Bool) (numerator denominator : Nat)
+noncomputable def signedScaledRatToReal (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) : Real :=
   if sign then
     -scaledRatToReal numerator denominator exponent

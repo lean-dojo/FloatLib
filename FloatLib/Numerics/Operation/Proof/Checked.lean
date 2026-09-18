@@ -33,12 +33,8 @@ private theorem exists_code_of_map_denote_eq
     {B : NumericalSystem} {result : Option B.Code}
     {value : NumericalValue B.Scalar}
     (hresult : Option.map B.denote result = some value) :
-    ∃ code, result = some code ∧ B.denote code = value := by
-  cases result with
-  | none => simp at hresult
-  | some code =>
-      refine ⟨code, rfl, ?_⟩
-      simpa using hresult
+    ∃ code, result = some code ∧ B.denote code = value :=
+  Option.map_eq_some_iff.mp hresult
 
 namespace Internal
 

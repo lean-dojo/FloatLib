@@ -26,12 +26,13 @@ serves, are catalogued in `FloatLib/Floats/ExecFloat/Backends/README.md`. Import
 when implementing a backend, or `FloatLib` for the application API.
 
 Importing this module changes how the compiler treats some standard-library functions. The
-`@[csimp]` theorems in `Core.Proof.Rounding` and `IntegerSquareRoot.Proof` route compiled
-`Numerics.roundShiftRightEven`, `Numerics.roundQuotientEven`, and `Nat.sqrt` through native-word
-kernels whenever the inputs fit one word. In particular `IntegerSquareRoot.natSqrt_eq_sqrtNat`
-replaces every compiled `Nat.sqrt` in downstream code, not only calls made by FloatLib. Each
-substitution is justified by a proved equation, and the arbitrary-precision branch of each
-replacement is the unchanged logical definition.
+`@[csimp]` theorems in `FixedWord.Core.Proof.Rounding` and `FixedWord.IntegerSquareRoot.Proof`
+route compiled `Numerics.roundShiftRightEven`, `Numerics.roundQuotientEven`, and `Nat.sqrt`
+through native-word dispatchers. Shifting and square root use the native kernels for values
+below `2^64`; quotient rounding requires a numerator below `2^63` and a nonzero denominator
+below `2^64`. In particular, `IntegerSquareRoot.natSqrt_eq_sqrtNat` affects every compiled
+`Nat.sqrt` in downstream code. Each substitution is justified by a proved equation, and the
+arbitrary-precision branch of each replacement is the unchanged logical definition.
 -/
 
 @[expose] public section

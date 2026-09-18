@@ -213,16 +213,4 @@ def failStandardFormats : Thunk Nat := ⟨fun _ =>
 def failCustomWideFormat : Thunk Nat := ⟨fun _ =>
   formatFailures customWideFormat⟩
 
-/-- Named failure counters for standard and custom exponent-width formats. -/
-def failureRows : Thunk (List (String × Nat)) := ⟨fun _ =>
-  [ ("standardFormats", failStandardFormats.get)
-  , ("customWideFormat", failCustomWideFormat.get)
-  ]⟩
-
-def totalFailures : Thunk Nat := ⟨fun _ =>
-  namedFailureTotal failureRows.get⟩
-
-def report : Thunk String := ⟨fun _ =>
-  renderFailureReport failureRows.get⟩
-
 end FloatLibTests.Regression.BinaryInterchange.ExecFloatScaledRationals

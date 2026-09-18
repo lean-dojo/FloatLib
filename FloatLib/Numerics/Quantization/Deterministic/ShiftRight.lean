@@ -35,15 +35,8 @@ bit length, the quotient is zero and the remainder is the original value.
 /-- The bits discarded by a right shift are exactly the remainder modulo `2^shift`. -/
 theorem shiftRightRemainder_eq_mod (value shift : Nat) :
     shiftRightRemainder value shift = value % 2 ^ shift := by
-  rw [shiftRightRemainder, Nat.shiftRight_eq',
-    Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq',
-    Nat.shiftLeft_eq]
-  have hdecompose := Nat.mod_add_div value (2 ^ shift)
-  have hle : value / 2 ^ shift * 2 ^ shift ≤ value := by
-    rw [Nat.mul_comm]
-    exact Nat.mul_div_le value (2 ^ shift)
-  apply (Nat.sub_eq_iff_eq_add hle).2
-  simpa [Nat.mul_comm] using hdecompose.symm
+  simp only [shiftRightRemainder, Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow,
+    Nat.shiftLeft_eq', Nat.shiftLeft_eq, Nat.mod_eq_sub_div_mul]
 
 /--
 Round `value / 2^shift` to the nearest natural number, breaking exact halfway cases toward even.

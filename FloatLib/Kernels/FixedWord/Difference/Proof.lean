@@ -124,30 +124,8 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hhighNat : value.hi.toNat ≠ 0 := by
       intro hzero
       exact hhigh (UInt64.toNat_inj.mp (by simpa using hzero))
-    have hvalueNat : value.toNat ≠ 0 := by
-      unfold UInt128.toNat
-      positivity
-    symm
-    apply (Nat.log2_eq_iff hvalueNat).2
-    constructor
-    · unfold UInt128.toNat
-      rw [pow_add]
-      calc
-        2 ^ 64 * 2 ^ value.hi.toNat.log2 ≤
-            2 ^ 64 * value.hi.toNat :=
-          Nat.mul_le_mul_left _ (Nat.log2_self_le hhighNat)
-        _ = value.hi.toNat * 2 ^ 64 := by ring
-        _ ≤ value.lo.toNat + value.hi.toNat * 2 ^ 64 := by omega
-    · unfold UInt128.toNat
-      rw [show 64 + value.hi.toNat.log2 + 1 =
-          64 + (value.hi.toNat.log2 + 1) by omega, pow_add]
-      calc
-        value.lo.toNat + value.hi.toNat * 2 ^ 64 <
-            2 ^ 64 + value.hi.toNat * 2 ^ 64 :=
-          Nat.add_lt_add_right value.lo.toNat_lt _
-        _ = 2 ^ 64 * (value.hi.toNat + 1) := by ring
-        _ ≤ 2 ^ 64 * 2 ^ (value.hi.toNat.log2 + 1) :=
-          Nat.mul_le_mul_left _ (Nat.succ_le_iff.mpr Nat.lt_log2_self)
+    exact (log2_low_add_high_mul_pow
+      value.lo.toNat value.hi.toNat 64 value.lo.toNat_lt hhighNat).symm
 
 /-- The total native two-word right shift is exact division by a power of two. -/
 @[simp, grind =] theorem shiftRight_toNat (value : UInt128) (shift : Nat) :
@@ -160,12 +138,11 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hcomplement : 64 - shift < 64 := by omega
     have hshiftWord : UInt64.ofNat shift < 64 := by
       apply UInt64.lt_iff_toNat_lt.mpr
-      rw [UInt64.toNat_ofNat', Nat.mod_eq_of_lt (hsmall.trans (by norm_num))]
+      rw [UInt64.toNat_ofNat_of_lt' (hsmall.trans (by decide))]
       exact hsmall
     have hshiftWordLe : UInt64.ofNat shift ≤ (64 : UInt64) := by
       apply UInt64.le_iff_toNat_le.mpr
-      simp only [UInt64.toNat_ofNat', UInt64.reduceToNat]
-      rw [Nat.mod_eq_of_lt (hsmall.trans (by norm_num))]
+      rw [UInt64.toNat_ofNat_of_lt' (hsmall.trans (by decide))]
       exact hsmall.le
     have hlow :
         (value.lo >>> UInt64.ofNat shift).toNat =
@@ -180,9 +157,8 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hhighLow :
         (lowBitsWord value.hi (UInt64.ofNat shift)).toNat =
           value.hi.toNat % 2 ^ shift := by
-      rw [lowBitsWord_toNat _ _ hshiftWordLe]
-      simp only [UInt64.toNat_ofNat']
-      rw [Nat.mod_eq_of_lt (hsmall.trans (by norm_num))]
+      rw [lowBitsWord_toNat _ _ hshiftWordLe,
+        UInt64.toNat_ofNat_of_lt' (hsmall.trans (by decide))]
     have hremainderBound :
         value.hi.toNat % 2 ^ shift < 2 ^ shift :=
       Nat.mod_lt _ (Nat.two_pow_pos shift)

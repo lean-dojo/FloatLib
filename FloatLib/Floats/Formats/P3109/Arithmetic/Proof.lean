@@ -14,9 +14,8 @@ public import Mathlib.Basic.Real.Basic
 # Mathematical semantics of P3109 rational arithmetic
 
 Finite arithmetic is exact rational arithmetic, and rational embedding into the reals preserves
-the complete expression. The algebraic results here precede rounding: associativity of exact
-addition does not assert associativity of rounded addition. The decoding theorems connect the
-public executable operations to one report projection of that exact result.
+the complete expression. The algebraic results describe arithmetic before rounding. The decoding
+theorems connect the public executable operations to one report projection of that exact result.
 -/
 
 @[expose] public section

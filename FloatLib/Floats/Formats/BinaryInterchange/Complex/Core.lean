@@ -86,7 +86,7 @@ addition are then rounded once more in the same format.
 
 namespace Internal
 
-/-- Exchange coordinates when the imaginary denominator component has larger magnitude. -/
+/-- Exchange the real and imaginary coordinates. -/
 @[inline] def swap {fmt : FloatFormat} (z : ExecComplex fmt) : ExecComplex fmt :=
   ⟨z.im, z.re⟩
 

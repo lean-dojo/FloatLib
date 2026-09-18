@@ -148,9 +148,8 @@ theorem roundShiftRightEvenNat_eq_roundShiftRightEven (value shift : Nat) :
   unfold roundShiftRightEvenNat
   split
   next hvalue =>
-    have hvalue64 : (UInt64.ofNat value).toNat = value := by
-      rw [UInt64.toNat_ofNat']
-      exact Nat.mod_eq_of_lt hvalue
+    have hvalue64 : (UInt64.ofNat value).toNat = value :=
+      UInt64.toNat_ofNat_of_lt' hvalue
     rw [roundShiftRightEven_toNat, hvalue64]
   next hvalue =>
     rw [Numerics.roundShiftRightEven]
@@ -222,12 +221,10 @@ theorem roundQuotientEvenNat_eq_roundQuotientEven (num den : Nat) :
   split
   next hfit =>
     obtain ⟨hnum, hdenPositive, hden⟩ := hfit
-    have hnum64 : (UInt64.ofNat num).toNat = num := by
-      rw [UInt64.toNat_ofNat']
-      exact Nat.mod_eq_of_lt (lt_trans hnum (by norm_num))
-    have hden64 : (UInt64.ofNat den).toNat = den := by
-      rw [UInt64.toNat_ofNat']
-      exact Nat.mod_eq_of_lt hden
+    have hnum64 : (UInt64.ofNat num).toNat = num :=
+      UInt64.toNat_ofNat_of_lt' (hnum.trans (by decide))
+    have hden64 : (UInt64.ofNat den).toNat = den :=
+      UInt64.toNat_ofNat_of_lt' hden
     have hdenNonzero : UInt64.ofNat den ≠ 0 := by
       intro h
       have := congrArg UInt64.toNat h

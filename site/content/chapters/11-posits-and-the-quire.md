@@ -42,9 +42,11 @@ The rest of the [posit descriptor](https://github.com/lean-dojo/FloatLib/blob/ma
 
 Because the width lives in the type, a `Posit32` value carries no format tag at runtime, and the width selects the storage carrier. `forKnownWidth` is a chain of guards: widths through 8 bits pack into a `UInt8`, through 16 into a `UInt16`, through 32 into a `UInt32`, through 64 into a `UInt64`, through 128 into two `UInt64` limbs, and anything wider uses the exact-width model directly. The carrier is a storage decision, not a semantic one; every operation on every carrier is proved equal to the same model, and `#float_info Posit32` prints which kernel was selected.
 
+<a id="finding-the-posit-implementation"></a>
+
 ## Reading a posit word
 
-To decode a posit, we first recover its magnitude. The top bit is the sign, and negative values are stored in two's complement of the whole word, so we compute
+The [posit decoder](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Model/Decode.lean) first recovers its magnitude. The top bit is the sign, and negative values are stored in two's complement of the whole word, so we compute
 
 $$
 m = \begin{cases} w & \text{if the sign bit is } 0, \\ 2^n - w & \text{otherwise.} \end{cases}
@@ -532,9 +534,3 @@ has been checked against this library.
 ## Error bounds and quire limits
 
 The roots, powers, exponentials, logarithms, ordinary and pi-scaled trigonometric functions, and hyperbolic functions have real-rounding proofs, but those equations do not supply the IEEE half-ulp and relative-error theory of [chapter 07](#/chapter/the-mathematics-of-rounding); posit spacing and boundary rules differ. The quire guarantees still require coefficients in range, so accumulation must respect its term limits or check `isNaR` on the way out.
-
-## Finding the posit implementation
-
-For a proof about a posit word, start with the [posit model](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Model), which defines decoding, and the [arithmetic](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Arithmetic) and [rounding](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Rounding) proofs that connect the basic operations to their exact specifications. For accumulation, use the [quire proofs](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Quire), where [[FloatLib.Floats.Formats.Posit.Quire.Model.toRat?_pToQ]] and [[FloatLib.Floats.Formats.Posit.Quire.Model.qToP_eq_roundRat]] prove exact conversion in and one rounding out.
-
-The [algebraic](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Algebraic), [logarithmic](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Logarithm), and [natural-function](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Elementary) APIs add roots, powers, fused products, and exponentials and logarithms with real-rounding proofs. To follow why the natural functions terminate, start with the [total adaptive comparator](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Exact/Elementary). Its proof uses exp/log irrationality derived from the [proof of rational-argument exponential transcendence](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Enclosure/Elementary). The [shared numerical algorithms](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics) and [kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels) also serve binary formats.

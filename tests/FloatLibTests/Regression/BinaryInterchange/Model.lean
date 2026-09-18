@@ -502,7 +502,7 @@ def failStandardOperations : Thunk Nat := ⟨fun _ =>
 def failCorrectlyRoundedReductions : Thunk Nat := ⟨fun _ =>
   let fmt := FloatFormat.binary32
   let half := FloatFormat.binary16
-  let finiteOnly := FloatFormat.e4m3fn
+  let finiteWithNaN := FloatFormat.e4m3fn
   let one := Model.posOne fmt
   let large : Model fmt := Model.ofNatBits 0x4b800000
   let negativeLarge : Model fmt := Model.ofNatBits 0xcb800000
@@ -545,10 +545,10 @@ def failCorrectlyRoundedReductions : Thunk Nat := ⟨fun _ =>
         (Model.sumWithStatus fmt #[Model.posInf fmt, one] .nearestEven)
         (Model.posInf fmt) false false false false false
     , outcomeIs
-        (Model.sumWithStatus finiteOnly #[Model.posInf fmt, one] .nearestEven)
+        (Model.sumWithStatus finiteWithNaN #[Model.posInf fmt, one] .nearestEven)
         (Model.ofNatBits 0x7f) false false true false true
     , outcomeIs
-        (Model.sumWithStatus finiteOnly #[Model.negInf fmt] .nearestEven)
+        (Model.sumWithStatus finiteWithNaN #[Model.negInf fmt] .nearestEven)
         (Model.ofNatBits 0x7f) false false true false true
     , statusIs
         (Model.sumWithStatus fmt #[Model.posInf fmt, Model.negInf fmt]

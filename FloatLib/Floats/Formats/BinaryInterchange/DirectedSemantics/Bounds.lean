@@ -28,7 +28,7 @@ namespace Model
 
 open FloatLib.Floats
 
-noncomputable section
+section
 
 /-- Conventional IEEE overflow results of opposite signs are negations of each other. -/
 theorem nativeOverflow_true_eq_neg_false_of_isIEEE

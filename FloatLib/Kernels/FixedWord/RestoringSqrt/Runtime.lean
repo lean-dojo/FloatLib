@@ -82,6 +82,36 @@ namespace FloatLib.Numerics.FixedWord.RestoringSquareRoot
   | steps + 1, state =>
       rootLoop radicand steps (rootStep (digitAt radicand steps) state)
 
+/-- Consume base-four digits with four word accumulators, constructing only the final state. -/
+def rootLoopWords
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) :
+    Nat → UInt64 → UInt64 → UInt64 → UInt64 →
+      RestoringRootState FloatLib.Numerics.FixedWord.UInt128
+  | 0, rootHi, rootLo, remainderHi, remainderLo =>
+      { root := ⟨rootHi, rootLo⟩, remainder := ⟨remainderHi, remainderLo⟩ }
+  | steps + 1, rootHi, rootLo, remainderHi, remainderLo =>
+      let expandedHi := (remainderHi <<< 2) ||| (remainderLo >>> 62)
+      let expandedLo := (remainderLo <<< 2) ||| digitAt radicand steps
+      let trialHi := (rootHi <<< 2) ||| (rootLo >>> 62)
+      let trialLo := (rootLo <<< 2) ||| 1
+      let doubledRootHi := (rootHi <<< 1) ||| (rootLo >>> 63)
+      let doubledRootLo := rootLo <<< 1
+      if expandedHi < trialHi || (expandedHi == trialHi && expandedLo < trialLo) then
+        rootLoopWords radicand steps
+          doubledRootHi doubledRootLo expandedHi expandedLo
+      else
+        let borrow : UInt64 := if expandedLo < trialLo then 1 else 0
+        rootLoopWords radicand steps
+          doubledRootHi (doubledRootLo ||| 1)
+          (expandedHi - trialHi - borrow) (expandedLo - trialLo)
+
+/-- The word-accumulator implementation of `rootLoop`, including its wrapping arithmetic. -/
+@[inline] def rootLoopImpl
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) (steps : Nat)
+    (state : RestoringRootState FloatLib.Numerics.FixedWord.UInt128) :
+    RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
+  rootLoopWords radicand steps state.root.hi state.root.lo state.remainder.hi state.remainder.lo
+
 /--
 Compute the floor root and exact square remainder from the requested base-four digits.
 
@@ -94,6 +124,12 @@ so the result need not be the root of the original radicand.
     RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
   rootLoop radicand steps
     { root := ⟨0, 0⟩, remainder := ⟨0, 0⟩ }
+
+/-- Run the word-accumulator loop from zero root and remainder. -/
+@[inline] def rootAndRemainderImpl
+    (radicand : FloatLib.Numerics.FixedWord.UInt256) (steps : Nat) :
+    RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
+  rootLoopWords radicand steps 0 0 0 0
 
 /--
 Round a floor root to the nearest integer root.

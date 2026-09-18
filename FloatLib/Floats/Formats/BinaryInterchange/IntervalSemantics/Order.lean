@@ -23,7 +23,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace Interval
 
-noncomputable section
+section
 
 /-- The proposition-valued and Boolean executable non-strict orders agree. -/
 theorem le_iff_leB_eq_true

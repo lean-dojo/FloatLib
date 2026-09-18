@@ -28,7 +28,7 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 
 local notation "Bounds" => Interval (format := format) (plan := plan) (code := code)
 
-noncomputable section
+section
 
 /-- Finite-only addition encloses a sum when the exact endpoint sums fit in the format. -/
 theorem add_sound_of_encoding_finite (I J : Bounds) (hformat : format.encoding = .finite)

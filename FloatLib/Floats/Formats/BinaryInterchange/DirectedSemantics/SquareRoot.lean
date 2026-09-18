@@ -27,7 +27,7 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 private theorem natCast_sqrt_bounds (n : Nat) :
     (Nat.sqrt n : ℝ) ≤ Real.sqrt (n : ℝ) ∧

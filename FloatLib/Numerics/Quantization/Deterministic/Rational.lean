@@ -9,6 +9,7 @@ module
 public import FloatLib.Numerics.Quantization.Deterministic.Quotient
 public import Mathlib.Algebra.Order.Field.Rat
 public import Mathlib.Data.Rat.Lemmas
+import Mathlib.Data.Rat.Floor
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -35,20 +36,12 @@ namespace FloatLib.Numerics
   let magnitude := Int.ofNat (roundQuotientEven x.num.natAbs x.den)
   if x.num < 0 then -magnitude else magnitude
 
-private theorem quotient_value (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
+private theorem quotient_value (numerator denominator : Nat) :
     (numerator : ℚ) / denominator =
       (numerator / denominator : Nat) + (numerator % denominator : Nat) / denominator := by
-  have hdenominatorRat : (denominator : ℚ) ≠ 0 := by
-    exact_mod_cast hdenominator
-  calc
-    (numerator : ℚ) / denominator =
-        ((numerator % denominator + denominator * (numerator / denominator) : Nat) : ℚ) /
-          denominator := by rw [Nat.mod_add_div]
-    _ = (numerator / denominator : Nat) +
-        (numerator % denominator : Nat) / denominator := by
-      push_cast
-      field_simp [hdenominatorRat]
-      ring
+  simpa only [Rat.floor_natCast_div_natCast, ← Int.natCast_ediv, Int.cast_natCast,
+    Int.fract_div_natCast_eq_div_natCast_mod] using
+    (Int.floor_add_fract ((numerator : ℚ) / denominator)).symm
 
 private theorem floor_error_le_half (numerator denominator : Nat)
     (hdenominator : denominator ≠ 0)
@@ -68,7 +61,7 @@ private theorem floor_error_le_half (numerator denominator : Nat)
       (numerator % denominator : Nat) / (denominator : ℚ) ≤ (1 : ℚ) / 2 := by
     rw [div_le_iff₀ hdenominatorRatPos]
     linarith
-  rw [quotient_value numerator denominator hdenominator]
+  rw [quotient_value numerator denominator]
   rw [show
     ((numerator / denominator : Nat) : ℚ) -
         ((numerator / denominator : Nat) +
@@ -99,7 +92,7 @@ private theorem ceil_error_le_half (numerator denominator : Nat)
       (1 : ℚ) / 2 ≤ (numerator % denominator : Nat) / denominator := by
     rw [le_div_iff₀ hdenominatorRatPos]
     linarith
-  rw [quotient_value numerator denominator hdenominator]
+  rw [quotient_value numerator denominator]
   push_cast
   rw [show
     (((numerator / denominator : Nat) : ℚ) + 1) -
@@ -226,7 +219,7 @@ theorem roundQuotientEven_error_lt_half (numerator denominator : Nat)
   dsimp only
   split
   · rename_i h
-    rw [quotient_value numerator denominator hd]
+    rw [quotient_value numerator denominator]
     have hhalf : (numerator % denominator : Rat) / denominator < (1 : Rat) / 2 := by
       rw [div_lt_iff₀ hdp]
       have hh : (2 : Rat) * (numerator % denominator : Nat) < denominator := by
@@ -239,7 +232,7 @@ theorem roundQuotientEven_error_lt_half (numerator denominator : Nat)
     exact hhalf
   · rename_i h
     have hg : denominator < 2 * (numerator % denominator) := by omega
-    rw [ite_eq_left hg, quotient_value numerator denominator hd]
+    rw [ite_eq_left hg, quotient_value numerator denominator]
     push_cast
     have hhalf : (1 : Rat) / 2 < (numerator % denominator : Rat) / denominator := by
       rw [lt_div_iff₀ hdp]

@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Pi.Runtime
 /-!
 # Correct rounding of configured posit pi-scaled trigonometric operations
 
-Each configured operation refines the model and inherits its exact real-rounding theorem.
-The statements hold for every lawful storage codec and every valid posit width.
+The configured pi-scaled operations inherit the model's real-rounding theorems through any
+lawful storage codec. Separate equations cover NaR inputs, inverse-function domain failures,
+and the half-integer poles of `tanPi`.
 -/
 
 public section

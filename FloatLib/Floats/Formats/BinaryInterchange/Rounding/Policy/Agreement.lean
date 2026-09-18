@@ -76,20 +76,6 @@ private theorem roundQuot_towardNegative_eq_roundQuotDirected
   cases sign <;>
     simp [roundQuot, roundQuotDirected, quotCeil, hdenominator]
 
-/-- A positive natural number has the expected floor logarithm when viewed as a quotient by one. -/
-private theorem floorLog2_den_one (mantissa : Nat) (hmantissa : mantissa ≠ 0) :
-    Numerics.RationalBinary.floorLog2 mantissa 1 =
-      Int.ofNat mantissa.log2 := by
-  apply floorLog2_eq_of_bounds mantissa 1 (Int.ofNat mantissa.log2)
-    hmantissa (by decide)
-  · rw [bpow_ofNat]
-    norm_num
-    exact_mod_cast pow2_log2_le hmantissa
-  · rw [show Int.ofNat mantissa.log2 + 1 =
-        Int.ofNat (mantissa.log2 + 1) by simp, bpow_ofNat]
-    norm_num
-    exact_mod_cast lt_pow2_log2_add_one hmantissa
-
 /-- Absorbing a dyadic exponent into a quotient adds that exponent to its leading bit. -/
 private theorem floorLog2_dyadicScale
     (mantissa : Nat) (exponent : Int) (hmantissa : mantissa ≠ 0) :
@@ -98,7 +84,7 @@ private theorem floorLog2_dyadicScale
       Int.ofNat mantissa.log2 + exponent := by
   dsimp only
   rw [floorLog2_scaleByPowerOfTwo mantissa 1 exponent hmantissa (by decide)]
-  rw [floorLog2_den_one mantissa hmantissa]
+  rw [floorLog2_den_one mantissa hmantissa, Int.ofNat_eq_natCast]
 
 /--
 Nearest-even quotient rounding of an exact dyadic on a target grid is the shared dyadic shift
@@ -193,18 +179,10 @@ private theorem exponent_add_subnormalAlign
     (fmt : FloatFormat) (exponent : Int) :
     exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) =
       exponent - fmt.minSubnormalExponent := by
-  have hone : 1 ≤ fmt.exponentBias + fmt.fracWidth := by
-    have hbias := fmt.exponentBias_pos
-    omega
-  have hcast :
-      Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) =
-        Int.ofNat (fmt.exponentBias + fmt.fracWidth) - 1 := by
-    simpa only [Int.ofNat_eq_natCast, Int.natCast_one] using
-      (Int.ofNat_sub hone)
+  have := fmt.exponentBias_pos
   unfold FloatFormat.minSubnormalExponent FloatFormat.minNormalExponent
-  rw [hcast]
-  simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-  ring
+  simp only [Int.ofNat_eq_natCast]
+  omega
 
 /-- Exponent alignment by nearest-even rounding has the branch form used by the dyadic rounder. -/
 private theorem roundMantissaAtExponentEven_eq_match
@@ -615,6 +593,7 @@ private theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
     simp only [applyUnderflow, Nat.one_ne_zero, beq_iff_eq, hmantissa,
       hscaledNumerator, ite_false]
     rw [hlog, floorLog2_den_one mantissa hmantissa]
+    simp only [← Int.ofNat_eq_natCast]
     simp only [overflowResult, hoverflow]
     by_cases hover :
         fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
@@ -791,7 +770,7 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
     · simp only [Bool.false_eq_true, ite_false]
       unfold roundRatMagnitudeDirectedScaled roundDyadicMagnitudeDown
       simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, ite_false,
-        floorLog2_den_one mantissa hmantissa]
+        floorLog2_den_one mantissa hmantissa, ← Int.ofNat_eq_natCast]
       by_cases hoverflow :
           fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
       · simp only [ite_eq_left hoverflow, directedOverflow, Bool.false_eq_true,
@@ -830,7 +809,7 @@ private theorem roundRatMagnitudeDirectedScaled_dyadic_eq
     · simp only [ite_true]
       unfold roundRatMagnitudeDirectedScaled roundDyadicMagnitudeUp
       simp only [Nat.one_ne_zero, beq_iff_eq, hmantissa, ite_false,
-        floorLog2_den_one mantissa hmantissa]
+        floorLog2_den_one mantissa hmantissa, ← Int.ofNat_eq_natCast]
       by_cases hoverflow :
           fmt.maxNormalExponent < Int.ofNat mantissa.log2 + exponent
       · simp only [ite_eq_left hoverflow, directedOverflow, ite_true]
