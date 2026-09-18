@@ -1,0 +1,7 @@
+Verificarlo c5d1bf798a5ec617c138aa5e6629e1923411d3c8
+
+COPYING is the complete upstream file: Apache-2.0 with LLVM exceptions
+and its accompanying legacy LLVM information. It covers the unchanged
+upstream-Dockerfile and upstream-docker-ci.yml retained in ecosystem/raw/
+verificarlo, plus Verificarlo source excerpts in run.log and config.log.
+SOURCE-NOTICES.txt preserves the backend source copyright headers.

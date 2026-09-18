@@ -160,4 +160,10 @@ bash tests/verify.sh     # build the library and run its checks
 bash site/build.sh       # build the guide and check its examples
 ```
 
-FloatLib is released under the [MIT license](LICENSE).
+## License and credits
+
+Thanks to the Lean, Mathlib, and Flocq communities, and to the authors of the libraries
+used in our comparisons.
+
+FloatLib's own code is [MIT licensed](LICENSE). See [third-party licenses](third_party/README.md)
+for external code, data, and fonts.

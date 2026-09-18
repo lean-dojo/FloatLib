@@ -1,0 +1,9 @@
+OCaml interval library, as included by FPTaylor
+b5a77cae348400f21f83512210d9f43c4bffb381
+
+Copyright 2011 Jean-Marc Alliot / Jean-Baptiste Gotteland.
+The original INTERVAL/fpu.ml header explicitly grants LGPL-3.0-or-later;
+SOURCE-NOTICES.txt preserves that complete header. COPYING and
+COPYING.LESSER are the complete unchanged files from FPTaylor's INTERVAL
+directory. These notices cover the fpu.ml excerpt in raw/fptaylor/run.log
+and its archive copy.

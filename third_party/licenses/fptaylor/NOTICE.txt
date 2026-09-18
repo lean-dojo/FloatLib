@@ -1,0 +1,6 @@
+FPTaylor b5a77cae348400f21f83512210d9f43c4bffb381
+
+LICENSE and SOURCE-NOTICES.txt cover the FPTaylor source excerpts in
+raw/fptaylor/run.log, including the lib.ml acknowledgments of HOL Light,
+Flyspeck and nlcertify. INTERVAL/fpu.ml excerpts have separate LGPL
+notices and license texts in ../ocaml-interval/.

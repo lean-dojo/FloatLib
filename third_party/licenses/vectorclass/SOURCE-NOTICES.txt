@@ -1,0 +1,122 @@
+Agner Fog Vector Class Library 1.02 Beta, as retained in ExBLAS 856130ebcfe906f519a623d57d1359e744e29042
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  src/common/vectorclass.h
+
+/****************************  vectorclass.h   ********************************
+* Author:        Agner Fog
+* Date created:  2012-05-30
+* Last modified: 2012-08-01
+* Version:       1.02 Beta
+* Project:       vector classes
+* Description:
+* Header file defining vector classes as interface to 
+* intrinsic functions in x86 microprocessors with SSE2 and later instruction
+* sets up to AVX2.
+*
+* Instructions:
+* Use Gnu, Intel or Microsoft C++ compiler. Compile for the desired 
+* instruction set, which must be at least SSE2. Specify the supported 
+* instruction set by a command line define, e.g. __SSE4_1__ if the 
+* compiler does not automatically do so.
+*
+* Each vector object is represented internally in the CPU as a 128-bit or
+* 256 bit register.
+*
+* This header file includes the appropriate header files depending on the
+* supported instruction set
+*
+* For detailed instructions, see VectorClass.pdf
+*
+* (c) Copyright 2012 GNU General Public License 3.0 http://www.gnu.org/licenses
+******************************************************************************/
+#ifndef VECTORCLASS_H
+
+
+========================================================================
+Source paths:
+  src/common/vectorf256.h
+
+/****************************  vectorf256.h   *******************************
+* Author:        Agner Fog
+* Date created:  2012-05-30
+* Last modified: 2012-08-01
+* Version:       1.02 Beta
+* Project:       vector classes
+* Description:
+* Header file defining 256-bit floating point vector classes as interface
+* to intrinsic functions in x86 microprocessors with AVX instruction set.
+*
+* Instructions:
+* Use Gnu, Intel or Microsoft C++ compiler. Compile for the desired 
+* instruction set, which must be at least AVX.
+*
+* The following vector classes are defined here:
+* Vec8f     Vector of 8 single precision floating point numbers
+* Vec4d     Vector of 4 double precision floating point numbers
+* Vec8fb    Vector of 8 Booleans for use with Vec8f
+* Vec4db    Vector of 4 Booleans for use with Vec4d
+*
+* Each vector object is represented internally in the CPU as a 256-bit register.
+* This header file defines operators and functions for these vectors.
+*
+* For example:
+* Vec4d a(1., 2., 3., 4.), b(5., 6., 7., 8.), c;
+* c = a + b;     // now c contains (6., 8., 10., 12.)
+*
+* For detailed instructions, see VectorClass.pdf
+*
+* (c) Copyright 2012 GNU General Public License http://www.gnu.org/licenses
+*****************************************************************************/
+
+// check combination of header files
+
+
+========================================================================
+Source paths:
+  src/common/vectori256.h
+
+/****************************  vectori256.h   *******************************
+* Author:        Agner Fog
+* Date created:  2012-05-30
+* Last modified: 2012-08-01
+* Version:       1.02 Beta
+* Project:       vector classes
+* Description:
+* Header file defining integer vector classes as interface to intrinsic 
+* functions in x86 microprocessors with AVX2 and later instruction sets.
+*
+* Instructions:
+* Use Gnu, Intel or Microsoft C++ compiler. Compile for the desired 
+* instruction set, which must be at least AVX2. 
+*
+* The following vector classes are defined here:
+* Vec256b   Vector of 256  1-bit unsigned integers or Booleans
+* Vec32c    Vector of  32  8-bit signed   integers
+* Vec32uc   Vector of  32  8-bit unsigned integers
+* Vec16s    Vector of  16 16-bit signed   integers
+* Vec16us   Vector of  16 16-bit unsigned integers
+* Vec8i     Vector of   8 32-bit signed   integers
+* Vec8ui    Vector of   8 32-bit unsigned integers
+* Vec4q     Vector of   4 64-bit signed   integers
+* Vec4uq    Vector of   4 64-bit unsigned integers
+*
+* Each vector object is represented internally in the CPU as a 256-bit register.
+* This header file defines operators and functions for these vectors.
+*
+* For example:
+* Vec8i a(1,2,3,4,5,6,7,8), b(9,10,11,12,13,14,15,16), c;
+* c = a + b;     // now c contains (10,12,14,16,18,20,22,24)
+*
+* For detailed instructions, see VectorClass.pdf
+*
+* (c) Copyright 2012 GNU General Public License http://www.gnu.org/licenses
+*****************************************************************************/
+
+// check combination of header files
+

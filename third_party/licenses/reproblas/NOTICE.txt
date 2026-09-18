@@ -1,0 +1,7 @@
+ReproBLAS dfb815058dd34b88caba2513cce63bc2e89f951f
+
+LICENSE is the complete University of California 2016 software license.
+It covers ReproBLAS source excerpts in ecosystem/raw/reproblas/run.log,
+including test/benchmark formatting helpers. SOURCE-NOTICES.txt records
+the inspected diagnostic-source paths and any individual notices.
+Separate glibc header snippets are covered by ../glibc/.

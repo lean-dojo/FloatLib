@@ -1,0 +1,11 @@
+OpenLibm 5fe399749f9276eaa0b8403e507470da05cbbb3f
+
+LICENSE.md is the complete upstream multi-license file. SOURCE-NOTICES.txt
+preserves copyright/permission comment blocks from the src, include,
+amd64, bsdsrc and ld80 source/header directories used by the observed
+amd64 library builds.
+
+These notices cover both retained providers/openlibm.so files identified
+in ../../retained-material.json. The LGPL test source is separate:
+TEST-SOURCE-NOTICES.txt and TESTS-COPYING.LIB cover libm-test.c excerpts
+in tests/results/main/ecosystem/raw/openlibm/run.log.

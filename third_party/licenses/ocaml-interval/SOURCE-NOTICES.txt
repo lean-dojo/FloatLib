@@ -1,0 +1,30 @@
+OCaml interval library, as distributed with FPTaylor b5a77cae348400f21f83512210d9f43c4bffb381
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  INTERVAL/fpu.ml
+
+(*
+    Copyright 2011 Jean-Marc Alliot / Jean-Baptiste Gotteland
+
+    This file is part of the ocaml interval library.
+
+    The ocaml interval library is free software: 
+    you can redistribute it and/or modify it under the terms of 
+    the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    The ocaml interval library is distributed in the hope that it will be 
+    useful,but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with the ocaml interval library.  
+    If not, see <http://www.gnu.org/licenses/>.
+*)

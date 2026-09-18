@@ -1,0 +1,525 @@
+FLiT 27b6061b9d2302fa8c3252fe770287bb4d07905b: retained SQL/configuration and test-source excerpts
+
+Copyright/license comment blocks below are reproduced verbatim.
+Repeated identical blocks are grouped by source path. Implementation bodies
+are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+
+========================================================================
+Source paths:
+  flit-tables-sqlite.sql
+
+-- -- LICENSE BEGIN --
+--
+-- Copyright (c) 2015-2020, Lawrence Livermore National Security, LLC.
+--
+-- Produced at the Lawrence Livermore National Laboratory
+--
+-- Written by
+--   Michael Bentley (mikebentley15@gmail.com),
+--   Geof Sawaya (fredricflinstone@gmail.com),
+--   and Ian Briggs (ian.briggs@utah.edu)
+-- under the direction of
+--   Ganesh Gopalakrishnan
+--   and Dong H. Ahn.
+--
+-- LLNL-CODE-743137
+--
+-- All rights reserved.
+--
+-- This file is part of FLiT. For details, see
+--   https://pruners.github.io/flit
+-- Please also read
+--   https://github.com/PRUNERS/FLiT/blob/master/LICENSE
+--
+-- Redistribution and use in source and binary forms, with or
+-- without modification, are permitted provided that the following
+-- conditions are met:
+--
+-- - Redistributions of source code must retain the above copyright
+--   notice, this list of conditions and the disclaimer below.
+--
+-- - Redistributions in binary form must reproduce the above
+--   copyright notice, this list of conditions and the disclaimer
+--   (as noted below) in the documentation and/or other materials
+--   provided with the distribution.
+--
+-- - Neither the name of the LLNS/LLNL nor the names of its
+--   contributors may be used to endorse or promote products derived
+--   from this software without specific prior written permission.
+--
+-- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-- CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+-- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-- DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+-- SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE
+-- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+-- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+-- TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+-- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+-- IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+-- THE POSSIBILITY OF SUCH DAMAGE.
+--
+-- Additional BSD Notice
+--
+-- 1. This notice is required to be provided under our contract
+--    with the U.S. Department of Energy (DOE). This work was
+--    produced at Lawrence Livermore National Laboratory under
+--    Contract No. DE-AC52-07NA27344 with the DOE.
+--
+-- 2. Neither the United States Government nor Lawrence Livermore
+--    National Security, LLC nor any of their employees, makes any
+--    warranty, express or implied, or assumes any liability or
+--    responsibility for the accuracy, completeness, or usefulness of
+--    any information, apparatus, product, or process disclosed, or
+--    represents that its use would not infringe privately-owned
+--    rights.
+--
+-- 3. Also, reference herein to any specific commercial products,
+--    process, or services by trade name, trademark, manufacturer or
+--    otherwise does not necessarily constitute or imply its
+--    endorsement, recommendation, or favoring by the United States
+--    Government or Lawrence Livermore National Security, LLC. The
+--    views and opinions of authors expressed herein do not
+--    necessarily state or reflect those of the United States
+--    Government or Lawrence Livermore National Security, LLC, and
+--    shall not be used for advertising or product endorsement
+--    purposes.
+--
+-- -- LICENSE END --
+
+
+--
+-- Commands used to create the tables for flit in an sqlite3 database.
+--
+
+-- The foreign key support is off by default.  We want this functionality.
+-- According to the documentation, it needs to be turned on every time at
+-- runtime.
+
+
+========================================================================
+Source paths:
+  flit-default-toml
+
+# -- LICENSE BEGIN --
+#
+# Copyright (c) 2015-2020, Lawrence Livermore National Security, LLC.
+#
+# Produced at the Lawrence Livermore National Laboratory
+#
+# Written by
+#   Michael Bentley (mikebentley15@gmail.com),
+#   Geof Sawaya (fredricflinstone@gmail.com),
+#   and Ian Briggs (ian.briggs@utah.edu)
+# under the direction of
+#   Ganesh Gopalakrishnan
+#   and Dong H. Ahn.
+#
+# LLNL-CODE-743137
+#
+# All rights reserved.
+#
+# This file is part of FLiT. For details, see
+#   https://pruners.github.io/flit
+# Please also read
+#   https://github.com/PRUNERS/FLiT/blob/master/LICENSE
+#
+# Redistribution and use in source and binary forms, with or
+# without modification, are permitted provided that the following
+# conditions are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the disclaimer below.
+#
+# - Redistributions in binary form must reproduce the above
+#   copyright notice, this list of conditions and the disclaimer
+#   (as noted below) in the documentation and/or other materials
+#   provided with the distribution.
+#
+# - Neither the name of the LLNS/LLNL nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+# CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+# SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Additional BSD Notice
+#
+# 1. This notice is required to be provided under our contract
+#    with the U.S. Department of Energy (DOE). This work was
+#    produced at Lawrence Livermore National Laboratory under
+#    Contract No. DE-AC52-07NA27344 with the DOE.
+#
+# 2. Neither the United States Government nor Lawrence Livermore
+#    National Security, LLC nor any of their employees, makes any
+#    warranty, express or implied, or assumes any liability or
+#    responsibility for the accuracy, completeness, or usefulness of
+#    any information, apparatus, product, or process disclosed, or
+#    represents that its use would not infringe privately-owned
+#    rights.
+#
+# 3. Also, reference herein to any specific commercial products,
+#    process, or services by trade name, trademark, manufacturer or
+#    otherwise does not necessarily constitute or imply its
+#    endorsement, recommendation, or favoring by the United States
+#    Government or Lawrence Livermore National Security, LLC. The
+#    views and opinions of authors expressed herein do not
+#    necessarily state or reflect those of the United States
+#    Government or Lawrence Livermore National Security, LLC, and
+#    shall not be used for advertising or product endorsement
+#    purposes.
+#
+# -- LICENSE END --
+# Autogenerated by "flit init"
+#   flit version {flit_version}
+
+# General information
+
+
+========================================================================
+Source paths:
+  flit-simple_convex_hull.cpp
+
+/* -- LICENSE BEGIN --
+ *
+ * Copyright (c) 2015-2020, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * Written by
+ *   Michael Bentley (mikebentley15@gmail.com),
+ *   Geof Sawaya (fredricflinstone@gmail.com),
+ *   and Ian Briggs (ian.briggs@utah.edu)
+ * under the direction of
+ *   Ganesh Gopalakrishnan
+ *   and Dong H. Ahn.
+ *
+ * LLNL-CODE-743137
+ *
+ * All rights reserved.
+ *
+ * This file is part of FLiT. For details, see
+ *   https://pruners.github.io/flit
+ * Please also read
+ *   https://github.com/PRUNERS/FLiT/blob/master/LICENSE
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the disclaimer below.
+ *
+ * - Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the disclaimer
+ *   (as noted below) in the documentation and/or other materials
+ *   provided with the distribution.
+ *
+ * - Neither the name of the LLNS/LLNL nor the names of its
+ *   contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+ * SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Additional BSD Notice
+ *
+ * 1. This notice is required to be provided under our contract
+ *    with the U.S. Department of Energy (DOE). This work was
+ *    produced at Lawrence Livermore National Laboratory under
+ *    Contract No. DE-AC52-07NA27344 with the DOE.
+ *
+ * 2. Neither the United States Government nor Lawrence Livermore
+ *    National Security, LLC nor any of their employees, makes any
+ *    warranty, express or implied, or assumes any liability or
+ *    responsibility for the accuracy, completeness, or usefulness of
+ *    any information, apparatus, product, or process disclosed, or
+ *    represents that its use would not infringe privately-owned
+ *    rights.
+ *
+ * 3. Also, reference herein to any specific commercial products,
+ *    process, or services by trade name, trademark, manufacturer or
+ *    otherwise does not necessarily constitute or imply its
+ *    endorsement, recommendation, or favoring by the United States
+ *    Government or Lawrence Livermore National Security, LLC. The
+ *    views and opinions of authors expressed herein do not
+ *    necessarily state or reflect those of the United States
+ *    Government or Lawrence Livermore National Security, LLC, and
+ *    shall not be used for advertising or product endorsement
+ *    purposes.
+ *
+ * -- LICENSE END -- */
+
+========================================================================
+Source paths:
+  flit-Paranoia.cpp
+
+/* -- LICENSE BEGIN --
+ *
+ * Copyright (c) 2015-2020, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * Written by
+ *   Michael Bentley (mikebentley15@gmail.com),
+ *   Geof Sawaya (fredricflinstone@gmail.com),
+ *   and Ian Briggs (ian.briggs@utah.edu)
+ * under the direction of
+ *   Ganesh Gopalakrishnan
+ *   and Dong H. Ahn.
+ *
+ * LLNL-CODE-743137
+ *
+ * All rights reserved.
+ *
+ * This file is part of FLiT. For details, see
+ *   https://pruners.github.io/flit
+ * Please also read
+ *   https://github.com/PRUNERS/FLiT/blob/master/LICENSE
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the disclaimer below.
+ *
+ * - Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the disclaimer
+ *   (as noted below) in the documentation and/or other materials
+ *   provided with the distribution.
+ *
+ * - Neither the name of the LLNS/LLNL nor the names of its
+ *   contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+ * SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Additional BSD Notice
+ *
+ * 1. This notice is required to be provided under our contract
+ *    with the U.S. Department of Energy (DOE). This work was
+ *    produced at Lawrence Livermore National Laboratory under
+ *    Contract No. DE-AC52-07NA27344 with the DOE.
+ *
+ * 2. Neither the United States Government nor Lawrence Livermore
+ *    National Security, LLC nor any of their employees, makes any
+ *    warranty, express or implied, or assumes any liability or
+ *    responsibility for the accuracy, completeness, or usefulness of
+ *    any information, apparatus, product, or process disclosed, or
+ *    represents that its use would not infringe privately-owned
+ *    rights.
+ *
+ * 3. Also, reference herein to any specific commercial products,
+ *    process, or services by trade name, trademark, manufacturer or
+ *    otherwise does not necessarily constitute or imply its
+ *    endorsement, recommendation, or favoring by the United States
+ *    Government or Lawrence Livermore National Security, LLC. The
+ *    views and opinions of authors expressed herein do not
+ *    necessarily state or reflect those of the United States
+ *    Government or Lawrence Livermore National Security, LLC, and
+ *    shall not be used for advertising or product endorsement
+ *    purposes.
+ *
+ * -- LICENSE END -- */
+#undef V9
+/*  A C/C++ version of Kahan's Floating Point Test "Paranoia"
+
+  Added to FLiT with minor modifications by
+
+      Michael Bentley, University of Utah, Jan. 2017
+
+  Taken from
+
+      Thos Sumner, UCSF, Feb. 1985
+      David Gay, BTL, Jan. 1986
+
+  This is a rewrite from the Pascal version by
+
+      B. A. Wichmann, 18 Jan. 1985
+
+  (and does NOT exhibit good C programming style).
+
+(C) Apr 19 1983 in BASIC version by:
+  Professor W. M. Kahan,
+  567 Evans Hall
+  Electrical Engineering & Computer Science Dept.
+  University of California
+  Berkeley, California 94720
+  USA
+
+converted to Pascal by:
+  B. A. Wichmann
+  National Physical Laboratory
+  Teddington Middx
+  TW11 OLW
+  UK
+
+converted to C by:
+
+  David M. Gay and Thos Sumner
+  AT&T Bell Labs Computer Center, Rm. U-76
+  600 Mountain Avenue University of California
+  Murray Hill, NJ 07974 San Francisco, CA 94143
+  USA USA
+
+converted for K&R, Standard C, and Standard C++ compilation [with loss
+of support for the split script below] by:
+
+   Nelson H. F. Beebe
+   Center for Scientific Computing
+   University of Utah
+   Department of Mathematics, 322 INSCC
+   155 S 1400 E RM 233
+   Salt Lake City, UT 84112-0090
+   USA
+   Email: beebe@math.utah.edu, beebe@acm.org, beebe@computer.org, beebe@ieee.org (Internet)
+   WWW URL: http://www.math.utah.edu/~beebe
+   Telephone: +1 801 581 5254
+   FAX: +1 801 585 1640, +1 801 581 4148
+
+with simultaneous corrections to the Pascal source (reflected
+in the Pascal source available over netlib).
+[A couple of bug fixes from dgh = sun!dhough incorporated 31 July 1986.]
+
+Reports of results on various systems from all the versions
+of Paranoia are being collected by Richard Karpinski at the
+same address as Thos Sumner.  This includes sample outputs,
+bug reports, and criticisms.
+
+You may copy this program freely if you acknowledge its source.
+Comments on the Pascal version to NPL, please.
+
+
+The C version catches signals from floating-point exceptions.
+If signal(SIGFPE,...) is unavailable in your environment, you may
+#define NOSIGNAL to comment out the invocations of signal.
+
+This source file is too big for some C compilers, but may be split
+into pieces.  Comments containing "SPLIT" suggest convenient places
+for this splitting.  At the end of these comments is an "ed script"
+(for the UNIX(tm) editor ed) that will do this splitting.
+
+By #defining Single when you compile this source, you may obtain
+a single-precision C version of Paranoia.
+
+
+The following is from the introductory commentary from Wichmann's work:
+
+The BASIC program of Kahan is written in Microsoft BASIC using many
+facilities which have no exact analogy in Pascal.  The Pascal
+version below cannot therefore be exactly the same.  Rather than be
+a minimal transcription of the BASIC program, the Pascal coding
+follows the conventional style of block-structured languages.  Hence
+the Pascal version could be useful in producing versions in other
+structured languages.
+
+Rather than use identifiers of minimal length (which therefore have
+little mnemonic significance), the Pascal version uses meaningful
+identifiers as follows [Note: A few changes have been made for C]:
+
+
+BASIC   C               BASIC   C               BASIC   C
+
+   A                       J                       S    StickyBit
+   a1   AInverse           J0   NoErrors           T
+   B    radix                    [Failure]         T0   Underflow
+   B1   BInverse           J1   NoErrors           T2   thirtyTwo
+   B2   radixD2                  [SeriousDefect]   T5   oneAndHalf
+   B9   bMinusU2           J2   NoErrors           T7   twentySeven
+   C                             [Defect]          T8   twoForty
+   C1   CInverse           J3   NoErrors           U    OneUlp
+   D                             [Flaw]            U0   UnderflowThreshold
+   D4   FourD              K    PageNo             U1
+   E0                      L    Milestone          U2
+   E1                      M                       V
+   E2   Exp2               N                       V0
+   E3                      N1                      V8
+   E5   MinSqEr            O    zero               V9
+   E6   SqEr               O1   one                W
+   E7   MaxSqEr            O2   two                X
+   E8                      O3   three              X1
+   E9                      O4   four               X8
+   F1   minusOne           O5   five               X9   Random1
+   F2   half               O8   eight              Y
+   F3   Third              O9   nine               Y1
+   F6                      P    Precision          Y2
+   F9                      Q                       Y9   Random2
+   G1   GMult              Q8                      Z
+   G2   GDiv               Q9                      Z0   PseudoZero
+   G3   GAddSub            R                       Z1
+   H                       R1   RMult              Z2
+   H1   HInverse           R2   RDiv               Z9
+   I                       R3   RAddSub
+   IO   noTrials           R4   RSqrt
+   I3   IEEE               R9   Random9
+
+   SqRWrng
+
+All the variables in BASIC are true variables and in consequence,
+the program is more difficult to follow since the "constants" must
+be determined (the glossary is very helpful).  The Pascal version
+uses Real constants, but checks are added to ensure that the values
+are correctly converted by the compiler.
+
+The major textual change to the Pascal version apart from the
+identifiersis that named procedures are used, inserting parameters
+wherehelpful.  New procedures are also introduced.  The
+correspondence is as follows:
+
+
+BASIC       Pascal
+lines
+
+  90- 140   pause
+ 170- 250   instructions
+ 380- 460   heading
+ 480- 670   characteristics
+ 690- 870   history
+2940-2950   random
+3710-3740   newD
+4040-4080   DoesYequalX
+4090-4110   printIfNPositive
+4640-4850   TestPartialUnderflow
+
+*/

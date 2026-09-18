@@ -1,0 +1,11 @@
+GNU C Library diagnostic excerpts
+
+The retained OpenLibm and ReproBLAS logs echo short source lines from
+stdio.h, bits/stdio2.h, bits/stdio2-decl.h and bits/string_fortified.h.
+The OpenLibm log records libc6-dev 2.39-0ubuntu8.9; the ReproBLAS log
+records libc6-dev 2.35-0ubuntu3.15.
+
+SOURCE-NOTICES.txt preserves the relevant FSF notices from upstream glibc
+2.35 and 2.39 release-tag headers, with exact source URLs and hashes in
+../../SOURCES.json. The exact Ubuntu-patched headers were not recovered.
+COPYING.LIB is the full LGPL-2.1 text, unchanged from glibc-2.39.

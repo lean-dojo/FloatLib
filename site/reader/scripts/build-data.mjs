@@ -6,6 +6,7 @@
 // highlights Lean, resolves [[Full.Lean.Name]] links, and writes:
 //   public/data/site.json           everything the app needs, fetched once at startup
 //   public/mathjax.css, public/mathjax/fonts/woff-v2/   offline MathJax output
+//   public/third-party-licenses.txt   notices for distributed code and fonts
 //
 // The site root defaults to the parent of this reader directory. build.sh sets
 // FLOATLIB_SITE_ROOT because it builds from a copy of reader/ on local disk.
@@ -18,6 +19,7 @@ import process from 'node:process';
 import MarkdownIt from 'markdown-it';
 import { highlightLeanLines, isCommentLine } from './lean-highlight.mjs';
 import { buildModuleGraph } from './module-graph.mjs';
+import { writeThirdPartyLicenses } from './build-licenses.mjs';
 
 const require = createRequire(import.meta.url);
 const readerDir = path.resolve(import.meta.dirname, '..');
@@ -595,6 +597,7 @@ async function main() {
   const fontsSource = path.join(path.dirname(require.resolve('mathjax')), 'output', 'chtml', 'fonts', 'woff-v2');
   await mkdir(path.join(publicDir, 'mathjax', 'fonts'), { recursive: true });
   await cp(fontsSource, path.join(publicDir, 'mathjax', 'fonts', 'woff-v2'), { recursive: true });
+  await writeThirdPartyLicenses(publicDir, path.dirname(siteRoot));
 
   const report = [
     `# Reader build warnings (${site.generatedAt})`,

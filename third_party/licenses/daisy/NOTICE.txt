@@ -1,0 +1,7 @@
+Daisy 6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+
+The raw/daisy/run.log source excerpts retain both Daisy and inherited
+Leon material. LICENSE preserves Daisy's Apache-2.0 text; LEON_LICENSE
+preserves EPFL's separate BSD-style notice. SOURCE-NOTICES.txt preserves
+the original and modified-work copyright allocations from all 38 Scala
+source files identified in the retained compiler diagnostics.

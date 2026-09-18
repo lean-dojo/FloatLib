@@ -131,6 +131,7 @@ function Sidebar({ index, route, onSearch }: { index: SiteIndex; route: Route; o
         </button>
         <p className="site-provenance">
           <a href={data.source.repository} target="_blank" rel="noreferrer">Source on GitHub</a>
+          <br /><a href="third-party-licenses.txt">Third-party licenses</a>
           {data.source.revision === null && <><br />
             <span className="uncommitted">Uncommitted source; no revision yet.</span></>}
         </p>

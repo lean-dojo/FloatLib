@@ -1,0 +1,6 @@
+CORE-MATH 68b034fbe9512781352d28f2dc9795c1686fe8e9
+
+SOURCE-NOTICES.txt preserves complete original MIT copyright/permission
+headers for binary32/binary64 exp, log, sin, cos, sinh, cosh and tanh,
+including binary64/log/dint.h, plus source headers for the retained
+compound/check_worst diagnostic excerpts.

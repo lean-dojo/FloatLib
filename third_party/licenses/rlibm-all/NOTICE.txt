@@ -1,0 +1,7 @@
+RLIBM-ALL ecosystem-provider and log notice
+
+Upstream: rutgers-apl/rlibm-all
+Commit: 90431a000071e415abf0f403b6125c385551e346
+Artifact: tests/results/main/ecosystem/raw/transcendental-direct/comparison/providers/rlibm.so
+Also covers RLIBM-ALL source excerpts in ecosystem/raw/rlibm-all/run.log.
+License: MIT; complete original LICENSE is adjacent.

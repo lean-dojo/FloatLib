@@ -1,0 +1,6 @@
+Intel TBB diagnostic header excerpt
+
+raw/exblas/run.log echoes the task_scheduler_init.h deprecation pragma.
+LICENSE and SOURCE-NOTICES.txt preserve Apache-2.0 and Intel's original
+2005-2020 notice from v2020.3. That source contains the observed pragma;
+the exact TBB build commit was not established.
