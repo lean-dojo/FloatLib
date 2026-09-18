@@ -166,13 +166,9 @@ private theorem accuracyRepresents_accuracyOfFraction
       (numerator : Real) / denominator =
         ((numerator / denominator : Nat) : Real) +
           ((numerator % denominator : Nat) : Real) / denominator := by
-    have hdivision :
-        ((denominator * (numerator / denominator) + numerator % denominator : Nat) : Real) =
-          numerator := by
-      exact_mod_cast Nat.div_add_mod numerator denominator
-    push_cast at hdivision
-    field_simp
-    linarith
+    simpa only [Int.floor_div_natCast, Int.floor_natCast, ← Int.natCast_ediv,
+      Int.cast_natCast, Int.fract_div_natCast_eq_div_natCast_mod] using
+      (Int.floor_add_fract ((numerator : ℝ) / denominator)).symm
   unfold accuracyOfFraction
   rw [hsplit]
   split_ifs with hremainder

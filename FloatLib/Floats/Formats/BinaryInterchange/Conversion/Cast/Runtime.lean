@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Widening
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 /-!
@@ -33,7 +34,7 @@ because they preserve every finite source value exactly.
 
 | Situation | Result |
 |-----------|--------|
-| The destination represents the source value | Exact conversion, including every binary16-to-binary32 finite widening |
+| The destination represents the source value | Exact conversion, including binary16 to binary32 |
 | The source lies between destination values | One rounding step in the selected mode |
 | The magnitude exceeds the destination range | The destination encoding's overflow behavior |
 | The magnitude is below the smallest normal | A subnormal or zero, according to rounding |
@@ -57,8 +58,9 @@ Across unequal descriptors, conversion uses `invalidResult dst`: the destination
 when available, or positive zero for a fully finite encoding. Neither the source NaN sign nor its
 payload is transported across unequal descriptors, even when their field widths agree.
 
-Infinity keeps its sign. A destination with infinities preserves it; other encodings return the
-finite value of greatest magnitude with that sign.
+Infinity follows the destination's overflow policy: same-sign infinity for IEEE encodings,
+canonical NaN for finite-with-NaN encodings, and the same-sign maximum finite value for a fully
+finite encoding.
 
 Once NaN and infinity have been excluded, finiteness is proved and `finiteDyadic` is total.
 `castWithStatus` also reports invalid input, overflow, underflow, and inexactness according to the
@@ -86,6 +88,24 @@ operation as a narrowing conversion or cross an encoding boundary.
   let shift := dst.fracWidth - src.fracWidth
   ofFields dst (signBit x) (expField x)
     (Nat.shiftLeft (fracField x) shift)
+
+/-- Implement compatible widening with one shift of the complete stored word. -/
+@[inline] def widenExactImpl {src dst : FloatFormat} (x : Model src)
+    (hexp : src.expWidth = dst.expWidth)
+    (_ : src.exponentBias = dst.exponentBias)
+    (_ : src.encoding = dst.encoding)
+    (hfrac : src.fracWidth ≤ dst.fracWidth) : Model dst :=
+  widenBits x hexp hfrac
+
+/--
+The compiler uses the whole-word shift in every caller of compatible widening.
+
+This equality covers every bit pattern; the surrounding cast retains its NaN and infinity policy.
+It is registered before the public casts are compiled.
+-/
+@[csimp] theorem widenExact_eq_widenExactImpl : @widenExact = @widenExactImpl := by
+  funext src dst x hexp hbias hencoding hfrac
+  exact (widenBits_eq_ofFields x hexp hfrac).symm
 
 /--
 Cast `x` from format `src` into format `dst`.
@@ -181,9 +201,10 @@ the destination format.
 Cast `x` and report the IEEE exception indicators raised by the conversion.
 
 A signaling NaN raises invalid. A quiet NaN raises invalid only when the destination cannot
-represent a NaN at all. Infinity is exact when the destination preserves infinity; conversion to
-a finite-only destination reports overflow and inexactness. Finite values use the same exact
-dyadic witness for both directed rounding and status classification.
+represent a NaN at all. Infinity is exact when the destination preserves infinity. A destination
+without infinity reports overflow and inexactness, including when its overflow encoding is a NaN;
+this conversion does not raise invalid. Finite values use the same exact dyadic witness for both
+directed rounding and status classification.
 -/
 def castWithStatus (src dst : FloatFormat) (x : Model src)
     (mode : IEEERoundingMode := .nearestEven) : IEEEOutcome dst :=

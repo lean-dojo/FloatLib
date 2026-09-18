@@ -24,10 +24,10 @@ namespace Model
 
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-- Binary power as a real number. -/
-abbrev bpow (exponent : Int) : ℝ :=
+noncomputable abbrev bpow (exponent : Int) : ℝ :=
   FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent
 
 /-- Every real binary power is positive. -/

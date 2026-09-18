@@ -25,7 +25,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace Interval
 
-noncomputable section
+section
 
 /--
 Finite-only interval addition encloses every selected sum when both exact endpoint sums fit in the

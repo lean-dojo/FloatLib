@@ -95,7 +95,7 @@ def structuralRoute? (format : FloatFormat) : Operation → Option StructuralRou
         some .fixedFormat
       else if pairKernelEligible format then
         some .fixedLimbs
-      else if decide (Model.NativeSmallWord.Eligible format) then
+      else if decide (Model.NativeSmallWord.StorageEligible format) then
         some .nativeWord
       else
         none

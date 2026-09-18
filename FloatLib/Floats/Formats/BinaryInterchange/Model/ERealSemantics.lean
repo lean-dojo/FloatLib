@@ -24,7 +24,7 @@ The definitions and proofs are uniform in `fmt`.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- Extended-real interpretation of `Model`; `none` is reserved exactly for NaNs. -/
 noncomputable def toEReal? {fmt : FloatFormat} (x : Model fmt) : Option EReal :=

@@ -107,18 +107,9 @@ theorem spec_fma_of_fma?_eq_some (x y z r : Model fmt) (h : FiniteKernel.fma? x 
 
 /-- Negating a conventional IEEE value flips only the decoded sign. -/
 theorem decode?_neg (hieee : fmt.isIEEE = true) (m : Model fmt) :
-    FiniteKernel.decode? (neg m) = (FiniteKernel.decode? m).map fun c => { c with sign := !c.sign } := by
-  have hencoding : fmt.encoding = .ieee := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
-  have hsigned : fmt.supportsSignedZero = true := by
-    simp [FloatFormat.supportsSignedZero, hencoding]
-  have hfinite : isFinite (neg m) = isFinite m := by
-    rw [isFinite, isFinite, hencoding]
-    exact IEEE.isFinite_neg m
-  unfold FiniteKernel.decode?
-  rw [hfinite, signBit_neg, hsigned, expField_neg, fracField_neg]
-  by_cases hfin : isFinite m = true
-  · simp [hfin]
-  · simp [hfin]
+    FiniteKernel.decode? (neg m) =
+      (FiniteKernel.decode? m).map fun c => { c with sign := !c.sign } :=
+  FiniteKernel.decode?_neg hieee m
 
 /-- The unsigned-scale exact sum does not depend on the order of its operands. -/
 theorem roundSum_comm (hieee : fmt.isIEEE = true) (roundOffset : Nat) (aSign bSign : Bool)

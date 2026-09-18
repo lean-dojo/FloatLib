@@ -105,7 +105,10 @@ theorem roundedInteger_nearestTiesToAway_tie (negative : Bool) (parity : Nat →
     roundedInteger .nearestTiesToAway negative parity scaled = ⌊scaled⌋₊ + 1 := by
   simp [roundedInteger, roundAway, htie]
 
-/-- On a halfway input, nearest-even selects the lower candidate precisely when its code is even. -/
+/--
+On a halfway input, nearest-even selects the lower candidate when `parity ⌊scaled⌋₊` is true,
+and the upper candidate otherwise.
+-/
 theorem roundedInteger_nearestTiesToEven_tie (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) (htie : scaled - ⌊scaled⌋₊ = 1 / 2) :
     roundedInteger .nearestTiesToEven negative parity scaled =

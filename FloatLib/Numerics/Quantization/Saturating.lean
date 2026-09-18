@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Quantization.Spec
-public import Mathlib.Order.Defs.LinearOrder
+public import Mathlib.Order.Interval.Set.ProjIcc
 
 /-!
 # Saturating quantization
@@ -27,6 +27,12 @@ namespace FloatLib.Numerics.Quantization.Saturating
 /-- Clamp to `[lower, upper]` when `lower ≤ upper`; otherwise return `lower`. -/
 @[inline] def clamp {α : Type} [LinearOrder α] (lower upper value : α) : α :=
   max lower (min upper value)
+
+/-- On a nonempty interval, clamping is Mathlib's interval projection with its bounds erased. -/
+theorem clamp_eq_projIcc {α : Type} [LinearOrder α]
+    (lower upper value : α) (hendpoints : lower ≤ upper) :
+    clamp lower upper value = (Set.projIcc lower upper hendpoints value : α) :=
+  rfl
 
 /-- Clamping fixes values already inside the declared interval. -/
 @[simp, grind =] theorem clamp_eq_self {α : Type} [LinearOrder α]

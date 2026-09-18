@@ -27,7 +27,7 @@ namespace Model
 
 open FloatLib.Floats
 
-noncomputable section
+section
 
 /-- Increasing a natural exponent by one does not decrease its power of two. -/
 theorem pow2_le_pow2_succ (exponent : Nat) :

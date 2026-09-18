@@ -417,10 +417,6 @@ private theorem roundNormalProduct_eq_spec
       (position + 1).toNat = position.toNat + 1 := by
     apply FloatLib.Numerics.FixedWord.uint64_add_toNat_of_lt
     rw [hposition, UInt64.toNat_one]
-    have hleading126 : productNat.log2 < 126 := by
-      rw [← hleading]
-      omega
-    norm_num at hxExponent31 hyExponent31 ⊢
     omega
   have hpositionAddNat :
       (position + 1).toNat =

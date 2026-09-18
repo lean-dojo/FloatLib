@@ -23,7 +23,7 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 namespace Dyadic
 

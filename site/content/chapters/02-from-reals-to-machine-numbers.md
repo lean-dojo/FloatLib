@@ -14,7 +14,7 @@ To understand that discrepancy, we'll follow two operations separately: interpre
 
 The real numbers complete the rational number line. A sequence of rational approximations such as $3, 3.1, 3.14, 3.141, \ldots$ approaches a limit even though that limit need not be rational. Completeness requires that every Cauchy sequence, whose terms eventually stay arbitrarily close to one another, has a limit on the line. The real line includes numbers such as $\sqrt{2}$ and $\pi$, and lets us reason about limits in calculus without leaving the number system.
 
-There are more real numbers than finite descriptions of them. Descriptions written in a finite alphabet are countable: list those with one symbol, then those with two, and continue by length. Cantor's uncountability result says that such a list cannot cover the real line. In fact, the countable set of finitely describable reals has measure zero, so almost every real has no finite formula or program that names it. Particular irrational numbers can still have short symbolic descriptions. The limitation of a fixed-width numeric type is stronger: it has room for only finitely many values, however those values are described.
+There are more real numbers than finite descriptions of them. Descriptions written in a finite alphabet are countable: list those with one symbol, then those with two, and continue by length. Cantor's uncountability result says that such a list cannot cover the real line. The countable set of finitely describable reals has measure zero, so almost every real has no finite formula or program that names it. Particular irrational numbers can still have short symbolic descriptions. The limitation of a fixed-width numeric type is stronger: it has room for only finitely many values, however those values are described.
 
 <a id="why-a-machine-holds-finitely-many-values"></a>
 
@@ -242,7 +242,7 @@ We can get a feel for the four directions by rounding familiar numbers to intege
 
 Both $2.5$ and $3.5$ are midpoints, and ties to even sends the first down and the second up. The theorems [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_nearestEven]], `toReal_roundToIntegral_towardZero`, `toReal_roundToIntegral_towardPositiveInfinity` and `toReal_roundToIntegral_towardNegativeInfinity` state that, for finite inputs in a conventional IEEE format satisfying the range condition below, the decoded result is the nearest-even integer, the truncation, $\lceil x \rceil$ or $\lfloor x \rfloor$ of the decoded input.
 
-The additional condition is `(fmt.fracWidth : Int) ≤ fmt.maxNormalExponent`, which ensures that the rounded integer remains representable. The standard IEEE interchange formats satisfy it; a custom descriptor needs its own proof.
+The additional condition is `(fmt.fracWidth : Int) ≤ fmt.maxNormalExponent`, so the rounded integer remains representable. The standard IEEE interchange formats satisfy it; a custom descriptor needs its own proof.
 
 To compare the four rules, follow the arrows in [Figure 2.3](#/chapter/from-reals-to-machine-numbers/figure-ch01-rounding-directions): the same three inputs appear on the integer line, one row per direction.
 

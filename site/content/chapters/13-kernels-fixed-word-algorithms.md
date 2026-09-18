@@ -22,7 +22,7 @@ For multiplication, the theorem says the returned words denote the product. For 
 
 The kernel interfaces are independent of a format's bit layout: no field widths, bias, or NaN or infinity encoding appears in the [kernel directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels). Signs enter only as a boolean on a magnitude ([signed-magnitude implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/SignedMagnitude/Runtime.lean)), and exponents as integers used for alignment and comparison ([dyadic comparison implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/DyadicCompare/Runtime.lean), `finiteScale`). The backends described in [chapter 14](#/chapter/backends-and-the-planner) decode a format's fields, call a kernel, and pack the result. Their refinement proofs use the kernel theorems as lemmas.
 
-Every kernel keeps executable definitions in a `Runtime.lean` module and theorems in separate proof modules (`Proof.lean`, sometimes split further). A program can import the runtime alone; a proof imports the same definitions together with their theorems.
+Every kernel keeps executable definitions in a `Runtime.lean` module and theorems in separate proof modules (`Proof.lean`, sometimes split further). A program can import the runtime alone; a proof imports the same definitions together with their theorems. The [fixed-word module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord.lean) also explains the naming: declarations retain the `FloatLib.Numerics.FixedWord` and `FloatLib.Numerics.LimbArray` namespaces because they operate on the numerical layer's primitive representations.
 
 ## One word, two words, four words
 
@@ -278,7 +278,7 @@ open FloatLib.Numerics.FixedWord.CertifiedDivision
 end
 ```
 
-Let's check the large quotient by cancelling the common power of two in
+The large quotient follows by cancelling the common power of two in
 $2^{225}/(3\cdot2^{111})$. This leaves $2^{114}/3$. Since $2^{114}$ leaves remainder one on
 division by three, the floor quotient is $(2^{114}-1)/3$. Multiplying it back by the original
 denominator leaves remainder $2^{111}$, exactly the remainder supplied to the certificate.
@@ -310,7 +310,7 @@ The definitions are shared too. The [signed-magnitude implementation](https://gi
 
 ## Compiler replacements with csimp
 
-A `@[csimp]` equation connects a logical definition to a compiler replacement, as described in [chapter 05](#/chapter/why-execution-and-proofs-are-separate). Lean's kernel checks the equation `f = g`, and the compiler uses it to rewrite calls to `f` into calls to `g`. The replacements in the [kernel directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels) include the proved two-limb quotient substitution described below.
+A `@[csimp]` equation connects a logical definition to a compiler replacement, as described in [chapter 05](#/chapter/why-execution-and-proofs-are-separate). Lean's kernel checks the equation `f = g`, and the compiler uses it to rewrite calls to `f` into calls to `g`. The replacements in the [kernel directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels) include the restoring division and square-root loops described below.
 
 For right-shift rounding, the logical definition is [[FloatLib.Numerics.roundShiftRightEven]] over `Nat`. The fast definition is `roundShiftRightEvenNat`, quoted below as a checked copy: it tests whether the value fits one word, and if so runs the native kernel and converts back.
 
@@ -352,7 +352,32 @@ The second `example` is the statement of [[FloatLib.Numerics.FixedWord.roundShif
 
 The arbitrary-precision branch repeats the body of the logical definition instead of calling it. If it called `Numerics.roundShiftRightEven`, the compiler would apply the same `csimp` rewrite to that call, and the compiled fallback would call itself. Repeating the body avoids this recursion, and the equation theorem proves that it computes the same result.
 
-There are five `@[csimp]` theorems in the [kernel directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels). Two are the rounders in the [rounding proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/Core/Proof/Rounding.lean) (`roundShiftRightEven` and `roundQuotientEven`). The [integer-square-root proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/IntegerSquareRoot/Proof.lean) routes `Nat.sqrt` through a `UInt64` Newton iteration for inputs below $2^{64}$; this one reaches outside the library, since any program importing `FloatLib.Kernels` compiles its own `Nat.sqrt` calls through [[FloatLib.Numerics.FixedWord.IntegerSquareRoot.natSqrt_eq_sqrtNat]], and the theorem's docstring says so. The [division compiler proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/Quotient/Compiler.lean) replaces the two-limb loop [[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128]], which allocates a fresh two-limb state at every generated bit, by `quotientSteps128Impl`, which keeps quotient and remainder in four `UInt64` accumulators and builds the state once at the end. The theorem [[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128_eq_quotientSteps128Impl]] is a short induction, kept in its own module so that an executable client can enable the rewrite without importing the rational-arithmetic proofs. The fifth replaces limb-array `toNat` with a Horner loop.
+The compiler equations also cover `roundQuotientEven` in the [rounding proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/Core/Proof/Rounding.lean). The [integer-square-root proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/IntegerSquareRoot/Proof.lean) routes `Nat.sqrt` through a `UInt64` Newton iteration for inputs below $2^{64}$; this one reaches outside the library, since any program importing `FloatLib.Kernels` compiles its own `Nat.sqrt` calls through [[FloatLib.Numerics.FixedWord.IntegerSquareRoot.natSqrt_eq_sqrtNat]], and the theorem's docstring says so. Limb-array `toNat` has a Horner-loop replacement, described below.
+
+The [division compiler proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/Quotient/Compiler.lean)
+replaces the one-word `quotientSteps` and two-limb
+[[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128]] by
+`quotientStepsImpl` and `quotientSteps128Impl`. Quotient and remainder travel as two or four
+`UInt64` scalar accumulators. The [restoring-square-root compiler proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/RestoringSqrt/Compiler.lean)
+replaces `rootLoop` by `rootLoopImpl`, which reads the same `UInt256` radicand and keeps the
+root and remainder in four `UInt64` accumulators. These loops build the returned state once,
+after the final digit, avoiding a fresh state allocation at every digit.
+
+The equations `quotientSteps_eq_quotientStepsImpl`,
+[[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128_eq_quotientSteps128Impl]],
+and `rootLoop_eq_rootLoopImpl` follow by induction over the loop count. They hold for every
+divisor or radicand, initial state, and digit count, including inputs on which the word
+arithmetic wraps. The capacity bounds needed to interpret a result as a natural-number
+quotient or square root remain unchanged. Keeping these equalities in separate compiler
+modules lets executable clients enable the rewrites without importing the numerical proofs.
+
+The compiler modules also certify the wrappers with
+`roundScaledQuotient_eq_roundScaledQuotientImpl` and
+`rootAndRemainder_eq_rootAndRemainderImpl`. Their replacements call `quotientStepsWords` and
+`rootLoopWords` directly. An equation for the inner loop alone need not change an inline
+wrapper whose body was compiled before that equation was available. With the wrapper
+equations imported when compiling a consumer, the compiler can replace the wrapper itself
+and reach the scalar loop.
 
 ## Limb arrays: 32-bit limbs updated in place
 
@@ -440,7 +465,7 @@ For the first and the fourth of those results, follow the limb positions in [Fig
 
 ![A limb array stores 2^70 + 5 as three 32-bit limbs, and adding 1 to 2^96 - 1 carries through all three limbs into the extra limb that add reserves](assets/ch08-limb-arrays.png "Little-endian 32-bit limbs represent a wide integer. The addition example shows why the output needs an extra limb for the final carry.")
 
-The fifth `csimp` theorem is [[FloatLib.Numerics.LimbArray.toNat_eq_toNatImpl]]. The `toNat` definition used in proofs starts with the first limb and adds the radix times the value of the rest. This form makes the invariants easy to state, but is not tail recursive. The compiled form uses a Horner loop from the top limb down. `hornerFrom_eq` proves the two forms equal, and `csimp` tells the compiler to use the loop.
+The compiler certificate for this conversion is [[FloatLib.Numerics.LimbArray.toNat_eq_toNatImpl]]. The `toNat` definition used in proofs starts with the first limb and adds the radix times the value of the rest. This form makes the invariants easy to state, but is not tail recursive. The compiled form uses a Horner loop from the top limb down. `hornerFrom_eq` proves the two forms equal, and `csimp` tells the compiler to use the loop.
 
 These kernels serve the [wide-limb backend](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/WideLimb), which handles IEEE layouts wider than 128 bits with an exponent field of at most 32 bits, using the limb storage named by `ExecFloat.BinaryLimbs`. Public arithmetic on this type uses the automatic certified planner: for example, `+` on `ExecFloat.BinaryLimbs 19 236` selects wide-limb addition under the default policy. [Chapter 14](#/chapter/backends-and-the-planner/choosing-the-limb-carrier) works through that call and its public specification theorem.
 
@@ -448,15 +473,11 @@ Its addition core `alignOrdered?` is the sticky-bit argument made concrete: when
 
 <a id="kernels-fixed-word-algorithms-and-limb-arrays"></a>
 
-## Finding the kernel implementations
+<a id="finding-the-kernel-implementations"></a>
 
-The [core word implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/Core/Runtime.lean) contains nearest-even shifts and quotients, two-word arithmetic, and restoring square-root state over `UInt64` and `UInt128`. The files live in the [kernel directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels); their declarations use the `FloatLib.Numerics.FixedWord` and `FloatLib.Numerics.LimbArray` namespaces because they operate on the numerical layer's primitive fixed-word representations. The [fixed-word module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord.lean) documents that naming convention, and the [kernel module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels.lean) documents the import's effect on compiled `Nat.sqrt` calls.
+## Reading a compiler certificate
 
-Each subdirectory under the [fixed-word directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels/FixedWord) pairs an algorithm with its proof. The [restoring divider](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels/FixedWord/Quotient) implements restoring division, with [[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128]] as the two-limb loop. The [certified divider](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels/FixedWord/CertifiedDivision) implements the binary128 divider: a proposed quotient and remainder, the check justified by [[FloatLib.Numerics.FixedWord.CertifiedDivision.certificate_sound]], and the restoring fallback covered by [[FloatLib.Numerics.FixedWord.CertifiedDivision.checkedCandidate_sound]].
-
-Beside the [fixed-word directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels/FixedWord), the [limb-array directory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels/LimbArray) handles formats wider than two words: [[FloatLib.Numerics.LimbArray]] stores a natural number as little-endian 32-bit limbs, and every kernel in it is specified by its effect on [[FloatLib.Numerics.LimbArray.toNat]]. The choice of `UInt32` avoids per-element boxing on a 64-bit platform, as explained in [this chapter](#/chapter/kernels-fixed-word-algorithms). The [limb-array definition](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/LimbArray/Core/Runtime.lean) describes the representation and its accessors.
-
-The proof style is uniform. A word-level function is related to its natural-number meaning by a `_toNat` lemma such as [[FloatLib.Numerics.FixedWord.mul64_toNat]] for the two-word product, and the specification is stated over `Nat`, so correctness is a theorem about naturals that the word version inherits. Five theorems here are also compiler certificates. A `@[csimp]` lemma tells the compiler to replace one Lean definition by another when compiling a caller with the theorem available; the five in this directory are [[FloatLib.Numerics.FixedWord.roundShiftRightEven_eq_roundShiftRightEvenNat]], `roundQuotientEven_eq_roundQuotientEvenNat`, [[FloatLib.Numerics.FixedWord.IntegerSquareRoot.natSqrt_eq_sqrtNat]], [[FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128_eq_quotientSteps128Impl]], and [[FloatLib.Numerics.LimbArray.toNat_eq_toNatImpl]]. The square-root lemma applies to newly compiled `Nat.sqrt` calls in any importing module, including code outside FloatLib, which is why the [kernel module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels.lean) warns about it. The following two signatures put the logical definition on the left and the word-level implementation on the right:
+These two compiler certificates put the logical definition on the left and the word-level implementation on the right. The second substitutes for `Nat.sqrt` in newly compiled calls in any importing module, including code outside FloatLib, as the [kernel module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels.lean) documents:
 
 ```lean
 #check @FloatLib.Numerics.FixedWord.roundShiftRightEven_eq_roundShiftRightEvenNat
@@ -474,6 +495,6 @@ Lean checks the equations that authorize these substitutions. The compiler must 
 
 ## Capacity bounds and compiler assumptions
 
-Several certificates require capacity hypotheses: a divisor below $2^{63}$ for the word division loop, a radicand below $2^{226}$ for the two-word square root at 113 digits, or a precision between 65 and 126 for certified division. A backend must prove these from its field widths before applying the theorem. Outside those bounds, the kernel still returns words, but the theorem does not establish their meaning. The dispatchers in [chapter 14](#/chapter/backends-and-the-planner) check eligibility and use a fallback when the specialized kernel cannot apply.
+Several numerical certificates require capacity hypotheses: a divisor below $2^{63}$ for the word division loop, a radicand below $2^{226}$ for the two-word square root at 113 digits, or a precision between 65 and 126 for certified division. A backend must prove these from its field widths before applying the theorem. Outside those bounds, the kernel still returns words, but the theorem does not establish their meaning. The accumulator equalities preserve those word results even outside the numerical bounds. The dispatchers in [chapter 14](#/chapter/backends-and-the-planner) check eligibility and use a fallback when the specialized kernel cannot apply.
 
 The refinement proofs are statements about Lean's definitions. `mul64_toNat` is a statement about `UInt64` operations as Lean's logic models them; whether the machine code the compiler emits for `mul64` multiplies correctly is a property of the compiler, the runtime, and the CPU. The refinement proofs cover the floating-point algorithms above those integer operations; they assume the toolchain and machine implement the operations correctly. [Chapter 15](#/chapter/performance/comparing-with-leans-native-floats) returns to it.

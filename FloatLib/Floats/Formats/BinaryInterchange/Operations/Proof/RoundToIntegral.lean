@@ -575,7 +575,10 @@ theorem roundToIntegralExactWithStatus_finite_exact
     · rw [dyadicRoundingStatus_overflow_of_isFinite _ _ _ hfin]
       exact hoverflow
 
-/-- For IEEE formats whose exponent range reaches the precision, integral rounding never overflows. -/
+/--
+Integral rounding of a finite IEEE value never overflows when
+`fmt.fracWidth ≤ fmt.maxNormalExponent`.
+-/
 theorem roundToIntegralExactWithStatus_overflow_eq_false
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
@@ -585,7 +588,9 @@ theorem roundToIntegralExactWithStatus_overflow_eq_false
   exact (roundToIntegralExactWithStatus_finite_exact hfmt hrange value mode exact
     (exactValue_eq_finite_of_toDyadic?_eq_some hd)).2.2
 
-/-- Integral rounding of a finite IEEE value is finite when the exponent range reaches the precision. -/
+/--
+Integral rounding of a finite IEEE value is finite when the exponent range reaches the precision.
+-/
 theorem isFinite_roundToIntegral
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)

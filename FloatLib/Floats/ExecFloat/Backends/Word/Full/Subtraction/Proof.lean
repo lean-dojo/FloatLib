@@ -638,6 +638,40 @@ private theorem addComponents_adjacent_large_right
     FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide)]
   rw [roundScaleExponent]
 
+private theorem adjacentDifference_facts (upper lower : UInt64)
+    (hupper : 2 ^ 52 ≤ upper.toNat ∧ upper.toNat < 2 ^ 53)
+    (hlower : 2 ^ 52 ≤ lower.toNat ∧ lower.toNat < 2 ^ 53)
+    (hle : upper ≤ lower) :
+    lower.toNat < upper.toNat <<< 1 ∧
+      ((upper <<< 1) - lower).toNat = (upper.toNat <<< 1) - lower.toNat ∧
+      (upper <<< 1) - lower ≠ 0 ∧
+      ((upper <<< 1) - lower).toNat < 2 ^ 53 := by
+  have hshiftFit : upper.toNat <<< 1 < 2 ^ 64 := by
+    rw [Nat.shiftLeft_eq]
+    norm_num
+    omega
+  have hshift : (upper <<< 1).toNat = upper.toNat <<< 1 := by
+    simpa using shiftLeft_toNat upper 1 (by norm_num) hshiftFit
+  have hlt : lower.toNat < upper.toNat <<< 1 := by
+    rw [Nat.shiftLeft_eq]
+    norm_num
+    omega
+  have hword : lower ≤ upper <<< 1 :=
+    UInt64.le_iff_toNat_le.mpr (by rw [hshift]; exact hlt.le)
+  have hdifference :
+      ((upper <<< 1) - lower).toNat = (upper.toNat <<< 1) - lower.toNat := by
+    rw [UInt64.toNat_sub_of_le _ _ hword, hshift]
+  refine ⟨hlt, hdifference, ?_, ?_⟩
+  · intro hzero
+    have hzeroNat := congrArg UInt64.toNat hzero
+    rw [hdifference] at hzeroNat
+    simp only [UInt64.toNat_zero] at hzeroNat
+    omega
+  · have hleNat := UInt64.le_iff_toNat_le.mp hle
+    rw [hdifference, Nat.shiftLeft_eq]
+    norm_num
+    omega
+
 /--
 Every accepted Sterbenz result is exactly the existing finite binary64 subtraction path.
 
@@ -806,44 +840,9 @@ theorem subSterbenz_refines (x y result : Value)
         · norm_num
           exact lt_trans (Nat.add_lt_add_right hyExponentFinite 1)
             (by norm_num)
-      have hxShiftFit :
-          xMantissa.toNat <<< 1 < 2 ^ 64 := by
-        rw [Nat.shiftLeft_eq]
-        norm_num
-        omega
-      have hxShiftNat :
-          (xMantissa <<< 1).toNat = xMantissa.toNat <<< 1 := by
-        simpa using FloatLib.Numerics.FixedWord.shiftLeft_toNat xMantissa 1
-          (by norm_num) hxShiftFit
-      have hxyMantissaNat :
-          xMantissa.toNat ≤ yMantissa.toNat :=
-        UInt64.le_iff_toNat_le.mp hxyMantissa
-      have hyLtShiftNat :
-          yMantissa.toNat < xMantissa.toNat <<< 1 := by
-        rw [Nat.shiftLeft_eq]
-        norm_num
-        omega
-      have hyLeShiftWord :
-          yMantissa ≤ xMantissa <<< 1 := by
-        apply UInt64.le_iff_toNat_le.mpr
-        rw [hxShiftNat]
-        exact hyLtShiftNat.le
-      have hdifferenceNat :
-          ((xMantissa <<< 1) - yMantissa).toNat =
-            (xMantissa.toNat <<< 1) - yMantissa.toNat := by
-        rw [UInt64.toNat_sub_of_le _ _ hyLeShiftWord, hxShiftNat]
-      have hdifferenceNonzero :
-          (xMantissa <<< 1) - yMantissa ≠ 0 := by
-        intro hzero
-        have hzeroNat := congrArg UInt64.toNat hzero
-        rw [hdifferenceNat] at hzeroNat
-        simp at hzeroNat
-        omega
-      have hdifferenceFit :
-          ((xMantissa <<< 1) - yMantissa).toNat < 2 ^ 53 := by
-        rw [hdifferenceNat, Nat.shiftLeft_eq]
-        norm_num
-        omega
+      obtain ⟨hyLtShiftNat, hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
+        adjacentDifference_facts xMantissa yMantissa
+          hxMantissaBounds hyMantissaBounds hxyMantissa
       rw [hxExponentNat]
       rw [addComponents_adjacent_large_left
         xMantissa.toNat yMantissa.toNat yExponent.toNat
@@ -868,44 +867,9 @@ theorem subSterbenz_refines (x y result : Value)
           · norm_num
             exact lt_trans (Nat.add_lt_add_right hxExponentFinite 1)
               (by norm_num)
-        have hyShiftFit :
-            yMantissa.toNat <<< 1 < 2 ^ 64 := by
-          rw [Nat.shiftLeft_eq]
-          norm_num
-          omega
-        have hyShiftNat :
-            (yMantissa <<< 1).toNat = yMantissa.toNat <<< 1 := by
-          simpa using FloatLib.Numerics.FixedWord.shiftLeft_toNat yMantissa 1
-            (by norm_num) hyShiftFit
-        have hyxMantissaNat :
-            yMantissa.toNat ≤ xMantissa.toNat :=
-          UInt64.le_iff_toNat_le.mp hyxMantissa
-        have hxLtShiftNat :
-            xMantissa.toNat < yMantissa.toNat <<< 1 := by
-          rw [Nat.shiftLeft_eq]
-          norm_num
-          omega
-        have hxLeShiftWord :
-            xMantissa ≤ yMantissa <<< 1 := by
-          apply UInt64.le_iff_toNat_le.mpr
-          rw [hyShiftNat]
-          exact hxLtShiftNat.le
-        have hdifferenceNat :
-            ((yMantissa <<< 1) - xMantissa).toNat =
-              (yMantissa.toNat <<< 1) - xMantissa.toNat := by
-          rw [UInt64.toNat_sub_of_le _ _ hxLeShiftWord, hyShiftNat]
-        have hdifferenceNonzero :
-            (yMantissa <<< 1) - xMantissa ≠ 0 := by
-          intro hzero
-          have hzeroNat := congrArg UInt64.toNat hzero
-          rw [hdifferenceNat] at hzeroNat
-          simp at hzeroNat
-          omega
-        have hdifferenceFit :
-            ((yMantissa <<< 1) - xMantissa).toNat < 2 ^ 53 := by
-          rw [hdifferenceNat, Nat.shiftLeft_eq]
-          norm_num
-          omega
+        obtain ⟨hxLtShiftNat, hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
+          adjacentDifference_facts yMantissa xMantissa
+            hyMantissaBounds hxMantissaBounds hyxMantissa
         rw [hyExponentNat]
         rw [addComponents_adjacent_large_right
           xMantissa.toNat yMantissa.toNat xExponent.toNat

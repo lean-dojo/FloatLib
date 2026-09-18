@@ -27,6 +27,18 @@ verified compiler substitutions.
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel
 
+/-- Negating a conventional IEEE value flips only the decoded sign. -/
+theorem decode?_neg {fmt : FloatFormat} (hieee : fmt.isIEEE = true) (m : Model fmt) :
+    decode? (neg m) = (decode? m).map fun c => { c with sign := !c.sign } := by
+  have hencoding : fmt.encoding = .ieee := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
+  have hsigned := FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hieee
+  have hfinite : isFinite (neg m) = isFinite m := by
+    rw [isFinite, isFinite, hencoding]
+    exact IEEE.isFinite_neg m
+  unfold decode?
+  rw [hfinite, signBit_neg, hsigned, expField_neg, fracField_neg]
+  by_cases hfin : isFinite m = true <;> simp [hfin]
+
 /-- The dyadic of a component triple carries the component sign. -/
 @[simp] theorem Components.toDyadic_negative (fmt : FloatFormat) (value : Components) :
     (value.toDyadic fmt).negative = value.sign := by

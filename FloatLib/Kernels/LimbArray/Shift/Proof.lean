@@ -32,14 +32,14 @@ namespace FloatLib.Numerics.LimbArray
 /-- A bit of a right-shifted limb, for shift counts below 32. -/
 theorem uint32_shiftRight_testBit (x : UInt32) (r n : Nat) (hr : r < 32) :
     (x >>> UInt32.ofNat r).toNat.testBit n = x.toNat.testBit (r + n) := by
-  rw [UInt32.toNat_shiftRight, UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : r < 2 ^ 32),
+  rw [UInt32.toNat_shiftRight, UInt32.toNat_ofNat_of_lt' (hr.trans (by decide)),
     Nat.mod_eq_of_lt hr, Nat.testBit_shiftRight]
 
 /-- A bit of a left-shifted limb, for shift counts below 32. -/
 theorem uint32_shiftLeft_testBit (x : UInt32) (r n : Nat) (hr : r < 32) :
     (x <<< UInt32.ofNat r).toNat.testBit n =
       (decide (n < 32) && (decide (r ≤ n) && x.toNat.testBit (n - r))) := by
-  rw [UInt32.toNat_shiftLeft, UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : r < 2 ^ 32),
+  rw [UInt32.toNat_shiftLeft, UInt32.toNat_ofNat_of_lt' (hr.trans (by decide)),
     Nat.mod_eq_of_lt hr, Nat.testBit_mod_two_pow, Nat.testBit_shiftLeft]
 
 /-! ## Left shift -/

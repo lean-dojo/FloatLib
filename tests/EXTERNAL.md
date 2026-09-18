@@ -115,7 +115,8 @@ FORMAT_STANDARDS_WORKERS=1 FORMAT_STANDARDS_CPU_SET=none \
 # MPFR, Arb, and the native boundary
 bash tests/oracles/mpfr.sh primitives
 bash tests/oracles/mpfr.sh reductions
-bash tests/oracles/binary16-exhaustive.sh add 32768 65536
+# Fix the left operand to 0x3555 (near 1/3), with every right encoding.
+bash tests/oracles/binary16-exhaustive.sh add 13653 65536
 source tests/lib/lake.sh
 floatlib_test_lake exe check arb
 floatlib_test_lake exe check native
@@ -126,8 +127,15 @@ bash tests/oracles/smt_fp.sh
 bash tests/oracles/transcendental_compare.sh --jobs 1
 ```
 
-The binary16 command checks one input-pair shard, not every binary16 pair. The transcendental
-command uses MPFR; its `--help` lists options for adding CORE-MATH, OpenLibm, and RLIBM.
+The binary16 command checks one input-pair shard, not every binary16 pair. CI checks four
+left operands for both addition and multiplication: the smallest positive subnormal (`0x0001`),
+a value near 1/3 (`0x3555`), the next value below -1 (`0xbc01`), and the largest finite positive
+value (`0x7bff`). Each is paired with every right encoding, for 524,288 pairs. This exercises
+finite arithmetic as well as exceptional operands. The `quick` and `release` profiles use
+the larger 16-row selection listed above.
+
+The transcendental command uses MPFR; its `--help` lists options for adding CORE-MATH,
+OpenLibm, and RLIBM.
 
 For one SoftPosit format and operation, supply a clean checkout at the revision pinned in
 [`softposit.sh`](oracles/softposit.sh):
@@ -179,13 +187,9 @@ nearest-away, round-to-odd, tininess-before-rounding, and universal NaN payload 
 
 ### ONNX and P3109 details
 
-The table adapter compares FloatLib's exact dyadic decoding with the public ONNX decoders and the
-pinned P3109 hexadecimal value tables. The P3109 emitter is descriptor-driven rather than one
-checker per named format.
-
-This is exact representation agreement with the working group's published tables. It is not IEEE
-certification and does not claim complete P3109 arithmetic, exception handling, OCP MX block
-operations, block scaling, saturation, or hardware FP8 behavior.
+The representation adapter compares decoded values with the published ONNX and P3109 tables.
+It checks FloatLib's exact dyadic decoding against the public ONNX decoders and pinned P3109
+hexadecimal value tables; the P3109 emitter uses the format descriptor.
 
 ### P3109 arithmetic with FLoPS
 
@@ -299,17 +303,16 @@ arithmetic comparison, and a timing measurement answer different questions.
 
 ## Limits of the saved comparisons
 
-The saved direct-comparison bundle does not establish coverage of:
+The saved direct-comparison bundle has these coverage limits:
 
-- IEEE decimal32, decimal64, or decimal128;
-- binary80's explicit-integer-bit representation;
-- every floating-point/integer conversion policy;
-- nearest-away, round-to-odd, or tininess-before-rounding;
-- one universal NaN payload-selection rule;
-- complete P3109 arithmetic or OCP MX interoperability;
-- official posit certification;
-- global correct-rounding or real-error theorems for all transcendentals; or
-- an optimized verified BLAS implementation.
+| Area | Historical coverage limit |
+| --- | --- |
+| Representations | No IEEE decimal32/64/128 or binary80 explicit-integer-bit comparisons |
+| Rounding and conversion | Not every floating-point/integer policy; no nearest-away, round-to-odd, tininess-before-rounding, or universal NaN payload-selection rule |
+| P3109 and OCP MX | Representation tables do not establish complete P3109 arithmetic or exception handling, OCP MX block operations or scaling, saturation, or hardware FP8 interoperability |
+| Certification | Table agreement is not IEEE certification; no official posit certification |
+| Transcendentals | No global correct-rounding or real-error theorems for all transcendentals |
+| Linear algebra | No optimized verified BLAS implementation |
 
 These are limits of that comparison, not a current inventory of the library. Later decimal,
 posit, and other checks are described in the

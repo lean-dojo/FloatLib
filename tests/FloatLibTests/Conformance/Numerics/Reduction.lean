@@ -10,11 +10,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction.Tre
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
 
 /-!
-# Repeated-rounding reduction examples
+# Correctly rounded and repeated-rounding reductions
 
 Binary16 distinguishes an exact accumulator from a reduction that rounds every addition:
 `(2048 + 1) - 2048` produces zero with repeated rounding, but one with a round-once accumulator.
 The symbolic examples apply the absolute and mixed bounds without global relative assumptions.
+Signed-zero and exceptional-input examples check the result bits and every IEEE status indicator
+in all four rounding modes, including conversions into finite-only destination formats.
 -/
 
 @[expose] public section
@@ -123,5 +125,64 @@ example (combine : ℝ → ℝ → ℝ) (value : Nat → ℝ) (u : ℝ) (hu : 0 
     |leftSchedule.eval combine value - permutedSchedule.eval combine value| ≤
       2 * (((1 + u) ^ leftSchedule.nodeCount - 1) * leftSchedule.sumAbs value) :=
   ReductionTree.abs_eval_sub_eval_le_geometric combine value id u hu (by decide) hl hp
+
+/-- Retain the result bits and all five exception indicators of a binary32-source sum. -/
+private def binary32Sum (destination : FloatFormat) (values : List Nat)
+    (mode : Model.IEEERoundingMode) : Nat × Model.IEEEStatus :=
+  let outcome := Model.sumWithStatus destination
+    (values.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode
+  (outcome.value.toNatBits, outcome.status)
+
+/-- Retain length errors, result bits, and all five indicators of a binary32-source dot product. -/
+private def binary32Dot (destination : FloatFormat) (left right : List Nat)
+    (mode : Model.IEEERoundingMode) :
+    Except FloatLib.Numerics.ReductionError (Nat × Model.IEEEStatus) :=
+  (Model.dotWithStatus destination
+    (left.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray
+    (right.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode).map
+    (fun outcome => (outcome.value.toNatBits, outcome.status))
+
+-- Same-sign zeros retain their sign; only mixed signs and cancellation depend on rounding.
+example (mode : Model.IEEERoundingMode) :
+    [ [], [0], [0, 0], [0x80000000, 0x80000000]
+    , [0, 0x80000000], [0x3f800000, 0xbf800000]
+    ].map (binary32Sum FloatFormat.binary32 · mode) =
+      [(0, {}), (0, {}), (0, {}), (0x80000000, {}),
+        (if mode = .towardNegativeInfinity then 0x80000000 else 0, {}),
+        (if mode = .towardNegativeInfinity then 0x80000000 else 0, {})] := by
+  cases mode <;> decide
+
+-- A quiet NaN before or after an invalid product cannot clear its invalid indicator.
+example (mode : Model.IEEERoundingMode) :
+    [ binary32Dot FloatFormat.binary32 [0, 0x7fc00000] [0x7f800000, 0x3f800000] mode
+    , binary32Dot FloatFormat.binary32 [0x7fc00000, 0] [0x3f800000, 0x7f800000] mode
+    ] = List.replicate 2 (.ok (0x7fc00000, { invalid := true })) := by
+  cases mode <;>
+    simp [binary32Dot, Model.dotWithStatus, Model.Reduction.Internal.dotState,
+      Model.Reduction.Internal.dotStateLoop] <;> decide
+
+-- Opposing infinities raise invalid with a preceding or following NaN; a NaN alone leaves it clear.
+example (mode : Model.IEEERoundingMode) :
+    [ [0x7f800000, 0xff800000, 0x7fc12345], [0x7fc12345, 0x7f800000, 0xff800000]
+    , [0x7fc12345]
+    ].map (binary32Sum FloatFormat.binary32 · mode) =
+      [(0x7fc12345, { invalid := true }), (0x7fc12345, { invalid := true }),
+        (0x7fc12345, {})] := by
+  cases mode <;> decide
+
+-- Infinity conversion covers IEEE, FN, FNUZ, and fully finite destination policies.
+-- The complete status distinguishes a conversion overflow from an invalid operation.
+example (mode : Model.IEEERoundingMode) :
+    [ binary32Sum FloatFormat.binary16 [0x7f800000] mode
+    , binary32Sum FloatFormat.e4m3fn [0x7f800000] mode
+    , binary32Sum FloatFormat.e4m3fnuz [0x7f800000] mode
+    , binary32Sum FloatFormat.e2m1 [0x7f800000] mode
+    , binary32Sum FloatFormat.e2m1 [0xff800000] mode
+    ] = [(0x7c00, {}),
+      (0x7f, { overflow := true, inexact := true }),
+      (0x80, { overflow := true, inexact := true }),
+      (0x7, { overflow := true, inexact := true }),
+      (0xf, { overflow := true, inexact := true })] := by
+  cases mode <;> decide
 
 end FloatLibTests.Conformance.Numerics.Reduction

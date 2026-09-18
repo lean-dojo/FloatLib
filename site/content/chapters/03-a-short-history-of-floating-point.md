@@ -49,7 +49,7 @@ Intel's 8087 coprocessor, released in 1980, implemented correctly rounded basic 
 
 IEEE 754-1985 specified binary formats, including the familiar biased exponent and implicit leading bit of the interchange formats. It required gradual underflow and defined zeros, subnormals, infinities, and NaNs. The arithmetic rules specified correct rounding for addition, subtraction, multiplication, division, square root, and remainder, with four rounding modes and nearest-even as the default. Five sticky flags recorded invalid operation, division by zero, overflow, underflow, and inexactness.
 
-In FloatLib, [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] has the four 1985 modes, and status-bearing operations return the five flags as a record. The reference `Model` used in the theorem and the executable `ExecFloat.Binary` carrier are connected by the proofs described in [chapter 05](#/chapter/why-execution-and-proofs-are-separate). On the executable carrier, dividing one by three illustrates how the rounding mode changes the answer while the status records that neither answer is exact:
+In FloatLib, [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] has the four 1985 modes, and [status-bearing operations](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Status/Runtime.lean) return the five flags as a record. The reference `Model` used in the theorem and the executable `ExecFloat.Binary` carrier are connected by the proofs described in [chapter 05](#/chapter/why-execution-and-proofs-are-separate). On the executable carrier, dividing one by three illustrates how the rounding mode changes the answer while the status records that neither answer is exact:
 
 ```lean
 abbrev Binary32 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
@@ -187,7 +187,7 @@ Now the error contains the total uptime. This simplified calculation does not as
 
 Israeli users had reported the drift on 11 February 1991. A corrected version was released on 16 February and reached Dhahran on 26 February, the day after the barracks was hit.
 
-We can reproduce the truncated constant with exact integer arithmetic. `ClockGrid` uses fixed point with 23 fraction bits. Its unbounded integer coefficient is divided by $2^{23}$ when decoded. This reproduces the rounding grid without modelling the clock register's finite storage. [[FloatLib.Floats.ExecFloat.FixedPoint.toRat]] reads the coefficient back as an exact rational:
+We can reproduce the truncated constant with exact integer arithmetic. `ClockGrid` uses the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) with 23 fraction bits. Its unbounded integer coefficient is divided by $2^{23}$ when decoded. This reproduces the rounding grid without modelling the clock register's finite storage. [[FloatLib.Floats.ExecFloat.FixedPoint.toRat]] reads the coefficient back as an exact rational:
 
 ```lean
 /-- Binary fixed point with 23 fractional bits: the grid of the Patriot's clock conversion. -/
@@ -258,7 +258,7 @@ example (x y : Model FloatFormat.binary64)
   Model.toReal_div_eq_roundAt x y FloatFormat.isIEEE_binary64 hx hy hy0 hout
 ```
 
-FloatLib also has a fast divider for the common finite binary64 path. It generates quotient bits with a restoring `UInt64` loop. The theorem `divFiniteFastImpl_eq` compares it with the generic implementation on every input pair, including cases where the implementations decline to handle the operands:
+FloatLib also has a [fast divider](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Word/Full/Division/Proof.lean) for the common finite binary64 path. It generates quotient bits with a restoring `UInt64` loop. The theorem `divFiniteFastImpl_eq` compares it with the generic implementation on every input pair, including cases where the implementations decline to handle the operands:
 
 ```lean
 #check @Model.NativeBinary64.divFiniteFastImpl_eq
@@ -308,7 +308,7 @@ The failure occurred in a conversion from floating point to a bounded integer. T
 
 The decision to leave this conversion unprotected rested on a range assumption. With a processor workload ceiling of 80 percent, checks were omitted for variables judged "either physically limited or that there was a large margin of safety, a reasoning which in the case of the variable BH turned out to be faulty". The computation belonged to an alignment function, meaningful only before lift-off, that for Ariane 4's sake kept running for about 40 seconds of flight. Ariane 5's early trajectory "results in considerably higher horizontal velocity values", and the equipment-level tests "did not specifically include the Ariane 5 trajectory data". The bound on BH was an assumption inherited from another rocket, and the board recommended: "Identify all implicit assumptions made by the code and its justification documents on the values of quantities provided by the equipment."
 
-In FloatLib a 16-bit signed destination is [[FloatLib.Numerics.Representations.FixedInt]] at width 16. Its representable range is expressed by the decidable proposition [[FloatLib.Numerics.Representations.FixedInt.InRange]]. The board did not publish the value BH reached, so we'll use 40000 as an illustrative input above 32767, not a reconstruction of the flight data. The first two evaluations show that it is out of range and that storing its low sixteen bits wraps it to $-25536$. The remaining evaluations convert a binary64 value to the same sixteen-bit integers, represented as a bounded fixed-point grid with no fraction digits. Only the overflow policy changes between the three casts.
+In FloatLib a [16-bit signed destination](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Representations/FixedInt/Core.lean) is [[FloatLib.Numerics.Representations.FixedInt]] at width 16. Its representable range is expressed by the decidable proposition [[FloatLib.Numerics.Representations.FixedInt.InRange]]. The board did not publish the value BH reached, so we'll use 40000 as an illustrative input above 32767, not a reconstruction of the flight data. The first two evaluations show that it is out of range and that storing its low sixteen bits wraps it to $-25536$. The remaining evaluations convert a binary64 value to the same sixteen-bit integers, represented as a bounded fixed-point grid with no fraction digits. Only the overflow policy changes between the three casts.
 
 ```lean
 #eval decide (FixedInt.InRange 16 40000)
@@ -353,11 +353,13 @@ example (value : Int) (h : FixedInt.InRange 16 value) :
   FixedInt.toInt_ofInt_eq_self (by decide) h
 ```
 
-The `InRange 16 value` hypothesis is the precise condition under which storing and reading the integer preserves it. Proving this theorem once does not establish `InRange 16 BH` for a particular trajectory. That requires evidence about the values the guidance system can produce, and a change from Ariane 4 to Ariane 5 requires revisiting that evidence. The same distinction appeared in the division theorem above: the arithmetic proof assumes finite inputs and a nonzero divisor; the application must show that its inputs satisfy those conditions.
+The `InRange 16 value` hypothesis in the [integer interpretation proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Representations/FixedInt/Semantics/Basic.lean) is the precise condition under which storing and reading the integer preserves it. Proving this theorem once does not establish `InRange 16 BH` for a particular trajectory. That requires evidence about the values the guidance system can produce, and a change from Ariane 4 to Ariane 5 requires revisiting that evidence. The same distinction appeared in the division theorem above: the arithmetic proof assumes finite inputs and a nonzero divisor; the application must show that its inputs satisfy those conditions.
 
 The alignment output was unused after lift-off, but an exception in the unused calculation could still shut down the reference unit. Choosing a conversion policy therefore also requires tracing how the surrounding program handles the result. A returned failure, a wrapped value, and a saturated value each need an appropriate response from the caller.
 
 <a id="verification-enters"></a>
+<a id="where-this-lives-in-the-library"></a>
+<a id="sources-and-definitions"></a>
 
 ## Proofs of hardware and software arithmetic
 
@@ -365,7 +367,7 @@ The FDIV failure showed why a division algorithm had to meet its specification o
 
 Flocq, Boldo and Melquiond's Coq library [@boldoMelquiond2011], organizes floating point around a rounded-real model. A float is a real number on a grid determined by a radix and an exponent function; rounding maps a real number onto that grid. This separates properties of the represented values from details of how a machine stores them. Theorems about ulps, error bounds, and Sterbenz subtraction can then be stated for a family of grids and applied to individual formats by proving that they meet the hypotheses.
 
-FloatLib's rounded-real layer follows this organization in Lean; its grid definitions and proofs are developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [Chapter 15](#/chapter/performance) compares its execution cost with an independent proved implementation extracted from Flocq. This measures their relative execution cost without comparing their outputs. [Chapter 16](#/chapter/external-validation) describes the separate checks of numerical results.
+FloatLib's rounded-real layer follows this organization in Lean; its grid definitions and proofs are developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [Chapter 15](#/chapter/performance) compares its execution cost with an independent proved implementation extracted from Flocq. The comparison matches binary precision and exponent bounds and checks the complete input and output values; [chapter 16](#/chapter/external-validation/binary-arithmetic-with-flocq-and-mpfr) describes those numerical checks.
 
 <a id="the-2008-and-2019-revisions-and-the-decimal-question"></a>
 
@@ -510,9 +512,3 @@ An eight-bit signed format with precision four has four exponent bits, its NaN a
 <a id="what-is-still-open"></a>
 
 The working group's value tables provide an independent way to check how a word is decoded. [Chapter 16](#/chapter/external-validation) describes those comparisons. They check the interpretation of the encoding; they do not test arithmetic, exception behaviour, or accelerator hardware.
-
-<a id="where-this-lives-in-the-library"></a>
-
-## Sources and definitions
-
-The cited reports and analyses are listed in the [bibliography](#/references). The code used here includes the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint), [bounded integer representation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Representations/FixedInt/Core.lean), and [integer interpretation proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Representations/FixedInt/Semantics/Basic.lean). The [status operations](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Status/Runtime.lean) return the flags. For the arithmetic arguments, see the [configured refinement equations](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Proof/Arithmetic.lean), [binary arithmetic semantics](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/BinaryInterchange/Arithmetic), and [binary64 divider proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Word/Full/Division/Proof.lean); the [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) describes how the implementations fit together.

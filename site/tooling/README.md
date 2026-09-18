@@ -83,10 +83,37 @@ names a missing node.
 with Lean's output. ` ```lean standalone ` compiles as its own file. `nocheck` skips (warning).
 `site/build.sh` enables strict checks and fails on warnings unless `FLOATLIB_SITE_STRICT=0`.
 
+## Build options
+
+The full build accepts these flags:
+
+| Flag | Effect |
+| --- | --- |
+| `--skip-lean` | Reuse the raw declaration export; still check chapters and result-derived figures. Use after prose edits, not changes to the selected declarations or library. |
+| `--skip-check` | Skip the chapter checker for a quick reader iteration. |
+| `--no-compile` | Check chapter structure and links without compiling Lean examples or verifying their printed results. |
+| `--allow-missing-results` | Allow a development build when retained result directories are absent. If they are present, their verification still runs and must pass. |
+| `--require-clean` | Reject an export from an uncommitted library or an unborn `HEAD`. Cannot be combined with `--allow-missing-results`. |
+
+`FLOATLIB_SITE_REQUIRE_CLEAN=1` is equivalent to `--require-clean`.
+`FLOATLIB_SITE_STRICT=0` permits chapter warnings during development; errors still fail.
+The output-directory overrides are listed above.
+
+For a prose check that neither invokes Lake nor verifies benchmark results, run the checker
+directly against the existing atlas:
+
+```bash
+python3 site/tooling/check_chapters.py --strict --no-compile \
+  --scratch /tmp/floatlib-prose-check --json /tmp/floatlib-prose-check/report.json
+```
+
+This does not replace the full build before publication.
+
 ## Source links during editing
 
-URLs point at `HEAD`; excerpts follow the worktree. Dirty nodes drop the `#L..` fragment (or the
-URL, if the file is untracked). `site/build.sh --require-clean` refuses a dirty library.
+URLs point at `HEAD`; excerpts follow the worktree. A dirty node keeps its exact link when the
+excerpt matches those lines at `HEAD`, uses a file-only link when they differ, and has no URL
+when the file is absent from `HEAD`. `site/build.sh --require-clean` refuses a dirty library.
 Before the first commit, `source.revision` is `null`, the diff digest is absent, and every
 declaration is marked uncommitted with no GitHub URL. Local builds still run all checks;
 `--require-clean` also refuses this state.

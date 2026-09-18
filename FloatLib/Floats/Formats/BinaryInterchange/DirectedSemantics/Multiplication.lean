@@ -24,7 +24,7 @@ widths. Both operands must be finite; the rounded product may be infinite.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- Downward-rounded multiplication is a lower bound on the exact real product. -/
 theorem toEReal_mulDown_le

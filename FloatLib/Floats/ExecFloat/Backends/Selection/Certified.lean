@@ -90,16 +90,6 @@ def ternary {α β γ δ : Type u} (estimate : Candidate) (spec : α → β → 
     funext left right addend
     exact run_eq_spec left right addend
 
-/--
-Retain a certified kernel exactly when its structural eligibility test succeeds.
-
-The caller supplies the eligibility decision; the constructor is independent of operation arity,
-format family, and cost model.
--/
-@[inline] def ifEligible {α : Type u} {spec : α}
-    (eligible : Bool) (candidate : Certified spec) : Option (Certified spec) :=
-  if eligible then some candidate else none
-
 end Certified
 
 /--

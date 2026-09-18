@@ -41,6 +41,8 @@ temporary work and keep build products outside the checkout through the shared b
 The [performance chapter](../site/content/chapters/15-performance.md) walks through the plots,
 and the [results README](results/main/README.md) describes the data behind them. A fresh run
 measures your source, compiler, and machine, so its timings can differ from ours.
+The [matched Flocq comparison](results/flocq-matched/README.md) has a separate figure
+and complete numerical agreement checks against Flocq and MPFR.
 
 We convert the exact input values before timing and record the selected backend, iteration
 count, elapsed time, and result checksums. The comparison guide explains the scalar dependency

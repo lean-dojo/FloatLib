@@ -2,7 +2,7 @@
 """Serve the built FloatLib site from local build storage.
 
 A plain static server is almost enough, but the reader is a single-page app with hash routes,
-so any path that is not a real file should return index.html (a bookmarked path from the
+so any path that is not a real file redirects to the root (a bookmarked path from the
 previous site, or a path a proxy rewrites, then lands on the app instead of a 404), and the
 build changes asset file names on every run, so responses carry no-cache headers to keep a
 browser from holding an index.html that names assets which no longer exist.
@@ -27,8 +27,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         path = self.translate_path(self.path)
         if not os.path.exists(path):
             # Unknown path: send the browser to the app's entry page. The page loads its assets
-            # by relative path, so it must be served at the root rather than in place. A link to
-            # the previous site's dependency graph now lands on the introduction and contents.
+            # by relative path, so it must be served at the root rather than in place.
+            # The reader maps legacy chapter and map hash routes after the redirect.
             self.send_response(302)
             self.send_header("Location", "/")
             self.end_headers()

@@ -18,9 +18,9 @@ public import FloatLib.Numerics.Capabilities.Elementary
 /-!
 # Format-generic executable transcendental functions
 
-This module exports deterministic `exp`, `log`, `sinh`, `cosh`, `tanh`, `sin`, and `cos` operations
-for `Model fmt`, together with reusable fixed-point primitives and explicit approximation
-configuration.
+Importing `BinaryInterchange.Transcendentals` adds deterministic `exp`, `log`, `sinh`, `cosh`,
+`tanh`, `sin`, and `cos` operations for `Model fmt`, with reusable fixed-point primitives and
+explicit approximation configuration.
 
 ## Approximation and certificates
 
@@ -57,7 +57,7 @@ Import this module for the `Model` functions and instances, or
 These imports add the binary elementary functions to those available from `import FloatLib`.
 The `MathFunctions` class and its host `Float` and real instances are available by default.
 Individual kernel submodules can be imported separately; `#float_info` loads only `Contract`
-through `Info/Profile.lean`.
+through `BinaryInterchange/Info/Profile.lean`.
 -/
 
 @[expose] public section

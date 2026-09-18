@@ -31,7 +31,7 @@ open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 open Packing.Internal
 
-noncomputable section
+section
 
 /-! ## Positive downward bounds -/
 

@@ -243,7 +243,10 @@ theorem mul_round_error_FLT (emin prec : ℤ) (hprec : 0 < prec)
   · simpa [err, hroundEq] using herr
   · exact hcexpFLT
 
-/-- FLT multiplication by a radix power is exact when the shift stays above `emin`. -/
+/--
+Multiplying an FLT-representable value by a radix power preserves representability when
+`emin + prec - magnitude β x ≤ e`.
+-/
 theorem generic_format_FLT_mul_bpow (emin prec : ℤ) (hprec : 0 < prec)
     {x : ℝ} (hx : @genericFormat β (fltExp emin prec)
       (fltValidExp emin prec hprec) x) (e : ℤ)

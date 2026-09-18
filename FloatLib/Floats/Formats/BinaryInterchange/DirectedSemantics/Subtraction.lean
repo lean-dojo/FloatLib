@@ -20,7 +20,7 @@ finite-value negation semantics turn the resulting sum bounds into real subtract
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- Downward-rounded subtraction is a lower bound on exact real subtraction. -/
 theorem toEReal_subDown_le

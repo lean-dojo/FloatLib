@@ -21,7 +21,7 @@ value. The result applies uniformly to finite values and infinities; only NaNs a
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- Executable float negation distributes over a conditional choice. -/
 theorem neg_ite {fmt : FloatFormat} {p : Prop} [Decidable p]

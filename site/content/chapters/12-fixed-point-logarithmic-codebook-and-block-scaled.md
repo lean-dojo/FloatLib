@@ -134,8 +134,7 @@ example : a + b = ExecFloat.Spec.add a b :=
 ```
 
 The value $0.125$ at two decimal digits is $12.5$ hundredths, a tie, and rounds to the even coefficient 12; $0.375$ is $37.5$ hundredths and rounds to 38.
-Try nudging the literals in the two coefficient `#eval` calls to either side of the tie and
-watching which coefficient we get :)
+Moving either literal to either side of its tie selects the closer coefficient instead.
 
 Conversion from another system follows the same rule: `run` rounds a finite rational once and reports whether the result was inexact, and rejects an infinity or an exceptional value because the grid has no code for either (`run_infinity`).
 
@@ -398,6 +397,7 @@ the block has no code for either.
 The concrete OCP MX formats in [chapter 09](#/chapter/low-precision-formats-for-machine-learning) bound both the scale and the elements. E8M0 codes 0 through 254 denote $2^{c-127}$, and code 255 is NaN ([scale encoding](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/E8M0/Core.lean)); element words may also be nonfinite. The array API supplies checked finite decoders: [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeElement_refines]] and [[FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines]] are `Checked2` contracts, and [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeBlock?]] extends them to an array. The standard 32-lane API additionally decodes each lane with its exceptional class, so a finite scale can coexist with a NaN element and finite neighbours. In both APIs, applying a finite power-of-two scale is exact exponent arithmetic and contributes no rounding of its own.
 
 <a id="automation-inspection-and-conformance"></a>
+<a id="finding-these-representations-in-the-source"></a>
 
 ## Using the proofs and inspecting operations
 
@@ -412,9 +412,3 @@ The families store their values as an `Int`, a `FixedInt`, an inductive type, a 
 The [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md) collects the families' main results. Their correctness rests on kernel-checked proofs; these families have not had independent external comparisons like those for binary formats and posits in [chapter 16](#/chapter/external-validation).
 
 Possible extensions include a bounded logarithmic encoding with a rounding policy, and fixed-point division and rescaling under named policies. Each would need new kernels and contracts, stated with the same three contract forms. The concrete MX family now provides a bounded block example: six element profiles, a reserved NaN scale, and exactly 32 lanes, with scale-selection and quantization proofs described in [chapter 09](#/chapter/low-precision-formats-for-machine-learning/choosing-a-scale-for-32-lanes).
-
-## Finding these representations in the source
-
-The four families have separate implementations for [fixed point](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint), [logarithmic numbers](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Logarithmic), [codebooks](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Codebook), and [blocks](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Block). For exact multiplication, start with [[FloatLib.Floats.Formats.FixedPoint.Code.toRat_mul]], which combines the two scales and gives the exact rational product, or [[FloatLib.Floats.Formats.Logarithmic.Code.toReal_mul]], which proves multiplication of logarithmic codes is exact real multiplication.
-
-For quantization, [[FloatLib.Floats.Formats.Codebook.nearestCode_spec]] says the chosen codeword is finite and minimizes the distance to the input, with ties going to the lower word. [[FloatLib.Floats.Formats.Block.quantizeAt_refines]] says quantizing a block at a supplied exponent rounds every lane at that exponent.

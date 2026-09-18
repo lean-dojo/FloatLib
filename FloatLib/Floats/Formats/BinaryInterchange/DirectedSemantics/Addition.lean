@@ -23,7 +23,7 @@ overflow for conventional IEEE descriptors.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- Downward-rounded addition is a lower bound on exact real addition for finite operands. -/
 theorem toEReal_addDown_le

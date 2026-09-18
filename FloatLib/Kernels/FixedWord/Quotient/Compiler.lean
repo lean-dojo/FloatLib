@@ -9,10 +9,10 @@ module
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 
 /-!
-# Compiler certificate for the two-limb quotient loop
+# Compiler certificates for restoring quotient loops
 
 The logical restoring loop is convenient for proofs, while the primitive-word accumulator avoids
-allocating a two-limb state at every generated quotient bit. This small module proves those loops
+allocating a state at every generated quotient bit. This module proves the one- and two-limb loops
 extensionally equal and registers the optimized direction with `@[csimp]`.
 
 Keeping this certificate separate from `Quotient.Proof` matters for executable clients: they can
@@ -23,6 +23,41 @@ development.
 @[expose] public section
 
 namespace FloatLib.Numerics.FixedWord.RestoringQuotient
+
+/-- The unboxed one-word accumulators preserve every step of the restoring recurrence. -/
+theorem quotientStepsWords_eq (den : UInt64) (n : Nat) (quotient remainder : UInt64) :
+    quotientStepsWords den n quotient remainder =
+      quotientSteps den n { quotient, remainder } := by
+  induction n generalizing quotient remainder with
+  | zero => rfl
+  | succ n ih =>
+      simp only [quotientStepsWords, quotientSteps, quotientStep]
+      split <;> exact ih _ _
+
+/-- The one-word implementation agrees for every state and iteration count. -/
+theorem quotientStepsImpl_eq_quotientSteps
+    (den : UInt64) (n : Nat) (state : QuotientState UInt64) :
+    quotientStepsImpl den n state = quotientSteps den n state := by
+  exact quotientStepsWords_eq den n state.quotient state.remainder
+
+/-- Compile one-word restoring division through primitive accumulators. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem quotientSteps_eq_quotientStepsImpl :
+    quotientSteps = quotientStepsImpl := by
+  funext den n state
+  exact (quotientStepsImpl_eq_quotientSteps den n state).symm
+
+/--
+Compile scaled quotient rounding through the same accumulator.
+
+This equation also replaces calls whose original body was compiled before the loop certificate
+was imported.
+-/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem roundScaledQuotient_eq_roundScaledQuotientImpl :
+    roundScaledQuotient = roundScaledQuotientImpl := by
+  funext num den shift
+  simp only [roundScaledQuotient, roundScaledQuotientImpl, quotientStepsWords_eq]
 
 /-- Reassemble one primitive-word accumulator step as a two-limb quotient state. -/
 private def quotientStep128WordsState

@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
+public import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 import Mathlib.Tactic.NormNum

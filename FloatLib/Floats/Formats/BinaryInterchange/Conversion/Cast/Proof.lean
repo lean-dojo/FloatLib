@@ -366,6 +366,41 @@ theorem genericFormat_of_compatibleWidening {src dst : FloatFormat}
     Int.ofNat_eq_natCast, hbias]
   omega
 
+/-- Compatible finite widening preserves the complete field encoding, including signed zero. -/
+theorem cast_eq_widenExact_of_compatibleWidening {src dst : FloatFormat} (x : Model src)
+    (hexp : src.expWidth = dst.expWidth)
+    (hbias : src.exponentBias = dst.exponentBias)
+    (hencoding : src.encoding = dst.encoding)
+    (hfrac : src.fracWidth ≤ dst.fracWidth)
+    (hx : isFinite x = true) :
+    cast src dst x = widenExact x hexp hbias hencoding hfrac := by
+  have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  by_cases hformat : src = dst
+  · subst dst
+    simp [cast, hnan, hinf, widenExact, ofFields_signBit_expField_fracField]
+  · simp [cast, hnan, hinf, hformat, hexp, hbias, hencoding, hfrac]
+
+/-- Every rounding mode uses the same bit-exact compatible finite widening. -/
+theorem castWithRounding_eq_widenExact_of_compatibleWidening {src dst : FloatFormat}
+    (x : Model src) (mode : IEEERoundingMode)
+    (hexp : src.expWidth = dst.expWidth)
+    (hbias : src.exponentBias = dst.exponentBias)
+    (hencoding : src.encoding = dst.encoding)
+    (hfrac : src.fracWidth ≤ dst.fracWidth)
+    (hx : isFinite x = true) :
+    castWithRounding src dst x mode = widenExact x hexp hbias hencoding hfrac := by
+  have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hcast := cast_eq_widenExact_of_compatibleWidening x hexp hbias hencoding hfrac hx
+  by_cases hformat : src = dst
+  · subst dst
+    cases mode <;>
+      simp [castWithRounding, hnan, hinf, hcast, widenExact,
+        ofFields_signBit_expField_fracField]
+  · cases mode <;>
+      simp [castWithRounding, hnan, hinf, hcast, hformat, hexp, hbias, hencoding, hfrac]
+
 /-- Casting across compatible exponent semantics with at least as much precision is exact. -/
 theorem cast_exact_of_compatibleWidening {src dst : FloatFormat} (x : Model src)
     (hexp : src.expWidth = dst.expWidth)
@@ -374,15 +409,8 @@ theorem cast_exact_of_compatibleWidening {src dst : FloatFormat} (x : Model src)
     (hfrac : src.fracWidth ≤ dst.fracWidth)
     (hx : isFinite x = true) :
     toReal (cast src dst x) = toReal x := by
-  have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
-  by_cases hformat : src = dst
-  · subst dst
-    simp [cast, hnan, hinf]
-  · have hcast :
-        cast src dst x = widenExact x hexp hbias hencoding hfrac := by
-      simp [cast, hnan, hinf, hformat, hexp, hbias, hencoding, hfrac]
-    rw [hcast, toReal_widenExact x hexp hbias hencoding hfrac hx]
+  rw [cast_eq_widenExact_of_compatibleWidening x hexp hbias hencoding hfrac hx,
+    toReal_widenExact x hexp hbias hencoding hfrac hx]
 
 /--
 For conventional IEEE source and destination formats, executable casting refines one nearest-even

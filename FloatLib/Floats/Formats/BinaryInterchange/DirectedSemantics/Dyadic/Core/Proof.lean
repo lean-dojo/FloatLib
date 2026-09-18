@@ -26,7 +26,7 @@ namespace Model
 
 open FloatLib.Floats
 
-noncomputable section
+section
 
 /-! ## Leading-bit normalization -/
 

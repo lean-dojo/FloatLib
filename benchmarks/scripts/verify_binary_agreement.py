@@ -9,6 +9,38 @@ import csv
 from pathlib import Path
 
 OPERATIONS = ("add", "sub", "mul", "div", "sqrt", "fma")
+# BinarySingleNaN.Prec_lt_emax requires prec < emax; widths 4, 5 and 7 fail it.
+FLOCQ_WIDTHS = {"6", "8", "16", "32", "64", "128", "256", "512", "1024", "2048", "4096"}
+LANE_ADAPTERS = {
+    "binary-software": "FloatLib",
+    "binary-native-c": "Native C",
+    "mpfr-reference": "MPFR",
+    "softfloat-reference": "Berkeley SoftFloat",
+    "cpython-float64": "CPython",
+    "flocq-reference": "Flocq",
+    "posit-software": None,
+    "universal-posit": None,
+}
+
+
+def read_requested_matrix(path: Path) -> dict[str, set[tuple[str, str]]]:
+    requested = {label: set() for label in LANE_ADAPTERS.values() if label is not None}
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        if reader.fieldnames != ["lane", "totalBits", "operation"]:
+            raise ValueError(f"invalid requested matrix header in {path}")
+        for row in reader:
+            if row["lane"] not in LANE_ADAPTERS:
+                raise ValueError(f"unknown requested lane: {row['lane']!r}")
+            key = (row["totalBits"], row["operation"])
+            if int(key[0]) <= 0 or key[1] not in OPERATIONS:
+                raise ValueError(f"invalid requested cell in {path}: {key}")
+            label = LANE_ADAPTERS[row["lane"]]
+            if label is not None:
+                if key in requested[label]:
+                    raise ValueError(f"duplicate requested {label} cell in {path}: {key}")
+                requested[label].add(key)
+    return requested
 
 
 def parse_bool(value: str) -> bool:
@@ -17,10 +49,17 @@ def parse_bool(value: str) -> bool:
     return value == "1"
 
 
+def normalize_digest(value: int) -> int:
+    """Compare signed OCaml and unsigned adapter output as 64-bit patterns."""
+    if not -(1 << 63) <= value < (1 << 64):
+        raise ValueError(f"digest outside signed/unsigned 64-bit range: {value}")
+    return value & ((1 << 64) - 1)
+
+
 def add_unique(
-    rows: dict[tuple[str, str], tuple[str, str, str]],
+    rows: dict[tuple[str, str], tuple[int, int, int]],
     key: tuple[str, str],
-    value: tuple[str, str, str],
+    value: tuple[int, int, int],
     label: str,
     trial: Path,
 ) -> None:
@@ -37,8 +76,9 @@ def verify_trial(
     require_flocq: bool,
     expected_keys: set[tuple[str, str]] | None,
     agreement_iterations: int,
+    requested: dict[str, set[tuple[str, str]]] | None = None,
 ) -> int:
-    adapters: dict[str, dict[tuple[str, str], tuple[str, str, str]]] = {
+    adapters: dict[str, dict[tuple[str, str], tuple[int, int, int]]] = {
         "FloatLib": {},
         "Native C": {},
         "MPFR": {},
@@ -49,11 +89,6 @@ def verify_trial(
     with trial.open(newline="", encoding="utf-8") as stream:
         for row in csv.DictReader(stream):
             key = (row["totalBits"], row["operation"])
-            value = (
-                row["agreementIterations"],
-                row["agreementSink"],
-                row["agreementFixtureTraceDigest"],
-            )
             label: str | None = None
             if (
                 row["implementation"] == "ExecFloat"
@@ -77,24 +112,52 @@ def verify_trial(
             elif row["implementation"] == "Flocq":
                 label = "Flocq"
             if label is not None:
+                count = int(row["agreementIterations"])
+                if count < 0:
+                    raise ValueError(
+                        f"negative {label} agreement count in {trial.name} at {key}: {count}"
+                    )
+                value = (
+                    count,
+                    normalize_digest(int(row["agreementSink"])),
+                    normalize_digest(int(row["agreementFixtureTraceDigest"])),
+                )
                 add_unique(adapters[label], key, value, label, trial)
 
     floatlib = adapters["FloatLib"]
     mpfr = adapters["MPFR"]
     actual_keys = set(floatlib) | set(mpfr)
+    if requested is not None:
+        for label, expected in requested.items():
+            actual = set(adapters[label])
+            if actual != expected:
+                raise ValueError(
+                    f"requested {label} grid differs in {trial.name}: "
+                    f"missing={sorted(expected - actual)}, "
+                    f"extra={sorted(actual - expected)}"
+                )
+            for key, value in adapters[label].items():
+                if value[0] != agreement_iterations:
+                    raise ValueError(
+                        f"wrong {label} agreement prefix length in {trial.name} at {key}: "
+                        f"{value[0]} != {agreement_iterations}"
+                    )
+        actual_keys = requested["FloatLib"] & requested["MPFR"]
     if expected_keys is not None and actual_keys != expected_keys:
         raise ValueError(
             f"binary fixture-chain grid differs in {trial.name}: "
             f"missing={sorted(expected_keys - actual_keys)}, "
             f"extra={sorted(actual_keys - expected_keys)}"
         )
-    if require_flocq:
+    check_flocq = require_flocq or bool(adapters["Flocq"])
+    if check_flocq:
         flocq_keys = set(adapters["Flocq"])
-        if flocq_keys != actual_keys:
+        expected_flocq = {key for key in actual_keys if key[0] in FLOCQ_WIDTHS}
+        if flocq_keys != expected_flocq:
             raise ValueError(
-                f"Flocq precision-reference grid differs in {trial.name}: "
-                f"missing={sorted(actual_keys - flocq_keys)}, "
-                f"extra={sorted(flocq_keys - actual_keys)}"
+                f"Flocq agreement grid differs in {trial.name}: "
+                f"missing={sorted(expected_flocq - flocq_keys)}, "
+                f"extra={sorted(flocq_keys - expected_flocq)}"
             )
 
     checked = 0
@@ -105,27 +168,33 @@ def verify_trial(
             )
         values = [floatlib[key], mpfr[key]]
         labels = ["FloatLib", "MPFR"]
-        if int(floatlib[key][0]) != agreement_iterations:
+        if floatlib[key][0] != agreement_iterations:
             raise ValueError(
                 f"wrong agreement prefix length in {trial.name} at {key}: "
                 f"{floatlib[key][0]} != {agreement_iterations}"
             )
         width, operation = key
-        if width in {"32", "64"}:
+        if width in {"32", "64"} and (
+            requested is None or key in requested["Native C"]
+        ):
             native = adapters["Native C"]
             if key not in native:
                 raise ValueError(f"missing Native C row in {trial.name} at {key}")
             values.append(native[key])
             labels.append("Native C")
-            if require_softfloat:
-                softfloat = adapters["Berkeley SoftFloat"]
-                if key not in softfloat:
-                    raise ValueError(
-                        f"missing Berkeley SoftFloat row in {trial.name} at {key}"
-                    )
-                values.append(softfloat[key])
-                labels.append("Berkeley SoftFloat")
-        if width == "64" and require_python:
+        if width in {"32", "64"} and (
+            require_softfloat if requested is None else key in requested["Berkeley SoftFloat"]
+        ):
+            softfloat = adapters["Berkeley SoftFloat"]
+            if key not in softfloat:
+                raise ValueError(
+                    f"missing Berkeley SoftFloat row in {trial.name} at {key}"
+                )
+            values.append(softfloat[key])
+            labels.append("Berkeley SoftFloat")
+        if width == "64" and (
+            require_python if requested is None else key in requested["CPython"]
+        ):
             cpython = adapters["CPython"]
             expects_cpython = operation != "fma" or python_has_fma
             if expects_cpython and key not in cpython:
@@ -133,6 +202,9 @@ def verify_trial(
             if key in cpython:
                 values.append(cpython[key])
                 labels.append("CPython")
+        if check_flocq and key[0] in FLOCQ_WIDTHS:
+            values.append(adapters["Flocq"][key])
+            labels.append("Flocq")
         if len(set(values)) != 1:
             raise ValueError(
                 f"binary fixture-chain workload differs in {trial.name} at {key}: "
@@ -153,6 +225,7 @@ def verify(
     widths: tuple[int, ...] | None,
     operations: tuple[str, ...],
     agreement_iterations: int,
+    requested_matrix: Path | None = None,
 ) -> int:
     trial_paths = sorted(raw.glob("trial-*.csv"))
     if trials is not None:
@@ -167,6 +240,7 @@ def verify(
     if not trial_paths:
         raise ValueError(f"no benchmark trials found under {raw}")
 
+    requested = read_requested_matrix(requested_matrix) if requested_matrix is not None else None
     expected_keys = None
     if widths is not None:
         expected_keys = {
@@ -174,6 +248,8 @@ def verify(
             for width in widths
             for operation in operations
         }
+    elif requested is not None:
+        expected_keys = requested["FloatLib"] & requested["MPFR"]
 
     checked = sum(
         verify_trial(
@@ -184,6 +260,7 @@ def verify(
             require_flocq,
             expected_keys,
             agreement_iterations,
+            requested,
         )
         for trial in trial_paths
     )
@@ -195,23 +272,43 @@ def verify(
                 f"{checked} != {expected_checked}"
             )
 
-    report.write_text(
+    native_note = (
+        "Native C and Berkeley SoftFloat join the binary32/binary64 checks, "
+        if requested is None or requested["Native C"]
+        else "Only the requested adapters join each paired check, "
+    )
+    summary = (
         f"Binary fixture-chain workload cells checked: {checked}\n"
-        f"Each comparable adapter ran the same untimed {agreement_iterations}-step "
-        "agreement prefix. The check compares that prefix's dependency sink and "
+        f"Each comparable adapter reports the same untimed {agreement_iterations}-step "
+        "agreement prefix. Flocq may reuse its prefix within the campaign for the same "
+        "compiled executable and format/operation. The check compares that prefix's dependency sink and "
         "fixture-trace digest; independently calibrated timed loops may use different "
         "iteration counts. It checks one retained workload, not a "
-        "floating-point conformance claim. Native C and Berkeley SoftFloat join "
-        "the binary32/binary64 checks, and CPython joins binary64 operations it "
-        "provides. When enabled, Flocq must cover the same grid, but it remains "
-        "a precision-only reference: its extracted model does not reproduce "
-        "each custom binary exponent range, so its dependency trace is not "
-        "claimed to agree. "
+        f"floating-point conformance claim. {native_note}"
+        "and CPython joins binary64 operations it "
+        "provides. When present or required, Flocq covers the supported FloatLib/MPFR "
+        "grid and its agreement prefix length, dependency sink and fixture-trace "
+        "digest must match. Widths 4, 5 and 7 are outside BinarySingleNaN's prec < emax "
+        "domain and have no Flocq rows. "
         f"SoftFloat required: {require_softfloat}; "
         f"CPython enabled: {require_python}; "
-        f"Flocq grid required: {require_flocq}.\n",
-        encoding="utf-8",
+        f"Flocq agreement required: {require_flocq}.\n"
     )
+    if requested is not None:
+        if checked == 0:
+            summary = (
+                "Binary fixture-chain workload cells checked: 0\n"
+                "Requested adapter rows and agreement prefix lengths were checked. "
+                "No FloatLib/MPFR pairs were requested; no cross-adapter agreement was checked.\n"
+            )
+        standalone = len(requested["FloatLib"] - requested["MPFR"]) * len(trial_paths)
+        if standalone:
+            summary += (
+                f"Standalone FloatLib binary workload cells: {standalone}. "
+                "Their presence and prefix lengths were checked; "
+                "they have no requested MPFR partner.\n"
+            )
+    report.write_text(summary, encoding="utf-8")
     return checked
 
 
@@ -226,6 +323,7 @@ def main() -> None:
     parser.add_argument("--trials", type=int)
     parser.add_argument("--agreement-iterations", type=int, required=True)
     parser.add_argument("--widths", nargs="+", type=int)
+    parser.add_argument("--requested-matrix", type=Path)
     parser.add_argument(
         "--operations",
         nargs="+",
@@ -247,6 +345,7 @@ def main() -> None:
             tuple(arguments.widths) if arguments.widths is not None else None,
             tuple(arguments.operations),
             arguments.agreement_iterations,
+            arguments.requested_matrix,
         )
     except (OSError, ValueError) as error:
         raise SystemExit(str(error)) from error

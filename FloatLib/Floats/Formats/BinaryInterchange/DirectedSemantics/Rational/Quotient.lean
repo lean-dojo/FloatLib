@@ -25,7 +25,7 @@ namespace Model
 
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-! ## Natural quotient bounds -/
 

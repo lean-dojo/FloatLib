@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Grid
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Internal
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Internal -- shake: keep
 
 /-!
 # Branch equations for directed rational packing
@@ -26,9 +25,8 @@ namespace Model
 
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
-open Packing.Internal
 
-noncomputable section
+section
 
 /-! ## Positive packing branches -/
 

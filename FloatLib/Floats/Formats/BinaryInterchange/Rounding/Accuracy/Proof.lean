@@ -28,7 +28,7 @@ open Float.Model.UnpackedFloat
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-- The model and rounded-real semantics choose the same exponent for a valid certificate. -/
 theorem cexp_accuracy_mul_bpow_eq_targetExponent

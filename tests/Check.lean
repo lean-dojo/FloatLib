@@ -147,7 +147,10 @@ private def transcendentals : IO UInt32 := do
   let specialFailures ← runCheck "arbitraryFormatSpecialValues" failArbitraryFormatSpecialValues
   let constantFailures ← runCheck "generatedConstants" failGeneratedConstants
   let boundedGenerationFailures ← runCheck "boundedGeneration" failBoundedGeneration
-  let total := specialFailures + constantFailures + boundedGenerationFailures
+  let reductionBudgetFailures ← runCheck "reductionBudget" failReductionBudget
+  let customReductionBudgetFailures ← runCheck "customReductionBudget" failCustomReductionBudget
+  let total := specialFailures + constantFailures + boundedGenerationFailures +
+    reductionBudgetFailures + customReductionBudgetFailures
   IO.println s!"TOTAL: {total}"
   pure <| exitCode total
 

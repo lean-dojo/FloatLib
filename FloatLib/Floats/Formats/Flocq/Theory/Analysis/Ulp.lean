@@ -144,15 +144,7 @@ theorem ulp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
 theorem ulp_mono_pos [MonotoneExp fexp] {x y : ℝ}
     (hx : 0 < x) (hxy : x ≤ y) : ulp β fexp x ≤ ulp β fexp y := by
   have hy : 0 < y := hx.trans_le hxy
-  have hmag : magnitude β x ≤ magnitude β y := by
-    have hxLower := (magnitude_spec β x hx.ne').1
-    have hyUpper := (magnitude_spec β y hy.ne').2
-    have hpowers : bpow β (magnitude β x - 1) <
-        bpow β (magnitude β y) := by
-      exact hxLower.trans (by simpa [abs_of_pos hx, abs_of_pos hy] using hxy) |>.trans_lt hyUpper
-    have hexp : magnitude β x - 1 < magnitude β y :=
-      (bpow_lt_bpow_iff β _ _).mp hpowers
-    linarith
+  have hmag := magnitude_mono_pos β hx hxy
   rw [ulp.of_ne_zero β fexp x hx.ne', ulp.of_ne_zero β fexp y hy.ne']
   exact (bpow_le_bpow_iff β _ _).2
     (MonotoneExp.monotone _ _ hmag)

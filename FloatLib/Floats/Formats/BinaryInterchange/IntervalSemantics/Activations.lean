@@ -31,7 +31,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace Interval
 
-noncomputable section
+section
 
 /-! ## ReLU -/
 

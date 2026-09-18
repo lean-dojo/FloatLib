@@ -33,7 +33,7 @@ open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 open Directed.Internal
 
-noncomputable section
+section
 
 private theorem nativeOverflow_false_eq_posInf
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :

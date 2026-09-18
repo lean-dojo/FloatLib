@@ -61,19 +61,9 @@ theorem RestoringRootState.root_lt_two_pow
     (hrep : state.Represents toNat value)
     (hvalue : value < 2 ^ (2 * precision)) :
     toNat state.root < 2 ^ precision := by
-  rw [show 2 * precision = precision + precision by omega, pow_add] at hvalue
-  by_contra hroot
-  have hlower : 2 ^ precision ≤ toNat state.root :=
-    Nat.le_of_not_gt hroot
-  have hsquare :
-      2 ^ precision * 2 ^ precision ≤
-        toNat state.root * toNat state.root :=
-    Nat.mul_le_mul hlower hlower
-  have hrootValue :
-      toNat state.root * toNat state.root ≤ value := by
-    rw [← hrep.1]
-    exact Nat.le_add_right _ _
-  exact (Nat.not_lt_of_ge (hsquare.trans hrootValue)) hvalue
+  apply Nat.mul_self_lt_mul_self_iff.mp
+  rw [← pow_add, ← two_mul]
+  exact (Nat.le_add_right _ _).trans_lt (hrep.1.symm ▸ hvalue)
 
 /--
 The root component of a valid restoring state is the exact floor square root, independently of
@@ -84,10 +74,8 @@ theorem RestoringRootState.root_eq_sqrt
     {state : RestoringRootState α} {value : Nat}
     (hrep : state.Represents toNat value) :
     toNat state.root = Nat.sqrt value := by
-  apply Nat.eq_sqrt.mpr
-  constructor
-  · nlinarith [hrep.1, Nat.zero_le (toNat state.remainder)]
-  · nlinarith [hrep.1, hrep.2]
+  rw [← hrep.1]
+  exact (Nat.sqrt_add_eq _ (by simpa only [two_mul] using hrep.2)).symm
 
 /--
 A valid restoring state contains the exact floor square root and its square remainder.
@@ -181,6 +169,28 @@ selector.
   unfold UInt64.log2 Fin.log2
   rfl
 
+/-- When the high part is nonzero, the low bits do not change its leading-bit position. -/
+theorem log2_low_add_high_mul_pow (low high offset : Nat)
+    (hlow : low < 2 ^ offset) (hhigh : high ≠ 0) :
+    (low + high * 2 ^ offset).log2 = offset + high.log2 := by
+  have hvalue : low + high * 2 ^ offset ≠ 0 := by
+    positivity
+  apply (Nat.log2_eq_iff hvalue).2
+  constructor
+  · rw [pow_add]
+    calc
+      2 ^ offset * 2 ^ high.log2 ≤ 2 ^ offset * high :=
+        Nat.mul_le_mul_left _ (Nat.log2_self_le hhigh)
+      _ = high * 2 ^ offset := Nat.mul_comm _ _
+      _ ≤ low + high * 2 ^ offset := Nat.le_add_left _ _
+  · rw [Nat.add_assoc, pow_add]
+    calc
+      low + high * 2 ^ offset < 2 ^ offset + high * 2 ^ offset :=
+        Nat.add_lt_add_right hlow _
+      _ = 2 ^ offset * (high + 1) := by ring
+      _ ≤ 2 ^ offset * 2 ^ (high.log2 + 1) :=
+        Nat.mul_le_mul_left _ (Nat.succ_le_iff.mpr Nat.lt_log2_self)
+
 /--
 If a nonzero native word fits below `2 ^ width`, then its leading-bit position is smaller than
 `width`.
@@ -226,29 +236,24 @@ theorem shiftLeft_toNat (value : UInt64) (shift : Nat)
     (hshift : shift < 64)
     (hfit : value.toNat <<< shift < 2 ^ 64) :
     (value <<< UInt64.ofNat shift).toNat = value.toNat <<< shift := by
-  rw [UInt64.toNat_shiftLeft]
-  simp only [UInt64.toNat_ofNat']
-  rw [Nat.mod_eq_of_lt (lt_trans hshift (by norm_num))]
-  rw [Nat.mod_eq_of_lt hshift, Nat.mod_eq_of_lt hfit]
+  rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat_of_lt' (hshift.trans (by decide)),
+    Nat.mod_eq_of_lt hshift, Nat.mod_eq_of_lt hfit]
 
 /-- An in-range native left shift is multiplication modulo the word size. -/
 theorem shiftLeft_toNat_mod (value : UInt64) (shift : Nat)
     (hshift : shift < 64) :
     (value <<< UInt64.ofNat shift).toNat =
       (value.toNat * 2 ^ shift) % 2 ^ 64 := by
-  rw [UInt64.toNat_shiftLeft]
-  simp only [UInt64.toNat_ofNat']
-  rw [Nat.mod_eq_of_lt (lt_trans hshift (by norm_num)),
-    Nat.mod_eq_of_lt hshift]
-  simp only [Nat.shiftLeft_eq]
+  rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat_of_lt' (hshift.trans (by decide)),
+    Nat.mod_eq_of_lt hshift, Nat.shiftLeft_eq]
 
 /-- Shifting the native word `1` within range represents the corresponding power of two. -/
 theorem uint64_powTwo_toNat (exponent : Nat) (hexponent : exponent < 64) :
     (((1 : UInt64) <<< UInt64.ofNat exponent).toNat) = 2 ^ exponent := by
   rw [shiftLeft_toNat (1 : UInt64) exponent hexponent]
-  · simp [Nat.shiftLeft_eq]
-  · simp [Nat.shiftLeft_eq]
-    exact Nat.pow_lt_pow_right (by decide) hexponent
+  · exact Nat.one_shiftLeft exponent
+  · simpa only [UInt64.toNat_one, Nat.one_shiftLeft] using
+      (Nat.pow_lt_pow_right (by decide) hexponent : 2 ^ exponent < 2 ^ 64)
 
 /--
 Moving the low `inner` bits of a word to the high end has the expected natural-number value.
@@ -261,13 +266,10 @@ theorem shiftLeftLowBits_toNat (value : UInt64) (inner : Nat)
     (value <<< UInt64.ofNat (64 - inner)).toNat =
       (value.toNat % 2 ^ inner) * 2 ^ (64 - inner) := by
   have hcomplement : 64 - inner < 64 := by omega
-  have hcomplementSize : 64 - inner < 2 ^ 64 := by
-    exact lt_trans hcomplement (by norm_num)
   have hsum : inner + (64 - inner) = 64 :=
     Nat.add_sub_of_le (Nat.le_of_lt hinner)
-  rw [UInt64.toNat_shiftLeft]
-  simp only [UInt64.toNat_ofNat']
-  rw [Nat.mod_eq_of_lt hcomplementSize, Nat.mod_eq_of_lt hcomplement]
+  rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat_of_lt' (hcomplement.trans (by decide)),
+    Nat.mod_eq_of_lt hcomplement]
   simp only [Nat.shiftLeft_eq]
   have hdecompose :
       value.toNat =
@@ -381,10 +383,8 @@ theorem wordDigit_eq
       (value.toNat / place index) % 4 := by
   unfold wordDigit place
   have hshift : 2 * index < 64 := by omega
-  have hshiftSize : 2 * index < 2 ^ 64 :=
-    lt_trans hshift (by norm_num)
   rw [UInt64.toNat_and, UInt64.toNat_shiftRight,
-    UInt64.toNat_ofNat', Nat.mod_eq_of_lt hshiftSize,
+    UInt64.toNat_ofNat_of_lt' (hshift.trans (by decide)),
     Nat.mod_eq_of_lt hshift]
   change (value.toNat >>> (2 * index)) &&& 3 =
     value.toNat / 2 ^ (2 * index) % 4
@@ -394,9 +394,7 @@ theorem wordDigit_eq
 /-- Advancing one base-four position multiplies its weight by four. -/
 theorem place_succ (index : Nat) :
     place (index + 1) = place index * 4 := by
-  unfold place
-  rw [show 2 * (index + 1) = 2 * index + 2 by omega, pow_add]
-  norm_num
+  simpa only [place, Nat.pow_mul] using Nat.pow_succ 4 index
 
 /--
 Generic refinement of a restoring loop from a proved digit step.
@@ -468,9 +466,7 @@ theorem loop_represents
 /-- Base-four positional weights multiply when their indices add. -/
 theorem place_add (left right : Nat) :
     place (left + right) = place left * place right := by
-  unfold place
-  rw [show 2 * (left + right) = 2 * left + 2 * right by omega,
-    pow_add]
+  simp only [place, Nat.pow_mul, pow_add]
 
 /-- Reconstructing the low base-four digits is reduction modulo their total width. -/
 theorem wordDigits_eq_mod
@@ -493,38 +489,17 @@ end BaseFour
   split
   next hindex =>
     have hindexNat : index.toNat < 64 := by
-      simpa [UInt64.lt_iff_toNat_lt] using hindex
+      simpa only [UInt64.lt_iff_toNat_lt, UInt64.reduceToNat] using hindex
     rw [Nat.testBit_eq_decide_div_mod_eq, Bool.eq_iff_iff]
-    simp only [beq_iff_eq, decide_eq_true_eq]
-    constructor
-    · intro equality
-      have naturalEquality := congrArg UInt64.toNat equality
-      simp only [UInt64.toNat_and, UInt64.toNat_shiftRight,
-        UInt64.toNat_one] at naturalEquality
-      rw [Nat.mod_eq_of_lt hindexNat] at naturalEquality
-      simpa only [UInt64.toNat_and, UInt64.toNat_shiftRight,
-        UInt64.toNat_one, Nat.shiftRight_eq_div_pow, Nat.and_comm,
-        Nat.one_and_eq_mod_two] using naturalEquality
-    · intro equality
-      apply UInt64.toNat_inj.mp
-      simp only [UInt64.toNat_and, UInt64.toNat_shiftRight,
-        UInt64.toNat_one]
-      rw [Nat.mod_eq_of_lt hindexNat]
-      simpa only [Nat.shiftRight_eq_div_pow, Nat.and_comm,
-        Nat.one_and_eq_mod_two] using equality
+    simp only [beq_iff_eq, decide_eq_true_eq, ← UInt64.toNat_inj,
+      UInt64.toNat_and, UInt64.toNat_shiftRight, UInt64.toNat_one,
+      Nat.mod_eq_of_lt hindexNat, Nat.and_one_is_mod, Nat.shiftRight_eq_div_pow]
   next hindex =>
     have hindexNat : 64 ≤ index.toNat := by
-      have : ¬index.toNat < 64 := by
-        intro h
-        apply hindex
-        exact UInt64.lt_iff_toNat_lt.mpr (by simpa using h)
-      omega
+      simpa [UInt64.lt_iff_toNat_lt] using hindex
     symm
-    apply Nat.testBit_lt_two_pow
-    calc
-      value.toNat < 2 ^ 64 := UInt64.toNat_lt value
-      _ ≤ 2 ^ index.toNat :=
-        Nat.pow_le_pow_right (by decide) hindexNat
+    exact Nat.testBit_lt_two_pow
+      (value.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) hindexNat))
 
 /-- Natural value of a machine-indexed low-bit mask below the carrier width. -/
 theorem lowMaskWord_toNat (width : UInt64) (hwidth : width < 64) :
@@ -579,9 +554,8 @@ theorem uint64_lowBits_toNat (value : UInt64) (shift : Nat)
     (hshift : shift < 64) :
     (value &&& (((1 : UInt64) <<< UInt64.ofNat shift) - 1)).toNat =
       value.toNat % 2 ^ shift := by
-  have hshiftSize : shift < 2 ^ 64 := lt_trans hshift (by norm_num)
-  have hshiftNat : (UInt64.ofNat shift).toNat = shift := by
-    rw [UInt64.toNat_ofNat', Nat.mod_eq_of_lt hshiftSize]
+  have hshiftNat : (UInt64.ofNat shift).toNat = shift :=
+    UInt64.toNat_ofNat_of_lt' (hshift.trans (by decide))
   have hshiftWord : UInt64.ofNat shift < 64 := by
     apply UInt64.lt_iff_toNat_lt.mpr
     rw [hshiftNat]

@@ -195,6 +195,22 @@ open Model
 abbrev custom37 : FloatFormat :=
   FloatFormat.ieee 6 30
 
+/-- The first fraction width beyond the old small-arithmetic capacity. -/
+abbrev custom40 : FloatFormat :=
+  FloatFormat.ieee 8 31
+
+/-- A wider custom significand that still fits a single stored word. -/
+abbrev custom49 : FloatFormat :=
+  FloatFormat.ieee 8 40
+
+/-- The largest fraction possible in a one-word IEEE layout. -/
+abbrev custom64 : FloatFormat :=
+  FloatFormat.ieee 2 61
+
+/-- The largest exponent field possible in a one-word layout. -/
+abbrev wideExponent : FloatFormat :=
+  FloatFormat.ieee 62 1
+
 def ordinaryNormals (fmt : FloatFormat) : Array (Model fmt × Model fmt) :=
   #[
     (posOne fmt, posOne fmt),
@@ -225,8 +241,14 @@ def baselineFailures (fmt : FloatFormat) : Nat :=
   Harness.binaryRouteFailures (baselinePairs fmt)
     NativeSmallWordDiv.divNormal? DivBackend.word DivBackend.generic false
 
+/-- Compare every pair of value classes, including negative zero and both infinities. -/
+def classFailures (fmt : FloatFormat) : Nat :=
+  FloatLibTests.Accounting.countPairFailures
+    (SmallWordFinite.samples fmt) (SmallWordFinite.samples fmt) fun x y =>
+      Harness.sameBits (DivBackend.word x y) (DivBackend.generic x y)
+
 def formatFailures (fmt : FloatFormat) : Nat :=
-  normalFailures fmt + baselineFailures fmt
+  normalFailures fmt + baselineFailures fmt + classFailures fmt
 
 def binary16Failures : Thunk Nat := ⟨fun _ =>
   formatFailures FloatFormat.binary16⟩
@@ -237,14 +259,49 @@ def bfloat16Failures : Thunk Nat := ⟨fun _ =>
 def custom37Failures : Thunk Nat := ⟨fun _ =>
   formatFailures custom37⟩
 
+def custom40Failures : Thunk Nat := ⟨fun _ => formatFailures custom40⟩
+
+def custom49Failures : Thunk Nat := ⟨fun _ => formatFailures custom49⟩
+
+def custom64Failures : Thunk Nat := ⟨fun _ => formatFailures custom64⟩
+
+/-- Check inexact quotients and both exponent-field endpoints at the widest exponent capacity. -/
+def wideExponentFailures : Thunk Nat := ⟨fun _ =>
+  let fmt := wideExponent
+  let threeHalves := ofFields fmt false fmt.bias 1
+  let minimumNormal := ofFields fmt false 1 0
+  let maximum := maxFinite fmt false
+  let roundedPairs := #[
+    (posOne fmt, threeHalves, ofFields fmt false (fmt.bias - 1) 1),
+    (negOne fmt, threeHalves, ofFields fmt true (fmt.bias - 1) 1),
+    (ofFields fmt false (2 * fmt.bias) 0, threeHalves,
+      ofFields fmt false (2 * fmt.bias - 1) 1),
+    (minimumNormal, ofFields fmt false (fmt.bias - 1) 1, ofFields fmt false 1 1),
+    (minimumNormal, minimumNormal, posOne fmt),
+    (maximum, maximum, posOne fmt)
+  ]
+  formatFailures fmt +
+    FloatLibTests.Accounting.countWhereFailures roundedPairs fun (x, y, expected) =>
+      match NativeSmallWordDiv.divNormal? x y with
+      | none => false
+      | some result =>
+          Harness.sameBits result expected &&
+            Harness.sameBits (DivBackend.word x y) expected &&
+            Harness.sameBits (DivBackend.generic x y) expected⟩
+
 def totalFailures : Thunk Nat := ⟨fun _ =>
-  binary16Failures.get + bfloat16Failures.get + custom37Failures.get⟩
+  binary16Failures.get + bfloat16Failures.get + custom37Failures.get +
+    custom40Failures.get + custom49Failures.get + custom64Failures.get + wideExponentFailures.get⟩
 
 def report : Thunk String := ⟨fun _ =>
   String.intercalate "\n"
     [ s!"binary16: {binary16Failures.get}"
     , s!"bfloat16: {bfloat16Failures.get}"
     , s!"custom37: {custom37Failures.get}"
+    , s!"custom40: {custom40Failures.get}"
+    , s!"custom49: {custom49Failures.get}"
+    , s!"custom64: {custom64Failures.get}"
+    , s!"wide exponent: {wideExponentFailures.get}"
     , s!"TOTAL: {totalFailures.get}"
     ]⟩
 

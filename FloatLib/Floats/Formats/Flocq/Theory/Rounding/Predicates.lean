@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Basic.Real.Basic
+public import Mathlib.Order.Bounds.Basic
 
 /-!
 # Rounding Predicates
@@ -29,6 +30,24 @@ def RoundDownPoint (F : ℝ → Prop) (x f : ℝ) : Prop :=
 /-- `f` is the least `F`-value no smaller than `x`. -/
 def RoundUpPoint (F : ℝ → Prop) (x f : ℝ) : Prop :=
   F f ∧ x ≤ f ∧ ∀ g, F g → x ≤ g → f ≤ g
+
+/-- A downward rounding point is a greatest element of the representable lower bounds. -/
+theorem roundDownPoint_iff_isGreatest (F : ℝ → Prop) (x f : ℝ) :
+    RoundDownPoint F x f ↔ IsGreatest {g | F g ∧ g ≤ x} f := by
+  constructor
+  · rintro ⟨hf, hfx, hgreatest⟩
+    exact ⟨⟨hf, hfx⟩, fun _ hg => hgreatest _ hg.1 hg.2⟩
+  · rintro ⟨⟨hf, hfx⟩, hgreatest⟩
+    exact ⟨hf, hfx, fun _ hg hgx => hgreatest ⟨hg, hgx⟩⟩
+
+/-- An upward rounding point is a least element of the representable upper bounds. -/
+theorem roundUpPoint_iff_isLeast (F : ℝ → Prop) (x f : ℝ) :
+    RoundUpPoint F x f ↔ IsLeast {g | F g ∧ x ≤ g} f := by
+  constructor
+  · rintro ⟨hf, hxf, hleast⟩
+    exact ⟨⟨hf, hxf⟩, fun _ hg => hleast _ hg.1 hg.2⟩
+  · rintro ⟨⟨hf, hxf⟩, hleast⟩
+    exact ⟨hf, hxf, fun _ hg hxg => hleast ⟨hg, hxg⟩⟩
 
 /-- Directed down on nonnegative inputs and directed up on nonpositive inputs. -/
 def RoundTowardZeroPoint (F : ℝ → Prop) (x f : ℝ) : Prop :=
@@ -56,13 +75,15 @@ def RoundNearest (F : ℝ → Prop) (round : ℝ → ℝ) : Prop :=
 
 /-- A downward rounding point is unique. -/
 theorem roundDownPoint_unique {F : ℝ → Prop} {x f g : ℝ}
-    (hf : RoundDownPoint F x f) (hg : RoundDownPoint F x g) : f = g := by
-  exact le_antisymm (hg.2.2 f hf.1 hf.2.1) (hf.2.2 g hg.1 hg.2.1)
+    (hf : RoundDownPoint F x f) (hg : RoundDownPoint F x g) : f = g :=
+  ((roundDownPoint_iff_isGreatest F x f).mp hf).unique
+    ((roundDownPoint_iff_isGreatest F x g).mp hg)
 
 /-- An upward rounding point is unique. -/
 theorem roundUpPoint_unique {F : ℝ → Prop} {x f g : ℝ}
-    (hf : RoundUpPoint F x f) (hg : RoundUpPoint F x g) : f = g := by
-  exact le_antisymm (hf.2.2 g hg.1 hg.2.1) (hg.2.2 f hf.1 hf.2.1)
+    (hf : RoundUpPoint F x f) (hg : RoundUpPoint F x g) : f = g :=
+  ((roundUpPoint_iff_isLeast F x f).mp hf).unique
+    ((roundUpPoint_iff_isLeast F x g).mp hg)
 
 /-- A representable value is its own downward rounding point. -/
 theorem roundDownPoint_refl {F : ℝ → Prop} {x : ℝ} (hx : F x) :

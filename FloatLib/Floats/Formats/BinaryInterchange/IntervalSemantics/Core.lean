@@ -26,7 +26,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace Interval
 
-noncomputable section
+section
 
 /-- Membership in the real interval denoted by the decoded endpoints. -/
 def RealMem {fmt : FloatFormat} (I : Interval fmt) (x : ℝ) : Prop :=

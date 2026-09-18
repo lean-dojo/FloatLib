@@ -16,25 +16,22 @@ open Flocq_kernel
    name and avoids a conversion inside the measured interval. *)
 external monotonic_nanos : unit -> int64 = "floatlib_monotonic_nanos"
 
-(* We match the significand precision of the binary format at each storage
-   width. This does not make the Flocq row an implementation of every custom
-   exponent range or exceptional-value policy. *)
+(* Storage width, exponent-field width, and significand precision match the
+   FloatLib and MPFR adapters. Flocq's certified IEEE interface requires
+   precision < emax, excluding the 4-, 5-, and 7-bit custom layouts. *)
 let formats =
   [|
-    (4, 2);
-    (5, 3);
-    (6, 3);
-    (7, 4);
-    (8, 4);
-    (16, 11);
-    (32, 24);
-    (64, 53);
-    (128, 113);
-    (256, 237);
-    (512, 493);
-    (1024, 1005);
-    (2048, 2029);
-    (4096, 4077);
+    (6, 3, 3);
+    (8, 4, 4);
+    (16, 5, 11);
+    (32, 8, 24);
+    (64, 11, 53);
+    (128, 15, 113);
+    (256, 19, 237);
+    (512, 19, 493);
+    (1024, 19, 1005);
+    (2048, 19, 2029);
+    (4096, 19, 4077);
   |]
 let operations = [| "add"; "sub"; "mul"; "div"; "sqrt"; "fma" |]
 
@@ -53,7 +50,7 @@ let optional_width () =
   | None | Some "" -> None
   | Some text ->
       let width = int_of_string text in
-      if not (Array.exists (fun (candidate, _) -> candidate = width) formats)
+      if not (Array.exists (fun (candidate, _, _) -> candidate = width) formats)
       then invalid_arg ("unsupported FORMAT_COMPARE_WIDTH: " ^ text);
       Some width
 
@@ -75,25 +72,26 @@ let default_iterations width =
   else if width <= 2048 then 5
   else 1
 
-let exact_input precision salt negative index =
+let exact_input precision emax salt negative index =
   let numerator = ((index * salt + salt + 1) mod 113) + 7 in
   let denominator = ((index * 11 + salt) mod 29) + 32 in
   flocq_from_ratio
     (z_of_int precision)
+    (z_of_int emax)
     negative
     (z_of_int numerator)
     (z_of_int denominator)
 
-let inputs_x precision =
+let inputs_x precision emax =
   Array.init 16 (fun index ->
-      exact_input precision 37 (index mod 5 = 0) index)
+      exact_input precision emax 37 (index mod 5 = 0) index)
 
-let inputs_y precision =
+let inputs_y precision emax =
   Array.init 16 (fun index ->
-      exact_input precision 61 (index mod 3 = 0) index)
+      exact_input precision emax 61 (index mod 3 = 0) index)
 
-let inputs_sqrt precision =
-  Array.init 16 (fun index -> exact_input precision 43 false index)
+let inputs_sqrt precision emax =
+  Array.init 16 (fun index -> exact_input precision emax 43 false index)
 
 let mix_sink sink value =
   Int64.mul (Int64.logxor sink value) 1_099_511_628_211L
@@ -153,8 +151,8 @@ let result_bits precision = function
   | B754_finite (negative, mantissa, exponent) ->
       finite_fingerprint precision negative mantissa exponent
 
-let run_binary operation precision iterations xs ys =
-  let operation = operation (z_of_int precision) in
+let run_binary operation precision emax iterations xs ys =
+  let operation = operation (z_of_int precision) (z_of_int emax) in
   let sink = ref dependency_seed in
   let fixture_trace = ref dependency_seed in
   for _iteration = iterations - 1 downto 0 do
@@ -164,8 +162,8 @@ let run_binary operation precision iterations xs ys =
   done;
   (!sink, !fixture_trace)
 
-let run_unary operation precision iterations xs =
-  let operation = operation (z_of_int precision) in
+let run_unary operation precision emax iterations xs =
+  let operation = operation (z_of_int precision) (z_of_int emax) in
   let sink = ref dependency_seed in
   let fixture_trace = ref dependency_seed in
   for _iteration = iterations - 1 downto 0 do
@@ -175,8 +173,8 @@ let run_unary operation precision iterations xs =
   done;
   (!sink, !fixture_trace)
 
-let run_ternary operation precision iterations xs ys =
-  let operation = operation (z_of_int precision) in
+let run_ternary operation precision emax iterations xs ys =
+  let operation = operation (z_of_int precision) (z_of_int emax) in
   let sink = ref dependency_seed in
   let fixture_trace = ref dependency_seed in
   for _iteration = iterations - 1 downto 0 do
@@ -189,27 +187,87 @@ let run_ternary operation precision iterations xs ys =
   done;
   (!sink, !fixture_trace)
 
-let workload operation precision xs ys sqrt_xs =
+let workload operation precision emax xs ys sqrt_xs =
   match operation with
   | "add" ->
-      fun iterations -> run_binary flocq_add precision iterations xs ys
+      fun iterations -> run_binary flocq_add precision emax iterations xs ys
   | "sub" ->
-      fun iterations -> run_binary flocq_sub precision iterations xs ys
+      fun iterations -> run_binary flocq_sub precision emax iterations xs ys
   | "mul" ->
-      fun iterations -> run_binary flocq_mul precision iterations xs ys
+      fun iterations -> run_binary flocq_mul precision emax iterations xs ys
   | "div" ->
-      fun iterations -> run_binary flocq_div precision iterations xs ys
+      fun iterations -> run_binary flocq_div precision emax iterations xs ys
   | "sqrt" ->
-      fun iterations -> run_unary flocq_sqrt precision iterations sqrt_xs
+      fun iterations -> run_unary flocq_sqrt precision emax iterations sqrt_xs
   | "fma" ->
-      fun iterations -> run_ternary flocq_fma precision iterations xs ys
+      fun iterations -> run_ternary flocq_fma precision emax iterations xs ys
   | _ -> invalid_arg ("unsupported operation: " ^ operation)
 
-let time_row width precision operation iterations warmup_iterations =
-  let xs = inputs_x precision in
-  let ys = inputs_y precision in
-  let sqrt_xs = inputs_sqrt precision in
-  let run = workload operation precision xs ys sqrt_xs in
+(* The fixed agreement prefix is deterministic. A campaign computes it once
+   for each operation and format, then reuses it across calibration and timing
+   trials. The runner supplies the SHA-256 of this compiled executable and a
+   fresh cache directory; a different executable cannot reuse these records.
+   This matters for the widest extracted square-root computations. *)
+let agreement_prefix width precision emax operation iterations run =
+  match
+    Sys.getenv_opt "FORMAT_COMPARE_FLOCQ_CACHE",
+    Sys.getenv_opt "FORMAT_COMPARE_FLOCQ_BINARY_SHA256"
+  with
+  | None, None -> run iterations
+  | Some directory, Some binary_sha256 ->
+      if String.length binary_sha256 <> 64 ||
+         not (String.for_all
+           (function '0' .. '9' | 'a' .. 'f' -> true | _ -> false)
+           binary_sha256)
+      then invalid_arg "invalid Flocq executable SHA-256";
+      let key =
+        Printf.sprintf "%s-%d-%d-%d-%s-%d"
+          binary_sha256 width precision emax operation iterations
+      in
+      let path = Filename.concat directory (key ^ ".txt") in
+      if Sys.file_exists path then begin
+        let input = open_in path in
+        Fun.protect ~finally:(fun () -> close_in input) (fun () ->
+          if input_line input <> key then
+            invalid_arg "Flocq agreement cache key mismatch";
+          let sink = Int64.of_string (input_line input) in
+          let trace = Int64.of_string (input_line input) in
+          (try
+             ignore (input_line input);
+             invalid_arg "extra data in Flocq agreement cache"
+           with End_of_file -> ());
+          (sink, trace))
+      end else begin
+        let sink, trace = run iterations in
+        let temporary =
+          Filename.temp_file ~temp_dir:directory "agreement-" ".tmp"
+        in
+        let output = open_out temporary in
+        Fun.protect
+          ~finally:(fun () ->
+            close_out_noerr output;
+            if Sys.file_exists temporary then Sys.remove temporary)
+          (fun () ->
+            Printf.fprintf output "%s\n%Ld\n%Ld\n" key sink trace;
+            close_out output;
+            Sys.rename temporary path);
+        (sink, trace)
+      end
+  | _ ->
+      invalid_arg "Flocq agreement cache needs both directory and executable SHA-256"
+
+let time_row width exponent_bits precision operation iterations
+    warmup_iterations agreement_iterations =
+  let emax = 1 lsl (exponent_bits - 1) in
+  if precision <= 0 || precision >= emax then
+    invalid_arg "Flocq requires 0 < precision < emax";
+  let xs = inputs_x precision emax in
+  let ys = inputs_y precision emax in
+  let sqrt_xs = inputs_sqrt precision emax in
+  let run = workload operation precision emax xs ys sqrt_xs in
+  let agreement_sink, agreement_trace =
+    agreement_prefix width precision emax operation agreement_iterations run
+  in
   ignore (Sys.opaque_identity (run warmup_iterations));
   let start = monotonic_nanos () in
   let sink, fixture_trace = Sys.opaque_identity (run iterations) in
@@ -218,8 +276,9 @@ let time_row width precision operation iterations warmup_iterations =
   Printf.printf
     "Flocq,binary-reference,flocq-p%d,%d,%s,software-reference,\
      Flocq 4.2.2 extracted OCaml Zarith,result-dependent-fixture-chain,\
-     %d,%Ld,%Ld,%Ld,0,0,0\n%!"
+     %d,%Ld,%Ld,%Ld,%d,%Ld,%Ld\n%!"
     precision width operation iterations total_nanos sink fixture_trace
+    agreement_iterations agreement_sink agreement_trace
 
 let () =
   let selected_width = optional_width () in
@@ -227,12 +286,15 @@ let () =
   let warmup_iterations =
     positive_env "FORMAT_COMPARE_WARMUP_ITERATIONS" 64
   in
+  let agreement_iterations =
+    positive_env "FORMAT_COMPARE_AGREEMENT_ITERATIONS" 256
+  in
   print_endline
     "implementation,family,format,totalBits,operation,executionClass,\
      backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,\
      agreementIterations,agreementSink,agreementFixtureTraceDigest";
   Array.iter
-    (fun (width, precision) ->
+    (fun (width, exponent_bits, precision) ->
       if Option.fold ~none:true ~some:(( = ) width) selected_width
       then
         let iterations =
@@ -249,6 +311,7 @@ let () =
                 selected_operation
             then
               time_row
-                width precision operation iterations warmup_iterations)
+                width exponent_bits precision operation iterations
+                warmup_iterations agreement_iterations)
           operations)
     formats

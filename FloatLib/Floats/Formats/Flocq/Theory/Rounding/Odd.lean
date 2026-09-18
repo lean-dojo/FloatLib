@@ -218,19 +218,22 @@ theorem generic_format_round_odd
   generic_format_round oddRound x
 
 /--
-Semantic round-to-odd specification.  An exact input is unchanged.  An inexact result is a
-directed neighbor and has an odd integer mantissa at an explicit radix exponent.
+Semantic round-to-odd specification at the grid exponent selected for the input.
+
+An exact input is unchanged. An inexact result is a directed neighbor whose integer mantissa
+is odd at `exponent`. Fixing this exponent matters: every nonzero binary dyadic has an odd
+mantissa at some exponent, which alone would not characterize round-to-odd.
 -/
-def RoundOddPoint (β : Numerics.Radix) (F : ℝ → Prop) (x f : ℝ) : Prop :=
+def RoundOddPoint (β : Numerics.Radix) (F : ℝ → Prop) (exponent : ℤ) (x f : ℝ) : Prop :=
   F f ∧
     (f = x ∨
       ((RoundDownPoint F x f ∨ RoundUpPoint F x f) ∧
-        ∃ m : ℤ, ∃ e : ℤ, f = (m : ℝ) * bpow β e ∧ Odd m))
+        ∃ m : ℤ, f = (m : ℝ) * bpow β exponent ∧ Odd m))
 
 /-- Generic rounding with `oddRound` satisfies the round-to-odd point specification. -/
 theorem round_odd_point
     {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp] (x : ℝ) :
-    RoundOddPoint β (genericFormat β fexp) x
+    RoundOddPoint β (genericFormat β fexp) (cexp β fexp x) x
       (round (β := β) (fexp := fexp) oddRound x) := by
   refine ⟨generic_format_round_odd x, ?_⟩
   by_cases hx : genericFormat β fexp x
@@ -243,8 +246,7 @@ theorem round_odd_point
           (round_floor_point (β := β) (fexp := fexp) x))
       · exact Or.inr (by simpa [hceil] using
           (round_ceil_point (β := β) (fexp := fexp) x))
-    · refine ⟨oddRound (scaledMantissa β fexp x),
-        cexp β fexp x, rfl, ?_⟩
+    · refine ⟨oddRound (scaledMantissa β fexp x), rfl, ?_⟩
       exact oddRound_scaled_mantissa_odd_of_not_generic hx
 
 end FloatLib.Floats.Formats.Flocq

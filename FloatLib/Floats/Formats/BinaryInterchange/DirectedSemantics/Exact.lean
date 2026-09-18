@@ -34,7 +34,7 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /-! ## Bounds satisfied by every decoded finite value -/
 

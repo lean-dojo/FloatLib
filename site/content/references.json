@@ -117,7 +117,7 @@
     "title": "Interval Analysis",
     "venue": "Prentice-Hall",
     "year": "1966",
-    "url": ""
+    "url": "https://openlibrary.org/books/OL5991135M"
   },
   {
     "key": "sterbenz1974",
@@ -125,7 +125,7 @@
     "title": "Floating-Point Computation",
     "venue": "Prentice-Hall",
     "year": "1974",
-    "url": ""
+    "url": "https://openlibrary.org/books/OL22915574M"
   },
   {
     "key": "dekker1971",
@@ -165,7 +165,7 @@
     "title": "The Art of Computer Programming, Volume 2: Seminumerical Algorithms, third edition",
     "venue": "Addison-Wesley (Algorithm D, Section 4.3.1)",
     "year": "1997",
-    "url": ""
+    "url": "https://www-cs-faculty.stanford.edu/~knuth/taocp.html"
   },
   {
     "key": "warrenHackersDelight2013",
@@ -173,7 +173,7 @@
     "title": "Hacker's Delight, second edition",
     "venue": "Addison-Wesley",
     "year": "2013",
-    "url": ""
+    "url": "https://www.informit.com/store/hackers-delight-9780321842688"
   },
   {
     "key": "kulisch2013",
@@ -197,7 +197,7 @@
     "title": "Computer Arithmetic and Formal Proofs: Verifying Floating-Point Algorithms with the Coq System",
     "venue": "ISTE Press and Elsevier",
     "year": "2017",
-    "url": ""
+    "url": "https://iste.co.uk/book.php?id=1238"
   },
   {
     "key": "harrison1999",
@@ -245,7 +245,8 @@
     "title": "The Lean Language Reference",
     "venue": "lean-lang.org",
     "year": "",
-    "url": "https://lean-lang.org/doc/reference/latest/"
+    "url": "https://lean-lang.org/doc/reference/latest/",
+    "accessed": "2026-09-18"
   },
   {
     "key": "lean434Release",
@@ -301,7 +302,8 @@
     "title": "Berkeley SoftFloat, Release 3e",
     "venue": "pinned at commit a0c6494 of https://github.com/ucb-bar/berkeley-softfloat-3 by tests/oracles/testfloat.sh",
     "year": "",
-    "url": "https://www.jhauser.us/arithmetic/SoftFloat.html"
+    "url": "https://www.jhauser.us/arithmetic/SoftFloat.html",
+    "accessed": "2026-09-18"
   },
   {
     "key": "hauserTestFloat",
@@ -309,7 +311,8 @@
     "title": "Berkeley TestFloat, Release 3e",
     "venue": "pinned at commit a9c849f of https://github.com/ucb-bar/berkeley-testfloat-3 by tests/oracles/testfloat.sh",
     "year": "",
-    "url": "https://www.jhauser.us/arithmetic/TestFloat.html"
+    "url": "https://www.jhauser.us/arithmetic/TestFloat.html",
+    "accessed": "2026-09-18"
   },
   {
     "key": "fousseMpfr2007",
@@ -341,7 +344,8 @@
     "title": "python-flint: Python bindings for FLINT and Arb",
     "venue": "version 0.9.0 in tests/EXTERNAL.md",
     "year": "",
-    "url": "https://github.com/flintlib/python-flint"
+    "url": "https://github.com/flintlib/python-flint",
+    "accessed": "2026-09-18"
   },
   {
     "key": "softPosit",
@@ -349,7 +353,8 @@
     "title": "SoftPosit",
     "venue": "GitLab repository, pinned at commit 17d5628",
     "year": "",
-    "url": "https://gitlab.com/cerlane/SoftPosit"
+    "url": "https://gitlab.com/cerlane/SoftPosit",
+    "accessed": "2026-09-18"
   },
   {
     "key": "ibmFpgen",
@@ -357,7 +362,8 @@
     "title": "IBM Floating-Point Test Suite vectors",
     "venue": "GitHub repository, pinned at commit 12e883a",
     "year": "",
-    "url": "https://github.com/sergev/ieee754-test-suite"
+    "url": "https://github.com/sergev/ieee754-test-suite",
+    "accessed": "2026-09-18"
   },
   {
     "key": "smtLibQfFp",
@@ -365,7 +371,8 @@
     "title": "QF_FP: Quantifier-Free Floating-Point Arithmetic",
     "venue": "SMT-LIB logic specification",
     "year": "",
-    "url": "https://smt-lib.org/logics-all.shtml#QF_FP"
+    "url": "https://smt-lib.org/logics-all.shtml#QF_FP",
+    "accessed": "2026-09-18"
   },
   {
     "key": "z3",
@@ -373,39 +380,8 @@
     "title": "The Z3 Theorem Prover",
     "venue": "GitHub repository",
     "year": "",
-    "url": "https://github.com/Z3Prover/z3"
-  },
-  {
-    "key": "fpBench",
-    "authors": "FPBench contributors",
-    "title": "FPBench",
-    "venue": "Project site and GitHub repository, pinned at commit a6621d5",
-    "year": "",
-    "url": "https://fpbench.org/"
-  },
-  {
-    "key": "daisy",
-    "authors": "Daisy contributors",
-    "title": "Daisy: A Framework for Analysis and Optimization of Numerical Programs",
-    "venue": "GitHub repository, pinned at commit 6a6f47a",
-    "year": "",
-    "url": "https://github.com/malyzajko/daisy"
-  },
-  {
-    "key": "fpTaylor",
-    "authors": "FPTaylor contributors",
-    "title": "FPTaylor",
-    "venue": "GitHub repository, pinned at commit b5a77ca",
-    "year": "",
-    "url": "https://github.com/soarlab/FPTaylor"
-  },
-  {
-    "key": "herbie",
-    "authors": "Herbie contributors",
-    "title": "Herbie",
-    "venue": "Project site and GitHub repository, pinned at commit 52cba77",
-    "year": "",
-    "url": "https://herbie.uwplse.org/"
+    "url": "https://github.com/Z3Prover/z3",
+    "accessed": "2026-09-18"
   },
   {
     "key": "coreMath",
@@ -413,7 +389,8 @@
     "title": "CORE-MATH",
     "venue": "GitLab repository, pinned at commit 68b034f",
     "year": "",
-    "url": "https://gitlab.inria.fr/core-math/core-math"
+    "url": "https://gitlab.inria.fr/core-math/core-math",
+    "accessed": "2026-09-18"
   },
   {
     "key": "openLibm",
@@ -421,7 +398,8 @@
     "title": "OpenLibm",
     "venue": "GitHub repository, pinned at commit 5fe3997",
     "year": "",
-    "url": "https://github.com/JuliaMath/openlibm"
+    "url": "https://github.com/JuliaMath/openlibm",
+    "accessed": "2026-09-18"
   },
   {
     "key": "rlibmAll",
@@ -429,39 +407,8 @@
     "title": "RLIBM-ALL",
     "venue": "GitHub repository, pinned at commit 90431a0",
     "year": "",
-    "url": "https://github.com/rutgers-apl/rlibm-all"
-  },
-  {
-    "key": "flit",
-    "authors": "PRUNERS and FLiT contributors",
-    "title": "FLiT: Floating-Point Litmus Tester",
-    "venue": "GitHub repository, pinned at commit 27b6061",
-    "year": "",
-    "url": "https://github.com/PRUNERS/FLiT"
-  },
-  {
-    "key": "verificarlo",
-    "authors": "Verificarlo contributors",
-    "title": "Verificarlo",
-    "venue": "GitHub repository, pinned at commit c5d1bf7",
-    "year": "",
-    "url": "https://github.com/verificarlo/verificarlo"
-  },
-  {
-    "key": "reproBLAS",
-    "authors": "ReproBLAS contributors",
-    "title": "ReproBLAS",
-    "venue": "Project site and GitHub repository, pinned at commit dfb8150",
-    "year": "",
-    "url": "https://bebop.cs.berkeley.edu/reproblas/"
-  },
-  {
-    "key": "exBLAS",
-    "authors": "ExBLAS contributors",
-    "title": "ExBLAS",
-    "venue": "GitHub repository, pinned at commit 856130e",
-    "year": "",
-    "url": "https://github.com/riakymch/exblas"
+    "url": "https://github.com/rutgers-apl/rlibm-all",
+    "accessed": "2026-09-18"
   },
   {
     "key": "stillwaterUniversal",
@@ -469,7 +416,8 @@
     "title": "Universal: A Header-Only C++ Template Library for Universal Number Arithmetic",
     "venue": "Stillwater Supercomputing, GitHub repository, pinned at commit 26e69f5 by benchmarks/scripts/format-comparison.sh",
     "year": "",
-    "url": "https://github.com/stillwater-sc/universal"
+    "url": "https://github.com/stillwater-sc/universal",
+    "accessed": "2026-09-18"
   },
   {
     "key": "gmpManual",
@@ -477,7 +425,8 @@
     "title": "GNU MP Manual, Multiplication Algorithms",
     "venue": "GMP documentation",
     "year": "",
-    "url": "https://gmplib.org/manual/Multiplication-Algorithms"
+    "url": "https://gmplib.org/manual/Multiplication-Algorithms",
+    "accessed": "2026-09-18"
   },
   {
     "key": "fftwPlanner",
@@ -485,7 +434,8 @@
     "title": "FFTW 3 Documentation, Planner Flags",
     "venue": "FFTW documentation",
     "year": "",
-    "url": "https://www.fftw.org/fftw3_doc/Planner-Flags.html"
+    "url": "https://www.fftw.org/fftw3_doc/Planner-Flags.html",
+    "accessed": "2026-09-18"
   },
   {
     "key": "gaoPatriot1992",
@@ -573,7 +523,8 @@
     "title": "Some disasters attributable to bad numerical computing",
     "venue": "University of Minnesota",
     "year": "",
-    "url": "https://www-users.cse.umn.edu/~arnold/disasters/"
+    "url": "https://www-users.cse.umn.edu/~arnold/disasters/",
+    "accessed": "2026-09-18"
   },
   {
     "key": "gmpFloatingPointManual",
@@ -581,7 +532,8 @@
     "title": "GNU MP Manual, Floating-point Functions",
     "venue": "GMP documentation",
     "year": "",
-    "url": "https://gmplib.org/manual/Floating_002dpoint-Functions"
+    "url": "https://gmplib.org/manual/Floating_002dpoint-Functions",
+    "accessed": "2026-09-18"
   },
   {
     "key": "mpfrManual",
@@ -589,7 +541,8 @@
     "title": "GNU MPFR Manual, Rounding",
     "venue": "MPFR documentation",
     "year": "",
-    "url": "https://www.mpfr.org/mpfr-current/mpfr.html#Rounding"
+    "url": "https://www.mpfr.org/mpfr-current/mpfr.html#Rounding",
+    "accessed": "2026-09-18"
   },
   {
     "key": "flopsPaper",

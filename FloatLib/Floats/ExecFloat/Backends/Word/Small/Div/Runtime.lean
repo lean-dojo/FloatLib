@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
+import FloatLib.Kernels.FixedWord.Quotient.Compiler
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 public import Mathlib.Data.Rat.Cast.Order
 

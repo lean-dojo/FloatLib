@@ -28,7 +28,7 @@ namespace Model
 open FloatLib.Floats
 open Directed.Internal
 
-noncomputable section
+section
 
 private theorem finite_maxFiniteFracField (fmt : FloatFormat)
     (hfmt : fmt.encoding = .finite) :

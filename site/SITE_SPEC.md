@@ -107,7 +107,8 @@ actual source location.
 
 - `content/landing.md`: opening definition, author byline, introduction, and highlights.
 - `content/chapters/NN-slug.md`: the sixteen chapters.
-- `content/references.json`: bibliography entries and primary-source links.
+- `content/references.json`: bibliography entries and primary-source links. Undated web resources
+  carry an `accessed` date in `YYYY-MM-DD` form, displayed separately from the publication year.
 - `content/assets/`: published images.
 - `logo.png`: original logo artwork; `content/assets/floatlib-logo.png` is the cropped version
   used by the reader and README.
@@ -155,8 +156,9 @@ The reader build requires `data/nodes.json`, Markdown chapters, `content/landing
   lines, and rendered documentation.
 - `modules`: the complete module graph, with each module's ID, file, group, direct dependencies,
   and meta dependencies.
-- `chapters`: chapter number, slug, title, summary, source file, rendered HTML, table of contents,
-  and declaration mentions. Internal frontmatter phase names are validated while reading the chapters.
+- `chapters`: chapter number, slug, title, summary, source file, rendered HTML, search text,
+  and declaration mentions. The reader derives section navigation from the rendered headings.
+  Internal frontmatter phase names are validated while reading the chapters.
 - `landing`: rendered `html` with optional `lede` and `authors` from the front matter.
 - `references`: bibliography entries with key, authors, title, venue, year, and source URL.
 
@@ -169,6 +171,7 @@ The data build also writes `data/reader-warnings.md` and the bundled MathJax sty
 Use the recorded results to check numerical claims:
 
 - `benchmarks/results/main/release/benchmark/`: scalar timings, ratios, metadata, and preflight results.
+- `benchmarks/results/flocq-matched/`: matched binary timings, full-value comparisons, and captured sources.
 - `tests/results/main/release/external/`: direct external comparisons and their diagnostics.
 - `tests/results/main/ecosystem/`: wider upstream and workload results, including qualified outcomes.
 
@@ -195,6 +198,8 @@ Run `bash site/build.sh` for the full site check. The export builds the modules 
 after prose-only edits; it still checks chapter examples and figure freshness. The build regenerates
 result-derived figures in local scratch and compares their bytes with the maintained assets. It must
 not silently skip missing evidence for a release build.
+The [build-options table](tooling/README.md#build-options) documents the remaining development
+flags, strictness settings, and clean-source requirement.
 
 Every fenced `lean` block in `content/chapters/` is extracted into a per-chapter scratch file,
 prefixed with `import FloatLib`, and compiled against the local library build. Claimed evaluation

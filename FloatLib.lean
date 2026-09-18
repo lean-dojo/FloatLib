@@ -23,7 +23,8 @@ instances for configured and model binary values. The `MathFunctions` class and 
 and real instances are available from the default import.
 
 For smaller imports, choose a module under `FloatLib.Numerics`, `FloatLib.Kernels`, or
-`FloatLib.Floats`. Examples and developer tools have separate entry points.
+`FloatLib.Floats`. Worked examples live under `FloatLib.Examples`; tests and benchmarks
+have separate Lake workspaces.
 -/
 
 @[expose] public section

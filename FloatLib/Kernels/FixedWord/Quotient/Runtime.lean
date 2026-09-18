@@ -56,6 +56,28 @@ the generated quotient prefix below `2^63` so that its doubling fits as well.
   | n + 1, state => quotientSteps den n (quotientStep den state)
 
 /--
+Generate quotient digits with unboxed quotient and remainder accumulators.
+
+Only the final result constructs a `QuotientState`. The arithmetic is identical to
+`quotientSteps`, including word wraparound outside its exact-arithmetic capacity bounds.
+-/
+def quotientStepsWords (den : UInt64) :
+    Nat → UInt64 → UInt64 → QuotientState UInt64
+  | 0, quotient, remainder => { quotient, remainder }
+  | n + 1, quotient, remainder =>
+      let doubledQuotient := quotient + quotient
+      let doubledRemainder := remainder + remainder
+      if doubledRemainder < den then
+        quotientStepsWords den n doubledQuotient doubledRemainder
+      else
+        quotientStepsWords den n (doubledQuotient + 1) (doubledRemainder - den)
+
+/-- Run the one-word restoring loop without allocating a state for each quotient bit. -/
+@[inline] def quotientStepsImpl (den : UInt64) (n : Nat) (state : QuotientState UInt64) :
+    QuotientState UInt64 :=
+  quotientStepsWords den n state.quotient state.remainder
+
+/--
 Generate one binary quotient digit in a two-limb carrier.
 
 Callers maintain `remainder < den < 2^127` and `quotient < 2^127`. These bounds keep the doubled
@@ -174,6 +196,11 @@ which keep every intermediate of the restoring loop inside one word.
     { quotient := num / den
       remainder := num % den }
   roundQuotientState den (quotientSteps den shift initial)
+
+/-- Nearest-even quotient rounding through the primitive-word accumulator. -/
+@[inline] def roundScaledQuotientImpl
+    (num den : UInt64) (shift : Nat) : UInt64 :=
+  roundQuotientState den (quotientStepsWords den shift (num / den) (num % den))
 
 /--
 Compute `floor (log2 (num / den))` for nonzero operands, using native-word alignment.

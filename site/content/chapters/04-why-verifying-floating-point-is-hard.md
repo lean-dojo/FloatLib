@@ -5,7 +5,7 @@ title: Proving floating-point arithmetic correct
 summary: Correctness proofs must account for rounding, exceptional values, and the way an implementation evaluates an expression.
 ---
 
-We now know what correct rounding promises for one operation: compute its exact result, then select a representable value. In a program, the selected value becomes the input to the next operation. Moving a pair of parentheses can change where rounding happens; changing an intermediate format can change which side of a midpoint the next operation sees. The bit patterns and rounding rule developed in [chapter 02](#/chapter/from-reals-to-machine-numbers) let us follow these effects precisely. To verify an implementation, we also need to show that its shifts, table lookups, and exceptional branches implement that rule for every input.
+Correct rounding specifies one operation: compute its exact result, then select a representable value. In a program, the selected value becomes the input to the next operation. Moving a pair of parentheses can change where rounding happens; changing an intermediate format can change which side of a midpoint the next operation sees. The bit patterns and rounding rule developed in [chapter 02](#/chapter/from-reals-to-machine-numbers) let us follow these effects precisely. To verify an implementation, we also need to show that its shifts, table lookups, and exceptional branches implement that rule for every input.
 
 <a id="the-state-space"></a>
 

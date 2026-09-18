@@ -12,6 +12,9 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Multiplication.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Add.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.FmaWord.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Type
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 
 /-!
 # Wide-limb regression checks
@@ -21,7 +24,8 @@ kernels with the exact baseline on 192-, 256-, and 1024-bit IEEE layouts. Every 
 structured operands (zeros, subnormals, the smallest and largest normals, infinities, NaN) with
 deterministic pseudo-random normal operands at chosen exponent distances, including the
 cancellation, sticky-bit, carry, overflow, and underflow boundaries, and checks that both the limb
-kernel and the exact baseline route are exercised.
+kernel and the exact baseline route are exercised. A separate set of explicit 256-bit fixtures
+checks the public `ExecFloat.BinaryLimbs` carrier, its planner selections, and all six operations.
 -/
 
 @[expose] public section
@@ -36,6 +40,8 @@ namespace FloatLibTests.Regression.BinaryInterchange.WideLimb
 
 open Model
 open FloatLibTests.Regression.BinaryInterchange.NativeHarness
+open FloatLib.Floats
+open FloatLibTests.Accounting
 
 /-- A 192-bit IEEE layout with 176 fraction bits. -/
 abbrev wide192 : FloatFormat := FloatFormat.ieee 15 176
@@ -218,11 +224,102 @@ def results : Thunk (Array FormatResult) := ⟨fun _ =>
    , runFormat wide256 "wide256" 4096
    , runFormat wide1024 "wide1024" 1024 ]⟩
 
+/-! ## Public limb carrier -/
+
+/-- The public 256-bit IEEE type stored in four 64-bit limbs. -/
+abbrev Limb256 := ExecFloat.BinaryLimbs 19 236
+
+private abbrev Limb256Family := ExecFloat.Binary.LimbFamily 19 236
+
+/-- Four public operations select limb kernels; division and square root use the exact baseline. -/
+example :
+    [ (ExecFloat.Add.selectedCandidate (F := Limb256Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := Limb256Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := Limb256Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := Limb256Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := Limb256Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := Limb256Family)).kind
+    ] = [.wideLimbs, .wideLimbs, .wideLimbs, .generic, .generic, .wideLimbs] := by
+  rfl
+
+/-- Construct a public limb value from explicit encoded fields. -/
+def limbValue (sign : Bool) (exponent fraction : Nat) : Limb256 :=
+  ExecFloat.Binary.ofModel (Model.ofFields wide256 sign exponent fraction)
+
+/-- Compare every stored bit, including zero signs and NaN payloads. -/
+def sameLimbBits (x y : Limb256) : Bool :=
+  ExecFloat.Binary.toNatBits x == ExecFloat.Binary.toNatBits y
+
+/--
+Public operations checked against explicit expected encodings.
+
+The carry fixtures cross each limb boundary. With `u = 2⁻²³⁶`, the FMA fixture must retain
+`(1 + u) * (1 - u) - 1 = -u²`; separately rounded multiplication would lose that residual.
+For `1 / 3`, the nearest 237-bit significand is `(2²³⁸ - 1) / 3`.
+-/
+def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
+  let f := wide256.fracWidth
+  let bias := wide256.bias
+  let zero := limbValue false 0 0
+  let negativeZero := limbValue true 0 0
+  let one := limbValue false bias 0
+  let two := limbValue false (bias + 1) 0
+  let three := limbValue false (bias + 1) (2 ^ (f - 1))
+  let four := limbValue false (bias + 2) 0
+  let negativeOne := limbValue true bias 0
+  let ulp := limbValue false (bias - f) 0
+  let aboveOne := limbValue false bias 1
+  let belowOne := limbValue false (bias - 1) (2 ^ f - 2)
+  let subnormal := limbValue false 0 1
+  let infinity := limbValue false wide256.expAllOnesNat 0
+  let largest := limbValue false (wide256.expAllOnesNat - 1) (2 ^ f - 1)
+  let nan : Limb256 := ExecFloat.Binary.ofModel (Model.canonicalNaN wide256)
+  [ ("codec",
+      (structured wide256).all fun x =>
+        ExecFloat.Binary.toNatBits (ExecFloat.Binary.ofModel x : Limb256) == x.toNatBits)
+  , ("codecTruncation", ExecFloat.Binary.toNatBits
+      (ExecFloat.Binary.ofNatBits (2 ^ 256 + 1) : Limb256) == 1)
+  , ("literal", sameLimbBits (3 : Limb256) three)
+  , ("addCarry64", sameLimbBits (limbValue false bias (2 ^ 64 - 1) + ulp)
+      (limbValue false bias (2 ^ 64)))
+  , ("addCarry128", sameLimbBits (limbValue false bias (2 ^ 128 - 1) + ulp)
+      (limbValue false bias (2 ^ 128)))
+  , ("addCarry192", sameLimbBits (limbValue false bias (2 ^ 192 - 1) + ulp)
+      (limbValue false bias (2 ^ 192)))
+  , ("addCarryExponent", sameLimbBits (limbValue false bias (2 ^ f - 1) + ulp) two)
+  , ("addSubnormal", sameLimbBits (subnormal + subnormal) (limbValue false 0 2))
+  , ("addOverflow", sameLimbBits (largest + largest) infinity)
+  , ("subCancellation", sameLimbBits (aboveOne - one) ulp)
+  , ("subSubnormal", sameLimbBits
+      (limbValue false 1 0 - limbValue false 0 (2 ^ f - 1)) subnormal)
+  , ("subSignedZero", sameLimbBits (negativeZero - zero) negativeZero)
+  , ("mulRounding", sameLimbBits (aboveOne * aboveOne) (limbValue false bias 2))
+  , ("mulSubnormal", sameLimbBits (subnormal * two) (limbValue false 0 2))
+  , ("mulSignedZero", sameLimbBits (negativeZero * one) negativeZero)
+  , ("mulOverflow", sameLimbBits (largest * two) infinity)
+  , ("fmaResidual", sameLimbBits (ExecFloat.fma aboveOne belowOne negativeOne)
+      (limbValue true (bias - 2 * f) 0))
+  , ("fmaSignedZero",
+      sameLimbBits (ExecFloat.fma negativeZero one negativeZero) negativeZero)
+  , ("fmaInvalid", sameLimbBits (ExecFloat.fma infinity zero one) nan)
+  , ("divExact", sameLimbBits (four / two) two)
+  , ("divRounding", sameLimbBits (one / three)
+      (limbValue false (bias - 2) ((2 ^ (f + 2) - 1) / 3 - 2 ^ f)))
+  , ("divByZero", sameLimbBits (one / zero) infinity)
+  , ("divInvalid", sameLimbBits (zero / zero) nan)
+  , ("sqrtExact", sameLimbBits (ExecFloat.sqrt four) two)
+  , ("sqrtSignedZero", sameLimbBits (ExecFloat.sqrt negativeZero) negativeZero)
+  , ("sqrtInvalid", sameLimbBits (ExecFloat.sqrt negativeOne) nan) ]⟩
+
 def totalFailures : Thunk Nat := ⟨fun _ =>
-  results.get.foldl (fun total result => total + result.totalFailures) 0⟩
+  results.get.foldl (fun total result => total + result.totalFailures) 0 +
+    countWhereFailures publicChecks.get (·.2)⟩
 
 /-- Executable fixture report consumed by the regression runner. -/
 def report : Thunk String := ⟨fun _ =>
-  String.intercalate "\n" (results.get.map FormatResult.report).toList⟩
+  let publicRows := publicChecks.get.map fun (name, passes) =>
+    (s!"wide256 public {name}", failureCount passes)
+  String.intercalate "\n"
+    ((results.get.map FormatResult.report).toList ++ [renderFailureReport publicRows])⟩
 
 end FloatLibTests.Regression.BinaryInterchange.WideLimb

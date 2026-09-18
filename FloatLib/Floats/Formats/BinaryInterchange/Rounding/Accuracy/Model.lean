@@ -26,7 +26,7 @@ open Float.Model.UnpackedFloat
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /--
 `accuracyRepresents mantissa accuracy value` states that `mantissa` is the integer truncation of

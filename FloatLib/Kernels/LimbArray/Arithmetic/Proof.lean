@@ -220,9 +220,7 @@ theorem size_addWordAt (v : LimbArray) (index : Nat) (w : UInt32) :
 /-- The 64-bit shifted word splits into a low and a high limb. -/
 theorem shifted_word_toNat (w : UInt32) (r : Nat) (hr : r < 32) :
     (w.toUInt64 <<< UInt64.ofNat r).toNat = w.toNat * 2 ^ r := by
-  rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat', UInt32.toNat_toUInt64,
-    Nat.mod_eq_of_lt (a := r) (by omega : r < 2 ^ 64), Nat.mod_eq_of_lt (by omega : r < 64),
-    Nat.shiftLeft_eq]
+  rw [shiftLeft_toNat_mod _ _ (hr.trans (by decide)), UInt32.toNat_toUInt64]
   apply Nat.mod_eq_of_lt
   have hw := uint32_toNat_lt w
   have hpow : 2 ^ r ≤ 2 ^ 31 := Nat.pow_le_pow_right (by decide) (by omega)

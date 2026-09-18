@@ -8,7 +8,7 @@ phases: [planner-and-configured, ieee-formats, binary-arithmetic]
 
 ## Setting up a project
 
-We'll use the same small program for calculations and proofs, so you can run the examples as we go. Use the Lean and Mathlib versions specified by FloatLib's [toolchain](https://github.com/lean-dojo/FloatLib/blob/main/lean-toolchain) and [Lake configuration](https://github.com/lean-dojo/FloatLib/blob/main/lakefile.lean). In another Lake project, add the dependency with `require`:
+Use the Lean and Mathlib versions specified by FloatLib's [toolchain](https://github.com/lean-dojo/FloatLib/blob/main/lean-toolchain) and [Lake configuration](https://github.com/lean-dojo/FloatLib/blob/main/lakefile.lean). In another Lake project, add the dependency with `require`:
 
 ```text
 require floatlib from git
@@ -16,6 +16,8 @@ require floatlib from git
 ```
 
 Run `lake update`, `lake exe cache get` to fetch the Mathlib cache, and `lake build`. Put `import FloatLib` at the top of `Main.lean`, and run it with `lake env lean Main.lean`. That import gives us every format family, the inspection commands, and the proof automation used below.
+
+The [basic-operation examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/BasicOperations.lean) are complete working programs. In the FloatLib checkout, `lake build FloatLib.Examples` compiles them. In your own file, `#eval` prints a computed value and `#check` prints a type [@leanReference].
 
 <a id="choosing-the-format-once"></a>
 
@@ -117,7 +119,7 @@ The named operations [[FloatLib.Floats.ExecFloat.Binary.add]], `sub`, `mul`, [[F
 -- 5592405 * 2^-24
 ```
 
-One third lies between two binary32 neighbours. The output shows them as dyadics in lowest terms; written over the common denominator $2^{25}$ they are $11184810 \cdot 2^{-25}$ (about $0.33333331$, printed as $5592405 \cdot 2^{-24}$) and $11184811 \cdot 2^{-25}$ (about $0.33333334$), adjacent significands with one third strictly between them. Nearest-even and toward $+\infty$ pick the upper one; toward zero and toward $-\infty$ pick the lower one, and those two agree because the value is positive. (The decimal expansions are worked out in the [basic-operation examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/BasicOperations.lean).)
+The output shows two dyadics in lowest terms. Over the common denominator $2^{25}$ they are $11184810 \cdot 2^{-25}$ (about $0.33333331$, printed as $5592405 \cdot 2^{-24}$) and $11184811 \cdot 2^{-25}$ (about $0.33333334$), adjacent significands with one third strictly between them. The [IEEE rounding discussion](#/chapter/ieee-binary-formats/directed-rounding) follows all four directions on this value, including what changes for negative inputs.
 
 IEEE 754 asks each operation to report five conditions, called exceptions in the standard though nothing is thrown: invalid, divide by zero, overflow, underflow, and inexact. The `WithStatus` variants return the result together with these five Booleans as an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEStatus]]. They compute the flags from the operands, exact arithmetic, and rounded result. [[FloatLib.Floats.Formats.BinaryInterchange.Model.addWithStatus_value]] states that the returned value is the same as for addition without status.
 
@@ -240,7 +242,7 @@ def values : List Binary32 := [16777216, 1, -16777216]
 -- Except.error (FloatLib.Numerics.ReductionError.lengthMismatch 3 2)
 ```
 
-Try reordering the list above and comparing the ordinary fold with the exact sum. Can you explain where the small term survives? :)
+Reordering the list to `[16777216, -16777216, 1]` lets the ordinary fold cancel the large terms first and return one. The exact sum returns one in either order because it retains every term until the final rounding.
 
 The status form reports that the exact sum was representable, with no rounding error. [[FloatLib.Floats.ExecFloat.Binary.dot]] keeps every product exact as well: $1.5 \cdot 2 + 2 \cdot 3 + 4 \cdot 4 = 25$ with one rounding at the end. A length mismatch returns an `Except.error` carrying both lengths before any arithmetic runs, as `dotWithStatus_lengthMismatch` proves. This check prevents the truncation that would result from using `List.zip` on unequal lists.
 
@@ -568,10 +570,10 @@ For a smaller set of dependencies, import the layer you need. `FloatLib.Floats.E
 
 The [Arb adapter](https://github.com/lean-dojo/FloatLib/blob/main/tests/FloatLibTests/Arb/ModelTranscendentals.lean) belongs to the separate test workspace. It calls Arb through python-flint, so its results depend on that external library; it is not an import supplied by the FloatLib library package.
 
-## Examples and extension guides
+<a id="examples-and-extension-guides"></a>
 
-The [basic-operation examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/BasicOperations.lean) are complete working programs. Compile the examples with `lake build FloatLib.Examples`. To try a calculation of your own, put the imports and abbreviations from this chapter in `Main.lean` and run `lake env lean Main.lean`; `#eval` prints a computed value and `#check` prints a type [@leanReference]. The [theorem guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md) lists theorem names, imports, and hypotheses; the [binary-format source guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/README.md) indexes the descriptor, model, specification, arithmetic, rounding, and configured interfaces.
+## Extending the library
 
-The [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) gives the registration procedure and the proof obligation at each step. The [one-word kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/Word/Small) provide a worked implementation. For a new format family, the [numerical interfaces](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Core) define the required vocabulary and the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) provides a compact implementation of the layers, from encoding and meaning through arithmetic and its proofs.
+A new backend for an existing format must compute the same reference operation. The [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) gives the registration procedure and its proof obligations; the [one-word kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/Word/Small) show how an implementation discharges them. A new format family also needs a meaning for its stored values. The [numerical interfaces](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Core) define those contracts, and the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) supplies a compact example, from encoding through arithmetic and its proofs.
 
-To explain why the two `0.3` comparisons differ, we need to look at the numbers each format can store. We will work out those values in the next chapter.
+The numbers each format can store explain the two `0.3` results; [representing real numbers in binary](#/chapter/from-reals-to-machine-numbers) works them out.

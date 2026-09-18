@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Kernels.LimbArray.Core.Runtime
 public import Mathlib.Data.Nat.Digits.Defs
+import FloatLib.Kernels.FixedWord.Core.Proof.Word
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
 
@@ -120,18 +121,12 @@ theorem segment_congr {a b : LimbArray} {s n : Nat}
 theorem segment_eq_zero_of_limb_eq_zero {v : LimbArray} {s n : Nat}
     (h : ∀ i, i < n → v.limb (s + i) = 0) :
     segment v s n = 0 := by
-  induction n generalizing s with
-  | zero => rfl
-  | succ n ih =>
-      have h0 := h 0 (by omega)
-      rw [Nat.add_zero] at h0
-      rw [segment_succ, h0]
-      simp only [UInt32.toNat_zero, Nat.zero_add]
-      rw [ih]
-      · simp
-      · intro i hi
-        have := h (i + 1) (by omega)
-        rwa [show s + 1 + i = s + (i + 1) by omega]
+  rw [segment_eq_ofDigits]
+  have hzero : ∀ i ∈ List.range' s n, (v.limb i).toNat = 0 := by
+    intro i hi
+    obtain ⟨j, hj, rfl⟩ := List.mem_range'.mp hi
+    simp only [Nat.one_mul, h j hj, UInt32.toNat_zero]
+  rw [List.map_eq_replicate_iff.mpr hzero, Nat.ofDigits_replicate_zero]
 
 /-- Trailing zero limbs do not change a segment. -/
 theorem segment_eq_of_limb_eq_zero {v : LimbArray} {s m n : Nat} (hmn : m ≤ n)
@@ -507,29 +502,9 @@ theorem log2_eq (v : LimbArray) (h : toNat v ≠ 0) : log2 v = (toNat v).log2 :=
       have hlimbNe : (v.limb i).toNat ≠ 0 := by
         intro hc
         exact hne (UInt32.toNat_inj.mp (by simpa using hc))
-      have hlow := segment_lt v 0 i
-      have hlog := Nat.log2_self_le hlimbNe
-      have hlog' := Nat.lt_log2_self (n := (v.limb i).toNat)
-      rw [uint32_log2_toNat]
-      symm
-      rw [Nat.log2_eq_iff h, hvalue, radix_pow]
-      constructor
-      · calc
-          2 ^ (32 * i + (v.limb i).toNat.log2) = 2 ^ (v.limb i).toNat.log2 * 2 ^ (32 * i) := by
-            rw [pow_add, Nat.mul_comm]
-          _ ≤ (v.limb i).toNat * 2 ^ (32 * i) := Nat.mul_le_mul_right _ hlog
-          _ ≤ _ := Nat.le_add_left _ _
-      · rw [radix_pow] at hlow
-        calc
-          segment v 0 i + (v.limb i).toNat * 2 ^ (32 * i) <
-              2 ^ (32 * i) + (v.limb i).toNat * 2 ^ (32 * i) := by omega
-          _ = ((v.limb i).toNat + 1) * 2 ^ (32 * i) := by ring
-          _ ≤ 2 ^ ((v.limb i).toNat.log2 + 1) * 2 ^ (32 * i) :=
-            Nat.mul_le_mul_right _ hlog'
-          _ = 2 ^ (32 * i + (v.limb i).toNat.log2 + 1) := by
-            rw [← pow_add]
-            congr 1
-            omega
+      rw [uint32_log2_toNat, hvalue, radix_pow]
+      exact (FixedWord.log2_low_add_high_mul_pow (segment v 0 i) (v.limb i).toNat
+        (32 * i) (by simpa only [radix_pow] using segment_lt v 0 i) hlimbNe).symm
 
 /-! ## Bit access -/
 
@@ -538,11 +513,7 @@ theorem testBit_eq (v : LimbArray) (k : Nat) : testBit v k = (toNat v).testBit k
   unfold testBit
   have hk : k % 32 < 32 := Nat.mod_lt _ (by decide)
   have hmod : (UInt32.ofNat (k % 32)).toNat % 32 = k % 32 := by
-    have hfit : (UInt32.ofNat (k % 32)).toNat = k % 32 := by
-      rw [UInt32.toNat_ofNat']
-      exact Nat.mod_eq_of_lt (by omega)
-    rw [hfit]
-    exact Nat.mod_eq_of_lt hk
+    rw [UInt32.toNat_ofNat_of_lt' (hk.trans (by decide)), Nat.mod_eq_of_lt hk]
   conv_rhs => rw [← Nat.div_add_mod k 32]
   rw [← limb_testBit v (k / 32) (k % 32) hk]
   rw [Nat.testBit_eq_decide_div_mod_eq]
@@ -556,8 +527,8 @@ theorem testBit_eq (v : LimbArray) (k : Nat) : testBit v k = (toNat v).testBit k
 theorem lowMask32_toNat (r : Nat) (hr : r < 32) : (lowMask32 r).toNat = 2 ^ r - 1 := by
   unfold lowMask32
   have hshift : ((1 : UInt32) <<< UInt32.ofNat r).toNat = 2 ^ r := by
-    rw [UInt32.toNat_shiftLeft, UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : r < 2 ^ 32),
-      Nat.mod_eq_of_lt hr, Nat.shiftLeft_eq, show (1 : UInt32).toNat = 1 by decide, Nat.one_mul]
+    rw [UInt32.toNat_shiftLeft, UInt32.toNat_ofNat_of_lt' (hr.trans (by decide)),
+      Nat.mod_eq_of_lt hr, UInt32.toNat_one, Nat.one_shiftLeft]
     exact Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) hr)
   rw [UInt32.toNat_sub_of_le, hshift]
   · rfl
@@ -591,11 +562,10 @@ theorem testBit_and_lowMask32 (x : UInt32) (r j : Nat) (hr : r < 32) :
   · have hbeq : (lo % 32 == 0) = false := by simpa using hr0
     simp only [hbeq, Bool.false_eq_true, ite_false]
     have hofNat1 : (UInt32.ofNat (lo % 32)).toNat % 32 = lo % 32 := by
-      rw [UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : lo % 32 < 2 ^ 32)]
-      exact Nat.mod_eq_of_lt hr
+      rw [UInt32.toNat_ofNat_of_lt' (hr.trans (by decide)), Nat.mod_eq_of_lt hr]
     have hofNat2 : (UInt32.ofNat (32 - lo % 32)).toNat % 32 = 32 - lo % 32 := by
-      rw [UInt32.toNat_ofNat', Nat.mod_eq_of_lt (by omega : 32 - lo % 32 < 2 ^ 32)]
-      exact Nat.mod_eq_of_lt (by omega)
+      have hshift : 32 - lo % 32 < 32 := by omega
+      rw [UInt32.toNat_ofNat_of_lt' (hshift.trans (by decide)), Nat.mod_eq_of_lt hshift]
     rw [UInt32.toNat_or, Nat.testBit_or, UInt32.toNat_shiftRight, UInt32.toNat_shiftLeft, hofNat1,
       hofNat2, Nat.testBit_shiftRight, Nat.testBit_mod_two_pow, Nat.testBit_shiftLeft]
     by_cases hn : n < 32

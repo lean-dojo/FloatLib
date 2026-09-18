@@ -6,7 +6,7 @@ summary: "Bits, exact dyadics, and real numbers let us state different propertie
 phases: [numerical-models, binary-format, binary-arithmetic, status-and-directed]
 ---
 
-We've used addition theorems to answer two questions: which bits does the operation return, and what does that result mean as a number? The first includes the sign of zero and the choice of NaN. For the second, we can prove that the result's real value is the exact sum rounded once, provided the inputs and output are finite. A real-valued error bound cannot distinguish the two zeros or describe a NaN payload. Exact dyadics connect the finite bit patterns to real values while preserving the sign of zero.
+An addition theorem can identify both the bits an operation returns and the numerical value they represent. The first includes the sign of zero and the choice of NaN. For the second, we can prove that the result's real value is the exact sum rounded once, provided the inputs and output are finite. A real-valued error bound cannot distinguish the two zeros or describe a NaN payload. Exact dyadics connect the finite bit patterns to real values while preserving the sign of zero.
 
 ## One word, three readings
 
@@ -142,7 +142,7 @@ For `one32` and `tiny32`, the exact sum lies between adjacent binary32 values ne
 
 ![The refinement theorem on one32 and tiny32: the exact real sum 1 + 11258999 · 2^-50 lies about 0.084 of a gap above 1 on the binary32 grid, and one rounding by roundAt takes it back to 1, the value of the word that add returns](assets/ch06-one-rounding.png "The exact sum lies less than half a binary32 gap above one. The executable addition and the real rounder both return one.")
 
-Let's apply the theorem to words we already know. For concrete words every hypothesis is decidable, so after `apply` leaves the four side goals (`isIEEE`, finiteness of each input, and finiteness of the sum), `decide` closes each one by evaluating the boolean:
+For these concrete words every hypothesis is decidable, so after `apply` leaves the four side goals (`isIEEE`, finiteness of each input, and finiteness of the sum), `decide` closes each one by evaluating the boolean:
 
 ```lean
 /-- The binary32 word for 2.0. -/
@@ -178,7 +178,7 @@ example (x y : Model FloatFormat.binary32)
   Model.abs_toReal_add_sub_le x y FloatFormat.isIEEE_binary32 hx hy hout
 ```
 
-Notice the argument to `epsilonAt` in the bound: it is the exact sum of the decoded operands. For `one32` and `tiny32`, that sum lies in the binade from one to two, whose spacing is $2^{-23}$, so the bound is $2^{-24}$. The actual error is $11258999 \cdot 2^{-50}$, and the integer comparison above proves it is smaller. In a symbolic proof we must keep the bound at the exact expression until we have justified its magnitude; substituting the rounded output as its argument can change the spacing when rounding crosses a power of two.
+The argument to `epsilonAt` in the bound is the exact sum of the decoded operands. For `one32` and `tiny32`, that sum lies in the binade from one to two, whose spacing is $2^{-23}$, so the bound is $2^{-24}$. The actual error is $11258999 \cdot 2^{-50}$, and the integer comparison above proves it is smaller. In a symbolic proof we must keep the bound at the exact expression until we have justified its magnitude; substituting the rounded output as its argument can change the spacing when rounding crosses a power of two.
 
 <a id="the-finiteness-hypotheses-and-how-to-discharge-them"></a>
 

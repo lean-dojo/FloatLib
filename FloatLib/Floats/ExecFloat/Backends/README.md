@@ -37,14 +37,13 @@ We determine eligibility from a decidable proposition on the descriptor's fields
 | `Generic/` | exact baseline | every binary descriptor | six | proved |
 | `Configured/NativeFPU/Unchecked.lean` | not a planner class | binary32/64, explicit call site | add, sub, mul, div, sqrt (not fma) | unchecked |
 
+The balanced-policy selections below are checked in
+[AutomaticDispatch.lean](../../../../tests/FloatLibTests/Conformance/Execution/AutomaticDispatch.lean).
+
 | Type | Selected (balanced policy) |
 | --- | --- |
 | `ExecFloat.Binary 8 23` | all six = fixed-format |
-| `ExecFloat.Binary 5 10` | all six = native-word (`UInt16`) |
-| `ExecFloat.Binary 4 3` | add/sub/mul/div = native-word; sqrt = table; fma = exact |
-| `ExecFloat.Binary 15 112` | all six = fixed-limb |
-| `ExecFloat.Binary 19 236` | all six = exact (proof-model carrier has no specialized kernel > 128) |
-| `ExecFloat.BinaryLimbs 19 236` | add/sub/mul/fma = wide-limb; div/sqrt = exact |
+| `ExecFloat.Binary 11 52` | all six = fixed-format |
 
 Selection chooses a certified operation, which can use the exact fallback for individual inputs.
 For example, wide-limb multiplication and FMA require normal operands and check the result's

@@ -253,32 +253,6 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
   simp [hcarry] at hexact
   exact hexact
 
-private theorem log2_low_add_high_mul_pow
-    (low high offset : Nat)
-    (hlow : low < 2 ^ offset) (hhigh : high ≠ 0) :
-    (low + high * 2 ^ offset).log2 =
-      offset + high.log2 := by
-  have hvalue : low + high * 2 ^ offset ≠ 0 := by
-    positivity
-  apply (Nat.log2_eq_iff hvalue).2
-  constructor
-  · rw [pow_add]
-    calc
-      2 ^ offset * 2 ^ high.log2 ≤
-          2 ^ offset * high :=
-        Nat.mul_le_mul_left _ (Nat.log2_self_le hhigh)
-      _ = high * 2 ^ offset := by ring
-      _ ≤ low + high * 2 ^ offset := by omega
-  · rw [show offset + high.log2 + 1 =
-      offset + (high.log2 + 1) by omega, pow_add]
-    calc
-      low + high * 2 ^ offset <
-          2 ^ offset + high * 2 ^ offset := by
-        exact Nat.add_lt_add_right hlow (high * 2 ^ offset)
-      _ = 2 ^ offset * (high + 1) := by ring
-      _ ≤ 2 ^ offset * 2 ^ (high.log2 + 1) :=
-        Nat.mul_le_mul_left _ (Nat.succ_le_iff.mpr Nat.lt_log2_self)
-
 /-- Native four-limb leading-bit selection agrees with `Nat.log2`. -/
 @[simp, grind =] theorem UInt256.log2_toNat (value : UInt256) :
     value.log2 = value.toNat.log2 := by

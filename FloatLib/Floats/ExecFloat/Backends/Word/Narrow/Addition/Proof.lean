@@ -127,67 +127,15 @@ private theorem roundDyadic_shiftLeft_add_small
         significand := (large <<< gap) + small
         exponent := Int.ofNat smallScale - 149 } =
       mkBits sign (smallScale + gap + 1) (large - 2 ^ 23) := by
-  have hlargePos : 0 < large := by
-    exact lt_of_lt_of_le (by norm_num) hlargeLow
-  have hcombinedPos : 0 < (large <<< gap) + small := by
-    simp only [Nat.shiftLeft_eq]
-    positivity
-  have hcombinedNe : (large <<< gap) + small ≠ 0 :=
-    Nat.ne_of_gt hcombinedPos
-  have hsmallGap : small < 2 ^ gap := by
-    exact hsmall.trans_le <|
-      Nat.pow_le_pow_right (by decide) (by omega)
-  have hlower : 2 ^ (23 + gap) ≤ (large <<< gap) + small := by
-    calc
-      2 ^ (23 + gap) = 2 ^ 23 * 2 ^ gap := by rw [pow_add]
-      _ ≤ large * 2 ^ gap := Nat.mul_le_mul_right _ hlargeLow
-      _ ≤ large * 2 ^ gap + small := Nat.le_add_right _ _
-      _ = (large <<< gap) + small := by rw [Nat.shiftLeft_eq]
-  have hupper : (large <<< gap) + small < 2 ^ ((23 + gap) + 1) := by
-    have hlargeSucc : large + 1 ≤ 2 ^ 24 := by omega
-    calc
-      (large <<< gap) + small = large * 2 ^ gap + small := by
-        rw [Nat.shiftLeft_eq]
-      _ < large * 2 ^ gap + 2 ^ gap := Nat.add_lt_add_left hsmallGap _
-      _ = (large + 1) * 2 ^ gap := by ring
-      _ ≤ 2 ^ 24 * 2 ^ gap := Nat.mul_le_mul_right _ hlargeSucc
-      _ = 2 ^ (24 + gap) := by rw [pow_add]
-      _ = 2 ^ ((23 + gap) + 1) := by congr 1; omega
-  have hleading :
-      ((large <<< gap) + small).log2 = 23 + gap :=
-    (Nat.log2_eq_iff hcombinedNe).2 ⟨hlower, hupper⟩
-  have hgapPos : 0 < gap := by omega
-  have hsmallHalf : small < Model.pow2 (gap - 1) := by
-    rw [Model.pow2_eq_two_pow]
-    exact hsmall.trans_le <|
-      Nat.pow_le_pow_right (by decide) (by omega)
-  have hround :
-      Numerics.roundShiftRightEven ((large <<< gap) + small) gap = large :=
-    Model.roundShiftRightEven_shiftLeft_add_of_lt_half
-      large small gap hgapPos hsmallHalf
-  have hnormal :
-      ¬Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) < -126 := by
-    simp only [Int.ofNat_eq_natCast]
-    omega
-  have hleadingWidth : 23 ≤ 23 + gap := by omega
-  have hshift : 23 + gap - 23 = gap := by omega
-  have hcarry : large ≠ Model.pow2 24 := by
-    rw [Model.pow2_eq_two_pow]
-    omega
-  have hoverflow :
-      ¬Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) > 127 := by
-    simp only [Int.ofNat_eq_natCast]
-    omega
-  have hencoded :
-      Int.toNat
-          (Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) + 127) =
-        smallScale + gap + 1 := by
-    simp only [Int.ofNat_eq_natCast]
-    omega
-  unfold roundDyadic
-  simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
-    hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
-  rw [Model.pow2_eq_two_pow]
+  have hsmallHalf : small < 2 ^ (gap - 1) :=
+    hsmall.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+  rw [roundDyadic_shiftLeft_add_of_lt_half sign small large gap
+    (Int.ofNat smallScale - 149) hlargeLow hlargeHigh (by omega) hsmallHalf
+    (by simp only [Int.ofNat_eq_natCast]; omega)
+    (by simp only [Int.ofNat_eq_natCast]; omega)]
+  congr 1
+  simp only [Int.ofNat_eq_natCast]
+  omega
 
 private theorem roundDyadic_shiftLeft_add_value
     (z : Value) (small smallScale gap : Nat)

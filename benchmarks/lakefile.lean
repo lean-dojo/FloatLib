@@ -77,6 +77,6 @@ lean_exe execFloatConfiguredBinaryBench where
   -- which are otherwise large enough to masquerade as dispatch cost at 5--8 ns/op.
   moreLeancArgs := #["-falign-functions=4096", "-falign-loops=64"]
 
-/-- Fast five-format addition probe used by the performance-regression budget gate. -/
+/-- Six-operation public arithmetic workload used by the performance-regression budget gate. -/
 lean_exe execFloatPerformanceRegression where
   root := `FloatLibBenchmarks.Public.PerformanceRegression

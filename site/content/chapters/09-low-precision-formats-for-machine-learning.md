@@ -18,7 +18,7 @@ Bfloat16, which Google had already built into its TPUs and Kalamkar and colleagu
 
 $$\operatorname{ulp}_{\text{binary16}}(1) = 2^{-10}, \qquad \operatorname{ulp}_{\text{bfloat16}}(1) = 2^{-7},$$
 
-so bfloat16 has eight times the spacing in their shared normal range, but its largest finite value is about $3.4 \times 10^{38}$, essentially binary32's, where binary16 stops at 65504. The exponent field is identical to binary32, so widening a bfloat16 value to binary32 is exact, and narrowing only rounds the fraction, except at the very top of the range where rounding up can carry past the largest bfloat16 value.
+so bfloat16 has eight times the spacing in their shared normal range, while binary16 stops at 65504. Bfloat16 and binary32 share the normal exponent range $-126$ through $127$, but their largest finite values differ: $(2-2^{-7})2^{127}$ for bfloat16 and $(2-2^{-23})2^{127}$ for binary32, both about $3.4 \times 10^{38}$. Every finite bfloat16 value widens exactly to binary32. Narrowing rounds the fraction; at the top of the range, rounding up can carry beyond the largest finite bfloat16 value.
 
 Because bfloat16 uses the IEEE encoding, [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.bfloat16]] is a plain descriptor and every theorem proved for IEEE descriptors applies without a new proof.
 
@@ -232,6 +232,7 @@ Under the default policy, `roundDyadic_nearestEven_eq_execFloat` says that polic
 The two rounding engines compute that result differently. The policy engine works on exact rationals and takes a `QuantizationPolicy`; the directed rounders shift a dyadic significand and support the four IEEE directions with native overflow and gradual underflow. Neither engine delegates to the other. `roundDyadicGeneral_toRoundingMode_eq_roundDyadicWithRounding` proves that they nevertheless agree on the complete packed word for every descriptor, all four IEEE directions, both signs, and every exact dyadic.
 
 <a id="how-the-executable-types-are-built"></a>
+<a id="using-the-low-precision-types"></a>
 
 ## Executable types and lookup tables
 
@@ -445,9 +446,3 @@ example (x : ℚ) :
 The first two inputs lie halfway between grid points; nearest-even selects codes $2$ and $-2$. The third input exceeds the code range and is clipped. The final theorem connects the whole executable operation, including clipping, to its real-valued specification.
 
 [[FloatLib.Numerics.Quantization.RealAffineQuantizer]] also accepts irrational scales and inputs, and takes its integer rounding function as an argument. Its order theorem needs a monotone rounder; its code round-trip theorem needs a rounder that fixes integers. With a nearest rounder, reconstruction differs from the input by at most $s/2$ when clipping is inactive. This last condition matters: a clipped input can be arbitrarily far from the largest reconstructed value. [[FloatLib.Floats.Formats.Flocq.affine_toReal_quantize]] proves that the rational implementation and real nearest-even specification agree for every rational input.
-
-## Using the low-precision types
-
-Use the named FP8, FP6, and FP4 types for individual values. For a block, [[FloatLib.Floats.Formats.OCP.MX.E8M0]] supplies the shared scale, and the [standard block implementation](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/OCP/MX/Standard) provides the six 32-element formats. Its quantizer follows the [scale rule above](#/chapter/low-precision-formats-for-machine-learning/choosing-a-scale-for-32-lanes); the minimum-error theorem compares element choices at that selected scale.
-
-To multiply and sum blocks, use the configured `dot` and `dotGeneral` operations. The [dot-product example](#/chapter/low-precision-formats-for-machine-learning/a-dot-product-rounds-after-the-last-block) shows why postponing rounding can preserve a cancellation that binary32 products would lose.

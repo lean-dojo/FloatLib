@@ -25,7 +25,7 @@ widths. The operands must be finite and the divisor nonzero; the result may be i
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-- The exact scaled rational quotient of two finite values denotes their real quotient. -/
 theorem signedScaledRatToReal_of_toDyadic?_some

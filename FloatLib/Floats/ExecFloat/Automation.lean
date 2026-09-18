@@ -6,8 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
-public import FloatLib.Floats.ExecFloat.Proof.Certificate -- shake: keep
+public import FloatLib.Floats.ExecFloat.Proof.Arithmetic -- shake: keep
 
 /-!
 # Format-independent `ExecFloat` automation

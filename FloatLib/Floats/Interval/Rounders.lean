@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
 
 /-!
 # Directed rounding (down/up) for Flocq-style formats
@@ -56,18 +56,8 @@ Correctness of directed rounding down: `roundDown x` is an enclosure **lower bou
 This is the format-generic analogue of the IEEE-754 fact that rounding toward $-\infty$ never exceeds
 the exact real value.
 -/
-theorem roundDown_le (x : ℝ) : roundDown (β := β) (fexp := fexp) x ≤ x := by
-  -- The positive scale `β^e` preserves the floor bound on the mantissa.
-  simp [roundDown, FloatLib.Floats.Formats.Flocq.round, FloatLib.Floats.Formats.Flocq.toReal]
-  set s : ℝ := scaledMantissa β fexp x
-  set e : ℤ := cexp β fexp x
-  have hx : s * bpow β e = x := by
-    simpa [s, e] using (FloatLib.Floats.Formats.Flocq.scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x)
-  have hb : 0 ≤ bpow β e := bpow.nonneg β e
-  have hf : (⌊s⌋ : ℝ) ≤ s := Int.floor_le s
-  have : (⌊s⌋ : ℝ) * bpow β e ≤ s * bpow β e :=
-    mul_le_mul_of_nonneg_right hf hb
-  simpa [hx, s, e, floorRound] using this
+theorem roundDown_le (x : ℝ) : roundDown (β := β) (fexp := fexp) x ≤ x :=
+  round_floor_le x
 
 /--
 Correctness of directed rounding up: `roundUp x` is an enclosure **upper bound**.
@@ -75,17 +65,8 @@ Correctness of directed rounding up: `roundUp x` is an enclosure **upper bound**
 This is the format-generic analogue of the IEEE-754 fact that rounding toward $+\infty$ is never below
 the exact real value.
 -/
-theorem le_roundUp (x : ℝ) : x ≤ roundUp (β := β) (fexp := fexp) x := by
-  simp [roundUp, FloatLib.Floats.Formats.Flocq.round, FloatLib.Floats.Formats.Flocq.toReal]
-  set s : ℝ := scaledMantissa β fexp x
-  set e : ℤ := cexp β fexp x
-  have hx : s * bpow β e = x := by
-    simpa [s, e] using (FloatLib.Floats.Formats.Flocq.scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x)
-  have hb : 0 ≤ bpow β e := bpow.nonneg β e
-  have hc : s ≤ (⌈s⌉ : ℝ) := Int.le_ceil s
-  have : s * bpow β e ≤ (⌈s⌉ : ℝ) * bpow β e :=
-    mul_le_mul_of_nonneg_right hc hb
-  simpa [hx, s, e, ceilRound, mul_assoc, mul_left_comm, mul_comm] using this
+theorem le_roundUp (x : ℝ) : x ≤ roundUp (β := β) (fexp := fexp) x :=
+  le_round_ceil x
 
 /--
 A pair of real maps bracketing every real number from below and above.

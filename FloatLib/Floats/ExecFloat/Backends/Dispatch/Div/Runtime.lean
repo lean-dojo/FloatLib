@@ -45,9 +45,10 @@ def generic {fmt : FloatFormat}
 Compiled implementation of `div`.
 
 Binary32 and binary64 finite operands use native-word decoding. Structurally eligible pair layouts
-use the certified radix-`2^32` normal quotient kernel. Every declined or ineligible case enters the
-single exact width-generic baseline here. The dispatcher is specialized on the descriptor, as
-described in `Dispatch.Add.Runtime`.
+use the certified radix-`2^32` normal quotient kernel. Every other one-word IEEE layout uses
+restoring division. Every declined or ineligible case enters the single exact width-generic
+baseline here. The dispatcher is specialized on the descriptor, as described in
+`Dispatch.Add.Runtime`.
 -/
 @[specialize fmt] def word {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if h32 : FloatFormat.IsBinary32 fmt then
@@ -70,7 +71,7 @@ described in `Dispatch.Add.Runtime`.
     match NativePair.divNormal? x y with
     | some quotient => quotient
     | none => generic x y
-  else if _heligible : NativeSmallWord.Eligible fmt then
+  else if _heligible : NativeSmallWord.StorageEligible fmt then
     match NativeSmallWordDiv.divNormal? x y with
     | some quotient => quotient
     | none => generic x y

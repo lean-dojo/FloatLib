@@ -23,9 +23,8 @@
 #   --no-compile     run the chapter checks without compiling the Lean blocks
 #   --allow-missing-results
 #                    build the reader without checking result-derived figures; development only
-#   --require-clean  fail when the exported data was built from a working tree with uncommitted
-#                    library files (the site would flag itself as uncommitted on every page and
-#                    some GitHub links would be withheld); use this for a build that is published
+#   --require-clean  fail when the exported data includes uncommitted library files;
+#                    use this for a published build
 #
 # Environment:
 #   FLOATLIB_BUILD_DIR      Lake build directory of the compiled library; when unset, the
@@ -93,9 +92,10 @@ for tool in lake python3 node corepack rsync; do
 done
 
 benchmark_result="$root/benchmarks/results/main/release/benchmark"
+flocq_result="$root/benchmarks/results/flocq-matched"
 external_result="$root/tests/results/main/release/external"
 ecosystem_result="$root/tests/results/main/ecosystem"
-if [[ -d "$benchmark_result" && -d "$external_result" && -d "$ecosystem_result" ]]; then
+if [[ -d "$benchmark_result" && -d "$flocq_result" && -d "$external_result" && -d "$ecosystem_result" ]]; then
   result_scratch="$(mktemp -d "${FLOATLIB_BUILD_DIR}-site-results.XXXXXX")"
   cleanup_result_scratch() {
     rm -rf -- "$result_scratch"
@@ -108,6 +108,8 @@ if [[ -d "$benchmark_result" && -d "$external_result" && -d "$ecosystem_result" 
   mkdir -p "$result_scratch/format"
   python3 "$root/site/content/assets/data/plot_format_comparison.py" \
     --out-dir "$result_scratch/format"
+  python3 "$root/benchmarks/plots/flocq_matched.py" \
+    --out "$result_scratch/flocq-matched.png"
   python3 "$root/site/content/assets/figures/ch10_external_ratios.py" \
     --out "$result_scratch/ch10-external-ratios.png"
   python3 "$root/site/content/assets/figures/ch11_universal_preflight.py" \
@@ -128,6 +130,9 @@ if [[ -d "$benchmark_result" && -d "$external_result" && -d "$ecosystem_result" 
   compare_figure \
     "$root/site/content/assets/format-comparison-main.png" \
     "$result_scratch/format/format-comparison-main.png"
+  compare_figure \
+    "$root/site/content/assets/flocq-matched.png" \
+    "$result_scratch/flocq-matched.png"
   compare_figure \
     "$root/site/content/assets/format-comparison-mul-fma.png" \
     "$result_scratch/format/format-comparison-mul-fma.png"
@@ -177,16 +182,14 @@ if [[ "$require_clean" == "1" ]] && ! python3 -c \
   exit 1
 fi
 
-# A build from a dirty tree is fine for iterating and wrong for publishing: every page's footer
-# says "plus N uncommitted files" and nodes in changed files lose their exact GitHub links.
+# Published builds require committed sources so GitHub links identify the code used for the export.
 dirty_files=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["source"].get("dirtyFiles", 0))' site/data/nodes.json)
 if [[ "$dirty_files" != "0" ]]; then
   {
     echo
     echo "WARNING: site/data/nodes.json was exported from a working tree with $dirty_files uncommitted"
-    echo "         library files. The site will say so on every page, and declarations in changed"
-    echo "         files get a file-level or no GitHub link. Commit the tree and rebuild before"
-    echo "         publishing (site/build.sh --require-clean refuses to build in this state)."
+    echo "         library files. Exact GitHub links are kept for excerpts that match HEAD."
+    echo "         Commit the tree and rebuild before publishing; --require-clean enforces this."
     echo
   } >&2
   if [[ "$require_clean" == "1" ]]; then

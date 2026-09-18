@@ -129,7 +129,7 @@ theorem toModel_injective : Function.Injective (toModel (plan := plan) (code := 
     toModel (sqrt I) = Model.Interval.sqrt I.toModel := by
   simp [sqrt]
 
-noncomputable section
+section
 
 /-- Real membership in decoded bounds; meaningful as an interval interpretation under `Valid`. -/
 abbrev RealMem (I : Bounds) (x : ℝ) : Prop := Model.Interval.RealMem I.toModel x

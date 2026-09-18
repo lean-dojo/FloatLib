@@ -80,15 +80,14 @@ theorem minValue_le_maxValue {width : Nat} (hwidth : 0 < width) :
 
 /-- Clamping at positive width always produces an in-range integer. -/
 theorem clamp_inRange {width : Nat} (hwidth : 0 < width) (value : Int) :
-    InRange width (clamp width value) := by
-  constructor
-  · exact le_max_left _ _
-  · exact max_le (minValue_le_maxValue hwidth) (min_le_left _ _)
+    InRange width (clamp width value) :=
+  ⟨Quantization.Saturating.lower_le_clamp _ _ _,
+    Quantization.Saturating.clamp_le_upper (minValue_le_maxValue hwidth)⟩
 
 /-- Clamping fixes every integer already in the signed storage interval. -/
 theorem clamp_eq_self {width : Nat} {value : Int} (hvalue : InRange width value) :
-    clamp width value = value := by
-  rw [clamp, Quantization.Saturating.clamp, min_eq_right hvalue.2, max_eq_right hvalue.1]
+    clamp width value = value :=
+  Quantization.Saturating.clamp_eq_self hvalue.1 hvalue.2
 
 /-- Encoding an in-range integer at positive width preserves its exact signed value. -/
 theorem toInt_ofInt_eq_self {width : Nat} (hwidth : 0 < width)

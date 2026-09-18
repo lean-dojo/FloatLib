@@ -13,14 +13,14 @@ That's a good result for our software kernels. Binary32 addition gives us more w
 138.6 ns in FloatLib, 22.9 ns in Berkeley SoftFloat, and 34.1 ns in MPFR.
 Looking at the individual operations tells us much more than one score for the whole library.
 
-Blue squares are FloatLib binary and green circles are FloatLib posits; the grey diamonds
-are an extracted Flocq precision model. Lower means faster. Both FloatLib curves run proved software. Lean
+Blue squares are FloatLib binary and green circles are FloatLib posits. Lower means faster.
+Both FloatLib curves run proved software. Lean
 erases proof terms during compilation [@leanReference], so a call executes the arithmetic
 without checking the theorem again. The relative times reflect the algorithms, representations,
 and calling paths. They do not measure the time needed to prove the operations.
 
-These curves use FloatLib's default policy and carriers. Binary32 and binary64 already
-run their fixed-format software kernels. The planner ranks certified candidates using
+The binary curves use explicit proved word kernels at binary32/64 and public operations
+under `PlanningThroughput` at the other widths. The planner ranks certified candidates using
 cost estimates; it does not choose the fastest line in this plot. MPFR and SoftFloat
 are external comparisons, and the native C line measures the host FPU. Users can
 [change the planning policy, choose limb storage, or explicitly call the host path](#/chapter/backends-and-the-planner/what-can-i-choose).
@@ -35,18 +35,16 @@ show the 5th to 95th percentiles across trials, not confidence intervals. FloatL
 2 bits and binary at 4 bits. The measurements stop at 4,096 bits; that is the largest width measured
 here, not a library limit.
 
-The starred Flocq series needs particular care: our adapter matches significand precision,
-but uses different exponent limits and can construct different inputs at small widths.
-We did not check that it visited the same sequence of inputs as FloatLib. The
-[external benchmark method](#/chapter/performance/how-we-ran-the-external-implementations)
-below works through a concrete example and explains what each comparison measures.
+The [matched Flocq comparison](#/chapter/performance/matched-binary-arithmetic-with-flocq-and-mpfr)
+below uses the same binary formats and checks both the prepared inputs and operation results.
+It has its own figure because it ran on a different machine.
 
 <a id="the-times-behind-the-curves"></a>
 
 ## Timing results
 
-Here are the ordinary 32-bit and 64-bit binary formats first. Every entry is a
-**median in nanoseconds per operation** across nine trials. Lower is
+Here are the ordinary 32-bit and 64-bit binary formats first. The next two tables report
+**median nanoseconds per operation** across nine trials. Lower is
 faster. These times include the benchmark's input selection, representation, adapter,
 and checksum work, as well as the arithmetic call.
 
@@ -57,15 +55,10 @@ and checksum work, as well as the arithmetic call.
 | **FloatLib** | **138.6** | **128.3** | **102.0** | **123.7** | **93.0** | **140.5** |
 | Berkeley SoftFloat | 22.9 | 23.1 | 18.2 | 19.6 | 27.8 | 29.2 |
 | MPFR | 34.1 | 34.9 | 31.8 | 33.3 | 45.5 | 47.6 |
-| Extracted Flocq\* | 1,128.0 | 1,108.1 | 1,709.7 | 1,427.0 | 7,485.3 | 2,615.3 |
 | Native C | 8.4 | 8.4 | 8.7 | 10.7 | 11.4 | 10.9 |
 
-FloatLib is faster than this extracted Flocq program on all six operations here;
-SoftFloat, MPFR, and native C are faster than FloatLib on all six. The asterisk marks a
-contextual comparison: Flocq's extracted
-program models the significand precision, without reproducing all of binary32's
-exponent limits and exceptional behavior. Native C uses the processor's floating
-point unit.
+SoftFloat, MPFR, and native C are faster than FloatLib on all six operations here.
+Native C uses the processor's floating point unit.
 
 ### Binary64
 
@@ -74,14 +67,32 @@ point unit.
 | **FloatLib** | **312.8** | **293.5** | **250.7** | **1,447.3** | **1,271.3** | **1,277.2** |
 | Berkeley SoftFloat | 23.3 | 23.1 | 18.3 | 29.5 | 30.6 | 29.0 |
 | MPFR | 36.7 | 35.4 | 31.9 | 31.3 | 49.2 | 49.4 |
-| Extracted Flocq\* | 2,201.0 | 2,155.7 | 6,617.5 | 3,037.4 | 34,460.3 | 10,113.8 |
 | Native C | 8.2 | 8.2 | 8.5 | 11.6 | 13.1 | 10.7 |
 | CPython | 801.3 | 827.3 | 826.0 | 821.9 | 800.1 | n/a |
 
 Against CPython, FloatLib wins addition, subtraction, and multiplication, but takes
 longer for division and square root. The Python timings include its runtime; the
-version measured has no `math.fma`. The Flocq precision-model distinction also
-applies at this width.
+version measured has no `math.fma`.
+
+### Matched binary arithmetic with Flocq and MPFR
+
+We also timed FloatLib, extracted Flocq, and MPFR with matching significand precision,
+exponent bounds, and nearest-even rounding. Each adapter rounds the same exact rational
+inputs once. The [numerical checks](#/chapter/external-validation/binary-arithmetic-with-flocq-and-mpfr)
+compare the complete values before we use these inputs for timing.
+
+![FloatLib, extracted Flocq, and MPFR across eleven matching binary formats and six operations](assets/flocq-matched.png "Nanoseconds per operation at matching binary precision and exponent bounds. Both axes are logarithmic; lower is faster. Measurements ran on an Intel Xeon Platinum 8275CL.")
+
+[Figure 15.2](#/chapter/performance/figure-flocq-matched) shows the measured widths from
+6 to 4,096 bits. FloatLib is faster than the extracted Flocq program except for 8-bit FMA,
+where Flocq takes 846 ns and FloatLib takes 1,601 ns. For binary64 multiplication,
+FloatLib takes 330 ns and Flocq takes 10,575 ns. MPFR takes 32 ns there and is faster than
+FloatLib at every point in this comparison.
+
+Each operation and width draws from sixteen input sets during timing.
+These are dependent scalar loops, so their cost includes input selection, allocation,
+and observing the result. The [method below](#/chapter/performance/the-flocq-program-we-timed)
+explains the extracted program and the complete-block loop used for the widest square roots.
 
 ### Posits
 
@@ -116,7 +127,8 @@ no saturation. All **529,152 arithmetic cases** and the **192 exact timing fixtu
 agreed bit for bit; [chapter 16](#/chapter/external-validation/p3109-arithmetic-with-flops)
 describes the input coverage.
 
-This is a separate experiment on an **Intel Xeon Platinum 8275CL**. The entries below
+This [experiment](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/p3109-flops/results.json)
+ran on an **Intel Xeon Platinum 8275CL**. The entries below
 are **median microseconds per operation** across nine pairs of fresh processes on one
 logical CPU. Both libraries run the same loop over 16 finite input triples; each returned
 code determines the next input. Input selection, the operation, and the checksum are
@@ -153,7 +165,8 @@ FloatLib's general `Model.cast` for the same four formats. All 128 input/output 
 fixtures agree exactly; the [broader conversion checks](#/chapter/external-validation/scalar-conversions-with-tensorlib)
 cover rounding boundaries and exceptional values too.
 
-These are **median nanoseconds per conversion** across nine paired trials on the
+The [results](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/tensorlib/results.json)
+are **median nanoseconds per conversion** across nine paired trials on the
 **Intel Xeon Platinum 8275CL**, using one logical CPU. “Encode” converts Float32 to the
 small format; “decode” converts back.
 
@@ -165,9 +178,11 @@ small format; “decode” converts back.
 | E5M2 | 2,248.1 | 267.9 | 2,083.1 | 270.5 |
 
 TensorLib is faster in all eight conversions, by about **5.9 to 13.0 times**.
-That gives us a clear place to improve FloatLib. TensorLib manipulates the fixed-format
-fields directly; FloatLib's descriptor cast handles format parameters and uses exact
-dyadic decoding and rounding, with a field-copy shortcut for compatible widenings.
+TensorLib manipulates the fixed-format fields directly; FloatLib's descriptor cast
+handles format parameters and uses exact dyadic decoding and rounding. These timings
+use its field-copy widening path. Compatible widenings now use a
+[proved word shift](#/chapter/ieee-binary-formats/casting-between-widths),
+which is not measured in this table.
 For the normal inputs timed here, TensorLib's casts use integer shifts, masks, and
 rounding. Its FP16 and FP8 subnormal decoders do use `Float32` multiplication, but those
 branches are outside this timing workload. The measured speedup therefore does not
@@ -184,8 +199,9 @@ with Clang 22.1.4. These are scalar dependent-call timings; a tensor kernel that
 many independent elements would measure a different workload.
 
 <a id="what-the-independent-checks-tell-us-about-speed"></a>
+<a id="which-libraries-did-we-time"></a>
 
-### Which libraries did we time?
+### Libraries timed separately
 
 The SoftPosit comparison checked result bits; it did not measure separate arithmetic
 times for FloatLib and SoftPosit. Its total runtime includes preparing the inputs,
@@ -237,9 +253,8 @@ another result without narrowing what the proof covers.
 
 ## What one timed operation includes
 
-The benchmark starts with sixteen sets of rational inputs. The adapters construct their
-inputs before timing; the Flocq conversion differs in the way explained below.
-An arithmetic result selects the next set of inputs and
+The nine-trial comparison starts with sixteen sets of rational inputs, converted by the
+adapters before timing. An arithmetic result selects the next set of inputs and
 contributes to a checksum, so later work depends on the operation being measured. This avoids a
 loop that repeatedly computes a constant, and avoids letting multiplication or division collapse
 into a stream of zeros or infinities.
@@ -250,7 +265,7 @@ second needs rounding. MPFR converts the rationals directly, without an earlier 
 rounding error. Universal imports the posit encodings generated from these inputs by
 FloatLib. This setup work happens before the clock starts.
 
-Let's follow one addition iteration. The loop loads an already-converted pair, adds it, observes the
+In one addition iteration, the loop loads an already-converted pair, adds it, observes the
 result, and uses the result to choose a pair for the next iteration. The dependency follows
 the choice of inputs: the next operation cannot know which pair to use until the previous
 result is available. The result itself does not become the next operand. That last choice keeps
@@ -269,7 +284,7 @@ supported binary format and compare checksums with FloatLib. One checksum follow
 results; another follows the chosen inputs. Both matter: a rounding difference can change
 which input comes next, so two loops that look alike could end up doing different work.
 Matching checksums are a useful check on these inputs, rather than a proof about every
-intermediate result. Flocq's different treatment is explained below.
+intermediate result. The Flocq comparison adds a separate check of complete numerical values.
 
 Fast and slow implementations need different loop lengths to get useful measurements.
 A short preliminary run estimates how many iterations will take about 200 ms; every
@@ -277,8 +292,7 @@ reported trial lasts at least 50 ms. The order is shuffled and rotated across ni
 so the same implementation does not always run first. We report the median and show
 the 5th to 95th percentiles. The underlying data also includes quartiles, standard deviation,
 and median absolute deviation.
-Most adapters warm up for 256 iterations. Flocq's warmup is capped at 64 through 128 bits,
-16 through 512 bits, four at 1,024 bits, and one at the two largest widths.
+Most adapters warm up for 256 iterations.
 
 The timing loops ran one at a time on the same logical CPU. This avoids migration between
 CPUs, though other work on the machine can still affect caches and clock speed.
@@ -355,33 +369,31 @@ operations join the binary64 agreement check.
 
 ### The Flocq program we timed
 
-Our small [Flocq wrapper](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/rocq/FlocqKernel.v) uses **Flocq 4.2.2**
-[@boldoMelquiond2011]. It exposes `Bplus`, `Bminus`, `Bmult`, `Bdiv`, `Bsqrt`, and `Bfma`
-from `IEEE754.BinarySingleNaN`, with nearest-even rounding and `benchmark_emax = 16384`.
-Significand precision follows the binary companion. The exponent range and single-NaN
-representation do not reproduce every FloatLib descriptor.
+Our [Flocq wrapper](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/rocq/FlocqKernel.v)
+uses **Flocq 4.2.2** [@boldoMelquiond2011]. It exposes `Bplus`, `Bminus`, `Bmult`, `Bdiv`,
+`Bsqrt`, and `Bfma` from `IEEE754.BinarySingleNaN`. Input conversion uses the proved
+`Bdiv_correct_aux` helper to round an exact integer quotient once. Precision and exponent
+bounds match the FloatLib descriptor; all three implementations use nearest-even rounding
+and gradual underflow. Flocq requires `0 < precision < emax`, so the custom 4-, 5-, and
+7-bit layouts are absent from all three curves.
 
-The clock starts inside the program, after input construction and warmup; proof checking
-and compilation happen beforehand. The measured loop includes extracted arithmetic,
-value allocation, normalization for the fingerprint, and checksum work.
+We extracted the wrapper with Coq 8.20.1 and compiled it with OCaml 4.13.1 and Zarith.
+FloatLib used Lean 4.34.0; the MPFR adapter used MPFR 4.1.0 and GCC 11.5.0. This experiment
+ran on an **Intel Xeon Platinum 8275CL**, with timing processes kept on the same logical CPU.
+FloatLib calls its proved word kernels explicitly at binary32/64 and uses public operations
+under `PlanningThroughput` at the other widths.
 
-There is also a difference in how our wrapper constructs the inputs. `flocq_from_ratio` first rounds
-the integer numerator and denominator at the destination precision, then divides them.
-That can differ from rounding the rational once. For the first input at two bits of
-significand precision, nearest-even rounding gives
+The figure uses one calibrated trial per entry, so it does not estimate timing variability.
+The main loop follows the result-dependent input selection described above. Square root at
+1,024, 2,048, and 4,096 bits instead uses complete blocks of sixteen inputs for all three
+implementations: each result affects their order, and each block visits every input once.
+This ensures that even the slowest wide square roots time the full input set. Other points
+use the original chain, whose calibrated length differs between implementations.
 
-$$
-R_2(45)=48,\qquad R_2(40)=32.
-$$
-
-Here 40 is halfway between 32 and 48, and 32 has the even significand. The adapter therefore
-constructs $R_2(-48/32)=-1.5$. Directly rounding the intended fraction gives
-$R_2(-45/40)=R_2(-1.125)=-1$. This difference comes from our wrapper's input construction.
-It is not evidence of an error in Flocq's arithmetic.
-
-The Flocq program runs every plotted operation and width, but skips the 256-operation
-comparison. Its grey curve therefore measures this particular extracted program with its
-own input rounding.
+The timer includes arithmetic, value allocation, normalization for the fingerprint, and
+checksum work. Input construction, warmup, proof checking, and compilation happen before it
+starts. The [result README](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/flocq-matched/README.md)
+contains the data, environment details, and commands to reproduce the figure.
 
 ### Universal: checking the posit inputs before timing
 
@@ -407,18 +419,16 @@ exhaustive posit conformance result.
 ### Comparing relative times
 
 Equal encoded width is a storage comparison. A binary format has a fixed significand precision;
-a posit's precision varies with its value. MPFR and Flocq use the binary companion's precision.
+a posit's precision varies with its value. MPFR uses the binary companion's precision.
 Posit-versus-binary timings at the same width do not imply equal
 accuracy or equal dynamic range. The 8-bit binary point, for example, uses an E4M3
 layout, and the 4,096-bit point is a custom binary layout with 19 exponent bits.
 
 ![FloatLib time divided by the external implementation's time for addition, multiplication, and division, at equal encoded widths](assets/ch10-external-ratios.png "FloatLib time divided by the comparison library’s time at equal encoded width. Lower is faster for FloatLib relative to that library; 1 means equal times. Different formats still have different numerical contracts.")
 
-In [Figure 15.2](#/chapter/performance/figure-ch10-external-ratios),
+In [Figure 15.3](#/chapter/performance/figure-ch10-external-ratios),
 a ratio of 1 means equal median time; 10 means FloatLib took ten times as long. For binary64
-addition, FloatLib/MPFR is **8.53**, while FloatLib/extracted-Flocq is **0.142**. The absolute times
-are 312.8 ns, 36.7 ns, and 2,201.0 ns respectively. Those two comparisons describe the same
-FloatLib measurement against two very different software implementations.
+addition, FloatLib/MPFR is **8.53**: the absolute times are 312.8 ns and 36.7 ns.
 
 We can reconstruct the MPFR point directly from the two measured medians:
 
@@ -429,16 +439,14 @@ $$
 $$
 
 The units cancel. FloatLib needed about 8.53 times the elapsed time per operation in this
-workload. Replacing the denominator with Flocq's 2,201.0 ns gives 0.142, putting that point below
-the equality line. This is a ratio of separately computed medians, rather than the median of
+workload. This is a ratio of separately computed medians, rather than the median of
 nine trial-by-trial ratios. On the logarithmic axis, equal vertical distances represent equal
 multiplicative changes.
 
-We cannot read either ratio as a “cost of proof.” The timed implementations use different arithmetic
+We cannot read the ratio as a “cost of proof.” The timed implementations use different arithmetic
 algorithms, representations, allocation patterns, and adapters. A proof certifies FloatLib's
 result; it does not explain which of those implementation choices accounts for the gap.
-On this workload, FloatLib's binary64 addition was slower than the MPFR adapter and faster
-than the extracted Flocq adapter.
+On this workload, FloatLib's binary64 addition was slower than the MPFR adapter.
 
 The posit comparison also changes with width. At 32 bits, addition took 311.7 ns in FloatLib and
 229.1 ns in Universal. At 64 bits, the corresponding times were 374.2 ns and 557.5 ns. At 4,096
@@ -451,7 +459,7 @@ An application with different inputs or a different mix of operations may give a
 
 ![All six operations from 2 to 16 bits, with each measured width labelled, including 5, 6, and 7 bits](assets/format-comparison-low-width.png "Median nanoseconds per operation at widths 2 to 16, with percentile bands and logarithmic axes. Lower is faster; only measured widths have markers.")
 
-We can separate the small-width points in [Figure 15.3](#/chapter/performance/figure-format-comparison-low-width),
+We can separate the small-width points in [Figure 15.4](#/chapter/performance/figure-format-comparison-low-width),
 which expands the crowded left edge of the main plot. Each of 5, 6, and 7 bits
 has its own measurement. Table lookup can be a small part of the total time at these widths:
 input selection, function calls, and the checksum still run on every iteration. A nearly flat
@@ -488,13 +496,13 @@ kernel, we also check the dispatch theorem and the generated code.
 ![Multiplication and fused multiply-add, with median ns/op and percentile bands across encoded widths](assets/format-comparison-mul-fma.png "Multiplication and fused multiply-add timings across encoded widths. Both axes are logarithmic; bands show the 5th to 95th percentiles and lower is faster.")
 
 Fused multiply-add computes the exact product and sum before one final rounding. It can therefore
-need a wider intermediate than an ordinary multiplication. In [Figure 15.4](#/chapter/performance/figure-format-comparison-mul-fma), binary32 FMA took
+need a wider intermediate than an ordinary multiplication. In [Figure 15.5](#/chapter/performance/figure-format-comparison-mul-fma), binary32 FMA took
 140.5 ns, while binary64 FMA took 1,277.2 ns. These particular implementations and inputs give that gap. The CPython FMA point is absent
 because CPython 3.11.2 does not expose that operation.
 
 ![Division and square root, with median ns/op and percentile bands across encoded widths](assets/format-comparison-div-sqrt.png "Division and square-root timings across encoded widths. Both axes are logarithmic; lower is faster. Universal square roots that disagreed on the benchmark inputs are excluded.")
 
-At 4,096 bits in [Figure 15.5](#/chapter/performance/figure-format-comparison-div-sqrt),
+At 4,096 bits in [Figure 15.6](#/chapter/performance/figure-format-comparison-div-sqrt),
 FloatLib binary division took **10.41 µs**, compared with **2.37 µs** for MPFR.
 Square root took **40.71 µs**, compared with **1.69 µs** for MPFR. The ratio is 4.39 for division
 and 24.07 for square root. Addition at the same width took 4.26 µs. Wide operations have distinct
@@ -522,7 +530,7 @@ baseline. The arithmetic specification is unchanged by that selection.
 
 ## Comparing with Lean's native floats
 
-At binary32 and binary64, the host provides arithmetic directly. Lean's `Float32` and `Float` call its `float` and `double` operations, while FloatLib's certified operations execute software kernels. We can compare the software times with native C in [Figure 15.6](#/chapter/performance/figure-ch17-host-vs-software), a detail of the same benchmark.
+At binary32 and binary64, the host provides arithmetic directly. Lean's `Float32` and `Float` call its `float` and `double` operations, while FloatLib's certified operations execute software kernels. We can compare the software times with native C in [Figure 15.7](#/chapter/performance/figure-ch17-host-vs-software), a detail of the same benchmark.
 
 ![Native C and FloatLib proved software at binary32 and binary64; bars show median ns/op and labels show FloatLib/native time ratios](assets/ch17-host-vs-software.png "Median nanoseconds per operation for native C arithmetic and FloatLib software at binary32 and binary64. Lower is faster; annotations give the software/native time ratio.")
 
@@ -721,7 +729,7 @@ result words.
 
 The mismatch already begins at `Float32.ofBits`, which canonicalizes the NaN input. Comparing
 only the result class would hide the payload difference; comparing words exposes it. The
-guarded API later in this chapter uses the same `pairs32` list to demonstrate why keeping these
+guarded API in [the host-operation example](#/chapter/performance/opting-into-guarded-host-operations) uses the same `pairs32` list to demonstrate why keeping these
 operands in software changes the outcome of the comparison.
 
 <a id="the-proved-conversion-and-arithmetic-bridges"></a>
@@ -1103,3 +1111,10 @@ the remaining runtime assumptions. Its performance still needs measurement in th
 the native C bars establish the reference comparison, not the cost of that substitution.
 
 <a id="inspecting-and-reproducing-the-evidence"></a>
+
+## Reproducing the measurements
+
+The [benchmark method](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/docs/Comparison.md)
+and [results](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/main/README.md)
+provide the commands, toolchains, measured sources, and raw trials for reproducing
+these measurements.

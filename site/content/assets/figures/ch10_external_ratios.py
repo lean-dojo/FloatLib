@@ -33,12 +33,10 @@ OUT_NAME = "ch10-external-ratios.png"
 
 OPERATIONS = ("add", "mul", "div")
 
-# Keep Flocq grey, distinct from the green FloatLib posit curve in the other figures.
+# Flocq's matched measurements use a separate campaign and figure.
 SERIES = (
     ("binarySoftwareOverMPFRBinaryCompanion", "FloatLib binary / MPFR",
      dict(color=fs.ORANGE, marker="^", linestyle=":", markersize=6)),
-    ("binarySoftwareOverFlocq", "FloatLib binary / extracted Flocq*",
-     dict(color="#60646c", marker="D", linestyle="-.", markersize=5)),
     ("execPositOverUniversalSoftware", "FloatLib posit / Universal software",
      dict(color=fs.PURPLE, marker="P", linestyle="--", markersize=6.5)),
     ("execPositOverUniversalHardwareAssisted",
@@ -129,8 +127,7 @@ def main() -> None:
                 if line.startswith("Model name:"))
     fig.text(0.5, 0.065,
              f"{host} · CPU {metadata['benchmarkCPU']}\n"
-             f"{metadata['runs']} trials · above 1: FloatLib took longer · equal encoded widths\n"
-             "*Flocq uses different input rounding; see the performance chapter.",
+             f"{metadata['runs']} trials · above 1: FloatLib took longer · equal encoded widths",
              ha="center", va="center", fontsize=8.5, color=fs.MUTED)
 
     target = fs.save(fig, OUT_NAME, out=args.out)

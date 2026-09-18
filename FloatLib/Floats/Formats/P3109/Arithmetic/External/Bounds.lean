@@ -123,7 +123,10 @@ theorem magnitude_bound_of_not_overflow (format : FloatFormat)
     Model.Dyadic.toReal_maxFiniteDyadic] at hreal
   exact hreal
 
-/-- Saturation preserves the grid and bounds every finite result by the external endpoints. -/
+/--
+For an IEEE descriptor with grid-aligned finite inputs, every finite saturation result stays
+on the grid and within the external endpoints.
+-/
 theorem saturate_finite (format : FloatFormat) (hformat : format.isIEEE = true)
     (policy : ProjectionPolicy) (input : NumericalValue Numerics.Dyadic)
     (hgrid : ∀ value, input = .finite value → FitsGrid format value)

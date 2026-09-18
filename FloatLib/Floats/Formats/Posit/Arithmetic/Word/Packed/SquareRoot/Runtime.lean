@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
+import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Runtime
 

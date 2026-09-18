@@ -202,7 +202,7 @@ structure EInterval where
   /-- Upper endpoint. -/
   hi : EReal
 
-noncomputable section
+section
 
 namespace EInterval
 

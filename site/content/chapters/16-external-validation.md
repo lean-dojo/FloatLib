@@ -11,7 +11,7 @@ Against SoftPosit, **32,893,800 cases** produced **7,564 differences**, all from
 distinct inputs. We can work through those seven by hand: the exact calculation agrees
 with FloatLib, and two bugs in SoftPosit's generic implementation explain the other answers.
 
-![Direct comparison counts and the widths tested, with green SoftPosit bars at every measured width.](assets/ch11-conformance-evidence.png "Bars count compared cases, not time or a percentage of input coverage. Orange diamonds mark SoftPosit differences: one each at 14 and 15 bits, two at 16 bits, and 7,560 at 32 bits.")
+![Two panels show total comparison counts by external tool, then P3109 and SoftPosit counts by encoded width. Case counts use logarithmic scales; diamonds locate SoftPosit differences.](assets/ch11-conformance-evidence.png "Bars count compared cases, not time or a percentage of input coverage. Orange diamonds mark SoftPosit differences: one each at 14 and 15 bits, two at 16 bits, and 7,560 at 32 bits.")
 
 The upper panel of [Figure 16.1](#/chapter/external-validation/figure-ch11-conformance-evidence)
 counts cases in suites that report a comparable case counter. Its logarithmic
@@ -207,6 +207,21 @@ Integer conversion must round before checking the destination range: a small neg
 can round to unsigned zero. Custom descriptors whose exponent ranges lie entirely above or
 below zero test assumptions that the three named decimal formats would not reveal.
 
+### Binary arithmetic with Flocq and MPFR
+
+The [matched timing comparison](#/chapter/performance/matched-binary-arithmetic-with-flocq-and-mpfr)
+uses the same rational inputs, binary precision, exponent bounds, and nearest-even rounding
+in FloatLib, Flocq, and MPFR. Before timing, we compare the complete significand, exponent,
+and sign of the prepared inputs and each operation's results. All 528 inputs and 1,056
+results agree across the three implementations, after removing redundant powers of two.
+
+There are sixteen input sets for each of eleven widths and six operations: addition,
+subtraction, multiplication, division, square root, and FMA. The timed loops also check
+result and input-selection checksums on a common prefix. These fixtures contain finite
+values and positive zeros; exception flags and NaN handling are covered by other checks
+in this chapter. The [result archive](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/flocq-matched/README.md)
+includes the complete values and a script that compares them again.
+
 ### P3109 arithmetic with FLoPS
 
 We compared FloatLib with FLoPS's executable P3109 kernel [@flopsArtifact] on
@@ -288,7 +303,7 @@ $2^{32}=4,294,967,296$ possible ordered bit-pattern pairs; we checked 65,536 of 
 MPFR checks the rounded finite values.
 Its NaN representation cannot check every IEEE payload or NaN-selection rule.
 
-Arb, through python-flint, supplies rigorous enclosures for the tested interval and
+Arb [@johanssonArb2017], through python-flint [@pythonFlint], supplies rigorous enclosures for the tested interval and
 transcendental inputs. Those enclosures give an independent check on the computations.
 Agreement on these inputs does not prove a global error bound or correct rounding everywhere.
 
@@ -394,7 +409,7 @@ inputs repeated across 7,560 cases. The other four inputs are FMA boundaries whe
 overwrites sticky information used in rounding. We evaluated FloatLib's public
 operation and exact rational specification together on all seven inputs; they agreed every time.
 
-Let's work through the positive 16-bit FMA example. Its operands have words `0x7680`,
+The positive 16-bit FMA example has operand words `0x7680`,
 `0x6128`, and `0x0001`, decoding to $2560$, $165/8$, and $2^{-56}$. We can keep the tiny
 addend visible throughout the exact calculation:
 

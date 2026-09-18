@@ -479,6 +479,7 @@ async function main() {
     venue: reference.venue ?? '',
     year: reference.year === undefined ? '' : String(reference.year),
     url: reference.url ?? '',
+    accessed: reference.accessed ?? '',
   }));
 
   const md = createMarkdown(references);

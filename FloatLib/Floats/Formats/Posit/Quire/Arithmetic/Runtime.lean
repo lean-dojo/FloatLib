@@ -90,7 +90,9 @@ always pass this check, so it only restricts direct callers of this kernel.
   | some dyadic => addDyadic accumulator dyadic
   | none => nar format
 
-/-- Subtract one posit exactly from a quire. -/
+/--
+Subtract one posit exactly from a quire, producing NaR on exceptional input or quire overflow.
+-/
 @[inline] def qSubP
     (accumulator : Model format)
     (subtrahend : FloatLib.Floats.Formats.Posit.Model format) : Model format :=

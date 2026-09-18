@@ -26,19 +26,6 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 open FloatLib.Numerics
 open Float.Model.UnpackedFloat
 
-private theorem floorLog2_den_one (n : Nat) (hn : n ≠ 0) :
-    RationalBinary.floorLog2 n 1 = (n.log2 : Int) := by
-  have hlo := Nat.log2_self_le hn
-  have hhi := Nat.lt_log2_self (n := n)
-  unfold RationalBinary.floorLog2
-  simp only [show Nat.log2 1 = 0 from rfl, Int.ofNat_eq_natCast, Nat.cast_zero, sub_zero]
-  have hlower : RationalBinary.lessThanPowerOfTwo n 1 (n.log2 : Int) = false := by
-    simp [RationalBinary.lessThanPowerOfTwo, Nat.shiftLeft_eq, not_lt.mpr hlo]
-  rw [hlower]
-  simp only [Bool.false_eq_true, ite_false]
-  rw [show (n.log2 : Int) + 1 = Int.ofNat (n.log2 + 1) by simp]
-  simp [RationalBinary.atLeastPowerOfTwo, Nat.shiftLeft_eq, not_le.mpr hhi]
-
 private theorem roundQuotientEven_scale_den_one (n p : Nat) :
     let scaled := RationalBinary.scaleByPowerOfTwo n 1 ((p : Int) - n.log2)
     roundQuotientEven scaled.1 scaled.2 =

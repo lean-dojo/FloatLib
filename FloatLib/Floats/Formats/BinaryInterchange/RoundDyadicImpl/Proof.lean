@@ -501,6 +501,27 @@ float model. The compiler uses this checked equality to replace the logical mode
     · exact ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal fmt d hm hsub
     · exact ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal fmt d hm (le_of_not_gt hsub)
 
+private theorem ieeeRoundDyadicImpl_of_normal
+    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
+    (hnormal :
+      FloatFormat.ieeeMinNormalExponent fmt ≤ (d.significand.log2 : Int) + d.exponent) :
+    ieeeRoundDyadicImpl fmt d =
+      let totalExponent := (d.significand.log2 : Int) + d.exponent
+      let rounded := roundMantissaToLeadingBitEven d.significand fmt.fracWidth
+      let carry := rounded == pow2 (fmt.fracWidth + 1)
+      let normalizedExponent := if carry then totalExponent + 1 else totalExponent
+      if normalizedExponent > Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
+        if d.negative then negInf fmt else posInf fmt
+      else
+        let normalizedMantissa := if carry then pow2 fmt.fracWidth else rounded
+        ofFields fmt d.negative
+          (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
+          (normalizedMantissa - pow2 fmt.fracWidth) := by
+  unfold ieeeRoundDyadicImpl
+  simp only [beq_iff_eq, hm, ite_false]
+  rw [ite_eq_right (not_lt_of_ge hnormal)]
+  rfl
+
 /--
 On conventional IEEE descriptors, the descriptor-general integer rounder and the specialized
 IEEE integer rounder produce the same packed word.
@@ -546,10 +567,6 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
       have hnormalIEEE :
           FloatFormat.ieeeMinNormalExponent fmt ≤ totalExponent :=
         hnormalBounds.trans hoverflowIEEE.le
-      have hnormalIEEE' :
-          FloatFormat.ieeeMinNormalExponent fmt ≤
-            (d.significand.log2 : Int) + d.exponent := by
-        simpa only [totalExponent] using hnormalIEEE
       let rounded :=
         roundMantissaToLeadingBitEven d.significand fmt.fracWidth
       have hgeneral :
@@ -557,26 +574,10 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
         unfold roundDyadicGeneral
         simp only [beq_iff_eq, hm, ite_false]
         rw [ite_eq_left hoverflow']
-      have himpl :
-          ieeeRoundDyadicImpl fmt d =
-            let carry := rounded == pow2 (fmt.fracWidth + 1)
-            let normalizedExponent :=
-              if carry then totalExponent + 1 else totalExponent
-            if normalizedExponent >
-                Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
-              if d.negative then negInf fmt else posInf fmt
-            else
-              let normalizedMantissa :=
-                if carry then pow2 fmt.fracWidth else rounded
-              ofFields fmt d.negative
-                (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
-                (normalizedMantissa - pow2 fmt.fracWidth) := by
-        unfold ieeeRoundDyadicImpl
-        simp only [beq_iff_eq, hm, ite_false]
-        rw [ite_eq_right (not_lt_of_ge hnormalIEEE')]
-        rfl
-      rw [hgeneral, himpl,
+      rw [hgeneral, ieeeRoundDyadicImpl_of_normal fmt d hm hnormalIEEE,
         nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
+      rw [show roundMantissaToLeadingBitEven d.significand fmt.fracWidth = rounded from rfl,
+        show (d.significand.log2 : Int) + d.exponent = totalExponent from rfl]
       simp only [beq_iff_eq]
       by_cases hcarry : rounded = pow2 (fmt.fracWidth + 1)
       · have hoverflowCarry :
@@ -665,10 +666,6 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
         have hnormalIEEE :
             FloatFormat.ieeeMinNormalExponent fmt ≤ totalExponent := by
           rwa [← hmin]
-        have hnormalIEEE' :
-            FloatFormat.ieeeMinNormalExponent fmt ≤
-              (d.significand.log2 : Int) + d.exponent := by
-          simpa only [totalExponent] using hnormalIEEE
         let rounded :=
           roundMantissaToLeadingBitEven d.significand fmt.fracWidth
         have hroundedHigh :
@@ -699,26 +696,9 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
           rw [ite_eq_right hoverflow', ite_eq_right hsub']
           simp only [packRoundedNormal, rounded, roundMantissaToLeadingBitEven, totalExponent,
             Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq, ite_or]
-        have himpl :
-            ieeeRoundDyadicImpl fmt d =
-              let carry := rounded == pow2 (fmt.fracWidth + 1)
-              let normalizedExponent :=
-                if carry then totalExponent + 1 else totalExponent
-              if normalizedExponent >
-                  Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
-                if d.negative then negInf fmt else posInf fmt
-              else
-                let normalizedMantissa :=
-                  if carry then pow2 fmt.fracWidth else rounded
-                ofFields fmt d.negative
-                  (Int.toNat
-                    (normalizedExponent + Int.ofNat fmt.bias))
-                  (normalizedMantissa - pow2 fmt.fracWidth) := by
-          unfold ieeeRoundDyadicImpl
-          simp only [beq_iff_eq, hm, ite_false]
-          rw [ite_eq_right (not_lt_of_ge hnormalIEEE')]
-          rfl
-        rw [hgeneral, himpl]
+        rw [hgeneral, ieeeRoundDyadicImpl_of_normal fmt d hm hnormalIEEE]
+        rw [show roundMantissaToLeadingBitEven d.significand fmt.fracWidth = rounded from rfl,
+          show (d.significand.log2 : Int) + d.exponent = totalExponent from rfl]
         simp only [beq_iff_eq]
         by_cases hcarry : rounded = pow2 (fmt.fracWidth + 1)
         · have hnormalizedMin :

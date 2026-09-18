@@ -25,7 +25,7 @@ All results are uniform in the binary format.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-noncomputable section
+section
 
 /-! ## Classification helpers -/
 

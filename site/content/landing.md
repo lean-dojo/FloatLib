@@ -6,9 +6,9 @@ authors:
   - Anima Anandkumar (Caltech)
 ---
 
-We built FloatLib so that the floating point code we run is also the code we can prove things about. The `x + y` in a program is the same operation covered by the theorem, down to rounding and the meaning of the result bits.
+The `x + y` in a FloatLib program is the same operation covered by the theorem, down to rounding and the meaning of the result bits.
 
-A few highlights we're excited about:
+The library provides:
 
 - **Your formats and rounding rules.** You can [define your own format](#/chapter/using-the-library/choosing-a-format) within the same framework. For binary layouts, choose the exponent and fraction widths, bias, and encoding policy for zeros, infinities, and NaNs. For a new representation or rounding rule, our shared interfaces connect your executable operations to their numerical specification through Lean proofs.
 - **The classical results, connected to code.** Correct rounding, half-ulp error bounds, and Sterbenz's lemma for exact subtraction are part of the [rounding theory](#/chapter/the-mathematics-of-rounding). We can use them to reason about the arithmetic in a program.
@@ -21,4 +21,4 @@ The [first chapter](#/chapter/using-the-library) gives you a small calculation t
 
 We follow the numerical-analysis literature and link to the specifications behind the named formats. If an argument catches your interest, the [references](#/references) will take you back to the original work.
 
-We'd love to see what you build with FloatLib. If you'd like to add a format, improve a proof, or help explain something better, have a look at the [contributing guide](https://github.com/lean-dojo/FloatLib/blob/main/CONTRIBUTING.md) :)
+We'd love to see what you build with FloatLib. If you'd like to add a format, improve a proof, or help explain something better, have a look at the [contributing guide](https://github.com/lean-dojo/FloatLib/blob/main/CONTRIBUTING.md).

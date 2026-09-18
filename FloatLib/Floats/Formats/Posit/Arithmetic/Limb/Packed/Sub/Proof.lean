@@ -15,8 +15,8 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Refinement of direct packed-pair posit subtraction
 
-The results below prove encoding range and equality with the representation-independent
-two-limb arithmetic kernel.
+Packed subtraction preserves the posit encoding range. Its complete result agrees with the
+two-limb subtraction kernel, including exceptional operands.
 -/
 
 @[expose] public section

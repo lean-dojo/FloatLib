@@ -119,8 +119,8 @@ meta structure TheoremSurface where
   /--
   Optional range, roundoff, or exactness meaning exposed by `#float_info [errors]`.
 
-  An empty field omits the group from numerical-analysis reports; it does not assert that the
-  declarations have no numerical consequences. The renderer does not infer bounds from names.
+  Numerical-analysis reports include only groups with an explicit guarantee in this field.
+  The renderer uses that supplied guarantee rather than inferring bounds from declaration names.
   -/
   numericalGuarantee? : Option NumericalGuarantee := none
 

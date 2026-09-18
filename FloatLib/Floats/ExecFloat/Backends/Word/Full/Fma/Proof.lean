@@ -347,6 +347,31 @@ private theorem roundNormalFmaDifference_refines
 
 /-! ## Native fast-path refinements -/
 
+private theorem fmaFiniteImpl?_eq_some_of_components (x y z result : Value)
+    (hx : expField (toUInt64 x) ≠ 0x7ff)
+    (hy : expField (toUInt64 y) ≠ 0x7ff)
+    (hz : expField (toUInt64 z) ≠ 0x7ff)
+    (hcomponents :
+      FiniteKernel.fmaComponents FloatFormat.binary64
+          { sign := signBit (toUInt64 x)
+            exponent := (expField (toUInt64 x)).toNat
+            mantissa :=
+              (finiteMantissa (expField (toUInt64 x)) (fracField (toUInt64 x))).toNat }
+          { sign := signBit (toUInt64 y)
+            exponent := (expField (toUInt64 y)).toNat
+            mantissa :=
+              (finiteMantissa (expField (toUInt64 y)) (fracField (toUInt64 y))).toNat }
+          { sign := signBit (toUInt64 z)
+            exponent := (expField (toUInt64 z)).toNat
+            mantissa :=
+              (finiteMantissa (expField (toUInt64 z)) (fracField (toUInt64 z))).toNat } =
+        result) :
+    fmaFiniteImpl? x y z = some result := by
+  unfold fmaFiniteImpl?
+  rw [decode_of_finiteExponent x hx, decode_of_finiteExponent y hy,
+    decode_of_finiteExponent z hz]
+  simpa only [FiniteKernel.fmaComponentsImpl_eq, Option.some.injEq] using hcomponents
+
 private theorem fmaNormalSameSignAligned_refines
     (x y z result : Value)
     (hresult : fmaNormalSameSignAligned? x y z = some result) :
@@ -516,17 +541,8 @@ private theorem fmaNormalSameSignAligned_refines
               (Nat.ne_of_gt hzExponentBounds.1)
               hxMantissaNe hyMantissaNe hzMantissaNe halignedNat
       _ = result := hrefines.symm
-  unfold fmaFiniteImpl?
-  rw [decode_of_finiteExponent x (by
-      simpa [xExponent, xBits] using hxExceptional),
-    decode_of_finiteExponent y (by
-      simpa [yExponent, yBits] using hyExceptional),
-    decode_of_finiteExponent z (by
-      simpa [zExponent, zBits] using hzExceptional)]
-  simp only [Option.some.injEq]
-  simpa [xBits, yBits, zBits, xExponent, yExponent, zExponent,
-    xFraction, yFraction, zFraction, xMantissa, yMantissa, zMantissa,
-    zSign, FiniteKernel.fmaComponentsImpl_eq] using hcomponents
+  exact fmaFiniteImpl?_eq_some_of_components x y z result
+    hxExceptional hyExceptional hzExceptional hcomponents
 
 private theorem fmaNormalOppositeSignAligned_refines
     (x y z result : Value)
@@ -670,17 +686,26 @@ private theorem fmaNormalOppositeSignAligned_refines
   have hxMantissaNe : xMantissa.toNat ≠ 0 := by omega
   have hyMantissaNe : yMantissa.toNat ≠ 0 := by omega
   have hzMantissaNe : zMantissa.toNat ≠ 0 := by omega
+  simp [fmaNormalOppositeSignAligned?, xBits, yBits, zBits, xExponent,
+    yExponent, zExponent, hxZero, hxExceptional, hyZero, hyExceptional,
+    hzZero, hzExceptional, productScale, zProductScale, productSign,
+    zSign, hsign, haligned, product, aligned, xMantissa, yMantissa,
+    zMantissa, xFraction, yFraction, zFraction, hproductNe,
+    -FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff] at hresult
+  let difference :=
+    if UInt128.less product aligned then
+      UInt128.sub aligned product
+    else
+      UInt128.sub product aligned
+  change 53 ≤ fmaLeading difference ∧
+    roundNormalProduct? (if UInt128.less product aligned then zSign else productSign)
+      xExponent yExponent difference (fmaLeading difference) = some result at hresult
   by_cases hless : FloatLib.Numerics.FixedWord.UInt128.less product aligned = true
   · have hordered : product.toNat < aligned.toNat :=
       (FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff product aligned).mp hless
     let magnitude := FloatLib.Numerics.FixedWord.UInt128.sub aligned product
     have haccepted := hresult
-    simp [fmaNormalOppositeSignAligned?, xBits, yBits, zBits, xExponent,
-      yExponent, zExponent, hxZero, hxExceptional, hyZero, hyExceptional,
-      hzZero, hzExceptional, productScale, zProductScale, productSign,
-      zSign, hsign, haligned, product, aligned, xMantissa, yMantissa,
-      zMantissa, xFraction, yFraction, zFraction, hproductNe,
-      hless] at haccepted
+    simp only [difference, hless, ite_true] at haccepted
     rcases haccepted with ⟨hleading, hround⟩
     have hleadingWord :
         (53 : UInt64) ≤ fmaLeading magnitude := by
@@ -724,17 +749,8 @@ private theorem fmaNormalOppositeSignAligned_refines
         _ = result := by
           rw [← halignedValue, ← hproduct]
           exact hrefines.symm
-    unfold fmaFiniteImpl?
-    rw [decode_of_finiteExponent x (by
-        simpa [xExponent, xBits] using hxExceptional),
-      decode_of_finiteExponent y (by
-        simpa [yExponent, yBits] using hyExceptional),
-      decode_of_finiteExponent z (by
-        simpa [zExponent, zBits] using hzExceptional)]
-    simp only [Option.some.injEq]
-    simpa [xBits, yBits, zBits, xExponent, yExponent, zExponent,
-      xFraction, yFraction, zFraction, xMantissa, yMantissa, zMantissa,
-      zSign, FiniteKernel.fmaComponentsImpl_eq] using hcomponents
+    exact fmaFiniteImpl?_eq_some_of_components x y z result
+      hxExceptional hyExceptional hzExceptional hcomponents
   · have hnotLt : ¬product.toNat < aligned.toNat := by
       intro hordered
       exact hless
@@ -745,12 +761,7 @@ private theorem fmaNormalOppositeSignAligned_refines
     have hordered : aligned.toNat < product.toNat := by omega
     let magnitude := FloatLib.Numerics.FixedWord.UInt128.sub product aligned
     have haccepted := hresult
-    simp [fmaNormalOppositeSignAligned?, xBits, yBits, zBits, xExponent,
-      yExponent, zExponent, hxZero, hxExceptional, hyZero, hyExceptional,
-      hzZero, hzExceptional, productScale, zProductScale, productSign,
-      zSign, hsign, haligned, product, aligned, xMantissa, yMantissa,
-      zMantissa, xFraction, yFraction, zFraction, hproductNe,
-      hless] at haccepted
+    simp only [difference, hless] at haccepted
     rcases haccepted with ⟨hleading, hround⟩
     have hleadingWord :
         (53 : UInt64) ≤ fmaLeading magnitude := by
@@ -794,17 +805,8 @@ private theorem fmaNormalOppositeSignAligned_refines
         _ = result := by
           rw [← hproduct, ← halignedValue]
           exact hrefines.symm
-    unfold fmaFiniteImpl?
-    rw [decode_of_finiteExponent x (by
-        simpa [xExponent, xBits] using hxExceptional),
-      decode_of_finiteExponent y (by
-        simpa [yExponent, yBits] using hyExceptional),
-      decode_of_finiteExponent z (by
-        simpa [zExponent, zBits] using hzExceptional)]
-    simp only [Option.some.injEq]
-    simpa [xBits, yBits, zBits, xExponent, yExponent, zExponent,
-      xFraction, yFraction, zFraction, xMantissa, yMantissa, zMantissa,
-      zSign, FiniteKernel.fmaComponentsImpl_eq] using hcomponents
+    exact fmaFiniteImpl?_eq_some_of_components x y z result
+      hxExceptional hyExceptional hzExceptional hcomponents
 
 /-- The native aligned binary64 FMA path refines the existing exact finite kernel. -/
 theorem fmaFiniteFastImpl_eq (x y z : Value) :

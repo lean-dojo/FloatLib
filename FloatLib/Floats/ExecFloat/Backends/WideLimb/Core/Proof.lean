@@ -236,11 +236,6 @@ theorem expField_eq (v : Value fmt) (h : fmt.expWidth ≤ 32) :
     Nat.shiftRight_eq_div_pow]
   exact Nat.mod_mod_of_dvd _ (Nat.pow_dvd_pow 2 h)
 
-/-- The stored exponent word denotes the exponent field. -/
-theorem expWord_toNat (v : Value fmt) (h : fmt.expWidth ≤ 32) :
-    (expWord v).toNat = Model.expField (toModel v) :=
-  expField_eq v h
-
 /-- The exponent field is below `2 ^ expWidth`. -/
 theorem expField_lt (v : Value fmt) (h : fmt.expWidth ≤ 32) :
     expField v < 2 ^ fmt.expWidth := by

@@ -6,6 +6,8 @@ Authors: FloatLib Team
 
 module
 
+import FloatLib.Kernels.FixedWord.Quotient.Compiler
+
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Runtime
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 

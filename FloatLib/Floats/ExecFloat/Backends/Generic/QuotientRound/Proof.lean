@@ -128,6 +128,22 @@ theorem normalSpec_eq_roundRatScaled_of_some
         (num <<< (Int.ofNat fmt.fracWidth -
           Numerics.RationalBinary.floorLog2 num den).toNat, den) := by
     simpa only [shift, rationalExponent] using hscale
+  have hhigh' :
+      ¬Int.ofNat fmt.ieeeMaxNormalExponent <
+        Numerics.RationalBinary.floorLog2 num den + exponent := by
+    simpa only [totalExponent, rationalExponent] using hhigh
+  have hnotUnder' :
+      ¬Numerics.RationalBinary.floorLog2 num den + exponent <
+        -Int.ofNat fmt.normalMantissaExpOffset := by
+    simpa only [totalExponent, rationalExponent] using hnotUnder
+  have hnotSub' :
+      ¬Numerics.RationalBinary.floorLog2 num den + exponent <
+        fmt.ieeeMinNormalExponent := by
+    simpa only [totalExponent, rationalExponent] using hnotSub
+  have hdenBool : (den == 0) = false := by
+    simp [hden]
+  have hnumBool : (num == 0) = false := by
+    simp [hnum]
   cases hcarryValue : carry with
   | false =>
       have hcarry :
@@ -170,27 +186,11 @@ theorem normalSpec_eq_roundRatScaled_of_some
               (Int.toNat (totalExponent + Int.ofNat fmt.bias))
               (roundedMantissa - Model.pow2 fmt.fracWidth) := by
         unfold Model.ieeeRoundRatScaled
-        have hhigh' :
-            ¬Int.ofNat fmt.ieeeMaxNormalExponent <
-              Numerics.RationalBinary.floorLog2 num den + exponent := by
-          simpa only [totalExponent, rationalExponent] using hhigh
-        have hnotUnder' :
-            ¬Numerics.RationalBinary.floorLog2 num den + exponent <
-              -Int.ofNat fmt.normalMantissaExpOffset := by
-          simpa only [totalExponent, rationalExponent] using hnotUnder
-        have hnotSub' :
-            ¬Numerics.RationalBinary.floorLog2 num den + exponent <
-              fmt.ieeeMinNormalExponent := by
-          simpa only [totalExponent, rationalExponent] using hnotSub
         have hoverflow' :
             ¬Int.ofNat fmt.ieeeMaxNormalExponent <
               Numerics.RationalBinary.floorLog2 num den + exponent := by
           simpa only [hnormalized, totalExponent, rationalExponent] using
             hoverflow
-        have hdenBool : (den == 0) = false := by
-          simp [hden]
-        have hnumBool : (num == 0) = false := by
-          simp [hnum]
         have hcarryBool :
             (Numerics.roundQuotientEven
                 (num <<< (Int.ofNat fmt.fracWidth -
@@ -260,27 +260,11 @@ theorem normalSpec_eq_roundRatScaled_of_some
             Model.ofFields fmt sign
               (Int.toNat (totalExponent + 1 + Int.ofNat fmt.bias)) 0 := by
         unfold Model.ieeeRoundRatScaled
-        have hhigh' :
-            ¬Int.ofNat fmt.ieeeMaxNormalExponent <
-              Numerics.RationalBinary.floorLog2 num den + exponent := by
-          simpa only [totalExponent, rationalExponent] using hhigh
-        have hnotUnder' :
-            ¬Numerics.RationalBinary.floorLog2 num den + exponent <
-              -Int.ofNat fmt.normalMantissaExpOffset := by
-          simpa only [totalExponent, rationalExponent] using hnotUnder
-        have hnotSub' :
-            ¬Numerics.RationalBinary.floorLog2 num den + exponent <
-              fmt.ieeeMinNormalExponent := by
-          simpa only [totalExponent, rationalExponent] using hnotSub
         have hoverflow' :
             ¬Int.ofNat fmt.ieeeMaxNormalExponent <
               Numerics.RationalBinary.floorLog2 num den + exponent + 1 := by
           simpa only [hnormalized, totalExponent, rationalExponent] using
             hoverflow
-        have hdenBool : (den == 0) = false := by
-          simp [hden]
-        have hnumBool : (num == 0) = false := by
-          simp [hnum]
         have hcarryBool :
             (Numerics.roundQuotientEven
                 (num <<< (Int.ofNat fmt.fracWidth -

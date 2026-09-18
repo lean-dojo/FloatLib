@@ -63,6 +63,7 @@ export type Reference = {
   venue: string;
   year: string;
   url: string;
+  accessed: string;
 };
 
 export type SiteData = {

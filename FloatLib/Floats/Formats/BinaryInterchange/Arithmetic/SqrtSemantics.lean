@@ -32,7 +32,7 @@ open Float.Model.UnpackedFloat
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-noncomputable section
+section
 
 /--
 The residual classification produced from an integer square root locates the exact real square
@@ -61,8 +61,6 @@ theorem accuracyRepresents_natSqrt (n : Nat) :
   have hnDecomp : n = root * root + remainder := by
     dsimp only [remainder]
     omega
-  have hnLtSuccSq : n < (root + 1) * (root + 1) := by
-    simpa [root] using Nat.lt_succ_sqrt n
   have hsqrtNonneg : 0 ≤ Real.sqrt n := Real.sqrt_nonneg _
   have hsqrtSq : (Real.sqrt n) ^ 2 = n := by
     simp [Real.sq_sqrt (show (0 : ℝ) ≤ n by positivity)]
@@ -96,11 +94,7 @@ theorem accuracyRepresents_natSqrt (n : Nat) :
             (n : ℝ) = (root : ℝ) * root + remainder := by
           exact_mod_cast hnDecomp
         nlinarith [hsqrtSq]
-      · have hnLtSuccSqCast :
-            (n : ℝ) < ((root + 1 : Nat) : ℝ) * (root + 1) := by
-          exact_mod_cast hnLtSuccSq
-        norm_num at hnLtSuccSqCast
-        nlinarith [hsqrtSq]
+      · exact Real.real_sqrt_lt_nat_sqrt_succ
 
 private theorem log2_sqrt (n : Nat) (hn : n ≠ 0) :
     (Nat.sqrt n).log2 = n.log2 / 2 := by
@@ -131,48 +125,9 @@ private theorem totalExponent_sqrt_shift
   rw [hroot, log2_sqrt _ hscaled,
     Nat.log2_shiftLeft_of_ne_zero mantissa shift hmantissa]
   change Int.ofNat ((mantissa.log2 + shift) / 2) + 1 + target =
-    (Int.ofNat mantissa.log2 + 1 + exponent + 1).ediv 2
-  have hcastDiv :
-      Int.ofNat ((mantissa.log2 + shift) / 2) =
-        (Int.ofNat (mantissa.log2 + shift)).ediv 2 := by
-    exact (Int.natCast_ediv (mantissa.log2 + shift) 2).symm
-  rw [hcastDiv]
-  have hcastAdd :
-      Int.ofNat (mantissa.log2 + shift) =
-        Int.ofNat mantissa.log2 + shift := by
-    simp
-  rw [hcastAdd]
-  have hexponent : exponent = (shift : Int) + 2 * target := by
-    omega
-  rw [hexponent]
-  have hrhsArg :
-      Int.ofNat mantissa.log2 + 1 + ((shift : Int) + 2 * target) + 1 =
-        (Int.ofNat mantissa.log2 + (shift : Int) + 2) + target * 2 := by
-    ring
-  rw [hrhsArg]
-  have hleftRaw :
-      (Int.ofNat mantissa.log2 + (shift : Int) + 1 * 2).ediv 2 =
-        (Int.ofNat mantissa.log2 + (shift : Int)).ediv 2 + 1 :=
-    Int.add_mul_ediv_right
-      (Int.ofNat mantissa.log2 + (shift : Int)) 1 (c := 2) (by norm_num)
-  have hleft :
-      (Int.ofNat mantissa.log2 + (shift : Int)).ediv 2 + 1 =
-        (Int.ofNat mantissa.log2 + (shift : Int) + 2).ediv 2 := by
-    rw [show Int.ofNat mantissa.log2 + (shift : Int) + 2 =
-      Int.ofNat mantissa.log2 + (shift : Int) + 1 * 2 by ring]
-    exact hleftRaw.symm
-  have hrightRaw :
-      (Int.ofNat mantissa.log2 + (shift : Int) + 2 + target * 2).ediv 2 =
-        (Int.ofNat mantissa.log2 + (shift : Int) + 2).ediv 2 + target :=
-    Int.add_mul_ediv_right
-      (Int.ofNat mantissa.log2 + (shift : Int) + 2) target
-      (c := 2) (by norm_num)
-  calc
-    (Int.ofNat mantissa.log2 + (shift : Int)).ediv 2 + 1 + target =
-        (Int.ofNat mantissa.log2 + (shift : Int) + 2).ediv 2 + target := by
-          rw [hleft]
-    _ = (Int.ofNat mantissa.log2 + (shift : Int) + 2 + target * 2).ediv 2 :=
-      hrightRaw.symm
+    (Int.ofNat mantissa.log2 + 1 + exponent + 1) / 2
+  simp only [Int.ofNat_eq_natCast] at *
+  omega
 
 private theorem sqrt_shift_mul_bpow
     (mantissa shift : Nat) (exponent target : Int)
