@@ -690,12 +690,24 @@ theorem anyLimbBelow_eq_true_iff (v : LimbArray) (q : Nat) :
         · subst hiq; exact Or.inl hne
         · exact Or.inr ⟨i, by omega, hne⟩
 
+/-- Limbs beyond storage are zero, so scanning them cannot change the answer. -/
+theorem anyLimbBelow_min_size (v : LimbArray) (count : Nat) :
+    anyLimbBelow v (min count v.size) = anyLimbBelow v count := by
+  apply Bool.eq_iff_iff.mpr
+  rw [anyLimbBelow_eq_true_iff, anyLimbBelow_eq_true_iff]
+  constructor
+  · rintro ⟨i, hi, hne⟩
+    exact ⟨i, (lt_min_iff.mp hi).1, hne⟩
+  · rintro ⟨i, hi, hne⟩
+    refine ⟨i, lt_min hi ?_, hne⟩
+    exact Nat.lt_of_not_ge fun h ↦ hne (limb_eq_zero_of_size_le v h)
+
 /-- `anyBelow` detects a nonzero suffix below bit `k`. -/
 theorem anyBelow_eq_true_iff (v : LimbArray) (k : Nat) :
     anyBelow v k = true ↔ toNat v % 2 ^ k ≠ 0 := by
   rw [← toNat_lowBits]
   unfold anyBelow
-  rw [Bool.or_eq_true, anyLimbBelow_eq_true_iff, bne_iff_ne]
+  rw [anyLimbBelow_min_size, Bool.or_eq_true, anyLimbBelow_eq_true_iff, bne_iff_ne]
   constructor
   · rintro (⟨i, hi, hne⟩ | hne) hzero
     · rw [toNat, segment_eq_zero_iff] at hzero

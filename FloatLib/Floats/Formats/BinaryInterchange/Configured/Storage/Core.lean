@@ -86,14 +86,18 @@ abbrev limbsForKnownWidth (format : FloatFormat) (width : Nat)
 def automatic (format : FloatFormat) : StoragePlan format :=
   forKnownWidth format format.bitWidth rfl
 
-/-- Common execution-planner storage metadata corresponding to a certified plan. -/
+/--
+Common execution-planner storage metadata corresponding to a certified plan.
+
+The exact-width `Model` carrier uses `.custom`; only `.limbs` stores an explicit limb array.
+-/
 @[inline] def storageClass {format : FloatFormat} :
     StoragePlan format → FloatLib.Floats.ExecFloat.Backend.StorageClass
   | .byte _ => .byte
   | .word16 _ => .word16
   | .word32 _ => .word32
   | .word64 _ => .word64
-  | .wide => .wideLimbs
+  | .wide => .custom
   | .limbs _ => .wideLimbs
 
 end StoragePlan

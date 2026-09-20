@@ -138,9 +138,10 @@ def anyLimbBelow (v : LimbArray) : Nat → Bool
   | 0 => false
   | i + 1 => v.limb i != 0 || anyLimbBelow v i
 
-/-- Whether any bit below position `k` is set. -/
+/-- Whether any bit below position `k` is set, scanning only stored limbs. -/
 @[inline] def anyBelow (v : LimbArray) (k : Nat) : Bool :=
-  anyLimbBelow v (k / 32) || (v.limb (k / 32) &&& lowMask32 (k % 32)) != 0
+  anyLimbBelow v (min (k / 32) v.size) ||
+    (v.limb (k / 32) &&& lowMask32 (k % 32)) != 0
 
 /-- Set the low bit when `sticky` holds; an empty array remains empty. -/
 @[inline] def orLowBit (v : LimbArray) (sticky : Bool) : LimbArray :=

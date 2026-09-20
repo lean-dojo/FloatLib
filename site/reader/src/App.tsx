@@ -373,8 +373,9 @@ export default function App({ index }: { index: SiteIndex }) {
     window.addEventListener('keydown', shortcut);
     return () => window.removeEventListener('keydown', shortcut);
   }, []);
-  const routeKey = route.kind === 'chapter' ? `chapter:${route.slug}` : route.kind === 'node' ? `node:${route.id}`
-    : route.kind === 'references' ? 'references' : route.kind;
+  const routeKey = route.kind === 'chapter' ? chapterPath(route.slug, route.heading)
+    : route.kind === 'node' ? `node:${route.id}`
+    : route.kind === 'references' ? referencesPath(route.key) : route.kind;
   useLayoutEffect(() => {
     if (route.kind === 'chapter' && route.heading) return;
     if (route.kind === 'references' && route.key) return;
