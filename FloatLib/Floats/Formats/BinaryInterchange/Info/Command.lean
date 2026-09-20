@@ -97,14 +97,18 @@ private meta def modelOperations :
   ]
 
 /-- Persistent storage specified by the configured family's selected plan. -/
-private meta def configuredStorage (plan : Expr) : MetaM String := do
-  let storageClass ← mkAppM
-    ``Configured.StoragePlan.storageClass #[plan]
-  let storageDisplay ← mkAppM
-    ``FloatLib.Floats.ExecFloat.Backend.StorageClass.display #[storageClass]
+private meta def configuredStorage (plan : Expr) (bitWidth : Nat) : MetaM String := do
+  let plan ← withTransparency .all <| whnf plan
   let storage ←
-    FloatLib.Floats.ExecFloat.Inspection.readString
-      "configured storage class" storageDisplay
+    if plan.isAppOfArity ``Configured.StoragePlan.wide 1 then
+      pure s!"BitVec {bitWidth} in Model"
+    else do
+      let storageClass ← mkAppM
+        ``Configured.StoragePlan.storageClass #[plan]
+      let storageDisplay ← mkAppM
+        ``FloatLib.Floats.ExecFloat.Backend.StorageClass.display #[storageClass]
+      FloatLib.Floats.ExecFloat.Inspection.readString
+        "configured storage class" storageDisplay
   pure s!"{storage} specified by the configured storage plan"
 
 /-- Read the standards identity supplied by a nominal static-byte family. -/
@@ -130,7 +134,7 @@ elab_rules : command
               match configuredFormatPlan? family with
               | some (format, plan) => do
                   let summary ← FloatInfo.inspectSummary format
-                  let storage ← configuredStorage plan
+                  let storage ← configuredStorage plan summary.bitWidth
                   pure
                     ( summary
                     , FloatInfo.standardName summary
