@@ -6,15 +6,15 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaledSqrt.Runtime
 public import Init.Data.Float.Model.Unpacked.Operations.Sqrt
 
 /-!
 # Executable native-backed unpacked floating-point square root
 
-The unpacked-float square-root implementation uses the proved native-word integer-root
-dispatcher when the radicand fits in `UInt64`. Wider radicands retain Lean's arbitrary-precision
-implementation.
+The unpacked-float square-root implementation reduces the radicand to the rounding scale before
+calling the proved integer-root dispatcher. The original core remains available with its exact
+logical-model contract.
 -/
 
 @[expose] public section
@@ -48,9 +48,11 @@ namespace Model.NativeModelSqrt
   | .finite .negative .. => .notANumber
   | .zero sign => .zero sign
   | .finite .positive mantissa exponent _ =>
-      let (mantissa, exponent, accuracy) := sqrtCore spec mantissa exponent
-      Float.Model.UnpackedFloat.roundWithAccuracy
-        spec .positive mantissa exponent accuracy
+      let targetExponent :=
+        min (exponent.ediv 2)
+          (spec.targetExponent ((Float.Model.totalExponent mantissa exponent + 1).ediv 2))
+      let shiftAmount := (exponent - 2 * targetExponent).toNat
+      ScaledSqrt.round spec .positive (mantissa <<< shiftAmount) targetExponent
 
 end Model.NativeModelSqrt
 end FloatLib.Floats.Formats.BinaryInterchange

@@ -157,27 +157,48 @@ theorem sameDatum_decode_encodeSaturate
           format.sameDatum_decode_encodeNegativeInfinity]
   | finite finite =>
       simp only at hgrid
-      unfold saturate
-      simp only [beq_iff_eq]
-      split
-      next _ =>
-        exact format.sameDatum_decode_encodeSaturateBelow mode rounding
-      next hnotBelow =>
-        split
-        next _ =>
-          exact format.sameDatum_decode_encodeSaturateAbove mode rounding
-        next hnotAbove =>
-          apply format.sameDatum_decode_encodeFinite finite hgrid
-          · apply not_lt.mp
-            intro hlt
-            apply hnotBelow
-            rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
-            exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
-          · apply not_lt.mp
-            intro hlt
-            apply hnotAbove
-            rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
-            exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+      have nonnegative (value : Numerics.Dyadic) (hnegative : value.negative = false) :
+          0 ≤ value.toRat := by
+        by_cases hzero : value.significand = 0
+        · exact ((Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero).symm.le
+        · exact (Numerics.Dyadic.toRat_pos_of_significand_ne_zero
+            value hzero hnegative).le
+      cases hnegative : finite.negative with
+      | false =>
+          simp only [saturate, hnegative, Bool.false_eq_true, ite_false, beq_iff_eq]
+          split
+          next _ =>
+            exact format.sameDatum_decode_encodeSaturateAbove mode rounding
+          next hnotAbove =>
+            apply format.sameDatum_decode_encodeFinite finite hgrid
+            · apply le_trans ?_ (nonnegative finite hnegative)
+              cases hsigned : format.signedness with
+              | signed =>
+                  rw [minFinite, hsigned, Numerics.Dyadic.neg_toRat]
+                  exact neg_nonpos.mpr format.maxFinite_toRat_pos.le
+              | unsigned => simp [minFinite, hsigned]
+            · apply not_lt.mp
+              intro hlt
+              apply hnotAbove
+              rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
+              exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+      | true =>
+          simp only [saturate, hnegative, ite_true, beq_iff_eq]
+          split
+          next _ =>
+            exact format.sameDatum_decode_encodeSaturateBelow mode rounding
+          next hnotBelow =>
+            apply format.sameDatum_decode_encodeFinite finite hgrid
+            · apply not_lt.mp
+              intro hlt
+              apply hnotBelow
+              rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
+              exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+            · have hnonpos : finite.toRat ≤ 0 := by
+                have hneg := nonnegative finite.neg (by simp [hnegative])
+                rw [Numerics.Dyadic.neg_toRat] at hneg
+                exact neg_nonneg.mp hneg
+              exact hnonpos.trans format.maxFinite_toRat_pos.le
 
 /--
 Decoding an executable projection returns its exact round-then-saturate datum.

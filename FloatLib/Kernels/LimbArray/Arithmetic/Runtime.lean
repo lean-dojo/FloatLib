@@ -25,6 +25,9 @@ intermediates in `UInt64`.
 
 `Arithmetic.Proof` states each kernel's effect on `toNat`, including the required capacity,
 borrow, and accumulator invariants.
+
+For the row-accumulation multiplication algorithm, see Richard P. Brent and Paul Zimmermann,
+*Modern Computer Arithmetic* (2010), §1.3.1, Algorithm 1.2 (`BasecaseMultiply`).
 -/
 
 @[expose] public section

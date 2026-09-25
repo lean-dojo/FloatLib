@@ -36,7 +36,7 @@ theorem quantizesAt_quantizeAt {lanes : Nat} (exponent : Int) (input : Vector Ra
   constructor
   · rfl
   · intro lane
-    simp [quantizeAt]
+    simp [quantizeAt, Nat.ne_of_gt (Nat.zero_lt_of_lt lane.isLt)]
 
 /-- `quantizeAt` implements shared-scale contextual quantization. -/
 theorem quantizeAt_refines (lanes : Nat) :
@@ -67,13 +67,13 @@ theorem blockScaled_sharedScale (lanes : Nat) :
   have hdecode : decode code = block :=
     (represents_iff code block).1 hcode
   rw [← hdecode]
-  simp [decode]
+  simp [decode, Nat.ne_of_gt (Nat.zero_lt_of_lt lane.isLt)]
 
 /-- Decoding a freshly quantized block exposes nearest-even reconstruction lane by lane. -/
 @[simp] theorem decode_quantizeAt_get {lanes : Nat} (exponent : Int)
     (input : Vector Rat lanes) (lane : Fin lanes) :
     (decode (quantizeAt exponent input))[lane.val] =
       (roundRatEven (input[lane.val] / scale exponent) : Rat) * scale exponent := by
-  simp [decode, quantizeAt]
+  simp [decode, quantizeAt, Nat.ne_of_gt (Nat.zero_lt_of_lt lane.isLt)]
 
 end FloatLib.Floats.Formats.Block

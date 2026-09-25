@@ -9,17 +9,21 @@ module
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Runtime
 public import Mathlib.Data.Nat.Sqrt
+import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Ring
 
 /-!
-# Verified native-word integer square root
+# Verified native and arbitrary-precision integer square root
 
 `sqrtIter_toNat` identifies the native Newton iteration with `Nat.sqrt.iter`, and `sqrt_toNat`
 proves that its initialization computes the floor square root. The native average cannot overflow.
 The runtime module proves termination by a strictly decreasing guess.
 
-`natSqrt_eq_sqrtNat` installs a compiler substitution for `Nat.sqrt`, using this implementation
-below `2^64` and the arbitrary-precision definition otherwise.
+`checkRoot?_eq` certifies the increasing-precision candidate by the defining square inequalities.
+`sqrtRem_eq` also establishes the exact remainder, with explicit full-precision iteration as
+fallback. `natSqrt_eq_sqrtNat` installs both implementations as a compiler substitution for
+`Nat.sqrt`, preserving the direct native-word branch below `2^64`.
 -/
 
 @[expose] public section
@@ -92,7 +96,7 @@ decreasing_by
     simp [sqrt, hsmall, hsmallNat]
   · have hlargeNat : ¬value.toNat ≤ 1 := by
       simpa [UInt64.le_iff_toNat_le] using hsmall
-    simp only [sqrt, hsmall, hlargeNat, ite_false]
+    simp only [sqrt, log2Word_eq_log2, hsmall, hlargeNat, ite_false]
     rw [sqrtIter_toNat]
     apply congrArg (Nat.sqrt.iter value.toNat)
     let shift := value.log2.toNat / 2 + 1
@@ -113,24 +117,73 @@ decreasing_by
     simpa only [shift, hlog, UInt64.reduceToNat] using
       FloatLib.Numerics.FixedWord.shiftLeft_toNat (1 : UInt64) shift hshift hfit
 
-/-- The bounded native implementation preserves natural-number square root. -/
+private theorem predecessor_square (guess : Nat) :
+    guess * guess - (guess + guess - 1) = (guess - 1) * (guess - 1) := by
+  cases guess with
+  | zero => decide
+  | succ guess =>
+      have hgap : guess + 1 + (guess + 1) - 1 = guess + guess + 1 := by omega
+      have hsquare :
+          (guess + 1) * (guess + 1) = guess * guess + (guess + guess + 1) := by ring
+      simp only [Nat.add_sub_cancel, hgap, hsquare]
+
+/-- Every accepted candidate gives the exact floor square root and remainder. -/
+theorem checkRoot?_eq (value guess : Nat) (result : Nat × Nat)
+    (h : checkRoot? value guess = some result) :
+    result = (Nat.sqrt value, value - Nat.sqrt value * Nat.sqrt value) := by
+  unfold checkRoot? at h
+  dsimp only at h
+  by_cases hlower : guess * guess ≤ value
+  · rw [ite_eq_left hlower] at h
+    split at h
+    next hremainder =>
+      have hroot : guess = Nat.sqrt value := Nat.eq_sqrt.mpr ⟨hlower, by
+        have hdecompose := Nat.sub_add_cancel hlower
+        nlinarith⟩
+      rw [← hroot]
+      exact (Option.some.inj h).symm
+    next _ => simp at h
+  · rw [ite_eq_right hlower, predecessor_square] at h
+    split at h
+    next hpredecessor =>
+      have hpositive : 0 < guess := by
+        by_contra hzero
+        have : guess = 0 := by omega
+        simp [this] at hlower
+      have hroot : guess - 1 = Nat.sqrt value := Nat.eq_sqrt.mpr ⟨hpredecessor, by
+        rw [Nat.sub_add_cancel hpositive]
+        omega⟩
+      rw [← hroot]
+      exact (Option.some.inj h).symm
+    next _ => simp at h
+
+/-- Checked increasing-precision Newton preserves the floor square root and exact remainder. -/
+theorem sqrtRem_eq (value : Nat) :
+    sqrtRem value = (Nat.sqrt value, value - Nat.sqrt value * Nat.sqrt value) := by
+  unfold sqrtRem
+  cases h : checkRoot? value (approxRoot value (value.log2 / 2)) with
+  | none => simp only [← Nat.sqrt.eq_1 value]
+  | some result => exact checkRoot?_eq value _ result h
+
+/--
+The native and checked arbitrary-precision implementations preserve natural-number square root.
+-/
 theorem sqrtNat_eq_sqrt (value : Nat) :
     sqrtNat value = Nat.sqrt value := by
   unfold sqrtNat
-  dsimp only
   split
   next hfit =>
     rw [sqrt_toNat, UInt64.toNat_ofNat_of_lt' hfit]
   next _ =>
-    exact (Nat.sqrt.eq_1 value).symm
+    exact congrArg Prod.fst (sqrtRem_eq value)
 
 /--
-The compiler uses native-word square root whenever the input fits in one word.
+The compiler uses native-word square root for one-word inputs and checked Newton for larger inputs.
 
 This `@[csimp]` theorem is global: every module that imports it, in particular everything that
 imports `FloatLib.Kernels`, compiles `Nat.sqrt` to `sqrtNat`, including uses unrelated to
-FloatLib. The substitution is sound by `sqrtNat_eq_sqrt`, and the fallback branch of `sqrtNat` is
-the unchanged logical definition, so only inputs below `2^64` take a different code path.
+FloatLib. The substitution is sound by `sqrtNat_eq_sqrt`. The checked candidate's fallback calls
+`Nat.sqrt.iter` explicitly, so compiling the replacement cannot recurse through this substitution.
 -/
 -- grind: no rule; this is a compiler implementation substitution, not a search rewrite.
 @[csimp] theorem natSqrt_eq_sqrtNat :

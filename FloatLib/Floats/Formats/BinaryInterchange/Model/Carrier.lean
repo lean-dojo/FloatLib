@@ -341,6 +341,33 @@ when the format reserves an exceptional encoding.
       if IEEE.isNaN x then ofBits (x.bits ||| FloatFormat.quietBit fmt) else x
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => x
 
+/--
+The IEEE 754 §9.7 payload of a binary NaN fraction field: the field without its quiet bit.
+
+The quiet bit is the most significant fraction bit. It is therefore the highest set bit of a quiet
+NaN's field and clear in a signaling NaN's field, so the payload is recovered without knowing the
+fraction width. A zero field has payload zero.
+-/
+@[inline] def payloadOfNaNField (signaling : Bool) (field : Nat) : Nat :=
+  if signaling then field else field - 2 ^ Nat.log2 field
+
+/--
+A quiet NaN of `fmt` carrying a source NaN's sign and payload, following IEEE 754-2019 §6.2.3.
+
+IEEE encodings keep the sign, set the quiet bit, and keep the payload when it fits below the quiet
+bit; a payload that does not fit is replaced by zero, the canonical payload. The maximum-NaN
+encoding keeps only the sign, FNUZ has a single NaN, and a fully finite encoding returns
+`invalidResult fmt`, positive zero.
+-/
+@[inline] def propagatedNaN (fmt : FloatFormat) (negative : Bool) (payload : Nat) : Model fmt :=
+  match fmt.encoding with
+  | .ieee =>
+      let quiet := 2 ^ (fmt.fracWidth - 1)
+      ofFields fmt negative fmt.expAllOnesNat (quiet + if payload < quiet then payload else 0)
+  | .finiteMaxNaN => ofFields fmt negative fmt.expAllOnesNat fmt.fracMaskNat
+  | .finiteUnsignedZero => negZero fmt
+  | .finite => posZero fmt
+
 /-- Return `x` quieted when it is a NaN. -/
 @[inline] def chooseNaN1 {fmt : FloatFormat} (x : Model fmt) : Option (Model fmt) :=
   if isNaN x then some (quietNaN x) else none

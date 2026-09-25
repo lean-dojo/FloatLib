@@ -1,0 +1,48 @@
+{
+  "label": "Operation",
+  "compactDefault": "add",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "ch17-host-vs-software.png",
+      "alt": "Six operations for binary32 and binary64: paired native C and FloatLib bars show median nanoseconds per operation on logarithmic vertical axes. One label per pair gives FloatLib median / native C median. 9 trials, with input selection and checksums included."
+    },
+    {
+      "id": "add",
+      "label": "Addition",
+      "src": "ch17-host-vs-software-add.svg",
+      "alt": "Addition: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    },
+    {
+      "id": "sub",
+      "label": "Subtraction",
+      "src": "ch17-host-vs-software-sub.svg",
+      "alt": "Subtraction: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "ch17-host-vs-software-mul.svg",
+      "alt": "Multiplication: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "ch17-host-vs-software-div.svg",
+      "alt": "Division: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    },
+    {
+      "id": "sqrt",
+      "label": "Square root",
+      "src": "ch17-host-vs-software-sqrt.svg",
+      "alt": "Square root: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    },
+    {
+      "id": "fma",
+      "label": "Fused multiply-add",
+      "src": "ch17-host-vs-software-fma.svg",
+      "alt": "Fused multiply-add: native C and FloatLib binary32 and binary64 median times in nanoseconds per operation on a logarithmic vertical axis. Paired bars show absolute times; labels show FloatLib median / native C median. 9 trials in the same input-selection and checksum harness."
+    }
+  ]
+}

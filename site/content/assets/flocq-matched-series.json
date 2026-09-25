@@ -1,0 +1,48 @@
+{
+  "label": "Operation",
+  "compactDefault": "add",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "flocq-matched.png",
+      "alt": "Six arithmetic operations: absolute time per operation against encoded width on logarithmic axes. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats, one trial. Square root at 1,024 bits and above uses complete 16-fixture blocks."
+    },
+    {
+      "id": "add",
+      "label": "Addition",
+      "src": "flocq-matched-add.svg",
+      "alt": "Addition: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Result-dependent fixture chain."
+    },
+    {
+      "id": "sub",
+      "label": "Subtraction",
+      "src": "flocq-matched-sub.svg",
+      "alt": "Subtraction: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Result-dependent fixture chain."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "flocq-matched-mul.svg",
+      "alt": "Multiplication: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Result-dependent fixture chain."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "flocq-matched-div.svg",
+      "alt": "Division: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Result-dependent fixture chain."
+    },
+    {
+      "id": "sqrt",
+      "label": "Square root",
+      "src": "flocq-matched-sqrt.svg",
+      "alt": "Square root: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Square root at 1,024 bits and above uses complete 16-fixture blocks."
+    },
+    {
+      "id": "fma",
+      "label": "Fused multiply-add",
+      "src": "flocq-matched-fma.svg",
+      "alt": "Fused multiply-add: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. One retained trial. Result-dependent fixture chain."
+    }
+  ]
+}

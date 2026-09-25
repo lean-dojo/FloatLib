@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch13-element-values.png: the seven small formats, layout and value set.
+"""Draw content/assets/ch13-element-values.png: seven small formats and their value sets.
 
 One row per format: E5M2, E4M3FN, E4M3FNUZ, E5M2FNUZ, E2M3, E3M2 and E2M1, in the order chapter 09
-introduces them. At the left, the stored word drawn to scale as sign, exponent and fraction fields
-(with fs.bit_layout, one width per bit in every row). At the right, every positive finite value
-the format can hold, as a tick on one shared logarithmic axis, tall for a normal value and short
-for a subnormal one. Zero is not drawn (it has no place on a logarithmic axis) and neither are the
-infinities and NaNs, so a row shows exactly the positive numbers a byte of that format can mean.
+introduces them. The desktop rows give the sign, exponent and fraction widths as numbers.
+Every positive finite value is a tick on a common logarithmic scale, tall for a normal value
+and short for a subnormal one. The phone version stacks seven panels with readable limits,
+counts and axis labels. Zero has no place on a logarithmic axis; infinities and NaNs are also
+excluded. Each row therefore contains exactly the positive finite values of its format.
 
 Sources. The descriptors are those of
 FloatLib/Floats/Formats/BinaryInterchange/Format/Catalog.lean: `e5m2 = ieee 5 2`,
@@ -42,7 +42,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 
-from matplotlib.lines import Line2D  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
 IEEE, FINITE_MAX_NAN, FINITE_UNSIGNED_ZERO, FINITE = "ieee", "finiteMaxNaN", "finiteUnsignedZero", "finite"
 
@@ -146,98 +146,71 @@ def power_of_two_label(value: Fraction) -> str:
     return rational_label(value)
 
 
-SIGN_COLOUR = fs.MUTED
-EXP_COLOUR = fs.ORANGE
-FRAC_COLOUR = fs.SKY
 NORMAL_COLOUR = fs.BLUE
 SUBNORMAL_COLOUR = fs.VERMILION
 
-LAYOUT_SCALE = 3          # axis units per bit in the layout panel, so one-bit fields get a label
-ROW_HEIGHT = 0.5
+def draw(mobile: bool):
+    fig = plt.figure(figsize=(3.8, 10.3) if mobile else (9, 6.3))
+    fig.text(0.035, 0.98, "Which positive values fit?", fontsize=14, weight="bold", va="top")
+    fig.text(0.035, 0.93 if mobile else 0.90,
+             "Tall blue ticks: normal\nShort orange ticks: subnormal" if mobile else
+             "Tall blue ticks: normal     Short orange ticks: subnormal",
+             fontsize=11.5, linespacing=1.4)
+    for i, fmt in enumerate(FORMATS):
+        normals, subnormals = positive_values(fmt)
+        smallest, largest = min(subnormals), max(normals)
+        bits = 1 + fmt["expWidth"] + fmt["fracWidth"]
+        if mobile:
+            y = 0.82 - i * 0.113
+            fig.text(0.035, y + 0.043, f"{fmt['name']}  ({bits} bits)", fontsize=12, weight="bold")
+            fig.text(0.035, y + 0.016,
+                     f"{power_of_two_label(smallest)} to {rational_label(largest)}; "
+                     f"{len(normals) + len(subnormals)} values", fontsize=11.5)
+            ax = fig.add_axes([0.09, y - 0.029, 0.84, 0.035])
+        else:
+            y = 0.78 - i * 0.102
+            fig.text(0.035, y, fmt["name"], fontsize=12, weight="bold")
+            fig.text(0.035, y - 0.032,
+                     f"{bits} bits: 1 + {fmt['expWidth']} + {fmt['fracWidth']}", fontsize=11,
+                     color=fs.MUTED)
+            fig.text(0.25, y, f"{power_of_two_label(smallest)} to {rational_label(largest)}",
+                     fontsize=11.5)
+            fig.text(0.25, y - 0.032, f"{len(normals) + len(subnormals)} positive values",
+                     fontsize=11, color=fs.MUTED)
+            ax = fig.add_axes([0.46, y - 0.033, 0.50, 0.062])
+        ax.set_xscale("log", base=2)
+        ax.set_xlim(2.0 ** -18, 2.0 ** 17)
+        ax.set_ylim(-0.42, 0.42)
+        ax.vlines([float(v) for v in normals], -0.3, 0.3, color=NORMAL_COLOUR, lw=0.9)
+        ax.vlines([float(v) for v in subnormals], -0.16, 0.16, color=SUBNORMAL_COLOUR, lw=1)
+        ks = [-16, -8, 0, 8, 16]
+        ax.set_xticks([2.0 ** k for k in ks],
+                      labels=[f"$2^{{{k}}}$" if k else "$1$" for k in ks])
+        ax.tick_params(axis="x", labelsize=11, length=2, pad=2)
+        ax.set_yticks([])
+        ax.minorticks_off()
+        ax.spines['left'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        if not mobile and i != len(FORMATS) - 1:
+            ax.set_xticklabels([])
+    fig.text(0.035, 0.03 if mobile else 0.01,
+             "Same logarithmic value axis in every row.\nZero, infinities and NaNs are not plotted."
+             if mobile else
+             "Fields: sign + exponent + fraction.  Same logarithmic value axis; zero, infinities and NaNs omitted.",
+             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
-
     check_against_chapter()
     fs.setup()
-
-    n = len(FORMATS)
-    fig = fs.figure(5.4)[0]
-    fig.clf()
-    # Two panels sharing the rows: layouts at the left, values at the right.
-    ax_layout = fig.add_axes([0.135, 0.13, 0.16, 0.76])
-    ax_values = fig.add_axes([0.325, 0.13, 0.66, 0.76])
-
-    rows = list(range(n))[::-1]
-    ylabels = []
-    for y, fmt in zip(rows, FORMATS):
-        normals, subnormals = positive_values(fmt)
-        ylabels.append(f"{fmt['name']}\n{len(normals) + len(subnormals)} positive values")
-
-        # Layout, most significant bit at the left, drawn to one scale in every row.
-        layout_fields = [
-            ("S", 1, SIGN_COLOUR),
-            (f"E{fmt['expWidth']}", fmt["expWidth"], EXP_COLOUR),
-            (f"M{fmt['fracWidth']}", fmt["fracWidth"], FRAC_COLOUR),
-        ]
-        fs.bit_layout(ax_layout, layout_fields, y=y - ROW_HEIGHT / 2, height=ROW_HEIGHT,
-                      label_bits=False, scale=LAYOUT_SCALE, name_size=9)
-
-        # Values.
-        xs_n = [float(v) for v in normals]
-        xs_s = [float(v) for v in subnormals]
-        ax_values.vlines(xs_n, y - 0.3, y + 0.3, color=NORMAL_COLOUR, linewidth=0.8)
-        ax_values.vlines(xs_s, y - 0.17, y + 0.17, color=SUBNORMAL_COLOUR, linewidth=0.8)
-        largest = max(normals)
-        ax_values.annotate(f"max {rational_label(largest)}", (float(largest), y),
-                           textcoords="offset points", xytext=(7, 0), ha="left", va="center",
-                           fontsize=9, color=fs.INK)
-        smallest = min(subnormals)
-        ax_values.annotate(power_of_two_label(smallest), (float(smallest), y),
-                           textcoords="offset points", xytext=(-7, 0), ha="right", va="center",
-                           fontsize=9, color=fs.INK)
-
-    ax_layout.set_xlim(-0.5, 8 * LAYOUT_SCALE + 0.5)
-    ax_layout.set_ylim(-0.6, n - 0.4)
-    ax_layout.set_yticks(rows)
-    ax_layout.set_yticklabels(ylabels, fontsize=9.5, linespacing=1.4)
-    ax_layout.tick_params(axis="y", length=0)
-    ax_layout.set_xticks([])
-    ax_layout.grid(False)
-    for side in ("left", "bottom"):
-        ax_layout.spines[side].set_visible(False)
-    ax_layout.set_title("stored word, to scale", loc="left", fontsize=10)
-
-    ax_values.set_xscale("log", base=2)
-    ax_values.set_xlim(2.0 ** -21, 2.0 ** 19.5)
-    ticks = [2.0 ** k for k in range(-16, 17, 4)]
-    ax_values.set_xticks(ticks)
-    ax_values.set_xticklabels([f"$2^{{{k}}}$" if k else "$1$" for k in range(-16, 17, 4)])
-    ax_values.minorticks_off()
-    ax_values.set_ylim(-0.6, n - 0.4)
-    ax_values.set_yticks(rows)
-    ax_values.set_yticklabels([])
-    ax_values.tick_params(axis="y", length=0)
-    ax_values.grid(axis="y", visible=False)
-    ax_values.set_xlabel("value (each positive finite value is one tick)")
-    ax_values.set_title("every positive finite value", loc="left", fontsize=10)
-
-    handles = [
-        Line2D([], [], marker="|", markersize=12, markeredgewidth=1.2, color=NORMAL_COLOUR,
-               linestyle="None", label="normal value (tall tick)"),
-        Line2D([], [], marker="|", markersize=7, markeredgewidth=1.2, color=SUBNORMAL_COLOUR,
-               linestyle="None", label="subnormal value (short tick)"),
-    ]
-    # The lower left of the value panel is empty (the small formats sit near one), so the legend
-    # lives there rather than crowding the panel title.
-    ax_values.legend(handles=handles, loc="lower left", ncol=1, fontsize=9.5, handletextpad=0.4,
-                     labelspacing=0.9)
-
-    out = fs.save(fig, "ch13-element-values.png", out=args.out)
-    print(f"wrote {out}")
+    out = args.out or fs.ASSETS / "ch13-element-values.png"
+    for mobile in (False, True):
+        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 
 if __name__ == "__main__":

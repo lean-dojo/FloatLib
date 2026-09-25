@@ -241,7 +241,7 @@ handling, and the 16-bit FMA cases lose sticky information that should decide th
 FloatLib's executable agrees with its exact specification on those inputs.
 
 That supports the recorded `external-limitation` classification; it does not make the raw
-comparison pass. The [website's validation chapter](../site/content/chapters/16-external-validation.md)
+comparison pass. The [website's validation chapter](../site/content/chapters/19-external-validation.md)
 also discusses later checks at more widths. Its broader counts should not be substituted into
 the older result manifest.
 
@@ -316,7 +316,7 @@ The saved direct-comparison bundle has these coverage limits:
 
 These are limits of that comparison, not a current inventory of the library. Later decimal,
 posit, and other checks are described in the
-[validation chapter](../site/content/chapters/16-external-validation.md).
+[validation chapter](../site/content/chapters/19-external-validation.md).
 Even exhaustive testing at one finite width cannot establish a theorem over every descriptor.
 Likewise, scalar arithmetic checks do not establish a verified GEMM implementation.
 

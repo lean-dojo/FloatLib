@@ -137,6 +137,70 @@ theorem run_default_negZero_value? :
       .failure (.exceptional .source exceptional) :=
   rfl
 
+/-- A configured NaN decodes to the NaN observation carrying its fraction field, sign, and class. -/
+theorem decode_of_isNaN {source : FloatFormat}
+    {sourcePlan : Configured.StoragePlan source} {sourceCode : Type}
+    [FloatLib.Floats.ExecFloat.ModelCodec sourcePlan (Model source) sourceCode]
+    (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan))
+    (hnan : Model.isNaN (toModel value) = true) :
+    ExecFloat.Binary.decode value =
+      .exceptional (.nan (some (Model.fracField (toModel value)))
+        (Model.signBit (toModel value)) (Model.isSNaN (toModel value))) := by
+  have hdyadic : Model.toDyadic? (toModel value) = none := by
+    cases h : Model.toDyadic? (toModel value) with
+    | none => rfl
+    | some d => simp [Model.isNaN_eq_false_of_toDyadic?_some h] at hnan
+  have hinf : Model.isInf (toModel value) = false := by
+    cases h : Model.isInf (toModel value) with
+    | false => rfl
+    | true => simp [Model.isNaN_eq_false_of_isInf_eq_true _ h] at hnan
+  simp [ExecFloat.Binary.decode, Model.exactNumericalSystem, hdyadic, hinf, NumericalValue.map]
+
+/--
+Default conversion of a decoded configured NaN is `Model.castWithStatus` on the source model.
+An IEEE destination keeps the sign and any payload that fits; an oversized payload becomes zero.
+Maximum-NaN encodings keep only the sign, while FNUZ has a single NaN. Invalid is raised exactly
+for a signaling source. The destination must have a NaN encoding; when it has none,
+`run_default_decode_of_isNaN_of_encoding_finite` shows that conversion fails while
+`Model.castWithStatus` raises invalid.
+-/
+theorem run_default_decode_of_isNaN {source : FloatFormat}
+    {sourcePlan : Configured.StoragePlan source} {sourceCode : Type}
+    [FloatLib.Floats.ExecFloat.ModelCodec sourcePlan (Model source) sourceCode]
+    (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan))
+    (mode : Model.IEEERoundingMode)
+    (hnan : Model.isNaN (toModel value) = true) (hformat : format.encoding ≠ .finite) :
+    run (format := format) (plan := plan) (code := code) Context.default
+        (ExecFloat.Binary.decode value) =
+      .success (ofModel (Model.castWithStatus source format (toModel value) mode).value)
+        { invalid := (Model.castWithStatus source format (toModel value) mode).status.invalid } := by
+  rw [decode_of_isNaN value hnan]
+  exact runWith_default_nan_eq_castWithStatus configuredPack (toModel value) mode hnan hformat
+
+/--
+Default conversion of a decoded configured NaN into a destination with no NaN encoding fails with
+the source NaN as the reported exceptional value, and `Model.castWithStatus` on the same source
+raises invalid.
+
+`ExecFloat` keeps the explicit failure because the destination has no NaN to deliver. The
+descriptor model instead returns positive zero with the invalid flag set, so both paths classify
+the conversion as invalid.
+-/
+theorem run_default_decode_of_isNaN_of_encoding_finite {source : FloatFormat}
+    {sourcePlan : Configured.StoragePlan source} {sourceCode : Type}
+    [FloatLib.Floats.ExecFloat.ModelCodec sourcePlan (Model source) sourceCode]
+    (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan))
+    (mode : Model.IEEERoundingMode)
+    (hnan : Model.isNaN (toModel value) = true) (hformat : format.encoding = .finite) :
+    run (format := format) (plan := plan) (code := code) Context.default
+        (ExecFloat.Binary.decode value) =
+      .failure (.exceptional .source
+        (.nan (some (Model.fracField (toModel value)))
+          (Model.signBit (toModel value)) (Model.isSNaN (toModel value)))) ∧
+      (Model.castWithStatus source format (toModel value) mode).status.invalid = true := by
+  rw [decode_of_isNaN value hnan]
+  exact runWith_default_nan_of_encoding_finite configuredPack (toModel value) mode hnan hformat
+
 end Conversion
 end ExecFloat.Binary
 end FloatLib.Floats

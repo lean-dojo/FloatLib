@@ -1,6 +1,6 @@
 # FloatLib website specification
 
-FloatLib's website is a technical book with an introduction, sixteen chapters, and a bibliography.
+FloatLib's website is a technical book with an introduction, twenty-one chapters, and a bibliography.
 It explains the numerical representations, executable algorithms, and proofs, and presents the
 performance measurements and external comparisons. The public name is FloatLib; the Lean namespace is
 `FloatLib` and the Lake package is `floatlib`. The repository URL is
@@ -41,7 +41,10 @@ The book starts with using FloatLib and a short code tour in chapter 1. The deta
 belongs beside the relevant explanations, rather than in a second directory-by-directory chapter.
 The reading order is: a working program; machine numbers; the history and its
 incident case studies; verification; execution, models, and rounding; the format families; kernels and dispatch;
-performance and the native-float comparison; external validation. The bibliography is a separate
+performance and the native-float comparison; external validation; interval proof automation;
+further examples. Decimal arithmetic and elementary functions have their own chapters after
+binary formats. Native-float semantics follow the performance chapter.
+The bibliography is a separate
 reference list, not a numbered chapter. Keep old chapter and
 section bookmarks working when material moves. Reordering should update chapter labels and links,
 without renaming historical result records or duplicating their figures.
@@ -72,6 +75,12 @@ to `#/chapter/<slug>/figure-<asset-stem>`; for example,
 `[Figure 2.1](#/chapter/from-reals-to-machine-numbers/figure-ch01-binary32-layout)`.
 The anchor comes from the image filename, so reordering figures changes their displayed numbers
 without breaking links. Update the numbers in prose when changing their order.
+
+Wide explanatory figures may provide an `<asset-stem>-mobile.png` arrangement, used below 600px.
+Keep the same mathematics in both layouts. Performance generators also produce individual
+operation views and an `<asset-stem>-series.json` manifest. The reader offers an operation selector,
+starting with one operation on phones and the overview on larger screens. The image and both
+full-size links must follow the selected view; the caption describes their shared measurement scope.
 
 ## Writing
 
@@ -106,7 +115,7 @@ actual source location.
 ## Source layout
 
 - `content/landing.md`: opening definition, author byline, introduction, and highlights.
-- `content/chapters/NN-slug.md`: the sixteen chapters.
+- `content/chapters/NN-slug.md`: the twenty-one chapters.
 - `content/references.json`: bibliography entries and primary-source links. Undated web resources
   carry an `accessed` date in `YYYY-MM-DD` form, displayed separately from the publication year.
 - `content/assets/`: published images.
@@ -124,7 +133,8 @@ Front matter in chapters contains `number`, `slug`, `title`, `summary`, and opti
 Landing front matter contains `lede` and `authors`. Keep the recorded author names and affiliations
 unless the authors supply a change. A Markdown image such as `![Caption](assets/figure.png)` becomes
 a figure with its caption. The reader copies published assets and excludes plotting code and input
-data from the public bundle.
+data from the public bundle. Figure-view manifests are embedded in the rendered HTML rather than
+copied as separate public files.
 
 ## Declaration data
 
@@ -157,7 +167,7 @@ The reader build requires `data/nodes.json`, Markdown chapters, `content/landing
 - `modules`: the complete module graph, with each module's ID, file, group, direct dependencies,
   and meta dependencies.
 - `chapters`: chapter number, slug, title, summary, source file, rendered HTML, search text,
-  and declaration mentions. The reader derives section navigation from the rendered headings.
+  declaration mentions, and second-level headings for section navigation.
   Internal frontmatter phase names are validated while reading the chapters.
 - `landing`: rendered `html` with optional `lede` and `authors` from the front matter.
 - `references`: bibliography entries with key, authors, title, venue, year, and source URL.
@@ -172,12 +182,15 @@ Use the recorded results to check numerical claims:
 
 - `benchmarks/results/main/release/benchmark/`: scalar timings, ratios, metadata, and preflight results.
 - `benchmarks/results/flocq-matched/`: matched binary timings, full-value comparisons, and captured sources.
+- `benchmarks/results/public-binary/`: paired public binary arithmetic timings, trial metadata, and fixture hashes.
 - `tests/results/main/release/external/`: direct external comparisons and their diagnostics.
 - `tests/results/main/ecosystem/`: wider upstream and workload results, including qualified outcomes.
 
 Read `benchmarks/docs/Comparison.md`, `tests/EXTERNAL.md`, and the relevant result metadata before
-interpreting a series. The main figure is `content/assets/format-comparison-main.png`. Figure
-scripts identify their authoritative inputs; do not keep duplicate benchmark CSVs under the site.
+interpreting a series. The performance chapter begins with the public binary measurements in
+`content/assets/public-binary-performance.png`; `format-comparison-main.png` compares the wider
+set of formats and libraries. Figure scripts identify their authoritative inputs; do not keep
+duplicate benchmark CSVs under the site.
 Keep the machine, affinity, workload, implementation boundaries, exclusions, and measurement date
 available next to the detailed results. Different total widths need not imply equal precision across
 formats. Distinguish direct FloatLib comparisons from another project's own tests. Retain and explain

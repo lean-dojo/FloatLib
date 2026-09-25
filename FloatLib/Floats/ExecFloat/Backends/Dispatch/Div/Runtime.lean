@@ -35,7 +35,7 @@ Width-generic compiled division.
 
 Finite operands use the compact scale kernel; exceptional operands retain `Spec.divSpecial`.
 -/
-def generic {fmt : FloatFormat}
+@[specialize fmt] def generic {fmt : FloatFormat}
     (x y : Model fmt) : Model fmt :=
   match FiniteKernel.divRuntime? x y with
   | some quotient => quotient

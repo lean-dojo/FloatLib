@@ -21,6 +21,7 @@ Both curves are arithmetic on parameters taken from the Lean source, nothing is 
   in the subnormal binades E in [-149, -127], where the spacing is fixed at 2^-149.
 
 Run from anywhere: python3 ch14_tapered_precision.py [--out PNG]
+Also writes a <stem>-mobile.png companion beside the overview.
 """
 
 from __future__ import annotations
@@ -93,6 +94,49 @@ def step_series(function, lo: int, hi: int, *, min_bits: int = 1):
     return xs, ys
 
 
+def draw_mobile(target: Path, px, py, bx, by, isolated: list[int]) -> Path:
+    """Keep both precision curves and their comparison points at phone size."""
+    fig, ax = fs.plt.subplots(figsize=(4.25, 6.5))
+    fig.subplots_adjust(left=0.17, right=0.96, bottom=0.37, top=0.89)
+    ax.step(px, py, where="post", **POSIT_STYLE)
+    ax.step(bx, by, where="post", **B32_STYLE)
+    ax.plot(isolated, [1] * len(isolated), linestyle="None", marker="|",
+            markersize=6, markeredgewidth=1, color=fs.BLUE)
+
+    for binade in (0, 64):
+        ax.plot([binade], [posit_significand_bits(binade)],
+                marker="o", color=fs.BLUE, markersize=6, zorder=5)
+        ax.plot([binade], [binary32_significand_bits(binade)],
+                marker="s", color=fs.ORANGE, markersize=6,
+                markerfacecolor="white", markeredgewidth=1.4, zorder=5)
+    ax.set_xlim(-160, 145)
+    ax.set_ylim(0, 31.5)
+    ticks = list(range(-150, 151, 30))
+    ax.set_xticks(ticks, labels=[f"2^{t}" if t else "1" for t in ticks],
+                  rotation=90)
+    ax.set_yticks(range(0, 31, 4))
+    ax.tick_params(labelsize=12)
+    ax.set_xlabel("Magnitude of the value", fontsize=12)
+    ax.set_ylabel("Significand bits", fontsize=12)
+
+    handles = [
+        Line2D([], [], marker="o", markersize=6, label="32-bit posit", **POSIT_STYLE),
+        Line2D([], [], marker="s", markersize=6, markerfacecolor="white",
+               markeredgewidth=1.4, label="binary32", **B32_STYLE),
+    ]
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.54, 0.98),
+               ncol=2, fontsize=12, columnspacing=1.0, handlelength=1.5)
+    for x, label in ((0.08, "Value"), (0.42, "Posit"), (0.70, "binary32")):
+        fig.text(x, 0.17, label, fontsize=12, fontweight="bold")
+    for y, binade in ((0.115, 0), (0.06, 64)):
+        fig.text(0.08, y, "1" if binade == 0 else f"2^{binade}", fontsize=12)
+        fig.text(0.42, y, str(posit_significand_bits(binade)), fontsize=12)
+        fig.text(0.70, y, str(binary32_significand_bits(binade)), fontsize=12)
+    fig.text(0.08, 0.005, "Significand = fraction bits + one.", fontsize=12)
+    return fs.save(fig, "ch14-tapered-precision.png",
+                   target.with_name(f"{target.stem}-mobile.png"))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
@@ -153,6 +197,7 @@ def main() -> None:
               columnspacing=2.0)
 
     out = fs.save(fig, "ch14-tapered-precision.png", args.out)
+    draw_mobile(out, px, py, bx, by, isolated)
     print(f"wrote {out}")
 
 

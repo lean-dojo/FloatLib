@@ -26,9 +26,9 @@ budget, a magnitude below the normal threshold before rounding, or overflow afte
 dispatcher then uses the exact generic implementation. Exact cancellation is accepted and returns
 positive zero.
 
-The functions mirror the branch structure of `FiniteScaleAdd.roundMagnitudes` and
-`FiniteScaleAdd.roundSum` step for step. Keeping the two shapes aligned is what makes the
-refinement proof a transfer of natural-number values through `UInt64.toNat`.
+The refinement proofs transfer natural-number values through `UInt64.toNat` and compare both
+implementations with exact magnitude alignment. The generic kernel's sticky-bit alignment and
+the native equal-scale exit are separately proved equal to that common specification.
 -/
 
 @[expose] public section
@@ -97,7 +97,7 @@ that overflow after rounding return `none`.
 -/
 @[inline] def roundMagnitude? (fmt : FloatFormat) (sign : Bool)
     (magnitude scale : UInt64) : Option (Model fmt) :=
-  let leading := magnitude.log2
+  let leading := FloatLib.Numerics.FixedWord.log2Word magnitude
   let position := leading + scale + alignOffset fmt
   let normalThreshold := biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 1
   if position < normalThreshold then
@@ -105,7 +105,8 @@ that overflow after rounding return `none`.
   else
     let fracWidth := UInt64.ofNat fmt.fracWidth
     let rounded :=
-      if fracWidth ≤ leading then
+      -- A significand that already fits needs no right-rounding step.
+      if fracWidth < leading then
         FloatLib.Numerics.FixedWord.roundShiftRightEven magnitude
           (leading - fracWidth).toNat
       else
@@ -135,10 +136,10 @@ subtraction cannot wrap.
 Add two decoded finite operands in machine words, or decline.
 
 Each operand is a sign, its stored biased exponent, and its integer significand including the
-implicit bit of a normal value. The scales are the compact finite scales of `FiniteKernel.scale`,
-so the operand with the larger scale is shifted left before the signed magnitudes are combined.
-Zero operands and alignment shifts above `shiftLimit fmt` return `none`; the exact kernel handles
-them.
+implicit bit of a normal value. The scales are the compact finite scales of `FiniteKernel.scale`.
+Equal scales combine directly; otherwise the operand with the larger scale is shifted left before
+the signed magnitudes are combined. Zero operands and alignment shifts above `shiftLimit fmt`
+return `none`; the exact kernel handles them.
 -/
 @[inline] def addFields? (fmt : FloatFormat)
     (xSign : Bool) (xExponent xMantissa : UInt64)
@@ -148,7 +149,9 @@ them.
   else
     let xScale := FloatLib.Numerics.FixedWord.finiteScale xExponent
     let yScale := FloatLib.Numerics.FixedWord.finiteScale yExponent
-    if xScale ≤ yScale then
+    if xScale == yScale then
+      roundAligned? fmt xSign ySign xMantissa yMantissa xScale
+    else if xScale ≤ yScale then
       let shift := yScale - xScale
       if shift ≤ shiftLimit fmt then
         roundAligned? fmt xSign ySign xMantissa (yMantissa <<< shift) xScale

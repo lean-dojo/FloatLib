@@ -7,57 +7,44 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.FixedPoint
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Config
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Hyperbolic
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Trig
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Power
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.PowerProof
 public import FloatLib.Numerics.Capabilities.Elementary
 
 /-!
-# Format-generic executable transcendental functions
+# Optional elementary functions for binary models
 
-Importing `BinaryInterchange.Transcendentals` adds deterministic `exp`, `log`, `sinh`, `cosh`,
-`tanh`, `sin`, and `cos` operations for `Model fmt`, with reusable fixed-point primitives and
-explicit approximation configuration.
+This module adds `exp`, `log`, `sinh`, `cosh`, `tanh`, `sin`, and `cos` for `Model fmt` and installs
+the `Pow` and `MathFunctions` instances. The default kernels use fixed-point range
+reduction, polynomial or series evaluation, and nearest-even destination rounding. Their working
+precision follows `GenerationPolicy`; they carry no general real-error bound. For an IEEE
+descriptor, `Model.pow` with a finite nonzero base and a finite integral exponent is correctly
+rounded whenever its result is finite (`Model.Power.toReal_pow_of_eq_intCast`); other finite
+exponents use `exp (y * log x)`.
 
-## Approximation and certificates
+`Model.Transcendentals.Certified.exp`, `log`, `expMinus1`, and `logPlus1` instead refine rational
+enclosures and return `Option (Model fmt)`. The last two retain small results near zero by
+subtracting or adding one before any rounding. Every accepted result is proved finite and equal
+to nearest-even rounding of the real function. The existing `Contract` is instantiated on this
+executable success domain. Options bound direct refinement attempts, with `none` for an
+inconclusive search.
 
-* `exp` and `log` use fixed-point range reduction and series evaluation. `sin` and `cos` evaluate
-  exact Taylor polynomials after an approximate argument reduction. The small hyperbolic branches
-  use exact polynomials too; `tanh` adds an integer square-root approximation. Each kernel rounds
-  its final approximation to the destination format. Working precision and polynomial length
-  depend on the format and `GenerationPolicy`. These kernels have no general real-error or
-  correct-rounding theorem; their extra working bits do not constitute a proved one-ULP bound.
-* `Model.Transcendentals.Contract` supplies kernel-checked real enclosures and certificate types.
-  These are proof objects over `ℝ`; an executable kernel gains an accuracy claim only when a proof
-  connects that kernel to one of those contracts.
-* `FloatLibTests.Arb.ModelTranscendentals` is an optional `IO` adapter supporting explicit IEEE
-  rounding directions. It trusts Arb/python-flint to enclose the real function and fails if an
-  enclosure does not stabilize to one destination value.
+`sinCosResult` and `sinCosWithResult` report arguments beyond the trigonometric exponent budget.
+Value-only sine and cosine map this failure to `invalidResult`. `Config.generatedFullRange`
+generates constants covering the format's full exponent range at a larger generation cost.
+These APIs return no IEEE status flags. `FloatLibTests.Arb.ModelTranscendentals` is a separate
+optional adapter supporting explicit rounding directions through Arb/python-flint.
 
-Tangent can be computed as `sin x / cos x`, with rounding after sine, cosine, and division and
-increased sensitivity near zeros of cosine. There is no dedicated tangent kernel. These functions
-use nearest-even destination rounding and return values without IEEE status flags.
-
-`sinCosResult` and `sinCosWithResult` report arguments beyond the selected configuration's
-trigonometric exponent budget. Value-only sine and cosine map this failure to `invalidResult`.
-`Config.generatedFullRange` opts into constants large enough for the format's full exponent
-range, with correspondingly larger generation costs. Successful reduction is not an accuracy
-certificate.
-
-`ExactExpression` can round an exactly represented rational expression once, but real
-transcendentals are not rational operations in general. A composition of these kernels therefore
-approximates and rounds at each function boundary. Certifying one final rounding for the whole
-composition requires a real enclosure or another exact-real procedure covering that composition.
-
-Import this module for the `Model` functions and instances, or
-`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` for the configured types.
-These imports add the binary elementary functions to those available from `import FloatLib`.
-The `MathFunctions` class and its host `Float` and real instances are available by default.
-Individual kernel submodules can be imported separately; `#float_info` loads only `Contract`
-through `BinaryInterchange/Info/Profile.lean`.
+Import `Transcendentals.Certified.Proof` alone for the certified model kernels, or
+`Configured.Transcendentals` for the configured elementary functions. `import FloatLib` keeps
+these binary operations opt-in; the `MathFunctions` class and its host `Float` and real instances
+remain available by default. `#float_info` loads only `Contract` through `Info.Profile`.
 -/
 
 @[expose] public section

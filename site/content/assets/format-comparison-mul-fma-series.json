@@ -1,0 +1,24 @@
+{
+  "label": "Operation",
+  "compactDefault": "mul",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "format-comparison-mul-fma.png",
+      "alt": "Median latency in nanoseconds per operation for multiplication, fused multiply-add, against encoded width on logarithmic axes, with nine-trial 5th to 95th percentile bands."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "format-comparison-mul-fma-mul.svg",
+      "alt": "Multiplication: median latency in nanoseconds per operation against encoded width, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); Berkeley SoftFloat; MPFR; native C FPU; CPython float; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "fma",
+      "label": "Fused multiply-add",
+      "src": "format-comparison-mul-fma-fma.svg",
+      "alt": "Fused multiply-add: median latency in nanoseconds per operation against encoded width, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); Berkeley SoftFloat; MPFR; native C FPU; FloatLib posit (proved); Stillwater Universal posit (software)."
+    }
+  ]
+}

@@ -22,6 +22,50 @@ are isolated in `Multiplication.Proof`.
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair
 
+open FloatLib.Numerics.FixedWord
+
+/--
+Multiply two two-word values into four limbs.
+
+Keeping each column sum and carry as a native word avoids boxing the polymorphic `AddResult`
+values used by `mul128`. The four output words are identical.
+-/
+@[inline] def multiplyLimbs (x y : UInt128) : UInt256 :=
+  let p00 := mul64 x.lo y.lo
+  let p01 := mul64 x.lo y.hi
+  let p10 := mul64 x.hi y.lo
+  let p11 := mul64 x.hi y.hi
+  let first1 := p00.hi + p01.lo
+  let second1 := first1 + p10.lo
+  let carry1 :=
+    (if first1 < p00.hi then (1 : UInt64) else 0) +
+      (if second1 < first1 then 1 else 0)
+  let first2 := p01.hi + p10.hi
+  let second2 := first2 + p11.lo
+  let third2 := second2 + carry1
+  let carry2 :=
+    (if first2 < p01.hi then (1 : UInt64) else 0) +
+      (if second2 < first2 then 1 else 0) +
+      (if third2 < second2 then 1 else 0)
+  ⟨p11.hi + carry2, third2, second1, p00.lo⟩
+
+/--
+Round with the convention of `UInt256.roundShiftRightEven128`, keeping the increment and its
+carry as scalar words. Its mathematical rounding contract requires `64 < shift < 128`; the
+total function also agrees with that kernel outside this range.
+-/
+@[inline] def roundProduct (value : UInt256) (shift : Nat) : UInt128 :=
+  let quotient := value.shiftRight128 shift
+  let inner := shift - 64
+  let highRemainder := value.limb1 &&& ((1 <<< UInt64.ofNat inner) - 1)
+  let halfHigh := (1 : UInt64) <<< UInt64.ofNat (inner - 1)
+  let increment : UInt64 :=
+    if highRemainder < halfHigh then 0
+    else if highRemainder > halfHigh || value.limb0 != 0 then 1
+    else if (quotient.lo &&& 1) == 0 then 0 else 1
+  let roundedLo := quotient.lo + increment
+  ⟨quotient.hi + (if roundedLo < quotient.lo then 1 else 0), roundedLo⟩
+
 /--
 Round and pack a four-limb normal product whose leading set bit is at position `leading`.
 
@@ -38,7 +82,7 @@ declined.
     none
   else
     let rounded :=
-      product.roundShiftRightEven128 (leading - UInt64.ofNat fmt.fracWidth).toNat
+      roundProduct product (leading - UInt64.ofNat fmt.fracWidth).toNat
     let carry := isCarry fmt rounded
     let normalizedPosition := if carry then position + 1 else position
     if UInt64.ofNat (3 * fmt.bias + 2 * fmt.fracWidth - 2) < normalizedPosition then
@@ -51,7 +95,7 @@ declined.
 /-- Multiply two decoded normal significands in fixed limbs. -/
 @[inline] def roundNormalLimb? {fmt : FloatFormat} (sign : Bool) (xExponent yExponent : UInt64)
     (xMantissa yMantissa : FloatLib.Numerics.FixedWord.UInt128) : Option (Model fmt) :=
-  let product := FloatLib.Numerics.FixedWord.mul128 xMantissa yMantissa
+  let product := multiplyLimbs xMantissa yMantissa
   roundNormalProduct? sign xExponent yExponent product (UInt64.ofNat product.log2)
 
 /--

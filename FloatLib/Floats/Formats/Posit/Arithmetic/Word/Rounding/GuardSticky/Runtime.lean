@@ -65,7 +65,7 @@ abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier UInt64 where
   lowOnes := NativeWord.lowMask
   increment := fun value => value + 1
   isOdd := isOdd
-  log2 := fun value => value.log2.toNat
+  log2 := fun value => (FixedWord.log2Word value).toNat
 
 /-- Test a positive scalar target against the format's exact minimum-positive value. -/
 @[inline] def isLessMinPositive

@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Runtime
+import FloatLib.Kernels.FixedWord.Core.Proof.Word
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
 
@@ -28,6 +29,7 @@ open FloatLib.Numerics
 theorem leadingBit_eq_log2 (value : Nat) :
     leadingBit value = value.log2 := by
   unfold leadingBit
+  simp only [FixedWord.log2Word_eq_log2]
   split
   next h =>
     rw [show (UInt64.ofNatLT value h).log2.toNat =

@@ -1,0 +1,30 @@
+{
+  "label": "Operation",
+  "compactDefault": "add",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "ch10-external-ratios.png",
+      "alt": "Addition, multiplication, and division: FloatLib median time divided by MPFR for binary arithmetic and by Stillwater Universal for posit arithmetic at equal encoded widths, on logarithmic axes. A ratio of 1 means equal time; above 1 means FloatLib took longer."
+    },
+    {
+      "id": "add",
+      "label": "Addition",
+      "src": "ch10-external-ratios-add.svg",
+      "alt": "Addition: FloatLib median time divided by the external implementation's median time against equal encoded width, on logarithmic axes. The horizontal line at 1 means equal time; above 1 means FloatLib took longer. Series: FloatLib binary / MPFR; FloatLib posit / Universal software. Ratios of 9-trial medians."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "ch10-external-ratios-mul.svg",
+      "alt": "Multiplication: FloatLib median time divided by the external implementation's median time against equal encoded width, on logarithmic axes. The horizontal line at 1 means equal time; above 1 means FloatLib took longer. Series: FloatLib binary / MPFR; FloatLib posit / Universal software. Ratios of 9-trial medians."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "ch10-external-ratios-div.svg",
+      "alt": "Division: FloatLib median time divided by the external implementation's median time against equal encoded width, on logarithmic axes. The horizontal line at 1 means equal time; above 1 means FloatLib took longer. Series: FloatLib binary / MPFR; FloatLib posit / Universal software. Ratios of 9-trial medians."
+    }
+  ]
+}

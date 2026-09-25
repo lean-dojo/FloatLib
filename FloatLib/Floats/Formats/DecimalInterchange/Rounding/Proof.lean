@@ -25,15 +25,57 @@ namespace FloatLib.Floats.Formats.DecimalInterchange.RoundingMode
     mode.increment s n 0 = false := by
   cases mode <;> cases s <;> simp [increment]
 
+/-- The integer remainder decision agrees with rounding the exact fractional part. -/
+theorem roundMagnitude_eq (mode : RoundingMode) (s : Bool) (x : ℚ) :
+    mode.roundMagnitude s x =
+      let lower := ⌊x⌋₊
+      if mode.increment s lower (x - lower) then lower + 1 else lower := by
+  by_cases hx : 0 ≤ x
+  · have hn : (x.num.toNat : ℚ) / x.den = x := by
+      have hn : (x.num.toNat : ℚ) = (x.num : ℚ) := by
+        exact_mod_cast Int.toNat_of_nonneg (Rat.num_nonneg.mpr hx)
+      rw [hn, Rat.num_div_den]
+    have hf : ⌊x⌋₊ = x.num.toNat / x.den := by
+      conv_lhs => rw [← hn]
+      exact Rat.natFloor_natCast_div_natCast _ _
+    have hr : x - (⌊x⌋₊ : ℚ) = (x.num.toNat % x.den : Nat) / (x.den : ℚ) := by
+      have hr := Int.fract_div_natCast_eq_div_natCast_mod
+        (k := ℚ) (m := x.num.toNat) (n := x.den)
+      rw [hn, Int.fract, ← Int.natCast_floor_eq_floor hx, Int.cast_natCast] at hr
+      exact hr
+    have hd : (0 : ℚ) < x.den := by exact_mod_cast x.den_pos
+    have hlt : (1 < 2 * (x - (⌊x⌋₊ : ℚ))) ↔ x.den < 2 * (x.num.toNat % x.den) := by
+      rw [hr, ← mul_div_assoc, one_lt_div hd]
+      norm_cast
+    have heq : (2 * (x - (⌊x⌋₊ : ℚ)) = 1) ↔ 2 * (x.num.toNat % x.den) = x.den := by
+      rw [hr, ← mul_div_assoc, div_eq_one_iff_eq hd.ne']
+      norm_cast
+    have hle : (1 ≤ 2 * (x - (⌊x⌋₊ : ℚ))) ↔ x.den ≤ 2 * (x.num.toNat % x.den) := by
+      rw [hr, ← mul_div_assoc, one_le_div hd]
+      norm_cast
+    have hpos : (0 < x - (⌊x⌋₊ : ℚ)) ↔ 0 < x.num.toNat % x.den := by
+      rw [hr, div_pos_iff_of_pos_right hd]
+      exact Nat.cast_pos
+    cases mode <;> simp [roundMagnitude, ← hf, increment, hlt, heq, hle, hpos]
+  · have hn : x.num.toNat = 0 :=
+      Int.toNat_of_nonpos (Rat.num_neg.mpr (lt_of_not_ge hx)).le
+    have hf : ⌊x⌋₊ = 0 := Nat.floor_of_nonpos (lt_of_not_ge hx).le
+    have hlt : ¬(1 < 2 * x) := by linarith
+    have heq : ¬(2 * x = 1) := by linarith
+    have hle : ¬(1 ≤ 2 * x) := by linarith
+    have hpos : ¬(0 < x) := not_lt.mpr (lt_of_not_ge hx).le
+    have hd : x.den ≠ 0 := x.den_nz
+    cases mode <;> simp [roundMagnitude, increment, hn, hf, hlt, heq, hle, hpos, hd]
+
 /-- Every nonnegative integer is fixed in every rounding direction. -/
 @[simp] theorem roundMagnitude_natCast (mode : RoundingMode) (s : Bool) (n : Nat) :
     mode.roundMagnitude s (n : ℚ) = n := by
-  simp [roundMagnitude]
+  simp [roundMagnitude_eq]
 
 /-- The rounded coefficient is one of the two adjacent integer grid points. -/
 theorem roundMagnitude_eq_floor_or_succ (mode : RoundingMode) (s : Bool) (x : ℚ) :
     mode.roundMagnitude s x = ⌊x⌋₊ ∨ mode.roundMagnitude s x = ⌊x⌋₊ + 1 := by
-  simp only [roundMagnitude]
+  simp only [roundMagnitude_eq]
   split <;> simp
 
 theorem floor_le_roundMagnitude (mode : RoundingMode) (s : Bool) (x : ℚ) :
@@ -68,7 +110,7 @@ theorem roundMagnitude_error_le_half (mode : RoundingMode)
   have hlo := Nat.floor_le hx
   have hhi := Nat.lt_floor_add_one x
   rcases hm with rfl | rfl
-  · simp only [roundMagnitude, increment, decide_eq_true_eq]
+  · simp only [roundMagnitude_eq, increment, decide_eq_true_eq]
     split
     · rename_i h
       rw [Nat.cast_add, Nat.cast_one, abs_of_pos (by linarith)]
@@ -77,7 +119,7 @@ theorem roundMagnitude_error_le_half (mode : RoundingMode)
       have hh : 2 * (x - (⌊x⌋₊ : ℚ)) ≤ 1 := le_of_not_gt fun hh => h (Or.inl hh)
       rw [abs_of_nonpos (sub_nonpos.mpr hlo)]
       linarith
-  · simp only [roundMagnitude, increment, decide_eq_true_eq]
+  · simp only [roundMagnitude_eq, increment, decide_eq_true_eq]
     split
     · rw [Nat.cast_add, Nat.cast_one, abs_of_pos (by linarith)]
       linarith
@@ -87,14 +129,14 @@ theorem roundMagnitude_error_le_half (mode : RoundingMode)
 /-- Rounding toward zero does not increase magnitude. -/
 theorem roundMagnitude_towardZero_le (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     ((towardZero.roundMagnitude s x : Nat) : ℚ) ≤ x := by
-  simpa [roundMagnitude, increment] using Nat.floor_le hx
+  simpa [roundMagnitude_eq, increment] using Nat.floor_le hx
 
 /-- Positive upward rounding is an upper enclosure. -/
 theorem le_roundMagnitude_towardPositive {x : ℚ} (hx : 0 ≤ x) :
     x ≤ ((towardPositive.roundMagnitude false x : Nat) : ℚ) := by
   have hlo := Nat.floor_le hx
   have hhi := Nat.lt_floor_add_one x
-  simp only [roundMagnitude, increment, Bool.not_false, Bool.true_and]
+  simp only [roundMagnitude_eq, increment, Bool.not_false, Bool.true_and]
   split
   · push_cast
     linarith
@@ -106,13 +148,13 @@ theorem le_roundSigned_towardPositive (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     (if s then -x else x) ≤ towardPositive.roundSigned s x := by
   cases s
   · exact le_roundMagnitude_towardPositive hx
-  · simpa [roundSigned, roundMagnitude, increment] using neg_le_neg (Nat.floor_le hx)
+  · simpa [roundSigned, roundMagnitude_eq, increment] using neg_le_neg (Nat.floor_le hx)
 
 /-- Downward rounding is a lower enclosure for either sign. -/
 theorem roundSigned_towardNegative_le (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     towardNegative.roundSigned s x ≤ (if s then -x else x) := by
   cases s
-  · simpa [roundSigned, roundMagnitude, increment] using Nat.floor_le hx
+  · simpa [roundSigned, roundMagnitude_eq, increment] using Nat.floor_le hx
   · exact neg_le_neg (le_roundMagnitude_towardPositive hx)
 
 /-- At an exact midpoint, nearest-even chooses the even adjacent coefficient. -/
@@ -123,7 +165,7 @@ theorem roundMagnitude_nearestEven_midpoint (s : Bool) (n : Nat) :
     apply (Nat.floor_eq_iff (by positivity)).mpr
     constructor <;> linarith
   have hr : (n : ℚ) + 1 / 2 - n = 1 / 2 := by ring
-  simp only [roundMagnitude, hf, hr, increment]
+  simp only [roundMagnitude_eq, hf, hr, increment]
   norm_num
 
 /-- Nearest-away increases magnitude at every exact midpoint, for either sign. -/
@@ -133,7 +175,7 @@ theorem roundMagnitude_nearestAway_midpoint (s : Bool) (n : Nat) :
     apply (Nat.floor_eq_iff (by positivity)).mpr
     constructor <;> linarith
   have hr : (n : ℚ) + 1 / 2 - n = 1 / 2 := by ring
-  simp only [roundMagnitude, hf, hr, increment]
+  simp only [roundMagnitude_eq, hf, hr, increment]
   norm_num
 
 /-- All five modes have strictly less than one decimal grid unit of error. -/

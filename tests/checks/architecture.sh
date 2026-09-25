@@ -165,6 +165,7 @@ opt_in_production_ban=(
   FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked
   FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
   FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
+  FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 )
 for banned_module in "${opt_in_production_ban[@]}"; do
   banned_imports="$(

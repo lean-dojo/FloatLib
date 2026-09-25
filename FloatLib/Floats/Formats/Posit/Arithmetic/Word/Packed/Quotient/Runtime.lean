@@ -54,8 +54,8 @@ for the different shifts.
 -/
 @[inline] def normalizeWords
     (numerator denominator : UInt64) : NormalizedWords :=
-  let numeratorLeading := numerator.log2.toNat
-  let denominatorLeading := denominator.log2.toNat
+  let numeratorLeading := (FixedWord.log2Word numerator).toNat
+  let denominatorLeading := (FixedWord.log2Word denominator).toNat
   let commonLeading := max numeratorLeading denominatorLeading
   { numerator :=
       numerator <<< UInt64.ofNat (commonLeading - numeratorLeading)

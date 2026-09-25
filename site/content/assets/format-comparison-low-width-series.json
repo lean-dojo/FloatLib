@@ -1,0 +1,48 @@
+{
+  "label": "Operation",
+  "compactDefault": "add",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "format-comparison-low-width.png",
+      "alt": "Median latency in nanoseconds per operation for addition, subtraction, multiplication, division, square root, fused multiply-add, against encoded width from 2 to 16 bits on logarithmic axes, with nine-trial 5th to 95th percentile bands."
+    },
+    {
+      "id": "add",
+      "label": "Addition",
+      "src": "format-comparison-low-width-add.svg",
+      "alt": "Addition: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "sub",
+      "label": "Subtraction",
+      "src": "format-comparison-low-width-sub.svg",
+      "alt": "Subtraction: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "format-comparison-low-width-mul.svg",
+      "alt": "Multiplication: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "format-comparison-low-width-div.svg",
+      "alt": "Division: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "sqrt",
+      "label": "Square root",
+      "src": "format-comparison-low-width-sqrt.svg",
+      "alt": "Square root: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (host sqrt)."
+    },
+    {
+      "id": "fma",
+      "label": "Fused multiply-add",
+      "src": "format-comparison-low-width-fma.svg",
+      "alt": "Fused multiply-add: median latency in nanoseconds per operation against encoded width from 2 to 16 bits, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); MPFR; FloatLib posit (proved); Stillwater Universal posit (software)."
+    }
+  ]
+}

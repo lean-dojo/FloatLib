@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Proof
 import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
@@ -181,6 +182,52 @@ theorem specWith_iff_eq_runWith {format : FloatFormat} {Destination : Type u}
     runWith pack ({ exceptional := .reject } : Context) (.exceptional exceptional) =
       .failure (.exceptional .source exceptional) :=
   rfl
+
+/--
+Default conversion of an observed binary NaN agrees with `Model.castWithStatus` in value and in
+the invalid flag, for every rounding mode and for equal or unequal descriptors.
+
+The sign and signaling class travel with the observation, and the destination NaN is
+`Model.propagatedNaN` on the IEEE payload, as IEEE 754-2019 §6.2.3 and §7.2 require. A destination
+with no NaN encoding is excluded here and covered by `runWith_default_nan_of_encoding_finite`:
+conversion then fails, while `Model.castWithStatus` returns positive zero and raises invalid.
+-/
+theorem runWith_default_nan_eq_castWithStatus {src dst : FloatFormat} {Destination : Type u}
+    (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
+    (hnan : Model.isNaN x = true) (hdst : dst.encoding ≠ .finite) :
+    runWith pack Context.default
+        (.exceptional (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) =
+      .success (pack (Model.castWithStatus src dst x mode).value)
+        { invalid := (Model.castWithStatus src dst x mode).status.invalid } := by
+  have hcast := Model.castWithRounding_of_isNaN (dst := dst) x mode hnan
+  have hisnan := Model.isNaN_propagatedNaN dst (Model.signBit x)
+    (Model.payloadOfNaNField (Model.isSNaN x) (Model.fracField x)) hdst
+  have hsome : ∃ v, Model.canonicalNaN? dst = some v := by
+    unfold Model.canonicalNaN?; cases h : dst.encoding <;> simp_all
+  obtain ⟨v, hv⟩ := hsome
+  simp only [runWith, quantizeExceptionalWith, Context.default, hv, Model.castWithStatus, hnan,
+    hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some]
+  cases Model.isSNaN x <;> rfl
+
+/--
+Default conversion of an observed binary NaN into a destination with no NaN encoding fails with
+the source NaN as the reported exceptional value, and `Model.castWithStatus` on the same source
+raises invalid.
+
+The two paths agree that the conversion is invalid. `ExecFloat` reports it as an explicit failure;
+the descriptor model delivers positive zero and sets the invalid flag.
+-/
+theorem runWith_default_nan_of_encoding_finite {src dst : FloatFormat} {Destination : Type u}
+    (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
+    (hnan : Model.isNaN x = true) (hdst : dst.encoding = .finite) :
+    runWith pack Context.default
+        (.exceptional (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) =
+      .failure (.exceptional .source
+        (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) ∧
+      (Model.castWithStatus src dst x mode).status.invalid = true := by
+  refine ⟨?_, Model.castWithStatus_invalid_of_isNaN_of_encoding_finite x mode hnan hdst⟩
+  have hv : Model.canonicalNaN? dst = none := by simp [Model.canonicalNaN?, hdst]
+  simp only [runWith, quantizeExceptionalWith, Context.default, hv]
 
 end Conversion
 end ExecFloat.Binary

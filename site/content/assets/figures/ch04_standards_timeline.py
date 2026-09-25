@@ -1,45 +1,27 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch04-standards-timeline.png: the dated events of the history chapter on one ruler.
+"""Draw five milestones from the history chapter, with a stacked mobile arrangement.
 
-The history chapter (site/content/chapters/03-a-short-history-of-floating-point.md) dates the machines
-before the standard, the IEEE standards and their revisions, the hardware verification work that
-followed the Pentium bug, the machine learning formats and their specifications, and the posit
-standard. Every event below is one the chapter text gives a year for, at that year, in the
-chapter's words; events the chapter mentions without a year in its prose (the VAX formats,
-bfloat16, the ONNX FNUZ variants, TF32) are left out rather than dated from memory. P3109 is
-drawn hollow for the working group's interim report v4.0.3, released 1 September 2026.
-The PDF cover at P3109/Public revision 34f5964 supplies the release date; chapter 10 cites it.
+The complete dated source inventory is retained in EVENTS. The diagram selects the Z3,
+IEEE 754-1985, the 2008 revision, OCP's 2023 specifications, and the P3109 interim report.
+Contextual hardware, verification and format history stays in chapter 03. Spacing expresses
+chronological order, not elapsed years. The hollow P3109 marker and explicit interim label
+avoid presenting a working-group report as an approved standard.
 
-The ruler on the left is to scale; the labels on the right are evenly spaced so that the dense
-years read, and a leader joins each label to its exact place on the ruler. Two events in one year
-sit side by side on the ruler. Colour and marker encode the kind of event, and the marker is
-repeated before each label, so identity never rests on colour alone. Okabe and Ito colours from
-figstyle, assigned in the palette's fixed order.
-
-Run from anywhere: python3 ch04_standards_timeline.py [--out PATH]
+The pinned P3109 date is the 4.0.3 report release, 1 September 2026 (P3109/Public revision
+34f5964, also cited by chapter 10). Other years and descriptions follow chapter 03's sources.
+Run from anywhere: python3 ch04_standards_timeline.py [--out PNG]
+The mobile companion is written beside the desktop image as <stem>-mobile.png.
 """
-
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import figstyle as fs  # noqa: E402
-
-from matplotlib.lines import Line2D  # noqa: E402
+import figstyle as fs
 
 OUT_NAME = "ch04-standards-timeline.png"
 
-KINDS = {
-    "standard": dict(label="standard or specification", color=fs.BLUE, marker="s"),
-    "format": dict(label="format family", color=fs.ORANGE, marker="o"),
-    "hardware": dict(label="hardware", color=fs.GREEN, marker="^"),
-    "verification": dict(label="verification", color=fs.VERMILION, marker="D"),
-}
-
-# (year, kind, text, interim). Chronological; same-year events keep the chapter's order.
+# Source chronology; only the selected milestones below are drawn.
 EVENTS = [
     (1914, "hardware", "Torres y Quevedo: a mechanical unit with a floating decimal point", False),
     (1941, "hardware", "Zuse Z3: binary, 14 significand bits, 7-bit exponent, infinite and undefined codes", False),
@@ -65,89 +47,69 @@ EVENTS = [
     (2026, "standard", "P3109: interim report 4.0.3 released 1 September 2026", True),
 ]
 
-RULER_X = 0.65          # inches from the left edge of the figure
-RULER_TOP, RULER_BOTTOM = 1910, 2030
-SLOT_STEP = 0.17        # horizontal offset between marker slots beside the ruler
-SLOT_MIN_YEARS = 3      # markers closer than this in years never share a slot
-GUTTER_X = 1.5          # leaders run level from the marker to here, then slant to the label
-LABEL_MARK_X = 2.35     # the repeated marker before each label
-YEAR_X = 2.5
-TEXT_X = 2.92
-LABEL_TOP, LABEL_BOTTOM = 1913, 2027   # the evenly spaced label column, in ruler years
-HEIGHT = 7.0
-MARKER_SIZE = 7.5
+# (source event index, short title, short explanation). OFP8 and MX share their 2023 node.
+MILESTONES = [
+    (1, "Z3", "Binary floating point"),
+    (6, "IEEE 754", "Shared binary rules"),
+    (12, "IEEE 754", "Decimal + required FMA"),
+    (19, "OCP", "OFP8 + microscaling"),
+    (21, "P3109", "Interim report 4.0.3"),
+]
+assert [EVENTS[index][0] for index, _, _ in MILESTONES] == [1941, 1985, 2008, 2023, 2026]
+assert EVENTS[19][0] == EVENTS[20][0] == 2023
+assert EVENTS[MILESTONES[-1][0]][3]
 
 
-def assign_slots(years: list[int]) -> list[int]:
-    """Give each event the leftmost slot whose previous occupant is at least SLOT_MIN_YEARS away,
-    so that markers a year or two apart never overlap on the ruler."""
-    last_in_slot: list[int] = []
-    slots = []
-    for year in years:
-        for slot, last in enumerate(last_in_slot):
-            if year - last >= SLOT_MIN_YEARS:
-                break
-        else:
-            slot = len(last_in_slot)
-            last_in_slot.append(year)
-        last_in_slot[slot] = year
-        slots.append(slot)
-    return slots
-
-
-def marker_kwargs(kind: str, interim: bool, size: float = MARKER_SIZE) -> dict:
-    k = KINDS[kind]
-    return dict(marker=k["marker"], color=k["color"], markerfacecolor="white" if interim else k["color"],
-                markeredgecolor=k["color"], markeredgewidth=1.4, markersize=size, linestyle="None")
-
-
-def draw(out: Path | None) -> Path:
+def build_figure(mobile: bool = False):
     fs.setup()
-    fig = fs.figure(HEIGHT)[0]
-    fig.clf()
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_xlim(0, fs.WIDTH)
-    ax.set_ylim(RULER_BOTTOM + 6, RULER_TOP - 14)   # years increase downwards; room at the top
-    ax.axis("off")
-    ax.grid(False)
-
-    # The ruler, to scale, with a labelled tick every ten years.
-    ax.plot([RULER_X, RULER_X], [RULER_TOP, RULER_BOTTOM], color=fs.INK, linewidth=1.0, zorder=2)
-    for year in range(RULER_TOP, RULER_BOTTOM + 1, 10):
-        ax.plot([RULER_X - 0.07, RULER_X], [year, year], color=fs.INK, linewidth=0.8, zorder=2)
-        ax.text(RULER_X - 0.12, year, str(year), ha="right", va="center", fontsize=9,
-                color=fs.MUTED)
-
-    # Labels are evenly spaced; markers sit at their exact year, in slots beside the ruler so
-    # that near-coincident years stay apart. A leader runs level from the marker to the gutter
-    # and then slants to its label, so no slanted line passes behind another year's marker.
-    n = len(EVENTS)
-    label_ys = [LABEL_TOP + i * (LABEL_BOTTOM - LABEL_TOP) / (n - 1) for i in range(n)]
-    slots = assign_slots([year for year, _kind, _text, _interim in EVENTS])
-    for (year, kind, text, interim), slot, y_label in zip(EVENTS, slots, label_ys):
-        x_mark = RULER_X + slot * SLOT_STEP
-        ax.plot([x_mark, GUTTER_X, LABEL_MARK_X - 0.1], [year, year, y_label], color=fs.LINE,
-                linewidth=0.9, zorder=1, solid_joinstyle="round")
-        ax.plot([x_mark], [year], zorder=3, **marker_kwargs(kind, interim))
-        ax.plot([LABEL_MARK_X], [y_label], zorder=3, **marker_kwargs(kind, interim, size=6.5))
-        ax.text(YEAR_X, y_label, str(year), ha="left", va="center", fontsize=9,
-                fontweight="bold", color=fs.INK)
-        ax.text(TEXT_X, y_label, text, ha="left", va="center", fontsize=9, color=fs.INK)
-
-    handles = [Line2D([], [], label=k["label"], **marker_kwargs(kind, False, size=7))
-               for kind, k in KINDS.items()]
-    handles.append(Line2D([], [], label="interim report (hollow)",
-                          **marker_kwargs("standard", True, size=7)))
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.995), ncol=5,
-               frameon=False, handletextpad=0.5, columnspacing=1.8)
-    return fs.save(fig, OUT_NAME, out)
+    width, height = (3.8, 6.4) if mobile else (9.0, 3.2)
+    fig = fs.plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    ax.text(0.18, height - 0.18, "Selected milestones", fontsize=14 if mobile else 16,
+            weight="bold", va="top")
+    ax.text(0.18, height - 0.66, "Hardware, standards and proposals", fontsize=11.5,
+            va="top", color=fs.MUTED)
+    if mobile:
+        ys = [5.15 - i * 1.01 for i in range(len(MILESTONES))]
+        ax.plot([0.40, 0.40], [ys[-1], ys[0]], color=fs.LINE, lw=1.5)
+        for (index, title, detail), y in zip(MILESTONES, ys):
+            year, kind, _, interim = EVENTS[index]
+            colour = fs.GREEN if kind == "hardware" else fs.BLUE
+            ax.plot(0.40, y, marker="^" if kind == "hardware" else "s", markersize=8,
+                    markerfacecolor="white" if interim else colour, markeredgecolor=colour,
+                    markeredgewidth=1.5)
+            ax.text(0.73, y + 0.08, f"{year} · {title}", fontsize=13, weight="bold",
+                    va="center")
+            ax.text(0.73, y - 0.27, detail, fontsize=11.5, va="center")
+        ax.text(0.18, 0.30, "Order shown; spacing is schematic.", fontsize=11.5,
+                va="center", color=fs.MUTED)
+    else:
+        xs = [0.85 + i * 1.82 for i in range(len(MILESTONES))]
+        ax.plot([xs[0], xs[-1]], [1.74, 1.74], color=fs.LINE, lw=1.5)
+        details = ["Binary floating\npoint", "Shared binary\nrules", "Decimal +\nrequired FMA",
+                   "OFP8 +\nmicroscaling", "Interim report\n4.0.3"]
+        for (index, title, _), x, detail in zip(MILESTONES, xs, details):
+            year, kind, _, interim = EVENTS[index]
+            colour = fs.GREEN if kind == "hardware" else fs.BLUE
+            ax.plot(x, 1.74, marker="^" if kind == "hardware" else "s", markersize=9,
+                    markerfacecolor="white" if interim else colour, markeredgecolor=colour,
+                    markeredgewidth=1.5)
+            ax.text(x, 2.08, str(year), ha="center", va="center", fontsize=13, weight="bold")
+            ax.text(x, 1.35, title, ha="center", va="center", fontsize=13, weight="bold")
+            ax.text(x, 0.87, detail, ha="center", va="center", fontsize=11.5, linespacing=1.4)
+        ax.text(4.50, 0.23, "Chronological order; spacing is schematic.", ha="center",
+                va="center", fontsize=11.5, color=fs.MUTED)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    print(f"wrote {draw(args.out)}")
+    target = args.out or fs.ASSETS / OUT_NAME
+    for mobile in (False, True):
+        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 
 if __name__ == "__main__":

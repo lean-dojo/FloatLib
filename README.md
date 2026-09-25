@@ -78,27 +78,30 @@ exception flags, intervals, and accumulation. You can also start from one of the
   before one final rounding. The library follows the 2022 posit standard.
 - **Small and custom formats.** FP8, FP6, FP4, OCP MX blocks, fixed point, logarithmic,
   and codebook representations share the numerical interfaces. The
-  [P3109 chapter](site/content/chapters/10-p3109.md) explains the working group's format
+  [P3109 chapter](site/content/chapters/12-p3109.md) explains the working group's format
   rules and the report this implementation follows.
 - **Classical rounding results.** Correct rounding, half-ulp error bounds, and Sterbenz's
   exact-subtraction lemma connect the real-valued theory to executable arithmetic.
   Mixed-precision bounds account for casts, products, and accumulator updates under
   their stated finiteness assumptions.
 - **Intervals and affine quantization.** A shared interval API accepts binary, decimal, posit,
-  and custom endpoints, with explicit outward-rounding contracts. Affine quantization has
+  and custom endpoints, with explicit outward-rounding contracts. The
+  [`interval` tactic](site/content/chapters/20-proving-numerical-bounds.md) proves real inequalities
+  by certified evaluation and subdivision, including elementary functions. Affine quantization has
   a real-valued specification with an explicit rounding rule and a proof connecting
   nearest-even quantization to the executable rational implementation.
 - **Repeatedly rounded sums.** Reduction trees describe a chosen order of additions.
   Error bounds account for rounding at each node, including absolute-error terms near
   underflow. These are separate from the exact accumulators that round only once.
 - **Elementary functions and complex numbers.** Posit elementary functions have proofs
-  identifying the correctly rounded real result. Binary elementary functions are
-  deterministic approximations, available through the opt-in
-  `Configured.Transcendentals` import; general error bounds for those kernels remain
-  open. Separate rational `exp` and `log` enclosures have proved containment bounds.
+  identifying the correctly rounded real result. For IEEE binary formats, optional
+  `Binary.Certified.exp` and `log` calls return correctly rounded finite results when
+  rational enclosure refinement succeeds. The `Configured.Transcendentals` import
+  also provides deterministic approximations for a wider set of binary functions;
+  general error bounds for those approximation kernels remain open.
   `ExecComplex` supplies arithmetic on pairs of binary components, with theorems that
   track scalar rounding. The [examples](FloatLib/Examples/Transcendentals.lean) and
-  [complex section](site/content/chapters/01-using-the-library.md#complex-arithmetic)
+  [complex section](site/content/chapters/21-further-examples.md#complex-arithmetic)
   show how to use them.
 
 We've collected the major theorems in our [theorem index](FloatLib/Floats/THEOREMS.md).
@@ -109,13 +112,13 @@ AI during development, alongside the work we did to plan and build the library.
 ## Speed and independent checks
 
 We have put substantial effort into making the proved arithmetic fast. The
-[planner](site/content/chapters/14-backends-and-the-planner.md) chooses among lookup tables,
+[planner](site/content/chapters/16-backends-and-the-planner.md) chooses among lookup tables,
 word kernels, and wider limb algorithms; every certified choice must prove agreement
 with the same specification. You can also choose a backend policy yourself. The host-FPU
 path is a separate, explicitly unchecked option.
 
 We would like to bring verified arithmetic closer to MPFR's speed. The
-[benchmarks](site/content/chapters/15-performance.md) compare scalar operations from 2 to
+[benchmarks](site/content/chapters/17-performance.md) compare scalar operations from 2 to
 4,096 bits, so you can see where the kernels do well and where we still have work to do.
 Lean checks the proofs before execution and erases them during compilation.
 We also ran `leanchecker` to replay the compiled FloatLib declarations through
@@ -124,7 +127,7 @@ Lean's kernel.
 The saved FloatLib runs matched Berkeley TestFloat on **more than 102 million cases** for the IEEE
 formats and operations we checked. Comparisons also cover MPFR, decimal arithmetic,
 small-format tables, and posits. SoftPosit differs on a small set of boundary cases;
-[the analysis](site/content/chapters/16-external-validation.md#the-softposit-differences)
+[the analysis](site/content/chapters/19-external-validation.md#the-softposit-differences)
 works through the exact calculations. These comparisons help check the specifications
 as well as the implementations.
 

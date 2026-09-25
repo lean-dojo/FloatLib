@@ -12,9 +12,14 @@ public import FloatLib.Numerics.Enclosure.Interval.Bounds
 # Partial interval arithmetic on arbitrary endpoint carriers
 
 Exact endpoint calculations take place in an ordered field. A supplied `OutwardRounding`
-encodes the lower and upper results; failure is explicit rather than silently saturating an
-invalid enclosure. Binary, decimal, and posit adapters can instantiate the scalar field with
-exact rationals. No IEEE-specific exceptional values enter this layer.
+encodes the lower and upper results. An operation returns `none` if decoding fails, an outward
+bound is unavailable, or a divisor interval contains zero. Binary, decimal, and posit adapters
+instantiate the scalar field with exact rationals.
+
+This implements the outward enclosure construction in Rump's
+[Verification methods](https://doi.org/10.1017/S096249291000005X), §5.3, equations (5.14)–(5.15).
+`OutwardRounding` requires containment, so an adapter may return wider bounds than the tight
+directed rounding used there.
 -/
 
 @[expose] public section

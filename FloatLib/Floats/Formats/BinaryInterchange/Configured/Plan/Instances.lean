@@ -14,9 +14,8 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 
 Representation-independent instances serve custom carriers. Higher-priority instances for
 `Configured.Code` expose byte tables after dependent elimination of the selected storage plan, and
-give the machine-word plans and the two-word wide formats a first-order entry point. When the
-structural candidate wins, a closed `ExecFloat.Binary` call can specialize that kernel to its
-descriptor.
+give the other non-limb plans a direct entry point to the selected structural or generic kernel.
+A closed `ExecFloat.Binary` call can therefore specialize that kernel to its descriptor.
 
 The priorities encode capability preference, not numerical semantics: every candidate must supply
 the same refinement contract before it can be selected. Keeping this wiring in one module makes
@@ -87,10 +86,10 @@ Families with a custom carrier continue to use the representation-independent in
 /-!
 ## First-order entry points
 
-A machine-word or pair plan calls its structural kernel directly only when that candidate wins
-against the generic kernel under the policy in scope. Otherwise it executes the memoized
-selection. This includes tiny formats stored in a larger word: their FMA and square-root costs
-can favor the generic kernel. Byte tables and limb candidates always enter through selection.
+A machine-word or pair plan calls its structural kernel directly when that candidate wins
+against the generic kernel under the policy in scope. Non-byte, non-limb plans also expose a
+direct call when the generic kernel wins. Byte tables, limb candidates, and the remaining
+structural routes execute the memoized selection.
 
 The guard stays inside `execute` so closed callers can specialize the selected kernel. A match
 around the capability record would prevent the compiler from reducing the projection before
@@ -112,6 +111,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun left right =>
       if Plan.firstOrderSelected planning.policy plan .add then
         Backend.wordAdd left right
+      else if Plan.firstOrderGenericSelected planning.policy plan .add then
+        Backend.genericAdd left right
       else
         selection.get.run left right
     execute_eq_implementation := by
@@ -120,7 +121,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_add_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_add_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 @[always_inline] instance (priority := 200) automaticSubCapability
     (format : FloatFormat) (plan : StoragePlan format)
@@ -136,6 +141,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun left right =>
       if Plan.firstOrderSelected planning.policy plan .sub then
         Backend.wordSub left right
+      else if Plan.firstOrderGenericSelected planning.policy plan .sub then
+        Backend.genericSub left right
       else
         selection.get.run left right
     execute_eq_implementation := by
@@ -144,7 +151,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_sub_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_sub_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 @[always_inline] instance (priority := 200) automaticMulCapability
     (format : FloatFormat) (plan : StoragePlan format)
@@ -160,6 +171,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun left right =>
       if Plan.firstOrderSelected planning.policy plan .mul then
         Backend.wordMul left right
+      else if Plan.firstOrderGenericSelected planning.policy plan .mul then
+        Backend.genericMul left right
       else
         selection.get.run left right
     execute_eq_implementation := by
@@ -168,7 +181,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_mul_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_mul_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 @[always_inline] instance (priority := 200) automaticDivCapability
     (format : FloatFormat) (plan : StoragePlan format)
@@ -184,6 +201,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun left right =>
       if Plan.firstOrderSelected planning.policy plan .div then
         Backend.wordDiv left right
+      else if Plan.firstOrderGenericSelected planning.policy plan .div then
+        Backend.genericDiv left right
       else
         selection.get.run left right
     execute_eq_implementation := by
@@ -192,7 +211,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_div_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_div_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 @[always_inline] instance (priority := 200) automaticSqrtCapability
     (format : FloatFormat) (plan : StoragePlan format)
@@ -208,6 +231,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun value =>
       if Plan.firstOrderSelected planning.policy plan .sqrt then
         Plan.structuralSqrt value
+      else if Plan.firstOrderGenericSelected planning.policy plan .sqrt then
+        Backend.genericSqrt value
       else
         selection.get.run value
     execute_eq_implementation := by
@@ -216,7 +241,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_sqrt_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_sqrt_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 @[always_inline] instance (priority := 200) automaticFmaCapability
     (format : FloatFormat) (plan : StoragePlan format)
@@ -232,6 +261,8 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
     execute := fun left right addend =>
       if Plan.firstOrderSelected planning.policy plan .fma then
         Plan.structuralFma left right addend
+      else if Plan.firstOrderGenericSelected planning.policy plan .fma then
+        Backend.genericFma left right addend
       else
         selection.get.run left right addend
     execute_eq_implementation := by
@@ -240,7 +271,11 @@ word and fixed-limb square root and FMA; numerical equivalence alone does not ju
       · rename_i h
         rw [← Plan.select_fma_run_of_firstOrder planning.policy plan h]
         rfl
-      · rfl }
+      · split
+        · rename_i h
+          rw [← Plan.select_fma_run_of_firstOrderGeneric planning.policy plan h]
+          rfl
+        · rfl }
 
 /-!
 Closed limb plans expose their concrete carrier during typeclass indexing. These instances

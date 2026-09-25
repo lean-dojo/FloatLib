@@ -280,4 +280,37 @@ theorem parseCharacters_fixedCharacters_of_nonpos (value : Decimal)
     parse value.formatScientific = some value.toRat := by
   simp [parse, Decimal.formatScientific]
 
+/-- Removing trailing zeros with any amount of fuel preserves the exact rational value. -/
+theorem Decimal.trimTrailingZerosLoop_toRat (fuel : Nat) (value : Decimal) :
+    (Decimal.trimTrailingZerosLoop fuel value).toRat = value.toRat := by
+  induction fuel generalizing value with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold Decimal.trimTrailingZerosLoop
+      split
+      · rename_i h
+        rw [ih]
+        obtain ⟨-, hmod⟩ := h
+        obtain ⟨q, hq⟩ : ∃ q, value.significand = 10 * q := ⟨value.significand / 10, by omega⟩
+        have hdiv : value.significand / 10 = q := by omega
+        rcases value with ⟨negative, significand, exponent⟩
+        simp only at hq hdiv ⊢
+        subst hq
+        rw [hdiv]
+        have hpow : (10 : Rat) ^ (exponent + 1) = (10 : Rat) ^ exponent * 10 := by
+          rw [zpow_add_one₀ (by norm_num)]
+        cases negative <;> simp [Decimal.toRat, hpow] <;> ring
+      · rfl
+
+/-- Removing trailing zeros preserves the exact rational value. -/
+@[simp] theorem Decimal.trimTrailingZeros_toRat (value : Decimal) :
+    value.trimTrailingZeros.toRat = value.toRat :=
+  Decimal.trimTrailingZerosLoop_toRat _ value
+
+/-- Compact dyadic text parses back to exactly the dyadic's rational value. -/
+@[simp] theorem parse_formatDyadicCompact (value : Dyadic) :
+    parse (formatDyadicCompact value) = some value.toRat := by
+  simp only [formatDyadicCompact]
+  split <;> simp
+
 end FloatLib.Numerics.DecimalText

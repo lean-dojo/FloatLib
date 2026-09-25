@@ -35,7 +35,7 @@ as subnormals; all other results are normalized without rounding.
   if difference == 0 then
     ofUInt64 0
   else
-    let leading := difference.log2
+    let leading := FloatLib.Numerics.FixedWord.log2Word difference
     if leading + exponent < 53 then
       let fraction := difference <<< (exponent - 1)
       ofUInt64 (packFieldsWord sign 0 fraction)

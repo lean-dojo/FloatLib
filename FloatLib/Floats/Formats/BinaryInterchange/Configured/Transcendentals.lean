@@ -7,32 +7,30 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals.Certified
 public import FloatLib.Numerics.Capabilities.Elementary
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 /-!
 # Opt-in transcendentals for configured binary values
 
-`import FloatLib` does not install `ExecFloat.Binary.exp`, `Model.exp`, `Model.pow`, or the
-`MathFunctions` instances for configured and model binary values. The class and its host `Float`
-and real instances are available without this module. Import this module to give `ExecFloat.Binary`
-the deterministic elementary-function kernels (`exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`, `cosh`,
-`tanh`) and the `MathFunctions` instance. Certified `sqrt` and `abs` stay on the default import;
-this instance only republishes them for generic code.
+This module adds deterministic `exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and `tanh`
+approximations and the `MathFunctions` instance to `ExecFloat.Binary`. The lifting theorems below
+preserve the model results through packing. These kernels use nearest-even arithmetic and
+IEEE-style exceptional values; they carry no general real-error bound.
 
-These functions are deterministic approximations with IEEE-style handling of exceptional inputs.
-The lifting theorems below say that packing does not change the selected model result; they do not
-claim a real-error bound or correct rounding. Such claims require a separate certificate or proved
-enclosure. The optional Arb-backed adapter has its own external-library trust boundary.
+`Binary.Certified.exp`, `log`, `expMinus1`, and `logPlus1` use rational enclosure refinement and
+return `Option Value`. Every accepted result is proved finite and equal to nearest-even rounding
+of the real function. The latter two functions form `exp x - 1` and `log (1 + x)` before rounding,
+retaining small results near zero. Import `Configured.Transcendentals.Certified` alone for this
+focused API. The `MathFunctions` instance uses the approximation kernels above.
 
-The functions use their configured internal approximation and nearest-even arithmetic; they do
-not accept a per-call rounding direction or return IEEE status flags. `Configured.Rounding.Runtime`
-provides directed rounding for the six primitive arithmetic operations, while the Arb adapter is
-the current explicit-rounding path for transcendental point evaluation.
+`sinCosResult` reports arguments beyond the trigonometric reduction budget. Value-only sine and
+cosine use the format's invalid result on failure. These APIs return no IEEE status flags;
+the optional Arb adapter supports explicit rounding directions through an external library.
 
-`sinCosResult` reports when an argument exceeds the default trigonometric reduction budget.
-The value-only `sin`, `cos`, and `sinCos` operations return the format's invalid result in that
-case. This resource failure is separate from IEEE status and from numerical accuracy certificates.
+`import FloatLib` keeps binary elementary functions opt-in. Certified `sqrt` and `abs`, the
+`MathFunctions` class, and its host `Float` and real instances are available by default.
 -/
 
 @[expose] public section
@@ -46,7 +44,9 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+  ExecFloat.Binary format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite plan code
 
 /-- Deterministic approximation to `eˣ` in the configured binary format. -/
 @[inline] def exp
@@ -154,8 +154,7 @@ without knowing the binary descriptor. `sqrt` and `abs` here are the certified o
 on the default import; the remaining fields have the same approximation boundary as the named
 functions above.
 -/
-instance : MathFunctions
-    Value where
+instance : MathFunctions (ExecFloat (Configured.Family format code plan)) where
   exp := exp
   tanh := tanh
   cosh := cosh

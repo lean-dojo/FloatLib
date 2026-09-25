@@ -8,6 +8,7 @@ Source:
 benchmarks/results/main/release/benchmark/environment/external-posit-conformance.csv.
 
 Run from anywhere: python3 ch11_universal_preflight.py [--out PNG]
+Also writes a <stem>-mobile.png companion beside the overview.
 """
 
 from __future__ import annotations
@@ -58,6 +59,49 @@ def planned_widths() -> list[int]:
             widths = [int(value) for value in line.removeprefix("widths=").split()]
             return [width for width in widths if width >= 5 and width not in {24, 48}]
     raise SystemExit(f"missing widths entry in {METADATA}")
+
+
+def draw_mobile(target: Path, cells: dict[tuple[int, str], str],
+                widths: list[int], passed: int, rejected: int) -> Path:
+    """Keep every operation/width cell, with vertical width labels."""
+    fig, ax = fs.plt.subplots(figsize=(4.25, 5.2))
+    fig.subplots_adjust(left=0.16, right=0.96, bottom=0.32, top=0.63)
+    ax.grid(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    n_cols, n_rows = len(widths), len(OPERATIONS)
+    for col, width in enumerate(widths):
+        for row, op in enumerate(OPERATIONS):
+            style = PASS_STYLE if cells[(width, op)] == "pass" else REJECT_STYLE
+            ax.add_patch(Rectangle((col, n_rows - 1 - row), 1, 1, **style))
+    ax.set_xlim(0, n_cols)
+    ax.set_ylim(0, n_rows)
+    ax.set_aspect("equal")
+    ax.set_xticks([i + 0.5 for i in range(n_cols)],
+                  labels=[str(w) for w in widths], rotation=90)
+    ax.set_yticks([n_rows - 1 - i + 0.5 for i in range(n_rows)], labels=OPERATIONS)
+    ax.tick_params(length=0, labelsize=12)
+    ax.set_xlabel("Posit width (bits)", fontsize=12)
+
+    fig.suptitle("Universal preflight", y=0.99, fontsize=14, fontweight="bold")
+    fig.text(0.5, 0.90, f"{passed} of {passed + rejected} comparisons matched",
+             ha="center", fontsize=12)
+    handles = [
+        Patch(label=f"All 16 inputs agree ({passed})", **PASS_STYLE),
+        Patch(label=f"Excluded from timings ({rejected})", **REJECT_STYLE),
+    ]
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.865),
+               fontsize=12, handlelength=1.6, labelspacing=0.7)
+
+    counts: dict[int, list[str]] = {}
+    for op in OPERATIONS:
+        count = sum(cells[(width, op)] == "pass" for width in widths)
+        counts.setdefault(count, []).append(op)
+    summary = [f"Widths matched (of {len(widths)}):"]
+    summary.extend(f"{', '.join(ops)}: {count}" for count, ops in counts.items())
+    fig.text(0.08, 0.025, "\n".join(summary), fontsize=12, linespacing=1.5,
+             va="bottom")
+    return fs.save(fig, OUT_NAME, target.with_name(f"{target.stem}-mobile.png"))
 
 
 def main() -> None:
@@ -117,6 +161,7 @@ def main() -> None:
                  y=0.99, fontsize=11)
 
     target = fs.save(fig, OUT_NAME, out=args.out)
+    draw_mobile(target, cells, widths, passed, rejected)
     print(f"wrote {target}")
 
 

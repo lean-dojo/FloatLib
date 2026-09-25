@@ -7,11 +7,11 @@ separate matched comparison; its old wrapper's rows are not plotted here. The da
 ``benchmarks/results/main/release/benchmark/plots/summary.csv``. The benchmark verifier
 regenerates that CSV from all nine raw trials before accepting the bundle.
 
-The focused figures pair mul with fma and div with sqrt. The reader shows a figure at most about
-900 pixels wide, where six panels leave the tick labels and legend unreadable. The six-panel
-overview, format-comparison-main.png, includes addition and subtraction for readers who want
-every operation on one page. A second six-panel figure stops at 16 bits so it can label every
-measured width. The full 2-to-4096-bit axis cannot label 5, 6, and 7 bits legibly.
+The focused figures pair mul with fma and div with sqrt. Every figure retains its overview PNG
+and supplies individual operation SVGs through an adjacent series manifest. The six-panel
+overview, format-comparison-main.png, includes addition and subtraction. A second six-panel
+figure stops at 16 bits so it can label every measured width. The full 2-to-4096-bit axis cannot
+label 5, 6, and 7 bits legibly.
 
 Tick policy: the full-range x axis is log base 2 and labels powers of two. Every measured point
 still appears, including 3, 5, 6, and 7 bits. The low-width figure labels every point. Lines connect
@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -38,6 +39,12 @@ from matplotlib.lines import Line2D  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
+sys.path.insert(0, str(REPO / "benchmarks" / "plots"))
+from format_comparison import (  # noqa: E402
+    compact_operation_layout, save_operation_svg, stagger_width_labels,
+    write_operation_series,
+)
+
 BENCHMARK = REPO / "benchmarks" / "results" / "main" / "release" / "benchmark"
 SUMMARY = BENCHMARK / "plots" / "summary.csv"
 DEFAULT_OUT_DIR = HERE.parent
@@ -255,6 +262,57 @@ def add_figure_heading(fig, title: str, *, title_y: float = 0.985) -> None:
     )
 
 
+def draw_operation_views(
+    table, overview: Path, operations, limits, *,
+    max_width: int | None = None, label_every_width: bool = False,
+    series_filter: set[str] | None = None,
+) -> None:
+    """Retain each overview panel's points, bands, series filter, and axis limits."""
+    descriptions = {}
+    scope = ("Scalar kernels, 2 to 16 bits" if max_width == 16
+             else "Scalar kernels at equal encoded width")
+    for operation in operations:
+        fig, ax = plt.subplots()
+        plotted = draw_panel(
+            ax, table, operation, max_width=max_width,
+            label_every_width=label_every_width, series_filter=series_filter,
+        )
+        if not plotted:
+            plt.close(fig)
+            continue
+        ax.set_xlim(limits[operation][0])
+        ax.set_ylim(limits[operation][1])
+        stagger_width_labels(ax)
+        ax.set_ylabel("Median latency (ns/op, log scale)")
+        selected = [(series, label, style) for series, label, style in SERIES
+                    if series in plotted]
+        notes = (
+            "Nine trials; bands span the 5th to 95th percentiles. Lower time is faster.",
+            "Input selection and checksums included. Lines connect measured widths.",
+        )
+        compact_operation_layout(
+            fig, ax, title=OPERATION_LABEL[operation], context=scope,
+            handles=[Line2D([], [], **style) for _series, _label, style in selected],
+            labels=[label for _series, label, _style in selected], notes=notes,
+            bold_labels={label for series, label, _style in selected if series in OURS},
+        )
+        check_no_dashes(*(text.get_text() for text in fig.findobj(matplotlib.text.Text)))
+        save_operation_svg(fig, overview, operation)
+        descriptions[operation] = (
+            f"{OPERATION_LABEL[operation]}: median latency in nanoseconds per operation "
+            f"against encoded width{' from 2 to 16 bits' if max_width == 16 else ''}, "
+            "on logarithmic axes, with nine-trial 5th to 95th percentile bands. "
+            "Series: " + "; ".join(label for _series, label, _style in selected) + "."
+        )
+    names = ", ".join(OPERATION_LABEL[operation].lower() for operation in descriptions)
+    write_operation_series(
+        overview, descriptions,
+        overview_alt=f"Median latency in nanoseconds per operation for {names}, "
+        f"against encoded width{' from 2 to 16 bits' if max_width == 16 else ''} "
+        "on logarithmic axes, with nine-trial 5th to 95th percentile bands.",
+    )
+
+
 def draw_pair(table, name: str, operations: tuple[str, str], out_dir: Path) -> Path:
     title = (
         f"FloatLib performance: {OPERATION_LABEL[operations[0]].lower()} "
@@ -273,7 +331,9 @@ def draw_pair(table, name: str, operations: tuple[str, str], out_dir: Path) -> P
     add_figure_heading(fig, title)
     out = out_dir / f"format-comparison-{name}.png"
     fig.savefig(out, dpi=200)
+    limits = {op: (ax.get_xlim(), ax.get_ylim()) for op, ax in zip(operations, axes)}
     plt.close(fig)
+    draw_operation_views(table, out, operations, limits)
     return out
 
 
@@ -293,7 +353,9 @@ def draw_overview(table, out_dir: Path) -> Path:
     add_figure_heading(fig, title)
     out = out_dir / "format-comparison-main.png"
     fig.savefig(out, dpi=200)
+    limits = {op: (ax.get_xlim(), ax.get_ylim()) for op, ax in zip(OPERATIONS, axes.flat)}
     plt.close(fig)
+    draw_operation_views(table, out, OPERATIONS, limits)
     return out
 
 
@@ -355,7 +417,12 @@ def draw_low_width(table, out_dir: Path) -> Path:
     add_figure_heading(fig, title)
     out = out_dir / "format-comparison-low-width.png"
     fig.savefig(out, dpi=200)
+    limits = {op: (ax.get_xlim(), ax.get_ylim()) for op, ax in zip(OPERATIONS, axes.flat)}
     plt.close(fig)
+    draw_operation_views(
+        table, out, OPERATIONS, limits, max_width=16,
+        label_every_width=True, series_filter=included,
+    )
     return out
 
 

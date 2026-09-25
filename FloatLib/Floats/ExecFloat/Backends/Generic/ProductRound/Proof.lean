@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Numerics.ShiftRightJam
+import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
 # Correctness of unsigned-scale product rounding
@@ -228,6 +230,44 @@ theorem round_normalized_sum
   rw [show fmt.fracWidth + 1 - fmt.fracWidth = 1 by omega]
   rw [ite_eq_right hcarry, ite_eq_right hoverflow, hencodedExponent]
   rw [ite_eq_right hcarry]
+
+/--
+Compressing low bits into a sticky bit preserves the rounded encoding when two bits remain
+below the destination significand. The same bound covers normal and subnormal rounding.
+-/
+theorem round_shiftRightJam (fmt : FloatFormat) (sign : Bool) (product scale jam : Nat)
+    (hleading : jam + fmt.fracWidth + 2 ≤ product.log2) :
+    round fmt sign (Numerics.shiftRightJam product jam) (scale + jam) =
+      round fmt sign product scale := by
+  have hproduct : product ≠ 0 := by
+    intro h
+    simp [h] at hleading
+  have hlower : 2 ^ (jam + 1) ≤ product :=
+    (Nat.le_log2 hproduct).1 (by omega)
+  have hjam : Numerics.shiftRightJam product jam ≠ 0 :=
+    Numerics.shiftRightJam_ne_zero product jam <|
+      (Nat.pow_le_pow_right (by decide) (Nat.le_succ jam)).trans hlower
+  have hlog := Numerics.log2_shiftRightJam product jam hlower
+  have hposition : product.log2 - jam + (scale + jam) = product.log2 + scale := by
+    omega
+  unfold round
+  simp only [beq_iff_eq, hproduct, hjam, ite_false, hlog, hposition]
+  by_cases hnormal : product.log2 + scale < fmt.bias + 2 * fmt.fracWidth - 1
+  · have halign : fmt.ieeeSubnormalAlignExp = fmt.bias + fmt.fracWidth - 1 := rfl
+    have hscale : scale < fmt.ieeeSubnormalAlignExp := by omega
+    have hscaleJam : scale + jam < fmt.ieeeSubnormalAlignExp := by omega
+    have hshift : fmt.ieeeSubnormalAlignExp - (scale + jam) =
+        fmt.ieeeSubnormalAlignExp - scale - jam := by omega
+    simp only [hnormal, hscaleJam, hscale, ite_true, hshift]
+    rw [Numerics.roundShiftRightEven_shiftRightJam product jam
+      (fmt.ieeeSubnormalAlignExp - scale) (by omega)]
+  · have hwide : fmt.fracWidth ≤ product.log2 := by omega
+    have hwideJam : fmt.fracWidth ≤ product.log2 - jam := by omega
+    have hshift : product.log2 - jam - fmt.fracWidth =
+        product.log2 - fmt.fracWidth - jam := by omega
+    simp only [hnormal, ite_false, hwideJam, hwide, ite_true, hshift]
+    rw [Numerics.roundShiftRightEven_shiftRightJam product jam
+      (product.log2 - fmt.fracWidth) (by omega)]
 
 private theorem exponent_add_align (fmt : FloatFormat) (scale : Nat) :
     (Int.ofNat scale -

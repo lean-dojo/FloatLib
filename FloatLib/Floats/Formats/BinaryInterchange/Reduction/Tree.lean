@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
 public import FloatLib.Numerics.Reduction.Error
 
 /-!
@@ -16,6 +17,10 @@ Each internal node uses `Model.add`, with one nearest-even rounding at that node
 execution certificate excludes exceptional inputs and overflow at every intermediate result.
 The error budget then follows from FloatLib's half-ULP theorem, including subnormal values.
 This API does not change `Model.sum`, which accumulates exactly and rounds only once.
+
+Each finite addition also has relative error at most `unitRoundoffAt fmt`, with no underflow
+term, because a sum of two grid points below the normal range is exact. This discharges the
+local premise of the mixed and geometric reduction bounds for `Model.add` trees.
 -/
 
 @[expose] public section
@@ -86,6 +91,51 @@ theorem abs_toReal_eval_sub_eval_le {a b : Numerics.ReductionTree (Model fmt)}
     _ ≤ |toReal (a.eval add id) - (a.leaves.map toReal).sum| +
         |(b.leaves.map toReal).sum - toReal (b.eval add id)| := abs_add_le _ _
     _ ≤ errorBudget a + errorBudget b := add_le_add ea (by rwa [abs_sub_comm])
+
+/--
+Every finite addition in the tree has relative error at most `unitRoundoffAt fmt`, measured
+against the magnitudes of its two operands, with no underflow allowance.
+-/
+theorem allNodes_abs_toReal_add_sub_le (t : Numerics.ReductionTree (Model fmt))
+    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
+    t.AllNodes add id (fun x y =>
+      |toReal (add x y) - (toReal x + toReal y)| ≤
+        unitRoundoffAt fmt * (|toReal x| + |toReal y|)) := by
+  induction t with
+  | leaf x => trivial
+  | node a b ha hb =>
+    refine ⟨ha hfinite.1, hb hfinite.2.1, ?_⟩
+    have hu : 0 ≤ unitRoundoffAt fmt :=
+      FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _
+    exact (abs_toReal_add_sub_le_unitRoundoffAt _ _ hfmt hfinite.1.isFinite_eval
+      hfinite.2.1.isFinite_eval hfinite.2.2).trans
+      (mul_le_mul_of_nonneg_left (abs_add_le _ _) hu)
+
+/--
+A finite IEEE reduction tree satisfies the mixed-budget bound with relative allowance
+`unitRoundoffAt fmt` and zero absolute allowance, including subnormal intermediate results.
+-/
+theorem abs_toReal_eval_sub_sum_le_mixedBudget (t : Numerics.ReductionTree (Model fmt))
+    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
+    |toReal (t.eval add id) - (t.leaves.map toReal).sum| ≤
+      t.mixedBudget toReal (unitRoundoffAt fmt) 0 := by
+  rw [← Numerics.ReductionTree.eval_add_eq_sum]
+  exact t.abs_eval_sub_exact_le_relativeBudget add id toReal (unitRoundoffAt fmt)
+    (FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _)
+    (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
+
+/--
+A finite IEEE reduction tree with `n` additions has error at most
+`((1 + u)^n - 1) * Σ|xᵢ|` for `u = unitRoundoffAt fmt`, with no normal-range hypothesis.
+-/
+theorem abs_toReal_eval_sub_sum_le_geometric (t : Numerics.ReductionTree (Model fmt))
+    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
+    |toReal (t.eval add id) - (t.leaves.map toReal).sum| ≤
+      ((1 + unitRoundoffAt fmt) ^ t.nodeCount - 1) * t.sumAbs toReal := by
+  rw [← Numerics.ReductionTree.eval_add_eq_sum]
+  exact t.abs_eval_sub_exact_le_geometric add id toReal (unitRoundoffAt fmt)
+    (FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _)
+    (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
 
 end ReductionTree
 end FloatLib.Floats.Formats.BinaryInterchange.Model

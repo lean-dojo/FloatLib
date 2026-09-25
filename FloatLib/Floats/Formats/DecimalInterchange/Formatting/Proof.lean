@@ -7,6 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
+public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Saturation
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
@@ -65,8 +66,8 @@ theorem convert_of_valid (f : Format) (mode : RoundingMode) (value : Datum)
   | finite negative coefficient quantum =>
       have hv := projectMagnitude_same_quantum f mode negative coefficient quantum hvalid
       have hs := projectMagnitude_exact_status f mode negative coefficient quantum quantum hvalid
-      change projectMagnitude f mode negative
-        ((coefficient : ℚ) * (10 : ℚ) ^ quantum) quantum = _
+      change projectScaled f mode negative coefficient quantum quantum = _
+      rw [projectScaled_eq]
       cases h : projectMagnitude f mode negative
           ((coefficient : ℚ) * (10 : ℚ) ^ quantum) quantum
       simp_all
@@ -120,6 +121,8 @@ theorem convert_valid (f : Format) (mode : RoundingMode) (value : Datum) :
     (convert f mode value).value.Valid f := by
   cases value with
   | finite negative coefficient quantum =>
+      change (projectScaled f mode negative coefficient quantum quantum).value.Valid f
+      rw [projectScaled_eq]
       exact projectMagnitude_valid f mode negative
         (mul_nonneg (Nat.cast_nonneg coefficient) (zpow_pos (by norm_num) quantum).le) quantum
   | infinity negative => trivial
@@ -141,7 +144,7 @@ theorem parse_of_decimal (f : Format) (mode : RoundingMode) (text : String) (val
     parse f mode text =
       projectMagnitude f mode value.negative
         ((value.significand : ℚ) * (10 : ℚ) ^ value.exponent) value.exponent := by
-  simp [parse, read, readCharacters, hread, convert]
+  simp [parse, read, readCharacters, hread, convert, projectScaled_eq]
 
 /-- Zero keeps its sign and uses the written quantum clamped to the destination range. -/
 theorem parse_zero (f : Format) (mode : RoundingMode) (text : String)

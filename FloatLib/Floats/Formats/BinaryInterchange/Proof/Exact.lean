@@ -105,7 +105,7 @@ namespace AtValue
 /-- Attach the payload-preserving interpretation of an executable value known to be a NaN. -/
 @[inline] def ofNaN {fmt : FloatFormat} (x : Model fmt)
     (hnan : isNaN x = true) :
-    AtValue fmt (.exceptional (.nan (some (fracField x)))) :=
+    AtValue fmt (.exceptional (.nan (some (fracField x)) (signBit x) (isSNaN x))) :=
   ⟨x, by simp [toNumericalValue, hnan]⟩
 
 /-- Positive infinity with its total interpretation in a conventional IEEE format. -/

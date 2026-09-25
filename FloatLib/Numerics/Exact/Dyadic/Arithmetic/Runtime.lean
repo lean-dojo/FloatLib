@@ -102,6 +102,30 @@ for formats, such as posits, that have a unique zero.
   addFields left.negative left.significand left.exponent
     right.negative right.significand right.exponent
 
+/--
+Exact sum of two squares, using only natural-number significands.
+
+Both squares are nonnegative, so alignment needs no signed addition or absolute-value recovery.
+The result has the same fields as exact multiplication followed by addition, including when one
+or both inputs are zero.
+-/
+@[inline] def sumSquares (left right : Dyadic) : Dyadic :=
+  let leftSquare := left.significand * left.significand
+  let rightSquare := right.significand * right.significand
+  let leftExponent := left.exponent + left.exponent
+  let rightExponent := right.exponent + right.exponent
+  if leftSquare == 0 then
+    if rightSquare == 0 then zero
+    else ⟨false, rightSquare, rightExponent⟩
+  else if rightSquare == 0 then
+    ⟨false, leftSquare, leftExponent⟩
+  else if leftExponent ≤ rightExponent then
+    ⟨false, leftSquare + (rightSquare <<< (rightExponent - leftExponent).toNat),
+      leftExponent⟩
+  else
+    ⟨false, (leftSquare <<< (leftExponent - rightExponent).toNat) + rightSquare,
+      rightExponent⟩
+
 /-- Exact subtraction from scalar dyadic fields. -/
 @[inline] def subFields
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)

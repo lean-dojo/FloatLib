@@ -66,5 +66,5 @@ Lean and C compiler versions make this a comparison of the compiled libraries an
 their adapters. It does not isolate the cost of an algorithm from its compiler.
 
 The [results](../../results/p3109-flops/results.json) and
-[guide table](../../../site/content/chapters/15-performance.md#p3109-arithmetic-with-flops)
+[guide table](../../../site/content/chapters/17-performance.md#p3109-arithmetic-with-flops)
 report this workload separately from the IEEE and posit benchmark machine.

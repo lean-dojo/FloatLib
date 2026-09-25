@@ -61,7 +61,7 @@ plus `fracWidth`, so both operands share the four-word coordinate of the product
         let xMantissa := normalMantissa fmt (fracHigh fmt xWords.hi) xWords.lo
         let yMantissa := normalMantissa fmt (fracHigh fmt yWords.hi) yWords.lo
         let zMantissa := normalMantissa fmt (fracHigh fmt zWords.hi) zWords.lo
-        let product := FloatLib.Numerics.FixedWord.mul128 xMantissa yMantissa
+        let product := multiplyLimbs xMantissa yMantissa
         let sum :=
           FloatLib.Numerics.FixedWord.add256 product (alignFmaAddend fmt zMantissa)
         if sum.carry != 0 then

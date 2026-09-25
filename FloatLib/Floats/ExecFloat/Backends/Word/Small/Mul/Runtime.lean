@@ -65,7 +65,7 @@ threshold before rounding or overflows after rounding. These cases use the gener
     (xExponent yExponent xMantissa yMantissa : UInt64) :
     Option (Model fmt) :=
   let product := xMantissa * yMantissa
-  let leading := product.log2
+  let leading := FloatLib.Numerics.FixedWord.log2Word product
   let scale := (xExponent - 1) + (yExponent - 1)
   let position := leading + scale
   let normalThreshold :=
@@ -87,7 +87,7 @@ that word for an eligible format.
 @[inline] def roundNormalProductWord (fmt : FloatFormat) (sign : Bool)
     (xExponent yExponent xMantissa yMantissa : UInt64) : UInt64 :=
   let product := xMantissa * yMantissa
-  let leading := product.log2
+  let leading := FloatLib.Numerics.FixedWord.log2Word product
   let scale := (xExponent - 1) + (yExponent - 1)
   let position := leading + scale
   let normalThreshold :=

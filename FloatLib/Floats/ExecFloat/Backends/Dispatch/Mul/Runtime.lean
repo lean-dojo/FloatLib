@@ -37,7 +37,7 @@ Width-generic compiled multiplication.
 Finite operands use the compact scale kernel; exceptional operands retain the public NaN and
 infinity policy.
 -/
-def generic {fmt : FloatFormat}
+@[specialize fmt] def generic {fmt : FloatFormat}
     (x y : Model fmt) : Model fmt :=
   match FiniteKernel.mulRuntime? x y with
   | some product => product

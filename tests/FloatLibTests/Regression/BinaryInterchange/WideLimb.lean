@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLibTests.Regression.BinaryInterchange.NativeHarness
+public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Division.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Fma.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Multiplication.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Add.Runtime
@@ -226,12 +227,12 @@ def results : Thunk (Array FormatResult) := ⟨fun _ =>
 
 /-! ## Public limb carrier -/
 
-/-- The public 256-bit IEEE type stored in four 64-bit limbs. -/
+/-- The public 256-bit IEEE type stored in eight 32-bit limbs. -/
 abbrev Limb256 := ExecFloat.BinaryLimbs 19 236
 
 private abbrev Limb256Family := ExecFloat.Binary.LimbFamily 19 236
 
-/-- Four public operations select limb kernels; division and square root use the exact baseline. -/
+/-- All six public operations select the certified limb-carrier candidates. -/
 example :
     [ (ExecFloat.Add.selectedCandidate (F := Limb256Family)).kind
     , (ExecFloat.Sub.selectedCandidate (F := Limb256Family)).kind
@@ -239,7 +240,7 @@ example :
     , (ExecFloat.Div.selectedCandidate (F := Limb256Family)).kind
     , (ExecFloat.Sqrt.selectedCandidate (F := Limb256Family)).kind
     , (ExecFloat.Fma.selectedCandidate (F := Limb256Family)).kind
-    ] = [.wideLimbs, .wideLimbs, .wideLimbs, .generic, .generic, .wideLimbs] := by
+    ] = [.wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs] := by
   rfl
 
 /-- Construct a public limb value from explicit encoded fields. -/
@@ -256,6 +257,8 @@ Public operations checked against explicit expected encodings.
 The carry fixtures cross each limb boundary. With `u = 2⁻²³⁶`, the FMA fixture must retain
 `(1 + u) * (1 - u) - 1 = -u²`; separately rounded multiplication would lose that residual.
 For `1 / 3`, the nearest 237-bit significand is `(2²³⁸ - 1) / 3`.
+Directed checks select the adjacent significand explicitly for both signs. Subnormal division
+checks both tie parities, and square roots just below a midpoint check the remainder comparison.
 -/
 def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   let f := wide256.fracWidth
@@ -274,6 +277,13 @@ def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   let infinity := limbValue false wide256.expAllOnesNat 0
   let largest := limbValue false (wide256.expAllOnesNat - 1) (2 ^ f - 1)
   let nan : Limb256 := ExecFloat.Binary.ofModel (Model.canonicalNaN wide256)
+  let signalingNaN := limbValue true wide256.expAllOnesNat 5
+  let quietNaN := limbValue true wide256.expAllOnesNat (2 ^ (f - 1) + 5)
+  let thirdFraction := (2 ^ (f + 2) - 1) / 3 - 2 ^ f
+  let directedThird (mode : IEEERoundingMode) (negative : Bool) :=
+    Model.WideLimb.toModel (Model.WideLimb.divWithRounding wide256 mode
+      (Model.WideLimb.ofModel (Model.ofFields wide256 negative bias 0))
+      (Model.WideLimb.ofModel (ExecFloat.Binary.toModel three)))
   [ ("codec",
       (structured wide256).all fun x =>
         ExecFloat.Binary.toNatBits (ExecFloat.Binary.ofModel x : Limb256) == x.toNatBits)
@@ -304,12 +314,29 @@ def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   , ("fmaInvalid", sameLimbBits (ExecFloat.fma infinity zero one) nan)
   , ("divExact", sameLimbBits (four / two) two)
   , ("divRounding", sameLimbBits (one / three)
-      (limbValue false (bias - 2) ((2 ^ (f + 2) - 1) / 3 - 2 ^ f)))
+      (limbValue false (bias - 2) thirdFraction))
+  , ("divTowardZero", sameBits (directedThird .towardZero false)
+      (Model.ofFields wide256 false (bias - 2) thirdFraction))
+  , ("divTowardPositive", sameBits (directedThird .towardPositiveInfinity false)
+      (Model.ofFields wide256 false (bias - 2) (thirdFraction + 1)))
+  , ("divTowardNegative", sameBits (directedThird .towardNegativeInfinity false)
+      (Model.ofFields wide256 false (bias - 2) thirdFraction))
+  , ("divNegativeTowardPositive", sameBits (directedThird .towardPositiveInfinity true)
+      (Model.ofFields wide256 true (bias - 2) thirdFraction))
+  , ("divNegativeTowardNegative", sameBits (directedThird .towardNegativeInfinity true)
+      (Model.ofFields wide256 true (bias - 2) (thirdFraction + 1)))
+  , ("divSubnormalHalfEven", sameLimbBits (subnormal / two) zero)
+  , ("divSubnormalHalfOdd", sameLimbBits (limbValue false 0 3 / two) (limbValue false 0 2))
+  , ("divSubnormalSignedZero", sameLimbBits (limbValue true 0 1 / two) negativeZero)
   , ("divByZero", sameLimbBits (one / zero) infinity)
   , ("divInvalid", sameLimbBits (zero / zero) nan)
+  , ("divNaNPayload", sameLimbBits (signalingNaN / one) quietNaN)
   , ("sqrtExact", sameLimbBits (ExecFloat.sqrt four) two)
+  , ("sqrtBelowEvenMidpoint", sameLimbBits (ExecFloat.sqrt aboveOne) one)
+  , ("sqrtBelowOddMidpoint", sameLimbBits (ExecFloat.sqrt (limbValue false bias 3)) aboveOne)
   , ("sqrtSignedZero", sameLimbBits (ExecFloat.sqrt negativeZero) negativeZero)
-  , ("sqrtInvalid", sameLimbBits (ExecFloat.sqrt negativeOne) nan) ]⟩
+  , ("sqrtInvalid", sameLimbBits (ExecFloat.sqrt negativeOne) nan)
+  , ("sqrtNaNPayload", sameLimbBits (ExecFloat.sqrt signalingNaN) quietNaN) ]⟩
 
 def totalFailures : Thunk Nat := ⟨fun _ =>
   results.get.foldl (fun total result => total + result.totalFailures) 0 +

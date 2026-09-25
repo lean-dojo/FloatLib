@@ -65,11 +65,32 @@ The binary functions `ExecFloat.Binary.exp`, `Model.exp`, `Model.pow`, and the c
 model binary `MathFunctions` instances require
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the model barrel
 `BinaryInterchange.Transcendentals` for model values). These are deterministic software kernels with
-representation-bridge theorems, not a host-FPU path. Certified `sqrt` and `abs` stay on the
-default import.
+representation-bridge theorems, not a host-FPU path. For an IEEE descriptor, `Model.pow` with a
+finite nonzero base and a finite integral exponent is correctly rounded whenever its result is
+finite (`Model.Power.toReal_pow_of_eq_intCast`). Certified `sqrt` and `abs` stay on the default import.
+
+For proved real rounding of `exp`, `log`, `expMinus1`, and `logPlus1`, import
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals.Certified`.
+Its `Binary.Certified` functions return `some` only after certifying a finite rounded result;
+`none` reports that the call could not certify one.
 
 ## Intervals
 
-- Proof-side outward-rounded reals: `FloatLib/Floats/Interval/Quantized.lean` (Flocq-style grid).
-- Executable binary endpoints: `Model.Interval fmt`. Unordered or NaN endpoints become `whole fmt`.
-- Optional Arb-backed transcendentals: `FloatLibTests.Arb.ModelTranscendentals` (not kernel-checked).
+`Numerics.Interval α` supports arbitrary endpoint representations through an `OutwardRounding`
+adapter. Binary, decimal, and posit adapters use exact rational decoding; successful operations
+enclose every real value between the input bounds. The shared
+[arithmetic](../../Numerics/Enclosure/Interval/Runtime.lean) returns `none` when it cannot produce
+a finite enclosure, including division across zero. Its
+[real containment theorems](../../Numerics/Enclosure/Interval/Real.lean) compose across operations.
+
+`ExecFloat.Binary.Interval` also exposes the directed `Model.Interval` operations. Its IEEE
+arithmetic theorems take finite input bounds and allow infinite output bounds after overflow;
+finite-only formats require endpoint calculations to stay in range.
+
+The [rational enclosure kernels](../../Numerics/Enclosure/Elementary/Runtime.lean) compute proved
+exponential and logarithm bounds. For proofs directly over real numbers,
+[quantized intervals](../Interval/Quantized.lean) use a Flocq-style rounding grid.
+
+With `import FloatLib`, the [`interval` tactic](../../../site/content/chapters/20-proving-numerical-bounds.md)
+proves real inequalities from rational input bounds using certified expression evaluation and
+subdivision.

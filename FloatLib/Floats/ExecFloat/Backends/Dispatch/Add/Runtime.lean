@@ -42,7 +42,7 @@ Width-generic compiled addition.
 Finite operands use the compact component decoder; exceptional operands retain the public NaN and
 infinity policy.
 -/
-def generic {fmt : FloatFormat}
+@[specialize fmt] def generic {fmt : FloatFormat}
     (x y : Model fmt) : Model fmt :=
   match FiniteKernel.addRuntime? x y with
   | some sum => sum

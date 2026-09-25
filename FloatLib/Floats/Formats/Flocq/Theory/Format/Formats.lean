@@ -22,10 +22,9 @@ NaNs, and signed zeros are defined in `FloatLib/Floats/Formats/BinaryInterchange
 
 References:
 
-- Flocq project: https://flocq.gitlabpages.inria.fr/flocq/
-- S. Boldo, G. Melquiond, “Flocq: a unified Coq library for proving floating-point algorithms
-  correct”
-  (ARITH 2011), DOI: 10.1109/ARITH.2011.40
+- S. Boldo and G. Melquiond, “Flocq: A Unified Library for Proving Floating-Point Algorithms
+  in Coq,” ARITH 2011, pp. 243–252, §§III-C–III-D (format predicates and their
+  exponent-function descriptions), DOI: 10.1109/ARITH.2011.40.
 - IEEE Standard for Floating-Point Arithmetic (IEEE 754-2019)
 -/
 

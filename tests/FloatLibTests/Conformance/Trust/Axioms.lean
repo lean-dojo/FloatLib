@@ -8,6 +8,7 @@ module
 
 public import FloatLib
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.Quotient.Compiler
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
@@ -25,7 +26,7 @@ public meta import Lean.Util.CollectAxioms
 At build time, collect the transitive axioms of every loaded declaration whose originating
 module belongs to `FloatLib`, including private declarations available in this environment.
 Only propositional extensionality, quotient soundness, and classical choice are accepted.
-The imports cover the public root and the optional configured binary transcendental operations.
+The imports cover the public root and the optional binary and decimal transcendental proofs.
 The quotient compiler certificate is loaded explicitly because its clients import it privately.
 Unimported modules are outside this check. Symbolic certificate, quire, and native-model regression
 declarations are checked separately because they belong to `FloatLibTests`.

@@ -62,135 +62,79 @@ def trace() -> list[dict]:
     return rows
 
 
-# Layout in axis units; the figure is 9 inches wide, so one unit is 9 / (X_END + 0.2) inches.
-X_STEP, X_RIN, X_LINE0, X_LINE1, X_TEXT, X_BIT, X_Q, X_ROUT, X_INV, X_END = (
-    0.2, 1.7, 3.4, 6.4, 7.7, 11.0, 11.9, 15.2, 16.3, 20.1)
-ROW_H = 1.45
-TOP_PAD = 1.55
-BOTTOM_PAD = 0.35
+def remainder_bar(ax, row: dict, *, y: float, x: float, width: float, height: float,
+                  show_zero: bool = True):
+    """A common 0..5 scale shows the doubled remainder and the divisor threshold."""
+    unit = width / 5
+    ax.plot([x, x + width], [y, y], color=fs.LINE, lw=0.8)
+    ax.add_patch(Rectangle((x, y), row["doubled"] * unit, height,
+                           fc=fs.SKY, ec=fs.BLUE, lw=0.8))
+    if row["bit"]:
+        ax.add_patch(Rectangle((x, y), DIVISOR * unit, height,
+                               fc="white", ec=fs.MUTED, hatch="///", lw=0.6))
+    ax.plot([x + DIVISOR * unit] * 2, [y - 0.05, y + height + 0.1],
+            color=fs.VERMILION, lw=1)
+    ax.text(x + DIVISOR * unit, y + height + 0.14, "3", fontsize=11.5,
+            color=fs.VERMILION, ha="center", va="bottom")
+    if show_zero:
+        ax.text(x, y - 0.06, "0", fontsize=11, va="top")
+
+
+def draw(mobile: bool, rows: list[dict]):
+    fig = plt.figure(figsize=(3.8, 8.5) if mobile else (9, 4.9))
+    fig.text(0.035, 0.98, "4 ÷ 3: grow the quotient one bit", fontsize=13.5, weight="bold", va="top")
+    fig.text(0.035, 0.915 if mobile else 0.875,
+             "Start: 4 = 1 × 3 + 1\nquotient q = 1, remainder r = 1" if mobile else
+             "Start: 4 = 1 × 3 + 1, so quotient q = 1 and remainder r = 1.",
+             fontsize=12, linespacing=1.5, va="top" if mobile else "baseline")
+    if not mobile:
+        fig.text(0.08, 0.76, "step", fontsize=11.5, color=fs.MUTED)
+        fig.text(0.23, 0.76, "Double r; compare with 3", fontsize=11.5, color=fs.MUTED)
+        fig.text(0.59, 0.76, "next bit", fontsize=11.5, color=fs.MUTED)
+        fig.text(0.74, 0.76, "new q, r", fontsize=11.5, color=fs.MUTED)
+    for i, row in enumerate(rows[1:]):
+        if mobile:
+            rect = [0.035, 0.64 - i * 0.168, 0.93, 0.148]
+            ax = fig.add_axes(rect)
+            ax.set(xlim=(0, 1), ylim=(0, 1))
+            ax.axis("off")
+            ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.6))
+            ax.text(0.04, 0.84, f"Step {row['step']}: 2r = {row['doubled']}", fontsize=12, weight="bold")
+            remainder_bar(ax, row, y=0.34, x=0.07, width=0.40, height=0.17)
+            action = "keep 2" if row["bit"] == 0 else "subtract 3"
+            ax.text(0.58, 0.55, action, fontsize=11.5)
+            ax.text(0.58, 0.29, f"append {row['bit']}", fontsize=12, color=fs.BLUE)
+            ax.text(0.04, 0.04, f"q = {row['q']} ({row['q']:b}₂),   r = {row['r_out']}", fontsize=11.5)
+        else:
+            ax = fig.add_axes([0.04, 0.59 - i * 0.13, 0.92, 0.13])
+            ax.set(xlim=(0, 1), ylim=(0, 1))
+            ax.axis("off")
+            ax.text(0.06, 0.48, str(row['step']), fontsize=12, ha="center")
+            remainder_bar(ax, row, y=0.32, x=0.21, width=0.24, height=0.22, show_zero=False)
+            action = f"2r = {row['doubled']}; " + ("keep" if row["bit"] == 0 else "subtract 3")
+            ax.text(0.20, 0.05, action, fontsize=11.5)
+            ax.text(0.62, 0.48, str(row['bit']), fontsize=13, color=fs.BLUE)
+            ax.text(0.76, 0.57, f"q = {row['q']} ({row['q']:b}₂)", fontsize=12)
+            ax.text(0.76, 0.17, f"r = {row['r_out']}", fontsize=12)
+    fig.text(0.035, 0.07 if mobile else 0.09,
+             "Final: 21 × 3 + 1 = 64 = 4 × 2⁴", fontsize=12, weight="bold")
+    fig.text(0.035, 0.022,
+             "Hatching: subtract one divisor.\nEvery step keeps 0 ≤ r < 3." if mobile else
+             "Hatching removes one divisor.  Every step keeps q × 3 + r = 4 × 2ⁿ and 0 ≤ r < 3.",
+             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
-
-    fs.setup()
     rows = trace()
-    height_units = TOP_PAD + ROW_H * len(rows) + BOTTOM_PAD
-    width_units = X_END + 0.2
-    fig = plt.figure(figsize=(fs.WIDTH, height_units * fs.WIDTH / width_units))
-    ax = fs.diagram_axes(fig, (0, width_units), (0, height_units))
-
-    top = height_units - 0.15
-    ax.text(X_STEP, top, f"{DIVIDEND} / {DIVISOR}: start from {DIVIDEND} = "
-            f"{DIVIDEND // DIVISOR} × {DIVISOR} + {DIVIDEND % DIVISOR}, then run the step "
-            f"{STEPS} times. Each step doubles r, compares it with d = {DIVISOR}, "
-            "and appends one quotient bit.",
-            ha="left", va="top", fontsize=9.5, color=fs.INK)
-
-    # Column headings.
-    y_head = height_units - TOP_PAD + 0.12
-    for x, label, ha in (
-        (X_STEP, "step", "left"),
-        ((X_RIN + X_LINE0) / 2 - 0.35, "r in", "center"),
-        ((X_LINE0 + X_LINE1) / 2, f"2r against d = {DIVISOR}", "center"),
-        (X_TEXT, "decision (2r < d?)", "left"),
-        (X_BIT + 0.4, "bit", "center"),
-        (X_Q, "quotient q\n(new bit boxed)", "left"),
-        ((X_ROUT + X_INV) / 2, "r out", "center"),
-        (X_INV, f"q × {DIVISOR} + r = {DIVIDEND} × 2ⁿ", "left"),
-    ):
-        ax.text(x, y_head, label, ha=ha, va="bottom", fontsize=9, color=fs.MUTED,
-                linespacing=1.2)
-    ax.plot([X_STEP, X_END], [y_head - 0.05, y_head - 0.05], color=fs.LINE, lw=0.8)
-
-    scale = (X_LINE1 - X_LINE0) / (2 * DIVISOR)  # the mini number line runs from 0 to 2d
-    for i, row in enumerate(rows):
-        y0 = height_units - TOP_PAD - ROW_H * (i + 1)
-        yc = y0 + ROW_H / 2
-        if i % 2 == 1:
-            ax.add_patch(Rectangle((X_STEP - 0.1, y0), X_END - X_STEP + 0.2, ROW_H,
-                                   facecolor=fs.PAPER_2, edgecolor="none", zorder=0))
-        label = "start" if row["step"] == 0 else f"step {row['step']}"
-        ax.text(X_STEP, yc, label, ha="left", va="center", fontsize=10, color=fs.INK)
-
-        if row["step"] > 0:
-            ax.text((X_RIN + X_LINE0) / 2 - 0.35, yc, str(row["r_in"]), ha="center",
-                    va="center", fontsize=10.5, color=fs.INK)
-            # Mini number line: 0 to 2d, the divisor as a dashed marker, 2r as a bar.
-            base = yc - 0.32
-            ax.plot([X_LINE0, X_LINE1], [base, base], color=fs.INK, lw=0.8)
-            for value in range(0, 2 * DIVISOR + 1):
-                x = X_LINE0 + value * scale
-                ax.plot([x, x], [base - 0.05, base + 0.05], color=fs.INK, lw=0.6)
-            for value in (0, DIVISOR, 2 * DIVISOR):
-                ax.text(X_LINE0 + value * scale, base - 0.1, str(value), ha="center", va="top",
-                        fontsize=8, color=fs.MUTED)
-            xd = X_LINE0 + DIVISOR * scale
-            ax.plot([xd, xd], [base, base + 0.62], color=fs.INK, lw=0.9, ls="--")
-            ax.text(xd + 0.05, base + 0.63, "d", ha="left", va="bottom", fontsize=8.5,
-                    color=fs.INK)
-            bar_y, bar_h = base + 0.12, 0.34
-            doubled = row["doubled"]
-            if row["bit"] == 0:
-                ax.add_patch(Rectangle((X_LINE0, bar_y), doubled * scale, bar_h,
-                                       facecolor=fs.ORANGE, edgecolor=fs.INK, lw=0.8))
-                decision = f"{doubled} < {DIVISOR}: keep\nr = {doubled}"
-            else:
-                # The part below d is subtracted (hatched); what is left is the new remainder.
-                ax.add_patch(Rectangle((X_LINE0, bar_y), DIVISOR * scale, bar_h,
-                                       facecolor="white", edgecolor=fs.BLUE, lw=0.8,
-                                       hatch="////"))
-                ax.add_patch(Rectangle((X_LINE0 + DIVISOR * scale, bar_y),
-                                       (doubled - DIVISOR) * scale, bar_h,
-                                       facecolor=fs.BLUE, edgecolor=fs.INK, lw=0.8))
-                decision = (f"{doubled} ≥ {DIVISOR}: subtract d\n"
-                            f"r = {doubled} - {DIVISOR} = {row['r_out']}")
-            ax.text(X_LINE1 + 0.15, bar_y + bar_h / 2, f"2r = {doubled}",
-                    ha="left", va="center", fontsize=8.5, color=fs.INK)
-            ax.text(X_TEXT, yc, decision, ha="left", va="center", fontsize=9, color=fs.INK,
-                    linespacing=1.35)
-            bit_colour = fs.ORANGE if row["bit"] == 0 else fs.BLUE
-            ax.text(X_BIT + 0.4, yc, str(row["bit"]), ha="center", va="center", fontsize=12,
-                    color=bit_colour, fontweight="bold")
-        else:
-            ax.text(X_TEXT, yc, f"initial state: {DIVIDEND} = "
-                    f"{row['q']} × {DIVISOR} + {row['r_out']}",
-                    ha="left", va="center", fontsize=9, color=fs.MUTED)
-
-        # The quotient bits, most significant first, the newest boxed and coloured.
-        bits = format(row["q"], "b")
-        cell = 0.42
-        for j, digit in enumerate(bits):
-            x = X_Q + j * cell
-            newest = row["step"] > 0 and j == len(bits) - 1
-            if newest:
-                ax.add_patch(Rectangle((x, yc - 0.3), cell, 0.6,
-                                       facecolor=(fs.ORANGE if row["bit"] == 0 else fs.BLUE),
-                                       edgecolor=fs.INK, lw=0.9, alpha=0.9))
-            ax.text(x + cell / 2, yc, digit, ha="center", va="center", fontsize=11,
-                    color=fs.INK, fontweight="bold" if newest else "normal",
-                    family="DejaVu Sans Mono")
-        ax.text(X_Q + len(bits) * cell + 0.15, yc, f"= {row['q']}", ha="left", va="center",
-                fontsize=10, color=fs.INK)
-
-        ax.text((X_ROUT + X_INV) / 2, yc, str(row["r_out"]), ha="center", va="center",
-                fontsize=10.5, color=fs.INK)
-        total = row["q"] * DIVISOR + row["r_out"]
-        ax.text(X_INV, yc, f"{row['q']} × {DIVISOR} + {row['r_out']} = {total} = "
-                f"{DIVIDEND} × 2{superscript(row['step'])}",
-                ha="left", va="center", fontsize=9.5, color=fs.INK)
-
-    out = fs.save(fig, "ch08-restoring-division.png", args.out)
-    print(f"wrote {out}")
-
-
-SUPERSCRIPTS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
-
-
-def superscript(n: int) -> str:
-    return str(n).translate(SUPERSCRIPTS)
+    fs.setup()
+    out = args.out or fs.ASSETS / "ch08-restoring-division.png"
+    for mobile in (False, True):
+        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        print(f"wrote {fs.save(draw(mobile, rows), target.name, target)}")
 
 
 if __name__ == "__main__":

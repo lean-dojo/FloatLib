@@ -12,7 +12,7 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 /-!
 # Packing correctness for explicitly rounded configured binary operations
 
-The decoding bridge theorems `toModel_add` through `toModel_sqrt` and their
+The decoding bridge theorems `toModel_addWithRounding` through `toModel_sqrtWithRounding` and their
 `IEEEOutcome.toModel_*WithStatus` companions state that decoding a configured result recovers the
 single descriptor-model operation used to compute it. They let proofs transfer results from the
 model without depending on the configured storage plan.
@@ -27,8 +27,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 namespace IEEEOutcome
 
@@ -41,40 +40,46 @@ namespace IEEEOutcome
 end IEEEOutcome
 
 /-- Decoding configured addition gives model addition with the same rounding mode. -/
-@[simp, grind =] theorem toModel_add (left right : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (add left right rounding) =
+@[simp, grind =] theorem toModel_addWithRounding
+    (left right : Value) (rounding : Model.IEEERoundingMode) :
+    toModel (addWithRounding left right rounding) =
       Model.addWithRounding rounding (toModel left) (toModel right) := by
-  simp [add, toModel, Configured.Family.toModel]
+  simp [addWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured subtraction gives model subtraction with the same rounding mode. -/
-@[simp, grind =] theorem toModel_sub (left right : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (sub left right rounding) =
+@[simp, grind =] theorem toModel_subWithRounding
+    (left right : Value) (rounding : Model.IEEERoundingMode) :
+    toModel (subWithRounding left right rounding) =
       Model.subWithRounding rounding (toModel left) (toModel right) := by
-  simp [sub, toModel, Configured.Family.toModel]
+  simp [subWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured multiplication gives model multiplication with the same rounding mode. -/
-@[simp, grind =] theorem toModel_mul (left right : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (mul left right rounding) =
+@[simp, grind =] theorem toModel_mulWithRounding
+    (left right : Value) (rounding : Model.IEEERoundingMode) :
+    toModel (mulWithRounding left right rounding) =
       Model.mulWithRounding rounding (toModel left) (toModel right) := by
-  simp [mul, toModel, Configured.Family.toModel]
+  simp [mulWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured division gives model division with the same rounding mode. -/
-@[simp, grind =] theorem toModel_div (left right : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (div left right rounding) =
+@[simp, grind =] theorem toModel_divWithRounding
+    (left right : Value) (rounding : Model.IEEERoundingMode) :
+    toModel (divWithRounding left right rounding) =
       Model.divWithRounding rounding (toModel left) (toModel right) := by
-  simp [div, toModel, Configured.Family.toModel]
+  simp [divWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured FMA gives model FMA with the same rounding mode. -/
-@[simp, grind =] theorem toModel_fma
+@[simp, grind =] theorem toModel_fmaWithRounding
     (left right addend : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (fma left right addend rounding) =
+    toModel (fmaWithRounding left right addend rounding) =
       Model.fmaWithRounding rounding (toModel left) (toModel right) (toModel addend) := by
-  simp [fma, toModel, Configured.Family.toModel]
+  simp [fmaWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured square root gives model square root with the same rounding mode. -/
-@[simp, grind =] theorem toModel_sqrt (value : Value) (rounding : Model.IEEERoundingMode) :
-    toModel (sqrt value rounding) = Model.sqrtWithRounding rounding (toModel value) := by
-  simp [sqrt, toModel, Configured.Family.toModel]
+@[simp, grind =] theorem toModel_sqrtWithRounding
+    (value : Value) (rounding : Model.IEEERoundingMode) :
+    toModel (sqrtWithRounding value rounding) =
+      Model.sqrtWithRounding rounding (toModel value) := by
+  simp [sqrtWithRounding, toModel, Configured.Family.toModel]
 
 /-- Decoding configured addition preserves the model result and exception flags. -/
 @[simp, grind =] theorem IEEEOutcome.toModel_addWithStatus

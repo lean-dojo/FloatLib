@@ -99,7 +99,8 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
         (a.toNat * 2 ^ (sa - sb)) sb := by
     unfold FiniteScaleAdd.roundSum
     rw [ite_eq_right (by simp [hbNe']), ite_eq_right (by simp [haNe']),
-      ite_eq_left hsb, Nat.shiftLeft_eq]
+      ite_eq_left hsb, FiniteScaleAdd.roundAligned_eq,
+      FiniteScaleAdd.roundMagnitudes_comm, Nat.shiftLeft_eq]
   rw [hspec]
   unfold alignOrdered? at hr
   rw [LimbArray.log2_eq a haNe, LimbArray.log2_eq b hbNe] at hr

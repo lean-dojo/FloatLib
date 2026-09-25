@@ -1,68 +1,44 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch01-binary32-layout.png: the three fields of a binary32 word.
+"""Draw binary32 fields and two worked encodings, with separately stacked mobile fields.
 
-Chapter 02 builds a format from a sign bit, an exponent field and a fraction field, and then
-reads two concrete words. The figure shows the field layout of binary32, the stored words for
-0.1 and -2.5 with each bit coloured by its field, the three field values read off each word,
-and the decoding rules for a normal and for a subnormal word.
+FloatFormat.binary32 in Format/Catalog.lean has 8 exponent and 23 fraction bits, bias 127
+and precision 24. Both encoded examples are derived exactly from the values in chapter 02:
+13421773 * 2^-27 (the rounded literal 0.1) and -5/2 (exactly -2.5). The chapter's words for
+1, 2 and -2.5 provide independent assertions. Every drawn bit is read from the derived word.
 
-Sources:
-
-* the format parameters are `FloatFormat.binary32` in
-  FloatLib/Floats/Formats/BinaryInterchange/Format/Catalog.lean (expWidth 8, fracWidth 23,
-  exponentBias 127, which is `ieeeBias 8 = 2^7 - 1` in Format/Definition.lean; the storage
-  width is `bitWidth = 1 + 8 + 23`);
-* the word for 0.1 is derived here from the value the chapter prints for the literal,
-  `13421773 * 2^-27` (site/content/chapters/02-from-reals-to-machine-numbers.md, the `toString`
-  result), by normalising the significand to 24 bits and biasing the exponent;
-* the word for -2.5 is derived the same way from the value -2.5 and checked against the
-  chapter's `toBits32 (-2.5 : Binary32)` result, 3223322624 (0xc0200000); the chapter's results
-  for 1 and 2, 1065353216 and 1073741824, are checked the same way;
-* the decoding rules are the chapter's formulas, (-1)^s (1 + F / 2^23) 2^(E - 127) for a normal
-  word and (-1)^s F 2^(1 - 127 - 23) for a subnormal one, which are the two branches of
-  `toDyadic?` in FloatLib/Floats/Formats/BinaryInterchange/Dyadic/Decode.lean.
+The normal/subnormal/reserved-exponent rules and the long decimal expansion remain in
+chapter 02. This diagram focuses on reading stored fields, including the implicit leading
+one of normal values. On mobile, fields are shown separately instead of shrinking 32 cells.
 
 Run from anywhere: python3 ch01_binary32_layout.py [--out PNG]
+The mobile companion is written beside the desktop image as <stem>-mobile.png.
 """
-
 from __future__ import annotations
 
 import argparse
-import sys
 from fractions import Fraction
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import figstyle as fs  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.colors import to_rgba  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
+import figstyle as fs
+from matplotlib.colors import to_rgba
+from matplotlib.patches import Rectangle
 
-# FloatFormat.binary32 (Format/Catalog.lean).
-EXP_WIDTH = 8
-FRAC_WIDTH = 23
-BIAS = 2 ** (EXP_WIDTH - 1) - 1          # FloatFormat.ieeeBias 8
-assert BIAS == 127
-TOTAL = 1 + EXP_WIDTH + FRAC_WIDTH       # FloatFormat.bitWidth
+OUT_NAME = "ch01-binary32-layout.png"
+EXP_WIDTH, FRAC_WIDTH = 8, 23
+BIAS = 2 ** (EXP_WIDTH - 1) - 1
+TOTAL = 1 + EXP_WIDTH + FRAC_WIDTH
 PRECISION = FRAC_WIDTH + 1
-
-SIGN_COLOUR = fs.PURPLE
-EXP_COLOUR = fs.ORANGE
-FRAC_COLOUR = fs.SKY
-FIELDS = [("s", 1, SIGN_COLOUR), ("exponent E (8 bits)", EXP_WIDTH, EXP_COLOUR),
-          ("fraction F (23 bits)", FRAC_WIDTH, FRAC_COLOUR)]
 MONO = "DejaVu Sans Mono"
+FIELDS = [("s", 1, fs.PURPLE), ("exponent E (8 bits)", EXP_WIDTH, fs.ORANGE),
+          ("fraction F (23 bits)", FRAC_WIDTH, fs.SKY)]
+assert (TOTAL, PRECISION, BIAS) == (32, 24, 127)
 
 
 def encode_normal(value: Fraction) -> int:
-    """The binary32 word of a value that lies in the normal range, from the chapter's rule.
-
-    Write |value| = m * 2^e with 2^23 <= m < 2^24 (normalisation), then F = m - 2^23 (the hidden
-    bit is dropped) and E = e + 23 + 127 (the bias). Raises if the value is not representable.
-    """
-    negative = value < 0
-    magnitude = abs(value)
-    exponent = 0
+    """Encode an exactly representable, nonzero normal value using the chapter's rule."""
+    if value == 0:
+        raise ValueError("zero is not normal")
+    negative, magnitude, exponent = value < 0, abs(value), 0
     while magnitude >= 2 ** PRECISION:
         magnitude /= 2
         exponent += 1
@@ -70,111 +46,107 @@ def encode_normal(value: Fraction) -> int:
         magnitude *= 2
         exponent -= 1
     if magnitude.denominator != 1:
-        raise ValueError(f"{value} is not a binary32 value")
+        raise ValueError(f"{value} is not exactly representable")
     significand = magnitude.numerator
     biased = exponent + FRAC_WIDTH + BIAS
-    assert 0 < biased < 2 ** EXP_WIDTH - 1
+    if not 0 < biased < 2 ** EXP_WIDTH - 1:
+        raise ValueError(f"{value} is not in the normal range")
     return (int(negative) << (TOTAL - 1)) | (biased << FRAC_WIDTH) | (significand - 2 ** FRAC_WIDTH)
 
 
 def fields_of(word: int) -> tuple[int, int, int]:
-    sign = word >> (TOTAL - 1)
-    exp_field = (word >> FRAC_WIDTH) & (2 ** EXP_WIDTH - 1)
-    frac_field = word & (2 ** FRAC_WIDTH - 1)
-    return sign, exp_field, frac_field
+    return word >> 31, (word >> FRAC_WIDTH) & (2 ** EXP_WIDTH - 1), word & (2 ** FRAC_WIDTH - 1)
 
 
-def bit_cells(ax, word: int, *, y: float, height: float = 0.8) -> None:
-    """One cell per bit, most significant first, tinted by the field the bit belongs to."""
-    x = 0.0
-    bit = TOTAL - 1
-    for _name, width, colour in FIELDS:
-        for _ in range(width):
-            ax.add_patch(Rectangle((x, y), 1, height, facecolor=to_rgba(colour, 0.38),
-                                   edgecolor=fs.INK, linewidth=0.6))
-            ax.text(x + 0.5, y + height / 2, str((word >> bit) & 1), ha="center", va="center",
-                    fontsize=9, family=MONO, color=fs.INK)
-            x += 1
+TENTH = Fraction(13421773, 2 ** 27)
+EXAMPLES = [
+    ("Rounded 0.1", encode_normal(TENTH), r"$13421773\times 2^{-27}$"),
+    ("Exact −2.5", encode_normal(Fraction(-5, 2)), r"$-5/2$"),
+]
+assert [word for _, word, _ in EXAMPLES] == [0x3DCCCCCD, 0xC0200000]
+assert fields_of(EXAMPLES[0][1]) == (0, 123, 5033165)
+assert fields_of(EXAMPLES[1][1]) == (1, 128, 2097152)
+assert encode_normal(Fraction(1)) == 1065353216
+assert encode_normal(Fraction(2)) == 1073741824
+assert EXAMPLES[1][1] == 3223322624
+
+
+def layout(ax, width: float, y: float, mobile: bool):
+    left, unit = 0.23 if mobile else 0.30, (width - (0.46 if mobile else 0.60)) / TOTAL
+    labels = ["s", "E · 8", "F · 23"] if mobile else [field[0] for field in FIELDS]
+    for (name, bits, colour), label in zip(FIELDS, labels):
+        ax.add_patch(Rectangle((left, y), unit * bits, 0.42,
+                               facecolor=to_rgba(colour, 0.38), edgecolor=fs.INK, lw=0.8))
+        ax.text(left + unit * bits / 2, y + 0.21, label, ha="center", va="center", fontsize=11.5)
+        left += unit * bits
+
+
+def desktop_example(ax, title, word, value, y):
+    ax.text(0.30, y, title, fontsize=13, weight="bold", va="center")
+    ax.text(2.35, y, f"= {value}", fontsize=13, va="center")
+    ax.text(8.70, y, f"0x{word:08x}", fontsize=12, family=MONO, ha="right", va="center")
+    left, unit, bit = 0.30, 8.40 / TOTAL, TOTAL - 1
+    for _, bits, colour in FIELDS:
+        for _ in range(bits):
+            ax.add_patch(Rectangle((left, y - 0.65), unit, 0.37,
+                                   facecolor=to_rgba(colour, 0.22), edgecolor=fs.LINE, lw=0.6))
+            ax.text(left + unit / 2, y - 0.465, str((word >> bit) & 1),
+                    ha="center", va="center", fontsize=11.5, family=MONO)
+            left += unit
             bit -= 1
+    sign, exponent, fraction = fields_of(word)
+    ax.text(0.30, y - 0.88, f"s = {sign}", fontsize=11.5, va="center")
+    ax.text(0.30 + unit * 5, y - 0.88, f"E = {exponent}", fontsize=11.5, ha="center", va="center")
+    ax.text(0.30 + unit * 20.5, y - 0.88, f"F = {fraction:,}", fontsize=11.5, ha="center", va="center")
 
 
-def field_readings(ax, word: int, *, y: float) -> None:
-    sign, exp_field, frac_field = fields_of(word)
-    spans = [(0, 1), (1, 1 + EXP_WIDTH), (1 + EXP_WIDTH, TOTAL)]
-    texts = [f"s = {sign}", f"E = {exp_field:08b} = {exp_field}",
-             f"F = {frac_field} = 0x{frac_field:06x}"]
-    for (lo, hi), text in zip(spans, texts):
-        ax.text((lo + hi) / 2, y, text, ha="center", va="top", fontsize=9.5, color=fs.INK)
+def mobile_example(ax, title, word, value, y):
+    sign, exponent, fraction = fields_of(word)
+    ax.text(0.23, y, title, fontsize=13, weight="bold", va="center")
+    ax.text(3.57, y, f"0x{word:08x}", fontsize=11.5, family=MONO, ha="right", va="center")
+    ax.text(0.23, y - 0.37, f"= {value}", fontsize=14, va="center")
+    ax.text(0.23, y - 0.80, f"s = {sign}", fontsize=11.5, family=MONO, va="center")
+    ax.text(1.11, y - 0.80, f"E = {exponent:08b}", fontsize=11.5, family=MONO, va="center")
+    ax.text(0.23, y - 1.19, "F · 23 fraction bits", fontsize=11.5, va="center")
+    ax.add_patch(Rectangle((0.23, y - 1.77), 3.34, 0.39,
+                           facecolor=to_rgba(fs.SKY, 0.22), edgecolor=fs.LINE, lw=0.6))
+    ax.text(1.90, y - 1.575, f"{fraction:023b}", fontsize=11.5, family=MONO,
+            ha="center", va="center")
 
 
-def example_row(ax, word: int, title: str, value_line: str, *, y: float) -> None:
-    ax.text(0, y + 0.95, title, ha="left", va="bottom", fontsize=9.5, color=fs.INK)
-    ax.text(TOTAL, y + 0.95, f"0x{word:08x} = {word}", ha="right", va="bottom", fontsize=9.5,
-            family=MONO, color=fs.MUTED)
-    bit_cells(ax, word, y=y)
-    field_readings(ax, word, y=y - 0.2)
-    ax.text(TOTAL / 2, y - 1.05, value_line, ha="center", va="top", fontsize=10, color=fs.INK)
+def build_figure(mobile: bool = False):
+    fs.setup()
+    width, height = (3.8, 7.3) if mobile else (9.0, 5.1)
+    fig = fs.plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    ax.text(0.18, height - 0.18, "Reading a binary32 word", fontsize=14 if mobile else 16,
+            weight="bold", va="top")
+    if mobile:
+        layout(ax, width, 6.23, True)
+        ax.text(1.90, 5.98, "Sign · exponent · fraction", fontsize=11.5,
+                ha="center", va="center", color=fs.MUTED)
+        for example, y in zip(EXAMPLES, (5.47, 3.07)):
+            mobile_example(ax, *example, y)
+        ax.plot([0.23, 3.57], [3.40, 3.40], color=fs.LINE, lw=0.7)
+        ax.text(1.90, 0.62, "Normal values: the leading 1\nis implicit.", fontsize=11.5,
+                ha="center", va="center", linespacing=1.4)
+    else:
+        layout(ax, width, 3.99, False)
+        for example, y in zip(EXAMPLES, (3.52, 2.03)):
+            desktop_example(ax, *example, y)
+        ax.text(4.50, 0.49, "Normal values have a leading 1 that is not stored.", fontsize=12,
+                ha="center", va="center")
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-
-    fs.setup()
-
-    # The chapter's values, and the words the chapter prints for them.
-    tenth = Fraction(13421773, 2 ** 27)
-    word_tenth = encode_normal(tenth)
-    assert word_tenth == 0x3DCCCCCD
-    word_neg = encode_normal(Fraction(-5, 2))
-    assert word_neg == 3223322624 == 0xC0200000
-    assert encode_normal(Fraction(1)) == 1065353216
-    assert encode_normal(Fraction(2)) == 1073741824
-    s, e, f = fields_of(word_tenth)
-    assert (s, e, f) == (0, 123, 5033165)
-    assert (2 ** FRAC_WIDTH + f) * Fraction(2) ** (e - BIAS - FRAC_WIDTH) == tenth
-    s2, e2, f2 = fields_of(word_neg)
-    assert (s2, e2, f2) == (1, 128, 2 ** 21)
-
-    xlim = (-0.6, TOTAL + 0.6)
-    ylim = (-0.3, 19.2)
-    height = fs.WIDTH * (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
-    fig = plt.figure(figsize=(fs.WIDTH, height))
-    ax = fs.diagram_axes(fig, xlim, ylim)
-
-    # Generic layout.
-    ax.text(0, 18.7, "binary32: one sign bit, 8 exponent bits, 23 fraction bits "
-            "(FloatFormat.binary32, bias 127)", ha="left", va="top", fontsize=10.5, color=fs.INK)
-    # The sign field is too narrow for a name inside its cell, so it is named below the row.
-    generic = [("", 1, SIGN_COLOUR)] + FIELDS[1:]
-    fs.bit_layout(ax, generic, y=16.6, height=0.8, name_size=9.5, index_size=9)
-    ax.text(0.5, 16.6 - 0.2, "sign s", ha="center", va="top", fontsize=9, color=fs.INK)
-
-    # The two example words.
-    example_row(ax, word_tenth,
-                f"the literal 0.1, rounded to {PRECISION} significant bits",
-                r"value $= (1 + 5033165 / 2^{23}) \cdot 2^{123 - 127} "
-                r"= 13421773 \cdot 2^{-27} = 0.100000001490116119384765625$",
-                y=12.9)
-    example_row(ax, word_neg, "the value -2.5, which exercises all three fields",
-                r"value $= -(1 + 2^{21} / 2^{23}) \cdot 2^{128 - 127} = -(1 + 1/4) \cdot 2 = -2.5$",
-                y=8.1)
-
-    # Decoding rules.
-    ax.plot([0, TOTAL], [4.2, 4.2], color=fs.LINE, linewidth=0.8)
-    rules = [
-        (r"normal word, $0 < E < 255$:  value $= (-1)^s \, (1 + F / 2^{23}) \cdot 2^{E - 127}$, "
-         r"the hidden bit supplies the 1"),
-        (r"zero or subnormal word, $E = 0$:  value $= (-1)^s \, F \cdot 2^{1 - 127 - 23} "
-         r"= (-1)^s \, F \cdot 2^{-149}$, no hidden bit"),
-        (r"$E = 255$:  $F = 0$ is $\pm\infty$, $F \neq 0$ is NaN"),
-    ]
-    for i, rule in enumerate(rules):
-        ax.text(0, 3.5 - 1.25 * i, rule, ha="left", va="top", fontsize=10, color=fs.INK)
-
-    out = fs.save(fig, "ch01-binary32-layout.png", args.out)
-    print(f"wrote {out}")
+    target = args.out or fs.ASSETS / OUT_NAME
+    for mobile in (False, True):
+        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 
 if __name__ == "__main__":

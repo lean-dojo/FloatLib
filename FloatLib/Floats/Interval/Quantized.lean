@@ -30,10 +30,9 @@ has no NaN payloads, signed-zero rules, or status flags.
 Division returns an `EReal` interval so that a denominator interval containing zero can be enclosed
 by $[-\infty,+\infty]$.
 
-References:
-- IEEE 1788-2015 (interval arithmetic).
-- Moore, Kearfott, Cloud, *Introduction to Interval Analysis* (2009).
-- Rump (INTLAB) for outward rounding.
+The endpoint formulas, outward rounding, and inclusion property are described in S. M. Rump,
+[Verification methods: Rigorous results using floating-point
+arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §§5.1–5.5.
 -/
 
 @[expose] public section

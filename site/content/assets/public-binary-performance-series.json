@@ -1,0 +1,48 @@
+{
+  "label": "Operation",
+  "compactDefault": "add",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "public-binary-performance.png",
+      "alt": "Six public binary operations: FloatLib and MPFR time in nanoseconds per operation, against encoded width. Medians and observed min/max of 3 trials on ordinary inputs, with paired precision and exponent bounds. Logarithmic axes."
+    },
+    {
+      "id": "add",
+      "label": "Addition",
+      "src": "public-binary-performance-add.svg",
+      "alt": "Addition: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    },
+    {
+      "id": "sub",
+      "label": "Subtraction",
+      "src": "public-binary-performance-sub.svg",
+      "alt": "Subtraction: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    },
+    {
+      "id": "mul",
+      "label": "Multiplication",
+      "src": "public-binary-performance-mul.svg",
+      "alt": "Multiplication: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "public-binary-performance-div.svg",
+      "alt": "Division: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    },
+    {
+      "id": "sqrt",
+      "label": "Square root",
+      "src": "public-binary-performance-sqrt.svg",
+      "alt": "Square root: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    },
+    {
+      "id": "fma",
+      "label": "Fused multiply-add",
+      "src": "public-binary-performance-fma.svg",
+      "alt": "Fused multiply-add: FloatLib and MPFR public-call time in nanoseconds per operation on a logarithmic vertical axis, against encoded width on a logarithmic axis. Medians and observed min/max of 3 trials on ordinary inputs, with precision and exponent bounds matched within each pair."
+    }
+  ]
+}

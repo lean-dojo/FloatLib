@@ -57,6 +57,212 @@ theorem castWithStatus_value
   have hinf := isInf_eq_false_of_isFinite_eq_true x hx
   simp [cast, hnan, hinf]
 
+/-! ## NaN propagation -/
+
+/-- Setting the quiet bit of a word sets bit `fracWidth - 1` of its fraction field. -/
+theorem fracField_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt) :
+    fracField (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) =
+      fracField (ofBits (fmt := fmt) b) ||| 2 ^ (fmt.fracWidth - 1) := by
+  have hfw := fmt.fracWidth_pos
+  unfold fracField ofBits FloatFormat.quietBit FloatFormat.fracMask FloatFormat.ofWordNat
+    FloatFormat.quietBitNat FloatFormat.fracMaskNat
+  simp only [BitVec.toNat_and, BitVec.toNat_or, BitVec.toNat_ofNat]
+  apply Nat.eq_of_testBit_eq
+  intro i
+  simp only [Nat.testBit_and, Nat.testBit_or, Nat.testBit_mod_two_pow, Nat.testBit_two_pow_sub_one,
+    Nat.testBit_two_pow]
+  unfold FloatFormat.bitWidth
+  by_cases h1 : i < fmt.fracWidth <;> by_cases h2 : fmt.fracWidth - 1 = i <;> simp [h1, h2] <;> omega
+
+/-- Setting the quiet bit of a word leaves its exponent field unchanged. -/
+theorem expField_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt) :
+    expField (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = expField (ofBits (fmt := fmt) b) := by
+  have hfw := fmt.fracWidth_pos
+  unfold expField ofBits FloatFormat.quietBit FloatFormat.expAllOnes FloatFormat.ofWordNat
+    FloatFormat.quietBitNat FloatFormat.expAllOnesNat
+  simp only [BitVec.toNat_and, BitVec.toNat_or, BitVec.toNat_ofNat, BitVec.toNat_ushiftRight]
+  apply Nat.eq_of_testBit_eq
+  intro i
+  simp only [Nat.testBit_and, Nat.testBit_or, Nat.testBit_mod_two_pow, Nat.testBit_two_pow_sub_one,
+    Nat.testBit_two_pow, Nat.testBit_shiftRight]
+  unfold FloatFormat.bitWidth
+  have : ¬ fmt.fracWidth - 1 = fmt.fracWidth + i := by omega
+  by_cases h1 : i < fmt.expWidth <;> simp [h1, this]
+
+/-- Setting the quiet bit of a word leaves its sign bit unchanged. -/
+theorem signBit_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt) :
+    signBit (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = signBit (ofBits (fmt := fmt) b) := by
+  have hfw := fmt.fracWidth_pos
+  rw [signBit_eq_msb, signBit_eq_msb]
+  unfold ofBits FloatFormat.quietBit FloatFormat.ofWordNat FloatFormat.quietBitNat
+  simp only [BitVec.msb_or]
+  have hq : (BitVec.ofNat fmt.bitWidth (2 ^ (fmt.fracWidth - 1))).msb = false := by
+    rw [BitVec.msb_eq_getLsbD_last, BitVec.getLsbD_ofNat, Nat.testBit_two_pow]
+    simp only [FloatFormat.bitWidth]
+    have : ¬ fmt.fracWidth - 1 = 1 + fmt.expWidth + fmt.fracWidth - 1 := by omega
+    simp [this]
+  simp [hq]
+
+
+/-- The quiet bit of a word is clear exactly when bit `fracWidth - 1` of its fraction is clear. -/
+theorem and_quietBit_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
+    ((x.bits &&& FloatFormat.quietBit fmt) == 0) = !(fracField x).testBit (fmt.fracWidth - 1) := by
+  have hfw := fmt.fracWidth_pos
+  have hlt : fmt.fracWidth - 1 < fmt.bitWidth := by unfold FloatFormat.bitWidth; omega
+  have hq : (2 : Nat) ^ (fmt.fracWidth - 1) < 2 ^ fmt.bitWidth := Nat.pow_lt_pow_right (by omega) hlt
+  have key : (x.bits &&& FloatFormat.quietBit fmt).toNat =
+      if (fracField x).testBit (fmt.fracWidth - 1) then 2 ^ (fmt.fracWidth - 1) else 0 := by
+    unfold fracField FloatFormat.quietBit FloatFormat.fracMask FloatFormat.ofWordNat
+      FloatFormat.quietBitNat FloatFormat.fracMaskNat
+    simp only [BitVec.toNat_and, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hq, Nat.testBit_and,
+      Nat.testBit_mod_two_pow, Nat.testBit_two_pow_sub_one]
+    apply Nat.eq_of_testBit_eq
+    intro i
+    by_cases hi : i = fmt.fracWidth - 1
+    · subst hi; split <;> simp_all
+    · have : ¬ fmt.fracWidth - 1 = i := fun h => hi h.symm
+      split <;> simp [Nat.testBit_and, this]
+  cases ht : (fracField x).testBit (fmt.fracWidth - 1)
+  · simp only [ht] at key
+    have : x.bits &&& FloatFormat.quietBit fmt = 0 := BitVec.eq_of_toNat_eq (by simpa using key)
+    simp [this]
+  · simp only [ht, ite_true] at key
+    have hne : x.bits &&& FloatFormat.quietBit fmt ≠ 0 := by
+      intro h; rw [h] at key; have := Nat.two_pow_pos (fmt.fracWidth - 1); simp at key; omega
+    simpa using hne
+
+/--
+Rebuilding a NaN from its sign and IEEE payload gives the quieted NaN.
+
+This is the same-descriptor case of IEEE 754-2019 §6.2.3, so `cast` could use `propagatedNaN` on
+every NaN; it keeps `quietNaN` on the same descriptor only because that path avoids field packing.
+-/
+theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : isNaN x = true) :
+    propagatedNaN fmt (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) = quietNaN x := by
+  have hfw := fmt.fracWidth_pos
+  unfold isNaN at hnan
+  unfold propagatedNaN quietNaN isSNaN
+  cases henc : fmt.encoding with
+  | finite => simp [henc] at hnan
+  | finiteUnsignedZero =>
+      simp only [henc, beq_iff_eq] at hnan
+      simp [negZero, ofBits, ← hnan]
+  | finiteMaxNaN =>
+      simp only [henc, Bool.and_eq_true, beq_iff_eq] at hnan
+      simp only
+      rw [← hnan.1, ← hnan.2]
+      exact ofFields_signBit_expField_fracField x
+  | ieee =>
+      simp only [henc] at hnan
+      simp only [hnan, ite_true]
+      have hx : IEEE.isNaN x = true := hnan
+      simp only [IEEE.isNaN, Bool.and_eq_true, beq_iff_eq, bne_iff_ne] at hx
+      obtain ⟨he, hf0⟩ := hx
+      set f := fracField x with hfdef
+      set q := 2 ^ (fmt.fracWidth - 1) with hqdef
+      have hqq : 2 ^ fmt.fracWidth = 2 * q := by
+        rw [hqdef, ← Nat.pow_succ']; congr 1; omega
+      have hflt : f < 2 * q := hqq ▸ fracField_lt_pow2 x
+      have hqpos : 0 < q := Nat.two_pow_pos _
+      have hbits : quietNaN x = ofBits (x.bits ||| FloatFormat.quietBit fmt) := by
+        simp [quietNaN, henc, hnan]
+      -- the quieted word as fields
+      have hq : ofBits (fmt := fmt) (x.bits ||| FloatFormat.quietBit fmt) =
+          ofFields fmt (signBit x) (FloatFormat.expAllOnesNat fmt) (f ||| q) := by
+        rw [← ofFields_signBit_expField_fracField (ofBits (fmt := fmt) (x.bits ||| FloatFormat.quietBit fmt)),
+          signBit_or_quietBit, expField_or_quietBit, fracField_or_quietBit]
+        change ofFields fmt (signBit x) (expField x) (fracField x ||| _) = _
+        rw [he]
+      rw [hq, IEEE.isSNaN, hnan, Bool.true_and, and_quietBit_eq_zero_iff, ← hfdef]
+      congr 1
+      have hdiv : f = q * (f / q) + f % q := (Nat.div_add_mod f q).symm
+      have hmod : f % q < q := Nat.mod_lt _ hqpos
+      have hd : f / q < 2 := Nat.div_lt_of_lt_mul (by omega)
+      have htb : f.testBit (fmt.fracWidth - 1) = decide (f / q % 2 = 1) := by
+        rw [Nat.testBit_eq_decide_div_mod_eq, hqdef]
+      rcases Nat.le_one_iff_eq_zero_or_eq_one.mp (Nat.lt_succ_iff.mp hd) with hdq | hdq <;>
+        simp only [hdq, Nat.mul_zero, Nat.mul_one, Nat.zero_add] at hdiv
+      · -- f < q: signaling
+        have hfq : f < q := by omega
+        have hf : f % q = f := Nat.mod_eq_of_lt hfq
+        have hor : q + f = f ||| q := by
+          have := Nat.two_pow_add_eq_or_of_lt (a := 1) (i := fmt.fracWidth - 1) hfq
+          rw [Nat.mul_one, ← hqdef] at this
+          rw [this, Nat.or_comm]
+        simp only [htb, hdq, payloadOfNaNField]
+        simp [hfq, hor]
+      · -- q ≤ f: quiet
+        have hlog : Nat.log2 f = fmt.fracWidth - 1 := by
+          rw [Nat.log2_eq_iff (by omega)]
+          constructor
+          · rw [← hqdef]; omega
+          · rw [show fmt.fracWidth - 1 + 1 = fmt.fracWidth by omega, hqq]; omega
+        simp only [htb, hdq, payloadOfNaNField, hlog, ← hqdef]
+        have hr : f - q < q := by omega
+        simp [hr]
+        have h1 := Nat.two_pow_add_eq_or_of_lt (a := 1) (i := fmt.fracWidth - 1) hmod
+        rw [← hqdef, Nat.mul_one] at h1
+        have hfeq : f = q ||| f % q := by omega
+        have : (f ||| q) = f := by
+          conv_lhs => rw [hfeq]
+          rw [Nat.or_comm (q) (f % q), Nat.or_assoc, Nat.or_self, Nat.or_comm]
+          exact hfeq.symm
+        omega
+
+/-- A propagated NaN is a NaN in every destination that has a NaN encoding. -/
+theorem isNaN_propagatedNaN (fmt : FloatFormat) (negative : Bool) (payload : Nat)
+    (h : fmt.encoding ≠ .finite) :
+    isNaN (propagatedNaN fmt negative payload) = true := by
+  have hexp : FloatFormat.expAllOnesNat fmt % 2 ^ fmt.expWidth = FloatFormat.expAllOnesNat fmt :=
+    Nat.mod_eq_of_lt (by unfold FloatFormat.expAllOnesNat; have := Nat.one_le_two_pow (n := fmt.expWidth); omega)
+  have hfw := fmt.fracWidth_pos
+  unfold propagatedNaN isNaN
+  cases henc : fmt.encoding with
+  | finite => exact absurd henc h
+  | finiteUnsignedZero => simp [negZero, ofBits]
+  | finiteMaxNaN =>
+      have hm : FloatFormat.fracMaskNat fmt % 2 ^ fmt.fracWidth = FloatFormat.fracMaskNat fmt :=
+        Nat.mod_eq_of_lt (by unfold FloatFormat.fracMaskNat; have := Nat.one_le_two_pow (n := fmt.fracWidth); omega)
+      simp [hexp, hm]
+  | ieee =>
+      have hq : 2 ^ fmt.fracWidth = 2 * 2 ^ (fmt.fracWidth - 1) := by
+        rw [← Nat.pow_succ']; congr 1; omega
+      have hpos := Nat.one_le_two_pow (n := fmt.fracWidth - 1)
+      have hlt : 2 ^ (fmt.fracWidth - 1) + (if payload < 2 ^ (fmt.fracWidth - 1) then payload else 0)
+          < 2 ^ fmt.fracWidth := by split <;> omega
+      simp only [IEEE.isNaN, expField_ofFields, fracField_ofFields, hexp, Nat.mod_eq_of_lt hlt]
+      simp
+
+/--
+On a NaN source, `cast` is `propagatedNaN` on the source sign and IEEE payload, for equal and
+unequal descriptors alike (IEEE 754-2019 §6.2.3).
+-/
+theorem cast_of_isNaN {src dst : FloatFormat} (x : Model src) (hnan : isNaN x = true) :
+    cast src dst x = propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) := by
+  by_cases h : src = dst
+  · subst h
+    simp [cast, hnan, propagatedNaN_eq_quietNaN x hnan]
+  · simp [cast, hnan, h]
+
+/-- The directed cast treats a NaN source exactly as `cast` does, in every rounding mode. -/
+theorem castWithRounding_of_isNaN {src dst : FloatFormat} (x : Model src)
+    (mode : IEEERoundingMode) (hnan : isNaN x = true) :
+    castWithRounding src dst x mode =
+      propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) := by
+  cases mode <;> simp [castWithRounding, hnan, cast_of_isNaN x hnan]
+
+/--
+Casting a NaN into a destination with no NaN encoding raises invalid in every rounding mode.
+
+Such a destination has no NaN to deliver, so `cast` returns positive zero and `castWithStatus`
+reports the lost NaN through the invalid flag.
+-/
+theorem castWithStatus_invalid_of_isNaN_of_encoding_finite {src dst : FloatFormat}
+    (x : Model src) (mode : IEEERoundingMode) (hnan : isNaN x = true)
+    (hdst : dst.encoding = .finite) :
+    (castWithStatus src dst x mode).status.invalid = true := by
+  simp [castWithStatus, hnan, isNaN_eq_false_of_encoding_finite hdst, outcomeWithInvalid]
+
 /-- Exact widening preserves the sign bit. -/
 theorem signBit_widenExact {src dst : FloatFormat} (x : Model src)
     (hexp : src.expWidth = dst.expWidth)

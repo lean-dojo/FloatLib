@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch13-mx-block.png: the chapter's block scaled product, bit by bit.
+"""Draw content/assets/ch13-mx-block.png: shared scales and one exact dot product.
 
 Chapter 09 works one OCP MX example in Lean: a `BlockCode FloatFormat.e2m1` of four E2M1 weights
 sharing the E8M0 scale code 125 and a block of four E2M1 activations sharing the scale code 128,
 decoded jointly, multiplied lane by lane in exact dyadic arithmetic, summed, and rounded once
-into bfloat16 and once into E4M3FN. This figure lays the two blocks out as boxes drawn to scale
-(one width per bit: an eight-bit scale beside four four-bit elements), shows what each element
-word means on its own and after the block's scale is applied, and follows the numbers down to the
-two rounded results.
+into bfloat16 and once into E4M3FN. This figure shows the four element values before and after
+their shared scale is applied, then follows the lane products to an exact sum. Both rounded
+outputs branch from that sum. The phone version stacks the blocks and the output choices.
 
 Sources. Every code is the chapter's own Lean text (`weights` and `activations` in section "E8M0
 and microscaling blocks"): scale codes 125 and 128, element words 0x2, 0x5, 0xb, 0x7 and 0x4,
@@ -36,7 +35,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 
-from matplotlib.patches import Patch, Rectangle  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import Rectangle  # noqa: E402
 
 # The chapter's two blocks: E8M0 scale code, then the four E2M1 element words.
 WEIGHTS = ("weights", 125, (0x2, 0x5, 0xb, 0x7))
@@ -51,11 +51,6 @@ CHAPTER_E4M3FN_WORD, CHAPTER_E4M3FN_VALUE = 200, Fraction(-4)
 
 E2M1_EXP_WIDTH, E2M1_FRAC_WIDTH, E2M1_BIAS = 2, 1, 1   # `finite 2 1`, bias ieeeBias 2 = 1
 E8M0_BIAS = 127
-
-SIGN_COLOUR = fs.MUTED
-EXP_COLOUR = fs.ORANGE
-FRAC_COLOUR = fs.SKY
-
 
 def e2m1_value(word: int) -> Fraction:
     """`Model.toDyadic?` at e2m1 (every word is finite): fields, then the two-case rule."""
@@ -120,149 +115,88 @@ def frac_text(value: Fraction) -> str:
     return f"{value.numerator}/{value.denominator}"
 
 
-def field_boxes(ax, x: float, y: float, height: float, parts, fontsize: float = 9.5) -> float:
-    """Adjacent one-unit-per-bit boxes; `parts` is a list of (bit string, colour). Returns the
-    right edge. Unlike fs.bit_layout this prints the bits themselves inside every field, however
-    narrow, which is what a worked example needs."""
-    for bits, colour in parts:
-        width = len(bits)
-        ax.add_patch(Rectangle((x, y), width, height, facecolor=colour, edgecolor=fs.INK,
-                               linewidth=0.9, alpha=0.9))
-        ax.text(x + width / 2, y + height / 2, " ".join(bits), ha="center", va="center",
-                fontsize=fontsize, color=fs.INK, family="DejaVu Sans Mono")
-        x += width
-    return x
+def vector(values) -> str:
+    return "[" + ",  ".join(frac_text(v) for v in values) + "]"
 
 
-def e2m1_parts(word: int):
-    bits = format(word, "04b")
-    return [(bits[0], SIGN_COLOUR), (bits[1:3], EXP_COLOUR), (bits[3], FRAC_COLOUR)]
-
-
-# Geometry in bit units: the scale box is 8 wide, each element 4 wide, with gaps of 0.6.
-SCALE_X = 0.0
-SCALE_W = 8
-ELEMENT_W = 4
-GAP = 0.6
-FIRST_ELEMENT_X = SCALE_X + SCALE_W + 1.4
-BOX_H = 1.3
-LABEL_X = -0.8            # right edge of the row labels
-
-
-def element_x(i: int) -> float:
-    return FIRST_ELEMENT_X + i * (ELEMENT_W + GAP)
-
-
-def element_centre(i: int) -> float:
-    return element_x(i) + ELEMENT_W / 2
-
-
-def draw_block(ax, block, y_top: float) -> None:
-    """One block: the boxes, the value of each element word, and the value after scaling."""
-    name, scale_code, words = block
-    unscaled, scaled, shift = decode_block(block)
-    y_box = y_top - BOX_H
-    ax.text(LABEL_X, y_box + BOX_H / 2, name, ha="right", va="center", fontsize=10.5,
-            fontweight="bold", color=fs.INK)
-    field_boxes(ax, SCALE_X, y_box, BOX_H, [(format(scale_code, "08b"), EXP_COLOUR)])
-    for i, word in enumerate(words):
-        field_boxes(ax, element_x(i), y_box, BOX_H, e2m1_parts(word))
-
-    # Row 1: what each word means on its own.
-    y1 = y_box - 1.0
-    ax.text(LABEL_X, y1, "code alone", ha="right", va="center", fontsize=9.5, color=fs.MUTED)
-    ax.text(SCALE_X + SCALE_W / 2, y1, f"$2^{{{scale_code} - 127}} = 2^{{{shift}}}$",
-            ha="center", va="center", fontsize=9.5)
-    for i, value in enumerate(unscaled):
-        ax.text(element_centre(i), y1, frac_text(value), ha="center", va="center", fontsize=10)
-
-    # Row 2: after the block's scale, with a bus from the scale box to every element.
-    y2 = y1 - 1.15
-    ax.text(LABEL_X, y2, f"times $2^{{{shift}}}$", ha="right", va="center", fontsize=9.5,
-            color=fs.MUTED)
-    y_bus = (y1 + y2) / 2 + 0.05
-    ax.plot([SCALE_X + SCALE_W / 2, SCALE_X + SCALE_W / 2, element_centre(len(words) - 1)],
-            [y1 - 0.3, y_bus, y_bus], color=fs.INK, linewidth=0.8)
-    for i, value in enumerate(scaled):
-        fs.arrow(ax, (element_centre(i), y_bus), (element_centre(i), y2 + 0.3), linewidth=0.8,
-                 shrink=0.0)
-        ax.text(element_centre(i), y2, frac_text(value), ha="center", va="center", fontsize=10,
-                fontweight="bold")
+def draw(mobile: bool):
+    fig = plt.figure(figsize=(3.8, 9.0) if mobile else (9, 5.5))
+    fig.text(0.035, 0.98, "Shared scales, one exact dot product", fontsize=13.5,
+             weight="bold", va="top")
+    fig.text(0.035, 0.925 if mobile else 0.90,
+             "Worked example with four E2M1 lanes", fontsize=11.5, color=fs.MUTED)
+    canvas = fig.add_axes([0, 0, 1, 1], zorder=0)
+    canvas.set(xlim=(0, 1), ylim=(0, 1))
+    canvas.axis("off")
+    block_rects = ([(0.035, 0.69, 0.93, 0.18), (0.035, 0.46, 0.93, 0.18)] if mobile else
+                   [(0.035, 0.57, 0.44, 0.25), (0.525, 0.57, 0.44, 0.25)])
+    for block, rect in zip((WEIGHTS, ACTIVATIONS), block_rects):
+        unscaled, scaled, shift = decode_block(block)
+        ax = fig.add_axes(rect)
+        ax.set(xlim=(0, 1), ylim=(0, 1))
+        ax.axis("off")
+        ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
+        ax.text(0.05, 0.83, block[0].capitalize(), fontsize=12, weight="bold")
+        ax.text(0.05, 0.62, f"E8M0 code {block[1]}: multiply by $2^{{{shift}}}$", fontsize=11.5)
+        ax.text(0.05, 0.39, vector(unscaled), fontsize=12)
+        ax.text(0.05, 0.15, "→  " + vector(scaled), fontsize=12, color=fs.BLUE)
+    products = [x * y for x, y in zip(CHAPTER_WEIGHTS, CHAPTER_ACTIVATIONS)]
+    assert products == [Fraction(1), Fraction(3, 4), Fraction(-3), Fraction(-3)]
+    product_y, sum_y = (0.385, 0.29) if mobile else (0.43, 0.31)
+    for x, y, w, h in block_rects:
+        # Both decoded blocks feed the same componentwise multiplication.
+        if mobile and y > 0.6:
+            canvas.plot([x + w, 0.985, 0.985],
+                        [y + h / 2, y + h / 2, product_y + 0.035],
+                        color=fs.MUTED, lw=1.1)
+            canvas.annotate("", (0.70, product_y + 0.035), (0.985, product_y + 0.035),
+                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+        else:
+            canvas.annotate("", (0.50, product_y + 0.035), (x + w / 2, y - 0.005),
+                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+    fig.text(0.5, product_y, "Lane products: " + vector(products), ha="center", fontsize=12)
+    canvas.annotate("", (0.5, sum_y + 0.04), (0.5, product_y - 0.01),
+                    arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+    fig.text(0.5, sum_y, "Exact sum: −17/4 = −4.25", ha="center", fontsize=14, weight="bold")
+    # Each output is rounded independently from the exact sum; there is no output-to-output arrow.
+    outputs = ([(0.06, 0.145, 0.88, 0.082), (0.06, 0.035, 0.88, 0.082)] if mobile else
+               [(0.08, 0.06, 0.38, 0.11), (0.54, 0.06, 0.38, 0.11)])
+    for i, rect in enumerate(outputs):
+        x, y, w, h = rect
+        canvas.add_patch(Rectangle((x, y), w, h, facecolor=fs.PAPER_2, edgecolor=fs.LINE, lw=0.8))
+        text = ("bfloat16: −4.25 (exact)" if i == 0 else "E4M3FN: −4 (tie to even)")
+        canvas.text(x + 0.04, y + h * 0.56, text, fontsize=12, va="center")
+    if mobile:
+        # A vertical bracket makes the common exact source explicit, even with stacked outputs.
+        canvas.plot([0.5, 0.025, 0.025], [sum_y - 0.012, sum_y - 0.012, 0.071],
+                    color=fs.MUTED, lw=1.1)
+        for x, y, w, h in outputs:
+            canvas.annotate("", (x, y + h / 2), (0.025, y + h / 2),
+                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+        fig.text(0.10, 0.247, "Round this sum once to either format:", fontsize=11.5)
+    else:
+        for x, y, w, h in outputs:
+            canvas.annotate("", (x + w / 2, y + h), (0.5, 0.205),
+                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+        canvas.annotate("", (0.5, 0.26), (0.5, sum_y - 0.01),
+                        arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
+        fig.text(0.5, 0.225, "Round the exact sum once to either format", ha="center", fontsize=11.5)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
-
     check_against_chapter()
+    assert e4m3fn_value(CHAPTER_E4M3FN_WORD + 1) == Fraction(-9, 2)
+    assert (CHAPTER_E4M3FN_VALUE + Fraction(-9, 2)) / 2 == CHAPTER_DOT
+    assert CHAPTER_E4M3FN_WORD % 2 == 0
     fs.setup()
-
-    _u, w, _s = decode_block(WEIGHTS)
-    _u, a, _s = decode_block(ACTIVATIONS)
-    products = [x * y for x, y in zip(w, a)]
-    dot = sum(products, Fraction(0))
-
-    right_edge = element_x(3) + ELEMENT_W
-    xlim = (LABEL_X - 5.4, right_edge + 0.8)
-    ylim = (-17.4, 1.9)
-    # Equal aspect: the height follows from the extent of the drawing, so nothing is letterboxed.
-    fig = fs.figure(fs.WIDTH * (ylim[1] - ylim[0]) / (xlim[1] - xlim[0]))[0]
-    fig.clf()
-    ax = fs.diagram_axes(fig, xlim, ylim)
-
-    # Column headers over the first block.
-    ax.text(SCALE_X + SCALE_W / 2, 1.0, "E8M0 scale, 8 bits", ha="center", va="center",
-            fontsize=9.5, color=fs.MUTED)
-    ax.text((element_x(0) + element_x(3) + ELEMENT_W) / 2, 1.0, "four E2M1 elements, 4 bits each",
-            ha="center", va="center", fontsize=9.5, color=fs.MUTED)
-
-    draw_block(ax, WEIGHTS, 0.0)
-    draw_block(ax, ACTIVATIONS, -5.4)
-
-    # Lane products, exact sum, and the two roundings.
-    y_prod = -11.4
-    ax.text(LABEL_X, y_prod, "lane products", ha="right", va="center", fontsize=9.5, color=fs.MUTED)
-    for i, (x, y, p) in enumerate(zip(w, a, products)):
-        y_text = f"({frac_text(y)})" if y < 0 else frac_text(y)
-        ax.text(element_centre(i), y_prod, f"{frac_text(x)} $\\times$ {y_text} = {frac_text(p)}",
-                ha="center", va="center", fontsize=10)
-
-    y_sum = y_prod - 1.4
-    centre = (element_x(0) + element_x(3) + ELEMENT_W) / 2
-    ax.text(LABEL_X, y_sum, "exact sum", ha="right", va="center", fontsize=9.5, color=fs.MUTED)
-    ax.plot([element_x(0), element_x(3) + ELEMENT_W], [y_prod - 0.6, y_prod - 0.6],
-            color=fs.INK, linewidth=0.8)
-    ax.text(centre, y_sum, " + ".join(f"({frac_text(p)})" if p < 0 else frac_text(p) for p in products)
-            + f" = {frac_text(dot)}", ha="center", va="center", fontsize=10, fontweight="bold")
-
-    box_w = element_x(3) + ELEMENT_W - element_x(0)
-    box_h = 1.2
-    y_box1 = y_sum - 1.2 - box_h          # bottom of the first result box
-    y_box2 = y_box1 - 0.4 - box_h         # bottom of the second
-    ax.text(LABEL_X, (y_box1 + y_box2 + box_h) / 2, "rounded once", ha="right", va="center",
-            fontsize=9.5, color=fs.MUTED)
-    fs.arrow(ax, (centre, y_sum - 0.45), (centre, y_box1 + box_h), linewidth=0.8, shrink=0.0)
-    bf = bfloat16_value(CHAPTER_BF16_WORD)
-    e4 = e4m3fn_value(CHAPTER_E4M3FN_WORD)
-    fs.box(ax, element_x(0), y_box1, box_w, box_h,
-           f"into bfloat16: word 0x{CHAPTER_BF16_WORD:04x}, exactly {float(bf):g}", fontsize=9.5)
-    fs.box(ax, element_x(0), y_box2, box_w, box_h,
-           f"into E4M3FN: word 0x{CHAPTER_E4M3FN_WORD:02x}, which is {frac_text(e4)} "
-           "(a tie, rounded to even)", fontsize=9.5)
-
-    handles = [
-        Patch(facecolor=SIGN_COLOUR, edgecolor=fs.INK, linewidth=0.9, label="sign bit"),
-        Patch(facecolor=EXP_COLOUR, edgecolor=fs.INK, linewidth=0.9, label="exponent bits"),
-        Patch(facecolor=FRAC_COLOUR, edgecolor=fs.INK, linewidth=0.9, label="fraction bit"),
-    ]
-    # The scale column is empty below the two blocks, so the legend goes there.
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(SCALE_X, y_prod + 0.7),
-              bbox_transform=ax.transData, ncol=1, fontsize=9.5, handlelength=1.4,
-              borderaxespad=0.0, labelspacing=0.7)
-
-    out = fs.save(fig, "ch13-mx-block.png", out=args.out)
-    print(f"wrote {out}")
+    out = args.out or fs.ASSETS / "ch13-mx-block.png"
+    for mobile in (False, True):
+        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.ExponentClamp
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
 public import FloatLib.Numerics.Exact.HexText.Proof
@@ -83,6 +84,7 @@ theorem convertDecimalText_eq_of_nonzero {fmt : FloatFormat} (hfmt : fmt.isIEEE 
     (value : Model fmt) (hfinite : isFinite value = true) (hzero : toReal value ≠ 0)
     (textValue : DecimalText.Decimal) (hexact : (textValue.toRat : Real) = toReal value) :
     (convertDecimalText fmt .nearestEven textValue).value = value := by
+  rw [convertDecimalText_eq_exact]
   let magnitude := (textValue.significand : Rat) * (10 : Rat) ^ textValue.exponent
   have hv : signedScaledRatToReal textValue.negative magnitude.num.natAbs magnitude.den 0 =
       toReal value := (signedScaledRatToReal_decimal textValue).trans hexact
@@ -136,8 +138,8 @@ theorem parse_formatDecimal_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE =
       simp [formatDecimal, formatWithStatus, exactValue, hdx, formatDyadicText,
         DecimalText.formatDyadic, DecimalText.ofDyadic]
     rw [hf, parse_eq_run, TextParser.run_of_readText _ _ _ _ (readText_decimal_format _)]
-    simp [convertText, convertDecimalText, roundRatWithRounding, roundRatWithRoundingScaled,
-      Except.map, hv]
+    simp [convertText, convertDecimalText_eq_exact, convertDecimalTextExact,
+      roundRatWithRounding, roundRatWithRoundingScaled, Except.map, hv]
   · exact parse_formatDecimal_of_isFinite_of_nonzero hfmt value hfinite hz
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

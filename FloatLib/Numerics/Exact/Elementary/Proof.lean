@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Elementary.Runtime
+public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridProof
 
 /-!
 # Real semantics of exact elementary comparisons
@@ -27,8 +28,22 @@ theorem compareLog_eq_real (argument boundary : ℚ) (hpositive : 0 < argument) 
   · subst argument
     simp [compareLog, cmp, cmpUsing]
   · rw [compareLog, dite_eq_right hone]
-    exact Enclosure.Comparison.compare_eq_real _ _ _ _
-      (fun n => Enclosure.contains_log argument (2 ^ n) hpositive)
+    dsimp only
+    let bits := boundary.den.log2 + 32
+    have hcontains := Enclosure.BinaryGrid.contains_log argument bits
+      (Enclosure.BinaryGrid.logPrecision bits argument bits) hpositive
+    split
+    · rename_i hlt
+      have hreal : Real.log (argument : ℝ) < (boundary : ℝ) :=
+        hcontains.2.trans_lt (by exact_mod_cast hlt)
+      simp [cmp, cmpUsing, hreal]
+    · split
+      · rename_i hgt
+        have hreal : (boundary : ℝ) < Real.log (argument : ℝ) :=
+          (show (boundary : ℝ) < _ by exact_mod_cast hgt).trans_le hcontains.1
+        simp [cmp, cmpUsing, hreal, not_lt_of_ge hreal.le]
+      · exact Enclosure.Comparison.compare_eq_real _ _ _ _
+          (fun n => Enclosure.contains_log argument (2 ^ n) hpositive)
 
 /-- The executable exponential comparison agrees with the real ordering. -/
 theorem compareExp_eq_real (argument boundary : ℚ) :

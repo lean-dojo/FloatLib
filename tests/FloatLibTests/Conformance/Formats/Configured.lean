@@ -11,6 +11,8 @@ public import FloatLib.Floats.Formats.Block.Configured.Proof
 public import FloatLib.Floats.Formats.Codebook.Catalog.Proof
 public import FloatLib.Floats.Formats.Codebook.Configured.Catalog
 public import FloatLib.Floats.Formats.Codebook.Configured.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Runtime
 public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Proof
 public import FloatLib.Floats.Formats.FixedPoint.Configured.Instances
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Instances
@@ -24,8 +26,8 @@ public meta import FloatLib.Numerics.Capabilities.Radix
 # Configured format checks
 
 Public-API checks for binary comparisons, exact logarithmic and fixed-point values, bounded
-overflow, codebooks, shared-scale blocks, and OCP MX. The examples check selected kernels,
-representation round trips, and rewriting public arithmetic to its specification.
+overflow, decimal roots, codebooks, shared-scale blocks, and OCP MX. The examples check selected
+kernels, representation round trips, and rewriting public arithmetic to its specification.
 -/
 
 @[expose] public section
@@ -36,6 +38,35 @@ open FloatLib.Numerics
 open FloatLib.Floats
 
 private abbrev Binary32 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
+
+-- Field notation must reach the certified default operations, including on limb-backed values.
+example (x y z : Binary32) :
+    x.sqrt = ExecFloat.Spec.sqrt x ∧ x.fma y z = ExecFloat.Spec.fma x y z :=
+  ⟨ExecFloat.Proof.sqrt_eq_spec x, ExecFloat.Proof.fma_eq_spec x y z⟩
+
+example (x y z : ExecFloat.BinaryLimbs 19 236) :
+    x.sqrt = ExecFloat.Spec.sqrt x ∧ x.fma y z = ExecFloat.Spec.fma x y z :=
+  ⟨ExecFloat.Proof.sqrt_eq_spec x, ExecFloat.Proof.fma_eq_spec x y z⟩
+
+-- Chained representation methods and directed rounding retain the configured receiver type.
+example :
+    (-4 : Binary32).abs.nextUp.toNatBits = 0x40800001 ∧
+      (4 : Binary32).isFinite = true ∧
+      ((4 : Binary32).sqrtWithRounding .towardPositiveInfinity).toNatBits = 0x40000000 := by
+  decide +kernel
+
+example (x : ExecFloat.BinaryLimbs 19 236) :
+    x.abs.nextUp.toNatBits = ExecFloat.Binary.toNatBits
+      (ExecFloat.Binary.nextUp (ExecFloat.Binary.abs x)) := rfl
+
+-- A codec for an unrelated format must not change inference for a concrete binary receiver.
+example {format : Formats.BinaryInterchange.FloatFormat}
+    {plan : Formats.BinaryInterchange.Configured.StoragePlan format} {code : Type}
+    [ExecFloat.ModelCodec plan (Formats.BinaryInterchange.Model format) code]
+    (x : ExecFloat.Binary 8 23) :
+    (Formats.BinaryInterchange.Model.castWithStatus _ format x.abs.nextUp.toModel).value =
+      (Formats.BinaryInterchange.Model.castWithStatus _ format
+        (ExecFloat.Binary.toModel (ExecFloat.Binary.nextUp (ExecFloat.Binary.abs x)))).value := rfl
 
 /-- Numerical comparison keeps signed-zero equality and NaN unorderedness separate from bits. -/
 example :
@@ -182,5 +213,106 @@ example :
     (ExecFloat.OCP.MX.E8M0.ofExponent? 0).map
       ExecFloat.OCP.MX.E8M0.exponent? = some (some 0) := by
   decide
+
+namespace Decimal
+
+open Formats.DecimalInterchange Formats.DecimalInterchange.Arithmetic
+
+private def oneDigit : Format := ⟨0, 1, 1, by decide⟩
+private def fourDigits : Format := ⟨1, 1, 4, by decide⟩
+private def positiveQuantum : Format := ⟨0, 1, -2, by decide⟩
+
+-- Rounding the squares first changes the one-digit hypotenuse from 7 to 6.
+example :
+    hypot oneDigit .nearestEven (.finite false 5 0) (.finite false 5 0) =
+      { value := .finite false 7 0, status := { inexact := true } } ∧
+    sqrt oneDigit .nearestEven
+      (add oneDigit .nearestEven
+        (square oneDigit .nearestEven (.finite false 5 0)).value
+        (square oneDigit .nearestEven (.finite false 5 0)).value).value =
+      { value := .finite false 6 0, status := { inexact := true } } := by
+  decide +kernel
+
+-- Rounding the reciprocal first changes 1 / sqrt(7) from 0.4 to 0.3.
+example :
+    rsqrt oneDigit .nearestEven (.finite false 7 0) =
+      { value := .finite false 4 (-1), status := { inexact := true } } ∧
+    sqrt oneDigit .nearestEven
+      (div oneDigit .nearestEven (.finite false 1 0) (.finite false 7 0)).value =
+      { value := .finite false 3 (-1), status := { inexact := true } } := by
+  decide +kernel
+
+-- Cube-root midpoints exercise both parities and the reversal for negative directed results.
+example :
+    [RoundingMode.nearestEven.rootRound false 3 (125 / 8),
+      RoundingMode.nearestEven.rootRound false 3 (343 / 8),
+      RoundingMode.nearestAway.rootRound false 3 (125 / 8),
+      RoundingMode.towardPositive.rootRound true 3 (125 / 8),
+      RoundingMode.towardNegative.rootRound true 3 (125 / 8),
+      RoundingMode.towardZero.rootRound true 3 (125 / 8)] =
+      [2, 4, 3, 2, 3, 2] := by
+  decide +kernel
+
+example :
+    rsqrt oneDigit .nearestEven (.finite true 0 0) =
+      { value := .infinity true, status := { divideByZero := true } } ∧
+    rootN oneDigit .nearestEven (.finite true 0 0) 2 =
+      { value := .finite false 0 0 } ∧
+    rootN oneDigit .nearestEven (.finite true 0 0) 3 =
+      { value := .finite true 0 0 } := by
+  decide +kernel
+
+example :
+    hypot fourDigits .nearestEven (.infinity true) (.nan true false 17) =
+      { value := .infinity false } ∧
+    hypot fourDigits .nearestEven (.infinity true) (.nan true true 17) =
+      { value := .nan true false 17, status := { invalid := true } } := by
+  decide +kernel
+
+-- Exact powers and roots keep the preferred decimal cohort: 2.0³ = 8.000.
+example :
+    powInt fourDigits .nearestEven (.finite false 20 (-1)) 3 =
+      { value := .finite false 8000 (-3) } ∧
+    rootN fourDigits .nearestEven (.finite false 8000 (-3)) 3 =
+      { value := .finite false 20 (-1) } := by
+  decide +kernel
+
+-- The smallest quantum here is +2; root(100, 2) lies between zero and 100 on this grid.
+example :
+    rootN positiveQuantum .nearestEven (.finite false 1 2) 2 =
+      { value := .finite false 0 2, status := { underflow := true, inexact := true } } ∧
+    rootN positiveQuantum .towardPositive (.finite false 1 2) 2 =
+      { value := .finite false 1 2, status := { underflow := true, inexact := true } } := by
+  decide +kernel
+
+-- Apply a real error theorem to the delivered cube root of two.
+example : |(1 : ℝ) - integerRoot 3 2| ≤ (1 : ℝ) / 2 := by
+  obtain ⟨value, hv, herror⟩ :=
+    rootN_error_le_half oneDigit .nearestEven (Or.inl rfl)
+      (.finite false 2 0) 2 (by decide +kernel) (by decide) 3 (by decide)
+      (by norm_num) (by decide +kernel)
+  have hdelivered :
+      (rootN oneDigit .nearestEven (.finite false 2 0) 3).value.toRat? = some (1 : ℚ) := by
+    decide +kernel
+  rw [hdelivered] at hv
+  have hvalue : value = (1 : ℚ) := (Option.some.inj hv).symm
+  subst value
+  have hquantum :
+      rootQuantum oneDigit (3 : Int).natAbs (integerRootRadicand 3 2) = 0 := by
+    decide +kernel
+  simpa only [hquantum, Rat.cast_one, Rat.cast_ofNat, zpow_zero] using herror
+
+-- The integer logB of zero, infinity, and NaN lies outside ±2(emax + p - 1), IEEE 754-2019
+-- §5.3.3. The bounds are 204, 798, and 12354.
+example :
+    (decimalExponent .decimal32 (.finite false 0 0)).value = -205 ∧
+    (decimalExponent .decimal32 (.infinity true)).value = 205 ∧
+    (decimalExponent .decimal64 (.finite true 0 3)).value = -799 ∧
+    (decimalExponent .decimal64 (.nan false true 1)).value = 799 ∧
+    (decimalExponent .decimal128 (.finite false 0 0)).value = -12355 ∧
+    (decimalExponent .decimal128 (.nan false false 0)).value = 12355 := by
+  decide +kernel
+
+end Decimal
 
 end FloatLibTests.Conformance.Formats.Configured

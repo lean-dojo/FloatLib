@@ -52,7 +52,7 @@ def invalidText : Outcome :=
 /-- Round a decoded datum into a destination format. Special spellings do not perform arithmetic. -/
 def convert (f : Format) (mode : RoundingMode) : Datum → Outcome
   | .finite negative coefficient quantum =>
-      projectMagnitude f mode negative ((coefficient : ℚ) * (10 : ℚ) ^ quantum) quantum
+      projectScaled f mode negative coefficient quantum quantum
   | .infinity negative => { value := .infinity negative }
   | .nan negative signaling payload =>
       if payload < f.payloadBound then { value := .nan negative signaling payload }

@@ -257,6 +257,7 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
 @[simp, grind =] theorem UInt256.log2_toNat (value : UInt256) :
     value.log2 = value.toNat.log2 := by
   unfold UInt256.log2
+  simp only [log2Word_eq_log2]
   by_cases h3 : value.limb3 = 0
   · have h3test : ¬value.limb3 != 0 := by
       simp [h3]

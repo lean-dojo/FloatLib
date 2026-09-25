@@ -9,6 +9,7 @@ import {
 import { updateOverflow } from './overflow';
 import { useTheme } from './theme';
 import { useCopyButtons } from './useCopyButtons';
+import { useFigureViews } from './useFigureViews';
 import type { Chapter, SiteNode } from './types';
 
 const STANDARD_AXIOMS = new Set(['propext', 'Classical.choice', 'Quot.sound']);
@@ -225,10 +226,15 @@ function ChapterPage({ index, chapter, heading }: { index: SiteIndex; chapter: C
   const next = position < data.chapters.length - 1 ? data.chapters[position + 1] : undefined;
   const body = useRef<HTMLDivElement>(null);
   useCopyButtons(body, chapter.html);
+  useFigureViews(body, chapter.html);
   useOverflowMarks(body, chapter.slug);
   useEffect(() => {
     if (!heading) return;
     const target = body.current?.querySelector<HTMLElement>(`#${CSS.escape(heading)}`);
+    // A bookmark to an optional proof or transcript must reveal the section before scrolling.
+    for (let parent = target?.parentElement; parent && parent !== body.current; parent = parent.parentElement) {
+      if (parent instanceof HTMLDetailsElement) parent.open = true;
+    }
     target?.scrollIntoView({ block: 'start' });
   }, [chapter.slug, heading]);
   return <article className="page chapter">
@@ -236,6 +242,14 @@ function ChapterPage({ index, chapter, heading }: { index: SiteIndex; chapter: C
       <p className="eyebrow">Chapter {chapter.number}</p>
       <h1>{chapter.title}</h1>
     </header>
+    {chapter.headings.length > 1 && <details className="chapter-contents" key={chapter.slug}>
+      <summary>In this chapter</summary>
+      <nav aria-label="Sections in this chapter">
+        <ol>{chapter.headings.map(section => <li key={section.id}>
+          <a href={href(chapterPath(chapter.slug, section.id))}>{section.title}</a>
+        </li>)}</ol>
+      </nav>
+    </details>}
     <div ref={body} className="prose chapter-body" dangerouslySetInnerHTML={{ __html: chapter.html }} />
     <nav className="chapter-pager" aria-label="Neighbouring chapters">
       {previous ? <a className="pager-previous" href={href(chapterPath(previous.slug))}>

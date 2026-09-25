@@ -14,10 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
 
 Each endpoint operation uses the corresponding directed `Model` kernel. Multiplication and
 division use the classical four-corner construction. Division returns the whole interval when the
-denominator contains zero because a single closed interval cannot represent the resulting
-disconnected quotient set. Addition, subtraction, multiplication, and division pass computed
+denominator contains zero, covering quotient sets that may be disconnected or unbounded.
+Addition, subtraction, multiplication, and division pass computed
 endpoints through `ofBounds`, replacing NaN or reversed endpoints with the format's whole range.
 For formats without infinity, enclosure of real results still requires the relevant range bounds.
+
+The finite endpoint formulas and outward rounding are described in Rump's
+[Verification methods](https://doi.org/10.1017/S096249291000005X), §§5.1 and 5.3.
 -/
 
 @[expose] public section

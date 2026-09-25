@@ -607,5 +607,22 @@
     "venue": "Source repository, revision 4ea18bb",
     "year": "2026",
     "url": "https://github.com/alerad/leancert/tree/4ea18bb66dfcd7f18f260bc25302400f5a3cafd7"
+  },
+  {
+    "key": "rump2010",
+    "authors": "Siegfried M. Rump",
+    "title": "Verification methods: Rigorous results using floating-point arithmetic",
+    "venue": "Acta Numerica, volume 19, pages 287–449",
+    "year": "2010",
+    "url": "https://doi.org/10.1017/S096249291000005X"
+  },
+  {
+    "key": "rocqInterval",
+    "authors": "Guillaume Melquiond and contributors",
+    "title": "Interval Package for Rocq",
+    "venue": "Project documentation",
+    "year": "",
+    "accessed": "2026-09-25",
+    "url": "https://coqinterval.gitlabpages.inria.fr/"
   }
 ]

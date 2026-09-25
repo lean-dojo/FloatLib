@@ -85,7 +85,7 @@ chooses a 105- or 106-bit integer radicand. Its square root cannot be a half-int
 -/
 @[inline] def sqrtPositiveFiniteCore
     (mantissa scale : UInt64) : UInt64 :=
-  let leading := mantissa.log2
+  let leading := FloatLib.Numerics.FixedWord.log2Word mantissa
   let position := leading + scale
   let shift :=
     if position % 2 == 0 then

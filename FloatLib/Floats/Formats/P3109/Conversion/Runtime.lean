@@ -103,7 +103,7 @@ datum used by IEEE 754 tininess.
     NumericalValue Rat → NumericalValue Numerics.Dyadic → Bool
   | .finite _, _ => false
   | .infinity sourceSign, .infinity resultSign => sourceSign != resultSign
-  | .exceptional (.nan _), .exceptional (.nan _) => false
+  | .exceptional (.nan ..), .exceptional (.nan ..) => false
   | .infinity _, _ | .exceptional _, _ => true
 
 /-- Whether projection changes the exact rational input or produces a nonfinite datum. -/
@@ -125,6 +125,7 @@ The report defines no status flags, so these are FloatLib's conversion indicator
   raise it, so this is narrower than IEEE 754 tininess.
 * `saturated` is raised only when saturation changed the rounding result and the delivered datum
   is a finite endpoint.
+* `invalid` is raised for a signaling NaN source, as for binary destinations.
 -/
 @[inline] def status
     (format : Formats.P3109.Format)
@@ -143,10 +144,16 @@ The report defines no status flags, so these are FloatLib's conversion indicator
           !Formats.P3109.Format.datumEqual rounded projected &&
             isFiniteEndpoint format projected
       }
-  | .infinity _ | .exceptional _ =>
+  | .infinity _ =>
       {
         saturated := isFiniteEndpoint format projected
         mappedSpecial := mappedSpecial input projected
+      }
+  | .exceptional exceptional =>
+      {
+        saturated := isFiniteEndpoint format projected
+        mappedSpecial := mappedSpecial input projected
+        invalid := exceptional.isSignalingNaN
       }
 
 /-- Quantize one complete exact-rational observation according to its P3109 projection policy. -/

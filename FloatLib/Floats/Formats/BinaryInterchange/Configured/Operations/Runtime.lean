@@ -30,7 +30,9 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+  ExecFloat.Binary format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite plan code
 
 /-- IEEE remainder, using a nearest-even integral quotient for finite operands. -/
 @[inline] def remainder (dividend divisor : Value) : Value :=
@@ -62,28 +64,28 @@ saturate; use `roundToIntegralExactWithStatus` to detect that overflow.
   IEEEOutcome.ofModel <|
     Model.roundToIntegralExactWithStatus (ExecFloat.Binary.toModel value) rounding
 
-/-- Multiply a configured value by `2^scale` and round in the selected direction. -/
-@[inline] def scaleB
-    (value : Value) (scale : Int) (rounding : Model.IEEERoundingMode) : Value :=
+/-- Multiply by `2^n` and round in the selected direction (IEEE 754 `scaleB`). -/
+@[inline] def scale
+    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan)
-    (Model.scaleB · scale rounding) value
+    (Model.scale · n rounding) value
 
 /-- Power-of-two scaling with the IEEE exception indicators. -/
-@[inline] def scaleBWithStatus
-    (value : Value) (scale : Int) (rounding : Model.IEEERoundingMode) :
+@[inline] def scaleWithStatus
+    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) :
     IEEEOutcome (format := format) (plan := plan) (code := code) :=
   IEEEOutcome.ofModel <|
-    Model.scaleBWithStatus (ExecFloat.Binary.toModel value) scale rounding
+    Model.scaleWithStatus (ExecFloat.Binary.toModel value) n rounding
 
-/-- Return the leading binary exponent in the same configured format. -/
-@[inline] def logB (value : Value) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.logB value
+/-- Leading binary exponent, rounded into the same configured format (IEEE 754 `logB`). -/
+@[inline] def binaryExponent (value : Value) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.binaryExponent value
 
 /-- Return the leading binary exponent and its IEEE exception indicators. -/
-@[inline] def logBWithStatus
+@[inline] def binaryExponentWithStatus
     (value : Value) :
     IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <| Model.logBWithStatus (ExecFloat.Binary.toModel value)
+  IEEEOutcome.ofModel <| Model.binaryExponentWithStatus (ExecFloat.Binary.toModel value)
 
 /-- Copy the numerical sign of `signSource` onto `magnitude`. -/
 @[inline] def copySign (magnitude signSource : Value) : Value :=

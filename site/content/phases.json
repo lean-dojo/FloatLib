@@ -2,7 +2,8 @@
   "imports": [
     "FloatLib",
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked",
-    "FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals"
+    "FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals",
+    "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof"
   ],
   "phases": [
     {
@@ -388,6 +389,18 @@
           "title": "Finite nonnegative square roots stay finite"
         },
         {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_hypot_eq_roundAt",
+          "title": "Hypotenuse rounds the exact norm once"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_rootN_eq_roundAt",
+          "title": "Integer roots round the signed real root"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_powInt_eq_roundAt",
+          "title": "Integer powers have one final rounding"
+        },
+        {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.ulpAt",
           "title": "The ulp of the format at x"
         },
@@ -406,6 +419,18 @@
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal",
           "title": "Relative error in the normal range"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_standardModel",
+          "title": "The standard model with gradual underflow"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_mul_one_add",
+          "title": "Finite addition has no underflow term"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.ReductionTree.abs_toReal_eval_sub_sum_le_mixedBudget",
+          "title": "Finite binary sums have a relative error budget"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz",
@@ -580,6 +605,26 @@
         {
           "name": "FloatLib.Numerics.Interval.containsReal_mul?",
           "title": "Executable interval multiplication encloses real products"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Expr",
+          "title": "Expressions for certified interval evaluation"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Backend.Sound",
+          "title": "The common interval backend contract"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Expr.containsReal_eval?",
+          "title": "Expression evaluation encloses every real input"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Backend.ofRounding_sound",
+          "title": "Custom outward rounders satisfy the expression contract"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Expr.check_sound",
+          "title": "Certified bounds through midpoint subdivision"
         },
         {
           "name": "FloatLib.Floats.ExecFloat.Binary.Interval.add_sound",
@@ -1017,7 +1062,7 @@
     },
     {
       "id": "ieee-formats",
-      "title": "IEEE binary formats in use",
+      "title": "IEEE formats in use",
       "nodes": [
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.binary16",
@@ -1044,15 +1089,15 @@
           "title": "Exact signed-rational value of a configured word"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.add",
+          "name": "FloatLib.Floats.ExecFloat.Binary.addWithRounding",
           "title": "Configured directed addition"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.div",
+          "name": "FloatLib.Floats.ExecFloat.Binary.divWithRounding",
           "title": "Configured directed division"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_add",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_addWithRounding",
           "title": "Configured addition decodes to the model"
         },
         {
@@ -1106,6 +1151,30 @@
         {
           "name": "FloatLib.Floats.ExecFloat.Binary.toModel_exp",
           "title": "Configured exponential agrees with its model"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.square_eq_mul",
+          "title": "Squaring preserves the multiplication result"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_expMinus1_eq_some",
+          "title": "Certified binary exp-minus-one"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_logPlus1_eq_some",
+          "title": "Certified binary log-plus-one"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.rootN_error_le_half",
+          "title": "Nearest decimal roots have half-grid error"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_expMinus1_eq_some",
+          "title": "Certified decimal exp-minus-one"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_logPlus1_eq_some",
+          "title": "Certified decimal log-plus-one"
         }
       ]
     },

@@ -1,16 +1,15 @@
 """Shared style for the guide's figures.
 
-Every figure script in this directory imports this module, so the chapters' figures share one
-palette, one type size, one width and one saving routine. A script draws one figure (or a small
-family), names its data sources in its docstring, and writes a PNG into content/assets, where the
-chapter refers to it as `![caption](assets/<name>.png)`.
+Figure scripts share this palette and saving routine. A script draws one figure or a small
+family, names its data sources in its docstring, and writes into content/assets.
+Chapters refer to the main image as `![description](assets/<name>.png "Caption")`.
 
 Conventions the helpers enforce or make easy:
 
 * Okabe and Ito colours only, assigned in a fixed order, never cycled or generated; identity is
   also carried by a label, a marker or a line style, never by colour alone.
-* 9 inches wide at 200 dpi (1800 px), so a figure that spans the guide's wide column is sharp on
-  a high-density screen; heights vary with content. Text is 10 pt or larger at that width.
+* The default overview width is 9 inches at 200 dpi. Individual plots and mobile arrangements
+  use narrower canvases with larger labels so their text remains readable in a phone column.
 * White background and no transparency: the reader shows each PNG on a white plate with a thin
   border, in dark mode too, so a figure must not rely on the page colour.
 * No em or en dashes in any drawn string (the site's text checks cannot see inside a PNG), which

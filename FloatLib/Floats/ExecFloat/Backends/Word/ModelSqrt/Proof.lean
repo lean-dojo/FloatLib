@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.Word.ModelSqrt.Runtime
-public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaledSqrt.Proof
 public import Mathlib.Algebra.Order.Group.Nat
 
 /-!
@@ -40,7 +40,8 @@ theorem sqrt_eq (spec : Float.Model.Format) (value : Float.Model.UnpackedFloat) 
   | finite sign mantissa exponent mantissa_pos =>
       cases sign
       · rfl
-      · simp [sqrt, Float.Model.UnpackedFloat.sqrt, sqrtCore_eq]
+      · simp [sqrt, Float.Model.UnpackedFloat.sqrt,
+          Float.Model.UnpackedFloat.sqrtCore, ScaledSqrt.round_eq, ScaledSqrt.accuracy]
 
 /-- Compile Lean's logical unpacked square root through the proved native-backed implementation. -/
 @[csimp] theorem unpackedSqrt_eq_sqrt :

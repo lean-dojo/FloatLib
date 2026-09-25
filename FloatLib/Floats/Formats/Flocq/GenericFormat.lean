@@ -30,9 +30,9 @@ The definitions mirror the separation in Flocq between:
 Primary references:
 
 - S. Boldo and G. Melquiond, “Flocq: A Unified Library for Proving Floating-Point Algorithms in
-  Coq,” ARITH 2011, DOI 10.1109/ARITH.2011.40.
-- Flocq 4.2.2 source repository, including `src/Core/Generic_fmt.v`:
-  <https://gitlab.inria.fr/flocq/flocq>.
+  Coq,” ARITH 2011, pp. 243–252, §III-D, DOI 10.1109/ARITH.2011.40.
+- Flocq 4.2.2 release, `src/Core/Generic_fmt.v`, definitions `generic_format` and `Valid_exp`:
+  <https://flocq.gitlabpages.inria.fr/releases/flocq-4.2.2.tar.gz>.
 - Flocq project documentation: <https://flocq.gitlabpages.inria.fr/flocq/>.
 -/
 

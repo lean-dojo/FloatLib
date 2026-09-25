@@ -91,7 +91,7 @@ example (a b : Binary32) :
 /-! ## Choose a rounding direction and inspect the status -/
 
 private def thirdUp : Binary32 :=
-  ExecFloat.Binary.div 1 3 (rounding := +∞)
+  ExecFloat.Binary.divWithRounding 1 3 (rounding := +∞)
 -- 11184811 * 2^-25
 
 private def thirdDownWithStatus :

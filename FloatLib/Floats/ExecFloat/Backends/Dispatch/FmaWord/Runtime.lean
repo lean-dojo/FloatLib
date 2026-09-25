@@ -30,7 +30,7 @@ Width-generic compiled FMA.
 The exceptional-value dispatcher stays explicit, while the all-finite path decodes each operand
 once and uses the compact finite kernel.
 -/
-def generic {fmt : FloatFormat}
+@[specialize fmt] def generic {fmt : FloatFormat}
     (x y z : Model fmt) : Model fmt :=
   match FiniteKernel.fmaRuntimeFlat? x y z with
   | some result => result

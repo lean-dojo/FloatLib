@@ -37,7 +37,10 @@ namespace Interval
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-local notation "Value" => FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+local notation "Value" =>
+  ExecFloat.Binary format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite plan code
 local notation "Bounds" => Interval (format := format) (plan := plan) (code := code)
 
 /-- Decode both endpoints without changing their complete encodings. -/
@@ -53,7 +56,7 @@ def mem (I : Bounds) (x : Value) : Prop :=
   Binary.toModel x ∈ I.toModel
 
 /-- Membership of a configured scalar in configured bounds. -/
-instance : Membership Value Bounds where
+instance : Membership (ExecFloat (Configured.Family format code plan)) Bounds where
   mem := Interval.mem
 
 /-- Both endpoints are finite and ordered. -/

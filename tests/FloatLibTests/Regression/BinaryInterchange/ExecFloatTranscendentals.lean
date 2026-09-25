@@ -16,6 +16,8 @@ public import FloatLibTests.Regression.BinaryInterchange.Harness
 These checks exercise special-value behavior in binary16, bfloat16, binary32, binary64, and a
 custom tiny format, validate generated constants, and check argument-reduction budgets for formats
 with wide exponent fields.
+The certified stable functions retain tiny inputs and signed zeros, and reject domains or
+refinement budgets that cannot certify a result.
 
 Run the native report with:
 
@@ -160,6 +162,36 @@ def failCustomReductionBudget : Thunk Nat := ⟨fun _ =>
     , accepts full aboveBudget
     ]⟩
 
+/-- Tiny arguments survive exact enclosure arithmetic, including their sign. -/
+def certifiedStableFailures (fmt : FloatFormat) : Nat :=
+  let positive := Model.roundDyadic fmt
+    { negative := false, significand := 1, exponent := -(fmt.fracWidth + 3 : Int) }
+  let acceptedAs (actual : Option (Model fmt)) (expected : Model fmt) : Bool :=
+    match actual with
+    | none => false
+    | some result => Harness.sameBits result expected
+  countFailures <|
+    [positive, Model.neg positive, Model.posZero fmt, Model.negZero fmt].flatMap fun x =>
+      [ acceptedAs (Model.Transcendentals.Certified.expMinus1 x) x
+      , acceptedAs (Model.Transcendentals.Certified.logPlus1 x) x
+      ]
+
+def failCertifiedStable : Thunk Nat := ⟨fun _ =>
+  [FloatFormat.ieee 4 3, .binary16, .binary32, .binary64, .binary128].foldl
+    (fun failures fmt => failures + certifiedStableFailures fmt) 0⟩
+
+/-- Domain failures and an empty search budget do not produce an uncertified approximation. -/
+def failCertifiedStableRejection : Thunk Nat := ⟨fun _ =>
+  let one := Model.posOne f32
+  let negativeOne := Model.negOne f32
+  countFailures
+    [ (Model.Transcendentals.Certified.logPlus1 negativeOne).isNone
+    , (Model.Transcendentals.Certified.logPlus1 (Model.negInf f32)).isNone
+    , (Model.Transcendentals.Certified.expMinus1 (Model.canonicalNaN f32)).isNone
+    , (Model.Transcendentals.Certified.expMinus1 one { maxSteps := 0 }).isNone
+    , (Model.Transcendentals.Certified.logPlus1 one { maxSteps := 0 }).isNone
+    ]⟩
+
 def report : Thunk String := ⟨fun _ =>
   let rows :=
     [ ("arbitraryFormatSpecialValues", failArbitraryFormatSpecialValues.get)
@@ -167,6 +199,8 @@ def report : Thunk String := ⟨fun _ =>
     , ("boundedGeneration", failBoundedGeneration.get)
     , ("reductionBudget", failReductionBudget.get)
     , ("customReductionBudget", failCustomReductionBudget.get)
+    , ("certifiedStable", failCertifiedStable.get)
+    , ("certifiedStableRejection", failCertifiedStableRejection.get)
     ]
   renderFailureReport rows⟩
 

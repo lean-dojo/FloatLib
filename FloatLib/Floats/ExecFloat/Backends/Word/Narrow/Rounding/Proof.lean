@@ -258,6 +258,7 @@ theorem roundProduct_eq_roundDyadic
         significand := product.toNat
         exponent := Int.ofNat scale.toNat - 298 } := by
   unfold roundProduct roundDyadic
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   simp only [beq_iff_eq]
   by_cases hzero : product = 0
   · have hzeroNat : product.toNat = 0 := by

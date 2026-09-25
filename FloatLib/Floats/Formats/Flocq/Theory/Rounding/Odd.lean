@@ -14,6 +14,19 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 For an inexact real input, `oddRound` selects the odd member of the two adjacent integers.
 Exact integers are unchanged.  Applied to a binary scaled mantissa, this is the usual round-to-odd
 or jamming rule: discarded information is recorded by setting the least-significant retained bit.
+
+The double-rounding result below concerns a fixed binary grid. The corresponding theorem for
+floating-point formats also needs hypotheses relating their precision and minimum exponents.
+
+References:
+
+- S. Boldo and G. Melquiond, “Emulation of a FMA and Correctly Rounded Sums: Proved Algorithms
+  Using Rounding to Odd,” IEEE Transactions on Computers 57(4), 2008, pp. 462–471,
+  §III-C, Theorem 3, DOI: 10.1109/TC.2007.70819.
+  Author manuscript: <https://guillaume.melquiond.fr/doc/08-tc.pdf>.
+- Flocq 4.2.2, `src/Prop/Round_odd.v`, definitions `Zrnd_odd`, `Rnd_odd_pt`, and
+  the format-level theorem `round_N_odd`:
+  <https://flocq.gitlabpages.inria.fr/releases/flocq-4.2.2.tar.gz>.
 -/
 
 @[expose] public section

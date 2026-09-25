@@ -300,6 +300,49 @@ private def binary32Conversion (rounding : RoundingMode) (exact : Rat)
     ({ quantization := { rounding }, entropy } : ExecFloat.Binary.Conversion.Context)).map
       ExecFloat.Binary.toNatBits
 
+private abbrev Binary16 :=
+  ExecFloat.Binary (exponentBits := 5) (fractionBits := 10)
+
+-- A NaN cast keeps its sign and payload and is quieted, IEEE 754-2019 §6.2.3. A signaling
+-- source raises invalid (§7.2). A payload too wide for the destination becomes zero.
+example :
+    [ ((ExecFloat.Binary.ofNatBits 0xffc00005 : Binary32).cast (target := Binary32)).map
+        ExecFloat.Binary.toNatBits
+    , ((ExecFloat.Binary.ofNatBits 0xff800005 : Binary32).cast (target := Binary32)).map
+        ExecFloat.Binary.toNatBits
+    , ((ExecFloat.Binary.ofNatBits 0x7f800001 : Binary32).cast (target := Binary64)).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0xffc00005 {}
+      , .success 0xffc00005 { invalid := true }
+      , .success 0x7ff8000000000001 { invalid := true }
+      ] := by
+  decide +kernel
+
+example :
+    [ ((ExecFloat.Binary.ofNatBits 0xfff8000000000000 : Binary64).cast (target := Binary16)).map
+        ExecFloat.Binary.toNatBits
+    , ((ExecFloat.Binary.ofNatBits 0x7ff8000000000201 : Binary64).cast (target := Binary16)).map
+        ExecFloat.Binary.toNatBits
+    , ((ExecFloat.Binary.ofNatBits 0x7ff8000000000001 : Binary64).cast (target := Binary16)).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0xfe00 {}
+      , .success 0x7e00 {}
+      , .success 0x7e01 {}
+      ] := by
+  decide +kernel
+
+-- Posit NaR has no sign or payload, but a signaling source still raises invalid.
+example :
+    [ (ExecFloat.Binary.ofNatBits 0x7f800001 : Binary32).cast (target := Posit32)
+    , (ExecFloat.Binary.ofNatBits 0x7fc00001 : Binary32).cast (target := Posit32)
+    ] =
+      [ .success ExecFloat.Posit.nar { mappedSpecial := true, invalid := true }
+      , .success ExecFloat.Posit.nar { mappedSpecial := true }
+      ] := by
+  decide +kernel
+
 -- Exceeding maxFinite does not itself signal overflow. The midpoint rounds to infinity.
 example :
     [ binary32Conversion .nearestEven (binary32OverflowMidpoint - 1)
@@ -402,6 +445,44 @@ example :
       , (0xff, { overflow := true, inexact := true })
       ] := by
   decide +kernel
+
+private abbrev FiniteE4M3 :=
+  ExecFloat.Binary (exponentBits := 4) (fractionBits := 3) (encoding := .finite)
+
+-- A fully finite destination has no NaN. `ExecFloat` conversion fails with the source NaN, and the
+-- model cast delivers positive zero with invalid raised, in every rounding mode.
+example :
+    [ ExecFloat.cast (target := FiniteE4M3) (ExecFloat.Binary.ofNatBits 0x7fc00000 : Binary32)
+    , ExecFloat.cast (target := FiniteE4M3) (ExecFloat.Binary.ofNatBits 0xff800001 : Binary32)
+    ] =
+      [ .failure (.exceptional .source (.nan (some 0x400000) false false))
+      , .failure (.exceptional .source (.nan (some 1) true true))
+      ] := by
+  decide +kernel
+
+example :
+    [ binary32Cast (FloatFormat.custom 4 3 7 .finite) 0x7fc00000
+    , binary32Cast (FloatFormat.custom 4 3 7 .finite) 0xff800001 .towardZero
+    ] =
+      [ (0x00, { invalid := true })
+      , (0x00, { invalid := true })
+      ] := by
+  decide +kernel
+
+-- The same agreement holds for every NaN source and every configured fully finite destination.
+example {format : FloatFormat} {plan : Configured.StoragePlan format}
+    {code : Type} [ExecFloat.ModelCodec plan (Model format) code]
+    (value : Binary32) (mode : Model.IEEERoundingMode)
+    (hnan : Model.isNaN (ExecFloat.Binary.toModel value) = true)
+    (hformat : format.encoding = .finite) :
+    (ExecFloat.Binary.Conversion.run (format := format) (plan := plan) (code := code)
+        .default (ExecFloat.Binary.decode value)).value? = none ∧
+      (Model.castWithStatus _ format
+        (ExecFloat.Binary.toModel value) mode).status.invalid = true := by
+  obtain ⟨hrun, hinvalid⟩ :=
+    ExecFloat.Binary.Conversion.run_default_decode_of_isNaN_of_encoding_finite
+      (format := format) (plan := plan) (code := code) value mode hnan hformat
+  exact ⟨by rw [hrun]; rfl, hinvalid⟩
 
 private def customBias : FloatFormat := FloatFormat.custom 8 23 100 .ieee
 

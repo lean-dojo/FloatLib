@@ -75,6 +75,7 @@ theorem countLeadingRunWord_toNat_eq
   unfold countLeadingRun
   simp only [ite_eq_left hwidthNat]
   unfold countLeadingZeros
+  simp only [FixedWord.log2Word_eq_log2]
   rw [← lowBitsWord_eq_lowBits
     (if bit then ~~~value else value) width hwidth]
 

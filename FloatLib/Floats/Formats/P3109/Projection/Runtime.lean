@@ -290,9 +290,12 @@ end Internal
       | .none, .unsigned, .extended | .none, _, .finite =>
           .exceptional (.nan)
   | .finite finite =>
-      if Numerics.Dyadic.Internal.compareScalable
-          finite format.minFinite == .lt then
-        Internal.saturateBelow format mode rounding
+      if finite.negative then
+        if Numerics.Dyadic.Internal.compareScalable
+            finite format.minFinite == .lt then
+          Internal.saturateBelow format mode rounding
+        else
+          .finite finite
       else if Numerics.Dyadic.Internal.compareScalable
           format.maxFinite finite == .lt then
         Internal.saturateAbove format mode rounding
@@ -369,7 +372,7 @@ def SameDatum :
       NumericalValue Numerics.Dyadic → Prop
   | .finite left, .finite right => left.toRat = right.toRat
   | .infinity left, .infinity right => left = right
-  | .exceptional (.nan _), .exceptional (.nan _) => True
+  | .exceptional (.nan ..), .exceptional (.nan ..) => True
   | _, _ => False
 
 /--
@@ -385,7 +388,7 @@ payload is not semantically observable here.
   | .finite left, .finite right =>
       Numerics.Dyadic.Internal.compareScalable left right == .eq
   | .infinity left, .infinity right => left == right
-  | .exceptional (.nan _), .exceptional (.nan _) => true
+  | .exceptional (.nan ..), .exceptional (.nan ..) => true
   | _, _ => false
 
 /--

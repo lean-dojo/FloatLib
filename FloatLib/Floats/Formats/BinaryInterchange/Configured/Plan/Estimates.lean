@@ -39,7 +39,8 @@ Byte and machine-word carriers are charged one unit per adapted value, on the sa
 
 The limb carrier converts each value through `LimbArray.toNat` and `LimbArray.ofNat`, one
 arbitrary-precision operation per limb, so its adapter cost grows with the limb count. Accepted
-wide-limb paths avoid this conversion; declined calls use the model adapter for the exact fallback.
+wide-limb paths read the stored fields directly, with any integer conversions included in their
+work estimate. Declined calls use the model adapter for the exact fallback.
 -/
 def modelMarshallingCost {format : FloatFormat}
     (plan : StoragePlan format) (operation : Operation) : Nat :=

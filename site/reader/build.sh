@@ -53,6 +53,7 @@ if [[ -d "$site_root/content/assets" ]]; then
   # Python caches, and retained working data out of the static site.
   rsync -a \
     --exclude '*.py' \
+    --exclude '*-series.json' \
     --exclude '__pycache__/' \
     --exclude 'data/' \
     "$site_root/content/assets/" "$out_dir/assets/"

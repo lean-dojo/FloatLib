@@ -181,6 +181,9 @@ normalization, which places the scaled dividend at `num * 2^127` or `num * 2^128
 of the precision, so the digit layout below does not depend on the format. The shift argument has
 only the two layouts supported by this kernel.
 
+Algorithm reference: Donald E. Knuth, *The Art of Computer Programming*, vol. 2,
+*Seminumerical Algorithms*, 3rd ed. (1997), §4.3.1, Algorithm D.
+
 The Algorithm D result remains a speculative fast candidate: callers independently check it with
 `certificate`. `checkedCandidate` retains this exact hot path and invokes a proved restoring
 divider only after a failed certificate.

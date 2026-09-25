@@ -38,7 +38,7 @@ temporary work and keep build products outside the checkout through the shared b
 | Public API overhead and performance regressions | [Calibration and regression checks](docs/Calibration.md) |
 | Recreate the saved tables and figures | `benchmarks/scripts/verify-main-result.sh` |
 
-The [performance chapter](../site/content/chapters/15-performance.md) walks through the plots,
+The [performance chapter](../site/content/chapters/17-performance.md) walks through the plots,
 and the [results README](results/main/README.md) describes the data behind them. A fresh run
 measures your source, compiler, and machine, so its timings can differ from ours.
 The [matched Flocq comparison](results/flocq-matched/README.md) has a separate figure

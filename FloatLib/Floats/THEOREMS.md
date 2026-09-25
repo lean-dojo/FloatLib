@@ -76,6 +76,19 @@ whose source decodes to a finite value; `Model.Policy.roundRat_nearestEven_eq_ex
 family give `Model.roundRat` its real-number semantics. The other formats' sections develop
 their rounding and projection theorems.
 
+For NaN sources, `ExecFloat.Binary.Conversion.run_default_decode_of_isNaN` shows that the default
+conversion returns the value and invalid flag of `Model.castWithStatus`. An IEEE destination keeps
+the sign and any payload that fits; an oversized payload becomes zero. Maximum-NaN encodings keep
+only the sign, while FNUZ has a single NaN. A signaling source raises invalid
+(IEEE 754-2019 §6.2.3, §7.2).
+That theorem needs a destination with a NaN encoding. For a fully finite destination,
+`run_default_decode_of_isNaN_of_encoding_finite` shows that the conversion fails with the source NaN
+as `.exceptional .source`, while `Model.castWithStatus` delivers positive zero and raises invalid
+(`Model.castWithStatus_invalid_of_isNaN_of_encoding_finite`; the carrier-generic form is
+`runWith_default_nan_of_encoding_finite`). Both paths treat the conversion as
+invalid; `ExecFloat` refuses to invent a value. `ExecFloat.Binary.Conversion.decode_of_isNaN` gives
+the NaN observation that a configured NaN decodes to.
+
 The policy engine and directed engine agree on the complete packed result:
 `Model.Policy.roundDyadicGeneral_toRoundingMode_eq_roundDyadicWithRounding` in
 `Rounding/Policy/Agreement.lean` covers every `FloatFormat`, all four `IEEERoundingMode` values,
@@ -145,6 +158,26 @@ Equality over `ℝ` alone cannot express those distinctions.
 The corresponding `isFinite_*_of_abs_*_le_posMaxFinite` lemmas turn a symbolic magnitude bound
 into the result-finiteness premise. This is usually easier than evaluating the output first.
 
+### Powers, roots, and hypotenuse
+
+Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Proof`.
+The `Model` theorems below have matching versions in `ExecFloat.Binary`, which apply directly
+to configured values. Their real statements require a conventional IEEE descriptor, finite
+operands in the function's domain, and a finite output.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Model.toReal_rsqrt_eq_roundAt` | For a positive finite input, reciprocal square root rounds the exact real reciprocal root once. |
+| `Model.toReal_hypot_eq_roundAt` | Hypotenuse rounds the root of the exact sum of squares, with no intermediate product rounding. |
+| `Model.toReal_powInt_eq_roundAt` | A finite nonzero base raised to an integer exponent is rounded once, including negative exponents. |
+| `Model.toReal_rootN_eq_roundAt` | A nonzero finite input and a nonzero integer degree give the rounded signed real root; negative inputs require an odd degree. |
+| `ExecFloat.Binary.toModel_rootN`, `toModel_powInt`, `toModel_hypot`, `toModel_rsqrt` | Every storage codec preserves the complete model result, including exceptional encodings. |
+
+Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Square` for
+`ExecFloat.Binary.square_eq_spec` and `square_eq_mul`: the unary square kernel produces the
+same complete result as the certified multiplication specification and selected multiplication
+backend. P3109 and posit squaring have corresponding `square_eq_mul` theorems.
+
 ### Casting and exact widening
 
 Import `FloatLib.Floats.Formats.BinaryInterchange.Conversion`.
@@ -156,6 +189,7 @@ Import `FloatLib.Floats.Formats.BinaryInterchange.Conversion`.
 | `cast_exact_of_gridExtension` | A finite cast is exact when the destination contains the source's dyadic grid. |
 | `cast_exact_of_compatibleWidening` | Increasing only fraction width while preserving exponent semantics and encoding is exact. |
 | `castWithRounding_eq_widenExact_of_compatibleWidening` | Every rounding mode gives the same widened encoding for a finite value with compatible exponent fields and encoding. |
+| `cast_of_isNaN`, `propagatedNaN_eq_quietNaN` | An IEEE destination quiets the NaN, keeps its sign, and keeps its payload when it fits, otherwise using payload zero (IEEE 754-2019 §6.2.3). Other encodings follow their own NaN rule; a cast to its own format is `quietNaN`. |
 | `toReal_widenExact` | The direct widening constructor preserves the decoded real value, including zeros and subnormals. |
 
 `cast_exact_of_gridExtension` is the general theorem behind standard widenings such as binary32
@@ -163,7 +197,8 @@ to binary64. It permits a larger exponent range; equal exponent widths are not r
 
 ### Accuracy and exact subtraction
 
-Import `FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error` or
+Import `FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error`,
+`FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel`, or
 `FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz` for scalar bounds. Import
 `FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof` for the mixed-precision dot and
 matrix theorems.
@@ -172,9 +207,17 @@ matrix theorems.
 | --- | --- |
 | `abs_roundAt_sub_le` | Nearest-even rounding differs from its real input by at most half an ULP. |
 | `relativeError_roundAt_le_of_normal` | A nonzero normal-range input satisfies the standard relative-error bound. |
-| `abs_toReal_add_sub_le`, `abs_toReal_sub_sub_le`, `abs_toReal_mul_sub_le`, `abs_toReal_div_sub_le`, `abs_toReal_sqrt_sub_le`, `abs_toReal_fma_sub_le` | One finite operation inherits the half-ULP bound. |
-| `add_exact_mem_Icc`, `sub_exact_mem_Icc`, `mul_exact_mem_Icc`, `div_exact_mem_Icc`, `sqrt_exact_mem_Icc`, `fma_exact_mem_Icc` | The exact operation result lies in the computed value's half-ULP enclosure. |
-| `abs_toReal_cast_sub_le` | One finite cast inherits the destination half-ULP bound. |
+| `abs_toReal_add_sub_le`, `abs_toReal_sub_sub_le`, `abs_toReal_mul_sub_le`, `abs_toReal_div_sub_le`, `abs_toReal_sqrt_sub_le`, `abs_toReal_fma_sub_le` | An IEEE operation with finite operands and result inherits the half-ULP bound under its domain hypotheses. |
+| `add_exact_mem_Icc`, `sub_exact_mem_Icc`, `mul_exact_mem_Icc`, `div_exact_mem_Icc`, `sqrt_exact_mem_Icc`, `fma_exact_mem_Icc` | Under the same IEEE, domain, and finiteness hypotheses, the exact operation result lies in the computed value's half-ULP enclosure. |
+| `abs_toReal_cast_sub_le` | A cast between IEEE descriptors with finite input and result inherits the destination half-ULP bound. |
+| `roundAt_standardModel` | Nearest-even rounding satisfies the standard model with gradual underflow, `roundAt x = x * (1 + δ) + η` with `\|δ\| ≤ unitRoundoffAt fmt = 2^(-precision)`, `\|η\| ≤ underflowErrorAt fmt = 2^(minSubnormalExponent - 1)`, and `δ * η = 0`, for every real `x`. For binary32 the constants are `2^(-24)` and `2^(-150)`. |
+| `round_standardModel_of_nearest` | The same model holds for every nearest rounding function, including ties away from zero. |
+| `round_standardModel`, `roundAtDown_standardModel`, `roundAtUp_standardModel`, `round_truncRound_standardModel` | Every valid rounding function, including the directed ones, satisfies the model with both constants doubled. |
+| `toReal_mul_standardModel`, `toReal_div_standardModel`, `toReal_sqrt_standardModel`, `toReal_fma_standardModel`, `toReal_cast_standardModel` | An operation on IEEE descriptors with finite operands and result satisfies the standard model with gradual underflow. Division requires a nonzero divisor; square root requires a nonnegative input, including either signed zero. |
+| `roundAt_add_eq_mul_one_add` | The rounded sum of two grid points is `(x + y) * (1 + δ)` with `\|δ\| ≤ unitRoundoffAt fmt` and no underflow term, because a sum below the normal range is exact. |
+| `toReal_add_eq_mul_one_add`, `toReal_sub_eq_mul_one_add`, `abs_toReal_add_sub_le_unitRoundoffAt`, `abs_toReal_sub_sub_le_unitRoundoffAt` | For an IEEE descriptor, addition or subtraction with finite operands and result has relative error at most `unitRoundoffAt fmt`, including subnormal operands and results. |
+| `unitRoundoffAt_eq`, `underflowErrorAt_eq`, `two_mul_unitRoundoffAt`, `two_mul_underflowErrorAt` | The standard-model constants are the powers of two `2^(-precision)` and `2^(minSubnormalExponent - 1)`; doubling them gives the relative normal spacing and the subnormal spacing. |
+| `ulpAt_eq_of_abs_lt_minNormalAt`, `ulpAt_le_of_minNormalAt_le` | Below the normal range one ULP is the subnormal spacing; in the normal range it is at most `2^(1 - precision) * \|x\|`. |
 | `mulAccError_eq_site_residuals` | One mixed-precision multiply-accumulate error is exactly the sum of its two input-cast, product, accumulator-cast, and addition residuals. |
 | `mulAcc_abs_error_le_budget` | A finite mixed-precision multiply-accumulate is bounded by the corresponding five local half-ULP budgets. |
 | `sequentialAccumulator_error_eq_sum` | Sequential accumulation error telescopes exactly into the errors committed at its executed prefix states. |
@@ -239,8 +282,10 @@ characterized by theorems in `Status.Proof`.
 ### Configured explicit rounding and status
 
 Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof`. The value-only configured
-operations are `ExecFloat.Binary.add`, `sub`, `mul`, `div`, `fma`, and `sqrt`. Operands come first,
-followed by a required named argument such as `(rounding := .towardPositiveInfinity)`. Their
+operations are `ExecFloat.Binary.addWithRounding`, `subWithRounding`, `mulWithRounding`,
+`divWithRounding`, `fmaWithRounding`, and `sqrtWithRounding`. Operands come first,
+followed by a required rounding argument, supplied positionally or by name as
+`(rounding := .towardPositiveInfinity)`. Their
 `*WithStatus` counterparts
 return the configured value and `Model.IEEEStatus` as a pair, so no stored word appears in
 application code.
@@ -252,7 +297,7 @@ extended-real infinity notation in importing files.
 | Theorem | Informal statement |
 | --- | --- |
 | `ExecFloat.Binary.IEEEOutcome.toModel_ofModel` | Repacking and decoding a model outcome preserves both its delivered value and all five status flags. |
-| `ExecFloat.Binary.toModel_add`, `toModel_sub`, `toModel_mul`, `toModel_div`, `toModel_fma`, `toModel_sqrt` | Decoding a configured directed operation gives the descriptor-model operation `Model.addWithRounding rounding` (and its five siblings) on the decoded operands. |
+| `ExecFloat.Binary.toModel_addWithRounding`, `toModel_subWithRounding`, `toModel_mulWithRounding`, `toModel_divWithRounding`, `toModel_fmaWithRounding`, `toModel_sqrtWithRounding` | Decoding a configured directed operation gives the descriptor-model operation `Model.addWithRounding rounding` (and its five siblings) on the decoded operands. |
 | `ExecFloat.Binary.IEEEOutcome.toModel_addWithStatus`, `toModel_subWithStatus`, `toModel_mulWithStatus`, `toModel_divWithStatus`, `toModel_fmaWithStatus`, `toModel_sqrtWithStatus` | Decoding a configured status-bearing operation gives the descriptor-model outcome, value and all five flags. |
 
 The configured functions are direct repackings of the existing descriptor-model operations, and
@@ -339,7 +384,7 @@ format the kernel is eligible for.
 | --- | --- |
 | `Model.NativePair.addFinite_eq`, `subFinite_eq`, `fmaFinite_eq` | On two 64-bit words, for every IEEE layout of at most 128 bits whose fraction is wider than one word (`NativePair.Eligible`), the fast finite addition, subtraction, and fused multiply-add agree with the exact finite kernel whenever they accept. |
 | `Model.NativePair.mulNormalLimb_refines`, `divNormal_refines`, `sqrtNormal_refines` | The two-word normal multiplication, division (Algorithm D candidate, independent certificate, proved restoring repair), and square root refine the reference specification under the same eligibility. |
-| `Model.WideLimb.toModel_add`, `toModel_sub`, `toModel_mul`, `toModel_fma` | On the 32-bit limb carrier of `ExecFloat.BinaryLimbs`, for every IEEE layout wider than 128 bits with an exponent field of at most 32 bits, the limb-array operation decodes to `Model.Spec.add`, `sub`, `mul`, and `fma`; division and square root use the exact baseline. |
+| `Model.WideLimb.toModel_add`, `toModel_sub`, `toModel_mul`, `toModel_div`, `toModel_sqrt`, `toModel_fma` | On the 32-bit limb carrier of `ExecFloat.BinaryLimbs`, for every IEEE layout wider than 128 bits with an exponent field of at most 32 bits, all six operations decode to their complete `Model.Spec` results. Division uses a direct integer quotient for finite inputs; square root uses an integer root for positive normal inputs, with exact fallbacks elsewhere. |
 | `Model.NativeSmallWordAdd.addFinite_refines` | The all-`UInt64` addition and subtraction kernel for IEEE layouts within one machine word refines the exact finite kernel whenever it accepts. |
 
 ## Lean's native float model
@@ -383,11 +428,30 @@ can use `Model.pow` / `x ^ y` on a binary model. The same import installs `MathF
 | `ExecFloat.Binary.toModel_sinh`, `toModel_cosh`, `toModel_tanh` | Configured hyperbolic calls preserve the corresponding model result. |
 
 These theorems connect configured calls to their model results. General real-error bounds and
-correct-rounding proofs for these kernels remain open, and the calls return no IEEE status flags. The contract
-types `Model.Transcendentals.Contract.ApproximationCertificate` and
-`CorrectlyRoundedCertificate` state those stronger obligations without asserting that an
-implementation has discharged them. The optional Arb adapter supplies externally trusted real
-enclosures and explicit rounding modes.
+correct-rounding proofs for these value-only kernels remain open, and the calls return no IEEE
+status flags. The optional Arb adapter supplies externally trusted real enclosures and explicit
+rounding modes.
+
+`Model.Power.toReal_pow_of_eq_intCast` covers a separate case: for an IEEE descriptor, a finite
+nonzero base, and a finite floating exponent whose real value is an integer, every finite
+`Model.pow` result is one nearest-even rounding of the exact integer power.
+
+For IEEE binary formats, `ExecFloat.Binary.Certified.exp`, `log`, `expMinus1`, and `logPlus1`
+refine proved rational enclosures until both endpoints round to the same finite encoding.
+The stable variants perform the subtraction or addition of one exactly before rounding.
+They return `some result` on success and `none` for rejected inputs or exhausted refinement.
+The theorems below are partial correctness: they describe every `some` result, but no theorem
+says which inputs succeed. The only proved success is the signed-zero passthrough
+`Model.Transcendentals.Certified.expMinus1_of_isZero` and `logPlus1_of_isZero`. The focused
+`Configured.Transcendentals.Certified` import exposes this API without installing the approximation
+functions. Its options control the starting degree and number of direct enclosure attempts.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `ExecFloat.Binary.Certified.toModel_exp`, `ExecFloat.Binary.Certified.toModel_log` | Decoding preserves the certified model kernel's optional result. |
+| `ExecFloat.Binary.Certified.isFinite_of_exp_eq_some`, `ExecFloat.Binary.Certified.isFinite_of_log_eq_some` | Every accepted result is finite. |
+| `ExecFloat.Binary.Certified.toReal_of_exp_eq_some`, `ExecFloat.Binary.Certified.toReal_of_log_eq_some` | An accepted result equals nearest-even real rounding of the exact exponential or logarithm. |
+| `ExecFloat.Binary.Certified.toReal_of_expMinus1_eq_some`, `ExecFloat.Binary.Certified.toReal_of_logPlus1_eq_some` | An accepted result is one nearest-even rounding of `Real.exp x - 1` or `Real.log (1 + x)`, without first rounding the exponential or the sum. |
 
 `ExactExpression` and `roundOnceWith` round once when the expression is exact in their chosen
 domain. A rational domain cannot represent `log`, `sin`, or `tanh` in general, so composing the
@@ -409,6 +473,9 @@ operand pairs. These modules are independent of any format or tensor library.
 | `Numerics.ReductionTree.abs_eval_sub_exact_le_geometric` | Under local relative bounds, leaf count and absolute-input scale give a schedule-independent geometric enclosure. |
 | `Model.ReductionTree.abs_toReal_eval_sub_sum_le` | Every finite IEEE reduction tree has a sum-of-half-ULPs bound, including subnormal intermediate results. |
 | `Model.ReductionTree.abs_toReal_eval_sub_eval_le` | Two finite schedules over the same input occurrences differ by at most their combined budgets. |
+| `Model.ReductionTree.allNodes_abs_toReal_add_sub_le` | Every finite addition in an IEEE tree meets the local relative premise with `u = unitRoundoffAt fmt` and no absolute allowance. |
+| `Model.ReductionTree.abs_toReal_eval_sub_sum_le_mixedBudget` | Every finite IEEE reduction tree satisfies the mixed-budget bound with `u = unitRoundoffAt fmt` and zero absolute allowance, including subnormal intermediate results. |
+| `Model.ReductionTree.abs_toReal_eval_sub_sum_le_geometric` | Every finite IEEE reduction tree with `n` additions has error at most `((1 + u)^n - 1) * Σ\|xᵢ\|`, with no normal-range hypothesis. |
 
 The model results live in `BinaryInterchange.Reduction.Tree`. They require finite leaves and
 finite intermediate additions. They do not identify arbitrary native CPU or GPU reductions
@@ -498,9 +565,9 @@ restoration, and their laws use that shared namespace.
 | `Arithmetic.nextUp_quantum_minimal`, `Arithmetic.nextDown_quantum_minimal` | Finite nonzero neighbors use the finest representable quantum. |
 | `Arithmetic.remainder_value`, `Arithmetic.remainder_error_le_half_divisor` | The exact nearest-even remainder is representable and has magnitude at most half the divisor. |
 | `Arithmetic.remainder_even_at_midpoint` | A remainder at half the divisor uses an even integer quotient. |
-| `Arithmetic.scaleB_exact_value`, `Arithmetic.scaleB_inexact_iff` | Scaling preserves representable exact values and reports numerical rounding precisely. |
-| `Arithmetic.scaleB_quantum_closest_of_representable` | Exact scaling chooses the cohort quantum closest to the shifted input quantum. |
-| `Arithmetic.logB_bounds`, `Arithmetic.logB_eq_of_equal_magnitude` | The finite exponent query bounds the input by consecutive powers of ten and is unchanged by cohort or sign. |
+| `Arithmetic.scale_exact_value`, `Arithmetic.scale_inexact_iff` | Scaling preserves representable exact values and reports numerical rounding precisely. |
+| `Arithmetic.scale_quantum_closest_of_representable` | Exact scaling chooses the cohort quantum closest to the shifted input quantum. |
+| `Arithmetic.decimalExponent_bounds`, `Arithmetic.decimalExponent_eq_of_equal_magnitude` | The finite exponent query bounds the input by consecutive powers of ten and is unchanged by cohort or sign. |
 | `Formatting.parse_formatExact`, `Formatting.parseWord_formatWord_exact` | Exact text preserves complete datums and canonical BID/DPD words. |
 | `Formatting.significantDecimal_error_le_half`, `Formatting.significantDecimal_nearestEven_midpoint` | Requested-precision output satisfies the nearest error bound and resolves even ties. |
 | `Formatting.parse_format_significant_value` | Output with at least the source precision round-trips numerically under any output/input rounding-mode pair. |
@@ -514,6 +581,30 @@ These guarantees cover the six core operations, their preferred-cohort rules, qu
 integral rounding, comparisons, classification, neighbors, remainder, exponent operations,
 text conversion, and explicit exception state.
 Import `FloatLib.Floats.Formats.DecimalInterchange` for the complete public decimal API.
+
+The algebraic operations add exact integer powers, reciprocal square root, hypotenuse, and
+integer roots. Import `FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Proof`; each
+operation accepts all five rounding modes and works with custom decimal layouts.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Arithmetic.square_valid`, `powInt_valid`, `rsqrt_valid`, `hypot_valid`, `rootN_valid` | The delivered datum is valid for the destination format. |
+| `Arithmetic.square_error_le_half`, `powInt_error_le_half`, `rsqrt_error_le_half`, `hypot_error_le_half`, `rootN_error_le_half` | A finite nearest-rounded result is within half the selected decimal grid step of the exact real expression, under its domain hypotheses. |
+| `Arithmetic.rootN_error_lt_one` | For a finite nonzero input and a nonzero degree in the real domain, every rounding mode has error strictly less than one selected grid step when no overflow occurs. |
+| `Arithmetic.rootN_towardNegative_le`, `le_rootN_towardPositive` | Directed roots lie on their requested side of the exact root when no overflow occurs. |
+| `Arithmetic.rootN_inexact_iff`, `rootN_underflow_iff` | Root status records numerical inexactness and tininess before rounding. |
+| `Arithmetic.integerRoot_pow_natAbs` | The real root specification satisfies its defining power equation, using the reciprocal operand for a negative degree. |
+
+The optional import
+`FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof` supplies stable
+`expMinus1` and `logPlus1` and their correctness theorems. In its `Transcendentals.Certified`
+namespace, `toReal_of_expMinus1_eq_some` and `toReal_of_logPlus1_eq_some` identify a successful
+result with nearest-even rounding of `Real.exp x - 1` and `Real.log (1 + x)`. The returned datum
+is valid and finite; valid signed zeros keep their quantum. An inconclusive enclosure or an
+invalid domain returns `none`. This is partial correctness: no theorem says which inputs
+succeed, except that a valid signed zero passes through (`expMinus1_of_isZero`,
+`logPlus1_of_isZero`).
+
 Conversions reuse exact source decoding and one destination projection:
 
 | Theorem | Informal statement |
@@ -673,7 +764,21 @@ containment; unavailable enclosures, exceptional inputs, and zero-crossing divis
 `none`. Concrete binary, decimal, and posit adapters use exact rational scalar arithmetic.
 `Interval.ContainsReal` interprets those rational endpoints in the reals; the
 `containsReal_add?`, `containsReal_sub?`, `containsReal_mul?`, and `containsReal_div?` theorems
-cover arbitrary real members, not only rational inputs.
+cover arbitrary real members, not only rational inputs. `contains_fma?` proves the
+ordered-field multiply-add enclosure; `containsReal_fma?` gives its real interpretation,
+with outward rounding applied only after the product and addend are combined.
+
+`Numerics.Interval.Expr` composes arithmetic, natural powers, and elementary functions.
+Its `containsReal_eval?` theorem proves real containment for any backend satisfying
+`Numerics.Interval.Backend.Sound`. The `rational_sound`, `binaryGrid_sound`, and
+`ofRounding_sound` theorems establish this contract for exact rational endpoints,
+integer binary-grid endpoints, and custom outward rounders, respectively.
+`Expr.check_sound` proves inequalities over a rational box, including adaptive subdivision;
+the `interval` tactic uses it to produce kernel-checked proofs from local real bounds.
+The elementary containment theorems include `containsReal_tanBounds?`,
+`containsReal_asinBounds?`, `containsReal_acosBounds?`, `containsReal_sinhBounds`,
+`containsReal_coshBounds`, and `containsReal_tanhBounds`. Inverse sine and cosine check
+the `[-1, 1]` domain; tangent checks that its cosine enclosure excludes zero.
 
 Configured binary endpoints are available through
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval`. The

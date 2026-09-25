@@ -115,7 +115,8 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
           saturated := true
           mappedSpecial := true }
 
-/-- Explicitly handle a source exceptional observation. -/
+/-- Explicitly handle a source exceptional observation. A signaling NaN source also raises
+`invalid`, as it does for a binary destination. -/
 @[inline] def quantizeExceptional (context : Context) (exceptional : ExceptionalValue) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
@@ -123,7 +124,8 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
   | .reject =>
       .failure (.exceptional .source exceptional)
   | .toNaR =>
-      .success (ExecFloat.Posit.nar) { mappedSpecial := true }
+      .success (ExecFloat.Posit.nar)
+        { mappedSpecial := true, invalid := exceptional.isSignalingNaN }
 
 /-- Reference conversion for every exact-rational observation. -/
 @[inline] def run (context : Context) :

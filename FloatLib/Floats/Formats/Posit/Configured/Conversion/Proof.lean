@@ -156,11 +156,13 @@ theorem spec_iff_eq_run (context : Context) (input : NumericalValue Rat)
       .success ExecFloat.Posit.nar { mappedSpecial := true } :=
   rfl
 
-/-- Default conversion maps exceptional observations to `NaR`, including IEEE NaNs and posit `NaR`. -/
+/-- Default conversion maps exceptional observations to `NaR`, including IEEE NaNs and posit `NaR`.
+A signaling NaN source also raises invalid, as IEEE 754-2019 §7.2 requires. -/
 @[grind =] theorem run_default_exceptional (exceptional : ExceptionalValue) :
     run (format := format) (plan := plan) (code := code)
         Context.default (.exceptional exceptional) =
-      .success ExecFloat.Posit.nar { mappedSpecial := true } :=
+      .success ExecFloat.Posit.nar
+        { mappedSpecial := true, invalid := exceptional.isSignalingNaN } :=
   rfl
 
 /-- Quantizing a decoded finite source into a wider codec appends exactly the additional zero bits.

@@ -60,7 +60,7 @@ declared exponent bias and exceptional-value policy directly.
             Int.ofNat fmt.fracWidth }
 
 /-- Exact rational value of a finite executable float; returns `none` for NaN or infinity. -/
-def toRat? {fmt : FloatFormat} (x : Model fmt) : Option Rat :=
+@[inline] def toRat? {fmt : FloatFormat} (x : Model fmt) : Option Rat :=
   (toDyadic? x).map Numerics.Dyadic.toRat
 
 /--

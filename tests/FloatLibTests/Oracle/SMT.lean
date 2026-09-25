@@ -147,32 +147,32 @@ private def chooseTernary {Value : Type}
 private def binary16Ops : ArithmeticOps Binary16 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary16)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.add
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.sub
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mul
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.div
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrt
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fma
+  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
+  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
+  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
+  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
+  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
+  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
 
 private def binary32Ops : ArithmeticOps Binary32 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary32)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.add
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.sub
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mul
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.div
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrt
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fma
+  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
+  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
+  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
+  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
+  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
+  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
 
 private def binary64Ops : ArithmeticOps Binary64 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary64)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.add
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.sub
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mul
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.div
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrt
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fma
+  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
+  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
+  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
+  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
+  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
+  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
 
 private def ArithmeticOps.evaluate {Value : Type} (operations : ArithmeticOps Value)
     (operation : Operation) (rounding : Model.IEEERoundingMode)

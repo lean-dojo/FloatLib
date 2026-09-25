@@ -63,6 +63,11 @@ namespace ConversionStatus
       (first.mappedSpecial || second.mappedSpecial) :=
   rfl
 
+/-- The merged invalid flag is raised exactly when either input raised it. -/
+@[simp, grind =] theorem merge_invalid (first second : ConversionStatus) :
+    (first.merge second).invalid = (first.invalid || second.invalid) :=
+  rfl
+
 /-- An empty first status contributes no flags. -/
 @[simp, grind =] theorem empty_merge (status : ConversionStatus) :
     ({} : ConversionStatus).merge status = status := by

@@ -10,29 +10,35 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Interval
 public import FloatLib.Floats.Interval.Quantized
 public import FloatLib.Floats.Interval.RealBounds
 public import FloatLib.Floats.Interval.Rounders
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
-# `FloatLib.Floats.Interval`
+# Interval arithmetic
 
-This namespace collects interval and enclosure utilities used across FloatLib:
+FloatLib's executable interval interfaces share outward rounding and real containment proofs:
 
-- proof-friendly interval enclosures for rounding-on-`ℝ` formats,
-- quantized intervals (endpoints snapped to a chosen Flocq-style rounded-real grid),
-- format-generic executable endpoint intervals (`BinaryInterchange.Model.Interval fmt`).
+- `Numerics.Interval α` pairs endpoints in any representation. Its operations use a supplied
+  `Numerics.OutwardRounding`; binary, decimal, and posit adapters provide rational decoders and
+  checked endpoint rounding. Successful results enclose arbitrary real values between the inputs,
+  through the theorems in `Numerics.Enclosure.Interval.Real`.
+- `BinaryInterchange.Model.Interval fmt` and `ExecFloat.Binary.Interval` provide directed binary
+  arithmetic. Their IEEE arithmetic theorems accept finite input bounds and permit infinite output
+  bounds after overflow. Finite-only formats have explicit range premises.
+- `Numerics.RationalInterval` supports the exact rational bounds used by the elementary
+  function kernels.
 
-The optional Arb-backed transcendental enclosure adapter is an explicit import:
+For proofs directly over `ℝ`, `Floats.Interval.Quantized` supplies noncomputable intervals whose
+endpoints lie on a Flocq-style rounding grid. Concrete endpoint adapters are in each format's
+`Interval` module; the optional Arb comparison adapter is in
 `FloatLibTests.Arb.ModelTranscendentals`.
 
-The interval API belongs under `FloatLib.Floats` because format semantics and executable numerical
-code both depend on it. External validators remain under `FloatLibTests`, keeping their
-additional trust assumptions out of the public numerical core.
-
 ## References
-- IEEE 1788-2015 (interval arithmetic standard).
-- Moore, Kearfott, Cloud, *Introduction to Interval Analysis* (2009).
-- Rump, "INTLAB, INTerval LABoratory" (1999).
-- Boldo & Melquiond, “Flocq” (ARITH 2011) for rounded-arithmetic-on-`ℝ` modeling.
+
+- S. M. Rump, [Verification methods: Rigorous results using floating-point
+  arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §§5.1–5.5:
+  endpoint arithmetic, outward rounding, and containment under composition.
+- S. Boldo and G. Melquiond, [Flocq: A Unified Library for Proving Floating-Point Algorithms
+  in Coq](https://doi.org/10.1109/ARITH.2011.40), ARITH 2011: the rounded-real grids used by the
+  proof-side interval interface.
 -/
 
 @[expose] public section

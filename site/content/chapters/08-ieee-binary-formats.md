@@ -1,8 +1,8 @@
 ---
 number: "08"
 slug: ieee-binary-formats
-title: "IEEE binary and decimal formats"
-summary: "Binary formats share one arithmetic model, while decimal formats preserve a quantum that distinguishes representations of equal values."
+title: "IEEE binary formats"
+summary: "Standard and custom binary layouts share arithmetic kernels and proofs; their descriptors and finite-value hypotheses determine how those proofs apply."
 phases: [ieee-formats, binary-format, binary-arithmetic, status-and-directed]
 ---
 
@@ -12,7 +12,7 @@ FloatLib expresses that common structure with one descriptor, [[FloatLib.Floats.
 
 ## One descriptor, many widths
 
-A `FloatFormat` has four data fields: `expWidth`, `fracWidth`, `exponentBias`, and `encoding`. The encoding is a value of [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]] and says what the reserved bit patterns mean; everything in this chapter uses `.ieee`, and the three other encodings (finite-max-NaN, finite-unsigned-zero, and fully finite) are the subject of [chapter 09](#/chapter/low-precision-formats-for-machine-learning). The structure also carries four [proof fields](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Format/Definition.lean): at least two exponent bits, at least one fraction bit, a positive bias, and a bias no larger than the largest finite exponent code. They are propositions, so they cost nothing at run time. The two width conditions default to `by decide` in the structure, and `FloatFormat.custom` defaults all four for literal arguments.
+A `FloatFormat` has four data fields: `expWidth`, `fracWidth`, `exponentBias`, and `encoding`. The encoding is a value of [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]] and says what the reserved bit patterns mean; the binary examples in this chapter use `.ieee`, and the three other encodings (finite-max-NaN, finite-unsigned-zero, and fully finite) are the subject of [chapter 11](#/chapter/low-precision-formats-for-machine-learning). The structure also carries four [proof fields](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Format/Definition.lean): at least two exponent bits, at least one fraction bit, a positive bias, and a bias no larger than the largest finite exponent code. They are propositions, so they cost nothing at run time. The two width conditions default to `by decide` in the structure, and `FloatFormat.custom` defaults all four for literal arguments.
 
 These minimums leave room for zeros, subnormals, normal numbers, infinities, and quiet NaNs. With one exponent bit the field has only two values, one reserved for zeros and subnormals and one for infinity and NaN, leaving no normal numbers. With two bits the codes 00, 01, 10, 11 become subnormals, two normal binades, and the infinity-NaN class. One fraction bit is enough to tell a quiet NaN from an infinity; signaling NaNs need at least two fraction bits. The two bias conditions put the exponent code used to encode $1$ inside the finite range.
 
@@ -39,7 +39,7 @@ The [named layouts](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Flo
 
 With every bit drawn at the same width in [Figure 8.1](#/chapter/ieee-binary-formats/figure-ch12-bit-layouts), we can compare how much storage each field takes. The exponent field ranges from five bits to fifteen, the fraction from seven to one hundred and twelve, and the sign bit stays one.
 
-![The five layouts of the table drawn to one scale, sign bit, exponent field, and fraction field from left to right, with the width of each field in bits](assets/ch12-bit-layouts.png "Five binary layouts on the same bit scale. Wider formats devote additional bits to both exponent range and precision.")
+![The five layouts of the table drawn to one scale, sign bit, exponent field, and fraction field from left to right, with the width of each field in bits](assets/ch12-bit-layouts.png "Five binary layouts on the same bit scale.")
 
 The same file defines the wider `binary256` layout with 19 exponent and 236 fraction bits. We can read the constants in the table straight from the descriptors:
 
@@ -63,9 +63,9 @@ open FloatLib.Floats.Formats.BinaryInterchange
 -- (16383, -16494)
 ```
 
-The last pair is $e_{\max}$ and the exponent of the least subnormal, $e_{\min} - w_f = -16382 - 112 = -16494$, for binary128. In [Figure 8.2](#/chapter/ieee-binary-formats/figure-ch12-range-precision), the three boundaries of each format, the least subnormal, the least normal, and the largest finite value, share one logarithmic axis. Beside them is the number of decimal digits the precision $p$ amounts to, $p \log_{10} 2$. Look especially at the two sixteen-bit formats: bfloat16 reaches binary32's range with fewer digits than binary16.
+The last pair is $e_{\max}$ and the exponent of the least subnormal, $e_{\min} - w_f = -16382 - 112 = -16494$, for binary128. The table in [Figure 8.2](#/chapter/ieee-binary-formats/figure-ch12-range-precision) gives each format's normal exponent interval and its least subnormal as a power of two. The *Significand precision* panel gives $p$ in bits, including the leading bit, corresponding to $p \log_{10} 2$ decimal digits. Look especially at the two sixteen-bit formats: bfloat16 shares binary32's normal exponent range, with fewer digits of precision than binary16.
 
-![The least subnormal, least normal, and largest finite value of the five formats on one logarithmic axis, with the decimal digits of precision each carries](assets/ch12-range-precision.png "Finite range and precision of five binary formats. The range axis distinguishes the least subnormal from the least normal value; its extreme ends use a compressed scale.")
+![Table of normal exponent intervals and least subnormal values for binary16, bfloat16, binary32, binary64, and binary128, with a separate bar chart of significand precision in bits including the leading bit](assets/ch12-range-precision.png "Exact exponent limits and significand precision for five binary formats.")
 
 The predicate [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.isIEEE]] holds when a descriptor has the `.ieee` encoding and the conventional bias $2^{w_e-1}-1$. It appears in nearly every theorem below as the hypothesis `hfmt : fmt.isIEEE = true`, and the catalog provides `simp` lemmas such as `isIEEE_binary32` so that `by simp` discharges it for the named formats. The condition is a hypothesis rather than a type index: the executable operations are meaningful for every encoding, while the real-number theorems use the IEEE reading of the reserved patterns.
 
@@ -107,7 +107,7 @@ When $1 \le E \le 2^{w_e} - 2$ the word is normal and denotes $(-1)^s (1 + F/2^{
 
 [[FloatLib.Floats.Formats.BinaryInterchange.Model.toDyadic?]] decodes a finite word to an exact dyadic rational without normalizing it. A normal word decodes to significand $2^{w_f} + F$ and exponent $E - b - w_f$, a subnormal word to significand $F$ and exponent $e_{\min} - w_f$. Keeping that form makes the fields visible in the decoded value: the fraction supplies the low significand bits, and the exponent accounts for their scale. The [IEEE decoding rule](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Dyadic/Core.lean) is `ieeeToDyadic?`; the [general decoder](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Dyadic/Decode.lean) `toDyadic?` dispatches to it for IEEE descriptors and reads the declared bias for the other encodings.
 
-Application code normally uses `ExecFloat.Binary`. Given the two widths, it builds a descriptor with the `.ieee` encoding and conventional bias as defaults, then selects its storage and kernels statically ([chapter 14](#/chapter/backends-and-the-planner)). Its `toModel` conversion lets us apply the model theorems to these executable values. We abbreviate the three configured types used here, then read the nearest binary32 value to $\pi$:
+Application code normally uses `ExecFloat.Binary`. Given the two widths, it builds a descriptor with the `.ieee` encoding and conventional bias as defaults, then selects its storage and kernels statically ([chapter 16](#/chapter/backends-and-the-planner)). Its `toModel` conversion lets us apply the model theorems to these executable values. We abbreviate the three configured types used here, then read the nearest binary32 value to $\pi$:
 
 ```lean
 abbrev Binary16 := ExecFloat.Binary (exponentBits := 5) (fractionBits := 10)
@@ -127,7 +127,7 @@ def leastSubnormal : Binary32 := ExecFloat.Binary.ofBits32 0x00000001
 -- (true, 1 * 2^-149)
 ```
 
-The word `0x40490fdb` has $s = 0$, $E = 128$, and $F = 4788187$, so the significand is $2^{23} + 4788187 = 13176795$ and the exponent is $128 - 127 - 23 = -22$. The value $13176795 \cdot 2^{-22} = 3.14159274\ldots$ differs from $\pi$ by less than half of the spacing $2^{-22}$ in that binade, as correct rounding demands. The word `0x00000001` is the least positive subnormal, $2^{-149} = 2^{e_{\min} - w_f}$ for binary32. [[FloatLib.Floats.ExecFloat.Binary.ofBits32]] and [[FloatLib.Floats.ExecFloat.Binary.toBits32]] transport the 32-bit word exactly in both directions, NaN payload included; the conversions to Lean's native `Float32` in the same file canonicalize NaNs, which is why we keep the two boundaries separate ([chapter 15](#/chapter/performance/comparing-with-leans-native-floats)).
+The word `0x40490fdb` has $s = 0$, $E = 128$, and $F = 4788187$, so the significand is $2^{23} + 4788187 = 13176795$ and the exponent is $128 - 127 - 23 = -22$. The value $13176795 \cdot 2^{-22} = 3.14159274\ldots$ differs from $\pi$ by less than half of the spacing $2^{-22}$ in that binade, as correct rounding demands. The word `0x00000001` is the least positive subnormal, $2^{-149} = 2^{e_{\min} - w_f}$ for binary32. [[FloatLib.Floats.ExecFloat.Binary.ofBits32]] and [[FloatLib.Floats.ExecFloat.Binary.toBits32]] transport the 32-bit word exactly in both directions, NaN payload included; the conversions to Lean's native `Float32` in the same file canonicalize NaNs, which is why we keep the two boundaries separate ([chapter 17](#/chapter/performance/host-arithmetic-as-a-reference)).
 
 At the boundary between subnormal and normal, the two decoding formulas meet without a gap. We can see it by incrementing the largest positive subnormal word twice:
 
@@ -143,6 +143,42 @@ As subnormal values get smaller, the absolute step stays the same and fewer sign
 
 We can inspect this value through the three readings from [chapter 06](#/chapter/the-numerical-models). For exact rational arithmetic, `toRat?` gives the stored rational and returns `none` for infinities and NaNs. When the exceptional details matter, [[FloatLib.Floats.Formats.BinaryInterchange.Model.exactValue]] returns an [[FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue]] that keeps the sign of zero, the sign of an infinity, and the sign, signaling class, and payload of a NaN. For real-number proofs, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal]] is total and sends NaNs and infinities to $0$. A map into $\mathbb{R}$ also necessarily sends both zeros to $0$, so signed-zero facts are stated on the bits instead.
 
+## Custom widths
+
+The IEEE theorems apply to an arbitrary descriptor with `isIEEE`, so a custom format needs no new arithmetic proofs. Consider a 24-bit layout with seven exponent bits and sixteen fraction bits, and a 71-bit layout with eleven exponent bits and fifty-nine fraction bits.
+
+```lean
+abbrev binary24 : FloatFormat := FloatFormat.ieee 7 16
+abbrev Binary24 := ExecFloat.Binary (exponentBits := 7) (fractionBits := 16)
+
+def one24 : Binary24 := 1
+
+#eval one24 + one24
+-- 2
+#eval (binary24.bitWidth, binary24.exponentBias,
+       binary24.minNormalExponent, binary24.maxNormalExponent)
+-- (24, 63, -62, 63)
+
+example (x y : Model binary24)
+    (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
+    (hout : Model.isFinite (Model.add x y) = true) :
+    Model.toReal (Model.add x y) =
+      Model.roundAt binary24 (Model.toReal x + Model.toReal y) :=
+  Model.toReal_add_eq_roundAt x y (by simp) hx hy hout
+
+abbrev binary71 : FloatFormat := FloatFormat.ieee 11 59
+abbrev Binary71 := ExecFloat.Binary (exponentBits := 11) (fractionBits := 59)
+
+example : binary71.bitWidth = 71 := by decide
+
+#eval ((1 : Binary71) / 3)
+-- 768614336404564651 * 2^-61
+```
+
+The 24-bit format has bias 63, normal exponents from $-62$ to $63$, and $p = 17$ significant bits; an eight-exponent-bit, fifteen-fraction-bit layout would occupy the same 24 bits with more range and one bit less precision, which is why "a 24-bit float" is not a specification until the split is given. The addition theorem applies with `by simp` discharging `binary24.isIEEE = true` through the lemma `isIEEE_ieee`, and nothing else in the proof mentions the width. The 71-bit format has 60 significant bits, and its quotient $1/3$ shows them: the significand $768614336404564651$ lies between $2^{59}$ and $2^{60}$. A format with 71 significant bits would instead take `fracWidth := 70` and occupy 82 stored bits with the same exponent field. [Chapter 11](#/chapter/low-precision-formats-for-machine-learning) goes the other way, down to eight and four bits, and changes what the reserved patterns mean.
+
+Programs normally use [[FloatLib.Floats.ExecFloat.Binary]] or [[FloatLib.Floats.ExecFloat.BinaryLimbs]], whose [[FloatLib.Floats.Formats.BinaryInterchange.Configured.StoragePlan]] chooses a carrier. Above 64 bits, `Binary` stores `Model format` directly; above 128 bits, `BinaryLimbs` uses an array of 32-bit limbs. Both have the same descriptor and reference semantics.
+
 <a id="exceptional-classes-and-how-nans-travel"></a>
 
 ## NaN propagation and signed zero
@@ -151,7 +187,7 @@ The [classifiers](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Float
 
 `classify` gathers these answers into the ten IEEE classes. Its semantic theorem reads the complete exact value: a finite nonzero magnitude below $2^{e_{\min}}$ is subnormal, and one at or above that threshold is normal. The sign distinguishes the two versions of each finite class and of infinity; NaNs are quiet or signaling. The same proof applies to every binary descriptor using its declared bias and encoding policy, and the configured API inherits it through its codec.
 
-The standard leaves NaN selection to the implementation. FloatLib uses two deterministic rules. When an operation is invalid and no operand is a NaN, `invalidResult` returns the format's `canonicalNaN`: positive sign, all-ones exponent, and only the quiet bit set. When at least one operand is a NaN, `chooseNaN2` prefers a signaling operand over a quiet one and otherwise the left operand over the right. It then sets the quiet bit and preserves the remaining payload. Selection therefore retains the signaling operand's payload when one is present; otherwise operand order resolves the choice without comparing payloads. The Arm architecture's default NaN propagation makes the same two choices.
+The standard leaves the choice among multiple input NaN payloads to the implementation [@ieee754_2019]. FloatLib uses two deterministic rules. When an operation is invalid and no operand is a NaN, `invalidResult` returns the format's `canonicalNaN`: positive sign, all-ones exponent, and only the quiet bit set. When at least one operand is a NaN, `chooseNaN2` prefers a signaling operand over a quiet one and otherwise the left operand over the right. It then sets the quiet bit and preserves the remaining payload. Selection therefore retains the signaling operand's payload when one is present; otherwise operand order resolves the choice without comparing payloads.
 
 The [independent comparisons](#/chapter/external-validation) check NaN class and signaling behaviour, but do not independently validate this choice of payload. At binary32, an invalid subtraction and an addition with a signaling NaN produce different payloads. The two zero encodings also remain distinguishable:
 
@@ -211,7 +247,7 @@ The flag theorems state the conditions for each exception: [[FloatLib.Floats.For
 
 ## Directed rounding
 
-The type [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] has the four IEEE attributes: `nearestEven`, `towardZero`, `towardPositiveInfinity`, and `towardNegativeInfinity`. Ordinary `+`, `-`, `*`, and `/` on a configured type round to nearest even, as the default arithmetic convention. The named operations [[FloatLib.Floats.ExecFloat.Binary.add]], `sub`, `mul`, [[FloatLib.Floats.ExecFloat.Binary.div]], `fma`, and `sqrt` take the direction as a required argument, and after `open scoped FloatLib.IEEERounding` the two infinite directions may be written `+∞` and `-∞`. The notation is scoped to keep it separate from the meaning of $\infty$ in a file about extended reals.
+The type [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] has the four IEEE attributes: `nearestEven`, `towardZero`, `towardPositiveInfinity`, and `towardNegativeInfinity`. Ordinary `+`, `-`, `*`, `/`, `x.sqrt`, and `x.fma y z` on a configured type round to nearest even. Their `*WithRounding` forms, including [[FloatLib.Floats.ExecFloat.Binary.addWithRounding]] and [[FloatLib.Floats.ExecFloat.Binary.divWithRounding]], require an explicit direction. After `open scoped FloatLib.IEEERounding`, the two infinite directions may be written `+∞` and `-∞`. The notation is scoped to keep it separate from the meaning of $\infty$ in a file about extended reals.
 
 One third is a useful value to try: it needs rounding, but we can still locate both neighbours exactly.
 
@@ -219,7 +255,7 @@ One third is a useful value to try: it needs rounding, but we can still locate b
 open scoped FloatLib.IEEERounding
 
 def third (rounding : Model.IEEERoundingMode) : Binary32 :=
-  ExecFloat.Binary.div 1 3 (rounding := rounding)
+  ExecFloat.Binary.divWithRounding 1 3 (rounding := rounding)
 
 #eval third .nearestEven
 -- 11184811 * 2^-25
@@ -230,13 +266,13 @@ def third (rounding : Model.IEEERoundingMode) : Binary32 :=
 #eval third -∞
 -- 5592405 * 2^-24
 
-#eval ExecFloat.Binary.add largest largest (rounding := .nearestEven)
+#eval ExecFloat.Binary.addWithRounding largest largest (rounding := .nearestEven)
 -- inf
-#eval ExecFloat.Binary.add largest largest (rounding := +∞)
+#eval ExecFloat.Binary.addWithRounding largest largest (rounding := +∞)
 -- inf
-#eval ExecFloat.Binary.add largest largest (rounding := .towardZero)
+#eval ExecFloat.Binary.addWithRounding largest largest (rounding := .towardZero)
 -- 16777215 * 2^104
-#eval ExecFloat.Binary.add largest largest (rounding := -∞)
+#eval ExecFloat.Binary.addWithRounding largest largest (rounding := -∞)
 -- 16777215 * 2^104
 
 example (x y : Model FloatFormat.binary32)
@@ -249,11 +285,11 @@ One third lies between the binary32 neighbours $5592405 \cdot 2^{-24}$ below and
 
 A useful variation is to make the numerator in `third` negative. Before rerunning the four evaluations, work out which rounding directions should agree.
 
-Directed operations are the basis of interval arithmetic, so their theorems are bounds rather than equations, stated in the extended reals through [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal]] for the reason [chapter 06](#/chapter/the-numerical-models) gives: [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_addDown_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_addUp]] say that `addDown`, addition toward $-\infty$, never exceeds the exact real sum and that `addUp`, addition toward $+\infty$, never falls below it, with the same shape for the [other directed operations](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/BinaryInterchange/DirectedSemantics): subtraction, multiplication, division, and square root.
+Directed operations are the basis of interval arithmetic, so their theorems are bounds rather than equations, stated in the extended reals through [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal]] for the reason [chapter 06](#/chapter/the-numerical-models) gives. For finite operands, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_addDown_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_addUp]] say that `addDown`, addition toward $-\infty$, never exceeds the exact real sum and that `addUp`, addition toward $+\infty$, never falls below it. The [other directed operations](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/BinaryInterchange/DirectedSemantics) have bounds of the same shape, with their finite-input and domain hypotheses: subtraction, multiplication, division, and square root.
 
 ## Casting between widths
 
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.cast]] is the descriptor-level operation: it converts a `Model src` into a `Model dst`. A finite source is decoded to its exact dyadic and packed into the destination with nearest-even rounding, which may overflow to a signed infinity or land in the subnormal range. An infinity becomes the same-sign infinity when the destination has one. A NaN cast to its own format is quieted with its payload kept, and a NaN cast to a different format becomes the destination's canonical NaN. We do not remap payloads across formats: the standard only recommends preserving a payload through a widen-and-narrow round trip (Section 6.2.3 of [@ieee754_2019]) and gives no rule for the bits themselves. We chose canonicalization so callers have one documented result when the source and destination payload widths differ.
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.cast]] is the descriptor-level operation: it converts a `Model src` into a `Model dst`. A finite source is decoded to its exact dyadic and packed into the destination with nearest-even rounding, which may overflow to a signed infinity or land in the subnormal range. An infinity becomes the same-sign infinity when the destination has one. A NaN cast to its own format is quieted with its payload kept. A NaN cast to a different IEEE format keeps its sign, becomes quiet, and keeps its payload when the payload fits in the destination's fraction without the quiet bit; a payload that does not fit becomes zero. Section 6.2.3 of [@ieee754_2019] asks for this propagation, and it makes a widen-and-narrow round trip return the original quiet NaN. Casting a signaling NaN raises invalid, as Section 7.2 requires.
 
 A finite value cast to its own format comes back unchanged. When the exponent width, bias, and encoding agree and only the fraction widens, `widenExact` copies the fields without decoding the value. For bfloat16 to binary32, both exponent fields have eight bits and bias 127, while the fraction grows from seven bits to twenty-three. Appending sixteen zero bits to the stored word puts its sign, exponent, and fraction in the right destination positions. For example, the bfloat16 word `0x3fc0`, representing $1.5$, becomes the binary32 word `0x3fc00000`.
 
@@ -270,9 +306,9 @@ example {src dst : FloatFormat} (x : Model src) (mode : Model.IEEERoundingMode)
   Model.castWithRounding_eq_widenExact_of_compatibleWidening x mode he hb hc hf hx
 ```
 
-The configured API spells a cast as `value.cast (target := …)` and returns a `ConversionOutcome`, a success carrying the value and conversion flags or an explicit failure. It does not call `Model.cast`. It goes through the general conversion pipeline shared with posits and P3109: the source is decoded to an exact rational, mapped into the destination's exact domain, and quantized once there. The [configured conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Conversion/Proof.lean) `ExecFloat.Binary.Conversion.run_default_finite` says that for a finite value this quantization is `Model.roundRat`, the same nearest-even rounding that `toReal_roundRatScaled_eq_roundAt` ties to `roundAt`, so on finite values the two paths agree.
+The configured API spells a cast as `value.cast (target := …)` and returns a `ConversionOutcome`, a success carrying the value and conversion flags or an explicit failure. It does not call `Model.cast`. It goes through the general conversion pipeline shared with posits and P3109: the source is decoded to an exact signed rational, preserving the sign of zero, mapped into the destination's exact domain, and quantized once there. The [configured conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Conversion/Proof.lean) `ExecFloat.Binary.Conversion.run_default_finite` says that for a finite value this quantization is `Model.roundRat`. For an IEEE destination and a finite result, `toReal_roundRatScaled_eq_roundAt` identifies its real value with `roundAt`.
 
-On NaNs they follow different policies: the pipeline delivers the destination's canonical NaN even at the same format and reports it in the `mappedSpecial` flag, while `Model.cast` keeps a same-format payload. The flags differ from `IEEEStatus` because the same pipeline reaches destinations that saturate or wrap. We'll use the configured path for the evaluations, then state the guarantees about `Model.cast` underneath.
+On NaNs they follow the same rule. The pipeline observes a NaN with its sign, signaling bit, and fraction field, and its default policy `propagateNaN` builds the destination NaN with `Model.propagatedNaN`, which is exactly what `Model.cast` does. A signaling source sets the `invalid` flag of the conversion status. The flags differ from `IEEEStatus` because the same pipeline reaches destinations that saturate or wrap. We'll use the configured path for the evaluations, then state the guarantees about `Model.cast` underneath.
 
 ```lean
 def halfUlp64 : Binary64 := ExecFloat.Binary.ofBits64 0x3ff0000010000000
@@ -294,7 +330,8 @@ def threeHalfUlp64 : Binary64 := ExecFloat.Binary.ofBits64 0x3ff0000030000000
 --     underflow := false,
 --     saturated := false,
 --     wrapped := false,
---     mappedSpecial := false }
+--     mappedSpecial := false,
+--     invalid := false }
 
 example (x : Model FloatFormat.binary32)
     (hx : Model.isFinite x = true)
@@ -380,13 +417,21 @@ The round-trip theorems recover every finite IEEE word, including the sign of ze
 
 For a shorter decimal or hexadecimal string, `formatWithStatus` accepts any positive significant-digit count and a rounding direction. Its exponent remains unbounded. The proofs establish the requested digit count, nearest-even midpoint selection, the half-grid error bound, and inexactness exactly when the printed value changes. The positional scanner, digit-grid selection, and rounding algorithms are shared with decimal interchange.
 
-## What is proved for each operation
+<a id="formats-encodings-and-their-meaning"></a>
 
-To reason about any of the six arithmetic operations, we first connect the kernel a program runs to the format's reference definition. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.sub_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.mul_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.div_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.sqrt_eq_spec]], and [[FloatLib.Floats.ExecFloat.Proof.fma_eq_spec]] give that equality, whichever fixed-word or limb kernel the planner selected. They hold for every `FloatFormat` with no IEEE hypothesis, because the reference definitions follow the descriptor's own exceptional-value policy. [Chapter 14](#/chapter/backends-and-the-planner) explains the proofs required of each kernel.
+## From executable arithmetic to real rounding
+
+To reason about any of the six arithmetic operations, we first connect the kernel a program runs to the format's reference definition. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.sub_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.mul_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.div_eq_spec]], [[FloatLib.Floats.ExecFloat.Proof.sqrt_eq_spec]], and [[FloatLib.Floats.ExecFloat.Proof.fma_eq_spec]] give that equality, whichever fixed-word or limb kernel the planner selected. They hold for every `FloatFormat` with no IEEE hypothesis, because the reference definitions follow the descriptor's own exceptional-value policy. [Chapter 16](#/chapter/backends-and-the-planner) explains the proofs required of each kernel.
+
+The configured interface exposes the same choices, including the `rounding` argument of [[FloatLib.Floats.ExecFloat.Binary.addWithRounding]] and casts through exact signed rationals. The [configured word kernels](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Core/Runtime.lean) adapt software arithmetic to the chosen format and carrier, with certificates such as [[FloatLib.Floats.Formats.BinaryInterchange.Configured.Backend.wordAdd_eq_spec]]. Calling the processor's floating-point instructions requires the explicit [unchecked native-FPU import](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean) discussed in [chapter 17](#/chapter/performance/host-arithmetic-as-a-reference); certified modules do not import it.
 
 We can then relate the reference definitions to real-number operations under `fmt.isIEEE = true`, as explained in [chapter 06](#/chapter/the-numerical-models). [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]] is Flocq-style nearest-even rounding onto the grid with precision $w_f + 1$ and gradual underflow at $e_{\min} - w_f$; the grid has no upper exponent bound, so the theorem must require a finite result to exclude overflow.
 
-With that, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_eq_roundAt]], and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]] each say: for finite operands whose executable result is finite, decoding the result gives the exact real operation rounded once. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]] adds the hypothesis that the divisor is not zero. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sqrt_eq_roundAt]] asks that the input be zero or have a clear sign bit, which admits both signed zeros, and needs no output-finiteness premise because [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_sqrt_of_isFinite]] proves that a square root cannot overflow. When evaluating the result first is inconvenient, the variants `isFinite_add_of_abs_add_le_posMaxFinite`, `isFinite_mul_of_abs_mul_le_posMaxFinite`, and `isFinite_div_of_abs_div_le_posMaxFinite` derive finiteness from a symbolic bound on the operands. The execution equation applies directly at binary32. The real-number examples below instantiate the rounding equations for multiplication at binary64 and fused multiply-add at binary128, and the square root finiteness lemma at binary32.
+For addition, subtraction, multiplication, and FMA, the rounding equations require finite operands and a finite executable result. Under those hypotheses, decoding gives the exact real operation rounded once. The theorem names follow the operations: [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_eq_roundAt]], and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]].
+
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]] also requires a nonzero divisor. For a finite square-root input, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sqrt_eq_roundAt]] instead asks that it be zero or have a clear sign bit, admitting both signed zeros. It needs no output-finiteness premise: [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_sqrt_of_isFinite]] proves that a square root cannot overflow.
+
+The examples expose these hypotheses at three widths. The first connects an ordinary binary32 call to its executable specification; the next two apply real rounding equations.
 
 ```lean
 example (a b : Binary32) : a + b = ExecFloat.Spec.add a b :=
@@ -412,7 +457,11 @@ example (x : Model FloatFormat.binary32)
   Model.isFinite_sqrt_of_isFinite x (by simp) hx (Or.inr hpos)
 ```
 
-Once we have a rounding equation, we can reuse the error bounds from the grid theory. [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]] bounds nearest-even rounding by half an ulp of the input, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] and its siblings transfer that bound to one finite operation. In the normal range, [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] gives the relative bound $u = 2^{-p}$. Sometimes the error is zero: [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz]] proves that two positive values within a factor of two subtract exactly, with the result's finiteness following from the hypotheses. [Chapter 07](#/chapter/the-mathematics-of-rounding) develops that theory.
+When evaluating a result first is inconvenient, `isFinite_add_of_abs_add_le_posMaxFinite`, `isFinite_mul_of_abs_mul_le_posMaxFinite`, and `isFinite_div_of_abs_div_le_posMaxFinite` derive its finiteness from symbolic bounds on the operands. These premises matter because `Model.toReal` assigns zero to a nonfinite word. [Chapter 01](#/chapter/using-the-library) works through the bridge from a configured value to `Model`.
+
+With a rounding equation established, we can apply the [general rounding theory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Flocq/Theory) developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] give the half-ulp bound; [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] gives $u = 2^{-p}$ in the normal range. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz]] gives exact subtraction for two positive finite values within a factor of two, with output finiteness following from those hypotheses.
+
+## Comparisons and neighbouring values
 
 Comparison is a separate operation with its own contract. [[FloatLib.Floats.Formats.BinaryInterchange.Model.compare]] returns `none` when either operand is a NaN and `some` ordering otherwise, so unordered is a value rather than a silently false answer. `compare_eq_some_lt_iff_toReal_lt_of_isFinite` and `compare_eq_some_eq_iff_toReal_eq_of_isFinite` identify the finite comparison with real order, `compare_eq_some_lt_iff_toEReal_lt` extends that to infinities, and `compare_zero_false_true` records that the two zeros compare equal. The finite comparison theorem applies at binary16; the binary32 evaluations show equal zeros and an unordered NaN.
 
@@ -428,202 +477,8 @@ example (x y : Model FloatFormat.binary16)
 -- none
 ```
 
-For minimum and maximum we implement the IEEE 754-2019 operations [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimum]] and `maximum`. They treat $-0$ as below $+0$ (`minimum_posZero_negZero_of_supportsSignedZero`) and agree with the real `min` on finite inputs (`toReal_minimum_eq_min_of_isFinite`). The 2019 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimumNumber]] and `maximumNumber` skip a NaN operand; the deprecated 2008 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minNum]] and `maxNum` differ from them on signaling NaNs. The standard's remaining scalar operations are implemented with their own status and finite-value theorems: `remainderWithStatus`, whose result `remainderWithStatus_exact` proves exactly representable, `roundToIntegral`, `scaleB`, `logB`, `nextUp`, and `nextDown`.
+For minimum and maximum we implement the IEEE 754-2019 operations [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimum]] and `maximum`. They treat $-0$ as below $+0$ (`minimum_posZero_negZero_of_supportsSignedZero`) and agree with the real `min` on finite inputs (`toReal_minimum_eq_min_of_isFinite`). The 2019 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimumNumber]] and `maximumNumber` skip a NaN operand; the deprecated 2008 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minNum]] and `maxNum` differ from them on signaling NaNs. Other scalar operations have their own status and finite-value theorems: `remainderWithStatus`, whose result `remainderWithStatus_exact` proves exactly representable, `roundToIntegral`, `scale`, `binaryExponent`, `nextUp`, and `nextDown`. Scaling multiplies by $2^k$ and rounds once; `binaryExponent` computes $\lfloor\log_2|x|\rfloor$ for a finite nonzero value and rounds that exponent into the same format. These are the binary forms of IEEE's `scaleB` and `logB`.
 
 Quiet and signaling comparisons share one truth table across binary and decimal formats. They agree about order. A quiet comparison raises invalid for a signaling NaN; a signaling comparison raises it for either kind of NaN.
 
-Sometimes we want to sort representations, including NaNs. `totalOrder` places negative zero before positive zero and distinguishes NaN signs, signaling classes, and payloads. `totalOrderMag` compares the corresponding magnitudes. Their proofs cover every binary descriptor and connect the executable comparison to an exact ordering specification. Neither operation raises an exception. Quantum operations concern decimal representations, which we turn to next. The host-FPU path is described in [chapter 15](#/chapter/performance/comparing-with-leans-native-floats).
-
-## Decimal interchange
-
-With decimal, we need to keep track of more than the numerical value of a datum. The amounts $1.20 = 120 \cdot 10^{-2}$ and $1.2 = 12 \cdot 10^{-1}$ are equal as rationals, but their coefficients and exponents differ. They belong to the same *cohort*: different representations of one value. A codec that silently removes the trailing zero has changed the datum even though a rational equality test would pass.
-
-The [decimal codec proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Basic.lean) establish exact datum round trips for decimal32, decimal64, and decimal128 in both binary integer decimal (BID) and densely packed decimal (DPD). BID stores the coefficient as a binary integer; DPD packs groups of decimal digits. Changing between them preserves the coefficient and its decimal exponent. It also preserves the sign of zero, infinity sign, and NaN sign, signaling bit, and payload.
-
-The theorem `decode_transcode` states this directly: decoding a converted word in the destination encoding gives the same datum as decoding the original word in its source encoding. Thus BID $120 \cdot 10^{-2}$ becomes DPD $120 \cdot 10^{-2}$, with the exponent still $-2$. The conversion does not normalize it to $12 \cdot 10^{-1}$.
-
-Some bit patterns are redundant. Every word decodes to a valid datum, but encoding that datum again returns its canonical word, as `Encoding.encode?_decode` proves. Converting to the other encoding and back can therefore change the bits while preserving every component of the datum. This is different from rounding: `encode?` rejects a datum that does not fit the destination rather than rounding it to a nearby one.
-
-The three standard formats are presets of one descriptor. A layout chooses the number of declets, the exponent continuation width, and the exponent bias; its precision is three digits per declet plus one leading digit. The algorithms and codec proofs also work for custom layouts with arbitrary bias. A theorem that needs quantum zero to be available says so explicitly. Custom layouts let us study other choices of precision and range; the IEEE names still refer to their specified parameters.
-
-<a id="arithmetic-keeps-track-of-the-cohort"></a>
-
-### Arithmetic and preferred exponents
-
-The [decimal arithmetic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Basic.lean) provides addition, subtraction, multiplication, division, fused multiply-add, and square root for decimal32, decimal64, and decimal128. The operations consume decoded `Datum` values and return an `Outcome`, pairing the result with five exception flags. BID or DPD is chosen when reading or writing the bits. All six operations accept the five decimal rounding modes: nearest with ties to even or away, toward zero, toward positive infinity, and toward negative infinity.
-
-We can see the preferred exponent at work in $1.20+0.30$. Both operands have quantum exponent $-2$, so their exact sum is
-
-$$
-(120+30)\cdot10^{-2}=150\cdot10^{-2}.
-$$
-
-The preferred exponent for addition is the smaller input exponent, here $-2$. The runtime therefore returns $1.50$, preserving that exponent, with no exception flags. Multiplication adds the input exponents: $1.2\cdot3.0$ has preferred exponent $-2$ and returns $3.60$. Removing a trailing zero would preserve each numerical result but change its cohort member. `preferredCohort` moves toward the preferred exponent by removing only exact trailing coefficient zeros, within the destination's limits.
-
-When precision is insufficient, the rounding mode decides the numerical result first. Decimal32 has seven significant digits. The exact sum $1.000000+0.0000005=1.0000005$ lies halfway between $1.000000$ and $1.000001$. Nearest-even chooses the former because coefficient 1000000 is even; nearest-away chooses the latter. Both results report inexact. Finite addition, subtraction, multiplication, division, and FMA form the exact rational expression before this projection. FMA therefore never rounds or signals overflow on its intermediate product alone.
-
-Square root uses an integer square root to locate adjacent candidates, then compares the radicand with their squared midpoint. This decides the rounding without approximating the real root. Its preferred exponent is the floor of half the input exponent. Square root preserves negative zero, while a negative nonzero input returns a quiet NaN and raises invalid.
-
-The [arithmetic proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Proof.lean) establish destination validity for the rational operations; the [square-root proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Sqrt/Proof.lean) do so for square root. With finite operands and no overflow, the nearest-mode error is at most half the selected decimal grid step; division requires a nonzero denominator and square root a nonnegative input. Directed-rounding theorems place the result on the required side of the exact value, and midpoint theorems resolve ties. Every representable rational projects to its exact numerical value. The inexactness theorems detect a numerical change, so choosing another cohort member does not itself raise inexact.
-
-Signs and flags distinguish cases that rational equality cannot. Exact cancellation in $1.20-1.20$ returns a zero with exponent $-2$: negative under rounding toward negative infinity, positive under the other four modes. A signaling NaN raises invalid and is quieted; the first NaN operand supplies the sign and payload when that payload fits the destination. The five returned flags are invalid, divide-by-zero, overflow, underflow, and inexact. Decimal tininess is tested **before rounding**, and underflow requires both a tiny exact result and inexactness. The binary kernels earlier in this chapter test tininess after rounding.
-
-Cohort selection has a stronger guarantee than preserving the numerical value. For an exact result, the projection and square-root theorems compare its exponent with every valid representation of that value and prove that it is closest to the preferred exponent. An inexact finite result uses the smallest quantum exponent in its cohort, including when the exact square root is irrational. The [preferred-cohort proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Cohort.lean), [minimal-quantum proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Minimal.lean), and their square-root counterparts establish these results.
-
-<a id="remembering-exceptions-across-a-calculation"></a>
-
-### Accumulating exception flags
-
-An `Outcome` tells us what happened in one operation. A longer calculation needs to remember earlier exceptions too. Suppose decimal32 division rounds $1/3$ to $0.3333333$, raising inexact, and the next operation divides $1$ by zero. The second operation raises divide-by-zero; it must not erase the earlier inexact flag.
-
-`Environment.run` supplies the current rounding direction and accumulates the returned flags. The environment is an ordinary Lean value, so a function's inputs and outputs show where that state goes. `saveAllFlags`, `testFlags`, `testSavedFlags`, `lowerFlags`, `raiseFlags`, and `restoreFlags` support selected groups of exceptions. Restoring a saved clear flag clears it; flags outside the group stay as they were.
-
-`Environment.withRounding` changes rounding within one computation. Rounding $1/3$ toward positive infinity produces $0.3333334$; on return, the caller's rounding direction is restored and the new inexact flag survives. The proofs characterize every flag after an operation, clearing, or restoration, and establish that grouping operations does not change the accumulated flags.
-
-<a id="choosing-a-decimal-grid"></a>
-
-### Quantization and integral rounding
-
-`quantize` requests a particular exponent rather than allowing the operation to choose one. Quantizing $1.235$ to the exponent of $0.01$ gives $1.24$ under nearest-even: the adjacent coefficients are 123 and 124, and 124 is even. The result has exponent $-2$ and raises inexact. Quantizing $1.2$ to the same exponent instead gives $1.20$ without inexact, because the numerical value has not changed.
-
-The quantize proofs fix the successful result's quantum, bound nearest rounding by half that grid step, and characterize inexactness as a numerical change. Directed bounds and an error below one grid step cover the other modes. If the rounded coefficient cannot fit at the requested exponent, quantize raises invalid; it never raises overflow, underflow, or divide-by-zero. Even an inexact subnormal quantize result therefore has no underflow flag.
-
-Integral rounding chooses exponent $\max(q,0)$ for an input exponent $q$. Both `roundToIntegral` and `roundToIntegralExact` return the same integer-valued datum and preserve the sign of a zero result. Under nearest-even, $1.5$ becomes $2$ in either variant; only `roundToIntegralExact` raises inexact. An already integral datum with positive exponent, such as $12\cdot10^2$, keeps that exponent.
-
-This requires the format's largest quantum exponent to be nonnegative, as it is in all three IEEE decimal formats. A custom layout whose exponents are all negative cannot encode the requested quantum; the operation raises invalid, and the proofs characterize that case too.
-
-### Comparing values and representations
-
-Numerical comparison treats $1.20$ and $1.2$ as equal. `totalOrder` can still distinguish them by their exponents, and also orders signed zeros and NaNs. Its proofs establish transitivity, totality, and agreement with the numerical, sign, and cohort rules. NaN payloads follow the documented implementation choice.
-
-The API provides all 22 quiet and signaling comparisons. Their Boolean answers agree; their invalid flags differ when a quiet NaN is present. Classification distinguishes the ten IEEE classes and proves that changing cohort does not turn a normal value into a subnormal one. Sign operations on raw BID and DPD words preserve every other bit, even for redundant encodings and signaling NaNs.
-
-<a id="moving-through-the-decimal-values"></a>
-
-### Adjacent values, scaling, and remainder
-
-The value immediately below decimal32's $1.000000$ is $0.9999999$. The value immediately above it is $1.000001$. The distances are $10^{-7}$ below and $10^{-6}$ above: crossing a power of ten changes the grid. `nextDown` and `nextUp` handle that boundary, and their adjacency proofs rule out every valid value between the input and its neighbor. They choose the finest quantum that represents the delivered value.
-
-`scaleB` shifts a datum's quantum by an integer and rounds once if the result no longer fits. `remainder` uses the nearest-even integer quotient: the remainder of $7/2$ is $7-4\cdot2=-1$. Its proofs establish exact representability, the half-divisor magnitude bound, and the even-quotient rule at a tie. `logB` reports the exponent of the leading decimal digit.
-
-<a id="writing-a-value-without-losing-its-representation"></a>
-
-### Decimal text round trips
-
-Printing $1.20$ as `1.2` is numerically harmless, but loses its quantum. `Formatting.formatExact` preserves the entire datum, including zero signs and NaN metadata. The parsing theorem recovers that datum in every rounding mode; the BID and DPD word theorem recovers its canonical encoding.
-
-Requested precision is a separate choice. Formatting to two significant digits rounds $1.25$ to $1.2$ under nearest-even and $1.3$ under nearest-away. The digit count is any positive integer, and the text exponent is unbounded. The proofs establish the requested precision, rounding direction, midpoint behavior, and numerical inexactness. Asking for at least the source precision preserves its value through output and input in any pair of rounding modes.
-
-<a id="crossing-into-another-format"></a>
-
-### Conversions between numerical formats
-
-Converting decimal $0.1$ to binary cannot preserve its value exactly: no finite binary fraction equals $1/10$. The converter starts from that exact rational and rounds once into the destination. Converting a binary value back to decimal starts from the binary value actually stored, so it need not recover the original decimal spelling.
-
-The same route connects decimal formats to each other and to posits: exact source decoding, then destination rounding. Decimal-to-decimal conversion also chooses the available cohort exponent closest to the source's preferred exponent when the value is exact. Posit destinations follow their own appended-bit rounding rule, including saturation at the range limits. BID and DPD encoding adds no further numerical rounding.
-
-Integer conversion rounds before checking the destination range. That ordering matters: a small negative fraction can round to unsigned zero. The five directions each have a quiet and an `Exact` variant; they return the same integer, while the latter reports inexactness. Exceptional sources and rounded values outside the destination range raise invalid and deliver zero in this binding. Integer-to-decimal conversion uses the same decimal projection as the other sources.
-
-The proofs state the rounding bounds and exception behavior for each destination. The [validation discussion](#/chapter/external-validation/decimal-values-cohorts-and-flags) explains what an independent comparison must check about complete datums, conversions, and flags.
-
-## Transcendental functions
-
-The optional [binary transcendental module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Transcendentals.lean) provides software implementations of `exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and `tanh` for every `ExecFloat.Binary` type. It also provides `Model.pow` and `MathFunctions` instances, so generic code can call these functions alongside the certified `sqrt` and `abs` and the constant `pi`. Each function decodes its input, calls the descriptor-generic model kernel, and packs the result back into the configured word.
-
-These binary transcendental kernels have no proved general accuracy bound. They use nearest-even rounding internally, accept no rounding direction, and return no status flags. The separate test workspace has an Arb adapter for point evaluation with an explicit rounding direction; it uses python-flint as an external reference, as described in [chapter 16](#/chapter/external-validation). The software kernels require the named import below; `import FloatLib` alone provides the `MathFunctions` class and its host `Float` instance, but does not install these binary functions:
-
-```lean standalone
-import FloatLib
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
-
-open FloatLib.Floats
-open FloatLib.Floats.Formats.BinaryInterchange
-
-abbrev Binary32 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
-#eval ExecFloat.Binary.exp (1 : Binary32)
--- 2850325 * 2^-20
-#eval ExecFloat.Binary.toBits32 (ExecFloat.Binary.exp (1 : Binary32))
--- 1076754516
-#eval ExecFloat.Binary.log (ExecFloat.Binary.exp (1 : Binary32))
--- 16777215 * 2^-24
-#eval ExecFloat.Binary.exp (100 : Binary32)
--- inf
-
-example (x : Binary32) :
-    ExecFloat.Binary.toModel (ExecFloat.Binary.exp x) = Model.exp (ExecFloat.Binary.toModel x) :=
-  ExecFloat.Binary.toModel_exp x
-```
-
-The result $2850325 \cdot 2^{-20} = 2.71828174591\ldots$, word `0x402df854`, is the binary32 value nearest to $e$. Taking the logarithm of that word returns $1 - 2^{-24}$ rather than $1$.
-
-The theorem `toModel_exp` connects the configured binary function to the model kernel: decoding the configured call gives `Model.exp` of the decoded input. The same lemma exists for each of the other functions, so a proof about a model kernel also applies to its configured function. This equality concerns the two implementations; it does not relate their output to the real exponential. The [posit functions](#/chapter/posits-and-the-quire/exponentials-and-logarithms) use different algorithms with proved real-rounding equations.
-
-Sine and cosine also need enough argument-reduction data for the input's exponent. The default generated configuration has an exponent budget of 4,096. `Model.sinCosResult` and the configured `ExecFloat.Binary.sinCosResult` report an input beyond that budget as `Except.error`, carrying `TrigReductionError.inputExponent` and `maxExponent`. `Model.sinCosWithResult` accepts a chosen configuration; `Config.generatedFullRange` supplies data for the format's full exponent range, at potentially substantial cost.
-
-This error reports a reduction-budget limit, not an IEEE status flag. `Except.ok` means the approximation policy executed; it is not an accuracy certificate. The value-only sine and cosine APIs map a budget error to `Model.invalidResult fmt`, a canonical NaN for IEEE formats. A format without an exceptional encoding falls back to positive zero, so callers who need to distinguish failure must use the checked result.
-
-The [transcendental contracts](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Transcendentals/Contract.lean) define three kinds of accuracy claim, introduced in [chapter 03](#/chapter/a-short-history-of-floating-point). A `RealEnclosure` is a proved pair of real bounds around $f(x)$. An `ApproximationCertificate` is a proposition about a whole kernel: on every finite input it returns a finite result within a stated absolute error budget of the real function.
-
-`ApproximationCertificateOn` and `CorrectlyRoundedCertificateOn` allow a stated domain, such as positive logarithm inputs or exponential inputs whose outputs remain finite; the guarantee must hold throughout that domain.
-
-A `StableEnclosure` has endpoints that round to the same grid value under `roundAt`. Once we have such bounds, `CertifiedRoundedResult.toReal_value_eq_roundAt` proves that a stored result equal to their common rounding is the correctly rounded $f(x)$. Multiple-precision libraries use this criterion to decide when their bounds are tight enough; the theorem does not depend on how the bounds were obtained. The contract module contains enclosure constructors for `exp`, `log`, `sinh`, `cosh`, `tanh`, `sin`, `cos`, and `sqrt` and theorems for combining them.
-
-`#float_info` lists this framework as conditional even with the default import. Applying it requires a whole-algorithm certificate for the selected kernel. The built-in binary transcendental kernels do not supply such certificates; the enclosure definitions and generic implications do not establish their accuracy.
-
-## Custom widths
-
-The IEEE theorems apply to an arbitrary descriptor with `isIEEE`, so a custom format needs no new arithmetic proofs. Consider a 24-bit layout with seven exponent bits and sixteen fraction bits, and a 71-bit layout with eleven exponent bits and fifty-nine fraction bits.
-
-```lean
-abbrev binary24 : FloatFormat := FloatFormat.ieee 7 16
-abbrev Binary24 := ExecFloat.Binary (exponentBits := 7) (fractionBits := 16)
-
-def one24 : Binary24 := 1
-
-#eval one24 + one24
--- 2
-#eval (binary24.bitWidth, binary24.exponentBias,
-       binary24.minNormalExponent, binary24.maxNormalExponent)
--- (24, 63, -62, 63)
-
-example (x y : Model binary24)
-    (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
-    (hout : Model.isFinite (Model.add x y) = true) :
-    Model.toReal (Model.add x y) =
-      Model.roundAt binary24 (Model.toReal x + Model.toReal y) :=
-  Model.toReal_add_eq_roundAt x y (by simp) hx hy hout
-
-abbrev binary71 : FloatFormat := FloatFormat.ieee 11 59
-abbrev Binary71 := ExecFloat.Binary (exponentBits := 11) (fractionBits := 59)
-
-example : binary71.bitWidth = 71 := by decide
-
-#eval ((1 : Binary71) / 3)
--- 768614336404564651 * 2^-61
-```
-
-The 24-bit format has bias 63, normal exponents from $-62$ to $63$, and $p = 17$ significant bits; an eight-exponent-bit, fifteen-fraction-bit layout would occupy the same 24 bits with more range and one bit less precision, which is why "a 24-bit float" is not a specification until the split is given. The addition theorem applies with `by simp` discharging `binary24.isIEEE = true` through the lemma `isIEEE_ieee`, and nothing else in the proof mentions the width. The 71-bit format has 60 significant bits, and its quotient $1/3$ shows them: the significand $768614336404564651$ lies between $2^{59}$ and $2^{60}$. A format with 71 significant bits would instead take `fracWidth := 70` and occupy 82 stored bits with the same exponent field. [Chapter 09](#/chapter/low-precision-formats-for-machine-learning) goes the other way, down to eight and four bits, and changes what the reserved patterns mean.
-
-<a id="formats-encodings-and-their-meaning"></a>
-
-## Applying a real-valued arithmetic theorem
-
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] turns a decoded addition into one rounding of an exact real sum. Its hypotheses require an IEEE descriptor, finite operands, and a finite result:
-
-```lean
-open FloatLib.Floats.Formats.BinaryInterchange in
-#check @Model.toReal_add_eq_roundAt
--- @Model.toReal_add_eq_roundAt : ∀ {fmt : FloatFormat} (x y : Model fmt),
---   fmt.isIEEE = true →
---     x.isFinite = true →
---       y.isFinite = true → (x.add y).isFinite = true → (x.add y).toReal = Model.roundAt fmt (x.toReal + y.toReal)
-```
-
-Every hypothesis is visible in the signature: a conventional IEEE descriptor, finite operands, and a finite executable result, which excludes overflow because overflow has no value in $\mathbb{R}$. `Model.toReal` is total, using zero for a non-finite word, so dropping those premises would change the meaning of the assertion. Once they are supplied, the theorem replaces a decoded executable addition with `roundAt` of the exact real sum. That is the point where a word-level calculation can use the [general rounding theory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Flocq/Theory); [chapter 01](#/chapter/using-the-library) works through the additional bridge from a configured `Binary32` value to this model.
-
-Programs normally use [[FloatLib.Floats.ExecFloat.Binary]] or [[FloatLib.Floats.ExecFloat.BinaryLimbs]], whose [[FloatLib.Floats.Formats.BinaryInterchange.Configured.StoragePlan]] chooses a carrier. Above 64 bits, `Binary` stores `Model format` directly; above 128 bits, `BinaryLimbs` uses an array of 32-bit limbs. Both have the same descriptor and reference semantics.
-
-The configured interface exposes the same choices, including the `rounding` argument of [[FloatLib.Floats.ExecFloat.Binary.add]] and casts through exact signed rationals. The [configured word kernels](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Core/Runtime.lean) adapt software arithmetic to the chosen format and carrier, with certificates such as [[FloatLib.Floats.Formats.BinaryInterchange.Configured.Backend.wordAdd_eq_spec]]. Calling the processor's floating-point instructions requires the explicit [unchecked native-FPU import](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean) discussed in [chapter 15](#/chapter/performance/comparing-with-leans-native-floats); certified modules do not import it.
-
-For decimal formats, choosing the represented value is only part of the result. The [decimal interchange examples](#/chapter/ieee-binary-formats/decimal-interchange) also track the quantum and exceptional metadata. `decode_transcode` proves that conversion between BID and DPD preserves that complete datum; numerical rounding and cohort selection are separate operations.
+Sometimes we want to sort representations, including NaNs. `totalOrder` places negative zero before positive zero and distinguishes NaN signs, signaling classes, and payloads. `totalOrderMag` compares the corresponding magnitudes. Their proofs cover every binary descriptor and connect the executable comparison to an exact ordering specification. Neither operation raises an exception. Decimal operations must also choose a representation within a cohort; [Decimal arithmetic](#/chapter/decimal-arithmetic) follows that choice from exact arithmetic to encoded words. [Elementary functions](#/chapter/elementary-functions) develops powers, roots, and the different accuracy guarantees available for transcendental calls.

@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Numerics.Automation.Interval
 public import FloatLib.Numerics.Automation.Numerics
 public import FloatLib.Numerics.Capabilities
 public import FloatLib.Numerics.Core

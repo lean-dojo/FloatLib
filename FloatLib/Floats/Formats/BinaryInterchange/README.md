@@ -35,14 +35,18 @@ exponent bias.
 | `Proof.*_eq_spec` | every `FloatFormat` |
 | Field decode, classification, exact dyadics | every `FloatFormat` |
 | Real-number / Lean-model arithmetic refinement | IEEE (`fmt.isIEEE = true`); finite values |
-| Remainder, `roundToIntegral*`, `scaleB`, `logB` | implemented with theorems |
+| Remainder, `roundToIntegral*`, `scale`, `binaryExponent` | implemented with theorems |
 | Integer conversion | `DType`; IEEE needed for the real nearest-even theorem |
 | Quiet and signaling comparison predicates | shared IEEE truth tables; exact-order and invalid-flag theorems |
 | `totalOrder` / `totalOrderMag` | implemented with complete-representation order laws and configured bridges |
 | Decimal quantum operations | belong to the separate `DecimalInterchange` family |
 | Decimal interchange | proved BID/DPD codecs, arithmetic, comparisons, and explicit exception state in `DecimalInterchange` |
 | Text round trips | exact decimal and hexadecimal formatting/parsing theorems for finite conventional IEEE values; `nan` formatting drops sign/payload |
-| Elementary functions (`exp`, `log`, trig, `pow`) | named import `Configured.Transcendentals` (or the model barrel); representation bridges only |
+| Elementary approximation kernels (`exp`, `log`, trig) | named import `Configured.Transcendentals` (or the model barrel); representation bridges, with no general real-error bound |
+| Certified `exp`, `log`, `expMinus1`, `logPlus1` | named import `Configured.Transcendentals.Certified`; each `some` result is finite and correctly rounded |
+
+For an IEEE descriptor, `Model.pow` is correctly rounded for a finite nonzero base and a finite
+integral exponent whenever its result is finite (`Model.Power.toReal_pow_of_eq_intCast`).
 
 ## Overflow by encoding
 

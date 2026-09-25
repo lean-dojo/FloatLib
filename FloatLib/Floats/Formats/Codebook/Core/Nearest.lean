@@ -79,13 +79,119 @@ def closerEntry {book : Codebook width α} (x : α)
   | none => some entry
   | some current => if |x - entry.2| < |x - current.2| then some entry else some current
 
+/-- Cache the distance of a selected word while scanning the remaining entries. -/
+private def withDistance {book : Codebook width α} (x : α) (entry : Code book × α) :
+    Code book × α :=
+  (entry.1, |x - entry.2|)
+
+/-- Compare each candidate with the cached distance of the current best word. -/
+private def closerDistance {book : Codebook width α} (x : α)
+    (best : Option (Code book × α)) (entry : Code book × α) : Option (Code book × α) :=
+  let candidate := withDistance x entry
+  match best with
+  | none => some candidate
+  | some current => if candidate.2 < current.2 then some candidate else some current
+
+/-- The first entry retains its value until a second finite entry requires a comparison. -/
+private def cachedDistance (x : α) : α ⊕ α → α
+  | .inl value => |x - value|
+  | .inr distance => distance
+
+/-- Normalize the first entry and later cached entries to the same distance invariant. -/
+private def distanceEntry {book : Codebook width α} (x : α)
+    (entry : Code book × (α ⊕ α)) : Code book × α :=
+  (entry.1, cachedDistance x entry.2)
+
+/-- Compare distances only after two finite entries have been found. -/
+private def closerLazyDistance {book : Codebook width α} (x : α)
+    (best : Option (Code book × (α ⊕ α))) (entry : Code book × α) :
+    Option (Code book × (α ⊕ α)) :=
+  match best with
+  | none => some (entry.1, .inl entry.2)
+  | some current =>
+    let distance := |x - entry.2|
+    match current.2 with
+    | .inl value =>
+      let previous := |x - value|
+      if distance < previous then some (entry.1, .inr distance)
+      else some (current.1, .inr previous)
+    | .inr previous =>
+      if distance < previous then some (entry.1, .inr distance) else best
+
 /--
 The first finite codeword whose denotation minimizes `|x - c|`, scanning words in ascending
 unsigned order and replacing the current best only on a strict improvement. Ties resolve to the
 lower word. The result is `none` exactly when the table has no finite entry.
+
+The scan constructs no intermediate list and computes each distance at most once. The first
+entry retains its value until a second finite entry is found, so a single finite entry needs no
+distance calculation. Later entries carry the distance of the current best word.
 -/
 def nearestCode (book : Codebook width α) (x : α) : Option (Code book) :=
-  ((finiteEntries book).foldl (closerEntry x) none).map Prod.fst
+  (Fin.foldl (2 ^ width) (fun best bits =>
+    let code := BitVec.ofNat width bits.val
+    match book.denote code with
+    | .finite value =>
+      match best with
+      | none => some (code, Sum.inl value)
+      | some current =>
+        let distance := |x - value|
+        match current.2 with
+        | .inl first =>
+          let previous := |x - first|
+          if distance < previous then some (code, .inr distance)
+          else some (current.1, .inr previous)
+        | .inr previous =>
+          if distance < previous then some (code, .inr distance) else best
+    | _ => best) none).map Prod.fst
+
+private theorem nearestCode_eq_foldl (book : Codebook width α) (x : α) :
+    nearestCode book x = ((finiteEntries book).foldl (closerEntry x) none).map Prod.fst := by
+  have hindices : List.range (2 ^ width) = (List.finRange (2 ^ width)).map Fin.val := by
+    apply List.ext_getElem <;> simp
+  have hcached : (finiteEntries book).foldl (closerDistance x) none =
+      ((finiteEntries book).foldl (closerEntry x) none).map (withDistance x) := by
+    exact List.foldl_hom (Option.map (withDistance x))
+      (g₁ := closerEntry x) (g₂ := closerDistance x) (init := none) (by
+        intro best entry
+        cases best with
+        | none => rfl
+        | some current =>
+          simp only [Option.map_some, closerDistance, closerEntry, withDistance]
+          by_cases h : |x - entry.2| < |x - current.2| <;>
+            simp only [h, ↓reduceIte, Option.map_some, withDistance])
+  have hlazy : (finiteEntries book).foldl (closerDistance x) none =
+      ((finiteEntries book).foldl (closerLazyDistance x) none).map (distanceEntry x) := by
+    exact List.foldl_hom (Option.map (distanceEntry x))
+      (g₁ := closerLazyDistance x) (g₂ := closerDistance x) (init := none) (by
+        intro best entry
+        cases best with
+        | none => rfl
+        | some current =>
+          rcases current with ⟨code, value | distance⟩ <;>
+            simp only [Option.map_some, closerLazyDistance, closerDistance,
+              withDistance, distanceEntry, cachedDistance] <;> split <;>
+            rename_i h <;> simp only [h, ↓reduceIte, Option.map_some,
+              distanceEntry, cachedDistance])
+  unfold nearestCode
+  rw [Fin.foldl_eq_finRange_foldl]
+  change ((List.finRange (2 ^ width)).foldl (fun best bits =>
+    let code := BitVec.ofNat width bits.val
+    match book.denote code with
+    | .finite value => closerLazyDistance x best (code, value)
+    | _ => best) none).map Prod.fst = _
+  have hscan : (List.finRange (2 ^ width)).foldl (fun best bits =>
+      let code := BitVec.ofNat width bits.val
+      match book.denote code with
+      | .finite value => closerLazyDistance x best (code, value)
+      | _ => best) none = (finiteEntries book).foldl (closerLazyDistance x) none := by
+    simp only [finiteEntries, hindices, List.foldl_filterMap, List.foldl_map]
+    congr 1
+    funext best bits
+    cases book.denote (BitVec.ofNat width bits.val) <;> rfl
+  rw [hscan]
+  have hprojection := congrArg (Option.map Prod.fst) (hlazy.symm.trans hcached)
+  simpa only [Option.map_map, Function.comp_def, distanceEntry, withDistance] using hprojection
 
 /-- Folding `closerEntry` from a present accumulator always yields a present result. -/
 theorem foldl_closerEntry_isSome {book : Codebook width α} (x : α)
@@ -126,7 +232,7 @@ theorem nearestCode_spec (book : Codebook width α) (x : α) (code : Code book)
     ∃ value, book.denote code = .finite value ∧
       ∀ other otherValue, book.denote other = .finite otherValue →
         |x - value| ≤ |x - otherValue| := by
-  unfold nearestCode at hnearest
+  rw [nearestCode_eq_foldl] at hnearest
   obtain ⟨selected, hfold, hfirst⟩ := Option.map_eq_some_iff.1 hnearest
   obtain ⟨hmem, hmin, -⟩ := foldl_closerEntry_spec x (finiteEntries book) none selected hfold
   rcases hmem with hmem | hnone
@@ -142,7 +248,7 @@ theorem nearestCode_isSome_of_denote_finite (book : Codebook width α) (x : α)
     {code : Code book} {value : α} (hfinite : book.denote code = .finite value) :
     ∃ nearest, nearestCode book x = some nearest := by
   have hmem := (mem_finiteEntries_iff book code value).2 hfinite
-  unfold nearestCode
+  rw [nearestCode_eq_foldl]
   obtain ⟨first, rest, hentries⟩ := List.exists_cons_of_ne_nil (List.ne_nil_of_mem hmem)
   rw [hentries, List.foldl_cons]
   obtain ⟨result, hresult⟩ :=

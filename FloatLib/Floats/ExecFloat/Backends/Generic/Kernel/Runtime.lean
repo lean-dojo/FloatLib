@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Runtime
@@ -308,7 +309,15 @@ rounded only once, so this is still a true fused operation at every supported pr
       some <| mulFields fmt
         xSign xExponent xMantissa ySign yExponent yMantissa
 
-/-- Divide finite scalar fields using the compact exponent difference. -/
+/--
+Divide finite scalar fields using the compact exponent difference.
+
+Formats whose precision fits in a word, zero exponent fields, and boundary results retain the
+reference rounder. For normalized mantissas, the ratio exponent is zero or minus one, so both
+possible total exponents must lie in the normal range before selecting the quotient rounder.
+Comparing the decoded normal mantissas gives this ratio exponent without recomputing their
+leading-bit positions.
+-/
 @[inline] def divFields
     (fmt : FloatFormat)
     (xSign : Bool) (xExponent xMantissa : Nat)
@@ -322,8 +331,14 @@ rounded only once, so this is still a true fused operation at every supported pr
   else if xMantissa == 0 then
     zero fmt sign
   else
-    roundRatScaled fmt sign xMantissa yMantissa
-      (Int.ofNat (scale xExponent) - Int.ofNat (scale yExponent))
+    let exponent := Int.ofNat (scale xExponent) - Int.ofNat (scale yExponent)
+    if decide (fmt.fracWidth < 64) || xExponent == 0 || yExponent == 0 ||
+        decide (exponent ≤ fmt.minNormalExponent) ||
+        decide (fmt.maxNormalExponent < exponent) then
+      roundRatScaled fmt sign xMantissa yMantissa exponent
+    else
+      FiniteQuotientRound.roundAtExponent fmt .nearestEven sign xMantissa yMantissa exponent
+        (if yMantissa ≤ xMantissa then 0 else -1)
 
 /-- Compiled finite division with scalar field decoding. -/
 @[inline] def divRuntime? {fmt : FloatFormat}

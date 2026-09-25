@@ -54,6 +54,7 @@ export type Chapter = {
   html: string;
   searchText: string;
   mentions: string[];
+  headings: { id: string; title: string }[];
 };
 
 export type Reference = {

@@ -17,7 +17,7 @@ A binary64 addition has $2^{64} \cdot 2^{64} = 2^{128}$ possible input pairs. At
 
 For formats of eight bits or fewer, the table backends evaluate the reference operation once at every pair of inputs and store the results. A `CertifiedBinary` kernel carries that table together with two certificates: `table_eq`, that every entry equals the operation the table was generated from, and `model_eq_spec`, that the generating operation equals the reference. The theorem [[FloatLib.Floats.Formats.BinaryInterchange.Configured.ByteTable.runBinary_eq_lift]] states that calling the table gives the same result as the configured model operation. Corresponding theorems cover operations with one and three arguments.
 
-For binary16, the library's addition and multiplication can be compared with MPFR [@fousseMpfr2007] in batches of the $2^{32}$ ordered input pairs. Dividing the work makes an exhaustive comparison manageable, but it is complete only after every batch has run. The binary16 comparisons described in [chapter 16](#/chapter/external-validation) cover a sample of the full $2^{32}$ pairs.
+For binary16, the library's addition and multiplication can be compared with MPFR [@fousseMpfr2007] in batches of the $2^{32}$ ordered input pairs. Dividing the work makes an exhaustive comparison manageable, but it is complete only after every batch has run. The binary16 comparisons described in [chapter 19](#/chapter/external-validation) cover a sample of the full $2^{32}$ pairs.
 
 For binary32 and binary64, tests can exercise known difficult cases and search for disagreements, but they cannot practically enumerate the whole input space. A proof handles this differently: its variables range over arbitrary input words. For example, an argument about how many low bits a shift discards can apply to every significand and exponent at once, without evaluating $2^{128}$ individual cases.
 
@@ -269,7 +269,7 @@ A proof about source code depends on the execution rules assigned to it. Monniau
 
 When we prove a result about Lean definitions, we still need an argument connecting them to an `addss` instruction before the theorem can tell us anything about that instruction. Certified `ExecFloat` arithmetic is software: the definitions used in proofs are the definitions compiled into the program, and we assume that the Lean compiler correctly implements integer and bit-vector operations.
 
-The optional host operations are exposed through the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean), with calls such as `Unchecked.add32`. That module is outside the default `import FloatLib` path. Its hardware calls have separate assumptions from the certified software operations; [chapter 15](#/chapter/performance/comparing-with-leans-native-floats) describes the guards and execution conditions relevant to comparing their results.
+The optional host operations are exposed through the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean), with calls such as `Unchecked.add32`. That module is outside the default `import FloatLib` path. Its hardware calls have separate assumptions from the certified software operations; [chapter 17](#/chapter/performance/host-arithmetic-as-a-reference) describes the guards and execution conditions relevant to comparing their results.
 
 <a id="two-decisions-a-specification-has-to-make"></a>
 
@@ -292,7 +292,7 @@ def exact500 : FloatLib.Numerics.Dyadic :=
 -- 126
 ```
 
-The word $127$ is `0x7f`, the NaN code; $126$ is `0x7e`, which encodes $448$. [Chapter 09](#/chapter/low-precision-formats-for-machine-learning) has the mathematics of both policies.
+The word $127$ is `0x7f`, the NaN code; $126$ is `0x7e`, which encodes $448$. [Chapter 11](#/chapter/low-precision-formats-for-machine-learning) has the mathematics of both policies.
 
 Casting between formats also has to preserve any information needed by later operations, including the sign of zero. Converting a value between formats through the rational numbers forgets whether a zero was negative, because $\mathbb{Q}$ has one zero. The exact conversion domain `SignedRat` retains that information: it is a rational together with an IEEE sign bit, whose arithmetic implements the IEEE sign rules. [[FloatLib.Floats.ExecFloat.Binary.decode]] returns such a value and keeps the sign; [[FloatLib.Floats.ExecFloat.Binary.toRat?]] returns a plain rational and does not:
 
@@ -313,54 +313,14 @@ The theorem `negative_add_of_eq_zero` states the rule for the default nearest-ev
 
 ## Connecting an implementation to its specification
 
-The implementation and its specification are Lean functions on the same input words, so we can compare their outputs directly. We want equality for every input, including exceptional values and ties. A separate theorem connects that output to real-number rounding when the inputs and result are finite. This [connection between executable definitions and their proofs](#/chapter/why-execution-and-proofs-are-separate) lets us use a mathematical result while still writing ordinary arithmetic syntax.
+The implementation and its specification are Lean functions on the same input words. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] identifies their complete outputs for every input, including exceptional values and ties. Each selected implementation must supply the proof that supports this equation; [chapter 05](#/chapter/why-execution-and-proofs-are-separate) follows that certificate from the arithmetic kernel to the public operation.
 
-Decoding is exact: every finite word denotes a dyadic rational, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toDyadic?]] computes it without approximation. The reference arithmetic uses exact integer, dyadic, and rational calculations to determine the rounded result. This makes the reference executable without relying on host floating-point arithmetic. Its real-valued counterpart is [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]], nearest-even rounding on the format's grid with gradual underflow, defined through the Flocq-style theory [@boldoMelquiond2011] developed in [chapter 07](#/chapter/the-mathematics-of-rounding).
-
-Behind `+` there is a reference definition and a set of faster arithmetic kernels. Each certified kernel carries a proof that it agrees with the reference for every input on which it is used. The planner can choose a kernel based on the format and operation while the certificate supplies the same output equation. The certificate record in [chapter 05](#/chapter/why-execution-and-proofs-are-separate) and the planner in [chapter 14](#/chapter/backends-and-the-planner) make that connection explicit. The public equation [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] states it for `+` without naming a kernel, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] connects the reference to real rounding:
-
-```lean
-example (x y : Binary32) : x + y = ExecFloat.Spec.add x y :=
-  ExecFloat.Proof.add_eq_spec x y
-
-example (x y : Model FloatFormat.binary32)
-    (hx : Model.isFinite x = true)
-    (hy : Model.isFinite y = true)
-    (hout : Model.isFinite (Model.add x y) = true) :
-    Model.toReal (Model.add x y) =
-      Model.roundAt FloatFormat.binary32
-        (Model.toReal x + Model.toReal y) :=
-  Model.toReal_add_eq_roundAt x y (by decide) hx hy hout
-```
-
-The hypotheses of the second theorem are mathematically necessary: NaNs and infinities are not reals, and finite inputs can overflow. A caller does not have to compute the output to establish the last one; [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_add_of_abs_add_le_posMaxFinite]] derives it from $|x| + |y| \le \mathrm{maxFinite}$.
-
-Before using that magnitude bound, we should check what it asks of our inputs. It is sufficient, rather than a characterization of every finite sum. If $M$ is the largest finite value, adding $M$ and $-M$ gives zero exactly, but the sum of their absolute values is $2M$ and fails the bound. For a calculation that relies on cancellation, a caller may need a sharper argument about the signed sum. The output-finiteness hypothesis states what must be true; the magnitude bound is one way to prove it.
-
-The dispatcher `AddBackend.word` calls a specialized arithmetic kernel eligible for the format. Any input that kernel declines, including every exceptional case, is handled by the exact generic baseline. The theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.AddBackend.word_eq_spec]] proves that `word` equals `Model.Spec.add` on every input, including those that use the fallback. [Chapter 13](#/chapter/kernels-fixed-word-algorithms) shows the kernel proofs, and [chapter 14](#/chapter/backends-and-the-planner) explains how kernels are selected and why that choice cannot change a result. [[FloatLib.Floats.ExecFloat.Proof.fullArithmeticCertificate]] packages the six operation equations for a type at once.
-
-Lean checks these proofs by type-checking proof terms and reducing definitions. The arithmetic reasoning is expressed in those terms; it does not require a trusted floating-point decision procedure. The `#print axioms` command reports the axioms used by a theorem, including dependencies inherited from other theorems:
-
-```lean
-#print axioms
-  FloatLib.Floats.Formats.BinaryInterchange.Model.AddBackend.word_eq_spec
--- 'FloatLib.Floats.Formats.BinaryInterchange.Model.AddBackend.word_eq_spec' depends on axioms: [propext,
---  Classical.choice,
---  Quot.sound]
-
-#print axioms
-  FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt
--- 'FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt' depends on axioms: [propext,
---  Classical.choice,
---  Quot.sound]
-```
-
-For these two results, the list consists of propositional extensionality, classical choice, and quotient soundness, the usual axioms of classical mathematics in Lean.
+A real-valued theorem answers a further question. For a conventional IEEE descriptor, finite operands, and a finite result, the decoded sum equals one nearest-even rounding of the exact real sum on a Flocq-style grid [@boldoMelquiond2011]. Finite inputs alone do not prevent overflow. [Chapter 06](#/chapter/the-numerical-models/proving-inputs-and-results-are-finite) shows how to establish the result's finiteness, including when cancellation makes a simple magnitude bound too conservative.
 
 ## What a proof does not cover
 
 Running the compiled program also requires the Lean compiler to implement the definitions correctly, including substitutions made for faster execution. Calls to host floating-point arithmetic introduce assumptions about the host as well. [Chapter 05](#/chapter/why-execution-and-proofs-are-separate) explains how these execution assumptions differ from the axioms listed by `#print axioms`.
 
-The refinement theorems establish agreement with the formal reference, but that leaves a further question: whether the reference faithfully represents the intended standard. Comparing it with independent implementations can expose a mistake shared by the implementation and its own specification. [Chapter 16](#/chapter/external-validation) describes comparisons with TestFloat, MPFR, published value tables, and host arithmetic that look for such disagreements.
+The refinement theorems establish agreement with the formal reference, but that leaves a further question: whether the reference faithfully represents the intended standard. Comparing it with independent implementations can expose a mistake shared by the implementation and its own specification. [Chapter 19](#/chapter/external-validation) describes comparisons with TestFloat, MPFR, published value tables, and host arithmetic that look for such disagreements.
 
 The historical failures discussed in [chapter 03](#/chapter/a-short-history-of-floating-point/what-imprecision-has-cost) also involve assumptions outside an individual arithmetic operation: ranges of physical inputs, accumulation over time, and the model being computed. A proof that addition rounds correctly can support such an analysis, but the application must still establish its own input bounds and error budget.

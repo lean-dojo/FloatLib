@@ -17,6 +17,9 @@ representability is `genericFormat` (the scaled mantissa x * 2^-cexp(x) is an in
 exact rationals below. Three binary digits is the precision the chapter uses for its own small
 example.
 
+The phone companion keeps all 169 pairs, moves the key and counts below the plot and uses
+shorter axis labels. --out writes both images beside the supplied path.
+
 Run from anywhere: python3 ch07_sterbenz.py [--out PNG]
 """
 
@@ -77,6 +80,47 @@ def in_wedge(x: Fraction, y: Fraction) -> bool:
     return x <= 2 * y and y <= 2 * x
 
 
+def draw_mobile(exact_in, exact_out, inexact_out):
+    fig = plt.figure(figsize=(3.8, 7.4))
+    fig.text(0.04, 0.98, "Where subtraction is exact", fontsize=14, weight="bold", va="top")
+    fig.text(0.04, 0.922, "Both inputs have three binary digits,\nfrom 0.5 to 4.",
+             fontsize=12, va="top", linespacing=1.45)
+    ax = fig.add_axes([0.19, 0.365, 0.78, 0.40])
+    top = 4.6
+    ax.set(xlim=(0, top), ylim=(0, top), aspect="equal")
+    ax.fill_between([0, top], [0, top / 2], [0, 2 * top], color=fs.SKY,
+                    alpha=0.28, linewidth=0, zorder=0)
+    ax.plot([0, top], [0, top / 2], color=fs.BLUE, linewidth=1.2, zorder=1)
+    ax.plot([0, top / 2], [0, top], color=fs.BLUE, linewidth=1.2, zorder=1)
+    ax.text(2.48, 4.45, "$y=2x$", fontsize=11.5, va="top", color=fs.BLUE)
+    ax.text(4.51, 2.66, "$x=2y$", fontsize=11.5, ha="right", color=fs.BLUE)
+    exact_style = dict(marker="o", markersize=4.0, color=fs.GREEN, markerfacecolor=fs.GREEN,
+                       linestyle="None")
+    inexact_style = dict(marker="s", markersize=4.0, color=fs.VERMILION, markerfacecolor="white",
+                         markeredgewidth=1.0, linestyle="None")
+    for pairs in (exact_in, exact_out):
+        ax.plot([x for x, _ in pairs], [y for _, y in pairs], zorder=3, **exact_style)
+    ax.plot([x for x, _ in inexact_out], [y for _, y in inexact_out], zorder=3, **inexact_style)
+    ticks = [0, 0.5, 1, 2, 3, 4]
+    ax.set_xticks(ticks, labels=[f"{x:g}" for x in ticks], fontsize=11.5)
+    ax.set_yticks(ticks, labels=[f"{y:g}" for y in ticks], fontsize=11.5)
+    ax.set_xlabel("input $x$", fontsize=12)
+    ax.set_ylabel("input $y$", fontsize=12)
+    handles = [
+        Patch(facecolor=fs.SKY, alpha=0.28, edgecolor=fs.BLUE, label=r"$y/2 \leq x \leq 2y$ (Sterbenz band)"),
+        Line2D([], [], label="$x-y$ is representable", **exact_style),
+        Line2D([], [], label="$x-y$ needs rounding", **inexact_style),
+    ]
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.035, 0.282),
+               fontsize=11.5, labelspacing=0.65, handlelength=1.7, borderaxespad=0)
+    fig.text(0.04, 0.127,
+             f"Inside: {len(exact_in)} pairs, all exact.\n"
+             f"Outside: {len(exact_out)} exact; {len(inexact_out)} need rounding.\n"
+             "The lemma makes no promise outside.",
+             fontsize=11.5, va="top", linespacing=1.5)
+    return fig
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
@@ -85,11 +129,16 @@ def main() -> None:
     lo, hi = Fraction(1, 2), Fraction(4)
     points = grid_points(lo, hi)
     assert all(representable(p) for p in points)
+    # Every input difference is a multiple of 1/8 in [-3.5, 3.5]. Enumerating that
+    # portion of the format checks the scaled-mantissa test independently.
+    positive_differences = grid_points(Fraction(1, 8), hi)
+    difference_grid = {Fraction(0), *positive_differences, *(-p for p in positive_differences)}
 
     exact_in, exact_out, inexact_out = [], [], []
     for x in points:
         for y in points:
             exact = representable(x - y)
+            assert exact == (x - y in difference_grid)
             if in_wedge(x, y):
                 assert exact, (x, y)          # the lemma, checked on every pair in the wedge
                 exact_in.append((float(x), float(y)))
@@ -98,6 +147,7 @@ def main() -> None:
             else:
                 inexact_out.append((float(x), float(y)))
     assert exact_out and inexact_out, "outside the wedge both outcomes should occur"
+    assert (len(points), len(exact_in), len(exact_out), len(inexact_out)) == (13, 97, 38, 34)
 
     fs.setup()
     fig, ax = fs.figure(6.9)
@@ -147,6 +197,8 @@ def main() -> None:
 
     out = fs.save(fig, "ch07-sterbenz.png", args.out)
     print(f"wrote {out}")
+    mobile = out.with_name(out.stem + "-mobile.png")
+    print(f"wrote {fs.save(draw_mobile(exact_in, exact_out, inexact_out), mobile.name, mobile)}")
 
 
 if __name__ == "__main__":

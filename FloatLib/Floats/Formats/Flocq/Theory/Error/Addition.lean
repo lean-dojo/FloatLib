@@ -25,6 +25,10 @@ needs seven digits.
 The representable error is the mathematical content of the TwoSum and FastTwoSum error-free
 transformations: `x + y = round (x + y) + e` with `e` in the format.  The step-by-step exactness of
 the floating-point operations that compute `e` in those algorithms is not formalized here.
+
+The source counterpart is Flocq 4.2.2, `src/Prop/Plus_error.v`, theorem `plus_error`,
+which states representability of `round (x + y) - (x + y)` under nearest rounding:
+<https://flocq.gitlabpages.inria.fr/releases/flocq-4.2.2.tar.gz>.
 -/
 
 @[expose] public section

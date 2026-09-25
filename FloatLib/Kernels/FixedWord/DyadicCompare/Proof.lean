@@ -93,6 +93,7 @@ theorem shiftLeft_toNat
     (significand <<< UInt64.ofNat shift).toNat =
       significand.toNat <<< shift := by
   apply FloatLib.Numerics.FixedWord.shiftLeft_toNat significand shift hshift
+  simp only [shiftFits, log2Word_eq_log2] at hfit
   rcases hfit with hzero | hleading
   · subst significand
     simp
@@ -245,7 +246,7 @@ theorem compareNonnegative_eq
 /--
 A word shift accepted by the 128-bit leading-bit test remains below the carrier limit.
 
-The runtime test uses only `UInt64.log2` and scalar addition. This theorem supplies the exact
+The runtime test uses only `log2Word` and scalar addition. This theorem supplies the exact
 natural-number capacity fact required by the two-limb shift refinement.
 -/
 private theorem word_shift_lt_twoPow128
@@ -339,6 +340,7 @@ theorem compareNonnegative128ToWord_eq
         leftSignificand.toNat leftExponent
         rightSignificand.toNat rightExponent := by
   unfold compareNonnegative128ToWord
+  simp only [log2Word_eq_log2]
   by_cases hhigh : leftSignificand.hi = 0
   · simp only [beq_iff_eq, hhigh, ite_true]
     rw [compareNonnegative_eq]
@@ -454,6 +456,7 @@ theorem isLessPowerOfTwo_eq
     FloatLib.Numerics.FixedWord.log2_toNat significand
   unfold isLessPowerOfTwo
     Dyadic.isLessNonnegativeFields Dyadic.compareNonnegativeFields
+  simp only [log2Word_eq_log2]
   rw [hlog]
   by_cases hzero : significand = 0
   · subst significand

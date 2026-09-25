@@ -43,6 +43,7 @@ theorem countLeadingZeros_eq_model
     rw [htruncated]
     exact Nat.mod_lt _ (Nat.two_pow_pos width)
   unfold countLeadingZeros
+  simp only [FixedWord.log2Word_eq_log2]
   change
     (if truncated == 0 then
       width

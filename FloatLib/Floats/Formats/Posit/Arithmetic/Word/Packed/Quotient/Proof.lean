@@ -90,7 +90,8 @@ private theorem normalizeWords_toNat
     shiftLeft_toCommon_toNat denominator (max numerator.toNat.log2 denominator.toNat.log2)
       hdenominator (Nat.le_max_right _ _) (by omega)
   refine ⟨?_, ?_, ?_, ?_⟩ <;>
-    simp only [normalizeWords, DirectDyadicQuotient.normalizeSignificands, FixedWord.log2_toNat,
+    simp only [normalizeWords, DirectDyadicQuotient.normalizeSignificands,
+      FixedWord.log2Word_eq_log2, FixedWord.log2_toNat,
       hnumeratorShift, hdenominatorShift]
 
 /-! ## Quotient-prefix refinement -/

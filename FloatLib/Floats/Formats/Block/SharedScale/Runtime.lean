@@ -26,7 +26,10 @@ open FloatLib.Numerics
     SharedScaleCode lanes where
   exponent := exponent
   significands :=
-    Vector.ofFn fun lane =>
-      roundRatEven (input[lane.val] / scale exponent)
+    if h : lanes = 0 then
+      ⟨#[], by simp [h]⟩
+    else
+      let factor := scale exponent
+      input.map fun value => roundRatEven (value / factor)
 
 end FloatLib.Floats.Formats.Block

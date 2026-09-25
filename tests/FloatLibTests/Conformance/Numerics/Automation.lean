@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats
+public import FloatLib.Numerics.Automation.Interval
 
 /-!
 # Regression checks for representation-independent numerical automation
@@ -174,5 +175,108 @@ example
     BinaryInterchange.Configured.Backend.genericAdd left right =
       BinaryInterchange.Configured.Spec.add left right := by
   grind
+
+/-! ## Real inequalities by certified interval evaluation -/
+
+-- The initial enclosure is too wide; subdivision must preserve the original variable bounds.
+example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
+  fail_if_success interval (depth := 0)
+  interval (precision := 32) (depth := 4)
+
+-- Powers and two variables pass through the same reifier.
+example (x y : ℝ) (hx : x ∈ Set.Icc (-1) 1) (hy : y ∈ Set.Icc 2 3) :
+    |x| ^ 3 / y ≤ 1 / 2 := by
+  interval
+
+example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : Real.exp x * Real.cos x < 3 := by
+  interval (degree := 12)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : Real.log x + Real.sqrt x < 5 / 2 := by
+  interval (degree := 12)
+
+-- Zero degree and precision still support exact algebraic bounds.
+example (x : ℝ) (hx : x ∈ Set.Icc (-1) 1) : x ^ 2 ≤ 1 := by
+  interval (precision := 0) (degree := 0) (depth := 0)
+
+-- A successful left child is insufficient, and the shared midpoint cannot be dropped.
+example (x : ℝ) (_hx : x ∈ Set.Icc 0 1) : True := by
+  fail_if_success have : x ≤ 1 / 2 := by interval (depth := 1)
+  fail_if_success have : 0 < (x - 1 / 2) ^ 2 := by interval (depth := 2)
+  trivial
+
+-- Local definitions of rational bounds are constants, not additional interval variables.
+example (x : ℝ) (hx : 0 ≤ x ∧ x ≤ 2) : x ≤ 2 := by
+  let two : ℝ := 2
+  change 0 ≤ x ∧ x ≤ two at hx
+  interval (depth := 0)
+
+-- Failures leave the goal unchanged. `1 / x ≤ 2` and `x < 0` are false on `[-1, 1]`. The `log`
+-- and `sqrt` bounds are true in Lean, where `Real.log x = Real.log |x|` and `Real.sqrt` of a
+-- negative number is `0`, but the enclosure rejects them because `x` may leave the domain.
+example (x : ℝ) (_hx : x ∈ Set.Icc (-1) 1) : True := by
+  fail_if_success have : 1 / x ≤ 2 := by interval (depth := 2)
+  fail_if_success have : Real.log x < 1 := by interval (depth := 2)
+  fail_if_success have : Real.sqrt x < 2 := by interval (depth := 2)
+  fail_if_success have : x < 0 := by interval (depth := 2)
+  trivial
+
+example (x : ℝ) : x = x := by
+  fail_if_success have : x ≤ 2 := by interval
+  rfl
+
+/-! ## Finite sums and matrix bounds -/
+
+open scoped BigOperators Matrix.Norms.Elementwise
+
+local macro "test_interval_options" : tactic =>
+  `(tactic| interval (precision := 32) (depth := 0))
+
+example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x ^ 2 ≤ 1 := by
+  test_interval_options
+
+example (x : Fin 4 → ℝ) (hx : ∀ i, x i ∈ Set.Icc (-1) 1) :
+    ∑ i, (x i) ^ 2 ≤ 4 := by
+  interval (depth := 0)
+
+example (x : ℕ → ℝ) (hx : ∀ i ∈ ({2, 5, 9} : Finset ℕ), x i ∈ Set.Icc 0 1) :
+    ∑ i ∈ ({2, 5, 9} : Finset ℕ), x i ≤ 3 := by
+  interval (depth := 0)
+
+-- A pointwise hypothesis cannot supply bounds beyond its index set.
+example (x : ℕ → ℝ) (_hx : ∀ i ∈ Finset.range 2, x i ∈ Set.Icc 0 1) : True := by
+  fail_if_success have : ∑ i ∈ Finset.range 3, x i ≤ 3 := by interval (depth := 0)
+  trivial
+
+example (x : Fin 3 → ℝ) (y : ℝ)
+    (h : y ∈ Set.Icc 0 1 ∧ ∀ i, x i ∈ Set.Icc 0 1) :
+    y + dotProduct x x ≤ 4 := by
+  interval (depth := 0)
+
+-- Congruence follows local definitions as well as literal arithmetic applications.
+example (x : ℝ) (hx : x ∈ Set.Icc (-1) 1) : |x| ^ 2 + 1 ≤ 2 := by
+  let square := |x| ^ 2
+  change square + 1 ≤ 2
+  interval (depth := 0)
+
+example (A : Matrix (Fin 2) (Fin 3) ℝ) (x : Fin 3 → ℝ)
+    (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1) (hx : ∀ i, x i ∈ Set.Icc (-1) 1) :
+    ‖WithLp.toLp 1 (A.mulVec x)‖₊ ≤ (6 : NNReal) := by
+  interval (depth := 0)
+
+example (A : Matrix (Fin 2) (Fin 3) ℝ) (B : Matrix (Fin 3) (Fin 2) ℝ)
+    (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1) (hB : ∀ i j, B i j ∈ Set.Icc (-1) 1) :
+    ‖A * B‖ ≤ 3 := by
+  interval (depth := 0)
+
+section
+open scoped Matrix.Norms.Operator
+
+-- The operator norm sums a row; it is not the elementwise maximum.
+example (A : Matrix (Fin 2) (Fin 3) ℝ) (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1) :
+    ‖A‖ ≤ 3 := by
+  fail_if_success have : ‖A‖ ≤ 1 := by interval (depth := 0)
+  interval (depth := 0)
+
+end
 
 end FloatLibTests.Conformance.Numerics.Automation

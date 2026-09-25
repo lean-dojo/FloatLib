@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Basic
+public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Format.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Integer.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Proof
@@ -26,6 +27,11 @@ layouts. Datums retain a coefficient and quantum exponent, including distinct
 cohort members with the same numerical value. BID and DPD codecs
 preserve complete datums, and arithmetic rounds exact expressions into the chosen
 decimal format with explicit exception outcomes.
+
+`Algebraic` adds square, reciprocal square root, hypotenuse, integer powers, and
+integer-degree roots in all five rounding modes. Each rounds the complete expression once.
+Import `DecimalInterchange.Transcendentals.Certified.Proof` for the finite-result
+`expMinus1` and `logPlus1` certificates.
 
 `Environment` threads the current rounding direction and sticky exception flags through
 pure computations. Neighbors, remainder, exponent operations, and external text conversion

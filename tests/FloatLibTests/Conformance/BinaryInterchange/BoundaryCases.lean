@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange
 /-!
 # Descriptor and interval boundary regressions
 
-These cases check declared exponent biases, overflow during integral conversion, and composition
-of intervals with infinite endpoints. Each expected result is checked by the kernel. Configured
-examples also exercise the same `ExecFloat` operations used by numerical programs.
+These cases check declared exponent biases, overflow during integral conversion, composition
+of intervals with infinite endpoints, and the binary32 constants of the standard model. Each
+expected result is checked by the kernel. Configured examples also exercise the same `ExecFloat`
+operations used by numerical programs.
 -/
 
 @[expose] public section
@@ -96,5 +97,42 @@ example {fmt : FloatFormat} (A B : Model.Interval fmt) (hfmt : fmt.isIEEE = true
   have habsValid := Model.Interval.abs_validExtended _ hnegValid
   simpa only [abs_neg, max_eq_left (abs_nonneg (x + y))] using
     Model.Interval.relu_sound_extended _ habsValid habs
+
+/-- The standard-model unit roundoff of binary32 is `2^(-24)`. -/
+theorem binary32_unitRoundoffAt :
+    Model.unitRoundoffAt FloatFormat.binary32 = 2 ^ (-24 : ℤ) := by
+  rw [Model.unitRoundoffAt_eq]
+  norm_num [FloatFormat.binary32]
+
+/-- The standard-model underflow allowance of binary32 is half its subnormal spacing, `2^(-150)`. -/
+theorem binary32_underflowErrorAt :
+    Model.underflowErrorAt FloatFormat.binary32 = 2 ^ (-150 : ℤ) := by
+  rw [Model.underflowErrorAt_eq]
+  have h : FloatFormat.minSubnormalExponent FloatFormat.binary32 = -149 := by decide
+  rw [h]
+  norm_num
+
+example (x : ℝ) :
+    ∃ δ η : ℝ, Model.roundAt FloatFormat.binary32 x = x * (1 + δ) + η ∧
+      |δ| ≤ 2 ^ (-24 : ℤ) ∧ |η| ≤ 2 ^ (-150 : ℤ) ∧ δ * η = 0 := by
+  simpa only [binary32_unitRoundoffAt, binary32_underflowErrorAt] using
+    Model.roundAt_standardModel FloatFormat.binary32 x
+
+-- Directed rounding doubles both constants.
+example (x : ℝ) :
+    ∃ δ η : ℝ, Model.roundAtDown FloatFormat.binary32 x = x * (1 + δ) + η ∧
+      |δ| ≤ 2 ^ (-23 : ℤ) ∧ |η| ≤ 2 ^ (-149 : ℤ) ∧ δ * η = 0 := by
+  obtain ⟨δ, η, h, hδ, hη, hδη⟩ := Model.roundAtDown_standardModel FloatFormat.binary32 x
+  rw [binary32_unitRoundoffAt] at hδ
+  rw [binary32_underflowErrorAt] at hη
+  exact ⟨δ, η, h, by norm_num at hδ ⊢; linarith, by norm_num at hη ⊢; linarith, hδη⟩
+
+-- Finite binary32 addition has no underflow term.
+example (x y : Model FloatFormat.binary32) (hx : Model.isFinite x = true)
+    (hy : Model.isFinite y = true) (hout : Model.isFinite (Model.add x y) = true) :
+    ∃ δ : ℝ, Model.toReal (Model.add x y) = (Model.toReal x + Model.toReal y) * (1 + δ) ∧
+      |δ| ≤ 2 ^ (-24 : ℤ) := by
+  simpa only [binary32_unitRoundoffAt] using
+    Model.toReal_add_eq_mul_one_add x y (by decide) hx hy hout
 
 end FloatLibTests.Conformance.BinaryInterchange.BoundaryCases

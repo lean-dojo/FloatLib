@@ -39,11 +39,13 @@ sources:
     note: Implements the identified working-group report, not a published IEEE standard.
   - title: OCP 8-bit Floating Point Specification, Revision 1.0
     authors: [Open Compute Project]
+    id: "https://www.opencompute.org/documents/ocp-8-bit-floating-point-specification-ofp8-revision-1-0-2023-12-01-pdf-1"
     type: specification
     relationship: formalizes
     note: The E4M3 and E5M2 encodings and their numerical behavior.
   - title: OCP Microscaling Formats Specification, Version 1.0
     authors: [Open Compute Project]
+    id: "https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf"
     type: specification
     relationship: formalizes
     note: Shared-scale block quantization and the six implemented element profiles.

@@ -52,8 +52,8 @@ arbitrary-precision naturals.
 
 /-- Position of the most significant set bit, with zero mapped to zero. -/
 @[inline] def log2 (value : UInt128) : Nat :=
-  if value.hi == 0 then value.lo.log2.toNat
-  else 64 + value.hi.log2.toNat
+  if value.hi == 0 then (log2Word value.lo).toNat
+  else 64 + (log2Word value.hi).toNat
 
 /--
 Shift a two-word value right, returning zero at and beyond the 128-bit carrier width.

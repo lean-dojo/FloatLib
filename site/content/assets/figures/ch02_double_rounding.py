@@ -26,6 +26,7 @@ a tie on the intermediate grid (its last term is half that grid's spacing), and 
 that it is.
 
 Run from anywhere: python3 ch02_double_rounding.py [--out PNG]
+Also writes a -mobile.png sibling, separating the two rounding steps and the direct route.
 """
 
 from __future__ import annotations
@@ -132,6 +133,78 @@ def curved_arrow(ax, start, end, *, color, rad, linestyle="-", linewidth=1.4) ->
                 arrowprops=dict(arrowstyle="-|>", color=color, lw=linewidth,
                                 linestyle=linestyle, shrinkA=3, shrinkB=3,
                                 connectionstyle=f"arc3,rad={rad}"))
+
+
+def build_mobile(target, wide, x, direct, first, second):
+    """Show the same exact example on three short local grids."""
+    assert (target, wide) == (3, 5)
+    assert (x, direct, first, second) == (Fraction(37, 32), Fraction(5, 4),
+                                        Fraction(9, 8), Fraction(1))
+    fine_step = TWO ** (1 - wide)
+    coarse_step = TWO ** (1 - target)
+    assert x - first == first + fine_step - x == Fraction(1, 32)
+    assert first - second == direct - first == coarse_step / 2
+    assert (first / fine_step).numerator % 2 == 0
+    assert (second / coarse_step).numerator % 2 == 0
+    assert direct - x < x - second
+
+    height = 9.0
+    fig = plt.figure(figsize=(3.8, height))
+    ax = fs.diagram_axes(fig, (0, 3.8), (0, height))
+    ax.text(0.18, 8.78, "Rounding twice changes\nthe result", fontsize=15,
+            weight="bold", va="top", linespacing=1.2)
+    ax.text(0.18, 8.08, "Nearest, ties to even", fontsize=12, va="center")
+    ax.text(0.18, 7.73, f"x = 1 + 1/8 + 1/32 = {float(x):g}", fontsize=12, va="center")
+    ax.text(0.18, 7.40, "Significands below are in base 2.", fontsize=12,
+            va="center", color=fs.MUTED)
+
+    def local_grid(y, lo, hi, value, result, prec, *, direct_route=False):
+        left, right = 0.48, 3.28
+
+        def place(v):
+            return left + float((v - lo) / (hi - lo)) * (right - left)
+
+        colour = fs.GREEN if direct_route else fs.VERMILION
+        ax.plot([left, right], [y, y], color=fs.INK, linewidth=1)
+        for endpoint in (lo, hi):
+            px = place(endpoint)
+            tick(ax, px, y, 0.10, color=fs.INK, linewidth=1.2)
+            ax.text(px, y - 0.18, f"{float(endpoint):g}", fontsize=12,
+                    ha="center", va="top")
+            ax.text(px, y - 0.45, binary_mantissa(endpoint, prec), fontsize=12,
+                    ha="center", va="top", family="DejaVu Sans Mono")
+        midpoint = (lo + hi) / 2
+        ax.plot([place(midpoint)], [y], marker="o", markersize=5.5,
+                markerfacecolor="white", markeredgecolor=fs.INK)
+        if direct_route:
+            ax.text(place(midpoint), y - 0.18, f"{float(midpoint):g}", fontsize=12,
+                    ha="center", va="top")
+        ax.plot([place(value)], [y + 0.15], marker="v", markersize=8, color=colour)
+        ax.text(place(value), y + 0.36, "x" if value == x else f"{float(value):g}",
+                fontsize=12, ha="center", va="bottom")
+        curved_arrow(ax, (place(value), y + 0.02), (place(result), y + 0.02),
+                     color=colour, rad=-0.35 if direct_route else 0.35,
+                     linestyle="-" if direct_route else "--")
+        ax.plot([place(result)], [y], marker="D" if direct_route else "o",
+                markersize=7, color=colour)
+
+    ax.text(0.18, 6.93, "First: 5 binary digits", fontsize=13, weight="bold", va="center")
+    local_grid(6.18, first, first + fine_step, x, first, wide)
+    ax.text(0.18, 5.37, "Halfway: even 1.0010 wins.", fontsize=12, va="center")
+
+    # The dotted connector carries the intermediate value into the second rounding.
+    ax.plot([0.48, 0.48], [5.11, 4.90], color=fs.VERMILION, linestyle=":", linewidth=1.4)
+    ax.text(0.67, 5.00, f"carry {float(first):g}", fontsize=12, va="center")
+    ax.text(0.18, 4.59, "Second: 3 binary digits", fontsize=13, weight="bold", va="center")
+    local_grid(3.84, second, direct, first, second, target)
+    ax.text(0.18, 3.03, "Halfway again: even 1.00 wins.", fontsize=12, va="center")
+
+    ax.plot([0.18, 3.62], [2.70, 2.70], color=fs.LINE, linewidth=0.8)
+    ax.text(0.18, 2.42, "Direct: 3 binary digits", fontsize=13, weight="bold", va="center")
+    local_grid(1.67, second, direct, x, direct, target, direct_route=True)
+    ax.text(0.18, 0.86, "x is above the midpoint: choose 1.25.", fontsize=12, va="center")
+    ax.text(0.18, 0.33, "Twice: 1     Once: 1.25", fontsize=14, weight="bold", va="center")
+    return fig
 
 
 def main() -> None:
@@ -248,6 +321,8 @@ def main() -> None:
 
     out = fs.save(fig, "ch02-double-rounding.png", args.out)
     print(f"wrote {out}")
+    mobile = out.with_name(f"{out.stem}-mobile{out.suffix}")
+    print(f"wrote {fs.save(build_mobile(target, wide, x, direct, first, second), mobile.name, mobile)}")
 
 
 if __name__ == "__main__":

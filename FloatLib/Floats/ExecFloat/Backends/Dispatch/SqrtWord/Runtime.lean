@@ -38,7 +38,7 @@ The outer dispatcher retains NaN payload, infinity, signed-zero, and negative-in
 Positive finite nonzero values use the compact decoder and checked model square root. Their
 classification proof makes the finite decoder total, so this path has no exceptional fallback.
 -/
-def generic {fmt : FloatFormat}
+@[specialize fmt] def generic {fmt : FloatFormat}
     (x : Model fmt) : Model fmt :=
   withNaNSelection (chooseNaN1 x) fun hnan =>
     let hnotNaN := (chooseNaN1_eq_none_iff x).1 hnan
