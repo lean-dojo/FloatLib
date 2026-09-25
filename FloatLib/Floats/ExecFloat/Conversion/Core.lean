@@ -90,6 +90,9 @@ structure ConversionStatus where
   wrapped : Bool := false
   /-- A source infinity or exceptional value was mapped to another value class. -/
   mappedSpecial : Bool := false
+  /-- The conversion signaled invalid operation. Binary destinations raise it for a signaling NaN
+  source, as IEEE 754 §7.2 requires. -/
+  invalid : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
 namespace ConversionStatus
@@ -102,6 +105,7 @@ namespace ConversionStatus
   saturated := first.saturated || second.saturated
   wrapped := first.wrapped || second.wrapped
   mappedSpecial := first.mappedSpecial || second.mappedSpecial
+  invalid := first.invalid || second.invalid
 
 end ConversionStatus
 

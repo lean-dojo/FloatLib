@@ -27,10 +27,12 @@ For executable, bit-level binary semantics (NaN/Inf/signed zero), see
 
 ## References
 
-- Flocq project (documentation + sources): https://flocq.gitlabpages.inria.fr/flocq/
-- S. Boldo, G. Melquiond, “Flocq: a unified Coq library for proving floating-point algorithms
-  correct”
-  (ARITH 2011), DOI: 10.1109/ARITH.2011.40
+- S. Boldo and G. Melquiond, “Flocq: A Unified Library for Proving Floating-Point Algorithms
+  in Coq,” ARITH 2011, pp. 243–252, §III (especially §III-D for generic formats),
+  DOI: 10.1109/ARITH.2011.40.
+- Flocq 4.2.2, `src/Core/Defs.v` and `src/Core/Generic_fmt.v`, for the real-valued
+  representation, rounding predicates, and exponent-function format:
+  <https://flocq.gitlabpages.inria.fr/releases/flocq-4.2.2.tar.gz>.
 - IEEE Standard for Floating-Point Arithmetic (IEEE 754-2019)
 - N. J. Higham, *Accuracy and Stability of Numerical Algorithms*, 2nd ed., SIAM, 2002
 -/

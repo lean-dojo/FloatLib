@@ -63,6 +63,10 @@ naming the compiled kernel here is what keeps the exact-dyadic body out of gener
 /--
 Native-storage finite FMA through the compiled unsigned-scale component kernel.
 
+If either multiplicand is zero and the addend is nonzero, the addend is already the exact result.
+Returning its stored word avoids normalization and rounding. Zero addends retain the kernel's
+signed-zero rule.
+
 As for `addFinite?`, the body names `FiniteKernel.fmaComponentsImpl`, the compiled twin of the
 exact `fmaComponents`, because the equality between them is proved in a module this runtime cannot
 import.
@@ -71,7 +75,10 @@ import.
     (x y z : Model fmt) : Option (Model fmt) :=
   match decode? x, decode? y, decode? z with
   | some dx, some dy, some dz =>
-      some <| FiniteKernel.fmaComponentsImpl fmt dx dy dz
+      if (dx.mantissa == 0 || dy.mantissa == 0) && dz.mantissa != 0 then
+        some z
+      else
+        some <| FiniteKernel.fmaComponentsImpl fmt dx dy dz
   | _, _, _ => none
 
 /-- Native-storage positive square root using the shared compact finite kernel. -/

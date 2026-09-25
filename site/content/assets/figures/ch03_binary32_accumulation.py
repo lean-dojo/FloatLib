@@ -22,6 +22,7 @@ the figure and the Lean output cannot drift apart. The representation error of t
 "1000 plus about 1.5 x 10^-5", and is not drawn: everything visible is rounding of the additions.
 
 Run from anywhere: python3 ch03_binary32_accumulation.py [--out PATH]
+Also writes a <stem>-mobile.png companion beside the overview.
 """
 
 from __future__ import annotations
@@ -95,6 +96,47 @@ def first_crossings(totals: list[Fraction]) -> dict[int, int]:
     return crossings
 
 
+def draw_mobile(target: Path, ks: list[int], errors: dict[str, list[float]],
+                crossings: dict[int, int]) -> Path:
+    """Reuse the exact accumulation curves on a narrow canvas."""
+    fig, ax = fs.plt.subplots(figsize=(4.25, 6.2))
+    fig.subplots_adjust(left=0.21, right=0.96, bottom=0.31, top=0.74)
+    fig.suptitle("Adding binary32 0.1", y=0.985, fontsize=14, fontweight="bold")
+
+    for index, j in enumerate(LABELLED_BINADES):
+        k = crossings[j]
+        ax.axvline(k, color=fs.MUTED, linestyle=":", linewidth=1.0, zorder=1)
+        ax.text(k, 0.052 if index % 2 == 0 else 0.030, str(2 ** j),
+                ha="center", va="bottom", fontsize=12, color=fs.MUTED)
+    ax.axhline(0, color=fs.INK, linewidth=0.8, zorder=1)
+    labels = {"nearestEven": "Nearest even", "towardZero": "Toward zero"}
+    for mode, style in SERIES.items():
+        ax.plot(ks, errors[mode], color=style["color"], linestyle=style["linestyle"],
+                linewidth=1.8, zorder=3, label=labels[mode])
+
+    ax.set_xlim(0, STEPS)
+    ax.set_ylim(-0.225, 0.075)
+    ax.set_xticks([0, 2500, 5000, 7500, 10000],
+                  labels=["0", "2,500", "5,000", "7,500", "10,000"])
+    ax.set_yticks([-0.20, -0.15, -0.10, -0.05, 0, 0.05])
+    ax.tick_params(labelsize=12)
+    ax.set_xlabel("Additions performed, k", fontsize=12)
+    ax.set_ylabel("Running total minus k/10", fontsize=12)
+    ax.grid(False, axis="x")
+
+    handles, _ = ax.get_legend_handles_labels()
+    handles.append(Line2D([], [], color=fs.MUTED, linestyle=":", linewidth=1.0,
+                          label="Total crosses a power of two"))
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.09, 0.93),
+               fontsize=12, handlelength=2.0, labelspacing=0.55)
+    fig.text(0.08, 0.16, "Final totals after 10,000 additions",
+             fontsize=12, fontweight="bold")
+    for y, mode in zip((0.105, 0.05), SERIES):
+        fig.text(0.08, y, f"{labels[mode]}: {EXPECTED_TEXT[mode]}",
+                 fontsize=12, color=fs.INK)
+    return fs.save(fig, OUT_NAME, target.with_name(f"{target.stem}-mobile.png"))
+
+
 def draw(out: Path | None) -> Path:
     totals = {mode: accumulate(mode) for mode in SERIES}
     for mode, expected in EXPECTED.items():
@@ -150,7 +192,9 @@ def draw(out: Path | None) -> Path:
     handles.append(Line2D([], [], color=fs.MUTED, linestyle=":", linewidth=1.0,
                           label="the running total reaches a power of two"))
     ax.legend(handles=handles, loc="upper right", frameon=False)
-    return fs.save(fig, OUT_NAME, out)
+    target = fs.save(fig, OUT_NAME, out)
+    draw_mobile(target, ks, errors, crossings)
+    return target
 
 
 def main() -> None:

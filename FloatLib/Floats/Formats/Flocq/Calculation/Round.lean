@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Calculation.Bracket
 public import FloatLib.Floats.Formats.Flocq.Calculation.Operations
-public import FloatLib.Floats.Formats.Flocq.Theory.Format.Digits
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 
 /-!
@@ -17,6 +16,11 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 The effective calculation layer identifies a unit interval `[m, m + 1)` and a location inside it.
 This file turns that finite location data into the integer selected by directed or nearest rounding
 and proves agreement with the rounded-real definitions.
+
+Source counterparts are in Flocq 4.2.2, `src/Calc/Round.v`: `inbetween_int_NE` for
+nearest-even selection, `truncate_correct` for the canonical bracket after truncation, and
+`round_trunc_NE_correct` for agreement with real-valued rounding.
+Release source: <https://flocq.gitlabpages.inria.fr/releases/flocq-4.2.2.tar.gz>.
 -/
 
 @[expose] public section
@@ -593,6 +597,8 @@ theorem round_nearestEven_computed (x : ℝ) :
 
 /--
 Nearest-even selection after canonical truncation agrees with generic rounded-real semantics.
+The input must be positive, and `hexp` requires sufficient precision in the initial bracket;
+`truncate_brackets` alone does not establish the canonical-exponent condition.
 -/
 theorem roundTruncatedNearestEven_correct
     (state : TruncationState) {x : ℝ} (hx : 0 < x) (hl : state.Brackets β x)

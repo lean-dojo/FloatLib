@@ -156,6 +156,11 @@ Shift right into two words, setting the low bit if any bit below the shift posit
 
 When the shifted quotient fits in two words, this is round-to-odd, or sticky, normalization.
 It preserves nearest-even rounding when the final rounder discards at least two more bits.
+
+For the floating-point formulation, see Sylvie Boldo and Guillaume Melquiond,
+"Emulation of a FMA and Correctly Rounded Sums: Proved Algorithms Using Rounding to Odd"
+(2008), §III-C, Theorem 3. The fixed-grid statement used here is
+`FloatLib.Numerics.roundShiftRightEven_shiftRightJam`.
 -/
 @[inline] def shiftRightJam128
     (value : UInt256) (shift : Nat) : UInt128 :=

@@ -46,6 +46,10 @@ __pycache__/
 !/benchmarks/results/tensorlib/
 /benchmarks/results/tensorlib/*
 !/benchmarks/results/tensorlib/results.json
+!/benchmarks/results/public-binary/
+/benchmarks/results/public-binary/*
+!/benchmarks/results/public-binary/measurements.csv
+!/benchmarks/results/public-binary/metadata.json
 /tests/results/*
 !/tests/results/main/
 !/tests/results/main/**

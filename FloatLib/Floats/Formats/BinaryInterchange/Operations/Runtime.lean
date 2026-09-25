@@ -203,29 +203,30 @@ Use that operation when the caller needs signaling-NaN or fractional-input statu
   (roundToIntegralExactWithStatus value mode).value
 
 /--
-Multiply a value by `2^scale` and round once in the selected direction.
+Multiply a value by `2^n`, round once, and report exception flags (IEEE 754 `scaleB`).
 
-Scaling changes the exact dyadic exponent without constructing `2^scale`; the shared rounder
+Scaling changes the exact dyadic exponent without constructing `2^n`; the shared rounder
 then applies the destination format and rounding direction.
 -/
-def scaleBWithStatus {fmt : FloatFormat} (value : Model fmt) (scale : Int)
+def scaleWithStatus {fmt : FloatFormat} (value : Model fmt) (n : Int)
     (mode : IEEERoundingMode := .nearestEven) : IEEEOutcome fmt :=
   match exactValue value with
   | .finite exact =>
-      let scaled : Numerics.Dyadic := { exact with exponent := exact.exponent + scale }
+      let scaled : Numerics.Dyadic := { exact with exponent := exact.exponent + n }
       let rounded := roundDyadicWithRounding fmt mode scaled
       { value := rounded
         status := dyadicRoundingStatus fmt mode scaled rounded }
   | .infinity _ => outcomeWithInvalid value false
   | .nan _ signaling _ => outcomeWithInvalid (quietNaN value) signaling
 
-/-- Value projection of `scaleBWithStatus`. -/
-@[inline] def scaleB {fmt : FloatFormat} (value : Model fmt) (scale : Int)
+/-- Multiply by `2^n` and round once in the selected direction (IEEE 754 `scaleB`). -/
+@[inline] def scale {fmt : FloatFormat} (value : Model fmt) (n : Int)
     (mode : IEEERoundingMode := .nearestEven) : Model fmt :=
-  (scaleBWithStatus value scale mode).value
+  (scaleWithStatus value n mode).value
 
 /--
-Round the exponent of the value's leading binary digit into the same format, using nearest-even.
+Return the leading binary exponent and exception flags (IEEE 754 `logB`).
+The exponent is rounded into the same format using nearest-even.
 
 For a nonzero finite dyadic `±m * 2^e` with `m > 0`, the exact result is `floor(log₂ m) + e`.
 Either infinity returns `nativeOverflow fmt false`, the format's positive overflow value. NaNs are
@@ -239,7 +240,7 @@ What that value is depends on the encoding:
   flag for the zero input.
 * `finite` (signed zero, no NaN) saturates to the most negative finite value.
 -/
-def logBWithStatus {fmt : FloatFormat} (value : Model fmt) : IEEEOutcome fmt :=
+def binaryExponentWithStatus {fmt : FloatFormat} (value : Model fmt) : IEEEOutcome fmt :=
   match exactValue value with
   | .finite exact =>
       if exact.significand == 0 then
@@ -258,9 +259,9 @@ def logBWithStatus {fmt : FloatFormat} (value : Model fmt) : IEEEOutcome fmt :=
       { value := quietNaN value
         status := { invalid := signaling } }
 
-/-- Value projection of `logBWithStatus`. -/
-@[inline] def logB {fmt : FloatFormat} (value : Model fmt) : Model fmt :=
-  (logBWithStatus value).value
+/-- Leading binary exponent, rounded into the same format (IEEE 754 `logB`). -/
+@[inline] def binaryExponent {fmt : FloatFormat} (value : Model fmt) : Model fmt :=
+  (binaryExponentWithStatus value).value
 
 /-!
 ## Status-bearing forms of the quiet operations

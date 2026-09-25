@@ -12,9 +12,6 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Runtime
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Finite
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proof.Boundaries
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proof.Core
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.MatmulProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
@@ -315,8 +312,8 @@ meta def profile
           , ``Model.toReal_roundToIntegral_towardPositiveInfinity
           , ``Model.toReal_roundToIntegral_towardZero
           , ``Model.toReal_roundToIntegral_nearestEven
-          , ``Model.scaleBWithStatus_of_finite
-          , ``Model.logBWithStatus_of_finite_nonzero
+          , ``Model.scaleWithStatus_of_finite
+          , ``Model.binaryExponentWithStatus_of_finite_nonzero
           ]
         definitions :=
           [ ``Model.signBit
@@ -345,8 +342,8 @@ meta def profile
           , ``Model.nextDownWithStatus
           , ``Model.remainderWithStatus
           , ``Model.roundToIntegralExactWithStatus
-          , ``Model.scaleBWithStatus
-          , ``Model.logBWithStatus
+          , ``Model.scaleWithStatus
+          , ``Model.binaryExponentWithStatus
           ]
         applicability := .verifiedForType
         scope :=

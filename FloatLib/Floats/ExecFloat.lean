@@ -19,8 +19,8 @@ public import FloatLib.Floats.ExecFloat.Automation
 
 `ExecFloat F` stores a value in the code type chosen by format `F`. Formats provide arithmetic
 capabilities independently: notation and explicit calls such as `ExecFloat.add` use the same
-selected implementation. `ExecFloat.Proof.*_eq_spec` rewrites each operation to its reference
-definition in `ExecFloat.Spec`.
+selected implementation. `ExecFloat.Proof.*_eq_spec` rewrites each operation, in call or notation
+form, to its reference definition in `ExecFloat.Spec`.
 
 Conversions name the destination type. Mixed operations such as `addAs` name their result type;
 `roundOnce` evaluates a finite expression in that destination's exact domain and quantizes once.

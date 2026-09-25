@@ -6,6 +6,7 @@ Authors: FloatLib Team
 import FloatLib
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import Lean
 
 /-!

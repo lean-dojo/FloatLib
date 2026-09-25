@@ -1,0 +1,24 @@
+{
+  "label": "Operation",
+  "compactDefault": "div",
+  "views": [
+    {
+      "id": "all",
+      "label": "All operations",
+      "src": "format-comparison-div-sqrt.png",
+      "alt": "Median latency in nanoseconds per operation for division, square root, against encoded width on logarithmic axes, with nine-trial 5th to 95th percentile bands."
+    },
+    {
+      "id": "div",
+      "label": "Division",
+      "src": "format-comparison-div-sqrt-div.svg",
+      "alt": "Division: median latency in nanoseconds per operation against encoded width, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); Berkeley SoftFloat; MPFR; native C FPU; CPython float; FloatLib posit (proved); Stillwater Universal posit (software)."
+    },
+    {
+      "id": "sqrt",
+      "label": "Square root",
+      "src": "format-comparison-div-sqrt-sqrt.svg",
+      "alt": "Square root: median latency in nanoseconds per operation against encoded width, on logarithmic axes, with nine-trial 5th to 95th percentile bands. Series: FloatLib binary (proved); Berkeley SoftFloat; MPFR; native C FPU; CPython float; FloatLib posit (proved); Stillwater Universal posit (host sqrt)."
+    }
+  ]
+}

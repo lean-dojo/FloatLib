@@ -271,6 +271,7 @@ function slugify(text) {
 function headingIdsRule(state) {
   const tokens = state.tokens;
   const seen = new Map();
+  state.env.headings = [];
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token.type !== 'heading_open') continue;
@@ -283,7 +284,44 @@ function headingIdsRule(state) {
     seen.set(id, count + 1);
     if (count) id = `${id}-${count + 1}`;
     token.attrSet('id', id);
+    if (token.tag === 'h2') state.env.headings.push({ id, title: text });
   }
+}
+
+let figureFiles = new Set();
+let figureSeries = new Map();
+
+/** Load the views generated alongside a plot, so absent or stale files fail the build. */
+async function loadFigureSeries(directory) {
+  const names = await readdir(directory);
+  figureFiles = new Set(names.map(name => `assets/${name}`));
+  const series = new Map();
+  for (const name of names.filter(name => name.endsWith('-series.json'))) {
+    const data = JSON.parse(await readText(path.join(directory, name)));
+    const stem = name.slice(0, -'-series.json'.length);
+    if (typeof data.label !== 'string' || !data.label.trim()
+      || !Array.isArray(data.views) || data.views.length < 2) {
+      throw new Error(`${name}: expected a label and at least two plot views`);
+    }
+    const ids = new Set();
+    const views = data.views.map(view => {
+      if (typeof view.id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(view.id)
+        || ids.has(view.id) || typeof view.label !== 'string' || !view.label.trim()
+        || typeof view.src !== 'string' || path.basename(view.src) !== view.src
+        || !/\.(png|svg)$/.test(view.src) || !figureFiles.has(`assets/${view.src}`)
+        || (view.alt !== undefined && typeof view.alt !== 'string')) {
+        throw new Error(`${name}: invalid or missing plot view ${JSON.stringify(view)}`);
+      }
+      ids.add(view.id);
+      return { ...view, src: `assets/${view.src}` };
+    });
+    const overview = `assets/${stem}.png`;
+    if (views[0].id !== 'all' || views[0].src !== overview || !ids.has(data.compactDefault)) {
+      throw new Error(`${name}: expected the original overview and an available compact default`);
+    }
+    series.set(overview, { label: data.label, compactDefault: data.compactDefault, views });
+  }
+  return series;
 }
 
 function figureRule(state) {
@@ -308,13 +346,32 @@ function figureRule(state) {
       ? `${Number(state.env.chapterNumber)}.${ordinal}` : String(ordinal);
     const figure = new state.Token('html_block', '', 0);
     figure.block = true;
-    // The image links to its own file so a plot downscaled to the measure can be opened at full
-    // size; the caption repeats the link in words for readers who do not try clicking an image.
+    const series = figureSeries.get(src);
+    const views = series?.views.map(view => ({
+      ...view, alt: view.alt ?? (view.id === 'all' ? alt : `${view.label}. ${caption}`),
+    }));
+    const controls = series
+      ? `<div class="figure-controls"><label for="${id}-view">${escapeHtml(series.label)}</label>`
+        + `<select id="${id}-view" aria-label="${escapeHtml(series.label)}, Figure ${number}" aria-controls="${id}-image">`
+        + views.map(view => `<option value="${view.id}">${escapeHtml(view.label)}</option>`).join('')
+        + '</select></div>'
+      : '';
+    const extra = series
+      ? ` data-views="${escapeHtml(JSON.stringify(views))}" data-compact-default="${series.compactDefault}" data-view="all"`
+      : '';
+    const mobile = src.replace(/(\.[^.]+)$/, '-mobile$1');
+    const imageHtml = `<img id="${id}-image" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy">`;
+    const picture = !series && figureFiles.has(mobile)
+      ? `<picture><source media="(max-width: 600px)" srcset="${escapeHtml(mobile)}">${imageHtml}</picture>`
+      : imageHtml;
+    // Both links follow the selected operation. Explanatory diagrams can use a stacked layout
+    // on phones while keeping the same figure number and mathematical content.
     const fullSize = `href="${escapeHtml(src)}" target="_blank" rel="noreferrer"`;
-    figure.content = `<figure class="figure" id="${escapeHtml(id)}"><a ${fullSize} title="Open the full-size image">`
-      + `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy"></a>`
+    figure.content = `<figure class="figure${series ? ' figure-series' : ''}" id="${escapeHtml(id)}"${extra}>`
+      + controls + `<a class="figure-image" data-figure-file ${fullSize} title="Open the full-size image">`
+      + picture + '</a>'
       + `<figcaption><strong class="figure-number">Figure ${number}.</strong> `
-      + `${caption ? escapeHtml(caption) : ''}<a class="figure-full" ${fullSize}>Full size</a></figcaption>`
+      + `${caption ? escapeHtml(caption) : ''}<a class="figure-full" data-figure-file ${fullSize}>Full size</a></figcaption>`
       + '</figure>\n';
     state.env.figures.push(src);
     tokens.splice(index, 3, figure);
@@ -424,6 +481,7 @@ function renderMarkdown(md, text, where, chapterNumber) {
     html,
     searchText: tokens.map(tokenText).join(' ').replace(/\s+/g, ' ').trim(),
     mentions: [...(env.mentions ?? [])],
+    headings: env.headings ?? [],
     unresolved: env.unresolved ?? [],
     figures: env.figures ?? [],
   };
@@ -482,11 +540,12 @@ async function main() {
     accessed: reference.accessed ?? '',
   }));
 
+  const assetsDir = path.join(siteRoot, 'content', 'assets');
+  figureSeries = await loadFigureSeries(assetsDir);
   const md = createMarkdown(references);
 
   // Chapters.
   const files = await chapterFiles();
-  const assetsDir = path.join(siteRoot, 'content', 'assets');
   const chapters = [];
   for (const file of files) {
     const text = await readText(file);
@@ -520,6 +579,7 @@ async function main() {
       html: rendered.html,
       searchText: rendered.searchText,
       mentions: rendered.mentions,
+      headings: rendered.headings,
     });
   }
   chapters.sort((left, right) => left.number.localeCompare(right.number) || left.slug.localeCompare(right.slug));

@@ -30,7 +30,7 @@ For `0 < mantissa < 2^24` and `scale ≤ 253`, the input value is
 in the 24-bit binary32 significand range before the final nearest-even decision.
 -/
 @[inline] def sqrtPositiveFiniteCore (mantissa scale : UInt64) : UInt32 :=
-  let leading := mantissa.log2
+  let leading := FloatLib.Numerics.FixedWord.log2Word mantissa
   let position := leading + scale
   let shift := if position % 2 == 0 then 47 - leading else 46 - leading
   let scaledMantissa := mantissa <<< shift

@@ -27,10 +27,10 @@ the floor/ceil rounding functions from `FloatLib/Floats/Formats/Flocq/Theory/Rou
 The rounders work for any radix $\beta$ and exponent selection
 function `fexp` satisfying `ValidExp`.
 
-References:
-- IEEE 754-2019 (rounding modes; directed rounding).
-- Higham, *Accuracy and Stability of Numerical Algorithms*, 2nd ed., SIAM, 2002.
-- Flocq (rounded arithmetic on reals).
+The format and rounding model follows S. Boldo and G. Melquiond,
+[Flocq: A Unified Library for Proving Floating-Point Algorithms
+in Coq](https://doi.org/10.1109/ARITH.2011.40), ARITH 2011. `formatRounder` below obtains the two
+inequalities from FloatLib's Flocq grid theorems.
 -/
 
 @[expose] public section

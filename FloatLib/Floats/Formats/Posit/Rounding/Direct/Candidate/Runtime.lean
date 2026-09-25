@@ -10,6 +10,7 @@ import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
 public import FloatLib.Floats.Formats.Posit.Descriptor
 public import FloatLib.Numerics.Exact.Dyadic.Basic
+public import FloatLib.Kernels.FixedWord.Core.Runtime
 
 /-!
 # Executable direct posit candidate generation
@@ -33,7 +34,7 @@ Wider significands use exact `Nat.log2`, so the operation remains total at every
 -/
 @[inline] def leadingBit (value : Nat) : Nat :=
   if h : value < UInt64.size then
-    (UInt64.ofNatLT value h).log2.toNat
+    (FixedWord.log2Word (UInt64.ofNatLT value h)).toNat
   else
     value.log2
 

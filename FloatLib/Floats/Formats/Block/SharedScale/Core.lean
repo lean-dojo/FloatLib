@@ -55,8 +55,11 @@ instance (lanes : Nat) : EncodedFormat (SharedScale lanes) where
 
 /-- Decode every lane using the one scale stored in the block. -/
 @[inline] def decode {lanes : Nat} (code : SharedScaleCode lanes) : Vector Rat lanes :=
-  Vector.ofFn fun lane =>
-    (code.significands[lane.val] : Rat) * scale code.exponent
+  if h : lanes = 0 then
+    ⟨#[], by simp [h]⟩
+  else
+    let factor := scale code.exponent
+    code.significands.map fun (significand : Int) => (significand : Rat) * factor
 
 instance (lanes : Nat) : FormatSemantics (SharedScale lanes) :=
   FormatSemantics.ofFinite _ decode

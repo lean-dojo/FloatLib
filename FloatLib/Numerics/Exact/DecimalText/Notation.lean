@@ -13,6 +13,10 @@ public import FloatLib.Numerics.Exact.DecimalText.Runtime
 These renderers place the decimal point in the digits of an exact decimal record. They perform
 no rounding and retain coefficient trailing zeros. Scientific notation keeps one digit before
 the point and always prints an exponent, including for signed zero.
+
+`formatDyadicCompact` is the exception: it first removes fractional trailing zeros, then prints
+fixed notation such as `1.5` or `6`, falling back to the shorter `e` exponent form when fixed
+notation would need more characters.
 -/
 
 @[expose] public section
@@ -67,5 +71,29 @@ def Decimal.scientificCharacters (value : Decimal) : List Char :=
 /-- Scientific decimal text, with no precision limit or additional rounding. -/
 def Decimal.formatScientific (value : Decimal) : String :=
   String.ofList value.scientificCharacters
+
+/-- Fuel-bounded worker that removes one trailing decimal zero per step while the exponent is
+negative. -/
+def Decimal.trimTrailingZerosLoop : Nat → Decimal → Decimal
+  | 0, value => value
+  | fuel + 1, value =>
+      if value.exponent < 0 ∧ value.significand % 10 = 0 then
+        trimTrailingZerosLoop fuel
+          { value with significand := value.significand / 10, exponent := value.exponent + 1 }
+      else
+        value
+
+/-- Remove fractional trailing zeros from the significand without changing the exact value.
+Nonnegative exponents are left alone, so integers keep their digits. -/
+def Decimal.trimTrailingZeros (value : Decimal) : Decimal :=
+  trimTrailingZerosLoop value.exponent.natAbs value
+
+/-- Exact decimal text of a dyadic without redundant fractional zeros.
+Fixed notation such as `1.5` is used unless the `e` exponent form is shorter. -/
+def formatDyadicCompact (value : Dyadic) : String :=
+  let trimmed := (ofDyadic value).trimTrailingZeros
+  let fixed := trimmed.formatFixed
+  let scaled := trimmed.format
+  if fixed.length ≤ scaled.length then fixed else scaled
 
 end FloatLib.Numerics.DecimalText

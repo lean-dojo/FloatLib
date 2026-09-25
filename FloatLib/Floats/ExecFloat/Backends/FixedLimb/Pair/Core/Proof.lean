@@ -147,12 +147,12 @@ theorem signMask_toNat (h : Eligible fmt) :
 /-- The low storage word is the low 64 bits of the encoding. -/
 theorem low_word_toNat (x : Model fmt) :
     (toWords x).lo.toNat = x.toNatBits % 2 ^ 64 := by
-  simp [toWords, Model.toNatBits, BitVec.extractLsb']
+  simp [toWords, UInt128.ofNat]
 
 /-- The high storage word is the encoding shifted down by 64 bits. -/
 theorem high_word_toNat (h : Eligible fmt) (x : Model fmt) :
     (toWords x).hi.toNat = x.toNatBits / 2 ^ 64 := by
-  simp only [toWords, BitVec.extractLsb', Nat.shiftRight_eq_div_pow]
+  simp only [toWords, UInt128.ofNat, Nat.shiftRight_eq_div_pow]
   change
     (BitVec.ofNat 64 (x.toNatBits / 2 ^ 64)).toNat =
       x.toNatBits / 2 ^ 64

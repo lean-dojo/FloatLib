@@ -161,13 +161,15 @@ theorem floatToIntSaturating_of_exactValue_eq_infinity
   exact ⟨by simp [floatToIntSaturating, hvalue],
     floatToInt_of_exactValue_eq_infinity x .towardZero negative hvalue⟩
 
-/-- NaN maps to zero natively while the checked API reports its payload. -/
+/--
+NaN maps to zero natively. The checked failure retains its sign, signaling class, and payload.
+-/
 theorem floatToIntSaturating_of_exactValue_eq_nan
     {fmt : FloatFormat} (width : Nat) (x : Model fmt) (negative signaling : Bool) (payload : Nat)
     (hvalue : Model.exactValue x = .nan negative signaling payload) :
     floatToIntSaturating width x = FixedInt.ofInt 0 ∧
       floatToInt (width := width) x .towardZero =
-        .failure (.exceptional .source (.nan (some payload))) := by
+        .failure (.exceptional .source (.nan (some payload) negative signaling)) := by
   exact ⟨by simp [floatToIntSaturating, hvalue],
     floatToInt_of_exactValue_eq_nan x .towardZero negative signaling payload hvalue⟩
 

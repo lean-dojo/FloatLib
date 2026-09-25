@@ -25,8 +25,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /-- Quiet comparison preserves the model's answer and all five flags. -/
 theorem compareQuiet_eq_model (predicate : Model.Comparison.Predicate) (x y : Value) :

@@ -8,12 +8,15 @@ module
 
 public import FloatLib.Numerics.Enclosure.Elementary.Termination
 public import FloatLib.Numerics.Enclosure.Comparison.Cache
+public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridRuntime
 
 /-!
 # Exact comparisons with natural logarithms and exponentials
 
-The runtime compares rational enclosures, doubling the Taylor degree until the ordering is
-known. The imported termination proof is erased during compilation.
+The logarithm comparator first tries a finite binary-grid enclosure. Inconclusive probes fall
+back to exact rational enclosures, doubling the Taylor degree until the ordering is known.
+The grid precision limits only the precheck, not the accuracy of the total comparison.
+The imported termination proof is erased during compilation.
 
 `compareExp` uses `exp x < y ↔ x < log y` for positive `y`. This avoids materializing an
 enormous exponential when the destination will saturate. `prepareExp` instead caches direct
@@ -28,9 +31,16 @@ namespace FloatLib.Numerics.ElementaryComparison
 /-- Compare the natural logarithm of a positive rational with a rational boundary. -/
 def compareLog (argument boundary : ℚ) (hpositive : 0 < argument) : Ordering :=
   if hone : argument = 1 then cmp 0 boundary
-  else Enclosure.Comparison.compare
-    (fun n => Enclosure.log argument (2 ^ n)) boundary
-    (Enclosure.exists_log_separating argument boundary hpositive hone)
+  else
+    -- Estimate the boundary's resolution from its denominator, with 32 guard bits.
+    let bits := boundary.den.log2 + 32
+    let interval := Enclosure.BinaryGrid.log argument bits
+      (Enclosure.BinaryGrid.logPrecision bits argument bits)
+    if interval.hi < boundary then .lt
+    else if boundary < interval.lo then .gt
+    else Enclosure.Comparison.compare
+      (fun n => Enclosure.log argument (2 ^ n)) boundary
+      (Enclosure.exists_log_separating argument boundary hpositive hone)
 
 /-- Compare a rational-input exponential with any rational boundary. -/
 def compareExp (argument boundary : ℚ) : Ordering :=

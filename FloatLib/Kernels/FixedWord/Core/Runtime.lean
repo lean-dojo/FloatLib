@@ -59,29 +59,27 @@ namespace FloatLib.Numerics.FixedWord
 Use native nearest-even shifting whenever the input fits in one machine word.
 
 `Core.Proof.Rounding` registers this dispatcher as the `@[csimp]` replacement for
-`Numerics.roundShiftRightEven`. The arbitrary-precision branch therefore repeats the logical
-definition instead of calling it, so compiler simplification cannot recurse through the
-replacement theorem.
+`Numerics.roundShiftRightEven`. Wider inputs retain the guard bit with the quotient and reuse
+those bits to test for a discarded suffix. Only a set guard bit with an even quotient needs that
+test; no halfway marker or remainder is constructed.
 -/
 @[inline] def roundShiftRightEvenNat (value shift : Nat) : Nat :=
   if _hvalue : value < 2 ^ 64 then
     (roundShiftRightEven (UInt64.ofNat value) shift).toNat
   else if shift == 0 then
     value
-  else if value.log2 + 1 < shift then
-    0
   else
-    let quotient := Nat.shiftRight value shift
-    let remainder := shiftRightRemainder value shift
-    let half := Nat.shiftLeft 1 (shift - 1)
-    if remainder < half then
-      quotient
-    else if half < remainder then
-      quotient + 1
-    else if quotient % 2 == 0 then
-      quotient
+    let amount := shift - 1
+    let retained := Nat.shiftRight value amount
+    let quotient := Nat.shiftRight retained 1
+    let lowByte := UInt8.ofNat retained
+    if (lowByte &&& 1) != 0 then
+      if ((lowByte >>> 1) &&& 1) != 0 || Nat.shiftLeft retained amount != value then
+        quotient + 1
+      else
+        quotient
     else
-      quotient + 1
+      quotient
 
 /--
 Round the native quotient `num / den` to nearest, with ties to even.
@@ -181,6 +179,38 @@ conversion in fixed-carrier rounding kernels.
 
 /-! ## Machine-width bit-field primitives -/
 
+/-- Select the half containing the leading bit and add its offset to the next stage. -/
+@[inline] def log2WordStep (shift : UInt64) (next : UInt64 → UInt64)
+    (value : UInt64) : UInt64 :=
+  let high := value >>> shift
+  let offset := if high == 0 then 0 else shift
+  let rest := if high == 0 then value else high
+  offset + next rest
+
+/--
+Floor binary logarithm using at most four word stages and a packed lookup; zero maps to zero.
+
+Zero and one return immediately. Other four-bit values use the packed lookup directly, and
+larger byte-sized values need only the final stage.
+For larger words, each preceding stage halves the range of possible leading-bit positions. The
+remaining four-bit value indexes a two-bit entry in the scalar constant `0xffffaa50`. All work stays
+in machine words, with no loop whose length grows with the position of the leading bit.
+`Core.Proof.Word` proves equality with `UInt64.log2` on the entire word range.
+-/
+@[inline] def log2Word (value : UInt64) : UInt64 :=
+  -- 0xffffaa50 packs floor(log2 n) for n = 0..15, with the zero entry defined as zero:
+  -- 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3.
+  let lookup := fun rest : UInt64 => ((0xffffaa50 : UInt64) >>> (rest <<< 1)) &&& 3
+  let last := log2WordStep 4 lookup
+  if value < 2 then
+    0
+  else if value < 16 then
+    lookup value
+  else if value < 256 then
+    last value
+  else
+    log2WordStep 32 (log2WordStep 16 (log2WordStep 8 last)) value
+
 /--
 Read one bit from a machine word using a machine-word index.
 
@@ -213,7 +243,7 @@ The complete-width branch avoids the modulo-64 interpretation of `1 <<< 64`.
 /--
 Count leading zeroes in the retained low-width field without crossing through `Nat`.
 
-Callers establish `width ≤ 64`. For a nonzero field, `UInt64.log2` gives its highest set-bit index,
+Callers establish `width ≤ 64`. For a nonzero field, `log2Word` gives its highest set-bit index,
 so the result is `width - bitLength`; the subtraction is exact under that capacity contract.
 -/
 @[inline] def countLeadingZerosWord (value width : UInt64) : UInt64 :=
@@ -221,7 +251,7 @@ so the result is `width - bitLength`; the subtraction is exact under that capaci
   if truncated == 0 then
     width
   else
-    width - (truncated.log2 + 1)
+    width - (log2Word truncated + 1)
 
 /--
 Count a leading equal-bit run in a low-width machine field.
@@ -270,7 +300,10 @@ end UInt128
 /--
 Exact native multiplication of two 64-bit words.
 
-The implementation follows the four-half-word decomposition from Hacker's Delight.
+The same half-word carry decomposition appears in Go 1.23.0, `math/bits.Mul64`:
+https://github.com/golang/go/blob/go1.23.0/src/math/bits/bits.go#L470-L483
+See also Henry S. Warren, Jr., *Hacker's Delight*, 2nd ed., §8.2,
+"High-Order Half of 64-Bit Product".
 -/
 @[inline] def mul64 (x y : UInt64) : UInt128 :=
   let x0 := low32 x

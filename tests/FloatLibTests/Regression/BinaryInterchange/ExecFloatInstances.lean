@@ -188,8 +188,38 @@ def failConfiguredReductions : Thunk Nat := ⟨fun _ =>
       | _ => false
     ]⟩
 
+/-! ## Correctly rounded integral powers -/
+
+/-- Binary32 model value from its bit pattern. -/
+def modelBinary32 (bits : Nat) : Model FloatFormat.binary32 :=
+  Model.ofNatBits (fmt := FloatFormat.binary32) bits
+
+/--
+Integral exponents round the exact power once. The first case was off by one ulp when `pow`
+multiplied step by step; the others exercise exponents far beyond any exact computation.
+-/
+def failIntegralPowers : Thunk Nat := ⟨fun _ =>
+  let bits (base exponent : Nat) :=
+    Model.toNatBits (Model.pow (modelBinary32 base) (modelBinary32 exponent))
+  countFailures
+    [ bits 0x3feafa59 0x40400000 == Model.toNatBits (Model.powInt (modelBinary32 0x3feafa59) 3)
+    , bits 0x3feafa59 0x40400000 == 0x40c5f889
+    -- (1 + 2^-23)^(2^23) rounds to e.
+    , bits 0x3f800001 0x4b000000 == 0x402df854
+    -- (1 - 2^-24)^(2^24) rounds one ulp below the rounded value of 1/e.
+    , bits 0x3f7fffff 0x4b800000 == 0x3ebc5ab1
+    -- 2^(2^127) overflows, (-1)^(2^127) is one, (-1)^(2^24 - 1) is minus one.
+    , bits 0x40000000 0x7f000000 == 0x7f800000
+    , bits 0xbf800000 0x7f000000 == 0x3f800000
+    , bits 0xbf800000 0x4b7fffff == 0xbf800000
+    -- 2^(-2^127) underflows to zero; (-2)^(-(2^24 - 1)) keeps its sign.
+    , bits 0x40000000 0xff000000 == 0x00000000
+    , bits 0xc0000000 0xcb7fffff == 0x80000000
+    ]⟩
+
 def totalFailures : Thunk Nat := ⟨fun _ =>
-  failCustomInstances.get + failWideExponentClassification.get + failConfiguredReductions.get⟩
+  failCustomInstances.get + failWideExponentClassification.get + failConfiguredReductions.get +
+    failIntegralPowers.get⟩
 
 def report : Thunk String := ⟨fun _ =>
   let failedNames :=
@@ -199,6 +229,7 @@ def report : Thunk String := ⟨fun _ =>
     , s!"failedCustomChecks: {failedNames}"
     , s!"wideExponentClassification: {failWideExponentClassification.get}"
     , s!"configuredReductions: {failConfiguredReductions.get}"
+    , s!"integralPowers: {failIntegralPowers.get}"
     , s!"TOTAL: {totalFailures.get}"
     ]⟩
 

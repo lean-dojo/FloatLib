@@ -101,13 +101,78 @@ def readText (text : String) : Option TextValue :=
               let (negative, rest) := Numerics.DecimalText.splitSign text.toList
               Numerics.SpecialText.parseSpecial TextValue.infinity TextValue.nan negative rest
 
-/-- One exact decimal-to-binary rounding, paired with the shared binary status calculation. -/
-def convertDecimalText (fmt : FloatFormat) (mode : IEEERoundingMode)
+/--
+One exact decimal-to-binary rounding, paired with the shared binary status calculation.
+
+This is the reference conversion. It forms the exact rational `significand * 10^exponent`, so its
+cost grows with the written exponent. `convertDecimalText` computes the same outcome after
+clamping the exponent with `clampDecimalExponent`.
+-/
+def convertDecimalTextExact (fmt : FloatFormat) (mode : IEEERoundingMode)
     (exact : Numerics.DecimalText.Decimal) : IEEEOutcome fmt :=
   let magnitude := (exact.significand : Rat) * (10 : Rat) ^ exact.exponent
   let value := roundRatWithRounding fmt mode exact.negative magnitude.num.natAbs magnitude.den
   { value, status := rationalRoundingStatus fmt mode exact.negative
       magnitude.num.natAbs magnitude.den value }
+
+/-- The binary leading exponent `log2 significand + exponent` of a dyadic. -/
+def dyadicLeadingExponent (value : Numerics.Dyadic) : Int :=
+  (value.significand.log2 : Int) + value.exponent
+
+/--
+A binary leading exponent at or above which every rational rounds to the overflow result.
+
+It exceeds the exponent tests of each rounder and the leading exponents of the overflow
+thresholds used by the status classifier, so both value and status are those of overflow.
+-/
+def decimalSaturationHigh (fmt : FloatFormat) : Int :=
+  max (max (fmt.maxNormalExponent + 1) ((FloatFormat.ieeeMaxNormalExponent fmt : Int) + 1))
+    (max (dyadicLeadingExponent (overflowMidpoint fmt) + 1)
+      (dyadicLeadingExponent (overflowLimit fmt) + 1))
+
+/--
+A binary leading exponent at or below which every positive rational rounds to the same result.
+
+It lies below each rounder's zero and least-subnormal cutoffs, below the least subnormal
+exponent, and below every threshold used by the status classifier, so the rounded value and its
+flags do not depend on the exact magnitude.
+-/
+def decimalSaturationLow (fmt : FloatFormat) : Int :=
+  min (min (min (fmt.minSubnormalExponent - 2)
+        (-(FloatFormat.normalMantissaExpOffset fmt : Int) - 1))
+      (min (fmt.maxNormalExponent - 1) ((FloatFormat.ieeeMaxNormalExponent fmt : Int) - 1)))
+    (min (min (dyadicLeadingExponent (overflowMidpoint fmt) - 1)
+        (dyadicLeadingExponent (overflowLimit fmt) - 1))
+      (min (dyadicLeadingExponent (underflowMidpoint fmt) - 1)
+        (min (dyadicLeadingExponent (minNormalDyadic fmt) - 1)
+          (dyadicLeadingExponent (underflowPredecessor fmt) - 1))))
+
+/--
+Clamp a decimal exponent to a range where the binary conversion is still exact but cheap.
+
+A zero significand gets exponent zero. Otherwise the exponent is kept between a lower bound, where
+the magnitude is below every underflow threshold, and an upper bound, where it is above every
+overflow threshold. `convertDecimalText_eq_exact` proves that the clamp never changes the result.
+-/
+def clampDecimalExponent (fmt : FloatFormat) (exact : Numerics.DecimalText.Decimal) :
+    Numerics.DecimalText.Decimal :=
+  if exact.significand = 0 then
+    { exact with exponent := 0 }
+  else
+    let high : Int := max 0 (decimalSaturationHigh fmt / 3 + 1)
+    let low : Int :=
+      min 0 ((decimalSaturationLow fmt - (exact.significand.log2 : Int) - 1) / 3)
+    { exact with exponent := max low (min high exact.exponent) }
+
+/--
+One exact decimal-to-binary rounding, paired with the shared binary status calculation.
+
+The exponent is first clamped by `clampDecimalExponent`, so inputs such as `1e99999999999` finish
+at once. The outcome equals `convertDecimalTextExact` for every input.
+-/
+def convertDecimalText (fmt : FloatFormat) (mode : IEEERoundingMode)
+    (exact : Numerics.DecimalText.Decimal) : IEEEOutcome fmt :=
+  convertDecimalTextExact fmt mode (clampDecimalExponent fmt exact)
 
 /-- One hexadecimal or legacy dyadic conversion with binary rounding status. -/
 def convertDyadicText (fmt : FloatFormat) (mode : IEEERoundingMode)
@@ -150,7 +215,9 @@ namespace TextParser
 
 /--
 Implementation core for character input, reporting all five IEEE exceptions.
-Finite input is converted from its complete exact value without resource limits.
+Finite input is converted from its complete exact value. Exponents far outside the format's
+range are clamped first, which leaves the outcome unchanged, so no input length or exponent limit
+is needed for termination.
 The caller-facing entrypoint is `Model.parse` in `BoundedParsing`.
 -/
 def run (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :

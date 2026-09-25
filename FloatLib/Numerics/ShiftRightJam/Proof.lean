@@ -14,11 +14,10 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Nearest-even rounding through guard and sticky bits
 
-The width-generic rounder `Numerics.roundShiftRightEven` compares the discarded remainder with the
-halfway value `2^(shift - 1)`. Limb kernels can avoid constructing that value by using three
-Boolean tests: the guard bit just below the kept quotient, whether
-any lower bit is set, and the parity of the quotient. This module proves that restatement and its
-consequences for the sticky-bit normalisation used by addition and fused multiply-add.
+The width-generic rounder `Numerics.roundShiftRightEven` inspects the guard bit, retained parity,
+and sticky bits. Kernels can therefore compress discarded bits before rounding a sum or fused
+multiply-add. The proofs below establish how far that compression may go and how it interacts
+with alignment and subtraction.
 
 * `roundShiftRightEven_eq_guard_sticky` is the three-bit form of nearest-even rounding.
 * `roundShiftRightEven_shiftRightJam` shows that jamming every bit below position `j` into one
@@ -43,53 +42,6 @@ namespace FloatLib.Numerics
 /-- The number one has no bits above position zero. -/
 theorem testBit_one_succ (i : Nat) : (1 : Nat).testBit (i + 1) = false :=
   Nat.testBit_lt_two_pow (Nat.one_lt_two_pow (Nat.succ_ne_zero i))
-
-/-- The remainder of a shift splits into the sticky bits and the guard bit. -/
-theorem mod_two_pow_succ_eq (x t : Nat) :
-    x % 2 ^ (t + 1) = x % 2 ^ t + 2 ^ t * (if x.testBit t then 1 else 0) := by
-  rw [Nat.mod_pow_succ, Nat.testBit_eq_decide_div_mod_eq]
-  have hmod : x / 2 ^ t % 2 < 2 := Nat.mod_lt _ (by decide)
-  by_cases h : x / 2 ^ t % 2 = 1
-  · simp [h]
-  · have hzero : x / 2 ^ t % 2 = 0 := by omega
-    simp [hzero]
-
-/--
-Nearest-even rounding in guard-and-sticky form.
-
-The quotient is incremented exactly when the guard bit is set and either a sticky bit is set or
-the quotient is odd.
--/
-theorem roundShiftRightEven_eq_guard_sticky (x s : Nat) (hs : 0 < s) :
-    roundShiftRightEven x s =
-      x / 2 ^ s +
-        if x.testBit (s - 1) && (decide (x % 2 ^ (s - 1) ≠ 0) || x.testBit s) then 1 else 0 := by
-  obtain ⟨t, rfl⟩ : ∃ t, s = t + 1 := ⟨s - 1, by omega⟩
-  rw [roundShiftRightEven_def]
-  simp only [Nat.add_one_ne_zero, beq_iff_eq, ite_false, Nat.shiftRight_eq', Nat.shiftLeft_eq',
-    Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq, Nat.add_sub_cancel]
-  have hremainder : x - x / 2 ^ (t + 1) * 2 ^ (t + 1) = x % 2 ^ (t + 1) := by
-    have := Nat.div_add_mod' x (2 ^ (t + 1))
-    omega
-  rw [hremainder, mod_two_pow_succ_eq]
-  have hlow : x % 2 ^ t < 2 ^ t := Nat.mod_lt _ (Nat.two_pow_pos t)
-  have hbitParity : x.testBit (t + 1) = decide (x / 2 ^ (t + 1) % 2 = 1) :=
-    Nat.testBit_eq_decide_div_mod_eq
-  cases hguard : x.testBit t
-  · simp only [Bool.false_eq_true, ↓reduceIte, Nat.mul_zero, Nat.add_zero, Bool.false_and]
-    rw [ite_eq_left hlow]
-  · simp only [↓reduceIte, Nat.mul_one, Bool.true_and]
-    rw [ite_eq_right (by omega)]
-    by_cases hsticky : x % 2 ^ t = 0
-    · rw [ite_eq_right (by omega)]
-      simp only [hsticky, ne_eq, not_true_eq_false, decide_false, Bool.false_or, hbitParity]
-      by_cases hodd : x / 2 ^ (t + 1) % 2 = 1
-      · rw [ite_eq_right (by omega)]
-        simp [hodd]
-      · rw [ite_eq_left (by omega)]
-        simp [hodd]
-    · rw [ite_eq_left (by omega)]
-      simp [hsticky]
 
 /-- The nearest-even quotient is at most the successor of the truncated quotient. -/
 theorem roundShiftRightEven_le_succ (x s : Nat) :

@@ -57,6 +57,8 @@ finite-only exceptional-value policies.
 `Configured` supplies the `ExecFloat.Binary` API. The descriptor-level `Model` supports bit-level
 and mathematical proofs. Scalar conversions and finite reductions are included; reductions
 accumulate the exact sum or dot product and round the final result once.
+Square, reciprocal square root, hypotenuse, integer powers, and integer-degree roots also
+round once, with real-rounding theorems for conventional IEEE descriptors.
 
 ## References
 
@@ -77,8 +79,10 @@ Elementary functions (`exp`, `log`, `sin`, ...) and `Model.pow` are not on this 
 Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the
 model barrel `BinaryInterchange.Transcendentals`) by name to install `Model.exp`,
 `Model.pow`, and `MathFunctions`. These are software approximation kernels without a general
-accuracy theorem; they do not call the host FPU. Certified `sqrt` and `abs` are available here;
-their `MathFunctions` aliases require the elementary-function import.
+accuracy theorem; they do not call the host FPU. For an IEEE descriptor, `Model.pow` with a finite
+nonzero base and a finite integral exponent is correctly rounded whenever its result is finite
+(`Model.Power.toReal_pow_of_eq_intCast`). Certified `sqrt` and `abs` are available here; their
+`MathFunctions` aliases require the elementary-function import.
 
 Import `FloatLib.Floats.ExecFloat` for the universal capability API, or this module directly for
 descriptor-model execution. Import `FloatLib.Floats.Formats.BinaryInterchange.Semantics` for the

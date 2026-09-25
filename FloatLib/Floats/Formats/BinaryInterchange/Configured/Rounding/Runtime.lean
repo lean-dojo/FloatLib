@@ -12,14 +12,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Explicit rounding runtime for configured binary values
 
-The six IEEE arithmetic operations lift from the descriptor model to the ordinary configured
-`ExecFloat.Binary` carrier with an explicit rounding direction:
+The six IEEE arithmetic operations lift from the descriptor model to configured binary values
+with an explicit rounding direction:
 
 ```lean
 open scoped FloatLib.IEEERounding
 
-ExecFloat.Binary.add x y (rounding := +∞)
-ExecFloat.Binary.div x y (rounding := -∞)
+ExecFloat.Binary.addWithRounding x y (rounding := +∞)
+ExecFloat.Binary.divWithRounding x y (rounding := -∞)
 ```
 
 Operands come first. The rounding argument is required and may be supplied by name. No global
@@ -54,7 +54,9 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+  ExecFloat.Binary format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite plan code
 
 /--
 A configured binary result paired with the IEEE exception indicators raised by one operation.
@@ -62,7 +64,8 @@ A configured binary result paired with the IEEE exception indicators raised by o
 This is an alias for a pair rather than another result structure. Pattern matching exposes the
 configured value first and its `Model.IEEEStatus` second.
 -/
-abbrev IEEEOutcome := Value × Model.IEEEStatus
+abbrev IEEEOutcome :=
+  FloatLib.Floats.ExecFloat (Configured.Family format code plan) × Model.IEEEStatus
 
 namespace IEEEOutcome
 
@@ -79,25 +82,25 @@ namespace IEEEOutcome
 end IEEEOutcome
 
 /-- Add two configured values and round the exact sum in the selected IEEE direction. -/
-@[inline] def add
+@[inline] def addWithRounding
     (left right : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan)
     (Model.addWithRounding rounding) left right
 
 /-- Subtract two configured values and round the exact difference in the selected direction. -/
-@[inline] def sub
+@[inline] def subWithRounding
     (left right : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan)
     (Model.subWithRounding rounding) left right
 
 /-- Multiply two configured values and round the exact product in the selected direction. -/
-@[inline] def mul
+@[inline] def mulWithRounding
     (left right : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan)
     (Model.mulWithRounding rounding) left right
 
 /-- Divide two configured values and round the exact quotient in the selected direction. -/
-@[inline] def div
+@[inline] def divWithRounding
     (left right : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan)
     (Model.divWithRounding rounding) left right
@@ -105,15 +108,15 @@ end IEEEOutcome
 /--
 Form the exact product-plus-addend and round once in the selected direction.
 
-This is the IEEE fused operation; `mul` followed by `add` rounds twice.
+This is the IEEE fused operation; `mulWithRounding` followed by `addWithRounding` rounds twice.
 -/
-@[inline] def fma
+@[inline] def fmaWithRounding
     (left right addend : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftTernary (Model := Model format) (plan := plan)
     (Model.fmaWithRounding rounding) left right addend
 
 /-- Take square root and round the exact nonnegative result in the selected direction. -/
-@[inline] def sqrt
+@[inline] def sqrtWithRounding
     (value : Value) (rounding : Model.IEEERoundingMode) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan)
     (Model.sqrtWithRounding rounding) value

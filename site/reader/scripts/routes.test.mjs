@@ -9,6 +9,7 @@ const { outputText } = ts.transpileModule(source, {
 });
 // The transpiled router runs from a data URL, so give its JSON import an absolute module URL.
 const aliasesText = await readFile(new URL('../src/chapter-aliases.json', import.meta.url), 'utf8');
+const aliases = JSON.parse(aliasesText);
 const aliasModule = `export default JSON.parse(${JSON.stringify(aliasesText)});`;
 const aliasUrl = `data:text/javascript;base64,${Buffer.from(aliasModule).toString('base64')}`;
 const aliasImport = /(['"])\.\/chapter-aliases\.json\1/;
@@ -71,11 +72,12 @@ test('chapter anchors and malformed escapes retain their existing behavior', () 
   assert.deepEqual(parseRoute('#/node/%invalid'), { kind: 'node', id: '%invalid' });
 });
 
-test('merged chapter bookmarks open the corresponding section', () => {
+test('legacy chapter bookmarks open their current chapter or section', () => {
   const defaults = [
     ['what-imprecision-has-cost', 'a-short-history-of-floating-point', 'what-imprecision-has-cost'],
-    ['comparing-with-lean-native-floats', 'performance', 'comparing-with-leans-native-floats'],
+    ['comparing-with-lean-native-floats', 'lean-native-floats'],
     ['a-tour-of-the-codebase', 'using-the-library', 'a-tour-of-the-codebase'],
+    ['validation-against-the-outside-world', 'external-validation'],
   ];
   for (const [oldSlug, slug, heading] of defaults) {
     assert.deepEqual(parseRoute(`#${chapterPath(oldSlug)}`), { kind: 'chapter', slug, heading });
@@ -85,7 +87,7 @@ test('merged chapter bookmarks open the corresponding section', () => {
 test('incident and native-float bookmarks preserve individual headings', () => {
   for (const [oldSlug, slug] of [
     ['what-imprecision-has-cost', 'a-short-history-of-floating-point'],
-    ['comparing-with-lean-native-floats', 'performance'],
+    ['comparing-with-lean-native-floats', 'lean-native-floats'],
   ]) {
     for (const heading of ['an-existing-section', 'a heading/with α?', '%invalid']) {
       assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, heading)}`), {
@@ -115,22 +117,115 @@ test('old references chapter bookmarks open the bibliography', () => {
 test('every old tour heading follows its section to the current chapter', () => {
   const destinations = [
     ['the-shape-of-the-tree', 'using-the-library', 'a-tour-of-the-codebase'],
-    ['numerics-exact-values-and-contracts', 'the-numerical-models'],
+    ['numerics-exact-values-and-contracts', 'the-numerical-models',
+      'a-common-interface-for-numerical-formats'],
     ['kernels-fixed-word-algorithms-and-limb-arrays', 'kernels-fixed-word-algorithms'],
-    ['formats-encodings-and-their-meaning', 'ieee-binary-formats'],
+    ['formats-encodings-and-their-meaning', 'ieee-binary-formats',
+      'from-executable-arithmetic-to-real-rounding'],
     ['execfloat-the-carrier-and-its-backends', 'backends-and-the-planner'],
-    ['public-and-private-imports', 'why-execution-and-proofs-are-separate'],
+    ['public-and-private-imports', 'why-execution-and-proofs-are-separate',
+      'runtimelean-and-prooflean'],
     ['tests-what-is-validated', 'external-validation'],
     ['benchmarks-and-the-website', 'why-execution-and-proofs-are-separate',
       'how-the-website-examples-are-checked'],
     ['what-the-check-scripts-enforce', 'why-execution-and-proofs-are-separate',
       'the-check-that-enforces-the-split'],
-    ['examples-and-extension-guides', 'using-the-library'],
+    ['examples-and-extension-guides', 'further-examples', 'extending-the-library'],
   ];
   for (const [oldHeading, slug, heading = oldHeading] of destinations) {
     const route = parseRoute(`#${chapterPath('a-tour-of-the-codebase', oldHeading)}`);
     assert.deepEqual(route, { kind: 'chapter', slug, heading });
     assert.deepEqual(parseRoute(`#${chapterPath(route.slug, route.heading)}`), route);
+  }
+});
+
+test('moved sections resolve directly across the revised chapters', () => {
+  const destinations = [
+    ['using-the-library', 'library-structure', 'using-the-library',
+      'proving-arithmetic-agrees-with-its-specification'],
+    ['using-the-library', 'complex-arithmetic', 'further-examples', 'complex-arithmetic'],
+    ['using-the-library', 'reductions-that-round-once', 'further-examples',
+      'sums-and-dot-products-with-one-rounding'],
+    ['why-execution-and-proofs-are-separate', 'lean-compilation-and-code-extraction',
+      'why-execution-and-proofs-are-separate', 'compiler-replacements-with-csimp'],
+    ['ieee-binary-formats', 'applying-a-real-valued-arithmetic-theorem', 'ieee-binary-formats',
+      'from-executable-arithmetic-to-real-rounding'],
+    ['ieee-binary-formats', 'decimal-interchange', 'decimal-arithmetic',
+      'encoding-the-complete-datum'],
+    ['ieee-binary-formats', 'stable-decimal-exponential-and-logarithm', 'elementary-functions',
+      'certified-decimal-functions'],
+    ['low-precision-formats-for-machine-learning', 'affine-integer-quantization',
+      'fixed-point-logarithmic-codebook-and-block-scaled', 'affine-quantization'],
+    ['posits-and-the-quire', 'where-the-posit-work-stops', 'posits-and-the-quire',
+      'rounding-thresholds-and-exceptional-values'],
+    ['kernels-fixed-word-algorithms', 'capacity-bounds-and-compiler-assumptions',
+      'kernels-fixed-word-algorithms', 'capacity-bounds-and-backend-dispatch'],
+    ['backends-and-the-planner', 'choosing-and-caching-an-implementation',
+      'backends-and-the-planner', 'following-a-public-arithmetic-call'],
+    ['performance', 'timing-results', 'performance', 'public-binary-arithmetic'],
+    ['performance', 'comparing-with-leans-native-floats', 'performance',
+      'host-arithmetic-as-a-reference'],
+  ];
+  for (const [oldSlug, oldHeading, slug, heading] of destinations) {
+    assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
+      kind: 'chapter', slug, heading,
+    });
+  }
+});
+
+test('native-float section bookmarks follow the split from either former chapter', () => {
+  const destinations = [
+    ['leans-model-and-its-compiled-operations'],
+    ['both-implementations-lose-associativity'],
+    ['converting-to-native-floats-changes-nan-payloads'],
+    ['proofs-relating-floatlib-to-leans-float-model'],
+    ['integer-conversions-in-lean-434'],
+    ['arithmetic-through-the-same-model'],
+    ['formats-rounding-directions-and-status'],
+    ['opting-into-guarded-host-operations'],
+    ['the-same-finite-bits-including-rounding-effects', 'both-implementations-lose-associativity'],
+    ['nan-payloads-change-at-the-native-conversion-boundary',
+      'converting-to-native-floats-changes-nan-payloads'],
+    ['the-proved-conversion-and-arithmetic-bridges',
+      'proofs-relating-floatlib-to-leans-float-model'],
+  ];
+  for (const oldSlug of ['performance', 'comparing-with-lean-native-floats']) {
+    for (const [oldHeading, heading = oldHeading] of destinations) {
+      assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
+        kind: 'chapter', slug: 'lean-native-floats', heading,
+      });
+    }
+  }
+  assert.deepEqual(parseRoute('#/chapter/comparing-with-lean-native-floats/comparing-with-leans-native-floats'), {
+    kind: 'chapter', slug: 'lean-native-floats', heading: 'leans-model-and-its-compiled-operations',
+  });
+});
+
+test('older chapter aliases also follow later section moves in one pass', () => {
+  for (const [oldSlug, oldHeading, slug, heading] of [
+    ['a-tour-of-the-codebase', 'reductions-that-round-once', 'further-examples',
+      'sums-and-dot-products-with-one-rounding'],
+    ['validation-against-the-outside-world', 'posit-hyperbolic-functions',
+      'external-validation', 'rounding-transcendental-results'],
+    ['validation-against-the-outside-world', 'posit-decimal-text',
+      'external-validation', 'decimal-datums-and-exact-text'],
+  ]) {
+    assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
+      kind: 'chapter', slug, heading,
+    });
+  }
+});
+
+test('alias destinations never require a second router pass', () => {
+  // Include headings inherited through a chapter rename, not just its explicit overrides.
+  const headings = new Set(Object.values(aliases).flatMap(alias => Object.keys(alias.headings ?? {})));
+  for (const slug of Object.keys(aliases)) {
+    for (const heading of [undefined, ...headings]) {
+      const path = chapterPath(slug, heading);
+      const route = parseRoute(`#${path}`);
+      assert.equal(route.kind, 'chapter', path);
+      assert.deepEqual(parseRoute(`#${chapterPath(route.slug, route.heading)}`), route, path);
+    }
   }
 });
 

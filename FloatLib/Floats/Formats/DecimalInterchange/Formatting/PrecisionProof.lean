@@ -221,7 +221,7 @@ theorem parse_format_significant_value (f : Format) (outputMode inputMode : Roun
     (parse f inputMode (format outputMode (.significant digits)
       (.finite value.negative value.significand value.exponent)).text).value.toRat? =
         (Datum.finite value.negative value.significand value.exponent).toRat? := by
-  simp only [parse, read_format_significant, convert, significantDecimal_negative,
+  simp only [parse, read_format_significant, convert, projectScaled_eq, significantDecimal_negative,
     significantDecimal_magnitude_of_valid f outputMode value digits hvalid hp]
   exact projectMagnitude_exact f inputMode value.negative value.significand value.exponent
     _ hvalid
@@ -242,7 +242,7 @@ theorem parse_format_significant_status (f : Format) (outputMode inputMode : Rou
     (hp : f.precision ≤ (digits : Nat)) :
     (parse f inputMode (format outputMode (.significant digits)
       (.finite value.negative value.significand value.exponent)).text).status = {} := by
-  simp only [parse, read_format_significant, convert, significantDecimal_negative,
+  simp only [parse, read_format_significant, convert, projectScaled_eq, significantDecimal_negative,
     significantDecimal_magnitude_of_valid f outputMode value digits hvalid hp]
   exact projectMagnitude_exact_status f inputMode value.negative value.significand value.exponent
     _ hvalid

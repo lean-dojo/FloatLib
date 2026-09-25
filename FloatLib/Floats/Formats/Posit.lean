@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module -- shake: keep-all
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Square
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
@@ -53,6 +54,7 @@ Its associated exact accumulator is `ExecFloat.Posit.Quire (bits := n)`.
 This module exposes the exact specifications for the six universal arithmetic
 operations. Certified exact-dyadic, native-word, and two-limb rounding backends are exposed here;
 static selection lives under `Posit.Configured`.
+`square` reuses the selected multiplication kernel and its refinement theorem.
 -/
 
 @[expose] public section

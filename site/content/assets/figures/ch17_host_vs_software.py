@@ -29,6 +29,11 @@ import figstyle as fs  # noqa: E402
 
 from matplotlib.patches import Patch  # noqa: E402
 
+sys.path.insert(0, str(fs.REPO / "benchmarks" / "plots"))
+from format_comparison import (  # noqa: E402
+    OPERATION_LABEL, compact_operation_layout, save_operation_svg, write_operation_series,
+)
+
 PLOTS = fs.REPO / "benchmarks" / "results" / "main" / "release" / "benchmark" / "plots"
 SUMMARY = PLOTS / "summary.csv"
 RATIOS = PLOTS / "ratios.csv"
@@ -101,12 +106,6 @@ def main() -> None:
             if abs(ratio - quotient) / quotient > 0.005:
                 raise SystemExit(f"ratios.csv disagrees with summary.csv at {width} {op}: "
                                  f"{ratio} vs {quotient}")
-            # The host label is right-aligned to the host bar's right edge, so that it ends
-            # just before the taller bar beside it instead of running onto it.
-            ax.annotate(f"{host:.2f}", (x, host), textcoords="offset points",
-                        xytext=(-2, 3), ha="right", va="bottom", fontsize=9, color=fs.MUTED)
-            ax.annotate(f"{ours:.1f}", (x + BAR_WIDTH / 2, ours), textcoords="offset points",
-                        xytext=(0, 3), ha="center", va="bottom", fontsize=9, color=fs.MUTED)
             ax.text(x, 0.93, f"{ratio:.1f}×", transform=ax.get_xaxis_transform(),
                     ha="center", va="center", fontsize=9, color=fs.INK, fontweight="bold")
     axes[0].set_ylabel(YLABEL)
@@ -127,6 +126,58 @@ def main() -> None:
              ha="center", va="center", fontsize=8.5, color=fs.MUTED)
 
     target = fs.save(fig, OUT_NAME, out=args.out)
+    descriptions = {}
+    for operation in OPERATIONS:
+        single, ax = fs.plt.subplots()
+        xs = list(range(len(PANELS)))
+        ax.bar(
+            [x - BAR_WIDTH / 2 for x in xs],
+            [med[(HOST, width, operation)] for width, _label in PANELS],
+            width=BAR_WIDTH, **HOST_STYLE,
+        )
+        ax.bar(
+            [x + BAR_WIDTH / 2 for x in xs],
+            [med[(OURS, width, operation)] for width, _label in PANELS],
+            width=BAR_WIDTH, **OURS_STYLE,
+        )
+        ax.set_yscale("log")
+        ax.set_ylim(6, max(med.values()) * 5)
+        ax.set_xticks(xs, labels=[label for _width, label in PANELS])
+        ax.set_xlabel("IEEE format")
+        ax.set_ylabel("Median time (ns/op, log scale)")
+        ax.grid(False, axis="x")
+        for x, (width, _label) in zip(xs, PANELS):
+            ax.text(
+                x, 0.93, f"{rat[(width, operation)]:.1f}×",
+                transform=ax.get_xaxis_transform(),
+                ha="center", va="center", fontsize=11, color=fs.INK, fontweight="bold",
+            )
+        compact_operation_layout(
+            single, ax, title=OPERATION_LABEL[operation],
+            context="Native C and FloatLib binary kernels",
+            handles=handles, labels=[LEGEND_HOST, LEGEND_OURS],
+            bold_labels={LEGEND_OURS},
+            notes=(
+                "Labels: FloatLib / native C median time. Lower time is faster.",
+                f"{metadata['runs']} trials; same input-selection and checksum harness.",
+                f"{host.replace('(R)', '')}.",
+            ),
+        )
+        fs.check_no_dashes(single)
+        save_operation_svg(single, target, operation)
+        descriptions[operation] = (
+            f"{OPERATION_LABEL[operation]}: native C and FloatLib binary32 and binary64 "
+            "median times in nanoseconds per operation on a logarithmic vertical axis. "
+            "Paired bars show absolute times; labels show FloatLib median / native C median. "
+            f"{metadata['runs']} trials in the same input-selection and checksum harness."
+        )
+    write_operation_series(
+        target, descriptions,
+        overview_alt="Six operations for binary32 and binary64: paired native C and FloatLib "
+        "bars show median nanoseconds per operation on logarithmic vertical axes. "
+        "One label per pair gives FloatLib median / native C median. "
+        f"{metadata['runs']} trials, with input selection and checksums included.",
+    )
     print(f"wrote {target}")
 
 

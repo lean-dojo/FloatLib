@@ -77,7 +77,7 @@ def div [FloatLib.Floats.ExecFloat.Div F]
 Reference definition of square root for this format.
 
 Proofs use this definition to state the required result. Numerical code should normally call
-`ExecFloat.sqrt` or use `.sqrt`.
+`ExecFloat.sqrt` or use `value.sqrt`.
 -/
 def sqrt [FloatLib.Floats.ExecFloat.Sqrt F]
     (value : FloatLib.Floats.ExecFloat F) : FloatLib.Floats.ExecFloat F :=
@@ -87,8 +87,7 @@ def sqrt [FloatLib.Floats.ExecFloat.Sqrt F]
 Reference definition of fused multiply-add for this format.
 
 Proofs use this definition to state the result required by the installed capability. Numerical code
-should
-normally call `ExecFloat.fma`.
+should normally call `ExecFloat.fma` or use `left.fma right addend`.
 -/
 def fma [FloatLib.Floats.ExecFloat.Fma F]
     (left right addend : FloatLib.Floats.ExecFloat F) : FloatLib.Floats.ExecFloat F :=

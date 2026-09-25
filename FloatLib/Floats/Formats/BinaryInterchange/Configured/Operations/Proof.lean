@@ -30,8 +30,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /-- Decoding configured IEEE remainder gives the descriptor-model remainder. -/
 @[simp, grind =] theorem toModel_remainder (dividend divisor : Value) :
@@ -63,29 +62,29 @@ local notation "Value" =>
   simp [roundToIntegralExactWithStatus]
 
 /-- Decoding configured power-of-two scaling gives descriptor-model scaling. -/
-@[simp, grind =] theorem toModel_scaleB
-    (value : Value) (scale : Int) (rounding : Model.IEEERoundingMode) :
-    toModel (scaleB value scale rounding) =
-      Model.scaleB (toModel value) scale rounding := by
-  simp [scaleB, toModel, Configured.Family.toModel]
+@[simp, grind =] theorem toModel_scale
+    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) :
+    toModel (scale value n rounding) =
+      Model.scale (toModel value) n rounding := by
+  simp [scale, toModel, Configured.Family.toModel]
 
 /-- Configured power-of-two scaling preserves the descriptor-model value and IEEE status. -/
-@[simp, grind =] theorem IEEEOutcome.toModel_scaleBWithStatus
-    (value : Value) (scale : Int) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome.toModel (scaleBWithStatus value scale rounding) =
-      Model.scaleBWithStatus (ExecFloat.Binary.toModel value) scale rounding := by
-  simp [scaleBWithStatus]
+@[simp, grind =] theorem IEEEOutcome.toModel_scaleWithStatus
+    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) :
+    IEEEOutcome.toModel (scaleWithStatus value n rounding) =
+      Model.scaleWithStatus (ExecFloat.Binary.toModel value) n rounding := by
+  simp [scaleWithStatus]
 
-/-- Decoding configured `logB` gives the descriptor-model leading binary exponent. -/
-@[simp, grind =] theorem toModel_logB (value : Value) :
-    toModel (logB value) = Model.logB (toModel value) := by
-  simp [logB, toModel, Configured.Family.toModel]
+/-- Decoding configured `binaryExponent` gives the descriptor-model leading binary exponent. -/
+@[simp, grind =] theorem toModel_binaryExponent (value : Value) :
+    toModel (binaryExponent value) = Model.binaryExponent (toModel value) := by
+  simp [binaryExponent, toModel, Configured.Family.toModel]
 
-/-- Configured `logB` preserves the descriptor-model value and IEEE status. -/
-@[simp, grind =] theorem IEEEOutcome.toModel_logBWithStatus (value : Value) :
-    IEEEOutcome.toModel (logBWithStatus value) =
-      Model.logBWithStatus (ExecFloat.Binary.toModel value) := by
-  simp [logBWithStatus]
+/-- Configured `binaryExponent` preserves the descriptor-model value and IEEE status. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_binaryExponentWithStatus (value : Value) :
+    IEEEOutcome.toModel (binaryExponentWithStatus value) =
+      Model.binaryExponentWithStatus (ExecFloat.Binary.toModel value) := by
+  simp [binaryExponentWithStatus]
 
 /-- Decoding configured sign copying gives descriptor-model sign copying. -/
 @[simp, grind =] theorem toModel_copySign (magnitude signSource : Value) :

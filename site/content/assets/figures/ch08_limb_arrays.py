@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch08-limb-arrays.png: a number split into 32-bit limbs, and a carry.
+"""Draw content/assets/ch08-limb-arrays.png: one carry through three 32-bit limbs.
 
 Chapter 13 introduces `FloatLib.Numerics.LimbArray` (FloatLib/Kernels/LimbArray/Core/Runtime.lean):
 a natural number stored as a little-endian `Array UInt32`, limb i carrying weight 2^(32 i), with
-limbs beyond the stored ones read as zero. Its Lean block prints two results this figure draws:
+limbs beyond the stored ones read as zero. Its Lean block prints two results checked here:
 
     #eval LimbArray.ofNat (2 ^ 70 + 5) 3
     -- { limbs := #[5, 0, 64] }
     #eval LimbArray.add (LimbArray.ofNat (2 ^ 96 - 1) 3) (LimbArray.ofNat 1 1)
     -- { limbs := #[0, 0, 0, 1] }
 
-The upper panel is the first result: 2^70 + 5 in three limbs, drawn most significant first, with
-each limb's bit positions, value and weight, and the array as Lean prints it. The lower panel is
-the second: `add` from FloatLib/Kernels/LimbArray/Arithmetic/Runtime.lean runs `addLoop`, which
+The figure follows only the second example, with B = 2^32 and array order stated explicitly.
+`add` from FloatLib/Kernels/LimbArray/Arithmetic/Runtime.lean runs `addLoop`, which
 at each limb forms `a_i + b_i + carry` in a UInt64, stores the low 32 bits, and passes the high
 bits on as the next carry; the sum is placed in one limb more than the wider operand and the final
 carry is stored there. Here every limb of 2^96 - 1 is 0xFFFFFFFF, so adding 1 carries through all
@@ -20,7 +19,8 @@ three limbs into the reserved fourth.
 
 This script transcribes `ofNat` and `addLoop` into Python over integers, replays both examples,
 and stops with an error if either result differs from the array the chapter prints. Every drawn
-number (limb values, per-limb UInt64 sums, carries, bit indices) comes from that replay.
+number (base-B digits, sums and carries) comes from that replay. Steps run left to right on
+desktop and top to bottom on the phone.
 
 Run from anywhere: python3 ch08_limb_arrays.py [--out PNG]
 """
@@ -79,164 +79,72 @@ def to_nat(v: list[int]) -> int:
 SPLIT_VALUE, SPLIT_COUNT, SPLIT_EXPECTED = 2 ** 70 + 5, 3, [5, 0, 64]
 ADD_LEFT, ADD_RIGHT, ADD_EXPECTED = (2 ** 96 - 1, 3), (1, 1), [0, 0, 0, 1]
 
-SUPERSCRIPTS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
-
-def pow2(n: int) -> str:
-    return "2" + str(n).translate(SUPERSCRIPTS)
-
-
-def lean_array(v: list[int]) -> str:
-    return "#[" + ", ".join(str(x) for x in v) + "]"
-
-
-def hex32(x: int) -> str:
-    return f"{x:08X}"
-
-
-# Layout in axis units; the figure is 9 inches wide.
-LIMB_W = 3.55
-LIMB_H = 0.95
-X_LABEL = 0.2
-X_LIMBS = 3.35
-WIDTH_UNITS = X_LIMBS + 4 * LIMB_W + 0.3
-MONO = "DejaVu Sans Mono"
-
-
-def limb_x(position: int, total: int) -> float:
-    """Left edge of limb `position` when `total` limbs are drawn, most significant leftmost."""
-    return X_LIMBS + (total - 1 - position) * LIMB_W
-
-
-def limb_box(ax, x: float, y: float, value: int, *, facecolor=fs.PAPER_2, stored: bool = True):
-    if stored:
-        ax.add_patch(Rectangle((x, y), LIMB_W, LIMB_H, facecolor=facecolor, edgecolor=fs.INK,
-                               lw=0.9, alpha=0.9))
-        ax.text(x + LIMB_W / 2, y + LIMB_H * 0.62, str(value), ha="center", va="center",
-                fontsize=9.5, color=fs.INK, family=MONO)
-        ax.text(x + LIMB_W / 2, y + LIMB_H * 0.26, "0x" + hex32(value), ha="center", va="center",
-                fontsize=8.5, color=fs.MUTED, family=MONO)
+def draw(mobile: bool, steps: list[dict]):
+    fig = plt.figure(figsize=(3.8, 7.8) if mobile else (9, 4.7))
+    fig.text(0.035, 0.98, "A carry through 32-bit limbs", fontsize=14, weight="bold", va="top")
+    fig.text(0.035, 0.915 if mobile else 0.87,
+             "Each limb is a digit in base $B=2^{32}$.\nStart with [B−1, B−1, B−1] and add 1."
+             if mobile else
+             "Each limb is a base-$B$ digit, with $B=2^{32}$.  Add 1 to [B−1, B−1, B−1].",
+             fontsize=12, linespacing=1.5, va="top" if mobile else "baseline")
+    canvas = fig.add_axes([0, 0, 1, 1], zorder=0)
+    canvas.set(xlim=(0, 1), ylim=(0, 1))
+    canvas.axis("off")
+    rects = ([(0.06, 0.64 - i * 0.175, 0.88, 0.125) for i in range(3)] if mobile else
+             [(0.035 + i * 0.26, 0.36, 0.22, 0.29) for i in range(3)])
+    for row, rect in zip(steps, rects):
+        ax = fig.add_axes(rect)
+        ax.set(xlim=(0, 1), ylim=(0, 1))
+        ax.axis("off")
+        ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
+        ax.text(0.05, 0.78, f"Limb {row['index']}", fontsize=12, weight="bold")
+        ax.text(0.05, 0.45, "(B−1) + 1 = B", fontsize=13)
+        ax.text(0.05, 0.11, "store 0; carry 1", fontsize=12, color=fs.BLUE)
+    for i, (x, y, w, h) in enumerate(rects):
+        if i < 2:
+            nx, ny, nw, nh = rects[i + 1]
+            start, end = ((x + w / 2, y), (nx + nw / 2, ny + nh)) if mobile else (
+                (x + w, y + h / 2), (nx, ny + nh / 2))
+        else:
+            start, end = ((x + w / 2, y), (0.5, 0.235)) if mobile else (
+                (x + w, y + h / 2), (0.85, y + h / 2))
+        canvas.annotate("", end, start, arrowprops=dict(arrowstyle="->", color=fs.BLUE, lw=1.4))
+        if mobile and i < 2:
+            canvas.text(0.55, (start[1] + end[1]) / 2, "carry 1", fontsize=11.5, va="center")
+    if mobile:
+        canvas.add_patch(Rectangle((0.06, 0.155), 0.88, 0.077, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
+        canvas.text(0.10, 0.195, "New limb 3: store the final 1", fontsize=12, va="center")
     else:
-        ax.add_patch(Rectangle((x, y), LIMB_W, LIMB_H, facecolor="white", edgecolor=fs.MUTED,
-                               lw=0.9, ls=(0, (3, 3))))
-        ax.text(x + LIMB_W / 2, y + LIMB_H * 0.62, "0", ha="center", va="center", fontsize=9.5,
-                color=fs.MUTED, family=MONO)
-        ax.text(x + LIMB_W / 2, y + LIMB_H * 0.26, "not stored, reads as 0", ha="center",
-                va="center", fontsize=8.5, color=fs.MUTED)
-
-
-def row_label(ax, y: float, text: str) -> None:
-    ax.text(X_LABEL, y + LIMB_H / 2, text, ha="left", va="center", fontsize=9.5, color=fs.INK,
-            linespacing=1.3)
+        canvas.add_patch(Rectangle((0.85, 0.36), 0.12, 0.29, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
+        canvas.text(0.91, 0.585, "Limb 3", fontsize=12, ha="center", weight="bold")
+        canvas.text(0.91, 0.47, "1", fontsize=16, ha="center", color=fs.BLUE)
+        canvas.text(0.91, 0.39, "new limb", fontsize=11, ha="center")
+    fig.text(0.035, 0.095 if mobile else 0.21,
+             r"Result: $[0,0,0,1] = B^3 = 2^{96}$", fontsize=13, weight="bold")
+    fig.text(0.035, 0.023 if mobile else 0.10,
+             "Arrays list limb 0 first (lowest weight).\nThe added 1 enters limb 0; then it is a carry."
+             if mobile else
+             "Arrays list limb 0 first (lowest weight).  The added 1 enters limb 0; subsequent 1s are carries.",
+             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
-
-    split = of_nat(SPLIT_VALUE, SPLIT_COUNT)
-    if split != SPLIT_EXPECTED:
-        raise SystemExit(f"ofNat gave {split}, chapter prints {SPLIT_EXPECTED}")
-    assert to_nat(split) == SPLIT_VALUE
-    a = of_nat(*ADD_LEFT)
-    b = of_nat(*ADD_RIGHT)
-    total, steps = add_loop(a, b)
-    if total != ADD_EXPECTED:
-        raise SystemExit(f"add gave {total}, chapter prints {ADD_EXPECTED}")
-    assert to_nat(total) == ADD_LEFT[0] + ADD_RIGHT[0]
-    n_out = len(total)
-
-    # Vertical plan, measured downwards from the top edge at 0; the height follows from it.
-    y_title = -0.15
-    y_split = y_title - 1.25 - LIMB_H          # bit positions above, so leave room
-    y_tonat = y_split - 0.75
-    y_rule = y_tonat - 0.75
-    y_title2 = y_rule - 0.35
-    y_a = y_title2 - 0.95 - LIMB_H
-    y_b = y_a - 0.25 - LIMB_H
-    y_sum = y_b - 0.2 - 1.1
-    y_arrow = y_sum - 0.25
-    y_out = y_arrow - 0.45 - LIMB_H
-    y_bottom = y_out - 0.85
-    height_units = -y_bottom
-
+    assert of_nat(SPLIT_VALUE, SPLIT_COUNT) == SPLIT_EXPECTED
+    assert to_nat(SPLIT_EXPECTED) == SPLIT_VALUE
+    a, b = of_nat(*ADD_LEFT), of_nat(*ADD_RIGHT)
+    out_limbs, steps = add_loop(a, b)
+    assert out_limbs == ADD_EXPECTED and to_nat(out_limbs) == 2 ** 96
+    assert all(row["total"] == RADIX and row["stored"] == 0 and row["carry_out"] == 1 for row in steps)
     fs.setup()
-    fig = plt.figure(figsize=(fs.WIDTH, height_units * fs.WIDTH / WIDTH_UNITS))
-    ax = fs.diagram_axes(fig, (0, WIDTH_UNITS), (y_bottom, 0))
-
-    # Upper panel: the split of 2^70 + 5 into three limbs.
-    ax.text(X_LABEL, y_title, f"A natural number as little-endian 32-bit limbs: "
-            f"LimbArray.ofNat ({pow2(70)} + 5) 3", ha="left", va="top", fontsize=10.5,
-            color=fs.INK)
-    row_label(ax, y_split, "limb value,\ndecimal and hex")
-    for position, value in enumerate(split):
-        x = limb_x(position, SPLIT_COUNT)
-        limb_box(ax, x, y_split, value, facecolor=fs.SKY)
-        hi, lo = 32 * position + 31, 32 * position
-        ax.text(x + LIMB_W / 2, y_split + LIMB_H + 0.42, f"limb {position}", ha="center",
-                va="bottom", fontsize=9.5, color=fs.INK)
-        ax.text(x + 0.08, y_split + LIMB_H + 0.06, str(hi), ha="left", va="bottom", fontsize=8,
-                color=fs.MUTED)
-        ax.text(x + LIMB_W - 0.08, y_split + LIMB_H + 0.06, str(lo), ha="right", va="bottom",
-                fontsize=8, color=fs.MUTED)
-        ax.text(x + LIMB_W / 2, y_split + LIMB_H + 0.06, f"bits {hi} to {lo}", ha="center",
-                va="bottom", fontsize=8, color=fs.MUTED)
-        ax.text(x + LIMB_W / 2, y_split - 0.08, f"weight {pow2(32 * position)}", ha="center",
-                va="top", fontsize=8.5, color=fs.MUTED)
-    terms = " + ".join(f"{v} × {pow2(32 * i)}" for i, v in enumerate(split) if v)
-    ax.text(X_LABEL, y_tonat, f"toNat = {terms} = {pow2(70)} + 5,   stored as limbs := "
-            f"{lean_array(split)}  (index 0 is the low limb)",
-            ha="left", va="top", fontsize=9.5, color=fs.INK)
-
-    # Lower panel: 2^96 - 1 plus 1, the carry rippling through every limb.
-    ax.plot([X_LABEL, WIDTH_UNITS - 0.2], [y_rule, y_rule], color=fs.LINE, lw=0.8)
-    ax.text(X_LABEL, y_title2, f"A carry through every limb: LimbArray.add "
-            f"(LimbArray.ofNat ({pow2(96)} - 1) 3) (LimbArray.ofNat 1 1)",
-            ha="left", va="top", fontsize=10.5, color=fs.INK)
-    for position in range(n_out):
-        ax.text(limb_x(position, n_out) + LIMB_W / 2, y_a + LIMB_H + 0.08, f"limb {position}",
-                ha="center", va="bottom", fontsize=9.5, color=fs.INK)
-    row_label(ax, y_a, f"a = {pow2(96)} - 1, three limbs\nlimbs := #[{a[0]},\n"
-              f"    {a[1]}, {a[2]}]")
-    for position, value in enumerate(a):
-        limb_box(ax, limb_x(position, n_out), y_a, value)
-    row_label(ax, y_b, f"b = 1\nlimbs := {lean_array(b)}")
-    for position in range(len(a)):
-        limb_box(ax, limb_x(position, n_out), y_b, limb(b, position), stored=position < len(b))
-    ax.text(X_LIMBS + LIMB_W - 0.3, y_b + LIMB_H / 2, "+", ha="right", va="center",
-            fontsize=12, color=fs.INK)
-
-    # Per-limb UInt64 sums with the stored low word and the carry out.
-    row_label(ax, y_sum, "each limb sum in hex,\nformed in a UInt64")
-    for step in steps:
-        x = limb_x(step["index"], n_out) + LIMB_W / 2
-        total_hex = f"{step['total']:X}"
-        total_split = total_hex[:-8] + " " + total_hex[-8:] if len(total_hex) > 8 else total_hex
-        text = (f"{hex32(step['a'])} + {hex32(step['b'])} + {step['carry_in']}\n"
-                f"= {total_split}\n"
-                f"store {hex32(step['stored'])}, carry {step['carry_out']}")
-        ax.text(x, y_sum + LIMB_H / 2, text, ha="center", va="center", fontsize=8.5,
-                color=fs.INK, family=MONO, linespacing=1.35)
-    for step in steps:
-        x_from = limb_x(step["index"], n_out) + LIMB_W / 2
-        x_to = limb_x(step["index"] + 1, n_out) + LIMB_W / 2
-        fs.arrow(ax, (x_from, y_arrow), (x_to, y_arrow), color=fs.VERMILION, linewidth=1.4)
-        ax.text((x_from + x_to) / 2, y_arrow + 0.05, f"carry {step['carry_out']}", ha="center",
-                va="bottom", fontsize=8.5, color=fs.VERMILION)
-
-    row_label(ax, y_out, f"a + b = {pow2(96)}, four limbs\nlimbs := {lean_array(total)}")
-    for position, value in enumerate(total):
-        top_limb = position == n_out - 1
-        limb_box(ax, limb_x(position, n_out), y_out, value,
-                 facecolor=fs.ORANGE if top_limb else fs.PAPER_2)
-    x_top = limb_x(n_out - 1, n_out)
-    ax.text(x_top + LIMB_W / 2, y_out - 0.1, "the extra limb that add reserves;\n"
-            "addLoop stores the final carry here", ha="center", va="top", fontsize=8.5,
-            color=fs.INK, linespacing=1.25)
-
-    out = fs.save(fig, "ch08-limb-arrays.png", args.out)
-    print(f"wrote {out}")
+    out = args.out or fs.ASSETS / "ch08-limb-arrays.png"
+    for mobile in (False, True):
+        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        print(f"wrote {fs.save(draw(mobile, steps), target.name, target)}")
 
 
 if __name__ == "__main__":

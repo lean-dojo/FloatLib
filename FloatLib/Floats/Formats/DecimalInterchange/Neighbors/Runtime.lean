@@ -15,6 +15,11 @@ selecting the least quantum in its cohort. Normalizing the input to its finest
 grid makes this a coefficient step. At a power of ten, the downward step uses
 the finer grid. No rounding direction is consulted.
 
+The adjacency and output-validity guarantees assume `x.Valid f`, as stated in
+`Neighbors.Proof` and `Neighbors.Adjacency`. A raw `Datum` does not carry its
+format; callers must establish this invariant before using these neighbor
+operations. The normalization step need not preserve an out-of-format input.
+
 Crossing the finite range or reaching a subnormal raises no exception. Only
 signaling NaNs raise invalid; NaN propagation otherwise follows the arithmetic
 payload policy.
@@ -37,7 +42,8 @@ def neighborBelow (f : Format) (c : Nat) (q : Int) : Datum :=
     .finite false (f.coefficientBound - 1) (q - 1)
   else .finite false (c - 1) q
 
-/-- Least representable value strictly greater than the operand, except at positive infinity. -/
+/-- For a valid non-NaN operand, the least representable value strictly greater than it,
+except that positive infinity is unchanged. -/
 def nextUp (f : Format) : Datum → Outcome
   | .nan s t p => nanResult f s p t
   | .infinity false => { value := .infinity false }
@@ -49,7 +55,8 @@ def nextUp (f : Format) : Datum → Outcome
         { value := if s then (neighborBelow f pair.1 pair.2).negate
             else neighborAbove f pair.1 pair.2 }
 
-/-- Greatest representable value strictly smaller than the operand, except at negative infinity. -/
+/-- For a valid non-NaN operand, the greatest representable value strictly smaller than it,
+except that negative infinity is unchanged. -/
 def nextDown (f : Format) (x : Datum) : Outcome :=
   let result := nextUp f x.negate
   { value := result.value.negate, status := result.status }

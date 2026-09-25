@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Runtime
+import Lean.Compiler.CSimpAttr
 import Mathlib.Tactic.Bound
 import Mathlib.Tactic.ByContra
 import Mathlib.Tactic.NormNum
@@ -125,22 +126,8 @@ theorem lowBitIsNonzero_eq_odd (code : UInt64) :
 /-- Inspecting the low bit of a two-limb word is natural-number parity. -/
 theorem UInt128.lowBitIsZero_eq_even (code : UInt128) :
     ((code.lo &&& 1) == 0) = decide (code.toNat % 2 = 0) := by
-  have hbit : (code.lo &&& 1).toNat = code.toNat % 2 := by
-    rw [UInt64.toNat_and, UInt64.toNat_one]
-    norm_num [Nat.and_two_pow_sub_one_eq_mod]
-    unfold UInt128.toNat
-    norm_num [Nat.add_mod, Nat.mul_mod]
-  by_cases heven : code.toNat % 2 = 0
-  · have hword : code.lo &&& 1 = 0 := by
-      apply UInt64.toNat_inj.mp
-      simpa [hbit] using heven
-    simp [hword, heven]
-  · have hword : code.lo &&& 1 ≠ 0 := by
-      intro equality
-      apply heven
-      have equalityNat := congrArg UInt64.toNat equality
-      simpa [hbit] using equalityNat
-    simp [hword, heven]
+  rw [FloatLib.Numerics.FixedWord.lowBitIsZero_eq_even]
+  norm_num [UInt128.toNat, Nat.add_mod, Nat.mul_mod]
 
 /-- Two-limb low-bit nonzero inspection is exactly odd natural-number parity. -/
 theorem UInt128.lowBitIsNonzero_eq_odd (code : UInt128) :
@@ -190,6 +177,81 @@ theorem log2_low_add_high_mul_pow (low high offset : Nat)
       _ = 2 ^ offset * (high + 1) := by ring
       _ ≤ 2 ^ offset * 2 ^ (high.log2 + 1) :=
         Nat.mul_le_mul_left _ (Nat.succ_le_iff.mpr Nat.lt_log2_self)
+
+/-- A correct stage on `shift` bits extends to a correct stage on twice as many bits. -/
+private theorem log2WordStep_toNat (shift : UInt64) (next : UInt64 → UInt64)
+    (hshift : shift.toNat < 64)
+    (hnext : ∀ value : UInt64, value.toNat < 2 ^ shift.toNat →
+      (next value).toNat = value.toNat.log2)
+    (value : UInt64) (hvalue : value.toNat < 2 ^ (shift.toNat + shift.toNat)) :
+    (log2WordStep shift next value).toNat = value.toNat.log2 := by
+  have hhigh : (value >>> shift).toNat = value.toNat / 2 ^ shift.toNat := by
+    rw [UInt64.toNat_shiftRight, Nat.mod_eq_of_lt hshift, Nat.shiftRight_eq_div_pow]
+  have hhigh_lt : (value >>> shift).toNat < 2 ^ shift.toNat := by
+    rw [hhigh, Nat.div_lt_iff_lt_mul (Nat.two_pow_pos _)]
+    simpa only [pow_add] using hvalue
+  by_cases hzero : value >>> shift = 0
+  · have hsmall : value.toNat < 2 ^ shift.toNat := by
+      have hdiv : value.toNat / 2 ^ shift.toNat = 0 := by
+        rw [← hhigh, hzero]
+        rfl
+      exact (Nat.div_eq_zero_iff.mp hdiv).resolve_left (Nat.ne_of_gt (Nat.two_pow_pos _))
+    simpa [log2WordStep, hzero] using hnext value hsmall
+  · have hhigh_ne : (value >>> shift).toNat ≠ 0 := by
+      simpa only [← UInt64.toNat_inj, UInt64.toNat_zero] using hzero
+    have hlog : value.toNat.log2 = shift.toNat + (value >>> shift).toNat.log2 := by
+      have h := log2_low_add_high_mul_pow
+        (value.toNat % 2 ^ shift.toNat) (value.toNat / 2 ^ shift.toNat) shift.toNat
+        (Nat.mod_lt _ (Nat.two_pow_pos _)) (hhigh ▸ hhigh_ne)
+      rw [Nat.mod_add_div'] at h
+      simpa only [hhigh] using h
+    have hvalue_ne : value.toNat ≠ 0 := by
+      intro hz
+      apply hhigh_ne
+      simp [hhigh, hz]
+    have hfit : shift.toNat + (next (value >>> shift)).toNat < 2 ^ 64 := by
+      rw [hnext _ hhigh_lt, ← hlog]
+      have hlt : value.toNat.log2 < 64 :=
+        (Nat.log2_lt hvalue_ne).mpr value.toNat_lt
+      omega
+    simpa [log2WordStep, hzero, uint64_add_toNat_of_lt _ _ hfit,
+      hnext _ hhigh_lt] using hlog.symm
+
+/-- Each two-bit entry of the packed constant gives the logarithm of its four-bit index. -/
+private theorem log2WordNibble_toNat (value : UInt64) (hvalue : value.toNat < 16) :
+    (((0xffffaa50 : UInt64) >>> (value <<< 1)) &&& 3).toNat = value.toNat.log2 := by
+  have hlookup : ∀ n : Fin 16,
+      (((0xffffaa50 : UInt64) >>> (UInt64.ofNat n.val <<< 1)) &&& 3).toNat =
+        n.val.log2 := by decide
+  simpa only [UInt64.ofNat_toNat] using hlookup ⟨value.toNat, hvalue⟩
+
+/-- The bounded word stages compute the natural-number binary logarithm exactly. -/
+@[simp, grind =] theorem log2Word_toNat (value : UInt64) :
+    (log2Word value).toNat = value.toNat.log2 := by
+  have h4 := log2WordStep_toNat 4 _ (by decide) log2WordNibble_toNat
+  unfold log2Word
+  split
+  · have hsmall : value.toNat < 2 := UInt64.lt_iff_toNat_lt.mp ‹value < 2›
+    rw [Nat.log2_def]
+    simp only [show ¬ 2 ≤ value.toNat by omega, ↓reduceIte]
+    rfl
+  · split
+    · exact log2WordNibble_toNat value (UInt64.lt_iff_toNat_lt.mp ‹value < 16›)
+    · split
+      · exact h4 value (UInt64.lt_iff_toNat_lt.mp ‹value < 256›)
+      · have h8 := log2WordStep_toNat 8 _ (by decide) h4
+        have h16 := log2WordStep_toNat 16 _ (by decide) h8
+        exact log2WordStep_toNat 32 _ (by decide) h16 value value.toNat_lt
+
+/-- The bounded search agrees with `UInt64.log2`, including at zero. -/
+theorem log2Word_eq_log2 (value : UInt64) : log2Word value = value.log2 := by
+  apply UInt64.toNat_inj.mp
+  rw [log2Word_toNat, log2_toNat]
+
+/-- Compile direct calls through the proved word search. -/
+@[csimp] theorem uint64_log2_eq_log2Word : UInt64.log2 = log2Word := by
+  funext value
+  exact (log2Word_eq_log2 value).symm
 
 /--
 If a nonzero native word fits below `2 ^ width`, then its leading-bit position is smaller than
@@ -603,6 +665,7 @@ theorem countLeadingZerosWord_toNat
     rw [htruncated]
     exact Nat.mod_lt _ (Nat.two_pow_pos width.toNat)
   unfold countLeadingZerosWord
+  simp only [log2Word_eq_log2]
   change
     (if truncated == 0 then
       width

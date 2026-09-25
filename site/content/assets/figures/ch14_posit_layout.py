@@ -17,6 +17,7 @@ that decoder, so they agree with the chapter's `#eval` results (0x6C = 128, 0x01
 0x7F = 2^24).
 
 Run from anywhere: python3 ch14_posit_layout.py [--out PNG]
+Also writes a -mobile.png sibling with a shared field key and a full-width row for each word.
 """
 
 from __future__ import annotations
@@ -153,6 +154,63 @@ def draw_row(ax, d: Decoded, y: float) -> None:
     ax.text(BITS + 2.6, y + 0.5, value_label(d), ha="left", va="center", fontsize=11, color=fs.INK)
 
 
+def build_mobile(rows):
+    """Keep the original words, field colours and exact values on a narrow canvas."""
+    assert [d.word for d in rows] == list(WORDS)
+    assert [d.value for d in rows] == [Fraction(1, 2 ** 24), Fraction(1),
+                                      Fraction(128), Fraction(2 ** 24)]
+    assert [(d.run, d.regime_value, d.used_exponent_bits, d.exponent, d.fraction_bits,
+             d.significand, d.scale) for d in rows] == [
+        (6, -6, 0, 0, 0, 1, -24), (1, 0, 2, 0, 3, 8, -3),
+        (2, 1, 2, 3, 2, 4, 5), (7, 6, 0, 0, 0, 1, 24)]
+    assert all(not d.negative and d.fraction == 0 for d in rows)
+    assert [d.has_terminator for d in rows] == [True, True, True, False]
+
+    height = 8.6
+    fig = fs.plt.figure(figsize=(3.8, height))
+    ax = fs.diagram_axes(fig, (0, 3.8), (0, height))
+    ax.text(0.18, 8.37, "Reading four posit8 words", fontsize=15, weight="bold", va="top")
+    ax.text(0.18, 7.96, "Most significant bit at left", fontsize=12, va="center")
+    key = (("sign", 0.18, 7.56), ("regime", 0.18, 7.24), ("terminator", 0.18, 6.92),
+           ("exponent", 2.04, 7.56), ("fraction", 2.04, 7.24))
+    for name, x, y in key:
+        ax.add_patch(Rectangle((x, y - 0.08), 0.17, 0.17, facecolor=FIELD_COLOURS[name],
+                               edgecolor=fs.INK, linewidth=0.6))
+        ax.text(x + 0.25, y, name.capitalize(), fontsize=12, va="center")
+
+    for row, d in enumerate(rows):
+        y = 6.37 - row * 1.61
+        ax.text(0.18, y, f"0x{d.word:02X}", fontsize=13, family="DejaVu Sans Mono",
+                va="center", weight="bold")
+        ax.text(3.62, y, value_label(d), fontsize=15, ha="right", va="center")
+        bit_y = y - 0.64
+        bit_index = BITS - 1
+        x = 0.18
+        cell = 3.44 / BITS
+        for name, width in fields(d):
+            for _ in range(width):
+                ax.add_patch(Rectangle((x, bit_y), cell, 0.42, facecolor=FIELD_COLOURS[name],
+                                       edgecolor=fs.INK, linewidth=0.8))
+                ax.text(x + cell / 2, bit_y + 0.21, str((d.word >> bit_index) & 1),
+                        fontsize=13, ha="center", va="center",
+                        color="white" if name in DIGIT_ON_DARK else fs.INK)
+                x += cell
+                bit_index -= 1
+        assert bit_index == -1
+        ax.text(0.18, y - 0.89, field_note("regime", d).capitalize().replace(", ", " · "),
+                fontsize=12, va="center")
+        if d.fraction_bits:
+            note = f"e = {d.exponent} · F = {d.fraction} · {d.fraction_bits} fraction bits"
+        elif d.has_terminator:
+            note = "No exponent or fraction bits"
+        else:
+            note = "No terminator or trailing fields"
+        ax.text(0.18, y - 1.18, note, fontsize=12, va="center")
+        if row < len(rows) - 1:
+            ax.plot([0.18, 3.62], [y - 1.41, y - 1.41], color=fs.LINE, linewidth=0.8)
+    return fig
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
@@ -175,6 +233,8 @@ def main() -> None:
 
     out = fs.save(fig, "ch14-posit-layout.png", args.out)
     print(f"wrote {out}")
+    mobile = out.with_name(f"{out.stem}-mobile{out.suffix}")
+    print(f"wrote {fs.save(build_mobile(rows), mobile.name, mobile)}")
 
 
 if __name__ == "__main__":

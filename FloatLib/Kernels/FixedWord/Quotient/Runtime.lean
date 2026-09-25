@@ -206,8 +206,8 @@ which keep every intermediate of the restoring loop inside one word.
 Compute `floor (log2 (num / den))` for nonzero operands, using native-word alignment.
 -/
 @[inline] def floorLog2RatWord (num den : UInt64) : Int :=
-  let numLog := num.log2.toNat
-  let denLog := den.log2.toNat
+  let numLog := (log2Word num).toNat
+  let denLog := (log2Word den).toNat
   if denLog ≤ numLog then
     let shift := numLog - denLog
     let initial := Int.ofNat shift

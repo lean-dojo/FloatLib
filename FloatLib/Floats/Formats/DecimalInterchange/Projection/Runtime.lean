@@ -80,6 +80,31 @@ def projectMagnitude (f : Format) (mode : RoundingMode) (negative : Bool)
           { inexact := inexact
             underflow := decide (magnitude < f.minNormal) && inexact } }
 
+/--
+Clamp the exponent of `coefficient * 10^exponent` to a range where projection stays cheap.
+
+A zero coefficient gets exponent zero. Otherwise the exponent is kept between a lower bound, where
+the magnitude is below half the least subnormal quantum, and `maxQuantum + precision`, where it
+overflows. `projectScaled_eq` proves that projecting the clamped magnitude gives the same outcome.
+-/
+def clampScaledExponent (f : Format) (coefficient : Nat) (exponent : Int) : Int :=
+  if coefficient = 0 then 0
+  else
+    max (f.minQuantum - (coefficient.log2 : Int) - 2)
+      (min (f.maxQuantum + (f.precision : Int)) exponent)
+
+/--
+Project the exact magnitude `coefficient * 10^exponent` with a preferred quantum.
+
+The exponent is clamped with `clampScaledExponent` before the power of ten is formed, so huge
+exponents such as `10^(10^12)` are never materialized. The outcome equals
+`projectMagnitude f mode negative (coefficient * 10^exponent) preferred`.
+-/
+def projectScaled (f : Format) (mode : RoundingMode) (negative : Bool) (coefficient : Nat)
+    (exponent preferred : Int) : Outcome :=
+  projectMagnitude f mode negative
+    ((coefficient : ℚ) * (10 : ℚ) ^ clampScaledExponent f coefficient exponent) preferred
+
 /-- Round an exact rational value with an operation's preferred quantum.
 `negativeZero` is consulted only when the exact input equals zero. -/
 def project (f : Format) (mode : RoundingMode) (value : ℚ) (preferred : Int)

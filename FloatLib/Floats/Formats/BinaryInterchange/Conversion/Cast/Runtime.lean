@@ -53,10 +53,12 @@ Model dst
 
 ## NaNs and infinities
 
-A NaN cast to the same descriptor is quieted while retaining its representable payload.
-Across unequal descriptors, conversion uses `invalidResult dst`: the destination's canonical NaN
-when available, or positive zero for a fully finite encoding. Neither the source NaN sign nor its
-payload is transported across unequal descriptors, even when their field widths agree.
+A NaN cast to the same descriptor is quieted while retaining its sign and payload.
+Across unequal descriptors, conversion uses `propagatedNaN`, as IEEE 754-2019 §6.2.3 recommends:
+an IEEE destination keeps the source sign and the IEEE payload (the fraction without its quiet
+bit, read as a natural number) when that payload fits, and otherwise uses the zero payload. A
+maximum-NaN destination keeps the sign, an FNUZ destination has its single NaN, and a fully finite
+destination receives positive zero. The explicit `ExecFloat` conversion applies the same rule.
 
 Infinity follows the destination's overflow policy: same-sign infinity for IEEE encodings,
 canonical NaN for finite-with-NaN encodings, and the same-sign maximum finite value for a fully
@@ -120,9 +122,9 @@ same-sign infinity for IEEE encodings, NaN for finite-with-NaN encodings, and th
 finite value for fully finite encodings. Saturating conversion is an explicit policy in
 `ExecFloat.Binary.Conversion.Context`.
 
-**NaN:** if `src = dst`, quiet the existing encoding while retaining its representable payload.
-Otherwise emit the destination's canonical NaN when it has one, or positive zero for a finite-only
-destination. Payloads are not remapped across unequal formats.
+**NaN:** if `src = dst`, quiet the existing encoding while retaining its sign and payload.
+Otherwise emit `propagatedNaN dst` with the source sign and IEEE payload: the payload survives when
+it fits the destination, and a finite-only destination receives positive zero.
 
 **Finite, `src = dst`:** short-circuits to `x` unchanged. Decoding to a dyadic and
 rounding back into the same grid is a true identity for finite values, so this skips the
@@ -135,7 +137,7 @@ decode/round work entirely. This matters for uniform-format `SitePolicy`s, where
       -- The dependent equality transports the exact-width payload without truncation.
       h ▸ quietNaN x
     else
-      invalidResult dst
+      propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x))
   else if hinf : isInf x = true then
     nativeOverflow dst (signBit x)
   else

@@ -18,7 +18,7 @@ public import Mathlib.Algebra.Order.Algebra
 
 The `NumericalSystem` interface gives `Model fmt` a representation-independent semantic view.
 Its ordinary semantic domain is `ℝ`; supported infinities retain their signs, and NaNs retain
-the stored fraction as a payload.
+the stored fraction as a payload together with their sign bit and signaling class.
 
 `Model.toDyadic?` supplies the executable exact dyadic decoder. This real-valued view lets
 generic refinement results compose with other numerical families.
@@ -35,7 +35,7 @@ open FloatLib.Numerics
 noncomputable def toNumericalValue {fmt : FloatFormat}
     (x : Model fmt) : NumericalValue ℝ :=
   if isNaN x then
-    .exceptional (.nan (some (fracField x)))
+    .exceptional (.nan (some (fracField x)) (signBit x) (isSNaN x))
   else if isInf x then
     .infinity (signBit x)
   else

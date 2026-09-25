@@ -23,7 +23,10 @@ open FloatLib.Floats.Formats.BinaryInterchange
 variable {fmt : FloatFormat} {plan : Configured.StoragePlan fmt} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model fmt) code]
 
-local notation "Value" => FloatLib.Floats.ExecFloat (Configured.Family fmt code plan)
+local notation "Value" =>
+  ExecFloat.Binary fmt.expWidth fmt.fracWidth fmt.encoding fmt.exponentBias
+    fmt.expWidth_ge_two fmt.fracWidth_pos fmt.exponentBias_pos
+    fmt.exponentBias_le_maxFinite plan code
 
 /-- Decimal or hexadecimal output at exact or requested precision, including rounding status. -/
 def formatWithStatus (rounding : Model.IEEERoundingMode) (radix : Model.TextRadix)

@@ -93,9 +93,12 @@ done
 
 benchmark_result="$root/benchmarks/results/main/release/benchmark"
 flocq_result="$root/benchmarks/results/flocq-matched"
+public_binary_result="$root/benchmarks/results/public-binary"
 external_result="$root/tests/results/main/release/external"
 ecosystem_result="$root/tests/results/main/ecosystem"
-if [[ -d "$benchmark_result" && -d "$flocq_result" && -d "$external_result" && -d "$ecosystem_result" ]]; then
+if [[ -d "$benchmark_result" && -d "$flocq_result" &&
+      -f "$public_binary_result/measurements.csv" && -f "$public_binary_result/metadata.json" &&
+      -d "$external_result" && -d "$ecosystem_result" ]]; then
   result_scratch="$(mktemp -d "${FLOATLIB_BUILD_DIR}-site-results.XXXXXX")"
   cleanup_result_scratch() {
     rm -rf -- "$result_scratch"
@@ -118,46 +121,50 @@ if [[ -d "$benchmark_result" && -d "$flocq_result" && -d "$external_result" && -
     --out "$result_scratch/ch11-conformance-evidence.png"
   python3 "$root/site/content/assets/figures/ch17_host_vs_software.py" \
     --out "$result_scratch/ch17-host-vs-software.png"
+  python3 "$root/site/content/assets/figures/ch15_public_binary.py" \
+    --out "$result_scratch/public-binary-performance.png"
 
-  compare_figure() {
-    local retained=$1
-    local regenerated=$2
-    if ! cmp -s "$retained" "$regenerated"; then
-      printf 'build.sh: result-derived figure is stale: %s\n' "$retained" >&2
-      return 1
-    fi
-  }
-  compare_figure \
-    "$root/site/content/assets/format-comparison-main.png" \
-    "$result_scratch/format/format-comparison-main.png"
-  compare_figure \
-    "$root/site/content/assets/flocq-matched.png" \
-    "$result_scratch/flocq-matched.png"
-  compare_figure \
-    "$root/site/content/assets/format-comparison-mul-fma.png" \
-    "$result_scratch/format/format-comparison-mul-fma.png"
-  compare_figure \
-    "$root/site/content/assets/format-comparison-div-sqrt.png" \
-    "$result_scratch/format/format-comparison-div-sqrt.png"
-  compare_figure \
-    "$root/site/content/assets/format-comparison-low-width.png" \
-    "$result_scratch/format/format-comparison-low-width.png"
-  compare_figure \
-    "$root/site/content/assets/ch10-external-ratios.png" \
-    "$result_scratch/ch10-external-ratios.png"
-  compare_figure \
-    "$root/site/content/assets/ch11-universal-preflight.png" \
-    "$result_scratch/ch11-universal-preflight.png"
-  compare_figure \
-    "$root/site/content/assets/ch11-conformance-evidence.png" \
-    "$result_scratch/ch11-conformance-evidence.png"
-  compare_figure \
-    "$root/site/content/assets/ch17-host-vs-software.png" \
-    "$result_scratch/ch17-host-vs-software.png"
+  # Compare every generated view, including the single-operation plots used on phones.
+  python3 - "$root/site/content/assets" "$result_scratch" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+assets, scratch = map(Path, sys.argv[1:])
+generated = {}
+for directory in (scratch, scratch / "format"):
+    for file in directory.iterdir():
+        if file.suffix in {".png", ".svg"} or file.name.endswith("-series.json"):
+            if file.name in generated:
+                raise SystemExit(f"build.sh: duplicate generated figure: {file.name}")
+            generated[file.name] = file
+required = {
+    "format-comparison-main.png", "format-comparison-mul-fma.png",
+    "format-comparison-div-sqrt.png", "format-comparison-low-width.png",
+    "flocq-matched.png", "ch10-external-ratios.png", "ch11-universal-preflight.png",
+    "ch11-conformance-evidence.png", "ch17-host-vs-software.png",
+    "public-binary-performance.png", "public-binary-low-precision.png",
+}
+missing = required - generated.keys()
+if missing:
+    raise SystemExit(f"build.sh: figures were not regenerated: {', '.join(sorted(missing))}")
+for name, file in generated.items():
+    if name.endswith("-series.json"):
+        for view in json.loads(file.read_text())["views"]:
+            if view["src"] not in generated:
+                raise SystemExit(f"build.sh: plot view was not regenerated: {view['src']}")
+    retained = assets / name
+    if not retained.is_file() or retained.read_bytes() != file.read_bytes():
+        raise SystemExit(f"build.sh: result-derived figure is stale: {retained}")
+print(f"verified {len(generated)} result-derived figures and view manifests")
+PY
 else
   {
     echo "build.sh: retained result trees are not all present:"
     echo "  $benchmark_result"
+    echo "  $flocq_result"
+    echo "  $public_binary_result/measurements.csv"
+    echo "  $public_binary_result/metadata.json"
     echo "  $external_result"
     echo "  $ecosystem_result"
     echo "Figure freshness cannot be checked until those trees exist."

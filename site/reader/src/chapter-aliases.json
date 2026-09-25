@@ -4,8 +4,25 @@
     "heading": "what-imprecision-has-cost"
   },
   "comparing-with-lean-native-floats": {
-    "slug": "performance",
-    "heading": "comparing-with-leans-native-floats"
+    "slug": "lean-native-floats",
+    "headings": {
+      "comparing-with-leans-native-floats": {
+        "slug": "lean-native-floats",
+        "heading": "leans-model-and-its-compiled-operations"
+      },
+      "the-same-finite-bits-including-rounding-effects": {
+        "slug": "lean-native-floats",
+        "heading": "both-implementations-lose-associativity"
+      },
+      "nan-payloads-change-at-the-native-conversion-boundary": {
+        "slug": "lean-native-floats",
+        "heading": "converting-to-native-floats-changes-nan-payloads"
+      },
+      "the-proved-conversion-and-arithmetic-bridges": {
+        "slug": "lean-native-floats",
+        "heading": "proofs-relating-floatlib-to-leans-float-model"
+      }
+    }
   },
   "a-tour-of-the-codebase": {
     "slug": "using-the-library",
@@ -17,7 +34,7 @@
       },
       "numerics-exact-values-and-contracts": {
         "slug": "the-numerical-models",
-        "heading": "numerics-exact-values-and-contracts"
+        "heading": "a-common-interface-for-numerical-formats"
       },
       "kernels-fixed-word-algorithms-and-limb-arrays": {
         "slug": "kernels-fixed-word-algorithms",
@@ -25,7 +42,7 @@
       },
       "formats-encodings-and-their-meaning": {
         "slug": "ieee-binary-formats",
-        "heading": "formats-encodings-and-their-meaning"
+        "heading": "from-executable-arithmetic-to-real-rounding"
       },
       "execfloat-the-carrier-and-its-backends": {
         "slug": "backends-and-the-planner",
@@ -33,7 +50,7 @@
       },
       "public-and-private-imports": {
         "slug": "why-execution-and-proofs-are-separate",
-        "heading": "public-and-private-imports"
+        "heading": "runtimelean-and-prooflean"
       },
       "tests-what-is-validated": {
         "slug": "external-validation",
@@ -48,12 +65,428 @@
         "heading": "the-check-that-enforces-the-split"
       },
       "examples-and-extension-guides": {
+        "slug": "further-examples",
+        "heading": "extending-the-library"
+      },
+      "library-structure": {
         "slug": "using-the-library",
-        "heading": "examples-and-extension-guides"
+        "heading": "proving-arithmetic-agrees-with-its-specification"
+      },
+      "rounding-directions-and-status-flags": {
+        "slug": "further-examples",
+        "heading": "rounding-directions-and-status-flags"
+      },
+      "choosing-a-different-endpoint-format": {
+        "slug": "further-examples",
+        "heading": "choosing-a-different-endpoint-format"
+      },
+      "reductions-that-round-once": {
+        "slug": "further-examples",
+        "heading": "sums-and-dot-products-with-one-rounding"
+      },
+      "sums-and-dot-products-with-one-rounding": {
+        "slug": "further-examples",
+        "heading": "sums-and-dot-products-with-one-rounding"
+      },
+      "the-result-as-a-real-number": {
+        "slug": "further-examples",
+        "heading": "the-result-as-a-real-number"
+      },
+      "complex-arithmetic": {
+        "slug": "further-examples",
+        "heading": "complex-arithmetic"
+      },
+      "mixing-formats": {
+        "slug": "further-examples",
+        "heading": "mixing-formats"
+      },
+      "choosing-imports": {
+        "slug": "further-examples",
+        "heading": "choosing-imports"
+      },
+      "extending-the-library": {
+        "slug": "further-examples",
+        "heading": "extending-the-library"
       }
     }
   },
   "validation-against-the-outside-world": {
-    "slug": "external-validation"
+    "slug": "external-validation",
+    "headings": {
+      "decimal-values-cohorts-and-flags": {
+        "slug": "external-validation",
+        "heading": "decimal-datums-and-exact-text"
+      },
+      "posit-exponentials-and-logarithms": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "posit-hyperbolic-functions": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "exact-trigonometric-comparisons": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-trigonometric-functions": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "pi-scaled-posit-trigonometric-functions": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-atan2": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-decimal-text": {
+        "slug": "external-validation",
+        "heading": "decimal-datums-and-exact-text"
+      },
+      "posit-integer-conversion": {
+        "slug": "external-validation",
+        "heading": "words-flags-and-conversion-success"
+      },
+      "natural-posit-exponentials-and-logarithms": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "ordinary-posit-trigonometric-results": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "pi-scaled-posit-trigonometric-results": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "two-coordinate-posit-angles": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      }
+    }
+  },
+  "using-the-library": {
+    "slug": "using-the-library",
+    "headings": {
+      "library-structure": {
+        "slug": "using-the-library",
+        "heading": "proving-arithmetic-agrees-with-its-specification"
+      },
+      "rounding-directions-and-status-flags": {
+        "slug": "further-examples",
+        "heading": "rounding-directions-and-status-flags"
+      },
+      "choosing-a-different-endpoint-format": {
+        "slug": "further-examples",
+        "heading": "choosing-a-different-endpoint-format"
+      },
+      "reductions-that-round-once": {
+        "slug": "further-examples",
+        "heading": "sums-and-dot-products-with-one-rounding"
+      },
+      "sums-and-dot-products-with-one-rounding": {
+        "slug": "further-examples",
+        "heading": "sums-and-dot-products-with-one-rounding"
+      },
+      "the-result-as-a-real-number": {
+        "slug": "further-examples",
+        "heading": "the-result-as-a-real-number"
+      },
+      "complex-arithmetic": {
+        "slug": "further-examples",
+        "heading": "complex-arithmetic"
+      },
+      "mixing-formats": {
+        "slug": "further-examples",
+        "heading": "mixing-formats"
+      },
+      "choosing-imports": {
+        "slug": "further-examples",
+        "heading": "choosing-imports"
+      },
+      "examples-and-extension-guides": {
+        "slug": "further-examples",
+        "heading": "extending-the-library"
+      },
+      "extending-the-library": {
+        "slug": "further-examples",
+        "heading": "extending-the-library"
+      }
+    }
+  },
+  "why-execution-and-proofs-are-separate": {
+    "slug": "why-execution-and-proofs-are-separate",
+    "headings": {
+      "public-and-private-imports": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "runtimelean-and-prooflean"
+      },
+      "lean-compilation-and-code-extraction": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "compiler-replacements-with-csimp"
+      },
+      "when-an-executable-definition-needs-a-proof": {
+        "slug": "why-execution-and-proofs-are-separate",
+        "heading": "runtimelean-and-prooflean"
+      }
+    }
+  },
+  "the-numerical-models": {
+    "slug": "the-numerical-models",
+    "headings": {
+      "numerics-exact-values-and-contracts": {
+        "slug": "the-numerical-models",
+        "heading": "a-common-interface-for-numerical-formats"
+      }
+    }
+  },
+  "ieee-binary-formats": {
+    "slug": "ieee-binary-formats",
+    "headings": {
+      "what-is-proved-for-each-operation": {
+        "slug": "ieee-binary-formats",
+        "heading": "from-executable-arithmetic-to-real-rounding"
+      },
+      "applying-a-real-valued-arithmetic-theorem": {
+        "slug": "ieee-binary-formats",
+        "heading": "from-executable-arithmetic-to-real-rounding"
+      },
+      "formats-encodings-and-their-meaning": {
+        "slug": "ieee-binary-formats",
+        "heading": "from-executable-arithmetic-to-real-rounding"
+      },
+      "powers-and-roots-with-one-rounding": {
+        "slug": "elementary-functions",
+        "heading": "powers-and-roots-with-one-rounding"
+      },
+      "decimal-interchange": {
+        "slug": "decimal-arithmetic",
+        "heading": "encoding-the-complete-datum"
+      },
+      "arithmetic-and-preferred-exponents": {
+        "slug": "decimal-arithmetic",
+        "heading": "arithmetic-and-preferred-exponents"
+      },
+      "accumulating-exception-flags": {
+        "slug": "decimal-arithmetic",
+        "heading": "accumulating-exception-flags"
+      },
+      "quantization-and-integral-rounding": {
+        "slug": "decimal-arithmetic",
+        "heading": "quantization-and-integral-rounding"
+      },
+      "comparing-values-and-representations": {
+        "slug": "decimal-arithmetic",
+        "heading": "comparing-values-and-representations"
+      },
+      "adjacent-values-scaling-and-remainder": {
+        "slug": "decimal-arithmetic",
+        "heading": "adjacent-values-scaling-and-remainder"
+      },
+      "decimal-text-round-trips": {
+        "slug": "decimal-arithmetic",
+        "heading": "decimal-text-round-trips"
+      },
+      "conversions-between-numerical-formats": {
+        "slug": "decimal-arithmetic",
+        "heading": "conversions-between-numerical-formats"
+      },
+      "arithmetic-keeps-track-of-the-cohort": {
+        "slug": "decimal-arithmetic",
+        "heading": "arithmetic-and-preferred-exponents"
+      },
+      "remembering-exceptions-across-a-calculation": {
+        "slug": "decimal-arithmetic",
+        "heading": "accumulating-exception-flags"
+      },
+      "choosing-a-decimal-grid": {
+        "slug": "decimal-arithmetic",
+        "heading": "quantization-and-integral-rounding"
+      },
+      "moving-through-the-decimal-values": {
+        "slug": "decimal-arithmetic",
+        "heading": "adjacent-values-scaling-and-remainder"
+      },
+      "writing-a-value-without-losing-its-representation": {
+        "slug": "decimal-arithmetic",
+        "heading": "decimal-text-round-trips"
+      },
+      "crossing-into-another-format": {
+        "slug": "decimal-arithmetic",
+        "heading": "conversions-between-numerical-formats"
+      },
+      "transcendental-functions": {
+        "slug": "elementary-functions",
+        "heading": "calling-the-approximation-kernels"
+      },
+      "certified-exponential-and-logarithm": {
+        "slug": "elementary-functions",
+        "heading": "certified-exponential-and-logarithm"
+      },
+      "stable-decimal-exponential-and-logarithm": {
+        "slug": "elementary-functions",
+        "heading": "certified-decimal-functions"
+      }
+    }
+  },
+  "low-precision-formats-for-machine-learning": {
+    "slug": "low-precision-formats-for-machine-learning",
+    "headings": {
+      "affine-integer-quantization": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "affine-quantization"
+      }
+    }
+  },
+  "posits-and-the-quire": {
+    "slug": "posits-and-the-quire",
+    "headings": {
+      "error-bounds-and-quire-limits": {
+        "slug": "posits-and-the-quire",
+        "heading": "rounding-thresholds-and-exceptional-values"
+      },
+      "where-the-posit-work-stops": {
+        "slug": "posits-and-the-quire",
+        "heading": "rounding-thresholds-and-exceptional-values"
+      }
+    }
+  },
+  "kernels-fixed-word-algorithms": {
+    "slug": "kernels-fixed-word-algorithms",
+    "headings": {
+      "reading-a-compiler-certificate": {
+        "slug": "kernels-fixed-word-algorithms",
+        "heading": "compiler-replacements-with-csimp"
+      },
+      "capacity-bounds-and-compiler-assumptions": {
+        "slug": "kernels-fixed-word-algorithms",
+        "heading": "capacity-bounds-and-backend-dispatch"
+      }
+    }
+  },
+  "backends-and-the-planner": {
+    "slug": "backends-and-the-planner",
+    "headings": {
+      "choosing-and-caching-an-implementation": {
+        "slug": "backends-and-the-planner",
+        "heading": "following-a-public-arithmetic-call"
+      }
+    }
+  },
+  "performance": {
+    "slug": "performance",
+    "headings": {
+      "timing-results": {
+        "slug": "performance",
+        "heading": "public-binary-arithmetic"
+      },
+      "comparing-with-leans-native-floats": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
+      "leans-model-and-its-compiled-operations": {
+        "slug": "lean-native-floats",
+        "heading": "leans-model-and-its-compiled-operations"
+      },
+      "both-implementations-lose-associativity": {
+        "slug": "lean-native-floats",
+        "heading": "both-implementations-lose-associativity"
+      },
+      "converting-to-native-floats-changes-nan-payloads": {
+        "slug": "lean-native-floats",
+        "heading": "converting-to-native-floats-changes-nan-payloads"
+      },
+      "proofs-relating-floatlib-to-leans-float-model": {
+        "slug": "lean-native-floats",
+        "heading": "proofs-relating-floatlib-to-leans-float-model"
+      },
+      "integer-conversions-in-lean-434": {
+        "slug": "lean-native-floats",
+        "heading": "integer-conversions-in-lean-434"
+      },
+      "arithmetic-through-the-same-model": {
+        "slug": "lean-native-floats",
+        "heading": "arithmetic-through-the-same-model"
+      },
+      "formats-rounding-directions-and-status": {
+        "slug": "lean-native-floats",
+        "heading": "formats-rounding-directions-and-status"
+      },
+      "opting-into-guarded-host-operations": {
+        "slug": "lean-native-floats",
+        "heading": "opting-into-guarded-host-operations"
+      },
+      "the-same-finite-bits-including-rounding-effects": {
+        "slug": "lean-native-floats",
+        "heading": "both-implementations-lose-associativity"
+      },
+      "nan-payloads-change-at-the-native-conversion-boundary": {
+        "slug": "lean-native-floats",
+        "heading": "converting-to-native-floats-changes-nan-payloads"
+      },
+      "the-proved-conversion-and-arithmetic-bridges": {
+        "slug": "lean-native-floats",
+        "heading": "proofs-relating-floatlib-to-leans-float-model"
+      }
+    }
+  },
+  "external-validation": {
+    "slug": "external-validation",
+    "headings": {
+      "decimal-values-cohorts-and-flags": {
+        "slug": "external-validation",
+        "heading": "decimal-datums-and-exact-text"
+      },
+      "posit-exponentials-and-logarithms": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "posit-hyperbolic-functions": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "exact-trigonometric-comparisons": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-trigonometric-functions": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "pi-scaled-posit-trigonometric-functions": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-atan2": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "posit-decimal-text": {
+        "slug": "external-validation",
+        "heading": "decimal-datums-and-exact-text"
+      },
+      "posit-integer-conversion": {
+        "slug": "external-validation",
+        "heading": "words-flags-and-conversion-success"
+      },
+      "natural-posit-exponentials-and-logarithms": {
+        "slug": "external-validation",
+        "heading": "rounding-transcendental-results"
+      },
+      "ordinary-posit-trigonometric-results": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "pi-scaled-posit-trigonometric-results": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      },
+      "two-coordinate-posit-angles": {
+        "slug": "external-validation",
+        "heading": "trigonometric-ordering-and-argument-reduction"
+      }
+    }
   }
 }

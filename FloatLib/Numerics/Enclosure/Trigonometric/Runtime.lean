@@ -14,8 +14,8 @@ public import Mathlib.Data.Nat.Factorial.Basic
 # Rational trigonometric enclosures
 
 The arctangent series is evaluated only for arguments in `(-1, 1)`. Inversion and the
-arctangent addition identity at π/4 reduce every rational input to a series argument of magnitude at most
-one half. Machin's identity `π / 4 = 4 * atan (1/5) - atan (1/239)` supplies a rational enclosure
+arctangent addition identity at π/4 reduce every rational input to a series argument of magnitude
+at most one half. Machin's identity `π / 4 = 4 * atan (1/5) - atan (1/239)` supplies a rational enclosure
 of the constant; no rounded approximation to π enters the argument reduction.
 
 The natural argument controls the number of terms. These operations return rational bounds,
@@ -24,6 +24,13 @@ assert termination of a rounding search at an exact rounding boundary.
 
 These kernels provide analytic foundations for the trigonometric functions listed in §5.5 of
 the *Posit Standard* (2022); they do not by themselves implement that section's rounding contract.
+
+The Taylor coefficients follow the NIST *Digital Library of Mathematical Functions*:
+[§4.19.E1](https://dlmf.nist.gov/4.19.E1) for sine,
+[§4.19.E2](https://dlmf.nist.gov/4.19.E2) for cosine, and
+[§4.24.E3](https://dlmf.nist.gov/4.24.E3) for arctangent.
+`SinCosProof` proves the remainder bounds using Mathlib's Taylor theorem; `AtanProof` bounds
+the arctangent tail by a geometric series and uses Mathlib's Machin identity to enclose π/4.
 -/
 
 @[expose] public section

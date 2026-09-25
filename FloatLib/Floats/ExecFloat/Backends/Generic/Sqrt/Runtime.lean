@@ -60,9 +60,9 @@ exact result above the tie.
 Descriptor-aware positive square root for formats not represented by Lean's conventional IEEE
 model.
 
-The radicand and root use natural-number arithmetic; exponents use `Int`.
-`IntegerSquareRoot.sqrtNat` uses the proved `UInt64` kernel when the scaled radicand fits and
-`Nat.sqrt` for larger inputs.
+The radicand and root use natural-number arithmetic; exponents use `Int`. The root is computed
+at the destination scale with one guard bit and an exact sticky flag, so a large exponent gap
+does not force an oversized integer square root.
 -/
 @[inline] def sqrtGeneral
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) : Model fmt :=
@@ -73,10 +73,8 @@ The radicand and root use natural-number arithmetic; exponents use `Int`.
     let rootExponent := min (exponent.ediv 2) finalExponent
     let radicandShift := (exponent - 2 * rootExponent).toNat
     let scaledMantissa := mantissa <<< radicandShift
-    let root := FloatLib.Numerics.FixedWord.IntegerSquareRoot.sqrtNat scaledMantissa
-    let remainder := scaledMantissa - root * root
     let roundingShift := (finalExponent - rootExponent).toNat
-    let roundedRoot := roundRoot root remainder roundingShift
+    let roundedRoot := (ScaledSqrt.shifted scaledMantissa roundingShift).roundedMantissa
     roundDyadicImpl fmt
       { negative := false
         significand := roundedRoot

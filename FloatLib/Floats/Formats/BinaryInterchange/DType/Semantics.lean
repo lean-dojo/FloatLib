@@ -93,14 +93,14 @@ theorem floatToInt_of_exactValue_eq_infinity
       .failure (.infinity .source negative) := by
   simp [floatToInt, hvalue]
 
-/-- Float-to-integer conversion rejects a NaN and retains its payload in the failure. -/
+/-- NaN conversion failures retain the source sign, signaling class, and payload. -/
 theorem floatToInt_of_exactValue_eq_nan
     {fmt : FloatFormat} {width : Nat} (x : Model fmt)
     (rounding : Model.IEEERoundingMode)
     (negative signaling : Bool) (payload : Nat)
     (hvalue : Model.exactValue x = .nan negative signaling payload) :
     floatToInt (width := width) x rounding =
-      .failure (.exceptional .source (.nan (some payload))) := by
+      .failure (.exceptional .source (.nan (some payload) negative signaling)) := by
   simp [floatToInt, hvalue]
 
 /-- Successful finite conversion stores the selected integer exactly at positive width. -/

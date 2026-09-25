@@ -101,7 +101,7 @@ example (value : Binary32) : ExecFloat.ConversionOutcome Posit32 :=
 /-! ## Compare the exact values produced by rounding -/
 
 private def third (rounding : Model.IEEERoundingMode) : Binary32 :=
-  ExecFloat.Binary.div 1 3 (rounding := rounding)
+  ExecFloat.Binary.divWithRounding 1 3 (rounding := rounding)
 -- third .nearestEven = 11184811 * 2^-25
 -- third .towardZero = 5592405 * 2^-24
 -- third .towardPositiveInfinity = 11184811 * 2^-25

@@ -4,9 +4,10 @@
 Chapter 11 gives the quire of an n-bit posit as a signed two's-complement word of 16n bits whose
 least significant bit is worth 2^(16 - 8n), and works out the capacity argument in words: the
 square of the largest posit is 2^240, and 2^31 such products come to exactly 2^511 coefficient
-units, one past the largest ordinary quire coefficient. This figure draws the word to scale, bit
-511 on the left, with the weight of each landmark bit written under it and the spans that one
-posit, one product of two posits, and the headroom for a long sum occupy.
+units, one past the largest ordinary quire coefficient. This figure draws the word to scale,
+bit 511 on the left, with three value landmarks and the thirty carry bits above the largest
+product. Its capacity strip states the strict bound from a zero accumulator for finite
+products; the longer derivation stays in the chapter.
 
 Everything drawn is arithmetic on the parameters of FloatLib/Floats/Formats/Posit/Quire/Model/
 Core.lean (width = 16 * bits, scaleExponent = 16 - 8 * bits) and of
@@ -27,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 POSIT_BITS = 32
@@ -36,7 +38,6 @@ MAX_POSIT_EXPONENT = 4 * (POSIT_BITS - 2)   # regime of payloadBits ones: 4 * (n
 
 BIT_ONE = -SCALE_EXPONENT                          # weight 2^0
 BIT_MIN_POSIT = BIT_ONE - MAX_POSIT_EXPONENT       # weight 2^-120
-BIT_MAX_POSIT = BIT_ONE + MAX_POSIT_EXPONENT       # weight 2^120
 BIT_MAX_PRODUCT = BIT_ONE + 2 * MAX_POSIT_EXPONENT  # weight 2^240
 BIT_SIGN = WIDTH - 1
 HEADROOM = BIT_SIGN - BIT_MAX_PRODUCT - 1          # 30 bits strictly between them
@@ -50,82 +51,58 @@ def x_of(bit: int) -> float:
     return BIT_SIGN - bit
 
 
+def draw(mobile: bool):
+    fig = plt.figure(figsize=(3.8, 5.8) if mobile else (9, 3.85))
+    fig.text(0.035, 0.97, "Room for exact products", fontsize=14, weight="bold", va="top")
+    fig.text(0.035, 0.87 if mobile else 0.83,
+             r"Posit32 quire: 512 bits, scale $2^{-240}$", fontsize=12, color=fs.MUTED)
+    ax = fig.add_axes([0.05, 0.43, 0.90, 0.35] if mobile else [0.04, 0.34, 0.92, 0.37])
+    ax.set(xlim=(-6, WIDTH + 6), ylim=(-1.15, 2.7))
+    ax.axis("off")
+    segments = [(BIT_SIGN, BIT_SIGN, fs.VERMILION),
+                (BIT_MAX_PRODUCT + 1, BIT_SIGN - 1, fs.GREEN),
+                (BIT_ONE, BIT_MAX_PRODUCT, fs.BLUE), (0, BIT_ONE - 1, fs.SKY)]
+    for lo, hi, colour in segments:
+        ax.add_patch(Rectangle((x_of(hi), 0), hi - lo + 1, 0.7,
+                               facecolor=colour, edgecolor=fs.INK, lw=0.6))
+    for bit, y, label in [(BIT_SIGN, 2.25, "sign: bit 511"),
+                           (496, 1.35, "30 carry bits: 481 to 510")]:
+        x = x_of(bit) + 0.5
+        ax.plot([x, x], [0.72, y - 0.08], color=fs.MUTED, lw=0.9)
+        ax.text(x + 4, y, label, fontsize=11.5, va="center")
+    point = x_of(BIT_ONE - 1)
+    ax.plot([point, point], [-0.04, 0.82], color=fs.INK, lw=1.5)
+    for bit, value, ha in [(BIT_MAX_PRODUCT, r"$2^{240}$", "left" if mobile else "center"),
+                            (BIT_ONE, "$1$", "center"),
+                            (0, r"$2^{-240}$", "right" if mobile else "center")]:
+        x = x_of(bit) + 0.5
+        ax.plot([x, x], [0, -0.18], color=fs.MUTED, lw=0.8)
+        ax.text(x, -0.3, f"bit {bit}\n{value}", fontsize=11.5, ha=ha, va="top", linespacing=1.4)
+    fig.text(0.035, 0.32 if mobile else 0.24,
+             "Largest product reaches bit 480.\nBits above it absorb carries." if mobile else
+             "Largest product: $2^{240}$, at bit 480.  The 30 bits above it absorb carries.",
+             fontsize=12, linespacing=1.5)
+    fig.text(0.035, 0.21 if mobile else 0.15,
+             "Blue: 241 integer positions\nLight blue: 240 fractional positions" if mobile else
+             "Blue: 241 integer positions.  Light blue: 240 fractional positions.",
+             fontsize=11.5, linespacing=1.5, color=fs.MUTED)
+    fig.text(0.035, 0.025,
+             "From zero, strictly fewer than $2^{31}$\nfinite products accumulate exactly."
+             if mobile else "From zero, strictly fewer than $2^{31}$ finite products accumulate exactly.",
+             fontsize=12, linespacing=1.5,
+             bbox=dict(facecolor=fs.PAPER_2, edgecolor=fs.LINE, boxstyle="square,pad=0.45"))
+    return fig
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
-
     fs.setup()
-    fig, ax = fs.figure(3.7)
-    ax.set_xlim(-6, WIDTH + 6)
-    ax.set_ylim(-3.4, 4.1)
-    ax.axis("off")
-    ax.grid(False)
-
-    y0, h = 0.0, 1.0
-    segments = [
-        (BIT_SIGN, BIT_SIGN, fs.VERMILION, ""),
-        (BIT_MAX_PRODUCT + 1, BIT_SIGN - 1, fs.GREEN, f"{HEADROOM} bits"),
-        (BIT_ONE, BIT_MAX_PRODUCT, fs.BLUE, f"{BIT_MAX_PRODUCT - BIT_ONE + 1} integer bits, weights 1 to $2^{{240}}$"),
-        (0, BIT_ONE - 1, fs.SKY, f"{BIT_ONE} fraction bits, weights $2^{{-240}}$ to $2^{{-1}}$"),
-    ]
-    for lo, hi, colour, label in segments:
-        ax.add_patch(Rectangle((x_of(hi), y0), hi - lo + 1, h, facecolor=colour,
-                               edgecolor=fs.INK, linewidth=0.9))
-        if label and hi - lo > 60:
-            ax.text((x_of(hi) + x_of(lo) + 1) / 2, y0 + h / 2, label, ha="center", va="center",
-                    fontsize=9.5, color="white" if colour == fs.BLUE else fs.INK)
-    # The two narrow segments are named by leaders that rise vertically from them, the sign
-    # label on the upper line and the headroom label on the lower one, so neither crosses the
-    # other or the spans drawn higher up.
-    sign_x = x_of(BIT_SIGN) + 0.5
-    ax.plot([sign_x, sign_x], [y0 + h, 1.95], color=fs.INK, linewidth=0.8)
-    ax.text(sign_x + 3, 1.95, f"sign, bit {BIT_SIGN}", ha="left", va="center", fontsize=9.5,
-            color=fs.INK)
-    head_x = (x_of(BIT_SIGN - 1) + x_of(BIT_MAX_PRODUCT + 1) + 1) / 2
-    ax.plot([head_x, head_x], [y0 + h, 1.38], color=fs.INK, linewidth=0.8)
-    ax.text(head_x + 3, 1.38,
-            f"{HEADROOM} bits of headroom, bits {BIT_MAX_PRODUCT + 1} to {BIT_SIGN - 1}",
-            ha="left", va="center", fontsize=9.5, color=fs.INK)
-
-    # Binary point between bit 240 and bit 239.
-    ax.plot([x_of(BIT_ONE - 1), x_of(BIT_ONE - 1)], [y0 - 0.15, y0 + h + 0.15], color=fs.INK,
-            linewidth=1.6)
-    ax.text(x_of(BIT_ONE - 1), y0 + h + 0.22, "binary point", ha="center", va="bottom",
-            fontsize=9.5, color=fs.INK)
-
-    # Landmark bits and their weights.
-    landmarks = [
-        (0, r"bit 0" "\n" r"$2^{-240}$" "\n" "smallest posit squared"),
-        (BIT_MIN_POSIT, r"bit 120" "\n" r"$2^{-120}$" "\n" "smallest posit"),
-        (BIT_ONE, r"bit 240" "\n" r"$2^{0} = 1$"),
-        (BIT_MAX_POSIT, r"bit 360" "\n" r"$2^{120}$" "\n" "largest posit"),
-        (BIT_MAX_PRODUCT, r"bit 480" "\n" r"$2^{240}$" "\n" "largest posit squared"),
-    ]
-    for bit, label in landmarks:
-        xc = x_of(bit) + 0.5
-        ax.plot([xc, xc], [y0 - 0.05, y0 - 0.35], color=fs.INK, linewidth=0.9)
-        ax.text(xc, y0 - 0.45, label, ha="center", va="top", fontsize=9, color=fs.INK,
-                linespacing=1.25)
-
-    # Spans above the word.
-    def span(lo_bit: int, hi_bit: int, y: float, text: str) -> None:
-        left, right = x_of(hi_bit), x_of(lo_bit) + 1
-        ax.plot([left, left, right, right], [y - 0.12, y, y, y - 0.12], color=fs.INK,
-                linewidth=0.9)
-        ax.text((left + right) / 2, y + 0.08, text, ha="center", va="bottom", fontsize=9.5,
-                color=fs.INK)
-
-    span(BIT_MIN_POSIT, BIT_MAX_POSIT, 3.4, r"one posit: $2^{-120}$ to $2^{120}$")
-    span(0, BIT_MAX_PRODUCT, 2.5, r"one product of two posits: $2^{-240}$ to $2^{240}$")
-
-    ax.text(WIDTH / 2, -3.3,
-            r"$2^{31}$ products of the largest posit sum to $2^{31} \cdot 2^{480} = 2^{511}$ units and reach the sign bit, "
-            "so the term limit is fewer than $2^{31}$",
-            ha="center", va="bottom", fontsize=9.5, color=fs.INK)
-
-    out = fs.save(fig, "ch14-quire.png", args.out)
-    print(f"wrote {out}")
+    out = args.out or fs.ASSETS / "ch14-quire.png"
+    for mobile in (False, True):
+        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 
 if __name__ == "__main__":

@@ -57,8 +57,35 @@ abbrev format
       | fail
           "ExecFloat.Binary requires bias ≤ encoding.maxFiniteExponent exponentBits") :
     FloatFormat :=
-  FloatFormat.custom exponentBits fractionBits bias encoding
-    exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite
+  -- Expose the fields so rebuilding an arbitrary descriptor reduces back to that descriptor.
+  -- Generic configured methods can then infer its codec without unfolding `FloatFormat.custom`.
+  { expWidth := exponentBits
+    expWidth_ge_two := exponentBits_ge_two
+    fracWidth := fractionBits
+    fracWidth_pos := fractionBits_pos
+    exponentBias := bias
+    encoding := encoding
+    exponentBias_pos := bias_pos
+    exponentBias_le_maxFinite := bias_le_maxFinite }
+
+/--
+Infer a configured receiver's descriptor before comparing its individual fields.
+
+This keeps field notation independent of unrelated codecs in scope. The `id` wrappers allow
+proof fields to be compared by proof irrelevance when Lean checks the hint.
+-/
+unif_hint formatEta
+    (format source : FloatFormat) (exponentBits fractionBits : Nat)
+    (encoding : FloatFormat.Encoding) (bias : Nat)
+    (exponentBits_ge_two : 2 ≤ exponentBits) (fractionBits_pos : 0 < fractionBits)
+    (bias_pos : 0 < bias)
+    (bias_le_maxFinite : bias ≤ encoding.maxFiniteExponent exponentBits) where
+  format =?= source
+  source =?= FloatFormat.mk exponentBits (id exponentBits_ge_two)
+    fractionBits (id fractionBits_pos) bias encoding (id bias_pos) (id bias_le_maxFinite) ⊢
+  ExecFloat.Binary.format format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite =?= source
 
 /--
 The default eight-exponent-bit, twenty-three-fraction-bit configuration is exactly the IEEE
@@ -155,14 +182,50 @@ abbrev LimbFamily
 end Binary
 
 /--
+An executable binary format selected directly by its numerical parameters.
+
+The stored width is derived as `1 + exponentBits + fractionBits`; it is not a separate parameter
+that can disagree with the layout. Storage and operation implementations are selected statically
+from the resulting format. The optional `plan` and `code` parameters let generic code use the
+same interface with another certified carrier.
+-/
+abbrev Binary
+    (exponentBits fractionBits : Nat)
+    (encoding : FloatFormat.Encoding := .ieee)
+    (bias : Nat := encoding.defaultBias exponentBits)
+    (exponentBits_ge_two : 2 ≤ exponentBits := by
+      first
+      | decide
+      | fail "ExecFloat.Binary requires exponentBits ≥ 2")
+    (fractionBits_pos : 0 < fractionBits := by
+      first
+      | decide
+      | fail "ExecFloat.Binary requires fractionBits ≥ 1")
+    (bias_pos : 0 < bias := by
+      first
+      | decide
+      | fail "ExecFloat.Binary requires a positive exponent bias")
+    (bias_le_maxFinite : bias ≤ encoding.maxFiniteExponent exponentBits := by
+      first
+      | decide
+      | fail
+          "ExecFloat.Binary requires bias ≤ encoding.maxFiniteExponent exponentBits")
+    (plan : Configured.StoragePlan (Binary.format exponentBits fractionBits encoding bias
+      exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite) :=
+      Configured.StoragePlan.forKnownWidth _ (1 + exponentBits + fractionBits) rfl)
+    (code : Type := Configured.Code plan) :=
+  FloatLib.Floats.ExecFloat <|
+    Configured.Family (Binary.format exponentBits fractionBits encoding bias
+      exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite) code plan
+
+/--
 An executable binary format wider than 128 bits stored as an array of 32-bit limbs.
 
 This is the opt-in counterpart of `ExecFloat.Binary` for wide formats: same descriptor, same
 literals and reference semantics. For eligible descriptors, the planner can select the kernels
 of `ExecFloat/Backends/WideLimb` to run addition, subtraction, multiplication, and fused
-multiply-add
-directly on the stored limbs. `ExecFloat.Binary` keeps the exact-width proof model, avoiding limb
-conversion for division, square root, comparison, and conversion.
+multiply-add directly on the stored limbs. `ExecFloat.Binary` keeps the exact-width proof model,
+avoiding limb conversion for division, square root, comparison, and conversion.
 -/
 abbrev BinaryLimbs
     (exponentBits fractionBits : Nat)
@@ -189,41 +252,12 @@ abbrev BinaryLimbs
       | decide
       | fail
           "ExecFloat.BinaryLimbs requires bias ≤ encoding.maxFiniteExponent exponentBits") :=
-  FloatLib.Floats.ExecFloat <|
-    Binary.LimbFamily exponentBits fractionBits encoding bias width_gt
-      exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite
-
-/--
-An executable binary format selected directly by its numerical parameters.
-
-The stored width is derived as `1 + exponentBits + fractionBits`; it is not a separate parameter
-that can disagree with the layout. Storage and operation implementations are selected statically
-from the resulting format.
--/
-abbrev Binary
-    (exponentBits fractionBits : Nat)
-    (encoding : FloatFormat.Encoding := .ieee)
-    (bias : Nat := encoding.defaultBias exponentBits)
-    (exponentBits_ge_two : 2 ≤ exponentBits := by
-      first
-      | decide
-      | fail "ExecFloat.Binary requires exponentBits ≥ 2")
-    (fractionBits_pos : 0 < fractionBits := by
-      first
-      | decide
-      | fail "ExecFloat.Binary requires fractionBits ≥ 1")
-    (bias_pos : 0 < bias := by
-      first
-      | decide
-      | fail "ExecFloat.Binary requires a positive exponent bias")
-    (bias_le_maxFinite : bias ≤ encoding.maxFiniteExponent exponentBits := by
-      first
-      | decide
-      | fail
-          "ExecFloat.Binary requires bias ≤ encoding.maxFiniteExponent exponentBits") :=
-  FloatLib.Floats.ExecFloat <|
-    Binary.Family exponentBits fractionBits encoding bias
-      exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite
+  Binary exponentBits fractionBits encoding bias
+    exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite
+    (plan := Configured.StoragePlan.limbsForKnownWidth
+      (Binary.format exponentBits fractionBits encoding bias
+        exponentBits_ge_two fractionBits_pos bias_pos bias_le_maxFinite)
+      (1 + exponentBits + fractionBits) rfl width_gt)
 
 end ExecFloat
 end FloatLib.Floats

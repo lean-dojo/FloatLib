@@ -56,7 +56,14 @@ inductive InfinityPolicy where
 
 /-- Policy for NaN, NaR, reserved, or undefined observations. -/
 inductive ExceptionalPolicy where
-  /-- Produce the destination's canonical NaN when one exists. -/
+  /--
+  Propagate a source NaN as `Model.propagatedNaN` does in `Model.cast`. IEEE destinations keep the
+  sign, set the quiet bit, and preserve a payload that fits, otherwise using payload zero.
+  Other encodings follow their own NaN rule. Other exceptional observations become the
+  destination's canonical NaN. This is the default.
+  -/
+  | propagateNaN
+  /-- Produce the destination's canonical NaN for every exceptional observation. -/
   | canonicalNaN
   /-- Reject every exceptional observation. -/
   | reject
@@ -71,7 +78,7 @@ structure Context where
   /-- Treatment of source infinity. -/
   infinity : InfinityPolicy := .preserve
   /-- Treatment of source exceptional values. -/
-  exceptional : ExceptionalPolicy := .canonicalNaN
+  exceptional : ExceptionalPolicy := .propagateNaN
   deriving DecidableEq, Repr
 
 /--
@@ -79,7 +86,9 @@ Canonical binary conversion context.
 
 Finite values use nearest-even/native-overflow/gradual-underflow behavior. Infinities and
 exceptional values retain their value class when the destination encoding supports that class;
-otherwise conversion fails explicitly.
+otherwise conversion fails explicitly. An IEEE destination quiets a NaN, keeps its sign and any
+payload that fits, and replaces an oversized payload with zero. Maximum-NaN encodings keep only
+the sign, while FNUZ has a single NaN. A signaling NaN raises `invalid`.
 -/
 def Context.default : Context := {}
 
@@ -88,7 +97,7 @@ namespace Context
 /--
 Canonical conversion context with one caller-selected finite rounding direction.
 
-Native overflow, gradual underflow, infinity preservation, and canonical-NaN mapping retain their
+Native overflow, gradual underflow, infinity preservation, and NaN propagation retain their
 default behavior. Use a record update when any of those policies must also change.
 -/
 @[inline] def withRounding (rounding : RoundingMode) : Context :=
@@ -165,7 +174,16 @@ backend cannot change numerical meaning.
   | none =>
       .failure .unsupportedPolicy
 
-/-- Apply the exceptional-value policy and pack a supported canonical NaN. -/
+/--
+Apply the exceptional-value policy and pack a destination NaN.
+
+A signaling NaN raises `invalid` under either NaN-producing policy (IEEE 754-2019 §7.2). Under
+`propagateNaN` a source NaN becomes `Model.propagatedNaN format negative payload`, with the payload
+read by `Model.payloadOfNaNField`, exactly the NaN that `Model.castWithStatus` delivers across
+unequal descriptors. It stays in the NaN class, so `mappedSpecial` is clear. NaR, reserved, and
+undefined observations, and every observation under `canonicalNaN`, become the canonical NaN with
+`mappedSpecial`. A destination without a NaN encoding rejects the conversion.
+-/
 @[inline] def quantizeExceptionalWith {format : FloatFormat} {Destination : Type u}
     (pack : Model format → Destination) (context : Context)
     (exceptional : ExceptionalValue) :
@@ -173,10 +191,22 @@ backend cannot change numerical meaning.
   match context.exceptional with
   | .reject =>
       .failure (.exceptional .source exceptional)
+  | .propagateNaN =>
+      match Model.canonicalNaN? format, exceptional with
+      | none, _ =>
+          .failure (.exceptional .source exceptional)
+      | some _, .nan payload negative signaling =>
+          .success
+            (pack (Model.propagatedNaN format negative
+              (Model.payloadOfNaNField signaling (payload.getD 0))))
+            { invalid := signaling }
+      | some value, _ =>
+          .success (pack value) { mappedSpecial := true }
   | .canonicalNaN =>
       match Model.canonicalNaN? format with
       | some value =>
-          .success (pack value) { mappedSpecial := true }
+          .success (pack value)
+            { mappedSpecial := true, invalid := exceptional.isSignalingNaN }
       | none =>
           .failure (.exceptional .source exceptional)
 

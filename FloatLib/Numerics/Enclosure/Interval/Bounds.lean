@@ -14,6 +14,10 @@ public import Mathlib.Algebra.Order.Field.Basic
 
 Multiplication and division away from zero are enclosed by their four endpoint calculations.
 The proofs apply to any ordered field, independently of endpoint representation or rounding.
+
+The corner rule is equation (5.4) in S. M. Rump,
+[Verification methods: Rigorous results using floating-point
+arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §5.1.
 -/
 
 @[expose] public section

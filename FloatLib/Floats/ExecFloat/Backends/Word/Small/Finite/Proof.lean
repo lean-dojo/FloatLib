@@ -11,6 +11,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 
 /-!
 # Correctness of native finite decoding for one-word formats
@@ -148,20 +149,44 @@ theorem addFinite_eq {fmt : FloatFormat}
   cases FiniteKernel.decode? x <;> cases FiniteKernel.decode? y <;>
     simp [FiniteKernel.addComponentsImpl_eq]
 
-/--
-Native-storage finite FMA equals the generic compact finite kernel.
+private theorem fmaComponentsImpl_eq_of_zero
+    {fmt : FloatFormat} (hieee : fmt.isIEEE = true)
+    (x y dz : FiniteKernel.Components) (z : Model fmt)
+    (hdz : FiniteKernel.decode? z = some dz)
+    (hzero : x.mantissa = 0 ∨ y.mantissa = 0)
+    (hnonzero : dz.mantissa ≠ 0) :
+    FiniteKernel.fmaComponentsImpl fmt x y dz = z := by
+  have hdyadic : toDyadic? z = some (dz.toDyadic fmt) := by
+    rw [FiniteKernel.toDyadic_eq_decode, hdz]
+    rfl
+  have hproduct : x.mantissa * y.mantissa = 0 := Nat.mul_eq_zero.mpr hzero
+  have hsum :
+      addDyadic (FiniteKernel.productDyadic fmt x y) (dz.toDyadic fmt) =
+        dz.toDyadic fmt := by
+    simp [FiniteKernel.productDyadic, addDyadic, Numerics.Dyadic.add,
+      Numerics.Dyadic.addFields, FiniteKernel.Components.toDyadic,
+      hproduct, hnonzero]
+  rw [FiniteKernel.fmaComponentsImpl_eq, FiniteKernel.fmaComponents, hsum,
+    ← roundDyadic_eq_roundDyadicImpl]
+  exact roundDyadicWithRounding_toDyadic? hieee .nearestEven hdyadic
 
-The runtime names the compiled `fmaComponentsImpl`; `fmaComponentsImpl_eq` identifies it with the
-exact `fmaComponents` used by `FiniteKernel.fma?`.
--/
+/-- Native-storage finite FMA, including the exact zero-product exit, equals the generic kernel. -/
 theorem fmaFinite_eq {fmt : FloatFormat}
     (heligible : NativeSmallWord.StorageEligible fmt)
     (x y z : Model fmt) :
     fmaFinite? x y z = FiniteKernel.fma? x y z := by
   unfold fmaFinite? FiniteKernel.fma?
   rw [decode_eq heligible x, decode_eq heligible y, decode_eq heligible z]
-  cases FiniteKernel.decode? x <;> cases FiniteKernel.decode? y <;>
-    cases FiniteKernel.decode? z <;> simp [FiniteKernel.fmaComponentsImpl_eq]
+  cases hx : FiniteKernel.decode? x <;> cases hy : FiniteKernel.decode? y <;>
+    cases hz : FiniteKernel.decode? z <;> simp only
+  rename_i dx dy dz
+  split
+  · next hzero =>
+      have hzero : (dx.mantissa = 0 ∨ dy.mantissa = 0) ∧ dz.mantissa ≠ 0 := by
+        simpa only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq, bne_iff_ne] using hzero
+      rw [← fmaComponentsImpl_eq_of_zero heligible.1 dx dy dz z hz hzero.1 hzero.2,
+        FiniteKernel.fmaComponentsImpl_eq]
+  · rw [FiniteKernel.fmaComponentsImpl_eq]
 
 /-- Native-storage positive square root equals the generic compact finite kernel. -/
 theorem sqrtPositive_eq {fmt : FloatFormat}

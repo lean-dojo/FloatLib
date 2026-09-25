@@ -31,6 +31,18 @@ open FloatLib.Numerics.FixedWord
 
 variable {fmt : FloatFormat}
 
+/-! ## Scalar carry arithmetic -/
+
+/-- Scalar column carries preserve all four words of the fixed-limb product. -/
+@[simp] theorem multiplyLimbs_eq_mul128 (x y : UInt128) :
+    multiplyLimbs x y = mul128 x y := rfl
+
+/-- Scalar rounding carries preserve both result words for every shift amount. -/
+@[simp] theorem roundProduct_eq_roundShiftRightEven128 (value : UInt256) (shift : Nat) :
+    roundProduct value shift = value.roundShiftRightEven128 shift := by
+  dsimp only [roundProduct, UInt256.roundShiftRightEven128]
+  split_ifs <;> simp_all [UInt128.increment, add64]
+
 /-! ## Threshold words -/
 
 /-- The first normal leading-bit position fits a native word. -/

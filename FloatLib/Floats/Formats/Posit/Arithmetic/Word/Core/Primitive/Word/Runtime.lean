@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Model.Fields
+public import FloatLib.Kernels.FixedWord.Core.Runtime
 
 /-!
 # Native-word posit primitives
@@ -101,7 +102,7 @@ whereas a bit read beyond the stored word must be `false`.
   if truncated == 0 then
     width
   else
-    width - (truncated.log2.toNat + 1)
+    width - ((FixedWord.log2Word truncated).toNat + 1)
 
 /--
 Count a leading run in the low `width` bits of a native word.

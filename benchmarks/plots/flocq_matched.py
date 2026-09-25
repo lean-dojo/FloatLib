@@ -184,6 +184,9 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+    from format_comparison import (
+        compact_operation_layout, save_operation_svg, write_operation_series,
+    )
 
     plt.rcParams.update({
         "font.family": "DejaVu Sans", "font.size": 11,
@@ -195,7 +198,7 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
     fig, axes = plt.subplots(2, 3, figsize=(12.8, 6.2), sharex=True, sharey=True)
     handles = {}
     tick_labels = {10: "10 ns", 1e3: "1 µs", 1e5: "100 µs", 1e7: "10 ms", 1e9: "1 s"}
-    for ax, (operation, title) in zip(axes.flat, OPERATIONS.items()):
+    def draw_panel(ax, operation):
         for impl, label, color, marker, style in SERIES:
             data = sorted((r for r in rows if r["implementation"] == impl
                            and r["operation"] == operation), key=lambda r: int(r["totalBits"]))
@@ -206,7 +209,7 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
                 linewidth=2.1 if impl == "ExecFloat" else 1.7, markersize=4.5,
             )
             handles[label] = line
-        ax.set_title(title, fontsize=13, loc="left", pad=6)
+        ax.set_title(OPERATIONS[operation], fontsize=13, loc="left", pad=6)
         ax.set_xscale("log", base=2)
         ax.set_yscale("log")
         ax.set_xlim(4.8, 5500)
@@ -218,6 +221,9 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
         ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: tick_labels[value]))
         ax.yaxis.set_minor_locator(NullLocator())
         ax.grid(alpha=.22, linewidth=.7)
+
+    for ax, operation in zip(axes.flat, OPERATIONS):
+        draw_panel(ax, operation)
     fig.legend(list(handles.values()), list(handles), loc="upper center",
                bbox_to_anchor=(.55, .995), ncol=3, frameon=False, fontsize=12)
     fig.text(.009, .49, "Time per operation · lower is faster",
@@ -228,6 +234,40 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=180)
     plt.close(fig)
+
+    descriptions = {}
+    for operation, title in OPERATIONS.items():
+        single, ax = plt.subplots()
+        draw_panel(ax, operation)
+        ax.set_xlabel("Encoded width (bits, log₂ scale)")
+        ax.set_ylabel("Time per operation (log scale)")
+        notes = (
+            "One trial; lower time is faster.",
+            "Precision and exponent bounds match.",
+            ("At 1,024+ bits, square root uses complete 16-fixture blocks."
+             if operation == "sqrt" else "Result-dependent fixture chain."),
+        )
+        compact_operation_layout(
+            single, ax, title=title, context="Matched binary formats, 6 to 4,096 bits",
+            handles=list(handles.values()), labels=list(handles), notes=notes,
+            bold_labels={"FloatLib binary (proved)"},
+        )
+        save_operation_svg(single, output, operation)
+        descriptions[operation] = (
+            f"{title}: absolute time per operation against encoded width, "
+            "on logarithmic axes with time ticks from nanoseconds to seconds. "
+            "FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. "
+            "One retained trial."
+            + (" Square root at 1,024 bits and above uses complete 16-fixture blocks."
+               if operation == "sqrt" else " Result-dependent fixture chain.")
+        )
+    write_operation_series(
+        output, descriptions,
+        overview_alt="Six arithmetic operations: absolute time per operation against encoded "
+        "width on logarithmic axes. FloatLib binary, extracted Flocq, and MPFR at eleven "
+        "matching binary formats, one trial. Square root at 1,024 bits and above uses "
+        "complete 16-fixture blocks.",
+    )
 
 
 def main() -> None:

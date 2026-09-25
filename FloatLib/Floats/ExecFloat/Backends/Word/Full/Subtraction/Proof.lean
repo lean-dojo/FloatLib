@@ -153,6 +153,7 @@ private theorem packExactDifference_eq_spec_subnormal
     rw [hposition, hleading] at hnative
     simpa using hnative
   unfold packExactDifference packExactDifferenceSpec
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
     hsubnormal, hsubnormalNat, ite_true]
   have hexponentWord : (1 : UInt64) ≤ exponent := by
@@ -359,6 +360,7 @@ private theorem packExactDifference_eq_spec_normal
     rw [hposition, hleading]
     simpa using h
   unfold packExactDifference packExactDifferenceSpec
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
     hnormal, hnormalNat, ite_false]
   rw [encodedExponent_word difference exponent hdifference hdifferenceFit

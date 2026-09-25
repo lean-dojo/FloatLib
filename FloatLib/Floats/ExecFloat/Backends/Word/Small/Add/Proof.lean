@@ -142,6 +142,25 @@ theorem shiftLimit_toNat (fmt : FloatFormat) (hfracWidth : fmt.fracWidth ≤ 61)
     change fmt.fracWidth ≤ 62
     omega
 
+private theorem roundMantissa_lt_eq_le (magnitude width leading : UInt64) :
+    (if width < leading then
+        Numerics.FixedWord.roundShiftRightEven magnitude (leading - width).toNat
+      else magnitude <<< (width - leading)) =
+    (if width ≤ leading then
+        Numerics.FixedWord.roundShiftRightEven magnitude (leading - width).toNat
+      else magnitude <<< (width - leading)) := by
+  by_cases hlt : width < leading
+  · simp only [hlt, UInt64.le_of_lt hlt, ite_true]
+  · by_cases heq : width = leading
+    · subst leading
+      simp [Numerics.FixedWord.roundShiftRightEven]
+    · have hnotle : ¬width ≤ leading := by
+        rw [UInt64.lt_iff_toNat_lt] at hlt
+        rw [← UInt64.toNat_inj] at heq
+        rw [UInt64.le_iff_toNat_le]
+        omega
+      simp only [hlt, hnotle, ite_false]
+
 /--
 The machine-word rounder computes the natural-number normal specification.
 
@@ -197,7 +216,8 @@ theorem roundMagnitude_eq_normalSpec
         fmt.bias + 2 * fmt.fracWidth - 1 :=
     normalThreshold_toNat hwidth
   unfold roundMagnitude? normalSpec?
-  dsimp only
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
+  rw [roundMantissa_lt_eq_le]
   rw [show magnitude.log2 = leading by rfl,
     show leading + scale + alignOffset fmt = position by rfl,
     show magnitude.toNat = magnitudeNat by rfl,
@@ -433,6 +453,35 @@ private theorem shifted_toNat (fmt : FloatFormat) (hfracWidth : fmt.fracWidth �
       (hfit.trans (by norm_num))
   rwa [UInt64.ofNat_toNat] at hshiftNat
 
+private theorem addFields_eq_shift_alignment (fmt : FloatFormat)
+    (xSign : Bool) (xExponent xMantissa : UInt64)
+    (ySign : Bool) (yExponent yMantissa : UInt64) :
+    addFields? fmt xSign xExponent xMantissa ySign yExponent yMantissa =
+      (if xMantissa == 0 || yMantissa == 0 then
+        none
+      else
+        let xScale := FloatLib.Numerics.FixedWord.finiteScale xExponent
+        let yScale := FloatLib.Numerics.FixedWord.finiteScale yExponent
+        if xScale ≤ yScale then
+          let shift := yScale - xScale
+          if shift ≤ shiftLimit fmt then
+            roundAligned? fmt xSign ySign xMantissa (yMantissa <<< shift) xScale
+          else
+            none
+        else
+          let shift := xScale - yScale
+          if shift ≤ shiftLimit fmt then
+            roundAligned? fmt xSign ySign (xMantissa <<< shift) yMantissa yScale
+          else
+            none) := by
+  unfold addFields?
+  split
+  · rfl
+  · by_cases hscale :
+        FloatLib.Numerics.FixedWord.finiteScale xExponent =
+          FloatLib.Numerics.FixedWord.finiteScale yExponent <;>
+      simp [hscale]
+
 /--
 An accepted field addition is the exact unsigned-scale sum of the same fields.
 
@@ -461,7 +510,7 @@ theorem addFields_refines
     Nat.pow_le_pow_right (by decide) (by omega)
   have hxMantissa62 : xMantissa.toNat < 2 ^ 62 := hxMantissa.trans_le hpowFrac
   have hyMantissa62 : yMantissa.toNat < 2 ^ 62 := hyMantissa.trans_le hpowFrac
-  unfold addFields? at hresult
+  rw [addFields_eq_shift_alignment] at hresult
   by_cases hzero : (xMantissa == 0 || yMantissa == 0) = true
   · simp [hzero] at hresult
   rw [ite_eq_right hzero] at hresult
@@ -485,7 +534,8 @@ theorem addFields_refines
       rw [← hxScale, ← hyScale]
       exact UInt64.le_iff_toNat_le.mp hle
     rw [ite_eq_left hle] at hresult
-    rw [ite_eq_left hleNat]
+    rw [ite_eq_left hleNat, FiniteScaleAdd.roundAligned_eq,
+      FiniteScaleAdd.roundMagnitudes_comm]
     by_cases hshift : yScale - xScale ≤ shiftLimit fmt
     · rw [ite_eq_left hshift] at hresult
       have hshiftNat :
@@ -523,7 +573,7 @@ theorem addFields_refines
       have hnat : ¬xScale.toNat ≤ yScale.toNat := fun h => hle (UInt64.le_iff_toNat_le.mpr h)
       omega
     rw [ite_eq_right hle] at hresult
-    rw [ite_eq_right hleNat]
+    rw [ite_eq_right hleNat, FiniteScaleAdd.roundAligned_eq]
     by_cases hshift : xScale - yScale ≤ shiftLimit fmt
     · rw [ite_eq_left hshift] at hresult
       have hshiftNat :

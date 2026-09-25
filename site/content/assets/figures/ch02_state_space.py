@@ -1,148 +1,97 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch02-state-space.png: how exhaustive testing grows with width.
+"""Draw ordered input-pair counts with one logarithmic scale and illustrative time labels.
 
-The correctness chapter ("The state space") counts the ordered input pairs of a binary operation at four
-encoded widths and converts each count to a running time at a billion tests per second. This
-figure puts those four points on one log axis and reads them twice, as a count on the left and
-as a time on the right. At the assumed rate, enumerating binary32 and binary64 is impractical.
-
-Sources:
-* widths: the descriptors in FloatLib/Floats/Formats/BinaryInterchange/Format/Catalog.lean,
-  each 1 + expWidth + fracWidth bits: e5m2 (5 + 2) and e4m3fn (4 + 3) for eight bits,
-  binary16 (5 + 10), binary32 (8 + 23), binary64 (11 + 52);
-* the count 2^(2w) at width w and the hypothetical rate of 10^9 tests per second are from
-  the chapter. The figure does not claim a universal feasibility cutoff or that the full
-  binary16 comparison has been run;
-* every time label is count / 10^9 seconds, converted with 3600 s per hour, 86400 s per day and
-  365.25 days per year, and printed to two significant figures, which is how chapter 15 rounds
-  its speed-ups. The chapter's own figures ("a few hundred years", "about 10^22 years") are
-  what these labels round to.
-
-No binary128 point is drawn, because the section does not discuss that width.
+For a w-bit format there are 2^w words and 2^(2w) ordered pairs. The widths (8, 16, 32, 64),
+one-billion-checks-per-second assumption, and pair counts are those in chapter 04. All bit
+patterns count, including zeros, infinities and NaNs where a format has them. Time is derived
+from that one hypothetical rate; it is neither a measured runtime nor a hardware forecast.
+A year is 365.25 days, as in the original figure. No secondary time or exponent axis is used.
 
 Run from anywhere: python3 ch02_state_space.py [--out PNG]
+The mobile companion is written beside the desktop image as <stem>-mobile.png.
 """
-
 from __future__ import annotations
 
 import argparse
 import math
-import sys
+from fractions import Fraction
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import figstyle as fs  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.lines import Line2D  # noqa: E402
+import figstyle as fs
+from matplotlib.patches import Rectangle
 
-# (label, expWidth, fracWidth) as declared in Catalog.lean.
-FORMATS = (
-    ("eight-bit formats", 5, 2),
-    ("binary16", 5, 10),
-    ("binary32", 8, 23),
-    ("binary64", 11, 52),
-)
-RATE = 10 ** 9                                   # tests per second, from the chapter
-SECONDS_PER_HOUR = 3600
-SECONDS_PER_DAY = 86400
-SECONDS_PER_YEAR = 365.25 * SECONDS_PER_DAY
-SMALL_WIDTHS = {8, 16}
-
-XLABEL = "encoded width of each operand (bits)"
-YLABEL = "ordered input pairs of one binary operation, $2^{2w}$ at width $w$"
-Y2LABEL = "time to run them all at a billion tests per second (seconds)"
-LEGEND_SMALL = "8 and 16 bits: feasible to enumerate at the assumed rate"
-LEGEND_LARGE = "binary32 and binary64: impractical to enumerate at the assumed rate"
+OUT_NAME = "ch02-state-space.png"
+FORMATS = [("8-bit formats", 5, 2), ("binary16", 5, 10),
+           ("binary32", 8, 23), ("binary64", 11, 52)]
+RATE = 10 ** 9
+SECONDS_PER_YEAR = Fraction(1461, 4) * 24 * 3600
+WIDTHS = [1 + e + f for _, e, f in FORMATS]
+PAIRS = [2 ** (2 * width) for width in WIDTHS]
+TIMES = [Fraction(count, RATE) for count in PAIRS]
+assert WIDTHS == [8, 16, 32, 64]
+assert PAIRS == [65536, 4294967296, 18446744073709551616, 340282366920938463463374607431768211456]
 
 
-def encoded_width(exp_width: int, frac_width: int) -> int:
-    return 1 + exp_width + frac_width
-
-
-def two_figures(value: float) -> str:
-    """Two significant figures, printed without an exponent."""
-    exponent = math.floor(math.log10(value))
-    rounded = round(value, 1 - exponent)
-    if rounded >= 10:
-        return f"{int(round(rounded))}"
-    return f"{rounded:.1f}"
-
-
-def time_label(seconds: float) -> str:
-    if seconds < 1e-3:
-        return f"{two_figures(seconds * 1e6)} microseconds"
+def time_label(seconds: Fraction) -> str:
+    if seconds < Fraction(1, 1000):
+        return f"{float(seconds * 10 ** 6):.0f} μs"
     if seconds < 60:
-        return f"{two_figures(seconds)} seconds"
-    if seconds < SECONDS_PER_DAY:
-        return f"{two_figures(seconds / SECONDS_PER_HOUR)} hours"
-    if seconds < SECONDS_PER_YEAR:
-        return f"{two_figures(seconds / SECONDS_PER_DAY)} days"
-    years = seconds / SECONDS_PER_YEAR
-    if years < 1e4:
-        return f"{two_figures(years)} years"
+        return f"{float(seconds):.1f} s"
+    years = float(seconds / SECONDS_PER_YEAR)
+    if years < 1000:
+        return f"{round(years, -1):.0f} years"
     exponent = math.floor(math.log10(years))
-    mantissa = round(years / 10 ** exponent, 1)
-    return rf"${mantissa} \times 10^{{{exponent}}}$ years"
+    mantissa = years / 10 ** exponent
+    return rf"${mantissa:.1f}\times 10^{{{exponent}}}$ years"
+
+
+assert [time_label(seconds) for seconds in TIMES[:3]] == ["66 μs", "4.3 s", "580 years"]
+assert time_label(TIMES[3]) == r"$1.1\times 10^{22}$ years"
+
+
+def build_figure(mobile: bool = False):
+    fs.setup()
+    width, height = (3.8, 6.5) if mobile else (9.0, 6.0)
+    fig = fs.plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    ax.text(0.18, height - 0.18, r"$w$-bit inputs give $2^{2w}$ pairs", fontsize=14 if mobile else 16,
+            weight="bold", va="top")
+    ax.text(0.18, height - 0.70, "At 1 billion checks/s (illustrative)", fontsize=11.5,
+            va="top", color=fs.MUTED)
+    left, right = 0.25, width - 0.25
+    first_y, step = (4.60, 1.03) if mobile else (4.17, 1.00)
+    colours = [fs.BLUE, fs.ORANGE, fs.GREEN, fs.VERMILION]
+    # A linear position in log2(count) is exactly a logarithmic count axis. Bar lengths
+    # therefore encode log counts, not a linear ratio of the actual pair counts.
+    for index, ((name, _, _), bits, seconds, colour) in enumerate(zip(FORMATS, WIDTHS, TIMES, colours)):
+        y = first_y - index * step
+        ax.text(left, y + 0.47, name, fontsize=12.5, weight="bold", va="center")
+        ax.text(right, y + 0.47, rf"$2^{{{2 * bits}}}$ pairs", fontsize=14 if mobile else 12.5,
+                ha="right", va="center")
+        ax.add_patch(Rectangle((left, y + 0.07), (right - left) * (2 * bits) / 128, 0.17,
+                               facecolor=colour, edgecolor="none"))
+        label = time_label(seconds)
+        ax.text(left, y - 0.17, label, fontsize=14 if "$" in label else 11.5, va="center")
+    axis_y = 0.79 if mobile else 0.63
+    ax.plot([left, right], [axis_y, axis_y], color=fs.INK, lw=0.8)
+    for exponent in [0, 32, 64, 96, 128]:
+        x = left + (right - left) * exponent / 128
+        ax.plot([x, x], [axis_y - 0.05, axis_y + 0.05], color=fs.INK, lw=0.8)
+        label = "1" if exponent == 0 else rf"$2^{{{exponent}}}$"
+        ax.text(x, axis_y - 0.24, label, ha="center", va="center", fontsize=14 if mobile else 12.5)
+    ax.text(width / 2, 0.16, "Ordered input pairs (log scale)", fontsize=11.5,
+            ha="center", va="center")
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-
-    fs.setup()
-    widths = [encoded_width(e, f) for _, e, f in FORMATS]
-    pairs = [2 ** (2 * w) for w in widths]
-
-    fig, ax = fs.figure(5.2)
-    fig.subplots_adjust(left=0.1, right=0.88, bottom=0.11, top=0.83)
-    ax.set_xscale("log", base=2)
-    ax.set_yscale("log")
-    ax.set_xlim(2 ** 2.7, 2 ** 7.3)
-    ylim = (1e1, 1e42)   # room under the eight-bit point for its two-line label
-    ax.set_ylim(*ylim)
-    ax.set_xticks(widths, labels=[str(w) for w in widths])
-    ax.minorticks_off()
-    ax.set_xlabel(XLABEL)
-    ax.set_ylabel(YLABEL)
-
-    # Reference durations, drawn where count / RATE equals one second, hour, year.
-    for seconds, name in ((1, "one second"), (SECONDS_PER_HOUR, "one hour"),
-                          (SECONDS_PER_YEAR, "one year")):
-        y = seconds * RATE
-        ax.axhline(y, color=fs.MUTED, linestyle=":", linewidth=0.9, zorder=1)
-        ax.text(2 ** 7.25, y, name, ha="right", va="bottom", fontsize=9, color=fs.MUTED)
-
-    ax.plot(widths, pairs, color=fs.MUTED, linewidth=1.2, zorder=2)
-    small_style = dict(marker="o", markersize=8, color=fs.BLUE, markerfacecolor=fs.BLUE,
-                            markeredgewidth=1.6, linestyle="None")
-    large_style = dict(marker="s", markersize=8, color=fs.VERMILION, markerfacecolor="white",
-                         markeredgewidth=1.6, linestyle="None")
-    for (label, _e, _f), w, count in zip(FORMATS, widths, pairs):
-        style = small_style if w in SMALL_WIDTHS else large_style
-        ax.plot([w], [count], zorder=4, **style)
-        text = f"{label}: $2^{{{2 * w}}}$ pairs\n{time_label(count / RATE)}"
-        ax.annotate(text, (w, count), textcoords="offset points", xytext=(11, -2),
-                    ha="left", va="top", fontsize=9,
-                    bbox=dict(facecolor="white", edgecolor="none", pad=1.5), zorder=5)
-
-    # Right axis: the same points read as seconds at the chapter's rate.
-    ax2 = ax.twinx()
-    ax2.set_yscale("log")
-    ax2.set_ylim(ylim[0] / RATE, ylim[1] / RATE)
-    ax2.set_ylabel(Y2LABEL)
-    ax2.grid(False)
-    ax2.spines["right"].set_visible(True)
-    ax2.spines["left"].set_visible(False)
-    ax2.spines["top"].set_visible(False)
-    ax2.minorticks_off()
-
-    handles = [Line2D([], [], label=LEGEND_SMALL, **small_style),
-               Line2D([], [], label=LEGEND_LARGE, **large_style)]
-    fig.legend(handles=handles, loc="upper center", ncol=1, bbox_to_anchor=(0.5, 0.97))
-
-    out = fs.save(fig, "ch02-state-space.png", args.out)
-    print(f"wrote {out}")
+    target = args.out or fs.ASSETS / OUT_NAME
+    for mobile in (False, True):
+        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 
 if __name__ == "__main__":

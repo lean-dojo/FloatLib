@@ -72,10 +72,7 @@ closed-format call sites.
 /-- Split a stored value into its high and low native words. -/
 @[inline] def toWords {fmt : FloatFormat} (x : Model fmt) :
     FloatLib.Numerics.FixedWord.UInt128 :=
-  {
-    hi := UInt64.ofBitVec (x.bits.extractLsb' 64 64)
-    lo := UInt64.ofBitVec (x.bits.extractLsb' 0 64)
-  }
+  FloatLib.Numerics.FixedWord.UInt128.ofNat x.toNatBits
 
 /-- Join two native words into a stored value, keeping the low `bitWidth` bits. -/
 @[inline] def ofWords (fmt : FloatFormat)

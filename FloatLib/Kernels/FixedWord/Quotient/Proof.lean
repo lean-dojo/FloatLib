@@ -552,6 +552,7 @@ theorem floorLog2RatWord_eq (num den : UInt64)
     exact hdenLogLt
   unfold floorLog2RatWord
     FloatLib.Numerics.RationalBinary.floorLog2
+  simp only [log2Word_eq_log2]
   rw [← hnumLog, ← hdenLog]
   by_cases hlogs : den.log2.toNat ≤ num.log2.toNat
   · simp only [hlogs, ite_true]
@@ -738,6 +739,7 @@ theorem floorLog2RatWord_log_bounds (num den : UInt64) :
       floorLog2RatWord num den ≤
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat := by
   unfold floorLog2RatWord
+  simp only [log2Word_eq_log2]
   by_cases hlogs : den.log2.toNat ≤ num.log2.toNat
   · simp only [hlogs, ite_true]
     have hdifference :

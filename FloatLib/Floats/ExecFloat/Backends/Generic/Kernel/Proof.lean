@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.GeneralProof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
@@ -470,9 +471,11 @@ theorem fmaComponents_sameSign_aligned
     omega
   simp only [or_self, ite_false]
   rw [ite_eq_left hscale]
+  rw [FiniteScaleAdd.roundAligned_eq]
   unfold FiniteScaleAdd.roundMagnitudes
   simp only [beq_self_eq_true, ite_true]
   unfold FiniteScaleAdd.roundMagnitude
+  rw [Nat.add_comm (zMantissa <<< _)]
   change
     FiniteProductRound.round fmt
         (Bool.xor xSign ySign)
@@ -576,13 +579,46 @@ theorem mulRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
   funext fmt x y
   exact (mulRuntime_eq x y).symm
 
+private theorem decode?_mantissa_normal {fmt : FloatFormat} {x : Model fmt} {c : Components}
+    (hdecode : decode? x = some c) (hnormal : c.exponent ≠ 0) :
+    2 ^ fmt.fracWidth ≤ c.mantissa ∧ c.mantissa < 2 ^ (fmt.fracWidth + 1) := by
+  unfold decode? at hdecode
+  split at hdecode
+  · cases hdecode
+  · cases hdecode
+    simp only at hnormal
+    have hfrac := fracField_lt_pow2 x
+    simp only [decodeMantissa, beq_iff_eq, hnormal, ite_false, pow2_eq_two_pow]
+    rw [pow_succ]
+    omega
+
 /-- The scalar-field division entry point preserves `div?`. -/
 theorem divRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
     divRuntime? x y = div? x y := by
   simp only [divRuntime?, withFinite_eq]
-  unfold div? divFields divComponents
-  cases decode? x <;>
-    cases decode? y <;>
+  unfold div?
+  cases hx : decode? x <;>
+    cases hy : decode? y <;>
+    simp only [Option.bind_none, Option.bind_some]
+  rename_i dx dy
+  by_cases hyzero : dy.mantissa = 0
+  · simp [divFields, divComponents, hyzero]
+  by_cases hxzero : dx.mantissa = 0
+  · simp [divFields, divComponents, hxzero, hyzero]
+  simp only [divFields, divComponents, beq_iff_eq, hxzero, hyzero, ite_false]
+  split
+  · rfl
+  · rename_i hselected
+    have hxnormal : dx.exponent ≠ 0 := by
+      intro h
+      simp [h] at hselected
+    have hynormal : dy.exponent ≠ 0 := by
+      intro h
+      simp [h] at hselected
+    have hlog := FiniteQuotientRound.floorLog2_eq_of_normal fmt.fracWidth
+      dx.mantissa dy.mantissa
+      (decode?_mantissa_normal hx hxnormal) (decode?_mantissa_normal hy hynormal)
+    rw [FiniteQuotientRound.roundAtExponent_eq _ _ _ _ _ _ _ hlog.symm]
     rfl
 
 /-- Compile finite division through the scalar decoder. -/

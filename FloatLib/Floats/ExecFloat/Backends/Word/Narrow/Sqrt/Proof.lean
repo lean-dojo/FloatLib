@@ -78,6 +78,8 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     (hscaleBound : scale.toNat ≤ 253) :
     sqrtPositiveFiniteCore mantissa scale =
       sqrtPositiveFiniteSpec mantissa.toNat scale.toNat := by
+  unfold sqrtPositiveFiniteCore
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   let nativeLeading := mantissa.log2
   let nativePosition := nativeLeading + scale
   let nativeShift : UInt64 :=

@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 /-!
 # Order theory for exact dyadics
 
-The executable `cmpDyadic` comparison agrees with real order. The proof aligns both integer
-significands at the smaller exponent and then cancels their common positive power-of-two scale.
+The executable `cmpDyadic` comparison agrees with real order. The proof reduces it to
+`cmpDyadicAligned`, aligns both integer significands at the smaller exponent, and then cancels
+their common positive power-of-two scale.
 -/
 
 @[expose] public section
@@ -81,8 +82,9 @@ private theorem cmpDyadic_eq_compare_aligned (a b : Numerics.Dyadic)
     let exponent := if a.exponent ≤ b.exponent then a.exponent else b.exponent
     cmpDyadic a b =
       compare (alignedSignedMantissa a exponent) (alignedSignedMantissa b exponent) := by
+  rw [cmpDyadic_eq_cmpDyadicAligned]
   simp (config := { zeta := true })
-    [cmpDyadic, hzero, alignedSignedMantissa, Numerics.Dyadic.signedSignificand]
+    [cmpDyadicAligned, hzero, alignedSignedMantissa, Numerics.Dyadic.signedSignificand]
 
 private theorem aligned_scale (d : Numerics.Dyadic) (exponent : Int) (hexponent : exponent ≤ d.exponent) :
     d.toReal =

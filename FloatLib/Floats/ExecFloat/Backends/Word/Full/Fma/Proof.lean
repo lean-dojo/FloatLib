@@ -103,7 +103,7 @@ private theorem fmaComponents_opposite_aligned_addend_larger
         (zExponent - 1) + 1074
     omega
   simp only [or_self, ite_false]
-  rw [ite_eq_left hscale]
+  rw [ite_eq_left hscale, FiniteScaleAdd.roundAligned_eq, FiniteScaleAdd.roundMagnitudes_comm]
   unfold FiniteScaleAdd.roundMagnitudes
   rw [ite_eq_right (by simpa only [beq_iff_eq] using hsign)]
   have hne :
@@ -182,7 +182,7 @@ private theorem fmaComponents_opposite_aligned_product_larger
         (zExponent - 1) + 1074
     omega
   simp only [or_self, ite_false]
-  rw [ite_eq_left hscale]
+  rw [ite_eq_left hscale, FiniteScaleAdd.roundAligned_eq, FiniteScaleAdd.roundMagnitudes_comm]
   unfold FiniteScaleAdd.roundMagnitudes
   rw [ite_eq_right (by simpa only [beq_iff_eq] using hsign)]
   have hne :

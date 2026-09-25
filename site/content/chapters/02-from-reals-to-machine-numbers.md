@@ -131,7 +131,7 @@ which is exactly the dyadic $(-1)^s (2^{w_f} + F) \cdot 2^{E - b - w_f}$. For bi
 
 In hexadecimal the three words are `0x3f800000`, `0x40000000` and `0xc0200000`. The last has the sign bit set, $E = 128$, and $F = 2^{21}$, so it denotes $-(1 + 1/4) \cdot 2 = -2.5$. [Figure 2.1](#/chapter/from-reals-to-machine-numbers/figure-ch01-binary32-layout) lays the three fields out and reads that word, and the word for `0.1`, bit by bit; [Chapter 08](#/chapter/ieee-binary-formats) decodes every class of word in this detail and derives the constants for other widths from $w_e$ and $w_f$.
 
-![The bit layout of binary32 and the stored words for 0.1 and -2.5, each bit tinted by its field, with the decoding rules for a normal word, a subnormal word and the reserved exponent field](assets/ch01-binary32-layout.png "Binary32 uses one sign bit, eight exponent bits, and twenty-three stored fraction bits. The exponent class determines how the word is decoded.")
+![Binary32's sign, exponent, and fraction fields, with the stored words for 0.1 and -2.5](assets/ch01-binary32-layout.png "Binary32 uses one sign bit, eight exponent bits, and twenty-three stored fraction bits. The two normal values illustrate how those fields encode a number.")
 
 We can now work backwards from the word for `0.1` in the figure. One tenth lies between $2^{-4}$ and $2^{-3}$, so its normal exponent is $-4$ and its stored exponent field is $123$. With 24 significant bits, the available values in this binade are integer multiples of $2^{-27}$. Expressing the exact tenth in those units gives
 
@@ -164,9 +164,9 @@ The first line is $2^{-149}$, the smallest step of the grid, and the second conf
 
 Binary32 has far too many values to draw. In [Figure 2.2](#/chapter/from-reals-to-machine-numbers/figure-ch01-toy-grid), we use a toy format with three exponent bits and two fraction bits so we can see every positive finite value. The spacing doubles at each power of two, and the words with the all-zeros exponent field continue the spacing of the first normal binade down to zero.
 
-![The positive values of a toy IEEE-style format with 3 exponent bits and 2 fraction bits, built with FloatFormat.ieee 3 2: the spacing doubles at each power of two, and the subnormal words below 1/4 keep the 1/16 spacing of the first normal binade all the way to zero, with the lower panel enlarging 0 to 1](assets/ch01-toy-grid.png "A toy format with three exponent bits and two fraction bits. Normal spacing doubles at each binade; subnormal spacing stays at 1/16 down to zero.")
+![Nonnegative values of a toy IEEE format with three exponent bits and two fraction bits. Squares mark zero and subnormals; circles mark normal values. Normal spacing doubles at each power of two, while subnormals keep the first normal spacing of 1/16.](assets/ch01-toy-grid.png "A toy format with three exponent bits and two fraction bits. Normal spacing doubles at each binade; subnormal spacing stays at 1/16 down to zero.")
 
-In the enlarged lower panel, the three positive subnormals are $1/16$, $2/16$, and $3/16$. The first normal is $4/16$, followed by $5/16$, $6/16$, and $7/16$. Nothing happens to the spacing at the change from open squares to filled circles. The significand coefficient advances from 3 to 4; encoding 4 supplies its leading one implicitly and resets the fraction field to zero. At $1/2$, however, the exponent increases. The next value is $5/8$, so the gap has doubled to $1/8$. This is the point of keeping the exponent fixed for subnormals: they extend the finest normal grid towards zero, although fewer of their stored fraction bits remain significant.
+The three positive subnormals are $1/16$, $2/16$, and $3/16$. The first normal is $4/16$, followed by $5/16$, $6/16$, and $7/16$. Nothing happens to the spacing at the change from open squares to filled circles. The significand coefficient advances from 3 to 4; encoding 4 supplies its leading one implicitly and resets the fraction field to zero. At $1/2$, however, the exponent increases. The next value is $5/8$, so the gap has doubled to $1/8$. This is the point of keeping the exponent fixed for subnormals: they extend the finest normal grid towards zero, although fewer of their stored fraction bits remain significant.
 
 With a sign bit and an all-zeros payload, the pattern with the sign set is available, and the standard uses it for $-0$. The two zeros compare equal, but they are not interchangeable: $1 / (+0) = +\infty$ while $1 / (-0) = -\infty$, so the sign of a zero that arose from underflow records which side of zero the exact result was on. Branch cuts of complex functions depend on this. We keep both zeros in every IEEE format, and this is why our full decoder does not return a plain rational. `toRat?`, which we used above, does return one and so reports $-0$ as `0`. [[FloatLib.Floats.ExecFloat.Binary.decode]] instead returns a [[FloatLib.Numerics.NumericalValue]] whose finite case carries a [[FloatLib.Numerics.SignedRat]], a rational paired with the sign bit the format would store, because a `Rat` has no negative zero and converting through one would silently turn $-0$ into $+0$:
 
@@ -244,18 +244,18 @@ Both $2.5$ and $3.5$ are midpoints, and ties to even sends the first down and th
 
 The additional condition is `(fmt.fracWidth : Int) ≤ fmt.maxNormalExponent`, so the rounded integer remains representable. The standard IEEE interchange formats satisfy it; a custom descriptor needs its own proof.
 
-To compare the four rules, follow the arrows in [Figure 2.3](#/chapter/from-reals-to-machine-numbers/figure-ch01-rounding-directions): the same three inputs appear on the integer line, one row per direction.
+To compare the four rules, follow the arrows in [Figure 2.3](#/chapter/from-reals-to-machine-numbers/figure-ch01-rounding-directions): each rule maps the same three inputs to integers.
 
-![The four directions of IEEERoundingMode on the midpoints -2.5, 2.5 and 3.5 when the representable values are the integers, one row per direction, with an arrow from each input to the integer that direction chooses](assets/ch01-rounding-directions.png "Four rounding directions on an integer grid. At a midpoint, nearest-even chooses by the parity of the destination integer.")
+![The four directions of IEEERoundingMode on the midpoints -2.5, 2.5 and 3.5, with arrows to the chosen integers](assets/ch01-rounding-directions.png "Four rounding directions on an integer grid. At a midpoint, nearest-even chooses by the parity of the destination integer.")
 
 The same directions apply to arithmetic. In binary32 the exact sum of $1$ and $10^{-9}$ lies between $1$ and the next representable value $1 + 2^{-23}$, and much closer to $1$: the excess is about $0.0084$ of the gap. Nearest rounding returns $1$. Rounding toward positive infinity returns the upper neighbour, which is the value `nextUp` produces:
 
 ```lean
-#eval ExecFloat.Binary.add (1 : Binary32) 1e-9
+#eval ExecFloat.Binary.addWithRounding (1 : Binary32) 1e-9
   (rounding := .nearestEven)
 -- 1
 
-#eval ExecFloat.Binary.add (1 : Binary32) 1e-9
+#eval ExecFloat.Binary.addWithRounding (1 : Binary32) 1e-9
   (rounding := .towardPositiveInfinity)
 -- 8388609 * 2^-23
 

@@ -110,6 +110,13 @@ theorem native32_int8_nan :
   rw [ExecFloat.Binary.float32ToInt8_eq_floatToIntSaturating]
   decide +kernel
 
+/-- Checked integer conversion retains a negative signaling NaN's sign, class, and payload. -/
+theorem checked32_int8_nan_metadata :
+    ExecDType.floatToInt (width := 8)
+      (Model.ofNatBits 0xff800005 : Model FloatFormat.binary32) .towardZero =
+        .failure (.exceptional .source (.nan (some 5) true true)) := by
+  decide +kernel
+
 /-- Import commutes with both public binary64 operations on arbitrary finite native operands. -/
 theorem native64_add_sub_commute (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :

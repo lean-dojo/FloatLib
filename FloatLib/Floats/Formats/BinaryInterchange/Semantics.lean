@@ -28,6 +28,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.BFloat16
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof

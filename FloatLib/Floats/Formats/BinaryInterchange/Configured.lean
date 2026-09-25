@@ -14,6 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Classificatio
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Comparison.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Square
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval
@@ -51,6 +53,9 @@ is separated further:
 * `Configured.TotalOrder` orders complete representations, including zero signs and NaN metadata;
 * `Configured.Operations.Runtime` exposes integral rounding, scaling, exponent, adjacency, and
   sign tools, while `Configured.Operations.Proof` supplies their contracts;
+* `Configured.Square` reuses the certified multiplication kernels for a single operand;
+* `Configured.Algebraic` provides reciprocal square root, hypotenuse, integer powers, and
+  integer-degree roots, with one final nearest-even rounding;
 * `Configured.Parsing` accepts exact decimal and radix-two character input without a host float;
 * `Configured.Formatting` writes decimal or hexadecimal text at exact or requested precision;
   the text conversion proofs establish rounding bounds and exact round trips; and

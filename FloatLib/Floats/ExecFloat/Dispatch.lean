@@ -67,8 +67,8 @@ the call with its reference definition.
 /--
 Compute square root using the certified implementation selected for `F`.
 
-This is the function behind `value.sqrt`. Proofs can use `ExecFloat.Proof.sqrt_eq_spec` to replace
-the call with its reference definition.
+Write `value.sqrt` or `ExecFloat.sqrt value`. Proofs can use
+`ExecFloat.Proof.sqrt_eq_spec` to replace the call with its reference definition.
 -/
 @[inline] def sqrt [Sqrt F] (value : ExecFloat F) : ExecFloat F :=
   Sqrt.run value

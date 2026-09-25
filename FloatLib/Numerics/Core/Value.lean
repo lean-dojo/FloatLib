@@ -27,8 +27,12 @@ universe u v w
 
 /-- Why an encoded word has no ordinary numerical value. -/
 inductive ExceptionalValue where
-  /-- A NaN encoding, optionally carrying its representation-defined payload bits. -/
-  | nan (payload : Option Nat := none)
+  /--
+  A NaN encoding, optionally carrying its representation-defined payload bits, together with its
+  sign bit and whether it is a signaling NaN. Encodings without these distinctions use the
+  defaults: no payload, positive, and quiet.
+  -/
+  | nan (payload : Option Nat := none) (negative : Bool := false) (signaling : Bool := false)
   /-- The single not-a-real value used by posit systems. -/
   | notAReal
   /-- A representation-specific reserved word, optionally retaining its encoded payload. -/
@@ -36,6 +40,11 @@ inductive ExceptionalValue where
   /-- An operation whose result is intentionally outside the scalar semantics. -/
   | undefined
   deriving DecidableEq, Repr
+
+/-- Whether an exceptional observation is a signaling NaN. -/
+@[inline] def ExceptionalValue.isSignalingNaN : ExceptionalValue → Bool
+  | .nan _ _ signaling => signaling
+  | .notAReal | .reserved _ | .undefined => false
 
 /--
 The mathematical meaning of one encoded value.

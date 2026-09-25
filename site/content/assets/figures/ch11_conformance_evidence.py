@@ -10,6 +10,10 @@ SoftPosit's raw differences stay visible. The retained adjudication found zero F
 exact-specification mismatches in those rows. The plot keeps the comparison differences
 visible; chapter 16 gives the diagnosis and provenance.
 
+The original asset contains suite totals; a separate ch11-conformance-widths.png contains
+per-width counts. Both have stacked phone companions. All four outputs are written beside
+the --out path when it is supplied; no series manifest is required.
+
 Sources:
 tests/results/main/release/external/{01-testfloat,02-format-standards,
 03-mpfr-primitives,04-mpfr-reductions,07-binary16-mpfr-rows,
@@ -32,8 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 
-from matplotlib.patches import Patch  # noqa: E402
-from matplotlib.lines import Line2D  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
 
 EXTERNAL = fs.REPO / "tests" / "results" / "main" / "release" / "external"
@@ -263,162 +266,140 @@ def softposit_by_width() -> dict[int, tuple[int, int, str]]:
     return result
 
 
-def draw() -> object:
-    fs.setup()
-    direct = direct_comparisons()
-    p3109 = p3109_by_width()
-    softposit = softposit_by_width()
-
-    fig, (top, bottom) = fs.figure(
-        10.0,
-        nrows=2,
-        gridspec_kw={"height_ratios": [1.15, 1]},
-    )
-    # Reserve space above each axes for its title and legend, and below for the
-    # small-width counts. None of those labels should cover a plotted case.
-    fig.subplots_adjust(left=0.22, right=0.97, bottom=0.16, top=0.82, hspace=0.85)
-
-    labels = [row[0] for row in direct]
-    values = [row[1] for row in direct]
-    colors = [fs.GREEN if row[0] == "SoftPosit" else fs.BLUE for row in direct]
-    positions = list(range(len(direct)))
-    top.barh(positions, values, color=colors, alpha=0.9)
-    top.set_yticks(positions, labels=labels)
-    top.set_xscale("log")
-    top.set_xlim(right=max(values) * 8)
-    top.set_xlabel("evaluated cases (log scale)")
-    top.set_title(
-        "Cases compared",
-        loc="left",
-        fontweight="bold",
-        pad=60,
-    )
-    for position, value in zip(positions, values, strict=True):
-        top.annotate(
-            f" {value:,}",
-            (value, position),
-            xytext=(3, 0),
-            textcoords="offset points",
-            va="center",
-            fontsize=9,
-        )
-    difference_marker = Line2D(
-        [], [], marker="D", linestyle="none", color=fs.ORANGE,
-        label="Differences (see labelled counts)", markersize=5,
-    )
-    for position, (_label, value, status) in enumerate(direct):
+def draw_totals(mobile: bool, direct, softposit):
+    fig = plt.figure(figsize=(3.8, 9.6) if mobile else (9, 6.8))
+    fig.text(0.035, 0.98, "Cases compared", fontsize=14, weight="bold", va="top")
+    fig.text(0.035, 0.928 if mobile else 0.905,
+             "Counts, not time or input coverage", fontsize=12, color=fs.MUTED)
+    ax = fig.add_axes([0.065, 0.365, 0.89, 0.515] if mobile else [0.31, 0.35, 0.65, 0.48])
+    rows = list(reversed(direct))
+    positions = list(range(len(rows)))[::-1]
+    ax.set_xscale("log")
+    ax.set_xlim(100, 10 ** 9)
+    ax.set_ylim(-0.7, len(rows) - 0.15)
+    for y, (label, value, status) in zip(positions, rows):
+        colour = fs.GREEN if status == "external" else fs.BLUE
+        ax.barh(y, value - 100, left=100, height=0.24 if mobile else 0.48, color=colour)
+        if mobile:
+            ax.text(0, y + 0.27, label.replace("Berkeley ", ""),
+                    transform=ax.get_yaxis_transform(), fontsize=11.5, va="bottom")
+            ax.text(1, y + 0.27, f"{value:,}", transform=ax.get_yaxis_transform(),
+                    fontsize=11.5, ha="right", va="bottom")
+        else:
+            ax.text(value * 1.18, y, f"{value:,}", fontsize=11.5, va="center")
         if status == "external":
-            top.plot(value, position, "D", color=fs.ORANGE, markersize=5)
-    top.legend(
-        handles=[
-            Patch(color=fs.BLUE, label="Other comparisons: no mismatches"),
-            Patch(
-                color=fs.GREEN,
-                label=(
-                    f"SoftPosit: {sum(row[1] for row in softposit.values()):,} differences "
-                    f"in {sum(row[0] for row in softposit.values()):,} cases"
-                ),
-            ),
-            difference_marker,
-        ],
-        loc="lower left",
-        bbox_to_anchor=(0, 1.015),
-        borderaxespad=0,
-    )
+            ax.plot(value, y, marker="D", ms=6, color=fs.VERMILION)
+    ax.set_yticks([] if mobile else positions,
+                  labels=[] if mobile else [r[0] for r in rows], fontsize=11.5)
+    ax.tick_params(axis="y", length=0)
+    ax.tick_params(axis="x", labelsize=11)
+    ax.set_xticks([10 ** n for n in (2, 4, 6, 8)],
+                  labels=["100", "10,000", "1M", "100M"])
+    ax.minorticks_off()
+    ax.grid(axis="y", visible=False)
+    ax.spines['left'].set_visible(False)
+    ax.set_xlabel("compared cases (log scale)", fontsize=11.5)
+    differences = sum(row[1] for row in softposit.values())
+    fig.text(0.035, 0.282 if mobile else 0.245,
+             f"◆ SoftPosit: {differences:,} differences" +
+              ("\nfrom seven distinct inputs." if mobile else " from seven distinct inputs."),
+              fontsize=12, color=fs.VERMILION, linespacing=1.45,
+              va="top" if mobile else "baseline")
+    fig.text(0.035, 0.217 if mobile else 0.185,
+             "All seven agree with FloatLib's\nexact specification." if mobile else
+             "All seven agree with FloatLib's exact specification. Other suites report zero mismatches.",
+             fontsize=11.5, linespacing=1.45, va="top" if mobile else "baseline")
+    fig.text(0.035, 0.166 if mobile else 0.123,
+             "Other suites: zero mismatches under\ntheir stated comparison rules." if mobile else
+             "Each suite has its own comparison rule; a case is not a common unit of input coverage.",
+             fontsize=11.5, color=fs.MUTED, linespacing=1.45,
+             va="top" if mobile else "baseline")
+    fig.text(0.035, 0.026,
+             "TestFloat: non-NaN bits and flags;\nNaN class and signaling, not all payloads.\nZ3: encodings where defined; abstract NaNs."
+             if mobile else
+             "TestFloat checks non-NaN bits and flags; NaN class and signaling, without a universal payload rule.\n"
+             "Z3 checks encodings where defined by SMT; its NaNs are abstract.",
+             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+    return fig
 
-    widths = sorted(set(p3109) | set(softposit))
-    x = list(range(len(widths)))
-    p_values = [p3109.get(width, (0, 0))[1] for width in widths]
-    s_values = [softposit.get(width, (0, 0, ""))[0] for width in widths]
-    bar_width = 0.39
-    bottom.bar(
-        [value - bar_width / 2 for value in x],
-        p_values,
-        width=bar_width,
-        color=fs.BLUE,
-        label="P3109 public value tables, zero mismatches",
-    )
-    bottom.bar(
-        [value + bar_width / 2 for value in x],
-        s_values,
-        width=bar_width,
-        color=fs.GREEN,
-        label="SoftPosit comparisons",
-    )
-    # Colour identifies the implementation, not whether its entire suite had zero
-    # differences. A separate marker cannot make two mismatches look like a whole
-    # bar of failures, and unlike a stacked segment it remains visible on a log axis.
-    for position, width in zip(x, widths, strict=True):
-        cases, differences, _mode = softposit.get(width, (0, 0, ""))
-        if differences:
-            location = position + bar_width / 2
-            bottom.plot(location, cases, "D", color=fs.ORANGE, markersize=5)
-            bottom.annotate(
-                f"{differences:,}",
-                (location, cases),
-                xytext=(0, 8),
-                textcoords="offset points",
-                ha="center",
-                fontsize=9,
-            )
-    bottom.set_yscale("log")
-    bottom.set_xticks(x, labels=[str(width) for width in widths])
-    bottom.set_xlabel("encoded width (bits)")
-    bottom.set_ylabel("evaluated cases (log scale)")
-    bottom.set_title(
-        "Cases checked at each width",
-        loc="left",
-        fontweight="bold",
-        pad=60,
-    )
-    bottom.legend(
-        handles=[
-            Patch(color=fs.BLUE, label="P3109 value tables"),
-            Patch(color=fs.GREEN, label="SoftPosit: all compared cases"),
-            difference_marker,
-        ],
-        loc="lower left",
-        bbox_to_anchor=(0, 1.015),
-        borderaxespad=0,
-    )
-    disagreement_counts = "; ".join(
-        f"{width} bit: {differences:,}"
-        for width, (_cases, differences, _mode) in sorted(softposit.items())
-        if differences
-    )
-    fig.text(
-        0.22,
-        0.025,
-        "SoftPosit: exhaustive at 2 to 8 bits; sampled at 9 to 16 and 32 bits.\n"
-        "The 32-bit count includes generic pX2 and dedicated p32. Reruns count once.\n"
-        "Differences: " + disagreement_counts + ".",
-        ha="left",
-        va="bottom",
-        fontsize=9,
-        color=fs.INK,
-    )
 
-    fig.suptitle(
-        "Checks against independent implementations",
-        x=0.02,
-        ha="left",
-        fontsize=14,
-        fontweight="bold",
-    )
-    fig.text(
-        0.02, 0.947,
-        "Counts, not timings. Longer bars mean more cases checked.",
-        ha="left", fontsize=10, color=fs.INK,
-    )
+def width_panel(fig, rect, rows, *, title: str, colour, mobile: bool, differences: bool):
+    ax = fig.add_axes(rect)
+    widths = sorted(rows)
+    positions = list(range(len(widths)))[::-1]
+    ax.set_xscale("log")
+    ax.set_xlim(10, 10 ** 8)
+    ax.set_ylim(-0.7, len(widths) - 0.25)
+    for y, width in zip(positions, widths):
+        value = rows[width][0] if differences else rows[width][1]
+        mismatch = rows[width][1] if differences else 0
+        # Hatching separates sampled cases without treating them as failures.
+        sampled = differences and rows[width][2] != "exhaustive"
+        ax.barh(y, value - 10, left=10, height=0.58, color=colour,
+                edgecolor="white", lw=0.3, hatch="///" if sampled else None)
+        if mismatch:
+            ax.plot(value, y, "D", color=fs.VERMILION, ms=5)
+        ax.text(value * 1.20, y, f"{value:,}", fontsize=11 if mobile else 10.5, va="center")
+    ax.set_yticks(positions, labels=[str(w) for w in widths], fontsize=11.5)
+    ax.tick_params(axis="y", length=0)
+    ax.tick_params(axis="x", labelsize=11)
+    ax.set_xticks([100, 10000, 1000000], labels=["100", "10,000", "1M"])
+    ax.minorticks_off()
+    ax.grid(axis="y", visible=False)
+    ax.spines["left"].set_visible(False)
+    ax.set_xlabel("cases (log scale)", fontsize=11.5)
+    ax.set_ylabel("width (bits)", fontsize=11.5)
+    ax.set_title(title, fontsize=12.5, weight="bold", loc="left", pad=13)
+
+
+def draw_widths(mobile: bool, p3109, softposit):
+    fig = plt.figure(figsize=(3.8, 13.0) if mobile else (9, 6.5))
+    fig.text(0.035, 0.98, "Which widths were checked?", fontsize=14, weight="bold", va="top")
+    fig.text(0.035, 0.94 if mobile else 0.89,
+             "Case counts, with each suite's own rules", fontsize=11.5, color=fs.MUTED)
+    width_panel(fig, [0.18, 0.59, 0.78, 0.30] if mobile else [0.09, 0.28, 0.38, 0.51],
+                p3109, title="P3109 value tables: zero mismatches", colour=fs.BLUE,
+                mobile=mobile, differences=False)
+    width_panel(fig, [0.18, 0.195, 0.78, 0.295] if mobile else [0.59, 0.28, 0.38, 0.51],
+                softposit, title="SoftPosit operation comparisons", colour=fs.GREEN,
+                mobile=mobile, differences=True)
+    fig.text(0.035, 0.135 if mobile else 0.17,
+             "SoftPosit, for the operations tested:\nsolid: exhaustive at 2 to 8 bits;\nhatched: sampled at 9 to 16 and 32 bits."
+             if mobile else
+             "SoftPosit: exhaustive for tested operations at 2 to 8 bits; hatched bars sample 9 to 16 and 32 bits.",
+             fontsize=11.5, linespacing=1.45, va="top" if mobile else "baseline")
+    diff_labels = [f"{w} bit: {d:,}" for w, (_, d, _) in sorted(softposit.items()) if d]
+    diff_text = "; ".join(diff_labels[:2]) + ";\n" + "; ".join(diff_labels[2:]) if mobile else "; ".join(diff_labels)
+    fig.text(0.035, 0.078 if mobile else 0.10,
+             "◆ Differences: " + diff_text + ".", fontsize=11.5, color=fs.VERMILION, linespacing=1.45,
+             va="top" if mobile else "baseline")
+    fig.text(0.035, 0.031 if mobile else 0.028,
+             "32-bit cases include pX2 and p32.\nReruns count once. Counts are not timings."
+             if mobile else
+             "32-bit cases include generic pX2 and dedicated p32. Repeated runs count once. Counts are not timings.",
+             fontsize=11.5 if mobile else 11, color=fs.MUTED, linespacing=1.45,
+             va="top" if mobile else "baseline")
     return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
-    arguments = parser.parse_args()
-    target = fs.save(draw(), OUT_NAME, out=arguments.out)
-    print(f"wrote {target}")
+    args = parser.parse_args()
+    direct = direct_comparisons()
+    p3109, softposit = p3109_by_width(), softposit_by_width()
+    assert sum(v[1] for v in softposit.values()) == 7564
+    assert sum(v[0] for v in softposit.values()) == 32893800
+    fs.setup()
+    out = args.out or fs.ASSETS / OUT_NAME
+    width_out = out.with_name("ch11-conformance-widths.png")
+    for mobile in (False, True):
+        for target, fig in [(out, draw_totals(mobile, direct, softposit)),
+                             (width_out, draw_widths(mobile, p3109, softposit))]:
+            target = target.with_name(target.stem + "-mobile.png") if mobile else target
+            print(f"wrote {fs.save(fig, target.name, target)}")
+    print(json.dumps({"totals": direct, "p3109_by_width": p3109,
+                      "softposit_by_width": softposit}, sort_keys=True))
 
 
 if __name__ == "__main__":

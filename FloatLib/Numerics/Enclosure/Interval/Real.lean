@@ -29,6 +29,12 @@ variable {α : Type*}
 def ContainsReal (decode : α → Option ℚ) (I : Interval α) (x : ℝ) : Prop :=
   I.Contains (fun a => (decode a).map (fun q => (q : ℝ))) x
 
+/-- Rational endpoints embed directly as closed real bounds. -/
+@[simp]
+theorem containsReal_some_iff (I : Interval ℚ) (x : ℝ) :
+    I.ContainsReal some x ↔ (I.lo : ℝ) ≤ x ∧ x ≤ (I.hi : ℝ) := by
+  simp [ContainsReal, Contains]
+
 /-- A successful finite decoder supplies the real endpoint inequalities. -/
 theorem containsReal_iff_of_decode? {decode : α → Option ℚ}
     {I : Interval α} {a : Interval ℚ} (ha : I.decode? decode = some a) (x : ℝ) :

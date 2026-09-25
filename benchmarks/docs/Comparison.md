@@ -14,7 +14,7 @@ benchmarks/scripts/verify-main-result.sh
 This checks the saved measurements and regenerates their tables and figures from the recorded
 trials. It needs Git, Python 3, and Matplotlib, but does not compile FloatLib or run the timed
 operations again. The [results README](../results/main/README.md) describes the files behind the
-[performance chapter](../../site/content/chapters/15-performance.md).
+[performance chapter](../../site/content/chapters/17-performance.md).
 
 The matched Flocq comparison has its own data and figure:
 

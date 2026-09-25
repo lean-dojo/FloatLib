@@ -61,6 +61,8 @@ theorem roundNormalProductWord_decode
             xExponent yExponent xMantissa yMantissa) =
       roundNormalProduct? fmt sign
         xExponent yExponent xMantissa yMantissa := by
+  unfold roundNormalProductWord roundNormalProduct?
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   let product := xMantissa * yMantissa
   let leading := product.log2
   let scale := (xExponent - 1) + (yExponent - 1)
@@ -68,8 +70,7 @@ theorem roundNormalProductWord_decode
   let normalThreshold :=
     (biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 1)
   by_cases hsubnormal : position < normalThreshold
-  · simp [roundNormalProductWord, roundNormalProduct?, product, leading,
-      scale, position, normalThreshold, hsubnormal]
+  · simp [product, leading, scale, position, normalThreshold, hsubnormal]
   let rounded :=
     FloatLib.Numerics.FixedWord.roundShiftRightEven product
       (leading - UInt64.ofNat fmt.fracWidth).toNat
@@ -190,7 +191,7 @@ private theorem roundNormalProduct_eq_spec
         fmt.bias + 2 * fmt.fracWidth - 1 :=
     normalThreshold_toNat hwidth
   unfold roundNormalProduct? FiniteProductRound.normalSpec?
-  dsimp only
+  simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   rw [show xMantissa * yMantissa = product by rfl]
   rw [show xMantissa.toNat * yMantissa.toNat = productNat by rfl]
   rw [show product.log2 = leading by rfl]

@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Proof
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
-import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
@@ -33,23 +32,6 @@ complete two-limb rounding proof.
 namespace FloatLib.Floats.Formats.Posit.Model.NativeWordRounding.GuardSticky
 
 open FloatLib.Numerics
-
-/-- A bounded scalar left shift has its exact natural-number value. -/
-private theorem shiftLeft_toNat
-    (value : UInt64) (shift : Nat)
-    (hshift : shift < 64)
-    (hfit : value.toNat <<< shift < 2 ^ 64) :
-    (shiftLeft value shift).toNat = value.toNat <<< shift := by
-  unfold shiftLeft
-  rw [ite_eq_left hshift]
-  exact FixedWord.shiftLeft_toNat value shift hshift hfit
-
-/-- A single bit shifted below the word width has its exact power-of-two value. -/
-private theorem shiftLeft_one_toNat (shift : Nat) (hshift : shift < 64) :
-    (shiftLeft 1 shift).toNat = 2 ^ shift := by
-  rw [shiftLeft_toNat (1 : UInt64) shift hshift, UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
-  rw [UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
-  exact Nat.pow_lt_pow_right (by decide) hshift
 
 /--
 Natural-number laws of the one-word candidate carrier at capacity 64.
@@ -92,11 +74,14 @@ theorem candidateCarrierLawful :
       simpa using equality
   toNat_lt := UInt64.toNat_lt
   toNat_ofWord _ := rfl
-  shiftLeft_toNat := shiftLeft_toNat
+  shiftLeft_toNat value shift hshift hfit := by
+    simpa only [shiftLeft, ite_eq_left hshift] using
+      FixedWord.shiftLeft_toNat value shift hshift hfit
   shiftRight_toNat := NativeWord.shiftRight_toNat
   fractionBelow_toNat value leading hleading hlower _ := by
-    have honeShift : (shiftLeft 1 leading).toNat = 2 ^ leading :=
-      shiftLeft_one_toNat leading hleading
+    have honeShift : (shiftLeft 1 leading).toNat = 2 ^ leading := by
+      simpa only [shiftLeft, ite_eq_left hleading] using
+        FixedWord.uint64_powTwo_toNat leading hleading
     have honeLe : shiftLeft 1 leading ≤ value := by
       rw [UInt64.le_iff_toNat_le, honeShift]
       exact hlower
@@ -110,7 +95,7 @@ theorem candidateCarrierLawful :
     show (value + 1).toNat = value.toNat + 1
     rw [UInt64.toNat_add, UInt64.toNat_one, Nat.mod_eq_of_lt hfit]
   isOdd_eq := FixedWord.lowBitIsNonzero_eq_odd
-  log2_eq := FixedWord.log2_toNat
+  log2_eq := FixedWord.log2Word_toNat
 
 /-- Under one-word eligibility the payload is shorter than the carrier. -/
 theorem payloadBits_lt_of_eligible

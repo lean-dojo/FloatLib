@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
+import FloatLib.Numerics.ShiftRightJam.Proof
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.SplitIfs
 
@@ -58,12 +59,6 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
   simp only [UInt64.reduceToNat]
   rw [Nat.mod_eq_of_lt hsum]
 
-private theorem uint64_quotient_even_iff (value : UInt64) (shift : Nat)
-    (hshift : shift < 64) :
-    ((value >>> UInt64.ofNat shift) &&& 1) == 0 ↔
-      (value.toNat >>> shift) % 2 == 0 := by
-  simp [← UInt64.toNat_inj, shiftRight_toNat value shift hshift]
-
 /-- Native word rounding agrees exactly with the generic natural-number rounder. -/
 @[simp, grind =] theorem roundShiftRightEven_toNat (value : UInt64) (shift : Nat) :
     (roundShiftRightEven value shift).toNat =
@@ -86,8 +81,8 @@ private theorem uint64_quotient_even_iff (value : UInt64) (shift : Nat)
     have hincrementBound : value.toNat >>> shift + 1 < 2 ^ 64 := by
       rw [← hincrement]
       exact UInt64.toNat_lt _
-    have heven :=
-      uint64_quotient_even_iff value shift hsmall
+    have heven := lowBitIsZero_eq_even (value >>> UInt64.ofNat shift)
+    rw [hquotient] at heven
     have hremainderNat :
         value.toNat - (value.toNat >>> shift <<< shift) =
           value.toNat % 2 ^ shift := by
@@ -151,12 +146,11 @@ theorem roundShiftRightEvenNat_eq_roundShiftRightEven (value shift : Nat) :
     have hvalue64 : (UInt64.ofNat value).toNat = value :=
       UInt64.toNat_ofNat_of_lt' hvalue
     rw [roundShiftRightEven_toNat, hvalue64]
-  next hvalue =>
-    rw [Numerics.roundShiftRightEven]
+  next hvalue => rfl
 
 /--
-The compiler uses native nearest-even shifting for one-word inputs and the arbitrary-precision
-definition otherwise.
+The compiler uses native nearest-even shifting for one-word inputs and guard-and-sticky rounding
+for wider inputs.
 -/
 -- grind: no rule; this compiler substitution expands a capacity-dispatch implementation.
 @[csimp] theorem roundShiftRightEven_eq_roundShiftRightEvenNat :

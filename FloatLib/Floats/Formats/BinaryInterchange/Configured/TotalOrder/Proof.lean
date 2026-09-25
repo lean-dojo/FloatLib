@@ -29,8 +29,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /-- Configured total ordering is exactly the descriptor-model predicate. -/
 theorem totalOrder_eq_model (x y : Value) :

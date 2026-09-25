@@ -116,6 +116,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
 @[simp, grind =] theorem log2_toNat (value : UInt128) :
     log2 value = value.toNat.log2 := by
   unfold log2
+  simp only [log2Word_eq_log2]
   by_cases hhigh : value.hi = 0
   · simp [hhigh, UInt128.toNat, FloatLib.Numerics.FixedWord.log2_toNat]
   · have hhighBool : ¬value.hi == 0 := by

@@ -39,7 +39,7 @@ left shift. The proposition is decidable from machine-word data; its proof is er
 compilation.
 -/
 @[inline] def shiftFits (significand : UInt64) (shift : Nat) : Prop :=
-  significand = 0 ∨ significand.log2.toNat + shift < 64
+  significand = 0 ∨ (log2Word significand).toNat + shift < 64
 
 instance (significand : UInt64) (shift : Nat) :
     Decidable (shiftFits significand shift) := by
@@ -123,7 +123,7 @@ wide path keeps significands in fixed limbs. Exponent arithmetic still uses `Int
   else if leftExponent ≤ rightExponent then
     let shift := Int.toNat (rightExponent - leftExponent)
     if _hshift : shift < 128 then
-      if _hfit : rightSignificand.log2.toNat + shift < 128 then
+      if _hfit : (log2Word rightSignificand).toNat + shift < 128 then
         UInt128.compare leftSignificand
           (UInt128.shiftLeft { hi := 0, lo := rightSignificand } shift)
       else
@@ -145,7 +145,7 @@ that a generic dyadic comparison needs when the exponent gap exceeds one machine
   if significand == 0 then
     true
   else
-    decide (exponent + Int.ofNat significand.log2.toNat < power)
+    decide (exponent + Int.ofNat (log2Word significand).toNat < power)
 
 /-- Strict comparison derived from the shared native-word ordering primitive. -/
 @[inline] def isLessNonnegative

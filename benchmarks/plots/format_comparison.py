@@ -6,9 +6,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import re
 import statistics
+import textwrap
 from collections import defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -126,6 +128,108 @@ SERIES_STYLE = {
         "linestyle": "None",
     },
 }
+
+
+def compact_operation_layout(
+    figure, axis, *, title: str, context: str, handles, labels,
+    notes: tuple[str, ...], bold_labels: frozenset[str] | set[str] = frozenset(),
+) -> None:
+    """Lay out one operation at a readable 4.25-inch width, including its legend."""
+    figure.set_size_inches(4.25, 6.0)
+    for location in ("left", "center", "right"):
+        axis.set_title("", loc=location)
+    axis.tick_params(axis="both", labelsize=11)
+    axis.xaxis.label.set_size(11)
+    axis.yaxis.label.set_size(11)
+    entries = list(zip(handles, labels, strict=True))
+    entries = ([entry for entry in entries if entry[1] in bold_labels]
+               + [entry for entry in entries if entry[1] not in bold_labels])
+    # Matplotlib fills columns first. Reorder so readers scan pairs across each row.
+    entries = entries[::2] + entries[1::2]
+    handles, labels = zip(*entries, strict=True)
+    wrapped = [textwrap.fill(label, 20, break_long_words=False) for label in labels]
+    legend = figure.legend(
+        handles, wrapped, loc="upper center", bbox_to_anchor=(0.5, 0.3),
+        ncols=min(2, len(labels)), frameon=False, fontsize=11,
+        handlelength=1.6, handletextpad=0.5, columnspacing=0.9,
+        labelspacing=0.7, borderaxespad=0,
+    )
+    for text, label in zip(legend.get_texts(), labels, strict=True):
+        if label in bold_labels:
+            text.set_fontweight("bold")
+    figure.canvas.draw()
+    renderer = figure.canvas.get_renderer()
+    legend_height = legend.get_window_extent(renderer).height / figure.dpi
+    left = max(0.72, (
+        axis.get_window_extent(renderer).x0 - axis.yaxis.get_tightbbox(renderer).x0
+    ) / figure.dpi + 0.12)
+    x_gap = (
+        axis.get_window_extent(renderer).y0 - axis.xaxis.get_tightbbox(renderer).y0
+    ) / figure.dpi + 0.20
+    note_lines = [
+        line for note in notes
+        for line in textwrap.wrap(note, 46, break_long_words=False)
+    ]
+    footer_height = len(note_lines) * 11 * 1.25 / 72 + 0.18
+    header_height = 0.52 + 0.20 * len(context.splitlines())
+    plot_height = 2.9
+    height = header_height + plot_height + x_gap + legend_height + footer_height
+    figure.set_size_inches(4.25, height)
+    axis.set_position([
+        left / 4.25, (footer_height + legend_height + x_gap) / height,
+        (4.25 - left - 0.18) / 4.25, plot_height / height,
+    ])
+    legend.set_bbox_to_anchor((0.5, (footer_height + legend_height) / height))
+    figure.text(0.06, 1 - 0.13 / height, title, fontsize=13, fontweight="bold",
+                ha="left", va="top")
+    figure.text(0.06, 1 - 0.42 / height, context, fontsize=11,
+                ha="left", va="top", linespacing=1.2)
+    figure.text(0.5, 0.08 / height, "\n".join(note_lines), fontsize=11,
+                ha="center", va="bottom", linespacing=1.25, color="#4a4a47")
+
+
+def stagger_width_labels(axis) -> None:
+    """Keep all existing width ticks while separating adjacent long labels."""
+    labels = [label.get_text().strip() for label in axis.get_xticklabels()]
+    axis.set_xticks(
+        axis.get_xticks(),
+        labels=[label if i % 2 == 0 else "\n" + label for i, label in enumerate(labels)],
+    )
+
+
+def save_operation_svg(figure, overview: Path, operation: str) -> Path:
+    """Keep physical dimensions and make SVG IDs and metadata reproducible."""
+    import matplotlib.pyplot as plt
+
+    target = overview.with_name(f"{overview.stem}-{operation}.svg")
+    with matplotlib.rc_context({
+        "svg.hashsalt": "floatlib-performance-operations-v1",
+        "svg.fonttype": "none",
+    }):
+        figure.savefig(target, metadata={"Date": None}, facecolor="white")
+    plt.close(figure)
+    return target
+
+
+def write_operation_series(
+    overview: Path, descriptions: dict[str, str], *, overview_alt: str,
+) -> Path:
+    """Write the reader's operation selector, with asset basenames only."""
+    if not descriptions:
+        raise ValueError("an operation selector needs at least one measured operation")
+    views = [{"id": "all", "label": "All operations", "src": overview.name,
+              "alt": overview_alt}]
+    for operation, alt in descriptions.items():
+        asset = overview.with_name(f"{overview.stem}-{operation}.svg")
+        if not asset.is_file():
+            raise ValueError(f"missing operation view: {asset}")
+        views.append({"id": operation, "label": OPERATION_LABEL[operation],
+                      "src": asset.name, "alt": alt})
+    target = overview.with_name(f"{overview.stem}-series.json")
+    target.write_text(json.dumps({
+        "label": "Operation", "compactDefault": next(iter(descriptions)), "views": views,
+    }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return target
 
 
 @dataclass(frozen=True)
@@ -700,6 +804,60 @@ def write_backend_regimes(path: Path, rows: list[Summary]) -> None:
                     )
 
 
+def draw_operation(axis, rows: list[Summary], operation: str) -> None:
+    """Use the same measured points and percentile bands in both layouts."""
+    operation_rows = [row for row in rows if row.key.operation == operation]
+    for series in SERIES_ORDER:
+        series_rows = [
+            row for row in operation_rows if row.key.series == series
+        ]
+        if not series_rows:
+            continue
+        series_rows.sort(key=lambda row: row.key.total_bits)
+        style = SERIES_STYLE[series]
+        is_execfloat = series in EXECFLOAT_SERIES
+        xs = [row.key.total_bits for row in series_rows]
+        medians = [row.timing.median for row in series_rows]
+        p05 = [row.timing.p05 for row in series_rows]
+        p95 = [row.timing.p95 for row in series_rows]
+        axis.plot(
+            xs,
+            medians,
+            label=SERIES_LABEL[series],
+            linewidth=3.4 if is_execfloat else 1.8,
+            markersize=6.5 if is_execfloat else 5,
+            zorder=4 if is_execfloat else 2,
+            **style,
+        )
+        if any(low != high for low, high in zip(p05, p95)):
+            axis.fill_between(
+                xs,
+                p05,
+                p95,
+                color=style["color"],
+                alpha=0.12,
+                linewidth=0,
+            )
+    axis.set_title(OPERATION_LABEL[operation], fontsize=12)
+    axis.set_xscale("log", base=2)
+    axis.set_yscale("log")
+    widths = {row.key.total_bits for row in operation_rows}
+    major_widths = [
+        width
+        for width in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
+        if width in widths
+    ]
+    axis.set_xticks(
+        major_widths,
+        labels=[
+            f"{width // 1024}k" if width >= 1024 else str(width)
+            for width in major_widths
+        ],
+    )
+    axis.minorticks_off()
+    axis.grid(True, which="both", alpha=0.25)
+
+
 def render_plot(output_dir: Path, rows: list[Summary]) -> None:
     import matplotlib.pyplot as plt
 
@@ -707,62 +865,14 @@ def render_plot(output_dir: Path, rows: list[Summary]) -> None:
     series_labels = SERIES_LABEL
     figure, axes = plt.subplots(2, 3, figsize=(15.5, 8.8), sharex=True)
     for axis, operation in zip(axes.flat, OPERATIONS):
-        operation_rows = [row for row in rows if row.key.operation == operation]
-        for series in SERIES_ORDER:
-            series_rows = [
-                row for row in operation_rows if row.key.series == series
-            ]
-            if not series_rows:
-                continue
-            series_rows.sort(key=lambda row: row.key.total_bits)
-            style = SERIES_STYLE[series]
-            is_execfloat = series in EXECFLOAT_SERIES
-            xs = [row.key.total_bits for row in series_rows]
-            medians = [row.timing.median for row in series_rows]
-            p05 = [row.timing.p05 for row in series_rows]
-            p95 = [row.timing.p95 for row in series_rows]
-            axis.plot(
-                xs,
-                medians,
-                label=series_labels[series],
-                linewidth=3.4 if is_execfloat else 1.8,
-                markersize=6.5 if is_execfloat else 5,
-                zorder=4 if is_execfloat else 2,
-                **style,
-            )
-            if any(low != high for low, high in zip(p05, p95)):
-                axis.fill_between(
-                    xs,
-                    p05,
-                    p95,
-                    color=style["color"],
-                    alpha=0.12,
-                    linewidth=0,
-                )
-        axis.set_title(OPERATION_LABEL[operation], fontsize=12)
-        axis.set_xscale("log", base=2)
-        axis.set_yscale("log")
-        widths = {row.key.total_bits for row in operation_rows}
-        major_widths = [
-            width
-            for width in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
-            if width in widths
-        ]
-        axis.set_xticks(
-            major_widths,
-            labels=[
-                f"{width // 1024}k" if width >= 1024 else str(width)
-                for width in major_widths
-            ],
-        )
-        axis.minorticks_off()
-        axis.grid(True, which="both", alpha=0.25)
+        draw_operation(axis, rows, operation)
 
     for axis in axes[:, 0]:
         axis.set_ylabel("Median latency (ns/operation, log scale)")
     for axis in axes[-1, :]:
         axis.set_xlabel("Encoded width (bits, log₂ scale)")
 
+    # Preserve the retained overview; operation views have their own legends.
     handles, labels = axes.flat[0].get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     legend = figure.legend(
@@ -835,7 +945,50 @@ def render_plot(output_dir: Path, rows: list[Summary]) -> None:
                 "\n".join(line.rstrip() for line in lines) + "\n",
                 encoding="utf-8",
             )
+    limits = {
+        operation: (axis.get_xlim(), axis.get_ylim())
+        for operation, axis in zip(OPERATIONS, axes.flat)
+    }
     plt.close(figure)
+
+    overview = output_dir / "format-comparison.png"
+    descriptions = {}
+    for operation in OPERATIONS:
+        if not any(row.key.operation == operation for row in rows):
+            continue
+        single, axis = plt.subplots()
+        draw_operation(axis, rows, operation)
+        axis.set_xlim(limits[operation][0])
+        axis.set_ylim(limits[operation][1])
+        stagger_width_labels(axis)
+        axis.set_xlabel("Encoded width (bits, log₂ scale)")
+        axis.set_ylabel("Median latency (ns/op, log scale)")
+        handles, labels = axis.get_legend_handles_labels()
+        notes = (
+            f"{trial_summary.replace('–', '-')} with 5th to 95th percentile bands.",
+            "Lower time is faster; input selection and checksums are included.",
+            "Lines connect measured widths. See backend-regimes.csv for backend changes.",
+        )
+        if trial_counts[0] < MINIMUM_PUBLICATION_TRIALS:
+            notes += (f"Development only: fewer than {MINIMUM_PUBLICATION_TRIALS} trials.",)
+        compact_operation_layout(
+            single, axis, title=OPERATION_LABEL[operation],
+            context="Equal-width scalar harness",
+            handles=handles, labels=labels, notes=notes,
+            bold_labels={series_labels[name] for name in EXECFLOAT_SERIES},
+        )
+        save_operation_svg(single, overview, operation)
+        descriptions[operation] = (
+            f"{OPERATION_LABEL[operation]}: median latency in nanoseconds per operation "
+            "against encoded width, with logarithmic axes and 5th to 95th percentile bands. "
+            "All measured implementations from the retained scalar-harness comparison."
+        )
+    write_operation_series(
+        overview, descriptions,
+        overview_alt="Six arithmetic operations: median latency in nanoseconds per operation "
+        "against encoded width on logarithmic axes, with all retained implementation series "
+        "and 5th to 95th percentile bands.",
+    )
 
 
 def main() -> None:

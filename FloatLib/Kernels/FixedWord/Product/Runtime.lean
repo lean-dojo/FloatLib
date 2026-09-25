@@ -100,13 +100,13 @@ def toNat (value : UInt256) : Nat :=
 /-- Position of the most significant set bit, with zero mapped to zero. -/
 @[inline] def log2 (value : UInt256) : Nat :=
   if value.limb3 != 0 then
-    192 + value.limb3.log2.toNat
+    192 + (log2Word value.limb3).toNat
   else if value.limb2 != 0 then
-    128 + value.limb2.log2.toNat
+    128 + (log2Word value.limb2).toNat
   else if value.limb1 != 0 then
-    64 + value.limb1.log2.toNat
+    64 + (log2Word value.limb1).toNat
   else
-    value.limb0.log2.toNat
+    (log2Word value.limb0).toNat
 
 end UInt256
 

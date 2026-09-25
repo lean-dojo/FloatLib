@@ -31,9 +31,12 @@ Exact rational parameters keep the scalar kernel executable and make its mathema
 independent of host floating-point behavior. Downstream tensor libraries can lift the scalar
 operation pointwise without introducing a second quantization semantics.
 
-The equations follow the integer-arithmetic quantization scheme used by common neural-network
-runtimes. See Jacob et al., "Quantization and Training of Neural Networks for Efficient
-Integer-Arithmetic-Only Inference," CVPR 2018, doi:10.1109/CVPR.2018.00286.
+The reconstruction equation is Jacob et al., "Quantization and Training of Neural Networks for
+Efficient Integer-Arithmetic-Only Inference," CVPR 2018, §2.1, Eq. (1), p. 2706,
+doi:10.1109/CVPR.2018.00286. The nearest-even tie rule is this kernel's policy; Eq. (1) specifies
+the affine reconstruction map. Ties are resolved on `x / s`, before adding the zero point.
+This parameter record permits any integer zero point. Exact zero has a code in the stored interval
+precisely when `qmin ≤ zeroPoint ≤ qmax`, as required by the paper's code-range convention.
 -/
 
 @[expose] public section

@@ -138,6 +138,25 @@ theorem fmaFields_eq
 
 /-! ## Structural addition laws -/
 
+/-- Natural-number sum-of-squares evaluation preserves all three exact dyadic fields. -/
+theorem sumSquares_eq (left right : Dyadic) :
+    sumSquares left right = (left.mul left).add (right.mul right) := by
+  simp only [sumSquares, mul, mulFields, Bool.xor_self, add, addFields, Bool.false_and,
+    Bool.false_eq_true, ite_false, beq_iff_eq]
+  split
+  · split <;> rfl
+  · split
+    · rfl
+    · split
+      · have hpositive : 0 < left.significand * left.significand := by omega
+        simp only [Int.ofNat_eq_natCast, ← Int.natCast_add, Int.natCast_eq_zero,
+          Nat.add_eq_zero_iff, hpositive.ne', false_and, ite_false, Int.natAbs_natCast]
+        rfl
+      · have hpositive : 0 < right.significand * right.significand := by omega
+        simp only [Int.ofNat_eq_natCast, ← Int.natCast_add, Int.natCast_eq_zero,
+          Nat.add_eq_zero_iff, hpositive.ne', and_false, ite_false, Int.natAbs_natCast]
+        rfl
+
 /--
 Normalize addition when the left operand stores zero.
 

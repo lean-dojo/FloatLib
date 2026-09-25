@@ -23,6 +23,78 @@ compiler substitution.
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteSqrt
 
+open Float.Model.UnpackedFloat in
+private theorem roundRoot_eq (root remainder shift : Nat) :
+    roundRoot root remainder shift =
+      (ExtendedMantissa.ofMantissaAndAccuracy root
+        (if remainder = 0 then .exact
+          else .inexact (if remainder ≤ root then .lt else .gt)) >>> shift).roundedMantissa := by
+  cases shift with
+  | zero =>
+    by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+      simp [roundRoot, hz, hle, HShiftRight.hShiftRight, Nat.repeat,
+        ExtendedMantissa.ofMantissaAndAccuracy, ExtendedMantissa.roundedMantissa,
+        ExtendedMantissa.accuracy, Accuracy.roundToNearestEven]
+  | succ k =>
+    rw [ScaledSqrt.shift_extended_succ]
+    have hp : 0 < 2 ^ k := Nat.two_pow_pos k
+    have hm := Nat.mod_lt root hp
+    have hdisc : root - root / (2 ^ k * 2) * (2 ^ k * 2) =
+        root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) := by
+      rw [← Nat.mod_eq_sub_div_mul, Nat.mod_mul]
+    simp only [roundRoot, Nat.succ_ne_zero, beq_iff_eq, ite_false,
+      Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq, Nat.pow_succ,
+      Nat.add_sub_cancel, pow2_eq_two_pow, hdisc]
+    rcases Nat.mod_two_eq_zero_or_one (root / 2 ^ k) with hb | hb
+    · have hlt : root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) < 2 ^ k := by
+        simp [hb, hm]
+      simp only [hlt, ite_true]
+      cases hsticky : (root % 2 ^ k != 0) <;>
+        by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+        simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+          ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+          Accuracy.roundToNearestEven, hb, hsticky]
+    · by_cases hlow : root % 2 ^ k = 0
+      · have heq : root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) = 2 ^ k := by
+          simp [hb, hlow]
+        simp only [heq, Nat.lt_irrefl, gt_iff_lt, ite_false]
+        rcases Nat.mod_two_eq_zero_or_one (root / (2 ^ k * 2)) with hparity | hparity <;>
+          by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+          simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+            ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hb, hlow, hparity]
+      · have hgt : 2 ^ k < root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) := by
+          simp only [hb, Nat.mul_one]
+          omega
+        have hnlt : ¬ root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) < 2 ^ k := by omega
+        have hsticky : (root % 2 ^ k != 0) = true := by
+          have heq : (root % 2 ^ k == 0) = false :=
+            Bool.eq_false_of_not_eq_true (fun h => hlow (beq_iff_eq.mp h))
+          simp [bne, heq]
+        simp only [hnlt, hgt, ite_false, ite_true]
+        by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+          simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+            ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hb, hsticky]
+
+/-- The scaled kernel preserves the complete result of the original full-radicand algorithm. -/
+theorem sqrtGeneral_eq_unscaled
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) :
+    sqrtGeneral fmt mantissa exponent =
+      if mantissa == 0 then
+        posZero fmt
+      else
+        let finalExponent := targetExponent fmt mantissa exponent
+        let rootExponent := min (exponent.ediv 2) finalExponent
+        let scaledMantissa := mantissa <<< (exponent - 2 * rootExponent).toNat
+        let root := Nat.sqrt scaledMantissa
+        let remainder := scaledMantissa - root * root
+        roundDyadicImpl fmt
+          { negative := false
+            significand := roundRoot root remainder (finalExponent - rootExponent).toNat
+            exponent := finalExponent } := by
+  simp only [sqrtGeneral, ScaledSqrt.shifted_eq, ScaledSqrt.accuracy, ← roundRoot_eq]
+
 /--
 For a conventional IEEE descriptor, exact-dyadic square root agrees with the established unpacked
 model applied to the original encoded value.

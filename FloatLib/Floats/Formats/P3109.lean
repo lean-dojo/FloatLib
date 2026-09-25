@@ -8,6 +8,7 @@ module -- shake: keep-all
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Instances
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
+public import FloatLib.Floats.Formats.P3109.Arithmetic.Square
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Selection
 public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Proof
@@ -36,6 +37,7 @@ Core arithmetic evaluates exact rational intermediates and performs one destinat
 Square root uses exact integer comparisons with a proof against `Real.sqrt`. The common
 `ExecFloat` capabilities provide add, subtract, multiply, divide, square root, and FMA;
 `ExecFloat.P3109.*To` also permits independent P3109 source and destination descriptors.
+`square` and `squareTo` project the exact square once, using the same projection policies.
 The mixed-operation interface covers fused addition, scaled arithmetic, and external
 binary16, binary32, and BFloat16 destinations. Extrema, classification, format queries, and
 neighbor operations follow the same descriptor's datum set.

@@ -48,7 +48,7 @@ namespace ExactValue
 noncomputable def toNumericalValue : ExactValue → NumericalValue ℝ
   | .finite value => .finite value.toReal
   | .infinity sign => .infinity sign
-  | .nan _ _ payload => .exceptional (.nan (some payload))
+  | .nan sign signaling payload => .exceptional (.nan (some payload) sign signaling)
 
 end ExactValue
 

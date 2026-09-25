@@ -23,6 +23,7 @@ Nothing is taken from memory; the assertions below pin the smallest subnormal, t
 normal and the largest finite value to those formulas.
 
 Run from anywhere: python3 ch01_toy_grid.py [--out PNG]
+Also writes a -mobile.png sibling, with one independently scaled row per exponent field.
 """
 
 from __future__ import annotations
@@ -94,6 +95,50 @@ def bracket(ax, lo: float, hi: float, y: float, text: str, *, color=fs.INK, font
             color=color, linespacing=1.25)
 
 
+def build_mobile(words):
+    """Keep all 28 values and their fields legible by separating the seven exponent rows."""
+    height = 9.0
+    fig = fs.plt.figure(figsize=(3.8, height))
+    ax = fs.diagram_axes(fig, (0, 3.8), (0, height))
+    ax.text(0.18, 8.77, "Six-bit toy grid", fontsize=15, weight="bold", va="top")
+    ax.text(0.18, 8.38, "3 exponent bits · 2 fraction bits\nBias 3 · sign bit 0 omitted",
+            fontsize=12, va="top", linespacing=1.4)
+    ax.text(0.18, 7.73, "Fraction field F", fontsize=12, va="center")
+    columns = (0.40, 1.40, 2.40, 3.40)
+    for frac_field, x in enumerate(columns):
+        ax.text(x, 7.43, f"{frac_field:02b}", fontsize=12, ha="center",
+                va="center", family="DejaVu Sans Mono")
+
+    steps = []
+    for exp_field in range(ALL_ONES):
+        row = [w for w in words if w[0] == exp_field]
+        assert [f for _, f, _ in row] == list(range(2 ** FRAC_WIDTH))
+        step = row[1][2] - row[0][2]
+        assert all(b[2] - a[2] == step for a, b in zip(row, row[1:]))
+        steps.append(step)
+        y = 7.08 - 0.88 * exp_field
+        ax.text(0.18, y, f"E = {exp_field:03b}", fontsize=12,
+                family="DejaVu Sans Mono", va="center")
+        ax.text(3.62, y, f"step {frac_label(step)}", fontsize=12, ha="right",
+                va="center")
+        line_y = y - 0.29
+        ax.plot([columns[0], columns[-1]], [line_y, line_y], color=fs.LINE, linewidth=1)
+        for (_, _, value), x in zip(row, columns):
+            subnormal = exp_field == 0
+            ax.plot([x], [line_y], marker="s" if subnormal else "o",
+                    markersize=7, markerfacecolor="white" if subnormal else fs.BLUE,
+                    markeredgecolor=fs.ORANGE if subnormal else fs.BLUE, markeredgewidth=1.5)
+            ax.text(x, line_y - 0.16, frac_label(value), fontsize=12, ha="center", va="top")
+    assert steps == [Fraction(1, 16), Fraction(1, 16), Fraction(1, 8),
+                     Fraction(1, 4), Fraction(1, 2), Fraction(1), Fraction(2)]
+    assert len({v for _, _, v in words}) == 28
+    ax.text(0.18, 1.05, "Open squares: zero + subnormals", fontsize=12, va="center")
+    ax.text(0.18, 0.76, "First normal: 1/4 · largest finite: 14", fontsize=12, va="center")
+    ax.text(0.18, 0.47, "E = 111 is reserved for inf / NaN.", fontsize=12, va="center")
+    ax.text(0.18, 0.18, "Each row uses its own scale.", fontsize=12, va="center", color=fs.MUTED)
+    return fig
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=None)
@@ -157,6 +202,8 @@ def main() -> None:
 
     out = fs.save(fig, "ch01-toy-grid.png", args.out)
     print(f"wrote {out}")
+    mobile = out.with_name(f"{out.stem}-mobile{out.suffix}")
+    print(f"wrote {fs.save(build_mobile(words), mobile.name, mobile)}")
 
 
 if __name__ == "__main__":

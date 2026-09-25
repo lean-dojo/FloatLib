@@ -32,7 +32,7 @@ In particular, finite multiplication supplies a product below `2^48`.
   if product == 0 then
     if sign then 0x80000000 else 0
   else
-    let leading := product.log2
+    let leading := FloatLib.Numerics.FixedWord.log2Word product
     let position := leading + scale
     if position < 172 then
       let fraction :=

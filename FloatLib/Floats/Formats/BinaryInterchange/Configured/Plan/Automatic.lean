@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.ByteTable.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Candidates
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.WideLimbCandidates
 
 /-!
@@ -140,7 +139,8 @@ def automaticDivCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word32 width_le => divCandidates format (.word32 width_le)
   | .word64 width_le => divCandidates format (.word64 width_le)
   | .wide => divCandidates format .wide
-  | .limbs width_gt => divCandidates format (.limbs width_gt)
+  | .limbs width_gt =>
+      divCandidates format (.limbs width_gt) (wideLimbDiv? format width_gt).toList
 
 /-- Square-root candidates for the automatically selected built-in carrier. -/
 def automaticSqrtCandidates (format : FloatFormat) (plan : StoragePlan format) :
@@ -152,7 +152,8 @@ def automaticSqrtCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word32 width_le => sqrtCandidates format (.word32 width_le)
   | .word64 width_le => sqrtCandidates format (.word64 width_le)
   | .wide => sqrtCandidates format .wide
-  | .limbs width_gt => sqrtCandidates format (.limbs width_gt)
+  | .limbs width_gt =>
+      sqrtCandidates format (.limbs width_gt) (wideLimbSqrt? format width_gt).toList
 
 /-- Fused-multiply-add candidates for the automatically selected built-in carrier. -/
 def automaticFmaCandidates (format : FloatFormat) (plan : StoragePlan format) :

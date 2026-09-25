@@ -15,7 +15,8 @@ public import FloatLib.Numerics.Core.Proof
 The adapter interprets every finite FP8, FP6, FP4, FNUZ, or IEEE code as an exact dyadic. It uses
 the complete `FloatFormat`, so an all-ones exponent can mean infinity, a finite value, or part of a
 NaN encoding according to the selected representation policy. A NaN is denoted by its fraction
-field, the same payload convention as `ExactValue.nan` and the real-valued `numericalSystem`.
+field, sign bit, and signaling class, the same convention as `ExactValue.nan` and the real-valued
+`numericalSystem`.
 -/
 
 @[expose] public section
@@ -28,7 +29,7 @@ open FloatLib.Numerics
 Exact numerical-system semantics for a policy-aware binary format.
 
 Finite codes denote their exact dyadic value, infinities carry their sign, and a NaN carries its
-fraction field as payload.
+fraction field as payload together with its sign bit and signaling class.
 -/
 def exactNumericalSystem (fmt : FloatFormat) : NumericalSystem where
   Code := Model fmt
@@ -38,7 +39,7 @@ def exactNumericalSystem (fmt : FloatFormat) : NumericalSystem where
     | some value => .finite value
     | none =>
         if Model.isInf x then .infinity (Model.signBit x)
-        else .exceptional (.nan (some (Model.fracField x)))
+        else .exceptional (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))
 
 /-- A policy-aware binary word with an erased proof of its exact finite dyadic value. -/
 abbrev ExactAtFinite (fmt : FloatFormat) (value : Numerics.Dyadic) :=

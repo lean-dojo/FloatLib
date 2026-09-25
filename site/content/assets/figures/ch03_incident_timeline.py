@@ -1,140 +1,91 @@
 #!/usr/bin/env python3
-"""Draw content/assets/ch03-incident-timeline.png: the five incidents of the history chapter on one time line.
+"""Draw the mechanisms of five incidents from chapter 03, in chronological order.
 
-Each incident sits at the date the history chapter (site/content/chapters/03-a-short-history-of-floating-point.md)
-gives for it, and is marked by the kind of failure the chapter attributes to it after reading the
-primary source. Every date, number and attribution below is copied from the chapter text and the
-sources it cites; nothing is estimated.
+The full dates and quantitative detail remain in that chapter and its cited primary sources:
+* Vancouver: January 1982 to 25 November 1983; three-decimal truncation on each update.
+  The close was 524.811, recomputed to 1098.892, a difference of 574.081 (Quinn/Lilley 1983).
+* Patriot: 25 February 1991; inconsistent clock conversions at different precisions make
+  elapsed-time errors grow with uptime. The truncated conversion is short by 0.3433 s after
+  100 hours (GAO/IMTEC-92-26; Skeel 1992). Mere cancellation of two equally converted times
+  would not explain the failure, so the diagram explicitly names the inconsistent conversions.
+* Sleipner A: 23 August 1991; a coarse finite-element mesh underestimated shear stress by
+  about 47 percent. This is a model/discretization error, not an arithmetic error
+  (Jakobsen/Rosendahl 1994; Selby/Vecchio/Collins 1997).
+* Pentium FDIV: reported to Intel on 24 October 1994; five missing SRT table cells,
+  quotient relative errors up to about 6e-5 (Coe et al. 1995; Edelman 1997).
+* Ariane 5 flight 501: 4 June 1996; binary64 to signed Int16 conversion outside range,
+  followed by an unhandled exception. Rounding played no part (Lions 1996).
 
-* Vancouver Stock Exchange index: launched January 1982 at 1000.000, closed Friday 25 November
-  1983 at 524.811, recomputed to 1098.892; each recomputation truncated to three decimals
-  (Quinn 1983, Lilley 1983). Drawn as a span from January 1982 to the 25 November 1983 close,
-  because the loss accumulated over those 22 months.
-* Patriot battery, Dhahran: 25 February 1991; clock time truncated to 23 fraction bits, 0.3433 s
-  short after 100 hours (GAO/IMTEC-92-26, Skeel 1992).
-* Sleipner A: 23 August 1991; not an arithmetic failure, a finite element mesh too coarse, shear
-  stresses underestimated by about 47 percent (Jakobsen and Rosendahl 1994; Selby, Vecchio and
-  Collins 1997).
-* Pentium FDIV bug: noticed June 1994, reported to Intel 24 October 1994; five cells missing from
-  the SRT division table, relative error up to about 6e-5 (Coe, Mathisen, Moler and Pratt 1995;
-  Edelman 1997). Placed at the 24 October report, the day the chapter dates.
-* Ariane 5 flight 501: 4 June 1996; a binary64 to 16-bit signed integer conversion overflowed,
-  rounding played no part (Lions 1996).
-
-Colour and marker encode the kind of failure; the text beside each marker repeats it, so identity
-never rests on colour alone. Okabe and Ito colours from figstyle.
-
-Run from anywhere: python3 ch03_incident_timeline.py [--out PATH]
+Rows are ordered by date, not laid out on a quantitative time axis. Arrows connect a failure
+mechanism to its consequence, not one incident to the next. All five incidents are retained.
+Run from anywhere: python3 ch03_incident_timeline.py [--out PNG]
+The mobile companion is written beside the desktop image as <stem>-mobile.png.
 """
-
 from __future__ import annotations
 
 import argparse
-import datetime as dt
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import figstyle as fs  # noqa: E402
-
-import matplotlib.dates as mdates  # noqa: E402
-from matplotlib.lines import Line2D  # noqa: E402
+import figstyle as fs
 
 OUT_NAME = "ch03-incident-timeline.png"
-
-# Kind of failure -> legend label and mark. Order follows figstyle.PALETTE; the incident that was
-# not an arithmetic failure is drawn hollow in black so that it reads as the odd one out.
-KINDS = {
-    "truncation": dict(label="truncation that accumulated", color=fs.BLUE, marker="o",
-                       face=fs.BLUE),
-    "overflow": dict(label="narrowing conversion overflow, not a rounding error",
-                     color=fs.ORANGE, marker="s", face=fs.ORANGE),
-    "table": dict(label="hardware division table error", color=fs.GREEN, marker="D",
-                  face=fs.GREEN),
-    "none": dict(label="not an arithmetic failure", color=fs.BLACK, marker="o", face="white"),
-}
-
-# Top row first. `side` says on which side of the marker the label sits.
+# name, year/span, mechanism, consequence, colour
 INCIDENTS = [
-    dict(name="Vancouver Stock Exchange index, January 1982 to 25 November 1983",
-         date=dt.date(1983, 11, 25), start=dt.date(1982, 1, 1), kind="truncation", side="right",
-         what=["every recomputation truncated to three decimals,",
-               "574 points lost in 22 months"]),
-    dict(name="Patriot battery, Dhahran, 25 February 1991",
-         date=dt.date(1991, 2, 25), kind="truncation", side="left",
-         what=["clock time truncated to 23 fraction bits,",
-               "0.3433 s of drift after 100 hours"]),
-    dict(name="Sleipner A, Gandsfjord, 23 August 1991",
-         date=dt.date(1991, 8, 23), kind="none", side="left",
-         what=["not arithmetic: a finite element mesh too coarse,",
-               "shear stresses underestimated by about 47 percent"]),
-    dict(name="Pentium FDIV bug, reported to Intel 24 October 1994",
-         date=dt.date(1994, 10, 24), kind="table", side="left",
-         what=["five cells missing from the SRT division table,",
-               r"quotients off by up to about $6 \times 10^{-5}$ relative"]),
-    dict(name="Ariane 5 flight 501, Kourou, 4 June 1996",
-         date=dt.date(1996, 6, 4), kind="overflow", side="left",
-         what=["binary64 to 16-bit signed integer conversion overflowed,",
-               "rounding played no part"]),
+    ("Vancouver index", "1982/83", "Repeated truncation", "Downward index bias", fs.BLUE),
+    ("Patriot", "1991", "Unequal clock conversions", "Timing error grows with uptime", fs.BLUE),
+    ("Sleipner A", "1991", "Coarse mesh (model error)", "Shear stress underestimated", fs.INK),
+    ("Pentium FDIV", "1994", "Missing lookup-table entries", "Wrong quotients", fs.GREEN),
+    ("Ariane 5", "1996", "Float → Int16 outside range", "Inertial unit shuts down", fs.ORANGE),
 ]
 
-X_START = dt.date(1981, 7, 1)
-X_END = dt.date(1998, 1, 1)
-MARKER_SIZE = 9.5
-LABEL_GAP = 13  # points between marker and label
 
-
-def draw(out: Path | None) -> Path:
+def build_figure(mobile: bool = False):
     fs.setup()
-    fig, ax = fs.figure(5.3)
-    rows = len(INCIDENTS)
-
-    for row, incident in enumerate(INCIDENTS):
-        y = rows - 1 - row
-        kind = KINDS[incident["kind"]]
-        x = mdates.date2num(incident["date"])
-        if "start" in incident:
-            x0 = mdates.date2num(incident["start"])
-            ax.plot([x0, x], [y, y], color=kind["color"], linewidth=5, alpha=0.3,
-                    solid_capstyle="butt", zorder=1)
-            ax.plot([x0], [y], marker="|", color=kind["color"], markersize=11,
-                    markeredgewidth=1.6, linestyle="None", zorder=2)
-        ax.plot([x], [y], marker=kind["marker"], color=kind["color"],
-                markerfacecolor=kind["face"], markeredgecolor=kind["color"],
-                markeredgewidth=1.6, markersize=MARKER_SIZE, linestyle="None", zorder=3)
-        sign = 1 if incident["side"] == "right" else -1
-        ha = "left" if sign > 0 else "right"
-        ax.annotate(incident["name"], (x, y), xytext=(sign * LABEL_GAP, 7),
-                    textcoords="offset points", ha=ha, va="bottom", fontsize=9.5,
-                    fontweight="bold", color=fs.INK)
-        ax.annotate("\n".join(incident["what"]), (x, y), xytext=(sign * LABEL_GAP, -4),
-                    textcoords="offset points", ha=ha, va="top", fontsize=9, color=fs.MUTED,
-                    linespacing=1.25)
-
-    ax.set_xlim(mdates.date2num(X_START), mdates.date2num(X_END))
-    ax.set_ylim(-0.85, rows - 0.3)
-    ax.xaxis.set_major_locator(mdates.YearLocator(1))
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.yaxis.set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.grid(False, axis="y")
-    ax.grid(True, axis="x")
-    ax.tick_params(axis="x", length=3)
-
-    handles = [Line2D([], [], linestyle="None", marker=k["marker"], color=k["color"],
-                      markerfacecolor=k["face"], markeredgecolor=k["color"],
-                      markeredgewidth=1.6, markersize=8, label=k["label"])
-               for k in KINDS.values()]
-    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2,
-              frameon=False, handletextpad=0.6, columnspacing=2.0)
-    return fs.save(fig, OUT_NAME, out)
+    width, height = (3.8, 8.5) if mobile else (9.0, 5.8)
+    fig = fs.plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    ax.text(0.18, height - 0.18,
+            "Five failures,\nfive mechanisms" if mobile else "Five failures, five mechanisms",
+            fontsize=14 if mobile else 16, weight="bold", va="top")
+    if mobile:
+        for index, (name, year, mechanism, consequence, colour) in enumerate(INCIDENTS):
+            y = 7.26 - index * 1.42
+            ax.text(0.23, y, f"{name} · {year}", fontsize=12.5, weight="bold", va="center")
+            ax.text(0.23, y - 0.38, mechanism, fontsize=11.5, va="center")
+            fs.arrow(ax, (0.34, y - 0.56), (0.34, y - 0.90), color=colour)
+            ax.text(0.56, y - 0.85, consequence, fontsize=11.5, va="center")
+            if index < len(INCIDENTS) - 1:
+                ax.plot([0.23, 3.57], [y - 1.15, y - 1.15], color=fs.LINE, lw=0.7)
+    else:
+        for x, label in ((0.25, "Incident"), (2.65, "Mechanism"), (6.25, "Consequence")):
+            ax.text(x, 4.82, label, fontsize=11.5, color=fs.MUTED, va="center")
+        mechanisms = ["Truncate every\nindex update", "Mix clock-conversion\nprecisions",
+                      "Coarse mesh\n(model error)", "Missing division-\ntable entries",
+                      "Float → Int16\noutside range"]
+        consequences = ["Persistent\ndownward bias", "Uptime-dependent\ntiming error",
+                        "Shear stress\nunderestimated", "Wrong quotients\nfor some inputs",
+                        "Inertial unit\nshuts down"]
+        for index, ((name, year, _, _, colour), mechanism, consequence) in enumerate(
+                zip(INCIDENTS, mechanisms, consequences)):
+            y = 4.17 - index * 0.86
+            ax.text(0.25, y + 0.12, name, fontsize=12.5, weight="bold", va="center")
+            ax.text(0.25, y - 0.18, year, fontsize=11.5, color=fs.MUTED, va="center")
+            ax.text(2.65, y, mechanism, fontsize=12, va="center", linespacing=1.3)
+            fs.arrow(ax, (5.58, y), (6.05, y), color=colour)
+            ax.text(6.25, y, consequence, fontsize=12, va="center", linespacing=1.3)
+            if index < len(INCIDENTS) - 1:
+                ax.plot([0.25, 8.75], [y - 0.43, y - 0.43], color=fs.LINE, lw=0.7)
+    return fig
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    print(f"wrote {draw(args.out)}")
+    target = args.out or fs.ASSETS / OUT_NAME
+    for mobile in (False, True):
+        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 
 if __name__ == "__main__":

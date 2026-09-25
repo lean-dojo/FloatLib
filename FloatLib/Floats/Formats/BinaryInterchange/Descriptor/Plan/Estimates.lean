@@ -140,7 +140,8 @@ Estimate for a kernel over a runtime-sized buffer of 32-bit limbs.
 Measured addition and subtraction costs grow linearly in the limb count; multiplication and FMA
 include the quadratic schoolbook product. Both this kernel and the generic kernel allocate on
 every call. Their allocation estimates are equal, so selection compares the estimated times.
-Division and square root have no wide-limb kernel and receive the generic cost.
+Division and square root use arbitrary-precision integer arithmetic and retain the generic work
+estimate. Their direct limb-carrier entries account for field conversion within that work.
 -/
 def wideLimbEstimate (format : FloatFormat) (operation : Operation) : Candidate :=
   let limbs := (format.bitWidth + 31) / 32

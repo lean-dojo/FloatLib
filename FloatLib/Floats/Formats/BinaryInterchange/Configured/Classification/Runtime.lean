@@ -26,7 +26,9 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 local notation "Value" =>
-  FloatLib.Floats.ExecFloat (Configured.Family format code plan)
+  ExecFloat.Binary format.expWidth format.fracWidth format.encoding format.exponentBias
+    format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
+    format.exponentBias_le_maxFinite plan code
 
 /-- Test normality under the complete configured descriptor. -/
 @[inline] def isNormal (x : Value) : Bool := Model.isNormal (toModel x)

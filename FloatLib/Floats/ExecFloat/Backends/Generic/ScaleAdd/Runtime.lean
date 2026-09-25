@@ -52,13 +52,41 @@ two-offset product coordinates.
     roundMagnitude fmt roundOffset leftSign (left - right) scale
 
 /--
-Align two signed magnitudes in an unsigned scale coordinate and round their exact sum once.
+Align the higher-scale operand while retaining only the low bits needed for rounding.
+
+When the exponents are well separated, the higher operand determines the sign even after
+subtraction. Keeping `fracWidth + 3` positions below it leaves a guard bit above the sticky bit,
+including after a borrow. The discarded suffix is tested by shifting back the quotient, so a
+large exponent gap does not allocate a correspondingly large power of two.
+-/
+@[inline] def roundAligned
+    (fmt : FloatFormat) (roundOffset : Nat)
+    (highSign lowSign : Bool) (high low gap scale : Nat) : Model fmt :=
+  let keep := fmt.fracWidth + 3
+  -- Keep moderate gaps on exact alignment to avoid jamming a small intermediate.
+  if 2 * keep < gap ∧ low.log2 + 1 < gap ∧ high ≠ 0 then
+    let discard := gap - keep
+    let upper := high <<< keep
+    let lower := low >>> discard
+    let exact := low == lower <<< discard
+    let magnitude :=
+      if highSign == lowSign then
+        let sum := upper + lower
+        if exact then sum else sum ||| 1
+      else
+        let difference := upper - lower
+        if exact then difference else (difference - 1) ||| 1
+    roundMagnitude fmt roundOffset highSign magnitude (scale + discard)
+  else
+    roundMagnitudes fmt roundOffset highSign lowSign (high <<< gap) low scale
+
+/--
+Align two signed magnitudes and round their exact sum once, using bounded alignment for large gaps.
 -/
 @[inline] def roundSum
     (fmt : FloatFormat) (roundOffset : Nat)
     (leftSign rightSign : Bool)
-    (leftMantissa leftScale rightMantissa rightScale : Nat) :
-    Model fmt :=
+    (leftMantissa leftScale rightMantissa rightScale : Nat) : Model fmt :=
   if leftMantissa == 0 then
     if rightMantissa == 0 then
       zero fmt (leftSign && rightSign)
@@ -67,10 +95,10 @@ Align two signed magnitudes in an unsigned scale coordinate and round their exac
   else if rightMantissa == 0 then
     roundMagnitude fmt roundOffset leftSign leftMantissa leftScale
   else if leftScale ≤ rightScale then
-    roundMagnitudes fmt roundOffset leftSign rightSign leftMantissa
-      (rightMantissa <<< (rightScale - leftScale)) leftScale
+    roundAligned fmt roundOffset rightSign leftSign rightMantissa leftMantissa
+      (rightScale - leftScale) leftScale
   else
-    roundMagnitudes fmt roundOffset leftSign rightSign
-      (leftMantissa <<< (leftScale - rightScale)) rightMantissa rightScale
+    roundAligned fmt roundOffset leftSign rightSign leftMantissa rightMantissa
+      (leftScale - rightScale) rightScale
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteScaleAdd
