@@ -198,7 +198,7 @@ def stagger_width_labels(axis) -> None:
 
 
 def save_operation_svg(figure, overview: Path, operation: str) -> Path:
-    """Keep physical dimensions and make SVG IDs and metadata reproducible."""
+    """Save an SVG with reproducible IDs, metadata, and whitespace."""
     import matplotlib.pyplot as plt
 
     target = overview.with_name(f"{overview.stem}-{operation}.svg")
@@ -208,6 +208,8 @@ def save_operation_svg(figure, overview: Path, operation: str) -> Path:
     }):
         figure.savefig(target, metadata={"Date": None}, facecolor="white")
     plt.close(figure)
+    lines = target.read_text(encoding="utf-8").splitlines()
+    target.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
     return target
 
 
