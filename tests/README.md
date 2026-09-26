@@ -16,6 +16,9 @@ compiler equality proofs and the public root's dependencies. Arb runs when
 `python-flint` is installed; otherwise the verifier reports that it was skipped. Any failed
 check fails the command.
 
+The manual CI workflow runs these checks, followed by MPFR smoke comparisons,
+benchmark command checks, and the guide's Lean examples.
+
 To also replay the compiled FloatLib declarations through Lean's kernel:
 
 ```bash
