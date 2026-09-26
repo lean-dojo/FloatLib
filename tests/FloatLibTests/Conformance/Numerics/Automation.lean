@@ -242,6 +242,10 @@ example (x : ℕ → ℝ) (hx : ∀ i ∈ ({2, 5, 9} : Finset ℕ), x i ∈ Set.
     ∑ i ∈ ({2, 5, 9} : Finset ℕ), x i ≤ 3 := by
   interval (depth := 0)
 
+example (x : ℕ → ℝ) (hx : ∀ i ∈ Finset.range 3, x i ∈ Set.Icc 0 1) :
+    ∑ i ∈ Finset.range 3, x i ≤ 3 := by
+  interval (depth := 0)
+
 -- A pointwise hypothesis cannot supply bounds beyond its index set.
 example (x : ℕ → ℝ) (_hx : ∀ i ∈ Finset.range 2, x i ∈ Set.Icc 0 1) : True := by
   fail_if_success have : ∑ i ∈ Finset.range 3, x i ≤ 3 := by interval (depth := 0)

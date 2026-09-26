@@ -40,6 +40,9 @@ if [[ ! -f pnpm-lock.yaml ]]; then
 fi
 corepack pnpm install --frozen-lockfile
 
+echo "reader: checking routes"
+corepack pnpm test
+
 echo "reader: building"
 corepack pnpm build
 
