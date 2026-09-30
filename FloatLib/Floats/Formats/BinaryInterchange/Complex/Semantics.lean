@@ -245,20 +245,6 @@ theorem toReal_magnitudeScale {fmt : FloatFormat} (z : ExecComplex fmt)
     rw [toReal_abs z.re hfmt hre, max_eq_left hle]
     rfl
 
-private theorem isZero_eq_true_iff_toReal_eq_zero {fmt : FloatFormat} (x : Model fmt)
-    (hx : Model.isFinite x = true) :
-    Model.isZero x = true ↔ Model.toReal x = 0 := by
-  refine ⟨Model.toReal_eq_zero_of_isZero x, ?_⟩
-  intro hreal
-  obtain ⟨d, hd⟩ := Model.exists_toDyadic?_of_isFinite hx
-  have hdreal : d.toReal = 0 := by simpa [Model.toReal_eq, hd] using hreal
-  have hmant : d.significand = 0 := by
-    have hs := (mul_eq_zero.mp hdreal).resolve_right
-      (FloatLib.Floats.Formats.Flocq.bpow.ne_zero Numerics.binaryRadix d.exponent)
-    cases hsign : d.negative <;>
-      simpa [Numerics.Dyadic.signedSignificand, hsign] using hs
-  exact Model.isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hmant
-
 /-- The nine scalar rounding sites of ratio division with a real-component pivot. -/
 noncomputable def roundedDivRealDominant (fmt : FloatFormat) (x y : ℂ) : ℂ :=
   let ratio := Model.roundAt fmt (y.im / y.re)
@@ -445,7 +431,7 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
     Model.toReal (magnitude z) = roundedMagnitude fmt (toComplex z) := by
   have hsfinite := Internal.isFinite_magnitudeScale z h.input
   have hsreal := Internal.toReal_magnitudeScale z hfmt h.input
-  have hszero := Internal.isZero_eq_true_iff_toReal_eq_zero
+  have hszero := Model.isZero_eq_true_iff_toReal_eq_zero
     (Internal.magnitudeScale z) hsfinite
   rw [hsreal] at hszero
   unfold magnitude roundedMagnitude

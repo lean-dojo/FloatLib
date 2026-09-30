@@ -123,6 +123,27 @@ lemma toReal_eq {fmt : FloatFormat} (x : Model fmt) :
   rw [toReal_eq, toDyadic?_zero]
   simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
 
+/-- The real interpretation erases the sign of an executable zero. -/
+theorem toReal_eq_zero_of_isZero {fmt : FloatFormat} (x : Model fmt)
+    (hx : isZero x = true) :
+    toReal x = 0 := by
+  rw [toReal_eq, toDyadic?_eq_zero_of_isZero_eq_true x hx]
+  simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
+
+/-- A finite value is an executable zero exactly when its real interpretation is zero. -/
+theorem isZero_eq_true_iff_toReal_eq_zero {fmt : FloatFormat} (x : Model fmt)
+    (hx : isFinite x = true) :
+    isZero x = true ↔ toReal x = 0 := by
+  refine ⟨toReal_eq_zero_of_isZero x, fun hreal ↦ ?_⟩
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
+  have hdreal : d.toReal = 0 := by simpa [toReal_eq, hd] using hreal
+  have hmant : d.significand = 0 := by
+    have hs := (mul_eq_zero.mp hdreal).resolve_right
+      (bpow.ne_zero Numerics.binaryRadix d.exponent)
+    cases hsign : d.negative <;>
+      simpa [Numerics.Dyadic.signedSignificand, hsign] using hs
+  exact isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hmant
+
 /-- Executable and logical decoding agree for formats represented by Lean's IEEE model. -/
 theorem toReal_eq_unpackedToReal_toModel {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) :

@@ -166,6 +166,34 @@ theorem abs_toReal_fma_sub_le {fmt : FloatFormat} (x y z : Model fmt)
   rw [toReal_fma_eq_roundAt x y z hfmt hx hy hz hout]
   exact abs_roundAt_sub_le fmt (toReal x * toReal y + toReal z)
 
+/--
+A finite value whose magnitude fits in the destination's finite range stays finite under
+conversion. With `abs_toReal_cast_sub_le` this discharges the output hypothesis from the input.
+-/
+theorem isFinite_cast_of_abs_toReal_le_posMaxFinite {src dst : FloatFormat} (x : Model src)
+    (hdst : dst.isIEEE = true) (hx : isFinite x = true)
+    (hbound : |toReal x| ≤ toReal (posMaxFinite dst)) :
+    isFinite (cast src dst x) = true := by
+  have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
+  have hreal : toReal x = d.toReal := by rw [toReal_eq, hd]
+  have hround := isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
+    dst hdst d (by simpa only [← hreal] using hbound)
+  unfold cast
+  simp only [hnan, hinf, Bool.false_eq_true, ↓reduceDIte]
+  split
+  · next heq => cases heq; exact hx
+  · split
+    · split
+      · split
+        · split
+          · exact isFinite_widenExact x _ _ _ _ hx
+          · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
+        · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
+      · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
+    · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
+
 /-- Absolute error of one finite cross-format cast. -/
 theorem abs_toReal_cast_sub_le {src dst : FloatFormat} (x : Model src)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
