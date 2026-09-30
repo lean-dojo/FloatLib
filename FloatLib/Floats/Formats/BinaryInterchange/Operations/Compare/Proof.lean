@@ -220,13 +220,6 @@ theorem maximumNumber_eq_maxNum_of_not_isSNaN {fmt : FloatFormat} (x y : Model f
   cases hxNaN : isNaN x <;> cases hyNaN : isNaN y <;>
     simp [maximumNumber, maxNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
 
-/-- The real interpretation erases the sign of an executable zero. -/
-theorem toReal_eq_zero_of_isZero {fmt : FloatFormat} (x : Model fmt)
-    (hx : isZero x = true) :
-    toReal x = 0 := by
-  rw [toReal_eq, toDyadic?_eq_zero_of_isZero_eq_true x hx]
-  simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
-
 /-! ## Non-NaN minimum and maximum -/
 
 /-- IEEE `minimum` is non-NaN when both operands are non-NaN. -/

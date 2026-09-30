@@ -333,11 +333,6 @@ theorem toReal_of_log_eq_some {fmt : FloatFormat}
       rw [toReal_of_toRat?_eq_some hinput]
       exact toReal_of_logRat_eq_some hresult
 
-private theorem toReal_eq_zero_of_isZero {fmt : FloatFormat} {input : Model fmt}
-    (hzero : isZero input = true) : toReal input = 0 := by
-  rw [toReal_eq, toDyadic?_eq_zero_of_isZero_eq_true input hzero]
-  simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
-
 /-- Each accepted `expMinus1` result is finite, including the signed-zero branch. -/
 theorem isFinite_of_expMinus1_eq_some {fmt : FloatFormat}
     {input result : Model fmt} {options : Options}
@@ -364,7 +359,7 @@ theorem toReal_of_expMinus1_eq_some {fmt : FloatFormat}
   · rename_i hzero
     cases Option.some.inj hresult
     simp only [Bool.and_eq_true] at hzero
-    simp [toReal_eq_zero_of_isZero hzero.2]
+    simp [toReal_eq_zero_of_isZero _ hzero.2]
   · cases hinput : toRat? input with
     | none => simp [hinput] at hresult
     | some argument =>
@@ -398,7 +393,7 @@ theorem toReal_of_logPlus1_eq_some {fmt : FloatFormat}
   · rename_i hzero
     cases Option.some.inj hresult
     simp only [Bool.and_eq_true] at hzero
-    simp [toReal_eq_zero_of_isZero hzero.2]
+    simp [toReal_eq_zero_of_isZero _ hzero.2]
   · cases hinput : toRat? input with
     | none => simp [hinput] at hresult
     | some argument =>

@@ -718,6 +718,30 @@ private theorem toReal_sqrt_eq_roundAt_of_nonzero
     _ = roundAt fmt (Real.sqrt (toReal x)) := by rw [hxReal]
 
 /--
+A finite value with a nonnegative real interpretation satisfies the domain condition of
+`toReal_sqrt_eq_roundAt`: it is a zero of either sign, or its sign bit is clear.
+-/
+theorem isZero_or_signBit_eq_false_of_toReal_nonneg {fmt : FloatFormat} (x : Model fmt)
+    (hfinite : isFinite x = true) (hnonneg : 0 ≤ toReal x) :
+    isZero x = true ∨ signBit x = false := by
+  by_cases hzero : toReal x = 0
+  · exact Or.inl ((isZero_eq_true_iff_toReal_eq_zero x hfinite).2 hzero)
+  right
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
+  have hsign := sign_eq_signBit_of_toDyadic?_some hd
+  cases hs : signBit x with
+  | false => rfl
+  | true =>
+    have hnonpos : toReal x ≤ 0 := by
+      have hreal : toReal x = d.toReal := by simp [toReal_eq, hd]
+      rw [hreal]
+      simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
+        hsign.trans hs, ↓reduceIte, Int.cast_neg]
+      exact mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.mpr (Nat.cast_nonneg _))
+        (bpow.pos Numerics.binaryRadix d.exponent).le
+    exact absurd (le_antisymm hnonpos hnonneg) hzero
+
+/--
 Generic executable square root performs one nearest-even rounding of the exact real square root
 on every finite, nonnegative conventional IEEE input. The domain condition includes both signed
 zeros. Unlike the other arithmetic operations, no finiteness of the result is assumed:
@@ -734,9 +758,7 @@ theorem toReal_sqrt_eq_roundAt
       rw [Proof.sqrt_eq_spec]
       simp [Spec.sqrt, chooseNaN1_none_of_isFinite x hfinite,
         isInf_eq_false_of_isFinite_eq_true x hfinite, hzero]
-    have hxReal : toReal x = 0 := by
-      rw [toReal_eq, toDyadic?_eq_zero_of_isZero_eq_true x hzero]
-      simp [Numerics.Dyadic.toReal]
+    have hxReal : toReal x = 0 := toReal_eq_zero_of_isZero x hzero
     rw [hsqrt, hxReal, Real.sqrt_zero, roundAt_zero]
   · exact toReal_sqrt_eq_roundAt_of_nonzero x hfmt hfinite
       (Bool.eq_false_iff.mpr hzero) (hdomain.resolve_left hzero) hresult
