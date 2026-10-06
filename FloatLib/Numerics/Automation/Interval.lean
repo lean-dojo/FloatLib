@@ -114,8 +114,22 @@ def prove (proposition : Q(Prop)) (tactic : Syntax) : TacticM Lean.Expr := do
   finally
     setGoals original
 
+/-- Bound kernel verification independently of the surrounding declaration's heartbeat setting. -/
+private def withCheckBudget {α : Type} (heartbeats : Nat) (action : TacticM α) : TacticM α := do
+  if heartbeats == 0 then
+    throwError "interval maxHeartbeats must be positive"
+  withOptions (fun opts => Elab.async.set (Lean.maxHeartbeats.set opts heartbeats) false) do
+    withCurrHeartbeats action
+
+/-- Cache a closed decision proof only after the kernel has checked it within the budget. -/
+private def verifyClosedCheck (proposition : Q(Prop)) (heartbeats : Nat) : TacticM Lean.Expr :=
+  withCheckBudget heartbeats do
+    let proof ← mkDecideProof proposition
+    let name ← mkAuxLemma [] proposition proof
+    return mkConst name
+
 /-- Verify a real or nonnegative-real inequality with the binary-grid backend. -/
-def close (precision degree depth : Nat) : TacticM Unit := withMainContext do
+def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : TacticM Unit := withMainContext do
   let target : Q(Prop) ← instantiateMVars (← getMainTarget)
   let (lhs, rhs, strict) ← match target with
     | ~q(($a : ℝ) ≤ $b) => pure (a, b, false)
@@ -152,11 +166,18 @@ def close (precision degree depth : Nat) : TacticM Unit := withMainContext do
     q(Eq.trans $expanded $interpreted)
   let checked : Q(Interval.Expr.check $expression $backend $relation $box $depth = true) ←
     try
-      prove q(Interval.Expr.check $expression $backend $relation $box $depth = true)
-        (← `(tactic| decide +kernel))
+      verifyClosedCheck q(Interval.Expr.check $expression $backend $relation $box $depth = true)
+        maxHeartbeats
     catch error =>
-      if error.isInterrupt || error.isRuntime then throw error
-      throwError (← diagnoseFailure expression box config relation depth atoms)
+      if error.isInterrupt then throw error
+      let diagnostic ← try
+        withCheckBudget maxHeartbeats do
+          diagnoseFailure expression box config relation depth atoms
+      catch diagnosticError =>
+        if diagnosticError.isInterrupt then throw diagnosticError
+        pure m!"interval could not certify: bounded diagnostics could not complete."
+      throwError "{diagnostic}\nKernel verification failed within the interval budget of \
+        {maxHeartbeats} heartbeats; a larger `(maxHeartbeats := ...)` may be needed."
   -- All arguments are known; assembling the application avoids re-elaborating the closed check.
   let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
     #[q(Int), expression, backend, q(Backend.binaryGrid_sound $config),
@@ -178,7 +199,9 @@ Prove a real or nonnegative-real inequality from rational bounds in the local co
 
 For example, `interval (precision := 64) (degree := 16) (depth := 8)` chooses a binary
 endpoint grid with 64 fractional bits, degree-16 elementary enclosures, and at most eight
-midpoint subdivisions along any branch. These are also the defaults.
+midpoint subdivisions along any branch. These are also the defaults. Kernel verification and
+failure diagnostics each have a separate budget of 20,000 heartbeats, even when the surrounding
+declaration disables heartbeat limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
 
 Concrete finite sums and matrix expressions are expanded automatically, including pointwise
 bounds such as `∀ i, x i ∈ Set.Icc 0 1`. Norms use the instances selected in the goal.
@@ -195,6 +218,7 @@ elab_rules : tactic
     let mut precision := 64
     let mut degree := 16
     let mut depth := 8
+    let mut maxHeartbeats := 20000
     let mut seen : Array Name := #[]
     for option in option, value in value do
       let key := option.getId.eraseMacroScopes
@@ -205,8 +229,12 @@ elab_rules : tactic
       | `precision => precision := value.getNat
       | `degree => degree := value.getNat
       | `depth => depth := value.getNat
-      | _ => throwErrorAt option "expected precision, degree, or depth"
+      | `maxHeartbeats =>
+        maxHeartbeats := value.getNat
+        if maxHeartbeats == 0 then
+          throwErrorAt value.raw "interval maxHeartbeats must be positive"
+      | _ => throwErrorAt option "expected precision, degree, depth, or maxHeartbeats"
     let saved ← saveState
     discard <| tryFinally'
-      (FloatLib.Numerics.Interval.Tactic.close precision degree depth)
+      (FloatLib.Numerics.Interval.Tactic.close precision degree depth maxHeartbeats)
       (fun result => unless result.isSome do saved.restore)

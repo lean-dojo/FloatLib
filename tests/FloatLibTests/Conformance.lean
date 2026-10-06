@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
+public import FloatLibTests.Conformance.BinaryInterchange.Info
 public import FloatLibTests.Conformance.BinaryInterchange.ExactAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecComplexAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecFloatAutomation

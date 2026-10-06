@@ -168,6 +168,16 @@ meta def finiteOnlyApplicability
     .unavailable
       "the theorem requires `format.encoding = .finite`; NaN-reserving finite encodings have a different boundary"
 
+/-- Applicability of integral rounding when every neighboring integer fits the format range. -/
+meta def integralApplicability (summary : Summary) : TheoremApplicability :=
+  if !summary.isIEEE then
+    ieeeApplicability summary
+  else if Int.ofNat summary.fracWidth ≤ summary.maxNormalExponent then
+    .verifiedForType
+  else
+    .unavailable
+      "the theorem requires `fracWidth ≤ maxNormalExponent`; this descriptor fails that range premise"
+
 /-- Build the complete user-facing inspection profile for a binary descriptor. -/
 meta def profile
     (summary : Summary)
@@ -283,7 +293,7 @@ meta def profile
         applicability := .verifiedForType
         scope :=
           "all binary descriptors; value preservation, finite rounding classification, invalid operations, divide-by-zero, and the overflow/underflow/inexact invariants stated by the listed theorems" }
-    , { topic := "standard classification, comparison, adjacency, remainder, integral, and exponent operations"
+    , { topic := "classification, comparison, adjacency, and descriptor-aware operation specifications"
         declarations :=
           [ ``Model.compare_eq_some_lt_iff_toEReal_lt
           , ``Model.compare_eq_some_eq_iff_toEReal_eq
@@ -306,19 +316,9 @@ meta def profile
           , ``Model.no_rank_between_nextDown
           , ``Model.remainderDyadic_toRat
           , ``Model.remainderWithStatus_of_finite
-          , ``Model.remainderWithStatus_exact
           , ``Model.remainderWithStatus_of_zero_divisor
           , ``Model.roundToIntegralExactWithStatus_of_finite
           , ``Model.roundToIntegralExactWithStatus_inexact_iff
-          , ``Model.roundToIntegralExactWithStatus_overflow_eq_false
-          , ``Model.isFinite_roundToIntegral
-          , ``Model.toReal_roundToIntegral_towardNegativeInfinity
-          , ``Model.toReal_roundToIntegral_towardPositiveInfinity
-          , ``Model.toReal_roundToIntegral_towardZero
-          , ``Model.isFinite_roundToIntegral_towardZero
-          , ``Model.toReal_roundToIntegral_towardZero_of_isFinite
-          , ``Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false
-          , ``Model.toReal_roundToIntegral_nearestEven
           , ``Model.scaleWithStatus_of_finite
           , ``Model.binaryExponentWithStatus_of_finite_nonzero
           , ``Model.binaryExponentInt_of_finite_nonzero
@@ -361,6 +361,26 @@ meta def profile
         applicability := .verifiedForType
         scope :=
           "all binary descriptors under the non-NaN, finite, nonzero, and endpoint hypotheses stated by each theorem; the declaration list is validated when the inspection profile is constructed" }
+    , { topic := "IEEE exact remainder and integral truncation"
+        declarations :=
+          [ ``Model.remainderWithStatus_exact
+          , ``Model.isFinite_roundToIntegral_towardZero
+          , ``Model.toReal_roundToIntegral_towardZero_of_isFinite
+          , ``Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false
+          ]
+        applicability := ieeeApplicability summary
+        scope := "IEEE-style descriptor; finite inputs and a nonzero remainder divisor as stated by each theorem" }
+    , { topic := "IEEE rounding to representable integers"
+        declarations :=
+          [ ``Model.roundToIntegralExactWithStatus_overflow_eq_false
+          , ``Model.isFinite_roundToIntegral
+          , ``Model.toReal_roundToIntegral_towardNegativeInfinity
+          , ``Model.toReal_roundToIntegral_towardPositiveInfinity
+          , ``Model.toReal_roundToIntegral_towardZero
+          , ``Model.toReal_roundToIntegral_nearestEven
+          ]
+        applicability := integralApplicability summary
+        scope := "IEEE-style descriptor with fracWidth ≤ maxNormalExponent; finite inputs as stated by each theorem" }
     , { topic := "IEEE directed rounding and interval enclosures"
         declarations :=
           [ ``Model.toEReal_addDown_le

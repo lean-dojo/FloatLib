@@ -81,6 +81,30 @@ end IEEEOutcome
       Model.sqrtWithRounding rounding (toModel value) := by
   simp [sqrtWithRounding, toModel, Configured.Family.toModel]
 
+/-- Compatibility name for `toModel_addWithRounding`. -/
+@[deprecated toModel_addWithRounding (since := "2026-10-06")]
+alias toModel_add := toModel_addWithRounding
+
+/-- Compatibility name for `toModel_subWithRounding`. -/
+@[deprecated toModel_subWithRounding (since := "2026-10-06")]
+alias toModel_sub := toModel_subWithRounding
+
+/-- Compatibility name for `toModel_mulWithRounding`. -/
+@[deprecated toModel_mulWithRounding (since := "2026-10-06")]
+alias toModel_mul := toModel_mulWithRounding
+
+/-- Compatibility name for `toModel_divWithRounding`. -/
+@[deprecated toModel_divWithRounding (since := "2026-10-06")]
+alias toModel_div := toModel_divWithRounding
+
+/-- Compatibility name for `toModel_fmaWithRounding`. -/
+@[deprecated toModel_fmaWithRounding (since := "2026-10-06")]
+alias toModel_fma := toModel_fmaWithRounding
+
+/-- Compatibility name for `toModel_sqrtWithRounding`. -/
+@[deprecated toModel_sqrtWithRounding (since := "2026-10-06")]
+alias toModel_sqrt := toModel_sqrtWithRounding
+
 /-- Decoding configured addition preserves the model result and exception flags. -/
 @[simp, grind =] theorem IEEEOutcome.toModel_addWithStatus
     (left right : Value) (rounding : Model.IEEERoundingMode) :

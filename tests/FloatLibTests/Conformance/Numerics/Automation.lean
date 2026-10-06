@@ -178,6 +178,27 @@ example
 
 /-! ## Real inequalities by certified interval evaluation -/
 
+open Lean Elab Tactic in
+elab "check_interval_budget_failure" : tactic => do
+  let saved ← saveState
+  let message ← try
+    evalTactic (← `(tactic| interval (depth := 64) (maxHeartbeats := 1)))
+    throwError "unexpected interval success"
+  catch error =>
+    pure (← error.toMessageData.toString)
+  saved.restore
+  unless message.contains "interval budget of 1 heartbeats" do
+    throwError "unexpected interval failure: {message}"
+  evalTactic (← `(tactic| exact le_rfl))
+
+-- The tactic keeps its own finite budget when the surrounding declaration disables limits.
+-- Failure restores the goal so its ordinary proof can still close it.
+set_option maxHeartbeats 0 in
+example (x : ℝ) (_hl : 0 ≤ x) (_hu : x ≤ 1) : x ≤ x := by
+  check_interval_budget_failure
+
+
+
 -- The initial enclosure is too wide; subdivision must preserve the original variable bounds.
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
   fail_if_success interval (depth := 0)

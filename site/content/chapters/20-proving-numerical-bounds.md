@@ -100,7 +100,13 @@ including the endpoints. Tangent divides sine bounds by cosine bounds, so its co
 enclosure must exclude zero. Subdivision or a higher approximation degree can separate
 a coarse cosine enclosure from zero, but cannot certify a bound across an actual pole.
 Likewise, a hypothesis $x\in[-1,1]$ is insufficient for this evaluator to enclose $1/x$.
-A failed check reports the expression and enclosure that blocked it. For example, a
+Kernel verification and failure diagnostics each have a separate budget of 20,000
+heartbeats. This limit remains active when the surrounding declaration sets
+`maxHeartbeats` to zero. A larger finite budget can be requested with
+`interval (maxHeartbeats := 40000)`. Budget exhaustion reports an inconclusive
+check and restores the original goal.
+
+When diagnostics finish, a failed check reports the expression and enclosure that blocked it. For example, a
 zero-containing denominator range explains why division failed; it does not claim that
 the denominator actually equals zero. An insufficient upper bound is reported separately,
 with the input box and subdivision depth. Closed rational expressions are simplified

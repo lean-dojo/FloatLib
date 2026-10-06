@@ -26,6 +26,15 @@ open FloatLib
 open FloatLib.Floats
 open FloatLib.Floats.Formats.BinaryInterchange
 
+-- E2M3 cannot represent the nearest integer 8: its finite boundary is 7.5.
+example : (Model.roundToIntegralExactWithStatus
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearestEven).value.toNatBits = 31 := by
+  decide +kernel
+
+example : (Model.roundToIntegralExactWithStatus
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearestEven).status.overflow = true := by
+  decide +kernel
+
 private abbrev Narrow := ExecFloat.Binary 2 1 (bias := 2)
 private abbrev NarrowFinite := ExecFloat.Binary 2 1 (encoding := .finite) (bias := 3)
 

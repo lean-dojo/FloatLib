@@ -419,6 +419,6 @@ The [Arb adapter](https://github.com/lean-dojo/FloatLib/blob/main/tests/FloatLib
 
 ## Extending the library
 
-For another layout within an existing family, the [custom-format examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/CustomFormats.lean) configure 24-bit and 71-bit binary types without defining a new format family.
+For another layout within an existing family, the [custom-format examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/CustomFormats.lean) configure a 16-bit binary telemetry type with a custom bias and NaN encoding without defining a new format family.
 
 A new backend for an existing format must compute the same reference operation. The [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) gives the registration procedure and its proof obligations; the [one-word kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/Word/Small) show how an implementation discharges them. A new format family also needs a meaning for its stored values. The [numerical interfaces](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Core) define those contracts, and the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) supplies a compact example, from encoding through arithmetic and its proofs.
