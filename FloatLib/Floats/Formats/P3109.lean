@@ -8,11 +8,14 @@ module -- shake: keep-all
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Instances
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
+public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Square
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Selection
 public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Proof
+public import FloatLib.Floats.Formats.P3109.Block.Proof
+public import FloatLib.Floats.Formats.P3109.Block.Root.Proof
 public import FloatLib.Floats.Formats.P3109.Projection.Correctness
 public import FloatLib.Floats.Formats.P3109.Projection.Direction
 public import FloatLib.Floats.Formats.P3109.Projection.Selection
@@ -41,6 +44,12 @@ Square root uses exact integer comparisons with a proof against `Real.sqrt`. The
 The mixed-operation interface covers fused addition, scaled arithmetic, and external
 binary16, binary32, and BFloat16 destinations. Extrema, classification, format queries, and
 neighbor operations follow the same descriptor's datum set.
+
+`Block` stores a nonempty sequence with an independently typed scale. Its conversion,
+maximum-finite scale selection, exact reductions, and mixed block dots follow chapter 5.
+Generic elementwise closed arithmetic and explicit lane rounding words share one projection
+interface. Block square root, reciprocal square root, and hypotenuse normalize the exact
+radicand before one destination rounding, including zero, infinite, and negative result scales.
 
 The implementation follows Interim Report v4.0.3. This is a working-group report, not an approved
 IEEE standard. Conversion indicators are defined by FloatLib.

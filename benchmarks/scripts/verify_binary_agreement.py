@@ -37,6 +37,8 @@ def read_requested_matrix(path: Path) -> dict[str, set[tuple[str, str]]]:
                 raise ValueError(f"invalid requested cell in {path}: {key}")
             label = LANE_ADAPTERS[row["lane"]]
             if label is not None:
+                if label == "Flocq" and key[0] not in FLOCQ_WIDTHS:
+                    raise ValueError(f"unsupported requested Flocq width in {path}: {key[0]}")
                 if key in requested[label]:
                     raise ValueError(f"duplicate requested {label} cell in {path}: {key}")
                 requested[label].add(key)
@@ -152,7 +154,10 @@ def verify_trial(
     check_flocq = require_flocq or bool(adapters["Flocq"])
     if check_flocq:
         flocq_keys = set(adapters["Flocq"])
-        expected_flocq = {key for key in actual_keys if key[0] in FLOCQ_WIDTHS}
+        expected_flocq = (
+            requested["Flocq"] if requested is not None
+            else {key for key in actual_keys if key[0] in FLOCQ_WIDTHS}
+        )
         if flocq_keys != expected_flocq:
             raise ValueError(
                 f"Flocq agreement grid differs in {trial.name}: "
@@ -202,7 +207,9 @@ def verify_trial(
             if key in cpython:
                 values.append(cpython[key])
                 labels.append("CPython")
-        if check_flocq and key[0] in FLOCQ_WIDTHS:
+        if check_flocq and key[0] in FLOCQ_WIDTHS and (
+            requested is None or key in requested["Flocq"]
+        ):
             values.append(adapters["Flocq"][key])
             labels.append("Flocq")
         if len(set(values)) != 1:
@@ -286,9 +293,10 @@ def verify(
         "iteration counts. It checks one retained workload, not a "
         f"floating-point conformance claim. {native_note}"
         "and CPython joins binary64 operations it "
-        "provides. When present or required, Flocq covers the supported FloatLib/MPFR "
-        "grid and its agreement prefix length, dependency sink and fixture-trace "
-        "digest must match. Widths 4, 5 and 7 are outside BinarySingleNaN's prec < emax "
+        "provides. Flocq follows its requested matrix when one is supplied, otherwise "
+        "the supported FloatLib/MPFR grid. Its prefix length is checked for every requested row; "
+        "its dependency sink and fixture-trace digest must match wherever a paired "
+        "FloatLib/MPFR cell is present. Widths 4, 5 and 7 are outside BinarySingleNaN's prec < emax "
         "domain and have no Flocq rows. "
         f"SoftFloat required: {require_softfloat}; "
         f"CPython enabled: {require_python}; "

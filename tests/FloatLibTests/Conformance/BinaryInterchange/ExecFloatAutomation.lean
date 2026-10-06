@@ -155,7 +155,7 @@ example : AtValue customFormat (.infinity true) :=
 
 example :
     AtValue customFormat
-      (.exceptional (.nan (some 16))) :=
+      (.exceptional (.nan (some 0))) :=
   numerics_refine (canonicalNaN customFormat)
 
 example :

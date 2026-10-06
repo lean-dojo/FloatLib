@@ -224,9 +224,46 @@ def scaleWithStatus {fmt : FloatFormat} (value : Model fmt) (n : Int)
     (mode : IEEERoundingMode := .nearestEven) : Model fmt :=
   (scaleWithStatus value n mode).value
 
+/-- Integer result and default exception indicators for IEEE `logB`. -/
+structure IntegerExponentOutcome where
+  /-- Exact leading exponent, or a format-dependent exceptional sentinel. -/
+  value : Int
+  /-- Exceptional integer results signal invalid; finite nonzero inputs raise no flags. -/
+  status : IEEEStatus := {}
+  deriving DecidableEq, Repr
+
+/-- The IEEE integer `logB` exceptional-result bound `emax + p - 1`. -/
+def logBBound (fmt : FloatFormat) : Int :=
+  fmt.maxNormalExponent + fmt.fracWidth
+
+/-- Exceptional integer outside the finite exponent range and the IEEE `logB` bound. -/
+def binaryExponentSentinel (fmt : FloatFormat) : Int :=
+  2 * max (max |fmt.minSubnormalExponent| |fmt.maxNormalExponent|) |logBBound fmt| + 1
+
 /--
-Return the leading binary exponent and exception flags (IEEE 754 `logB`).
-The exponent is rounded into the same format using nearest-even.
+Exact IEEE 754-2019 §5.3.3 `logB` with an unbounded integer result format.
+
+For nonzero finite `±m * 2^e`, return `floor(log₂ m) + e` with clear status. Zero returns
+the negative exceptional sentinel; infinity and either kind of NaN return the positive one.
+All exceptional integer results signal `invalid`, as required for an integer `logBFormat`.
+No rounding of the exponent occurs, including for low-precision source descriptors.
+-/
+def binaryExponentInt {fmt : FloatFormat} (value : Model fmt) : IntegerExponentOutcome :=
+  match exactValue value with
+  | .finite exact =>
+      if exact.significand == 0 then
+        { value := -binaryExponentSentinel fmt, status := { invalid := true } }
+      else
+        { value := Int.ofNat exact.significand.log2 + exact.exponent }
+  | .infinity _ | .nan _ _ _ =>
+      { value := binaryExponentSentinel fmt, status := { invalid := true } }
+
+/--
+Return the leading binary exponent rounded into the same format, with exception flags.
+
+This convenience operation uses nearest-even. It agrees with floating-result IEEE `logB`
+only when the source format can represent the exponent exactly; `binaryExponentInt` provides
+the exact integer-result operation for every descriptor.
 
 For a nonzero finite dyadic `±m * 2^e` with `m > 0`, the exact result is `floor(log₂ m) + e`.
 Either infinity returns `nativeOverflow fmt false`, the format's positive overflow value. NaNs are
@@ -259,7 +296,7 @@ def binaryExponentWithStatus {fmt : FloatFormat} (value : Model fmt) : IEEEOutco
       { value := quietNaN value
         status := { invalid := signaling } }
 
-/-- Leading binary exponent, rounded into the same format (IEEE 754 `logB`). -/
+/-- Leading binary exponent rounded into the source format; `binaryExponentInt` is exact. -/
 @[inline] def binaryExponent {fmt : FloatFormat} (value : Model fmt) : Model fmt :=
   (binaryExponentWithStatus value).value
 

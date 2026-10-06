@@ -115,6 +115,10 @@ def minimumFinite : NumericalValue Rat → NumericalValue Rat → NumericalValue
 def maximumFinite : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat :=
   finiteVariant maximumNumber
 
+/-- Report §4.11.4 clamp, propagating NaN and rejecting reversed bounds. -/
+def clamp (value lower upper : NumericalValue Rat) : NumericalValue Rat :=
+  if greater lower upper then nan else minimum (maximum value lower) upper
+
 end FloatLib.Floats.Formats.P3109.Arithmetic
 
 namespace FloatLib.Floats.ExecFloat.P3109
@@ -122,6 +126,18 @@ namespace FloatLib.Floats.ExecFloat.P3109
 open Formats.P3109
 
 variable {format : Format}
+
+/-- Clamp independently typed P3109 operands before one destination projection. -/
+@[inline] def clampTo {source lowerFormat upperFormat : Format} (destination : Format)
+    (policy : ProjectionPolicy) (value : ExecFloat.P3109 source)
+    (lower : ExecFloat.P3109 lowerFormat) (upper : ExecFloat.P3109 upperFormat) :
+    ExecFloat.P3109 destination :=
+  ternaryTo destination policy Arithmetic.clamp value lower upper
+
+/-- Same-format clamp with exact bound checks and one final projection. -/
+@[inline] def clamp (value lower upper : ExecFloat.P3109 format)
+    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
+  clampTo format policy value lower upper
 
 /-- Strict comparison of decoded operands, with NaN unordered. -/
 @[inline] def less (left right : ExecFloat.P3109 format) : Bool :=

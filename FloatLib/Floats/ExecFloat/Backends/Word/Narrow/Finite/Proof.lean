@@ -149,6 +149,17 @@ theorem finiteScale_le_of_components
   · simpa only [hexponent] using expField_lt x
   · simpa only [hexponent] using hfinite
 
+/-- Bounds shared by word-kernel proofs after naming a finite operand's decoded components. -/
+theorem finiteComponents_bounds
+    (x : Value) {exponent fraction : UInt32} {mantissa scale : UInt64}
+    (hexponent : exponent = expField (toUInt32 x))
+    (hfraction : fraction = fracField (toUInt32 x))
+    (hmantissa : mantissa = finiteMantissa exponent fraction)
+    (hscale : scale = finiteScale exponent) (hfinite : exponent ≠ 0xff) :
+    mantissa.toNat < 2 ^ 24 ∧ scale.toNat ≤ 253 :=
+  ⟨finiteMantissa_lt_of_components x hexponent hfraction hmantissa,
+    finiteScale_le_of_components x hexponent hscale hfinite⟩
+
 /-- Native finite components decode to the same exact dyadic as the generic binary32 decoder. -/
 theorem toDyadic_eq_finiteComponents (x : Value) :
     toDyadic? (toUInt32 x) =

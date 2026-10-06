@@ -11,6 +11,8 @@ import FloatLib.Floats.Formats.IEEE754.Native
 import FloatLibTests.Accounting
 import FloatLibTests.Conformance.BinaryInterchange.NativeExecution
 import FloatLibTests.Conformance.Formats.LowBit
+import FloatLibTests.Conformance.Formats.MXStandard
+import FloatLibTests.Conformance.P3109.Block
 import FloatLibTests.Conformance.Posit.Quire
 import FloatLibTests.Regression.ArbParser
 import FloatLibTests.Regression.BinaryInterchange.ExecFloatInstances
@@ -57,7 +59,9 @@ private def core : IO UInt32 :=
     { title := "rounding policies"
       body := PolicyRounding.report.get
       failures := PolicyRounding.totalFailures.get },
-    Conformance.Formats.LowBit.report.get
+    Conformance.Formats.LowBit.report.get,
+    Conformance.Formats.MXStandard.report.get,
+    Conformance.P3109.Block.report.get
   ]
 
 private def kernels : IO UInt32 :=

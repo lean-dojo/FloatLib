@@ -351,6 +351,10 @@ fraction width. A zero field has payload zero.
 @[inline] def payloadOfNaNField (signaling : Bool) (field : Nat) : Nat :=
   if signaling then field else field - 2 ^ Nat.log2 field
 
+/-- Diagnostic payload of a binary NaN, excluding its quiet bit. -/
+@[inline] def nanPayload {fmt : FloatFormat} (x : Model fmt) : Nat :=
+  payloadOfNaNField (isSNaN x) (fracField x)
+
 /--
 A quiet NaN of `fmt` carrying a source NaN's sign and payload, following IEEE 754-2019 §6.2.3.
 

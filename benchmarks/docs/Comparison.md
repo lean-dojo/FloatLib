@@ -174,6 +174,9 @@ FORMAT_COMPARE_FAMILY=binary-interchange FORMAT_COMPARE_WIDTH=96 \
 This emits the six operation rows for the chosen width. The comparison script also accepts
 these widths as standalone binary rows. It checks cross-adapter agreement for requested
 FloatLib/MPFR pairs and rejects missing requested rows.
+Explicit lane selections can also run Flocq alone or with an unpaired FloatLib or MPFR lane.
+The verifier checks every requested row and its agreement-prefix length; it compares Flocq's
+result digests where the same cell has both FloatLib and MPFR partners.
 
 MPFR and Flocq use the significand precision of the binary format at the same storage width.
 That gives us a binary comparison point. A posit's precision changes with its magnitude, so

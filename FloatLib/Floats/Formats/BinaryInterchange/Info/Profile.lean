@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat.Info
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Runtime
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
@@ -314,6 +315,11 @@ meta def profile
           , ``Model.toReal_roundToIntegral_nearestEven
           , ``Model.scaleWithStatus_of_finite
           , ``Model.binaryExponentWithStatus_of_finite_nonzero
+          , ``Model.binaryExponentInt_of_finite_nonzero
+          , ``Model.binaryExponentInt_bounds
+          , ``Model.binaryExponentInt_of_zero
+          , ``Model.binaryExponentInt_of_infinity
+          , ``Model.binaryExponentInt_of_nan
           ]
         definitions :=
           [ ``Model.signBit
@@ -344,6 +350,7 @@ meta def profile
           , ``Model.roundToIntegralExactWithStatus
           , ``Model.scaleWithStatus
           , ``Model.binaryExponentWithStatus
+          , ``Model.binaryExponentInt
           ]
         applicability := .verifiedForType
         scope :=
@@ -438,6 +445,26 @@ meta def profile
           kinds := [.absoluteError]
           statement :=
             "Sequential dot products and matrix entries are bounded by the sum of their checked per-site rounding residual budgets." } }
+    , { topic := "requested-precision decimal and hexadecimal output"
+        declarations :=
+          [ ``Model.significantDecimal_nearestEven_error
+          , ``Model.significantHex_nearestEven_error
+          , ``Model.significantDecimal_towardPositiveInfinity_le
+          , ``Model.significantDecimal_towardNegativeInfinity_le
+          , ``Model.significantDecimal_towardZero_abs_le
+          , ``Model.significantHex_towardPositiveInfinity_le
+          , ``Model.significantHex_towardNegativeInfinity_le
+          , ``Model.significantHex_towardZero_abs_le
+          ]
+        applicability := .verifiedForType
+        scope :=
+          "every exact finite input and positive requested significant-digit count; " ++
+          "directed bounds concern the emitted value, not a subsequent binary input rounding"
+        numericalGuarantee? := some {
+          kinds := [.absoluteError, .rounding]
+          statement :=
+            "Nearest-even output stays within half an external grid unit. Directed output " ++
+            "stays on its requested side, and toward-zero output cannot increase magnitude." } }
     , { topic := "IEEE operation error bounds and Sterbenz exactness"
         declarations :=
           [ ``Model.abs_toReal_add_sub_le
@@ -495,7 +522,8 @@ meta def profile
   nonclaims :=
     [ "equivalence between compiled Float32/Float arithmetic and this type; only the explicit conversion boundary is checked"
     , "every clause of IEEE 754 follows from the six backend-refinement equations"
-    , "bitwise format/parse round trips for NaN payloads; the formatter intentionally emits a canonical `nan` spelling"
+    , "bitwise NaN round trips through compact diagnostic `format`; use explicit " ++
+        "formatDecimal or formatHex output to retain NaN metadata"
     , "the built-in deterministic transcendental kernels currently carry a whole-algorithm approximation or correctly-rounded certificate"
     , "external MPFR, Arb, compiler lowering, or FFI behavior is inside this certificate"
     ]

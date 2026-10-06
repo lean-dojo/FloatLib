@@ -28,9 +28,10 @@ universe u v w
 /-- Why an encoded word has no ordinary numerical value. -/
 inductive ExceptionalValue where
   /--
-  A NaN encoding, optionally carrying its representation-defined payload bits, together with its
-  sign bit and whether it is a signaling NaN. Encodings without these distinctions use the
-  defaults: no payload, positive, and quiet.
+  A NaN encoding, optionally carrying its diagnostic payload, together with its sign bit and
+  whether it is a signaling NaN. The payload excludes encoding markers such as an IEEE quiet bit;
+  source decoders remove those markers before constructing this representation-independent value.
+  Encodings without these distinctions use the defaults: no payload, positive, and quiet.
   -/
   | nan (payload : Option Nat := none) (negative : Bool := false) (signaling : Bool := false)
   /-- The single not-a-real value used by posit systems. -/

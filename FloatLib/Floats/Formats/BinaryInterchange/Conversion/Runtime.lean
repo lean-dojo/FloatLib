@@ -179,8 +179,9 @@ Apply the exceptional-value policy and pack a destination NaN.
 
 A signaling NaN raises `invalid` under either NaN-producing policy (IEEE 754-2019 §7.2). Under
 `propagateNaN` a source NaN becomes `Model.propagatedNaN format negative payload`, with the payload
-read by `Model.payloadOfNaNField`, exactly the NaN that `Model.castWithStatus` delivers across
-unequal descriptors. It stays in the NaN class, so `mappedSpecial` is clear. NaR, reserved, and
+supplied by the source decoder without encoding markers. Binary decoders use `Model.nanPayload`,
+so this is exactly the NaN that `Model.castWithStatus` delivers across unequal descriptors.
+It stays in the NaN class, so `mappedSpecial` is clear. NaR, reserved, and
 undefined observations, and every observation under `canonicalNaN`, become the canonical NaN with
 `mappedSpecial`. A destination without a NaN encoding rejects the conversion.
 -/
@@ -197,8 +198,7 @@ undefined observations, and every observation under `canonicalNaN`, become the c
           .failure (.exceptional .source exceptional)
       | some _, .nan payload negative signaling =>
           .success
-            (pack (Model.propagatedNaN format negative
-              (Model.payloadOfNaNField signaling (payload.getD 0))))
+            (pack (Model.propagatedNaN format negative (payload.getD 0)))
             { invalid := signaling }
       | some value, _ =>
           .success (pack value) { mappedSpecial := true }

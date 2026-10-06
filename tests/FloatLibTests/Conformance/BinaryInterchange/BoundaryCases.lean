@@ -29,6 +29,26 @@ open FloatLib.Floats.Formats.BinaryInterchange
 private abbrev Narrow := ExecFloat.Binary 2 1 (bias := 2)
 private abbrev NarrowFinite := ExecFloat.Binary 2 1 (encoding := .finite) (bias := 3)
 
+-- The E5M2 subnormal code 2 is 2^(-15). Its integer exponent must remain -15,
+-- although that exponent cannot be represented exactly by an E5M2 floating result.
+example : Model.binaryExponentInt (Model.ofNatBits (fmt := .e5m2) 2) =
+    ⟨-15, {}⟩ := by decide +kernel
+
+example : (Model.binaryExponentWithStatus (Model.ofNatBits (fmt := .e5m2) 2)).status.inexact =
+    true := by decide +kernel
+
+example : (Model.binaryExponentInt (Model.posZero .binary32)).status.invalid = true := by
+  decide +kernel
+
+example : (Model.binaryExponentInt (Model.posZero .binary32)).value <
+    -2 * |Model.logBBound .binary32| := by decide +kernel
+
+example : (Model.binaryExponentInt (Model.posInf .binary32)).value >
+    2 * |Model.logBBound .binary32| := by decide +kernel
+
+example : (Model.binaryExponentInt (Model.canonicalNaN .binary32)).status.invalid = true := by
+  decide +kernel
+
 -- The ceiling is two, outside these descriptors' finite range.
 example : (ExecFloat.Binary.roundToIntegralExactWithStatus (1.5 : Narrow)
     .towardPositiveInfinity).2.overflow = true := by decide +kernel

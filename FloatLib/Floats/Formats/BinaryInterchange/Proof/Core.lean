@@ -48,7 +48,8 @@ namespace ExactValue
 noncomputable def toNumericalValue : ExactValue → NumericalValue ℝ
   | .finite value => .finite value.toReal
   | .infinity sign => .infinity sign
-  | .nan sign signaling payload => .exceptional (.nan (some payload) sign signaling)
+  | .nan sign signaling field =>
+      .exceptional (.nan (some (payloadOfNaNField signaling field)) sign signaling)
 
 end ExactValue
 
@@ -81,7 +82,7 @@ theorem toNumericalValue_eq_exactValue_toNumericalValue
                   exists_toDyadic?_of_isFinite hfinite
                 rw [hdecode] at hvalue
                 contradiction
-          simp [toNumericalValue, exactValue, ExactValue.toNumericalValue,
+          simp [toNumericalValue, exactValue, ExactValue.toNumericalValue, nanPayload,
             hdecode, hnan, hinf]
 
 /--

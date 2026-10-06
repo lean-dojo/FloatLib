@@ -137,14 +137,14 @@ theorem run_default_negZero_value? :
       .failure (.exceptional .source exceptional) :=
   rfl
 
-/-- A configured NaN decodes to the NaN observation carrying its fraction field, sign, and class. -/
+/-- A configured NaN decodes to its diagnostic payload without the quiet bit, sign, and class. -/
 theorem decode_of_isNaN {source : FloatFormat}
     {sourcePlan : Configured.StoragePlan source} {sourceCode : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec sourcePlan (Model source) sourceCode]
     (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan))
     (hnan : Model.isNaN (toModel value) = true) :
     ExecFloat.Binary.decode value =
-      .exceptional (.nan (some (Model.fracField (toModel value)))
+      .exceptional (.nan (some (Model.nanPayload (toModel value)))
         (Model.signBit (toModel value)) (Model.isSNaN (toModel value))) := by
   have hdyadic : Model.toDyadic? (toModel value) = none := by
     cases h : Model.toDyadic? (toModel value) with
@@ -195,7 +195,7 @@ theorem run_default_decode_of_isNaN_of_encoding_finite {source : FloatFormat}
     run (format := format) (plan := plan) (code := code) Context.default
         (ExecFloat.Binary.decode value) =
       .failure (.exceptional .source
-        (.nan (some (Model.fracField (toModel value)))
+        (.nan (some (Model.nanPayload (toModel value)))
           (Model.signBit (toModel value)) (Model.isSNaN (toModel value)))) ∧
       (Model.castWithStatus source format (toModel value) mode).status.invalid = true := by
   rw [decode_of_isNaN value hnan]

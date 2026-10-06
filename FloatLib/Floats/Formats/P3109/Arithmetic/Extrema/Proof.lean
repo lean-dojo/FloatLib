@@ -16,6 +16,7 @@ Finite extrema agree with the rational field's minimum and maximum. Comparisons 
 rational order, while NaN remains unordered. Magnitude ties and the preference for finite values
 are stated separately from rounding. The executable extrema use the same `binaryTo` refinement
 as arithmetic, so these identities describe the expression at their single projection boundary.
+Clamping rejects reversed bounds and agrees with the rational interval clamp for ordered bounds.
 -/
 
 @[expose] public section
@@ -111,4 +112,30 @@ theorem maximumMagnitude_neg_self (value : Rat) (hvalue : 0 ≤ value) :
   simp only [maximumMagnitude, habs, less_self, Bool.false_eq_true, ite_false]
   rw [maximum_finite, max_eq_right (by linarith)]
 
+/-- Reversed clamp bounds have the report's indeterminate NaN result. -/
+theorem clamp_of_reversed (value lower upper : Numerics.NumericalValue Rat)
+    (hbounds : greater lower upper = true) : clamp value lower upper = nan := by
+  simp [clamp, hbounds]
+
+/-- Clamping a finite value between ordered finite bounds is the rational interval clamp. -/
+theorem clamp_finite (value lower upper : Rat) (hbounds : lower ≤ upper) :
+    clamp (.finite value) (.finite lower) (.finite upper) =
+      .finite (min (max value lower) upper) := by
+  simp [clamp, greater, less, not_lt.mpr hbounds]
+
 end FloatLib.Floats.Formats.P3109.Arithmetic
+
+namespace FloatLib.Floats.ExecFloat.P3109
+
+open Formats.P3109
+
+/-- Mixed clamp encoding refines the exact closed clamp followed by report projection. -/
+theorem decode_clampTo {source lowerFormat upperFormat : Format} (destination : Format)
+    (policy : ProjectionPolicy) (value : ExecFloat.P3109 source)
+    (lower : ExecFloat.P3109 lowerFormat) (upper : ExecFloat.P3109 upperFormat) :
+    Format.SameDatum (decode (clampTo destination policy value lower upper))
+      (destination.projectRatValue policy
+        (Arithmetic.clamp value.toClosedRat lower.toClosedRat upper.toClosedRat)) :=
+  decode_projectRat _ _
+
+end FloatLib.Floats.ExecFloat.P3109

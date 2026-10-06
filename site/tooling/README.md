@@ -3,7 +3,7 @@
 We build the website from the guide's Markdown chapters and declarations exported from Lean.
 The build checks examples, links, and figures as part of producing the reader.
 Run these commands from the repository root after building the library.
-The full build needs Python 3.12, Matplotlib 3.11.0 (the version used for the
+The full build needs Python 3.12 or newer, Matplotlib 3.11.0 (the version used for the
 checked figures), Node.js, Corepack, and rsync. Install Matplotlib in your Python environment:
 
 ```bash
@@ -98,6 +98,8 @@ The full build accepts these flags:
 `FLOATLIB_SITE_REQUIRE_CLEAN=1` is equivalent to `--require-clean`.
 `FLOATLIB_SITE_STRICT=0` permits chapter warnings during development; errors still fail.
 The output-directory overrides are listed above.
+Chapter compilation uses one compiler at a time. Set `FLOATLIB_SITE_JOBS` to select another
+worker count when the machine has an appropriate resource budget.
 
 For a prose check that neither invokes Lake nor verifies benchmark results, run the checker
 directly against the existing atlas:

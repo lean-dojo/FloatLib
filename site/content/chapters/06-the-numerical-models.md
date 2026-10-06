@@ -57,6 +57,8 @@ Keep the significand and exponent of the small value in mind; we'll use them to 
 
 The exact reading does not stop at finite values. [[FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue]] is an inductive type with three constructors, `finite`, `infinity`, and `nan`, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.exactValue]] decodes any word into it without losing anything: a finite value keeps its dyadic, an infinity keeps its sign, and a NaN keeps its sign, whether it is signaling, and its whole fraction field. Bit-for-bit comparison against an external oracle needs these exceptional-value fields as well as the finite value. Mapping to a real number would discard them.
 
+The common `NumericalValue` view separates a NaN's diagnostic payload from its encoding markers. Binary decoders remove the quiet bit before supplying that payload, while retaining the sign and signaling class as separate fields. Generic conversion can then preserve the payload without knowing the source format's bit layout. `ExactValue.nan` remains the view for examining the complete stored fraction field.
+
 ```lean
 #eval Model.exactValue (Model.negZero FloatFormat.binary32)
 -- FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue.finite { negative := true, significand := 0, exponent := 0 }

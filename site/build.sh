@@ -38,6 +38,7 @@
 #                            disagrees with what Lean printed is an error in every mode). Set it
 #                            to 0 only while chapters and the node list are being reconciled; the
 #                            warnings are always listed in site/data/reader-warnings.md.
+#   FLOATLIB_SITE_JOBS      simultaneous chapter compilers (default: 1)
 #   FLOATLIB_SITE_REQUIRE_CLEAN  set to 1 for the same effect as --require-clean
 #   BUILD_DIR, OUT_DIR       forwarded to site/reader/build.sh (local node_modules mirror and
 #                            the finished site; defaults: ${FLOATLIB_BUILD_DIR}-site-reader
@@ -56,7 +57,7 @@ scratch="${FLOATLIB_SITE_SCRATCH:-${FLOATLIB_BUILD_DIR}-site-check}"
 out_dir="${OUT_DIR:-${FLOATLIB_BUILD_DIR}-site}"
 
 export_args=()
-check_args=()
+check_args=(--jobs "${FLOATLIB_SITE_JOBS:-1}")
 run_check=1
 require_clean="${FLOATLIB_SITE_REQUIRE_CLEAN:-0}"
 allow_missing_results=0

@@ -518,10 +518,10 @@ theorem addFiniteImpl_eq (x y : Value) :
   have hyNatNonzero : yMantissa.toNat ≠ 0 :=
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxExceptional, hyExceptional, hxZero, hyZero, or_self, ite_false]
-  have hxMantissaLt := finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
-  have hyMantissaLt := finiteMantissa_lt_of_components y hyExponent hyFraction hyMantissa
-  have hxScaleLe := finiteScale_le_of_components x hxExponent hxScale hxExceptional
-  have hyScaleLe := finiteScale_le_of_components y hyExponent hyScale hyExceptional
+  obtain ⟨hxMantissaLt, hxScaleLe⟩ :=
+    finiteComponents_bounds x hxExponent hxFraction hxMantissa hxScale hxExceptional
+  obtain ⟨hyMantissaLt, hyScaleLe⟩ :=
+    finiteComponents_bounds y hyExponent hyFraction hyMantissa hyScale hyExceptional
   by_cases hscale : xScale ≤ yScale
   · have hscaleNat := UInt64.le_iff_toNat_le.mp hscale
     have hshiftNat := UInt64.toNat_sub_of_le yScale xScale hscale

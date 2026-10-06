@@ -75,6 +75,11 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
       Model.scaleWithStatus (ExecFloat.Binary.toModel value) n rounding := by
   simp [scaleWithStatus]
 
+/-- The integer exponent query preserves the exact descriptor-model result and status. -/
+@[simp, grind =] theorem binaryExponentInt_eq (value : Value) :
+    binaryExponentInt value = Model.binaryExponentInt (toModel value) :=
+  rfl
+
 /-- Decoding configured `binaryExponent` gives the descriptor-model leading binary exponent. -/
 @[simp, grind =] theorem toModel_binaryExponent (value : Value) :
     toModel (binaryExponent value) = Model.binaryExponent (toModel value) := by

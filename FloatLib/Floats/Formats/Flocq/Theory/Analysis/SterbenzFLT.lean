@@ -46,26 +46,9 @@ theorem generic_format_FLX_to_FLT_of_normal (emin prec : ℤ) (hprec : 0 < prec)
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
   obtain ⟨_, f, hxf, hmant⟩ := (generic_format_FLX_iff (β := β) prec hprec x).mp hxFLX
   refine (generic_format_FLT_iff (β := β) emin prec hprec x).mpr ⟨hprec, f, hxf, hmant, ?_⟩
-  have hmabs : abs (f.mantissa : ℝ) = (f.mantissa.natAbs : ℝ) := by
-    cases f.mantissa with
-    | ofNat n => simp
-    | negSucc n =>
-        rw [Int.cast_negSucc, abs_of_neg]
-        · norm_num
-        · exact neg_neg_of_pos (by positivity : (0 : ℝ) < (n + 1 : ℕ))
-  have hmantR : abs (f.mantissa : ℝ) < bpow β prec := by
-    rw [hmabs, bpow_eq_natPow (β := β) prec hprec.le]
-    exact_mod_cast hmant
   have habsx : abs x < bpow β (f.exponent + prec) := by
-    rw [hxf, toReal, abs_mul, abs_of_pos (bpow.pos β f.exponent)]
-    calc
-      abs (f.mantissa : ℝ) * bpow β f.exponent <
-          bpow β prec * bpow β f.exponent :=
-        mul_lt_mul_of_pos_right hmantR (bpow.pos β f.exponent)
-      _ = bpow β (f.exponent + prec) := by
-        rw [← bpow.add_exp]
-        congr 1
-        linarith
+    rw [hxf]
+    exact f.abs_toReal_lt_bpow prec hprec.le hmant
   have hlt : bpow β (emin + prec - 1) < bpow β (f.exponent + prec) :=
     lt_of_le_of_lt hnorm habsx
   have hexp : emin + prec - 1 < f.exponent + prec :=

@@ -117,6 +117,13 @@ theorem checked32_int8_nan_metadata :
         .failure (.exceptional .source (.nan (some 5) true true)) := by
   decide +kernel
 
+/-- Checked integer failures retain a quiet NaN's diagnostic payload without its quiet bit. -/
+theorem checked32_int8_quiet_nan_metadata :
+    ExecDType.floatToInt (width := 8)
+      (Model.ofNatBits 0xffc00005 : Model FloatFormat.binary32) .towardZero =
+        .failure (.exceptional .source (.nan (some 5) true false)) := by
+  decide +kernel
+
 /-- Import commutes with both public binary64 operations on arbitrary finite native operands. -/
 theorem native64_add_sub_commute (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :

@@ -58,6 +58,21 @@ theorem bpow_eq_natPow (p : ℤ) (hp : 0 ≤ p) :
   obtain ⟨n, rfl⟩ := Int.eq_ofNat_of_zero_le hp
   simp [bpow, Numerics.Radix.toReal]
 
+/-- A mantissa with fewer than `prec` radix digits bounds the represented value's magnitude. -/
+theorem FloatRep.abs_toReal_lt_bpow (f : FloatRep β) (prec : ℤ) (hprec : 0 ≤ prec)
+    (hmant : f.mantissa.natAbs < β.base ^ prec.toNat) :
+    abs (toReal f) < bpow β (f.exponent + prec) := by
+  have hmantR : abs (f.mantissa : ℝ) < bpow β prec := by
+    rw [bpow_eq_natPow prec hprec]
+    simpa only [Nat.cast_natAbs, Int.cast_abs] using
+      (show (f.mantissa.natAbs : ℝ) < (β.base ^ prec.toNat : ℕ) by exact_mod_cast hmant)
+  rw [toReal, abs_mul, abs_of_pos (bpow.pos β f.exponent)]
+  calc
+    abs (f.mantissa : ℝ) * bpow β f.exponent <
+        bpow β prec * bpow β f.exponent :=
+      mul_lt_mul_of_pos_right hmantR (bpow.pos β f.exponent)
+    _ = bpow β (f.exponent + prec) := by rw [← bpow.add_exp, add_comm]
+
 /-- The generic `flxExp` format satisfies the explicit FLX mantissa bound. -/
 theorem flxFormat_of_generic (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
     (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x) :
@@ -101,12 +116,7 @@ theorem flxFormat_of_generic (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
       have hmcast : (m.natAbs : ℝ) < bpow β prec := by
         rw [hsint] at hslt
         have hmabs : (m.natAbs : ℝ) = abs (m : ℝ) := by
-          cases m with
-          | ofNat n => simp
-          | negSucc n =>
-              rw [Int.cast_negSucc, abs_of_neg]
-              · norm_num
-              · exact neg_neg_of_pos (by positivity : (0 : ℝ) < (n + 1 : ℕ))
+          simp only [Nat.cast_natAbs, Int.cast_abs]
         rwa [hmabs]
       have hpnonneg : 0 ≤ prec := hprec.le
       rw [bpow_eq_natPow (β := β) prec hpnonneg] at hmcast
@@ -125,27 +135,9 @@ theorem generic_of_flxFormat (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
   · have hx0 : x ≠ 0 := by
       rw [hxf, toReal]
       exact mul_ne_zero (by exact_mod_cast hm0) (bpow.ne_zero β f.exponent)
-    have hmabs : abs (f.mantissa : ℝ) = (f.mantissa.natAbs : ℝ) := by
-      cases f.mantissa with
-      | ofNat n => simp
-      | negSucc n =>
-          rw [Int.cast_negSucc, abs_of_neg]
-          · norm_num
-          · exact neg_neg_of_pos (by positivity : (0 : ℝ) < (n + 1 : ℕ))
-    have hpnonneg : 0 ≤ prec := hprec.le
-    have hmantR : abs (f.mantissa : ℝ) < bpow β prec := by
-      rw [hmabs, bpow_eq_natPow (β := β) prec hpnonneg]
-      exact_mod_cast hmant
     have habsx : abs x < bpow β (f.exponent + prec) := by
-      rw [hxf, toReal, abs_mul, abs_of_pos (bpow.pos β f.exponent)]
-      calc
-        abs (f.mantissa : ℝ) * bpow β f.exponent <
-            bpow β prec * bpow β f.exponent :=
-          mul_lt_mul_of_pos_right hmantR (bpow.pos β f.exponent)
-        _ = bpow β (f.exponent + prec) := by
-          rw [← bpow.add_exp]
-          congr 1
-          linarith
+      rw [hxf]
+      exact f.abs_toReal_lt_bpow prec hprec.le hmant
     have hmag : magnitude β x ≤ f.exponent + prec :=
       magnitude_le_of_abs_lt_bpow β x (f.exponent + prec) hx0 habsx
     have hcexp : cexp β (flxExp prec) x ≤ f.exponent := by
@@ -207,12 +199,7 @@ theorem fltFormat_of_generic (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ)
       have hmcast : (m.natAbs : ℝ) < bpow β prec := by
         rw [hsint] at hslt
         have hmabs : (m.natAbs : ℝ) = abs (m : ℝ) := by
-          cases m with
-          | ofNat n => simp
-          | negSucc n =>
-              rw [Int.cast_negSucc, abs_of_neg]
-              · norm_num
-              · exact neg_neg_of_pos (by positivity : (0 : ℝ) < (n + 1 : ℕ))
+          simp only [Nat.cast_natAbs, Int.cast_abs]
         rwa [hmabs]
       rw [bpow_eq_natPow (β := β) prec hprec.le] at hmcast
       exact_mod_cast hmcast
@@ -231,26 +218,9 @@ theorem generic_of_fltFormat (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ)
   · have hx0 : x ≠ 0 := by
       rw [hxf, toReal]
       exact mul_ne_zero (by exact_mod_cast hm0) (bpow.ne_zero β f.exponent)
-    have hmabs : abs (f.mantissa : ℝ) = (f.mantissa.natAbs : ℝ) := by
-      cases f.mantissa with
-      | ofNat n => simp
-      | negSucc n =>
-          rw [Int.cast_negSucc, abs_of_neg]
-          · norm_num
-          · exact neg_neg_of_pos (by positivity : (0 : ℝ) < (n + 1 : ℕ))
-    have hmantR : abs (f.mantissa : ℝ) < bpow β prec := by
-      rw [hmabs, bpow_eq_natPow (β := β) prec hprec.le]
-      exact_mod_cast hmant
     have habsx : abs x < bpow β (f.exponent + prec) := by
-      rw [hxf, toReal, abs_mul, abs_of_pos (bpow.pos β f.exponent)]
-      calc
-        abs (f.mantissa : ℝ) * bpow β f.exponent <
-            bpow β prec * bpow β f.exponent :=
-          mul_lt_mul_of_pos_right hmantR (bpow.pos β f.exponent)
-        _ = bpow β (f.exponent + prec) := by
-          rw [← bpow.add_exp]
-          congr 1
-          linarith
+      rw [hxf]
+      exact f.abs_toReal_lt_bpow prec hprec.le hmant
     have hmag : magnitude β x ≤ f.exponent + prec :=
       magnitude_le_of_abs_lt_bpow β x (f.exponent + prec) hx0 habsx
     have hcexp : cexp β (fltExp emin prec) x ≤ f.exponent := by

@@ -58,10 +58,10 @@ theorem mulFiniteImpl_eq (x y : Value) :
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxExceptional, hyExceptional, hxZero, hyZero, hxNatNonzero,
     hyNatNonzero, or_self, ite_false]
-  have hxMantissaLt :=
-    finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
-  have hyMantissaLt :=
-    finiteMantissa_lt_of_components y hyExponent hyFraction hyMantissa
+  obtain ⟨hxMantissaLt, hxScaleLe⟩ :=
+    finiteComponents_bounds x hxExponent hxFraction hxMantissa hxScale hxExceptional
+  obtain ⟨hyMantissaLt, hyScaleLe⟩ :=
+    finiteComponents_bounds y hyExponent hyFraction hyMantissa hyScale hyExceptional
   have hproductBound :
       xMantissa.toNat * yMantissa.toNat < 2 ^ 48 := by
     norm_num at hxMantissaLt hyMantissaLt ⊢
@@ -72,10 +72,6 @@ theorem mulFiniteImpl_eq (x y : Value) :
     rw [UInt64.toNat_mul]
     apply Nat.mod_eq_of_lt
     exact lt_trans hproductBound (by norm_num)
-  have hxScaleLe :=
-    finiteScale_le_of_components x hxExponent hxScale hxExceptional
-  have hyScaleLe :=
-    finiteScale_le_of_components y hyExponent hyScale hyExceptional
   have hscale :
       (xScale + yScale).toNat = xScale.toNat + yScale.toNat := by
     rw [UInt64.toNat_add]

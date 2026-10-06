@@ -196,7 +196,7 @@ theorem runWith_default_nan_eq_castWithStatus {src dst : FloatFormat} {Destinati
     (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
     (hnan : Model.isNaN x = true) (hdst : dst.encoding ≠ .finite) :
     runWith pack Context.default
-        (.exceptional (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) =
+        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) =
       .success (pack (Model.castWithStatus src dst x mode).value)
         { invalid := (Model.castWithStatus src dst x mode).status.invalid } := by
   have hcast := Model.castWithRounding_of_isNaN (dst := dst) x mode hnan
@@ -206,7 +206,7 @@ theorem runWith_default_nan_eq_castWithStatus {src dst : FloatFormat} {Destinati
     unfold Model.canonicalNaN?; cases h : dst.encoding <;> simp_all
   obtain ⟨v, hv⟩ := hsome
   simp only [runWith, quantizeExceptionalWith, Context.default, hv, Model.castWithStatus, hnan,
-    hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some]
+    hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some, Model.nanPayload]
   cases Model.isSNaN x <;> rfl
 
 /--
@@ -221,9 +221,9 @@ theorem runWith_default_nan_of_encoding_finite {src dst : FloatFormat} {Destinat
     (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
     (hnan : Model.isNaN x = true) (hdst : dst.encoding = .finite) :
     runWith pack Context.default
-        (.exceptional (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) =
+        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) =
       .failure (.exceptional .source
-        (.nan (some (Model.fracField x)) (Model.signBit x) (Model.isSNaN x))) ∧
+        (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) ∧
       (Model.castWithStatus src dst x mode).status.invalid = true := by
   refine ⟨?_, Model.castWithStatus_invalid_of_isNaN_of_encoding_finite x mode hnan hdst⟩
   have hv : Model.canonicalNaN? dst = none := by simp [Model.canonicalNaN?, hdst]

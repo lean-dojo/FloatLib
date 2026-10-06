@@ -310,6 +310,19 @@ abbreviations of the same record. Selection, clearing, saving, testing, and rest
 share one implementation. `Numerics.IEEEStatus.Proof` proves their laws for every flag state
 and selected group; the decimal namespace exports those results.
 
+### Exact integer exponents
+
+Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof`.
+`binaryExponentInt` returns the exact integer exponent of a finite nonzero input. The
+same-format `binaryExponent` convenience operation rounds that integer into the source format.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Model.binaryExponentInt_of_finite_nonzero` | The integer result is the significand's integer binary logarithm plus its stored exponent, with clear status. |
+| `Model.binaryExponentInt_bounds` | Its exponent brackets the exact magnitude between consecutive powers of two. |
+| `Model.binaryExponentSentinel_outside_logBBound` | The exceptional sentinel lies beyond twice the IEEE exceptional-result bound. |
+| `Model.binaryExponentInt_of_zero`, `binaryExponentInt_of_infinity`, `binaryExponentInt_of_nan` | Zero returns a negative sentinel; infinity and NaN return a positive sentinel; each raises invalid. |
+
 ### Quiet and signaling comparisons
 
 Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Comparison.Proof`.
@@ -365,12 +378,13 @@ keeps its compact diagnostic display.
 | `Model.parse_formatDecimal_of_isFinite` | Every finite IEEE word round-trips through exact decimal text with nearest-even input. |
 | `Model.significantDecimal_coefficient_bounds`, `Model.significantHex_coefficient_bounds` | Nonzero output has exactly the requested positive number of significant digits in every mode. |
 | `Model.significantDecimal_nearestEven_error`, `Model.significantHex_nearestEven_error` | Nearest-even output stays within half the selected text-grid step. |
+| `Model.significantDecimal_towardPositiveInfinity_le`, `Model.significantHex_towardPositiveInfinity_le` | Output toward positive infinity is at least the exact input. |
+| `Model.significantDecimal_towardNegativeInfinity_le`, `Model.significantHex_towardNegativeInfinity_le` | Output toward negative infinity is at most the exact input. |
+| `Model.significantDecimal_towardZero_abs_le`, `Model.significantHex_towardZero_abs_le` | Output toward zero cannot increase the exact input's magnitude. |
 | `Model.formatDyadicText_decimal_inexact_iff`, `Model.formatDyadicText_hexadecimal_inexact_iff` | Output raises inexact exactly when its numerical value changes. |
 | `Model.formatWithStatus_exact_status` | Exact output leaves all five exception indicators clear. |
 
-The finite exact-output theorems do not establish the minimum decimal digit count (`Pmin`)
-needed for a round trip. Universal NaN/infinity word recovery and the three directed output
-inequalities also remain outside this proof API.
+Universal NaN/infinity word recovery remains outside this proof API.
 
 ### Certified execution backends
 
@@ -854,6 +868,12 @@ The mixed interface also includes fused addition, scaled operations, and binary1
 and BFloat16 destinations. Extrema and query operations use the descriptor's finite classes and
 exceptional values.
 
+`Formats.P3109.Block` adds nonempty blocks with independently typed scales and elements.
+Conversions, exact sums, products, dots, and generic unary, binary, and ternary closed rational
+operations normalize at the requested result scale before one destination projection. Block
+roots use P3109 destinations and handle negative result scales through signed exact roots.
+Stochastic policies carry one explicitly supplied word per lane.
+
 | Theorem | Informal statement |
 | --- | --- |
 | `ExecFloat.P3109.decode_zero` | The named zero constructor denotes the unique finite zero. |
@@ -884,6 +904,12 @@ exceptional values.
 | `ExecFloat.P3109.decode_binaryTo` | A binary operation decodes to the destination projection of its exact source values. |
 | `ExecFloat.P3109.decode_ternaryTo` | A fused ternary operation has one destination projection after its exact evaluation. |
 | `ExecFloat.P3109.decode_fmaTo_finite` | Finite fused multiply-add projects the exact rational product plus addend. |
+| `Formats.P3109.Arithmetic.clamp_finite`, `ExecFloat.P3109.decode_clampTo` | Ordered finite bounds give the rational interval clamp; encoding performs one report projection. |
+| `Formats.P3109.Block.decode_project_lane`, `decode_convertFrom_lane` | Each lane decodes to its declared destination projection, with normalization when requested. |
+| `Formats.P3109.Block.normalize_finite`, `normalize_zero`, `normalize_infinite_finite` | Ordinary division and the report's zero/infinite-scale normalization rules hold exactly. |
+| `Formats.P3109.Block.sumExact_finite`, `productExact_finite`, `dotExact_finite` | Finite reductions equal exact rational sums, products, and independently scaled dot products. |
+| `Formats.P3109.Block.decode_reduceAdd`, `decode_reduceMultiply`, `decode_dotProduct` | The complete exact reduction is projected only once. |
+| `Formats.P3109.BlockRoot.normalize_finite_real`, `rounded_eq_real`, `decode_project` | Normalization gives the exact scaled real root, square comparisons implement its rounding, and encoding preserves the saturated datum. |
 | `Formats.P3109.Arithmetic.roundSqrtRatToPrecision_eq_real` | Integer square-root comparisons select the same precision-grid value as the real square-root rounding rule. |
 | `Formats.P3109.Arithmetic.sqrtRoundAway_stochasticA`, `sqrtRoundAway_stochasticB`, `sqrtRoundAway_stochasticC` | Each stochastic square-root threshold agrees with the report's floor or nearest-integer formula on the exact root fraction, for every supplied word. |
 | `ExecFloat.P3109.decode_sqrtTo` | Executable square root decodes to the declared real-root projection, including exceptional inputs. |

@@ -400,10 +400,10 @@ theorem divFiniteImpl_eq (x y : Value) :
     (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxExceptional, hyExceptional, hxZero, hyZero, hxNatNonzero,
     hyNatNonzero, ite_false]
-  have hxMantissaLt :=
-    finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
-  have hyMantissaLt :=
-    finiteMantissa_lt_of_components y hyExponent hyFraction hyMantissa
+  obtain ⟨hxMantissaLt, _⟩ :=
+    finiteComponents_bounds x hxExponent hxFraction hxMantissa hxScale hxExceptional
+  obtain ⟨hyMantissaLt, _⟩ :=
+    finiteComponents_bounds y hyExponent hyFraction hyMantissa hyScale hyExceptional
   have hexponent :
       Int.ofNat xScale.toNat - Int.ofNat yScale.toNat =
         (Int.ofNat xScale.toNat - 149) -

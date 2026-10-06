@@ -59,7 +59,7 @@ Convert a binary-interchange value to a checked signed integer with explicit rou
 A finite source is first rounded to an unbounded `Int`. The conversion succeeds only when that
 integer fits in `width` signed bits. The status reports whether rounding discarded a fractional
 part. Infinity and NaN retain their source classification as explicit conversion failures.
-NaN failures preserve the sign, signaling class, and payload.
+NaN failures preserve the sign, signaling class, and diagnostic payload without the quiet bit.
 -/
 @[inline] def floatToInt {width : Nat} {fmt : FloatFormat} (x : Model fmt)
     (rounding : IEEERoundingMode) :
@@ -74,7 +74,8 @@ NaN failures preserve the sign, signaling class, and payload.
   | .infinity negative =>
       .failure (.infinity .source negative)
   | .nan negative signaling payload =>
-      .failure (.exceptional .source (.nan (some payload) negative signaling))
+      .failure (.exceptional .source
+        (.nan (some (Model.payloadOfNaNField signaling payload)) negative signaling))
 
 /-- Encode `true` as positive one and `false` as positive zero. -/
 @[inline] def boolToFloat (fmt : FloatFormat) (b : Bool) : Model fmt :=

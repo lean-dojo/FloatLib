@@ -151,6 +151,34 @@ def nativeAdapters : Nat :=
       | .error _ => false
       | .ok restored => restored.toBits.toNat == bits
 
+/-- Check nearest-even significant-digit output followed by nearest-even input. -/
+def significantRoundTrip (fmt : FloatFormat) (digits : ℕ+) (bits : Nat) : Bool :=
+  let value := Model.ofNatBits (fmt := fmt) bits
+  if value.isFinite then
+    let output := Model.formatWithStatus .nearestEven .decimal (.significant digits) value
+    match Model.parse fmt output.text with
+    | .error _ => false
+    | .ok restored => restored.bits == value.bits
+  else true
+
+/-- Exhaustive binary16 Pmin checks and boundary samples at the other basic format minima. -/
+def minimumDigitRoundTrips : Nat :=
+  countWhereFailures (List.range 65536) (significantRoundTrip .binary16 5) +
+  countWhereFailures
+    [0, 0x80000000, 1, 0x80000001, 0x007fffff, 0x00800000, 0x3f800000,
+      0x3f800001, 0x3f7fffff, 0x7f7fffff, 0xff7fffff]
+    (significantRoundTrip .binary32 9) +
+  countWhereFailures
+    [0, 0x8000000000000000, 1, 0x8000000000000001, 0x000fffffffffffff,
+      0x0010000000000000, 0x3ff0000000000000, 0x3ff0000000000001,
+      0x3fefffffffffffff, 0x7fefffffffffffff, 0xffefffffffffffff]
+    (significantRoundTrip .binary64 17) +
+  countWhereFailures
+    [0, 2 ^ 127, 1, 2 ^ 127 + 1, 2 ^ 112 - 1, 2 ^ 112, 16383 * 2 ^ 112,
+      16383 * 2 ^ 112 + 1, 16383 * 2 ^ 112 - 1, 32767 * 2 ^ 112 - 1,
+      2 ^ 127 + 32767 * 2 ^ 112 - 1]
+    (significantRoundTrip .binary128 36)
+
 /-- Failure counts for the parser and decimal presentation cases. -/
 def report : Thunk ReportSection := ⟨fun _ =>
   ReportSection.ofRows "text conversion"
@@ -161,6 +189,7 @@ def report : Thunk ReportSection := ⟨fun _ =>
      , ("scientific carry and direction", scientificDirections)
      , ("bounded parser agreement", boundedAgreement)
      , ("small-format round trips", smallFormatRoundTrips)
+     , ("IEEE minimum-digit round trips", minimumDigitRoundTrips)
      , ("native binary64 adapters", nativeAdapters) ]⟩
 
 end FloatLibTests.Regression.BinaryInterchange.Text

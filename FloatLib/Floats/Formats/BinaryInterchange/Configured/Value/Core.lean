@@ -81,8 +81,8 @@ Decode into the exact signed-rational semantic domain used by binary conversion.
 
 Finite values become exact rationals together with their sign bit, so a negative zero decodes to
 `SignedRat.negZero` rather than to `0`. Infinities retain their sign, and a NaN carries its
-fraction field as payload together with its sign bit and signaling class. Use `toRat?` when only
-the rational value of a finite number matters.
+diagnostic payload without the quiet bit, together with its sign bit and signaling class.
+Use `toRat?` when only the rational value of a finite number matters.
 -/
 @[inline] def decode
     (value : Value) :

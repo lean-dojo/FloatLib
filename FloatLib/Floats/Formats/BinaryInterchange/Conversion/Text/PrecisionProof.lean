@@ -198,4 +198,102 @@ theorem significantHex_coefficient_bounds (mode : IEEERoundingMode)
   cases h : exactValue value <;> cases radix <;>
     simp [formatWithStatus, h, formatDyadicText]
 
+private theorem directedTextBounds (negative : Bool) (magnitude unit : Rat)
+    (hmagnitude : 0 ≤ magnitude) (hunit : 0 < unit) :
+    let signed := (if negative then (-1 : Rat) else 1) * magnitude
+    let rounded := fun mode => (if negative then (-1 : Rat) else 1) *
+      (roundTextMagnitude mode negative (magnitude / unit) : Rat) * unit
+    signed ≤ rounded .towardPositiveInfinity ∧
+      rounded .towardNegativeInfinity ≤ signed ∧
+      |rounded .towardZero| ≤ |signed| := by
+  dsimp only
+  have hx : 0 ≤ magnitude / unit := div_nonneg hmagnitude hunit.le
+  have hf := mul_le_mul_of_nonneg_right (Nat.floor_le hx) hunit.le
+  have hc := mul_le_mul_of_nonneg_right (Nat.le_ceil (magnitude / unit)) hunit.le
+  rw [div_mul_cancel₀ _ hunit.ne'] at hf hc
+  have hfloor : (0 : Rat) ≤ (⌊magnitude / unit⌋₊ : Rat) * unit :=
+    mul_nonneg (Nat.cast_nonneg _) hunit.le
+  cases negative <;>
+    simp only [roundTextMagnitude, Bool.false_eq_true, ite_false, ite_true,
+      one_mul, neg_mul, abs_neg, abs_of_nonneg hmagnitude,
+      abs_of_nonneg hfloor] <;> constructor
+  · exact hc
+  · exact ⟨hf, hf⟩
+  · exact neg_le_neg hf
+  · exact ⟨neg_le_neg hc, hf⟩
+
+private theorem significantDecimal_directed_bounds (value : DecimalText.Decimal) (digits : ℕ+) :
+    value.toRat ≤
+        (DecimalText.significantDecimal (roundTextMagnitude .towardPositiveInfinity)
+          value digits).toRat ∧
+      (DecimalText.significantDecimal (roundTextMagnitude .towardNegativeInfinity)
+        value digits).toRat ≤ value.toRat ∧
+      |(DecimalText.significantDecimal (roundTextMagnitude .towardZero) value digits).toRat| ≤
+        |value.toRat| := by
+  have h := directedTextBounds value.negative
+    ((value.significand : Rat) * (10 : Rat) ^ value.exponent)
+    ((10 : Rat) ^ DecimalText.significantQuantum value.significand value.exponent digits)
+    (mul_nonneg (Nat.cast_nonneg _) (zpow_pos (by norm_num : (0 : Rat) < 10) _).le)
+    (zpow_pos (by norm_num : (0 : Rat) < 10) _)
+  simp only [DecimalText.significantDecimal_value]
+  cases hs : value.negative <;>
+    simpa [DecimalText.Decimal.toRat, hs, mul_assoc] using h
+
+/-- Decimal output rounded toward positive infinity is at least the exact input. -/
+theorem significantDecimal_towardPositiveInfinity_le (value : DecimalText.Decimal)
+    (digits : ℕ+) :
+    value.toRat ≤ (DecimalText.significantDecimal
+      (roundTextMagnitude .towardPositiveInfinity) value digits).toRat :=
+  (significantDecimal_directed_bounds value digits).1
+
+/-- Decimal output rounded toward negative infinity is at most the exact input. -/
+theorem significantDecimal_towardNegativeInfinity_le (value : DecimalText.Decimal)
+    (digits : ℕ+) :
+    (DecimalText.significantDecimal (roundTextMagnitude .towardNegativeInfinity)
+      value digits).toRat ≤ value.toRat :=
+  (significantDecimal_directed_bounds value digits).2.1
+
+/-- Decimal output rounded toward zero cannot increase the magnitude. -/
+theorem significantDecimal_towardZero_abs_le (value : DecimalText.Decimal) (digits : ℕ+) :
+    |(DecimalText.significantDecimal (roundTextMagnitude .towardZero) value digits).toRat| ≤
+      |value.toRat| :=
+  (significantDecimal_directed_bounds value digits).2.2
+
+private theorem significantHex_directed_bounds (value : Numerics.Dyadic) (digits : ℕ+) :
+    value.toRat ≤ (HexText.significant (roundTextMagnitude .towardPositiveInfinity)
+        value digits).toRat ∧
+      (HexText.significant (roundTextMagnitude .towardNegativeInfinity)
+        value digits).toRat ≤ value.toRat ∧
+      |(HexText.significant (roundTextMagnitude .towardZero) value digits).toRat| ≤
+        |value.toRat| := by
+  have h := directedTextBounds value.negative
+    (((HexText.radixPair value).1 : Rat) * (16 : Rat) ^ (HexText.radixPair value).2)
+    ((16 : Rat) ^ RadixText.significantQuantum 16 (HexText.radixPair value).1
+      (HexText.radixPair value).2 digits)
+    (mul_nonneg (Nat.cast_nonneg _) (zpow_pos (by norm_num : (0 : Rat) < 16) _).le)
+    (zpow_pos (by norm_num : (0 : Rat) < 16) _)
+  simp only [HexText.significant_value, RadixText.roundCoefficient]
+  rw [HexText.radixPair_value] at h
+  cases hs : value.negative <;>
+    simpa [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand, hs, mul_assoc,
+      HexText.radixPair_value] using h
+
+/-- Hexadecimal output toward positive infinity is at least the exact input. -/
+theorem significantHex_towardPositiveInfinity_le (value : Numerics.Dyadic) (digits : ℕ+) :
+    value.toRat ≤ (HexText.significant (roundTextMagnitude .towardPositiveInfinity)
+      value digits).toRat :=
+  (significantHex_directed_bounds value digits).1
+
+/-- Hexadecimal output toward negative infinity is at most the exact input. -/
+theorem significantHex_towardNegativeInfinity_le (value : Numerics.Dyadic) (digits : ℕ+) :
+    (HexText.significant (roundTextMagnitude .towardNegativeInfinity) value digits).toRat ≤
+      value.toRat :=
+  (significantHex_directed_bounds value digits).2.1
+
+/-- Hexadecimal output toward zero cannot increase the magnitude. -/
+theorem significantHex_towardZero_abs_le (value : Numerics.Dyadic) (digits : ℕ+) :
+    |(HexText.significant (roundTextMagnitude .towardZero) value digits).toRat| ≤
+      |value.toRat| :=
+  (significantHex_directed_bounds value digits).2.2
+
 end FloatLib.Floats.Formats.BinaryInterchange.Model

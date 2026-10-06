@@ -65,6 +65,8 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_int8_saturates,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_int8_negative_infinity,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_int8_nan,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.checked32_int8_nan_metadata,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.checked32_int8_quiet_nan_metadata,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_sqrt_commutes,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_commutes,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_negative_zero,

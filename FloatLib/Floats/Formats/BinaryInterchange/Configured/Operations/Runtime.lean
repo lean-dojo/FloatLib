@@ -77,7 +77,11 @@ saturate; use `roundToIntegralExactWithStatus` to detect that overflow.
   IEEEOutcome.ofModel <|
     Model.scaleWithStatus (ExecFloat.Binary.toModel value) n rounding
 
-/-- Leading binary exponent, rounded into the same configured format (IEEE 754 `logB`). -/
+/-- Exact integer-result IEEE `logB`, with no packing or exponent rounding. -/
+@[inline] def binaryExponentInt (value : Value) : Model.IntegerExponentOutcome :=
+  Model.binaryExponentInt (ExecFloat.Binary.toModel value)
+
+/-- Leading binary exponent rounded into the configured format; `binaryExponentInt` is exact. -/
 @[inline] def binaryExponent (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.binaryExponent value
 

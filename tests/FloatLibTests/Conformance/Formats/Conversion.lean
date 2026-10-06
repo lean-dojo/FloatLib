@@ -303,6 +303,23 @@ private def binary32Conversion (rounding : RoundingMode) (exact : Rat)
 private abbrev Binary16 :=
   ExecFloat.Binary (exponentBits := 5) (fractionBits := 10)
 
+private structure DiagnosticNaN where
+  payload : Nat
+  signaling : Bool
+
+private instance : ExecFloat.ExactDecoder DiagnosticNaN SignedRat where
+  decode value := .exceptional (.nan (some value.payload) false value.signaling)
+
+/-- Custom decoders supply diagnostic payloads independently of the source NaN's signaling bit. -/
+example :
+    [ (ExecFloat.convert (target := Binary32) (DiagnosticNaN.mk 5 false)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (DiagnosticNaN.mk 5 true)).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0x7fc00005 {}, .success 0x7fc00005 { invalid := true } ] := by
+  decide +kernel
+
 -- A NaN cast keeps its sign and payload and is quieted, IEEE 754-2019 §6.2.3. A signaling
 -- source raises invalid (§7.2). A payload too wide for the destination becomes zero.
 example :
@@ -455,7 +472,7 @@ example :
     [ ExecFloat.cast (target := FiniteE4M3) (ExecFloat.Binary.ofNatBits 0x7fc00000 : Binary32)
     , ExecFloat.cast (target := FiniteE4M3) (ExecFloat.Binary.ofNatBits 0xff800001 : Binary32)
     ] =
-      [ .failure (.exceptional .source (.nan (some 0x400000) false false))
+      [ .failure (.exceptional .source (.nan (some 0) false false))
       , .failure (.exceptional .source (.nan (some 1) true true))
       ] := by
   decide +kernel

@@ -18,6 +18,7 @@ public import FloatLibTests.Conformance.Formats.Configured
 public import FloatLibTests.Conformance.Formats.ConfiguredIntervals
 public import FloatLibTests.Conformance.Formats.Conversion
 public import FloatLibTests.Conformance.Formats.LowBit
+public import FloatLibTests.Conformance.Formats.MXStandard
 public import FloatLibTests.Conformance.Formats.NonBinaryIntervals
 public import FloatLibTests.Conformance.Numerics.Boolean
 public import FloatLibTests.Conformance.Numerics.Declaration
@@ -30,6 +31,7 @@ public import FloatLibTests.Conformance.Numerics.Quantization.RealAffine
 public import FloatLibTests.Conformance.Numerics.Reduction
 public import FloatLibTests.Conformance.Numerics.Automation
 public import FloatLibTests.Conformance.P3109.Projection
+public import FloatLibTests.Conformance.P3109.Block
 public import FloatLibTests.Conformance.Posit
 public import FloatLibTests.Conformance.Trust.Axioms
 public import FloatLibTests.Conformance.Trust.RootImports

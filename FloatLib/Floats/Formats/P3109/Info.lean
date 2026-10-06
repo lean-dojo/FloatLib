@@ -15,6 +15,8 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Proof
+public import FloatLib.Floats.Formats.P3109.Block.Proof
+public import FloatLib.Floats.Formats.P3109.Block.Root.Proof
 public meta import Lean.Elab.Command
 public import FloatLib.Floats.ExecFloat.Info
 
@@ -142,9 +144,33 @@ elab_rules : command
                   "binary16, binary32, and BFloat16 with exact encoding after report projection"⟩
               , ⟨"extrema and queries",
                   "numeric and magnitude extrema, classification, format limits, and neighbors"⟩
+              , ⟨"scaled blocks",
+                  "conversion, maximum-finite scale selection, exact reductions and mixed dots"⟩
+              , ⟨"block elementwise arithmetic",
+                  "exact closed expressions and roots with lane-specific random words"⟩
               ]
             theoremSurfaces :=
               [ {
+                  topic := "scaled block projection and reductions"
+                  declarations :=
+                    [ ``FloatLib.Floats.Formats.P3109.Block.decode_project_lane
+                    , ``FloatLib.Floats.Formats.P3109.Block.decode_convertFrom_lane
+                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_zero
+                    , ``FloatLib.Floats.Formats.P3109.Block.sumExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.productExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.dotExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.decode_dotProduct
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.normalize_finite_real
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.rounded_eq_real
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.decode_project
+                    ]
+                  applicability := .verifiedForType
+                  scope :=
+                    "nonempty independently scaled blocks with exact source decoders; " ++
+                    "one destination projection after complete exact evaluation"
+                }
+              , {
                   topic := "exact representation and checked encoding"
                   declarations :=
                     [ ``FloatLib.Floats.ExecFloat.P3109.decode_eq_format_decode
