@@ -70,6 +70,7 @@ theorem roundToIntegralExact_invalid_iff (f : Format) (mode : RoundingMode)
     have hz := le_max_right q 0
     omega
 
+/-- Exact integral rounding always returns a datum valid in the destination format. -/
 theorem roundToIntegralExact_valid (f : Format) (mode : RoundingMode) (x : Datum) :
     (roundToIntegralExact f mode x).value.Valid f := by
   cases x
@@ -77,6 +78,7 @@ theorem roundToIntegralExact_valid (f : Format) (mode : RoundingMode) (x : Datum
   · trivial
   · exact nanResult_valid ..
 
+/-- Quiet integral rounding always returns a datum valid in the destination format. -/
 theorem roundToIntegral_valid (f : Format) (mode : RoundingMode) (x : Datum) :
     (roundToIntegral f mode x).value.Valid f := roundToIntegralExact_valid ..
 

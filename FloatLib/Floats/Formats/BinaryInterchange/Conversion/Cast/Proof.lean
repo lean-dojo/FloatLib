@@ -667,6 +667,45 @@ theorem cast_eq_roundAt {src dst : FloatFormat}
       rw [toReal_eq, hd]
 
 /--
+Casting any finite binary descriptor to an IEEE destination performs one nearest-even real
+rounding, provided the delivered result is finite. The source may use a custom bias or a
+finite-only encoding.
+-/
+theorem cast_eq_roundAt_of_isIEEE_destination {src dst : FloatFormat}
+    (hdst : dst.isIEEE = true) (x : Model src)
+    (hx : isFinite x = true) (hxy : isFinite (cast src dst x) = true) :
+    toReal (cast src dst x) = roundAt dst (toReal x) := by
+  by_cases hsrc : src.isIEEE = true
+  · exact cast_eq_roundAt hsrc hdst x hx hxy
+  · have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
+    have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+    have hformat : src ≠ dst := by
+      intro heq
+      subst dst
+      exact hsrc hdst
+    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
+    -- A compatible widening into an IEEE descriptor would make the source IEEE as well.
+    -- Every remaining finite source takes the exact decode-and-round path.
+    have hcast : cast src dst x = roundDyadic dst d := by
+      simp only [cast, hnan, hinf, Bool.false_eq_true, dite_false, hformat]
+      split
+      · next he =>
+        split
+        · next hb =>
+          split
+          · next hc =>
+            have hsame : src.isIEEE = dst.isIEEE := by
+              simp [FloatFormat.isIEEE, FloatFormat.bias, he, hb, hc]
+            exact (hsrc (hsame.trans hdst)).elim
+          · simp [finiteDyadic, hd]
+        · simp [finiteDyadic, hd]
+      · simp [finiteDyadic, hd]
+    rw [hcast] at hxy ⊢
+    rw [toReal_roundDyadic_eq_roundAt dst hdst d hxy]
+    congr 1
+    rw [toReal_eq, hd]
+
+/--
 Conventional IEEE casting into a finer dyadic grid is exact whenever the executable result is
 finite. This permits a wider exponent field and covers the usual exact standard-format widening
 conversions.
@@ -682,6 +721,22 @@ theorem cast_exact_of_gridExtension {src dst : FloatFormat} (x : Model src)
     FloatLib.Floats.Formats.Flocq.nearestEven (toReal x)
     (genericFormat_of_gridExtension hfrac hmin
       (toReal_genericFormat_of_isFinite x hx))
+
+/--
+A finer destination grid preserves the real value of every finite source descriptor, including
+finite-only encodings. Result finiteness remains necessary because grid inclusion does not bound
+the destination's upper exponent range.
+-/
+theorem cast_exact_of_gridExtension_of_isIEEE_destination
+    {src dst : FloatFormat} (x : Model src) (hdst : dst.isIEEE = true)
+    (hfrac : src.fracWidth ≤ dst.fracWidth)
+    (hmin : dst.minSubnormalExponent ≤ src.minSubnormalExponent)
+    (hx : isFinite x = true) (hxy : isFinite (cast src dst x) = true) :
+    toReal (cast src dst x) = toReal x := by
+  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hxy]
+  exact FloatLib.Floats.Formats.Flocq.round_preserves_generic
+    FloatLib.Floats.Formats.Flocq.nearestEven (toReal x)
+    (genericFormat_of_gridExtension hfrac hmin (toReal_genericFormat_of_isFinite x hx))
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

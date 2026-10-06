@@ -182,19 +182,19 @@ Sterbenz's lemma [@sterbenz1974] gives a condition under which subtraction is ex
 
 ![Sterbenz's hypothesis y/2 ≤ x ≤ 2y as a wedge in the plane, with every pair of grid points with three binary digits between 1/2 and 4 marked by whether x - y is on the grid: inside the wedge all 97 pairs are, outside it 38 are and 34 are not](assets/ch07-sterbenz.png "Subtraction is exact throughout the factor-of-two region; some pairs outside it also subtract exactly.")
 
-The format that packed binary values actually use is FLT, and there the argument has two regimes. If the difference is small enough to be subnormal it is automatically representable: every FLT value is a multiple of $\beta^{e_{\min}}$, so the difference is too (`generic_format_FIX_sub`), and in the subnormal range that is all representability asks. Otherwise the difference is normal, the FLX theorem applies, and the result is transported back to FLT. The [FLT proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/SterbenzFLT.lean) is `generic_format_FLT_sterbenz`. At the packed level, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz]] states the executable consequence: two positive finite values within a factor of two subtract exactly, and since the exact difference is bounded by one of the operands, result finiteness follows rather than being assumed.
+The format that packed binary values actually use is FLT, and there the argument has two regimes. If the difference is small enough to be subnormal it is automatically representable: every FLT value is a multiple of $\beta^{e_{\min}}$, so the difference is too (`generic_format_FIX_sub`), and in the subnormal range that is all representability asks. Otherwise the difference is normal, the FLX theorem applies, and the result is transported back to FLT. The [FLT proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/SterbenzFLT.lean) is `generic_format_FLT_sterbenz`. At the packed level, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz_of_same_sign]] states the executable consequence: two finite values of the same sign whose magnitudes are within a factor of two subtract exactly, and since the exact difference is bounded by one of the operands, result finiteness follows rather than being assumed.
 
-We can use the theorem below to prove exactness and the evaluations after it to inspect both the difference and its inexact flag:
+The magnitude formulation also covers two negative operands and both signs of zero. If one magnitude is zero, the ratio bounds force the other to be zero too. We can use the theorem below to prove exactness and the evaluations after it to inspect both the difference and its inexact flag:
 
 ```lean
 example {fmt : FloatFormat} {x y : Model fmt}
     (hfmt : fmt.isIEEE = true)
     (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
-    (hxpos : 0 < Model.toReal x) (hypos : 0 < Model.toReal y)
-    (hxy : Model.toReal x ≤ 2 * Model.toReal y)
-    (hyx : Model.toReal y ≤ 2 * Model.toReal x) :
+    (hsign : 0 ≤ Model.toReal x * Model.toReal y)
+    (hxy : |Model.toReal x| ≤ 2 * |Model.toReal y|)
+    (hyx : |Model.toReal y| ≤ 2 * |Model.toReal x|) :
     Model.toReal (Model.sub x y) = Model.toReal x - Model.toReal y :=
-  Model.toReal_sub_eq_of_sterbenz hfmt hx hy hxpos hypos hxy hyx
+  Model.toReal_sub_eq_of_sterbenz_of_same_sign hfmt hx hy hsign hxy hyx
 
 def onePlusUlp : Binary32 := ExecFloat.Binary.nextUp 1
 
@@ -301,7 +301,7 @@ For signed-rational expressions targeting binary or other signed-zero-preserving
 
 For a concrete cancellation, take exact signed-rational operands with values one and negative one. Ordinary `SignedRat` addition produces positive zero. Quantizing that supplied zero downward into a binary destination keeps it positive; the quantizer no longer has the two operands from which it could recover a cancellation rule. Using `ExactExpression.addWith` with that destination and a downward context chooses negative zero while the operands are still available, before any quantization occurs. Both paths have rational value zero. Their different sign bits explain why preserving an exact numerical value and preserving the intended IEEE operation are separate obligations. Same-sign zero addition retains the common sign under either rule.
 
-Reductions accumulate the exact sum of every finite input as a dyadic and invoke the descriptor rounder once at the end; the [reduction theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Reduction/Proof.lean) `Model.Reduction.sumWithStatus_eq_round_of_finite_nonzero` states this for every array of finite inputs whose exact sum is nonzero. A cast rounds the value it receives ([[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]]). If that value is already the rounded result of an operation, the composition contains two roundings, as in the binary64-to-binary32 example.
+FloatLib's reductions accumulate every finite input as an exact dyadic and invoke the destination rounder once at the end. This is the library's chosen guarantee: IEEE 754-2019 §9.4 permits implementation-defined reduction approximations and evaluation orders [@ieee754_2019]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite]] identifies a finite sum result with one nearest-even rounding of the mathematical sum. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite]] gives the corresponding statement for equal-length arrays and their exact product sum. Both real-valued contracts include empty input and cancellation to zero; the stored zero sign is specified separately by the reduction's zero-result theorems. The finite-result premise excludes overflow to infinity. A cast rounds the value it receives ([[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt_of_isIEEE_destination]]). If that value is already the rounded result of an operation, the composition contains two roundings, as in the binary64-to-binary32 example.
 
 ## When every addition rounds
 

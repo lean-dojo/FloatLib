@@ -306,7 +306,9 @@ example {src dst : FloatFormat} (x : Model src) (mode : Model.IEEERoundingMode)
   Model.castWithRounding_eq_widenExact_of_compatibleWidening x mode he hb hc hf hx
 ```
 
-The configured API spells a cast as `value.cast (target := …)` and returns a `ConversionOutcome`, a success carrying the value and conversion flags or an explicit failure. It does not call `Model.cast`. It goes through the general conversion pipeline shared with posits and P3109: the source is decoded to an exact signed rational, preserving the sign of zero, mapped into the destination's exact domain, and quantized once there. The [configured conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Conversion/Proof.lean) `ExecFloat.Binary.Conversion.run_default_finite` says that for a finite value this quantization is `Model.roundRat`. For an IEEE destination and a finite result, `toReal_roundRatScaled_eq_roundAt` identifies its real value with `roundAt`.
+The descriptor-level [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt_of_isIEEE_destination]] also covers finite source values from custom-bias and finite-only encodings. Only the destination needs the IEEE encoding convention; the result must remain finite. [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_exact_of_gridExtension_of_isIEEE_destination]] makes the cast exact when the destination has at least the source precision and reaches its smallest subnormal exponent. Grid inclusion alone does not guarantee enough upper range, so that exactness theorem retains the finite-result premise. IEEE 754-2019 §5.4.2 likewise requires both sufficient precision and sufficient range for exact widening conversions [@ieee754_2019].
+
+The configured API spells a cast as `value.cast (target := …)` and returns a `ConversionOutcome`, a success carrying the value and conversion flags or an explicit failure. It does not call `Model.cast`. It goes through the general conversion pipeline shared with posits and P3109: the source is decoded to an exact signed rational, preserving the sign of zero, mapped into the destination's exact domain, and quantized once there. The [configured conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Conversion/Proof.lean) `ExecFloat.Binary.Conversion.run_default_finite` says that for a finite value this quantization is `Model.roundRat`. For an IEEE destination and a finite result, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundRatScaled_eq_roundAt_of_isFinite]] identifies its real value with `roundAt`, including a zero numerator. The denominator must remain nonzero; signed zero is preserved by the executable converter even though its real denotation is zero.
 
 On NaNs they follow the same rule. The pipeline observes a NaN with its sign, signaling class, and diagnostic payload. The source decoder removes the quiet bit from the stored fraction field; the generic payload excludes encoding markers. The default policy `propagateNaN` builds the destination NaN with `Model.propagatedNaN`, which is exactly what `Model.cast` does. A signaling source sets the `invalid` flag of the conversion status. The flags differ from `IEEEStatus` because the same pipeline reaches destinations that saturate or wrap. We'll use the configured path for the evaluations, then state the guarantees about `Model.cast` underneath.
 
@@ -459,7 +461,7 @@ example (x : Model FloatFormat.binary32)
 
 When evaluating a result first is inconvenient, `isFinite_add_of_abs_add_le_posMaxFinite`, `isFinite_mul_of_abs_mul_le_posMaxFinite`, and `isFinite_div_of_abs_div_le_posMaxFinite` derive its finiteness from symbolic bounds on the operands. These premises matter because `Model.toReal` assigns zero to a nonfinite word. [Chapter 01](#/chapter/using-the-library) works through the bridge from a configured value to `Model`.
 
-With a rounding equation established, we can apply the [general rounding theory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Flocq/Theory) developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] give the half-ulp bound; [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] gives $u = 2^{-p}$ in the normal range. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz]] gives exact subtraction for two positive finite values within a factor of two, with output finiteness following from those hypotheses.
+With a rounding equation established, we can apply the [general rounding theory](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Flocq/Theory) developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] give the half-ulp bound; [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] gives $u = 2^{-p}$ in the normal range. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz_of_same_sign]] gives exact subtraction for finite values of the same sign whose magnitudes lie within a factor of two, with output finiteness following from those hypotheses.
 
 ## Comparisons and neighbouring values
 
@@ -478,6 +480,27 @@ example (x y : Model FloatFormat.binary16)
 ```
 
 For minimum and maximum we implement the IEEE 754-2019 operations [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimum]] and `maximum`. They treat $-0$ as below $+0$ (`minimum_posZero_negZero_of_supportsSignedZero`) and agree with the real `min` on finite inputs (`toReal_minimum_eq_min_of_isFinite`). The 2019 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minimumNumber]] and `maximumNumber` skip a NaN operand; the deprecated 2008 [[FloatLib.Floats.Formats.BinaryInterchange.Model.minNum]] and `maxNum` differ from them on signaling NaNs. Other scalar operations have their own status and finite-value theorems: `remainderWithStatus`, whose result `remainderWithStatus_exact` proves exactly representable, `roundToIntegral`, `scale`, `binaryExponent`, `nextUp`, and `nextDown`. Scaling multiplies by $2^k$ and rounds once; `binaryExponentInt` returns $\lfloor\log_2|x|\rfloor$ exactly as an integer, with IEEE `logB` exception handling. The same-format `binaryExponent` convenience operation rounds that integer into the source format; small formats can lose accuracy in this extra rounding. Scaling is the binary form of IEEE's `scaleB`.
+
+For an exact normalized rational, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_roundRatQDown_le]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_roundRatQUp]] bound the input between its downward and upward conversions. Their extended-real conclusions admit overflow to infinity and include zero and subnormals without a nonzero-input premise.
+
+Truncation toward zero cannot increase the input magnitude, following the rounding direction in IEEE 754-2019 §4.3.2 and the integral operation in §5.9 [@ieee754_2019]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_towardZero_of_isFinite]] therefore needs only a finite input and the IEEE encoding convention: it computes floor for nonnegative values and ceiling for negative values. The companion finiteness and overflow theorems apply even when a custom descriptor has more fraction bits than its upper exponent bound. Other integral rounding directions retain the range condition `fmt.fracWidth ≤ fmt.maxNormalExponent`. IEEE 754's standard binary interchange formats satisfy it.
+
+The six-bit descriptor below has two exponent bits and three fraction bits. It follows the IEEE encoding convention, but is not one of IEEE 754's defined interchange formats. Its largest finite positive value is $3.75$: truncation delivers three, while rounding to the nearest integer would need four, which overflows this descriptor.
+
+```lean
+example {fmt : FloatFormat} (value : Model fmt)
+    (hfmt : fmt.isIEEE = true) (hfinite : Model.isFinite value = true) :
+    Model.isFinite (Model.roundToIntegral value .towardZero) = true :=
+  Model.isFinite_roundToIntegral_towardZero hfmt value hfinite
+
+abbrev IntegralNarrow := FloatFormat.ieee 2 3
+#eval (Model.roundToIntegral
+  (Model.ofNatBits (fmt := IntegralNarrow) 23) .towardZero).toNatBits
+-- 20
+#eval Model.isInf (Model.roundToIntegral
+  (Model.ofNatBits (fmt := IntegralNarrow) 23) .nearestEven)
+-- true
+```
 
 Quiet and signaling comparisons share one truth table across binary and decimal formats. They agree about order. A quiet comparison raises invalid for a signaling NaN; a signaling comparison raises it for either kind of NaN.
 

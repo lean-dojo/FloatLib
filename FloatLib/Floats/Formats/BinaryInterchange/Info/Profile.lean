@@ -9,12 +9,14 @@ module
 public import FloatLib.Floats.ExecFloat.Info
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Runtime
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 
@@ -25,8 +27,8 @@ Representation, exceptional values, rounding rules, and theorem groups used by `
 `Info.Command` resolves the carrier and supplies its storage and execution details. Complex and
 interval profiles also use `inspectSummary` to read their component descriptor.
 
-Each theorem group states its scope. IEEE-specific theorems are marked unavailable when the
-descriptor does not meet their encoding and bias requirements.
+Each theorem group states its scope. Applicability distinguishes destination-only IEEE contracts
+from contracts requiring IEEE encodings on both sides of a cast.
 -/
 
 @[expose] public section
@@ -230,6 +232,7 @@ meta def profile
     , { topic := "IEEE nearest-even operation semantics"
         declarations :=
           [ ``Model.toReal_add_eq_roundAt
+          , ``Model.toReal_roundRatScaled_eq_roundAt_of_isFinite
           , ``Model.toReal_sub_eq_roundAt
           , ``Model.toReal_mul_eq_roundAt
           , ``Model.toReal_div_eq_roundAt
@@ -312,6 +315,9 @@ meta def profile
           , ``Model.toReal_roundToIntegral_towardNegativeInfinity
           , ``Model.toReal_roundToIntegral_towardPositiveInfinity
           , ``Model.toReal_roundToIntegral_towardZero
+          , ``Model.isFinite_roundToIntegral_towardZero
+          , ``Model.toReal_roundToIntegral_towardZero_of_isFinite
+          , ``Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false
           , ``Model.toReal_roundToIntegral_nearestEven
           , ``Model.scaleWithStatus_of_finite
           , ``Model.binaryExponentWithStatus_of_finite_nonzero
@@ -474,6 +480,7 @@ meta def profile
           , ``Model.abs_toReal_sqrt_sub_le
           , ``Model.abs_toReal_fma_sub_le
           , ``Model.toReal_sub_eq_of_sterbenz
+          , ``Model.toReal_sub_eq_of_sterbenz_of_same_sign
           ]
         applicability := ieeeApplicability summary
         scope :=
@@ -495,6 +502,43 @@ meta def profile
           kinds := [.rounding, .absoluteError, .exactness]
           statement :=
             "A finite cast is one destination rounding with at most 1/2 destination ULP error, and grid extensions are exact." } }
+    , { topic := "finite source casts to IEEE destinations"
+        declarations :=
+          [ ``Model.cast_eq_roundAt_of_isIEEE_destination
+          , ``Model.cast_exact_of_gridExtension_of_isIEEE_destination
+          ]
+        applicability := .conditional
+          "the destination must satisfy `isIEEE = true`; the source may use any descriptor"
+        scope :=
+          "finite source and result; grid exactness also requires destination grid inclusion"
+        numericalGuarantee? := some {
+          kinds := [.rounding, .exactness]
+          statement :=
+            "Casting performs one destination rounding, including finite-only and custom-bias " ++
+            "sources; a finer destination grid preserves the source real value." } }
+    , { topic := "IEEE rational conversion enclosures"
+        declarations :=
+          [ ``Model.toEReal_roundRatQDown_le
+          , ``Model.le_toEReal_roundRatQUp
+          ]
+        applicability := ieeeApplicability summary
+        scope := "all normalized rationals, including zero and overflow to infinity"
+        numericalGuarantee? := some {
+          kinds := [.rounding]
+          statement :=
+            "Directed conversion encloses the exact rational between extended-real bounds." } }
+    , { topic := "IEEE destination reduction semantics"
+        declarations :=
+          [ ``Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite
+          , ``Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite
+          ]
+        applicability := ieeeApplicability summary
+        scope := "finite operands and result; dot products additionally require equal input lengths"
+        numericalGuarantee? := some {
+          kinds := [.rounding]
+          statement :=
+            "Exact accumulation is followed by one nearest-even destination rounding, " ++
+            "including empty inputs and cancellation to zero." } }
     , { topic := "transcendental enclosures and whole-algorithm proof contracts"
         declarations :=
           [ ``Model.Transcendentals.Contract.RealEnclosure.abs_sub_le_width

@@ -621,6 +621,29 @@ theorem sumWithStatus_eq_zero_of_finite
   simp [hstate, hzero, outcomeWithInvalid]
 
 /--
+Every finite-input nearest-even sum with a finite result is one real rounding of the exact sum.
+Zero totals include empty input, signed zeros, and cancellation; their stored signs are specified
+by `sumWithStatus_eq_zero_of_finite` and disappear only in the real-valued conclusion.
+-/
+theorem sumWithStatus_value_toReal_eq_roundAt_of_finite
+    (destination : FloatFormat) {source : FloatFormat}
+    (values : Array (Model source))
+    (hfmt : destination.isIEEE = true)
+    (hfinite : ∀ value ∈ values.toList, isFinite value = true)
+    (hresult : isFinite (sumWithStatus destination values .nearestEven).value = true) :
+    toReal (sumWithStatus destination values .nearestEven).value =
+      roundAt destination (Semantics.finiteSum values.toList : ℝ) := by
+  by_cases hzero : Semantics.finiteSum values.toList = 0
+  · have hsig : (values.foldl Internal.State.pushValue
+        ({} : Internal.State destination)).exact.significand = 0 := by
+      apply (Numerics.Dyadic.toRat_eq_zero_iff _).mp
+      rw [Internal.array_foldl_pushValue_exact_toRat, hzero]
+    rw [sumWithStatus_eq_zero_of_finite destination values .nearestEven hfinite hsig]
+    simp [hzero]
+  · exact sumWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+      destination values hfmt hfinite hzero hresult
+
+/--
 A nonempty sum of zeros with one common sign preserves that sign in every rounding mode.
 
 The destination's zero constructor accounts for formats without a negative zero. The hypotheses
@@ -796,6 +819,40 @@ theorem dotWithStatus_eq_zero_of_finite
   simp [dotWithStatus, hsize, Internal.State.finish,
     Internal.State.HasOnlyFiniteTerms] at hstate ⊢
   simp [hstate, hzero, outcomeWithInvalid]
+
+/--
+Every successful finite-input nearest-even dot product with a finite result is one real rounding
+of the exact product sum, including cancellation to zero. Equal input lengths are required, and
+exceptional outputs remain excluded from this real-valued statement.
+-/
+theorem dotWithStatus_value_toReal_eq_roundAt_of_finite
+    (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
+    (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
+    (exact : Rat) (outcome : IEEEOutcome destination)
+    (hfmt : destination.isIEEE = true) (hsize : left.size = right.size)
+    (hleftFinite : ∀ position (hposition : position < left.size), isFinite left[position] = true)
+    (hrightFinite : ∀ position (hposition : position < right.size), isFinite right[position] = true)
+    (hspec : Semantics.finiteDot left.toList right.toList = .ok exact)
+    (houtcome : dotWithStatus destination left right .nearestEven = .ok outcome)
+    (hresult : isFinite outcome.value = true) :
+    toReal outcome.value = roundAt destination (exact : ℝ) := by
+  by_cases hzero : exact = 0
+  · subst exact
+    have hrat : (Internal.dotState left right hsize :
+        Internal.State destination).exact.toRat = 0 := by
+      rw [Internal.dotState_exact_toRat left right hsize hleftFinite hrightFinite]
+      have hbridge := Semantics.finiteDot_toList_eq_slice left right hsize
+      rw [hspec] at hbridge
+      exact (Except.ok.inj hbridge).symm
+    have hsig := (Numerics.Dyadic.toRat_eq_zero_iff _).mp hrat
+    rw [dotWithStatus_eq_zero_of_finite destination left right .nearestEven hsize
+      hleftFinite hrightFinite hsig] at houtcome
+    simp only [Except.ok.injEq] at houtcome
+    subst outcome
+    simp
+  · exact dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+      destination left right exact outcome hfmt hsize hleftFinite hrightFinite
+      hspec hzero houtcome hresult
 
 /-- The empty correctly rounded sum is positive zero with no exception indicator. -/
 @[simp] theorem sumWithStatus_empty

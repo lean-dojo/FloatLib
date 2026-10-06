@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 Normalized mathlib `Rat` values round directly into any `Model fmt`. For conventional IEEE
 formats, directed overflow returns either a signed infinity or the largest finite value of the
 same sign, according to the rounding direction. The conversion theorems establish the
-extended-real lower bound for downward conversion and non-NaN results in both directions.
+extended-real lower and upper bounds and non-NaN results in both directions.
 -/
 
 @[expose] public section
@@ -42,33 +42,30 @@ def roundRatQDown (fmt : FloatFormat) (q : Rat) : Model fmt :=
 def roundRatQUp (fmt : FloatFormat) (q : Rat) : Model fmt :=
   roundRatQWithRounding fmt .towardPositiveInfinity q
 
-/-- Rewrite a rational cast into the signed numerator form used by the executable rounders. -/
-private theorem ratCast_eq_signed_div (q : Rat) :
-    (q : ℝ) =
-      if q.num < 0 then
-        -((q.num.natAbs : ℝ) / (q.den : ℝ))
-      else
-        (q.num.natAbs : ℝ) / (q.den : ℝ) := by
+/-- The signed numerator and scale-zero representation denotes the normalized rational. -/
+private theorem signedScaledRatToReal_of_rat (q : Rat) :
+    signedScaledRatToReal (q.num < 0) q.num.natAbs q.den 0 = (q : ℝ) := by
   rw [Rat.cast_def]
-  split_ifs with h
-  · simp [abs_of_neg h]
-    ring
-  · have hn : 0 ≤ q.num := le_of_not_gt h
-    simp [abs_of_nonneg hn]
+  by_cases h : q.num < 0
+  · simp [signedScaledRatToReal, scaledRatToReal, h, abs_of_neg h, neg_div]
+  · simp [signedScaledRatToReal, scaledRatToReal, h, abs_of_nonneg (le_of_not_gt h)]
 
 /-- Downward conversion of an exact rational is an extended-real lower bound. -/
 theorem toEReal_roundRatQDown_le (fmt : FloatFormat) (q : Rat)
     (hfmt : fmt.isIEEE = true) :
     toEReal (roundRatQDown fmt q) ≤ ((q : ℝ) : EReal) := by
-  rw [ratCast_eq_signed_div]
-  by_cases h : q.num < 0
-  · simpa [roundRatQDown, roundRatQWithRounding, roundRatDown,
-      signedScaledRatToReal, scaledRatToReal, bpow, bpow, h,
-      EReal.coe_div, EReal.coe_neg] using
-      (toEReal_roundRatDown_le fmt (q.num < 0) q.num.natAbs q.den hfmt q.den_nz)
-  · simpa [roundRatQDown, roundRatQWithRounding, roundRatDown,
-      signedScaledRatToReal, scaledRatToReal, bpow, bpow, h, EReal.coe_div] using
-      (toEReal_roundRatDown_le fmt (q.num < 0) q.num.natAbs q.den hfmt q.den_nz)
+  simpa only [roundRatQDown, roundRatQWithRounding, roundRatDown, signedScaledRatToReal_of_rat]
+    using toEReal_roundRatDown_le fmt (q.num < 0) q.num.natAbs q.den hfmt q.den_nz
+
+/--
+Upward conversion of an exact rational is an extended-real upper bound, including zero,
+subnormal rounding, and overflow to positive infinity.
+-/
+theorem le_toEReal_roundRatQUp (fmt : FloatFormat) (q : Rat)
+    (hfmt : fmt.isIEEE = true) :
+    ((q : ℝ) : EReal) ≤ toEReal (roundRatQUp fmt q) := by
+  simpa only [roundRatQUp, roundRatQWithRounding, roundRatUp, signedScaledRatToReal_of_rat]
+    using le_toEReal_roundRatUp fmt (q.num < 0) q.num.natAbs q.den hfmt q.den_nz
 
 /-- Downward conversion of a normalized rational never produces NaN. -/
 theorem isNaN_roundRatQDown_eq_false (fmt : FloatFormat) (q : Rat)

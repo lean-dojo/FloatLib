@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Executable packing semantics
 
-For a descriptor with `fmt.isIEEE = true` and a nonzero rational input, a finite result produced
+For a descriptor with `fmt.isIEEE = true` and a nonzero denominator, a finite result produced
 by `roundRatScaled` denotes exactly `roundAt` applied to the corresponding real value.
 
 The positive proof covers underflow, subnormal and normal results, including a carry into the next
@@ -163,6 +163,24 @@ theorem toReal_roundRatScaled_eq_roundAt
           fmt numerator denominator exponent hfmt hnumerator hdenominator hfiniteFalse]
       simp [signedScaledRatToReal]
 
+
+/--
+Finite scaled-rational rounding agrees with nearest-even real rounding, including a zero
+numerator. A nonzero denominator is still required; zero denominators produce an invalid result.
+-/
+theorem toReal_roundRatScaled_eq_roundAt_of_isFinite
+    (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
+    (exponent : Int) (hfmt : fmt.isIEEE = true)
+    (hdenominator : denominator ≠ 0)
+    (hfinite : isFinite (roundRatScaled fmt sign numerator denominator exponent) = true) :
+    toReal (roundRatScaled fmt sign numerator denominator exponent) =
+      roundAt fmt (signedScaledRatToReal sign numerator denominator exponent) := by
+  by_cases hnumerator : numerator = 0
+  · subst numerator
+    rw [roundRatScaled_num_zero fmt sign denominator exponent hdenominator, toReal_zero]
+    simp [signedScaledRatToReal, scaledRatToReal]
+  · exact toReal_roundRatScaled_eq_roundAt
+      fmt sign numerator denominator exponent hfmt hnumerator hdenominator hfinite
 
 end
 

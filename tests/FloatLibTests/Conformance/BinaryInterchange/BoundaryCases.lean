@@ -155,4 +155,176 @@ example (x y : Model FloatFormat.binary32) (hx : Model.isFinite x = true)
   simpa only [binary32_unitRoundoffAt] using
     Model.toReal_add_eq_mul_one_add x y (by decide) hx hy hout
 
+private abbrev IntegralNarrow := FloatFormat.ieee 2 3
+
+-- This IEEE-shaped custom layout does not satisfy the standard interchange range bound.
+example : ¬ (IntegralNarrow.fracWidth : Int) ≤ IntegralNarrow.maxNormalExponent := by
+  decide +kernel
+
+/-- Every finite E2M3 input can be truncated without the interchange range bound. -/
+theorem truncation_custom_range (value : Model (FloatFormat.ieee 2 3))
+    (hfinite : Model.isFinite value = true) :
+    Model.isFinite (Model.roundToIntegral value .towardZero) = true :=
+  Model.isFinite_roundToIntegral_towardZero (by decide) value hfinite
+
+/-- The broader truncation theorem computes 3.75 to 3 in the narrow-range descriptor. -/
+theorem truncation_custom_value :
+    Model.toReal (Model.roundToIntegral
+      (Model.ofNatBits (fmt := FloatFormat.ieee 2 3) 23) .towardZero) = 3 := by
+  let value := Model.ofNatBits (fmt := IntegralNarrow) 23
+  have hd : Model.toDyadic? value = some ⟨false, 15, -2⟩ := by
+    dsimp [value]
+    rfl
+  have hvalue : Model.toReal value = (15 / 4 : ℝ) := by
+    norm_num [Model.toReal_eq, hd, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
+  change Model.toReal (Model.roundToIntegral value .towardZero) = 3
+  rw [Model.toReal_roundToIntegral_towardZero_of_isFinite (by decide) value (by decide), hvalue]
+  norm_num
+
+example : (Model.roundToIntegralExactWithStatus
+    (Model.ofNatBits (fmt := IntegralNarrow) 23) .towardZero).status.overflow = false :=
+  Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false (by decide) _ (by decide)
+
+-- Nearest rounding still overflows here; its range guard cannot be dropped wholesale.
+example : Model.isInf (Model.roundToIntegral
+    (Model.ofNatBits (fmt := IntegralNarrow) 23) .nearestEven) = true := by
+  decide +kernel
+
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := IntegralNarrow) 55) .towardZero).toNatBits = 52 := by
+  decide +kernel
+
+example : (Model.roundToIntegral (Model.negZero .binary64) .towardZero).toNatBits =
+    0x8000000000000000 := by decide +kernel
+
+/-- Zero numerators use the common rational-rounding theorem for either stored sign. -/
+theorem scaled_rational_zero (sign : Bool) (denominator : Nat) (hd : denominator ≠ 0)
+    (exponent : Int) :
+    Model.toReal (Model.roundRatScaled FloatFormat.binary64 sign 0 denominator exponent) =
+      Model.roundAt FloatFormat.binary64
+        (Model.signedScaledRatToReal sign 0 denominator exponent) := by
+  apply Model.toReal_roundRatScaled_eq_roundAt_of_isFinite _ _ _ _ _ (by decide) hd
+  rw [Model.roundRatScaled_num_zero _ _ _ _ hd]
+  exact Model.isFinite_eq_true_of_isZero_eq_true _ (Model.isZero_zero _ _)
+
+example : (Model.roundRatScaled FloatFormat.binary64 true 0 3 (-1074)).toNatBits =
+    0x8000000000000000 := by decide +kernel
+
+example : Model.isNaN (Model.roundRatScaled FloatFormat.binary64 false 0 0 0) = true := by
+  decide +kernel
+
+/-- Sterbenz exactness covers negative nearby operands through the public same-sign theorem. -/
+theorem sterbenz_negative :
+    Model.toReal (Model.sub (Model.ofNatBits (fmt := .binary64) 0xbff8000000000000)
+      (Model.negOne .binary64)) = (-1 / 2 : ℝ) := by
+  let x := Model.ofNatBits (fmt := .binary64) 0xbff8000000000000
+  let y := Model.negOne FloatFormat.binary64
+  have hd : Model.toDyadic? x = some ⟨true, 3 * 2 ^ 51, -52⟩ := by
+    dsimp [x]
+    rfl
+  have hx : Model.toReal x = (-3 / 2 : ℝ) := by
+    norm_num [Model.toReal_eq, hd, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
+  have hy : Model.toReal y = -1 := Model.toReal_negOne _
+  have hsub := Model.toReal_sub_eq_of_sterbenz_of_same_sign (x := x) (y := y)
+    (by decide) (by decide) (by decide)
+    (by rw [hx, hy]; norm_num) (by rw [hx, hy]; norm_num) (by rw [hx, hy]; norm_num)
+  change Model.toReal (Model.sub x y) = (-1 / 2 : ℝ)
+  rw [hsub, hx, hy]
+  norm_num
+
+example : (Model.sub (Model.ofNatBits (fmt := .binary16) 0x8002)
+    (Model.ofNatBits (fmt := .binary16) 0x8001)).toNatBits = 0x8001 := by
+  decide +kernel
+
+example : Model.toReal (Model.sub (Model.negZero .binary64) (Model.posZero .binary64)) = 0 := by
+  have hfmt : FloatFormat.binary64.isIEEE = true := by decide
+  rw [Model.toReal_sub_eq_of_sterbenz_of_same_sign
+    (x := Model.negZero .binary64) (y := Model.posZero .binary64)
+    hfmt (by decide) (by decide)
+    (by simp [hfmt]) (by simp [hfmt]) (by simp [hfmt])]
+  simp [hfmt]
+
+-- FNUZ is a finite-with-NaN encoding with a different bias from the IEEE layout.
+example : FloatFormat.e4m3fnuz.isIEEE = false := by decide +kernel
+
+/-- A finite FNUZ source uses the common exact widening contract for an IEEE destination. -/
+theorem cast_fnuz_source :
+    Model.toReal (Model.cast FloatFormat.e4m3fnuz FloatFormat.binary32
+      (Model.ofNatBits (fmt := .e4m3fnuz) 68)) =
+      Model.toReal (Model.ofNatBits (fmt := .e4m3fnuz) 68) :=
+  Model.cast_exact_of_gridExtension_of_isIEEE_destination _ (by decide)
+    (by decide) (by decide) (by decide) (by decide)
+
+example : (Model.cast FloatFormat.e4m3fnuz (FloatFormat.ieee 4 3)
+    (Model.ofNatBits (fmt := .e4m3fnuz) 68)).toNatBits = 60 := by decide +kernel
+
+example : (Model.cast FloatFormat.e4m3fn (FloatFormat.ieee 4 3)
+    (Model.ofNatBits (fmt := .e4m3fn) 60)).toNatBits = 60 := by decide +kernel
+
+/-- Opposite finite terms cancel through the common sum rounding bridge. -/
+theorem sum_cancellation_real :
+    Model.toReal (Model.sumWithStatus FloatFormat.binary64
+      #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven).value = 0 := by
+  have hsum : Model.Reduction.Semantics.finiteSum
+      [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32] = 0 := by
+    decide +kernel
+  rw [Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite _ _ (by decide)]
+  · change Model.roundAt FloatFormat.binary64
+      (Model.Reduction.Semantics.finiteSum
+        [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32] : ℝ) = 0
+    rw [hsum]
+    simp
+  · intro value hvalue
+    change value ∈ [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32]
+      at hvalue
+    simp at hvalue
+    rcases hvalue with rfl | rfl <;> decide +kernel
+  · decide +kernel
+
+/-- A cancelling product sum succeeds and uses the common real-rounding theorem at zero. -/
+theorem dot_cancellation_real :
+    ∃ outcome : Model.IEEEOutcome FloatFormat.binary64,
+      Model.dotWithStatus FloatFormat.binary64
+          #[Model.posOne .binary32, Model.posOne .binary32]
+          #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven = .ok outcome ∧
+        Model.toReal outcome.value = Model.roundAt FloatFormat.binary64 (0 : ℝ) := by
+  let outcome : Model.IEEEOutcome FloatFormat.binary64 := { value := Model.posZero .binary64, status := {} }
+  have houtcome : Model.dotWithStatus FloatFormat.binary64
+      #[Model.posOne .binary32, Model.posOne .binary32]
+      #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven = .ok outcome := by
+    dsimp [outcome]
+    decide +kernel
+  refine ⟨outcome, houtcome, ?_⟩
+  simpa using Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite
+    _ _ _ 0 outcome (by decide) (by decide)
+    (by
+      intro position hposition
+      have h : position = 0 ∨ position = 1 := by
+        change position < 2 at hposition
+        omega
+      rcases h with rfl | rfl <;> decide +kernel +revert)
+    (by
+      intro position hposition
+      have h : position = 0 ∨ position = 1 := by
+        change position < 2 at hposition
+        omega
+      rcases h with rfl | rfl <;> decide +kernel +revert)
+    (by decide +kernel) houtcome (by dsimp [outcome]; decide +kernel)
+
+/-- Normalized rational conversion supplies both enclosure endpoints without a nonzero premise. -/
+theorem rational_directed_enclosure (fmt : FloatFormat) (q : Rat) (hfmt : fmt.isIEEE = true) :
+    ((q : ℝ) : EReal) ∈ Set.Icc
+      (Model.toEReal (Model.roundRatQDown fmt q))
+      (Model.toEReal (Model.roundRatQUp fmt q)) :=
+  ⟨Model.toEReal_roundRatQDown_le fmt q hfmt, Model.le_toEReal_roundRatQUp fmt q hfmt⟩
+
+example : (Model.roundRatQUp FloatFormat.binary16 ((1 : Rat) / 2 ^ 25)).toNatBits = 1 := by
+  decide +kernel
+
+example : (Model.roundRatQUp FloatFormat.binary16 (-(1 : Rat) / 2 ^ 25)).toNatBits = 0x8000 := by
+  decide +kernel
+
+example : Model.isInf (Model.roundRatQUp FloatFormat.binary16 65536) = true := by
+  decide +kernel
+
 end FloatLibTests.Conformance.BinaryInterchange.BoundaryCases

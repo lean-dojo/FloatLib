@@ -112,16 +112,16 @@ When a subtraction gives a poor answer, it is tempting to blame the subtraction.
 -- 1 * 2^-20
 ```
 
-The intended real calculation gives $10^{-6}$; the computed value is $2^{-20} \approx 9.54 \times 10^{-7}$, off by almost five percent. The subtraction itself is exact. The theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz]] states that for positive finite values within a factor of two of each other the decoded difference is the exact real difference. Here it is applied at binary32, with `by decide` discharging the hypothesis that the format is a conventional IEEE one:
+The intended real calculation gives $10^{-6}$; the computed value is $2^{-20} \approx 9.54 \times 10^{-7}$, off by almost five percent. The subtraction itself is exact. The theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz_of_same_sign]] states that for finite values of the same sign whose magnitudes lie within a factor of two, the decoded difference is the exact real difference. Here it is applied at binary32, with `by decide` discharging the hypothesis that the format is a conventional IEEE one:
 
 ```lean
 example (x y : Model FloatFormat.binary32)
     (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
-    (hxpos : 0 < Model.toReal x) (hypos : 0 < Model.toReal y)
-    (hxy : Model.toReal x ≤ 2 * Model.toReal y)
-    (hyx : Model.toReal y ≤ 2 * Model.toReal x) :
+    (hsign : 0 ≤ Model.toReal x * Model.toReal y)
+    (hxy : |Model.toReal x| ≤ 2 * |Model.toReal y|)
+    (hyx : |Model.toReal y| ≤ 2 * |Model.toReal x|) :
     Model.toReal (Model.sub x y) = Model.toReal x - Model.toReal y :=
-  Model.toReal_sub_eq_of_sterbenz (by decide) hx hy hxpos hypos hxy hyx
+  Model.toReal_sub_eq_of_sterbenz_of_same_sign (by decide) hx hy hsign hxy hyx
 ```
 
 The addition rounded $1 + 10^{-6}$ to the nearest multiple of $2^{-23}$, introducing an absolute error of about $4.6 \times 10^{-8}$. Subtracting one leaves that absolute error unchanged while reducing the magnitude of the result by about a million. Its relative error therefore grows sharply. Exact subtraction cannot recover information discarded by the addition. [Chapter 07](#/chapter/the-mathematics-of-rounding) develops the grid form of Sterbenz's lemma, [[FloatLib.Floats.Formats.Flocq.generic_format_FLX_sterbenz]].

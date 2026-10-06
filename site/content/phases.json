@@ -433,8 +433,8 @@
           "title": "Finite binary sums have a relative error budget"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz",
-          "title": "Sterbenz exactness for binary formats"
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz_of_same_sign",
+          "title": "Sterbenz exactness for both operand signs"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.cast",
@@ -471,6 +471,26 @@
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.matmul_refines",
           "title": "Matrix product shape and entries"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundRatScaled_eq_roundAt_of_isFinite",
+          "title": "Scaled rational rounding includes zero"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt_of_isIEEE_destination",
+          "title": "Casts from every finite binary descriptor"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.cast_exact_of_gridExtension_of_isIEEE_destination",
+          "title": "Finer IEEE grids preserve finite sources"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite",
+          "title": "One rounding for finite sums including zero"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite",
+          "title": "One rounding for finite dot products including zero"
         }
       ]
     },
@@ -563,6 +583,18 @@
           "title": "Integral rounding to nearest even"
         },
         {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_towardZero_of_isFinite",
+          "title": "Truncation needs no upper range assumption"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_roundToIntegral_towardZero",
+          "title": "Finite truncation remains finite"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false",
+          "title": "Truncation never signals overflow"
+        },
+        {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.compare",
           "title": "IEEE comparison: unordered when NaN"
         },
@@ -629,6 +661,14 @@
         {
           "name": "FloatLib.Floats.ExecFloat.Binary.Interval.add_sound",
           "title": "Configured interval addition encloses the exact sum"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_roundRatQDown_le",
+          "title": "Exact rational conversion is a lower bound"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_roundRatQUp",
+          "title": "Exact rational conversion is an upper bound"
         }
       ]
     },

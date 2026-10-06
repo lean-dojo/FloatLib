@@ -11,6 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendenta
 public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.Quotient.Compiler
+public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
 public import FloatLibTests.Conformance.Execution.Certificates
 public import FloatLibTests.Conformance.Posit.Quire
@@ -53,6 +54,14 @@ private def allowedKernelAxioms : Array Lean.Name :=
 
 private def auditedTestDeclarations : Array Lean.Name :=
   #[
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.cast_fnuz_source,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.sum_cancellation_real,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.dot_cancellation_real,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.rational_directed_enclosure,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.truncation_custom_range,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.truncation_custom_value,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.scaled_rational_zero,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.sterbenz_negative,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_roundtrip,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_roundtrip,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_nan_canonicalized,

@@ -27,7 +27,13 @@ discarded and exposes the exceptional branches.
 For IEEE encodings with `fmt.fracWidth ≤ fmt.maxNormalExponent`, the selected integer is exactly
 representable. This condition holds for the IEEE interchange formats. On finite inputs,
 `roundToIntegral` then denotes the floor, ceiling, truncation, or nearest-even integer selected by
-the rounding direction, and `roundToIntegralExactWithStatus` reports no overflow.
+the rounding direction, and `roundToIntegralExactWithStatus` reports no overflow. Truncation
+toward zero needs no such range condition: its result cannot exceed the input magnitude.
+
+## References
+
+* IEEE 754-2019, Sections 4.3.2 and 5.9 (directed and integral rounding).
+  https://doi.org/10.1109/IEEESTD.2019.8766229
 -/
 
 @[expose] public section
@@ -460,59 +466,41 @@ private theorem two_pow_fracWidth_le_toReal_posMaxFinite
           bpow (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) :=
       mul_le_mul hmantissa hone zero_le_one (Nat.cast_nonneg _)
 
-/--
-When the exponent range reaches `fracWidth`, rounding a finite IEEE value to an integer stays
-within range. A nonnegative stored exponent already represents an integer; a negative exponent
-gives a rounded magnitude at most `2^fracWidth`. In both cases that magnitude is `m * 2^k` with
-`m` fitting the significand precision.
--/
-private theorem roundDyadicToInt_representable
-    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+-- A nonnegative stored exponent already represents an integer, independently of rounding mode.
+private theorem roundDyadicToInt_of_exponent_eq_ofNat
+    (mode : IEEERoundingMode) (value : Numerics.Dyadic) (k : Nat)
+    (hexp : value.exponent = Int.ofNat k) :
+    roundDyadicToInt mode value =
+      if value.negative then -Int.ofNat (value.significand * 2 ^ k)
+      else Int.ofNat (value.significand * 2 ^ k) := by
+  by_cases hzero : value.significand = 0
+  · simp [roundDyadicToInt, hzero]
+  · simp [roundDyadicToInt, hzero, hexp, Nat.shiftLeft_eq]
+
+-- Integral rounding preserves precision independently of the format's upper exponent bound.
+private theorem roundDyadicToInt_significand
+    {fmt : FloatFormat}
     (value : Model fmt) (mode : IEEERoundingMode)
     (exact : Numerics.Dyadic) (hd : toDyadic? value = some exact) :
     ∃ m k : Nat,
       (Numerics.Dyadic.ofScaledInt (roundDyadicToInt mode exact) 0).significand = m * 2 ^ k ∧
-        m < 2 ^ (fmt.fracWidth + 1) ∧
-        |((roundDyadicToInt mode exact : Int) : ℝ)| ≤ toReal (posMaxFinite fmt) := by
+        m < 2 ^ (fmt.fracWidth + 1) := by
   have hsig := toDyadic?_significand_lt value hd
-  have hfin : isFinite value = true := isFinite_eq_true_of_toDyadic?_some hd
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  have hxbound : |exact.toReal| ≤ toReal (posMaxFinite fmt) := by
-    rw [← hx]
-    exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite value hfmt hfin
   cases hexp : exact.exponent with
   | negSucc shift =>
       have hneg : exact.exponent < 0 := by
         rw [hexp]
         omega
       have habs := abs_roundDyadicToInt_le_two_pow_of_exponent_neg mode exact fmt.fracWidth hsig hneg
-      refine ⟨(roundDyadicToInt mode exact).natAbs, 0, by simp [Numerics.Dyadic.ofScaledInt], ?_, ?_⟩
-      · have hnat : (roundDyadicToInt mode exact).natAbs ≤ 2 ^ fmt.fracWidth := by
-          have := habs
-          rw [Int.abs_eq_natAbs] at this
-          exact_mod_cast this
-        exact lt_of_le_of_lt hnat (Nat.pow_lt_pow_right (by decide) (by omega))
-      · have hcast : |((roundDyadicToInt mode exact : Int) : ℝ)| ≤ (2 : ℝ) ^ fmt.fracWidth := by
-          have := habs
-          exact_mod_cast this
-        exact hcast.trans (two_pow_fracWidth_le_toReal_posMaxFinite fmt hrange)
+      refine ⟨(roundDyadicToInt mode exact).natAbs, 0,
+        by simp [Numerics.Dyadic.ofScaledInt], ?_⟩
+      have hnat : (roundDyadicToInt mode exact).natAbs ≤ 2 ^ fmt.fracWidth := by
+        rw [Int.abs_eq_natAbs] at habs
+        exact_mod_cast habs
+      exact lt_of_le_of_lt hnat (Nat.pow_lt_pow_right (by decide) (by omega))
   | ofNat k =>
-      have hvalue :
-          roundDyadicToInt mode exact =
-            if exact.negative then -Int.ofNat (exact.significand * 2 ^ k)
-            else Int.ofNat (exact.significand * 2 ^ k) := by
-        by_cases hzero : exact.significand = 0
-        · simp [roundDyadicToInt, hzero]
-        · simp [roundDyadicToInt, hzero, hexp, Nat.shiftLeft_eq]
-      have hreal : ((roundDyadicToInt mode exact : Int) : ℝ) = exact.toReal := by
-        rw [hvalue, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hexp]
-        cases exact.negative <;>
-          simp only [Bool.false_eq_true, ite_false, ite_true, Int.ofNat_eq_natCast,
-            zpow_natCast] <;>
-          push_cast <;> ring
-      refine ⟨exact.significand, k, ?_, hsig, by rw [hreal]; exact hxbound⟩
+      have hvalue := roundDyadicToInt_of_exponent_eq_ofNat mode exact k hexp
+      refine ⟨exact.significand, k, ?_, hsig⟩
       show (roundDyadicToInt mode exact).natAbs = exact.significand * 2 ^ k
       rw [hvalue]
       cases exact.negative
@@ -521,23 +509,17 @@ private theorem roundDyadicToInt_representable
       · simp only [ite_true, Int.natAbs_neg]
         rfl
 
-/--
-On a finite input of an IEEE format whose exponent range reaches the precision, the result
-represents the selected integer exactly and reports no overflow. Fractional input can still set
-`inexact`.
-
-Every IEEE interchange format satisfies `fmt.fracWidth ≤ fmt.maxNormalExponent`.
--/
-theorem roundToIntegralExactWithStatus_finite_exact
+-- Precision and range are separate: truncation supplies its range bound from the input magnitude.
+private theorem roundToIntegralExactWithStatus_finite_exact_of_abs_le
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
     (value : Model fmt) (mode : IEEERoundingMode)
-    (exact : Numerics.Dyadic) (hvalue : exactValue value = .finite exact) :
+    (exact : Numerics.Dyadic) (hvalue : exactValue value = .finite exact)
+    (hbound : |((roundDyadicToInt mode exact : Int) : ℝ)| ≤ toReal (posMaxFinite fmt)) :
     isFinite (roundToIntegral value mode) = true ∧
       toReal (roundToIntegral value mode) = ((roundDyadicToInt mode exact : Int) : ℝ) ∧
       (roundToIntegralExactWithStatus value mode).status.overflow = false := by
   have hd : toDyadic? value = some exact := exactValue_eq_finite_iff.mp hvalue
-  obtain ⟨m, k, hsig, hm, hbound⟩ := roundDyadicToInt_representable hfmt hrange value mode exact hd
+  obtain ⟨m, k, hsig, hm⟩ := roundDyadicToInt_significand value mode exact hd
   have hexpMin : fmt.minSubnormalExponent ≤ (0 : Int) := by
     have := fmt.exponentBias_pos
     simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
@@ -574,6 +556,97 @@ theorem roundToIntegralExactWithStatus_finite_exact
     · rw [hval, hc0]
     · rw [dyadicRoundingStatus_overflow_of_isFinite _ _ _ hfin]
       exact hoverflow
+
+/--
+On a finite input of an IEEE format whose exponent range reaches the precision, the selected
+integer is represented exactly and reports no overflow. Fractional input can still set `inexact`.
+The range condition holds for IEEE 754's standard binary interchange formats.
+-/
+theorem roundToIntegralExactWithStatus_finite_exact
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (mode : IEEERoundingMode)
+    (exact : Numerics.Dyadic) (hvalue : exactValue value = .finite exact) :
+    isFinite (roundToIntegral value mode) = true ∧
+      toReal (roundToIntegral value mode) = ((roundDyadicToInt mode exact : Int) : ℝ) ∧
+      (roundToIntegralExactWithStatus value mode).status.overflow = false := by
+  have hd : toDyadic? value = some exact := exactValue_eq_finite_iff.mp hvalue
+  have hbound : |((roundDyadicToInt mode exact : Int) : ℝ)| ≤ toReal (posMaxFinite fmt) := by
+    cases hexp : exact.exponent with
+    | negSucc shift =>
+      have hneg : exact.exponent < 0 := by rw [hexp]; omega
+      have hsig := toDyadic?_significand_lt value hd
+      have hsmall := abs_roundDyadicToInt_le_two_pow_of_exponent_neg mode exact
+        fmt.fracWidth hsig hneg
+      have hcast : |((roundDyadicToInt mode exact : Int) : ℝ)| ≤ (2 : ℝ) ^ fmt.fracWidth := by
+        exact_mod_cast hsmall
+      exact hcast.trans (two_pow_fracWidth_le_toReal_posMaxFinite fmt hrange)
+    | ofNat k =>
+      have hrounded := roundDyadicToInt_of_exponent_eq_ofNat mode exact k hexp
+      have hreal : ((roundDyadicToInt mode exact : Int) : ℝ) = exact.toReal := by
+        rw [hrounded, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hexp]
+        cases exact.negative <;>
+          simp only [Bool.false_eq_true, ite_false, ite_true, Int.ofNat_eq_natCast,
+            zpow_natCast] <;> push_cast <;> ring
+      rw [hreal, show exact.toReal = toReal value by simp [toReal_eq, hd]]
+      exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite value hfmt
+        (isFinite_eq_true_of_toDyadic?_some hd)
+  exact roundToIntegralExactWithStatus_finite_exact_of_abs_le hfmt value mode exact hvalue hbound
+
+/-- Truncation toward zero cannot increase the magnitude of an exact dyadic. -/
+theorem abs_roundDyadicToInt_towardZero_le (value : Numerics.Dyadic) :
+    |((roundDyadicToInt .towardZero value : Int) : ℝ)| ≤ |value.toReal| := by
+  rw [roundDyadicToInt_towardZero]
+  by_cases hv : 0 ≤ value.toReal
+  · rw [ite_eq_left hv, abs_of_nonneg hv, abs_of_nonneg]
+    · exact Int.floor_le _
+    · exact_mod_cast Int.floor_nonneg.mpr hv
+  · have hv0 : value.toReal ≤ 0 := (not_le.mp hv).le
+    rw [ite_eq_right hv, abs_of_nonpos hv0, abs_of_nonpos]
+    · exact neg_le_neg (Int.le_ceil _)
+    · exact_mod_cast Int.ceil_nonpos.mpr hv0
+
+private theorem roundToIntegralExactWithStatus_towardZero_finite_exact
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    isFinite (roundToIntegral value .towardZero) = true ∧
+      toReal (roundToIntegral value .towardZero) =
+        (if 0 ≤ toReal value then (⌊toReal value⌋ : ℝ) else (⌈toReal value⌉ : ℝ)) ∧
+      (roundToIntegralExactWithStatus value .towardZero).status.overflow = false := by
+  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
+  have hx : toReal value = exact.toReal := by simp [toReal_eq, hd]
+  have hbound : |((roundDyadicToInt .towardZero exact : Int) : ℝ)| ≤
+      toReal (posMaxFinite fmt) := by
+    apply (abs_roundDyadicToInt_towardZero_le exact).trans
+    rw [← hx]
+    exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite value hfmt hfinite
+  have h := roundToIntegralExactWithStatus_finite_exact_of_abs_le hfmt value .towardZero exact
+    (exactValue_eq_finite_of_toDyadic?_eq_some hd) hbound
+  refine ⟨h.1, ?_, h.2.2⟩
+  rw [h.2.1, roundDyadicToInt_towardZero, ← hx]
+  split_ifs <;> rfl
+
+/-- Truncating a finite IEEE value toward zero is finite, for any exponent range. -/
+theorem isFinite_roundToIntegral_towardZero
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    isFinite (roundToIntegral value .towardZero) = true :=
+  (roundToIntegralExactWithStatus_towardZero_finite_exact hfmt value hfinite).1
+
+/-- Truncation toward zero computes floor or ceiling without an exponent-range restriction. -/
+theorem toReal_roundToIntegral_towardZero_of_isFinite
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    toReal (roundToIntegral value .towardZero) =
+      if 0 ≤ toReal value then (⌊toReal value⌋ : ℝ) else (⌈toReal value⌉ : ℝ) :=
+  (roundToIntegralExactWithStatus_towardZero_finite_exact hfmt value hfinite).2.1
+
+/-- Truncation toward zero of a finite IEEE value never signals overflow. -/
+theorem roundToIntegralExactWithStatus_towardZero_overflow_eq_false
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    (roundToIntegralExactWithStatus value .towardZero).status.overflow = false :=
+  (roundToIntegralExactWithStatus_towardZero_finite_exact hfmt value hfinite).2.2
 
 /--
 Integral rounding of a finite IEEE value never overflows when
