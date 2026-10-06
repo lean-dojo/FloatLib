@@ -56,3 +56,8 @@ supplement's sources and protocol are under `balanced-sqrt/` in the ZIP.
 Replaying its timings requires rebuilding the pinned dependencies and adapting
 the captured paths and CPU affinity; the ZIP is an evidence archive, not a
 standalone build package.
+
+Private mount and home paths in the captured build records have been replaced with
+`/workspace` publication placeholders. `publication-redactions.json` records the
+original and published hashes. The ZIP's member ledger and the verifier's archive
+hash authenticate the sanitized publication; numerical inputs and timings are unchanged.

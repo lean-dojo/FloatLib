@@ -7,6 +7,7 @@ cd "$ROOT"
 # shellcheck source=tests/lib/lake.sh
 source "$ROOT/tests/lib/lake.sh"
 
+python3 tests/checks/publication-privacy.py
 bash tests/checks/version-pins.sh
 
 floatlib_lake build

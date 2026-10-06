@@ -1,6 +1,9 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -36,6 +39,9 @@ jobs:
             /usr/share/swift
           sudo docker image prune --all --force || true
           df -h
+
+      - name: Check publication privacy
+        run: python3 tests/checks/publication-privacy.py
 
       - name: Install independent-oracle dependencies
         run: |

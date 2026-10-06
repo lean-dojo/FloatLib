@@ -17,7 +17,7 @@ import zipfile
 
 
 RESULTS = Path(__file__).resolve().parents[1] / "results" / "flocq-matched"
-ARCHIVE_SHA256 = "66d84170e28bb0c347a5d75de9c4e9f84c576db7a17163cb1db3904759da82e8"
+ARCHIVE_SHA256 = "af847f1d988233577dbe11df6eeaebcc4a3c139e6c4133ef6c19016f1fcd874d"
 EXPONENT_BITS = {
     6: 3, 8: 4, 16: 5, 32: 8, 64: 11, 128: 15,
     256: 19, 512: 19, 1024: 19, 2048: 19, 4096: 19,

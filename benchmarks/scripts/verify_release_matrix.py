@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import math
 import re
 from pathlib import Path
@@ -936,6 +937,16 @@ def verify_source_metadata(benchmark: Path, metadata: dict[str, str]) -> None:
         ("worktree.patch", "worktree_patch_sha256"),
     ):
         expected = snapshot.get(snapshot_key)
+        receipt_path = provenance / "public-source-archive.json"
+        if name == "worktree.patch" and receipt_path.exists():
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            redaction = receipt.get("redacted_provenance", {}).get(name)
+            if redaction is not None:
+                if redaction.get("original_sha256") != expected or not re.fullmatch(
+                    r"[0-9a-f]{64}", redaction.get("published_sha256", "")
+                ):
+                    raise ValueError("published patch redaction differs from source snapshot")
+                expected = redaction["published_sha256"]
         actual = sha256(required[name])
         if actual != expected:
             raise ValueError(

@@ -38,6 +38,7 @@ __pycache__/
 !/benchmarks/results/flocq-matched/
 /benchmarks/results/flocq-matched/*
 !/benchmarks/results/flocq-matched/README.md
+!/benchmarks/results/flocq-matched/publication-redactions.json
 !/benchmarks/results/flocq-matched/matched-benchmark-summary.csv
 !/benchmarks/results/flocq-matched/matched-comparison-evidence.zip
 !/benchmarks/results/p3109-flops/

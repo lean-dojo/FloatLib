@@ -54,8 +54,9 @@ are preserved under `release/provenance/`; no timing row or derived result was
 changed.
 
 The reports and figures use the current FloatLib name. Raw output retains the names
-recorded by the campaigns; its contents and the original source-file hashes are unchanged.
-Result manifests cover the published files and updated report labels.
+recorded by the campaigns; numerical measurements and the original source-file hashes
+are unchanged. Published infrastructure metadata uses redacted placeholders.
+Result manifests cover those published bytes and updated report labels.
 
 The original Git history bundles contain unpublished manuscript history and are kept
 private. Their recorded hashes remain in the original metadata. The public check verifies
@@ -66,5 +67,8 @@ not verify the original Git history. Maintainers can also check an original bund
 The benchmark source capture also included a nested history bundle. That one file is
 omitted from `provenance/FloatLib-source-public.tar.gz`.
 [`public-source-archive.json`](provenance/public-source-archive.json) records its original
-hash and the public archive's hash. Every retained archive member must still match the
-original source ledger.
+hash and the public archive's hash. Infrastructure paths, internal hostnames, and
+private registry addresses are replaced with publication placeholders, including
+copies in nested archives. The receipt records original and published hashes for
+each redacted member and the published worktree patch. Other members match the
+original source ledger; numerical measurements are unchanged.

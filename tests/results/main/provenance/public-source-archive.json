@@ -1,0 +1,37 @@
+{
+  "archive": "FloatLib-source-public.tar.gz",
+  "omitted_files": {},
+  "original_archive_sha256": "8f5e4316b181b7d96cc676625413f00ec8660772f665c473f1bff8fb37230e3e",
+  "redacted_files": {
+    "benchmarks/results/main/sources/baseline-8-to-4096/metadata.txt": {
+      "original_sha256": "4b841a05163ff3a78d70e14038abe055d3a9ef6b2a2797273ccd72d6ffaddc4e",
+      "published_sha256": "6aa97f048dec5c54c78f878fd9ab0b2d4fc428f78cb4e3744260f4f7e91cf49e"
+    },
+    "benchmarks/results/main/sources/execfloat-2-to-8/metadata.txt": {
+      "original_sha256": "0c70a6834ee7cf38ec93bb0b47c2e6428a425791b4cc0a0580642251f7903250",
+      "published_sha256": "7905c5afd45a518ac4131424744e383bbc9e21b50c81d659ef5122bb9c52dd00"
+    },
+    "benchmarks/results/main/sources/execfloat-8-to-4096/metadata.txt": {
+      "original_sha256": "44cbb5222b1b5c2b90605e05bbbd05f0882a67eb7f8e65a4919ff9be3ab4230b",
+      "published_sha256": "99f84674f53a6454ad48e93b77bd26f20910c46a7b3917c25962eb642bfcff43"
+    },
+    "benchmarks/results/main/sources/external-4-to-7/metadata.txt": {
+      "original_sha256": "be8561b710b38790acd9eedc0680c2fce47228ba47f3d3e7730225314c4db5a7",
+      "published_sha256": "7f10269bbd690a8914adcf8c3c4830216c8d3707146b68436cd5f2eb17bb928b"
+    },
+    "site/content/assets/data/pass5-final-metadata/pass5-final/metadata.txt": {
+      "original_sha256": "af330604e1d816f0c9559c2ec93ccaf3c3fa4c5a6358481a3424ec71f7480103",
+      "published_sha256": "0fc42d572c271f68f187543c3e7a5c391c1e64effb81355084bd46601dbd1057"
+    },
+    "site/content/assets/data/pass5-final-metadata/pass5-final2/metadata.txt": {
+      "original_sha256": "5f8a71f522a3d921ca7494cdc798ea559ec114a3ffe3a45c9ca207bdd794c914",
+      "published_sha256": "046948abfc83b5d1044bd6f4275a02481f461efff45ee25187931c6c8cc5e4d7"
+    },
+    "site/content/chapters/09-backends-and-the-planner.md": {
+      "original_sha256": "bd3ac4eeeab6afda918288017350ae615f2cb58b5329d2c7dc33542efdebebb9",
+      "published_sha256": "2f546b03f91be5d7a0fce34a00890281ade05c9471e9ac69722dde7b773ee090"
+    }
+  },
+  "redacted_provenance": {},
+  "sha256": "d3da0c370b00d58ca6622625510d8e89330bc8aebb026bf9100fcdd05f9017fb"
+}

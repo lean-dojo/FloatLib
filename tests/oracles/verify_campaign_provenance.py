@@ -178,11 +178,16 @@ def verify_archive(
     archive = shared / "FloatLib-source.tar.gz"
     archive_digest = snapshot["source_archive_sha256"]
     omitted: dict[str, str] = {}
+    redacted: dict[str, dict[str, str]] = {}
+    redacted_provenance: dict[str, dict[str, str]] = {}
     publication_path = shared / "public-source-archive.json"
     if publication_path.exists():
         publication = json.loads(publication_path.read_text(encoding="utf-8"))
-        if not isinstance(publication, dict) or set(publication) != {
+        if not isinstance(publication, dict) or not {
             "archive", "sha256", "original_archive_sha256", "omitted_files"
+        } <= set(publication) or set(publication) - {
+            "archive", "sha256", "original_archive_sha256", "omitted_files",
+            "redacted_files", "redacted_provenance"
         }:
             raise ValueError("invalid public source archive metadata")
         if publication["archive"] != "FloatLib-source-public.tar.gz":
@@ -190,8 +195,24 @@ def verify_archive(
         if publication["original_archive_sha256"] != archive_digest:
             raise ValueError("public archive metadata names a different original capture")
         omitted = publication["omitted_files"]
-        if not isinstance(omitted, dict) or not omitted:
-            raise ValueError("public archive must identify its omitted history bundles")
+        if not isinstance(omitted, dict):
+            raise ValueError("invalid omitted history bundle ledger")
+        redacted = publication.get("redacted_files", {})
+        redacted_provenance = publication.get("redacted_provenance", {})
+        for ledger in (redacted, redacted_provenance):
+            if not isinstance(ledger, dict):
+                raise ValueError("invalid publication redaction ledger")
+            for raw, entry in ledger.items():
+                require_safe_path(raw)
+                if not isinstance(entry, dict) or set(entry) != {
+                    "original_sha256", "published_sha256"
+                } or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+                         for value in entry.values()):
+                    raise ValueError(f"invalid publication redaction for {raw}")
+        if set(redacted) & set(omitted):
+            raise ValueError("a source member cannot be both omitted and redacted")
+        if set(redacted_provenance) - {"worktree.patch"}:
+            raise ValueError("only the published worktree patch may redact provenance")
         for raw in omitted:
             path = require_safe_path(raw)
             if path.parent.as_posix() not in {
@@ -225,6 +246,11 @@ def verify_archive(
         if not repository_bundle.is_file():
             raise ValueError(f"missing repository bundle: {repository_bundle}")
         expected_digests[repository_bundle] = snapshot["repository_bundle_sha256"]
+    for raw, entry in redacted_provenance.items():
+        path = shared / raw
+        if expected_digests[path] != entry["original_sha256"]:
+            raise ValueError(f"redaction differs from the original provenance hash: {raw}")
+        expected_digests[path] = entry["published_sha256"]
     for path, expected in expected_digests.items():
         actual = digest(path)
         if actual != expected:
@@ -275,6 +301,10 @@ def verify_archive(
                 value.update(block)
             archived[member.name] = value.hexdigest()
     retained = {path: value for path, value in hashes.items() if path not in omitted}
+    for raw, entry in redacted.items():
+        if retained.get(raw) != entry["original_sha256"]:
+            raise ValueError(f"redaction differs from the original source ledger: {raw}")
+        retained[raw] = entry["published_sha256"]
     if archived != retained:
         missing = sorted(set(retained) - set(archived))
         extra = sorted(set(archived) - set(retained))
@@ -287,10 +317,12 @@ def verify_archive(
             "source archive differs from its hash ledger: "
             f"missing={missing}, extra={extra}, changed={changed}"
         )
-    if omitted:
+    if omitted or redacted:
         print(
-            f"Verified {len(archived)} archived files against the original source ledger; "
-            f"omitted {len(omitted)} private Git history bundle(s)."
+            f"Verified {len(archived)} published archive members; "
+            f"{len(redacted)} have recorded infrastructure redactions and "
+            f"{len(omitted)} private Git history bundle(s) are omitted. "
+            "Unmodified members match the original source ledger."
         )
 
 
@@ -307,6 +339,8 @@ def verify_attached(
         "worktree-status.txt": "worktree-status.txt",
         "worktree.patch": "worktree.patch",
     }
+    if (shared / "public-source-archive.json").exists():
+        pairs["public-source-archive.json"] = "public-source-archive.json"
     for attached_name, shared_name in pairs.items():
         attached_path = attached / attached_name
         shared_path = shared / shared_name
