@@ -13,6 +13,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.DivisionSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.MulDiv
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Constants
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
