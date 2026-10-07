@@ -222,6 +222,14 @@ private def oneDigit : Format := ⟨0, 1, 1, by decide⟩
 private def fourDigits : Format := ⟨1, 1, 4, by decide⟩
 private def positiveQuantum : Format := ⟨0, 1, -2, by decide⟩
 
+-- Degree zero is invalid even for a quiet or signaling NaN input.
+example :
+    rootN oneDigit .nearestEven (.nan true false 3) 0 =
+      { value := .nan false false 0, status := { invalid := true } } ∧
+    rootN oneDigit .nearestEven (.nan true true 3) 0 =
+      { value := .nan false false 0, status := { invalid := true } } := by
+  decide +kernel
+
 -- Rounding the squares first changes the one-digit hypotenuse from 7 to 6.
 example :
     hypot oneDigit .nearestEven (.finite false 5 0) (.finite false 5 0) =

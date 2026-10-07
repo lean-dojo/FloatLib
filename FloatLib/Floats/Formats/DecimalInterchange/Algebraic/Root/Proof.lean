@@ -71,10 +71,19 @@ theorem rootMagnitude_valid (f : Format) (mode : RoundingMode) (s : Bool)
     · exact hv
     · exact preferredCohort_valid f s _ _ _ hv
 
+/-- Degree zero always delivers an invalid result, including quiet and signaling NaNs. -/
+@[simp] theorem Arithmetic.rootN_degree_zero (f : Format) (mode : RoundingMode) (x : Datum) :
+    rootN f mode x 0 = invalidResult := by
+  cases x <;> simp [rootN]
+
 theorem Arithmetic.rootN_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
     (rootN f mode x n).value.Valid f := by
   cases x with
-  | nan s t p => exact nanResult_valid ..
+  | nan s t p =>
+    simp only [rootN]
+    split
+    · exact invalidResult_valid f
+    · exact nanResult_valid ..
   | infinity s =>
     simp only [rootN]
     repeat first

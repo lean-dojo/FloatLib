@@ -135,28 +135,34 @@ theorem roundAt_sub_eq_of_sterbenz_of_same_sign (fmt : FloatFormat) {u v : ℝ}
     rw [show -u - -v = -(u - v) by ring, roundAt_neg] at h
     linarith
 
+/-- Same-sign finite subtraction cannot overflow, independently of the factor-of-two condition. -/
+theorem isFinite_sub_of_same_sign {fmt : FloatFormat} {x y : Model fmt}
+    (hfmt : fmt.isIEEE = true) (hx : isFinite x = true) (hy : isFinite y = true)
+    (hsign : 0 ≤ toReal x * toReal y) :
+    isFinite (sub x y) = true := by
+  have hbx := abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite x hfmt hx
+  have hby := abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite y hfmt hy
+  apply isFinite_sub_of_abs_toReal_sub_le_posMaxFinite x y hfmt hx hy
+  rw [abs_le]
+  rcases mul_nonneg_iff.mp hsign with ⟨hx0, hy0⟩ | ⟨hx0, hy0⟩
+  · rw [abs_of_nonneg hx0] at hbx
+    rw [abs_of_nonneg hy0] at hby
+    constructor <;> linarith
+  · rw [abs_of_nonpos hx0] at hbx
+    rw [abs_of_nonpos hy0] at hby
+    constructor <;> linarith
+
 /--
-Subtraction of finite values of the same sign within a factor of two is exact and cannot
-overflow. The real-valued statement includes both signs of zero.
+Subtraction of finite values of the same sign within a factor of two has the exact real
+difference. The real-valued statement includes both signs of zero.
 -/
 theorem toReal_sub_eq_of_sterbenz_of_same_sign {fmt : FloatFormat} {x y : Model fmt}
     (hfmt : fmt.isIEEE = true) (hx : isFinite x = true) (hy : isFinite y = true)
     (hsign : 0 ≤ toReal x * toReal y)
     (hxy : |toReal x| ≤ 2 * |toReal y|) (hyx : |toReal y| ≤ 2 * |toReal x|) :
     toReal (sub x y) = toReal x - toReal y := by
-  have hbx := abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite x hfmt hx
-  have hby := abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite y hfmt hy
-  have hbound : |toReal x - toReal y| ≤ toReal (posMaxFinite fmt) := by
-    rw [abs_le]
-    rcases mul_nonneg_iff.mp hsign with ⟨hx0, hy0⟩ | ⟨hx0, hy0⟩
-    · rw [abs_of_nonneg hx0] at hbx
-      rw [abs_of_nonneg hy0] at hby
-      constructor <;> linarith
-    · rw [abs_of_nonpos hx0] at hbx
-      rw [abs_of_nonpos hy0] at hby
-      constructor <;> linarith
   rw [toReal_sub_eq_roundAt x y hfmt hx hy
-    (isFinite_sub_of_abs_toReal_sub_le_posMaxFinite x y hfmt hx hy hbound)]
+    (isFinite_sub_of_same_sign hfmt hx hy hsign)]
   exact roundAt_sub_eq_of_sterbenz_of_same_sign fmt
     (toReal_genericFormat_of_isFinite x hx) (toReal_genericFormat_of_isFinite y hy)
     hsign hxy hyx

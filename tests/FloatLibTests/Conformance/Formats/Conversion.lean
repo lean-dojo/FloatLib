@@ -429,7 +429,7 @@ example :
         ]) =
       List.replicate 4
         [ (0x7f, { overflow := true, inexact := true })
-        , (0x7f, { overflow := true, inexact := true })
+        , (0xff, { overflow := true, inexact := true })
         , (0x80, { overflow := true, inexact := true })
         , (0x80, { overflow := true, inexact := true })
         ] := by
@@ -443,7 +443,7 @@ example :
     , binary32Cast FloatFormat.e4m3fnuz 0xd01502f9
     ] =
       [ (0x7f, { overflow := true, inexact := true })
-      , (0x7f, { overflow := true, inexact := true })
+      , (0xff, { overflow := true, inexact := true })
       , (0x80, { overflow := true, inexact := true })
       , (0x80, { overflow := true, inexact := true })
       ] := by

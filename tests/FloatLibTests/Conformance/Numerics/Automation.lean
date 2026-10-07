@@ -101,6 +101,18 @@ example :
       { mantissa := -15, exponent := 2 } := by
   numerics
 
+-- Exact rational endpoints must survive a successful weak endpoint check.
+example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x ≤ 1 / 3 := by interval
+
+example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x + 1 ≤ 4 / 3 := by interval
+
+example (x : ℝ) (hx : x ∈ Set.Icc (1 / 3 : ℝ) 1) : 1 / 3 ≤ x := by interval
+
+-- A touching endpoint supplies no strict margin.
+example (x : ℝ) (_hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : True := by
+  fail_if_success have : x < 1 / 3 := by interval (maxHeartbeats := 100)
+  trivial
+
 /-! ## Stable `grind` contracts -/
 
 abbrev Binary32 :=

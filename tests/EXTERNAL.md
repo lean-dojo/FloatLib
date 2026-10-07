@@ -127,12 +127,12 @@ bash tests/oracles/smt_fp.sh
 bash tests/oracles/transcendental_compare.sh --jobs 1
 ```
 
-The binary16 command checks one input-pair shard, not every binary16 pair. CI checks four
-left operands for both addition and multiplication: the smallest positive subnormal (`0x0001`),
-a value near 1/3 (`0x3555`), the next value below -1 (`0xbc01`), and the largest finite positive
-value (`0x7bff`). Each is paired with every right encoding, for 524,288 pairs. This exercises
-finite arithmetic as well as exceptional operands. The `quick` and `release` profiles use
-the larger 16-row selection listed above.
+The binary16 command checks one input-pair shard, not every binary16 pair. CI checks 17
+left operands for both addition and multiplication, each paired with all 65,536 right
+encodings: **2,228,224 ordered pairs**. The selection covers signed zeros, subnormal boundaries,
+adjacent normal values, both largest finite magnitudes, infinities, and quiet/signaling NaNs.
+The `quick` and `release` profiles use 16 left operands, for **2,097,152 ordered pairs**.
+The saved release evidence predates this expansion and records two rows, or 131,072 pairs.
 
 The transcendental command uses MPFR; its `--help` lists options for adding CORE-MATH,
 OpenLibm, and RLIBM.

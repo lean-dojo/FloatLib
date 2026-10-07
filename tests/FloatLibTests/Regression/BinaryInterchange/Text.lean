@@ -179,6 +179,22 @@ def minimumDigitRoundTrips : Nat :=
       2 ^ 127 + 32767 * 2 ^ 112 - 1]
     (significantRoundTrip .binary128 36)
 
+/-- Both exact text forms preserve every stored NaN fraction bit, including the quiet bit. -/
+def nanTextRoundTrip (fmt : FloatFormat) (bits : Nat) : Bool :=
+  let value := Model.ofNatBits (fmt := fmt) bits
+  if value.isNaN then
+    [Model.formatDecimal value, Model.formatHex value].all fun text =>
+      match Model.parse fmt text with
+      | .error _ => false
+      | .ok restored => restored.bits == value.bits
+  else true
+
+/-- Exhaust all binary16 NaNs and the signed and unsigned-zero FP8 NaN encodings. -/
+def nanTextRoundTrips : Nat :=
+  countWhereFailures (List.range 65536) (nanTextRoundTrip .binary16) +
+  countPairFailures [FloatFormat.e4m3fn, .e4m3fnuz, .e5m2fnuz]
+    (List.range 256) nanTextRoundTrip
+
 /-- Failure counts for the parser and decimal presentation cases. -/
 def report : Thunk ReportSection := ⟨fun _ =>
   ReportSection.ofRows "text conversion"
@@ -190,6 +206,7 @@ def report : Thunk ReportSection := ⟨fun _ =>
      , ("bounded parser agreement", boundedAgreement)
      , ("small-format round trips", smallFormatRoundTrips)
      , ("IEEE minimum-digit round trips", minimumDigitRoundTrips)
+     , ("NaN encoding text round trips", nanTextRoundTrips)
      , ("native binary64 adapters", nativeAdapters) ]⟩
 
 end FloatLibTests.Regression.BinaryInterchange.Text

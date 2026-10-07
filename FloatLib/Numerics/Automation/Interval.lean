@@ -17,8 +17,9 @@ public meta import Lean.Elab.Tactic.Decide
 # Interval proofs from rational bounds
 
 `interval` proves real inequalities by evaluating certified interval expressions. It reads rational
-bounds from the local context, uses integer endpoints on a binary grid, and subdivides the widest
-input interval when the first enclosure is inconclusive.
+bounds from the local context and first tries algebraic expressions with exact rational endpoints.
+The binary-grid backend then handles remaining goals and subdivides the widest input interval
+when its first enclosure is inconclusive.
 
 Finite sums, dot products, matrix products, and supported norms expand using Mathlib equalities.
 Pointwise hypotheses supply the bounds of their entries. Real and nonnegative-real inequalities
@@ -128,7 +129,24 @@ private def verifyClosedCheck (proposition : Q(Prop)) (heartbeats : Nat) : Tacti
     let name ← mkAuxLemma [] proposition proof
     return mkConst name
 
-/-- Verify a real or nonnegative-real inequality with the binary-grid backend. -/
+/-- Algebraic expressions can use exact rational endpoints without elementary approximation. -/
+private partial def isAlgebraic (expression : Q(Interval.Expr)) : MetaM Bool := withIncRecDepth do
+  checkSystem "interval algebraic expression"
+  match expression with
+  | ~q(Interval.Expr.const $_c) => return true
+  | ~q(Interval.Expr.var $_i) => return true
+  | ~q(Interval.Expr.unary $op $a) =>
+    match op with
+    | ~q(UnaryOp.neg) | ~q(UnaryOp.abs) | ~q(UnaryOp.inv) => isAlgebraic a
+    | ~q(UnaryOp.pow $_n) => isAlgebraic a
+    | _ => return false
+  | ~q(Interval.Expr.binary $_op $a $b) =>
+    return (← isAlgebraic a) && (← isAlgebraic b)
+  | ~q(Interval.Expr.ternary $_op $a $b $c) =>
+    return (← isAlgebraic a) && (← isAlgebraic b) && (← isAlgebraic c)
+  | _ => return false
+
+/-- Verify a real or nonnegative-real inequality with exact rational or binary-grid bounds. -/
 def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : TacticM Unit := withMainContext do
   let target : Q(Prop) ← instantiateMVars (← getMainTarget)
   let (lhs, rhs, strict) ← match target with
@@ -164,8 +182,41 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
     evalEquality scalar expression values cache
   let equality : Q($difference = Interval.Expr.eval $expression $values) :=
     q(Eq.trans $expanded $interpreted)
+  -- Exact endpoints retain equality at non-dyadic bounds, such as the upper bound 1/3.
+  if ← isAlgebraic expression then
+    let exactBackend : Q(Backend ℚ) := q(Backend.rational $config)
+    let exactProof? ← try
+      let checked ← verifyClosedCheck
+        q(Interval.Expr.check $expression $exactBackend $relation $box 0 = true)
+        maxHeartbeats
+      pure (some checked)
+    catch error =>
+      if error.isInterrupt then throw error
+      pure none
+    if let some checked := exactProof? then
+      let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
+        #[q(ℚ), expression, exactBackend, q(Backend.rational_sound $config),
+          relation, box, q(0), checked, values, membership]
+      let proof ← if strict then do
+        let h : Q(Interval.Expr.eval $expression $values < 0) := sound
+        let h : Q($lhs - $rhs < 0) := q((Eq.symm $equality) ▸ $h)
+        pure q(sub_neg.mp $h)
+      else do
+        let h : Q(Interval.Expr.eval $expression $values ≤ 0) := sound
+        let h : Q($lhs - $rhs ≤ 0) := q((Eq.symm $equality) ▸ $h)
+        pure q(sub_nonpos.mp $h)
+      closeMainGoal `interval proof
+      return
   let checked : Q(Interval.Expr.check $expression $backend $relation $box $depth = true) ←
     try
+      let preflight ← try
+        withCheckBudget maxHeartbeats do
+          preflightCheck expression box config relation depth
+      catch error =>
+        if error.isInterrupt then throw error
+        pure none
+      if preflight == some false then
+        throwError "interval checker returned false"
       verifyClosedCheck q(Interval.Expr.check $expression $backend $relation $box $depth = true)
         maxHeartbeats
     catch error =>
@@ -199,9 +250,13 @@ Prove a real or nonnegative-real inequality from rational bounds in the local co
 
 For example, `interval (precision := 64) (degree := 16) (depth := 8)` chooses a binary
 endpoint grid with 64 fractional bits, degree-16 elementary enclosures, and at most eight
-midpoint subdivisions along any branch. These are also the defaults. Kernel verification and
-failure diagnostics each have a separate budget of 20,000 heartbeats, even when the surrounding
+midpoint subdivisions along any branch. These are also the defaults. Each verification attempt and
+failure diagnostics have separate budgets of 20,000 heartbeats, even when the surrounding
 declaration disables heartbeat limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
+
+Algebraic goals first use exact rational endpoints without subdivision, preserving equality at
+non-dyadic hypothesis bounds. An advisory executable check rejects failing binary-grid leaves
+before kernel reduction; every successful proof still requires kernel verification.
 
 Concrete finite sums and matrix expressions are expanded automatically, including pointwise
 bounds such as `∀ i, x i ∈ Set.Icc 0 1`. Norms use the instances selected in the goal.

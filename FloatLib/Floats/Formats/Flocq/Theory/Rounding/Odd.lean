@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
+public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
 
 /-!
 # Round to Odd
@@ -261,5 +262,29 @@ theorem round_odd_point
           (round_ceil_point (β := β) (fexp := fexp) x))
     · refine ⟨oddRound (scaledMantissa β fexp x), rfl, ?_⟩
       exact oddRound_scaled_mantissa_odd_of_not_generic hx
+
+/-- Flocq's round-to-odd point predicate, testing parity at the result's canonical exponent.
+Abrupt-underflow grids can give a different exponent to the input and output, so input-grid
+parity alone does not establish this predicate. -/
+def RoundOddCanonicalPoint (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp]
+    (x f : ℝ) : Prop :=
+  RoundOddPoint β (genericFormat β fexp) (cexp β fexp f) x f
+
+/-- Input-grid rounding satisfies canonical round-to-odd whenever the canonical exponent is
+preserved. Fixed-point grids always satisfy this condition. -/
+theorem round_odd_canonical_point_of_cexp_eq
+    {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp] (x : ℝ)
+    (hexponent : cexp β fexp (round (β := β) (fexp := fexp) oddRound x) =
+      cexp β fexp x) :
+    RoundOddCanonicalPoint β fexp x (round (β := β) (fexp := fexp) oddRound x) := by
+  rw [RoundOddCanonicalPoint, hexponent]
+  exact round_odd_point x
+
+/-- Fixed-point round-to-odd meets Flocq's canonical parity convention for every input. -/
+theorem round_odd_canonical_point_FIX (β : Numerics.Radix) (exponent : ℤ) (x : ℝ) :
+    RoundOddCanonicalPoint β (fixExp exponent) x
+      (round (β := β) (fexp := fixExp exponent) oddRound x) := by
+  apply round_odd_canonical_point_of_cexp_eq
+  simp [cexp, fixExp]
 
 end FloatLib.Floats.Formats.Flocq

@@ -87,6 +87,9 @@ def arithmeticFailures : Thunk Nat := ⟨fun _ =>
     [ E4M3FN.toUInt8
       (FloatLib.Floats.ExecFloat.add (E4M3FN.ofNatBits 0x38) (E4M3FN.ofNatBits 0x40)) ==
         0x44
+    , E4M3FN.toUInt8
+      (FloatLib.Floats.ExecFloat.add (E4M3FN.ofNatBits 0xfe) (E4M3FN.ofNatBits 0xfe)) ==
+        0xff
     , E5M2.toUInt8
       (FloatLib.Floats.ExecFloat.add (E5M2.ofNatBits 0x3c) (E5M2.ofNatBits 0x40)) ==
         0x42

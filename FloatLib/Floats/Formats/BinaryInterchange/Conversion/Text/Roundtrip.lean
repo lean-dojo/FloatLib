@@ -79,6 +79,31 @@ theorem signedScaledRatToReal_decimal (value : DecimalText.Decimal) :
   · simp [magnitude, DecimalText.Decimal.toRat, hs]
   · simp [magnitude, DecimalText.Decimal.toRat, hs]
 
+/-- Decimal conversion rounds the complete exact input once, including inexact text and zero. -/
+theorem toReal_convertDecimalText_nearestEven (fmt : FloatFormat)
+    (hfmt : fmt.isIEEE = true) (value : DecimalText.Decimal)
+    (hfinite : isFinite (convertDecimalText fmt .nearestEven value).value = true) :
+    toReal (convertDecimalText fmt .nearestEven value).value =
+      roundAt fmt (value.toRat : ℝ) := by
+  rw [convertDecimalText_eq_exact] at hfinite ⊢
+  change toReal (roundRatScaled fmt value.negative
+    _ _ 0) = _
+  rw [toReal_roundRatScaled_eq_roundAt_of_isFinite fmt value.negative
+    _ _ 0 hfmt (Rat.den_nz _) hfinite, signedScaledRatToReal_decimal]
+
+/-- Successfully parsed decimal text has the nearest-even real value of its exact decimal datum.
+The input may be inexact for the destination; only a nonfinite delivered value is excluded. -/
+theorem toReal_parse_decimal_nearestEven {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (text : String) (value : DecimalText.Decimal) (result : Model fmt)
+    (hread : readText text = some (.decimal value))
+    (hparse : parse fmt text = .ok result) (hfinite : isFinite result = true) :
+    toReal result = roundAt fmt (value.toRat : ℝ) := by
+  rw [parse_eq_run, TextParser.run_of_readText _ _ _ _ hread] at hparse
+  have hvalue : (convertDecimalText fmt .nearestEven value).value = result := by
+    simpa only [convertText, Except.map, Except.ok.injEq] using hparse
+  rw [← hvalue] at hfinite ⊢
+  exact toReal_convertDecimalText_nearestEven fmt hfmt value hfinite
+
 /-- Decimal conversion of an exact finite nonzero value restores its complete IEEE word. -/
 theorem convertDecimalText_eq_of_nonzero {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (value : Model fmt) (hfinite : isFinite value = true) (hzero : toReal value ≠ 0)

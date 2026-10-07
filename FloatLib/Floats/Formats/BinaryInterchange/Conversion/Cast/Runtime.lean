@@ -137,7 +137,7 @@ decode/round work entirely. This matters for uniform-format `SitePolicy`s, where
       -- The dependent equality transports the exact-width payload without truncation.
       h ▸ quietNaN x
     else
-      propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x))
+      propagatedNaN dst (signBit x) (nanPayload x)
   else if hinf : isInf x = true then
     nativeOverflow dst (signBit x)
   else

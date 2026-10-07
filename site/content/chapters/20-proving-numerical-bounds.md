@@ -100,7 +100,18 @@ including the endpoints. Tangent divides sine bounds by cosine bounds, so its co
 enclosure must exclude zero. Subdivision or a higher approximation degree can separate
 a coarse cosine enclosure from zero, but cannot certify a bound across an actual pole.
 Likewise, a hypothesis $x\in[-1,1]$ is insufficient for this evaluator to enclose $1/x$.
-Kernel verification and failure diagnostics each have a separate budget of 20,000
+Algebraic goals first try exact rational endpoints without subdivision. This preserves a touching
+non-dyadic bound:
+
+```lean
+example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x ≤ 1 / 3 := by
+  interval
+```
+
+An advisory executable check rejects failing binary-grid leaves before kernel reduction. It
+supplies no proof evidence; successful goals still go through the kernel check below.
+
+Each verification attempt and failure diagnostics have separate budgets of 20,000
 heartbeats. This limit remains active when the surrounding declaration sets
 `maxHeartbeats` to zero. A larger finite budget can be requested with
 `interval (maxHeartbeats := 40000)`. Budget exhaustion reports an inconclusive

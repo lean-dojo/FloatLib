@@ -45,11 +45,13 @@ abbrev At (fmt : FloatFormat) (r : ℝ) :=
 namespace ExactValue
 
 /-- Forget encoding distinctions and retain the general numerical-system interpretation. -/
-noncomputable def toNumericalValue : ExactValue → NumericalValue ℝ
+noncomputable def toNumericalValue (value : ExactValue)
+    (encoding : FloatFormat.Encoding := .ieee) : NumericalValue ℝ :=
+  match value with
   | .finite value => .finite value.toReal
   | .infinity sign => .infinity sign
   | .nan sign signaling field =>
-      .exceptional (.nan (some (payloadOfNaNField signaling field)) sign signaling)
+      .exceptional (.nan (some (payloadOfNaNField signaling field encoding)) sign signaling)
 
 end ExactValue
 
@@ -58,7 +60,7 @@ Forgetting exact encoding distinctions agrees with the existing numerical-system
 -/
 theorem toNumericalValue_eq_exactValue_toNumericalValue
     {fmt : FloatFormat} (x : Model fmt) :
-    toNumericalValue x = (exactValue x).toNumericalValue := by
+    toNumericalValue x = (exactValue x).toNumericalValue fmt.encoding := by
   cases hdecode : toDyadic? x with
   | some value =>
       have hnan := isNaN_eq_false_of_toDyadic?_some hdecode
@@ -95,7 +97,7 @@ noncomputable def exactSemantics (fmt : FloatFormat) :
     ExactSemantics (numericalSystem fmt) where
   Exact := ExactValue
   decode := exactValue
-  forget := ExactValue.toNumericalValue
+  forget := fun value => value.toNumericalValue fmt.encoding
   forget_decode x :=
     (toNumericalValue_eq_exactValue_toNumericalValue x).symm
 

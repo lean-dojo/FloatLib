@@ -211,6 +211,20 @@ theorem fma_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     toReal_eq_of_represents hz']
 
 /-- A finite cross-format cast refines nearest-even rounding in its destination format. -/
+theorem cast_refines_of_isIEEE_destination (src dst : FloatFormat)
+    (hdst : dst.isIEEE = true) :
+    Operation.Finite1If (numericalSystem src) (numericalSystem dst)
+      (Model.cast src dst) (fun (x : ℝ) => roundAt dst x)
+      (fun _ result => isFinite result = true) := by
+  unfold Operation.Finite1If numericalSystem
+  intro x r hx hout
+  have hx' : Represents x r := hx
+  apply (represents_iff _ _).2
+  refine ⟨hout, ?_⟩
+  rw [cast_eq_roundAt_of_isIEEE_destination hdst x (isFinite_of_represents hx') hout]
+  rw [toReal_eq_of_represents hx']
+
+/-- IEEE-source specialization of `cast_refines_of_isIEEE_destination`. -/
 theorem cast_refines (src dst : FloatFormat)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true) :
     Operation.Finite1If (numericalSystem src) (numericalSystem dst)

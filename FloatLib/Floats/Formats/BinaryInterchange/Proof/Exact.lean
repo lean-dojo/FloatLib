@@ -45,10 +45,10 @@ namespace AtExact
 
 /-- Forget exact encoding distinctions while retaining the same executable value. -/
 @[inline] def toValue {fmt : FloatFormat} {v : ExactValue}
-    (x : AtExact fmt v) : AtValue fmt v.toNumericalValue :=
+    (x : AtExact fmt v) : AtValue fmt (v.toNumericalValue fmt.encoding) :=
   ⟨x.1,
     (toNumericalValue_eq_exactValue_toNumericalValue x.1).trans
-      (congrArg ExactValue.toNumericalValue (denote x))⟩
+      (congrArg (fun value => value.toNumericalValue fmt.encoding) (denote x))⟩
 
 /-- A finite exact refinement induces the corresponding real-valued refinement. -/
 @[inline] def toAt {fmt : FloatFormat} {value : Numerics.Dyadic}

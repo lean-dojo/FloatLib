@@ -55,6 +55,7 @@ private def allowedKernelAxioms : Array Lean.Name :=
 private def auditedTestDeclarations : Array Lean.Name :=
   #[
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.cast_fnuz_source,
+    ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.parse_tenth_real,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.sum_cancellation_real,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.dot_cancellation_real,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.rational_directed_enclosure,

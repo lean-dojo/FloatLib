@@ -103,7 +103,7 @@ def nan (profile : Profile) : Element profile :=
 def overflow (profile : Profile) (negative : Bool) : Element profile :=
   match profile with
   | .e5m2 => BitVec.ofNat 8 (124 + if negative then 128 else 0)
-  | .e4m3 => nan .e4m3
+  | .e4m3 => (BinaryInterchange.Model.propagatedNaN .e4m3fn negative 0).bits
   | other => endpoint other negative
 
 /--

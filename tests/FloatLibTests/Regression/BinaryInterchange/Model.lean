@@ -605,7 +605,7 @@ def failCorrectlyRoundedReductions : Thunk Nat := ⟨fun _ =>
         (Model.ofNatBits 0x7f) false false true false true
     , outcomeIs
         (Model.sumWithStatus finiteWithNaN #[Model.negInf fmt] .nearestEven)
-        (Model.ofNatBits 0x7f) false false true false true
+        (Model.ofNatBits 0xff) false false true false true
     , statusIs
         (Model.sumWithStatus fmt #[Model.posInf fmt, Model.negInf fmt]
           .nearestEven).status

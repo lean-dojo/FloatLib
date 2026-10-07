@@ -10,6 +10,7 @@ import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
+import FloatLibTests.Oracle.Parsing
 
 /-!
 # Berkeley TestFloat stream checker
@@ -29,6 +30,8 @@ backends or the explicit `NativeFPU.Unchecked` host API.
 open FloatLib.Floats.Formats.BinaryInterchange
 
 namespace FloatLibTests.Oracle.TestFloat
+
+open Parsing
 
 private inductive Operation where
   | add
@@ -112,28 +115,6 @@ private def formatName? : String → Option FloatFormat
   | "f64" => some .binary64
   | "f128" => some .binary128
   | _ => none
-
-private def hexDigit? (character : Char) : Option Nat :=
-  let code := character.toNat
-  if 48 ≤ code ∧ code ≤ 57 then
-    some (code - 48)
-  else if 65 ≤ code ∧ code ≤ 70 then
-    some (code - 55)
-  else if 97 ≤ code ∧ code ≤ 102 then
-    some (code - 87)
-  else
-    none
-
-private def parseHex? (text : String) : Option Nat :=
-  text.toList.foldlM
-    (fun value character => do
-      let digit ← hexDigit? character
-      pure (16 * value + digit))
-    0
-
-private def fields (line : String) : List String :=
-  (line.trimAscii.copy.splitToList (fun character => character.isWhitespace)).filter
-    (fun field => !field.isEmpty)
 
 private def statusBits (status : Model.IEEEStatus) : Nat :=
   (if status.inexact then 1 else 0) +

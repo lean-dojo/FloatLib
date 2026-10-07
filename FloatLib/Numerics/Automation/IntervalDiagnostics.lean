@@ -334,6 +334,29 @@ private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box
 
 end Diagnostics
 
+/-- Inspect the executable checker before kernel verification. A failed leaf can reject the
+attempt early; this advisory result never supplies evidence for a successful proof. -/
+def preflightCheck (expression : Q(Interval.Expr)) (box : Q(Box))
+    (config : Q(Backend.Config)) (relation : Q(Relation)) (depth : Q(Nat)) :
+    MetaM (Option Bool) := withoutModifyingState do
+  let e ← Diagnostics.readExpr expression
+  let box ← Diagnostics.readBox box
+  let config : Backend.Config :=
+    ⟨← Diagnostics.readNat q(Backend.Config.precision $config),
+      ← Diagnostics.readNat q(Backend.Config.degree $config)⟩
+  let relation : Q(Relation) ← whnf relation
+  let relation ← match relation with
+    | ~q(Relation.nonpositive) => pure Relation.nonpositive
+    | ~q(Relation.negative) => pure Relation.negative
+    | _ => throwError "expected a closed interval relation"
+  let depth ← Diagnostics.readNat depth
+  let (result, _) ←
+    (Diagnostics.findLeaf e (Backend.binaryGrid config) relation box depth 0).run 512
+  return match result with
+    | .certified => some true
+    | .leaf _ _ => some false
+    | .limited => none
+
 /--
 Explain a failed `Expr.check` using its quoted expression, box, binary-grid configuration, relation,
 and subdivision depth. The optional `atoms` array supplies the original real terms in variable

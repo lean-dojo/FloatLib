@@ -26,6 +26,39 @@ open FloatLib
 open FloatLib.Floats
 open FloatLib.Floats.Formats.BinaryInterchange
 
+-- E4M3FN has one NaN per sign and no diagnostic payload bits.
+example : (Model.add (Model.ofNatBits (fmt := .e4m3fn) 0xfe)
+    (Model.ofNatBits (fmt := .e4m3fn) 0xfe)).toNatBits = 0xff := by decide +kernel
+
+example : Model.nanPayload (Model.ofNatBits (fmt := .e4m3fn) 0x7f) = 0 := by decide +kernel
+
+example : (Model.cast .e4m3fn .binary32
+    (Model.ofNatBits (fmt := .e4m3fn) 0x7f)).toNatBits = 0x7fc00000 := by decide +kernel
+
+example : (Model.cast .e4m3fn .binary32
+    (Model.ofNatBits (fmt := .e4m3fn) 0xff)).toNatBits = 0xffc00000 := by decide +kernel
+
+example (x : Model .e4m3fn) (hx : Model.isFinite x = true)
+    (hout : Model.isFinite (Model.cast .e4m3fn .binary16 x) = true) :
+    |Model.toReal (Model.cast .e4m3fn .binary16 x) - Model.toReal x| ≤
+      Model.epsilonAt .binary16 (Model.toReal x) :=
+  Model.abs_toReal_cast_sub_le_of_isIEEE_destination x (by decide) hx hout
+
+/-- Inexact decimal text is connected to its exact rational value, beyond text round trips. -/
+theorem parse_tenth_real :
+    Model.toReal (Model.ofNatBits (fmt := .binary32) 0x3dcccccd) =
+      Model.roundAt .binary32 (1 / 10) := by
+  have hread : Model.readText "0.1" = some (.decimal ⟨false, 1, -1⟩) := by decide +kernel
+  have hparse : Model.parse .binary32 "0.1" =
+      .ok (Model.ofNatBits (fmt := .binary32) 0x3dcccccd) := by
+    rw [Model.parse_eq_run, Model.TextParser.run_of_readText _ _ _ _ hread]
+    decide +kernel
+  have h := Model.toReal_parse_decimal_nearestEven (fmt := .binary32) (by decide)
+    "0.1" ⟨false, 1, -1⟩ (Model.ofNatBits 0x3dcccccd)
+    hread hparse (by decide +kernel)
+  norm_num [Numerics.DecimalText.Decimal.toRat] at h ⊢
+  exact h
+
 -- E2M3 cannot represent the nearest integer 8: its finite boundary is 7.5.
 example : (Model.roundToIntegralExactWithStatus
     (Model.ofNatBits (fmt := .e2m3) 31) .nearestEven).value.toNatBits = 31 := by

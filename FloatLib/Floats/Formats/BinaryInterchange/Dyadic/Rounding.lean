@@ -81,7 +81,8 @@ theorem zero_extendedMantissa_shiftRight (shift : Nat) :
 @[inline] def nativeOverflow (fmt : FloatFormat) (sign : Bool) : Model fmt :=
   match fmt.encoding with
   | .ieee => if sign then negInf fmt else posInf fmt
-  | .finiteMaxNaN | .finiteUnsignedZero => invalidResult fmt
+  | .finiteMaxNaN => propagatedNaN fmt sign 0
+  | .finiteUnsignedZero => invalidResult fmt
   | .finite => maxFinite fmt sign
 
 /-- Conventional IEEE native overflow is the usual signed infinity. -/

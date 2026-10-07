@@ -193,6 +193,14 @@ theorem le_toEReal_sqrtUp {fmt : FloatFormat} {r : ℝ}
   ⟨Model.fma x.1 y.1 z.1,
     Operation.Finite3If.denote (fma_refines fmt hfmt) x.2 y.2 z.2 hfinite⟩
 
+/-- Cast any finite source descriptor into an IEEE destination through one real rounding. -/
+@[inline] def castOfIEEEDestination {src dst : FloatFormat} {r : ℝ} (x : At src r)
+    (hdst : dst.isIEEE = true)
+    (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
+    At dst (roundAt dst r) :=
+  ⟨Model.cast src dst x.1,
+    Operation.Finite1If.denote (cast_refines_of_isIEEE_destination src dst hdst) x.2 hfinite⟩
+
 /-- A cross-format cast transports its real index through destination rounding. -/
 @[inline] def cast {src dst : FloatFormat} {r : ℝ} (x : At src r)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
@@ -240,6 +248,12 @@ theorem le_toEReal_sqrtUp {fmt : FloatFormat} {r : ℝ}
     (hfinite : Model.isFinite (Model.fma x.1 y.1 z.1) = true) :
     (fma x y z hfmt hfinite).1 = Model.fma x.1 y.1 z.1 :=
   rfl
+
+/-- The general finite cast witness retains the executable cast as its carrier. -/
+@[simp] theorem value_castOfIEEEDestination {src dst : FloatFormat} {r : ℝ} (x : At src r)
+    (hdst : dst.isIEEE = true)
+    (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
+    (castOfIEEEDestination x hdst hfinite).1 = Model.cast src dst x.1 := rfl
 
 /-- The carrier of a finite cast witness is the model cast. -/
 @[simp] theorem value_cast {src dst : FloatFormat} {r : ℝ} (x : At src r)

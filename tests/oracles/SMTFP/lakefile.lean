@@ -28,6 +28,10 @@ package floatlibSMTFP where
 
 require floatlib from floatLibRoot
 
+lean_lib OracleParsing where
+  roots := #[`FloatLibTests.Oracle.Parsing]
+  srcDir := floatLibRoot / "tests"
+
 lean_exe smtFpRunner where
   root := `FloatLibTests.Oracle.SMT
   srcDir := floatLibRoot / "tests"

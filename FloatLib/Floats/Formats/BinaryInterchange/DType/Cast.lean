@@ -75,7 +75,7 @@ NaN failures preserve the sign, signaling class, and diagnostic payload without 
       .failure (.infinity .source negative)
   | .nan negative signaling payload =>
       .failure (.exceptional .source
-        (.nan (some (Model.payloadOfNaNField signaling payload)) negative signaling))
+        (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling))
 
 /-- Encode `true` as positive one and `false` as positive zero. -/
 @[inline] def boolToFloat (fmt : FloatFormat) (b : Bool) : Model fmt :=

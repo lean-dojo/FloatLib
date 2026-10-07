@@ -416,9 +416,18 @@ theorem toReal_fma_standardModel {fmt : FloatFormat} (x y z : Model fmt)
   exact roundAt_standardModel fmt _
 
 /--
-Standard model with gradual underflow for a cast between IEEE descriptors with finite input and
-result, using the constants of the destination format.
+Standard model with gradual underflow for a finite cast to an IEEE destination, using the
+constants of the destination format.
 -/
+theorem toReal_cast_standardModel_of_isIEEE_destination {src dst : FloatFormat} (x : Model src)
+    (hdst : dst.isIEEE = true)
+    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
+    ∃ δ η : ℝ, toReal (cast src dst x) = toReal x * (1 + δ) + η ∧
+      |δ| ≤ unitRoundoffAt dst ∧ |η| ≤ underflowErrorAt dst ∧ δ * η = 0 := by
+  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hout]
+  exact roundAt_standardModel dst _
+
+/-- IEEE-source specialization of `toReal_cast_standardModel_of_isIEEE_destination`. -/
 theorem toReal_cast_standardModel {src dst : FloatFormat} (x : Model src)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
     (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :

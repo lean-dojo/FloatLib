@@ -81,12 +81,12 @@ def rootMagnitude (f : Format) (mode : RoundingMode) (negative : Bool)
         { inexact := inexact
           underflow := decide (radicand < f.minNormal ^ degree) && inexact } }
 
-/-- Integer-degree root with one final rounding. Degree zero is invalid for numeric
-operands; input NaNs retain the usual decimal propagation. For an exact finite
+/-- Integer-degree root with one final rounding. Degree zero is invalid for every
+operand, including NaNs. Other degrees use the usual decimal NaN propagation. For an exact finite
 result, the preferred quantum is the floor of the signed operand quantum divided
 by the positive degree magnitude. -/
 def Arithmetic.rootN (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
-  | .nan s t p, _ => nanResult f s p t
+  | .nan s t p, n => if n = 0 then invalidResult else nanResult f s p t
   | .infinity s, n =>
       if n = 0 then invalidResult
       else if s && decide (n % 2 = 0) then invalidResult

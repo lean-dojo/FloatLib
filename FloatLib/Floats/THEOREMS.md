@@ -76,6 +76,11 @@ whose source decodes to a finite value; `Model.Policy.roundRat_nearestEven_eq_ex
 family give `Model.roundRat` its real-number semantics. The other formats' sections develop
 their rounding and projection theorems.
 
+Non-IEEE NaN encodings have diagnostic payload zero: their reserved fraction bits are
+encoding markers. `Model.ExactValue` and external NaN text retain the complete stored fraction
+field; `Model.nanPayload`, numerical observations, checked integer failures, and cross-format
+casts use the diagnostic payload. IEEE NaNs retain every payload bit below the quiet bit.
+
 For NaN sources, `ExecFloat.Binary.Conversion.run_default_decode_of_isNaN` shows that the default
 conversion returns the value and invalid flag of `Model.castWithStatus`. An IEEE destination keeps
 the sign and any payload that fits; an oversized payload becomes zero. Maximum-NaN encodings keep
@@ -185,8 +190,8 @@ Import `FloatLib.Floats.Formats.BinaryInterchange.Conversion`.
 | Theorem | Informal statement |
 | --- | --- |
 | `cast_self_of_finite` | Casting a finite value to its own format preserves its exact encoding, including signed zero. |
-| `cast_eq_roundAt` | A finite IEEE cast is one nearest-even rounding in the destination format. |
-| `cast_exact_of_gridExtension` | A finite cast is exact when the destination contains the source's dyadic grid. |
+| `cast_eq_roundAt`, `cast_eq_roundAt_of_isIEEE_destination` | A finite cast to an IEEE destination is one nearest-even rounding. The destination-only variant accepts any finite source descriptor, including FP8. |
+| `cast_exact_of_gridExtension`, `cast_exact_of_gridExtension_of_isIEEE_destination` | A finite cast is exact when the IEEE destination contains the source's dyadic grid; the destination-only variant accepts any finite source encoding. |
 | `cast_exact_of_compatibleWidening` | Increasing only fraction width while preserving exponent semantics and encoding is exact. |
 | `castWithRounding_eq_widenExact_of_compatibleWidening` | Every rounding mode gives the same widened encoding for a finite value with compatible exponent fields and encoding. |
 | `cast_of_isNaN`, `propagatedNaN_eq_quietNaN` | An IEEE destination quiets the NaN, keeps its sign, and keeps its payload when it fits, otherwise using payload zero (IEEE 754-2019 §6.2.3). Other encodings follow their own NaN rule; a cast to its own format is `quietNaN`. |
@@ -205,6 +210,11 @@ matrix theorems.
 
 | Theorem | Informal statement |
 | --- | --- |
+| `roundAt_sub_eq_of_sterbenz_of_nonneg`, `roundAt_sub_eq_of_sterbenz_of_same_sign` | Nearby representable values have an exact rounded-real difference, including nonnegative zero and same-sign negative operands. |
+| `toReal_sub_eq_of_sterbenz_of_same_sign` | Same-sign finite IEEE values within a factor of two have the exact executable real difference. |
+| `isFinite_sub_of_same_sign` | Same-sign finite IEEE subtraction stays finite, without a factor-of-two premise. |
+| `abs_toReal_cast_sub_le_of_isIEEE_destination`, `cast_exact_mem_Icc_of_isIEEE_destination`, `toReal_cast_standardModel_of_isIEEE_destination` | Any finite source encoding inherits the IEEE destination's half-ULP enclosure and standard error model when the cast result is finite. |
+| `cast_refines_of_isIEEE_destination`, `At.castOfIEEEDestination`, `At.value_castOfIEEEDestination` | The general finite-source cast contract also transports proof-indexed values through one destination rounding while retaining the executable carrier. |
 | `abs_roundAt_sub_le` | Nearest-even rounding differs from its real input by at most half an ULP. |
 | `relativeError_roundAt_le_of_normal` | A nonzero normal-range input satisfies the standard relative-error bound. |
 | `abs_toReal_add_sub_le`, `abs_toReal_sub_sub_le`, `abs_toReal_mul_sub_le`, `abs_toReal_div_sub_le`, `abs_toReal_sqrt_sub_le`, `abs_toReal_fma_sub_le` | An IEEE operation with finite operands and result inherits the half-ULP bound under its domain hypotheses. |
@@ -251,6 +261,17 @@ value, while toward-zero and a direction back into the finite range do not overf
 rounded significand enters the next binade. `dyadicRoundingStatus_overflow` and
 `rationalRoundingStatusScaled_overflow` expose that classification for dyadic and signed-rational
 inputs, respectively.
+
+`roundToIntegralExactWithStatus_finite_exact` separates representability of the rounded integer
+from the input's finiteness. The toward-zero results
+`abs_roundDyadicToInt_towardZero_le`, `roundToIntegralExactWithStatus_towardZero_finite_exact`,
+`isFinite_roundToIntegral_towardZero`, `toReal_roundToIntegral_towardZero_of_isFinite`, and
+`roundToIntegralExactWithStatus_towardZero_overflow_eq_false` establish truncation without an
+additional precision-versus-exponent-range assumption for IEEE descriptors.
+
+`toReal_roundRatScaled_eq_roundAt_of_isFinite` includes zero numerators in the exact-input
+nearest-even bridge. `le_toEReal_roundRatQUp` gives the corresponding upward bound in `EReal`,
+including zero, subnormal results, and overflow to positive infinity.
 
 The value-only `roundToIntegral` is the flagless IEEE 754-2019 §5.9 `roundToIntegral{TiesToEven,
 TowardZero, TowardPositive, TowardNegative}` family. `roundToIntegralExactWithStatus` is §5.9
@@ -374,6 +395,7 @@ keeps its compact diagnostic display.
 
 | Theorem | Informal statement |
 | --- | --- |
+| `Model.toReal_convertDecimalText_nearestEven`, `Model.toReal_parse_decimal_nearestEven` | Successfully scanned decimal text is one nearest-even rounding of its exact decimal value, including inexact text and zero, when the IEEE output is finite. |
 | `Model.parse_formatHex_of_isFinite` | Every finite IEEE word round-trips through exact hexadecimal text in all input modes, including signed zero. |
 | `Model.parse_formatDecimal_of_isFinite` | Every finite IEEE word round-trips through exact decimal text with nearest-even input. |
 | `Model.significantDecimal_coefficient_bounds`, `Model.significantHex_coefficient_bounds` | Nonzero output has exactly the requested positive number of significant digits in every mode. |
@@ -511,6 +533,7 @@ carrier before and after that model operation.
 | `Model.Reduction.Internal.array_foldl_pushValue_exact_toRat` | The executable sum accumulator denotes the exact rational sum of all finite inputs. |
 | `Model.Reduction.Internal.dotState_exact_toRat` | The dot accumulator denotes the exact rational sum of exact products. |
 | `Model.Reduction.sumWithStatus_eq_round_of_finite_nonzero` | A nonzero finite sum performs one final dyadic rounding and returns exactly that rounding's status. |
+| `Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite`, `dotWithStatus_value_toReal_eq_roundAt_of_finite` | Finite-input nearest-even sums and successful dots with finite outputs are one real rounding, including empty inputs and cancellation to zero. |
 | `Model.Reduction.sumWithStatus_eq_zero_of_finite` | An exact-zero finite sum follows the documented signed-zero rule and raises no status flag. |
 | `Model.Reduction.dotWithStatus_eq_round_of_finite_nonzero` | A nonzero finite dot performs one final dyadic rounding and returns exactly that rounding's status. |
 | `Model.Reduction.dotWithStatus_eq_zero_of_finite` | An exact-zero finite dot follows the documented signed-zero rule and raises no status flag. |
@@ -603,6 +626,7 @@ operation accepts all five rounding modes and works with custom decimal layouts.
 | Theorem | Informal statement |
 | --- | --- |
 | `Arithmetic.square_valid`, `powInt_valid`, `rsqrt_valid`, `hypot_valid`, `rootN_valid` | The delivered datum is valid for the destination format. |
+| `Arithmetic.rootN_degree_zero` | Degree zero returns a canonical quiet NaN and raises invalid for every input, including NaNs. |
 | `Arithmetic.square_error_le_half`, `powInt_error_le_half`, `rsqrt_error_le_half`, `hypot_error_le_half`, `rootN_error_le_half` | A finite nearest-rounded result is within half the selected decimal grid step of the exact real expression, under its domain hypotheses. |
 | `Arithmetic.rootN_error_lt_one` | For a finite nonzero input and a nonzero degree in the real domain, every rounding mode has error strictly less than one selected grid step when no overflow occurs. |
 | `Arithmetic.rootN_towardNegative_le`, `le_rootN_towardPositive` | Directed roots lie on their requested side of the exact root when no overflow occurs. |
@@ -853,6 +877,11 @@ error analyses rather than executable operations.
 | `Flocq.sqrt_round_residual_FLX` | For precision above one, the residual `x - q^2` of a nearest-rounded square root is representable. |
 | `Flocq.roundAtScale_nearestEven_after_odd_binary_extra` | Round-to-odd with two extra binary digits followed by nearest-even rounding equals direct nearest-even rounding, on a fixed grid only. |
 | `Flocq.refineLocation_correct` | The executable bracket refinement used by the effective calculation layer is sound. |
+
+`Flocq.RoundOddPoint` fixes parity at an explicitly supplied grid exponent.
+`Flocq.RoundOddCanonicalPoint` uses the result's canonical exponent, matching Flocq's
+`Rnd_odd_pt`. `round_odd_canonical_point_FIX` proves this contract for fixed-point grids;
+`round_odd_canonical_point_of_cexp_eq` transports it when rounding preserves the canonical exponent.
 
 ## P3109 representation, projection, and arithmetic
 

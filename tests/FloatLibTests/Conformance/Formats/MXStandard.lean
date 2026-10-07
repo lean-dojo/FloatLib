@@ -43,6 +43,9 @@ def scalarFailures : Thunk Nat := ⟨fun _ => countFailures
   , scalar .e4m3 .overflow 465 == 127
   , scalar .e4m3 .saturate 1000 == 126
   , scalar .e4m3 .overflow (-464) == 254
+  , scalar .e4m3 .overflow (-465) == 255
+  , scalar .e4m3 .overflow (-896) == 255
+  , (Element.quantize .e4m3 .overflow (.infinity true)).toNat == 255
   , scalar .e5m2 .overflow 61439 == 123
   , scalar .e5m2 .overflow 61440 == 124
   , scalar .e5m2 .saturate 61440 == 123

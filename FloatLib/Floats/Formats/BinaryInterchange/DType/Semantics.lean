@@ -101,7 +101,7 @@ theorem floatToInt_of_exactValue_eq_nan
     (hvalue : Model.exactValue x = .nan negative signaling payload) :
     floatToInt (width := width) x rounding =
       .failure (.exceptional .source
-        (.nan (some (Model.payloadOfNaNField signaling payload)) negative signaling)) := by
+        (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling)) := by
   simp [floatToInt, hvalue]
 
 /-- Successful finite conversion stores the selected integer exactly at positive width. -/

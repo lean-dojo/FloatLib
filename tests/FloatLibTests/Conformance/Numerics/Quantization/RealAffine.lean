@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Affine
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Odd
+public import FloatLib.Floats.Formats.Flocq.Theory.Special.FTZ
 
 /-!
 # Real affine quantization and executable refinement
@@ -87,5 +88,31 @@ example : RoundOddPoint binaryRadix integerGrid 0 (5 / 2) 3 := by
 -- Exact inputs retain their value even when their mantissa is even.
 example : RoundOddPoint binaryRadix integerGrid 0 2 2 := by
   exact ⟨⟨2, by norm_num⟩, Or.inl rfl⟩
+
+section AbruptUnderflow
+
+local instance : ValidExp (ftzExp 0 3) := ftzValidExp 0 3 (by norm_num)
+
+example : round (β := binaryRadix) (fexp := ftzExp 0 3) oddRound 1 = 4 := by
+  have hmag : magnitude binaryRadix 1 = 1 := by
+    simpa [bpow] using magnitude_bpow binaryRadix 0
+  simp only [FloatLib.Floats.Formats.Flocq.round, toReal, scaledMantissa, cexp, hmag]
+  norm_num [ftzExp, oddRound, bpow, Radix.toReal, binaryRadix]
+
+-- The least normal value 4 has canonical mantissa 4, despite its odd input-grid mantissa 1.
+example : ¬ RoundOddCanonicalPoint binaryRadix (ftzExp 0 3) 1 4 := by
+  have hmag : magnitude binaryRadix 4 = 3 := by
+    have h := magnitude_bpow binaryRadix 2
+    norm_num [bpow, Radix.toReal, binaryRadix] at h
+    exact h
+  rintro ⟨_, h | ⟨_, m, hm, hodd⟩⟩
+  · norm_num at h
+  · have hm' : m = 4 := by
+      exact_mod_cast (by simpa [cexp, hmag, ftzExp, bpow] using hm.symm : (m : ℝ) = 4)
+    subst m
+    obtain ⟨k, hk⟩ := hodd
+    omega
+
+end AbruptUnderflow
 
 end FloatLibTests.Conformance.Numerics.Quantization.RealAffine

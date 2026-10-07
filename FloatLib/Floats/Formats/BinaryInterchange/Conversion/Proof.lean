@@ -201,12 +201,12 @@ theorem runWith_default_nan_eq_castWithStatus {src dst : FloatFormat} {Destinati
         { invalid := (Model.castWithStatus src dst x mode).status.invalid } := by
   have hcast := Model.castWithRounding_of_isNaN (dst := dst) x mode hnan
   have hisnan := Model.isNaN_propagatedNaN dst (Model.signBit x)
-    (Model.payloadOfNaNField (Model.isSNaN x) (Model.fracField x)) hdst
+    (Model.nanPayload x) hdst
   have hsome : ∃ v, Model.canonicalNaN? dst = some v := by
     unfold Model.canonicalNaN?; cases h : dst.encoding <;> simp_all
   obtain ⟨v, hv⟩ := hsome
   simp only [runWith, quantizeExceptionalWith, Context.default, hv, Model.castWithStatus, hnan,
-    hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some, Model.nanPayload]
+    hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some]
   cases Model.isSNaN x <;> rfl
 
 /--

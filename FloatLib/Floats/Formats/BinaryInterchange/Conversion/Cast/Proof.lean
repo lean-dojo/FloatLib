@@ -138,10 +138,10 @@ This is the same-descriptor case of IEEE 754-2019 §6.2.3, so `cast` could use `
 every NaN; it keeps `quietNaN` on the same descriptor only because that path avoids field packing.
 -/
 theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : isNaN x = true) :
-    propagatedNaN fmt (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) = quietNaN x := by
+    propagatedNaN fmt (signBit x) (nanPayload x) = quietNaN x := by
   have hfw := fmt.fracWidth_pos
   unfold isNaN at hnan
-  unfold propagatedNaN quietNaN isSNaN
+  unfold propagatedNaN quietNaN nanPayload isSNaN
   cases henc : fmt.encoding with
   | finite => simp [henc] at hnan
   | finiteUnsignedZero =>
@@ -238,7 +238,7 @@ On a NaN source, `cast` is `propagatedNaN` on the source sign and IEEE payload, 
 unequal descriptors alike (IEEE 754-2019 §6.2.3).
 -/
 theorem cast_of_isNaN {src dst : FloatFormat} (x : Model src) (hnan : isNaN x = true) :
-    cast src dst x = propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) := by
+    cast src dst x = propagatedNaN dst (signBit x) (nanPayload x) := by
   by_cases h : src = dst
   · subst h
     simp [cast, hnan, propagatedNaN_eq_quietNaN x hnan]
@@ -248,7 +248,7 @@ theorem cast_of_isNaN {src dst : FloatFormat} (x : Model src) (hnan : isNaN x = 
 theorem castWithRounding_of_isNaN {src dst : FloatFormat} (x : Model src)
     (mode : IEEERoundingMode) (hnan : isNaN x = true) :
     castWithRounding src dst x mode =
-      propagatedNaN dst (signBit x) (payloadOfNaNField (isSNaN x) (fracField x)) := by
+      propagatedNaN dst (signBit x) (nanPayload x) := by
   cases mode <;> simp [castWithRounding, hnan, cast_of_isNaN x hnan]
 
 /--

@@ -170,7 +170,7 @@ theorem floatToIntSaturating_of_exactValue_eq_nan
     floatToIntSaturating width x = FixedInt.ofInt 0 ∧
       floatToInt (width := width) x .towardZero =
         .failure (.exceptional .source
-          (.nan (some (Model.payloadOfNaNField signaling payload)) negative signaling)) := by
+          (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling)) := by
   exact ⟨by simp [floatToIntSaturating, hvalue],
     floatToInt_of_exactValue_eq_nan x .towardZero negative signaling payload hvalue⟩
 

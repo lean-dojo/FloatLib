@@ -346,14 +346,18 @@ The IEEE 754 §9.7 payload of a binary NaN fraction field: the field without its
 
 The quiet bit is the most significant fraction bit. It is therefore the highest set bit of a quiet
 NaN's field and clear in a signaling NaN's field, so the payload is recovered without knowing the
-fraction width. A zero field has payload zero.
+fraction width. A zero field has payload zero. Non-IEEE encodings have no diagnostic payload bits and
+therefore carry payload zero.
 -/
-@[inline] def payloadOfNaNField (signaling : Bool) (field : Nat) : Nat :=
-  if signaling then field else field - 2 ^ Nat.log2 field
+@[inline] def payloadOfNaNField (signaling : Bool) (field : Nat)
+    (encoding : FloatFormat.Encoding := .ieee) : Nat :=
+  match encoding with
+  | .ieee => if signaling then field else field - 2 ^ Nat.log2 field
+  | .finiteMaxNaN | .finiteUnsignedZero | .finite => 0
 
 /-- Diagnostic payload of a binary NaN, excluding its quiet bit. -/
 @[inline] def nanPayload {fmt : FloatFormat} (x : Model fmt) : Nat :=
-  payloadOfNaNField (isSNaN x) (fracField x)
+  payloadOfNaNField (isSNaN x) (fracField x) fmt.encoding
 
 /--
 A quiet NaN of `fmt` carrying a source NaN's sign and payload, following IEEE 754-2019 §6.2.3.

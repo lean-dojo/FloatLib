@@ -195,6 +195,14 @@ theorem isFinite_cast_of_abs_toReal_le_posMaxFinite {src dst : FloatFormat} (x :
     · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
 
 /-- Absolute error of one finite cross-format cast. -/
+theorem abs_toReal_cast_sub_le_of_isIEEE_destination {src dst : FloatFormat} (x : Model src)
+    (hdst : dst.isIEEE = true)
+    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
+    |toReal (cast src dst x) - toReal x| ≤ epsilonAt dst (toReal x) := by
+  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hout]
+  exact abs_roundAt_sub_le dst (toReal x)
+
+/-- IEEE-source specialization of `abs_toReal_cast_sub_le_of_isIEEE_destination`. -/
 theorem abs_toReal_cast_sub_le {src dst : FloatFormat} (x : Model src)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
     (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
@@ -269,6 +277,16 @@ theorem fma_exact_mem_Icc {fmt : FloatFormat} (x y z : Model fmt)
   exact roundAt_mem_Icc fmt (toReal x * toReal y + toReal z)
 
 /-- The source real value lies in the half-ULP enclosure around a finite cast. -/
+theorem cast_exact_mem_Icc_of_isIEEE_destination {src dst : FloatFormat} (x : Model src)
+    (hdst : dst.isIEEE = true)
+    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
+    toReal x ∈ Set.Icc
+      (toReal (cast src dst x) - epsilonAt dst (toReal x))
+      (toReal (cast src dst x) + epsilonAt dst (toReal x)) := by
+  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hout]
+  exact roundAt_mem_Icc dst (toReal x)
+
+/-- IEEE-source specialization of `cast_exact_mem_Icc_of_isIEEE_destination`. -/
 theorem cast_exact_mem_Icc {src dst : FloatFormat} (x : Model src)
     (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
     (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
