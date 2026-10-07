@@ -153,7 +153,7 @@ private theorem cast_sign_apply (sign : Sign) (mantissa : Nat) :
   cases sign <;> simp [Float.Model.UnpackedFloat.Sign.apply]
 
 /-- Lean's remainder classification locates the exact quotient relative to the integer quotient. -/
-private theorem accuracyRepresents_accuracyOfFraction
+theorem accuracyRepresents_accuracyOfFraction
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
     accuracyRepresents (numerator / denominator)
       (accuracyOfFraction (numerator % denominator) denominator)
