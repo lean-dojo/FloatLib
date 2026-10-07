@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.MulDiv
 public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.Constructors
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.FromInt
@@ -140,6 +141,45 @@ theorem native32_add_overflow :
       (ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x7f7fffff) +
         ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x7f7fffff)) = 0x7f800000 := by
   rw [← ExecFloat.Binary.ofFloat32_add_of_isFinite _ _ (by decide +kernel) (by decide +kernel)]
+  decide +kernel
+
+/-- A zero provisional quotient still rounds: the least binary64 subnormal over 1.5 is itself. -/
+theorem unpacked64_div_zero_quotient :
+    Model.roundAt FloatFormat.binary64
+        (Model.toReal (Model.ofNatBits (fmt := .binary64) 1) /
+          Model.toReal (Model.ofNatBits (fmt := .binary64) 0x3ff8000000000000)) =
+      Model.toReal (Model.ofNatBits (fmt := .binary64) 1) := by
+  rw [← Model.toReal_ofModel_div_toModel_eq_roundAt (by decide) _ _
+    (by decide +kernel) (by decide +kernel)]
+  exact congrArg Model.toReal (by decide +kernel)
+
+/-- The quotient's sign reaches the result: the negative least subnormal over 1.5 is itself. -/
+theorem unpacked64_div_zero_quotient_negative :
+    Model.roundAt FloatFormat.binary64
+        (Model.toReal (Model.ofNatBits (fmt := .binary64) 0x8000000000000001) /
+          Model.toReal (Model.ofNatBits (fmt := .binary64) 0x3ff8000000000000)) =
+      Model.toReal (Model.ofNatBits (fmt := .binary64) 0x8000000000000001) := by
+  rw [← Model.toReal_ofModel_div_toModel_eq_roundAt (by decide) _ _
+    (by decide +kernel) (by decide +kernel)]
+  exact congrArg Model.toReal (by decide +kernel)
+
+example : (Float.Model.UnpackedFloat.divCore Float.Model.Format.binary64
+    1 (-1074) (3 * 2 ^ 51) (-52)).1 = 0 := by decide +kernel
+
+/-- A subnormal product at a tie rounds to the even neighbor without an exponent premise. -/
+theorem unpacked64_mul_subnormal_tie :
+    Model.roundAt FloatFormat.binary64
+        (Model.toReal (Model.ofNatBits (fmt := .binary64) 1) *
+          Model.toReal (Model.ofNatBits (fmt := .binary64) 0x3ff8000000000000)) =
+      Model.toReal (Model.ofNatBits (fmt := .binary64) 2) := by
+  rw [← Model.toReal_ofModel_mul_toModel_eq_roundAt (by decide) _ _ (by decide +kernel)]
+  exact congrArg Model.toReal (by decide +kernel)
+
+-- Arbitrary unpacked operands still need the exponent premise: this exact product is 1, but
+-- Lean's result packs to the least subnormal.
+example : Float.Model.UnpackedFloat.pack Float.Model.Format.binary64
+    (Float.Model.UnpackedFloat.mul Float.Model.Format.binary64
+      (.finite .positive 1 0 (by decide)) (.finite .positive 1 0 (by decide))) = 1#64 := by
   decide +kernel
 
 /-- Public configured binary32 square root commutes with native export on every input word. -/

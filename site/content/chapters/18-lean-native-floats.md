@@ -334,6 +334,28 @@ have narrower hypotheses. Multiplication requires a provisional exponent satisfy
 `divCore`. Their real-valued conclusions apply once those conditions and the stated finite
 conditions have been established.
 
+Operands unpacked from format words always satisfy the exponent condition, and division does
+not need a nonzero provisional quotient. For a conventional IEEE descriptor, the
+[format-word theorems](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Arithmetic/LeanModel/MulDiv.lean)
+therefore need only a finite result, plus a finite divisor for division, and conclude
+$\operatorname{roundAt}_{\mathrm{fmt}}(\operatorname{value}(x)\cdot\operatorname{value}(y))$ and
+$\operatorname{roundAt}_{\mathrm{fmt}}(\operatorname{value}(x)/\operatorname{value}(y))$. When
+`divCore` returns a zero provisional quotient, the sign, the selected exponent, and the remainder
+accuracy still determine the rounding to a signed zero or a signed least subnormal. We can check
+the smallest case with the kernel: the least positive subnormal divided by `1.5` rounds back to
+itself, although its provisional quotient is zero.
+
+```lean
+example : Float.ofBits 0x0000000000000001 / 1.5 = Float.ofBits 0x0000000000000001 := rfl
+
+example :
+    (Float.ofBits 0x0000000000000001).toModel.unpack = .finite .positive 1 (-1074) (by decide) ∧
+    (1.5 : Float).toModel.unpack = .finite .positive (3 * 2 ^ 51) (-52) (by decide) ∧
+    (Float.Model.UnpackedFloat.divCore Float.Model.Format.binary64
+      1 (-1074) (3 * 2 ^ 51) (-52)).1 = 0 :=
+  ⟨rfl, rfl, by decide⟩
+```
+
 All these proofs concern Lean's logical definitions. Compiled native calls still use external
 runtime functions and hardware instructions. The optional guarded host operations below retain
 that trust boundary.
