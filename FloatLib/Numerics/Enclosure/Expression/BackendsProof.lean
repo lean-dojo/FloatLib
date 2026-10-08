@@ -124,6 +124,8 @@ theorem ofRounding_sound (R : OutwardRounding α ℚ) (config : Config := {}) :
     cases op with
     | fma => exact containsReal_fma? R h hx hy hz
 
+  call := by intros; contradiction
+
 /-- Exact rational endpoints satisfy the common real-containment contract. -/
 theorem rational_sound (config : Config := {}) : (rational config).Sound :=
   ofRounding_sound _ config
@@ -193,5 +195,7 @@ theorem binaryGrid_sound (config : Config := {}) : (binaryGrid config).Sound whe
     | fma =>
       cases Option.some.inj h
       exact BinaryGrid.containsReal_fma config.precision hx hy hz
+
+  call := by intros; contradiction
 
 end FloatLib.Numerics.Interval.Backend

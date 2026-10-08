@@ -62,6 +62,13 @@ def _unary_ops() -> dict[str, Callable[[Any], Any]]:
         "sqrt": lambda x: x.sqrt(),
         "sin": lambda x: x.sin(),
         "cos": lambda x: x.cos(),
+        "tan": lambda x: x.tan(),
+        "asin": lambda x: x.asin(),
+        "acos": lambda x: x.acos(),
+        "atan": lambda x: x.atan(),
+        "asinh": lambda x: x.asinh(),
+        "acosh": lambda x: x.acosh(),
+        "atanh": lambda x: x.atanh(),
         "sigmoid": sigmoid,
         "pi": lambda x: x.pi(),
     }
@@ -81,6 +88,8 @@ def _binary_ops() -> dict[str, Callable[[Any, Any], Any]]:
         "sub": lambda a, b: a - b,
         "mul": lambda a, b: a * b,
         "div": lambda a, b: a / b,
+        "rpow": lambda a, b: a ** b,
+        "logb": lambda a, b: b.log() / a.log(),
     }
 
 
@@ -248,7 +257,7 @@ def main(argv: list[str]) -> int:
     # Unary interval mode: one named function over one input interval.
     p.add_argument(
         "--func",
-        help="Unary function: exp|log|sinh|cosh|tanh|sqrt|sin|cos|sigmoid|pi",
+        help="Unary function: " + "|".join(_unary_ops()),
     )
     p.add_argument("--lo", help="Lower endpoint (decimal string)")
     p.add_argument("--hi", help="Upper endpoint (decimal string)")
@@ -291,7 +300,8 @@ def main(argv: list[str]) -> int:
 
             # Monotone endpoint evaluation is the default here because it matches the needs of NN
             # activation enclosures. For non-monotone functions, switch strategy to "ball".
-            monotone = {"tanh", "exp", "log", "sinh", "sqrt", "sigmoid", "pi"}
+            monotone = {"tanh", "exp", "log", "sinh", "sqrt", "sigmoid", "pi",
+                        "asin", "acos", "atan", "asinh", "acosh", "atanh"}
             strategy = "endpoints" if str(func) in monotone else "ball"
             y = _unary_interval_enclosure(str(func), lo, hi, strategy=strategy)
 

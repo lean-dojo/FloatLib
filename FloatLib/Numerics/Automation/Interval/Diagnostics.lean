@@ -17,9 +17,10 @@ public meta import Mathlib.Util.Qq
 # Failure diagnostics for interval proofs
 
 `Tactic.diagnoseFailure` explains a failed binary-grid check without constructing proof evidence.
-It follows the checker's subdivision order and uses the existing evaluator and backend operations
-to locate the first rejected operation on a failing leaf. An enclosure that includes a forbidden
-value is reported as an enclosure obstruction, not as a claim about the real subexpression.
+Algebraic failures follow the checker's subdivision order and use the existing evaluator to locate
+the first rejected operation. Registered functions are inspected through their actual quoted
+backend. An enclosure that includes a forbidden value is reported as an enclosure obstruction,
+not as a claim about the real subexpression.
 
 Diagnostic retries change one accuracy setting at a time. They describe only the inspected box;
 the tactic must still verify every successful proof with its usual kernel check. All work is
@@ -34,11 +35,13 @@ namespace FloatLib.Numerics.Interval.Tactic
 
 namespace Diagnostics
 
+/-- Recover a closed natural literal after reducing its quoted expression. -/
 private def readNat (e : Q(Nat)) : MetaM Nat := do
   let some n := (← withTransparency .all (whnf e)).rawNatLit?
     | throwError "expected a closed natural number"
   return n
 
+/-- Read a signed integer from Lean’s two literal constructors. -/
 private def readInt (e : Q(Int)) : MetaM Int := do
   let e : Q(Int) ← withTransparency .all (whnf e)
   match e with
@@ -46,42 +49,12 @@ private def readInt (e : Q(Int)) : MetaM Int := do
   | ~q(Int.negSucc $n) => return Int.negSucc (← readNat n)
   | _ => throwError "expected a closed integer"
 
+/-- Decode a quoted rational exactly, retaining its signed numerator. -/
 private def readRat (e : Q(ℚ)) : MetaM ℚ := do
   if let some r ← getRatValue? e then return r
   return Rat.divInt (← readInt q(Rat.num $e)) (← readNat q(Rat.den $e))
 
-private def readUnary (e : Q(UnaryOp)) : MetaM UnaryOp := do
-  let e : Q(UnaryOp) ← whnf e
-  match e with
-  | ~q(UnaryOp.neg) => return .neg
-  | ~q(UnaryOp.abs) => return .abs
-  | ~q(UnaryOp.inv) => return .inv
-  | ~q(UnaryOp.pow $n) => return .pow (← readNat n)
-  | ~q(UnaryOp.exp) => return .exp
-  | ~q(UnaryOp.log) => return .log
-  | ~q(UnaryOp.sin) => return .sin
-  | ~q(UnaryOp.cos) => return .cos
-  | ~q(UnaryOp.tan) => return .tan
-  | ~q(UnaryOp.asin) => return .asin
-  | ~q(UnaryOp.acos) => return .acos
-  | ~q(UnaryOp.atan) => return .atan
-  | ~q(UnaryOp.sinh) => return .sinh
-  | ~q(UnaryOp.cosh) => return .cosh
-  | ~q(UnaryOp.tanh) => return .tanh
-  | ~q(UnaryOp.sqrt) => return .sqrt
-  | _ => throwError "expected a closed unary operation"
-
-private def readBinary (e : Q(BinaryOp)) : MetaM BinaryOp := do
-  let e : Q(BinaryOp) ← whnf e
-  match e with
-  | ~q(BinaryOp.add) => return .add
-  | ~q(BinaryOp.sub) => return .sub
-  | ~q(BinaryOp.mul) => return .mul
-  | ~q(BinaryOp.div) => return .div
-  | ~q(BinaryOp.min) => return .min
-  | ~q(BinaryOp.max) => return .max
-  | _ => throwError "expected a closed binary operation"
-
+/-- Read only algebraic syntax; registered functions use the actual quoted backend below. -/
 private partial def readExpr (e : Q(Interval.Expr)) : MetaM Interval.Expr :=
   withIncRecDepth do
     checkSystem "interval diagnostics"
@@ -89,13 +62,31 @@ private partial def readExpr (e : Q(Interval.Expr)) : MetaM Interval.Expr :=
     match e with
     | ~q(Interval.Expr.const $r) => return .const (← readRat r)
     | ~q(Interval.Expr.var $i) => return .var (← readNat i)
-    | ~q(Interval.Expr.unary $op $a) => return .unary (← readUnary op) (← readExpr a)
+    | ~q(Interval.Expr.unary $op $a) =>
+      let op : Q(UnaryOp) ← whnf op
+      let operation ← match op with
+        | ~q(UnaryOp.neg) => pure UnaryOp.neg
+        | ~q(UnaryOp.abs) => pure UnaryOp.abs
+        | ~q(UnaryOp.inv) => pure UnaryOp.inv
+        | ~q(UnaryOp.pow $n) => pure (UnaryOp.pow (← readNat n))
+        | _ => throwError "expected an algebraic unary operation"
+      return .unary operation (← readExpr a)
     | ~q(Interval.Expr.binary $op $a $b) =>
-      return .binary (← readBinary op) (← readExpr a) (← readExpr b)
+      let op : Q(BinaryOp) ← whnf op
+      let operation ← match op with
+        | ~q(BinaryOp.add) => pure BinaryOp.add
+        | ~q(BinaryOp.sub) => pure BinaryOp.sub
+        | ~q(BinaryOp.mul) => pure BinaryOp.mul
+        | ~q(BinaryOp.div) => pure BinaryOp.div
+        | ~q(BinaryOp.min) => pure BinaryOp.min
+        | ~q(BinaryOp.max) => pure BinaryOp.max
+        | _ => throwError "expected a closed binary operation"
+      return .binary operation (← readExpr a) (← readExpr b)
     | ~q(Interval.Expr.ternary TernaryOp.fma $a $b $c) =>
       return .ternary .fma (← readExpr a) (← readExpr b) (← readExpr c)
-    | _ => throwError "expected a closed interval expression"
+    | _ => throwError "native interval diagnostics require algebraic syntax"
 
+/-- Decode the original rational coordinates in their variable-index order. -/
 private partial def readBox (box : Q(Box)) : MetaM Box :=
   withIncRecDepth do
     let box : Q(Box) ← whnf box
@@ -106,24 +97,7 @@ private partial def readBox (box : Q(Box)) : MetaM Box :=
         (← readBox tail)
     | _ => throwError "expected a closed rational box"
 
-private def unaryName : UnaryOp → String
-  | .neg => "negation"
-  | .abs => "abs"
-  | .inv => "inverse"
-  | .pow _ => "power"
-  | .exp => "exp"
-  | .log => "log"
-  | .sin => "sin"
-  | .cos => "cos"
-  | .tan => "tan"
-  | .asin => "arcsin"
-  | .acos => "arccos"
-  | .atan => "arctan"
-  | .sinh => "sinh"
-  | .cosh => "cosh"
-  | .tanh => "tanh"
-  | .sqrt => "sqrt"
-
+/-- Display an algebraic binary operation in a failed expression. -/
 private def binaryName : BinaryOp → String
   | .add => "+"
   | .sub => "-"
@@ -132,6 +106,7 @@ private def binaryName : BinaryOp → String
   | .min => "min"
   | .max => "max"
 
+/-- Use the source real term when available, otherwise display its variable index. -/
 private def atomMessage (atoms : Array Lean.Expr) (i : Nat) : MessageData :=
   match atoms[i]? with
   | some atom => m!"{atom}"
@@ -141,6 +116,7 @@ private def atomMessage (atoms : Array Lean.Expr) (i : Nat) : MessageData :=
 private def exprMessage (atoms : Array Lean.Expr) (e : Interval.Expr) : MessageData :=
   (go e).run' 32
 where
+  /-- Limit the displayed expression to the remaining node count. -/
   go (e : Interval.Expr) : StateM Nat MessageData := do
     let remaining ← get
     if remaining == 0 then return "…"
@@ -150,13 +126,18 @@ where
     | .var i => return atomMessage atoms i
     | .unary (.pow n) a => return m!"({← go a} ^ {n})"
     | .unary .neg a => return m!"(-{← go a})"
-    | .unary op a => return m!"{unaryName op}({← go a})"
+    | .unary .abs a => return m!"abs({← go a})"
+    | .unary .inv a => return m!"inverse({← go a})"
+    | .unary _ a => return m!"operation({← go a})"
     | .binary op a b => return m!"({← go a} {binaryName op} {← go b})"
     | .ternary .fma a b c => return m!"({← go a} * {← go b} + {← go c})"
+    | .call index _ => return m!"registered operation {index}"
 
+/-- Display both exact rational endpoints of an enclosure. -/
 private def rangeMessage (I : Interval ℚ) : MessageData :=
   m!"[{I.lo}, {I.hi}]"
 
+/-- Show at most six coordinates so large aggregate goals retain readable diagnostics. -/
 private def boxMessage (atoms : Array Lean.Expr) (box : Box) : MessageData :=
   if box.isEmpty then "closed expression"
   else
@@ -165,9 +146,11 @@ private def boxMessage (atoms : Array Lean.Expr) (box : Box) : MessageData :=
     let rest := if box.length ≤ 6 then [] else [m!"… ({box.length - 6} more coordinates)"]
     MessageData.joinSep (entries ++ rest) ", "
 
+/-- Interpret integer endpoints on the configured binary grid. -/
 private def decodeRange (config : Backend.Config) (I : Interval Int) : Interval ℚ :=
   I.map (BinaryGrid.toRat config.precision)
 
+/-- Check interruption and heartbeat limits before and after advisory evaluation. -/
 private def checkedEval (e : Interval.Expr) (B : Backend Int)
     (env : Nat → Option (Interval Int)) : MetaM (Option (Interval Int)) := do
   checkSystem "interval diagnostics"
@@ -175,55 +158,9 @@ private def checkedEval (e : Interval.Expr) (B : Backend Int)
   checkSystem "interval diagnostics"
   return result
 
-private structure Obstruction where
-  expression : Interval.Expr
-  message : MessageData
-
-private def unaryObstruction (atoms : Array Lean.Expr) (config : Backend.Config)
-    (op : UnaryOp) (a : Interval.Expr) (I : Interval ℚ) : MessageData :=
-  let argument := m!"{exprMessage atoms a} is enclosed by {rangeMessage I}"
-  let context := m!"{unaryName op}: {argument}"
-  match op with
-  | .inv =>
-    if I.lo ≤ 0 ∧ 0 ≤ I.hi then
-      m!"{context}, which includes zero; the denominator enclosure must exclude zero."
-    else m!"{context}; the backend returned no enclosure for an unknown reason."
-  | .log =>
-    if I.lo ≤ 0 then
-      m!"{context}; the log backend requires a strictly positive lower endpoint."
-    else m!"{context}; the backend returned no enclosure for an unknown reason."
-  | .sqrt =>
-    if I.lo < 0 then
-      m!"{context}; the sqrt backend requires a nonnegative lower endpoint."
-    else m!"{context}; the backend returned no enclosure for an unknown reason."
-  | .asin | .acos =>
-    if I.lo < -1 ∨ 1 < I.hi then
-      m!"{context}; the backend requires an enclosing range contained in [-1, 1]."
-    else if I.hi < I.lo then
-      m!"{context}; the backend rejects reversed interval endpoints."
-    else
-      let coarse := [I.lo, I.hi].findSome? fun x =>
-        if -1 < x ∧ x < 1 ∧ x ≠ 0 then
-          let J := sqrtPointBounds (1 - x ^ 2) config.precision
-          if J.lo ≤ 0 then some (x, J) else none
-        else none
-      match coarse with
-      | some (x, J) =>
-        m!"{context}, within [-1, 1], but the internal sqrt(1 - t^2) enclosure at \
-          t = {x} is {rangeMessage J} and cannot separate the denominator from zero. \
-          Increase precision."
-      | none => m!"{context}; the backend returned no enclosure for an unknown reason."
-  | .tan =>
-    let cosine := cosBounds I config.degree
-    if cosine.lo ≤ 0 ∧ 0 ≤ cosine.hi then
-      m!"{context}; its cosine enclosure {rangeMessage cosine} includes zero. \
-        This does not establish that the argument reaches a pole."
-    else m!"{context}; the backend returned no enclosure for an unknown reason."
-  | _ => m!"{context}; the backend returned no enclosure for an unknown reason."
-
 /-- Descend in evaluation order, using `eval?` itself to distinguish rejected children. -/
 private partial def firstObstruction (atoms : Array Lean.Expr) (config : Backend.Config)
-    (env : Nat → Option (Interval Int)) (e : Interval.Expr) : MetaM Obstruction :=
+    (env : Nat → Option (Interval Int)) (e : Interval.Expr) : MetaM (Interval.Expr × MessageData) :=
   withIncRecDepth do
     checkSystem "interval diagnostics"
     let B := Backend.binaryGrid config
@@ -234,7 +171,12 @@ private partial def firstObstruction (atoms : Array Lean.Expr) (config : Backend
       return ⟨e, m!"no interval is available for {atomMessage atoms i}"⟩
     | .unary op a =>
       let some I ← checkedEval a B env | firstObstruction atoms config env a
-      return ⟨e, unaryObstruction atoms config op a (decodeRange config I)⟩
+      let I := decodeRange config I
+      let message := if op == .inv && decide (I.lo ≤ 0 ∧ 0 ≤ I.hi) then
+          m!"inverse: {exprMessage atoms a} is enclosed by {rangeMessage I}, which includes \
+            zero; the denominator enclosure must exclude zero."
+        else m!"the backend returned no enclosure for {exprMessage atoms e}; reason unknown."
+      return ⟨e, message⟩
     | .binary op a b =>
       let some _ ← checkedEval a B env | firstObstruction atoms config env a
       let some J ← checkedEval b B env | firstObstruction atoms config env b
@@ -250,7 +192,11 @@ private partial def firstObstruction (atoms : Array Lean.Expr) (config : Backend
       let some _ ← checkedEval b B env | firstObstruction atoms config env b
       let some _ ← checkedEval c B env | firstObstruction atoms config env c
       return ⟨e, m!"the backend returned no enclosure for {exprMessage atoms e}; reason unknown."⟩
+    | .call index _ =>
+      return ⟨e, m!"registered operation {index} returned no enclosure; check its domain \
+        conditions or increase the approximation settings."⟩
 
+/-- A diagnostic search either certifies its boxes, isolates a failing leaf, or runs out of fuel. -/
 private inductive SearchResult where
   | certified
   | leaf (box : Box) (splits : Nat)
@@ -279,6 +225,7 @@ private def findLeaf (e : Interval.Expr) (B : Backend Int) (relation : Relation)
       | result => return result
 termination_by depth
 
+/-- Probe one larger precision or degree without treating a diagnostic retry as a proof. -/
 private def retryMessage (e : Interval.Expr) (obstruction : Option Interval.Expr)
     (box : Box) (relation : Relation) (config : Backend.Config) :
     MetaM (Option MessageData) := do
@@ -306,6 +253,7 @@ private def retryMessage (e : Interval.Expr) (obstruction : Option Interval.Expr
             the full inequality still needs checking."
   return none
 
+/-- Explain a failed leaf and distinguish subdivision exhaustion from an unsplittable box. -/
 private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box)
     (relation : Relation) (config : Backend.Config) (depth splits : Nat) : MetaM MessageData := do
   let B := Backend.binaryGrid config
@@ -314,7 +262,7 @@ private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box
   let (reason, obstruction) ← match ← checkedEval e B (fun i => intervals[i]?) with
     | none => do
       let failure ← firstObstruction atoms config (fun i => intervals[i]?) e
-      pure (failure.message, some failure.expression)
+      pure (failure.2, some failure.1)
     | some I =>
       let required := if relation == .negative then "< 0" else "≤ 0"
       pure (m!"the enclosure of {exprMessage atoms e} is {rangeMessage (decodeRange config I)}; \
@@ -333,6 +281,37 @@ private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box
     | none => message
 
 end Diagnostics
+
+/-- Inspect the actual registered backend by reduction, within the caller's diagnostic budget.
+The displayed enclosure belongs to the original box; subdivision may have narrower children. -/
+def diagnoseRegisteredFailure (expression : Q(Interval.Expr)) (backend : Q(Backend Int))
+    (box : Q(Box)) (config : Q(Backend.Config)) (relation : Q(Relation)) (depth : Q(Nat))
+    (atoms : Array Lean.Expr := #[]) : MetaM MessageData := withoutModifyingState do
+  let bounds ← Diagnostics.readBox box
+  let boxText := Diagnostics.boxMessage atoms bounds
+  let intervals : Q(Option (List (Interval Int))) ←
+    withTransparency .all (whnf q(Box.enclose? $box $backend))
+  let ~q(some $inputs) := intervals
+    | return m!"interval could not enclose the original input box: {boxText}."
+  let result : Q(Option (Interval Int)) ← withTransparency .all
+    (whnf q(Interval.Expr.eval? $expression $backend (fun i => $inputs[i]?)))
+  let ~q(some $I) := result
+    | return m!"interval could not enclose a registered operation on the original box: \
+      {boxText}. Check its accepted domain and approximation settings."
+  let precision ← Diagnostics.readNat q(Backend.Config.precision $config)
+  let lo ← Diagnostics.readInt q(Interval.lo $I)
+  let hi ← Diagnostics.readInt q(Interval.hi $I)
+  let range : Interval ℚ := ⟨BinaryGrid.toRat precision lo, BinaryGrid.toRat precision hi⟩
+  let strict := relation.isAppOf ``Relation.negative
+  let required := if strict then "< 0" else "≤ 0"
+  if (if strict then range.hi < 0 else range.hi ≤ 0) then
+    return m!"The original-box enclosure establishes {required}, but kernel verification \
+      did not complete. A larger finite `(maxHeartbeats := ...)` may be needed."
+  let depth ← Diagnostics.readNat depth
+  return m!"interval could not certify: on the original box, the expression is enclosed by \
+    {Diagnostics.rangeMessage range}; its upper endpoint does not establish {required}.\n\
+    Box: {boxText}. Verification used subdivision depth {depth}. Try tighter input bounds, \
+    more subdivision, or higher approximation settings."
 
 /-- Inspect the executable checker before kernel verification. A failed leaf can reject the
 attempt early; this advisory result never supplies evidence for a successful proof. -/

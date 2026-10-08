@@ -26,6 +26,7 @@ public import FloatLibTests.Conformance.Numerics.Declaration
 public import FloatLibTests.Conformance.Numerics.FixedInt
 public import FloatLibTests.Conformance.Numerics.FixedPoint
 public import FloatLibTests.Conformance.Numerics.GenericIntervals
+public import FloatLibTests.Conformance.Numerics.IntervalExtensions
 public import FloatLibTests.Conformance.Numerics.Quantization.Affine
 public import FloatLibTests.Conformance.Numerics.Quantization.Interfaces
 public import FloatLibTests.Conformance.Numerics.Quantization.RealAffine

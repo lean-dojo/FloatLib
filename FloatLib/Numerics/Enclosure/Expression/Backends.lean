@@ -11,8 +11,10 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
 public import FloatLib.Numerics.Enclosure.Interval.Elementary
 public import FloatLib.Numerics.Enclosure.Interval.Fused
 public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
+public import FloatLib.Numerics.Enclosure.Interval.InverseHyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
 public import FloatLib.Numerics.Enclosure.Interval.Operations
+public import FloatLib.Numerics.Enclosure.Interval.Powers
 
 /-!
 # Rational and binary-grid expression backends
@@ -30,14 +32,6 @@ The elementary enclosures and their domain checks are shared by all endpoint bac
 namespace FloatLib.Numerics.Interval.Backend
 
 variable {α : Type*}
-
-/-- Accuracy controls shared by the expression backends. Both settings allow zero. -/
-structure Config where
-  /-- Fractional bits for square-root bounds and, when selected, the binary endpoint grid. -/
-  precision : Nat := 64
-  /-- Taylor approximation degree for exponential, logarithmic, and trigonometric bounds. -/
-  degree : Nat := 16
-  deriving DecidableEq, Repr, Inhabited
 
 /--
 Rational enclosures for elementary expression operations.
@@ -138,5 +132,29 @@ def binaryGrid (config : Config := {}) : Backend Int where
   ternary? op I J K :=
     match op with
     | .fma => some (BinaryGrid.fma config.precision I J K)
+
+/-- Adapt an existing unary elementary enclosure to the extension interface. -/
+def elementaryExtension (op : UnaryOp) : Extension :=
+  Extension.unary (fun config I => elementaryBounds? config op I)
+
+/-- Inverse hyperbolic sine enclosure for registered evaluation. -/
+def asinhExtension : Extension :=
+  Extension.unary (fun config I => asinhBounds? I config.degree config.precision)
+
+/-- Inverse hyperbolic cosine enclosure for registered evaluation. -/
+def acoshExtension : Extension :=
+  Extension.unary (fun config I => acoshBounds? I config.degree config.precision)
+
+/-- Inverse hyperbolic tangent enclosure for registered evaluation. -/
+def atanhExtension : Extension :=
+  Extension.unary (fun config I => atanhBounds? I config.degree)
+
+/-- Real powers on positive bases for registered evaluation. -/
+def rpowExtension : Extension :=
+  Extension.binary (fun config I J => rpowBounds? I J config.degree)
+
+/-- Logarithms with a supplied positive base separated from one. -/
+def logbExtension : Extension :=
+  Extension.binary (fun config I J => logbBounds? I J config.degree)
 
 end FloatLib.Numerics.Interval.Backend

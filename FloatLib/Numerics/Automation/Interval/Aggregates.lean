@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Numerics.Automation.Interval.Functions
 public import FloatLib.Numerics.Enclosure.Expression.Real
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.BigOperators.Intervals
@@ -157,11 +158,10 @@ def aggregateAtoms : Simp.Simproc := fun e ↦ do
     ``dotProduct, ``Matrix.mulVec, ``Matrix.vecMul,
     ``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv, ``Min.min, ``Max.max,
     ``Neg.neg, ``abs, ``Inv.inv, ``HPow.hPow, ``Nat.cast, ``Int.cast, ``Rat.cast,
-    ``Subtype.val, ``NNReal.toReal, ``OfNat.ofNat, ``ite, ``dite,
-    ``Real.exp, ``Real.log, ``Real.sin, ``Real.cos, ``Real.tan, ``Real.arcsin,
-    ``Real.arccos, ``Real.arctan, ``Real.sinh, ``Real.cosh, ``Real.tanh, ``Real.sqrt]
+    ``Subtype.val, ``NNReal.toReal, ``OfNat.ofNat, ``ite, ``dite]
   if let .const head _ := e.getAppFn then
-    if heads.contains head then return .continue
+    let registered := (intervalExtensionRegistry.getState (← getEnv)).find? head
+    if heads.contains head || registered.isSome then return .continue
   if e.isAppOfArity ``Finset.sum 5 then
     let s := e.getAppArgs[3]!
     if s.isAppOf ``Insert.insert || s.isAppOf ``Singleton.singleton then return .continue

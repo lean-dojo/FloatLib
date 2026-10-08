@@ -6,11 +6,11 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Numerics.Automation.IntervalReify
+public import FloatLib.Numerics.Automation.Interval.Bounds
 public import FloatLib.Numerics.Enclosure.Expression.BackendsProof
 public import FloatLib.Numerics.Enclosure.Expression.CheckProof
-public meta import FloatLib.Numerics.Automation.IntervalDiagnostics
-public meta import FloatLib.Numerics.Automation.IntervalEquality
+public meta import FloatLib.Numerics.Automation.Interval.Diagnostics
+public meta import FloatLib.Numerics.Automation.Interval.Reify
 public meta import Lean.Elab.Tactic.Decide
 
 /-!
@@ -36,85 +36,6 @@ open Lean Elab Tactic Meta Qq
 
 namespace FloatLib.Numerics.Interval.Tactic
 
-/-- A bounded real atom, with explicit proofs of its rational endpoints. -/
-structure Coordinate where
-  /-- Real subexpression represented by this coordinate. -/
-  term : Q(ℝ)
-  /-- Quoted rational lower endpoint. -/
-  lo : Q(ℚ)
-  /-- Quoted rational upper endpoint. -/
-  hi : Q(ℚ)
-  /-- Proof that the lower endpoint is below the real term. -/
-  lower : Q(($lo : ℝ) ≤ $term)
-  /-- Proof that the real term is below the upper endpoint. -/
-  upper : Q($term ≤ ($hi : ℝ))
-
-/-- Select the strongest rational lower and upper bounds available for one atom. -/
-def coordinate (atom : Q(ℝ)) (bounds : Array Bound) : MetaM Coordinate := do
-  let mut lower : Option Bound := none
-  let mut upper : Option Bound := none
-  for bound in bounds do
-    unless ← withReducible (isDefEq atom bound.term) do continue
-    if bound.lower then
-      if lower.all (·.value < bound.value) then lower := some bound
-    else
-      if upper.all (bound.value < ·.value) then upper := some bound
-  let some lowerBound := lower
-    | throwError "interval needs a rational lower bound for {atom}"
-  let some upperBound := upper
-    | throwError "interval needs a rational upper bound for {atom}"
-  return ⟨atom, lowerBound.rational, upperBound.rational, lowerBound.proof, upperBound.proof⟩
-
-/-- A rational box and the proof that its ordered real coordinates belong to it. -/
-structure ReifiedBox where
-  /-- Rational intervals in variable-index order. -/
-  box : Q(Box)
-  /-- Real terms in the same order as the box coordinates. -/
-  reals : Q(List ℝ)
-  /-- Proof that each real term belongs to its corresponding interval. -/
-  membership : Q(Box.ContainsReal $box (fun i => $reals[i]?.getD 0))
-
-/-- Assemble box membership directly from the selected hypotheses. -/
-def reifyBox : List Coordinate → MetaM ReifiedBox
-  | [] => do
-    let box : Q(Box) := q([])
-    let reals : Q(List ℝ) := q([])
-    let membership : Lean.Expr := q(Box.containsReal_nil (fun i => ([] : List ℝ)[i]?.getD 0))
-    return ⟨box, reals, membership⟩
-  | head :: tail => do
-    let tail ← reifyBox tail
-    let term : Q(ℝ) ← pure head.term
-    let lo : Q(ℚ) ← pure head.lo
-    let hi : Q(ℚ) ← pure head.hi
-    let lower : Q(($lo : ℝ) ≤ $term) ← pure head.lower
-    let upper : Q($term ≤ ($hi : ℝ)) ← pure head.upper
-    let rest : Q(Box) ← pure tail.box
-    let restReals : Q(List ℝ) ← pure tail.reals
-    let restProof : Q(Box.ContainsReal $rest (fun i => $restReals[i]?.getD 0)) ←
-      pure tail.membership
-    let box : Q(Box) := q(⟨$lo, $hi⟩ :: $rest)
-    let reals : Q(List ℝ) := q($term :: $restReals)
-    let headProof : Q(($lo : ℝ) ≤ $term ∧ $term ≤ ($hi : ℝ)) ←
-      pure q(And.intro $lower $upper)
-    let membership : Lean.Expr :=
-      q(Box.containsReal_cons
-        (I := ⟨$lo, $hi⟩) (box := $rest)
-        (values := fun i => ($term :: $restReals)[i]?.getD 0) $headProof $restProof)
-    return ⟨box, reals, membership⟩
-
-/-- Produce a complete proof with a tactic, without replacing the caller's goals. -/
-def prove (proposition : Q(Prop)) (tactic : Syntax) : TacticM Lean.Expr := do
-  let original ← getGoals
-  let proof ← mkFreshExprMVar proposition
-  try
-    setGoals [proof.mvarId!]
-    evalTactic tactic
-    unless (← getUnsolvedGoals).isEmpty do
-      throwError "interval could not close its verification obligation"
-    instantiateMVars proof
-  finally
-    setGoals original
-
 /-- Bound kernel verification independently of the surrounding declaration's heartbeat setting. -/
 private def withCheckBudget {α : Type} (heartbeats : Nat) (action : TacticM α) : TacticM α := do
   if heartbeats == 0 then
@@ -125,29 +46,13 @@ private def withCheckBudget {α : Type} (heartbeats : Nat) (action : TacticM α)
 /-- Cache a closed decision proof only after the kernel has checked it within the budget. -/
 private def verifyClosedCheck (proposition : Q(Prop)) (heartbeats : Nat) : TacticM Lean.Expr :=
   withCheckBudget heartbeats do
-    let proof ← mkDecideProof proposition
+    let proof ← withTransparency .all (mkDecideProof proposition)
     let name ← mkAuxLemma [] proposition proof
     return mkConst name
 
-/-- Algebraic expressions can use exact rational endpoints without elementary approximation. -/
-private partial def isAlgebraic (expression : Q(Interval.Expr)) : MetaM Bool := withIncRecDepth do
-  checkSystem "interval algebraic expression"
-  match expression with
-  | ~q(Interval.Expr.const $_c) => return true
-  | ~q(Interval.Expr.var $_i) => return true
-  | ~q(Interval.Expr.unary $op $a) =>
-    match op with
-    | ~q(UnaryOp.neg) | ~q(UnaryOp.abs) | ~q(UnaryOp.inv) => isAlgebraic a
-    | ~q(UnaryOp.pow $_n) => isAlgebraic a
-    | _ => return false
-  | ~q(Interval.Expr.binary $_op $a $b) =>
-    return (← isAlgebraic a) && (← isAlgebraic b)
-  | ~q(Interval.Expr.ternary $_op $a $b $c) =>
-    return (← isAlgebraic a) && (← isAlgebraic b) && (← isAlgebraic c)
-  | _ => return false
-
 /-- Verify a real or nonnegative-real inequality with exact rational or binary-grid bounds. -/
-def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : TacticM Unit := withMainContext do
+def close (precision degree depth : Nat)
+    (maxHeartbeats : Nat := 20000) : TacticM Unit := withMainContext do
   let target : Q(Prop) ← instantiateMVars (← getMainTarget)
   let (lhs, rhs, strict) ← match target with
     | ~q(($a : ℝ) ≤ $b) => pure (a, b, false)
@@ -158,14 +63,14 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
   let difference : Q(ℝ) := q($lhs - $rhs)
   let normalized ← normalizeAggregates difference
   let scalar : Q(ℝ) ← pure normalized.expr
-  let ((expression, cache), atoms) ← (reifyScalarWithCache scalar).run #[]
+  let (expression, cache) ← (reify scalar).run {}
+  let atoms := cache.atoms
   let mut bounds := #[]
   for decl in ← getLCtx do
     if decl.isImplementationDetail then continue
     if ← isProp decl.type then
       bounds := bounds ++ (← boundsOfProofFor atoms decl.toExpr)
-  let coordinates ← atoms.toList.mapM (fun atom => coordinate atom bounds)
-  let data ← reifyBox coordinates
+  let data ← reifyBox bounds atoms.toList
   let box : Q(Box) ← pure data.box
   let reals : Q(List ℝ) ← pure data.reals
   let membership : Q(Box.ContainsReal $box (fun i => $reals[i]?.getD 0)) ←
@@ -175,16 +80,47 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
   let degree : Q(Nat) ← pure (mkNatLit degree)
   let depth : Q(Nat) ← pure (mkNatLit depth)
   let config : Q(Backend.Config) ← pure q(⟨$precision, $degree⟩)
-  let backend : Q(Backend Int) ← pure q(Backend.binaryGrid $config)
+  let mut extensions : Q(List Extension) := q([])
+  let mut functionTable : Q(List (List ℝ → ℝ)) := q([])
+  let mut extensionProof : Lean.Expr := q(extensionsSound_nil)
+  for name in cache.extensions.reverse do
+    let (E, function, _, sound) ← extensionCertificate name
+    let quotedFunction : Q(RealFunction (Extension.arity $E)) ← pure function
+    let proof : Q(Extension.Sound $E $quotedFunction) ← pure sound
+    let currentProof : Q(ExtensionsSound $extensions $functionTable) ← pure extensionProof
+    let newExtensions : Q(List Extension) := q($E :: $extensions)
+    let newFunctions : Q(List (List ℝ → ℝ)) :=
+      q(RealFunction.apply $quotedFunction :: $functionTable)
+    let newProof : Q(ExtensionsSound $newExtensions $newFunctions) :=
+      q(ExtensionsSound.cons $currentProof $proof)
+    extensions := newExtensions
+    functionTable := newFunctions
+    extensionProof := newProof
+  let extensionTable : Q(List Extension) ← pure extensions
+  let realFunctionTable : Q(List (List ℝ → ℝ)) ← pure functionTable
+  let certifiedExtensions : Q(ExtensionsSound $extensionTable $realFunctionTable) ←
+    pure extensionProof
+  let functions : Q(Nat → List ℝ → ℝ) := q(extensionValues $realFunctionTable)
+  let backend : Q(Backend Int) :=
+    q(Backend.withExtensions (Backend.binaryGrid $config) $config $extensionTable)
+  let backendProof : Q(Backend.Sound $backend $functions) :=
+    q(Backend.withExtensions_sound (extensions := $extensionTable) (functions := $realFunctionTable)
+      (Backend.binaryGrid_sound $config) $config $certifiedExtensions)
   let relation : Q(Relation) ← pure (if strict then q(.negative) else q(.nonpositive))
   let expanded : Q($difference = $scalar) ← normalized.getProof
-  let interpreted : Q($scalar = Interval.Expr.eval $expression $values) ←
-    evalEquality scalar expression values cache
-  let equality : Q($difference = Interval.Expr.eval $expression $values) :=
+  let interpreted : Q($scalar = Interval.Expr.eval $expression $values $functions) ←
+    evalEquality scalar expression values cache functions
+  let equality : Q($difference = Interval.Expr.eval $expression $values $functions) :=
     q(Eq.trans $expanded $interpreted)
-  -- Exact endpoints retain equality at non-dyadic bounds, such as the upper bound 1/3.
-  if ← isAlgebraic expression then
-    let exactBackend : Q(Backend ℚ) := q(Backend.rational $config)
+  -- Without registered calls, every reified operation is algebraic. Exact rational endpoints
+  -- retain equality at non-dyadic bounds, such as the upper bound 1/3.
+  if cache.extensions.isEmpty then
+    let exactBackend : Q(Backend ℚ) :=
+      q(Backend.withExtensions (Backend.rational $config) $config $extensionTable)
+    let exactBackendProof : Q(Backend.Sound $exactBackend $functions) :=
+      q(Backend.withExtensions_sound (extensions := $extensionTable)
+        (functions := $realFunctionTable)
+        (Backend.rational_sound $config) $config $certifiedExtensions)
     let exactProof? ← try
       let checked ← verifyClosedCheck
         q(Interval.Expr.check $expression $exactBackend $relation $box 0 = true)
@@ -195,26 +131,27 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
       pure none
     if let some checked := exactProof? then
       let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
-        #[q(ℚ), expression, exactBackend, q(Backend.rational_sound $config),
+        #[functions, q(ℚ), expression, exactBackend, exactBackendProof,
           relation, box, q(0), checked, values, membership]
       let proof ← if strict then do
-        let h : Q(Interval.Expr.eval $expression $values < 0) := sound
+        let h : Q(Interval.Expr.eval $expression $values $functions < 0) := sound
         let h : Q($lhs - $rhs < 0) := q((Eq.symm $equality) ▸ $h)
         pure q(sub_neg.mp $h)
       else do
-        let h : Q(Interval.Expr.eval $expression $values ≤ 0) := sound
+        let h : Q(Interval.Expr.eval $expression $values $functions ≤ 0) := sound
         let h : Q($lhs - $rhs ≤ 0) := q((Eq.symm $equality) ▸ $h)
         pure q(sub_nonpos.mp $h)
       closeMainGoal `interval proof
       return
   let checked : Q(Interval.Expr.check $expression $backend $relation $box $depth = true) ←
     try
-      let preflight ← try
+      let preflight ← if cache.extensions.isEmpty then try
         withCheckBudget maxHeartbeats do
           preflightCheck expression box config relation depth
       catch error =>
         if error.isInterrupt then throw error
         pure none
+      else pure none
       if preflight == some false then
         throwError "interval checker returned false"
       verifyClosedCheck q(Interval.Expr.check $expression $backend $relation $box $depth = true)
@@ -223,7 +160,10 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
       if error.isInterrupt then throw error
       let diagnostic ← try
         withCheckBudget maxHeartbeats do
-          diagnoseFailure expression box config relation depth atoms
+          if cache.extensions.isEmpty then
+            diagnoseFailure expression box config relation depth atoms
+          else
+            diagnoseRegisteredFailure expression backend box config relation depth atoms
       catch diagnosticError =>
         if diagnosticError.isInterrupt then throw diagnosticError
         pure m!"interval could not certify: bounded diagnostics could not complete."
@@ -231,14 +171,14 @@ def close (precision degree depth : Nat) (maxHeartbeats : Nat := 20000) : Tactic
         {maxHeartbeats} heartbeats; a larger `(maxHeartbeats := ...)` may be needed."
   -- All arguments are known; assembling the application avoids re-elaborating the closed check.
   let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
-    #[q(Int), expression, backend, q(Backend.binaryGrid_sound $config),
+    #[functions, q(Int), expression, backend, backendProof,
       relation, box, depth, checked, values, membership]
   let proof ← if strict then do
-    let h : Q(Interval.Expr.eval $expression $values < 0) := sound
+    let h : Q(Interval.Expr.eval $expression $values $functions < 0) := sound
     let h : Q($lhs - $rhs < 0) := q((Eq.symm $equality) ▸ $h)
     pure q(sub_neg.mp $h)
   else do
-    let h : Q(Interval.Expr.eval $expression $values ≤ 0) := sound
+    let h : Q(Interval.Expr.eval $expression $values $functions ≤ 0) := sound
     let h : Q($lhs - $rhs ≤ 0) := q((Eq.symm $equality) ▸ $h)
     pure q(sub_nonpos.mp $h)
   closeMainGoal `interval proof
@@ -255,8 +195,9 @@ failure diagnostics have separate budgets of 20,000 heartbeats, even when the su
 declaration disables heartbeat limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
 
 Algebraic goals first use exact rational endpoints without subdivision, preserving equality at
-non-dyadic hypothesis bounds. An advisory executable check rejects failing binary-grid leaves
-before kernel reduction; every successful proof still requires kernel verification.
+non-dyadic hypothesis bounds. For arithmetic without registered calls, an advisory executable check
+rejects failing binary-grid leaves before kernel reduction. Registered calls use bounded kernel
+reduction directly; every successful proof requires kernel verification.
 
 Concrete finite sums and matrix expressions are expanded automatically, including pointwise
 bounds such as `∀ i, x i ∈ Set.Icc 0 1`. Norms use the instances selected in the goal.

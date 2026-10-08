@@ -27,6 +27,7 @@ import FloatLibTests.Regression.BinaryInterchange.TinyArithmetic
 import FloatLibTests.Regression.BinaryInterchange.TwoWordMul
 import FloatLibTests.Regression.BinaryInterchange.WideLimb
 import FloatLibTests.Regression.Interval.ArbTranscendentals
+import FloatLibTests.Regression.Interval.ElementaryArb
 meta import FloatLib.Examples
 meta import FloatLibTests
 
@@ -163,7 +164,8 @@ private def arb : IO UInt32 := do
   IO.println s!"arbParser: {parserFailures}"
   let runtimeFailures ←
     FloatLibTests.Regression.Interval.ArbTranscendentals.run
-  let total := parserFailures + runtimeFailures
+  let elementaryFailures ← FloatLibTests.Regression.Interval.ElementaryArb.run
+  let total := parserFailures + runtimeFailures + elementaryFailures
   IO.println s!"TOTAL: {total}"
   pure <| exitCode total
 

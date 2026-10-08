@@ -24,6 +24,8 @@ checks of both children without assuming that any sampled point represents the e
 
 namespace FloatLib.Numerics.Interval
 
+variable {functions : Nat → List ℝ → ℝ}
+
 /-- Real meaning of the two relations accepted by the executable checker. -/
 def Relation.Holds (relation : Relation) (value : ℝ) : Prop :=
   match relation with
@@ -68,7 +70,7 @@ theorem Box.containsReal_cons {I : Interval ℚ} {box : Box} {values : Nat → �
 
 /-- Enclosing rational endpoints contains every real between them. -/
 theorem Backend.containsReal_encloseInterval? {α : Type*} {B : Backend α}
-    (hB : B.Sound) {I : Interval ℚ} {J : Interval α}
+    (hB : B.Sound functions) {I : Interval ℚ} {J : Interval α}
     (h : B.encloseInterval? I = some J) {x : ℝ} (hx : I.ContainsReal some x) :
     J.ContainsReal B.decode x := by
   cases hlo : B.const? I.lo with
@@ -85,7 +87,7 @@ theorem Backend.containsReal_encloseInterval? {α : Type*} {B : Backend α}
       exact ⟨a, b, ha, hb, hax.trans hlo', hhi'.trans hxb⟩
 
 /-- Successful box enclosure supplies sound values for every coordinate in the interval list. -/
-theorem Box.containsReal_enclose? {α : Type*} {B : Backend α} (hB : B.Sound)
+theorem Box.containsReal_enclose? {α : Type*} {B : Backend α} (hB : B.Sound functions)
     {box : Box} {intervals : List (Interval α)} (h : box.enclose? B = some intervals)
     {values : Nat → ℝ} (hbox : box.ContainsReal values) :
     ∀ (i : Nat) (I : Interval α),
@@ -128,10 +130,10 @@ theorem Relation.holds_of_check {relation : Relation} {hi : ℚ}
     exact hx.trans_lt (by exact_mod_cast hhi)
 
 /-- A successful leaf check establishes the inequality for every real assignment in its box. -/
-theorem Expr.checkBox_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sound)
+theorem Expr.checkBox_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sound functions)
     {relation : Relation} {box : Box} (h : e.checkBox B relation box = true)
     {values : Nat → ℝ} (hbox : box.ContainsReal values) :
-    relation.Holds (e.eval values) := by
+    relation.Holds (e.eval values functions) := by
   cases hbox' : box.enclose? B with
   | none => simp [Expr.checkBox, hbox'] at h
   | some intervals =>
@@ -193,10 +195,10 @@ A successful adaptive check proves the real inequality throughout the original r
 The computation depends only on the backend, expression, rational box, relation, and depth.
 The real environment and its membership proof enter only this theorem.
 -/
-theorem Expr.check_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sound)
+theorem Expr.check_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sound functions)
     {relation : Relation} {box : Box} {depth : Nat}
     (h : e.check B relation box depth = true) {values : Nat → ℝ}
-    (hbox : box.ContainsReal values) : relation.Holds (e.eval values) := by
+    (hbox : box.ContainsReal values) : relation.Holds (e.eval values functions) := by
   induction depth generalizing box with
   | zero =>
     exact e.checkBox_sound hB (by simpa [Expr.check] using h) hbox

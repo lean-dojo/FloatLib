@@ -806,7 +806,7 @@ cover arbitrary real members, not only rational inputs. `contains_fma?` proves t
 ordered-field multiply-add enclosure; `containsReal_fma?` gives its real interpretation,
 with outward rounding applied only after the product and addend are combined.
 
-`Numerics.Interval.Expr` composes arithmetic, natural powers, and elementary functions.
+`Numerics.Interval.Expr` composes arithmetic, natural and real powers, and elementary functions.
 Its `containsReal_eval?` theorem proves real containment for any backend satisfying
 `Numerics.Interval.Backend.Sound`. The `rational_sound`, `binaryGrid_sound`, and
 `ofRounding_sound` theorems establish this contract for exact rational endpoints,
@@ -817,6 +817,21 @@ The elementary containment theorems include `containsReal_tanBounds?`,
 `containsReal_asinBounds?`, `containsReal_acosBounds?`, `containsReal_sinhBounds`,
 `containsReal_coshBounds`, and `containsReal_tanhBounds`. Inverse sine and cosine check
 the `[-1, 1]` domain; tangent checks that its cosine enclosure excludes zero.
+`containsReal_rpowBounds?` covers variable real exponents on positive base intervals;
+`containsReal_logbBounds?` covers positive arguments and bases whose logarithm enclosure
+excludes zero. `containsReal_asinhBounds?`, `containsReal_acoshBounds?`, and
+`containsReal_atanhBounds?` give inverse hyperbolic containment. Inverse hyperbolic cosine
+requires inputs at least one, and inverse hyperbolic tangent requires an interval strictly
+inside `(-1, 1)`.
+Inverse hyperbolic sine uses monotonicity and odd symmetry for stable endpoint evaluation.
+All five contracts apply to every real member of their accepted input intervals.
+
+`ConstantBounds` bundles a constant's rational endpoints with the ordinary inequalities proving
+containment. Its `toExtension_sound` theorem supplies the general contract automatically.
+`Extension.Sound` connects a computable enclosure to a curried real function or constant.
+`Backend.withExtensions_sound` preserves containment when extending any sound endpoint backend.
+`@[interval_extension]` registers constant certificates or those proofs for use by the tactic; `Expr.call`
+supports arbitrary argument counts and is reevaluated on each subdivision.
 
 Configured binary endpoints are available through
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval`. The

@@ -257,6 +257,112 @@ example (x : ℝ) : x = x := by
   fail_if_success have : x ≤ 2 := by interval
   rfl
 
+/-! ## Real powers, base logarithms, and inverse hyperbolic functions -/
+
+-- The exponent is a real variable; negative exponents are included in the same enclosure.
+example (x y : ℝ) (hx : x ∈ Set.Icc 1 2) (hy : y ∈ Set.Icc (-2) 2) :
+    x ^ y < 5 := by
+  interval (depth := 0)
+
+-- Explicit function application follows the same path as power notation.
+example (x y : ℝ) (hx : x ∈ Set.Icc 1 2) (hy : y ∈ Set.Icc (-2) 2) :
+    Real.rpow x y < 5 := by
+  interval (depth := 0)
+
+example (x y : ℝ) (hx : x ∈ Set.Icc (1 / 4) (1 / 2))
+    (hy : y ∈ Set.Icc (-2) (-1)) : x ^ y < 17 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : x ^ (0 : ℝ) ≤ 1 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : x ^ (1 / 2 : ℝ) < 3 / 2 := by
+  interval (precision := 128) (degree := 24) (depth := 0)
+
+-- A base below one reverses the sign of the logarithm; the base may also vary.
+example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : Real.logb 2 x < 11 / 10 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 100) : Real.logb 10 x < 21 / 10 := by
+  interval (degree := 24) (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 2 4) : Real.logb (1 / 2) x < -9 / 10 := by
+  interval (depth := 0)
+
+example (b x : ℝ) (hb : b ∈ Set.Icc 2 3) (hx : x ∈ Set.Icc 4 8) :
+    Real.logb b x < 31 / 10 := by
+  interval (depth := 0)
+
+-- Variable bases below one and bases close to one use the general logb enclosure.
+example (b x : ℝ) (hb : b ∈ Set.Icc (1 / 4) (1 / 2)) (hx : x ∈ Set.Icc 2 3) :
+    Real.logb b x < -2 / 5 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 (1001 / 1000)) :
+    Real.logb (1001 / 1000) x < 11 / 10 := by
+  interval (precision := 128) (degree := 24) (depth := 0)
+
+-- A narrow numerical target exercises approximation degree as well as endpoint precision.
+example : Real.logb 2 (3 / 2) < (10790653543520307106 : ℝ) / 2 ^ 64 := by
+  interval (precision := 64) (degree := 88) (depth := 0)
+
+-- Monotonicity and odd symmetry preserve tight bounds across zero.
+example (x : ℝ) (hx : x ∈ Set.Icc (-1) 1) : |Real.arsinh x| < 1 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc (-1) (-1 / 2)) : Real.arsinh x < -2 / 5 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc (-100) (-10)) : Real.arsinh x < 0 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc (-100) 100) : |Real.arsinh x| < 6 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x = 0) : Real.arsinh x ≤ 0 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : Real.arcosh x < 7 / 5 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x = 1) : Real.arcosh x ≤ 0 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc (-1 / 2) (1 / 2)) : |Real.artanh x| < 3 / 5 := by
+  interval (depth := 0)
+
+-- Reification and equality reconstruction also work through local definitions.
+example (x y : ℝ) (hx : x ∈ Set.Icc 1 2) (hy : y ∈ Set.Icc (-1) 1) :
+    x ^ y + Real.logb 2 x < 4 := by
+  let power := x ^ y
+  let logarithm := Real.logb 2 x
+  change power + logarithm < 4
+  interval (depth := 0)
+
+-- False goals and rejected real-power domains must never produce proofs.
+example (x : ℝ) (_hx : x ∈ Set.Icc 0 2) : True := by
+  fail_if_success have : x ^ (1 / 2 : ℝ) < 2 := by interval (depth := 2)
+  fail_if_success have : Real.logb 2 x < 2 := by interval (depth := 2)
+  trivial
+
+example (x : ℝ) (_hx : x ∈ Set.Icc (-2) (-1)) : True := by
+  fail_if_success have : x ^ (1 / 2 : ℝ) < 2 := by interval (depth := 2)
+  fail_if_success have : Real.arcosh x < 2 := by interval (depth := 2)
+  trivial
+
+example (b x : ℝ) (_hb : b ∈ Set.Icc (1 / 2) 2) (_hx : x ∈ Set.Icc 2 3) : True := by
+  fail_if_success have : Real.logb b x < 10 := by interval (depth := 2)
+  trivial
+
+example (x : ℝ) (_hx : x ∈ Set.Icc (-1) 1) : True := by
+  fail_if_success have : Real.artanh x < 10 := by interval (depth := 2)
+  trivial
+
+example (x y : ℝ) (_hx : x ∈ Set.Icc 1 2) (_hy : y ∈ Set.Icc 1 2) : True := by
+  fail_if_success have : x ^ y < 1 := by interval (depth := 2)
+  fail_if_success have : Real.logb 2 x < 0 := by interval (depth := 2)
+  trivial
+
 /-! ## Finite sums and matrix bounds -/
 
 open scoped BigOperators Matrix.Norms.Elementwise

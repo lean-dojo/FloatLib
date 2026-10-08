@@ -88,7 +88,9 @@ The tactic recognizes addition, subtraction, multiplication, division, negation,
 absolute value, natural powers whose exponent reduces to a numeral, minimum, maximum,
 and multiply-add. Its elementary functions are `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`,
 `arcsin`, `arccos`, `arctan`,
-`sinh`, `cosh`, and `tanh`. It collects rational bounds from weak or strict inequalities,
+`sinh`, `cosh`, `tanh`, `arsinh`, `arcosh`, and `artanh`. It also recognizes real powers
+`x ^ (y : ℝ)` and base-specific logarithms `Real.logb b x`, including variable exponents
+and bases. It collects rational bounds from weak or strict inequalities,
 equalities, conjunctions, and `Set.Icc` membership. Strict input bounds are conservatively
 widened to closed intervals. If several bounds describe the same term, it selects the
 strongest lower and upper endpoints.
@@ -100,6 +102,32 @@ including the endpoints. Tangent divides sine bounds by cosine bounds, so its co
 enclosure must exclude zero. Subdivision or a higher approximation degree can separate
 a coarse cosine enclosure from zero, but cannot certify a bound across an actual pole.
 Likewise, a hypothesis $x\in[-1,1]$ is insufficient for this evaluator to enclose $1/x$.
+
+Real powers require a strictly positive base interval; negative and zero real exponents
+are accepted on that domain. `Real.logb b x` requires positive base and argument intervals,
+and an enclosure of `log b` that excludes zero. Bases below one are accepted. A base
+interval reaching one is rejected; a coarse enclosure near one may need a higher degree.
+Inverse hyperbolic cosine requires inputs at least one, and inverse hyperbolic tangent
+requires an interval strictly inside $(-1,1)$. Inverse hyperbolic sine uses monotonicity
+and odd symmetry, evaluating
+$\log(x+\sqrt{1+x^2})$ at nonnegative endpoints to avoid cancellation for negative inputs.
+
+```lean
+example (x y : ℝ) (hx : x ∈ Set.Icc 1 2) (hy : y ∈ Set.Icc (-2) 2) :
+    x ^ y < 5 := by
+  interval (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc 1 100) : Real.logb 10 x < 21 / 10 := by
+  interval (degree := 24) (depth := 0)
+
+example (x : ℝ) (hx : x ∈ Set.Icc (-1 / 2) (1 / 2)) : |Real.artanh x| < 3 / 5 := by
+  interval (depth := 0)
+```
+
+The endpoint precision has no fixed maximum, but increasing `precision` alone does not
+promise that many accurate bits. The Taylor remainder and the width of the input box can
+dominate the grid spacing; increase `degree` or `depth` when those are the limiting factors.
+
 Algebraic goals first try exact rational endpoints without subdivision. This preserves a touching
 non-dyadic bound:
 
@@ -108,8 +136,8 @@ example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x ≤ 1 / 3 := by
   interval
 ```
 
-An advisory executable check rejects failing binary-grid leaves before kernel reduction. It
-supplies no proof evidence; successful goals still go through the kernel check below.
+An advisory executable check rejects failing arithmetic leaves before kernel reduction. Registered
+calls use bounded kernel reduction. Every successful goal still requires a kernel-checked certificate.
 
 Each verification attempt and failure diagnostics have separate budgets of 20,000
 heartbeats. This limit remains active when the surrounding declaration sets
@@ -117,11 +145,11 @@ heartbeats. This limit remains active when the surrounding declaration sets
 `interval (maxHeartbeats := 40000)`. Budget exhaustion reports an inconclusive
 check and restores the original goal.
 
-When diagnostics finish, a failed check reports the expression and enclosure that blocked it. For example, a
-zero-containing denominator range explains why division failed; it does not claim that
-the denominator actually equals zero. An insufficient upper bound is reported separately,
-with the input box and subdivision depth. Closed rational expressions are simplified
-using Lean's real arithmetic before enclosure.
+Arithmetic diagnostics report the obstructing range or insufficient upper bound. Registered-call
+diagnostics inspect the actual enclosure on the original box and report rejected domains separately.
+For example, a zero-containing denominator range explains why division failed without claiming
+that the denominator equals zero. Closed rational expressions are simplified using Lean's real
+arithmetic before enclosure.
 
 Hyperbolic cosine needs special care because its minimum can lie inside the input interval.
 We first take the absolute-value range and use monotonicity on the nonnegative half-line.
@@ -148,6 +176,49 @@ example (f : ℝ → ℝ) (x : ℝ) (hx : f x ∈ Set.Icc 0 1) : 2 * f x ≤ 2 :
 ```
 
 Here `f x` is one bounded input. The tactic needs no information about how `f` is defined.
+
+## User-defined constants and functions
+
+To teach `interval` about a constant, give it rational lower and upper bounds and prove that the
+constant lies between them. `ConstantBounds` keeps both in one definition; the attribute registers
+it automatically. For example, here are fixed bounds for a named square root of two:
+
+```lean
+open FloatLib.Numerics.Interval
+
+noncomputable def sqrtTwo : ℝ := Real.sqrt 2
+
+@[interval_extension]
+def sqrtTwoBounds : ConstantBounds sqrtTwo where
+  bounds _ := ⟨1.4, 1.5⟩
+  valid _ := by
+    have hsquare := Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+    have hnonneg := Real.sqrt_nonneg (2 : ℝ)
+    norm_num [sqrtTwo]
+    constructor <;> nlinarith
+
+example : sqrtTwo < (1.6 : ℝ) := by interval
+example : Real.logb 2 sqrtTwo < (1 : ℝ) := by interval
+```
+
+`bounds` returns the two endpoints. `valid` proves the usual inequalities `lower ≤ constant` and
+`constant ≤ upper`. The argument ignored by `_` is the requested precision; use it to compute
+narrower bounds when needed. FloatLib constructs the general enclosure and its soundness proof.
+
+Importing the provider's module imports its registration. Expose executable certificate definitions
+with `@[expose]` when exporting them from a Lean module. Local and scoped registrations follow
+Lean's ordinary attribute visibility rules; a later applicable registration replaces an earlier one.
+
+Functions use the general `Extension` interface and register a theorem `E.Sound f` with the same
+attribute. `Extension.unary` and `Extension.binary` adapt existing procedures. Their `unary_sound` and
+`binary_sound` theorems lift containment proofs covering every real member of the input intervals.
+For other arities, supply an `Extension` record and prove `Extension.Sound` directly. The evaluator
+checks argument counts, propagates `none` for rejected domains, and recomputes function enclosures
+on each subdivided input box. Parameters of other types can be fixed in named wrappers.
+
+For Catalan's constant, the provider would define its real value, an executable approximation, and
+a theorem bounding its remainder. Registration makes that certificate available to the tactic;
+it does not derive the approximation or the remainder theorem automatically.
 
 ## Sums and matrices
 

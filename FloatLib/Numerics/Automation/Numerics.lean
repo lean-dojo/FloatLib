@@ -86,22 +86,27 @@ private meta def applyChecked3 : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked3.map_denote_eq)
 
+/-- Apply a checked three-input contract and leave its precondition to the rule search. -/
 private meta def applyChecked3On : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked3On.map_denote_eq)
 
+/-- Apply a checked two-input contract through the tactic elaborator. -/
 private meta def applyChecked2 : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked2.map_denote_eq)
 
+/-- Apply a checked two-input contract and leave its precondition to the rule search. -/
 private meta def applyChecked2On : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked2On.map_denote_eq)
 
+/-- Apply a checked unary contract through the tactic elaborator. -/
 private meta def applyChecked1 : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked1.map_denote_eq)
 
+/-- Apply a checked unary contract and leave its precondition to the rule search. -/
 private meta def applyChecked1On : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
     `(tactic| apply Operation.Checked1On.map_denote_eq)
@@ -140,6 +145,7 @@ macro_rules
        all_goals try norm_num
        all_goals try omega))
 
+/-- Reduce goals with no free variables, preserving unresolved and symbolic goals. -/
 private def reduceClosedGoals : TacticM Unit := do
   let goals ← getUnsolvedGoals
   let mut remaining := #[]
