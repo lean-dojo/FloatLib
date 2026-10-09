@@ -10,8 +10,6 @@ When we write `x + y` on a FloatLib type, we call an implementation selected for
 
 Lean's kernel is the trusted checker that accepts or rejects proof terms, reducing definitions as needed. An arithmetic kernel is an implementation of an operation for a class of formats. The distinction matters here: Lean's kernel checks the equations about arithmetic kernels, while the compiler translates their executable definitions into code.
 
-<a id="one-value-type-one-operation-and-the-equation-between-them"></a>
-
 ## From addition to its reference operation
 
 `ExecFloat F` stores one value in format `F`. For binary32, it holds a packed `UInt32`; the reference model uses an exact-width bit vector. Other formats can use wider words or arrays of limbs, as the [storage definitions](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/Storage/Core.lean) specify. The representation can change while the format's numerical meaning stays fixed.
@@ -55,8 +53,6 @@ example (x y : Binary32) : x + y = ExecFloat.add x y := rfl
 ```
 
 A value can also be paired with proofs about it. Lean erases fields in `Prop` during compilation, so those proof fields add no runtime data to the `ExecFloat F` value.
-
-<a id="a-certificate-is-a-record-with-a-proof-inside"></a>
 
 ## Certifying an implementation
 
@@ -108,7 +104,6 @@ The import determines which tools a client loads. The [runtime module](https://g
 
 Lean's module system distinguishes an interface from the dependencies used to implement it. A `public import` makes the imported declarations available to clients; a plain `import` is local to the module. FloatLib uses `@[expose] public section` for its declarations and `public meta section` for elaborator code. A client can therefore use an operation without importing every lemma used to prove it correct.
 
-<a id="the-check-that-enforces-the-split"></a>
 <a id="when-an-executable-definition-needs-a-proof"></a>
 
 Some executable types carry a proof that their stored code is valid. Constructing such a value needs a range argument even in a program that only computes. The [packed posit backend](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Configured/Backend/Runtime.lean) imports the range lemmas needed to construct its codes. These proofs are needed when Lean checks the definition and are erased during compilation, just like certificate fields.
@@ -140,8 +135,6 @@ example (fmt : FloatFormat) (x y : Model fmt) :
 
 Following the branches is also enough to see why execution does not need a comparison against the reference on every call. On an accepted branch the refinement theorem already supplies the equality for all operands satisfying that branch's premises. On a declined branch the dispatcher calls the proved fallback. The proof combines these cases before compilation; the running program makes the input checks and computes one branch. The runtime quotient certificate in [chapter 15](#/chapter/kernels-fixed-word-algorithms) is a different construction: there, checking a proposed answer is an explicit part of the algorithm.
 
-<a id="what-csimp-does-and-what-it-does-not"></a>
-
 ## Compiler replacements with csimp
 
 Reference definitions often compute on `Nat` and `Int` and allocate decoded records or wide intermediate integers. A compiler replacement can avoid those allocations while preserving the result. A `@[csimp]` equation proves two Lean definitions equal and instructs the compiler to replace the first with the second in generated code. Lean's kernel checks the equation before the compiler uses it. [The kernel source tour](#/chapter/kernels-fixed-word-algorithms/kernels-fixed-word-algorithms-and-limb-arrays) describes these replacements in the arithmetic kernels.
@@ -170,12 +163,9 @@ With `@[csimp]`, correctness of the compiled replacement depends on the compiler
 
 The posit decoder [[FloatLib.Floats.Formats.Posit.Model.toDyadic?]] uses `@[implemented_by]` for a one-pass compiled implementation. Its private theorem `toDyadicImpl?_eq_toDyadic?`, in the [decoder implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Model/Decode.lean), proves that the replacement agrees with the logical decoder. That theorem supplies the mathematical justification, although the attribute itself does not require it. [Chapter 13](#/chapter/posits-and-the-quire) explains the decoding algorithm.
 
-<a id="why-this-is-not-extraction"></a>
 <a id="lean-compilation-and-code-extraction"></a>
 
 Extraction, in the sense of Coq's or Isabelle's code generators, translates definitions that were proved correct into a program in another language and trusts the translator. The compiler for that target language may then optimize the generated program. FloatLib states its refinement equations within Lean. The fast arithmetic kernel is itself a Lean definition, compiled by Lean's own compiler [@moura2021lean4], and the certificate is an equation between two Lean terms that Lean's kernel checked. Lean's compiler takes these definitions directly, including replacements justified by `@[csimp]`; correctness at runtime still depends on the compiler preserving their semantics.
-
-<a id="the-trust-surface"></a>
 
 ## Following a theorem's assumptions
 
@@ -198,10 +188,6 @@ For a useful finite check, we are happy to use `native_decide`: native evaluatio
 The [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean) provides `NativeFPU.Unchecked.add32` and corresponding functions for the other host operations. Each checks a guard before calling one host `Float32` or `Float` operation; exceptional cases use the proved software implementation. [Chapter 17](#/chapter/performance/host-arithmetic-as-a-reference) shows the guard and where host and library disagree.
 
 Applications can call the unchecked functions explicitly, accepting the host assumptions in place of a refinement theorem. These functions are outside the certified candidate list, cannot be selected by a policy, and require a separate import. Comparing their outputs with the proved kernels can find disagreements, but does not supply the missing refinement theorem.
-
-<a id="how-the-website-examples-are-checked"></a>
-
-<a id="what-the-split-buys-and-what-it-does-not"></a>
 
 ## Using numerical theorems with executable arithmetic
 

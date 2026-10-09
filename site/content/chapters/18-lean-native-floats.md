@@ -61,8 +61,6 @@ FloatLib uses the same finite value sets for binary32 and binary64, while retain
 NaN distinctions. We can first compare some encoded results, then examine which model
 identities have proofs.
 
-<a id="the-same-finite-bits-including-rounding-effects"></a>
-
 ## Both implementations lose associativity
 
 Binary32 addition is not associative. Take $x = 2^{25}$, $y = -2^{25}$, and $z = 1$. The exact sum
@@ -110,8 +108,6 @@ external comparisons and their scope.
 Subnormal inputs matter because an environment that flushes them to zero may disagree with
 the software operation. These comparisons exercise the compiler, runtime, processor, and process settings together.
 Passing on one machine does not establish agreement for every operand and environment.
-
-<a id="nan-payloads-change-at-the-native-conversion-boundary"></a>
 
 ## Converting to native floats changes NaN payloads
 
@@ -176,8 +172,6 @@ result words.
 Comparing only the result class would hide this payload difference. The
 [guarded host example](#/chapter/lean-native-floats/opting-into-guarded-host-operations)
 uses the same `pairs32` list and keeps these NaN operands in software.
-
-<a id="the-proved-conversion-and-arithmetic-bridges"></a>
 
 ## Proofs relating FloatLib to Lean's float model
 

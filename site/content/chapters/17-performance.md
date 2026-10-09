@@ -15,9 +15,7 @@ Lean erases proof terms during compilation [@leanReference]. These measurements 
 arithmetic and the work around each call; the algorithms, representations, and calling paths
 still determine how quickly a proved operation runs.
 
-<a id="the-times-behind-the-curves"></a>
 <a id="timing-results"></a>
-<a id="current-binary-arithmetic"></a>
 
 ## Public binary arithmetic
 
@@ -63,8 +61,6 @@ reported separately below.
 
 <details>
 <summary>The public operation and its theorem</summary>
-
-<a id="executing-the-operation-covered-by-the-theorem"></a>
 
 ### Running the code we proved
 
@@ -117,8 +113,6 @@ calls above.
 
 <details>
 <summary>Extraction, inputs, and the timed Flocq loop</summary>
-
-<a id="flocq-exactly-which-extracted-program"></a>
 
 ### The Flocq program we timed
 
@@ -334,8 +328,6 @@ explains.
 
 ![Six arithmetic operations across encoded widths from 2 to 4,096 bits; median nanoseconds per operation with 5th to 95th percentile bands](assets/format-comparison-main.png "Median nanoseconds per operation across encoded widths, with 5th to 95th percentile bands. Both axes are logarithmic; lower is faster. Missing markers denote unavailable or excluded comparisons.")
 
-<a id="reading-the-ratios"></a>
-
 ### Comparing relative times
 
 Equal encoded width is a storage comparison. A binary format has a fixed significand precision;
@@ -360,8 +352,6 @@ uses the median of within-trial ratios. On the logarithmic axis, equal vertical 
 represent equal multiplicative changes. The ratios compare complete timed loops with
 different algorithms, representations, and adapters. They cannot isolate a cost attributable
 to verification.
-
-<a id="small-formats-and-changes-of-kernel"></a>
 
 ### Why a wider format can be faster
 
@@ -584,7 +574,6 @@ exhaustive posit conformance result.
 
 </details>
 
-<a id="what-the-independent-checks-tell-us-about-speed"></a>
 <a id="which-libraries-did-we-time"></a>
 
 ## Libraries timed separately
@@ -600,8 +589,6 @@ checks compare encodings; the P3109 arithmetic timings use FLoPS's executable ke
 [validation chapter](#/chapter/external-validation) explains those
 checks, and the [posit chapter](#/chapter/posits-and-the-quire/cross-checks-against-universal-and-softposit)
 works through the seven distinct SoftPosit inputs behind the reported differences.
-
-<a id="inspecting-and-reproducing-the-evidence"></a>
 
 ## Reproducing the measurements
 

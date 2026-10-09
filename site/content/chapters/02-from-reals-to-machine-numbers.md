@@ -16,8 +16,6 @@ The real numbers complete the rational number line. A sequence of rational appro
 
 There are more real numbers than finite descriptions of them. Descriptions written in a finite alphabet are countable: list those with one symbol, then those with two, and continue by length. Cantor's uncountability result says that such a list cannot cover the real line. The countable set of finitely describable reals has measure zero, so almost every real has no finite formula or program that names it. Particular irrational numbers can still have short symbolic descriptions. The limitation of a fixed-width numeric type is stronger: it has room for only finitely many values, however those values are described.
 
-<a id="why-a-machine-holds-finitely-many-values"></a>
-
 ## A fixed word stores finitely many values
 
 A word of $n$ bits has exactly $2^n$ states. A 32-bit word has $2^{32}$ of them, and any interpretation of those states supplies at most $2^{32}$ distinct meanings. A numeric format specifies that interpretation: which number each pattern denotes, and which patterns represent exceptional results. A 64-bit word increases the available states to $2^{64}$, still a finite set. More bits can make the represented values closer together or extend their range, but cannot represent every real number.
@@ -94,8 +92,6 @@ Fixed-point and floating-point formats allocate their bits differently. Fixed po
 A fixed-point format with $k$ fractional bits stores an integer $n$ and denotes $n \cdot 2^{-k}$. Its values form a uniform grid with spacing $2^{-k}$, so nearest rounding within range has absolute error at most $2^{-k-1}$, and adding two values is exact when the sum fits. With a fixed word width, finer spacing leaves less room for large values. A $w$-bit signed word covers only $[-2^{w-k-1}, 2^{w-k-1})$, so the absolute error bound is independent of magnitude, while the relative error becomes larger for values close to zero. Fixed point suits quantities whose scale is known in advance: currency, sensor readings, the coefficients of a digital filter. The [Patriot clock conversion](#/chapter/a-short-history-of-floating-point/what-imprecision-has-cost) used a fixed-point approximation to one tenth; its error affected tracking when timestamps converted by different rules were subtracted.
 
 A floating-point format instead fixes the precision $p$ and lets the exponent vary. A normal value is $\pm m \cdot 2^e$ with $2^{p-1} \le m < 2^p$. This is scientific notation in base two. Within a binade $[2^e, 2^{e+1})$ the spacing is $2^{e-p+1}$; here the exponent labels the binade's lower endpoint, rather than the scale attached to the integer significand above. Moving to the next binade doubles both the values and the spacing. The absolute rounding error can grow with magnitude while the relative error stays roughly constant in the normal range. Addition can require rounding because aligning the operands may produce more significant bits than the format can store. A small addend can lie between the grid points available at the scale of a larger one. Floating point suits quantities whose scale is unknown or varies over many orders of magnitude, which describes most of scientific computing.
-
-<a id="sign-exponent-width-fraction-width"></a>
 
 ## The sign, exponent, and fraction fields
 
@@ -206,8 +202,6 @@ The all-ones exponent field with a nonzero fraction denotes Not a Number. It rep
 
 With subnormals, signed zeros, infinities and NaN added to the normal numbers, the format is closed: every arithmetic operation on a pair of words yields a word. We can therefore define these operations as total functions, including their exceptional cases. [[FloatLib.Floats.Formats.BinaryInterchange.Model.exactValue]] records the complete meaning of a word: a finite dyadic with its sign of zero intact, a signed infinity, or a NaN with its sign, signaling class and payload. Later operations can distinguish those encodings when their rules require it.
 
-<a id="rounding-is-not-optional"></a>
-
 ## Correct rounding
 
 The exact sum of two finite binary32 values is a dyadic, but it may need more than 24 significant bits or exceed the format's range. Correct rounding specifies which result to return: compute the exact result conceptually, then apply the chosen rounding rule once [@ieee754_2019]. For inputs in the finite range, that rule selects a grid point from an exact value in $\mathbb{R}$. The word-level operation also specifies overflow and exceptional operands. This makes the output determined by the inputs and rounding mode, so a correctness theorem can state an equality with a rounding function rather than merely bound the error.
@@ -265,8 +259,6 @@ The same directions apply to arithmetic. In binary32 the exact sum of $1$ and $1
 ```
 
 The directed modes are what make the library's interval arithmetic possible: round the lower endpoint down and the upper endpoint up, and the exact result is enclosed.
-
-<a id="why-the-exact-value-is-a-dyadic-and-the-rounded-value-is-a-contract-on-the-reals"></a>
 
 ## Exact intermediates and real-valued rounding
 

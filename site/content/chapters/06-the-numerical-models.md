@@ -82,8 +82,6 @@ We can follow `tiny32` through [Figure 6.1](#/chapter/the-numerical-models/figur
 
 ![Three cards read tiny32 as stored fields (sign 0, exponent 100, fraction 2870391), an exact dyadic (significand 11258999, exponent -50), and the real value 11258999 times 2^-50; the arrows decode and interpret without rounding](assets/ch06-three-readings.png "One finite word, read as stored fields, an exact dyadic, and a real value.")
 
-<a id="why-the-readings-cannot-be-collapsed"></a>
-
 ## What rounding discards
 
 Take $x = 1$ and $y$ the binary32 value nearest to $10^{-8}$, which is $11258999 \cdot 2^{-50}$. The exact sum $1 + y$ is a perfectly good dyadic with a fifty-bit fraction. Binary32 has twenty-three fraction bits, and the spacing of representable numbers just above $1$ is $2^{-23} \approx 1.19 \times 10^{-7}$. The increment $y$ is about $0.084$ of that spacing, so the nearest representable value to the exact sum is $1$ itself.
@@ -190,8 +188,6 @@ For a finite input that is nonnegative or a signed zero, square root cannot over
 
 </details>
 
-<a id="the-finiteness-hypotheses-and-how-to-discharge-them"></a>
-
 ## Proving inputs and results are finite
 
 Each finiteness hypothesis excludes a case where the equality would fail. The input hypotheses are needed because `toReal` returns a placeholder for nonfinite values: without them, `toReal x` could be the $0$ that stands in for a NaN, and the theorem would assert that adding a NaN behaves like adding zero. The output hypothesis excludes overflow. If $x$ and $y$ are both the largest finite binary32 value, the executable sum is $+\infty$, `toReal` of it is $0$, and the right-hand side is the ordinary real $\mathrm{roundAt}_f(2 \cdot \mathrm{maxFinite})$, near $6.8 \times 10^{38}$. An infinity cannot be identified with the finite real value on the right.
@@ -213,8 +209,6 @@ example (x y : Model FloatFormat.binary32)
 The triangle bound is convenient when we have separate bounds on the operands, but it is only sufficient. If one operand is the largest finite value and the other its negation, their sum is exactly zero although the sum of their absolute values is twice the largest finite value. When cancellation matters, `isFinite_add_of_abs_toReal_add_le_posMaxFinite` instead takes a bound on the absolute value of the exact sum itself. The triangle-bound theorem is derived from this tighter criterion using the triangle inequality. Choosing between them depends on the information the application already has about its operands.
 
 The hypothesis `fmt.isIEEE = true` restricts the real-valued refinement theorem to conventional IEEE descriptors. Exact decoding, the reference operations, and the `Spec` equalities hold for every descriptor, including FNUZ and finite-only encodings. The bridge to `roundAt` additionally goes through Lean's float model, because `roundDyadic` delegates its normalization to that model for IEEE descriptors, and the model is IEEE-shaped. `toDyadic?_ieee_eq_model` and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_eq_unpackedToReal_toModel]] identify the binary decoder with it exactly when the descriptor is conventionally IEEE. A non-IEEE format has exact dyadic semantics and executable arithmetic, but its operations do not yet have a `roundAt` theorem.
-
-<a id="the-relational-form-and-the-general-interface"></a>
 
 <a id="numerics-exact-values-and-contracts"></a>
 
@@ -295,8 +289,6 @@ def half32 : Model FloatFormat.binary32 := Model.ofNatBits 0x3f000000
 ```
 
 Flags accumulate with [[FloatLib.Numerics.IEEEStatus.union]] when a caller wants them to persist across a sequence of operations, the way a hardware status register does.
-
-<a id="what-the-models-do-not-claim"></a>
 
 ## From one operation to a calculation
 

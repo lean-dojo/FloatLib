@@ -368,8 +368,6 @@ The missing addition/subtraction entries failed during verification: stack overf
 support these classifications. They describe the tested paths and resource settings,
 not format-support limits, and provide no speed ratios.
 
-<a id="floatspec-measurement-record"></a>
-
 <details>
 <summary>FloatSpec source revisions and measurement protocol</summary>
 
@@ -454,8 +452,6 @@ bits rather than IEEE status flags. This comparison therefore checks result valu
 NaN classes, with no claim about signaling behavior or exception flags. TensorLib's
 finite conversion results passed throughout; we found no numerical defect in these cases.
 
-<a id="published-encodings-and-finite-numerical-references"></a>
-
 ### Encoding tables and MPFR
 
 The format-table suite checked **7,602,160 P3109 cases** and **1,296 ONNX cases**, with zero
@@ -486,9 +482,6 @@ Arb [@johanssonArb2017], through python-flint [@pythonFlint], supplies rigorous 
 transcendental inputs. Those enclosures give an independent check on the computations.
 Agreement on these inputs does not prove a global error bound or correct rounding everywhere.
 
-<a id="duration-and-the-release-outcome"></a>
-<a id="a-small-input-that-exposed-a-logarithm-bug"></a>
-
 ## Why logarithms near 1 are difficult
 
 For binary elementary functions, we compared FloatLib with MPFR, CORE-MATH [@coreMath],
@@ -517,10 +510,6 @@ With wide exponent fields, an input can be cheap to store yet enormous
 to expand into fixed-point arithmetic. Inspecting the exponent first can avoid enormous
 intermediates for tiny inputs or inputs far beyond saturation or overflow. Boundary checks
 must establish when returning a rounded limiting value is valid.
-
-<a id="the-wider-ecosystem-campaign"></a>
-<a id="learning-from-other-numerical-tools"></a>
-<a id="other-libraries-own-tests"></a>
 
 ## Why some performance markers are missing
 
@@ -609,7 +598,6 @@ The [all-width round-trip proofs](#/chapter/posits-and-the-quire/exact-decimal-t
 establish recovery of the original word; executable comparisons would additionally exercise
 the compiler and text interface.
 
-<a id="natural-posit-exponentials-and-logarithms"></a>
 <a id="posit-exponentials-and-logarithms"></a>
 <a id="posit-hyperbolic-functions"></a>
 
@@ -648,7 +636,6 @@ Prepared comparators cache enclosure levels. To exercise that runtime path, we n
 one prepared object across several boundaries and force refinement beyond its initial cache.
 Checking the ordering layer would still be separate from checking final rounded posit words.
 
-<a id="ordinary-posit-trigonometric-results"></a>
 <a id="posit-trigonometric-functions"></a>
 
 To check the [rounded radian functions](#/chapter/posits-and-the-quire/ordinary-trigonometric-functions),
@@ -657,7 +644,6 @@ the standard's appended-bit threshold, which need not be the arithmetic midpoint
 two posits. Reusing an IEEE nearest-value rounder would check a different rule. The test also
 needs NaR and inputs outside the inverse functions' real domains.
 
-<a id="pi-scaled-posit-trigonometric-results"></a>
 <a id="pi-scaled-posit-trigonometric-functions"></a>
 
 For a pi-scaled function, exact rational period reduction should precede the numerical
@@ -666,7 +652,6 @@ to test. Integer and half-integer arguments also give exact zeros, extrema, and 
 need explicit classification. At an integer multiple of π, for example, cosine's sign is
 determined by the integer's parity, even when that integer is too large for a host float.
 
-<a id="two-coordinate-posit-angles"></a>
 <a id="posit-atan2"></a>
 
 The two-coordinate functions `arcTan2` and `arcTan2Pi` need pairs of inputs. Axes and
@@ -674,11 +659,6 @@ diagonals give exact special cases, while points close to an axis test whether t
 small angular displacement survive the comparison. An independent check should include all
 quadrants, NaR, and operands of very different magnitudes. A correct result and a practical
 running time remain separate properties, especially at wide precisions.
-
-<a id="inspecting-the-comparison-records"></a>
-<a id="tests-what-is-validated"></a>
-
-<a id="exploring-the-comparisons-yourself"></a>
 
 ## Running the comparisons
 

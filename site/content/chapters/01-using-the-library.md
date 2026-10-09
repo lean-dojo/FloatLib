@@ -19,8 +19,6 @@ Run `lake update`, `lake exe cache get` to fetch the Mathlib cache, and `lake bu
 
 The [basic-operation examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/BasicOperations.lean) are complete working programs. In the FloatLib checkout, `lake build FloatLib.Examples` compiles them. In your own file, `#eval` prints a computed value and `#check` prints a type [@leanReference].
 
-<a id="choosing-the-format-once"></a>
-
 ## Choosing a format
 
 A format in FloatLib is a Lean type. We'll start with binary32 and give it a name using `abbrev`, which leaves its definition visible to instance resolution and proofs. [[FloatLib.Floats.ExecFloat.Binary]] takes the exponent width and the stored fraction width; the total width, $1 + 8 + 23 = 32$ bits, is derived from them. Instances, backend selection, and theorems then apply to `Binary32` without registration.
@@ -80,7 +78,6 @@ example (a b : Binary32) : a + b = ExecFloat.Spec.add a b :=
 
 This equation identifies the complete result word, including exceptional results. Interpreting a finite result as a rounded real sum requires additional finiteness hypotheses; [the numerical-model chapter](#/chapter/the-numerical-models/the-rounding-contract-as-a-statement-about-reals) explains them, and [a further example](#/chapter/further-examples/the-result-as-a-real-number) carries out that proof on the configured type.
 
-<a id="a-tour-of-the-codebase"></a>
 <a id="library-structure"></a>
 
 The proof connects three parts of the source. [Numerics](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics) defines exact values and contracts. [Kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels) supplies integer algorithms with refinement proofs. [Floats](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats) gives words their format and connects the executable operations to those algorithms.
@@ -141,8 +138,6 @@ def thirdDown := ExecFloat.Binary.divWithStatus (1 : Binary32) 3 (rounding := -â
 ```
 
 This flag describes division of the stored operands; it does not include any earlier rounding of input literals. Statuses are ordinary returned data, and `IEEEStatus.union` combines them across operations. [Further examples](#/chapter/further-examples/rounding-directions-and-status-flags) compare the four directions and the different causes of exceptional results.
-
-<a id="asking-a-type-what-it-is"></a>
 
 ## Inspecting a format
 

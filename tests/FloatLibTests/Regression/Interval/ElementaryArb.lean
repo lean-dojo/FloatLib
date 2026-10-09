@@ -16,6 +16,7 @@ public import FloatLibTests.Regression.Interval.ArbTranscendentals
 Compare binary-grid endpoint bounds against higher-precision Arb balls at representative positive,
 negative, and near-boundary inputs. Arb is external test evidence; production containment proofs
 are checked by Lean and do not depend on this oracle. Approximation degree grows with precision.
+Containment is already proved, so the width check is what detects a loss of accuracy.
 -/
 
 @[expose] public section
@@ -32,7 +33,12 @@ def constant (x : ℚ) : Json :=
 def application (name : String) (args : List ℚ) : Json :=
   Json.mkObj [("op", Json.str name), ("args", Json.arr (args.map constant).toArray)]
 
-/-- Check that the Lean enclosure contains the independent higher-precision Arb ball. -/
+/-- Bits of accuracy an enclosure may lose relative to its endpoint precision. The current
+enclosures lose at most one bit on these inputs. -/
+def widthSlack : Nat := 4
+
+/-- Check that the Lean enclosure contains the independent higher-precision Arb ball and that its
+width is at most `2 ^ (widthSlack - precision)` relative to the larger of one and the result. -/
 def checkEnclosure (precision : Nat) (enclosure : Option (Interval Int))
     (reference : Json) : IO Bool := do
   let some I := enclosure | return false
@@ -40,8 +46,11 @@ def checkEnclosure (precision : Nat) (enclosure : Option (Interval Int))
   let bounds ← match result.outputBall.toRatBoundsChecked with
     | .ok bounds => pure bounds
     | .error message => throw (IO.userError message)
-  return decide (BinaryGrid.toRat precision I.lo ≤ bounds.1 ∧
-    bounds.2 ≤ BinaryGrid.toRat precision I.hi)
+  let lo := BinaryGrid.toRat precision I.lo
+  let hi := BinaryGrid.toRat precision I.hi
+  let scale := max 1 (max |bounds.1| |bounds.2|)
+  return decide (lo ≤ bounds.1 ∧ bounds.2 ≤ hi ∧
+    hi - lo ≤ scale * 2 ^ widthSlack / 2 ^ precision)
 
 /-- Exercise all seventeen supported elementary functions at three endpoint precisions. -/
 def run : IO Nat := do

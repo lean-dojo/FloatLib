@@ -62,8 +62,6 @@ example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : Real.exp x < 3 := by
 [Chapter 20](#/chapter/proving-numerical-bounds) explains the evaluator, its precision controls,
 and how subdivision can prove inequalities that a single interval evaluation leaves open.
 
-<a id="reductions-that-round-once"></a>
-
 ## Sums and dot products with one rounding
 
 When we sum a list by rounding after each addition, a small term can be lost. A binary32 significand has 24 bits, so $2^{24} + 1$ (that is, $16777216 + 1$) rounds back to $2^{24}$, and subtracting $2^{24}$ then gives zero. `sumList` and `sum` instead decode every term to an exact dyadic, accumulate the complete sum in software, and round once at the end.

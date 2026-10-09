@@ -16,7 +16,6 @@ workload.
 
 Each candidate includes a proof of correctness. A cost estimate can therefore affect performance without changing the specified result. GMP also chooses algorithms by size [@gmpManual], and FFTW separates a transform description from its execution plan [@fftwPlanner]. FloatLib additionally requires a proof that each candidate's `run` equals the common specification.
 
-<a id="what-can-i-choose"></a>
 <a id="what-can-we-choose"></a>
 
 ## Choosing a backend
@@ -46,8 +45,6 @@ than selectable FloatLib backends.
 
 [Chapter 17](#/chapter/performance) compares measured execution times.
 
-<a id="why-a-ladder-and-not-one-kernel"></a>
-
 ## Why different widths use different kernels
 
 The generic baseline computes on `Nat` significands to handle every width. Its wide intermediates
@@ -57,8 +54,6 @@ Increasing the width sixteenfold changes the estimate much less, because the mod
 of the cost to fixed allocation overhead.
 
 The specialized representations avoid different costs. A table replaces the arithmetic with one index computation and one byte load. A one-word kernel avoids allocation by keeping every field, aligned significand, and rounding decision in a `UInt64`. A two-word kernel keeps binary128 in a pair of machine words rather than an arbitrary-precision integer. A limb-array kernel keeps a 4096-bit significand in one mutable array instead of allocating a fresh bignum for every shift. The generic path uses arbitrary-precision intermediates to handle every descriptor and exceptional case. For addition, each implementation proves agreement with the same reference function, `ExecFloat.Spec.add`.
-
-<a id="the-rungs"></a>
 
 ## Available kernels
 
@@ -149,8 +144,6 @@ abbrev Binary256 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 236)
 
 Under the default policy, the 8-bit addition runs a machine-word kernel and the binary128 addition runs a two-limb kernel. Both inputs and the exact sum are representable in each format, so neither call needs an inexact rounding.
 
-<a id="eligibility-is-a-statement-about-the-descriptor"></a>
-
 ## Which formats a kernel supports
 
 A kernel checks the descriptor's fields, so a custom `ExecFloat.Binary` with the same layout as a standard format qualifies for the same kernel. Each kernel states its requirements as a proposition that Lean can decide.
@@ -196,8 +189,6 @@ The 52-bit layout with 40 fraction bits adds in one word but multiplies through 
 
 </details>
 
-<a id="what-a-candidate-advertises"></a>
-
 ## Estimating computation and memory costs
 
 To compare the alternatives, we give every implementation a
@@ -215,8 +206,6 @@ sets these format-independent workload assumptions and relative weights. It give
 for the 32-unit allocation charge or the 64-byte memory block. The scores below order candidates
 in this declared model; they are not times in nanoseconds. The earlier microsecond estimates
 motivate avoiding allocation, but are separate from this configured score calculation.
-
-<a id="the-selector"></a>
 
 ## How the planner chooses
 
@@ -248,8 +237,6 @@ example {α : Type} {spec : α} (policy : Policy) (candidates : CandidateSet (Ce
 The selected certificate establishes the numerical result. To explain performance, we must
 also connect the selected implementation to the function that a public call executes. We will
 follow that connection after working through E4M3's costs.
-
-<a id="asking-what-was-chosen"></a>
 
 ## Inspecting the selected backend
 
@@ -384,10 +371,7 @@ does not amortize over five million calls, so FMA stays on the exact baseline wh
 moves to its table. The value type and literals stay the same. We can now follow the selected
 certificate into the public operation and its theorem.
 
-<a id="selection-happens-when-the-type-is-elaborated"></a>
-<a id="the-type-fixes-the-configuration-selection-is-cached"></a>
 <a id="choosing-and-caching-an-implementation"></a>
-<a id="execfloat-the-carrier-and-its-backends"></a>
 
 ## Following a public arithmetic call
 
@@ -428,8 +412,6 @@ covers the resulting composite. Some plans can call the winning structural kerne
 that entry must still check both its eligibility and its policy win. A cached direct-dispatch
 decision is checked on each closed automatic call, so dispatch can still contribute to its cost.
 The selection and execution equations also apply when the descriptor or policy varies at runtime.
-
-<a id="the-limb-carrier-at-this-revision"></a>
 
 ## Choosing the limb carrier
 
@@ -555,8 +537,6 @@ example (x y : Binary32) : x + y = ExecFloat.Spec.add x y :=
 The `example` type-checks because the `Add` instance on `Binary32` unfolds to [[FloatLib.Floats.ExecFloat.add]], the certified dispatch, so a theorem about `ExecFloat.add` is a theorem about `x + y`. The public equation is the projection of a certificate that the format constructed with its proof inside, so it needs no axioms at all; the real-number theorem quantifies over $\mathbb{R}$ and inherits the three axioms Mathlib's construction of the reals rests on: propositional extensionality, quotient soundness, and choice.
 
 </details>
-
-<a id="the-host-fpu-is-a-separate-door"></a>
 
 ## Using the host FPU
 

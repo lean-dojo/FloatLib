@@ -14,8 +14,6 @@ between the operation on codes and the operation on those numbers.
 
 Fixed-point, logarithmic, codebook, and shared-scale representations give codes different meanings and support different operations. They use the contracts from [chapter 06](#/chapter/the-numerical-models) to state which operations are exact, which can fail, and which need a range hypothesis. Fixed-width integers supply the stored coefficients for bounded fixed point; affine quantization connects integer codes to values through a scale and a zero point. FloatLib also includes Booleans among its non-floating-point systems.
 
-<a id="one-contract-several-carriers"></a>
-
 ## Connecting stored codes to numbers
 
 A [[FloatLib.Numerics.NumericalSystem]] connects a type of stored codes to a type of scalars used in proofs. Its denotation assigns every code a finite scalar, an infinity, or an exceptional value. The code type is also called the *carrier* in [chapter 16](#/chapter/backends-and-the-planner): it is what a program stores at runtime.
@@ -106,8 +104,6 @@ example {a b : ℚ}
 
 The third example multiplies values at different scales. The `2 + 3` in its result type records the sum of their fractional digit counts. Division, square root, fused multiply-add, and transcendental functions can produce values outside the grid and need a rounding policy. The exact family provides none of these operations.
 
-<a id="fixed-point-through-execfloat-operators-and-literals"></a>
-
 ## Fixed-point operators and literals
 
 `FixedPoint` makes the same codes available through the `ExecFloat` interface. Ordinary `+` and `-` use the usual `ExecFloat.Add` and `ExecFloat.Sub` instances; unary minus is a direct `Neg` instance on the integer kernel. For addition and subtraction, the integer kernels above are also the reference definitions, so their certificates, such as `addCertified`, are immediate. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] connects the public operation to its specification. Multiplication uses the explicit `mul` with the composed scale in its result type, rather than `ExecFloat.Mul`.
@@ -137,8 +133,6 @@ The value $0.125$ at two decimal digits is $12.5$ hundredths, a tie, and rounds 
 Moving either literal to either side of its tie selects the closer coefficient instead.
 
 Conversion from another system follows the same rule: `run` rounds a finite rational once and reports whether the result was inexact, and rejects an infinity or an exceptional value because the grid has no code for either (`run_infinity`).
-
-<a id="bounded-fixed-point-three-answers-to-overflow"></a>
 
 ## Bounded fixed point and overflow
 
@@ -262,8 +256,6 @@ Multiplication is the only arithmetic operation: the sum of two powers of $\beta
 
 The configured carrier `Logarithmic` installs `*` through `ExecFloat.Mul`, with [[FloatLib.Floats.ExecFloat.Proof.mul_eq_spec]] tying it to the specification, and a source decoder (`exactDecoder`) so values can be converted out. Converting into logarithmic codes would require choices of nearest-power, tie, underflow, and bounded-exponent policies; there is no destination quantizer. The exact core uses an unbounded integer exponent. A bounded hardware encoding or a fractional logarithm field would need a further representation and its own rounding rules.
 
-<a id="codebooks-the-table-is-the-format"></a>
-
 ## Codebooks: assigning a value to each word
 
 A codebook assigns a value directly to each bit pattern. Examples include a one-bit weight, a two-bit ternary value with a spare pattern, and a four-bit table tuned to a weight distribution. [[FloatLib.Floats.Formats.Codebook]] stores this assignment in a single field mapping every `BitVec width` to a `NumericalValue α`. Every word has a meaning, possibly an exceptional one, and `numericalSystem` uses that table as its denotation. To define arithmetic, we must show how an operation on the words relates to the values in the table. The bit width alone cannot tell us.
@@ -311,8 +303,6 @@ The codebook quantizer examines every finite word and picks the closest. `neares
 ```
 
 The last line is the tie rule in action: zero is equidistant from $-1$ and $+1$, the lower word wins, and the answer is the code for $-1$. The configured carrier `Codebook` keeps the selected table in the type, so two tables of the same width are never interchangeable, and exposes `decode` and named values such as `negativeOne`. The nearest-word quantizer is available as `nearest?`. It is not installed as the generic conversion instance: that would also require a policy for reserved words and ties in the application.
-
-<a id="affine-quantization-a-scale-a-zero-point-and-a-code-range"></a>
 
 ## Affine quantization
 
@@ -376,8 +366,6 @@ example (x : ℚ) :
   affine_toReal_quantize offsetGrid x
 ```
 
-<a id="shared-scale-blocks-a-code-that-is-a-whole-vector"></a>
-
 ## One exponent for a block of values
 
 In a block-scaled format, several stored integers share one exponent. We need that exponent to recover the value of each entry. [[FloatLib.Floats.Formats.Block.SharedScaleCode]] with `lanes` entries holds one `exponent : Int` and a `Vector Int lanes` of significands, and `decode` produces a `Vector Rat lanes` whose lane $i$ is
@@ -420,7 +408,6 @@ the block has no code for either.
 
 The concrete OCP MX formats in [chapter 11](#/chapter/low-precision-formats-for-machine-learning) bound both the scale and the elements. E8M0 codes 0 through 254 denote $2^{c-127}$, and code 255 is NaN ([scale encoding](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/E8M0/Core.lean)); element words may also be nonfinite. The array API supplies checked finite decoders: [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeElement_refines]] and [[FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines]] are `Checked2` contracts, and [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeBlock?]] extends them to an array. The standard 32-lane API additionally decodes each lane with its exceptional class, so a finite scale can coexist with a NaN element and finite neighbours. In both APIs, applying a finite power-of-two scale is exact exponent arithmetic and contributes no rounding of its own.
 
-<a id="automation-inspection-and-conformance"></a>
 <a id="finding-these-representations-in-the-source"></a>
 
 ## Using the proofs and inspecting operations

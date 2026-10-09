@@ -28,7 +28,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not os.path.exists(path):
             # Unknown path: send the browser to the app's entry page. The page loads its assets
             # by relative path, so it must be served at the root rather than in place.
-            # The reader maps legacy chapter and map hash routes after the redirect.
             self.send_response(302)
             self.send_header("Location", "/")
             self.end_headers()

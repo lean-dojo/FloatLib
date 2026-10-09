@@ -18,8 +18,6 @@ Some bit patterns are redundant. Every word decodes to a valid datum, but encodi
 
 The three standard formats are presets of one descriptor. A layout chooses the number of declets, the exponent continuation width, and the exponent bias; its precision is three digits per declet plus one leading digit. The algorithms and codec proofs also work for custom layouts with arbitrary bias. A theorem that needs quantum zero to be available says so explicitly. Custom layouts let us study other choices of precision and range; the IEEE names still refer to their specified parameters.
 
-<a id="arithmetic-keeps-track-of-the-cohort"></a>
-
 ## Arithmetic and preferred exponents
 
 The [decimal arithmetic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Basic.lean) provides addition, subtraction, multiplication, division, fused multiply-add, and square root for decimal32, decimal64, and decimal128. The operations consume decoded `Datum` values and return an `Outcome`, pairing the result with five exception flags. BID or DPD is chosen when reading or writing the bits. All six operations accept the five decimal rounding modes: nearest with ties to even or away, toward zero, toward positive infinity, and toward negative infinity.
@@ -82,8 +80,6 @@ require a nonzero base and degree, with an odd degree for a negative base. They 
 delivered value with a real root whose defining power equation is proved separately.
 Validity and exceptional-input results are separate from these numerical bounds.
 
-<a id="remembering-exceptions-across-a-calculation"></a>
-
 ## Accumulating exception flags
 
 An `Outcome` tells us what happened in one operation. A longer calculation needs to remember earlier exceptions too. Suppose decimal32 division rounds $1/3$ to $0.3333333$, raising inexact, and the next operation divides $1$ by zero. The second operation raises divide-by-zero; it must not erase the earlier inexact flag.
@@ -91,8 +87,6 @@ An `Outcome` tells us what happened in one operation. A longer calculation needs
 `Environment.run` supplies the current rounding direction and accumulates the returned flags. The environment is an ordinary Lean value, so a function's inputs and outputs show where that state goes. `saveAllFlags`, `testFlags`, `testSavedFlags`, `lowerFlags`, `raiseFlags`, and `restoreFlags` support selected groups of exceptions. Restoring a saved clear flag clears it; flags outside the group stay as they were.
 
 `Environment.withRounding` changes rounding within one computation. Rounding $1/3$ toward positive infinity produces $0.3333334$; on return, the caller's rounding direction is restored and the new inexact flag survives. The proofs characterize every flag after an operation, clearing, or restoration, and establish that grouping operations does not change the accumulated flags.
-
-<a id="choosing-a-decimal-grid"></a>
 
 ## Quantization and integral rounding
 
@@ -110,23 +104,17 @@ Numerical comparison treats $1.20$ and $1.2$ as equal. `totalOrder` can still di
 
 The API provides all 22 quiet and signaling comparisons. Their Boolean answers agree; their invalid flags differ when a quiet NaN is present. Classification distinguishes the ten IEEE classes and proves that changing cohort does not turn a normal value into a subnormal one. Sign operations on raw BID and DPD words preserve every other bit, even for redundant encodings and signaling NaNs.
 
-<a id="moving-through-the-decimal-values"></a>
-
 ## Adjacent values, scaling, and remainder
 
 The value immediately below decimal32's $1.000000$ is $0.9999999$. The value immediately above it is $1.000001$. The distances are $10^{-7}$ below and $10^{-6}$ above: crossing a power of ten changes the grid. `nextDown` and `nextUp` handle that boundary, and their adjacency proofs rule out every valid value between the input and its neighbor. They choose the finest quantum that represents the delivered value.
 
 For decimal formats, `scale` multiplies by $10^n$ by shifting a datum's quantum and rounds once if the result no longer fits. `remainder` uses the nearest-even integer quotient: the remainder of $7/2$ is $7-4\cdot2=-1$. Its proofs establish exact representability, the half-divisor magnitude bound, and the even-quotient rule at a tie. `decimalExponent` reports the exponent of the leading decimal digit.
 
-<a id="writing-a-value-without-losing-its-representation"></a>
-
 ## Decimal text round trips
 
 Printing $1.20$ as `1.2` is numerically harmless, but loses its quantum. `Formatting.formatExact` preserves the entire datum, including zero signs and NaN metadata. The parsing theorem recovers that datum in every rounding mode; the BID and DPD word theorem recovers its canonical encoding.
 
 Requested precision is a separate choice. Formatting to two significant digits rounds $1.25$ to $1.2$ under nearest-even and $1.3$ under nearest-away. The digit count is any positive integer, and the text exponent is unbounded. The proofs establish the requested precision, rounding direction, midpoint behavior, and numerical inexactness. Asking for at least the source precision preserves its value through output and input in any pair of rounding modes.
-
-<a id="crossing-into-another-format"></a>
 
 ## Conversions between numerical formats
 

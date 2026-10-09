@@ -179,8 +179,6 @@ The 24-bit format has bias 63, normal exponents from $-62$ to $63$, and $p = 17$
 
 Programs normally use [[FloatLib.Floats.ExecFloat.Binary]] or [[FloatLib.Floats.ExecFloat.BinaryLimbs]], whose [[FloatLib.Floats.Formats.BinaryInterchange.Configured.StoragePlan]] chooses a carrier. Above 64 bits, `Binary` stores `Model format` directly; above 128 bits, `BinaryLimbs` uses an array of 32-bit limbs. Both have the same descriptor and reference semantics.
 
-<a id="exceptional-classes-and-how-nans-travel"></a>
-
 ## NaN propagation and signed zero
 
 The [classifiers](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Model/Carrier.lean) [[FloatLib.Floats.Formats.BinaryInterchange.Model.isZero]], `isSubnormal`, [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isInf]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isNaN]], `isSNaN`, and `isQNaN` test the stored fields. All but `isSubnormal` are defined by a case split on the encoding, and under `.ieee` they are the field tests above; `isSubnormal` is the same field test, zero exponent and nonzero fraction, in every encoding. The quiet bit is the most significant fraction bit: a NaN with that bit set is quiet and propagates silently, a NaN with it clear is signaling and raises the invalid flag when it is an operand.
@@ -386,8 +384,6 @@ example {width : Nat} (x : FixedInt width)
 ```
 
 The nearest binary32 value to $\pi$ rounds to the 8-bit integer $3$ with inexact set. The integer $300$ does not fit in eight signed bits and fails with `outOfRange`. And $2049$ has no binary16 representation: its precision covers every integer only up to $2048$, so nearest-even returns $2048$ and flags inexact.
-
-<a id="text-you-can-read-back"></a>
 
 ### Parsing and printing
 

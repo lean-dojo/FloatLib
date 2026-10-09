@@ -172,8 +172,6 @@ The second evaluation computes each format's largest finite value from its descr
 
 A fully finite format has no infinity or NaN code for an overflow result, so FloatLib's native policy saturates to the largest finite magnitude. The rule, `nativeOverflow`, follows the encoding: signed infinity for `ieee`, the NaN word for `finiteMaxNaN` and `finiteUnsignedZero`, and the largest finite value with the appropriate sign for `finite`.
 
-<a id="encoding-versus-policy"></a>
-
 ## Rounding and overflow policies
 
 The encoding says what the stored bits mean. It does not say what an operation should do when its exact result does not fit, and the specifications leave that choice to the implementation. The FP8 paper describes saturating conversion, with a non-saturating mode as an option, and CUDA's conversion intrinsics expose both: `__NV_NOSAT` turns an E4M3 result beyond 448 into the NaN word `0x7f`, and `__NV_SATFINITE` clamps it to 448. Both are E4M3FN; they differ in overflow policy. Similarly, a format may have subnormal patterns while the hardware flushes subnormal results to zero.
@@ -231,7 +229,6 @@ Under the default policy, `roundDyadic_nearestEven_eq_execFloat` says that polic
 
 The two rounding engines compute that result differently. The policy engine works on exact rationals and takes a `QuantizationPolicy`; the directed rounders shift a dyadic significand and support the four IEEE directions with native overflow and gradual underflow. Neither engine delegates to the other. `roundDyadicGeneral_toRoundingMode_eq_roundDyadicWithRounding` proves that they nevertheless agree on the complete packed word for every descriptor, all four IEEE directions, both signs, and every exact dyadic.
 
-<a id="how-the-executable-types-are-built"></a>
 <a id="using-the-low-precision-types"></a>
 
 ## Executable types and lookup tables
@@ -381,8 +378,6 @@ The implementation chooses scale one for an all-zero block, clamps a requested e
 
 Decoding an existing standard block preserves each lane's exceptional class. With a finite scale, an infinity or NaN in one element does not erase finite neighbours; a NaN scale affects every lane. Finite scaling uses exact rational arithmetic, so it remains meaningful beyond binary32's range. These quantization and decoding contracts describe the six logical block formats, without prescribing a physical memory layout.
 
-<a id="a-dot-product-rounds-after-the-last-block"></a>
-
 ## MX dot products with one final rounding
 
 The standard MX operations `dot` and `dotGeneral` turn those decoded lanes into a binary32 result. The two operands may use different element profiles, covering all 36 pairs of the six profiles. `dot` takes one 32-lane block from each operand; `dotGeneral` takes equally many blocks on each side, with each operand keeping its own profile and each block its own scale.
@@ -401,8 +396,6 @@ The [dot-product proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLi
 
 The [configured dot-product proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/Standard/Configured/DotProduct/Proof.lean) carries the same result to `ExecFloat.OCP.MX.Standard.dotGeneral`: packing into the executable binary32 carrier adds no further rounding. Exact-zero sums, including an empty dot, return positive zero; a negative nonzero sum that underflows keeps its negative sign. NaN scales propagate NaN, and zero times infinity or addition of opposite infinities is invalid. This value-only API does not return NaN payloads or status flags.
 
-<a id="where-the-proofs-stop"></a>
-
 ## Conditions on the error bounds
 
 The scalar arithmetic has exact dyadic semantics, while its real-number error theorems have a narrower scope. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundDyadic_eq_roundAt]], which connects executable rounding to the rounded-real grid [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]], carries the hypothesis `fmt.isIEEE = true`, and so do the arithmetic theorems built on it. They therefore cover bfloat16, TF32, and E5M2, and not E4M3FN, the FNUZ formats, or the fully finite element formats. The MX results above bound quantization at a selected scale and the single binary32 rounding of an exact dot. They do not extend the IEEE half-ulp arithmetic bounds of [chapter 07](#/chapter/the-mathematics-of-rounding) to operations rounded into those element formats.
@@ -410,8 +403,6 @@ The scalar arithmetic has exact dyadic semantics, while its real-number error th
 A sequential mixed-precision dot product rounds intermediate results too. `dotSequential` takes a `SitePolicy` naming the storage, product, accumulator, and output formats. The policy-aware `mulAddFinite?` can execute, for example, an E4M3FN times E4M3FN product accumulated into bfloat16 or binary32. Both run on any descriptor. The error budget theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.dotSequential_abs_error_le_budget]] requires all four formats to be IEEE and every intermediate to be finite. Those intermediate rounding steps are absent from the exact MX dot.
 
 Directed and stochastic policies over the non-IEEE scalar formats have executable semantics and an agreement theorem for the IEEE directions, but no real error theorems. The standard MX quantizer uses nearest-even rounding with its explicit scale and overflow policies. Its contracts describe FloatLib's choices of scale and accumulation precision; they do not establish the behavior of an H100 or MI300.
-
-<a id="finding-the-low-precision-implementations"></a>
 
 ## Affine integer quantization
 

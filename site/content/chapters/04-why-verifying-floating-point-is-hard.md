@@ -7,8 +7,6 @@ summary: Correctness proofs must account for rounding, exceptional values, and t
 
 Correct rounding specifies one operation: compute its exact result, then select a representable value. In a program, the selected value becomes the input to the next operation. Moving a pair of parentheses can change where rounding happens; changing an intermediate format can change which side of a midpoint the next operation sees. The bit patterns and rounding rule developed in [chapter 02](#/chapter/from-reals-to-machine-numbers) let us follow these effects precisely. To verify an implementation, we also need to show that its shifts, table lookups, and exceptional branches implement that rule for every input.
 
-<a id="the-state-space"></a>
-
 ## Limits of exhaustive testing
 
 A binary64 addition has $2^{64} \cdot 2^{64} = 2^{128}$ possible input pairs. At a billion tests per second that is about $10^{22}$ years. Binary32 has $2^{64}$ pairs, which is a few hundred years at the same rate. Exhaustive testing becomes feasible at smaller widths: binary16 has $2^{32}$ ordered pairs, roughly four billion, and an eight-bit format has $2^{16} = 65{,}536$, which fits in a table. Actual running time also depends on the cost of computing the expected result. [Figure 4.1](#/chapter/why-verifying-floating-point-is-hard/figure-ch02-state-space) compares the counts using the same hypothetical rate for every format.
@@ -20,8 +18,6 @@ For formats of eight bits or fewer, the table backends evaluate the reference op
 For binary16, the library's addition and multiplication can be compared with MPFR [@fousseMpfr2007] in batches of the $2^{32}$ ordered input pairs. Dividing the work makes an exhaustive comparison manageable, but it is complete only after every batch has run. The binary16 comparisons described in [chapter 19](#/chapter/external-validation) cover a sample of the full $2^{32}$ pairs.
 
 For binary32 and binary64, tests can exercise known difficult cases and search for disagreements, but they cannot practically enumerate the whole input space. A proof handles this differently: its variables range over arbitrary input words. For example, an argument about how many low bits a shift discards can apply to every significand and exponent at once, without evaluating $2^{128}$ individual cases.
-
-<a id="the-algebra-that-fails"></a>
 
 ## Rounding changes algebraic identities
 
@@ -189,8 +185,6 @@ def a : Binary32 :=
 
 Here $a = 1 + 2^{-12}$, so $a^2 - 1 = 2^{-11} + 2^{-24}$ exactly, which the fused operation [[FloatLib.Floats.ExecFloat.fma]] returns. The separate product needs 25 significant bits and rounds to $1 + 2^{-11}$; the subtraction then returns $2^{-11}$. A compiler may contract `a * a - 1` into an FMA when the language and compilation options permit it. Verifying that expression therefore requires fixing whether contraction is allowed. The model-level theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]] specifies the fused operation as one rounding of the exact expression.
 
-<a id="values-that-are-not-numbers"></a>
-
 ## Exceptional values and signed zeros
 
 An arithmetic operation on stored words must also handle infinities, NaNs, and signed zeros. These cases need their own rules because their behaviour cannot be recovered from arithmetic on the reals. An infinity absorbs every finite addend, so $x + \infty = \infty$ does not determine $x$. NaN is not equal to itself under IEEE comparison, so IEEE equality is not reflexive. Lean's structural equality on the stored word is reflexive:
@@ -253,8 +247,6 @@ Status flags are a further piece of state that real arithmetic does not have. Ev
 
 Hardware commonly accumulates these flags in a status register. The library returns them with each result, making them available to ordinary program logic. [[FloatLib.Floats.Formats.BinaryInterchange.Model.divWithStatus_divideByZero]] says the divide-by-zero flag is set exactly when a finite nonzero operand is divided by a zero, and `divWithStatus_invalid` gives the exact invalid predicate, including a signaling NaN operand and infinity divided by infinity. These predicates specify information that decoding the result to a real number cannot retain.
 
-<a id="error-bounds-are-not-bit-specifications"></a>
-
 ## Error bounds and exact output words
 
 The classic analysis, used throughout Higham's textbook [@higham2002] and Goldberg's survey [@goldberg1991], writes $\mathrm{fl}(x \circ y) = (x \circ y)(1 + \delta)$ with $|\delta| \le u$, where $u$ is the unit roundoff. Under its range assumptions, this bounds the error introduced by an operation. It is useful precisely because the analysis can proceed without knowing the exact rounded result: the bound admits any result within the allowed error. Subnormal results require an absolute-error treatment, and overflow requires separate handling. Even where the relative bound applies, satisfying it alone does not establish correct rounding.
@@ -270,8 +262,6 @@ A proof about source code depends on the execution rules assigned to it. Monniau
 When we prove a result about Lean definitions, we still need an argument connecting them to an `addss` instruction before the theorem can tell us anything about that instruction. Certified `ExecFloat` arithmetic is software: the definitions used in proofs are the definitions compiled into the program, and we assume that the Lean compiler correctly implements integer and bit-vector operations.
 
 The optional host operations are exposed through the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean), with calls such as `Unchecked.add32`. That module is outside the default `import FloatLib` path. Its hardware calls have separate assumptions from the certified software operations; [chapter 17](#/chapter/performance/host-arithmetic-as-a-reference) describes the guards and execution conditions relevant to comparing their results.
-
-<a id="two-decisions-a-specification-has-to-make"></a>
 
 ## Overflow policy and the sign of zero
 
@@ -308,8 +298,6 @@ Casting between formats also has to preserve any information needed by later ope
 ```
 
 The theorem `negative_add_of_eq_zero` states the rule for the default nearest-even addition: an exact zero sum is negative exactly when both operands are. [[FloatLib.Floats.ExecFloat.Binary.Conversion.run_default_negZero_value?]] then says that converting an exact $-0$ into any binary destination yields that destination's negative zero, or its single zero when the encoding has only one, as the FNUZ formats do. A cast that lost the sign would still pass tests that compared the two zeros with `==`.
-
-<a id="how-a-proof-assistant-closes-the-gap"></a>
 
 ## Connecting an implementation to its specification
 

@@ -106,8 +106,6 @@ example : Model.fexpOf FloatFormat.binary32 = fltExp (-149) 24 := by
 
 We can work out that change in spacing by substituting values into `fexpOf`. The magnitude of one is $1$, so its canonical exponent is $\max(1-24,-149)=-23$. The magnitude of two is $2$, giving $-22$ instead: one step above two is twice as large as one step above one. At the least normal value, $2^{-126}$, the magnitude is $-125$ and the canonical exponent is $\max(-125-24,-149)=-149$. For positive values below that point, the maximum keeps choosing $-149$. The subnormal grid continues with that same spacing all the way to zero, progressively using fewer significant bits rather than a smaller exponent.
 
-<a id="what-a-rounded-result-promises"></a>
-
 ## Absolute and relative error bounds
 
 Nearest rounding is within half a ulp of the exact value. In the theory it is [[FloatLib.Floats.Formats.Flocq.error_bound_ulp]]:
@@ -233,8 +231,6 @@ Companion [product-residual proofs](https://github.com/lean-dojo/FloatLib/blob/m
 
 </details>
 
-<a id="the-double-rounding-hazard"></a>
-
 ## Double rounding
 
 Rounding twice to the same format changes nothing, since rounding is idempotent. Rounding to a fine format and then to a coarse one is a different matter, and whether it agrees with rounding directly to the coarse format depends on the mode.
@@ -343,7 +339,6 @@ Every rounding mode then decides whether to increment the mantissa. Rounding upw
 
 A kernel may still need to discard low bits before making that decision. Truncation changes the adjacent grid points, so it must update the location too: a value above the midpoint of a small cell can lie below the midpoint of the larger cell containing it. `refineLocation_correct` proves how to carry that information to the coarser grid. The [truncation theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Calculation/Round.lean), `roundTruncatedNearestEven_correct`, then identifies the selected result with `round nearestEven x`. These are the rounding refinements used by the kernels in [chapter 15](#/chapter/kernels-fixed-word-algorithms) and [chapter 16](#/chapter/backends-and-the-planner).
 
-<a id="finding-the-rounding-theory"></a>
 <a id="using-the-rounding-theorems"></a>
 
 ## Connecting the grid to packed formats
@@ -353,8 +348,6 @@ The generic theory becomes a format in the library's own sense through an [`Enco
 For packed binary formats the connection runs through `fexpOf` and `roundAt`, and two theorems hold for every finite decoded word of every supported descriptor, IEEE or not: [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_genericFormat_of_isFinite]] puts every finite value on its descriptor's grid, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_toReal_eq]] says rounding it back to its own format is the identity. Connecting an arithmetic operation to the grid still requires that operation's refinement hypotheses.
 
 The rounded-real grid is unbounded above: `fltExp` has no upper bound, so there is no largest element and no overflow. A packed format has both. A theorem of the form $\mathrm{decode}(\mathrm{add}(x,y)) = \mathrm{roundAt}(\mathrm{decode}(x) + \mathrm{decode}(y))$ therefore needs the hypothesis that the output is finite, because if the exact sum overflows, the packed result is an infinity, which has no real value to decode, while the right side is an ordinary real number. Symbolic criteria such as `isFinite_add_of_abs_add_le_posMaxFinite` let callers discharge the output-finiteness hypothesis from input bounds. For square root, a finite input that is nonnegative or a signed zero produces a finite result, so its refinement theorem needs the input domain condition but no separate output-finiteness premise.
-
-<a id="what-we-took-from-flocq-and-what-we-did-not"></a>
 
 ## Relationship to Flocq
 

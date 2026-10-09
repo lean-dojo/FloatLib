@@ -9,8 +9,6 @@ To read an old floating-point word, we need more than its field widths: we need 
 
 ![Five milestones in floating-point formats, from an early computer design to low-precision standards](assets/ch04-standards-timeline.png "Selected milestones in floating-point representation and standardization. The P3109 entry refers to an interim report.")
 
-<a id="before-there-was-a-standard"></a>
-
 ## Before IEEE 754
 
 Konrad Zuse's electromechanical Z3 used binary floating point with 14 stored significand bits and a 7-bit exponent. In his [reconstruction based on Zuse's 1941 patent application](https://www.inf.fu-berlin.de/inst/ag-ki/rojas_home/documents/1996/Konrad_Zuses_Legacy.pdf), Raúl Rojas describes exponent encodings for zero and infinity. Undefined operations such as $0/0$ lit an exception lamp and stopped the machine.
@@ -50,8 +48,6 @@ A common arithmetic standard fixes the result of an operation. The programs usin
 A timestamp can be accurate to one part in a million and still be unsuitable for measuring a short interval. What matters is how its error combines with the error in the timestamp being subtracted from it. A narrowing conversion has a different constraint: a value that fits in the source register may exceed the destination range. These failures depend on how a program uses its numbers, as well as on the accuracy of each arithmetic operation.
 
 ![Five incidents, each marked by the kind of numerical failure described in its primary sources. Sleipner concerns the physical model.](assets/ch03-incident-timeline.png "Five failures with different causes, from arithmetic and conversion errors to an inadequate physical model. Correct rounding alone would not resolve all five.")
-
-<a id="an-index-that-truncated-itself-vancouver-1982-to-1983"></a>
 
 ## Accumulated truncation: Vancouver, 1982 to 1983
 
@@ -116,8 +112,6 @@ on each step. This explains why the two final stretches are parallel: they use t
 
 The last evaluation sets `inexact` because that addition required rounding. A loop can retain such flags with [[FloatLib.Numerics.IEEEStatus.union]], which combines each field with logical OR. This records whether an event occurred anywhere in the loop. It cannot distinguish one inexact addition from ten thousand, or tell whether their errors cancel. A bound on the final error needs the rounding analysis as well as the status record.
 
-<a id="a-clock-that-drifted-patriot-dhahran-1991"></a>
-
 ## Inconsistent time conversions: Patriot, Dhahran, 1991
 
 On 25 February 1991 the Patriot battery protecting Dhahran Air Base failed to track an incoming Scud, which struck an Army barracks and killed 28 American soldiers. The General Accounting Office reported a year later [@gaoPatriot1992] that the battery had run continuously for over 100 hours. The weapons control computer kept time as an integer count of tenths of a second. Its range gate algorithm, which predicts where the target will next appear, needed that count converted to seconds, and the registers were 24 bits long. The conversion lost precision; an inconsistency in how converted times were used made the range gate shift grow with running time.
@@ -179,15 +173,11 @@ The check computes with exact integer coefficients and rationals, so it isolates
 
 An error budget for the tracking calculation would need the maximum uptime, the interval between observations, and the accuracy of each conversion used in forming that interval. Increasing precision reduces a conversion error, while using a consistent conversion allows the errors in nearby timestamps to cancel. Bounds such as those developed in [chapter 07](#/chapter/the-mathematics-of-rounding) are useful only after the analysis has identified which expression the program actually computes.
 
-<a id="a-platform-that-sank-sleipner-a-1991-and-why-it-belongs-in-a-different-list"></a>
-
 ## Model error: Sleipner A, 1991
 
 On 23 August 1991 the concrete gravity base of the Sleipner A platform sank in the Gandsfjord outside Stavanger during a controlled ballasting operation, at a depth of about 65 meters. A tricell wall cracked, water came in faster than the pumps could remove it, and the structure went to the bottom. The loss is put at about 700 million dollars. The finite element analysis, done with NASTRAN, had underestimated the shear stresses in the tricell walls by about 47 percent, and the reinforcement in the critical zone was inadequately anchored; a corrected analysis predicted failure at 62 meters [@jakobsenRosendahl1994] [@selbyVecchioCollins1997]. Arnold summarizes both accounts [@arnoldDisasters].
 
 Here we have to look beyond arithmetic to the model itself: the reported problem was that the discretization did not resolve the stresses near a corner of the structure. A finite element calculation approximates a physical structure with a mesh and computes stresses within that model. Correctly rounding every operation would help bound the error in solving the chosen discrete problem, but it would not establish that the mesh captured the local stress concentration. That needs evidence about the modelling assumptions and the discretization, in addition to the arithmetic.
-
-<a id="a-table-with-five-holes-the-pentium-fdiv-bug-1994"></a>
 
 ## Missing table entries: the Pentium FDIV bug, 1994
 
@@ -229,15 +219,9 @@ At three fractional bits, the exact quotient is $(14+6/7)\cdot2^{-3}$. The remai
 
 A divider that returns an incorrect quotient for even one input pair cannot satisfy this equality with a correct reference. The proof for an optimized loop or table must cover every returned result, including inputs that exercise rarely used branches.
 
-<a id="what-a-verified-library-changes"></a>
-
 The public refinement equation lets a caller use that agreement without naming the selected kernel. [Chapter 05](#/chapter/why-execution-and-proofs-are-separate) follows how a local algorithm proof becomes a theorem about the public operation.
 
-<a id="what-it-does-not-change"></a>
-
 These equations concern Lean definitions. Running the software also relies on the compiler and runtime to implement integer and bit-vector operations correctly. The certified software divider uses integer arithmetic. Optional calls to the host floating-point divider live in the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean); [chapter 19](#/chapter/external-validation) compares their results with the software model. Those comparisons can reveal disagreements, but the software proof does not establish correctness of the processor's divider.
-
-<a id="an-overflow-that-was-not-floating-point-ariane-5-flight-501-1996"></a>
 
 ## A narrowing conversion: Ariane 5, flight 501, 1996
 
@@ -292,8 +276,6 @@ The `InRange 16 value` hypothesis in the [integer interpretation proof](https://
 
 The alignment output was unused after lift-off, but an exception in the unused calculation could still shut down the reference unit. Choosing a conversion policy therefore also requires tracing how the surrounding program handles the result. A returned failure, a wrapped value, and a saturated value each need an appropriate response from the caller.
 
-<a id="verification-enters"></a>
-<a id="where-this-lives-in-the-library"></a>
 <a id="sources-and-definitions"></a>
 
 ## Proofs of hardware and software arithmetic
@@ -304,15 +286,11 @@ Flocq, Boldo and Melquiond's Coq library [@boldoMelquiond2011], organizes floati
 
 FloatLib's rounded-real layer follows this organization in Lean; its grid definitions and proofs are developed in [chapter 07](#/chapter/the-mathematics-of-rounding). [Chapter 17](#/chapter/performance) compares its execution cost with an independent proved implementation extracted from Flocq. The comparison matches binary precision and exponent bounds and checks the complete input and output values; [chapter 19](#/chapter/external-validation/binary-arithmetic-with-flocq-and-mpfr) describes those numerical checks.
 
-<a id="the-2008-and-2019-revisions-and-the-decimal-question"></a>
-
 ## The 2008 and 2019 revisions
 
 The 1985 standard was binary only. IEEE 854 in 1987 [@ieee854_1987] restated the rules for radix 2 or 10 without fixing any bit layout, and the two were merged in IEEE 754-2008, which added decimal32, decimal64, and decimal128 with two competing significand encodings, IBM's densely packed decimal and Intel's binary integer decimal. It also added binary16 as an interchange format, made fused multiply-add a required operation, added a ties-to-away rounding mode required only for decimal arithmetic, and introduced `minNum` and `maxNum`. IEEE 754-2019 [@ieee754_2019] was a smaller revision. It replaced `minNum` and `maxNum` with four operations, `minimum`, `maximum`, `minimumNumber`, and `maximumNumber`, which distinguish NaN-propagating behaviour from a preference for numerical operands. It also recommended augmented operations that return the exact rounding error alongside the result and revised other edge cases.
 
 Decimal arithmetic makes a familiar distinction visible. On a grid of hundredths, ten cents plus twenty cents is exactly thirty cents: the integer coefficients add as $10+20=30$, denoting $3/10$. Binary32 cannot represent that rational and rounds it to $5033165 \cdot 2^{-24}$. A fixed decimal scale is useful when the application knows its unit; decimal floating point allows the scale to change with an exponent. Either still needs a rounding rule for results between grid points. [The decimal discussion](#/chapter/decimal-arithmetic/encoding-the-complete-datum) develops the two encodings and explains why one numerical value can have several decimal representations.
-
-<a id="machine-learning-reopens-the-encoding-questions"></a>
 
 ## Low-precision formats for machine learning
 
@@ -336,8 +314,6 @@ A shared scale changes the interpretation of every element in a block. E8M0 code
 
 A numerical grid also need not be a hardware storage format. TF32 computations use binary32 inputs with reduced significand precision. Its eight exponent and ten fraction bits describe the rounded values; they do not imply an independent 19-bit hardware word.
 
-<a id="the-dissenters-posits-and-the-quire"></a>
-
 ## Posits and the quire
 
 Posits allocate bits differently again. Gustafson and Yonemoto proposed in 2017 [@gustafsonYonemoto2017] a variable-length, run-length-coded regime field. Values near 1 need a short regime, leaving more bits for the fraction; extreme magnitudes need a longer regime and leave fewer fraction bits. Posits have one NaR (not a real) code, one zero, and no separate subnormal encoding. A companion fixed-point accumulator, the quire, can accumulate products exactly until its coefficient range is exhausted. The 2017 family was written `posit<n, es>`; the Posit Standard of 2022 [@positStandard2022] fixed the exponent parameter at two bits, so a standard posit is identified by total width alone.
@@ -354,14 +330,10 @@ Both quotients lie above one third. The posit error is sixteen times smaller her
 
 De Dinechin, Forget, Muller, and Uguen examine this distribution of precision and its hardware costs [@deDinechinPosits2019]. [Chapter 13](#/chapter/posits-and-the-quire) develops the encoding and the quire's capacity conditions; [chapter 19](#/chapter/external-validation) compares the arithmetic with an independent implementation.
 
-<a id="p3109-and-the-attempt-to-standardize-again"></a>
-
 ## P3109 formats
 
 The IEEE P3109 working group's interim report [@p3109InterimReport] proposes a parameterized family for low-precision arithmetic; it is not an approved IEEE standard. Its four parameters are total width $K$, precision $P$ including the implicit bit, signedness, and a domain that is finite or extended with infinities. A signed P3109 format places its single NaN at the midpoint of the code space, in the word that would otherwise be negative zero. An extended format places infinities at the endpoints of its finite ranges, instead of reserving an all-ones exponent class. Unsigned formats use the sign bit for magnitude. The report also specifies nine rounding modes, including round-to-odd and three stochastic variants, and three saturation behaviours.
 
 For example, a signed eight-bit extended format with precision four has its NaN at code 128 and its infinities at 127 and 255. Those placements differ from an IEEE exponent-class reservation despite the familiar division into sign, exponent, and fraction. [Chapter 12](#/chapter/p3109) develops the encoding, rounding and saturation rules, and FloatLib's proofs against the interim report.
-
-<a id="what-is-still-open"></a>
 
 The working group's value tables provide an independent way to check how a word is decoded. [Chapter 19](#/chapter/external-validation) describes those comparisons. They check the interpretation of the encoding; they do not test arithmetic, exception behaviour, or accelerator hardware.

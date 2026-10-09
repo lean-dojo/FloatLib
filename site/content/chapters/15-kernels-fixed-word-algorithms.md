@@ -305,8 +305,6 @@ square-root path calls this shared helper; it does not need a new planner candid
 The fallback explicitly calls `Nat.sqrt.iter`, keeping the compiler replacement
 acyclic. The fixed-capacity restoring kernels above retain their own routes.
 
-<a id="certificates-check-the-answer-instead-of-trusting-the-search"></a>
-
 ## Checking a division result
 
 At two limbs the restoring loop runs 112 or 113 iterations for binary128, one bit each, after the initial state has supplied the leading quotient bit. Knuth's Algorithm D [@knuth1997] uses long division in radix $2^{32}$ to produce a 128-bit quotient in four digit steps. Each step estimates a quotient digit, corrects it at most twice, and repairs a negative partial remainder by adding the divisor back. The correctness proof is attached to the check of the proposed quotient and remainder; the Algorithm D search itself is unproved. [[FloatLib.Numerics.FixedWord.CertifiedDivision.candidate]] runs Algorithm D and returns a candidate quotient and remainder; [[FloatLib.Numerics.FixedWord.CertifiedDivision.certificate]] checks them independently with three tests (namespaces shortened here):
@@ -363,8 +361,6 @@ The carry test makes the equality an equality of natural numbers. Without accoun
 We can change the Algorithm D search in the [certified-division implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/CertifiedDivision/Runtime.lean) without changing the
 soundness argument for an accepted result: that proof depends on the certificate check.
 
-<a id="proved-once-reused-everywhere"></a>
-
 ## Reusing a kernel proof across formats
 
 Once we have proved the word arithmetic, we can reuse it across formats. The kernel theorems
@@ -377,7 +373,6 @@ The invariants are stated over an abstract carrier. `RestoringRootState α` hold
 
 The definitions are shared too. The [signed-magnitude implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/SignedMagnitude/Runtime.lean) combines two signed magnitudes in one word, and the [dyadic comparison implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/FixedWord/DyadicCompare/Runtime.lean) compares word significands at unbounded exponents. Binary interchange and posit backends therefore use the same definitions of cancellation and ordering.
 
-<a id="what-csimp-does-on-one-example"></a>
 <a id="finding-the-kernel-implementations"></a>
 <a id="reading-a-compiler-certificate"></a>
 
@@ -606,7 +601,6 @@ The proofs [`toModel_div`](https://github.com/lean-dojo/FloatLib/blob/main/Float
 and [`toModel_sqrt`](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/WideLimb/Sqrt/Proof.lean)
 cover the complete operations, including those fallback branches.
 
-<a id="where-the-kernel-boundary-ends"></a>
 <a id="capacity-bounds-and-compiler-assumptions"></a>
 
 ## Capacity bounds and backend dispatch

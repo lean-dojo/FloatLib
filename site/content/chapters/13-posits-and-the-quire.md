@@ -104,8 +104,6 @@ Every finite posit has a terminating decimal expansion because its denominator i
 
 Parsing goes through an ASCII decimal scanner and exact rational arithmetic, then rounds once into the posit format. The theorems `Model.parse_display`, `Model.parse_toString`, and configured `parse_toString` prove recovery of every original word at every valid width, including zero and NaR. The configured result holds for any lawful codec. The printer promises exact text, not the shortest spelling: redundant coefficient zeros can remain. [Chapter 19](#/chapter/external-validation/decimal-datums-and-exact-text) describes how independent code can check the emitted value and the parser's syntax.
 
-<a id="more-bits-the-same-value"></a>
-
 ### Widening without rounding
 
 To widen a posit, append zeros to its word. The 8-bit `0x6c` above becomes `0x6c00` in 16 bits and still denotes 128. In this example, the extra bits extend the fraction with zeros.
@@ -121,8 +119,6 @@ Posit-to-integer conversion uses ordinary nearest-integer rounding with even tie
 The standard's exceptional integer word has only its most significant bit set. Those bits also encode an ordinary integer. A signed output equal to the minimum integer, or an unsigned output equal to $2^{w-1}$, can therefore be a successful result. The sentinel theorems describe both possibilities; inspecting that word alone cannot tell us whether conversion failed.
 
 `floor`, `ceil`, and `nearestInt` return integers in the same posit format, and those integers are always representable. If the input is already integral, it stays unchanged. Otherwise, the format has enough fraction positions to represent both neighboring integers, including a ceiling that crosses a power of two. The proofs establish their exact rational values at every width; `nearestInt_spec` also gives the half-unit error bound and even-integer tie rule.
-
-<a id="tapered-precision-in-numbers"></a>
 
 ## How precision changes with magnitude
 
@@ -225,8 +221,6 @@ example : ExecFloat.Posit.Conversion.Context :=
   { infinity := .reject, exceptional := .reject }
 ```
 
-<a id="what-is-proved-for-the-arithmetic"></a>
-
 ## Arithmetic correctness
 
 The [reference definitions](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Arithmetic/Spec.lean) compute exactly and then apply posit rounding. [[FloatLib.Floats.Formats.Posit.Model.Spec.add]] decodes both operands to `Rat`, adds, and calls `roundRat`; `div` returns NaR for a zero divisor and otherwise rounds the exact quotient; `fma` rounds the exact rational $a \cdot b + c$ once. The exact square root need not be rational. To round it, `sqrt` avoids forming an approximate root: `roundSqrtRat` compares the rational radicand against the squares of exact posit boundaries, using, for nonnegative $c$, $c \leq \sqrt{r}$ if and only if $c^2 \leq r$. The specification uses no host `Float` arithmetic.
@@ -278,8 +272,6 @@ example : FinEnum.card (Model (ExecFloat.Posit.format 8)) = 256 :=
 The instance is derived from `bitsEquiv`, so Mathlib code can enumerate `Model format` itself. The exhaustive round-trip check covers widths 2 through 8: every word other than NaR decodes to a rational and rounds back to the same word. NaR has its own closed theorems.
 
 For Mathlib users there is also a projective view, `toProjectiveRat`, sending NaR to the added point of `OnePoint Rat`, with `toProjectiveRat_eq_infty_iff` and `toProjectiveRat_eq_coe_iff` recording what it preserves. This view helps connect the type to Mathlib, but the added point does not give NaR the meaning of an infinity.
-
-<a id="the-quire"></a>
 
 ## Exact accumulation with a quire
 
@@ -488,8 +480,6 @@ The numerical comparator classifies rational special values before refining encl
 The [hyperbolic API](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Hyperbolic) implements `sinH`, `cosH`, `tanH`, `arcSinH`, `arcCosH`, and `arcTanH`. Their model and configured proofs identify the result with one rounding of the exact real function. The first four accept every finite input; `arcCosH` requires $x\geq1$, and `arcTanH` requires $-1<x<1$. NaR propagates, and an input outside an inverse function's domain gives NaR.
 
 The implementation compares the exact result with a posit boundary. For example, deciding whether $\tanh x<1/2$ reduces to deciding whether $2x<\log 3$, since $\operatorname{artanh}(1/2)=\tfrac12\log 3$. This avoids constructing either exponential in the formula for $\tanh x$. Hyperbolic sine and cosine use rational bounds to settle large exponential comparisons first and refine an enclosure only when those bounds do not decide the ordering. The inverse functions share logarithm enclosures across rounding comparisons. [The validation section](#/chapter/external-validation/rounding-transcendental-results) explains how independent enclosures can check these functions, including their domain and range boundaries.
-
-<a id="the-compiled-decoder-and-its-trust-boundary"></a>
 
 ## What the decoder proof assumes about the compiler
 

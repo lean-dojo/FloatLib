@@ -26,36 +26,9 @@ test('declaration links preserve question marks and Unicode', () => {
   });
 });
 
-test('bookmarks from before the library rename keep their selected name', () => {
-  const id = 'FloatLib.Numerics.IEEEStatus.union';
-  assert.deepEqual(parseRoute('#/node/LeanFloat.Numerics.IEEEStatus.union'), {
-    kind: 'node', id,
-  });
-  assert.deepEqual(parseRoute('#/node/LeanFloat.Numerics.%CE%B1%3F'), {
-    kind: 'node', id: 'FloatLib.Numerics.α?',
-  });
-  for (const path of ['/map', '/map/rounding', '/graph?view=declarations']) {
-    const separator = path.includes('?') ? '&' : '?';
-    assert.deepEqual(parseRoute(`#${path}${separator}node=LeanFloat.Numerics.IEEEStatus.union`), {
-      kind: 'graph', view: 'declarations', selected: id,
-    });
-  }
-  assert.deepEqual(parseRoute('#/graph?node=LeanFloat.Numerics'), {
-    kind: 'graph', view: 'modules', selected: 'FloatLib.Numerics',
-  });
-  assert.deepEqual(parseRoute('#/node/LeanFloater.example'), {
-    kind: 'node', id: 'LeanFloater.example',
-  });
-});
-
-test('map bookmarks open the declaration graph and preserve the selected declaration', () => {
-  for (const hash of ['#/map', '#/map/', '#/map/rounding', '#/map/rounding/', '#/map?node=']) {
-    assert.deepEqual(parseRoute(hash), { kind: 'graph', view: 'declarations', selected: undefined });
-  }
-  assert.deepEqual(parseRoute('#/map?node=FloatLib.Numerics.%CE%B1%3F'), {
-    kind: 'graph', view: 'declarations', selected: 'FloatLib.Numerics.α?',
-  });
+test('graph links preserve the view and selected declaration', () => {
   assert.deepEqual(parseRoute('#/graph'), { kind: 'graph', view: 'modules', selected: undefined });
+  assert.deepEqual(parseRoute('#/graph?node='), { kind: 'graph', view: 'modules', selected: undefined });
   assert.deepEqual(parseRoute('#/graph?view=declarations&node=FloatLib.Numerics.%CE%B1%3F'), {
     kind: 'graph', view: 'declarations', selected: 'FloatLib.Numerics.α?',
   });
@@ -72,39 +45,7 @@ test('chapter anchors and malformed escapes retain their existing behavior', () 
   assert.deepEqual(parseRoute('#/node/%invalid'), { kind: 'node', id: '%invalid' });
 });
 
-test('legacy chapter bookmarks open their current chapter or section', () => {
-  const defaults = [
-    ['what-imprecision-has-cost', 'a-short-history-of-floating-point', 'what-imprecision-has-cost'],
-    ['comparing-with-lean-native-floats', 'lean-native-floats'],
-    ['a-tour-of-the-codebase', 'using-the-library', 'a-tour-of-the-codebase'],
-    ['validation-against-the-outside-world', 'external-validation'],
-  ];
-  for (const [oldSlug, slug, heading] of defaults) {
-    assert.deepEqual(parseRoute(`#${chapterPath(oldSlug)}`), { kind: 'chapter', slug, heading });
-  }
-});
-
-test('incident and native-float bookmarks preserve individual headings', () => {
-  for (const [oldSlug, slug] of [
-    ['what-imprecision-has-cost', 'a-short-history-of-floating-point'],
-    ['comparing-with-lean-native-floats', 'lean-native-floats'],
-  ]) {
-    for (const heading of ['an-existing-section', 'a heading/with α?', '%invalid']) {
-      assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, heading)}`), {
-        kind: 'chapter', slug, heading,
-      });
-    }
-  }
-});
-
-test('old references chapter bookmarks open the bibliography', () => {
-  for (const heading of [
-    undefined, 'the-incidents-in-chapter-03', 'the-incidents-in-chapter-04', 'another-section',
-  ]) {
-    assert.deepEqual(parseRoute(`#${chapterPath('references', heading)}`), {
-      kind: 'references', key: undefined,
-    });
-  }
+test('reference links open the bibliography', () => {
   assert.deepEqual(parseRoute('#/references'), { kind: 'references', key: undefined });
   assert.deepEqual(parseRoute('#/references/ieee754_2019'), {
     kind: 'references', key: 'ieee754_2019',
@@ -112,31 +53,6 @@ test('old references chapter bookmarks open the bibliography', () => {
   assert.deepEqual(parseRoute('#/chapter/using-the-library/what-the-theorems-give-you'), {
     kind: 'chapter', slug: 'using-the-library', heading: 'what-the-theorems-give-you',
   });
-});
-
-test('every old tour heading follows its section to the current chapter', () => {
-  const destinations = [
-    ['the-shape-of-the-tree', 'using-the-library', 'a-tour-of-the-codebase'],
-    ['numerics-exact-values-and-contracts', 'the-numerical-models',
-      'a-common-interface-for-numerical-formats'],
-    ['kernels-fixed-word-algorithms-and-limb-arrays', 'kernels-fixed-word-algorithms'],
-    ['formats-encodings-and-their-meaning', 'ieee-binary-formats',
-      'from-executable-arithmetic-to-real-rounding'],
-    ['execfloat-the-carrier-and-its-backends', 'backends-and-the-planner'],
-    ['public-and-private-imports', 'why-execution-and-proofs-are-separate',
-      'runtimelean-and-prooflean'],
-    ['tests-what-is-validated', 'external-validation'],
-    ['benchmarks-and-the-website', 'why-execution-and-proofs-are-separate',
-      'how-the-website-examples-are-checked'],
-    ['what-the-check-scripts-enforce', 'why-execution-and-proofs-are-separate',
-      'the-check-that-enforces-the-split'],
-    ['examples-and-extension-guides', 'further-examples', 'extending-the-library'],
-  ];
-  for (const [oldHeading, slug, heading = oldHeading] of destinations) {
-    const route = parseRoute(`#${chapterPath('a-tour-of-the-codebase', oldHeading)}`);
-    assert.deepEqual(route, { kind: 'chapter', slug, heading });
-    assert.deepEqual(parseRoute(`#${chapterPath(route.slug, route.heading)}`), route);
-  }
 });
 
 test('moved sections resolve directly across the revised chapters', () => {
@@ -173,7 +89,7 @@ test('moved sections resolve directly across the revised chapters', () => {
   }
 });
 
-test('native-float section bookmarks follow the split from either former chapter', () => {
+test('native-float section bookmarks follow the split from the performance chapter', () => {
   const destinations = [
     ['leans-model-and-its-compiled-operations'],
     ['both-implementations-lose-associativity'],
@@ -189,29 +105,9 @@ test('native-float section bookmarks follow the split from either former chapter
     ['the-proved-conversion-and-arithmetic-bridges',
       'proofs-relating-floatlib-to-leans-float-model'],
   ];
-  for (const oldSlug of ['performance', 'comparing-with-lean-native-floats']) {
-    for (const [oldHeading, heading = oldHeading] of destinations) {
-      assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
-        kind: 'chapter', slug: 'lean-native-floats', heading,
-      });
-    }
-  }
-  assert.deepEqual(parseRoute('#/chapter/comparing-with-lean-native-floats/comparing-with-leans-native-floats'), {
-    kind: 'chapter', slug: 'lean-native-floats', heading: 'leans-model-and-its-compiled-operations',
-  });
-});
-
-test('older chapter aliases also follow later section moves in one pass', () => {
-  for (const [oldSlug, oldHeading, slug, heading] of [
-    ['a-tour-of-the-codebase', 'reductions-that-round-once', 'further-examples',
-      'sums-and-dot-products-with-one-rounding'],
-    ['validation-against-the-outside-world', 'posit-hyperbolic-functions',
-      'external-validation', 'rounding-transcendental-results'],
-    ['validation-against-the-outside-world', 'posit-decimal-text',
-      'external-validation', 'decimal-datums-and-exact-text'],
-  ]) {
-    assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
-      kind: 'chapter', slug, heading,
+  for (const [oldHeading, heading = oldHeading] of destinations) {
+    assert.deepEqual(parseRoute(`#${chapterPath('performance', oldHeading)}`), {
+      kind: 'chapter', slug: 'lean-native-floats', heading,
     });
   }
 });
@@ -230,12 +126,12 @@ test('alias destinations never require a second router pass', () => {
 });
 
 test('alias resolution decodes names once and ignores inherited object properties', () => {
-  assert.deepEqual(parseRoute('#/chapter/a-tour-of-the-%63odebase/the-shape-of-the-%74ree'), {
-    kind: 'chapter', slug: 'using-the-library', heading: 'a-tour-of-the-codebase',
+  assert.deepEqual(parseRoute('#/chapter/perform%61nce/timing-%72esults'), {
+    kind: 'chapter', slug: 'performance', heading: 'public-binary-arithmetic',
   });
   for (const heading of ['toString', '__proto__', 'unknown-section', '%invalid']) {
-    assert.deepEqual(parseRoute(`#${chapterPath('a-tour-of-the-codebase', heading)}`), {
-      kind: 'chapter', slug: 'using-the-library', heading,
+    assert.deepEqual(parseRoute(`#${chapterPath('performance', heading)}`), {
+      kind: 'chapter', slug: 'performance', heading,
     });
   }
   for (const slug of ['toString', '__proto__', 'unknown-chapter', '%invalid']) {
