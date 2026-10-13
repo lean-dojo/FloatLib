@@ -77,7 +77,7 @@ theorem packedFields_lt_storage (fmt : FloatFormat) (sign : Bool)
       Nat.shiftLeft (exponent &&& FloatFormat.expAllOnesNat fmt) fmt.fracWidth <
         2 ^ fmt.bitWidth := by
     have hShifted := Nat.shiftLeft_lt (m := fmt.fracWidth) hExponentField
-    exact hShifted.trans_le <|
+    exact Nat.lt_of_lt_of_le hShifted <|
       Nat.pow_le_pow_right (by decide) (by
         unfold FloatFormat.bitWidth
         omega)
@@ -86,7 +86,7 @@ theorem packedFields_lt_storage (fmt : FloatFormat) (sign : Bool)
     Nat.and_lt_two_pow fraction (fracMaskNat_lt_field fmt)
   have hFraction :
       fraction &&& FloatFormat.fracMaskNat fmt < 2 ^ fmt.bitWidth :=
-    hFractionField.trans_le <|
+    Nat.lt_of_lt_of_le hFractionField <|
       Nat.pow_le_pow_right (by decide) (by
         unfold FloatFormat.bitWidth
         omega)

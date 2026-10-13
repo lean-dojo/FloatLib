@@ -5,11 +5,15 @@ title: Related work and external validation
 summary: How FloatLib relates to other verified numerical libraries, and what comparisons with independent implementations tell us.
 ---
 
-We checked FloatLib against Berkeley TestFloat on **102,454,320 cases** and got the same
-answers throughout. That comparison covers the formats and operations listed below.
-Against SoftPosit, **32,893,800 cases** produced **7,564 differences**, all from seven
-distinct inputs. We can work through those seven by hand: the exact calculation agrees
-with FloatLib, and two bugs in SoftPosit's generic implementation explain the other answers.
+We checked every binary16 and bfloat16 addition, subtraction, multiplication, and division,
+on all $2^{32}$ operand pairs in each of the four rounding directions, and every binary32
+square root: **154,618,822,656 cases**, each with its value and all five exception flags,
+and got the same answers as SoftFloat and MPFR throughout. Berkeley TestFloat adds
+**102,454,320 cases** in the wider formats listed below. Against SoftPosit, **32,893,800
+cases** produced **7,564 differences**, all from seven distinct inputs. We can work through
+those seven by hand: the exact calculation agrees with FloatLib, and two bugs in SoftPosit's
+generic implementation explain the other answers. The comparisons with MPFX found four bugs
+in that library, which we describe below and have reported to its authors.
 
 ## The SoftPosit differences
 
@@ -83,7 +87,8 @@ This is an observable numerical error on that input, not a different tie-breakin
 ![Total comparison counts by external tool on a logarithmic scale, with SoftPosit's differences marked separately](assets/ch11-conformance-evidence.png "Bars count compared cases, not time or a percentage of input coverage. The marked SoftPosit differences are examined against exact arithmetic.")
 
 [Figure 19.1](#/chapter/external-validation/figure-ch11-conformance-evidence)
-counts cases in suites that report a comparable case counter. Its logarithmic
+counts cases in the retained release suites that report a comparable case counter. The
+exhaustive and MPFX comparisons below are separate from this plot. Its logarithmic
 axis spans 400 MPFR primitive cases to more than 102 million TestFloat cases. A case has the
 meaning assigned by its suite: a table entry, a generated operation, or a bounded expression.
 These bars do not measure a common percentage of all possible inputs. Other checks, including
@@ -102,6 +107,43 @@ bar is not a stronger theorem.
 ![P3109 value-table checks and SoftPosit arithmetic checks grouped by bit width, with hatched bars for sampled comparisons and diamonds at widths with differences](assets/ch11-conformance-widths.png "Compared cases by encoded width, not execution times. SoftPosit differs once each at 14 and 15 bits, twice at 16 bits, and 7,560 times at 32 bits.")
 
 </details>
+
+## The MPFX differences
+
+MPFX [@saikiDoubleRounding2026] simulates a narrow format by computing a round-to-odd
+result in a `double` or `float` container and rounding it again. The paper gives conditions
+on format containment for safe double rounding, including two extra precision bits for
+nearest rounding, a sufficiently fine minimum quantum, and an upper-bound margin. Its
+rounding theorems apply when the final rounding does not overflow. MPFX has two fast
+engines: one emulates round-to-odd with the hardware's round-toward-zero mode and its inexact
+flag, the other reads the rounding error from an error-free transformation. We compared both
+with FloatLib on binary16, bfloat16, IEEE-style `e4m3` and `e5m2`, and the two formats at the
+edge of the class MPFX supports: **316,800,000 comparisons** on chosen operands, and every
+binary16 and bfloat16 pair of the exhaustive campaign above. The following concrete examples
+reproduce four problems independently of FloatLib, using MPFR, SoftFloat, or the host FPU as appropriate.
+The sampled comparison groups remaining EFT differences by engine; that grouping alone
+does not establish their cause.
+
+An exact zero sum is the simplest. Under roundTowardNegative, IEEE 754 makes
+$1 + (-1)$ equal to $-0$, so that $x - x$ keeps the sign the rounding direction points to.
+MPFX returns $+0$ for every such sum, difference, and FMA, in both engines and every format:
+63,488 binary16 pairs and 65,280 bfloat16 pairs per operation, one for each finite $x$. Its
+square root of $-\infty$ returns a NaN without the invalid flag. And when the container's own
+result overflows, as happens for bfloat16 products in a `float`, the overflow flag is lost
+even though the rounded result is infinite.
+
+The fourth class comes from the error-free transformation. It computes the rounding error of
+a product, quotient, or square root with an FMA, and an error below the container's least
+subnormal rounds to zero. The engine then treats the result as exact. Rounding
+$\sqrt{3\cdot 2^{-1072}}$ to 51 bits, the hardware engine and FloatLib both give
+`0x1.bb67ae8584cacp-536`, while the error-free engine gives `0x1.bb67ae8584ca8p-536`, one unit
+lower. In bfloat16 the same loss affects every product that underflows the `float` container:
+rounding $2^{-70}\cdot 2^{-90}$ toward positive infinity must give the least positive
+bfloat16 value, $2^{-133}$, and the engine returns zero with no inexact or underflow flag.
+MPFX's notes already record this failure for binary64 products, quotients, and FMAs; the
+square root and the `float` container are new. We reported all four classes in
+[bksaiki/mpfx#36](https://github.com/bksaiki/mpfx/issues/36), with reproducers that use only
+MPFR, SoftFloat, and the host FPU.
 
 ## Other verified numerical libraries
 
@@ -283,6 +325,18 @@ selected level-2 generators. All three completed, but we have not run every leve
 combination. Binary80, decimal formats, nearest-away, round-to-odd, and
 tininess-before-rounding are not included in this comparison.
 
+For binary16 and bfloat16 we do not need to choose cases. A 16-bit operation has $2^{32}$
+ordered operand pairs, few enough to evaluate all of them in each rounding direction. We ran
+FloatLib's status-returning operations on every pair for addition, subtraction,
+multiplication, and division, and every binary32 square root, and compared each value and
+all five flags with SoftFloat for binary16 and binary32 and with MPFR, set to the format's
+precision and exponent range, for bfloat16. For binary16 both references ran, so the MPFR
+emulation was checked against SoftFloat on every pair before we relied on it for bfloat16.
+In nearest-even mode each case also compared the planner's kernel with the model. The
+**154,618,822,656** cases agreed throughout. The certified `expMinus1` and `logPlus1` were
+run on all $2^{32}$ binary32 inputs and on CORE-MATH's binary64 worst cases, and every result
+they returned was MPFR's correctly rounded value.
+
 IBM FPgen [@ibmFpgen] supplied **81,513** additional supported inputs. We also compared
 **27,492** bounded ground QF_FP cases with Z3 [@z3] [@smtLibQfFp]. Both checks reported zero mismatches.
 SMT floating-point NaNs are abstract, so the Z3 adapter checks exact encodings where the theory
@@ -377,7 +431,7 @@ based on `0d91825727839f597fd06b22fdd038ea21480f0c`. The
 hashes, drivers, protocols, results, and diagnostic records; full input fixtures and
 verification streams are not included.
 
-Both arms used **Lean 4.34.0-rc2 and the same Mathlib**. FloatLib needed import-path
+Both arms used **the same Lean toolchain and Mathlib**. FloatLib needed import-path
 compatibility edits; its arithmetic bodies were unchanged. The FloatSpec driver used
 definition expansion and proof-only let substitution, with `@[inline]` generic wrappers
 and `@[noinline]` functions specialized to each precision. Each arm selected its format

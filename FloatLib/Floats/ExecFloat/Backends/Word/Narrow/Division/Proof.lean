@@ -295,8 +295,8 @@ theorem roundRatScaledWord_eq
             hfraction using 1
         all_goals
           simp [Numerics.RationalBinary.scaleByPowerOfTwo,
-            Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq] <;>
-            split <;> rfl
+            Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq]
+        all_goals split <;> rfl
     | negSucc shift =>
         have hbounds :=
           subnormal_den_shift_bounds num den exponent shift
@@ -314,8 +314,8 @@ theorem roundRatScaledWord_eq
             hfraction using 1
         all_goals
           simp [Numerics.RationalBinary.scaleByPowerOfTwo,
-            Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq] <;>
-            split <;> rfl
+            Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq]
+        all_goals split <;> rfl
   · simp only [hsubnormal, ite_false]
     let rationalExponent :=
       Numerics.RationalBinary.floorLog2 num.toNat den.toNat

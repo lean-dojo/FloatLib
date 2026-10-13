@@ -2,7 +2,7 @@ Daisy 6a6f47abdd231d3009444e9e1b8ce9febc28c27e: all 38 Scala source files named 
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

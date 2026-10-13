@@ -2,10 +2,10 @@ OpenLibm 5fe399749f9276eaa0b8403e507470da05cbbb3f: source/header notices for the
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ISO-8859-1 source notices are losslessly transcoded to UTF-8; characters
-are preserved. SOURCES.json identifies each source encoding.
+are preserved.
 
 ========================================================================
 Source paths:

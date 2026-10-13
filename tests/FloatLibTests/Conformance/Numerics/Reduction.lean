@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction.Tree
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
+-- The `DecidableEq (Except ε α)` instance body is needed by `decide` below.
+import all Batteries.Data.Except
 
 /-!
 # Correctly rounded and repeated-rounding reductions

@@ -125,7 +125,7 @@ and gradual underflow. Flocq requires `0 < precision < emax`, so the custom 4-, 
 7-bit layouts are absent from all three curves.
 
 We extracted the wrapper with Coq 8.20.1 and compiled it with OCaml 4.13.1 and Zarith.
-FloatLib used Lean 4.34.0; the MPFR adapter used MPFR 4.1.0 and GCC 11.5.0. This experiment
+The MPFR adapter used MPFR 4.1.0 and GCC 11.5.0. This experiment
 kept the timing processes on the same logical CPU.
 
 In the main loop, each result selects the next of sixteen prepared input sets and contributes
@@ -611,8 +611,6 @@ warmup/result sinks. The compact
 records source, driver, executable, and fixture SHA256 identities, format layouts,
 and CPU affinity.
 
-FloatLib uses Lean **4.34.0** and Mathlib
-`5ed2965256430c3649e86755f9576b54eca72435`.
 The external arm uses MPFR **4.1.0-p13** with GMP **6.2.1**. Width means encoded
 storage: the wide plot uses significand precisions 24, 53, 113, 237, 493, 1,005, 2,029,
 and 4,077 bits. Binary16 uses 11 significand bits and bfloat16 uses 8. The smaller

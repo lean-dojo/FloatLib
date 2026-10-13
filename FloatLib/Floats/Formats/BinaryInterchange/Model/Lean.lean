@@ -136,7 +136,7 @@ private theorem ofNat_and_lowMask_eq_setWidth
     omega
   rw [Nat.mod_eq_of_lt hmask, Nat.and_two_pow_sub_one_eq_mod]
   rw [Nat.mod_mod_of_dvd n (Nat.pow_dvd_pow 2 hwidth)]
-  rw [Nat.mod_eq_of_lt ((Nat.mod_lt n (Nat.two_pow_pos width)).trans_le hpow)]
+  rw [Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le (Nat.mod_lt n (Nat.two_pow_pos width)) hpow)]
 
 /--
 Packing explicit fields agrees with Lean's sign/exponent/fraction concatenation. Inputs are reduced

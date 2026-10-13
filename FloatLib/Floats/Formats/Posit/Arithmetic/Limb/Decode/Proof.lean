@@ -642,9 +642,9 @@ private theorem toDyadic?_eq_model_of_ordinary
     intro equality
     exact hzeroCode ((isZero_eq_true_iff code).mp equality)
   have hvalueNaRBool : value.isNaR = false :=
-    beq_eq_false_iff_ne.mpr hvalueNaR
+    Bool.eq_false_iff.mpr fun h => hvalueNaR ((Model.isNaR_eq_true_iff value).mp h)
   have hvalueZeroBool : value.isZero = false :=
-    beq_eq_false_iff_ne.mpr hvalueZero
+    Bool.eq_false_iff.mpr fun h => hvalueZero ((Model.isZero_eq_true_iff value).mp h)
   have hnarWordBool : (code == signMaskWord format) = false := by
     apply beq_eq_false_iff_ne.mpr
     intro equality
@@ -652,11 +652,8 @@ private theorem toDyadic?_eq_model_of_ordinary
     have equalityNat := congrArg
       FloatLib.Numerics.FixedWord.UInt128.toNat equality
     simpa [signMaskWord_toNat format heligible] using equalityNat
-  unfold toDyadic?
-  simp only [hnarWordBool, hzeroBool, Bool.false_eq_true, ite_false]
-  change some (decodeFinite format code) = value.toDyadic?
-  rw [decodeFinite_eq_decodeFields format code heligible hcode
-    hvalueNaR hvalueZero]
+  rw [toDyadic?, ite_eq_right (by simp [hnarWordBool]), ite_eq_right (by simp [hzeroBool]),
+    decodeFinite_eq_decodeFields format code heligible hcode hvalueNaR hvalueZero]
   exact
     (Model.toDyadic?_eq_some_decodeFields
       value hvalueNaRBool hvalueZeroBool).symm

@@ -36,6 +36,8 @@ public meta import FloatLib.Floats.Formats.Posit.Configured.Conversion.Proof
 public meta import FloatLib.Floats.Formats.Posit.Configured.Conversion.Instances
 public meta import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Proof
+-- The `DecidableEq (Except ε α)` instance body is needed by `decide` below.
+import all Batteries.Data.Except
 
 /-!
 # Explicit conversion and mixed-arithmetic conformance

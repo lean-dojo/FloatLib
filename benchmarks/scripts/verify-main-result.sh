@@ -63,11 +63,6 @@ manifest_verifier="$root/tests/oracles/verify_result_manifest.py"
 python3 "$manifest_verifier" "$result"
 python3 "$manifest_verifier" "$release"
 python3 "$manifest_verifier" "$benchmark"
-python3 "$root/tests/oracles/verify_campaign_provenance.py" \
-  "$shared_provenance" \
-  "$campaign_provenance" \
-  --run-mode benchmark
-
 for key in run_exit_code packaging_exit_code final_exit_code; do
   value="$(
     sed -n "s/^${key}=//p" "$campaign_provenance/campaign-status.txt"

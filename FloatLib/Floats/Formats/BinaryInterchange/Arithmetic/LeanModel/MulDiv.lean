@@ -21,7 +21,7 @@ zero, the sign, the selected exponent, and the remainder accuracy still determin
 need only a conventional IEEE descriptor and a finite result, plus a finite divisor for division.
 Arbitrary unpacked operands need not satisfy the precondition, so
 `toReal_ofModel_mul_finite_eq_roundAt` keeps its exponent hypothesis. These bridges are checked
-against the logical floating-point model shipped with Lean 4.34.
+against the logical floating-point model shipped with Lean.
 -/
 
 @[expose] public section

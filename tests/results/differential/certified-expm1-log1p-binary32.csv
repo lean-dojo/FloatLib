@@ -1,0 +1,3 @@
+function,inputs,match,mismatch,none_nonfinite_input,none_overflow_or_undefined
+expm1,all 2^32 binary32,3258020376,0,16777216,1020169704
+log1p,all 2^32 binary32,3204448256,0,16777216,1073741824

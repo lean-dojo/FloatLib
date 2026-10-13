@@ -9,7 +9,7 @@ module
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Core
 public import FloatLib.Numerics.Exact.RationalBinary
 public import Mathlib.Data.List.MinMax
-public import Mathlib.Data.Prod.Lex
+public import Mathlib.Order.Prod.Lex.Basic
 
 /-!
 # Exact destination quantization for concrete OCP MX blocks

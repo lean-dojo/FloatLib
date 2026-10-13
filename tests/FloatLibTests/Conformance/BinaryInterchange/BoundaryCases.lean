@@ -7,6 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange
+-- The `DecidableEq (Except ε α)` instance body is needed by `decide` below.
+import all Batteries.Data.Except
 
 /-!
 # Descriptor and interval boundary regressions

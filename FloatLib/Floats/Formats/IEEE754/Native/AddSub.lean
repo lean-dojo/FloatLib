@@ -16,7 +16,7 @@ public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 /-!
 # Native addition and subtraction
 
-These bridges are checked against the logical floating-point model shipped with Lean 4.34.
+These bridges are checked against the logical floating-point model shipped with Lean.
 Finite inputs include both signed zeros. The result is unrestricted: cancellation, subnormal
 rounding, and overflow to infinity all preserve the complete packed word through the existing
 native adapters.

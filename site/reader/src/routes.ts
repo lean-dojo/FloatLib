@@ -20,8 +20,7 @@ function decode(value: string): string {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
-// Merged chapters have a default section; bookmarks to individual sections keep their heading
-// unless that section moved elsewhere. Resolve before lookup so navigation uses the current slug.
+// Resolve moved section bookmarks before lookup so navigation uses the current chapter and heading.
 function currentChapter(slug: string, heading?: string): Extract<Route, { kind: 'chapter' }> {
   const alias = aliases.get(slug);
   if (!alias) return { kind: 'chapter', slug, heading };

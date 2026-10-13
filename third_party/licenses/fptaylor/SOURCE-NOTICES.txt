@@ -2,7 +2,7 @@ FPTaylor b5a77cae348400f21f83512210d9f43c4bffb381: source names in retained diag
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

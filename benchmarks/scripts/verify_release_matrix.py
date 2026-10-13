@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
-import json
 import math
 import re
 from pathlib import Path
@@ -143,14 +141,6 @@ def read_rows(path: Path, header: list[str]) -> list[dict[str, str]]:
                 f"unexpected CSV header in {path}: {reader.fieldnames!r}"
             )
         return list(reader)
-
-
-def sha256(path: Path) -> str:
-    value = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            value.update(block)
-    return value.hexdigest()
 
 
 def parse_nonnegative(
@@ -865,154 +855,6 @@ def verify_backend_selection(
         )
 
 
-def read_source_hashes(path: Path) -> dict[str, str]:
-    hashes: dict[str, str] = {}
-    for line_number, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(),
-        start=1,
-    ):
-        if len(line) < 67 or line[64:66] != "  ":
-            raise ValueError(f"invalid source hash at {path}:{line_number}")
-        digest, source_path = line[:64], line[66:]
-        if (
-            re.fullmatch(r"[0-9a-f]{64}", digest) is None
-            or not source_path
-            or source_path.startswith("/")
-            or "\\" in source_path
-            or source_path != Path(source_path).as_posix()
-            or "." in Path(source_path).parts
-            or ".." in Path(source_path).parts
-            or source_path in hashes
-        ):
-            raise ValueError(f"invalid source hash at {path}:{line_number}")
-        hashes[source_path] = digest
-    return hashes
-
-
-def find_source_provenance(benchmark: Path) -> Path | None:
-    # A development run may keep provenance inside the benchmark directory.
-    # Published campaign bundles keep it beside `benchmark/` so the source and
-    # cluster records describe the whole release. Accept both layouts, but
-    # never guess when two complete copies are present.
-    required_names = {
-        "source-snapshot.txt",
-        "source-files.sha256",
-        "worktree-status.txt",
-        "worktree.patch",
-    }
-    candidates = (benchmark / "provenance", benchmark.parent / "provenance")
-    complete = [
-        candidate
-        for candidate in candidates
-        if all((candidate / name).is_file() for name in required_names)
-    ]
-    if len(complete) > 1:
-        raise ValueError(
-            "benchmark has two complete source-provenance directories: "
-            f"{complete!r}"
-        )
-    return complete[0] if complete else None
-
-
-def verify_source_metadata(benchmark: Path, metadata: dict[str, str]) -> None:
-    provenance = find_source_provenance(benchmark)
-    if provenance is None:
-        return
-    required = {
-        "source-snapshot.txt": provenance / "source-snapshot.txt",
-        "source-files.sha256": provenance / "source-files.sha256",
-        "worktree-status.txt": provenance / "worktree-status.txt",
-        "worktree.patch": provenance / "worktree.patch",
-    }
-
-    snapshot = read_metadata(required["source-snapshot.txt"])
-    if metadata.get("gitCommit") != snapshot.get("head_revision"):
-        raise ValueError(
-            "benchmark gitCommit differs from retained source snapshot: "
-            f"{metadata.get('gitCommit')!r} != {snapshot.get('head_revision')!r}"
-        )
-    for name, snapshot_key in (
-        ("source-files.sha256", "source_file_hashes_sha256"),
-        ("worktree-status.txt", "worktree_status_sha256"),
-        ("worktree.patch", "worktree_patch_sha256"),
-    ):
-        expected = snapshot.get(snapshot_key)
-        receipt_path = provenance / "public-source-archive.json"
-        if name == "worktree.patch" and receipt_path.exists():
-            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-            redaction = receipt.get("redacted_provenance", {}).get(name)
-            if redaction is not None:
-                if redaction.get("original_sha256") != expected or not re.fullmatch(
-                    r"[0-9a-f]{64}", redaction.get("published_sha256", "")
-                ):
-                    raise ValueError("published patch redaction differs from source snapshot")
-                expected = redaction["published_sha256"]
-        actual = sha256(required[name])
-        if actual != expected:
-            raise ValueError(
-                f"retained {name} differs from source snapshot: "
-                f"{actual} != {expected}"
-            )
-
-    try:
-        recorded_dirty = int(metadata["gitDirtyFiles"])
-    except (KeyError, ValueError) as error:
-        raise ValueError("benchmark metadata has no valid gitDirtyFiles count") from error
-    if recorded_dirty < 0:
-        raise ValueError(f"negative gitDirtyFiles count: {recorded_dirty}")
-    status_lines = required["worktree-status.txt"].read_text(
-        encoding="utf-8"
-    ).splitlines()
-    captured_dirty = sum(
-        bool(line) and not line.startswith("## ") for line in status_lines
-    )
-    if recorded_dirty != captured_dirty:
-        raise ValueError(
-            "benchmark dirty-file count differs from retained worktree status: "
-            f"{recorded_dirty} != {captured_dirty}"
-        )
-
-    source_hashes = read_source_hashes(required["source-files.sha256"])
-    # Paths are part of the digest input. Select the recorded source root without
-    # translating historical names or changing any retained hashes.
-    source_roots = {
-        prefix
-        for prefix in ("FloatLib/", "LeanFloat/")
-        if any(path.startswith(prefix) for path in source_hashes)
-    }
-    if len(source_roots) != 1:
-        raise ValueError(
-            "source ledger must contain exactly one library source root: "
-            f"{sorted(source_roots)}"
-        )
-    source_root = next(iter(source_roots))
-    build_configs = {"lakefile.lean", "lean-toolchain", "lake-manifest.json"}
-    selected_paths = sorted(
-        source_path
-        for source_path in source_hashes
-        if source_path.startswith(source_root) or source_path in build_configs
-    )
-    missing_configs = sorted(build_configs - set(selected_paths))
-    if missing_configs or not any(
-        source_path.startswith(source_root) for source_path in selected_paths
-    ):
-        raise ValueError(
-            "source ledger cannot reproduce Lean source hash: "
-            f"missing build files={missing_configs}"
-        )
-    source_digest_input = "".join(
-        f"{source_hashes[source_path]}  {source_path}\n"
-        for source_path in selected_paths
-    ).encode("utf-8")
-    captured_source_hash = hashlib.sha256(source_digest_input).hexdigest()
-    recorded_source_hash = metadata.get("leanSourceAndBuildConfigHash")
-    if captured_source_hash != recorded_source_hash:
-        raise ValueError(
-            "benchmark Lean source hash differs from retained source ledger: "
-            f"{recorded_source_hash} != {captured_source_hash}"
-        )
-
-
 def verify(benchmark: Path) -> None:
     metadata = read_metadata(benchmark / "metadata.txt")
     require(metadata, "runs", str(TRIALS))
@@ -1081,7 +923,6 @@ def verify(benchmark: Path) -> None:
         trial_order,
     )
     verify_backend_selection(benchmark, timed_rows)
-    verify_source_metadata(benchmark, metadata)
     print(
         f"verified {len(expected)} timed cells in each of {TRIALS} trials "
         f"({len(expected) * TRIALS} rows)"

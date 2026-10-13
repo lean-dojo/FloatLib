@@ -2,7 +2,7 @@ CORE-MATH 68b034fbe9512781352d28f2dc9795c1686fe8e9: retained provider sources an
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

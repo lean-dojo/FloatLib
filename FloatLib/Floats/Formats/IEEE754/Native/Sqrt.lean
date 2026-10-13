@@ -15,7 +15,7 @@ public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 /-!
 # Square-root agreement with Lean's floating-point model
 
-These bridges compare FloatLib square root with the Lean 4.34 logical model underlying the native
+These bridges compare FloatLib square root with the Lean logical model underlying the native
 floating-point types. Canonicalization forgets NaN payloads and signs while retaining all numeric
 bits, including the sign of zero. The model equality does not verify the external machine
 instructions used by compiled native operations.
@@ -218,7 +218,7 @@ namespace FloatLib.Floats.ExecFloat.Binary
 open Formats.BinaryInterchange
 
 /--
-Lean 4.34 binary32 square root agrees with FloatLib square root through the existing native
+Lean binary32 square root agrees with FloatLib square root through the existing native
 adapter. Only NaN signs and payloads are discarded by the representation relation.
 -/
 theorem toModel_ofFloat32_sqrt (x : Float32) :
@@ -233,7 +233,7 @@ theorem toModel_ofFloat32_sqrt (x : Float32) :
   exact h
 
 /--
-Lean 4.34 binary64 square root agrees with FloatLib square root through the existing native
+Lean binary64 square root agrees with FloatLib square root through the existing native
 adapter, including signed zeros and exceptional results.
 -/
 theorem toModel_ofFloat_sqrt (x : Float) :

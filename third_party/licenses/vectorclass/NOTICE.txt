@@ -3,8 +3,7 @@ SPDX-License-Identifier for this distribution: GPL-3.0-only
 
 Upstream: riakymch/exblas, commit
 856130ebcfe906f519a623d57d1359e744e29042, src/common/.
-Retained material: tests/results/main/ecosystem/raw/exblas/applied-compatibility.patch
-and its identical member in the benchmark public source archive.
+Retained material: tests/results/main/ecosystem/raw/exblas/applied-compatibility.patch.
 
 The pinned vectorclass.h umbrella header explicitly states GNU General
 Public License 3.0 and has no or-later clause. The two patched headers,
@@ -16,7 +15,6 @@ a published version when no version is specified. No or-later grant is
 asserted for the version-3.0 umbrella header.
 
 GPL-3.0.txt contains the complete GNU GPLv3 text, including section 14.
-Its source and hash are recorded in ../../SOURCES.json.
 
 FloatLib's patch changes integer constant spellings; its hunks identify the
 modified lines. The original notice headers are in SOURCE-NOTICES.txt.

@@ -2,7 +2,7 @@ GNU libc 2.35 and 2.39: source-header notices for diagnostic excerpts; Ubuntu pa
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

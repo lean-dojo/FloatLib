@@ -16,7 +16,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 The exact dyadic addition used by FloatLib and Lean's unpacked addition align the operands at
 the smaller exponent before rounding once. Their agreement includes cancellation to positive
 zero and overflow to infinity. A descriptor must have the conventional IEEE encoding and bias.
-These bridges are checked against the logical floating-point model shipped with Lean 4.34.
+These bridges are checked against the logical floating-point model shipped with Lean.
 
 NaN payloads require care at the native boundary: FloatLib propagates a quieted payload, whereas
 Lean's unpacked model has a single NaN.
@@ -67,7 +67,8 @@ private theorem round_addFields_eq_normalize
     · simp only [roundDyadic, hfmt, ite_true, ieeeRoundDyadic,
         Bool.false_and, Bool.true_and, modelSign_false, modelSign_true,
         round_exact_zero]
-      simp_all [Float.Model.UnpackedFloat.normalize] <;> omega
+      simp_all [Float.Model.UnpackedFloat.normalize]
+      all_goals omega
     · simp only [roundDyadic, hfmt, ite_true, ieeeRoundDyadic]
       rw [← round_natAbs_eq_normalize]
       rfl

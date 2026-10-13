@@ -80,3 +80,15 @@ lean_exe execFloatConfiguredBinaryBench where
 /-- Six-operation public arithmetic workload used by the performance-regression budget gate. -/
 lean_exe execFloatPerformanceRegression where
   root := `FloatLibBenchmarks.Public.PerformanceRegression
+
+/-- Run certified binary `exp`, `log`, `expMinus1`, and `logPlus1` on encoded inputs. -/
+lean_exe execFloatCertifiedExpLog where
+  root := `FloatLibBenchmarks.Public.CertifiedExpLog
+
+/-- Exhaustive 16-bit arithmetic and binary32 square root with IEEE flags. -/
+lean_exe execFloatExhaustive where
+  root := `FloatLibBenchmarks.Public.Exhaustive
+
+/-- IEEE results and flags for listed operands, used to check other libraries. -/
+lean_exe execFloatOracleList where
+  root := `FloatLibBenchmarks.Public.OracleList

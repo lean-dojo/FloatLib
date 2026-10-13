@@ -10,6 +10,7 @@ public import FloatLib.Kernels.IntegerRoot.Runtime
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 import Mathlib.Data.Nat.Log
+import Mathlib.Tactic.Linarith
 
 /-!
 # Exactness of seeded integer roots

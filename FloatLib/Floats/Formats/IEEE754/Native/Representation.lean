@@ -53,12 +53,12 @@ theorem isModelCanonical_ofFloat32 (value : Float32) :
       change Float32.ofModel (Model.toFloat32Model (Model.ofFloat32Model model)) = _
       rw [Model.toFloat32Model_ofFloat32Model]
 
-/-- Lean 4.34's binary32 NaN imports as FloatLib's canonical quiet NaN. -/
+/-- Lean's binary32 NaN imports as FloatLib's canonical quiet NaN. -/
 theorem toModel_ofFloat32_nan :
     toModel (ofFloat32 Float32.nan) = Model.canonicalNaN FloatFormat.binary32 :=
   Model.ofFloat32Model_nan
 
-/-- Lean 4.34's binary32 infinity imports as FloatLib's positive infinity. -/
+/-- Lean's binary32 infinity imports as FloatLib's positive infinity. -/
 theorem toModel_ofFloat32_inf :
     toModel (ofFloat32 Float32.inf) = Model.posInf FloatFormat.binary32 :=
   Model.ofFloat32Model_inf
@@ -88,12 +88,12 @@ theorem isModelCanonical_ofFloat (value : Float) :
       change Float.ofModel (Model.toFloatModel (Model.ofFloatModel model)) = _
       rw [Model.toFloatModel_ofFloatModel]
 
-/-- Lean 4.34's binary64 NaN imports as FloatLib's canonical quiet NaN. -/
+/-- Lean's binary64 NaN imports as FloatLib's canonical quiet NaN. -/
 theorem toModel_ofFloat_nan :
     toModel (ofFloat Float.nan) = Model.canonicalNaN FloatFormat.binary64 :=
   Model.ofFloatModel_nan
 
-/-- Lean 4.34's binary64 infinity imports as FloatLib's positive infinity. -/
+/-- Lean's binary64 infinity imports as FloatLib's positive infinity. -/
 theorem toModel_ofFloat_inf :
     toModel (ofFloat Float.inf) = Model.posInf FloatFormat.binary64 :=
   Model.ofFloatModel_inf

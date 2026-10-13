@@ -127,7 +127,7 @@ actual source location.
 - `tooling/`: Lean export, metadata assembly, and chapter checks.
 - `reader/`: React reader, Markdown rendering, data build, and existing route tests.
 - `build.sh`: figure freshness checks, export, chapter verification, and reader build.
-- `serve.py`: local preview server with cache revalidation and legacy-path redirects.
+- `serve.py`: local preview server with cache revalidation and redirects to the app entry page.
 
 Front matter in chapters contains `number`, `slug`, `title`, `summary`, and optional internal `phases`.
 Landing front matter contains `lede` and `authors`. Keep the recorded author names and affiliations
@@ -224,7 +224,7 @@ modules for prose or reader edits.
 
 Use `python3 site/serve.py --dir <local-output>` to preview. Inspect the built site in a browser at
 desktop and mobile widths, including the introduction, all chapter routes, math, image loading,
-search, declaration links, themes, and legacy redirects. Check both graph views, search, selection,
+search, declaration links, themes, and moved section bookmarks. Check both graph views, search, selection,
 zoom, and dependency links at desktop and mobile widths. Chapter agenda ledes remain absent.
 
 Update this contract when the intended website behavior changes. Explicit user instructions take

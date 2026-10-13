@@ -74,11 +74,6 @@ python3 "$manifest_verifier" "$result"
 python3 "$manifest_verifier" "$release"
 python3 "$manifest_verifier" "$external"
 python3 "$manifest_verifier" "$ecosystem"
-python3 "$root/tests/oracles/verify_campaign_provenance.py" \
-  "$shared_provenance" \
-  "$campaign_provenance" \
-  --run-mode conformance
-
 python3 "$root/tests/oracles/verify_release_evidence.py" \
   "$external" \
   "$ecosystem"

@@ -632,11 +632,7 @@ private theorem roundNormalSpec_eq_roundRatScaled_of_some (h : Eligible fmt)
     all_goals
       simp [roundNormalSpec?, hle, hcarry, hnumNe, hdenNe] at hresult'
       obtain ⟨hrange, hpacked⟩ := hresult'
-      try simp only [not_or] at hrange
-      try push_cast at hrange hpacked
       simp [hle, hdenNe, hnumNe, Nat.shiftLeft_eq, hcarry]
-      try simp only [Int.ofNat_eq_natCast]
-      try push_cast
       constructorm* _ ∧ _
       all_goals first | omega | (convert hpacked using 2; omega)
   · have hlow' :
@@ -649,11 +645,7 @@ private theorem roundNormalSpec_eq_roundRatScaled_of_some (h : Eligible fmt)
     all_goals
       simp [roundNormalSpec?, hle, hcarry, hnumNe, hdenNe] at hresult'
       obtain ⟨hrange, hpacked⟩ := hresult'
-      try simp only [not_or] at hrange
-      try push_cast at hrange hpacked
       simp [hle, hdenNe, hnumNe, Nat.shiftLeft_eq, hcarry]
-      try simp only [Int.ofNat_eq_natCast]
-      try push_cast
       constructorm* _ ∧ _
       all_goals first | omega | (convert hpacked using 2; omega)
 

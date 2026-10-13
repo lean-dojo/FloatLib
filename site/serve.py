@@ -2,9 +2,9 @@
 """Serve the built FloatLib site from local build storage.
 
 A plain static server is almost enough, but the reader is a single-page app with hash routes,
-so any path that is not a real file redirects to the root (a bookmarked path from the
-previous site, or a path a proxy rewrites, then lands on the app instead of a 404), and the
-build changes asset file names on every run, so responses carry no-cache headers to keep a
+so any path that is not a real file redirects to the root, allowing a path rewritten by a
+proxy to reach the app. The build changes asset file names on every run, so responses carry
+no-cache headers to keep a
 browser from holding an index.html that names assets which no longer exist.
 
 Usage: python3 site/serve.py [--port 4002] [--bind 127.0.0.1] [--dir /tmp/site-output]

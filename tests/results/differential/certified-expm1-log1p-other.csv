@@ -1,0 +1,7 @@
+function,format,inputs,cases,match,mismatch,none_nonfinite_input,none_overflow_or_undefined
+expm1,binary64,CORE-MATH worst cases (distinct entries),123552,123295,0,6,251
+log1p,binary64,CORE-MATH worst cases (distinct entries),347766,347757,0,6,3
+expm1,binary16,all finite inputs,63488,50572,0,0,12916
+expm1,bfloat16,all finite inputs,65280,49714,0,0,15566
+log1p,binary16,all finite inputs,63488,47104,0,0,16384
+log1p,bfloat16,all finite inputs,65280,48896,0,0,16384

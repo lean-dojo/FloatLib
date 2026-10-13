@@ -2,7 +2,7 @@ Agner Fog Vector Class Library 1.02 Beta, as retained in ExBLAS 856130ebcfe906f5
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

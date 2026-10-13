@@ -127,6 +127,29 @@ bash tests/oracles/smt_fp.sh
 bash tests/oracles/transcendental_compare.sh --jobs 1
 ```
 
+The exhaustive and MPFX checks take a built SoftFloat checkout (the one `testfloat.sh` caches
+works) and, optionally, an MPFX checkout:
+
+```bash
+# One of 256 blocks of binary16 addition pairs, nearest-even; blocks 0..255 cover all 2^32 pairs.
+bash tests/oracles/exhaustive16.sh --softfloat-dir /path/to/berkeley-softfloat-3 \
+  --mpfx-dir /path/to/mpfx pairs f16 add near_even 60
+# One of 1,024 blocks of binary32 square roots, toward negative infinity.
+bash tests/oracles/exhaustive16.sh --softfloat-dir /path/to/berkeley-softfloat-3 \
+  sqrt f32 sqrt min 300
+
+# Certified expMinus1 on a 2^22 block of binary32 inputs and on listed inputs of any format.
+source tests/lib/lake.sh
+floatlib_benchmark_lake build execFloatCertifiedExpLog
+cc -O2 tests/oracles/certified_explog_block.c -lmpfr -lgmp -o /tmp/explog_block
+"$(floatlib_build_path bin/execFloatCertifiedExpLog)" range expm1 1056964608 4194304 /tmp/block.bin
+/tmp/explog_block expm1 1056964608 4194304 /tmp/block.bin
+python3 -I tests/oracles/coremath_words.py expm1.wc /tmp/expm1-words.txt
+
+# MPFX on one format, operation, and operand set.
+bash tests/oracles/mpfx/run.sh --mpfx-dir /path/to/mpfx --work /tmp/mpfx 11 50 sqrt tiny 200000
+```
+
 The binary16 command checks one input-pair shard, not every binary16 pair. CI checks 17
 left operands for both addition and multiplication, each paired with all 65,536 right
 encodings: **2,228,224 ordered pairs**. The selection covers signed zeros, subnormal boundaries,
@@ -164,6 +187,9 @@ lists the Lean executable's stream protocols after sourcing `tests/lib/lake.sh`.
 | SMT floating-point semantics | [SMT-LIB QF_FP](https://smt-lib.org/logics-all.shtml#QF_FP) through [Z3](https://github.com/Z3Prover/z3) |
 | Independent posit execution | [SoftPosit](https://gitlab.com/cerlane/SoftPosit) |
 | Transcendental observations | [CORE-MATH](https://gitlab.inria.fr/core-math/core-math), [OpenLibm](https://github.com/JuliaMath/openlibm), and [RLIBM](https://github.com/rutgers-apl/rlibm) |
+| Every binary16 and bfloat16 arithmetic pair, every binary32 square root | [Berkeley SoftFloat](https://www.jhauser.us/arithmetic/SoftFloat-3/doc/SoftFloat.html) and an MPFR emulation of each format |
+| Certified `expMinus1` and `logPlus1` | [GNU MPFR](https://www.mpfr.org/mpfr-current/mpfr.html) and the [CORE-MATH](https://gitlab.inria.fr/core-math/core-math) worst-case lists |
+| A double-rounding format simulator | [MPFX](https://github.com/bksaiki/mpfx) |
 
 ### TestFloat details
 
@@ -255,6 +281,43 @@ The saved transcendental row is `observational-complete`. MPFR supplies high-pre
 while CORE-MATH, OpenLibm, and RLIBM expose different supported functions and rounding contracts.
 We record every available result and difference. These observations concern the approximate
 binary kernels, separately from the proved posit functions described on the website.
+
+### Exhaustive 16-bit arithmetic
+
+`execFloatExhaustive` evaluates `Model.*WithStatus` on every ordered pair of binary16 or bfloat16
+encodings, for addition, subtraction, multiplication, and division in the four IEEE directions, and
+on every binary32 square root. In nearest-even mode it also records whether the planner-selected
+kernel behind the ordinary operator returns a different encoding. The
+[reference](oracles/exhaustive16_reference.cpp) compares each value and all five flags with
+SoftFloat (binary16, binary32) or with MPFR set to the format's precision and exponent range
+(bfloat16, which SoftFloat lacks), detecting tininess after rounding. For binary16 both references
+run, which checks the MPFR emulation against SoftFloat on every pair.
+
+The 12,288 blocks give 154,618,822,656 results with no value, flag, kernel, or reference
+difference ([summary](results/differential/exhaustive16-floatlib.csv)).
+
+### Certified expMinus1 and logPlus1
+
+On all 2^32 binary32 inputs, every finite binary16 and bfloat16 input, and the distinct entries of
+CORE-MATH's binary64 `expm1.wc` and `log1p.wc` lists (123,552 and 347,766), every returned result is
+MPFR's correctly rounded value, and a call returns nothing exactly when its input is not finite or
+its result overflows or is undefined
+([binary32](results/differential/certified-expm1-log1p-binary32.csv),
+[other formats](results/differential/certified-expm1-log1p-other.csv)).
+
+### MPFX
+
+[MPFX](oracles/mpfx/README.md) computes a round-to-odd result in a `double` or `float` container
+and rounds it again. We compared both of its engines with FloatLib on six formats (binary16,
+bfloat16, IEEE-style `e4m3` and `e5m2`, and the two formats at the edge of its supported class),
+six operations, four directions, and three operand sets, 316.8 million comparisons, and on every
+binary16 and bfloat16 pair of the exhaustive campaign. Standalone examples reproduce four MPFX
+problems, reported as [bksaiki/mpfx#36](https://github.com/bksaiki/mpfx/issues/36): exact zeros under
+roundTowardNegative returned as `+0`, `sqrt(-inf)` without the invalid flag, a lost overflow flag
+when the container overflows, and error-free-transformation results whose rounding error
+underflowed the container ([sampled](results/differential/mpfx-sampled-classes.csv),
+[exhaustive](results/differential/mpfx-exhaustive16.csv)). Remaining EFT differences are
+grouped by engine without assigning a cause to every case.
 
 ## Reading the ecosystem results
 

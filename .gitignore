@@ -54,8 +54,9 @@ __pycache__/
 /tests/results/*
 !/tests/results/main/
 !/tests/results/main/**
+!/tests/results/differential/
+!/tests/results/differential/**
 
 # Repository-history backups can contain unpublished manuscripts.
 *.bundle
 # The original benchmark source archive also embeds a history bundle.
-/benchmarks/results/main/provenance/FloatLib-source.tar.gz

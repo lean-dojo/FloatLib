@@ -624,5 +624,13 @@
     "year": "",
     "accessed": "2026-09-25",
     "url": "https://coqinterval.gitlabpages.inria.fr/"
+  },
+  {
+    "key": "saikiDoubleRounding2026",
+    "authors": "Brett Saiki, Bill Zorn, Cynthia Richey, and Zachary Tatlock",
+    "title": "When Double Rounding is Correct",
+    "venue": "arXiv:2610.09005",
+    "year": "2026",
+    "url": "https://arxiv.org/abs/2610.09005"
   }
 ]

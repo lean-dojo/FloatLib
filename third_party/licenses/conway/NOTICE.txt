@@ -2,7 +2,7 @@ Conway refinement reader attribution
 
 Copyright 2026 Dan Abramov.
 
-FloatLib's website reader, including archived versions, contains adaptations
+FloatLib's website reader contains adaptations
 of the Conway refinement reader:
 https://github.com/gaearon/conway-refinement
 Upstream reader: blueprint/src/web-reader/
@@ -12,13 +12,6 @@ LICENSE contains the Apache-2.0 text from upstream commit
 The revision originally adapted by FloatLib was not recorded.
 
 FloatLib modified the reader. Adaptations appear in site/reader/src/App.tsx,
-MapView.tsx, data.tsx, and site/reader/styles.css; the archived SITE_SPEC.md
-also records the adaptation.
-
-Archive coverage:
-  benchmarks/results/main/provenance/FloatLib-source-public.tar.gz
-  tests/results/main/provenance/FloatLib-source.tar.gz
-including the former archive's nested member
-  tests/results/main/provenance/FloatLibrary-source.tar.gz
+MapView.tsx, data.tsx, and site/reader/styles.css.
 
 Attribution notice prepared by FloatLib.

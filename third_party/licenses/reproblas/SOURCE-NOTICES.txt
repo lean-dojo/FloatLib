@@ -2,7 +2,7 @@ ReproBLAS dfb815058dd34b88caba2513cce63bc2e89f951f: source files named in retain
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 Inspected files without an individual copyright/license preamble
 (covered by the accompanying upstream project license where applicable):

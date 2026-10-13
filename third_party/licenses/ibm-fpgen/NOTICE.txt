@@ -3,8 +3,7 @@ IBM FPgen / IEEE floating-point test suite
 Redistribution permission: unverified.
 
 Retained material: tests/results/main/release/external/09-ibm-fpgen/
-*.map.tsv and *.stream, and the corresponding members of
-benchmarks/results/main/provenance/FloatLib-source-public.tar.gz.
+*.map.tsv and *.stream.
 The maps retain original source records; streams re-encode those records.
 The 33 original file notices are preserved in ORIGINAL-NOTICES.txt.
 

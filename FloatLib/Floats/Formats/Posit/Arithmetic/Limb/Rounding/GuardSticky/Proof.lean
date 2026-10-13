@@ -137,18 +137,8 @@ theorem isLessMinPositive_eq
   dsimp only
   rw [FixedWord.DyadicCompare.compareNonnegative128ToWord_eq]
   simp only [UInt64.toNat_one]
-  change
-    Dyadic.isLessNonnegativeFields significand.toNat exponent
-        1 (-(4 * Int.ofNat (format.payloadBits - 1))) =
-      Dyadic.isLess
-        { negative := false
-          significand := significand.toNat
-          exponent }
-        { negative := false
-          significand := 1
-          exponent := -(4 * Int.ofNat (format.payloadBits - 1)) }
-  rw [Dyadic.isLessNonnegativeFields_eq]
-  rw [Dyadic.isLessFields_eq]
+  rw [← Dyadic.isLessNonnegativeFields.eq_1, Dyadic.isLessNonnegativeFields_eq,
+    Dyadic.isLessFields_eq]
 
 /-! ## Complete carrier refinement -/
 

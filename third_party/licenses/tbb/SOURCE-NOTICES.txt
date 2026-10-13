@@ -2,7 +2,7 @@ Intel TBB v2020.3: notice for task_scheduler_init.h diagnostic excerpt; exact bu
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:

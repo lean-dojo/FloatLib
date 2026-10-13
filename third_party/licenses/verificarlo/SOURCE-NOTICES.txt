@@ -2,7 +2,7 @@ Verificarlo c5d1bf798a5ec617c138aa5e6629e1923411d3c8: diagnostic source excerpts
 
 Copyright/license comment blocks below are reproduced verbatim.
 Repeated identical blocks are grouped by source path. Implementation bodies
-are not included. Full upstream file hashes/URLs are in ../../SOURCES.json.
+are not included.
 
 ========================================================================
 Source paths:
