@@ -20,9 +20,9 @@ For scalar rounding, refine the enclosure until both bounds round to the same de
 in the requested IEEE mode. If the precision budget is exhausted or an exact boundary prevents
 agreement, return an error.
 
-Lean checks parsing and the conversion of rational bounds. The enclosure itself depends on
-Arb/python-flint; agreement of its rounded bounds is external evidence, not a kernel proof of the
-transcendental result.
+Lean checks parsing and the conversion of rational bounds. The enclosure itself comes from
+Arb/python-flint, so agreement of its rounded bounds is external evidence. No kernel proof covers
+the transcendental result.
 -/
 
 @[expose] public section
@@ -78,24 +78,23 @@ def arbBounds {fmt : FloatFormat} (func : String) (X : Interval fmt)
 /--
 Compute an arbitrary-format interval enclosure for a named unary function.
 
-The Arb bounds are exact rationals; their conversion uses `roundRatQDown` and `roundRatQUp`, whose
+The Arb bounds are exact rationals. Their conversion uses `ofRat` rounding down and up, whose
 extended-real enclosure inequalities are proved for every `FloatFormat`.
 -/
 def arbUnary {fmt : FloatFormat} (func : String) (X : Interval fmt)
     (precBits digits : Nat := 200) : IO (Interval fmt) := do
   let (lower, upper) ← arbBounds func X (precBits := precBits) (digits := digits)
   pure
-    { lo := roundRatQDown fmt lower
-      hi := roundRatQUp fmt upper }
+    { lo := ofRat fmt lower (mode := .down)
+      hi := ofRat fmt upper (mode := .up) }
 
 /--
 Round a finite point evaluation of a named Arb function in any IEEE rounding mode.
 
 The oracle precision is increased until both endpoints of its exact rational enclosure round to the
-same bit pattern. The function fails rather than guessing when the configured attempts do not
-resolve a rounding boundary.
+same bit pattern. It throws when the configured attempts do not resolve a rounding boundary.
 -/
-def arbUnaryWithRounding {fmt : FloatFormat} (func : String) (x : Model fmt)
+def arbUnaryRounded {fmt : FloatFormat} (func : String) (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) := do
   discard <| ensureFinite x "x"
   let growResource (value : Nat) : Nat :=
@@ -109,8 +108,8 @@ def arbUnaryWithRounding {fmt : FloatFormat} (func : String) (x : Model fmt)
         let pointBounds : Interval fmt := point x
         let (lower, upper) ←
           arbBounds func pointBounds (precBits := precBits) (digits := digits)
-        let lowerRounded := roundRatQWithRounding fmt mode lower
-        let upperRounded := roundRatQWithRounding fmt mode upper
+        let lowerRounded := ofRat fmt lower (mode := mode)
+        let upperRounded := ofRat fmt upper (mode := mode)
         if lowerRounded.toNatBits == upperRounded.toNatBits then
           pure lowerRounded
         else
@@ -171,55 +170,55 @@ def arbUnaryWithRounding {fmt : FloatFormat} (func : String) (x : Model fmt)
 
 /-! ## Scalar wrappers with explicit rounding mode -/
 
-/-- Arb-backed scalar `exp` with an explicit rounding mode. -/
-@[inline] def expArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `exp`, rounded in a given IEEE mode. -/
+@[inline] def expArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "exp" x mode config
+  arbUnaryRounded "exp" x mode config
 
-/-- Arb-backed scalar `log` with an explicit rounding mode. -/
-@[inline] def logArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `log`, rounded in a given IEEE mode. -/
+@[inline] def logArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "log" x mode config
+  arbUnaryRounded "log" x mode config
 
-/-- Arb-backed scalar `sinh` with an explicit rounding mode. -/
-@[inline] def sinhArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `sinh`, rounded in a given IEEE mode. -/
+@[inline] def sinhArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "sinh" x mode config
+  arbUnaryRounded "sinh" x mode config
 
-/-- Arb-backed scalar `cosh` with an explicit rounding mode. -/
-@[inline] def coshArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `cosh`, rounded in a given IEEE mode. -/
+@[inline] def coshArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "cosh" x mode config
+  arbUnaryRounded "cosh" x mode config
 
-/-- Arb-backed scalar `tanh` with an explicit rounding mode. -/
-@[inline] def tanhArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `tanh`, rounded in a given IEEE mode. -/
+@[inline] def tanhArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "tanh" x mode config
+  arbUnaryRounded "tanh" x mode config
 
-/-- Arb-backed scalar `sin` with an explicit rounding mode. -/
-@[inline] def sinArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `sin`, rounded in a given IEEE mode. -/
+@[inline] def sinArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "sin" x mode config
+  arbUnaryRounded "sin" x mode config
 
-/-- Arb-backed scalar `cos` with an explicit rounding mode. -/
-@[inline] def cosArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `cos`, rounded in a given IEEE mode. -/
+@[inline] def cosArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "cos" x mode config
+  arbUnaryRounded "cos" x mode config
 
-/-- Arb-backed scalar `sqrt` with an explicit rounding mode. -/
-@[inline] def sqrtArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar `sqrt`, rounded in a given IEEE mode. -/
+@[inline] def sqrtArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "sqrt" x mode config
+  arbUnaryRounded "sqrt" x mode config
 
-/-- Arb-backed scalar logistic sigmoid with an explicit rounding mode. -/
-@[inline] def sigmoidArbWithRounding {fmt : FloatFormat} (x : Model fmt)
+/-- Arb-backed scalar logistic sigmoid, rounded in a given IEEE mode. -/
+@[inline] def sigmoidArbRounded {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "sigmoid" x mode config
+  arbUnaryRounded "sigmoid" x mode config
 
-/-- Arb-backed arbitrary-format π with an explicit rounding mode. -/
-@[inline] def piArbWithRounding (fmt : FloatFormat) (mode : IEEERoundingMode)
+/-- Arb-backed arbitrary-format π, rounded in a given IEEE mode. -/
+@[inline] def piArbRounded (fmt : FloatFormat) (mode : IEEERoundingMode)
     (config : ArbRoundingConfig := {}) : IO (Model fmt) :=
-  arbUnaryWithRounding "pi" (posZero fmt) mode config
+  arbUnaryRounded "pi" (posZero fmt) mode config
 
 end Interval
 end Model

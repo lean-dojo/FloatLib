@@ -11,12 +11,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Properties
 /-!
 # Compiled binary format constants
 
-Layout proofs are easiest to read with powers such as `2 ^ fmt.expWidth`; compiled code is better
-served by left shifts. Frequently used format values therefore have shift-based implementations,
-with proved equalities registered for compiler substitution.
+Layout proofs are easiest to read with powers such as `2 ^ fmt.expWidth`, but compiled code is
+better served by left shifts. Frequently used format values therefore have shift-based
+implementations, with proved equalities registered for compiler substitution.
 
-Source-level theorems use the mathematical definitions; compiler substitutions replace them
-with the proved shift formulas.
+Theorems use the mathematical definitions, and compiled code runs the proved shift formulas.
 -/
 
 @[expose] public section
@@ -25,116 +24,117 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace FloatFormat
 
 /-- Shift-based compiled implementation of `bias`. -/
-@[inline] def biasImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.bias (fmt : FloatFormat) : Nat :=
   Nat.shiftLeft 1 (fmt.expWidth - 1) - 1
 
 /-- Shift-based compiled implementation of `ieeeMinSubnormalExponent`. -/
-@[inline] def ieeeMinSubnormalExponentImpl (fmt : FloatFormat) : Int :=
-  (1 : Int) - Int.ofNat (biasImpl fmt) - Int.ofNat fmt.fracWidth
+@[inline] def Internal.ieeeMinSubnormalExponent (fmt : FloatFormat) : Int :=
+  (1 : Int) - Int.ofNat (Internal.bias fmt) - Int.ofNat fmt.fracWidth
 
 /-- Compiled implementation of `normalMantissaExpOffset`. -/
-@[inline] def normalMantissaExpOffsetImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.normalMantissaExpOffset (fmt : FloatFormat) : Nat :=
   fmt.exponentBias + fmt.fracWidth
 
 /-- Shift-based compiled implementation of `ieeeMaxNormalExponent`. -/
-@[inline] def ieeeMaxNormalExponentImpl (fmt : FloatFormat) : Nat :=
-  biasImpl fmt
+@[inline] def Internal.ieeeMaxNormalExponent (fmt : FloatFormat) : Nat :=
+  Internal.bias fmt
 
 /-- Shift-based compiled implementation of `ieeeMinNormalExponent`. -/
-@[inline] def ieeeMinNormalExponentImpl (fmt : FloatFormat) : Int :=
-  (1 : Int) - Int.ofNat (biasImpl fmt)
+@[inline] def Internal.ieeeMinNormalExponent (fmt : FloatFormat) : Int :=
+  (1 : Int) - Int.ofNat (Internal.bias fmt)
 
 /-- Compiled implementation of `subnormalAlignExp`. -/
-@[inline] def subnormalAlignExpImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.subnormalAlignExp (fmt : FloatFormat) : Nat :=
   fmt.exponentBias + fmt.fracWidth - 1
 
 /-- Shift-based compiled implementation of `expAllOnesNat`. -/
-@[inline] def expAllOnesNatImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.expAllOnesNat (fmt : FloatFormat) : Nat :=
   Nat.shiftLeft 1 fmt.expWidth - 1
 
 /-- Shift-based compiled implementation of `fracMaskNat`. -/
-@[inline] def fracMaskNatImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.fracMaskNat (fmt : FloatFormat) : Nat :=
   Nat.shiftLeft 1 fmt.fracWidth - 1
 
 /-- Shift-based compiled implementation of `expMaskNat`. -/
-@[inline] def expMaskNatImpl (fmt : FloatFormat) : Nat :=
-  Nat.shiftLeft (expAllOnesNat fmt) fmt.fracWidth
+@[inline] def Internal.expMaskNat (fmt : FloatFormat) : Nat :=
+  Nat.shiftLeft (FloatFormat.expAllOnesNat fmt) fmt.fracWidth
 
 /-- Shift-based compiled implementation of `signMaskNat`. -/
-@[inline] def signMaskNatImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.signMaskNat (fmt : FloatFormat) : Nat :=
   Nat.shiftLeft 1 (signBitIndex fmt)
 
 /-- Shift-based compiled implementation of `quietBitNat`. -/
-@[inline] def quietBitNatImpl (fmt : FloatFormat) : Nat :=
+@[inline] def Internal.quietBitNat (fmt : FloatFormat) : Nat :=
   Nat.shiftLeft 1 (fmt.fracWidth - 1)
 
 /-- Compiler substitution of exponent-bias exponentiation by the equivalent shift kernel. -/
-@[csimp] theorem bias_eq_biasImpl :
-    bias = biasImpl := by
+@[csimp] theorem bias_eq_internal :
+    bias = Internal.bias := by
   funext fmt
-  simp [bias, biasImpl, Nat.shiftLeft_eq]
+  simp [bias, Internal.bias, Nat.shiftLeft_eq]
 
 /-- Compiler substitution for the least-subnormal dyadic exponent. -/
-@[csimp] theorem ieeeMinSubnormalExponent_eq_ieeeMinSubnormalExponentImpl :
-    ieeeMinSubnormalExponent = ieeeMinSubnormalExponentImpl := by
+@[csimp] theorem ieeeMinSubnormalExponent_eq_internal :
+    ieeeMinSubnormalExponent = Internal.ieeeMinSubnormalExponent := by
   funext fmt
-  simp [ieeeMinSubnormalExponent, ieeeMinSubnormalExponentImpl, bias, biasImpl, Nat.shiftLeft_eq]
+  simp [ieeeMinSubnormalExponent, Internal.ieeeMinSubnormalExponent, bias, Internal.bias,
+    Nat.shiftLeft_eq]
 
 /-- Compiler substitution for the normal-significand exponent offset. -/
-@[csimp] theorem normalMantissaExpOffset_eq_normalMantissaExpOffsetImpl :
-    normalMantissaExpOffset = normalMantissaExpOffsetImpl := by
+@[csimp] theorem normalMantissaExpOffset_eq_internal :
+    normalMantissaExpOffset = Internal.normalMantissaExpOffset := by
   funext fmt
   rfl
 
 /-- Compiler substitution for the greatest normal unbiased exponent. -/
-@[csimp] theorem ieeeMaxNormalExponent_eq_ieeeMaxNormalExponentImpl :
-    ieeeMaxNormalExponent = ieeeMaxNormalExponentImpl := by
+@[csimp] theorem ieeeMaxNormalExponent_eq_internal :
+    ieeeMaxNormalExponent = Internal.ieeeMaxNormalExponent := by
   funext fmt
-  simp [ieeeMaxNormalExponent, ieeeMaxNormalExponentImpl, bias, biasImpl,
+  simp [ieeeMaxNormalExponent, Internal.ieeeMaxNormalExponent, bias, Internal.bias,
     Nat.shiftLeft_eq]
 
 /-- Compiler substitution for the least normal unbiased exponent. -/
-@[csimp] theorem ieeeMinNormalExponent_eq_ieeeMinNormalExponentImpl :
-    ieeeMinNormalExponent = ieeeMinNormalExponentImpl := by
+@[csimp] theorem ieeeMinNormalExponent_eq_internal :
+    ieeeMinNormalExponent = Internal.ieeeMinNormalExponent := by
   funext fmt
-  simp [ieeeMinNormalExponent, ieeeMinNormalExponentImpl, bias, biasImpl,
+  simp [ieeeMinNormalExponent, Internal.ieeeMinNormalExponent, bias, Internal.bias,
     Nat.shiftLeft_eq]
 
 /-- Compiler substitution for the subnormal alignment exponent. -/
-@[csimp] theorem subnormalAlignExp_eq_subnormalAlignExpImpl :
-    subnormalAlignExp = subnormalAlignExpImpl := by
+@[csimp] theorem subnormalAlignExp_eq_internal :
+    subnormalAlignExp = Internal.subnormalAlignExp := by
   funext fmt
   rfl
 
 /-- Compiler substitution of the all-ones exponent mask by the equivalent shift kernel. -/
-@[csimp] theorem expAllOnesNat_eq_expAllOnesNatImpl :
-    expAllOnesNat = expAllOnesNatImpl := by
+@[csimp] theorem expAllOnesNat_eq_internal :
+    expAllOnesNat = Internal.expAllOnesNat := by
   funext fmt
-  simp [expAllOnesNat, expAllOnesNatImpl, Nat.shiftLeft_eq]
+  simp [expAllOnesNat, Internal.expAllOnesNat, Nat.shiftLeft_eq]
 
 /-- Compiler substitution of the fraction mask by the equivalent shift kernel. -/
-@[csimp] theorem fracMaskNat_eq_fracMaskNatImpl :
-    fracMaskNat = fracMaskNatImpl := by
+@[csimp] theorem fracMaskNat_eq_internal :
+    fracMaskNat = Internal.fracMaskNat := by
   funext fmt
-  simp [fracMaskNat, fracMaskNatImpl, Nat.shiftLeft_eq]
+  simp [fracMaskNat, Internal.fracMaskNat, Nat.shiftLeft_eq]
 
 /-- Compiler substitution of the shifted exponent mask by the equivalent shift kernel. -/
-@[csimp] theorem expMaskNat_eq_expMaskNatImpl :
-    expMaskNat = expMaskNatImpl := by
+@[csimp] theorem expMaskNat_eq_internal :
+    expMaskNat = Internal.expMaskNat := by
   funext fmt
-  simp [expMaskNat, expMaskNatImpl, Nat.shiftLeft_eq]
+  simp [expMaskNat, Internal.expMaskNat, Nat.shiftLeft_eq]
 
 /-- Compiler substitution of the sign mask by the equivalent shift kernel. -/
-@[csimp] theorem signMaskNat_eq_signMaskNatImpl :
-    signMaskNat = signMaskNatImpl := by
+@[csimp] theorem signMaskNat_eq_internal :
+    signMaskNat = Internal.signMaskNat := by
   funext fmt
-  simp [signMaskNat, signMaskNatImpl, Nat.shiftLeft_eq]
+  simp [signMaskNat, Internal.signMaskNat, Nat.shiftLeft_eq]
 
 /-- Compiler substitution of the quiet-NaN bit by the equivalent shift kernel. -/
-@[csimp] theorem quietBitNat_eq_quietBitNatImpl :
-    quietBitNat = quietBitNatImpl := by
+@[csimp] theorem quietBitNat_eq_internal :
+    quietBitNat = Internal.quietBitNat := by
   funext fmt
-  simp [quietBitNat, quietBitNatImpl, Nat.shiftLeft_eq]
+  simp [quietBitNat, Internal.quietBitNat, Nat.shiftLeft_eq]
 
 end FloatFormat
 end FloatLib.Floats.Formats.BinaryInterchange

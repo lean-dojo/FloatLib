@@ -10,7 +10,7 @@ public import FloatLib.Floats.Formats.Posit.Descriptor
 public import FloatLib.Kernels.FixedWord.Core.Runtime
 
 /-!
-# Shared fixed-carrier guard-and-sticky Posit rounding
+# Carrier-generic guard-and-sticky Posit rounding
 
 One-word and two-limb posit kernels round the same normalized exponent/fraction stream. They
 differ only in the carrier that holds the significand and the packed code, so everything from tail
@@ -24,12 +24,11 @@ and instantiated by each carrier.
   bit. `fractionPrefix`, `tailPrefix`, `lowerCandidateFromFields`, `roundInterior`, and
   `roundNormalizedPositive` form the shared kernel.
 
-Both records are passed explicitly to always-inlined functions. The `UInt64` and `UInt128`
-instances are transparent constants, allowing specialization to their primitive operations.
-The sibling proof module
-states the natural-number meaning of every operation (`LawfulTailCarrier`,
-`LawfulCandidateCarrier`) and proves the shared kernel against the arbitrary-width rounder
-`DirectDyadicPacking.roundPositiveCode`.
+Both records are passed as arguments to always-inlined functions. The `UInt64` and `UInt128`
+instances are transparent constants, so the functions specialize to their primitive operations.
+The sibling proof module states the natural-number meaning of every operation
+(`LawfulTailCarrier`, `LawfulCandidateCarrier`) and proves the shared kernel against the
+arbitrary-width rounder `DirectDyadicPacking.roundPositiveCode`.
 
 The two exponent bits are always stored in `UInt64`, so this module reads them through neutral
 fixed-word primitives and depends on neither posit storage backend. Underflow detection, the zero
@@ -64,7 +63,7 @@ below the carrier width, and `fractionBelow` on a significand whose leading one 
 index. The structure contains executable data only.
 -/
 structure CandidateCarrier (α : Type) extends TailCarrier α where
-  /-- Embed a machine word; used for the two-bit exponent field and the constants zero and one. -/
+  /-- Embed a machine word, used for the two-bit exponent field and the constants zero and one. -/
   ofWord : UInt64 → α
   /-- Shift left, returning zero once the shift reaches the carrier width. -/
   shiftLeft : α → Nat → α
@@ -72,11 +71,11 @@ structure CandidateCarrier (α : Type) extends TailCarrier α where
   shiftRight : α → Nat → α
   /-- Remove the leading one, at the given bit index, from a normalized significand. -/
   fractionBelow : α → Nat → α
-  /-- Addition; exact whenever the mathematical sum fits the carrier. -/
+  /-- Addition, exact whenever the mathematical sum fits the carrier. -/
   add : α → α → α
   /-- A mask whose low `width` bits are one. -/
   lowOnes : Nat → α
-  /-- Successor; exact whenever it fits the carrier. -/
+  /-- Successor, exact whenever it fits the carrier. -/
   increment : α → α
   /-- Whether the least significant bit is set. -/
   isOdd : α → Bool
@@ -191,9 +190,11 @@ sticky suffix.
 Round the nonzero positive value `significand * 2 ^ exponent`, known not to underflow, to its
 unsigned posit code.
 
-Regimes that consume the payload map directly to `maxPos` or `minPos`; interior values use the
-field-oriented guard/sticky rule. For a lawful carrier whose capacity is strictly greater than the
-format's payload width, the result is the carrier image of `DirectDyadicPacking.roundPositiveCode`
+Regimes that consume the payload map to `maxPos` or `minPos`, and interior values use the
+field-oriented guard/sticky rule. The regime `scale.ediv 4` and the exponent field `scale.emod 4`
+are an arithmetic shift and the low two's-complement bits, so no machine division runs. For a
+lawful carrier whose capacity is strictly greater than the format's payload width, the result is
+the carrier image of `DirectDyadicPacking.roundPositiveCode`
 (`roundNormalizedPositive_toNat_eq_direct`).
 -/
 @[always_inline, inline] def roundNormalizedPositive
@@ -201,8 +202,8 @@ format's payload width, the result is the carrier image of `DirectDyadicPacking.
     (significand : α) (exponent : Int) : α :=
   let leading := carrier.log2 significand
   let scale := exponent + Int.ofNat leading
-  let regime := scale.ediv 4
-  let exponentField := UInt64.ofNat (scale.emod 4).toNat
+  let regime := scale >>> 2
+  let exponentField := (Int64.ofInt scale).toUInt64 &&& 3
   if 0 ≤ regime then
     let run := regime.toNat + 1
     if format.payloadBits ≤ run then

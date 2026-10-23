@@ -10,8 +10,8 @@ module
 # Representation-independent Posit guard and sticky bits
 
 These functions inspect the exact exponent-and-fraction tail using natural numbers only. They are
-the common specification refined by the one-word and two-limb execution carriers; no fixed-width
-storage implementation is imported here.
+the common specification refined by the one-word and two-limb execution carriers, and this module
+imports no fixed-width storage implementation.
 -/
 
 @[expose] public section
@@ -39,7 +39,7 @@ the significand below its leading one and then return exact zero padding.
 Whether any exact exponent/fraction bit remains after `consumed` leading tail positions.
 
 Before both exponent bits have been consumed, the suffix consists of the low exponent bits and
-the explicit fraction. Afterwards it is exactly a low-bit test on the significand.
+the fraction below the leading one. Afterwards it is a low-bit test on the significand.
 -/
 @[inline] def tailHasNonzeroAfter
     (exponentField significand leading consumed : Nat) : Bool :=

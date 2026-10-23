@@ -13,8 +13,8 @@ public import FloatLibTests.Accounting
 /-!
 # P3109 chapter 5 block regressions
 
-These cases cover explicit and selected scales, special projection rules, exact reductions,
-independent source scales, elementwise fused arithmetic, and explicit random words per lane.
+These cases cover given and selected scales, special projection rules, exact reductions,
+independent source scales, elementwise fused arithmetic, and per-lane random words.
 Root operations check normalization before rounding, including negative result scales.
 -/
 
@@ -91,15 +91,15 @@ def stochasticFailures : Thunk Nat := ⟨fun _ =>
       (pair (33 / 32 : Rat) (33 / 32)) (1 : Rat)
     decide (result.values.map Mixed.decode = pair (.finite 1) (.finite (17 / 16)))⟩
 
-/-- Actual projected roots retain exact scale normalization and direction before saturation. -/
+/-- Projected roots keep exact scale normalization and direction before saturation. -/
 def rootFailures : Thunk Nat := ⟨fun _ =>
-  let format := Format.signed 8 4 .extended
+  let format := Format.binary8p4se
   let small := Format.signed 6 5 .extended
   let roots := Formats.P3109.Block.sqrt format {} (source 1 25 4) (2 : Rat)
   let negativeRoots := Formats.P3109.Block.sqrt format {} (source 1 25 4) (-2 : Rat)
   let reciprocal := Formats.P3109.Block.rsqrt format {} (source 1 4 16) (1 / 2 : Rat)
   let norms := Formats.P3109.Block.hypot format {} (source 1 3 5) (source 1 4 12) (2 : Rat)
-  let directed := Formats.P3109.Block.sqrt small ⟨.scalar .towardPositive, .none⟩
+  let directed := Formats.P3109.Block.sqrt small ⟨.scalar .up, .none⟩
     (source 1 2 2) (-2 : Rat)
   countFailures
     [ decide (roots.values.map Mixed.decode = pair (.finite (5 / 2)) (.finite 1))

@@ -14,9 +14,12 @@ public import Mathlib.Tactic.Linarith
 # Exactness of single-quotient rounding
 
 If `num = den * q + r`, with `r < den`, dividing `2 * num` yields `2 * q` below the
-midpoint and `2 * q + 1` at or above it. Thus its low two bits and the equality test
-`den * quotient = 2 * num` contain precisely the information needed for ties to even.
-The low-word product can only reject that equality; a collision is checked in full.
+midpoint and `2 * q + 1` at or above it. Its low two bits and the equality test
+`den * quotient = 2 * num` therefore carry all the information ties to even needs. The low-word
+product can only reject that equality, and a low-word match is checked in full.
+
+Nearest-away rounding reuses the nearest-even and directed branches, and its supplied-exponent tie
+test is the reference `rationalIsGridTieScaled`.
 -/
 
 @[expose] public section
@@ -71,7 +74,7 @@ private theorem roundEvenDoubled_eq (doubled den : Nat) :
     simp [hproduct, hlow]
   · simp [hproduct]
 
-/-- The extra quotient bit implements exact nearest-even rounding for every nonzero divisor. -/
+/-- On a doubled numerator, `roundEvenDoubled` rounds to nearest even for any nonzero divisor. -/
 theorem roundEvenDoubled_twice (num den : Nat) (hden : den ≠ 0) :
     roundEvenDoubled (2 * num) den = roundQuotientEven num den := by
   have hpos : 0 < den := Nat.pos_of_ne_zero hden
@@ -113,37 +116,14 @@ theorem roundEvenScaled_eq (num den : Nat) (shift : Int) (hden : den ≠ 0) :
       apply roundEvenDoubled_twice
       simp [Nat.shiftLeft_eq, hden]
 
-/-- The one-quotient ceiling agrees with the reference, including its zero conventions. -/
-theorem ceilQuotient_eq (num den : Nat) : ceilQuotient num den = quotCeil num den := by
-  by_cases hden : den = 0
-  · simp [ceilQuotient, quotCeil, hden]
-  by_cases hnum : num = 0
-  · simp [ceilQuotient, quotCeil, hnum, hden]
-  have hpos : 0 < den := Nat.pos_of_ne_zero hden
-  have hrem := Nat.mod_lt num hpos
-  have hdiv := Nat.div_add_mod num den
-  have hsucc : num - 1 + 1 = num := by omega
-  simp only [ceilQuotient, quotCeil, hnum, hden, beq_iff_eq, Bool.or_eq_true,
-    or_self, ite_false]
-  by_cases hexact : num % den = 0
-  · have hqpos : 0 < num / den := by nlinarith
-    have hqsucc : num / den - 1 + 1 = num / den := by omega
-    have hquotient : (num - 1) / den = num / den - 1 := by
-      apply Nat.div_eq_of_lt_le <;> nlinarith
-    simp [hexact, hquotient, hqsucc]
-  · have hquotient : (num - 1) / den = num / den := by
-      have hremPos : 0 < num % den := Nat.pos_of_ne_zero hexact
-      apply Nat.div_eq_of_lt_le <;> nlinarith
-    simp [hexact, hquotient]
-
 /-- Directed rounding uses the same lower and upper adjacent integers as the reference. -/
 theorem roundDirectedScaled_eq (up : Bool) (num den : Nat) (shift : Int) :
     roundDirectedScaled up num den shift =
       let scaled := RationalBinary.scaleByPowerOfTwo num den shift
       roundQuotDirected up scaled.1 scaled.2 := by
-  simp only [roundDirectedScaled, roundQuotDirected, ceilQuotient_eq]
+  simp only [roundDirectedScaled, roundQuotDirected]
 
-/-- The IEEE branch preserves every threshold, carry, signed zero, and subnormal tie. -/
+/-- The IEEE branch is `ieeeRoundRatScaled`, thresholds, carries, signed zeros and ties included. -/
 theorem ieeeRoundAtExponent_eq (fmt : FloatFormat) (sign : Bool) (num den : Nat)
     (exponent rationalExponent : Int) (hfmt : fmt.isIEEE = true)
     (hlog : rationalExponent = RationalBinary.floorLog2 num den) :
@@ -157,7 +137,7 @@ theorem ieeeRoundAtExponent_eq (fmt : FloatFormat) (sign : Bool) (num den : Nat)
     rw [roundEvenScaled_eq num den _ hden]
     rfl
 
-/-- Custom descriptor policies use the same exact quotient and packing semantics. -/
+/-- The descriptor-generic branch is the reference rounder `roundRatScaledGeneral`. -/
 theorem generalRoundAtExponent_eq (fmt : FloatFormat) (sign : Bool) (num den : Nat)
     (exponent rationalExponent : Int)
     (hlog : rationalExponent = RationalBinary.floorLog2 num den) :
@@ -177,28 +157,49 @@ theorem directedRoundAtExponent_eq (fmt : FloatFormat) (up sign : Bool) (num den
   subst rationalExponent
   simp only [directedRoundAtExponent, roundRatMagnitudeDirectedScaled, roundDirectedScaled_eq]
 
-/-- A correct rational exponent suffices for exact agreement in every IEEE rounding direction. -/
+/-- Selecting the IEEE or descriptor-generic branch gives the reference nearest-even rounder. -/
+theorem nearestEvenRoundAtExponent_eq (fmt : FloatFormat) (sign : Bool) (num den : Nat)
+    (exponent rationalExponent : Int)
+    (hlog : rationalExponent = RationalBinary.floorLog2 num den) :
+    nearestEvenRoundAtExponent fmt sign num den exponent rationalExponent =
+      roundRatScaled fmt sign num den exponent := by
+  by_cases hfmt : fmt.isIEEE = true
+  · simp [nearestEvenRoundAtExponent, roundRatScaled, hfmt,
+      ieeeRoundAtExponent_eq _ _ _ _ _ _ hfmt hlog]
+  · simp [nearestEvenRoundAtExponent, roundRatScaled, hfmt,
+      generalRoundAtExponent_eq _ _ _ _ _ _ hlog]
+
+/-- With a correct rational exponent, the tie test is the reference rational grid-tie test. -/
+theorem isGridTieAtExponent_eq (fmt : FloatFormat) (num den : Nat)
+    (exponent rationalExponent : Int)
+    (hlog : rationalExponent = RationalBinary.floorLog2 num den) :
+    isGridTieAtExponent fmt num den exponent rationalExponent =
+      rationalIsGridTieScaled fmt num den exponent := by
+  subst rationalExponent
+  rfl
+
+/-- A correct rational exponent suffices for exact agreement in every rounding direction. -/
 theorem roundAtExponent_eq (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (num den : Nat) (exponent rationalExponent : Int)
     (hlog : rationalExponent = RationalBinary.floorLog2 num den) :
     roundAtExponent fmt mode sign num den exponent rationalExponent =
-      roundRatWithRoundingScaled fmt mode sign num den exponent := by
+      Internal.Directed.roundRatScaled fmt mode sign num den exponent := by
   cases mode with
-  | nearestEven =>
-      by_cases hfmt : fmt.isIEEE = true
-      · simp [roundAtExponent, roundRatWithRoundingScaled, roundRatScaled,
-          hfmt, ieeeRoundAtExponent_eq _ _ _ _ _ _ hfmt hlog]
-      · simp [roundAtExponent, roundRatWithRoundingScaled, roundRatScaled,
-          hfmt, generalRoundAtExponent_eq _ _ _ _ _ _ hlog]
-  | towardZero | towardPositiveInfinity | towardNegativeInfinity =>
-      simp only [roundAtExponent, roundRatWithRoundingScaled,
+  | nearest =>
+      exact nearestEvenRoundAtExponent_eq _ _ _ _ _ _ hlog
+  | nearestAway =>
+      simp only [roundAtExponent, Internal.Directed.roundRatScaled, roundRatNearestAwayScaled,
+        isGridTieAtExponent_eq _ _ _ _ _ hlog, directedRoundAtExponent_eq _ _ _ _ _ _ _ hlog,
+        nearestEvenRoundAtExponent_eq _ _ _ _ _ _ hlog]
+  | towardZero | up | down | away =>
+      simp only [roundAtExponent, Internal.Directed.roundRatScaled,
         directedRoundAtExponent_eq _ _ _ _ _ _ _ hlog]
 
-/-- The standalone rounder refines exact rational rounding without width or format restrictions. -/
+/-- `roundScaled` equals exact rational rounding, with no width or format restriction. -/
 theorem roundScaled_eq (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (num den : Nat) (exponent : Int) :
     roundScaled fmt mode sign num den exponent =
-      roundRatWithRoundingScaled fmt mode sign num den exponent :=
+      Internal.Directed.roundRatScaled fmt mode sign num den exponent :=
   roundAtExponent_eq _ _ _ _ _ _ _ rfl
 
 /--

@@ -12,16 +12,15 @@ public import FloatLib.Numerics.Core.Representation
 # Representation-independent executable numerical values
 
 `ExecFloat F` is the public runtime carrier selected by an `EncodedFormat F`. Neither this carrier
-nor `EncodedFormat` assumes a floating radix or an IEEE layout. Its runtime representation is
-exactly the family-chosen `FormatCode F` type. Semantic
-interpretation is required only by proof-facing definitions, so noncomputable real semantics
-cannot disable code generation for the carrier.
+nor `EncodedFormat` assumes a floating radix or an IEEE layout, and its runtime representation is
+the family-chosen `FormatCode F` type. Only proof-side definitions need a semantic interpretation,
+so noncomputable real semantics cannot disable code generation for the carrier.
 
 The nominal format tag is a proposition attached through `Subtype`. Lean specifies that a subtype
 is represented identically to its carrier in compiled code, so a static format using `UInt32`
-continues to cross generated entry points as a native 32-bit word. See the source documentation on
+still crosses generated entry points as a native 32-bit word. See the source documentation on
 `Subtype` in Lean's `Init.Prelude`:
-<https://github.com/leanprover/lean4/blob/v4.34.0/src/Init/Prelude.lean#L641-L643>.
+<https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>.
 Static format packages may therefore choose `UInt8`, `UInt32`, `UInt64`, fixed limb records, or
 another direct carrier, while dynamic packages may choose descriptor-bearing or runtime-sized
 storage without changing the universal API.
@@ -42,8 +41,8 @@ universe u v w
 /--
 Erased nominal evidence distinguishing the executable values of different formats.
 
-This proposition has one constructor and contains no data. Its purpose is type separation, not
-runtime validation.
+This proposition has one constructor and no data. It separates types and validates nothing at
+runtime.
 -/
 inductive ExecFloatTag (F : Type u) : Prop where
   | intro : ExecFloatTag F
@@ -51,8 +50,8 @@ inductive ExecFloatTag (F : Type u) : Prop where
 /--
 The executable value of format `F`.
 
-The value is represented exactly as the arbitrary family-selected `FormatCode F`; the proof-only
-tag introduces no runtime descriptor, bit-vector, radix, or exceptional-value assumption.
+The value is represented as the family-selected `FormatCode F`, and the proof-only tag adds no
+runtime descriptor, bit-vector, radix or exceptional-value assumption.
 -/
 abbrev ExecFloat (F : Type u) [EncodedFormat F] :=
   { _raw : FormatCode F // ExecFloatTag F }
@@ -64,9 +63,9 @@ variable {F : Type u} [EncodedFormat F]
 /--
 Human-readable formatting supplied by an encoded numerical family.
 
-The formatter receives the family-selected runtime code directly. Keeping this contract below
-`ExecFloat` lets every representation print its mathematical value without requiring a universal
-radix, exceptional-value model, or conversion through a host floating-point type.
+The formatter receives the family-selected runtime code. Because this contract sits below
+`ExecFloat`, every representation can print its mathematical value without a universal radix, an
+exceptional-value model or a conversion through a host floating-point type.
 -/
 class FormatDisplay (F : Type u) [EncodedFormat F] where
   /-- Render one runtime code according to the format's own numerical semantics. -/
@@ -76,7 +75,7 @@ class FormatDisplay (F : Type u) [EncodedFormat F] where
 Lossless conversion between a runtime carrier and its proof model.
 
 `plan` is an arbitrary static index used only to distinguish carrier choices during typeclass
-search. The contract itself is independent of radix, encoding, exceptional values, and arithmetic
+search. Nothing in the contract depends on radix, encoding, exceptional values or arithmetic
 semantics. Format families therefore share these inverse laws while keeping their storage plans
 and model types separate.
 -/
@@ -86,7 +85,7 @@ class ModelCodec {Plan : Type u} (plan : Plan)
   toModel : Code → Model
   /-- Pack one proof-model value into the runtime carrier. -/
   ofModel : Model → Code
-  /-- Decoding after packing is exact. -/
+  /-- Decoding after packing returns the model value. -/
   toModel_ofModel : ∀ value, toModel (ofModel value) = value
   /-- Packing after decoding preserves the runtime code. -/
   ofModel_toModel : ∀ value, ofModel (toModel value) = value
@@ -99,19 +98,19 @@ class ModelCodec {Plan : Type u} (plan : Plan)
 @[inline] def raw (value : ExecFloat F) : FormatCode F :=
   value.val
 
-/-- Apply a unary operation directly to the family-selected runtime code. -/
+/-- Apply a unary operation to the family-selected runtime code, without decoding. -/
 @[always_inline, inline] def applyUnary
     (operation : FormatCode F → FormatCode F)
     (value : ExecFloat F) : ExecFloat F :=
   ofRaw (operation value.raw)
 
-/-- Apply a binary operation directly to family-selected runtime codes. -/
+/-- Apply a binary operation to family-selected runtime codes, without decoding. -/
 @[always_inline, inline] def applyBinary
     (operation : FormatCode F → FormatCode F → FormatCode F)
     (left right : ExecFloat F) : ExecFloat F :=
   ofRaw (operation left.raw right.raw)
 
-/-- Apply a ternary operation directly to family-selected runtime codes. -/
+/-- Apply a ternary operation to family-selected runtime codes, without decoding. -/
 @[always_inline, inline] def applyTernary
     (operation : FormatCode F → FormatCode F → FormatCode F → FormatCode F)
     (left right third : ExecFloat F) : ExecFloat F :=
@@ -223,9 +222,9 @@ theorem decode_injective {left right : ExecFloat F}
     ← encode_decode (Model := Model) (plan := plan) right, equality]
 
 /--
-Lift a proved unary code operation to `ExecFloat`.
+A unary code operation that commutes with `toModel` is the lift of its model operation.
 
-The executable side remains the direct code operation; the model equation is proof-only.
+The executable side stays the code operation, and the model equation is used only in proofs.
 -/
 theorem applyUnary_eq_lift
     (operation : FormatCode F → FormatCode F)
@@ -243,9 +242,7 @@ theorem applyUnary_eq_lift
   exact operation_eq value.raw
 
 /--
-Lift a proved binary code operation to `ExecFloat`.
-
-The executable side remains the direct code operation; the model equation is proof-only.
+A binary code operation that commutes with `toModel` is the lift of its model operation.
 -/
 theorem applyBinary_eq_lift
     (operation : FormatCode F → FormatCode F → FormatCode F)
@@ -264,9 +261,7 @@ theorem applyBinary_eq_lift
   exact operation_eq left.raw right.raw
 
 /--
-Lift a proved ternary code operation to `ExecFloat`.
-
-The executable side remains the direct code operation; the model equation is proof-only.
+A ternary code operation that commutes with `toModel` is the lift of its model operation.
 -/
 theorem applyTernary_eq_lift
     (operation : FormatCode F → FormatCode F → FormatCode F → FormatCode F)
@@ -361,10 +356,13 @@ instance [FormatDisplay F] : ToString (ExecFloat F) where
 /--
 `#eval` uses a format's mathematical display when one is available.
 
-The resulting text is emitted directly rather than represented as a quoted Lean string.
+The text is emitted unquoted, and is parenthesized when it is negative and appears as an
+argument, as in `some (-1.5)`.
 -/
 instance [FormatDisplay F] : Repr (ExecFloat F) where
-  reprPrec value _ := Std.Format.text (toString value)
+  reprPrec value precedence :=
+    let text := toString value
+    if text.startsWith "-" then Repr.addAppParen text precedence else Std.Format.text text
 
 /--
 Low-priority structural representation for internal families without a mathematical display.

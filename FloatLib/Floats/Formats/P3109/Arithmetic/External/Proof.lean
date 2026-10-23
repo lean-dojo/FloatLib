@@ -17,7 +17,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 Report precision rounding and saturation produce representable dyadics. The binary encoder
 therefore preserves every finite projected value, including a significand carry. The executable
 result decodes to that exact rational, with no second rounding. Exceptional results use the
-specified signed infinity or canonical quiet NaN; zero is encoded with positive sign.
+specified signed infinity or canonical quiet NaN, and zero is encoded with positive sign.
 -/
 
 @[expose] public section
@@ -147,12 +147,13 @@ theorem mixed_binary_refines
     {Left LeftExact Right RightExact : Type}
     [ExecFloat.ExactDecoder Left LeftExact] [ExecFloat.ExactMap LeftExact Rat]
     [ExecFloat.ExactDecoder Right RightExact] [ExecFloat.ExactMap RightExact Rat]
-    (format : FloatFormat) (hformat : format.isIEEE = true) (policy : ProjectionPolicy)
+    (format : FloatFormat) (hformat : format.isIEEE = true)
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)
-    (left : Left) (right : Right) :
-    Encodes (Mixed.binary (destination format hformat) policy operation left right)
-      (projectValue format policy (operation (Mixed.decode left) (Mixed.decode right))) :=
-  project_refines format hformat policy _
+    (left : Left) (right : Right) (mode : RoundingMode) (saturation : SaturationMode) :
+    Encodes (Mixed.binary (destination format hformat) operation left right mode saturation)
+      (projectValue format { rounding := mode, saturation }
+        (operation (Mixed.decode left) (Mixed.decode right))) :=
+  project_refines format hformat _ _
 
 /-- External fused arithmetic preserves the complete ternary expression through encoding. -/
 theorem mixed_ternary_refines
@@ -160,12 +161,14 @@ theorem mixed_ternary_refines
     [ExecFloat.ExactDecoder Left LeftExact] [ExecFloat.ExactMap LeftExact Rat]
     [ExecFloat.ExactDecoder Right RightExact] [ExecFloat.ExactMap RightExact Rat]
     [ExecFloat.ExactDecoder Third ThirdExact] [ExecFloat.ExactMap ThirdExact Rat]
-    (format : FloatFormat) (hformat : format.isIEEE = true) (policy : ProjectionPolicy)
+    (format : FloatFormat) (hformat : format.isIEEE = true)
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat →
-      NumericalValue Rat) (left : Left) (right : Right) (third : Third) :
-    Encodes (Mixed.ternary (destination format hformat) policy operation left right third)
-      (projectValue format policy
+      NumericalValue Rat) (left : Left) (right : Right) (third : Third) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Encodes
+      (Mixed.ternary (destination format hformat) operation left right third mode saturation)
+      (projectValue format { rounding := mode, saturation }
         (operation (Mixed.decode left) (Mixed.decode right) (Mixed.decode third))) :=
-  project_refines format hformat policy _
+  project_refines format hformat _ _
 
 end FloatLib.Floats.Formats.P3109.Arithmetic.External

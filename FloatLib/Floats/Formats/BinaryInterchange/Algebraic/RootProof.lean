@@ -16,7 +16,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 Reciprocal square root rounds the square root of the exact reciprocal radicand. Integer roots
 round the nonnegative root of the exact magnitude, inverting that magnitude before rounding
 for negative degrees. Negative odd roots restore the sign after choosing the real branch.
-The theorems include subnormal outputs and exact midpoint ties; only IEEE overflow is excluded.
+The theorems include subnormal outputs and exact midpoint ties. Only IEEE overflow is excluded.
 
 Zero policies are stated separately because the real numbers have neither signed zero nor
 infinity. In particular `rsqrt(-0)` has the negative overflow sign.
@@ -33,12 +33,19 @@ theorem rsqrt_of_isZero {fmt : FloatFormat} (value : Model fmt)
   have hfinite := isFinite_eq_true_of_isZero_eq_true value hzero
   simp [rsqrt, chooseNaN1_none_of_isFinite value hfinite, hzero]
 
-/-- Degree zero is invalid for every input, including infinities and signed zeros. -/
-@[simp] theorem rootN_zero {fmt : FloatFormat} (value : Model fmt) :
-    rootN value 0 = invalidResult fmt := by
-  simp [rootN]
+/-- A NaN input is quieted for every degree, keeping its payload. -/
+theorem rootN_of_isNaN {fmt : FloatFormat} (value : Model fmt) (degree : Int)
+    (hnan : isNaN value = true) :
+    rootN value degree = quietNaN value := by
+  simp [rootN, chooseNaN1, hnan]
 
-/-- Odd roots retain the sign of zero; even roots select a positive zero or positive pole. -/
+/-- Degree zero is invalid for every other input, including infinities and signed zeros. -/
+@[simp] theorem rootN_zero {fmt : FloatFormat} (value : Model fmt)
+    (hnan : isNaN value = false) :
+    rootN value 0 = invalidResult fmt := by
+  simp [rootN, chooseNaN1, hnan]
+
+/-- Odd roots retain the sign of zero, while even roots select a positive zero or positive pole. -/
 theorem rootN_of_isZero {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hzero : isZero value = true) (hdegree : degree ≠ 0) :
     rootN value degree =
@@ -94,9 +101,9 @@ end Algebraic
 /--
 A finite nonzero integer root rounds the chosen real branch once.
 
-Even degrees require a clear sign bit; odd degrees allow either sign. Negative degrees are
-reciprocal roots. The absolute value and explicit sign select the negative odd real branch
-without relying on the convention for real exponentiation of negative bases.
+Even degrees require a clear sign bit, while odd degrees allow either sign. Negative degrees are
+reciprocal roots. The absolute value and the sign select the negative odd real branch, so the
+statement does not rely on the convention for real exponentiation of negative bases.
 -/
 theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)

@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.IEEE754.Native.Integer.ToInt
 /-!
 # Native signed integer conversion
 
-Lean 4.34 gives signed native casts logical definitions built on the floating-point models
-introduced in Lean 4.33. It also exposes the arbitrary integer and natural constructors and adds
+Lean gives signed native casts logical definitions built on its floating-point models. It also
+exposes the arbitrary integer and natural constructors and adds
 named floating-point constants. These definitions let us connect native conversion to FloatLib's
 existing specifications through one shared rounding proof for both binary32 and binary64.
 

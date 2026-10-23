@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Bounded fixed-point conversion runtime
 
-Bounded fixed point offers three overflow policies. `reject` returns `outOfRange`,
-`wrap` reduces the rounded coefficient modulo `2 ^ width`, and `saturate` clamps it
-to the signed range. `Conversion.Instances` installs checked conversion as the
+Conversion into bounded fixed point takes the `OverflowPolicy` of its arithmetic as its context:
+`reject` returns `outOfRange`, `wrap` reduces the rounded coefficient modulo `2 ^ width`, and
+`saturate` clamps it to the signed range. `Conversion.Instances` installs `reject` as the
 context-free default.
 -/
 
@@ -26,16 +26,6 @@ open FloatLib.Numerics
 
 namespace ExecFloat.BoundedFixedPoint
 namespace Conversion
-
-/-- Overflow policy for conversion into bounded fixed point. -/
-inductive OverflowPolicy where
-  /-- Reject a rounded coefficient outside the signed destination range. -/
-  | reject
-  /-- Reduce the rounded coefficient modulo `2 ^ width`. -/
-  | wrap
-  /-- Clamp the rounded coefficient to the signed destination range. -/
-  | saturate
-  deriving DecidableEq, Repr
 
 variable {radix : Radix} {fractionalDigits width : Nat}
 
@@ -62,19 +52,19 @@ variable {radix : Radix} {fractionalDigits width : Nat}
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width) :=
   match policy with
   | .reject =>
-      match ExecFloat.BoundedFixedPoint.ofRat? exact with
+      match ExecFloat.BoundedFixedPoint.ofRat exact with
       | some rounded => .success rounded (finiteStatus policy exact rounded)
       | none => .failure .outOfRange
   | .wrap =>
       let rounded : ExecFloat.BoundedFixedPoint radix fractionalDigits width :=
-        ExecFloat.BoundedFixedPoint.ofRatWrapping exact
+        ExecFloat.BoundedFixedPoint.ofRat exact .wrap
       .success rounded (finiteStatus policy exact rounded)
   | .saturate =>
       let rounded : ExecFloat.BoundedFixedPoint radix fractionalDigits width :=
-        ExecFloat.BoundedFixedPoint.ofRatSaturating exact
+        ExecFloat.BoundedFixedPoint.ofRat exact .saturate
       .success rounded (finiteStatus policy exact rounded)
 
-/-- Convert a complete rational observation under an explicit bounded-overflow policy. -/
+/-- Convert a rational observation, finite or not, under a bounded-overflow policy. -/
 @[inline] def run (policy : OverflowPolicy) :
     NumericalValue Rat →
       FloatLib.Floats.ExecFloat.ConversionOutcome
@@ -101,7 +91,7 @@ def coefficientSpec (policy : OverflowPolicy) (exact : Rat) (stored : Int) : Pro
 Conversion relates the delivered coefficient to integer rounding, range, wrap, and clamp.
 
 The status is retained in full. Rejection of a finite input occurs exactly when the nearest-even
-coefficient is out of range under `reject`; the other policies always deliver a value.
+coefficient is out of range under `reject`. The other policies always deliver a value.
 -/
 def spec :
     Quantization.Spec OverflowPolicy (NumericalValue Rat)
@@ -124,7 +114,7 @@ def spec :
         reason = .exceptional .source exceptional
     | _, _ => False
 
-/-- Bounded fixed-point values decode canonically to their exact stored rational. -/
+/-- Bounded fixed-point values decode to their exact stored rational. -/
 instance exactDecoder :
     FloatLib.Floats.ExecFloat.ExactDecoder
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width) Rat where

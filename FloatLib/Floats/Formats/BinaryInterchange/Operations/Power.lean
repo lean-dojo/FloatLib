@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
@@ -17,21 +18,24 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 `Model.pow` provides one deterministic power policy for every `FloatFormat`. For an IEEE descriptor,
 a finite nonzero base and a finite integral exponent give a correctly rounded result whenever
 that result is finite: its decoded value is nearest-even rounding of the exact power, as for
-`Model.powInt`. Small exact powers are computed by `powInt` itself. Larger ones
-use directed enclosures of `|x|^n` built by binary exponentiation at a working precision derived
-from the format. Repeated squaring stops once the enclosure lies beyond the overflow threshold or
-below half the least subnormal, so the exponent is never expanded into an integer when the
-answer is already an overflow or a zero. An enclosure whose endpoints round to different values
-is refined at a higher precision, and exact evaluation remains the last resort.
+`Model.powInt`. Small exact powers are computed by `powInt` itself. Larger ones use directed
+enclosures of `|x|^n` built by binary exponentiation at a working precision derived from the
+format. Repeated squaring stops once the enclosure lies beyond the overflow threshold or below
+half the least subnormal, so the exponent is never expanded into an integer when the answer is
+already an overflow or a zero. An enclosure whose endpoints round to different values is refined
+at a higher precision, and exact evaluation is the last resort.
 
-Integer exponents are classified directly from their dyadic representation. The classifier records
-sign, parity, and an optional bounded magnitude without constructing an integer whose bit length is
-controlled by the floating-point exponent field. This is essential for formats with wide exponent
-fields.
+Integer exponents are classified from their dyadic representation. The classifier records sign,
+parity, and an optional bounded magnitude without constructing an integer whose bit length is
+controlled by the floating-point exponent field, which formats with wide exponent fields need.
 
-Non-integral exponents use the generic `exp` and `log` kernels. That path is approximate; this
-module does not prove correct rounding for real exponentiation. `Operations.PowerProof` proves the
-integral case under the IEEE and finiteness hypotheses above.
+A finite positive base with any other finite exponent uses `Transcendentals.Certified.pow`,
+which refines proved enclosures of `exp (y * log x)` until both endpoints round to the same
+finite value, so an accepted result is nearest-even rounding of the real power. Only when that
+search fails (an overflow, an exact result on a rounding boundary, an exhausted budget, or a
+descriptor other than IEEE) does `pow` fall back to the approximate composition of the generic
+`exp`, `mul` and `log` kernels. `Operations.PowerProof` proves both correctly rounded cases under
+the IEEE and finiteness hypotheses above.
 -/
 
 @[expose] public section
@@ -65,9 +69,9 @@ structure IntegerExponent where
 /--
 Classify a finite dyadic as an integer.
 
-For a nonnegative dyadic exponent, the left shift is bounded by `log₂ smallPowLimit`; the shifted
-magnitude is then checked against the limit. For a negative exponent, divisibility is checked
-only when the right shift is no greater than the significand's leading bit index.
+For a nonnegative dyadic exponent, the left shift is bounded by `log₂ smallPowLimit`, and the
+shifted magnitude is then checked against the limit. For a negative exponent, divisibility is
+checked only when the right shift is no greater than the significand's leading bit index.
 -/
 def classifyIntegerDyadic? (value : Numerics.Dyadic) : Option IntegerExponent :=
   if value.significand == 0 then
@@ -104,55 +108,18 @@ def classifyIntegerDyadic? (value : Numerics.Dyadic) : Option IntegerExponent :=
 /--
 Repeated rounded multiplication with recurrence `p₀ = 1`, `pₙ₊₁ = base * pₙ`.
 
-Each step rounds, so this is not the correctly rounded power; `pow` uses `integerPower?`.
+Each step rounds, so this is not the correctly rounded power. `pow` uses `integerPower?`.
 -/
 def powNatLinear {fmt : FloatFormat} (base : Model fmt) : Nat → Model fmt
   | 0 => posOne fmt
   | exponent + 1 => mul base (powNatLinear base exponent)
-
-/--
-Evaluate the former direct integer-power path. Callers select magnitudes at most `smallPowLimit`.
-
-For a finite nonzero base `s * 2^e`, a negative exponent of magnitude `n` is rounded from
-`(1 / s^n) * 2^(-e*n)`. Only the significand is raised to a power, so the denominator's size is
-bounded by the input precision and `smallPowLimit`, independently of the exponent range.
-Exceptional bases retain the division and multiplication policies of the format. Positive
-exponents round at every step; `pow` now uses `integerPower?`.
--/
-@[deprecated "use `Power.integerPower?`" (since := "2026-09-24"), inline]
-def powSmallInteger {fmt : FloatFormat}
-    (base : Model fmt) (metadata : IntegerExponent) (magnitude : Nat) : Model fmt :=
-  if metadata.negative then
-    match toDyadic? base with
-    | some exact =>
-        if exact.significand == 0 then
-          div (posOne fmt) (powNatLinear base magnitude)
-        else
-          roundRatScaled fmt (exact.negative && magnitude % 2 == 1)
-            1 (exact.significand ^ magnitude) (-(exact.exponent * Int.ofNat magnitude))
-    | none => div (posOne fmt) (powNatLinear base magnitude)
-  else
-    powNatLinear base magnitude
-
-set_option linter.deprecated false in
-/--
-Evaluate the former integer-power branch before the negative-base sign rule.
-
-Large magnitudes use the deterministic general path `exp (b * log |a|)`. `pow` now uses
-`integerPower?` instead.
--/
-@[deprecated "use `Power.integerPower?`" (since := "2026-09-24")] def powIntegerDet {fmt : FloatFormat}
-    (base exponent : Model fmt) (metadata : IntegerExponent) : Model fmt :=
-  match metadata.smallMagnitude? with
-  | some magnitude => powSmallInteger base metadata magnitude
-  | none => exp (mul exponent (log (abs base)))
 
 /-! ## Correctly rounded integral exponents -/
 
 /--
 A nonnegative dyadic `mantissa * 2^exponent`, used as one endpoint of a power enclosure.
 
-Only the mantissa and the exponent are stored; the value is never materialized as a rational
+Only the mantissa and the exponent are stored, so the value is never materialized as a rational
 while its exponent may be far outside the destination range.
 -/
 structure Endpoint where
@@ -262,7 +229,7 @@ finite value.
 One enclosure attempt for `(base ^ (magnitude * 2^shift)) ^ (±1)` at a fixed precision.
 
 `reciprocal` selects the negative exponent and `negative` the sign of the result. Screening
-returns an overflow or a signed zero; otherwise both enclosure endpoints must round to the same
+returns an overflow or a signed zero. Otherwise both enclosure endpoints must round to the same
 finite value. For an IEEE descriptor, every finite result is nearest-even rounding of the exact
 target. Every other outcome is `none`.
 -/
@@ -309,7 +276,7 @@ Integer power of a finite nonzero base with dyadic representation `b`, for the i
 correctly rounded.
 
 Small exact results use `powInt`. A base of magnitude one gives a signed one. Otherwise
-directed enclosures are refined through `workingPrecisions`; if none decides the result,
+directed enclosures are refined through `workingPrecisions`, and if none decides the result,
 `powInt` computes it exactly. `exactBudget` bounds the exact work in the first case.
 -/
 def integerPowerWith {fmt : FloatFormat} (exactBudget : Nat) (base : Model fmt)
@@ -341,24 +308,36 @@ def integerPower? {fmt : FloatFormat} (base exponent : Model fmt) : Option (Mode
         integerPowerWith exactBitBudget base b y.negative parts.1 parts.2
   | _, _ => none
 
+/--
+Refinement budget of the certified search in `pow`: eight refinement attempts after the overflow
+and underflow screens. When the argument grid limits the width, the schedule doubles the working
+precision every second attempt and ends near eight times the first precision. An exact result on
+a rounding boundary generally does not settle, and the budget bounds the time spent before the
+fallback.
+-/
+def certifiedOptions : Transcendentals.Certified.Options := { maxSteps := 8 }
+
 end Power
 
 /--
 Deterministic executable floating-point exponentiation.
 
-The special cases and branch order are explicit:
+The special cases, in branch order:
 
-* `x^(+-0) = 1`, including a NaN base;
+* `x^(+-0) = 1`, including a quiet-NaN base; a signaling-NaN base is quieted
+  (IEEE 754-2019 §9.2.1 and §6.2);
 * `1^y = 1` except for a signaling-NaN exponent;
 * infinite exponents are classified by `|x|` relative to one;
 * signed zero and infinite bases give a zero or an overflow, negative exactly for a negative base
   and an odd integer exponent;
 * a finite nonzero base with a finite integral exponent uses `Power.integerPower?`; for an IEEE
   descriptor, a finite result is correctly rounded;
-* otherwise a finite negative base is invalid, and a positive one uses `exp (y * log x)`.
+* otherwise a finite negative base is invalid, and a positive one uses the certified enclosure
+  search `Transcendentals.Certified.pow`, whose accepted results are correctly rounded, with
+  `exp (y * log x)` as the fallback when the search fails.
 -/
 def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
-  if isZero exponent then
+  if isZero exponent && !isSNaN base then
     posOne fmt
   else if compare base (posOne fmt) = some .eq && !isSNaN exponent then
     posOne fmt
@@ -403,7 +382,10 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
                 | some result => result
                 | none =>
                     if signBit base then invalidResult fmt
-                    else exp (mul exponent (log base))
+                    else
+                      match Transcendentals.Certified.pow base exponent Power.certifiedOptions with
+                      | .ok result => result
+                      | .error _ => exp (mul exponent (log base))
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

@@ -15,10 +15,10 @@ public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 /-!
 # Square-root agreement with Lean's floating-point model
 
-These bridges compare FloatLib square root with the Lean logical model underlying the native
-floating-point types. Canonicalization forgets NaN payloads and signs while retaining all numeric
-bits, including the sign of zero. The model equality does not verify the external machine
-instructions used by compiled native operations.
+These theorems relate FloatLib square root to the Lean logical model underlying the native
+floating-point types. Canonicalization forgets NaN payloads and signs and keeps all numeric bits,
+including the sign of zero. The model equality does not verify the machine instructions used by
+compiled native operations.
 -/
 
 @[expose] public section
@@ -140,8 +140,9 @@ private theorem toModel_canonicalNaN (fmt : FloatFormat) :
   simp [unpack, he', hm]
 
 /--
-Square root agrees on every conventional IEEE input after NaN canonicalization. The equality
-retains signed zeros and covers negative arguments, infinities, and both kinds of NaN.
+Square root agrees with Lean's model on every input of an IEEE format after NaN
+canonicalization. The equality keeps signed zeros and covers negative arguments, infinities, and
+both kinds of NaN.
 -/
 theorem canonicalizeModel_sqrt_eq_model {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) :
@@ -218,12 +219,12 @@ namespace FloatLib.Floats.ExecFloat.Binary
 open Formats.BinaryInterchange
 
 /--
-Lean binary32 square root agrees with FloatLib square root through the existing native
-adapter. Only NaN signs and payloads are discarded by the representation relation.
+Lean binary32 square root agrees with FloatLib square root through the native adapter.
+Canonicalization discards only NaN signs and payloads.
 -/
 theorem toModel_ofFloat32_sqrt (x : Float32) :
-    toModel (ofFloat32 x.sqrt) =
-      Model.canonicalizeModel (Model.sqrt (toModel (ofFloat32 x))) := by
+    toModel (ofFloat32 x.sqrt : Binary32) =
+      Model.canonicalizeModel (Model.sqrt (toModel (ofFloat32 x : Binary32))) := by
   rw [toModel_ofFloat32, toModel_ofFloat32]
   change Model.ofFloat32Model (Float32.Model.sqrt x.toModel) = _
   rw [Float32.Model.sqrt, Model.ofFloat32Model_pack]
@@ -233,12 +234,12 @@ theorem toModel_ofFloat32_sqrt (x : Float32) :
   exact h
 
 /--
-Lean binary64 square root agrees with FloatLib square root through the existing native
-adapter, including signed zeros and exceptional results.
+Lean binary64 square root agrees with FloatLib square root through the native adapter,
+including signed zeros and exceptional results.
 -/
 theorem toModel_ofFloat_sqrt (x : Float) :
-    toModel (ofFloat x.sqrt) =
-      Model.canonicalizeModel (Model.sqrt (toModel (ofFloat x))) := by
+    toModel (ofFloat x.sqrt : Binary64) =
+      Model.canonicalizeModel (Model.sqrt (toModel (ofFloat x : Binary64))) := by
   rw [toModel_ofFloat, toModel_ofFloat]
   change Model.ofFloatModel (Float.Model.sqrt x.toModel) = _
   rw [Float.Model.sqrt, Model.ofFloatModel_pack]
@@ -260,7 +261,7 @@ private theorem toModel_execSqrt {format : FloatFormat} {plan : Configured.Stora
 Configured binary32 square root commutes with export to Lean's native `Float32`, for every
 input word. This uses the installed certified software operation.
 -/
-theorem toFloat32_sqrt (x : ExecFloat.Binary 8 23) :
+theorem toFloat32_sqrt (x : Binary32) :
     toFloat32 (ExecFloat.sqrt x) = (toFloat32 x).sqrt := by
   apply (show Function.Injective Float32.toModel from
     fun ⟨a⟩ ⟨b⟩ h => congrArg Float32.ofModel h)
@@ -272,7 +273,7 @@ theorem toFloat32_sqrt (x : ExecFloat.Binary 8 23) :
 Configured binary64 square root commutes with export to Lean's native `Float`, including
 signed zeros, infinities, and NaNs under Lean's canonical representation.
 -/
-theorem toFloat_sqrt (x : ExecFloat.Binary 11 52) :
+theorem toFloat_sqrt (x : Binary64) :
     toFloat (ExecFloat.sqrt x) = (toFloat x).sqrt := by
   apply (show Function.Injective Float.toModel from
     fun ⟨a⟩ ⟨b⟩ h => congrArg Float.ofModel h)

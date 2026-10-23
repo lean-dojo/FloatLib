@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.ToPro
 /-!
 # Binary conversion of zeros and NaNs
 
-The zero theorem includes all status flags. The NaN field theorems establish the
-stored sign, all-ones exponent and quiet-bit-plus-payload fraction independently
-of any destination width.
+The zero theorem covers every status flag. The NaN field theorems give the stored
+sign, the all-ones exponent and the quiet-bit-plus-payload fraction for every
+destination width.
 -/
 
 @[expose] public section
@@ -40,12 +40,14 @@ open FloatLib.Floats FloatLib.Floats.Formats BinaryInterchange
   cases mode <;> simp [binaryOverflow, not_le.mpr hmid, not_le.mpr hlimit,
     not_lt.mpr hmax.le]
 
-/-- Every decimal zero cohort converts to the source-signed binary zero with clear status. -/
+/--
+Every decimal zero cohort converts to the binary zero of the same sign, with clear status.
+-/
 @[simp] theorem toBinary_zero (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (mode : RoundingMode) (s : Bool) (q : Int) :
     toBinary fmt hfmt mode (.finite s 0 q) =
-      { value := Model.zero fmt s, status := {} } := by
-  simp [toBinary, roundBinaryMagnitude_zero fmt hfmt, binaryStatus, Model.toRat?]
+      { value := Model.zero fmt s, status := {}, ternary := .eq } := by
+  simp [toBinary, roundBinaryMagnitude_zero fmt hfmt, binaryStatus, binaryTernary, Model.toRat?]
 
 /-- NaN conversion preserves the sign bit for every destination width. -/
 @[simp] theorem binaryNaN_signBit (fmt : FloatFormat) (s : Bool) (payload : Nat) :

@@ -14,12 +14,10 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Shared proof for finishing a native-word product
 
-The one-word and two-word multiplication kernels differ in how they form and round an exact
-product. Once they have a rounded `UInt64` significand, however, carry handling, overflow testing,
-and field packing are identical. This module proves that common final stage once.
-
-The theorem is deliberately about the finishing stage only. Product construction remains in each
-backend, where the machine representation and its capacity bounds are materially different.
+This module proves the final stage shared by the one-word and two-word multiplication kernels:
+carry handling, overflow testing and field packing of a rounded `UInt64` significand. Product
+construction stays in each backend, where the machine representation and its capacity bounds
+differ.
 -/
 
 @[expose] public section
@@ -30,9 +28,9 @@ namespace Model.NativeWordProduct
 open NativeSmallWord
 
 /--
-The word-valued finishing function decodes to the optional finishing function.
+Decoding `finishWord` with its decline marker gives `finish?`.
 
-The only condition on the caller's decline marker is that it lies above every valid packed word.
+The caller's decline marker only has to lie above every valid packed word.
 -/
 theorem finishWord_decode
     (fmt : FloatFormat) (hwidth : fmt.bitWidth ≤ 64)
@@ -65,10 +63,10 @@ theorem finishWord_decode
     else
       some <| NativeSmallWord.ofWord <|
         if overflowThreshold < normalizedPosition then decline else packed) =
-      if overflowThreshold < normalizedPosition then
+      (if overflowThreshold < normalizedPosition then
         none
       else
-        some <| NativeSmallWord.ofWord packed
+        some packed).map NativeSmallWord.ofWord
   by_cases hoverflow : overflowThreshold < normalizedPosition
   · simp [hoverflow]
   have hpacked :
@@ -121,8 +119,9 @@ theorem finish_eq
          some <| ofFields fmt sign
            (normalizedPosition - exponentOffset)
            (normalizedMantissa - pow2 fmt.fracWidth)) := by
-  unfold finish?
+  unfold finish? finishWord?
   dsimp only
+  rw [apply_ite (Option.map NativeSmallWord.ofWord), Option.map_none, Option.map_some]
   have hcarry :
       (rounded == carryBit fmt) =
         (roundedNat == 2 ^ (fmt.fracWidth + 1)) := by

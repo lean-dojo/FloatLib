@@ -17,8 +17,8 @@ import Mathlib.Tactic.Ring
 
 The restoring loop returns the floor square root and square remainder of its input.
 The invariant relates the consumed radicand prefix to the partial root at each shift-and-subtract
-step. This direct refinement proof lets callers use the kernel without a runtime certificate
-check, provided the scaled radicand fits the fixed-word bound.
+step. This refinement proof lets callers use the kernel without a runtime certificate check,
+provided the scaled radicand fits the fixed-word bound.
 -/
 
 @[expose] public section
@@ -126,8 +126,7 @@ private theorem rootStep_spec
           expandedBase.lo.toNat + digit.toNat := by
       dsimp only [expandedBase, shiftLeftTwo]
       exact shiftedLow_append_digit state.remainder.lo digit hdigit
-    dsimp only [expanded]
-    unfold UInt128.toNat
+    rw [UInt128.toNat.eq_1 expanded]
     change
       (expandedBase.lo ||| digit).toNat +
           expandedBase.hi.toNat * 2 ^ 64 =
@@ -390,8 +389,7 @@ private theorem rootAndRemainder_rep
 The first `steps` base-four digits reconstruct every radicand below `2^(2 * steps)`, for any digit
 count between 64 and 128.
 
-This covers both the 96- and 113-digit kernels; the two-word square-root kernels use
-`fracWidth + 1` digits.
+This covers both the 96- and 113-digit kernels.
 -/
 private theorem digitsValue_eq_toNat
     (radicand : UInt256) (steps : Nat)
@@ -479,10 +477,10 @@ private theorem digitsValue_eq_toNat
     ring
 
 /--
-The restoring kernel with `steps` digits returns the exact floor root and square remainder for
-every radicand below `2^(2 * steps)`, for any digit count between 64 and 125.
+The restoring kernel with `steps` digits returns the floor root and square remainder for every
+radicand below `2^(2 * steps)`, for any digit count between 64 and 125.
 
-The upper bound keeps the remainder doubled twice inside the two-word state; the two-word
+The upper bound keeps the remainder doubled twice inside the two-word state. The two-word
 square-root kernels use `fracWidth + 1` digits.
 -/
 theorem rootAndRemainder_spec

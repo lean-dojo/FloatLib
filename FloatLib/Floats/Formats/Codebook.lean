@@ -9,6 +9,7 @@ module -- shake: keep-all
 public import FloatLib.Floats.Formats.Codebook.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Codebook.Automation
 public import FloatLib.Floats.Formats.Codebook.Configured.Catalog
+public import FloatLib.Floats.Formats.Codebook.Configured.Display
 public import FloatLib.Floats.Formats.Codebook.Configured.Proof
 public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Proof
@@ -24,14 +25,14 @@ codebook representation, the supplied catalog, proved catalog arithmetic, the co
 
 Import narrower submodules when defining another codebook family internally.
 
-Unlike standardized interchange formats, a codebook is defined by its complete denotation table.
-Consequently, the table itself is the authoritative format specification; FloatLib does not
-silently infer arithmetic from bit width or element type.
+A codebook is defined by its complete denotation table, so the table is the authoritative format
+specification. FloatLib does not infer arithmetic from bit width or element type.
 
 ## Reference
 
 `Codebook.denote` specifies the meaning of every stored word, including exceptional entries.
-`nearestCode` supplies nearest-entry quantization; catalog arithmetic is defined separately.
+`nearestCode` supplies nearest-entry quantization, and catalog arithmetic lives in
+`Codebook.Arithmetic`.
 -/
 
 @[expose] public section

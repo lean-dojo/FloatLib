@@ -13,13 +13,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
 /-!
 # Wide-limb square-root runtime
 
-Positive normal inputs are decoded directly from their stored limbs. Their significands are
+Positive normal inputs are decoded from their stored limbs. Their significands are
 scaled by `fracWidth` or `fracWidth + 1` bits and passed to a checked increasing-precision integer
 square root. The exact remainder determines rounding, including carry into the exponent.
 
 The normal path has no fraction-width bound and does not require the bias to exceed the
 precision. Zero, subnormal, negative, and exceptional inputs use the reference operation.
-`Sqrt.Proof` establishes equality with that operation on every eligible stored value.
+`Sqrt.Proof` proves equality with that operation on every eligible stored value.
 -/
 
 @[expose] public section
@@ -31,14 +31,14 @@ open FloatLib.Numerics
 /-- Read the normal significand without allocating a separate array of fraction limbs. -/
 @[inline] def sqrtMantissa {fmt : FloatFormat} (x : Value fmt) : Nat :=
   let implicitBit := 1 <<< fmt.fracWidth
-  implicitBit + (x.1.toNatImpl &&& (implicitBit - 1))
+  implicitBit + (LimbArray.Internal.toNat x.1 &&& (implicitBit - 1))
 
 /--
 Square root of normal scalar fields, with remainder rounding and a possible exponent carry.
 
 For the normal-input contract, the scaled radicand has either `2 * fracWidth + 1` or
-`2 * fracWidth + 2` bits. Its square root therefore needs no discarded integer bits: the exact
-remainder is below the rounding midpoint precisely when it is at most the integer root.
+`2 * fracWidth + 2` bits. Its square root therefore needs no discarded integer bits, and the
+exact remainder is below the rounding midpoint exactly when it is at most the integer root.
 -/
 def sqrtNormalValue (fmt : FloatFormat) (exponent mantissa : Nat) : Value fmt :=
   let shift := fmt.fracWidth + (exponent + fmt.bias) % 2

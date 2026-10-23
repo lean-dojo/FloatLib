@@ -8,10 +8,14 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
+public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
+import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
+import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
+import FloatLib.Numerics.ShiftRightJam.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 import Mathlib.Tactic.NormNum
 
@@ -164,38 +168,36 @@ private theorem roundMantissa_lt_eq_le (magnitude width leading : UInt64) :
 /--
 The machine-word rounder computes the natural-number normal specification.
 
-The magnitude is nonzero and the scale is bounded by the exponent range, so no intermediate
-position, shift, or increment wraps around the word.
+With a nonzero magnitude and a scale bounded by the exponent range, no intermediate position,
+shift or increment wraps around the word.
 -/
 theorem roundMagnitude_eq_normalSpec
     (fmt : FloatFormat)
     (hwidth : fmt.bitWidth ≤ 64)
     (hexpWidth : fmt.expWidth ≤ 30)
     (hfracWidth : fmt.fracWidth ≤ 61)
-    (sign : Bool) (magnitude scale : UInt64)
+    (offset : UInt64) (sign : Bool) (magnitude scale : UInt64)
     (hmagnitude : magnitude ≠ 0)
-    (hscale : scale.toNat < 2 ^ 31) :
-    roundMagnitude? fmt sign magnitude scale =
-      normalSpec? fmt sign magnitude.toNat
-        (scale.toNat + (fmt.exponentBias + fmt.fracWidth - 1)) := by
+    (hscale : scale.toNat + offset.toNat < 2 ^ 62) :
+    roundMagnitude? fmt offset sign magnitude scale =
+      normalSpec? fmt sign magnitude.toNat (scale.toNat + offset.toNat) := by
   let magnitudeNat := magnitude.toNat
   have hmagnitudeNe : magnitudeNat ≠ 0 := by
     simpa [magnitudeNat, ← UInt64.toNat_inj] using hmagnitude
   have hmagnitudeFit : magnitudeNat < 2 ^ 64 := UInt64.toNat_lt_size magnitude
   have hbias := bias_lt fmt hexpWidth
   have hexponentBias := exponentBias_lt fmt hexpWidth
-  have hoffset := alignOffset_toNat fmt hexpWidth hfracWidth
   let leading := magnitude.log2
   have hleading : leading.toNat = magnitudeNat.log2 :=
     FloatLib.Numerics.FixedWord.log2_toNat magnitude
   have hleadingUpper : leading.toNat < 64 := by
     rw [hleading]
     exact (Nat.log2_lt hmagnitudeNe).2 hmagnitudeFit
-  let positionNat := magnitudeNat.log2 + (scale.toNat + (fmt.exponentBias + fmt.fracWidth - 1))
-  let position := leading + scale + alignOffset fmt
+  let positionNat := magnitudeNat.log2 + (scale.toNat + offset.toNat)
+  let position := leading + scale + offset
   have hposition : position.toNat = positionNat := by
     unfold position positionNat
-    rw [UInt64.toNat_add, UInt64.toNat_add, hleading, hoffset]
+    rw [UInt64.toNat_add, UInt64.toNat_add, hleading]
     have hinner : magnitudeNat.log2 + scale.toNat < 2 ^ 64 := by
       norm_num at hscale ⊢
       omega
@@ -219,10 +221,9 @@ theorem roundMagnitude_eq_normalSpec
   simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   rw [roundMantissa_lt_eq_le]
   rw [show magnitude.log2 = leading by rfl,
-    show leading + scale + alignOffset fmt = position by rfl,
+    show leading + scale + offset = position by rfl,
     show magnitude.toNat = magnitudeNat by rfl,
-    show magnitudeNat.log2 + (scale.toNat + (fmt.exponentBias + fmt.fracWidth - 1)) =
-      positionNat by rfl]
+    show magnitudeNat.log2 + (scale.toNat + offset.toNat) = positionNat by rfl]
   by_cases hsubnormal : positionNat < fmt.bias + 2 * fmt.fracWidth - 1
   · have hsubnormalWord :
         position < (biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 1) := by
@@ -320,19 +321,18 @@ theorem roundMagnitude_refines
     (hwidth : fmt.bitWidth ≤ 64)
     (hexpWidth : fmt.expWidth ≤ 30)
     (hfracWidth : fmt.fracWidth ≤ 61)
-    (sign : Bool) (magnitude scale : UInt64)
+    (offset : UInt64) (sign : Bool) (magnitude scale : UInt64)
     (hmagnitude : magnitude ≠ 0)
-    (hscale : scale.toNat < 2 ^ 31)
+    (hscale : scale.toNat + offset.toNat < 2 ^ 62)
     (result : Model fmt)
-    (hresult : roundMagnitude? fmt sign magnitude scale = some result) :
+    (hresult : roundMagnitude? fmt offset sign magnitude scale = some result) :
     result =
-      FiniteScaleAdd.roundMagnitude fmt (FiniteKernel.finiteScaleOffset fmt)
-        sign magnitude.toNat scale.toNat := by
+      FiniteScaleAdd.roundMagnitude fmt offset.toNat sign magnitude.toNat scale.toNat := by
   rw [roundMagnitude_eq_normalSpec fmt hwidth hexpWidth hfracWidth
-    sign magnitude scale hmagnitude hscale] at hresult
+    offset sign magnitude scale hmagnitude hscale] at hresult
   have hmagnitudeNe : magnitude.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hmagnitude
-  unfold FiniteScaleAdd.roundMagnitude FiniteKernel.finiteScaleOffset
+  unfold FiniteScaleAdd.roundMagnitude
   exact normalSpec_refines fmt sign magnitude.toNat _ hmagnitudeNe result hresult
 
 /-! ## Signed magnitudes and alignment -/
@@ -347,14 +347,14 @@ theorem roundAligned_refines
     (hwidth : fmt.bitWidth ≤ 64)
     (hexpWidth : fmt.expWidth ≤ 30)
     (hfracWidth : fmt.fracWidth ≤ 61)
-    (leftSign rightSign : Bool) (left right scale : UInt64)
+    (offset : UInt64) (leftSign rightSign : Bool) (left right scale : UInt64)
     (hleft : left ≠ 0) (hright : right ≠ 0)
     (hsum : left.toNat + right.toNat < 2 ^ 64)
-    (hscale : scale.toNat < 2 ^ 31)
+    (hscale : scale.toNat + offset.toNat < 2 ^ 62)
     (result : Model fmt)
-    (hresult : roundAligned? fmt leftSign rightSign left right scale = some result) :
+    (hresult : roundAligned? fmt offset leftSign rightSign left right scale = some result) :
     result =
-      FiniteScaleAdd.roundMagnitudes fmt (FiniteKernel.finiteScaleOffset fmt)
+      FiniteScaleAdd.roundMagnitudes fmt offset.toNat
         leftSign rightSign left.toNat right.toNat scale.toNat := by
   have hleftNat := toNat_ne_zero_of_ne_zero hleft
   have hrightNat := toNat_ne_zero_of_ne_zero hright
@@ -370,8 +370,8 @@ theorem roundAligned_refines
       have hnat := congrArg UInt64.toNat h
       rw [hadd, UInt64.toNat_zero] at hnat
       omega
-    rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth leftSign (left + right) scale
-      haddNe hscale result hresult, hadd]
+    rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth offset leftSign (left + right)
+      scale haddNe hscale result hresult, hadd]
   · rw [ite_eq_right (by simpa using hsign)] at hresult
     rw [ite_eq_right (by simpa using hsign)]
     by_cases heq : left = right
@@ -395,8 +395,8 @@ theorem roundAligned_refines
           have hnat := congrArg UInt64.toNat h
           rw [hsub, UInt64.toNat_zero] at hnat
           omega
-        rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth rightSign (right - left)
-          scale hsubNe hscale result hresult, hsub]
+        rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth offset rightSign
+          (right - left) scale hsubNe hscale result hresult, hsub]
       · have hltNat : ¬left.toNat < right.toNat := by
           intro h
           exact hlt (UInt64.lt_iff_toNat_lt.mpr h)
@@ -412,8 +412,8 @@ theorem roundAligned_refines
           have hnat := congrArg UInt64.toNat h
           rw [hsub, UInt64.toNat_zero] at hnat
           omega
-        rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth leftSign (left - right)
-          scale hsubNe hscale result hresult, hsub]
+        rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth offset leftSign
+          (left - right) scale hsubNe hscale result hresult, hsub]
 
 /-- The machine-word finite scale is the compact finite scale of the exact kernel. -/
 theorem finiteScale_toNat_eq_scale (exponent : UInt64) :
@@ -453,6 +453,243 @@ private theorem shifted_toNat (fmt : FloatFormat) (hfracWidth : fmt.fracWidth �
       (hfit.trans (by norm_num))
   rwa [UInt64.ofNat_toNat] at hshiftNat
 
+
+/-! ## Sticky alignment for large scale gaps -/
+
+/-- With a normal larger significand and a small enough lower operand, the exact aligned magnitude
+has its leading bit at least at `width + gap - 1`. -/
+theorem alignedMagnitude_lower (width high low gap : Nat) (sameSign : Bool)
+    (hhighLower : 2 ^ width ≤ high) (hlow : low ≤ 2 ^ (width + gap - 1)) (hgap : 3 ≤ gap) :
+    2 ^ (width + gap - 1) ≤
+      (if sameSign then high * 2 ^ gap + low else high * 2 ^ gap - low) := by
+  have hpowGap : 2 ^ (width + gap) = 2 ^ width * 2 ^ gap := Nat.pow_add _ _ _
+  have hhighGap : 2 ^ (width + gap) ≤ high * 2 ^ gap := by
+    rw [hpowGap]
+    exact Nat.mul_le_mul_right _ hhighLower
+  have hhalf : 2 ^ (width + gap) = 2 ^ (width + gap - 1) * 2 := by
+    rw [← Nat.pow_succ]
+    congr 1
+    omega
+  split <;> omega
+
+end Model.NativeSmallWordAdd
+
+/--
+With a normal larger significand, three guard positions and a sticky bit round like the exact sum:
+the exact magnitude keeps at least `fracWidth + 2` bits above the jammed positions.
+-/
+theorem Model.FiniteScaleAdd.roundMagnitude_shiftRightJam (fmt : FloatFormat) (roundOffset : Nat)
+    (highSign lowSign : Bool) (high low gap scale : Nat)
+    (hhighLower : 2 ^ fmt.fracWidth ≤ high) (hlow : low ≤ 2 ^ (fmt.fracWidth + gap - 1))
+    (hgap : 3 ≤ gap) :
+    FiniteScaleAdd.roundMagnitude fmt roundOffset highSign
+        (Numerics.shiftRightJam
+          (if highSign == lowSign then high * 2 ^ gap + low else high * 2 ^ gap - low) (gap - 3))
+        (scale + (gap - 3)) =
+      FiniteScaleAdd.roundMagnitudes fmt roundOffset highSign lowSign (high <<< gap) low scale := by
+  have hbound := NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth high low gap
+    (highSign == lowSign) hhighLower hlow hgap
+  have hround (magnitude : Nat) (hbound : 2 ^ (fmt.fracWidth + gap - 1) ≤ magnitude) :
+      FiniteScaleAdd.roundMagnitude fmt roundOffset highSign
+          (Numerics.shiftRightJam magnitude (gap - 3)) (scale + (gap - 3)) =
+        FiniteScaleAdd.roundMagnitude fmt roundOffset highSign magnitude scale := by
+    have hpositive := (Nat.two_pow_pos _).trans_le hbound
+    have hleading : gap - 3 + fmt.fracWidth + 2 ≤ magnitude.log2 := by
+      have := (Nat.le_log2 hpositive.ne').2 hbound
+      omega
+    unfold FiniteScaleAdd.roundMagnitude
+    rw [show scale + (gap - 3) + roundOffset = (scale + roundOffset) + (gap - 3) by omega]
+    exact FiniteProductRound.round_shiftRightJam fmt highSign magnitude
+      (scale + roundOffset) (gap - 3) hleading
+  rw [hround _ hbound, Nat.shiftLeft_eq]
+  have hlowLt : low < high * 2 ^ gap := by
+    have := NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth high low gap false
+      hhighLower hlow hgap
+    simp only [Bool.false_eq_true, ite_false] at this
+    have hpos : 0 < 2 ^ (fmt.fracWidth + gap - 1) := Nat.two_pow_pos _
+    omega
+  by_cases hsign : highSign = lowSign
+  · subst hsign
+    simp only [FiniteScaleAdd.roundMagnitudes, beq_self_eq_true, ite_true]
+  · have hsignBeq : (highSign == lowSign) = false := by simpa using hsign
+    simp only [hsignBeq, Bool.false_eq_true, ite_false, FiniteScaleAdd.roundMagnitudes,
+      beq_iff_eq, Nat.ne_of_gt hlowLt, Nat.not_lt_of_ge hlowLt.le]
+
+namespace Model.NativeSmallWordAdd
+
+open NativeSmallWord
+
+/-- The machine-word sticky magnitude is the natural-number jam of the exact aligned sum. -/
+private theorem jammedMagnitude_toNat (sameSign : Bool) (high low gap : UInt64)
+    (hhigh : high.toNat < 2 ^ 60) (hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat)
+    (hlowNe : low.toNat ≠ 0) (hgap : 3 ≤ gap.toNat) :
+    (jammedMagnitude sameSign high low gap).toNat =
+      Numerics.shiftRightJam
+        (if sameSign then high.toNat * 2 ^ gap.toNat + low.toNat
+          else high.toNat * 2 ^ gap.toNat - low.toNat)
+        (gap.toNat - 3) := by
+  have hdiscard : (gap - 3).toNat = gap.toNat - 3 :=
+    UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by simpa using hgap))
+  set d := gap.toNat - 3 with hd
+  have hlowerNat : (if gap - 3 < 64 then low >>> (gap - 3) else 0).toNat = low.toNat / 2 ^ d := by
+    split
+    · rename_i hsmall
+      have hsmallNat : d < 64 := by
+        have := UInt64.lt_iff_toNat_lt.mp hsmall
+        rw [hdiscard] at this
+        simpa using this
+      rw [UInt64.toNat_shiftRight, hdiscard, Nat.shiftRight_eq_div_pow]
+      congr 2
+      exact Nat.mod_eq_of_lt hsmallNat
+    · rename_i hlarge
+      have hlargeNat : 64 ≤ d := by
+        have := UInt64.not_lt.mp hlarge
+        have h2 := UInt64.le_iff_toNat_le.mp this
+        rw [hdiscard] at h2
+        simpa using h2
+      rw [UInt64.toNat_zero, eq_comm, Nat.div_eq_zero_iff_lt (Nat.two_pow_pos _)]
+      exact low.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) hlargeNat)
+  have hexact :
+      (decide (gap - 3 < 64) &&
+          (if gap - 3 < 64 then low >>> (gap - 3) else 0) <<< (gap - 3) == low) =
+        decide (low.toNat % 2 ^ d = 0) := by
+    by_cases hsmall : gap - 3 < 64
+    · have hsmallNat : d < 64 := by
+        have := UInt64.lt_iff_toNat_lt.mp hsmall
+        rw [hdiscard] at this
+        simpa using this
+      simp only [hsmall, decide_true, ite_true, Bool.true_and]
+      apply Bool.eq_iff_iff.mpr
+      rw [beq_iff_eq, decide_eq_true_eq, ← UInt64.toNat_inj, UInt64.toNat_shiftLeft,
+        UInt64.toNat_shiftRight, hdiscard, Nat.mod_eq_of_lt (show d < 64 from hsmallNat),
+        Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq]
+      have hle : low.toNat / 2 ^ d * 2 ^ d ≤ low.toNat := Nat.div_mul_le_self _ _
+      rw [Nat.mod_eq_of_lt (hle.trans_lt low.toNat_lt)]
+      have := Nat.div_add_mod' low.toNat (2 ^ d)
+      omega
+    · have hlargeNat : 64 ≤ d := by
+        have := UInt64.not_lt.mp hsmall
+        have h2 := UInt64.le_iff_toNat_le.mp this
+        rw [hdiscard] at h2
+        simpa using h2
+      simp only [hsmall, decide_false, Bool.false_and]
+      symm
+      rw [decide_eq_false_iff_not, Nat.mod_eq_of_lt
+        (low.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) hlargeNat))]
+      exact hlowNe
+  have hupper : (high <<< 3).toNat = high.toNat * 2 ^ 3 := by
+    have hfit : high.toNat <<< 3 < 2 ^ 64 := by
+      rw [Nat.shiftLeft_eq]
+      calc high.toNat * 2 ^ 3 < 2 ^ 60 * 2 ^ 3 :=
+            Nat.mul_lt_mul_of_pos_right hhigh (by decide)
+        _ ≤ 2 ^ 64 := by norm_num
+    have h := FloatLib.Numerics.FixedWord.shiftLeft_toNat high 3 (by decide) hfit
+    simpa [Nat.shiftLeft_eq] using h
+  have hgapSplit : high.toNat * 2 ^ gap.toNat = high.toNat * 2 ^ 3 * 2 ^ d := by
+    rw [Nat.mul_assoc, ← Nat.pow_add]
+    congr 2
+    omega
+  have hlowSplit : low.toNat < high.toNat * 2 ^ 3 * 2 ^ d := by
+    rw [← hgapSplit]
+    exact hlowLt
+  have hquot : low.toNat / 2 ^ d < high.toNat * 2 ^ 3 :=
+    Nat.div_lt_of_lt_mul (by rwa [Nat.mul_comm] at hlowSplit)
+  unfold jammedMagnitude FloatLib.Numerics.FixedWord.jamCombine
+  simp only [hexact]
+  rw [hgapSplit]
+  have hupperFit : high.toNat * 2 ^ 3 < 2 ^ 63 := by
+    calc high.toNat * 2 ^ 3 < 2 ^ 60 * 2 ^ 3 :=
+          Nat.mul_lt_mul_of_pos_right hhigh (by decide)
+      _ = 2 ^ 63 := by norm_num
+  cases sameSign
+  · simp only [Bool.false_eq_true, ite_false]
+    rw [Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hlowSplit.le]
+    have hsubLe : (if gap - 3 < 64 then low >>> (gap - 3) else 0) ≤ high <<< 3 := by
+      apply UInt64.le_iff_toNat_le.mpr
+      rw [hlowerNat, hupper]
+      omega
+    by_cases hz : low.toNat % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true]
+      rw [UInt64.toNat_sub_of_le _ _ hsubLe, hupper, hlowerNat]
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      have hone : (1 : UInt64) ≤ high <<< 3 - (if gap - 3 < 64 then low >>> (gap - 3) else 0) := by
+        apply UInt64.le_iff_toNat_le.mpr
+        rw [UInt64.toNat_sub_of_le _ _ hsubLe, hupper, hlowerNat]
+        simp only [UInt64.reduceToNat]
+        omega
+      rw [UInt64.toNat_or, UInt64.toNat_sub_of_le _ _ hone, UInt64.toNat_sub_of_le _ _ hsubLe,
+        hupper, hlowerNat]
+      rfl
+  · simp only [ite_true]
+    rw [Numerics.shiftRightJam_add_mul_two_pow]
+    have hsumFit : high.toNat * 2 ^ 3 + low.toNat / 2 ^ d < 2 ^ 64 := by omega
+    have hsum : (high <<< 3 + (if gap - 3 < 64 then low >>> (gap - 3) else 0)).toNat =
+        high.toNat * 2 ^ 3 + low.toNat / 2 ^ d := by
+      rw [UInt64.toNat_add, hupper, hlowerNat]
+      exact Nat.mod_eq_of_lt hsumFit
+    by_cases hz : low.toNat % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true]
+      exact hsum
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      rw [UInt64.toNat_or, hsum]
+      rfl
+
+/-- An accepted sticky alignment is the exact signed-magnitude combination of the same fields. -/
+theorem roundJammed_refines
+    (fmt : FloatFormat)
+    (hwidth : fmt.bitWidth ≤ 64)
+    (hexpWidth : fmt.expWidth ≤ 30)
+    (hfracWidth : fmt.fracWidth ≤ 61)
+    (offset : UInt64) (highSign lowSign : Bool) (high low gap scale : UInt64)
+    (hlow : low.toNat ≤ 2 ^ (fmt.fracWidth + gap.toNat - 1))
+    (hlowNe : low ≠ 0)
+    (hscale : scale.toNat + gap.toNat + offset.toNat < 2 ^ 62)
+    (result : Model fmt)
+    (hresult : roundJammed? fmt offset highSign lowSign high low gap scale = some result) :
+    result =
+      FiniteScaleAdd.roundMagnitudes fmt offset.toNat
+        highSign lowSign (high.toNat <<< gap.toNat) low.toNat scale.toNat := by
+  unfold roundJammed? at hresult
+  split at hresult
+  · rename_i hguard
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at hguard
+    obtain ⟨⟨hhidden, hhighLt⟩, hgap⟩ := hguard
+    have hhighLower : 2 ^ fmt.fracWidth ≤ high.toNat := by
+      have := UInt64.le_iff_toNat_le.mp hhidden
+      rwa [NativeSmallWord.hiddenBit_toNat_of_width fmt hwidth] at this
+    have hhigh : high.toNat < 2 ^ 60 := by simpa using UInt64.lt_iff_toNat_lt.mp hhighLt
+    have hgapNat : 3 ≤ gap.toNat := by simpa using UInt64.le_iff_toNat_le.mp hgap
+    have hlowNeNat := toNat_ne_zero_of_ne_zero hlowNe
+    have hbelow := alignedMagnitude_lower fmt.fracWidth high.toNat low.toNat gap.toNat false
+      hhighLower hlow hgapNat
+    have hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat := by
+      simp only [Bool.false_eq_true, ite_false] at hbelow
+      have hpos : 0 < 2 ^ (fmt.fracWidth + gap.toNat - 1) := Nat.two_pow_pos _
+      omega
+    have hmag := jammedMagnitude_toNat (highSign == lowSign) high low gap hhigh hlowLt
+      hlowNeNat hgapNat
+    have hdiscard : (gap - 3).toNat = gap.toNat - 3 :=
+      UInt64.toNat_sub_of_le _ _ hgap
+    have hscaleSum : (scale + (gap - 3)).toNat = scale.toNat + (gap.toNat - 3) := by
+      rw [UInt64.toNat_add, hdiscard]
+      exact Nat.mod_eq_of_lt (by omega)
+    have hmagNe : jammedMagnitude (highSign == lowSign) high low gap ≠ 0 := by
+      intro h
+      have hzero := congrArg UInt64.toNat h
+      rw [hmag, UInt64.toNat_zero] at hzero
+      refine Numerics.shiftRightJam_ne_zero _ _ ?_ hzero
+      exact (Nat.pow_le_pow_right (by decide) (by omega)).trans
+        (alignedMagnitude_lower fmt.fracWidth high.toNat low.toNat gap.toNat _ hhighLower hlow
+          hgapNat)
+    have hscaleBound : (scale + (gap - 3)).toNat + offset.toNat < 2 ^ 62 := by
+      rw [hscaleSum]
+      omega
+    rw [roundMagnitude_refines fmt hwidth hexpWidth hfracWidth offset highSign _ _ hmagNe
+      hscaleBound result hresult, hmag, hscaleSum]
+    exact FiniteScaleAdd.roundMagnitude_shiftRightJam fmt _ highSign lowSign high.toNat low.toNat
+      gap.toNat scale.toNat hhighLower hlow hgapNat
+  · simp at hresult
+
 private theorem addFields_eq_shift_alignment (fmt : FloatFormat)
     (xSign : Bool) (xExponent xMantissa : UInt64)
     (ySign : Bool) (yExponent yMantissa : UInt64) :
@@ -465,15 +702,15 @@ private theorem addFields_eq_shift_alignment (fmt : FloatFormat)
         if xScale ≤ yScale then
           let shift := yScale - xScale
           if shift ≤ shiftLimit fmt then
-            roundAligned? fmt xSign ySign xMantissa (yMantissa <<< shift) xScale
+            roundAligned? fmt (alignOffset fmt) xSign ySign xMantissa (yMantissa <<< shift) xScale
           else
-            none
+            roundJammed? fmt (alignOffset fmt) ySign xSign yMantissa xMantissa shift xScale
         else
           let shift := xScale - yScale
           if shift ≤ shiftLimit fmt then
-            roundAligned? fmt xSign ySign (xMantissa <<< shift) yMantissa yScale
+            roundAligned? fmt (alignOffset fmt) xSign ySign (xMantissa <<< shift) yMantissa yScale
           else
-            none) := by
+            roundJammed? fmt (alignOffset fmt) xSign ySign xMantissa yMantissa shift yScale) := by
   unfold addFields?
   split
   · rfl
@@ -523,6 +760,13 @@ theorem addFields_refines
   have hxScaleLt := finiteScale_toNat_lt fmt hexpWidth xExponent hxExponent
   have hyScaleLt := finiteScale_toNat_lt fmt hexpWidth yExponent hyExponent
   have hlimit := shiftLimit_toNat fmt hfracWidth
+  have hoffset : (alignOffset fmt).toNat = FiniteKernel.finiteScaleOffset fmt :=
+    alignOffset_toNat fmt hexpWidth hfracWidth
+  have hoffsetLt : (alignOffset fmt).toNat < 2 ^ 31 := by
+    have := exponentBias_lt fmt hexpWidth
+    rw [alignOffset_toNat fmt hexpWidth hfracWidth]
+    norm_num at this ⊢
+    omega
   unfold FiniteKernel.addFields
   rw [ite_eq_left hieee]
   unfold FiniteScaleAdd.roundSum
@@ -557,11 +801,31 @@ theorem addFields_refines
         rw [hshifted]
         norm_num at hxMantissa62 hshiftedLt ⊢
         omega
-      rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth xSign ySign xMantissa
-        (yMantissa <<< (yScale - xScale)) xScale hxNe hshiftedNe hsum hxScaleLt result hresult,
-        hshifted, hshiftNat, hxScale]
+      have hscaleBound : xScale.toNat + (alignOffset fmt).toNat < 2 ^ 62 := by
+        norm_num at hxScaleLt hoffsetLt ⊢
+        omega
+      rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth (alignOffset fmt) xSign ySign
+        xMantissa (yMantissa <<< (yScale - xScale)) xScale hxNe hshiftedNe hsum hscaleBound
+        result hresult, hshifted, hshiftNat, hxScale, hoffset]
     · rw [ite_eq_right hshift] at hresult
-      exact absurd hresult (by simp)
+      have hshiftNat :
+          (yScale - xScale).toNat =
+            FiniteKernel.scale yExponent.toNat - FiniteKernel.scale xExponent.toNat := by
+        rw [UInt64.toNat_sub_of_le _ _ hle, hxScale, hyScale]
+      have hscaleBound :
+          xScale.toNat + (yScale - xScale).toNat + (alignOffset fmt).toNat < 2 ^ 62 := by
+        rw [UInt64.toNat_sub_of_le _ _ hle]
+        have := UInt64.le_iff_toNat_le.mp hle
+        norm_num at hyScaleLt hoffsetLt ⊢
+        omega
+      have hlowBound :
+          xMantissa.toNat ≤ 2 ^ (fmt.fracWidth + (yScale - xScale).toNat - 1) := by
+        have hgt := UInt64.lt_iff_toNat_lt.mp (UInt64.not_le.mp hshift)
+        rw [hlimit] at hgt
+        exact hxMantissa.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
+      rw [FiniteScaleAdd.roundMagnitudes_comm, roundJammed_refines fmt hwidth hexpWidth hfracWidth
+        (alignOffset fmt) ySign xSign yMantissa xMantissa (yScale - xScale) xScale hlowBound hxNe
+        hscaleBound result hresult, hshiftNat, hxScale, hoffset]
   · have hleNat :
         ¬FiniteKernel.scale xExponent.toNat ≤ FiniteKernel.scale yExponent.toNat := by
       intro h
@@ -595,11 +859,31 @@ theorem addFields_refines
         rw [hshifted]
         norm_num at hyMantissa62 hshiftedLt ⊢
         omega
-      rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth xSign ySign
-        (xMantissa <<< (xScale - yScale)) yMantissa yScale hshiftedNe hyNe hsum hyScaleLt
-        result hresult, hshifted, hshiftNat, hyScale]
+      have hscaleBound : yScale.toNat + (alignOffset fmt).toNat < 2 ^ 62 := by
+        norm_num at hyScaleLt hoffsetLt ⊢
+        omega
+      rw [roundAligned_refines fmt hwidth hexpWidth hfracWidth (alignOffset fmt) xSign ySign
+        (xMantissa <<< (xScale - yScale)) yMantissa yScale hshiftedNe hyNe hsum hscaleBound
+        result hresult, hshifted, hshiftNat, hyScale, hoffset]
     · rw [ite_eq_right hshift] at hresult
-      exact absurd hresult (by simp)
+      have hshiftNat :
+          (xScale - yScale).toNat =
+            FiniteKernel.scale xExponent.toNat - FiniteKernel.scale yExponent.toNat := by
+        rw [UInt64.toNat_sub_of_le _ _ hlt, hxScale, hyScale]
+      have hscaleBound :
+          yScale.toNat + (xScale - yScale).toNat + (alignOffset fmt).toNat < 2 ^ 62 := by
+        rw [UInt64.toNat_sub_of_le _ _ hlt]
+        have := UInt64.le_iff_toNat_le.mp hlt
+        norm_num at hxScaleLt hoffsetLt ⊢
+        omega
+      have hlowBound :
+          yMantissa.toNat ≤ 2 ^ (fmt.fracWidth + (xScale - yScale).toNat - 1) := by
+        have hgt := UInt64.lt_iff_toNat_lt.mp (UInt64.not_le.mp hshift)
+        rw [hlimit] at hgt
+        exact hyMantissa.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
+      rw [roundJammed_refines fmt hwidth hexpWidth hfracWidth (alignOffset fmt) xSign ySign
+        xMantissa yMantissa (xScale - yScale) yScale hlowBound hyNe hscaleBound result hresult,
+        hshiftNat, hyScale, hoffset]
 
 /-! ## Storage-word decoding -/
 
@@ -664,11 +948,9 @@ theorem finiteMantissa_toNat_lt {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 6
 /--
 An accepted one-word addition, or subtraction, is the exact compact finite kernel's answer.
 
-`negateRight` selects subtraction: the kernel toggled the right sign in machine words, and the
-theorem states the corresponding claim about `neg y`. Every decline is outside the statement; the
-dispatcher uses the exact implementation for it. The hypothesis is the kernel's own capacity
-contract `Eligible`: IEEE encoding, at most 64 total bits, at most 30 exponent bits, and at most
-61 fraction bits.
+With `negateRight` set the kernel toggles the right sign in machine words, and the theorem states
+the claim for `neg y`. Declines fall outside the statement, and the dispatcher handles them with
+the exact implementation. Only the capacity contract `Eligible` is assumed of the format.
 -/
 theorem addFinite_refines {fmt : FloatFormat}
     (heligible : Eligible fmt)
@@ -705,6 +987,83 @@ theorem addFinite_refines {fmt : FloatFormat}
     exact congrArg some
       (addFields_refines fmt hieee hwidth hexpWidth hfracWidth _ _ _ _ _ _
         hxExponent hyExponent hxMantissa hyMantissa result hresult).symm
+
+/-! ## Storage-word entry points -/
+
+private theorem model_eq_of_toNatBits {fmt : FloatFormat} {x y : Model fmt}
+    (h : x.toNatBits = y.toNatBits) : x = y := by
+  rw [← ofNatBits_toNatBits x, ← ofNatBits_toNatBits y, h]
+
+theorem ofWord_zeroWord {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64) (sign : Bool) :
+    ofWord (fmt := fmt) (zeroWord fmt sign) = zero fmt sign := by
+  unfold zeroWord zero
+  by_cases h : (sign && fmt.supportsSignedZero) = true
+  · simp only [h, ite_true]
+    apply model_eq_of_toNatBits
+    have hfield : fmt.expWidth + fmt.fracWidth < 64 := by
+      unfold FloatFormat.bitWidth at hwidth; omega
+    have hshift : ((1 : UInt64) <<< UInt64.ofNat (fmt.expWidth + fmt.fracWidth)).toNat =
+        2 ^ (fmt.expWidth + fmt.fracWidth) :=
+      FloatLib.Numerics.FixedWord.uint64_powTwo_toNat _ hfield
+    rw [toNatBits_ofWord]
+    simp only [packFields, ite_true, UInt64.zero_and, UInt64.zero_shiftLeft, UInt64.or_zero]
+    rw [hshift]
+    simp only [negZero, Model.toNatBits, FloatFormat.signMask, FloatFormat.ofWordNat,
+      FloatFormat.signMaskNat, FloatFormat.signBitIndex, FloatFormat.bitWidth,
+      Model.ofBits, BitVec.toNat_ofNat]
+    have hlt : 2 ^ (fmt.expWidth + fmt.fracWidth) < 2 ^ (1 + fmt.expWidth + fmt.fracWidth) :=
+      Nat.pow_lt_pow_right (by decide) (by omega)
+    rw [Nat.mod_eq_of_lt hlt, show 1 + fmt.expWidth + fmt.fracWidth - 1 =
+      fmt.expWidth + fmt.fracWidth by omega, Nat.mod_eq_of_lt hlt]
+  · simp only [h]
+    apply model_eq_of_toNatBits
+    rw [toNatBits_ofWord]
+    simp [posZero]
+
+theorem roundMagnitude?_eq_map (fmt : FloatFormat) (offset : UInt64) (sign : Bool)
+    (magnitude scale : UInt64) :
+    roundMagnitude? fmt offset sign magnitude scale =
+      (roundMagnitudeWord? fmt offset sign magnitude scale).map ofWord := by
+  simp only [roundMagnitude?, roundMagnitudeWord?]
+  split
+  · rfl
+  · rfl
+
+theorem roundAligned?_eq_map {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64)
+    (offset : UInt64) (leftSign rightSign : Bool) (left right scale : UInt64) :
+    roundAligned? fmt offset leftSign rightSign left right scale =
+      (roundAlignedWord? fmt offset leftSign rightSign left right scale).map ofWord := by
+  simp only [roundAligned?, roundAlignedWord?]
+  split_ifs <;> simp [roundMagnitude?_eq_map, ofWord_zeroWord hwidth]
+
+theorem roundJammed?_eq_map (fmt : FloatFormat) (offset : UInt64) (highSign lowSign : Bool)
+    (high low gap scale : UInt64) :
+    roundJammed? fmt offset highSign lowSign high low gap scale =
+      (roundJammedWord? fmt offset highSign lowSign high low gap scale).map ofWord := by
+  simp only [roundJammed?, roundJammedWord?]
+  split
+  · exact roundMagnitude?_eq_map _ _ _ _ _
+  · rfl
+
+theorem addFields?_eq_map {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64)
+    (xSign : Bool) (xExponent xMantissa : UInt64)
+    (ySign : Bool) (yExponent yMantissa : UInt64) :
+    addFields? fmt xSign xExponent xMantissa ySign yExponent yMantissa =
+      (addFieldsWord? fmt xSign xExponent xMantissa ySign yExponent yMantissa).map ofWord := by
+  simp only [addFields?, addFieldsWord?]
+  split_ifs <;> simp [roundAligned?_eq_map hwidth, roundJammed?_eq_map]
+
+/--
+On storage words below the radix, `addFinite?` is the `ofWord` image of `addFiniteWord?`.
+-/
+theorem addFinite?_ofWord {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64)
+    {xBits yBits : UInt64}
+    (hx : xBits.toNat < 2 ^ fmt.bitWidth) (hy : yBits.toNat < 2 ^ fmt.bitWidth)
+    (negateRight : Bool) :
+    addFinite? (ofWord (fmt := fmt) xBits) (ofWord yBits) negateRight =
+      (addFiniteWord? fmt xBits yBits negateRight).map ofWord := by
+  simp only [addFinite?, addFiniteWord?, toWord_ofWord_of_lt hx, toWord_ofWord_of_lt hy]
+  split_ifs <;> simp [addFields?_eq_map hwidth]
 
 end Model.NativeSmallWordAdd
 end FloatLib.Floats.Formats.BinaryInterchange

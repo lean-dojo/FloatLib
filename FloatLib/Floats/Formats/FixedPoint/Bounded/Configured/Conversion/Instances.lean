@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Conversion.P
 /-!
 # Bounded fixed-point conversion instances
 
-Bounded fixed-point destinations support exact-rational quantization under an explicit overflow
-policy. The context-free instance chooses checked conversion and therefore rejects overflow.
+Bounded fixed-point destinations quantize exact rationals under a caller-chosen overflow policy.
+The context-free instance chooses `.reject`, as the arithmetic does.
 -/
 
 @[expose] public section
@@ -26,7 +26,7 @@ namespace Conversion
 
 variable {radix : Radix} {fractionalDigits width : Nat}
 
-/-- Bounded fixed-point conversion requires an explicit overflow policy. -/
+/-- Bounded fixed-point conversion, with the overflow policy as its context. -/
 instance quantizer :
     FloatLib.Floats.ExecFloat.Quantizer
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width) Rat where
@@ -35,7 +35,7 @@ instance quantizer :
   spec := spec
   correct := implements_run
 
-/-- Context-free bounded conversion is checked and rejects overflow. -/
+/-- Context-free bounded conversion rejects overflow. -/
 instance defaultQuantizer :
     FloatLib.Floats.ExecFloat.DefaultQuantizer
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width) Rat where

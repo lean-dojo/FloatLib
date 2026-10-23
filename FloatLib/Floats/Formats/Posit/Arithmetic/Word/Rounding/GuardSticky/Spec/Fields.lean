@@ -6,19 +6,19 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Spec
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Spec
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Runtime
 
 /-!
 # Field-oriented guard-and-sticky Posit rounding
 
-Field-oriented rounding reads the finite exponent/fraction tail directly from its normalized
-fields. It is the representation-independent executable kernel: arbitrary-width backends use
-these `Nat` operations directly, while fixed-word and fixed-limb backends refine the same bit
-and suffix queries to native masks and shifts.
+Field-oriented rounding reads the finite exponent/fraction tail in place from its normalized
+fields. It is the representation-independent executable kernel: arbitrary-width backends run
+these `Nat` operations, while fixed-word and fixed-limb backends refine the same bit and suffix
+queries to native masks and shifts.
 
-Unlike `exactTailRaw`, the field-oriented kernel never first concatenates the exponent and
-fraction into a larger temporary natural number.
+The field-oriented kernel never concatenates the exponent and fraction into a larger temporary
+natural number, as `exactTailRaw` does.
 -/
 
 @[expose] public section
@@ -26,11 +26,11 @@ fraction into a larger temporary natural number.
 namespace FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding
 
 /--
-Round an interior normalized Posit directly from its fields.
+Round an interior normalized Posit from its fields.
 
-This is the general executable guard/sticky kernel for every width. It retains the same packed
-lower candidate as `roundInteriorCode`, but reads the discarded suffix in place instead of
-materializing the complete exponent/fraction stream.
+This is the general executable guard/sticky kernel for every width. It builds the same packed
+lower candidate as `roundInteriorCode` but reads the discarded suffix in place, without
+materializing the exponent/fraction stream.
 -/
 @[inline] def roundInteriorCodeFromFields
     (format : Format) (regime : Int)

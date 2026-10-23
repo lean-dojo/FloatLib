@@ -11,6 +11,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendenta
 public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.Quotient.Compiler
+import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
+import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
 public import FloatLibTests.Conformance.Execution.Certificates
@@ -28,23 +30,24 @@ At build time, collect the transitive axioms of every loaded declaration whose o
 module belongs to `FloatLib`, including private declarations available in this environment.
 Only propositional extensionality, quotient soundness, and classical choice are accepted.
 The imports cover the public root and the optional binary and decimal transcendental proofs.
-The quotient compiler certificate is loaded explicitly because its clients import it privately.
+The quotient, integer square root, and checked square root compiler certificates are loaded
+explicitly because their clients import them privately.
 Unimported modules are outside this check. Symbolic certificate, quire, and native-model regression
 declarations are checked separately because they belong to `FloatLibTests`.
 
 The production traversal includes `@[csimp]` equality proofs. For the sole permitted
-`@[implemented_by]` declaration, the audit also reads Lean's actual attribute and checks that its
+`@[implemented_by]` declaration, the audit also reads Lean's attribute and checks that its
 replacement is an endpoint of the unconditional, universally quantified decoder equality theorem.
 The private decoder proof is loaded explicitly for this check. Axiom collection by itself only
 follows logical definitions and cannot validate a compiler substitution.
 
-`tests/checks/trust-surface.sh` separately inventories source uses of native proof evaluation,
+`tests/checks/trust-surface.sh` inventories source uses of native proof evaluation,
 `@[implemented_by]`, `@[extern]`, and unchecked host imports. Neither audit verifies generated
-machine code or the external numerical libraries. The explicit `NativeFPU.Unchecked` API remains
-outside the configured arithmetic refinement theorems and this import closure.
+machine code or the external numerical libraries. The opt-in `NativeFPU.Unchecked` API is outside
+the configured arithmetic refinement theorems and this import closure.
 
 The axiom traversal uses the pinned Lean implementation of `Lean.collectAxioms` in
-`Lean.Util.CollectAxioms`; see also mathlib's `Mathlib.Util.AssertNoSorry`.
+`Lean.Util.CollectAxioms`. See also mathlib's `Mathlib.Util.AssertNoSorry`.
 -/
 
 public meta section
@@ -153,8 +156,8 @@ private def checkReplacementEquality (logical replacement proof : Lean.Name) :
 run_cmd
   let env := (← Lean.getEnv).setExporting false
   let logical := ``FloatLib.Floats.Formats.Posit.Model.toDyadic?
-  let replacementName := `FloatLib.Floats.Formats.Posit.Model.toDyadicImpl?
-  let proofName := `FloatLib.Floats.Formats.Posit.Model.toDyadicImpl?_eq_toDyadic?
+  let replacementName := `FloatLib.Floats.Formats.Posit.Model.Internal.toDyadic?
+  let proofName := `FloatLib.Floats.Formats.Posit.Model.Internal.toDyadic?_eq
   let mut productionCount : Nat := 0
   let mut privateCount : Nat := 0
   let mut csimpCount : Nat := 0

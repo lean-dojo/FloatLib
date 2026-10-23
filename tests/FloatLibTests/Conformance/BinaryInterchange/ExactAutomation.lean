@@ -31,18 +31,18 @@ example {fmt : FloatFormat} {value : FloatLib.Numerics.Dyadic}
 example {fmt : FloatFormat} {leftValue rightValue : FloatLib.Numerics.Dyadic}
     (left : ExactAtFinite fmt leftValue) (right : ExactAtFinite fmt rightValue) :
     Option.map (exactNumericalSystem fmt).denote
-        (Model.mulFinite? fmt QuantizationPolicy.nearestEven 0 left.1 right.1) =
-      some (Model.quantizedValue fmt QuantizationPolicy.nearestEven 0
+        (Model.mulFinite? fmt QuantizationPolicy.nearest 0 left.1 right.1) =
+      some (Model.quantizedValue fmt QuantizationPolicy.nearest 0
         (Model.mulDyadic leftValue rightValue)) := by
   numerics
 
 example {fmt : FloatFormat} {leftValue rightValue : FloatLib.Numerics.Dyadic}
     (left : ExactAtFinite fmt leftValue) (right : ExactAtFinite fmt rightValue) :
     (exactNumericalSystem fmt).At
-      (Model.quantizedValue fmt QuantizationPolicy.nearestEven 0
+      (Model.quantizedValue fmt QuantizationPolicy.nearest 0
         (FloatLib.Floats.Formats.BinaryInterchange.Model.addDyadic leftValue rightValue)) :=
   Operation.Checked2.applyAt
-    (Model.addFinite_refines fmt QuantizationPolicy.nearestEven 0) left right
+    (Model.addFinite_refines fmt QuantizationPolicy.nearest 0) left right
 
 example :
     Model.toDyadic? (Model.ofNatBits (fmt := FloatFormat.e2m1) 7) =

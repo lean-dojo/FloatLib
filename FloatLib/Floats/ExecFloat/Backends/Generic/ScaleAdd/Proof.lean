@@ -17,8 +17,8 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 
 For conventional IEEE descriptors, `roundSum_eq` identifies unsigned-scale alignment and rounding
 with exact dyadic addition followed by `roundDyadic`. The proof includes zero operands and the
-signed-zero result of cancellation. The `roundOffset` parameter accommodates both addition scales
-and the product scales used by FMA.
+signed-zero result of cancellation. The `roundOffset` parameter covers both addition scales and
+the product scales used by FMA.
 -/
 
 @[expose] public section
@@ -179,7 +179,7 @@ theorem roundMagnitudes_comm (fmt : FloatFormat) (roundOffset : Nat)
       · have hgt : right < left := by omega
         simp [hsign, Ne.symm hsign, heq, Ne.symm heq, hlt, hgt]
 
-/-- `roundSum` is exactly dyadic addition followed by one IEEE rounding step. -/
+/-- `roundSum` is exact dyadic addition followed by one IEEE rounding step. -/
 theorem roundSum_eq
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (roundOffset : Nat) (leftSign rightSign : Bool)
@@ -194,8 +194,8 @@ theorem roundSum_eq
           { negative := rightSign
             significand := rightMantissa
             exponent := exponent fmt rightScale roundOffset }) := by
-  rw [← addDyadicImpl_eq]
-  unfold roundSum addDyadicImpl
+  rw [← Internal.addDyadic_eq]
+  unfold roundSum Internal.addDyadic
   by_cases hleft : leftMantissa = 0
   · by_cases hright : rightMantissa = 0
     · simp [hleft, hright, roundDyadic_zero fmt hfmt]

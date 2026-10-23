@@ -54,8 +54,8 @@ inductive Domain where
 /--
 A validated descriptor for the complete four-parameter P3109 format family.
 
-One value of this structure selects a profile; there is no separate Lean type or decoder for each
-bit width. The proof fields rule out precisely the invalid `(K, P, signedness)` combinations from
+One value of this structure selects a profile, with no separate Lean type or decoder for each
+bit width. The proof fields rule out exactly the invalid `(K, P, signedness)` combinations of
 the report before any value can be constructed.
 -/
 structure Format where
@@ -71,7 +71,7 @@ structure Format where
   bitWidth_gt_two : 2 < bitWidth
   /-- P3109 requires positive precision. -/
   precision_pos : 0 < precision
-  /-- Signed formats require `P < K`; unsigned formats allow `P = K`. -/
+  /-- Signed formats require `P < K`, and unsigned formats allow `P = K`. -/
   precision_bound :
     match signedness with
     | .signed => precision < bitWidth
@@ -192,10 +192,16 @@ matrices, and other callers whose parameters are ordinary runtime values.
   else
     none
 
+/-- The report's Binary8p3se: eight bits, precision three, signed, extended with infinities. -/
+@[inline] def binary8p3se : Format := signed 8 3 .extended
+
+/-- The report's Binary8p4se: eight bits, precision four, signed, extended with infinities. -/
+@[inline] def binary8p4se : Format := signed 8 4 .extended
+
 /--
 Exact positive finite value decoded from one in-range magnitude.
 
-Informally, row zero is subnormal and uses the stored trailing bits directly. Every other row
+Row zero is subnormal and uses the stored trailing bits as its significand. Every other row
 prepends the implicit leading bit and subtracts the descriptor's exponent bias. Exceptional-code
 classification and negative mirroring happen in `decodeNat`, outside this shared mathematical
 formula.
@@ -225,8 +231,8 @@ formula.
 /--
 Decode an in-range natural-number code point according to P3109 Section 4.7.2.
 
-Callers with arbitrary natural numbers should first construct a `BitVec format.bitWidth`; the
-public `decode` and `ExecFloat.P3109.ofNatBits` functions do this automatically.
+Callers with arbitrary natural numbers should first construct a `BitVec format.bitWidth`, as the
+public `decode` and `ExecFloat.P3109.ofNatBits` functions do.
 -/
 @[inline] def decodeNat (format : Format) (bits : Nat) :
     NumericalValue Numerics.Dyadic :=
@@ -267,8 +273,15 @@ public `decode` and `ExecFloat.P3109.ofNatBits` functions do this automatically.
     NumericalValue Numerics.Dyadic :=
   format.decodeNat code.toNat
 
-/-- Complete codebook induced by a P3109 descriptor. -/
-def codebook (format : Format) :
+/--
+Complete codebook induced by a P3109 descriptor.
+
+The definition is irreducible. `#eval` fully reduces the type of a value while it looks for a
+`ToExpr` instance, and unfolding this codebook would expand the whole decoder of a concrete
+descriptor and exhaust the recursion limit. Proofs use `codebook_denote`, or unfold it with
+`unfold Format.codebook`. Compiled code still inlines it, so a decode reads no codebook record.
+-/
+@[inline, irreducible] def codebook (format : Format) :
     Formats.Codebook format.bitWidth Numerics.Dyadic where
   denote := format.decode
 
@@ -285,7 +298,7 @@ namespace FloatLib.Floats.ExecFloat
 Executable exact-width carrier for any valid P3109 descriptor.
 
 Generic exact-expression operations can use this type as a destination through its conversion
-capability. The representation layer does not install a separate arithmetic interface.
+capability.
 -/
 abbrev P3109 (format : Formats.P3109.Format) :=
   ExecFloat.Codebook format.codebook
@@ -329,7 +342,7 @@ Construct a finite P3109 value from named representation fields.
 `biasedExponent` and `trailing` are checked against the descriptor widths. The constructor also
 rejects a negative request for an unsigned format and every field combination reserved for NaN or
 infinity. It is the structured alternative to `ofNatBits` when an application already has decoded
-P3109 fields; it does not perform numerical rounding.
+P3109 fields. It does no numerical rounding.
 -/
 @[inline] def ofFiniteFields? (negative : Bool)
     (biasedExponent trailing : Nat) : Option (ExecFloat.P3109 format) :=

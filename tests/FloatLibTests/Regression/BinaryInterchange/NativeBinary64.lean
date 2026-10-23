@@ -19,7 +19,7 @@ also checks that both specialized and baseline routes are exercised where applic
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -42,7 +42,7 @@ def acceptedPairs : Array (UInt64 × UInt64) :=
     (0x7fd0000000000000, 0x7fdfffffffffffff)
   ]
 
-/-- Values deliberately handled by the exact baseline. -/
+/-- Pairs that the equal-exponent path declines, counted as baseline cases. -/
 def baselinePairs : Array (UInt64 × UInt64) :=
   #[
     (0x3ff0000000000000, 0xbff0000000000000),
@@ -125,7 +125,7 @@ def acceptedPairs : Array (UInt64 × UInt64) :=
     (0xbff8000000000000, 0x3ff0000000000000)
   ]
 
-/-- Signed, subnormal, distant-exponent, infinity, and NaN pairs handled by the exact baseline. -/
+/-- Signed, subnormal, distant-exponent, infinity, and NaN pairs that both routes decline. -/
 def baselinePairs : Array (UInt64 × UInt64) :=
   #[
     (0xbff8000000000000, 0x3ff0000000000000),
@@ -330,10 +330,10 @@ open Model
 open NativeHarness.Binary64
 
 @[noinline] def sameSignCandidate (x y z : Value) : Option Value :=
-  NativeBinary64.fmaNormalSameSignAligned? x y z
+  NativeBinary64.fmaNormalSameSign? x y z
 
 @[noinline] def oppositeSignCandidate (x y z : Value) : Option Value :=
-  NativeBinary64.fmaNormalOppositeSignAligned? x y z
+  NativeBinary64.fmaNormalOppositeSign? x y z
 
 @[noinline] def publicFma (x y z : Value) : Value :=
   Model.fma x y z
@@ -367,9 +367,12 @@ def generated : Thunk (Array (UInt64 × UInt64 × UInt64)) := ⟨fun _ =>
     let ySign := i % 2 == 1
     let productSign := Bool.xor xSign ySign
     let zSign := if i % 4 == 0 then !productSign else productSign
-    let aligned := i % 3 != 0
+    -- Addend scales 52 and 45 bits above the product take the exact-alignment routes. Scale 72
+    -- is outside their 62-bit window and takes the sticky path, counted here as a baseline case.
     let zExponent :=
-      if aligned then alignedZExponent else alignedZExponent + 1
+      if i % 3 == 0 then alignedZExponent + 20
+      else if i % 3 == 1 then alignedZExponent
+      else alignedZExponent - 7
     let xFraction :=
       (index * 0x9e3779b97f4a7c15) &&& 0x000fffffffffffff
     let yFraction :=

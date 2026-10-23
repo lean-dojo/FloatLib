@@ -20,13 +20,13 @@ This standalone runner reads deterministic cases produced by `tests/oracles/smt_
 the exact interchange word returned by configured `ExecFloat.Binary` execution.
 
 Nearest-even arithmetic uses the ordinary certified dispatch selected for each format. The other
-three IEEE directions use the explicit configured rounding API. Cross-format cases use the public
-`ExecFloat.castWith` conversion with an explicit IEEE rounding context. Keeping this runner separate
-from the shared oracle executable lets the SMT adapter remain independently runnable without
-changing its command surface.
+three directions (`rtz`, `rtp`, `rtn`) pass the direction as `mode` to `ExecFloat.Binary.add` and
+its siblings. Cross-format cases use the public `ExecFloat.cast` conversion with the case's
+direction as `mode`. The runner is kept apart from the shared oracle executable, so the SMT
+adapter can run on its own without changing its command surface.
 
 Input and output are tab-separated. The Python adapter owns comparison, aggregate counts, and
-machine-readable reports; this module only parses cases and executes FloatLib.
+machine-readable reports, and this module only parses cases and executes FloatLib.
 -/
 
 open FloatLib.Floats
@@ -35,10 +35,6 @@ open FloatLib.Floats.Formats.BinaryInterchange
 namespace FloatLibTests.Oracle.SMT
 
 open Parsing
-
-private abbrev Binary16 := ExecFloat.Binary 5 10
-private abbrev Binary32 := ExecFloat.Binary 8 23
-private abbrev Binary64 := ExecFloat.Binary 11 52
 
 private inductive Operation where
   | add
@@ -77,10 +73,10 @@ private def Format.hexDigits : Format → Nat
   | .f64 => 16
 
 private def parseRounding? : String → Option Model.IEEERoundingMode
-  | "rne" => some .nearestEven
+  | "rne" => some .nearest
   | "rtz" => some .towardZero
-  | "rtp" => some .towardPositiveInfinity
-  | "rtn" => some .towardNegativeInfinity
+  | "rtp" => some .up
+  | "rtn" => some .down
   | _ => none
 
 private structure ArithmeticOps (Value : Type) where
@@ -94,9 +90,9 @@ private structure ArithmeticOps (Value : Type) where
   fma : Value → Value → Value → Model.IEEERoundingMode → Value
 
 /--
-Use the selected certified kernel for nearest-even and the explicit configured implementation for
-directed rounding. This distinction exercises the ordinary execution path without pretending that
-the nearest-even-only dispatcher chooses a process-global rounding mode.
+Use the selected certified kernel for nearest-even and the configured operation with a `mode`
+argument for directed rounding. The split exercises the ordinary execution path without
+pretending that the nearest-even-only dispatcher chooses a process-global rounding mode.
 -/
 private def chooseBinary {Value : Type}
     (nearest : Value → Value → Value)
@@ -104,7 +100,7 @@ private def chooseBinary {Value : Type}
     Value → Value → Model.IEEERoundingMode → Value :=
   fun left right rounding =>
     match rounding with
-    | .nearestEven => nearest left right
+    | .nearest => nearest left right
     | _ => directed left right rounding
 
 private def chooseUnary {Value : Type}
@@ -113,7 +109,7 @@ private def chooseUnary {Value : Type}
     Value → Model.IEEERoundingMode → Value :=
   fun value rounding =>
     match rounding with
-    | .nearestEven => nearest value
+    | .nearest => nearest value
     | _ => directed value rounding
 
 private def chooseTernary {Value : Type}
@@ -122,38 +118,38 @@ private def chooseTernary {Value : Type}
     Value → Value → Value → Model.IEEERoundingMode → Value :=
   fun left right addend rounding =>
     match rounding with
-    | .nearestEven => nearest left right addend
+    | .nearest => nearest left right addend
     | _ => directed left right addend rounding
 
 private def binary16Ops : ArithmeticOps Binary16 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary16)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
+  add := chooseBinary ExecFloat.add (ExecFloat.Binary.add · · ·)
+  sub := chooseBinary ExecFloat.sub (ExecFloat.Binary.sub · · ·)
+  mul := chooseBinary ExecFloat.mul (ExecFloat.Binary.mul · · ·)
+  div := chooseBinary ExecFloat.div (ExecFloat.Binary.div · · ·)
+  sqrt := chooseUnary ExecFloat.sqrt (ExecFloat.Binary.sqrt · ·)
+  fma := chooseTernary ExecFloat.fma (ExecFloat.Binary.fma · · · ·)
 
 private def binary32Ops : ArithmeticOps Binary32 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary32)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
+  add := chooseBinary ExecFloat.add (ExecFloat.Binary.add · · ·)
+  sub := chooseBinary ExecFloat.sub (ExecFloat.Binary.sub · · ·)
+  mul := chooseBinary ExecFloat.mul (ExecFloat.Binary.mul · · ·)
+  div := chooseBinary ExecFloat.div (ExecFloat.Binary.div · · ·)
+  sqrt := chooseUnary ExecFloat.sqrt (ExecFloat.Binary.sqrt · ·)
+  fma := chooseTernary ExecFloat.fma (ExecFloat.Binary.fma · · · ·)
 
 private def binary64Ops : ArithmeticOps Binary64 where
   ofBits := fun bits => (ExecFloat.Binary.ofNatBits bits : Binary64)
   toBits := ExecFloat.Binary.toNatBits
-  add := chooseBinary ExecFloat.add ExecFloat.Binary.addWithRounding
-  sub := chooseBinary ExecFloat.sub ExecFloat.Binary.subWithRounding
-  mul := chooseBinary ExecFloat.mul ExecFloat.Binary.mulWithRounding
-  div := chooseBinary ExecFloat.div ExecFloat.Binary.divWithRounding
-  sqrt := chooseUnary ExecFloat.sqrt ExecFloat.Binary.sqrtWithRounding
-  fma := chooseTernary ExecFloat.fma ExecFloat.Binary.fmaWithRounding
+  add := chooseBinary ExecFloat.add (ExecFloat.Binary.add · · ·)
+  sub := chooseBinary ExecFloat.sub (ExecFloat.Binary.sub · · ·)
+  mul := chooseBinary ExecFloat.mul (ExecFloat.Binary.mul · · ·)
+  div := chooseBinary ExecFloat.div (ExecFloat.Binary.div · · ·)
+  sqrt := chooseUnary ExecFloat.sqrt (ExecFloat.Binary.sqrt · ·)
+  fma := chooseTernary ExecFloat.fma (ExecFloat.Binary.fma · · · ·)
 
 private def ArithmeticOps.evaluate {Value : Type} (operations : ArithmeticOps Value)
     (operation : Operation) (rounding : Model.IEEERoundingMode)
@@ -201,33 +197,31 @@ private def evaluateCast (source destination : Format)
     match operands with
     | [value] => pure value
     | values => throw s!"wrong cast operand count: received {values.length}"
-  let context :=
-    ExecFloat.Binary.Conversion.Context.withRounding rounding.toRoundingMode
   match source, destination with
   | .f16, .f32 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary16).castWith
-          (target := Binary32) context
+        (ExecFloat.Binary.ofNatBits bits : Binary16).cast
+          (target := Binary32) (mode := rounding)
   | .f16, .f64 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary16).castWith
-          (target := Binary64) context
+        (ExecFloat.Binary.ofNatBits bits : Binary16).cast
+          (target := Binary64) (mode := rounding)
   | .f32, .f16 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary32).castWith
-          (target := Binary16) context
+        (ExecFloat.Binary.ofNatBits bits : Binary32).cast
+          (target := Binary16) (mode := rounding)
   | .f32, .f64 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary32).castWith
-          (target := Binary64) context
+        (ExecFloat.Binary.ofNatBits bits : Binary32).cast
+          (target := Binary64) (mode := rounding)
   | .f64, .f16 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary64).castWith
-          (target := Binary16) context
+        (ExecFloat.Binary.ofNatBits bits : Binary64).cast
+          (target := Binary16) (mode := rounding)
   | .f64, .f32 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
-        (ExecFloat.Binary.ofNatBits bits : Binary64).castWith
-          (target := Binary32) context
+        (ExecFloat.Binary.ofNatBits bits : Binary64).cast
+          (target := Binary32) (mode := rounding)
   | _, _ =>
       throw "cast source and destination formats must differ"
 

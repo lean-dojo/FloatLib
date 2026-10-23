@@ -15,9 +15,9 @@ public import FloatLibTests.Fixtures.NativeIEEE
 /-!
 # Binary32 and binary64 host checks
 
-Public configured arithmetic now executes the proved fixed-word kernels in both logical and
-compiled code. Guarded host `float` and `double` functions remain available through the explicit
-`NativeFPU.Unchecked` opt-in; they are not installed through `@[implemented_by]`.
+Public configured arithmetic runs the proved fixed-word kernels in both logical and compiled
+code. Guarded host `float` and `double` functions are available through the `NativeFPU.Unchecked`
+opt-in and are not installed through `@[implemented_by]`.
 
 The corpus covers ordinary values, half-ULP ties, cancellation, subnormal inputs and outputs,
 signed zero, overflow, infinities, and NaNs. Subnormal cases also detect flush-to-zero and
@@ -25,17 +25,16 @@ denormals-are-zero environments. Exceptional inputs must take the software branc
 payload and invalid-result policies.
 
 The dispatch half calls all six public `ExecFloat` operations for both widths, including FMA. The
-host half separately calls the five operations exposed by `NativeFPU.Unchecked`; no unchecked FMA
-exists.
+host half calls the five operations of `NativeFPU.Unchecked`, which has no FMA.
 
-These samples validate the explicit host/compiler/runtime/FPU boundary. They do not turn host
-agreement into a proof.
+These samples test the host, compiler, runtime and FPU boundary. Host agreement does not become a
+proof.
 -/
 
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 namespace FloatLibTests.Conformance.BinaryInterchange.NativeExecution
@@ -44,9 +43,6 @@ open FloatLib.Floats
 open FloatLib.Floats.Formats.BinaryInterchange.Configured
 open FloatLibTests.Accounting
 open FloatLibTests.Fixtures.NativeIEEE
-
-abbrev Binary32 := ExecFloat.Binary 8 23
-abbrev Binary64 := ExecFloat.Binary 11 52
 
 /-- Count disagreements between two binary operations over the shared named edge cases. -/
 @[inline] def pairFailures {Word Value : Type}
@@ -130,7 +126,7 @@ def sameBinary64 (left right : Binary64) : Bool := left.raw.1 == right.raw.1
 /-!
 The six binary64 dispatch comparisons are separate definitions on purpose. Each public operation
 inlines its selected word kernel at the call site, so one definition containing all six exceeds
-the compiler's per-definition budget; six small definitions compile in ordinary time.
+the compiler's per-definition budget, while six small definitions compile in ordinary time.
 -/
 
 /-- Sampled disagreements between public binary64 addition and the selected software kernel. -/
@@ -168,7 +164,7 @@ def binary64DispatchFailures : Thunk Nat := ⟨fun _ =>
   binary64AddFailures.get + binary64SubFailures.get + binary64MulFailures.get + binary64DivFailures.get +
     binary64SqrtFailures.get + binary64FmaFailures.get⟩
 
-/-- Total sampled disagreements across configured paths and explicit host functions. -/
+/-- Total sampled disagreements across configured paths and unchecked host functions. -/
 def totalFailures : Thunk Nat := ⟨fun _ =>
   binary32DispatchFailures.get + binary64DispatchFailures.get +
     binary32UncheckedFailures.get + binary64UncheckedFailures.get⟩
@@ -176,7 +172,7 @@ def totalFailures : Thunk Nat := ⟨fun _ =>
 /--
 Human-readable native-backend conformance result.
 
-This report executes configured operations and the explicit host `Float32` and `Float` functions,
+This report executes configured operations and the unchecked host `Float32` and `Float` functions,
 comparing their bits with the proved software kernels. A nonzero unchecked count means the
 compiler/runtime, processor, or active floating-point environment disagrees with the software
 kernel.

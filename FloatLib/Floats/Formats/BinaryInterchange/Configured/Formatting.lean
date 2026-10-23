@@ -6,12 +6,13 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 
 /-! # External character output for configured binary values
 
 Storage selection affects neither the characters nor the exception indicators.
-The descriptor model supplies the shared decimal and hexadecimal algorithms.
+The descriptor model supplies the shortest, exact, significant-digit, fixed, scientific and
+hexadecimal algorithms.
 -/
 
 @[expose] public section
@@ -28,64 +29,23 @@ local notation "Value" =>
     fmt.expWidth_ge_two fmt.fracWidth_pos fmt.exponentBias_pos
     fmt.exponentBias_le_maxFinite plan code
 
-/-- Decimal or hexadecimal output at exact or requested precision, including rounding status. -/
-def formatWithStatus (rounding : Model.IEEERoundingMode) (radix : Model.TextRadix)
-    (precision : Model.TextPrecision) (value : Value) : Model.TextOutcome :=
-  Model.formatWithStatus rounding radix precision (toModel value)
+/--
+Write a configured value as text, as `Model.format`: by default the shortest decimal that reads
+back as `value` (what `toString` and `#eval` show), otherwise in `style` with rounding in `mode`
+and, with `status := true`, the inexact indicator.
+-/
+@[inline] def format (value : Value) (style : Model.TextStyle := .shortest)
+    (mode : Model.IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => Model.TextOutcome
+    | false => String :=
+  Model.format (toModel value) style mode status
 
-/-- Exact decimal output, preserving the sign and diagnostic information of special values. -/
-def formatDecimal (value : Value) : String := Model.formatDecimal (toModel value)
-
-/-- Exact hexadecimal output with an integral significand and a decimal binary exponent. -/
-def formatHex (value : Value) : String := Model.formatHex (toModel value)
-
-/-- Fixed or scientific decimal output, with explicit rounding and exception status. -/
-def formatDecimalWithStatus (rounding : Model.IEEERoundingMode) (style : Model.DecimalStyle)
-    (value : Value) : Model.TextOutcome :=
-  Model.formatDecimalWithStatus rounding style (toModel value)
-
-/-- Nearest-even fixed output with exactly `places` digits after the decimal point. -/
-def formatFixed (value : Value) (places : Nat) : String :=
-  Model.formatFixed (toModel value) places
-
-/-- Nearest-even scientific output with `places + 1` significant digits. -/
-def formatScientific (value : Value) (places : Nat) : String :=
-  Model.formatScientific (toModel value) places
-
-/-- Decimal notation and its status flags are independent of the storage representation. -/
-@[simp] theorem formatDecimalWithStatus_ofModel (rounding : Model.IEEERoundingMode)
-    (style : Model.DecimalStyle) (value : Model fmt) :
-    formatDecimalWithStatus rounding style (ofModel (plan := plan) (code := code) value) =
-      Model.formatDecimalWithStatus rounding style value := by
-  simp [formatDecimalWithStatus]
-
-/-- Repacking a value does not change fixed decimal output. -/
-@[simp] theorem formatFixed_ofModel (value : Model fmt) (places : Nat) :
-    formatFixed (ofModel (plan := plan) (code := code) value) places =
-      Model.formatFixed value places := by
-  simp [formatFixed]
-
-/-- Repacking a value does not change scientific decimal output. -/
-@[simp] theorem formatScientific_ofModel (value : Model fmt) (places : Nat) :
-    formatScientific (ofModel (plan := plan) (code := code) value) places =
-      Model.formatScientific value places := by
-  simp [formatScientific]
-
-/-- Configured precision output is identical to descriptor-model output, including status. -/
-@[simp] theorem formatWithStatus_ofModel (rounding : Model.IEEERoundingMode)
-    (radix : Model.TextRadix) (precision : Model.TextPrecision) (value : Model fmt) :
-    formatWithStatus rounding radix precision (ofModel (plan := plan) (code := code) value) =
-      Model.formatWithStatus rounding radix precision value := by
-  simp [formatWithStatus]
-
-/-- Repacking a model word leaves its exact decimal output unchanged. -/
-@[simp] theorem formatDecimal_ofModel (value : Model fmt) :
-    formatDecimal (ofModel (plan := plan) (code := code) value) = Model.formatDecimal value := by
-  simp [formatDecimal]
-
-/-- Repacking a model word leaves its exact hexadecimal output unchanged. -/
-@[simp] theorem formatHex_ofModel (value : Model fmt) :
-    formatHex (ofModel (plan := plan) (code := code) value) = Model.formatHex value := by
-  simp [formatHex]
+/-- Text and its status are independent of the storage representation. -/
+@[simp] theorem format_ofModel (value : Model fmt) (style : Model.TextStyle)
+    (mode : Model.IEEERoundingMode) (status : Bool) :
+    format (ofModel (plan := plan) (code := code) value) style mode status =
+      Model.format value style mode status := by
+  simp [format]
 
 end FloatLib.Floats.ExecFloat.Binary

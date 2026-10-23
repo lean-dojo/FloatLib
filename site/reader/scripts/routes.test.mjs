@@ -95,7 +95,7 @@ test('native-float section bookmarks follow the split from the performance chapt
     ['both-implementations-lose-associativity'],
     ['converting-to-native-floats-changes-nan-payloads'],
     ['proofs-relating-floatlib-to-leans-float-model'],
-    ['integer-conversions-in-lean-434'],
+    ['integer-conversions-in-lean-434', 'integer-conversions'],
     ['arithmetic-through-the-same-model'],
     ['formats-rounding-directions-and-status'],
     ['opting-into-guarded-host-operations'],

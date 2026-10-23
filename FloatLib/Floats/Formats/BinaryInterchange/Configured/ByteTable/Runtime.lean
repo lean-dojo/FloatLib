@@ -19,8 +19,8 @@ Every binary-interchange descriptor occupying at most eight encoded bits admits 
 format-independent tiny-table backend used by other finite encodings. Table generation evaluates
 the reference definition, while warm execution performs native indexing and one byte load.
 
-The operation planner may reject a table when setup cost or resident memory is inappropriate for
-the selected workload. That policy does not affect the refinement proofs in `ByteTable.Proof`.
+The operation planner may reject a table when its setup cost or resident memory does not suit the
+workload. That choice does not affect the refinement proofs in `ByteTable.Proof`.
 -/
 
 @[expose] public section
@@ -32,13 +32,36 @@ open FloatLib.Floats.ExecFloat.Backend
 
 variable {format : FloatFormat}
 
-/-- The exact binary-interchange model as a proved finite byte encoding. -/
-def encoding (format : FloatFormat) (width_le_eight : format.bitWidth ≤ 8) :
+/--
+The number of codes of a descriptor, `2 ^ format.bitWidth`.
+
+A table lookup compiled for an arbitrary descriptor evaluates this on every call. Compiled code
+uses the shift of `radix_eq_shift`, because `Nat.pow` runs through arbitrary-precision arithmetic.
+-/
+def radix (format : FloatFormat) : Nat :=
+  2 ^ format.bitWidth
+
+/-- The shift that compiled code runs for `radix`. -/
+def radixShift (format : FloatFormat) : Nat :=
+  1 <<< format.bitWidth
+
+/-- `radix` and its compiled shift agree. -/
+@[csimp] theorem radix_eq_shift : @radix = @radixShift := by
+  funext format
+  simp [radix, radixShift, Nat.shiftLeft_eq]
+
+/--
+The exact binary-interchange model as a proved finite byte encoding.
+
+It is inlined so that a table lookup compiled for an arbitrary descriptor reads `radix` without
+allocating the encoding record on every call.
+-/
+@[inline] def encoding (format : FloatFormat) (width_le_eight : format.bitWidth ≤ 8) :
     TinyTable.Encoding (Model format) where
-  radix := 2 ^ format.bitWidth
+  radix := radix format
   radix_pos := Nat.two_pow_pos format.bitWidth
   radix_le_byte := by
-    simpa only [show 256 = 2 ^ 8 by decide] using
+    simpa only [radix, show 256 = 2 ^ 8 by decide] using
       (Nat.pow_le_pow_right (by decide : 0 < 2) width_le_eight)
   decode code := Model.ofNatBits code.val
   encode value := ⟨value.toNatBits, Model.toNatBits_lt_two_pow value⟩
@@ -114,8 +137,8 @@ def fmaTable (width_le_eight : format.bitWidth ≤ 8) :
 /--
 Execute one already-constructed certified binary table on the configured byte carrier.
 
-The explicit table argument ensures the selected capability captures one memoizing `Thunk`
-instead of constructing a fresh cell on every arithmetic call.
+Taking the table as an argument lets the selected capability capture one memoizing `Thunk`
+instead of building a fresh cell on every arithmetic call.
 -/
 @[always_inline, inline] def runBinary
     {modelSpec : Model format → Model format → Model format}

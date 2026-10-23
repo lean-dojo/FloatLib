@@ -12,7 +12,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Subtraction.Runtime
 # Native binary64 addition and subtraction runtime
 
 The executable binary64 dispatchers combine equal-exponent addition with signed Sterbenz
-subtraction. Their refinement proofs are isolated in `Addition.Proof`.
+subtraction. Their refinement proofs are in `Addition.Proof`.
 -/
 
 @[expose] public section
@@ -22,7 +22,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64
 /--
 Try native same-sign addition of normal binary64 operands with the same exponent.
 
-The sum of two 53-bit significands is rounded once to nearest-even and packed directly.
+The sum of two 53-bit significands is rounded once to nearest-even and packed.
 -/
 @[inline] def addNormalSameExponent? (x y : Value) : Option Value :=
   let xBits := toUInt64 x
@@ -48,18 +48,18 @@ The sum of two 53-bit significands is rounded once to nearest-even and packed di
           (rounded - 0x0010000000000000)
 
 /-- Try native equal-exponent addition before the exact finite binary64 implementation. -/
-@[inline] def addFiniteFastImpl? (x y : Value) : Option Value :=
+@[inline] def addFinite? (x y : Value) : Option Value :=
   match addNormalSameExponent? x y with
   | some sum => some sum
-  | none => addFiniteImpl? x y
+  | none => addFiniteComponents? x y
 
 /--
 Try signed Sterbenz subtraction first, then reuse native same-exponent addition for opposite-sign
-subtraction. Every declined case retains the exact finite component kernel.
+subtraction. Every declined case falls back to the exact finite component kernel.
 -/
-@[inline] def subFiniteFastImpl? (x y : Value) : Option Value :=
+@[inline] def subFinite? (x y : Value) : Option Value :=
   match subSignedSterbenz? x y with
   | some difference => some difference
-  | none => addFiniteFastImpl? x (negate y)
+  | none => addFinite? x (negate y)
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

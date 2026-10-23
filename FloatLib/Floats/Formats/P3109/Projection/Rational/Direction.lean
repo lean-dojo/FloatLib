@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
 # Deterministic rational precision-rounding guarantees
 
 These results derive direction, error bounds, and tie selection from the proved rational
-formula. They hold before saturation, whose overflow behavior is deliberately separate.
+formula. They hold before saturation, which handles overflow on its own.
 The common quantum-level results apply to both P3109 descriptors and external binary formats.
 -/
 
@@ -68,26 +68,26 @@ theorem roundedInteger_towardZero (negative : Bool) (parity : Nat → Bool) (sca
 
 /-- Rounding up in magnitude brackets a nonnegative input within one integer unit. -/
 theorem roundedInteger_up (parity : Nat → Bool) (scaled : Rat) (hnonneg : 0 ≤ scaled) :
-    scaled ≤ (roundedInteger .towardPositive false parity scaled : Rat) ∧
-      (roundedInteger .towardPositive false parity scaled : Rat) < scaled + 1 := by
+    scaled ≤ (roundedInteger .up false parity scaled : Rat) ∧
+      (roundedInteger .up false parity scaled : Rat) < scaled + 1 := by
   have hlo := Nat.floor_le hnonneg
   have hhi := Nat.lt_floor_add_one scaled
   simp only [roundedInteger, roundAway, Bool.not_false, Bool.and_true, decide_eq_true_eq]
   split_ifs <;> push_cast <;> constructor <;> linarith
 
 /-- The nearest-away candidate is at most one half-unit from the exact scaled value. -/
-theorem roundedInteger_nearestTiesToAway_error (negative : Bool) (parity : Nat → Bool)
+theorem roundedInteger_nearestAway_error (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) (hnonneg : 0 ≤ scaled) :
-    |(roundedInteger .nearestTiesToAway negative parity scaled : Rat) - scaled| ≤ 1 / 2 := by
+    |(roundedInteger .nearestAway negative parity scaled : Rat) - scaled| ≤ 1 / 2 := by
   have hlo := Nat.floor_le hnonneg
   have hhi := Nat.lt_floor_add_one scaled
   simp only [roundedInteger, roundAway, decide_eq_true_eq]
   split_ifs <;> push_cast <;> rw [abs_le] <;> constructor <;> linarith
 
 /-- The nearest-even candidate is at most one half-unit away, for either lower-code parity. -/
-theorem roundedInteger_nearestTiesToEven_error (negative : Bool) (parity : Nat → Bool)
+theorem roundedInteger_nearest_error (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) (hnonneg : 0 ≤ scaled) :
-    |(roundedInteger .nearestTiesToEven negative parity scaled : Rat) - scaled| ≤ 1 / 2 := by
+    |(roundedInteger .nearest negative parity scaled : Rat) - scaled| ≤ 1 / 2 := by
   have hlo := Nat.floor_le hnonneg
   have hhi := Nat.lt_floor_add_one scaled
   cases hp : parity ⌊scaled⌋₊
@@ -100,27 +100,27 @@ theorem roundedInteger_nearestTiesToEven_error (negative : Bool) (parity : Nat �
     split_ifs <;> push_cast <;> rw [abs_le] <;> constructor <;> linarith
 
 /-- On a halfway input, nearest-away selects the greater magnitude. -/
-theorem roundedInteger_nearestTiesToAway_tie (negative : Bool) (parity : Nat → Bool)
+theorem roundedInteger_nearestAway_tie (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) (htie : scaled - ⌊scaled⌋₊ = 1 / 2) :
-    roundedInteger .nearestTiesToAway negative parity scaled = ⌊scaled⌋₊ + 1 := by
+    roundedInteger .nearestAway negative parity scaled = ⌊scaled⌋₊ + 1 := by
   simp [roundedInteger, roundAway, htie]
 
 /--
 On a halfway input, nearest-even selects the lower candidate when `parity ⌊scaled⌋₊` is true,
 and the upper candidate otherwise.
 -/
-theorem roundedInteger_nearestTiesToEven_tie (negative : Bool) (parity : Nat → Bool)
+theorem roundedInteger_nearest_tie (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) (htie : scaled - ⌊scaled⌋₊ = 1 / 2) :
-    roundedInteger .nearestTiesToEven negative parity scaled =
+    roundedInteger .nearest negative parity scaled =
       if parity ⌊scaled⌋₊ then ⌊scaled⌋₊ else ⌊scaled⌋₊ + 1 := by
   cases hp : parity ⌊scaled⌋₊ <;> simp [roundedInteger, roundAway, htie, hp]
 
 /-- With significand parity, the selected halfway candidate is an even integer. -/
-theorem roundedInteger_nearestTiesToEven_tie_even (negative : Bool) (scaled : Rat)
+theorem roundedInteger_nearest_tie_even (negative : Bool) (scaled : Rat)
     (htie : scaled - ⌊scaled⌋₊ = 1 / 2) :
-    roundedInteger .nearestTiesToEven negative (fun lower => decide (lower % 2 = 0))
+    roundedInteger .nearest negative (fun lower => decide (lower % 2 = 0))
         scaled % 2 = 0 := by
-  rw [roundedInteger_nearestTiesToEven_tie _ _ _ htie]
+  rw [roundedInteger_nearest_tie _ _ _ htie]
   simp only [decide_eq_true_eq]
   split_ifs <;> omega
 
@@ -131,7 +131,7 @@ theorem roundedInteger_toOdd_odd (negative : Bool) (scaled : Rat)
   simp only [roundedInteger, roundAway, hinexact, decide_true, Bool.true_and, decide_eq_true_eq]
   split_ifs <;> omega
 
-/-- The scaled magnitude is nonnegative at every quantum. -/
+/-- Scaled magnitudes are nonnegative at every quantum. -/
 theorem scaledMagnitude_nonneg (value : Rat) (quantum : Int) :
     0 ≤ scaledMagnitude value quantum :=
   mul_nonneg (abs_nonneg value) (le_of_lt (zpow_pos (by norm_num) _))
@@ -173,21 +173,21 @@ theorem roundAt_error_lt_quantum (mode : RoundingMode) (quantum : Int) (parity :
     (zpow_pos (by norm_num : (0 : Rat) < 2) quantum)
 
 /-- Nearest-away rounding has error at most half the chosen quantum. -/
-theorem roundAt_nearestTiesToAway_error (quantum : Int) (parity : Nat → Bool) (value : Rat) :
-    |roundAt .nearestTiesToAway quantum parity value - value| ≤ (2 : Rat) ^ quantum / 2 := by
+theorem roundAt_nearestAway_error (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    |roundAt .nearestAway quantum parity value - value| ≤ (2 : Rat) ^ quantum / 2 := by
   rw [roundAt_error]
   have h := mul_le_mul_of_nonneg_right
-    (roundedInteger_nearestTiesToAway_error (value.num < 0) parity _
+    (roundedInteger_nearestAway_error (value.num < 0) parity _
       (scaledMagnitude_nonneg value quantum))
     (le_of_lt (zpow_pos (by norm_num : (0 : Rat) < 2) quantum))
   linarith
 
 /-- Nearest-even rounding has error at most half the chosen quantum, including precision one. -/
-theorem roundAt_nearestTiesToEven_error (quantum : Int) (parity : Nat → Bool) (value : Rat) :
-    |roundAt .nearestTiesToEven quantum parity value - value| ≤ (2 : Rat) ^ quantum / 2 := by
+theorem roundAt_nearest_error (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    |roundAt .nearest quantum parity value - value| ≤ (2 : Rat) ^ quantum / 2 := by
   rw [roundAt_error]
   have h := mul_le_mul_of_nonneg_right
-    (roundedInteger_nearestTiesToEven_error (value.num < 0) parity _
+    (roundedInteger_nearest_error (value.num < 0) parity _
       (scaledMagnitude_nonneg value quantum))
     (le_of_lt (zpow_pos (by norm_num : (0 : Rat) < 2) quantum))
   linarith
@@ -206,9 +206,9 @@ theorem roundAt_towardZero (quantum : Int) (parity : Nat → Bool) (value : Rat)
   constructor <;> nlinarith
 
 /-- Directed rounding toward positive infinity brackets the input from above. -/
-theorem roundAt_towardPositive (quantum : Int) (parity : Nat → Bool) (value : Rat) :
-    value ≤ roundAt .towardPositive quantum parity value ∧
-      roundAt .towardPositive quantum parity value < value + (2 : Rat) ^ quantum := by
+theorem roundAt_up (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    value ≤ roundAt .up quantum parity value ∧
+      roundAt .up quantum parity value < value + (2 : Rat) ^ quantum := by
   have hs := scaledMagnitude_nonneg value quantum
   have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
   have hlo := mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le
@@ -224,7 +224,7 @@ theorem roundAt_towardPositive (quantum : Int) (parity : Nat → Bool) (value : 
     simp only [roundAt, hn, signed, Bool.false_eq_true, ite_false]
     constructor <;> nlinarith
   · have hdown :
-        roundedInteger .towardPositive true parity (scaledMagnitude value quantum) =
+        roundedInteger .up true parity (scaledMagnitude value quantum) =
           ⌊scaledMagnitude value quantum⌋₊ := by
       simp [roundedInteger, roundAway]
     simp only [hn, signed, ite_true] at hx
@@ -232,9 +232,9 @@ theorem roundAt_towardPositive (quantum : Int) (parity : Nat → Bool) (value : 
     constructor <;> nlinarith
 
 /-- Directed rounding toward negative infinity brackets the input from below. -/
-theorem roundAt_towardNegative (quantum : Int) (parity : Nat → Bool) (value : Rat) :
-    roundAt .towardNegative quantum parity value ≤ value ∧
-      value < roundAt .towardNegative quantum parity value + (2 : Rat) ^ quantum := by
+theorem roundAt_down (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    roundAt .down quantum parity value ≤ value ∧
+      value < roundAt .down quantum parity value + (2 : Rat) ^ quantum := by
   have hs := scaledMagnitude_nonneg value quantum
   have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
   have hlo := mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le
@@ -247,29 +247,29 @@ theorem roundAt_towardNegative (quantum : Int) (parity : Nat → Bool) (value : 
   rw [← scaledMagnitude_mul_quantum value quantum] at hx
   cases hn : decide (value.num < 0)
   · have hdown :
-        roundedInteger .towardNegative false parity (scaledMagnitude value quantum) =
+        roundedInteger .down false parity (scaledMagnitude value quantum) =
           ⌊scaledMagnitude value quantum⌋₊ := by
       simp [roundedInteger, roundAway]
     simp only [hn, signed, Bool.false_eq_true, ite_false] at hx
     simp only [roundAt, hn, hdown, signed, Bool.false_eq_true, ite_false]
     constructor <;> nlinarith
   · have hup' :
-        roundedInteger .towardNegative true parity (scaledMagnitude value quantum) =
-          roundedInteger .towardPositive false parity (scaledMagnitude value quantum) := rfl
+        roundedInteger .down true parity (scaledMagnitude value quantum) =
+          roundedInteger .up false parity (scaledMagnitude value quantum) := rfl
     simp only [hn, signed, ite_true] at hx
     simp only [roundAt, hn, hup', signed, ite_true]
     constructor <;> nlinarith
 
 /-- The halfway value is resolved by code parity, with the original sign restored. -/
-theorem roundAt_nearestTiesToEven_tie (quantum : Int) (parity : Nat → Bool) (value : Rat)
+theorem roundAt_nearest_tie (quantum : Int) (parity : Nat → Bool) (value : Rat)
     (htie : scaledMagnitude value quantum - ⌊scaledMagnitude value quantum⌋₊ = 1 / 2) :
-    roundAt .nearestTiesToEven quantum parity value =
+    roundAt .nearest quantum parity value =
       signed (value.num < 0)
         (((if parity ⌊scaledMagnitude value quantum⌋₊
             then ⌊scaledMagnitude value quantum⌋₊
             else ⌊scaledMagnitude value quantum⌋₊ + 1 : Nat) : Rat) * (2 : Rat) ^ quantum) := by
   unfold roundAt
-  rw [roundedInteger_nearestTiesToEven_tie _ _ _ htie]
+  rw [roundedInteger_nearest_tie _ _ _ htie]
 
 /-- The report's precision-one parity uses the zero code or the biased exponent. -/
 theorem codeEven_one (bias : Nat) (quantum : Int) (lower : Nat) :
@@ -294,51 +294,51 @@ theorem roundFiniteRatToPrecision_error_lt_quantum (format : Format) (mode : Rou
   rw [roundFiniteRatToPrecision_toRat]
   exact RationalRounding.roundAt_error_lt_quantum _ _ _ _
 
-/-- Rational rounding toward positive infinity lies above the exact input. -/
-theorem roundFiniteRatToPrecision_towardPositive (format : Format) (value : Rat) :
-    value ≤ (format.roundFiniteRatToPrecision .towardPositive value).toRat ∧
-      (format.roundFiniteRatToPrecision .towardPositive value).toRat <
+/-- Rational rounding toward positive infinity is at or above the input, within one quantum. -/
+theorem roundFiniteRatToPrecision_up (format : Format) (value : Rat) :
+    value ≤ (format.roundFiniteRatToPrecision .up value).toRat ∧
+      (format.roundFiniteRatToPrecision .up value).toRat <
         value +
           (2 : Rat) ^ RationalRounding.quantum format.precision format.exponentBias value := by
   rw [roundFiniteRatToPrecision_toRat]
-  exact RationalRounding.roundAt_towardPositive _ _ _
+  exact RationalRounding.roundAt_up _ _ _
 
-/-- Rational rounding toward negative infinity lies below the exact input. -/
-theorem roundFiniteRatToPrecision_towardNegative (format : Format) (value : Rat) :
-    (format.roundFiniteRatToPrecision .towardNegative value).toRat ≤ value ∧
-      value < (format.roundFiniteRatToPrecision .towardNegative value).toRat +
+/-- Rational rounding toward negative infinity is at or below the input, within one quantum. -/
+theorem roundFiniteRatToPrecision_down (format : Format) (value : Rat) :
+    (format.roundFiniteRatToPrecision .down value).toRat ≤ value ∧
+      value < (format.roundFiniteRatToPrecision .down value).toRat +
         (2 : Rat) ^ RationalRounding.quantum format.precision format.exponentBias value := by
   rw [roundFiniteRatToPrecision_toRat]
-  exact RationalRounding.roundAt_towardNegative _ _ _
+  exact RationalRounding.roundAt_down _ _ _
 
 /-- Rational nearest-away precision rounding satisfies the half-quantum bound. -/
-theorem roundFiniteRatToPrecision_nearestTiesToAway_error (format : Format) (value : Rat) :
-    |(format.roundFiniteRatToPrecision .nearestTiesToAway value).toRat - value| ≤
+theorem roundFiniteRatToPrecision_nearestAway_error (format : Format) (value : Rat) :
+    |(format.roundFiniteRatToPrecision .nearestAway value).toRat - value| ≤
       (2 : Rat) ^ RationalRounding.quantum format.precision format.exponentBias value / 2 := by
   rw [roundFiniteRatToPrecision_toRat]
-  exact RationalRounding.roundAt_nearestTiesToAway_error _ _ _
+  exact RationalRounding.roundAt_nearestAway_error _ _ _
 
 /-- Rational nearest-even precision rounding satisfies the half-quantum bound. -/
-theorem roundFiniteRatToPrecision_nearestTiesToEven_error (format : Format) (value : Rat) :
-    |(format.roundFiniteRatToPrecision .nearestTiesToEven value).toRat - value| ≤
+theorem roundFiniteRatToPrecision_nearest_error (format : Format) (value : Rat) :
+    |(format.roundFiniteRatToPrecision .nearest value).toRat - value| ≤
       (2 : Rat) ^ RationalRounding.quantum format.precision format.exponentBias value / 2 := by
   rw [roundFiniteRatToPrecision_toRat]
-  exact RationalRounding.roundAt_nearestTiesToEven_error _ _ _
+  exact RationalRounding.roundAt_nearest_error _ _ _
 
 /-- Rational halfway selection uses the report's code parity, including precision one. -/
-theorem roundFiniteRatToPrecision_nearestTiesToEven_tie (format : Format) (value : Rat)
+theorem roundFiniteRatToPrecision_nearest_tie (format : Format) (value : Rat)
     (htie :
       let q := RationalRounding.quantum format.precision format.exponentBias value
       RationalRounding.scaledMagnitude value q -
         ⌊RationalRounding.scaledMagnitude value q⌋₊ = 1 / 2) :
     let q := RationalRounding.quantum format.precision format.exponentBias value
     let lower := ⌊RationalRounding.scaledMagnitude value q⌋₊
-    (format.roundFiniteRatToPrecision .nearestTiesToEven value).toRat =
+    (format.roundFiniteRatToPrecision .nearest value).toRat =
       RationalRounding.signed (value.num < 0)
         (((if RationalRounding.codeEven format.precision format.exponentBias q lower
             then lower else lower + 1 : Nat) : Rat) * (2 : Rat) ^ q) := by
   rw [roundFiniteRatToPrecision_toRat]
-  exact RationalRounding.roundAt_nearestTiesToEven_tie _ _ _ htie
+  exact RationalRounding.roundAt_nearest_tie _ _ _ htie
 
 end Format
 end FloatLib.Floats.Formats.P3109

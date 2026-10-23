@@ -13,9 +13,9 @@ public import FloatLibTests.Accounting
 # Shared binary-interchange regression checks
 
 Regression modules supply the numerical operation and fixture corpus. This module supplies the
-binary-format checks they share: bitwise comparison, IEEE-status matching, route coverage, and
-exhaustive traversal of a format's encodings. Format-independent failure counting lives in
-`FloatLibTests.Accounting`.
+binary-format checks they share: bitwise comparison, matching of IEEE status and ternary values,
+route coverage, and exhaustive traversal of a format's encodings. Format-independent failure
+counting lives in `FloatLibTests.Accounting`.
 -/
 
 @[expose] public section
@@ -32,7 +32,7 @@ universe u v w
   left.toNatBits == right.toNatBits
 
 /-- Check every IEEE exception-status flag. -/
-@[inline] def statusIs (status : Model.IEEEStatus)
+@[inline] def statusIs (status : FloatLib.Numerics.IEEEStatus)
     (invalid divideByZero overflow underflow inexact : Bool) : Bool :=
   status.invalid == invalid &&
   status.divideByZero == divideByZero &&
@@ -40,11 +40,13 @@ universe u v w
   status.underflow == underflow &&
   status.inexact == inexact
 
-/-- Check both the stored result and every IEEE exception-status flag. -/
+/-- Check the stored result, every IEEE exception-status flag, and the ternary value. -/
 @[inline] def outcomeIs {fmt : FloatFormat} (outcome : Model.IEEEOutcome fmt)
-    (expected : Model fmt) (invalid divideByZero overflow underflow inexact : Bool) : Bool :=
+    (expected : Model fmt) (invalid divideByZero overflow underflow inexact : Bool)
+    (ternary : Ordering) : Bool :=
   sameBits outcome.value expected &&
-  statusIs outcome.status invalid divideByZero overflow underflow inexact
+  statusIs outcome.status invalid divideByZero overflow underflow inexact &&
+  outcome.ternary == ternary
 
 /-- Count disagreements between an operation and its reference over any iterable corpus. -/
 @[inline] def mismatchCount

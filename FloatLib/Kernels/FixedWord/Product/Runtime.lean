@@ -12,11 +12,11 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 # Fixed-limb product runtime
 
 Carry-preserving addition and full products operate over one, two, and four native limbs. The
-explicit `UInt256` carrier is large enough for the exact product of two `UInt128` values, so the
-product needs no arbitrary-precision conversion.
+`UInt256` carrier holds the full product of two `UInt128` values, so the product needs no
+arbitrary-precision conversion.
 
-`Product.Proof` shows that each returned value and carry reconstruct the exact natural-number
-sum or product.
+`Product.Proof` shows that each returned value and carry reconstruct the natural-number sum or
+product.
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ universe u
 
 /-- A fixed-width addition result together with its unsigned carry. -/
 structure AddResult (α : Type u) where
-  /-- Low fixed-width part of the exact sum. -/
+  /-- Low fixed-width part of the sum. -/
   value : α
   /-- Carry above the payload's highest bit, represented as a native word. -/
   carry : UInt64
@@ -73,8 +73,8 @@ Embed a two-limb value after shifting it left by `shift` bits, for `64 < shift <
 
 The two-word kernels for formats of at most 128 bits align a `fracWidth + 1`-bit significand by
 `fracWidth` or `fracWidth + 1` places, so division, fused multiply-add, and square root share this
-one word shuffle. `toNat_ofUInt128ShiftedLeft` gives its value under the stated shift bounds;
-outside them the native shift counts wrap and the result is unspecified.
+one word shuffle. `toNat_ofUInt128ShiftedLeft` gives its value under the stated shift bounds.
+Outside them the native shift counts wrap and the result is unspecified.
 -/
 @[inline] def ofUInt128ShiftedLeft (value : UInt128) (shift : Nat) : UInt256 :=
   let inner := shift - 64
@@ -119,7 +119,7 @@ end UInt256
   ⟨⟨limb3.value, limb2.value, limb1.value, limb0.value⟩, limb3.carry⟩
 
 /--
-Exact native multiplication of two two-limb values.
+Full 256-bit product of two two-limb values in native arithmetic.
 
 Four `mul64` products form the schoolbook product. Each output column is reduced with `add64`, and
 the resulting carry count is passed to the next column.
@@ -137,5 +137,89 @@ the resulting carry count is passed to the next column.
   let third2 := add64 second2.value carry1
   let carry2 := first2.carry + second2.carry + third2.carry
   ⟨p11.hi + carry2, third2.value, second1.value, p00.lo⟩
+
+/-! ## Scalar-carry implementations
+
+`AddResult UInt64` boxes its `value` field, and the generated code materializes the record behind
+the carry branch, so every `add64` inside a larger kernel allocates. The definitions below repeat
+the same column arithmetic with every intermediate sum and carry as a native word. Each is
+definitionally equal to the definition it replaces, and `@[csimp]` installs it in compiled code.
+-/
+
+/-- `addCarry64` with its intermediate sums and carries kept as native words. -/
+@[inline] def Internal.addCarry64 (x y carry : UInt64) : AddResult UInt64 :=
+  let first := x + y
+  let firstCarry : UInt64 := if first < x then 1 else 0
+  let second := first + carry
+  let secondCarry : UInt64 := if second < first then 1 else 0
+  ⟨second, firstCarry + secondCarry⟩
+
+/-- Compiled code runs `addCarry64` as `Internal.addCarry64`. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem addCarry64_eq_internal : @addCarry64 = @Internal.addCarry64 := rfl
+
+/-- `add128` with its column sums and carries kept as native words. -/
+@[inline] def Internal.add128 (x y : UInt128) : AddResult UInt128 :=
+  let low := x.lo + y.lo
+  let lowCarry : UInt64 := if low < x.lo then 1 else 0
+  let lowSum := low + 0
+  let lowSumCarry : UInt64 := if lowSum < low then 1 else 0
+  let high := x.hi + y.hi
+  let highCarry : UInt64 := if high < x.hi then 1 else 0
+  let highSum := high + (lowCarry + lowSumCarry)
+  let highSumCarry : UInt64 := if highSum < high then 1 else 0
+  ⟨⟨highSum, lowSum⟩, highCarry + highSumCarry⟩
+
+/-- Compiled code runs `add128` as `Internal.add128`. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem add128_eq_internal : @add128 = @Internal.add128 := rfl
+
+/-- `add256` with its column sums and carries kept as native words. -/
+@[inline] def Internal.add256 (x y : UInt256) : AddResult UInt256 :=
+  let s0 := x.limb0 + y.limb0
+  let c0a : UInt64 := if s0 < x.limb0 then 1 else 0
+  let t0 := s0 + 0
+  let c0b : UInt64 := if t0 < s0 then 1 else 0
+  let s1 := x.limb1 + y.limb1
+  let c1a : UInt64 := if s1 < x.limb1 then 1 else 0
+  let t1 := s1 + (c0a + c0b)
+  let c1b : UInt64 := if t1 < s1 then 1 else 0
+  let s2 := x.limb2 + y.limb2
+  let c2a : UInt64 := if s2 < x.limb2 then 1 else 0
+  let t2 := s2 + (c1a + c1b)
+  let c2b : UInt64 := if t2 < s2 then 1 else 0
+  let s3 := x.limb3 + y.limb3
+  let c3a : UInt64 := if s3 < x.limb3 then 1 else 0
+  let t3 := s3 + (c2a + c2b)
+  let c3b : UInt64 := if t3 < s3 then 1 else 0
+  ⟨⟨t3, t2, t1, t0⟩, c3a + c3b⟩
+
+/-- Compiled code runs `add256` as `Internal.add256`. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem add256_eq_internal : @add256 = @Internal.add256 := rfl
+
+/-- `mul128` with its column sums and carries kept as native words. -/
+@[inline] def Internal.mul128 (x y : UInt128) : UInt256 :=
+  let p00 := mul64 x.lo y.lo
+  let p01 := mul64 x.lo y.hi
+  let p10 := mul64 x.hi y.lo
+  let p11 := mul64 x.hi y.hi
+  let first1 := p00.hi + p01.lo
+  let second1 := first1 + p10.lo
+  let carry1 :=
+    (if first1 < p00.hi then (1 : UInt64) else 0) +
+      (if second1 < first1 then 1 else 0)
+  let first2 := p01.hi + p10.hi
+  let second2 := first2 + p11.lo
+  let third2 := second2 + carry1
+  let carry2 :=
+    (if first2 < p01.hi then (1 : UInt64) else 0) +
+      (if second2 < first2 then 1 else 0) +
+      (if third2 < second2 then 1 else 0)
+  ⟨p11.hi + carry2, third2, second1, p00.lo⟩
+
+/-- Compiled code runs `mul128` as `Internal.mul128`. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem mul128_eq_internal : @mul128 = @Internal.mul128 := rfl
 
 end FloatLib.Numerics.FixedWord

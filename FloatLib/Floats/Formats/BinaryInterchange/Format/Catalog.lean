@@ -14,7 +14,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 
 Named `FloatFormat` descriptors cover IEEE interchange formats, common machine-learning formats,
 and a 256-bit IEEE-style layout. They are all values of the same `FloatFormat` structure used by
-custom formats; no operation or theorem is duplicated for a named encoding.
+custom formats, so no operation or theorem is duplicated for a named encoding.
 
 ## References
 
@@ -152,10 +152,10 @@ theorem eq_binary64_of_isBinary64 {fmt : FloatFormat} (h : IsBinary64 fmt) :
   exponentBias_le_maxFinite := by decide
 
 /--
-A named 256-bit IEEE-style layout with a 237-bit significand.
+IEEE binary256, commonly called octuple precision, with a 237-bit significand.
 
-It uses 19 exponent bits and 236 stored fraction bits. Arbitrary wider layouts remain available
-by constructing `FloatFormat` directly.
+IEEE 754-2019 Section 3.6 defines it with 19 exponent bits and 236 stored fraction bits. Wider
+layouts are available by constructing a `FloatFormat`.
 -/
 @[inline] def binary256 : FloatFormat where
   expWidth := 19
@@ -168,7 +168,7 @@ by constructing `FloatFormat` directly.
 /-- Binary128 uses the IEEE exceptional-value encoding. -/
 @[simp] theorem isIEEE_binary128 : binary128.isIEEE = true := by decide
 
-/-- The binary256 profile uses the IEEE-style exceptional-value encoding. -/
+/-- Binary256 uses the IEEE exceptional-value encoding. -/
 @[simp] theorem isIEEE_binary256 : binary256.isIEEE = true := by decide
 
 /-! ### Low-precision and finite-only formats -/

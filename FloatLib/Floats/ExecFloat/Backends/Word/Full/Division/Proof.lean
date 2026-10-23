@@ -15,11 +15,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Proof
 # Verified native normal-result division for binary64
 
 The native path generates quotient bits with a restoring `UInt64` loop. Every accepted result
-equals the exact-rational finite result as an encoded value. `divFiniteFastImpl_eq` extends this
-agreement to the complete optional finite operation, including declined inputs.
+equals the generic finite kernel's result, and `divFinite_eq_divFiniteComponents` extends this
+agreement to the whole optional finite operation, declined inputs included.
 
 Zeros and quotients outside the normal-result path use the generic finite kernel. Non-finite
-operands remain the responsibility of the outer arithmetic dispatcher.
+operands are handled by the outer arithmetic dispatcher.
 -/
 
 @[expose] public section
@@ -193,7 +193,7 @@ private theorem roundNormalNative_eq_spec
 private theorem divNormal_refines
     (x y result : Value)
     (hresult : divNormal? x y = some result) :
-    NativeBinary64.divFiniteImpl? x y = some result := by
+    NativeBinary64.divFiniteComponents? x y = some result := by
   let xBits := toUInt64 x
   let yBits := toUInt64 y
   let xExponent := expField xBits
@@ -203,15 +203,15 @@ private theorem divNormal_refines
   let xMantissa := finiteMantissa xExponent xFraction
   let yMantissa := finiteMantissa yExponent yFraction
   by_cases hxExceptional : xExponent = 0x7ff
-  · simp [divNormal?, xBits, xExponent, hxExceptional] at hresult
+  · simp [divNormal?, divNormalWord?, xBits, xExponent, hxExceptional] at hresult
   by_cases hyExceptional : yExponent = 0x7ff
-  · simp [divNormal?, yBits, yExponent, hyExceptional] at hresult
+  · simp [divNormal?, divNormalWord?, yBits, yExponent, hyExceptional] at hresult
   by_cases hxZero : xMantissa = 0
-  · simp [divNormal?, xBits, yBits, xExponent, yExponent,
+  · simp [divNormal?, divNormalWord?, xBits, yBits, xExponent, yExponent,
       xFraction, xMantissa,
       hxExceptional, hyExceptional, hxZero] at hresult
   by_cases hyZero : yMantissa = 0
-  · simp [divNormal?, xBits, yBits, xExponent, yExponent,
+  · simp [divNormal?, divNormalWord?, xBits, yBits, xExponent, yExponent,
       yFraction, yMantissa, hxExceptional, hyExceptional,
       hyZero] at hresult
   have hxFractionBound : xFraction.toNat < 2 ^ 52 := by
@@ -253,8 +253,8 @@ private theorem divNormal_refines
                 (Bool.xor (signBit xBits) (signBit yBits))
                 encodedExponent fraction) =
         some result := by
-    simpa [divNormal?, xBits, yBits, xExponent, yExponent,
-      xFraction, yFraction, xMantissa, yMantissa, exponent,
+    simpa [divNormal?, divNormalWord?, apply_ite (Option.map ofUInt64), xBits, yBits,
+      xExponent, yExponent, xFraction, yFraction, xMantissa, yMantissa, exponent,
       rationalExponent, hxExceptional, hyExceptional, hxZero, hyZero,
       beq_iff_eq] using hresult
   have hspec :
@@ -299,7 +299,7 @@ private theorem divNormal_refines
       (Bool.xor (signBit xBits) (signBit yBits))
       xMantissa.toNat yMantissa.toNat exponent result
       hshiftNonnegative' hspec
-  unfold NativeBinary64.divFiniteImpl? NativeBinary64.decode?
+  unfold NativeBinary64.divFiniteComponents? NativeBinary64.decode?
   simp only [xBits, yBits, xExponent, yExponent, hxExceptional,
     hyExceptional, beq_iff_eq, ite_false, Option.some.injEq]
   change
@@ -344,12 +344,12 @@ private theorem divNormal_refines
   rw [hxScale, hyScale]
   simpa only [exponent] using hrounded.symm
 
-/-- The native candidate plus certified general route equals the existing finite binary64 implementation. -/
-theorem divFiniteFastImpl_eq (x y : Value) :
-    divFiniteFastImpl? x y = NativeBinary64.divFiniteImpl? x y := by
+/-- Native finite division with its fallback equals the generic component kernel. -/
+theorem divFinite_eq_divFiniteComponents (x y : Value) :
+    divFinite? x y = NativeBinary64.divFiniteComponents? x y := by
   cases hfast : divNormal? x y with
-  | none => simp [divFiniteFastImpl?, hfast]
+  | none => simp [divFinite?, hfast]
   | some result =>
-      simp [divFiniteFastImpl?, hfast, divNormal_refines x y result hfast]
+      simp [divFinite?, hfast, divNormal_refines x y result hfast]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

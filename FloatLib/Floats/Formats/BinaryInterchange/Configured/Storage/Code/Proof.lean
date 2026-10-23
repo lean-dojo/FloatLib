@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Code.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Proof
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Proof
+import FloatLib.Kernels.FixedWord.Core.Proof.UInt128
 
 /-!
 # Packing equivalence for configured binary formats
@@ -32,7 +33,7 @@ private theorem toNatBits_ofBits_ofNatLT (bits : Nat) (hbits : bits < 2 ^ format
     (Model.ofBits (fmt := format) (BitVec.ofNatLT bits hbits)).toNatBits = bits :=
   BitVec.toNat_ofNatLT bits hbits
 
-/-- Decoding a freshly packed proof-model value returns that exact model. -/
+/-- Decoding a freshly packed proof-model value returns that model. -/
 @[simp, grind =] theorem toModel_ofModel (value : Model format) :
     toModel (plan := plan) (ofModel (plan := plan) value) = value := by
   cases plan with
@@ -52,6 +53,14 @@ private theorem toNatBits_ofBits_ofNatLT (bits : Nat) (hbits : bits < 2 ^ format
       change Model.ofBits (BitVec.ofNatLT _ _) = value
       rw [BitVec.ofNatLT_eq_ofNat]
       simp only [ofModel, StaticStorage.Word64Code.toNat_ofNat]
+      exact Model.ofNatBits_toNatBits value
+  | pair _ width_le =>
+      change Model.ofBits (BitVec.ofNatLT _ _) = value
+      rw [BitVec.ofNatLT_eq_ofNat]
+      change Model.ofNatBits
+        (FloatLib.Numerics.FixedWord.UInt128.ofNat value.toNatBits).toNat = value
+      rw [FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat _
+        (Nat.lt_two_pow_of_lt_two_pow_of_le (Model.toNatBits_lt_two_pow value) width_le)]
       exact Model.ofNatBits_toNatBits value
   | wide =>
       rfl
@@ -89,6 +98,14 @@ private theorem toNatBits_ofBits_ofNatLT (bits : Nat) (hbits : bits < 2 ^ format
         code.1.toNat
       rw [toNatBits_ofBits_ofNatLT]
       exact congrArg UInt64.toNat (@UInt64.ofNat_toNat code.1)
+  | pair _ _ =>
+      apply Subtype.ext
+      apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective
+      change (FloatLib.Numerics.FixedWord.UInt128.ofNat
+        (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits).toNat = code.1.toNat
+      rw [toNatBits_ofBits_ofNatLT]
+      exact FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat _
+        (FloatLib.Numerics.FixedWord.UInt128.toNat_lt code.1)
   | wide =>
       rfl
   | limbs _ =>

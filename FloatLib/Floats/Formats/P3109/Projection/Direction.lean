@@ -23,11 +23,11 @@ integers bracketing the scaled magnitude. This module proves that the determinis
 the choice the report prescribes:
 
 * `towardZero` truncates: the result has the smaller magnitude and lies within one quantum;
-* `towardPositive` and `towardNegative` bracket the input from the requested side;
-* `nearestTiesToAway` and `nearestTiesToEven` stay within half a quantum, and on an exact tie
+* `up` and `down` bracket the input from the requested side;
+* `nearestAway` and `nearest` stay within half a quantum, and on an exact tie
   select the larger magnitude, respectively the candidate whose P3109 code is even;
-* `toOdd` stays within one quantum; for `P > 1`, it returns an odd significand whenever nonzero
-  bits were discarded.
+* `toOdd` stays within one quantum, and for `P > 1` it returns an odd significand whenever
+  nonzero bits were discarded.
 
 The bounds concern rational denotations before saturation and cover every descriptor width,
 including `P = 1`. `Projection.Selection` and `Projection.Rational.Selection` prove the
@@ -74,7 +74,7 @@ private theorem abs_signRat_mul (negative : Bool) (a u : Rat) (hu : 0 < u) :
 Structural description of one precision-rounding step.
 
 The input equals `sign * (lower + rem / 2^d) * 2^Q` with `rem < 2^d`, and the result significand
-is `lower` or `lower + 1` exactly as `roundAway` decides.
+is `lower` or `lower + 1`, as `roundAway` decides.
 -/
 theorem roundFiniteToPrecision_spec
     (format : Format) (mode : RoundingMode) (value : Numerics.Dyadic)
@@ -211,8 +211,8 @@ private theorem abs_mul_lt_of_lt_one (a u : Rat) (hu : 0 < u) (h : |a| < 1) :
 Structural description of an exact tie under any rounding mode.
 
 The discarded fraction is exactly one half, so the input is `sign * (lower + 1/2) * 2^Q`, and
-the result significand is `lower` or `lower + 1` exactly as `roundAway` decides when the
-remainder equals the half point `2^(d-1)`.
+the result significand is `lower` or `lower + 1`, as `roundAway` decides when the remainder
+equals the half point `2^(d-1)`.
 -/
 private theorem roundFiniteToPrecision_tie_spec
     (format : Format) (mode : RoundingMode) (value : Numerics.Dyadic)
@@ -356,11 +356,11 @@ theorem roundFiniteToPrecision_towardZero_maximal
   exact mul_le_mul_of_nonneg_right hle hu.le
 
 open Internal in
-/-- `towardPositive` never rounds down and stays within one quantum above the input. -/
-theorem roundFiniteToPrecision_towardPositive
+/-- `up` never rounds down and stays within one quantum above the input. -/
+theorem roundFiniteToPrecision_up
     (format : Format) (value : Numerics.Dyadic) :
-    value.toRat ≤ (format.roundFiniteToPrecision .towardPositive value).toRat ∧
-      (format.roundFiniteToPrecision .towardPositive value).toRat <
+    value.toRat ≤ (format.roundFiniteToPrecision .up value).toRat ∧
+      (format.roundFiniteToPrecision .up value).toRat <
         value.toRat + (2 : Rat) ^ format.quantumExponent value := by
   have hu := format.quantum_pos value
   rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
@@ -368,7 +368,7 @@ theorem roundFiniteToPrecision_towardPositive
       (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
     simp [hu]
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .towardPositive value hpos.ne'
+      roundFiniteToPrecision_spec format .up value hpos.ne'
     have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
     have hfu : (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value <
@@ -396,12 +396,12 @@ theorem roundFiniteToPrecision_towardPositive
         constructor <;> nlinarith
 
 open Internal in
-/-- `towardNegative` never rounds up and stays within one quantum below the input. -/
-theorem roundFiniteToPrecision_towardNegative
+/-- `down` never rounds up and stays within one quantum below the input. -/
+theorem roundFiniteToPrecision_down
     (format : Format) (value : Numerics.Dyadic) :
-    (format.roundFiniteToPrecision .towardNegative value).toRat ≤ value.toRat ∧
+    (format.roundFiniteToPrecision .down value).toRat ≤ value.toRat ∧
       value.toRat <
-        (format.roundFiniteToPrecision .towardNegative value).toRat +
+        (format.roundFiniteToPrecision .down value).toRat +
           (2 : Rat) ^ format.quantumExponent value := by
   have hu := format.quantum_pos value
   rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
@@ -409,7 +409,7 @@ theorem roundFiniteToPrecision_towardNegative
       (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
     simp [hu]
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .towardNegative value hpos.ne'
+      roundFiniteToPrecision_spec format .down value hpos.ne'
     have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
     have hfu : (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value <
@@ -436,15 +436,15 @@ theorem roundFiniteToPrecision_towardNegative
         push_cast
         constructor <;> nlinarith
 
-/-- Every grid point at or above the input is at or above the `towardPositive` result. -/
-theorem roundFiniteToPrecision_towardPositive_minimal
+/-- Every grid point at or above the input is at or above the `up` result. -/
+theorem roundFiniteToPrecision_up_minimal
     (format : Format) (value : Numerics.Dyadic) (n : Int)
     (hn : value.toRat ≤ (n : Rat) * (2 : Rat) ^ format.quantumExponent value) :
-    (format.roundFiniteToPrecision .towardPositive value).toRat ≤
+    (format.roundFiniteToPrecision .up value).toRat ≤
       (n : Rat) * (2 : Rat) ^ format.quantumExponent value := by
   have hu := format.quantum_pos value
-  obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .towardPositive value
-  have hbracket := (format.roundFiniteToPrecision_towardPositive value).2
+  obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .up value
+  have hbracket := (format.roundFiniteToPrecision_up value).2
   rw [hm] at hbracket ⊢
   have hlt : (m : Rat) < (n : Rat) + 1 := by
     have : (m : Rat) * 2 ^ format.quantumExponent value <
@@ -455,15 +455,15 @@ theorem roundFiniteToPrecision_towardPositive_minimal
   have hle : (m : Rat) ≤ (n : Rat) := by exact_mod_cast (Int.lt_add_one_iff.mp hint)
   exact mul_le_mul_of_nonneg_right hle hu.le
 
-/-- Every grid point at or below the input is at or below the `towardNegative` result. -/
-theorem roundFiniteToPrecision_towardNegative_maximal
+/-- Every grid point at or below the input is at or below the `down` result. -/
+theorem roundFiniteToPrecision_down_maximal
     (format : Format) (value : Numerics.Dyadic) (n : Int)
     (hn : (n : Rat) * (2 : Rat) ^ format.quantumExponent value ≤ value.toRat) :
     (n : Rat) * (2 : Rat) ^ format.quantumExponent value ≤
-      (format.roundFiniteToPrecision .towardNegative value).toRat := by
+      (format.roundFiniteToPrecision .down value).toRat := by
   have hu := format.quantum_pos value
-  obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .towardNegative value
-  have hbracket := (format.roundFiniteToPrecision_towardNegative value).2
+  obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .down value
+  have hbracket := (format.roundFiniteToPrecision_down value).2
   rw [hm] at hbracket ⊢
   have hlt : (n : Rat) < (m : Rat) + 1 := by
     have : (n : Rat) * 2 ^ format.quantumExponent value <
@@ -477,10 +477,10 @@ theorem roundFiniteToPrecision_towardNegative_maximal
 /-! ## Nearest modes -/
 
 open Internal in
-/-- `nearestTiesToAway` rounds to within half a quantum of the input. -/
-theorem roundFiniteToPrecision_nearestTiesToAway_abs_sub_le
+/-- `nearestAway` rounds to within half a quantum of the input. -/
+theorem roundFiniteToPrecision_nearestAway_abs_sub_le
     (format : Format) (value : Numerics.Dyadic) :
-    |(format.roundFiniteToPrecision .nearestTiesToAway value).toRat - value.toRat| ≤
+    |(format.roundFiniteToPrecision .nearestAway value).toRat - value.toRat| ≤
       (2 : Rat) ^ format.quantumExponent value / 2 := by
   have hu := format.quantum_pos value
   rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
@@ -489,7 +489,7 @@ theorem roundFiniteToPrecision_nearestTiesToAway_abs_sub_le
     simp
     positivity
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .nearestTiesToAway value hpos.ne'
+      roundFiniteToPrecision_spec format .nearestAway value hpos.ne'
     have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
     by_cases hremZero : rem = 0
@@ -516,16 +516,16 @@ theorem roundFiniteToPrecision_nearestTiesToAway_abs_sub_le
         constructor <;> linarith
 
 open Internal in
-/-- On an exact tie, `nearestTiesToAway` selects the candidate of larger magnitude. -/
-theorem roundFiniteToPrecision_nearestTiesToAway_tie
+/-- On an exact tie, `nearestAway` selects the candidate of larger magnitude. -/
+theorem roundFiniteToPrecision_nearestAway_tie
     (format : Format) (value : Numerics.Dyadic)
     (htie :
-      |(format.roundFiniteToPrecision .nearestTiesToAway value).toRat - value.toRat| =
+      |(format.roundFiniteToPrecision .nearestAway value).toRat - value.toRat| =
         (2 : Rat) ^ format.quantumExponent value / 2) :
-    |value.toRat| < |(format.roundFiniteToPrecision .nearestTiesToAway value).toRat| := by
+    |value.toRat| < |(format.roundFiniteToPrecision .nearestAway value).toRat| := by
   have hu := format.quantum_pos value
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
-    roundFiniteToPrecision_tie_spec format .nearestTiesToAway value htie
+    roundFiniteToPrecision_tie_spec format .nearestAway value htie
   simp only [roundAway, beq_iff_eq, hhalf, ite_false, le_refl, decide_true, ite_true] at hsig
   rw [hY, hX, hsig, abs_signRat_mul _ _ _ hu, abs_signRat_mul _ _ _ hu]
   push_cast
@@ -533,10 +533,10 @@ theorem roundFiniteToPrecision_nearestTiesToAway_tie
   nlinarith
 
 open Internal in
-/-- `nearestTiesToEven` rounds to within half a quantum of the input. -/
-theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
+/-- `nearest` rounds to within half a quantum of the input. -/
+theorem roundFiniteToPrecision_nearest_abs_sub_le
     (format : Format) (value : Numerics.Dyadic) :
-    |(format.roundFiniteToPrecision .nearestTiesToEven value).toRat - value.toRat| ≤
+    |(format.roundFiniteToPrecision .nearest value).toRat - value.toRat| ≤
       (2 : Rat) ^ format.quantumExponent value / 2 := by
   have hu := format.quantum_pos value
   rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
@@ -545,7 +545,7 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
     simp
     positivity
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .nearestTiesToEven value hpos.ne'
+      roundFiniteToPrecision_spec format .nearest value hpos.ne'
     have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
     by_cases hremZero : rem = 0
@@ -573,9 +573,9 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
         · have hf : (rem : Rat) / 2 ^ d = 1 / 2 := by
             rw [← eq_half_iff rem d hd, hhalf]
             exact heq
-          have hc : (format.roundFiniteToPrecision .nearestTiesToEven value).significand =
+          have hc : (format.roundFiniteToPrecision .nearest value).significand =
               lower + 1 ∨
-              (format.roundFiniteToPrecision .nearestTiesToEven value).significand = lower := by
+              (format.roundFiniteToPrecision .nearest value).significand = lower := by
             rw [hsig]
             split <;> simp
           rcases hc with hc | hc <;> rw [hc] <;> push_cast <;> rw [abs_le] <;>
@@ -593,25 +593,25 @@ theorem roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
 
 open Internal in
 /--
-On an exact tie, `nearestTiesToEven` selects the candidate whose P3109 code is even.
+On an exact tie, `nearest` selects the candidate whose P3109 code is even.
 
 The input is exactly halfway between `lower * 2^Q` and `(lower + 1) * 2^Q` in magnitude, and the
-result has magnitude `lower * 2^Q` precisely when the lower code is even under the report's
+result has magnitude `lower * 2^Q` exactly when the lower code is even under the report's
 `CodeIsEven` rule (including its `P = 1` special case).
 -/
-theorem roundFiniteToPrecision_nearestTiesToEven_tie
+theorem roundFiniteToPrecision_nearest_tie
     (format : Format) (value : Numerics.Dyadic)
     (htie :
-      |(format.roundFiniteToPrecision .nearestTiesToEven value).toRat - value.toRat| =
+      |(format.roundFiniteToPrecision .nearest value).toRat - value.toRat| =
         (2 : Rat) ^ format.quantumExponent value / 2) :
     ∃ lower : Nat,
       |value.toRat| = ((lower : Rat) + 1 / 2) * (2 : Rat) ^ format.quantumExponent value ∧
-      (|(format.roundFiniteToPrecision .nearestTiesToEven value).toRat| =
+      (|(format.roundFiniteToPrecision .nearest value).toRat| =
           (lower : Rat) * (2 : Rat) ^ format.quantumExponent value ↔
         format.lowerCodeIsEven (format.quantumExponent value) lower = true) := by
   have hu := format.quantum_pos value
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
-    roundFiniteToPrecision_tie_spec format .nearestTiesToEven value htie
+    roundFiniteToPrecision_tie_spec format .nearest value htie
   simp only [roundAway, beq_iff_eq, hhalf, ite_false, lt_self_iff_false, decide_false,
     Bool.false_or, beq_self_eq_true, Bool.true_and] at hsig
   refine ⟨lower, ?_, ?_⟩
@@ -632,15 +632,15 @@ theorem roundFiniteToPrecision_nearestTiesToEven_tie
       simp
 
 open Internal in
-/-- With more than one significand bit, a `nearestTiesToEven` tie yields an even significand. -/
-theorem roundFiniteToPrecision_nearestTiesToEven_tie_even
+/-- With more than one significand bit, a `nearest` tie yields an even significand. -/
+theorem roundFiniteToPrecision_nearest_tie_even
     (format : Format) (value : Numerics.Dyadic) (hprecision : 1 < format.precision)
     (htie :
-      |(format.roundFiniteToPrecision .nearestTiesToEven value).toRat - value.toRat| =
+      |(format.roundFiniteToPrecision .nearest value).toRat - value.toRat| =
         (2 : Rat) ^ format.quantumExponent value / 2) :
-    (format.roundFiniteToPrecision .nearestTiesToEven value).significand % 2 = 0 := by
+    (format.roundFiniteToPrecision .nearest value).significand % 2 = 0 := by
   obtain ⟨lower, d, hd, hhalf, hX, hsig, hY⟩ :=
-    roundFiniteToPrecision_tie_spec format .nearestTiesToEven value htie
+    roundFiniteToPrecision_tie_spec format .nearest value htie
   simp only [roundAway, beq_iff_eq, hhalf, ite_false, lt_self_iff_false, decide_false,
     Bool.false_or, beq_self_eq_true, Bool.true_and, lowerCodeIsEven, hprecision, ite_true] at hsig
   rw [hsig]

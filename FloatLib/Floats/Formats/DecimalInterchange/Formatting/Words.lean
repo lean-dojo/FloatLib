@@ -26,7 +26,7 @@ structure WordOutcome (f : Format) where
   /-- The result encoded in the selected BID or DPD layout. -/
   word : BitVec f.bitWidth
   /-- IEEE exception indicators raised by character conversion. -/
-  status : Status := {}
+  status : Numerics.IEEEStatus := {}
   deriving DecidableEq, Repr
 
 /-- Parse and round once, then encode the valid result as BID or DPD. -/
@@ -40,7 +40,7 @@ def formatWord (encoding : Encoding) (f : Format) (mode : RoundingMode)
     (precision : Precision) (word : BitVec f.bitWidth) : TextOutcome :=
   format mode precision (encoding.decode f word)
 
-/-- The word parser encodes precisely the datum parser's result, including special fields. -/
+/-- The word parser encodes the datum parser's result, special fields included. -/
 theorem decode_parseWord (encoding : Encoding) (f : Format) (mode : RoundingMode)
     (text : String) :
     encoding.decode f (parseWord encoding f mode text).word = (parse f mode text).value :=

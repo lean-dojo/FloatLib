@@ -8,13 +8,14 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
+import FloatLib.Kernels.FixedWord.Core.Proof.UInt128
 
 /-!
 # Runtime packing for configured binary formats
 
 `Code.toModel` and `Code.ofModel` are the single executable conversion pair for every built-in
-carrier. Range proofs are erased. The `word16`, `word32`, and `word64` plans use the carrier's
-stored range proof to avoid computing powers of two or remainders during decoding.
+carrier. Range proofs are erased. The `word16`, `word32`, `word64`, and `pair` plans use the
+carrier's stored range proof to avoid computing powers of two or remainders during decoding.
 `Code.Proof` shows that packing and decoding are mutual inverses for every plan.
 -/
 
@@ -30,11 +31,12 @@ variable {format : FloatFormat} {plan : StoragePlan format}
 /--
 Interpret a packed runtime code in the exact-width proof model.
 
-The machine-word carriers already carry the proof that their natural-number view is below
-`2 ^ format.bitWidth`, so the model word is built with `BitVec.ofNatLT`. Compiled code then
-performs no modular reduction and no power computation on the decode path: the conversion is the
-unboxing of the word. The byte carrier keeps the canonical `Model.ofNatBits` decoder because the
-byte tier executes exhaustive tables, whose proofs are stated in terms of that decoder.
+The machine-word and two-word carriers already carry the proof that their natural-number view is
+below `2 ^ format.bitWidth`, so the model word is built with `BitVec.ofNatLT` and compiled code
+performs no modular reduction and no power computation on the decode path. For a single machine
+word the conversion is the unboxing of the word. The byte carrier keeps the canonical
+`Model.ofNatBits` decoder because the byte tier executes exhaustive tables, whose proofs are
+stated in terms of that decoder.
 -/
 @[always_inline, inline] def toModel : Code plan → Model format :=
   match plan with
@@ -42,6 +44,7 @@ byte tier executes exhaustive tables, whose proofs are stated in terms of that d
   | .word16 _ => fun code => Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)
   | .word32 _ => fun code => Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)
   | .word64 _ => fun code => Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)
+  | .pair _ _ => fun code => Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)
   | .wide => fun code => code
   | .limbs _ => fun code => Model.WideLimb.toModel code
 
@@ -68,6 +71,11 @@ byte tier executes exhaustive tables, whose proofs are stated in terms of that d
         (Model.toNatBits_lt_two_pow value)
         (Nat.lt_two_pow_of_lt_two_pow_of_le
           (Model.toNatBits_lt_two_pow value) width_le)
+  | .pair _ width_le => fun value =>
+      ⟨FloatLib.Numerics.FixedWord.UInt128.ofNat value.toNatBits, by
+        rw [FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat _
+          (Nat.lt_two_pow_of_lt_two_pow_of_le (Model.toNatBits_lt_two_pow value) width_le)]
+        exact Model.toNatBits_lt_two_pow value⟩
   | .wide => fun value => value
   | .limbs _ => fun value => Model.WideLimb.ofModel value
 

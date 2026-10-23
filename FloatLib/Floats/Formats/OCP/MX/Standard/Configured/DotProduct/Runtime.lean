@@ -28,13 +28,13 @@ open FloatLib.Floats.Formats.OCP.MX.Standard
 
 /-- Exact block accumulation followed by one configured binary32 projection. -/
 @[inline] def dot {leftProfile rightProfile : Profile}
-    (left : Standard leftProfile) (right : Standard rightProfile) : ExecFloat.Binary 8 23 :=
+    (left : Standard leftProfile) (right : Standard rightProfile) : Binary32 :=
   ExecFloat.Binary.ofModel (Formats.OCP.MX.Standard.dot left.toCode right.toCode)
 
 /-- Exact accumulation across all blocks, with one final configured binary32 rounding. -/
 @[inline] def dotGeneral {leftProfile rightProfile : Profile} {n : Nat}
     (left : Vector (Standard leftProfile) n) (right : Vector (Standard rightProfile) n) :
-    ExecFloat.Binary 8 23 :=
+    Binary32 :=
   ExecFloat.Binary.ofModel
     (Formats.OCP.MX.Standard.dotGeneral (left.map toCode) (right.map toCode))
 

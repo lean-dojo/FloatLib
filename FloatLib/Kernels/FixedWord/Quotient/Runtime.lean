@@ -14,7 +14,7 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 
 One- and two-limb unsigned restoring-division state machines share a quotient/remainder
 recurrence, alongside a one-word rational-logarithm kernel.
-`Quotient.Proof` proves the one-word loop and the two-limb step;
+`Quotient.Proof` proves the one-word loop and the two-limb step, and
 `Quotient.Restoring128Proof` proves the two-limb loop.
 -/
 
@@ -28,7 +28,7 @@ universe u
 structure QuotientState (α : Type u) where
   /-- Binary quotient prefix generated so far. -/
   quotient : α
-  /-- Exact remainder after the generated quotient prefix. -/
+  /-- Remainder after the generated quotient prefix. -/
   remainder : α
   deriving DecidableEq, Repr
 
@@ -58,8 +58,8 @@ the generated quotient prefix below `2^63` so that its doubling fits as well.
 /--
 Generate quotient digits with unboxed quotient and remainder accumulators.
 
-Only the final result constructs a `QuotientState`. The arithmetic is identical to
-`quotientSteps`, including word wraparound outside its exact-arithmetic capacity bounds.
+Only the final result constructs a `QuotientState`. The arithmetic is that of `quotientSteps`,
+including word wraparound outside its capacity bounds.
 -/
 def quotientStepsWords (den : UInt64) :
     Nat → UInt64 → UInt64 → QuotientState UInt64
@@ -73,7 +73,7 @@ def quotientStepsWords (den : UInt64) :
         quotientStepsWords den n (doubledQuotient + 1) (doubledRemainder - den)
 
 /-- Run the one-word restoring loop without allocating a state for each quotient bit. -/
-@[inline] def quotientStepsImpl (den : UInt64) (n : Nat) (state : QuotientState UInt64) :
+@[inline] def Internal.quotientSteps (den : UInt64) (n : Nat) (state : QuotientState UInt64) :
     QuotientState UInt64 :=
   quotientStepsWords den n state.quotient state.remainder
 
@@ -135,13 +135,12 @@ the remainder below the denominator, and the generated quotient in range.
           (doubledRemainderLo - denLo)
 
 /--
-Compiled two-limb quotient loop.
+Compiled two-limb quotient loop, on the accumulators of `quotientSteps128Words`.
 
-The implementation keeps quotient and remainder in four primitive machine-word accumulators. It
-constructs the public state only once, after the final digit, avoiding per-step structure and
-addition-result allocation.
+It constructs the public state once, after the final digit, so no step allocates a structure or
+an addition result.
 -/
-@[inline] def quotientSteps128Impl
+@[inline] def Internal.quotientSteps128
     (den : FloatLib.Numerics.FixedWord.UInt128) (n : Nat)
     (state : QuotientState FloatLib.Numerics.FixedWord.UInt128) :
     QuotientState FloatLib.Numerics.FixedWord.UInt128 :=
@@ -153,10 +152,10 @@ addition-result allocation.
 Generate `n` binary quotient digits in a two-limb carrier.
 
 The logical body is the shared restoring recurrence, and it is the only definition the kernel
-sees. With `Quotient.Compiler` imported, compiled code runs `quotientSteps128Impl` instead: that
-module proves the two extensionally equal and registers the equation with `@[csimp]`, so the
-substitution is checked rather than asserted through `implemented_by`. Modules that import only
-this runtime compile the logical recursion.
+sees. With `Quotient.Compiler` imported, compiled code runs `Internal.quotientSteps128` instead.
+That module proves the two equal and registers the equation with `@[csimp]`, so the substitution
+carries a proof, which `implemented_by` would not. Modules that import only this runtime compile
+the logical recursion.
 -/
 def quotientSteps128
     (den : FloatLib.Numerics.FixedWord.UInt128) :
@@ -185,6 +184,26 @@ remainder and the incremented quotient fit one word.
     state.quotient + 1
 
 /--
+Floating-point candidate for `(num <<< shift) / den` when `shift < 64`. Its accuracy is never
+assumed, because `isFloorQuotient` checks every candidate.
+-/
+@[inline] def Internal.approxQuotient (num den : UInt64) (shift : Nat) : UInt64 :=
+  (num.toFloat / den.toFloat * ((1 : UInt64) <<< UInt64.ofNat shift).toFloat).toUInt64
+
+/-- Remainder of `scaled` after subtracting `guess * den`, as a two-word value. -/
+@[inline] def quotientRemainder (scaled : UInt128) (den guess : UInt64) : UInt128 :=
+  UInt128.sub scaled (mul64 guess den)
+
+/--
+Whether `guess` is the floor quotient of `scaled` by `den` with room to round up, decided from
+the two-word product and remainder.
+-/
+@[inline] def isFloorQuotient (scaled : UInt128) (den guess : UInt64) : Bool :=
+  guess < 0x7fffffffffffffff && !UInt128.less scaled (mul64 guess den) &&
+    (quotientRemainder scaled den guess).hi == 0 &&
+    (quotientRemainder scaled den guess).lo < den
+
+/--
 Round `(num / den) * 2^shift` to nearest even using native restoring division.
 
 `roundScaledQuotient_toNat` requires `0 < den < 2^63` and `(num <<< shift) / den + 1 < 2^63`,
@@ -197,10 +216,30 @@ which keep every intermediate of the restoring loop inside one word.
       remainder := num % den }
   roundQuotientState den (quotientSteps den shift initial)
 
-/-- Nearest-even quotient rounding through the primitive-word accumulator. -/
-@[inline] def roundScaledQuotientImpl
+/--
+Compiled `roundScaledQuotient`. When `shift < 64` and `0 < den < 2^63`, the floating-point
+candidate or a neighbour that passes `isFloorQuotient` replaces the restoring loop. Otherwise the
+loop runs on primitive-word accumulators. The checked state is never materialized, so the fast path
+allocates nothing. `Quotient.Compiler` proves it equal to `roundScaledQuotient`.
+-/
+@[inline] def Internal.roundScaledQuotient
     (num den : UInt64) (shift : Nat) : UInt64 :=
-  roundQuotientState den (quotientStepsWords den shift (num / den) (num % den))
+  if den != 0 && den < 0x8000000000000000 && shift < 64 then
+    let scaled := UInt128.shiftLeft { hi := 0, lo := num } shift
+    let guess := Internal.approxQuotient num den shift
+    if isFloorQuotient scaled den guess then
+      roundQuotientState den
+        { quotient := guess, remainder := (quotientRemainder scaled den guess).lo }
+    else if isFloorQuotient scaled den (guess - 1) then
+      roundQuotientState den
+        { quotient := guess - 1, remainder := (quotientRemainder scaled den (guess - 1)).lo }
+    else if isFloorQuotient scaled den (guess + 1) then
+      roundQuotientState den
+        { quotient := guess + 1, remainder := (quotientRemainder scaled den (guess + 1)).lo }
+    else
+      roundQuotientState den (quotientStepsWords den shift (num / den) (num % den))
+  else
+    roundQuotientState den (quotientStepsWords den shift (num / den) (num % den))
 
 /--
 Compute `floor (log2 (num / den))` for nonzero operands, using native-word alignment.

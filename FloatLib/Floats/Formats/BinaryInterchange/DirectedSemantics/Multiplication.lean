@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 /-!
 # Directed multiplication soundness for conventional IEEE formats
 
-For finite operands, `mulDown` and `mulUp` round the same exact dyadic product in opposite
-directions. The extended-real statements remain valid when outward rounding overflows.
+For finite operands, `mul x y (mode := .down)` and `mul x y (mode := .up)` round the same exact
+dyadic product in opposite directions. The extended-real statements hold even when outward
+rounding overflows.
 
 The bounds hold for every descriptor satisfying `fmt.isIEEE = true`, with no restriction to named
-widths. Both operands must be finite; the rounded product may be infinite.
+widths.
 -/
 
 @[expose] public section
@@ -27,27 +28,25 @@ namespace Model
 section
 
 /-- Downward-rounded multiplication is a lower bound on the exact real product. -/
-theorem toEReal_mulDown_le
+theorem toEReal_mul_down_le
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    toEReal (mulDown x y) ≤ ((toReal x * toReal y : ℝ) : EReal) := by
+    toEReal (mul x y (mode := .down)) ≤ ((toReal x * toReal y : ℝ) : EReal) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy, mulDown,
-    mulWithRounding_eq_of_toDyadic?_some .towardNegativeInfinity nofun hdx hdy]
+  rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy, mul_eq_of_toDyadic?_some .down nofun hdx hdy]
   exact toEReal_roundDyadicDown_le fmt _ hfmt
 
 /-- The exact real product is bounded above by upward-rounded multiplication. -/
-theorem le_toEReal_mulUp
+theorem le_toEReal_mul_up
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    ((toReal x * toReal y : ℝ) : EReal) ≤ toEReal (mulUp x y) := by
+    ((toReal x * toReal y : ℝ) : EReal) ≤ toEReal (mul x y (mode := .up)) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy, mulUp,
-    mulWithRounding_eq_of_toDyadic?_some .towardPositiveInfinity nofun hdx hdy]
+  rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy, mul_eq_of_toDyadic?_some .up nofun hdx hdy]
   exact le_toEReal_roundDyadicUp fmt _ hfmt
 
 end

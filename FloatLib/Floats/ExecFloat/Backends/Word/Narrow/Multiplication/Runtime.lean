@@ -13,15 +13,15 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Rounding.Runtime
 # Native-word finite multiplication for generic binary32
 
 Finite binary32 significands occupy at most 24 bits, so their exact product fits in one `UInt64`.
-Special-value policy remains outside this module; both entry points return `none` for a NaN or
-infinity. Correctness lives in `Multiplication.Proof`.
+Both entry points return `none` for a NaN or infinity, and the caller applies the special-value
+policy. `Multiplication.Proof` has the proofs.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 
-/-- Finite multiplication through exact dyadic coordinates. -/
+/-- Finite binary32 multiplication through exact dyadic coordinates. -/
 @[inline] def mulFinite? (x y : Value) : Option Value :=
   match toDyadic? (toUInt32 x), toDyadic? (toUInt32 y) with
   | some dx, some dy =>
@@ -38,10 +38,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 /--
 Machine-word implementation of finite binary32 multiplication.
 
-Each operand magnitude is `mantissa * 2^(scale - 149)`, with subtraction interpreted in `Int`.
-The runtime uses unsigned scales throughout normalization and rounding.
+Each operand magnitude is `mantissa * 2^(scale - 149)`, with the subtraction in `Int`. Scales
+stay unsigned through normalization and rounding.
 -/
-@[inline] def mulFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def mulFiniteWord? (x y : Value) : Option Value :=
   let xBits := toUInt32 x
   let yBits := toUInt32 y
   let xExponent := expField xBits

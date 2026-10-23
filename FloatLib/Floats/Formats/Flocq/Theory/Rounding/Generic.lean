@@ -15,6 +15,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
 Rounding any real with a valid integer-rounding rule produces a value in the selected generic
 format. The proof separates inputs whose magnitude is at most the selected exponent from those
 above it.
+
+Negative inputs reduce to positive ones through `round_neg`, which conjugates the integer rule by
+negation. Conjugation exchanges floor and ceiling and fixes truncation.
 -/
 
 @[expose] public section
@@ -23,7 +26,7 @@ namespace FloatLib.Floats.Formats.Flocq
 
 variable {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
 
-/-- The `Valid_exp` consequence used when the input magnitude is below the selected exponent. -/
+/-- The `Valid_exp` consequence used when the input magnitude is at most the selected exponent. -/
 theorem validExp_small {e : ℤ} (h : e ≤ fexp e) : fexp (fexp e + 1) ≤ fexp e :=
   ((ValidExp.flocq_valid (fexp := fexp) e).2 h).1
 
@@ -185,6 +188,26 @@ theorem round_neg (rnd : ℝ → ℤ) (x : ℝ) :
     round (β := β) (fexp := fexp) rnd (-x) =
       -round (β := β) (fexp := fexp) (negRound rnd) x := by
   simp [round, toReal, negRound]
+
+/-- Conjugating floor by negation gives ceiling. -/
+theorem negRound_floorRound : negRound floorRound = ceilRound := by
+  funext x
+  simp [negRound, floorRound, ceilRound, Int.floor_neg]
+
+/-- Conjugating ceiling by negation gives floor. -/
+theorem negRound_ceilRound : negRound ceilRound = floorRound := by
+  funext x
+  simp [negRound, floorRound, ceilRound, Int.ceil_neg]
+
+/-- Toward-zero integer rounding commutes with negation. -/
+theorem negRound_truncRound : negRound truncRound = truncRound := by
+  funext x
+  rcases lt_trichotomy x 0 with hx | rfl | hx
+  · have hnx : ¬-x < 0 := not_lt.mpr (neg_nonneg.mpr hx.le)
+    simp [negRound, truncRound, hx, hnx, Int.floor_neg]
+  · simp [negRound, truncRound]
+  · have hnx : -x < 0 := neg_neg_of_pos hx
+    simp [negRound, truncRound, not_lt.mpr hx.le, hnx, Int.ceil_neg]
 
 /-- Rounding any real produces a value in the selected generic format. -/
 theorem generic_format_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :

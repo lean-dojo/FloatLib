@@ -7,17 +7,17 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Bounds
 
 /-!
 # Correctness of direct generic dyadic rounding
 
-The executable integer implementation in `RoundDyadicImpl.Runtime` is extensionally equal to the
+The executable integer implementation in `RoundingKernel.Runtime` is extensionally equal to the
 logical `Float.Model.UnpackedFloat.round` specification used by `ieeeRoundDyadic`. The
-`@[csimp]` theorems install the direct implementation in compiled code while preserving the
-model-facing definitions in the type theory.
+`@[csimp]` theorems install the direct implementation in compiled code while proofs keep the
+model-facing definitions.
 
 The IEEE proof covers signed zero, subnormal rounding, the minimum-normal transition,
 normalization carry, and overflow at arbitrary field widths. `roundDyadicGeneral_eq_roundDyadic`
@@ -312,11 +312,11 @@ theorem ofModel_finite_normalized_eq_ofFields
       (mantissa - pow2 fmt.fracWidth))]
   rw [toModelBits_ofFields, toModelBits_ofFields, hfraction]
 
-private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal
+private theorem ieeeRoundDyadic_eq_internal_of_subnormal
     (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
     (hsub : (d.significand.log2 : Int) + d.exponent <
       FloatFormat.ieeeMinNormalExponent fmt) :
-    ieeeRoundDyadic fmt d = ieeeRoundDyadicImpl fmt d := by
+    ieeeRoundDyadic fmt d = Internal.ieeeRoundDyadic fmt d := by
   let rounded :=
     roundMantissaAtExponentEven d.significand d.exponent
       (FloatFormat.ieeeMinSubnormalExponent fmt)
@@ -329,7 +329,7 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal
     exact roundMantissaAtExponentEven_minSubnormal_le_pow2
       fmt d.significand d.exponent hsub
   have himpl :
-      ieeeRoundDyadicImpl fmt d =
+      Internal.ieeeRoundDyadic fmt d =
         if rounded == 0 then
           if d.negative then negZero fmt else posZero fmt
         else if rounded == pow2 fmt.fracWidth then
@@ -345,7 +345,7 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal
       exact
         (roundMantissaAtExponentEven_minSubnormal_eq_match
           fmt d.significand d.exponent).symm
-    unfold ieeeRoundDyadicImpl
+    unfold Internal.ieeeRoundDyadic
     simp only [beq_iff_eq, hm, ite_false]
     rw [ite_eq_left hsub]
     exact congrArg
@@ -385,11 +385,11 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal
         fmt d.negative rounded hzero hroundedLt]
       simp [hzero, hcarry]
 
-private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
+private theorem ieeeRoundDyadic_eq_internal_of_normal
     (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
     (hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤
       (d.significand.log2 : Int) + d.exponent) :
-    ieeeRoundDyadic fmt d = ieeeRoundDyadicImpl fmt d := by
+    ieeeRoundDyadic fmt d = Internal.ieeeRoundDyadic fmt d := by
   let exponent : Int := (d.significand.log2 : Int) + d.exponent
   let rounded := roundMantissaToLeadingBitEven d.significand fmt.fracWidth
   have htarget :
@@ -408,7 +408,7 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
   have hhighLe : rounded ≤ pow2 (fmt.fracWidth + 1) :=
     roundMantissaToLeadingBitEven_le_pow2_succ d.significand fmt.fracWidth
   have himpl :
-      ieeeRoundDyadicImpl fmt d =
+      Internal.ieeeRoundDyadic fmt d =
         let carry := rounded == pow2 (fmt.fracWidth + 1)
         let normalizedExponent := if carry then exponent + 1 else exponent
         if normalizedExponent >
@@ -420,7 +420,7 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
           ofFields fmt d.negative
             (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
             (normalizedMantissa - pow2 fmt.fracWidth) := by
-    unfold ieeeRoundDyadicImpl
+    unfold Internal.ieeeRoundDyadic
     simp only [beq_iff_eq, hm, ite_false]
     rw [ite_eq_right (not_lt_of_ge hnormal)]
     rfl
@@ -488,24 +488,24 @@ private theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal
 The direct integer dyadic rounder computes the same result as Lean's format-parameterized logical
 float model. The compiler uses this checked equality to replace the logical model at runtime.
 -/
-@[csimp] theorem ieeeRoundDyadic_eq_ieeeRoundDyadicImpl :
-    @ieeeRoundDyadic = @ieeeRoundDyadicImpl := by
+@[csimp] theorem ieeeRoundDyadic_eq_internal :
+    @ieeeRoundDyadic = @Internal.ieeeRoundDyadic := by
   funext fmt d
   by_cases hm : d.significand = 0
-  · unfold ieeeRoundDyadic ieeeRoundDyadicImpl
+  · unfold ieeeRoundDyadic Internal.ieeeRoundDyadic
     rw [hm, round_exact_zero, ofModel_zero_eq_signedZero]
     simp
   · by_cases hsub :
       (d.significand.log2 : Int) + d.exponent <
         FloatFormat.ieeeMinNormalExponent fmt
-    · exact ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_subnormal fmt d hm hsub
-    · exact ieeeRoundDyadic_eq_ieeeRoundDyadicImpl_of_normal fmt d hm (le_of_not_gt hsub)
+    · exact ieeeRoundDyadic_eq_internal_of_subnormal fmt d hm hsub
+    · exact ieeeRoundDyadic_eq_internal_of_normal fmt d hm (le_of_not_gt hsub)
 
-private theorem ieeeRoundDyadicImpl_of_normal
+private theorem Internal.ieeeRoundDyadic_of_normal
     (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
     (hnormal :
       FloatFormat.ieeeMinNormalExponent fmt ≤ (d.significand.log2 : Int) + d.exponent) :
-    ieeeRoundDyadicImpl fmt d =
+    Internal.ieeeRoundDyadic fmt d =
       let totalExponent := (d.significand.log2 : Int) + d.exponent
       let rounded := roundMantissaToLeadingBitEven d.significand fmt.fracWidth
       let carry := rounded == pow2 (fmt.fracWidth + 1)
@@ -514,10 +514,10 @@ private theorem ieeeRoundDyadicImpl_of_normal
         if d.negative then negInf fmt else posInf fmt
       else
         let normalizedMantissa := if carry then pow2 fmt.fracWidth else rounded
-        ofFields fmt d.negative
+        Model.ofFields fmt d.negative
           (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
           (normalizedMantissa - pow2 fmt.fracWidth) := by
-  unfold ieeeRoundDyadicImpl
+  unfold Internal.ieeeRoundDyadic
   simp only [beq_iff_eq, hm, ite_false]
   rw [ite_eq_right (not_lt_of_ge hnormal)]
   rfl
@@ -526,13 +526,12 @@ private theorem ieeeRoundDyadicImpl_of_normal
 On conventional IEEE descriptors, the descriptor-general integer rounder and the specialized
 IEEE integer rounder produce the same packed word.
 
-This is an algorithmic equality: it compares signed zero, subnormal carry, normalization carry,
-overflow, and the final exponent/fraction fields directly. It does not pass through real-valued
-semantics.
+The proof is algorithmic: it compares signed zero, subnormal carry, normalization carry,
+overflow, and the final exponent/fraction fields without passing through real-valued semantics.
 -/
-private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
+private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
     (fmt : FloatFormat) (d : Numerics.Dyadic) (hfmt : fmt.isIEEE = true) :
-    roundDyadicGeneral fmt d = ieeeRoundDyadicImpl fmt d := by
+    roundDyadicGeneral fmt d = Internal.ieeeRoundDyadic fmt d := by
   have hmin :=
     FloatFormat.minNormalExponent_eq_ieee fmt hfmt
   have hsubnormal :=
@@ -547,7 +546,7 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
     rw [hsubnormal, ieeeSubnormalAlignExp_eq_neg_minSubnormalExp]
     omega
   by_cases hm : d.significand = 0
-  · simp [roundDyadicGeneral, ieeeRoundDyadicImpl, hm,
+  · simp [roundDyadicGeneral, Internal.ieeeRoundDyadic, hm,
       zero_eq_signedZero_of_isIEEE fmt hfmt]
   · let totalExponent : Int :=
       (d.significand.log2 : Int) + d.exponent
@@ -574,7 +573,7 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
         unfold roundDyadicGeneral
         simp only [beq_iff_eq, hm, ite_false]
         rw [ite_eq_left hoverflow']
-      rw [hgeneral, ieeeRoundDyadicImpl_of_normal fmt d hm hnormalIEEE,
+      rw [hgeneral, Internal.ieeeRoundDyadic_of_normal fmt d hm hnormalIEEE,
         nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
       rw [show roundMantissaToLeadingBitEven d.significand fmt.fracWidth = rounded from rfl,
         show (d.significand.log2 : Int) + d.exponent = totalExponent from rfl]
@@ -636,14 +635,14 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
           simp only [packRoundedSubnormal, beq_iff_eq, fraction]
           rfl
         have himpl :
-            ieeeRoundDyadicImpl fmt d =
+            Internal.ieeeRoundDyadic fmt d =
               if fraction == 0 then
                 if d.negative then negZero fmt else posZero fmt
               else if fraction == pow2 fmt.fracWidth then
                 ofFields fmt d.negative 1 0
               else
                 ofFields fmt d.negative 0 fraction := by
-          unfold ieeeRoundDyadicImpl
+          unfold Internal.ieeeRoundDyadic
           simp only [beq_iff_eq, hm, ite_false]
           rw [ite_eq_left hsubIEEE']
           rfl
@@ -696,7 +695,7 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
           rw [ite_eq_right hoverflow', ite_eq_right hsub']
           simp only [packRoundedNormal, rounded, roundMantissaToLeadingBitEven, totalExponent,
             Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq, ite_or]
-        rw [hgeneral, ieeeRoundDyadicImpl_of_normal fmt d hm hnormalIEEE]
+        rw [hgeneral, Internal.ieeeRoundDyadic_of_normal fmt d hm hnormalIEEE]
         rw [show roundMantissaToLeadingBitEven d.significand fmt.fracWidth = rounded from rfl,
           show (d.significand.log2 : Int) + d.exponent = totalExponent from rfl]
         simp only [beq_iff_eq]
@@ -758,28 +757,28 @@ private theorem roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE
           rw [hbias]
 
 /--
-The descriptor-general nearest-even dyadic algorithm agrees exactly with the public dyadic
-rounding specification, including signed zero and every packed exceptional result.
+The descriptor-general nearest-even dyadic algorithm agrees with the public dyadic rounding
+specification, including signed zero and every packed exceptional result.
 -/
 theorem roundDyadicGeneral_eq_roundDyadic
     (fmt : FloatFormat) (d : Numerics.Dyadic) :
     roundDyadicGeneral fmt d = roundDyadic fmt d := by
   by_cases hfmt : fmt.isIEEE = true
   · rw [roundDyadic, ite_eq_left hfmt,
-      ieeeRoundDyadic_eq_ieeeRoundDyadicImpl]
-    exact roundDyadicGeneral_eq_ieeeRoundDyadicImpl_of_isIEEE fmt d hfmt
+      ieeeRoundDyadic_eq_internal]
+    exact roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE fmt d hfmt
   · have hfmtFalse : fmt.isIEEE = false :=
       Bool.eq_false_of_not_eq_true hfmt
     simp [roundDyadic, hfmtFalse]
 
 /-- Compiler substitution preserves the complete-format dyadic rounding specification. -/
-@[csimp] theorem roundDyadic_eq_roundDyadicImpl :
-    @roundDyadic = @roundDyadicImpl := by
+@[csimp] theorem roundDyadic_eq_internal :
+    @roundDyadic = @Internal.roundDyadic := by
   funext fmt d
   by_cases hieee : fmt.isIEEE
-  · simp [roundDyadic, roundDyadicImpl, hieee,
-      ieeeRoundDyadic_eq_ieeeRoundDyadicImpl]
-  · simp [roundDyadic, roundDyadicImpl, hieee]
+  · simp [roundDyadic, Internal.roundDyadic, hieee,
+      ieeeRoundDyadic_eq_internal]
+  · simp [roundDyadic, Internal.roundDyadic, hieee]
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

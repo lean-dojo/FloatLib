@@ -11,12 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP MX E2M3
 
-`E2M3` is a six-bit finite floating element from the OCP microscaling specification. The runtime
-carrier is a `UInt8` with an erased proof that the code is below 64. For addition, subtraction,
-multiplication, division, and square root, balanced and throughput planning select exhaustive
-proved tables; latency planning selects arithmetic kernels. Fused multiply-add keeps
-both a table and the generic proved kernel: throughput planning selects the table, while balanced
-and latency-oriented planning avoid its larger lookup footprint.
+`FloatLib.Floats.E2M3` is a six-bit finite floating element from the OCP microscaling
+specification, with type-level identity `E2M3.Family`. The runtime carrier is a `UInt8` with an
+erased proof that the code is below 64. For addition, subtraction, multiplication, division, and
+square root, balanced and throughput planning select exhaustive proved tables, and latency
+planning selects arithmetic kernels. Fused multiply-add keeps both a table and the generic proved
+kernel. Throughput planning selects the table, while balanced and latency-oriented planning avoid
+its larger lookup footprint.
 
 ## Reference
 
@@ -26,96 +27,107 @@ and latency-oriented planning avoid its larger lookup footprint.
 
 @[expose] public section
 
-namespace FloatLib.Floats.Formats.OCP.MX
+namespace FloatLib.Floats
 
 open FloatLib.Numerics
 open FloatLib.Floats.ExecFloat.Backend
 open FloatLib.Floats.Formats.BinaryInterchange
 
-/-- OCP MX E2M3 six-bit element format with byte-backed storage. -/
-inductive E2M3 : Type
+namespace E2M3
+
+/-- Type-level identity of `E2M3`, selecting its descriptor, carrier, and kernels. -/
+inductive Family : Type
 
 /-- The E2M3 encoding fits in its direct byte carrier. -/
-theorem e2m3_width_le_eight : FloatFormat.e2m3.bitWidth ≤ 8 := by decide
+theorem width_le_eight : FloatFormat.e2m3.bitWidth ≤ 8 := by decide
 
 /-- Certified E2M3 addition table. -/
-def e2m3AddTable :
+def addTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.add :=
-  StaticByte.Tables.add FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.add :=
+  StaticByte.Tables.add FloatFormat.e2m3 width_le_eight
 
 /-- Certified E2M3 subtraction table. -/
-def e2m3SubTable :
+def subTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.sub :=
-  StaticByte.Tables.sub FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.sub :=
+  StaticByte.Tables.sub FloatFormat.e2m3 width_le_eight
 
 /-- Certified E2M3 multiplication table. -/
-def e2m3MulTable :
+def mulTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.mul :=
-  StaticByte.Tables.mul FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.mul :=
+  StaticByte.Tables.mul FloatFormat.e2m3 width_le_eight
 
 /-- Certified E2M3 division table. -/
-def e2m3DivTable :
+def divTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.div :=
-  StaticByte.Tables.div FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.div :=
+  StaticByte.Tables.div FloatFormat.e2m3 width_le_eight
 
 /-- Certified E2M3 square-root table. -/
-def e2m3SqrtTable :
+def sqrtTable :
     TinyTable.CertifiedUnary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.sqrt :=
-  StaticByte.Tables.sqrt FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.sqrt :=
+  StaticByte.Tables.sqrt FloatFormat.e2m3 width_le_eight
 
 /--
 Certified E2M3 fused-multiply-add table.
 
-Its generation equation is opaque, so importing this package does not normalize the 262,144
-entries.
+The table is generated lazily at its first lookup, so importing this package does not compute
+its 262,144 entries.
 -/
-def e2m3FmaTable :
+def fmaTable :
     TinyTable.CertifiedTernary
-      (StaticByte.encoding FloatFormat.e2m3 e2m3_width_le_eight) Model.Spec.fma :=
-  StaticByte.Tables.fma FloatFormat.e2m3 e2m3_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m3 width_le_eight) Model.Spec.fma :=
+  StaticByte.Tables.fma FloatFormat.e2m3 width_le_eight
 
-@[always_inline] instance : StaticByte.Family E2M3 where
+@[always_inline] instance : StaticByte.Family E2M3.Family where
   format := FloatFormat.e2m3
-  width_le_eight := e2m3_width_le_eight
-  kernels := StaticByte.Kernels.fromTables e2m3_width_le_eight
-    e2m3AddTable e2m3SubTable e2m3MulTable e2m3DivTable e2m3SqrtTable e2m3FmaTable
+  width_le_eight := width_le_eight
+  kernels := StaticByte.Kernels.fromTables width_le_eight
+    addTable subTable mulTable divTable sqrtTable fmaTable
 
-meta instance : StaticByte.FamilyInfo E2M3 where
+meta instance : StaticByte.FamilyInfo E2M3.Family where
   standard := "Open Compute Project MX E2M3 element format"
 
-@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E2M3 where
+@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E2M3.Family where
   namePrefix := "OCP MX E2M3"
   addSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  addTable := e2m3AddTable
+  addTable := addTable
   subSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  subTable := e2m3SubTable
+  subTable := subTable
   mulSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  mulTable := e2m3MulTable
+  mulTable := mulTable
   divSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  divTable := e2m3DivTable
+  divTable := divTable
   sqrtSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  sqrtTable := e2m3SqrtTable
+  sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M3] :
-    FloatLib.Floats.ExecFloat.Fma E2M3 :=
+    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M3.Family] :
+    FloatLib.Floats.ExecFloat.Fma E2M3.Family :=
   StaticByte.Plans.fmaTableCapability
     "OCP MX E2M3 fused-multiply-add table"
     (.throughputOnly (by decide) (by decide) (by decide))
-    e2m3_width_le_eight e2m3FmaTable
+    width_le_eight fmaTable
     Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
+end E2M3
+
+/--
+OCP MX FP6 E2M3 element: 2 exponent and 3 fraction bits with bias 1, every code finite, stored in
+the low six bits of a byte. Throughput planning answers all six operations from certified byte
+tables.
+-/
+abbrev E2M3 := ExecFloat E2M3.Family
+
 /-- Construct E2M3 from a natural pattern, reduced to six bits. -/
-@[inline] def E2M3.ofNatBits (bits : Nat) : FloatLib.Floats.ExecFloat E2M3 :=
-  StaticByte.ofNatBits E2M3 bits
+@[inline] def E2M3.ofNatBits (bits : Nat) : E2M3 :=
+  StaticByte.ofNatBits E2M3.Family bits
 
 /-- Read the byte whose low six bits contain the E2M3 code. -/
-@[inline] def E2M3.toUInt8 (value : FloatLib.Floats.ExecFloat E2M3) : UInt8 :=
+@[inline] def E2M3.toUInt8 (value : E2M3) : UInt8 :=
   StaticByte.toUInt8 value
 
-end FloatLib.Floats.Formats.OCP.MX
+end FloatLib.Floats

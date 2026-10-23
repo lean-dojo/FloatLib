@@ -1,14 +1,14 @@
 # FloatLib website specification
 
-FloatLib's website is a technical book with an introduction, twenty-one chapters, and a bibliography.
-It explains the numerical representations, executable algorithms, and proofs, and presents the
-performance measurements and external comparisons. The public name is FloatLib; the Lean namespace is
-`FloatLib` and the Lake package is `floatlib`. The repository URL is
+FloatLib's website is a technical book: an introduction, twenty-one chapters, and a bibliography. It
+explains the numerical representations, executable algorithms, and proofs, and it presents the
+performance measurements and external comparisons. In public the project is called FloatLib. The
+Lean namespace is `FloatLib`, the Lake package is `floatlib`, and the repository lives at
 `https://github.com/lean-dojo/FloatLib`.
 
 ## Reader and navigation
 
-The reader is a static React application with hash routes:
+FloatLib's reader is a static React application with hash routes:
 
 - `#/`: the FloatLib introduction, highlights, and a chapter index.
 - `#/chapter/<slug>`: a chapter, with its title followed directly by the article.
@@ -17,100 +17,107 @@ The reader is a static React application with hash routes:
 - `#/graph`: every library module and its direct FloatLib imports, including meta imports.
 - `#/graph?view=declarations`: the selected declarations from the guide and their dependencies.
 
-The sidebar contains chapter navigation, the dependency graph, and references. Search, theme
-selection, keyboard access, and mobile navigation remain available. The graph is a separate page
-within this reader. Legacy map URLs open the declaration graph and preserve a selected declaration.
-Each declaration page links to its neighborhood in the graph.
-Use the supplied FloatLib logo in the navigation header, with “Verified floating point in Lean”
-beside it. The same cropped artwork appears in the README.
+The sidebar holds chapter navigation, the dependency graph, and references, and search, theme
+selection, keyboard access, and mobile navigation all stay available. Inside this reader the graph
+is a page of its own. Legacy map URLs open the declaration graph and keep a selected declaration,
+and each declaration page links to its neighborhood in the graph. Put the supplied FloatLib logo in
+the navigation header, with “Verified floating point in Lean” beside it. That's the same cropped
+artwork the README uses.
 
-Label the two graph views accurately: the module graph covers every source module under `FloatLib`
-and the root entry point; the declaration graph covers the guide's selected definitions and
-theorems. Include search, selection, immediate dependencies and dependents, group filtering, zoom,
-and pan. Keep the graph's controls usable on mobile and provide keyboard-accessible connection lists.
+Label the two graph views for what they show. The module graph covers every source module under
+`FloatLib` plus the root entry point, and the declaration graph covers the guide's selected
+definitions and theorems. Give the graph search, selection, immediate dependencies and dependents,
+group filtering, zoom, and pan. Keep its controls usable on mobile, and provide connection lists
+that work from the keyboard.
 
-Chapter summaries are metadata for search; they are not displayed as agenda paragraphs under chapter
-titles. The landing page opens with a concise definition of FloatLib and the author byline,
-and an introduction that explains what the library implements and proves. It does not open with a
-fictional origin story or instructions about which kind of reader should read which chapter.
-The navigation already names FloatLib, so do not repeat it as a visible landing-page heading.
-Keep an accessible heading for the overview. Invite readers to build on the library and link to
-the contributing guide.
+Chapter summaries are search metadata, so don't display them as agenda paragraphs under chapter
+titles. The landing page opens with a short definition of FloatLib and the author byline, then an
+introduction to what the library implements and proves. No fictional origin story, and no
+instructions about which kind of reader should read which chapter. Since the navigation already
+names FloatLib, don't repeat it as a visible heading on the landing page, but keep an accessible
+heading for the overview. Invite readers to build on the library and link to the contributing guide.
 
-The book starts with using FloatLib and a short code tour in chapter 1. The detailed source tour
-belongs beside the relevant explanations, rather than in a second directory-by-directory chapter.
-The reading order is: a working program; machine numbers; the history and its
-incident case studies; verification; execution, models, and rounding; the format families; kernels and dispatch;
-performance and the native-float comparison; external validation; interval proof automation;
-further examples. Decimal arithmetic and elementary functions have their own chapters after
-binary formats. Native-float semantics follow the performance chapter.
-The bibliography is a separate
-reference list, not a numbered chapter. Keep old chapter and
-section bookmarks working when material moves. Reordering should update chapter labels and links,
-without renaming historical result records or duplicating their figures.
+In chapter 1 the book starts with using FloatLib and a short code tour. Put the detailed source tour
+beside the explanations it belongs to, and don't write a second directory-by-directory chapter. In
+reading order, the book goes from a working program to machine numbers, the history and its incident
+case studies, and verification. Then come execution, models, and rounding, the format families, and
+kernels and dispatch, followed by performance and the native-float comparison, external validation,
+interval proof automation, and further examples. Decimal arithmetic and elementary functions get
+their own chapters after the binary formats, and native-float semantics come after the performance
+chapter. Keep the bibliography as a reference list of its own, with no chapter number. When material
+moves, keep old chapter and section bookmarks working. A reordering should update chapter labels and
+links, but it shouldn't rename historical result records or duplicate their figures.
 
 ## Typography and figures
 
-Keep the existing restrained book typography: readable serif prose, monospace Lean, generous line
-height, and a centered measure. Type and article widths scale together on large screens. Navigation
-collapses on mobile. Long code and tables can scroll inside their own containers; the page itself
-must not overflow. Render math with bundled MathJax assets and highlight Lean code without changing
-what is copied.
+Keep the restrained book typography the site already has: readable serif prose, monospace Lean,
+generous line height, and a centered measure. On large screens the type and the article width scale
+together, and on mobile the navigation collapses. Long code and tables may scroll inside their own
+containers, but the page itself must never overflow. Render math with the bundled MathJax assets,
+and highlight Lean code without changing what gets copied.
 
-Figures belong beside the explanation that makes them useful. Performance and validation plots belong
-in their respective chapters. Captions identify the measured
-quantity and enough scope to prevent misreading. Explain log scales, missing series, and qualified
-outcomes where relevant. A large case count is not a percentage of coverage, and the duration of a
-test campaign is not library performance. Keep diagrams that explain a representation or algorithm;
-do not replace the article with dashboards, decorative cards, or proof inventories.
+Put each figure next to the explanation that makes it useful, which means performance and validation
+plots go in their own chapters. A caption names the measured quantity and gives enough scope that
+nobody misreads it. Explain log scales, missing series, and qualified outcomes where they come up.
+Don't present a large case count as a percentage of coverage, or the duration of a test campaign as
+library performance. Keep diagrams that explain a representation or an algorithm, and don't swap the
+article for dashboards, decorative cards, or proof inventories.
 
-A Markdown image may use its optional title for the visible caption, with a separate description
-in the alt text. Use this on chapter figures so the description and caption do not repeat each
-other. Timing plots should say that lower is faster; comparison-count plots should say they count
-cases, not time.
+A Markdown image can use its optional title as the visible caption and keep a description in the alt
+text. Do this on chapter figures, so the description and the caption don't repeat each other. Timing
+plots should say that lower is faster, and comparison-count plots should say they count cases, not
+time.
 
-The reader numbers figures within each chapter: Figure 2.1, Figure 2.2, and so on.
-Refer to each figure from nearby prose and tell the reader what to look for. Link the reference
-to `#/chapter/<slug>/figure-<asset-stem>`; for example,
-`[Figure 2.1](#/chapter/from-reals-to-machine-numbers/figure-ch01-binary32-layout)`.
-The anchor comes from the image filename, so reordering figures changes their displayed numbers
-without breaking links. Update the numbers in prose when changing their order.
+Figures are numbered within each chapter: Figure 2.1, Figure 2.2, and so on. Refer to each figure
+from nearby prose and tell the reader what to look for. Link the reference to
+`#/chapter/<slug>/figure-<asset-stem>`, for example
+`[Figure 2.1](#/chapter/from-reals-to-machine-numbers/figure-ch01-binary32-layout)`. Because the
+anchor comes from the image filename, reordering figures changes their displayed numbers without
+breaking any link. Do update the numbers in the prose when you change the order.
 
-Wide explanatory figures may provide an `<asset-stem>-mobile.png` arrangement, used below 600px.
-Keep the same mathematics in both layouts. Performance generators also produce individual
-operation views and an `<asset-stem>-series.json` manifest. The reader offers an operation selector,
-starting with one operation on phones and the overview on larger screens. The image and both
-full-size links must follow the selected view; the caption describes their shared measurement scope.
+A wide explanatory figure may come with an `<asset-stem>-mobile.png` arrangement, which the reader
+uses below 600px. Both layouts must show the same mathematics. Performance generators also write
+individual operation views and an `<asset-stem>-series.json` manifest, and from those the reader
+offers an operation selector that starts with one operation on phones and with the overview on
+larger screens. The image and both full-size links must follow the selected view. Their shared
+measurement scope goes in the caption.
 
 ## Writing
 
-Explain the subject directly and in depth. Develop a concrete example far enough that the reader can
-follow the mechanism, then connect it to the mathematics and the implementation. Preserve useful
-existing explanations, equations, checked examples, citations, and qualifications. Edit weak framing
-without compressing a substantial chapter into a summary.
+Explain the subject in depth. Take a worked example far enough that the reader can follow the
+mechanism, and then connect it to the mathematics and the implementation. Keep the useful
+explanations, equations, checked examples, citations, and qualifications that are already there. Fix
+weak framing, but don't squash a substantial chapter into a summary.
 
-Follow the `research-storytelling` skill when available. Use the relevant explanatory techniques
-from its reference authors: a running example, a diagram developed through several steps, an
-experiment interpreted from its evidence, or a derivation that makes the implementation intelligible.
-The technique should fit the chapter. Preserve its distinct argument and rhythm.
+If the `research-storytelling` skill is available, follow it, and borrow whichever explanatory
+technique from its reference authors fits: a running example, a diagram built up over several steps,
+an experiment read from its evidence, or a derivation that makes sense of the implementation. Pick
+the technique to fit the chapter. Each chapter keeps its own argument and rhythm.
 
-Use “we” for the authors' voice throughout the guide and interface. Do not invent the authors'
-experiences, motives, conversations, or development history. First-person phrasing can guide a
-calculation or describe a choice made in the exposition; autobiographical claims
-need evidence from the authors' actual work. Avoid canned chapter
-agendas, audience-routing paragraphs, repeated promises about what the reader will learn, dramatic
-one-line conclusions, and generic recaps. A chapter may open with an example, a definition, or an
-observation; it does not need a ritual question or a syllabus sentence. Explain design decisions
-through their technical consequences. Do not mandate a uniform paragraph template across chapters.
+Use direct explanations and worked calculations together. Keep a clear existing explanation when
+adding an example, and follow the calculation far enough to explain its result. Use “we” naturally
+for the authors' work or for a calculation, without rewriting sentences merely to add personality.
+Keep grounded opinions, uncertainty, and occasional informality when they help explain the work.
+An occasional “:)” fits a light moment such as an admitted weakness or an invitation, at most once
+or twice a chapter. Do not make an invitation or an imperative the default chapter opening.
+Keep related sentences together, and break paragraphs when the topic changes, for example from a
+calculation to its API or from a theorem to its hypotheses. Don't invent the
+authors' experiences, motives, conversations, or development history. First person is fine for walking through a
+calculation or describing a choice the exposition makes, but an autobiographical claim needs
+evidence from the authors' actual work. Leave out canned chapter agendas, paragraphs that route
+different audiences to different chapters, repeated promises about what the reader will learn,
+dramatic one-line conclusions, and generic recaps. A chapter can open with an example, a definition,
+or an observation. It doesn't need a ritual question or a syllabus sentence. Explain each design
+decision by its technical consequences, and don't force one paragraph template on every chapter.
 
-Claims about proof scope must name the relevant contract. Binary arithmetic, a P3109 projection, a
-block-format encoding, and an approximate transcendental function do not have interchangeable
-correctness guarantees. Keep numerical assumptions and limitations with the claim they qualify.
+A claim about proof scope has to name its contract, because binary arithmetic, a P3109 projection, a
+block-format encoding, and an approximate transcendental function come with different correctness
+guarantees. Keep each numerical assumption or limitation with the claim it qualifies.
 
-Link to source code through descriptive words in the sentence, such as “allocation measurements”
-or “the rounding proof”, rather than printing long file paths in the prose. Keep literal paths
-in commands and instructions where the reader needs to type them. Check each link against the
-actual source location.
+Link to source code from descriptive words in the sentence, such as “allocation measurements” or
+“the rounding proof”, and keep long file paths out of the prose. Literal paths belong in commands
+and instructions, where the reader has to type them. Check every link against the actual source
+location.
 
 ## Source layout
 
@@ -129,35 +136,37 @@ actual source location.
 - `build.sh`: figure freshness checks, export, chapter verification, and reader build.
 - `serve.py`: local preview server with cache revalidation and redirects to the app entry page.
 
-Front matter in chapters contains `number`, `slug`, `title`, `summary`, and optional internal `phases`.
-Landing front matter contains `lede` and `authors`. Keep the recorded author names and affiliations
-unless the authors supply a change. A Markdown image such as `![Caption](assets/figure.png)` becomes
-a figure with its caption. The reader copies published assets and excludes plotting code and input
-data from the public bundle. Figure-view manifests are embedded in the rendered HTML rather than
-copied as separate public files.
+Chapter front matter has `number`, `slug`, `title`, `summary`, and optional internal `phases`, and
+landing front matter has `lede` and `authors`. Keep the recorded author names and affiliations
+unless the authors send a change. A Markdown image such as `![Caption](assets/figure.png)` becomes a
+figure with its caption. When the reader copies published assets, it leaves plotting code and input
+data out of the public bundle. Figure-view manifests are embedded in the rendered HTML and never
+copied out as public files of their own.
 
 ## Declaration data
 
-`data/nodes.json` contains `source`, `phases`, and `nodes`. Source provenance includes the repository,
-revision, and working-tree status. An unborn HEAD uses a null revision and no worktree diff digest;
-all nodes are uncommitted and have no source URL. Each selected node retains its full Lean name as its
-id, kind, title, phase ID, module, file and line range, source URL, statement, documentation, axioms,
-selected dependencies, source excerpt, and dirty status. Each phase contains only its `id` and `title`.
-The phase list must be nonempty, and each phase must contain a node. Names must resolve and be
-unique; dependencies, source ranges, and provenance are validated. Dependencies are computed through
-unselected declarations and transitively reduced.
-These are supporting details for a declaration, not the organizing interface of the book.
-The reader also generates its complete module graph from the source import headers. Ignore comments,
-include public and meta imports, and reject missing project imports and cycles. External dependencies
-such as Mathlib are outside this graph. Do not infer proof dependencies from module imports.
+`data/nodes.json` holds `source`, `phases`, and `nodes`. Its source provenance gives the repository,
+the revision, and the working-tree status. With an unborn HEAD the revision is null and there is no
+worktree diff digest, and every node is uncommitted with no source URL. Each selected node keeps its
+full Lean name as its id, along with its kind, title, phase ID, module, file and line range, source
+URL, statement, documentation, axioms, selected dependencies, source excerpt, and dirty status. A
+phase holds just its `id` and `title`. The phase list can't be empty, and every phase needs a node.
+Names must resolve and be unique, and the dependencies, source ranges, and provenance all get
+validated. Dependencies are computed through unselected declarations and then transitively reduced.
+All of this supports a declaration's page, and the book isn't organized around it. From the
+source import headers the reader also generates its complete module graph. When it does, ignore
+comments, include public and meta imports, and reject missing project imports and cycles. External
+dependencies such as Mathlib stay outside this graph. Don't infer proof dependencies from module
+imports.
 
-A link `[[Full.Lean.Name]]` resolves to `#/node/<URL-encoded-name>` when the declaration is exported.
-Missing names render as code and are reported by the checker; the strict site build rejects unresolved
-links. Source links must honestly represent the exported revision and working-tree status.
+When the declaration is exported, a link `[[Full.Lean.Name]]` resolves to
+`#/node/<URL-encoded-name>`. A missing name renders as code and the checker reports it, and the
+strict site build rejects any unresolved link. Source links have to represent the exported revision
+and working-tree status honestly.
 
 ## Reader data
 
-The reader build requires `data/nodes.json`, Markdown chapters, `content/landing.md`, and
+To build, the reader needs `data/nodes.json`, Markdown chapters, `content/landing.md`, and
 `content/references.json`. It writes `public/data/site.json` with:
 
 - `generatedAt`, `source`, and `origin`: generation time, declaration provenance, and input paths.
@@ -172,13 +181,14 @@ The reader build requires `data/nodes.json`, Markdown chapters, `content/landing
 - `landing`: rendered `html` with optional `lede` and `authors` from the front matter.
 - `references`: bibliography entries with key, authors, title, venue, year, and source URL.
 
-The reader renders the landing HTML as one article followed by the chapter index. Numbered citations
-link to bibliography entries; their source URLs remain links to the cited publications.
-The data build also writes `data/reader-warnings.md` and the bundled MathJax stylesheet and fonts.
+On the landing page the reader renders the HTML as one article with the chapter index after it.
+Numbered citations link to bibliography entries, and the entries' source URLs point to the cited
+publications. The data build also writes `data/reader-warnings.md` and the bundled MathJax
+stylesheet and fonts.
 
 ## Evidence and measurement claims
 
-Use the recorded results to check numerical claims:
+Check numerical claims against the recorded results:
 
 - `benchmarks/results/main/release/benchmark/`: scalar timings, ratios, metadata, and preflight results.
 - `benchmarks/results/flocq-matched/`: matched binary timings, full-value comparisons, and captured sources.
@@ -186,46 +196,45 @@ Use the recorded results to check numerical claims:
 - `tests/results/main/release/external/`: direct external comparisons and their diagnostics.
 - `tests/results/main/ecosystem/`: wider upstream and workload results, including qualified outcomes.
 
-Read `benchmarks/docs/Comparison.md`, `tests/EXTERNAL.md`, and the relevant result metadata before
-interpreting a series. The performance chapter begins with the public binary measurements in
-`content/assets/public-binary-performance.png`; `format-comparison-main.png` compares the wider
-set of formats and libraries. Figure scripts identify their authoritative inputs; do not keep
-duplicate benchmark CSVs under the site.
-Keep the machine, affinity, workload, implementation boundaries, exclusions, and measurement date
-available next to the detailed results. Different total widths need not imply equal precision across
-formats. Distinguish direct FloatLib comparisons from another project's own tests. Retain and explain
-disagreements rather than presenting a universal pass label.
+Before you interpret a series, read `benchmarks/docs/Comparison.md`, `tests/EXTERNAL.md`, and the
+result metadata that goes with it. The performance chapter opens with the public binary measurements
+in `content/assets/public-binary-performance.png`, and `format-comparison-main.png` compares the
+wider set of formats and libraries. Each figure script names its authoritative inputs, so don't keep
+duplicate benchmark CSVs under the site. Next to the detailed results, keep the machine, affinity,
+workload, implementation boundaries, exclusions, and measurement date. Different total widths need
+not imply equal precision across formats. Tell direct FloatLib comparisons apart from another
+project's own tests. When results disagree, keep the disagreement and explain it instead of showing
+one universal pass label.
 
 ## Verification and build directories
 
-Keep build outputs, dependency caches, and scratch checks outside the source tree.
-`tests/lib/lake.sh` defines the shared per-checkout `FLOATLIB_BUILD_DIR`; site scripts derive their
-defaults from it. `BUILD_DIR` controls the reader build mirror, `OUT_DIR` the finished site,
-and `FLOATLIB_SITE_SCRATCH` the chapter scratch directory. The standard output is
-`${FLOATLIB_BUILD_DIR}-site`, not a build directory in the checkout. Source files and maintained
-published figures stay in the repository.
+Build outputs, dependency caches, and scratch checks stay outside the source tree.
+`tests/lib/lake.sh` defines the shared per-checkout `FLOATLIB_BUILD_DIR`, and the site scripts take
+their defaults from it. `BUILD_DIR` controls the reader build mirror, `OUT_DIR` the finished site,
+and `FLOATLIB_SITE_SCRATCH` the chapter scratch directory. By default the site goes to
+`${FLOATLIB_BUILD_DIR}-site`, never to a build directory in the checkout. Source files and
+maintained published figures stay in the repository.
 
-Run `bash site/build.sh` for the full site check. The export builds the modules listed in
-`content/phases.json`, including the optional binary transcendental and unchecked host APIs.
-`--skip-lean` may reuse a current declaration export
-after prose-only edits; it still checks chapter examples and figure freshness. The build regenerates
-result-derived figures in local scratch and compares their bytes with the maintained assets. It must
-not silently skip missing evidence for a release build.
-The [build-options table](tooling/README.md#build-options) documents the remaining development
-flags, strictness settings, and clean-source requirement.
+`bash site/build.sh` runs the full site check. Its export builds the modules listed in
+`content/phases.json`, including the optional binary transcendental and unchecked host APIs. After
+prose-only edits, `--skip-lean` may reuse a current declaration export, and it still checks chapter
+examples and figure freshness. The build regenerates result-derived figures in local scratch and
+compares their bytes with the maintained assets. For a release build it must never skip missing
+evidence silently. Other development flags, strictness settings, and the clean-source requirement
+are in the [build-options table](tooling/README.md#build-options).
 
 Every fenced `lean` block in `content/chapters/` is extracted into a per-chapter scratch file,
 prefixed with `import FloatLib`, and compiled against the local library build. Claimed evaluation
-outputs are checked. An unresolved link, unexpected compiler warning, output mismatch, or failing
-example fails the strict build. A new Lean example on the landing page must be checked in local
-scratch or copied verbatim from a checked chapter example; the chapter extractor does not check the
-landing page itself. Remove temporary test sources after checking them; do not add persistent test
-modules for prose or reader edits.
+outputs are checked as well. An unresolved link, an unexpected compiler warning, an output mismatch,
+or a failing example fails the strict build. The chapter extractor never looks at the landing page,
+so a new Lean example there has to be checked in local scratch or copied verbatim from a checked
+chapter example. Delete temporary test sources once you've checked them, and don't add persistent
+test modules for prose or reader edits.
 
-Use `python3 site/serve.py --dir <local-output>` to preview. Inspect the built site in a browser at
-desktop and mobile widths, including the introduction, all chapter routes, math, image loading,
-search, declaration links, themes, and moved section bookmarks. Check both graph views, search, selection,
-zoom, and dependency links at desktop and mobile widths. Chapter agenda ledes remain absent.
+To preview, run `python3 site/serve.py --dir <local-output>`. Look at the built site in a browser at
+desktop and mobile widths: the introduction, all chapter routes, math, image loading, search,
+declaration links, themes, and moved section bookmarks. At both widths, check both graph views,
+search, selection, zoom, and dependency links. Chapter agenda ledes should still be absent.
 
-Update this contract when the intended website behavior changes. Explicit user instructions take
-precedence over older design notes.
+When the intended website behavior changes, update this contract. If a user's instructions conflict
+with an older design note, the instructions win.

@@ -15,7 +15,8 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Addition.Proof
 An accepted result is the compact finite kernel `FiniteKernel.fma?` on the operand models
 (`fmaNormal?_refines`): the exact limb product is the product of the decoded significands, and the
 alignment core computes the unsigned-scale exact sum `FiniteScaleAdd.roundSum` that
-`FiniteKernel.fmaComponentsImpl` evaluates. `toModel_fma` then closes with the reference operation.
+`FiniteKernel.Internal.fmaComponents` evaluates. `toModel_fma` then closes with the reference
+operation.
 -/
 
 @[expose] public section
@@ -61,8 +62,8 @@ theorem fmaNormal?_refines (h : Eligible fmt) (x y z r : Value fmt)
     rw [decode?_normal h x hxeFinite hxe0, decode?_normal h y hyeFinite hye0,
       decode?_normal h z hzeFinite hze0]
     simp only [Option.some.injEq]
-    rw [← FiniteKernel.fmaComponentsImpl_eq]
-    unfold FiniteKernel.fmaComponentsImpl
+    rw [← FiniteKernel.Internal.fmaComponents_eq]
+    unfold FiniteKernel.Internal.fmaComponents
     rw [ite_eq_left h.isIEEE, hsum, hproduct]
     have hxe0' : (expField x == 0) = false := by simpa using hxe0
     have hye0' : (expField y == 0) = false := by simpa using hye0

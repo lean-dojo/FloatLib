@@ -37,14 +37,6 @@ namespace FloatLib.Examples.PositQuire
 
 open FloatLib.Floats
 
-/-- The input and output format for this example. -/
-abbrev Posit32 :=
-  ExecFloat.Posit (bits := 32)
-
-/-- The exact accumulator paired with `Posit32`. -/
-abbrev Quire32 :=
-  ExecFloat.Posit.Quire (bits := 32)
-
 /-- Accumulate the products in order, starting from the zero quire. -/
 def accumulateProducts (pairs : List (Posit32 × Posit32)) : Quire32 :=
   -- qMulAdd forms the product in the quire. Multiplying two Posit32 values first would round it.
@@ -53,8 +45,8 @@ def accumulateProducts (pairs : List (Posit32 × Posit32)) : Quire32 :=
     ExecFloat.Posit.Quire.zero
 
 /--
-Compute a dot product and round once after accumulation. Unequal lengths return an error;
-quire overflow and NaR operands produce a successful result whose posit value is NaR.
+Compute a dot product and round once after accumulation. Unequal lengths return an error, while
+quire overflow and NaR operands give a successful result whose posit value is NaR.
 -/
 def dotProduct (xs ys : List Posit32) :
     Except Numerics.ReductionError Posit32 :=

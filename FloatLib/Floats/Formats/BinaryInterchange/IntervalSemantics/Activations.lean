@@ -15,8 +15,8 @@ public import FloatLib.Floats.Interval.ERealCoercions
 # Activation enclosures for executable binary intervals
 
 ReLU, absolute value, and square root have enclosure and interval-validity theorems with
-operation-specific hypotheses. The executable definitions live in `Interval.Activations`; shared
-endpoint order and negation facts come from `IntervalSemantics.Arithmetic`.
+operation-specific hypotheses. The executable definitions live in `Interval.Activations`, and
+shared endpoint order and negation facts come from `IntervalSemantics.Arithmetic`.
 
 ReLU and absolute value work for every descriptor and accept ordered non-NaN endpoints, including
 infinities from an earlier operation. Their finite-input theorems specialize the same proofs.
@@ -156,25 +156,25 @@ theorem sqrt_sound
     hnonnegative.trans hA.toReal_ordered
   constructor
   · change
-      toEReal (sqrtDown A.lo) ≤ ((Real.sqrt x : ℝ) : EReal)
+      toEReal (Model.sqrt A.lo (mode := .down)) ≤ ((Real.sqrt x : ℝ) : EReal)
     calc
-      toEReal (sqrtDown A.lo) ≤
+      toEReal (Model.sqrt A.lo (mode := .down)) ≤
           ((Real.sqrt (toReal A.lo) : ℝ) : EReal) :=
-        toEReal_sqrtDown_le_of_nonnegative A.lo hfmt hA.lo_isFinite hnonnegative
+        toEReal_sqrt_down_le_of_nonnegative A.lo hfmt hA.lo_isFinite hnonnegative
       _ ≤ ((Real.sqrt x : ℝ) : EReal) :=
         EReal.coe_le_coe_iff.2 (Real.sqrt_le_sqrt hx.1)
   · change
-      ((Real.sqrt x : ℝ) : EReal) ≤ toEReal (sqrtUp A.hi)
+      ((Real.sqrt x : ℝ) : EReal) ≤ toEReal (Model.sqrt A.hi (mode := .up))
     calc
       ((Real.sqrt x : ℝ) : EReal) ≤
           ((Real.sqrt (toReal A.hi) : ℝ) : EReal) :=
         EReal.coe_le_coe_iff.2 (Real.sqrt_le_sqrt hx.2)
-      _ ≤ toEReal (sqrtUp A.hi) :=
-        le_toEReal_sqrtUp_of_nonnegative A.hi hfmt hA.hi_isFinite hhiNonnegative
+      _ ≤ toEReal (Model.sqrt A.hi (mode := .up)) :=
+        le_toEReal_sqrt_up_of_nonnegative A.hi hfmt hA.hi_isFinite hhiNonnegative
 
 /--
 Square root maps a finite valid nonnegative interval to an ordered interval with non-NaN
-endpoints. The extended-valid conclusion avoids requiring a separate output-finiteness premise.
+endpoints. Concluding extended validity avoids an output-finiteness premise.
 -/
 theorem sqrt_validExtended
     {fmt : FloatFormat} (A : Interval fmt) (hfmt : fmt.isIEEE = true) (hA : Valid A)
@@ -182,11 +182,11 @@ theorem sqrt_validExtended
     ValidExtended (sqrt A) := by
   have hhiNonnegative : 0 ≤ toReal A.hi :=
     hnonnegative.trans hA.toReal_ordered
-  have hloNaN : isNaN (sqrtDown A.lo) = false :=
-    isNaN_sqrtDown_eq_false_of_isFinite_of_nonnegative
+  have hloNaN : isNaN (Model.sqrt A.lo (mode := .down)) = false :=
+    isNaN_sqrt_down_eq_false_of_isFinite_of_nonnegative
       A.lo hfmt hA.lo_isFinite hnonnegative
-  have hhiNaN : isNaN (sqrtUp A.hi) = false :=
-    isNaN_sqrtUp_eq_false_of_isFinite_of_nonnegative
+  have hhiNaN : isNaN (Model.sqrt A.hi (mode := .up)) = false :=
+    isNaN_sqrt_up_eq_false_of_isFinite_of_nonnegative
       A.hi hfmt hA.hi_isFinite hhiNonnegative
   refine ⟨hloNaN, hhiNaN, ?_⟩
   apply (le_iff_toEReal_le_of_isNaN_eq_false _ _ hloNaN hhiNaN).2

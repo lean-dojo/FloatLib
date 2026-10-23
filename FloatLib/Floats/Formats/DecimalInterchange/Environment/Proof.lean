@@ -23,8 +23,8 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 
 namespace Environment
 
-/-- Restoring all saved flags preserves the current rounding direction. -/
-theorem restoreFlags_allFlags (environment : Environment) (saved : Status) :
+/-- Restoring every flag from a snapshot replaces the flags and keeps the rounding direction. -/
+theorem restoreFlags_allFlags (environment : Environment) (saved : Numerics.IEEEStatus) :
     environment.restoreFlags saved.saveAllFlags Numerics.IEEEStatus.allFlags =
       { environment with flags := saved } := by
   simp [restoreFlags]
@@ -39,7 +39,7 @@ theorem restoreFlags_allFlags (environment : Environment) (saved : Status) :
 
 /-- A flag after execution is the disjunction of its previous and newly raised states. -/
 theorem run_isSet (environment : Environment) (operation : RoundingMode → Outcome)
-    (exception : Exception) :
+    (exception : Numerics.IEEEException) :
     (environment.run operation).2.flags.isSet exception =
       (environment.flags.isSet exception ||
         (operation environment.rounding).status.isSet exception) := by

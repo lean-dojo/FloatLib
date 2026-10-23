@@ -10,11 +10,15 @@ public import Mathlib.Algebra.Order.Field.Basic
 public import Mathlib.Order.Compare
 
 /-!
-# Quotient comparisons in ordered fields
+# Quotient and offset comparisons in ordered fields
 
 Comparing a quotient with a boundary is equivalent to testing a linear residual against zero.
 A negative denominator reverses the ordering. These identities let interval-based comparisons
 use subtraction and multiplication without constructing quotient intervals.
+
+Comparing `x - c` with a boundary is comparing `x` with the boundary plus `c`. The `Minus1`
+functions use this to compare an unrounded value with shifted boundaries, so the subtraction is
+never rounded on its own.
 -/
 
 public section
@@ -33,5 +37,9 @@ theorem cmp_div_of_neg (s c b : α) (hc : c < 0) :
     (cmp (s - b * c) 0).swap = cmp (s / c) b := by
   rw [cmp_swap]
   simp only [cmp, cmpUsing, sub_lt_zero, sub_pos, div_lt_iff_of_neg hc, lt_div_iff_of_neg hc]
+
+/-- Subtracting a constant from the compared value adds it to the boundary. -/
+theorem cmp_sub_eq_cmp_add (x c b : α) : cmp (x - c) b = cmp x (b + c) := by
+  rw [← cmp_add_right (x - c) b c, sub_add_cancel]
 
 end FloatLib.Numerics

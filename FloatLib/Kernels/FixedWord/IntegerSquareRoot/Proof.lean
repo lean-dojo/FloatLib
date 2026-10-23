@@ -17,20 +17,21 @@ import Mathlib.Tactic.Ring
 # Verified native and arbitrary-precision integer square root
 
 `sqrtIter_toNat` identifies the native Newton iteration with `Nat.sqrt.iter`, and `sqrt_toNat`
-proves that its initialization computes the floor square root. The native average cannot overflow.
-The runtime module proves termination by a strictly decreasing guess.
+proves that its initialization computes the floor square root. `sqrtChecked_toNat` does the same
+for the checked floating-point candidate. The native average cannot overflow, and the runtime
+module proves termination by a strictly decreasing guess.
 
 `checkRoot?_eq` certifies the increasing-precision candidate by the defining square inequalities.
-`sqrtRem_eq` also establishes the exact remainder, with explicit full-precision iteration as
-fallback. `natSqrt_eq_sqrtNat` installs both implementations as a compiler substitution for
-`Nat.sqrt`, preserving the direct native-word branch below `2^64`.
+`sqrtRem_eq` also gives the remainder, with full-precision iteration as the fallback.
+`natSqrt_eq_sqrtNat` installs both implementations as a compiler substitution for `Nat.sqrt`,
+keeping the native-word branch below `2^64`.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.FixedWord.IntegerSquareRoot
 
-/-- The overflow-free native average has its ordinary natural-number value. -/
+/-- `average` computes the floor of the natural-number average. -/
 @[simp, grind =] theorem average_toNat (left right : UInt64) :
     (average left right).toNat = (left.toNat + right.toNat) / 2 := by
   have hleftHalf :
@@ -60,7 +61,7 @@ namespace FloatLib.Numerics.FixedWord.IntegerSquareRoot
   rw [UInt64.toNat_add, UInt64.toNat_add, hleftHalf, hrightHalf, hcarry,
     Nat.mod_eq_of_lt hfirstFit, Nat.mod_eq_of_lt hfullFit, Nat.add_div (by decide)]
 
-/-- The native Newton iteration is exactly Lean's natural-number iteration. -/
+/-- The native Newton iteration agrees with Lean's natural-number iteration. -/
 @[simp, grind =] theorem sqrtIter_toNat (value guess : UInt64) :
     (sqrtIter value guess).toNat =
       Nat.sqrt.iter value.toNat guess.toNat := by
@@ -86,7 +87,7 @@ termination_by guess.toNat
 decreasing_by
   exact UInt64.lt_iff_toNat_lt.mp hdecrease
 
-/-- Native-word integer square root agrees exactly with `Nat.sqrt`. -/
+/-- Native-word integer square root agrees with `Nat.sqrt`. -/
 @[simp, grind =] theorem sqrt_toNat (value : UInt64) :
     (sqrt value).toNat = Nat.sqrt value.toNat := by
   rw [Nat.sqrt.eq_1]
@@ -117,6 +118,54 @@ decreasing_by
     simpa only [shift, hlog, UInt64.reduceToNat] using
       FloatLib.Numerics.FixedWord.shiftLeft_toNat (1 : UInt64) shift hshift hfit
 
+/-- An accepted candidate is the floor square root. -/
+theorem isFloorRoot_spec {value guess : UInt64} (h : isFloorRoot value guess = true) :
+    guess.toNat = Nat.sqrt value.toNat := by
+  simp only [isFloorRoot, Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq] at h
+  obtain ⟨⟨hsmall, hsquare⟩, hnext⟩ := h
+  have hg : guess.toNat < 2 ^ 32 := UInt64.lt_iff_toNat_lt.mp hsmall
+  have hsquareFit : guess.toNat * guess.toNat < 2 ^ 64 := by
+    calc guess.toNat * guess.toNat < 2 ^ 32 * 2 ^ 32 := Nat.mul_lt_mul'' hg hg
+      _ = 2 ^ 64 := by norm_num
+  have hsquareNat : guess.toNat * guess.toNat ≤ value.toNat := by
+    have := UInt64.le_iff_toNat_le.mp hsquare
+    rwa [UInt64.toNat_mul, Nat.mod_eq_of_lt hsquareFit] at this
+  apply Nat.eq_sqrt.mpr
+  refine ⟨hsquareNat, ?_⟩
+  rcases hnext with hmax | hlt
+  · subst hmax
+    have := value.toNat_lt
+    norm_num at this ⊢
+    omega
+  · have hne : guess.toNat + 1 < 2 ^ 32 ∨ guess.toNat + 1 = 2 ^ 32 := by omega
+    rcases hne with hfit | hedge
+    · have hsuccFit : (guess.toNat + 1) * (guess.toNat + 1) < 2 ^ 64 := by
+        calc (guess.toNat + 1) * (guess.toNat + 1) < 2 ^ 32 * 2 ^ 32 :=
+              Nat.mul_lt_mul'' hfit hfit
+          _ = 2 ^ 64 := by norm_num
+      have hsucc : (guess + 1).toNat = guess.toNat + 1 := by
+        rw [UInt64.toNat_add]
+        exact Nat.mod_eq_of_lt (by change guess.toNat + 1 < 2 ^ 64; omega)
+      have := UInt64.lt_iff_toNat_lt.mp hlt
+      rwa [UInt64.toNat_mul, hsucc, Nat.mod_eq_of_lt hsuccFit] at this
+    · have := value.toNat_lt
+      rw [hedge]
+      norm_num at this ⊢
+      omega
+
+/-- `sqrtChecked` agrees with `Nat.sqrt`. -/
+theorem sqrtChecked_toNat (value : UInt64) :
+    (sqrtChecked value).toNat = Nat.sqrt value.toNat := by
+  unfold sqrtChecked
+  dsimp only
+  split
+  · exact isFloorRoot_spec ‹_›
+  · split
+    · exact isFloorRoot_spec ‹_›
+    · split
+      · exact isFloorRoot_spec ‹_›
+      · exact sqrt_toNat value
+
 private theorem predecessor_square (guess : Nat) :
     guess * guess - (guess + guess - 1) = (guess - 1) * (guess - 1) := by
   cases guess with
@@ -127,7 +176,7 @@ private theorem predecessor_square (guess : Nat) :
           (guess + 1) * (guess + 1) = guess * guess + (guess + guess + 1) := by ring
       simp only [Nat.add_sub_cancel, hgap, hsquare]
 
-/-- Every accepted candidate gives the exact floor square root and remainder. -/
+/-- Every accepted candidate gives the floor square root and its remainder. -/
 theorem checkRoot?_eq (value guess : Nat) (result : Nat × Nat)
     (h : checkRoot? value guess = some result) :
     result = (Nat.sqrt value, value - Nat.sqrt value * Nat.sqrt value) := by
@@ -157,7 +206,7 @@ theorem checkRoot?_eq (value guess : Nat) (result : Nat × Nat)
       exact (Option.some.inj h).symm
     next _ => simp at h
 
-/-- Checked increasing-precision Newton preserves the floor square root and exact remainder. -/
+/-- Checked increasing-precision Newton returns the floor square root and its remainder. -/
 theorem sqrtRem_eq (value : Nat) :
     sqrtRem value = (Nat.sqrt value, value - Nat.sqrt value * Nat.sqrt value) := by
   unfold sqrtRem
@@ -166,7 +215,7 @@ theorem sqrtRem_eq (value : Nat) :
   | some result => exact checkRoot?_eq value _ result h
 
 /--
-The native and checked arbitrary-precision implementations preserve natural-number square root.
+The native and checked arbitrary-precision implementations compute the natural-number square root.
 -/
 theorem sqrtNat_eq_sqrt (value : Nat) :
     sqrtNat value = Nat.sqrt value := by
@@ -183,7 +232,8 @@ The compiler uses native-word square root for one-word inputs and checked Newton
 This `@[csimp]` theorem is global: every module that imports it, in particular everything that
 imports `FloatLib.Kernels`, compiles `Nat.sqrt` to `sqrtNat`, including uses unrelated to
 FloatLib. The substitution is sound by `sqrtNat_eq_sqrt`. The checked candidate's fallback calls
-`Nat.sqrt.iter` explicitly, so compiling the replacement cannot recurse through this substitution.
+`Nat.sqrt.iter`, never `Nat.sqrt`, so compiling the replacement cannot recurse through this
+substitution.
 -/
 -- grind: no rule; this is a compiler implementation substitution, not a search rewrite.
 @[csimp] theorem natSqrt_eq_sqrtNat :

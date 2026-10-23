@@ -17,8 +17,8 @@ formulas, with direction and error theorems for deterministic modes and selectio
 every supplied stochastic word. This file proves that the result always fits the direct encoder's
 precision grid, then reuses the same saturation-and-encoding theorem as dyadic projection.
 
-The logarithm bound imported here is a proof theorem about exact natural-number quotients; the
-P3109 runtime itself remains independent of binary-interchange representation and policy.
+The logarithm bound imported here is a theorem about exact natural-number quotients. The P3109
+runtime does not depend on the binary-interchange representation or policy.
 -/
 
 @[expose] public section
@@ -109,8 +109,8 @@ theorem roundFiniteRatToPrecision_fitsPrecisionGrid
 /--
 Decoding exact-rational projection returns its round-then-saturate datum.
 
-The representation theorem is shared with dyadic projection; only the proof that rational
-rounding lands on the precision grid is new.
+The encoding theorem is shared with dyadic projection, so the only new step is that rational
+rounding lands on the precision grid.
 -/
 theorem sameDatum_decode_projectRatCode
     (format : Format) (policy : ProjectionPolicy)
@@ -136,15 +136,14 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 variable {format : Formats.P3109.Format}
 
-/-- Decoding `projectRat` exposes the exact P3109 rational round-then-saturate specification. -/
+/-- Decoding `projectRat` gives the P3109 rational round-then-saturate specification. -/
 theorem decode_projectRat
-    (policy : Formats.P3109.ProjectionPolicy)
-    (value : NumericalValue Rat) :
+    (value : NumericalValue Rat)
+    (mode : Formats.P3109.RoundingMode) (saturation : Formats.P3109.SaturationMode) :
     Formats.P3109.Format.SameDatum
-      (decode (projectRat (format := format) policy value))
-      (format.projectRatValue policy value) := by
-  exact
-    Formats.P3109.Format.sameDatum_decode_projectRatCode
-      format policy value
+      (decode (projectRat (format := format) value mode saturation))
+      (format.projectRatValue { rounding := mode, saturation } value) := by
+  rw [decode_eq_format_decode]
+  exact Formats.P3109.Format.sameDatum_decode_projectRatCode format _ value
 
 end FloatLib.Floats.ExecFloat.P3109

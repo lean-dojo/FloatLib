@@ -15,11 +15,10 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Info
 
 This optional meta module registers `#float_info` for the promoted
 `ExecFloat.BoundedFixedPoint` wrapper. It reports the selected coefficient width and radix scale,
-then exposes only theorem-backed wrapping, checked, and saturating guarantees.
+then lists the theorem-backed guarantees for the three overflow options.
 
-Keeping inspection optional prevents elaborator support from entering ordinary runtime imports.
-The profile mirrors the raw family while naming the configured public operations users actually
-call.
+Keeping inspection optional keeps elaborator support out of ordinary runtime imports. The profile
+mirrors the raw family but names the configured public operations that users call.
 -/
 
 public meta section
@@ -49,11 +48,11 @@ elab_rules : command
           FloatLib.Floats.Formats.FixedPoint.Bounded.FloatInfo.Command.profile
             base fractionalDigits width
         let configuredWrapping : TheoremSurface :=
-          { topic := "configured wrapping arithmetic"
+          { topic := "configured arithmetic with overflow := .wrap"
             declarations :=
-              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_wrapAdd
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_wrapSub
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_wrapMul
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_add_wrap
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_sub_wrap
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_mul_wrap
               ]
             applicability := .verifiedForType
             scope := "all stored coefficients and destination widths"
@@ -62,26 +61,26 @@ elab_rules : command
               statement :=
                 "Wrapping always returns a represented coefficient and exactly follows centered modular reduction." } }
         let configuredChecked : TheoremSurface :=
-          { topic := "configured checked and saturating arithmetic"
+          { topic := "configured arithmetic with overflow := .reject or .saturate"
             declarations :=
-              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.checkedAdd_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.checkedSub_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.checkedMul_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_checkedAdd_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_checkedSub_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_checkedMul_eq_some
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_saturatingAdd
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_saturatingSub
-              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_saturatingMul
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.add_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.sub_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.mul_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_add_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_sub_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_mul_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_add_saturate
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_sub_saturate
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_mul_saturate
               ]
             applicability :=
               if width > 0 then .verifiedForType else .unavailable "signed width must be positive"
             scope :=
-              "positive destination widths; checked exactness holds whenever a value is returned"
+              "positive destination widths; rejecting exactness holds whenever a value is returned"
             numericalGuarantee? := some {
               kinds := [.range, .exactness]
               statement :=
-                "Checked operations succeed when the exact coefficient fits and every returned value decodes to the exact rational result; saturating operations decode to the exact coefficient clamped to the signed range." } }
+                "Rejecting operations succeed when the exact coefficient fits and every returned value decodes to the exact rational result; saturating operations decode to the exact coefficient clamped to the signed range." } }
         let baseProfile : FormatProfile :=
           { coreProfile with
             declarationPrefix := "FloatLib.Floats.ExecFloat.BoundedFixedPoint."
@@ -91,7 +90,7 @@ elab_rules : command
                 coreProfile.rounding
             execution :=
               [ ⟨"carrier", s!"ExecFloat over FixedInt {width}"⟩
-              , ⟨"dispatch", "direct fixed-width kernels selected by explicit operation names"⟩
+              , ⟨"dispatch", "direct fixed-width kernels selected by the overflow option"⟩
               , ⟨"backend proof",
                   "wrapping, checked, and saturating operations each lift a rational decoding "
                     ++ "theorem from the raw code layer"⟩
@@ -99,7 +98,7 @@ elab_rules : command
             theoremSurfaces :=
               configuredWrapping :: configuredChecked :: coreProfile.theoremSurfaces
             nonclaims :=
-              [ "one overflow policy is silently selected by ordinary arithmetic notation"
+              [ "ordinary arithmetic notation silently selects an overflow policy"
               , "division, square root, fused multiply-add, or transcendental functions are "
                   ++ "provided"
               , "IEEE exceptional values or flags apply to this integer-backed family" ] }

@@ -13,14 +13,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 /-!
 # Shared proofs for native normal operand pairs
 
-Several one-word kernels begin with the same operation: reject zero, subnormal, and exceptional
-operands, then expose two normalized significands and their biased exponents. The executable
-decoder remains in `Small.Core.Runtime`; this module proves its common contract once.
+Several one-word kernels start the same way: they reject zero, subnormal and exceptional
+operands, then expose two normalized significands and their biased exponents.
+`Small.Core.Runtime` has the executable decoder, and this module proves its common contract once.
 
-`View` records the exact generic decoder results together with the bounds needed by fixed-word
-rounders. Multiplication and division can therefore focus on their different arithmetic without
-repeating storage-field and exceptional-value arguments. No executable definition depends on this
-proof layer.
+`View` records the generic decoder results together with the bounds the fixed-word rounders need,
+so the multiplication and division proofs don't repeat the storage-field and exceptional-value
+arguments. No executable definition depends on this module.
 -/
 
 @[expose] public section
@@ -30,7 +29,7 @@ namespace Model.NativeNormalPair
 
 open NativeSmallWord
 
-/-- Proof-facing view of two successfully decoded normal operands. -/
+/-- Fields and decoder facts of two successfully decoded normal operands. -/
 structure View {fmt : FloatFormat} (x y : Model fmt) where
   /-- XOR of the operand signs, as supplied to multiplicative kernels. -/
   sign : Bool
@@ -131,10 +130,9 @@ theorem decode_normal {fmt : FloatFormat}
   rw [← NativeSmallWord.normalMantissa_toNat_of_width hwidth x]
 
 /--
-Extract the shared proof view from a successful native normal-pair callback.
+A successful `withNormalPair?` call yields a `View` whose fields are the ones passed to the kernel.
 
-The callback itself remains fully generic. Its caller receives the exact fields passed at runtime,
-their normalized bounds, and decoder equalities suitable for any binary operation.
+Since the kernel stays generic, the view serves any binary operation.
 -/
 theorem view_of_success
     {fmt : FloatFormat} {α : Type}
@@ -164,21 +162,21 @@ theorem view_of_success
       (NativeSmallWord.signField fmt xBits)
       (NativeSmallWord.signField fmt yBits)
   by_cases hxZero : xExponent = 0
-  · simp [NativeSmallWord.withNormalPair?,
+  · simp [NativeSmallWord.withNormalPair?, NativeSmallWord.withNormalPairWord?,
       xBits, xExponent, hxZero] at hresult
   by_cases hxExceptional : xExponent = allOnes
-  · simp [NativeSmallWord.withNormalPair?,
+  · simp [NativeSmallWord.withNormalPair?, NativeSmallWord.withNormalPairWord?,
       xBits, xExponent, allOnes, hxExceptional] at hresult
   by_cases hyZero : yExponent = 0
-  · simp [NativeSmallWord.withNormalPair?,
+  · simp [NativeSmallWord.withNormalPair?, NativeSmallWord.withNormalPairWord?,
       yBits, yExponent, hyZero] at hresult
   by_cases hyExceptional : yExponent = allOnes
-  · simp [NativeSmallWord.withNormalPair?,
+  · simp [NativeSmallWord.withNormalPair?, NativeSmallWord.withNormalPairWord?,
       yBits, yExponent, allOnes, hyExceptional] at hresult
   have hkernel :
       kernel sign xExponent yExponent xMantissa yMantissa =
         some result := by
-    simpa [NativeSmallWord.withNormalPair?,
+    simpa [NativeSmallWord.withNormalPair?, NativeSmallWord.withNormalPairWord?,
       xBits, yBits, xExponent, yExponent, allOnes, xMantissa,
       yMantissa, sign, hxZero, hxExceptional, hyZero, hyExceptional] using
       hresult
@@ -242,10 +240,10 @@ theorem view_of_success
     yMantissaBounds := hyMantissaBounds }, hkernel⟩
 
 /--
-Lift a certified normal-product callback to the generic finite multiplication kernel.
+A normal-pair kernel that rounds like `FiniteProductRound.round` refines `FiniteKernel.mul?`.
 
-The shared view handles native decoding. The callback hypothesis is responsible only for the
-product representation and its final rounding.
+Because the shared view handles the native decoding, `kernel_refines` only covers the product and
+its rounding.
 -/
 theorem mul_refines
     {fmt : FloatFormat}

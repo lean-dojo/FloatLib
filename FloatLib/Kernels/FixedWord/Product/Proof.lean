@@ -17,9 +17,9 @@ import Mathlib.Tactic.Tauto
 /-!
 # Verified fixed-limb significand products
 
-`mul128_toNat` proves exact `128 × 128 → 256` multiplication using the `mul64_toNat` theorem
-from `Core.Proof.UInt128`. The addition theorems reconstruct the exact sum from its low limbs
-and outgoing carry. The `UInt256` lemmas describe widening, projection, and leading-bit selection.
+`mul128_toNat` proves the full `128 × 128 → 256` product correct using the `mul64_toNat` theorem
+from `Core.Proof.UInt128`. The addition theorems reconstruct the sum from its low limbs and
+outgoing carry. The `UInt256` lemmas describe widening, projection, and leading-bit selection.
 -/
 
 @[expose] public section
@@ -31,7 +31,7 @@ namespace FloatLib.Numerics.FixedWord
     (UInt256.ofUInt128 value).toNat = value.toNat := by
   simp [UInt256.ofUInt128, UInt256.toNat, UInt128.toNat]
 
-/-- The generic widening shuffle has the expected unbounded value for in-range shifts. -/
+/-- `ofUInt128ShiftedLeft` agrees with `<<<` for shifts strictly between 64 and 128. -/
 theorem UInt256.toNat_ofUInt128ShiftedLeft (value : UInt128) (shift : Nat)
     (hlower : 64 < shift) (hupper : shift < 128) :
     (UInt256.ofUInt128ShiftedLeft value shift).toNat = value.toNat <<< shift := by
@@ -75,7 +75,7 @@ theorem UInt256.toNat_ofUInt128ShiftedLeft (value : UInt128) (shift : Nat)
   simp only [UInt64.toNat_zero, zero_add]
   ring
 
-/-- The low-half projection is exact whenever the four-limb value fits in two limbs. -/
+/-- A four-limb value below `2^128` keeps its whole value under `low128`. -/
 theorem UInt256.low128_toNat_of_lt (value : UInt256)
     (hvalue : value.toNat < 2 ^ 128) :
     value.low128.toNat = value.toNat := by
@@ -100,7 +100,7 @@ theorem UInt256.low128_toNat_of_lt (value : UInt256)
   simp [UInt256.toNat, uint64_toNat_eq_zero]
   tauto
 
-/-- The natural-number interpretation determines every limb of a four-word value. -/
+/-- A four-word value is determined by its natural-number interpretation. -/
 theorem UInt256.toNat_injective : Function.Injective UInt256.toNat := by
   intro x y hvalue
   cases x with
@@ -124,7 +124,7 @@ theorem UInt256.toNat_injective : Function.Injective UInt256.toNat := by
       exact ⟨UInt64.toNat_inj.mp h3, UInt64.toNat_inj.mp h2,
         UInt64.toNat_inj.mp h1, UInt64.toNat_inj.mp h0⟩
 
-/-- Native addition with carry represents the corresponding exact natural-number sum. -/
+/-- Native addition with carry represents the natural-number sum. -/
 theorem add64_toNat (x y : UInt64) :
     let result := add64 x y
     result.value.toNat + result.carry.toNat * 2 ^ 64 =
@@ -135,13 +135,13 @@ theorem add64_toNat (x y : UInt64) :
   split <;> rename_i h <;> rw [UInt64.lt_iff_toNat_lt, UInt64.toNat_add] at h <;>
     simp only [UInt64.toNat_add, UInt64.reduceToNat] <;> omega
 
-/-- The carry returned by `add64` is always either zero or one. -/
+/-- `add64` returns a carry of zero or one. -/
 theorem add64_carry_le_one (x y : UInt64) :
     (add64 x y).carry.toNat ≤ 1 := by
   simp [add64]
   split <;> simp
 
-/-- `addCarry64` represents exact addition. -/
+/-- `addCarry64` represents natural-number addition with an incoming carry. -/
 theorem addCarry64_toNat (x y carry : UInt64) :
     let result := addCarry64 x y carry
     result.value.toNat + result.carry.toNat * 2 ^ 64 =
@@ -160,7 +160,7 @@ theorem addCarry64_toNat (x y carry : UInt64) :
   simp only [addCarry64, hsum]
   linarith
 
-/-- The outgoing carry from `addCarry64` is a bit when the incoming carry is a bit. -/
+/-- If the incoming carry of `addCarry64` is a bit, so is the outgoing carry. -/
 theorem addCarry64_carry_le_one (x y carry : UInt64)
     (hcarry : carry.toNat ≤ 1) :
     (addCarry64 x y carry).carry.toNat ≤ 1 := by
@@ -170,7 +170,7 @@ theorem addCarry64_carry_le_one (x y carry : UInt64)
   dsimp only at hexact
   omega
 
-/-- `add128` represents exact addition, including its carry above bit 127. -/
+/-- `add128` represents natural-number addition, including its carry above bit 127. -/
 theorem add128_toNat (x y : UInt128) :
     let result := add128 x y
     result.value.toNat + result.carry.toNat * 2 ^ 128 =
@@ -182,7 +182,7 @@ theorem add128_toNat (x y : UInt128) :
   simp only [add128, UInt128.toNat, UInt64.toNat_zero] at *
   omega
 
-/-- The carry returned by `add128` is zero or one. -/
+/-- `add128` returns a carry of zero or one. -/
 theorem add128_carry_le_one (x y : UInt128) :
     (add128 x y).carry.toNat ≤ 1 := by
   let low := addCarry64 x.lo y.lo 0
@@ -202,7 +202,7 @@ theorem add128_carry_eq_zero_of_lt (x y : UInt128)
   simp only [UInt64.reduceToNat]
   omega
 
-/-- The value limbs of `add128` contain the exact sum when its carry is zero. -/
+/-- When `add128` returns a zero carry, its value limbs hold the whole sum. -/
 theorem add128_value_toNat_of_carry_zero (x y : UInt128)
     (hcarry : (add128 x y).carry = 0) :
     (add128 x y).value.toNat = x.toNat + y.toNat := by
@@ -214,8 +214,8 @@ theorem add128_value_toNat_of_carry_zero (x y : UInt128)
 /--
 The low two limbs of `add128` contain the ordinary sum whenever that sum fits in 128 bits.
 
-This is the common refinement fact needed by fixed-limb midpoint, significand, and remainder
-kernels. Keeping it next to `add128` avoids backend-local copies of the same carry argument.
+Fixed-limb midpoint, significand, and remainder kernels all need this fact, so it lives next to
+`add128` instead of in backend-local copies of the same carry argument.
 -/
 theorem add128_value_toNat_of_lt (x y : UInt128)
     (hfit : x.toNat + y.toNat < 2 ^ 128) :
@@ -223,7 +223,7 @@ theorem add128_value_toNat_of_lt (x y : UInt128)
   add128_value_toNat_of_carry_zero x y
     (add128_carry_eq_zero_of_lt x y hfit)
 
-/-- `add256` represents exact addition, including its carry above bit 255. -/
+/-- `add256` represents natural-number addition, including its carry above bit 255. -/
 theorem add256_toNat (x y : UInt256) :
     let result := add256 x y
     result.value.toNat + result.carry.toNat * 2 ^ 256 =
@@ -244,7 +244,7 @@ theorem add256_toNat (x y : UInt256) :
   simp only [add256, UInt256.toNat, UInt64.toNat_zero] at *
   omega
 
-/-- The value limbs of `add256` contain the exact sum when its carry is zero. -/
+/-- When `add256` returns a zero carry, its value limbs hold the whole sum. -/
 theorem add256_value_toNat_of_carry_zero (x y : UInt256)
     (hcarry : (add256 x y).carry = 0) :
     (add256 x y).value.toNat = x.toNat + y.toNat := by
@@ -327,7 +327,7 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
         low value.limb3.toNat 192 hlow hhigh
     simpa [UInt256.toNat, low] using hlog.symm
 
-/-- Every four-word unsigned value lies below the first unrepresentable 256-bit integer. -/
+/-- Every four-word unsigned value is below `2^256`. -/
 theorem UInt256.toNat_lt (value : UInt256) :
     value.toNat < 2 ^ 256 := by
   unfold UInt256.toNat
@@ -337,7 +337,7 @@ theorem UInt256.toNat_lt (value : UInt256) :
   have h3 := value.limb3.toNat_lt
   omega
 
-/-- `mul128` represents the exact mathematical product of its operands. -/
+/-- `mul128` computes the full mathematical product of its operands. -/
 @[simp, grind =] theorem mul128_toNat (x y : UInt128) :
     (mul128 x y).toNat = x.toNat * y.toNat := by
   let p00 := mul64 x.lo y.lo
@@ -352,13 +352,13 @@ theorem UInt256.toNat_lt (value : UInt256) :
   let third2 := add64 second2.value carry1
   let carry2 := first2.carry + second2.carry + third2.carry
   have hp00 : p00.lo.toNat + p00.hi.toNat * 2 ^ 64 = x.lo.toNat * y.lo.toNat :=
-    mul64_toNat x.lo y.lo
+    (UInt128.toNat.eq_1 p00).symm.trans (mul64_toNat x.lo y.lo)
   have hp01 : p01.lo.toNat + p01.hi.toNat * 2 ^ 64 = x.lo.toNat * y.hi.toNat :=
-    mul64_toNat x.lo y.hi
+    (UInt128.toNat.eq_1 p01).symm.trans (mul64_toNat x.lo y.hi)
   have hp10 : p10.lo.toNat + p10.hi.toNat * 2 ^ 64 = x.hi.toNat * y.lo.toNat :=
-    mul64_toNat x.hi y.lo
+    (UInt128.toNat.eq_1 p10).symm.trans (mul64_toNat x.hi y.lo)
   have hp11 : p11.lo.toNat + p11.hi.toNat * 2 ^ 64 = x.hi.toNat * y.hi.toNat :=
-    mul64_toNat x.hi y.hi
+    (UInt128.toNat.eq_1 p11).symm.trans (mul64_toNat x.hi y.hi)
   have hfirst1 : first1.value.toNat + first1.carry.toNat * 2 ^ 64 =
       p00.hi.toNat + p01.lo.toNat := add64_toNat p00.hi p01.lo
   have hsecond1 : second1.value.toNat + second1.carry.toNat * 2 ^ 64 =

@@ -21,7 +21,7 @@ Lean type: we choose its parameters once in an `abbrev`, then use literals, oper
 conversions at that type.
 
 The four sections below build a custom binary layout, a posit width, a decimal fixed-point grid,
-and a P3109 format. They are independent; `BasicOperations` introduces the shared interface.
+and a P3109 format. They are independent, and `BasicOperations` introduces the shared interface.
 -/
 
 @[expose] public section
@@ -55,9 +55,9 @@ private def telemetryMeaning : Option Rat :=
 /-
 `1.5 * 2.25 + 0.5 = 31/8` exactly, and this format represents every step. Normal values carry
 eleven significant bits including the implicit leading one, and an exponent field `e` denotes
-`2^(e - 14)`. `finiteMaxNaN` reserves the all-ones exponent and fraction for NaN with either sign;
-the remaining top-exponent patterns are finite. This is not IEEE binary16 even
-though the field widths agree; the bias of 14 rather than 15 is a second deliberate difference.
+`2^(e - 14)`. `finiteMaxNaN` reserves the all-ones exponent and fraction for NaN with either sign,
+and the other top-exponent patterns are finite. So this isn't IEEE binary16, even though the field
+widths agree. The bias of 14 (binary16 uses 15) is a second deliberate difference.
 -/
 
 /-! ## Choose a posit width -/
@@ -78,7 +78,7 @@ private def positMeaning : Option Rat :=
 -- some (31/8)
 
 /-
-The same calculation is exact in a 12-bit posit as well. Posits have no fixed exponent field; the
+The same calculation is exact in a 12-bit posit as well. Posits have no fixed exponent field. The
 regime and exponent bits adapt to the magnitude, and values near one get the most fraction bits.
 -/
 
@@ -101,9 +101,9 @@ private def fixedReport : Int × Rat :=
 
 /-
 Here the parameter 3 is a decimal scale, not a storage width. An integer coefficient `c`
-represents `c / 1000`, the coefficient is unbounded, and addition on this grid never rounds. A
-fixed-point value has no display instance of its own, so we inspect it through `coefficient` and
-`toRat`; the coefficient 3500 is the number a ledger would store.
+represents `c / 1000`, the coefficient is unbounded, and addition on this grid never rounds. With
+`import FloatLib` the total prints as `3.500`, keeping its scale. `coefficient` gives 3500, the
+number a ledger would store, and `toRat` gives the exact value.
 -/
 
 /-! ## Select a P3109 descriptor and conversion policy -/
@@ -119,8 +119,8 @@ private def p3109Reading : ExecFloat.ConversionOutcome CompactP3109 :=
   ExecFloat.convert (target := CompactP3109) (3 / 16 : Rat)
 
 private def p3109TowardZero : ExecFloat.ConversionOutcome CompactP3109 :=
-  ExecFloat.convertWith (target := CompactP3109) (1 / 3 : Rat)
-    { rounding := .towardZero, saturation := .finite }
+  ExecFloat.convert (target := CompactP3109) (1 / 3 : Rat)
+    (context := { rounding := .towardZero, saturation := .finite })
 
 private def p3109Meaning : Option (NumericalValue Rat) :=
   p3109Reading.value?.map ExecFloat.P3109.Conversion.decodeRat
@@ -132,7 +132,7 @@ private def p3109TowardZeroMeaning : Option (NumericalValue Rat) :=
 
 /-
 The source is a `Rat`, so `3/16` is exact before the destination rounds it, and it is
-representable. `1/3` is not; rounding toward zero picks the neighbour below, `5/16`, and the
+representable. `1/3` is not, so rounding toward zero picks the neighbour below, `5/16`. The
 `.finite` saturation policy would clamp an overflowing result to the largest finite value instead
 of producing an exceptional code. A successful outcome carries the value and status, a failure
 carries its reason, and `value?` keeps only the optional value. Decoding then separates finite

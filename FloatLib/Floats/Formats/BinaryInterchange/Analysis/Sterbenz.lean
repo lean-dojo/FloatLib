@@ -15,8 +15,8 @@ public import Mathlib.Algebra.Order.Algebra
 
 Sterbenz's lemma applies to the rounded-real grid of every `fmt`: two same-sign representable
 values within a factor of two have an exactly representable difference. For an IEEE descriptor,
-subtraction of the corresponding finite model values remains finite and decodes to that exact
-real difference. The same-sign forms cover negative operands and zero as well.
+subtraction of the corresponding finite model values is finite and decodes to that exact real
+difference. The same-sign forms cover negative operands and zero as well.
 
 ## References
 
@@ -60,8 +60,8 @@ theorem roundAt_sub_eq_of_sterbenz (fmt : FloatFormat) {u v : ℝ}
 /--
 Subtraction of positive finite executable values within a factor of two has no rounding error.
 
-The Sterbenz hypotheses also bound the exact difference by one of the finite operands, so
-finiteness of the executable result follows rather than appearing as a separate premise.
+The Sterbenz hypotheses also bound the exact difference by one of the finite operands, so the
+theorem derives finiteness of the executable result instead of assuming it.
 -/
 theorem toReal_sub_eq_of_sterbenz {fmt : FloatFormat} {x y : Model fmt}
     (hfmt : fmt.isIEEE = true)
@@ -132,7 +132,7 @@ theorem roundAt_sub_eq_of_sterbenz_of_same_sign (fmt : FloatFormat) {u v : ℝ}
     have h := roundAt_sub_eq_of_sterbenz_of_nonneg fmt
       (generic_format_neg u hu) (generic_format_neg v hv)
       (neg_nonneg.mpr hu0) (neg_nonneg.mpr hv0) huv hvu
-    rw [show -u - -v = -(u - v) by ring, roundAt_neg] at h
+    rw [show -u - -v = -(u - v) by ring, roundAt_neg, IEEERoundingMode.negate] at h
     linarith
 
 /-- Same-sign finite subtraction cannot overflow, independently of the factor-of-two condition. -/

@@ -19,10 +19,13 @@ and sticky bits. Kernels can therefore compress discarded bits before rounding a
 multiply-add. The proofs below establish how far that compression may go and how it interacts
 with alignment and subtraction.
 
-* `roundShiftRightEven_eq_guard_sticky` is the three-bit form of nearest-even rounding.
-* `roundShiftRightEven_shiftRightJam` shows that jamming every bit below position `j` into one
-  sticky bit does not change a later rounding by at least `j + 2` bits. Applying this to an
-  addition result requires a separate argument relating that result to its jammed value.
+* `roundShiftRightEven_eq_guard_sticky`, from `Quantization.Deterministic.ShiftRight`, is the
+  three-bit form of nearest-even rounding that these proofs build on.
+* `roundShiftRight_shiftRightJam` shows that jamming every bit below position `j` into one
+  sticky bit does not change a later rounding by at least `j + 2` bits, under every
+  `MagnitudeRounding` rule. `roundShiftRightEven_shiftRightJam` is its nearest-even case.
+  Applying this to an addition result needs a further argument relating that result to its
+  jammed value.
 * `roundShiftRightEven_mul_two_pow` and `roundShiftRightEven_mul_two_pow_of_le` relate rounding
   of a scaled value to rounding of the original.
 * `shiftRightJam_add_mul_two_pow` and `shiftRightJam_mul_two_pow_sub` describe the jammed
@@ -57,7 +60,7 @@ theorem div_two_pow_le_roundShiftRightEven (x s : Nat) :
 
 /-! ## Jamming -/
 
-/-- Setting the low bit of a natural number. -/
+/-- Setting the low bit adds one to an even number and leaves an odd number unchanged. -/
 theorem or_one_eq (q : Nat) : q ||| 1 = if q % 2 = 0 then q + 1 else q := by
   apply Nat.eq_of_testBit_eq
   intro i
@@ -95,15 +98,19 @@ theorem shiftRightJam_ne_zero (x j : Nat) (hx : 2 ^ j ≤ x) : shiftRightJam x j
   omega
 
 /--
-Rounding after a sticky-bit jam agrees with rounding the original value, provided the rounding
-keeps at least the guard bit above the jammed position.
+Rounding after a sticky-bit jam agrees with rounding the original value under every rule,
+provided the rounding keeps at least the guard bit above the jammed position.
+
+The jam preserves the retained bits, the guard bit, and whether any lower bit is set, which are
+the only inputs of `MagnitudeRounding.increment`.
 -/
-theorem roundShiftRightEven_shiftRightJam (x j s : Nat) (hj : j + 2 ≤ s) :
-    roundShiftRightEven (shiftRightJam x j) (s - j) = roundShiftRightEven x s := by
+theorem roundShiftRight_shiftRightJam (rule : MagnitudeRounding) (x j s : Nat)
+    (hj : j + 2 ≤ s) :
+    roundShiftRight rule (shiftRightJam x j) (s - j) = roundShiftRight rule x s := by
   obtain ⟨u, rfl⟩ : ∃ u, s = j + (u + 2) := ⟨s - j - 2, by omega⟩
   rw [show j + (u + 2) - j = u + 2 by omega]
-  rw [roundShiftRightEven_eq_guard_sticky _ _ (by omega),
-    roundShiftRightEven_eq_guard_sticky _ _ (by omega)]
+  rw [roundShiftRight_eq_guard_sticky _ _ _ (by omega),
+    roundShiftRight_eq_guard_sticky _ _ _ (by omega)]
   rw [shiftRightJam_div_pow x j (u + 2) (by omega), show u + 2 - 1 = u + 1 by omega,
     show j + (u + 2) - 1 = j + (u + 1) by omega, shiftRightJam_testBit x j (u + 1) (by omega),
     shiftRightJam_testBit x j (u + 2) (by omega)]
@@ -114,7 +121,15 @@ theorem roundShiftRightEven_shiftRightJam (x j s : Nat) (hj : j + 2 ≤ s) :
     exact shiftRightJam_mod_pow_ne_zero_iff x j (u + 1) (by omega)
   rw [hsticky]
 
-/-- The jammed quotient of an aligned sum. -/
+/--
+The nearest-even case of `roundShiftRight_shiftRightJam`: if `j + 2 ≤ s`, jamming by `j` and then
+rounding by `s - j` agrees with rounding the original value by `s`.
+-/
+theorem roundShiftRightEven_shiftRightJam (x j s : Nat) (hj : j + 2 ≤ s) :
+    roundShiftRightEven (shiftRightJam x j) (s - j) = roundShiftRightEven x s :=
+  roundShiftRight_shiftRightJam .nearestEven x j s hj
+
+/-- The jammed quotient of an aligned sum `A * 2^j + B`, in terms of `A` and `B`. -/
 theorem shiftRightJam_add_mul_two_pow (A B j : Nat) :
     shiftRightJam (A * 2 ^ j + B) j =
       if B % 2 ^ j = 0 then A + B / 2 ^ j else (A + B / 2 ^ j) ||| 1 := by
@@ -128,7 +143,7 @@ theorem shiftRightJam_add_mul_two_pow (A B j : Nat) :
   rw [hdiv, hmod]
   simp only [beq_iff_eq]
 
-/-- The jammed quotient of an aligned difference. -/
+/-- The jammed quotient of an aligned difference `A * 2^j - B` with `B ≤ A * 2^j`. -/
 theorem shiftRightJam_mul_two_pow_sub (A B j : Nat) (hB : B ≤ A * 2 ^ j) :
     shiftRightJam (A * 2 ^ j - B) j =
       if B % 2 ^ j = 0 then A - B / 2 ^ j else (A - B / 2 ^ j - 1) ||| 1 := by

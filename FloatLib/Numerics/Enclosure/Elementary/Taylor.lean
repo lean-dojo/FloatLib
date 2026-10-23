@@ -17,10 +17,10 @@ import Mathlib.Tactic.Ring
 
 Each Horner step is an affine map with integer coefficients and a positive common denominator.
 Composing adjacent blocks uses only integer arithmetic. Binary splitting balances the sizes of
-the multiplication operands; rational normalization is needed only once, at the end.
+the multiplication operands, and rational normalization happens once, at the end.
 
-The resulting exponential and logarithm polynomials agree with their finite sums for every
-rational argument and every number of terms, without convergence assumptions.
+The resulting exponential, logarithm and arctangent polynomials agree with their finite sums for
+every rational argument and every number of terms, without convergence assumptions.
 -/
 
 @[expose] public section
@@ -169,26 +169,77 @@ theorem horner_logStep (x : ℚ) (start n : Nat) :
     rw [← mul_div_assoc]
     congr 1 <;> ring
 
-/-- The first `n` exponential terms, with one final rational normalization. -/
+/-- The arctangent Horner step `tail ↦ 1 / (2k + 1) - x ^ 2 * tail`. -/
+def atanStep (x : ℚ) (k : Nat) : Block :=
+  ⟨x.den ^ 2, -(x.num ^ 2) * (2 * k + 1), x.den ^ 2 * (2 * k + 1),
+    Nat.mul_pos (Nat.pow_pos x.den_pos) (Nat.succ_pos _)⟩
+
+/-- An arctangent block evaluates to `1 / (2k + 1) - x ^ 2 * tail`. -/
+theorem eval_atanStep (x : ℚ) (k : Nat) (tail : ℚ) :
+    (atanStep x k).eval tail = 1 / (2 * k + 1) - x ^ 2 * tail := by
+  have hd : (x.den : ℚ) ≠ 0 := by exact_mod_cast Nat.ne_of_gt x.den_pos
+  have hk : (2 * k + 1 : ℚ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero (2 * k)
+  simp only [atanStep, Block.eval, Int.cast_mul, Int.cast_neg, Int.cast_pow, Int.cast_add,
+    Int.cast_natCast, Int.cast_ofNat, Int.cast_one, Nat.cast_mul, Nat.cast_pow, Nat.cast_add,
+    Nat.cast_ofNat, Nat.cast_one]
+  calc
+    _ = 1 / (2 * k + 1) - ((x.num : ℚ) / x.den) ^ 2 * tail := by
+      field_simp
+      ring
+    _ = _ := by rw [Rat.num_div_den]
+
+/-- Arctangent Horner steps expand into a sum of powers of `-x ^ 2` over odd denominators. -/
+theorem horner_atanStep (x : ℚ) (start n : Nat) :
+    horner (atanStep x) start n 0 =
+      ∑ i ∈ Finset.range n, (-x ^ 2) ^ i / ((2 * (start + i) + 1 : Nat) : ℚ) := by
+  induction n generalizing start with
+  | zero => simp [horner]
+  | succ n ih =>
+    rw [horner, eval_atanStep, ih, Finset.sum_range_succ']
+    simp only [Nat.add_zero, pow_zero, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_one]
+    rw [Finset.mul_sum, sub_eq_add_neg, ← Finset.sum_neg_distrib, add_comm]
+    congr 1
+    apply Finset.sum_congr rfl
+    intro i hi
+    rw [pow_succ]
+    ring_nf
+
+/-- Sum of the first `n` exponential terms, with one final rational normalization. -/
 def exp (x : ℚ) (n : Nat) : ℚ :=
   let block := split (expStep x) 0 n
   mkRat block.constantTerm block.denominator
 
-/-- The first `n` terms of `-log (1 - x)`, with one final rational normalization. -/
+/-- Sum of the first `n` terms of `-log (1 - x)`, with one final rational normalization. -/
 def logOneSub (x : ℚ) (n : Nat) : ℚ :=
   let block := split (logStep x) 0 n
   mkRat block.constantTerm block.denominator
 
-/-- The exponential evaluation equals the first `n` terms of its Taylor series. -/
+/-- Sum of the first `n` arctangent terms, with one final rational normalization. -/
+def atan (x : ℚ) (n : Nat) : ℚ :=
+  let block := split (atanStep x) 0 n
+  x * mkRat block.constantTerm block.denominator
+
+/-- `exp x n` is the sum of the first `n` terms of the exponential series. -/
 theorem exp_eq_sum (x : ℚ) (n : Nat) :
     exp x n = ∑ i ∈ Finset.range n, x ^ i / (i.factorial : ℚ) := by
   have he := eval_split (expStep x) 0 n 0
   simpa [exp, Block.eval, Rat.mkRat_eq_div, horner_expStep, Nat.one_ascFactorial] using he
 
-/-- The logarithm evaluation equals the first `n` terms of the series for `-log (1 - x)`. -/
+/-- `logOneSub x n` is the sum of the first `n` terms of the series for `-log (1 - x)`. -/
 theorem logOneSub_eq_sum (x : ℚ) (n : Nat) :
     logOneSub x n = ∑ i ∈ Finset.range n, x ^ (i + 1) / ((i + 1 : Nat) : ℚ) := by
   have he := eval_split (logStep x) 0 n 0
   simpa [logOneSub, Block.eval, Rat.mkRat_eq_div, horner_logStep] using he
+
+/-- `atan x n` is the sum of the first `n` terms of the arctangent series. -/
+theorem atan_eq_sum (x : ℚ) (n : Nat) :
+    atan x n = ∑ i ∈ Finset.range n, (-1) ^ i * x ^ (2 * i + 1) / ((2 * i + 1 : Nat) : ℚ) := by
+  have he := eval_split (atanStep x) 0 n 0
+  simp only [Block.eval, mul_zero, add_zero] at he
+  rw [atan, Rat.mkRat_eq_div, he, horner_atanStep, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [neg_pow, ← pow_mul, pow_succ, Nat.zero_add]
+  ring
 
 end FloatLib.Numerics.Enclosure.Taylor

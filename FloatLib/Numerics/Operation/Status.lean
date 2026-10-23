@@ -24,14 +24,14 @@ namespace FloatLib.Numerics.Operation
 universe u v
 
 /-- Complete semantics of a unary operation whose concrete result carries a code and status. -/
-def WithStatus1 (A B : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatus1 (A B : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → Outcome) (value : Outcome → B.Code) (status : Outcome → Status)
     (post : NumericalValue A.Scalar → NumericalValue B.Scalar → Status → Prop) : Prop :=
   Refines1 A run fun input outcome =>
     post input (B.denote (value outcome)) (status outcome)
 
 /-- Complete semantics of a two-input operation whose result carries a code and status. -/
-def WithStatus2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatus2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → Outcome) (value : Outcome → C.Code)
     (status : Outcome → Status)
     (post : NumericalValue A.Scalar → NumericalValue B.Scalar →
@@ -40,7 +40,7 @@ def WithStatus2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
     post left right (C.denote (value outcome)) (status outcome)
 
 /-- Complete semantics of a three-input operation whose result carries a code and status. -/
-def WithStatus3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatus3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → C.Code → Outcome) (value : Outcome → D.Code)
     (status : Outcome → Status)
     (post : NumericalValue A.Scalar → NumericalValue B.Scalar →
@@ -49,14 +49,14 @@ def WithStatus3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
     post first second third (D.denote (value outcome)) (status outcome)
 
 /-- Finite semantics of a unary status-bearing operation. -/
-def WithStatusFinite1 (A B : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatusFinite1 (A B : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → Outcome) (value : Outcome → B.Code) (status : Outcome → Status)
     (post : A.Scalar → B.Scalar → Status → Prop) : Prop :=
   RefinesFinite1 A run fun input outcome =>
     ∃ output, B.Represents (value outcome) output ∧ post input output (status outcome)
 
 /-- Finite semantics of a two-input status-bearing operation. -/
-def WithStatusFinite2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatusFinite2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → Outcome) (value : Outcome → C.Code)
     (status : Outcome → Status)
     (post : A.Scalar → B.Scalar → C.Scalar → Status → Prop) : Prop :=
@@ -65,7 +65,7 @@ def WithStatusFinite2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Typ
       post left right output (status outcome)
 
 /-- Finite semantics of a three-input status-bearing operation. -/
-def WithStatusFinite3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
+def RefinesStatusFinite3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → C.Code → Outcome) (value : Outcome → D.Code)
     (status : Outcome → Status)
     (post : A.Scalar → B.Scalar → C.Scalar → D.Scalar → Status → Prop) : Prop :=

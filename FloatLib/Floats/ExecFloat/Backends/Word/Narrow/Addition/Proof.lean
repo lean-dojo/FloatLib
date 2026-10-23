@@ -17,13 +17,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Proof
 /-!
 # Correctness of native-word addition for generic binary32
 
-The direct `UInt64` addition kernel is proved equivalent to its exact-dyadic finite specification.
-Runtime clients can import `Addition.Runtime` without the alignment, packing, and rounding proof
-developments.
+The `UInt64` addition kernel equals its exact-dyadic finite specification. For exponent gaps at
+most 39, alignment and signed addition are exact in one word. For larger gaps the smaller operand
+cannot change the nearest-even rounding of the larger one, even at a binade boundary.
 
-For exponent gaps at most 39, alignment and signed addition are exact in one word. For larger
-gaps, the smaller operand cannot change nearest-even rounding of the larger operand, including
-at a binade boundary. Both cases refine the same binary32 specification.
+Runtime clients can import `Addition.Runtime` without the alignment, packing and rounding proofs.
 -/
 
 @[expose] public section
@@ -401,8 +399,8 @@ private theorem roundDyadic_shiftLeft_sub_value
   exact mkBits_fields (toUInt32 z)
 
 /--
-Shifting a 24-bit significand left by at most 39 bits stays below `2 ^ 63`. The word shift is
-therefore exact, and the shifted word is nonzero whenever the significand is.
+Shifting a 24-bit significand left by at most 39 bits stays below `2 ^ 63`. So the word shift is
+exact, and the shifted word is nonzero whenever the significand is.
 -/
 private theorem shiftLeft_facts
     (mantissa shift : UInt64) (hmantissa : mantissa ≠ 0)
@@ -485,15 +483,14 @@ private theorem roundDyadic_addDyadic_far
       hsmallLt hexponentNonzero hexponentNat (by omega) (by omega)
 
 /--
-The direct `UInt64` finite addition kernel equals the generic exact-dyadic implementation.
+Word-level finite addition equals the exact-dyadic `addFinite?`.
 
-Non-finite operands return `none`, and zero operands use the exact-dyadic kernel. For nonzero
-finite operands, a gap of at most 39 permits an exact left shift of the larger-scale significand
-to the smaller scale. A larger gap rounds to the dominant operand for either choice of signs.
+Non-finite operands give `none` on both sides, and zero operands take the exact-dyadic kernel.
+Nonzero operands split on whether the exponent gap is at most 39.
 -/
-theorem addFiniteImpl_eq (x y : Value) :
-    addFiniteImpl? x y = addFinite? x y := by
-  unfold addFiniteImpl? addFinite?
+theorem addFiniteWord_eq (x y : Value) :
+    addFiniteWord? x y = addFinite? x y := by
+  unfold addFiniteWord? addFinite?
   rw [toDyadic_eq_finiteComponents x, toDyadic_eq_finiteComponents y]
   dsimp only
   simp only [Bool.or_eq_true, beq_iff_eq]

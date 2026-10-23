@@ -15,7 +15,8 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Direction
 The external adapter uses its own declared precision and bias in the report formula.
 Its precision is always greater than one, so lower-code parity is integer significand parity.
 The rational selection theorem covers every deterministic mode and every supplied stochastic
-word. These statements concern precision rounding; saturation and encoding are treated separately.
+word. These statements concern precision rounding. Saturation is proved in `External.Bounds` and
+encoding in `External.Proof`.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7.4 and 4.8.
 -/
@@ -71,12 +72,12 @@ theorem roundFinite_toRat (format : FloatFormat) (mode : RoundingMode) (value : 
     quantum_eq, hp]
 
 /-- External nearest-even precision rounding stays within half its own quantum. -/
-theorem roundFinite_nearestTiesToEven_error (format : FloatFormat) (value : Rat) :
-    |(roundFinite format .nearestTiesToEven value).toRat - value| ≤
+theorem roundFinite_nearest_error (format : FloatFormat) (value : Rat) :
+    |(roundFinite format .nearest value).toRat - value| ≤
       (2 : Rat) ^
         RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value / 2 := by
   rw [roundFinite_toRat]
-  exact RationalRounding.roundAt_nearestTiesToEven_error _ _ _
+  exact RationalRounding.roundAt_nearest_error _ _ _
 
 /-- Every external mode stays within its own quantum, including each stochastic word. -/
 theorem roundFinite_error_lt_quantum (format : FloatFormat) (mode : RoundingMode) (value : Rat) :
@@ -86,21 +87,21 @@ theorem roundFinite_error_lt_quantum (format : FloatFormat) (mode : RoundingMode
   exact RationalRounding.roundAt_error_lt_quantum _ _ _ _
 
 /-- External upward rounding brackets the input from above before saturation. -/
-theorem roundFinite_towardPositive (format : FloatFormat) (value : Rat) :
-    value ≤ (roundFinite format .towardPositive value).toRat ∧
-      (roundFinite format .towardPositive value).toRat < value +
+theorem roundFinite_up (format : FloatFormat) (value : Rat) :
+    value ≤ (roundFinite format .up value).toRat ∧
+      (roundFinite format .up value).toRat < value +
         (2 : Rat) ^
           RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
   rw [roundFinite_toRat]
-  exact RationalRounding.roundAt_towardPositive _ _ _
+  exact RationalRounding.roundAt_up _ _ _
 
 /-- External downward rounding brackets the input from below before saturation. -/
-theorem roundFinite_towardNegative (format : FloatFormat) (value : Rat) :
-    (roundFinite format .towardNegative value).toRat ≤ value ∧
-      value < (roundFinite format .towardNegative value).toRat +
+theorem roundFinite_down (format : FloatFormat) (value : Rat) :
+    (roundFinite format .down value).toRat ≤ value ∧
+      value < (roundFinite format .down value).toRat +
         (2 : Rat) ^
           RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
   rw [roundFinite_toRat]
-  exact RationalRounding.roundAt_towardNegative _ _ _
+  exact RationalRounding.roundAt_down _ _ _
 
 end FloatLib.Floats.Formats.P3109.Arithmetic.External

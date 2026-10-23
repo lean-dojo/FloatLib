@@ -21,7 +21,7 @@ recompiling the unrelated fixed-limb and complex regression suite when a tiny ke
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -51,8 +51,8 @@ specification over every pair of stored words.
 -/
 def compiledFiniteMulFailures (fmt : FloatFormat) : Nat :=
   Harness.exhaustiveBinaryFailures fmt fun left right =>
-    Model.mulFinite? fmt QuantizationPolicy.nearestEven 17 left right ==
-      Model.mulFiniteSpec? fmt QuantizationPolicy.nearestEven 17 left right
+    Model.mulFinite? fmt QuantizationPolicy.nearest 17 left right ==
+      Model.mulFiniteSpec? fmt QuantizationPolicy.nearest 17 left right
 
 /-- Count compiled additions that differ from the table-free generic implementation. -/
 def compiledAddFailures (fmt : FloatFormat) : Nat :=

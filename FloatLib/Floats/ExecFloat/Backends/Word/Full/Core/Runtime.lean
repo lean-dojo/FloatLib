@@ -14,13 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 /-!
 # Native-storage binary64 runtime
 
-Binary64 is represented publicly by the same generic `Model` as every binary-interchange format,
-but its payload fits exactly in a `UInt64`. These adapters expose that native storage to finite
-kernels without introducing a second user-visible value type.
+Binary64 uses the same generic `Model` as every binary-interchange format, but its 64-bit
+encoding fits in one `UInt64`. These adapters hand that native storage to the finite kernels
+without a second user-visible value type.
 
-Field extraction, packing, and exact intermediate arithmetic are kept here in the runtime layer.
-Exceptional IEEE behavior remains in the shared dispatcher, and `Core.Proof` shows that the
-native-word routines agree with the generic model.
+Field extraction, packing and exact intermediate arithmetic live here. Exceptional IEEE behavior
+stays in the shared dispatcher, and `Core.Proof` proves that the native-word routines agree with
+the generic model.
 -/
 
 @[expose] public section
@@ -54,7 +54,7 @@ abbrev Value := Model FloatFormat.binary64
 @[inline] def fracField (bits : UInt64) : UInt64 :=
   bits &&& 0x000fffffffffffff
 
-/-- Pack binary64 fields directly into their native storage word. -/
+/-- Pack binary64 sign, exponent and fraction fields into a native storage word. -/
 @[inline] def packFieldsWord
     (sign : Bool) (exponent fraction : UInt64) : UInt64 :=
   (if sign then (1 : UInt64) <<< 63 else 0) |||
@@ -65,10 +65,13 @@ abbrev Value := Model FloatFormat.binary64
 @[inline] def finiteMantissa (exponent fraction : UInt64) : UInt64 :=
   if exponent == 0 then fraction else fraction ||| 0x0010000000000000
 
-/-- Round a normalized two-limb product once its leading-bit position is known. -/
-@[inline] def roundNormalProduct? (sign : Bool) (xExponent yExponent : UInt64)
-    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64) : Option Value :=
-  let scale := (xExponent - 1) + (yExponent - 1)
+/--
+Round the normalized two-limb magnitude `product * 2 ^ (scale - 2 * 1074)`, with sign `sign` and
+given its leading-bit position, to a packed storage word. The magnitude uses the coordinates of
+`FiniteProductRound.round`.
+-/
+@[inline] def roundScaledWord? (sign : Bool) (scale : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64) : Option UInt64 :=
   let position := leading + scale
   if position < 1126 then
     none
@@ -84,13 +87,31 @@ abbrev Value := Model FloatFormat.binary64
         if carry then (0x0010000000000000 : UInt64) else rounded
       let exponent := normalizedPosition.toNat - 1125
       let fraction := normalizedMantissa.toNat - 0x0010000000000000
-      some <| ofFields FloatFormat.binary64 sign exponent fraction
+      some <| packFieldsWord sign (UInt64.ofNat exponent) (UInt64.ofNat fraction)
+
+/-- `roundScaledWord?` as a model value. -/
+@[inline] def roundScaled? (sign : Bool) (scale : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64) : Option Value :=
+  (roundScaledWord? sign scale product leading).map ofUInt64
 
 /--
-Form the exact product of decoded normal binary64 significands in native limbs, then round it.
+Round a normalized two-limb product of significands with biased exponents `xExponent` and
+`yExponent`, given its leading-bit position, to a packed storage word.
+-/
+@[inline] def roundNormalProductWord? (sign : Bool) (xExponent yExponent : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64) : Option UInt64 :=
+  roundScaledWord? sign ((xExponent - 1) + (yExponent - 1)) product leading
 
-The path declines when the leading exponent is below the normal range before rounding, or when
-rounding would overflow. Those cases use the generic exact rounder.
+/-- `roundNormalProductWord?` as a model value. -/
+@[inline] def roundNormalProduct? (sign : Bool) (xExponent yExponent : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64) : Option Value :=
+  (roundNormalProductWord? sign xExponent yExponent product leading).map ofUInt64
+
+/--
+Multiply decoded normal binary64 significands exactly in native limbs, then round the product.
+
+It declines when the leading exponent is below the normal range before rounding, or when rounding
+would overflow, and the caller then uses the generic exact rounder.
 -/
 @[inline] def roundNormalLimb? (sign : Bool) (xExponent yExponent : UInt64)
     (xMantissa yMantissa : UInt64) : Option Value :=
@@ -131,18 +152,18 @@ rounding would overflow. Those cases use the generic exact rounder.
 /--
 Native-storage finite addition through the compiled unsigned-scale component kernel.
 
-The body names `FiniteKernel.addComponentsImpl`, the compiled twin of the exact-dyadic
+Its body calls `FiniteKernel.Internal.addComponents`, the compiled twin of the exact-dyadic
 `addComponents`. Their equality is proved in `Kernel.Proof`, which a runtime module cannot import,
-so naming the compiled kernel here keeps the exact-dyadic body out of the binary64 hot path.
+so calling the compiled kernel by name keeps the exact-dyadic body out of the binary64 hot path.
 -/
-@[inline] def addFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def addFiniteComponents? (x y : Value) : Option Value :=
   match decode? x, decode? y with
   | some dx, some dy =>
-      some <| FiniteKernel.addComponentsImpl FloatFormat.binary64 dx dy
+      some <| FiniteKernel.Internal.addComponents FloatFormat.binary64 dx dy
   | _, _ => none
 
 /-- Finite binary64 multiplication with flat native field decoding. -/
-@[inline] def mulFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def mulFinite? (x y : Value) : Option Value :=
   let xBits := toUInt64 x
   let yBits := toUInt64 y
   let xExponent := expField xBits
@@ -160,7 +181,7 @@ so naming the compiled kernel here keeps the exact-dyadic body out of the binary
         (FloatLib.Numerics.FixedWord.finiteScale yExponent).toNat)
 
 /-- Native-storage finite division using the shared exact component kernel. -/
-@[inline] def divFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def divFiniteComponents? (x y : Value) : Option Value :=
   match decode? x, decode? y with
   | some dx, some dy =>
       some <| FiniteKernel.divComponents FloatFormat.binary64 dx dy
@@ -169,13 +190,13 @@ so naming the compiled kernel here keeps the exact-dyadic body out of the binary
 /--
 Native-storage finite fused multiply-add through the compiled unsigned-scale component kernel.
 
-As for `addFiniteImpl?`, the body names `FiniteKernel.fmaComponentsImpl` so that the compiled
-binary64 path uses the unsigned-scale kernel instead of the exact-dyadic `fmaComponents` body.
+As in `addFiniteComponents?`, the body calls `FiniteKernel.Internal.fmaComponents` to keep the
+exact-dyadic `fmaComponents` body off the compiled binary64 path.
 -/
-@[inline] def fmaFiniteImpl? (x y z : Value) : Option Value :=
+@[inline] def fmaFiniteComponents? (x y z : Value) : Option Value :=
   match decode? x, decode? y, decode? z with
   | some dx, some dy, some dz =>
-      some <| FiniteKernel.fmaComponentsImpl FloatFormat.binary64 dx dy dz
+      some <| FiniteKernel.Internal.fmaComponents FloatFormat.binary64 dx dy dz
   | _, _, _ => none
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

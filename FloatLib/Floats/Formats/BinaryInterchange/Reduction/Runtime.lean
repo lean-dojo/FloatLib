@@ -16,8 +16,8 @@ public import FloatLib.Numerics.Reduction
 
 `sum` decodes every operand exactly, adds in the shared dyadic domain, and rounds once into the
 requested destination format. `dot` does the same with exact products. Source and destination
-formats may differ, so the operations cover ordinary uniform reductions and explicit
-mixed-precision accumulation with one API.
+formats may differ, so the operations cover ordinary uniform reductions and mixed-precision
+accumulation with one API.
 
 Exceptional inputs are deterministic:
 
@@ -31,19 +31,20 @@ NaN payloads are preserved when source and destination formats agree. Cross-form
 the ordinary `Model.cast` policy. An infinite result follows the destination's native overflow
 rule, matching casts: IEEE encodings preserve infinity, finite-with-NaN encodings return NaN,
 and fully finite encodings return the same-sign maximum. A destination without infinity raises
-overflow and inexact. Empty reductions return positive zero. A sum of zeros with the same sign
-keeps that sign; cancellation and mixed-sign zeros are negative only under rounding toward
-negative infinity. FNUZ destinations use positive zero.
+overflow and inexact, and the ternary value is `.lt` for `+∞` and `.gt` for `-∞`. Empty
+reductions return positive zero. A sum of zeros with the same sign keeps that sign, and
+cancellation and mixed-sign zeros are negative only under rounding toward negative infinity. FNUZ
+destinations use positive zero.
 
-There is deliberately no initial-addend argument. One product plus an addend is already IEEE FMA,
-and larger finite algebraic expressions can use `ExecFloat.roundOnce`. A repeated FMA chain is a
-different operation because it rounds every prefix; it agrees with `dot` only when those
-intermediate roundings are exact and the exceptional and signed-zero rules also agree.
+There is no initial-addend argument. One product plus an addend is already IEEE FMA, and larger
+finite algebraic expressions can use `ExecFloat.roundOnce`. A repeated FMA chain is a different
+operation because it rounds every prefix. It agrees with `dot` only when those intermediate
+roundings are exact and the exceptional and signed-zero rules also agree.
 
 The binary reducer and a posit quire share the useful idea “exact products, then one final round,”
 but not the same machine model. This reducer uses an unbounded software dyadic accumulator and IEEE
 NaN, infinity, signed-zero, and status semantics. A posit quire is a fixed `16n`-bit accumulator
-with NaR and an explicit coefficient-range condition.
+with NaR and a coefficient-range condition.
 -/
 
 @[expose] public section
@@ -168,7 +169,7 @@ def State.pushProduct
 Accumulate a contiguous dot-product slice without allocating a zipped collection.
 
 `index` is the first pair to consume and `remaining` is the number of pairs. The size proofs are
-erased after compilation; they make every array access bounds-safe without a default value.
+erased after compilation, and they make every array access bounds-safe without a default value.
 -/
 def dotStateLoop
     {destination leftFormat rightFormat : FloatFormat}
@@ -195,7 +196,13 @@ termination_by remaining
     State destination :=
   dotStateLoop left right {} 0 left.size (by simp) (by simp [hsize])
 
-/-- Resolve exceptional values or round the exact finite result once. -/
+/--
+Resolve exceptional values or round the exact finite result once.
+
+The ternary value compares a rounded finite result with the exact sum. An exact zero sum, a NaN,
+and an invalid result have `.eq`. An infinite result uses `exactInfinityTernary`, which is `.eq`
+when the destination keeps the infinity.
+-/
 def State.finish {destination : FloatFormat}
     (state : State destination) (mode : IEEERoundingMode) :
     IEEEOutcome destination :=
@@ -215,60 +222,69 @@ def State.finish {destination : FloatFormat}
             let value := nativeOverflow destination state.negativeInfinity
             { value
               status := if isInf value then .clear
-                else { overflow := true, inexact := true } }
+                else { overflow := true, inexact := true }
+              ternary := exactInfinityTernary state.negativeInfinity value }
           else if state.exact.significand == 0 then
             let negative :=
               state.sawFiniteTerm &&
                 (state.allTermsNegativeZero ||
                   (!state.allTermsPositiveZero &&
-                    mode == .towardNegativeInfinity))
+                    mode == .down))
             outcomeWithInvalid (zero destination negative) false
           else
-            let value := roundDyadicWithRounding destination mode state.exact
-            { value
-              status := dyadicRoundingStatus destination mode state.exact value }
+            let value := Internal.Directed.roundDyadic destination mode state.exact
+            dyadicRoundingOutcome destination mode state.exact value
+
+/--
+The value of `State.finish`.
+
+The finisher is inlined here, so the compiled value-only reductions compute neither flags nor the
+ternary value of the final rounding.
+-/
+def State.finishValue {destination : FloatFormat}
+    (state : State destination) (mode : IEEERoundingMode) : Model destination :=
+  (inline (state.finish mode)).value
 
 end Reduction.Internal
 
+namespace Internal
+
 /--
-Correctly rounded sum of an array.
+Correctly rounded sum of an array with its IEEE status, the kernel of
+`Model.sum destination values (mode := mode) (status := true)`.
 
 Every finite source value is decoded exactly, the exact dyadic sum is formed without intermediate
 rounding, and the result is rounded once into `destination`.
 -/
-def sumWithStatus (destination : FloatFormat) {source : FloatFormat}
+def Status.sum (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode) :
     IEEEOutcome destination :=
   let state := values.foldl Reduction.Internal.State.pushValue
     ({} : Reduction.Internal.State destination)
   state.finish mode
 
-/-- Value-only projection of `sumWithStatus`. -/
-@[inline] def sum (destination : FloatFormat) {source : FloatFormat}
+/--
+Correctly rounded sum of an array, the kernel of `Model.sum destination values (mode := mode)`.
+
+The accumulation is that of `Status.sum`, and the final rounding goes through `State.finishValue`,
+so no flags or ternary value are computed.
+-/
+def Value.sum (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode) :
     Model destination :=
-  (sumWithStatus destination values mode).value
-
-/-- List entry point for correctly rounded summation. -/
-@[inline] def sumListWithStatus (destination : FloatFormat) {source : FloatFormat}
-    (values : List (Model source)) (mode : IEEERoundingMode) :
-    IEEEOutcome destination :=
-  sumWithStatus destination values.toArray mode
-
-/-- Value-only list entry point for correctly rounded summation. -/
-@[inline] def sumList (destination : FloatFormat) {source : FloatFormat}
-    (values : List (Model source)) (mode : IEEERoundingMode) :
-    Model destination :=
-  (sumListWithStatus destination values mode).value
+  let state := values.foldl Reduction.Internal.State.pushValue
+    ({} : Reduction.Internal.State destination)
+  state.finishValue mode
 
 /--
-Correctly rounded dot product of two arrays.
+Correctly rounded dot product of two arrays with its IEEE status, the kernel of
+`Model.dot destination left right (mode := mode) (status := true)`.
 
 Each finite pair is multiplied in the exact dyadic domain, all products are added exactly, and
-the result
-is rounded once into `destination`. Unequal lengths are rejected before any arithmetic occurs.
+the result is rounded once into `destination`. Unequal lengths are rejected before any arithmetic
+occurs.
 -/
-def dotWithStatus (destination : FloatFormat)
+def Status.dot (destination : FloatFormat)
     {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (mode : IEEERoundingMode) :
@@ -280,29 +296,84 @@ def dotWithStatus (destination : FloatFormat)
   else
     .error (.lengthMismatch left.size right.size)
 
-/-- Value-only projection of `dotWithStatus`. -/
-def dot (destination : FloatFormat)
+/--
+Correctly rounded dot product of two arrays, the kernel of
+`Model.dot destination left right (mode := mode)`.
+
+The length check and the accumulation are those of `Status.dot`, and the final rounding goes
+through `State.finishValue`, so no flags or ternary value are computed.
+-/
+def Value.dot (destination : FloatFormat)
     {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (mode : IEEERoundingMode) :
     Except Numerics.ReductionError (Model destination) :=
-  (dotWithStatus destination left right mode).map IEEEOutcome.value
+  if hsize : left.size = right.size then
+    let state : Reduction.Internal.State destination :=
+      Reduction.Internal.dotState left right hsize
+    .ok (state.finishValue mode)
+  else
+    .error (.lengthMismatch left.size right.size)
 
-/-- List entry point for a correctly rounded dot product. -/
-@[inline] def dotListWithStatus (destination : FloatFormat)
+end Internal
+
+/--
+Correctly rounded sum of an array in `mode` (nearest-even by default).
+
+Every finite source value is decoded exactly, the exact dyadic sum is formed without intermediate
+rounding, and the result is rounded once into `destination`. With `status := true` the result is
+the `IEEEOutcome` carrying the exception flags and the ternary value of that one rounding.
+`Reduction.value_sum` states that its value is the sum, so every theorem about the status form
+describes the value.
+-/
+@[macro_inline] def sum (destination : FloatFormat) {source : FloatFormat}
+    (values : Array (Model source)) (mode : IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome destination
+    | false => Model destination :=
+  match status with
+  | true => Internal.Status.sum destination values mode
+  | false => Internal.Value.sum destination values mode
+
+/-- List entry point for correctly rounded summation, with the options of `sum`. -/
+@[macro_inline] def sumList (destination : FloatFormat) {source : FloatFormat}
+    (values : List (Model source)) (mode : IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome destination
+    | false => Model destination :=
+  sum destination values.toArray mode status
+
+/--
+Correctly rounded dot product of two arrays in `mode` (nearest-even by default).
+
+Each finite pair is multiplied in the exact dyadic domain, all products are added exactly, and
+the result is rounded once into `destination`. Unequal lengths are rejected before any arithmetic
+occurs. With `status := true` the successful result is the `IEEEOutcome` carrying the exception
+flags and the ternary value. `Reduction.map_value_dot` states that its value and its errors are
+those of the value form.
+-/
+@[macro_inline] def dot (destination : FloatFormat)
+    {leftFormat rightFormat : FloatFormat}
+    (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    Except Numerics.ReductionError (match status with
+      | true => IEEEOutcome destination
+      | false => Model destination) :=
+  match status with
+  | true => Internal.Status.dot destination left right mode
+  | false => Internal.Value.dot destination left right mode
+
+/-- List entry point for a correctly rounded dot product, with the options of `dot`. -/
+@[macro_inline] def dotList (destination : FloatFormat)
     {leftFormat rightFormat : FloatFormat}
     (left : List (Model leftFormat)) (right : List (Model rightFormat))
-    (mode : IEEERoundingMode) :
-    Except Numerics.ReductionError (IEEEOutcome destination) :=
-  dotWithStatus destination left.toArray right.toArray mode
-
-/-- Value-only list entry point for a correctly rounded dot product. -/
-@[inline] def dotList (destination : FloatFormat)
-    {leftFormat rightFormat : FloatFormat}
-    (left : List (Model leftFormat)) (right : List (Model rightFormat))
-    (mode : IEEERoundingMode) :
-    Except Numerics.ReductionError (Model destination) :=
-  dot destination left.toArray right.toArray mode
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    Except Numerics.ReductionError (match status with
+      | true => IEEEOutcome destination
+      | false => Model destination) :=
+  dot destination left.toArray right.toArray mode status
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

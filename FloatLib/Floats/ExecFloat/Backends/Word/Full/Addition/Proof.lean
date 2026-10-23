@@ -14,13 +14,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 # Verified equal-exponent binary64 addition
 
 The binary64 addition kernel handles same-sign normal operands with equal exponents entirely in
-`UInt64`. Their exact 54-bit significand sum is rounded once to nearest-even and packed
-directly. Unequal exponents, opposite signs, subnormals, and overflow boundaries are left to the
+`UInt64`. Their exact 54-bit significand sum is rounded once to nearest-even and packed.
+Unequal exponents, opposite signs, subnormals, and overflow boundaries are left to the
 generic finite kernel. Exceptional values are handled by the outer operation dispatcher.
 
 The subtraction dispatcher composes this adder with the signed Sterbenz backend: same-sign nearby
 operands use exact native subtraction, opposite-sign operands reuse native addition, and every
-declined case retains the generic kernel.
+declined case falls back to the generic kernel.
 -/
 
 @[expose] public section
@@ -104,14 +104,15 @@ private theorem packRoundedSum_eq_round
   simpa [pow2_eq_two_pow] using hround
 
 /--
-Every accepted native equal-exponent addition is exactly the existing finite binary64 path.
+Every accepted native equal-exponent addition agrees with the finite binary64 path
+`addFiniteComponents?`.
 
-Rejected values retain `addFiniteImpl?`; this theorem is the trust boundary for the native
-specialization.
+Rejected values fall back to `addFiniteComponents?`, so this theorem is the trust boundary for the
+native specialization.
 -/
 theorem addNormalSameExponent_refines (x y result : Value)
     (hfast : addNormalSameExponent? x y = some result) :
-    addFiniteImpl? x y = some result := by
+    addFiniteComponents? x y = some result := by
   unfold addNormalSameExponent? at hfast
   dsimp only at hfast
   set xBits := toUInt64 x with hxBits
@@ -238,31 +239,31 @@ theorem addNormalSameExponent_refines (x y result : Value)
               (rounded - 0x0010000000000000)) := by
         simpa [rounded] using hpack.symm
       _ = result := hresult
-  unfold addFiniteImpl?
+  unfold addFiniteComponents?
   rw [decode_of_finiteExponent x hxFinite,
     decode_of_finiteExponent y hyFinite]
   simp only [Option.some.injEq]
   simpa [xBits, yBits, xExponent, yExponent, xSign, ySign,
     xFraction, yFraction, xMantissa, yMantissa, hxBits, hyBits,
-    hsign, hyExponentEq, FiniteKernel.addComponentsImpl_eq] using hcomponents
+    hsign, hyExponentEq, FiniteKernel.Internal.addComponents_eq] using hcomponents
 
-/-- The native addition dispatcher is bit-for-bit equal to the exact finite implementation. -/
-theorem addFiniteFastImpl_eq (x y : Value) :
-    addFiniteFastImpl? x y = addFiniteImpl? x y := by
-  unfold addFiniteFastImpl?
+/-- Native `addFinite?` is bit-for-bit equal to the exact finite implementation. -/
+theorem addFinite_eq_addFiniteComponents (x y : Value) :
+    addFinite? x y = addFiniteComponents? x y := by
+  unfold addFinite?
   cases hfast : addNormalSameExponent? x y with
   | none => rfl
   | some result =>
       rw [addNormalSameExponent_refines x y result hfast]
 
-/-- The native subtraction dispatcher is bit-for-bit equal to exact finite subtraction. -/
-theorem subFiniteFastImpl_eq (x y : Value) :
-    subFiniteFastImpl? x y = addFiniteImpl? x (negate y) := by
-  unfold subFiniteFastImpl?
+/-- Native `subFinite?` is bit-for-bit equal to exact finite subtraction. -/
+theorem subFinite_eq_addFiniteComponents_negate (x y : Value) :
+    subFinite? x y = addFiniteComponents? x (negate y) := by
+  unfold subFinite?
   cases hfast : subSignedSterbenz? x y with
   | some result =>
       exact (subSignedSterbenz_refines x y result hfast).symm
   | none =>
-      exact addFiniteFastImpl_eq x (negate y)
+      exact addFinite_eq_addFiniteComponents x (negate y)
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

@@ -167,6 +167,85 @@ for callee in "${required_callees[@]}"; do
   fi
 done
 
+# The configured selectors: every default spelling compiles to exactly the generic operation's
+# code (after renaming the probe and its local variables), and the directed and status forms reach
+# the descriptor-model kernels without planner or thunk calls.
+python3 - "$generated_c" "$prefix" <<'PY'
+import re
+import sys
+
+path, prefix = sys.argv[1], sys.argv[2]
+text = open(path, encoding="utf-8").read()
+functions = {}
+for match in re.finditer(r"^(?:LEAN_EXPORT |static )[^\n;{]*? (\w+)\([^;{]*\)\{$", text, re.M):
+    depth, index = 1, match.end()
+    while depth:
+        index = min(i for i in (text.find("{", index), text.find("}", index)) if i >= 0)
+        depth += 1 if text[index] == "{" else -1
+        index += 1
+    functions[match.group(1)] = text[match.end():index]
+
+
+def name_pattern(probe):
+    return re.compile(re.escape("ConfiguredBinary_" + probe) + r"(?![A-Za-z0-9])")
+
+
+def normal(body, *probes):
+    for probe in probes:
+        body = name_pattern(probe).sub("ConfiguredBinary_PROBE", body)
+    seen = {}
+    return re.sub(r"\bv_\w*?_[0-9]+_\b",
+                  lambda m: seen.setdefault(m.group(0), "v%d" % len(seen)), body)
+
+
+def entry(probe):
+    name = prefix + "_" + probe
+    if name not in functions:
+        print("missing generated configured-selector body:", probe, file=sys.stderr)
+        sys.exit(1)
+    return functions[name]
+
+
+def helpers(probe):
+    """Specializations and constants named after the probe, apart from its entry points."""
+    own = {prefix + "_" + probe, prefix + "_" + probe + "___boxed"}
+    return {name: body for name, body in functions.items()
+            if name_pattern(probe).search(name) and name not in own}
+
+
+planner = re.compile(r"selectCertified|considerCertified|lean_mk_thunk|lean_thunk_get")
+same = kernels = 0
+for width in ("32", "64"):
+    for operation in ("Add", "Sub", "Mul", "Div", "Sqrt", "Fma"):
+        reference = "binary%s%s" % (width, operation)
+        forms = ["Binary", "Nearest", "Field"]
+        forms += ["Operator"] if operation in ("Add", "Sub", "Mul", "Div") else []
+        forms += ["NearestAway"] if operation == "Sqrt" else []
+        reference_helpers = sorted(normal(body, reference) for body in helpers(reference).values())
+        for form in forms:
+            probe = reference + form
+            # The entry point must make the reference's call; any specialization of its own must
+            # repeat one of the reference's.
+            matches = normal(entry(probe), probe, reference) == normal(entry(reference), reference)
+            own = sorted(normal(body, probe) for body in helpers(probe).values())
+            if not matches or any(body not in reference_helpers for body in own):
+                print("%s does not compile to the code of %s" % (probe, reference),
+                      file=sys.stderr)
+                sys.exit(1)
+            same += 1
+        for form, kernel in (("Up", "Model_Internal_Directed_"),
+                             ("Status", "Model_Internal_Status_")):
+            probe = reference + form
+            body = entry(probe) + "".join(helpers(probe).values())
+            if kernel not in body or planner.search(body):
+                print("%s does not call its %s kernel directly" % (probe, kernel),
+                      file=sys.stderr)
+                sys.exit(1)
+            kernels += 1
+print("Configured selectors: %d default spellings compile to the generic kernels, %d directed "
+      "and status forms reach the model kernels." % (same, kernels))
+PY
+
 if [[ "$(grep -Fc 'Model_FmaBackend_word' "$generated_c")" -lt 2 ]]; then
   printf '%s\n' 'configured binary32/binary64 FMA lost the proved word kernel' >&2
   exit 1

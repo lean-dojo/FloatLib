@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
@@ -21,10 +22,10 @@ results are compared bit-for-bit. NaN payload and sign differences are ignored, 
 does not prescribe one payload-propagation encoding, but quiet and signaling NaNs remain distinct.
 
 The checker also compares all five IEEE exception flags. It expects TestFloat to use tininess
-after rounding, matching `Model.*WithStatus`.
+after rounding, matching the `Model` operations with `status := true`.
 
-The checker calls logical `Model` operations directly. It does not execute configured `ExecFloat`
-backends or the explicit `NativeFPU.Unchecked` host API.
+The checker calls logical `Model` operations. It executes neither configured `ExecFloat`
+backends nor the opt-in `NativeFPU.Unchecked` host API.
 -/
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -102,10 +103,10 @@ private def Operation.parse? : String → Option Operation
   | _ => none
 
 private def parseRoundingMode? : String → Option Model.IEEERoundingMode
-  | "near_even" => some .nearestEven
+  | "near_even" => some .nearest
   | "minMag" => some .towardZero
-  | "min" => some .towardNegativeInfinity
-  | "max" => some .towardPositiveInfinity
+  | "min" => some .down
+  | "max" => some .up
   | _ => none
 
 private def formatName? : String → Option FloatFormat
@@ -116,7 +117,7 @@ private def formatName? : String → Option FloatFormat
   | "f128" => some .binary128
   | _ => none
 
-private def statusBits (status : Model.IEEEStatus) : Nat :=
+private def statusBits (status : FloatLib.Numerics.IEEEStatus) : Nat :=
   (if status.inexact then 1 else 0) +
   (if status.underflow then 2 else 0) +
   (if status.overflow then 4 else 0) +
@@ -188,7 +189,7 @@ private def selectionOutcome {format : FloatFormat}
   Model.outcomeWithInvalid value (Model.isSNaN left || Model.isSNaN right)
 
 private def comparisonStatus {format : FloatFormat}
-    (operation : Operation) (left right : Model format) : Model.IEEEStatus :=
+    (operation : Operation) (left right : Model format) : FloatLib.Numerics.IEEEStatus :=
   let invalid :=
     match operation with
     | .eq | .leQuiet | .ltQuiet =>
@@ -235,11 +236,11 @@ private def applyBinary? {format : FloatFormat}
     (operation : Operation) (rounding : Model.IEEERoundingMode)
     (left right : Model format) : Option (Model.IEEEOutcome format) :=
   match operation with
-  | .add => some (Model.addWithStatus left right rounding)
-  | .sub => some (Model.subWithStatus left right rounding)
-  | .mul => some (Model.mulWithStatus left right rounding)
-  | .div => some (Model.divWithStatus left right rounding)
-  | .rem => some (Model.remainderWithStatus left right)
+  | .add => some (Model.add left right (mode := rounding) (status := true))
+  | .sub => some (Model.sub left right (mode := rounding) (status := true))
+  | .mul => some (Model.mul left right (mode := rounding) (status := true))
+  | .div => some (Model.div left right (mode := rounding) (status := true))
+  | .rem => some (Model.remainder left right (status := true))
   | _ => none
 
 private def checkLine (format : FloatFormat) (operation : Operation)
@@ -250,17 +251,17 @@ private def checkLine (format : FloatFormat) (operation : Operation)
       let expected ← parseExpectedFloat destination expectedText
       let flags ← parseExpected "flags" flagsText
       pure (checkOutcome
-        (Model.castWithStatus format destination input rounding) expected flags)
+        (Model.cast format destination input rounding (status := true)) expected flags)
   | .sqrt, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpectedFloat format expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkOutcome (Model.sqrtWithStatus input rounding) expected flags)
+      pure (checkOutcome (Model.sqrt input (mode := rounding) (status := true)) expected flags)
   | .roundToInt, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpectedFloat format expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkOutcome (Model.roundToIntegralExactWithStatus input rounding) expected flags)
+      pure (checkOutcome (Model.roundToIntegral input rounding (status := true)) expected flags)
   | .copy, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpectedFloat format expectedText
@@ -323,7 +324,7 @@ private def checkLine (format : FloatFormat) (operation : Operation)
       let addend ← parseFloat format addendText
       let expected ← parseExpectedFloat format expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkOutcome (Model.fmaWithStatus left right addend rounding) expected flags)
+      pure (checkOutcome (Model.fma left right addend (mode := rounding) (status := true)) expected flags)
   | .add, [leftText, rightText, expectedText, flagsText]
   | .sub, [leftText, rightText, expectedText, flagsText]
   | .mul, [leftText, rightText, expectedText, flagsText]

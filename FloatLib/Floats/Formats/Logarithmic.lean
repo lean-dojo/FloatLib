@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module -- shake: keep-all
 
 public import FloatLib.Floats.Formats.Logarithmic.Automation
+public import FloatLib.Floats.Formats.Logarithmic.Configured.Display
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Instances
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Proof
@@ -21,10 +22,10 @@ public meta import FloatLib.Numerics.Capabilities.Radix
 The exact value set is zero together with the signed integral powers `±β^e` of the radix `β`,
 with `e` an unbounded integer. Multiplication is the only arithmetic operation supplied, and it is
 exact because signs combine and exponents add. General addition and conversion into this value set
-require rounding: a sum of radix powers need not be a radix power. Division by a nonzero value
-could subtract exponents exactly, but division and its zero-divisor policy are not implemented.
-The family supplies a
-configured `ExecFloat.Logarithmic` carrier, proof automation, and `#float_info` support.
+require rounding, since a sum of radix powers need not be a radix power. Division by a nonzero
+value could subtract exponents exactly, but division and its zero-divisor policy are not
+implemented. The family supplies a configured `ExecFloat.Logarithmic` carrier, proof automation,
+and `#float_info` support.
 
 ## References
 

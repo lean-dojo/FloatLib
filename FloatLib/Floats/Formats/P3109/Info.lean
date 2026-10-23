@@ -24,9 +24,8 @@ public import FloatLib.Floats.ExecFloat.Info
 # Inspection reports for P3109 formats
 
 This optional meta module registers `#float_info` for `ExecFloat.P3109`. The report reads the
-closed descriptor and the actual installed arithmetic and conversion capabilities. It describes
-P3109 itself rather than exposing the generic codebook carrier used to store its exact-width
-codes.
+closed descriptor and the installed arithmetic and conversion capabilities. It describes the
+P3109 format and hides the generic codebook carrier that stores its exact-width codes.
 -/
 
 public meta section
@@ -217,14 +216,14 @@ elab_rules : command
                     [ ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_toRat_eq_int_mul
                     , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardZero
                     , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardZero_maximal
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardPositive
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardPositive_minimal
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardNegative
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_towardNegative_maximal
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestTiesToAway_abs_sub_le
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestTiesToAway_tie
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestTiesToEven_abs_sub_le
-                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestTiesToEven_tie
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_up
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_up_minimal
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_down
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_down_maximal
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestAway_abs_sub_le
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestAway_tie
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearest_abs_sub_le
+                    , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearest_tie
                     , ``FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_toOdd_abs_sub_lt
                     ]
                   applicability := .verifiedForType
@@ -235,8 +234,8 @@ elab_rules : command
                     kinds := [.rounding]
                     statement :=
                       "towardZero truncates to the nearest grid point of smaller magnitude; " ++
-                      "towardPositive and towardNegative select the adjacent grid point on the " ++
-                      "requested side; nearestTiesToAway and nearestTiesToEven stay within half " ++
+                      "up and down select the adjacent grid point on the " ++
+                      "requested side; nearestAway and nearest stay within half " ++
                       "a quantum and resolve exact ties toward larger magnitude, respectively " ++
                       "toward the candidate with an even P3109 code; toOdd stays within one " ++
                       "quantum and, when precision exceeds one, returns an odd significand " ++
@@ -265,10 +264,10 @@ elab_rules : command
               , {
                   topic := "exact arithmetic before one destination projection"
                   declarations :=
-                    [ ``FloatLib.Floats.ExecFloat.P3109.decode_unaryTo
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_binaryTo
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_ternaryTo
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_fmaTo_finite
+                    [ ``FloatLib.Floats.ExecFloat.P3109.decode_unary
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_binary
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_ternary
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_fma_finite
                     , ``FloatLib.Floats.Formats.P3109.Arithmetic.fma_finite_real
                     , ``FloatLib.Floats.Formats.P3109.Arithmetic.div_zero
                     ]
@@ -283,9 +282,9 @@ elab_rules : command
                     [ ``FloatLib.Floats.Formats.P3109.Arithmetic.sqrtRoundAway_eq_real
                     , ``FloatLib.Floats.Formats.P3109.Arithmetic.roundSqrtRatToPrecision_eq_real
                     , ``FloatLib.Floats.Formats.P3109.Arithmetic.sqrtValue_eq_real
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_sqrtTo
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_rsqrtTo
-                    , ``FloatLib.Floats.ExecFloat.P3109.decode_hypotTo
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_sqrt
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_rsqrt
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_hypot
                     ]
                   applicability := .verifiedForType
                   scope :=

@@ -17,9 +17,9 @@ import Mathlib.Tactic.Tauto
 # Verified two-word values and exact wide multiplication
 
 The natural-number meaning of `UInt128` is injective, and the native `64 × 64 → 128`
-multiplication kernel computes the exact product through two 64-bit output limbs. These facts
-are independent of any floating-point family, so multiplication, division, and square-root
-backends can share the same native/arbitrary-precision boundary.
+multiplication kernel computes the full product in two 64-bit output limbs. Neither fact depends
+on a floating-point family, so multiplication, division, and square-root backends share the same
+native/arbitrary-precision boundary.
 
 Later proofs reason about the mathematical value of the pair instead of reopening carry code at
 every use site.
@@ -31,7 +31,7 @@ namespace FloatLib.Numerics.FixedWord
 
 namespace UInt128
 
-/-- Every two-word unsigned value lies below the first unrepresentable 128-bit integer. -/
+/-- Every two-word unsigned value is below `2^128`. -/
 theorem toNat_lt (value : UInt128) :
     value.toNat < 2 ^ 128 := by
   unfold UInt128.toNat
@@ -145,7 +145,7 @@ private theorem shiftLeft32_toNat (value : UInt64)
   rw [Nat.shiftLeft_eq, Nat.mod_eq_of_lt]
   nlinarith
 
-/-- `mul64` represents the exact mathematical product of its operands. -/
+/-- `mul64` computes the full mathematical product of its operands. -/
 @[simp, grind =] theorem mul64_toNat (x y : UInt64) :
     (mul64 x y).toNat = x.toNat * y.toNat := by
   let x0 := low32 x
@@ -190,11 +190,12 @@ private theorem shiftLeft32_toNat (value : UInt64)
         x1.toNat * y1.toNat * 2 ^ 64 := by
     rw [split32_toNat x, split32_toNat y]
     ring
+  unfold UInt128.toNat
   change lo.toNat + hi.toNat * 2 ^ 64 = x.toNat * y.toNat
   rw [hlo, hhi, hsplit]
   omega
 
-/-- A zero high product limb certifies that the low limb is the complete exact product. -/
+/-- When the high limb of the product is zero, the low limb is the whole product. -/
 theorem mul64_lo_toNat_of_hi_eq_zero
     (left right : UInt64) (hhigh : (mul64 left right).hi = 0) :
     (mul64 left right).lo.toNat = left.toNat * right.toNat := by

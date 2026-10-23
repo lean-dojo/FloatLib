@@ -19,8 +19,8 @@ import Mathlib.Tactic.SplitIfs
 /-!
 # Correctness of restoring quotient generation
 
-The one-word restoring loop computes exact nearest-even rational rounding under its capacity
-bounds. This module also proves the two-limb step and the one-word rational logarithm.
+The one-word restoring loop computes the nearest-even rounding of a rational quotient under its
+capacity bounds. This module also proves the two-limb step and the one-word rational logarithm.
 `Quotient.Restoring128Proof` extends the step theorem to the two-limb loop. Floating-point kernels
 supply their own decoding, exponent handling, and packing.
 -/
@@ -409,8 +409,78 @@ theorem quotientStep128_toNat
       hbelow, ite_false]
     rw [hquotientSetLowBit, hremainderSubtract]
 
+/-- Nearest-even rounding of an exact quotient state is the reference quotient rounding. -/
+theorem roundQuotientState_toNat (den : UInt64) (state : QuotientState UInt64) (scaled : Nat)
+    (hden : den ≠ 0)
+    (hdenFit : den.toNat < 2 ^ 63)
+    (hquotient : state.quotient.toNat = scaled / den.toNat)
+    (hremainderEq : state.remainder.toNat = scaled % den.toNat)
+    (hquotientFit : scaled / den.toNat + 1 < 2 ^ 63) :
+    (roundQuotientState den state).toNat = Numerics.roundQuotientEven scaled den.toNat := by
+  have hdenNat : den.toNat ≠ 0 := by
+    simpa [← UInt64.toNat_inj] using hden
+  have hremainderLt : state.remainder.toNat < den.toNat := by
+    rw [hremainderEq]
+    exact Nat.mod_lt _ (Nat.pos_of_ne_zero hdenNat)
+  have hdoubleFit : state.remainder.toNat + state.remainder.toNat < 2 ^ 64 := by
+    omega
+  have hdouble :
+      (state.remainder + state.remainder).toNat = 2 * (scaled % den.toNat) := by
+    rw [uint64_add_toNat_of_lt _ _ hdoubleFit, hremainderEq]
+    ring
+  have hincrementFit : state.quotient.toNat + 1 < 2 ^ 64 := by
+    rw [hquotient]
+    exact lt_trans hquotientFit (by norm_num)
+  have hincrement : (state.quotient + 1).toNat = scaled / den.toNat + 1 := by
+    have hone : (1 : UInt64).toNat = 1 := by decide
+    rw [uint64_add_toNat_of_lt _ _]
+    · rw [hquotient, hone]
+    · simpa only [hone] using hincrementFit
+  have heven :
+      (state.quotient % 2 == 0) ↔ (scaled / den.toNat) % 2 == 0 := by
+    simp only [beq_iff_eq]
+    constructor
+    · intro h
+      have hnat := congrArg UInt64.toNat h
+      simpa [UInt64.toNat_mod, hquotient] using hnat
+    · intro h
+      apply UInt64.toNat_inj.mp
+      simpa [UInt64.toNat_mod, hquotient] using h
+  unfold roundQuotientState Numerics.roundQuotientEven
+  simp only [UInt64.lt_iff_toNat_lt, hdouble, heven]
+  split_ifs <;> simp_all
+
+/-- An accepted quotient candidate is the floor quotient, with its remainder in the low word. -/
+theorem isFloorQuotient_spec {scaled : UInt128} {den guess : UInt64}
+    (h : isFloorQuotient scaled den guess = true) :
+    guess.toNat = scaled.toNat / den.toNat ∧
+      (quotientRemainder scaled den guess).lo.toNat = scaled.toNat % den.toNat ∧
+      guess.toNat + 1 < 2 ^ 63 := by
+  unfold isFloorQuotient at h
+  simp only [Bool.and_eq_true, Bool.not_eq_true', beq_iff_eq, decide_eq_true_eq] at h
+  obtain ⟨⟨⟨hsmall, hless⟩, hhi⟩, hlo⟩ := h
+  have hle : (mul64 guess den).toNat ≤ scaled.toNat := by
+    have hnot : ¬(UInt128.less scaled (mul64 guess den) = true) := by simp [hless]
+    rw [UInt128.less_eq_true_iff] at hnot
+    omega
+  have hsub := UInt128.sub_toNat scaled (mul64 guess den) hle
+  rw [mul64_toNat] at hsub hle
+  have hlow : (quotientRemainder scaled den guess).toNat =
+      (quotientRemainder scaled den guess).lo.toNat := by
+    unfold UInt128.toNat
+    rw [hhi]
+    simp
+  have hrem := UInt64.lt_iff_toNat_lt.mp hlo
+  have hpos : 0 < den.toNat := by omega
+  have hunique : scaled.toNat / den.toNat = guess.toNat ∧
+      scaled.toNat % den.toNat = (quotientRemainder scaled den guess).lo.toNat :=
+    (Nat.div_mod_unique hpos).mpr
+      ⟨by rw [← hlow, quotientRemainder, hsub, Nat.mul_comm den.toNat guess.toNat]; omega, hrem⟩
+  have hfit : guess.toNat < 2 ^ 63 - 1 := UInt64.lt_iff_toNat_lt.mp hsmall
+  exact ⟨hunique.1.symm, hunique.2.symm, by omega⟩
+
 /--
-Native restoring division computes the exact nearest-even rounding of the scaled rational quotient.
+Native restoring division computes the nearest-even rounding of the scaled rational quotient.
 -/
 theorem roundScaledQuotient_toNat
     (num den : UInt64) (shift : Nat)
@@ -480,51 +550,12 @@ theorem roundScaledQuotient_toNat
         (num.toNat <<< shift) % den.toNat := by
     rw [show final.remainder.toNat = final.toNat.remainder by rfl,
       hsteps, hfinalNat.2]
-  have hremainderLt :
-      final.remainder.toNat < den.toNat := by
-    rw [hfinalRemainder]
-    exact Nat.mod_lt _ (Nat.pos_of_ne_zero hdenNat)
-  have hdoubleFit :
-      final.remainder.toNat + final.remainder.toNat < 2 ^ 64 := by
-    nlinarith
-  have hdouble :
-      (final.remainder + final.remainder).toNat =
-        2 * ((num.toNat <<< shift) % den.toNat) := by
-    rw [uint64_add_toNat_of_lt _ _ hdoubleFit, hfinalRemainder]
-    ring
-  have hincrementFit :
-      final.quotient.toNat + 1 < 2 ^ 64 := by
-    rw [hfinalQuotient]
-    exact lt_trans hquotientFit (by norm_num)
-  have hincrement :
-      (final.quotient + 1).toNat =
-        (num.toNat <<< shift) / den.toNat + 1 := by
-    have hone : (1 : UInt64).toNat = 1 := by decide
-    rw [uint64_add_toNat_of_lt _ _]
-    · rw [hfinalQuotient, hone]
-    · simpa only [hone] using hincrementFit
-  have heven :
-      (final.quotient % 2 == 0) ↔
-        ((num.toNat <<< shift) / den.toNat) % 2 == 0 := by
-    simp only [beq_iff_eq]
-    constructor
-    · intro h
-      have hnat := congrArg UInt64.toNat h
-      simpa [UInt64.toNat_mod, hfinalQuotient] using hnat
-    · intro h
-      apply UInt64.toNat_inj.mp
-      simpa [UInt64.toNat_mod, hfinalQuotient] using h
-  unfold roundScaledQuotient
-  change (roundQuotientState den final).toNat =
-    Numerics.roundQuotientEven
-      (num.toNat <<< shift) den.toNat
-  unfold roundQuotientState Numerics.roundQuotientEven
-  simp only [UInt64.lt_iff_toNat_lt, hdouble, heven]
-  split_ifs <;> simp_all
+  exact roundQuotientState_toNat den final _ hden hdenFit hfinalQuotient hfinalRemainder
+    hquotientFit
 
 
 /--
-The native-word rational logarithm selector agrees with the exact representation-independent
+The native-word rational logarithm selector agrees with the representation-independent
 `floorLog2` specification for nonzero operands.
 -/
 theorem floorLog2RatWord_eq (num den : UInt64)

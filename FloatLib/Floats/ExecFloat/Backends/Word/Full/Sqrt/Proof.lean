@@ -12,13 +12,15 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Sqrt.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
 public import FloatLib.Floats.ExecFloat.Backends.SqrtNormalRounding
 public import Mathlib.Data.Nat.Sqrt
+public import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 
 /-!
 # Correctness of the native binary64 square-root kernel
 
-The restoring two-limb kernel reconstructs its scaled radicand one base-four digit at a time. Its
-state invariant proves that the final native root is `Nat.sqrt` with the exact remainder. The
-format-level theorem then refines the native field packing to Lean's unpacked binary64 model.
+The restoring two-limb kernel reconstructs its scaled radicand one base-four digit at a time, and
+its state invariant shows that the final native root is `Nat.sqrt` with the exact remainder. A
+checked Newton candidate gives the same state (`rootAndRemainderChecked_eq`). Finally, the
+format-level theorem refines the native field packing to Lean's unpacked binary64 model.
 -/
 
 @[expose] public section
@@ -396,6 +398,45 @@ private def sqrtPositiveFiniteSpec (mantissa scale : Nat) : UInt64 :=
   packFieldsWord false (UInt64.ofNat encodedExponent)
     (UInt64.ofNat (roundedMantissa - Model.pow2 52))
 
+/-! ## Checked Newton root -/
+
+/-- On every input, the checked candidate path computes `rootAndRemainder`. -/
+theorem rootAndRemainderChecked_eq (mantissa : UInt64) (shift : Nat) :
+    rootAndRemainderChecked mantissa shift = rootAndRemainder mantissa shift := by
+  unfold rootAndRemainderChecked
+  split
+  · rename_i hguard
+    dsimp only
+    split
+    · rename_i state hstate
+      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.or_eq_true, beq_iff_eq] at hguard
+      obtain ⟨⟨hpos, hlt⟩, hbits⟩ := hguard
+      have hfit : mantissa.toNat <<< shift < 2 ^ 106 := by
+        rcases hbits with h0 | hb
+        · subst h0; simp
+        · rw [FloatLib.Numerics.FixedWord.log2Word_eq_log2,
+            FloatLib.Numerics.FixedWord.log2_toNat] at hb
+          rw [Nat.shiftLeft_eq]
+          have hm : mantissa.toNat < 2 ^ (mantissa.toNat.log2 + 1) := Nat.lt_log2_self
+          calc mantissa.toNat * 2 ^ shift < 2 ^ (mantissa.toNat.log2 + 1) * 2 ^ shift :=
+                Nat.mul_lt_mul_of_pos_right hm (Nat.two_pow_pos _)
+            _ = 2 ^ (mantissa.toNat.log2 + 1 + shift) := (pow_add 2 _ _).symm
+            _ ≤ 2 ^ 106 := Nat.pow_le_pow_right (by decide) (by omega)
+      have hrad := shiftedRadicand_toNat mantissa shift hpos hlt
+        (lt_trans hfit (Nat.pow_lt_pow_right (by decide) (by decide)))
+      obtain ⟨hroot, hrem⟩ := rootAndRemainder_spec mantissa shift hpos hlt hfit
+      obtain ⟨hroot', hrem'⟩ := CheckedSquareRoot.checkRoot?_spec hstate
+      rw [hrad] at hroot' hrem'
+      cases hloop : rootAndRemainder mantissa shift with
+      | mk root remainder =>
+        rw [hloop] at hroot hrem
+        cases state
+        simp only at hroot hrem hroot' hrem' ⊢
+        rw [UInt64.toNat_inj.mp (hroot'.trans hroot.symm),
+          UInt64.toNat_inj.mp (hrem'.trans hrem.symm)]
+    · rfl
+  · rfl
+
 /-! ## Native-core refinement -/
 
 private theorem sqrtPositiveFiniteCore_eq_spec
@@ -406,6 +447,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
     sqrtPositiveFiniteCore mantissa scale =
       sqrtPositiveFiniteSpec mantissa.toNat scale.toNat := by
   unfold sqrtPositiveFiniteCore
+  simp only [rootAndRemainderChecked_eq]
   simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   let nativeLeading := mantissa.log2
   let nativePosition := nativeLeading + scale

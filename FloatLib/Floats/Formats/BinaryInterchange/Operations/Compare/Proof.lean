@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.DyadicOrder
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
@@ -35,12 +36,12 @@ theorem chooseNaN2_none_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     chooseNaN2 x y = none :=
   (chooseNaN2_eq_none_iff x y).2 ⟨hx, hy⟩
 
-/-- Exactly pairs containing a NaN produce the unordered comparison relation. -/
+/-- Comparison is unordered exactly when an operand is a NaN. -/
 theorem compare_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     compare x y = none ↔ isNaN x = true ∨ isNaN y = true := by
   cases hx : isNaN x <;> cases hy : isNaN y <;> simp [compare, hx, hy]
 
-/-- Without NaNs, `minNum` is exactly the ordinary IEEE `minimum` operation. -/
+/-- Without NaNs, `minNum` is the IEEE `minimum` operation. -/
 theorem minNum_eq_minimum_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
     minNum x y = minimum x y := by
@@ -48,7 +49,7 @@ theorem minNum_eq_minimum_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
   have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hy
   simp [minNum, hxSNaN, hySNaN, hx, hy]
 
-/-- Without NaNs, `maxNum` is exactly the ordinary IEEE `maximum` operation. -/
+/-- Without NaNs, `maxNum` is the IEEE `maximum` operation. -/
 theorem maxNum_eq_maximum_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
     maxNum x y = maximum x y := by
@@ -144,17 +145,17 @@ theorem maxNum_of_isNaN_both {fmt : FloatFormat} (x y : Model fmt)
 
 /-! ### IEEE 754-2019 `minimumNumber` and `maximumNumber` -/
 
-/-- Without NaNs, `minimumNumber` is exactly the IEEE `minimum` operation. -/
+/-- Without NaNs, `minimumNumber` is the IEEE `minimum` operation. -/
 theorem minimumNumber_eq_minimum_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
     minimumNumber x y = minimum x y := by
-  simp [minimumNumber, hx, hy]
+  simp [minimumNumber, Internal.Value.minimumNumber, hx, hy]
 
-/-- Without NaNs, `maximumNumber` is exactly the IEEE `maximum` operation. -/
+/-- Without NaNs, `maximumNumber` is the IEEE `maximum` operation. -/
 theorem maximumNumber_eq_maximum_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
     maximumNumber x y = maximum x y := by
-  simp [maximumNumber, hx, hy]
+  simp [maximumNumber, Internal.Value.maximumNumber, hx, hy]
 
 /--
 `minimumNumber` returns the right operand whenever only the left operand is a NaN, even a
@@ -163,37 +164,37 @@ signaling one. This is the point where IEEE 754-2019 departs from `minNum`.
 theorem minimumNumber_of_isNaN_left {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = true) (hy : isNaN y = false) :
     minimumNumber x y = y := by
-  simp [minimumNumber, hx, hy]
+  simp [minimumNumber, Internal.Value.minimumNumber, hx, hy]
 
 /-- `minimumNumber` returns the left operand whenever only the right operand is a NaN. -/
 theorem minimumNumber_of_isNaN_right {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = true) :
     minimumNumber x y = x := by
-  simp [minimumNumber, hx, hy]
+  simp [minimumNumber, Internal.Value.minimumNumber, hx, hy]
 
 /-- When both operands are NaNs, `minimumNumber` delivers the quiet NaN chosen by `bothNaNNumber`. -/
 theorem minimumNumber_of_isNaN_both {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = true) (hy : isNaN y = true) :
     minimumNumber x y = bothNaNNumber x y := by
-  simp [minimumNumber, hx, hy]
+  simp [minimumNumber, Internal.Value.minimumNumber, hx, hy]
 
 /-- `maximumNumber` returns the right operand whenever only the left operand is a NaN. -/
 theorem maximumNumber_of_isNaN_left {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = true) (hy : isNaN y = false) :
     maximumNumber x y = y := by
-  simp [maximumNumber, hx, hy]
+  simp [maximumNumber, Internal.Value.maximumNumber, hx, hy]
 
 /-- `maximumNumber` returns the left operand whenever only the right operand is a NaN. -/
 theorem maximumNumber_of_isNaN_right {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = true) :
     maximumNumber x y = x := by
-  simp [maximumNumber, hx, hy]
+  simp [maximumNumber, Internal.Value.maximumNumber, hx, hy]
 
 /-- When both operands are NaNs, `maximumNumber` delivers the quiet NaN chosen by `bothNaNNumber`. -/
 theorem maximumNumber_of_isNaN_both {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = true) (hy : isNaN y = true) :
     maximumNumber x y = bothNaNNumber x y := by
-  simp [maximumNumber, hx, hy]
+  simp [maximumNumber, Internal.Value.maximumNumber, hx, hy]
 
 /-- The NaN chosen for two NaN operands is always one of them, quieted. -/
 theorem bothNaNNumber_eq_or {fmt : FloatFormat} (x y : Model fmt) :
@@ -211,14 +212,14 @@ theorem minimumNumber_eq_minNum_of_not_isSNaN {fmt : FloatFormat} (x y : Model f
     (hx : isSNaN x = false) (hy : isSNaN y = false) :
     minimumNumber x y = minNum x y := by
   cases hxNaN : isNaN x <;> cases hyNaN : isNaN y <;>
-    simp [minimumNumber, minNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
+    simp [minimumNumber, Internal.Value.minimumNumber, minNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
 
 /-- The `maximumNumber` counterpart of `minimumNumber_eq_minNum_of_not_isSNaN`. -/
 theorem maximumNumber_eq_maxNum_of_not_isSNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isSNaN x = false) (hy : isSNaN y = false) :
     maximumNumber x y = maxNum x y := by
   cases hxNaN : isNaN x <;> cases hyNaN : isNaN y <;>
-    simp [maximumNumber, maxNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
+    simp [maximumNumber, Internal.Value.maximumNumber, maxNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
 
 /-! ## Non-NaN minimum and maximum -/
 
@@ -248,7 +249,7 @@ theorem isNaN_minimumNumber_eq_false_of_not_both
     (h : isNaN x = false ∨ isNaN y = false) :
     isNaN (minimumNumber x y) = false := by
   cases hx : isNaN x <;> cases hy : isNaN y <;>
-    simp_all [minimumNumber, isNaN_minimum_eq_false_of_isNaN_eq_false]
+    simp_all [minimumNumber, Internal.Value.minimumNumber, isNaN_minimum_eq_false_of_isNaN_eq_false]
 
 /-- `maximumNumber` never returns a NaN unless both operands are NaNs. -/
 theorem isNaN_maximumNumber_eq_false_of_not_both
@@ -256,13 +257,13 @@ theorem isNaN_maximumNumber_eq_false_of_not_both
     (h : isNaN x = false ∨ isNaN y = false) :
     isNaN (maximumNumber x y) = false := by
   cases hx : isNaN x <;> cases hy : isNaN y <;>
-    simp_all [maximumNumber, isNaN_maximum_eq_false_of_isNaN_eq_false]
+    simp_all [maximumNumber, Internal.Value.maximumNumber, isNaN_maximum_eq_false_of_isNaN_eq_false]
 
 /-! ## Finite comparison -/
 
 /--
-Once both operands are known not to be NaNs, the public comparison is exactly the total
-non-NaN comparison.
+Once both operands are known not to be NaNs, the public comparison is the total non-NaN
+comparison.
 -/
 theorem compare_eq_some_compareNonNaN
     {fmt : FloatFormat} (x y : Model fmt)
@@ -273,8 +274,8 @@ theorem compare_eq_some_compareNonNaN
 /--
 Any successful public comparison determines the result of the total non-NaN comparison.
 
-This is the proof bridge used by the min/max semantics below: runtime code does not need an
-unreachable unordered branch once NaNs have already been excluded.
+The min/max semantics below use it, so runtime code needs no unreachable unordered branch once
+NaNs are excluded.
 -/
 @[simp] theorem compareNonNaN_eq_of_compare_eq_some
     {fmt : FloatFormat} (x y : Model fmt)
@@ -764,9 +765,9 @@ theorem toEReal_maximum_eq_max
     simp [maximum, hchoose, hcompare, hxTotal, hyTotal, max_eq_left hgt.le]
 
 /--
-On non-NaN values, `minNum` has the exact extended-real semantics of mathematical minimum.
-Signed-zero tie breaking remains visible in the encoded result even though `toEReal` identifies
-the two zeros.
+On non-NaN values, `minNum` has the extended-real semantics of mathematical minimum. The encoded
+result keeps its signed-zero tie breaking, which `toEReal` does not see because it identifies the
+two zeros.
 -/
 theorem toEReal_minNum_eq_min
     {fmt : FloatFormat} (x y : Model fmt)
@@ -776,9 +777,9 @@ theorem toEReal_minNum_eq_min
   exact toEReal_minimum_eq_min x y hxNaN hyNaN
 
 /--
-On non-NaN values, `maxNum` has the exact extended-real semantics of mathematical maximum.
-Signed-zero tie breaking remains visible in the encoded result even though `toEReal` identifies
-the two zeros.
+On non-NaN values, `maxNum` has the extended-real semantics of mathematical maximum. The encoded
+result keeps its signed-zero tie breaking, which `toEReal` does not see because it identifies the
+two zeros.
 -/
 theorem toEReal_maxNum_eq_max
     {fmt : FloatFormat} (x y : Model fmt)

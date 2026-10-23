@@ -9,19 +9,18 @@ module
 public import Std.Tactic.BVDecide
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Subtraction.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Verified exact subtraction for nearby binary64 values
 
-Sterbenz's lemma guarantees exact representability for subtraction of finite floating-point
-values with the same sign and magnitudes within a factor of two. This module proves a positive
-normal-input core,
-then handles negative operands by negating and swapping them. It computes the exact significand
+By Sterbenz's lemma, the difference of two finite floating-point values with the same sign and
+magnitudes within a factor of two is representable. The kernel computes the exact significand
 difference in `UInt64` and packs it without entering the arbitrary-precision generic addition
-kernel.
+kernel. This module proves the positive normal-input core, then handles negative operands by
+negating and swapping them.
 
-Every rejected input retains the existing exact generic implementation.
+Rejected inputs use the exact generic implementation.
 -/
 
 @[expose] public section
@@ -74,11 +73,11 @@ private theorem decode_negate_of_finiteExponent (x : Value)
   rw [expField_xor_sign, fracField_xor_sign, signBit_xor_sign]
   simp [hfinite]
 
-private theorem addFiniteImpl_negate_eq_components
+private theorem addFiniteComponents_negate_eq_components
     (x y : Value)
     (hxfinite : expField (toUInt64 x) ≠ 0x7ff)
     (hyfinite : expField (toUInt64 y) ≠ 0x7ff) :
-    addFiniteImpl? x (negate y) =
+    addFiniteComponents? x (negate y) =
       some (FiniteKernel.addComponents FloatFormat.binary64
         {
           sign := signBit (toUInt64 x)
@@ -92,10 +91,10 @@ private theorem addFiniteImpl_negate_eq_components
           mantissa :=
             (finiteMantissa (expField (toUInt64 y))
               (fracField (toUInt64 y))).toNat }) := by
-  unfold addFiniteImpl?
+  unfold addFiniteComponents?
   rw [decode_of_finiteExponent x hxfinite,
     decode_negate_of_finiteExponent y hyfinite]
-  simp only [FiniteKernel.addComponentsImpl_eq]
+  simp only [FiniteKernel.Internal.addComponents_eq]
 
 @[simp] private theorem binary64_bias :
     FloatFormat.binary64.bias = 1023 := by
@@ -540,7 +539,7 @@ private theorem addComponents_same_large_left
         (exponent + 1073) := by
   have hlarge : large ≠ 0 := by omega
   unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_roundDyadicImpl,
+  rw [← roundDyadic_eq_internal,
     normalComponents_toDyadic false exponent large hexponent hlarge,
     normalComponents_toDyadic true exponent small hexponent hsmall,
     addDyadic_oppositeSign_sameExponent_largeLeft false true large small
@@ -580,7 +579,7 @@ private theorem addComponents_same_large_right
         (exponent + 1073) := by
   have hlarge : large ≠ 0 := by omega
   unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_roundDyadicImpl,
+  rw [← roundDyadic_eq_internal,
     normalComponents_toDyadic false exponent small hexponent hsmall,
     normalComponents_toDyadic true exponent large hexponent hlarge,
     addDyadic_oppositeSign_sameExponent_largeRight false true small large
@@ -604,7 +603,7 @@ private theorem addComponents_adjacent_large_left
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
     omega
   unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_roundDyadicImpl,
+  rw [← roundDyadic_eq_internal,
     normalComponents_toDyadic false (exponent + 1) large
       hexponentSucc hlarge,
     normalComponents_toDyadic true exponent small hexponent hsmall,
@@ -630,7 +629,7 @@ private theorem addComponents_adjacent_large_right
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
     omega
   unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_roundDyadicImpl,
+  rw [← roundDyadic_eq_internal,
     normalComponents_toDyadic false exponent small hexponent hsmall,
     normalComponents_toDyadic true (exponent + 1) large
       hexponentSucc hlarge,
@@ -675,14 +674,12 @@ private theorem adjacentDifference_facts (upper lower : UInt64)
     omega
 
 /--
-Every accepted Sterbenz result is exactly the existing finite binary64 subtraction path.
-
-The theorem is the trust boundary for the specialization: rejected inputs retain
-`addFiniteImpl? x (negate y)`, while an accepted native result is bit-for-bit identical to it.
+Every result of `subSterbenz?` is also the result of the finite binary64 subtraction path
+`addFiniteComponents? x (negate y)`, which handles the rejected inputs.
 -/
 theorem subSterbenz_refines (x y result : Value)
     (hfast : subSterbenz? x y = some result) :
-    addFiniteImpl? x (negate y) = some result := by
+    addFiniteComponents? x (negate y) = some result := by
   unfold subSterbenz? at hfast
   dsimp only at hfast
   set xBits := toUInt64 x with hxBits
@@ -757,7 +754,7 @@ theorem subSterbenz_refines (x y result : Value)
     simpa [yExponent, yBits, hyBits] using hyExponentExceptional
   simp [hxSignFalse, hySignFalse, hxExponentZero, hyExponentZero,
     hxExponentExceptional, hyExponentExceptional] at hfast
-  rw [addFiniteImpl_negate_eq_components x y hxFiniteWord hyFiniteWord]
+  rw [addFiniteComponents_negate_eq_components x y hxFiniteWord hyFiniteWord]
   rw [← hxBits, ← hyBits, ← hxExponent, ← hyExponent, ← hxFraction,
     ← hyFraction, ← hxMantissa, ← hyMantissa, hxSignFalse, hySignFalse]
   simp only [Bool.not_false]
@@ -884,14 +881,14 @@ theorem subSterbenz_refines (x y result : Value)
       · simp [hsame, hleft, hright] at hfast
 
 /--
-Every accepted signed Sterbenz result is exactly the existing finite subtraction path.
+Every result of `subSignedSterbenz?` is also the result of `addFiniteComponents? x (negate y)`.
 
-The negative case reuses the positive theorem after negating and swapping both inputs, then uses
-commutativity of exact finite addition.
+For negative operands it reuses `subSterbenz_refines` after negating and swapping both inputs,
+then uses commutativity of exact finite addition.
 -/
 theorem subSignedSterbenz_refines (x y result : Value)
     (hfast : subSignedSterbenz? x y = some result) :
-    addFiniteImpl? x (negate y) = some result := by
+    addFiniteComponents? x (negate y) = some result := by
   unfold subSignedSterbenz? at hfast
   dsimp only at hfast
   cases hxSign : signBit (toUInt64 x) <;>
@@ -906,8 +903,8 @@ theorem subSignedSterbenz_refines (x y result : Value)
       subSterbenz_refines (negate y) (negate x) result hnegative
     rw [negate_negate] at hrefines
     calc
-      addFiniteImpl? x (negate y) =
-          addFiniteImpl? (negate y) x := addFiniteImpl_comm _ _
+      addFiniteComponents? x (negate y) =
+          addFiniteComponents? (negate y) x := addFiniteComponents_comm _ _
       _ = some result := hrefines
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

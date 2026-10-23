@@ -17,11 +17,10 @@ dyadics, configured binary floats, configured posits, and other rationally decod
 ordinary `convert`, `cast`, and destination-driven mixed-operation APIs without first passing
 through a host float.
 
-The conversion context is exactly `ProjectionPolicy`: the P3109 rounding mode and saturation mode
-are not duplicated in a second policy type. Every policy produces a P3109 datum, so conversion
-returns success for finite, infinite, and exceptional observations. Changes to an input
-infinity or exceptional observation are reported through `mappedSpecial`; endpoint clamping
-is reported through `saturated`.
+The conversion context is `ProjectionPolicy` itself, so the P3109 rounding and saturation modes
+live in one policy type. Every policy produces a P3109 datum, so conversion returns success for
+finite, infinite, and exceptional observations. Changes to an input infinity or exceptional
+observation are reported through `mappedSpecial`, and endpoint clamping through `saturated`.
 -/
 
 @[expose] public section
@@ -162,14 +161,15 @@ The report defines no status flags, so these are FloatLib's conversion indicator
     (input : NumericalValue Rat) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (ExecFloat.P3109 format) :=
-  .success (ExecFloat.P3109.projectRat policy input)
+  .success (ExecFloat.P3109.projectRat input policy.rounding policy.saturation)
     (status format policy input)
 
 /--
-Conversion preserves the selected word and status and denotes the round-then-saturate datum.
+Conversion contract: the outcome has `run`'s word and status, and the word denotes the
+round-then-saturate datum.
 
-`SameDatum` compares finite values numerically and identifies NaN payloads. The word equality is
-retained separately so that this semantic clause does not discard complete output information.
+`SameDatum` compares finite values numerically and identifies NaN payloads, so the word equality
+is stated as well.
 -/
 def spec :
     Quantization.Spec Formats.P3109.ProjectionPolicy
@@ -179,18 +179,18 @@ def spec :
   fun policy input outcome =>
     match outcome with
     | .success value indicators =>
-        value = ExecFloat.P3109.projectRat policy input ∧
+        value = ExecFloat.P3109.projectRat input policy.rounding policy.saturation ∧
           indicators = status format policy input ∧
           Formats.P3109.Format.SameDatum
             (ExecFloat.P3109.decode value) (format.projectRatValue policy input)
     | .failure _ => False
 
 /--
-P3109 decoding selects the common exact-rational scalar domain.
+P3109 values decode into the common exact-rational scalar domain.
 
-The elevated priority refines the carrier's generic codebook decoder, whose finite domain is
-`Dyadic`. Importing the generic codebook API together with P3109 therefore still leaves one
-canonical source domain for ordinary scalar conversion.
+The raised priority overrides the carrier's generic codebook decoder, whose finite domain is
+`Dyadic`, so importing the generic codebook API with P3109 still leaves one source domain for
+ordinary scalar conversion.
 -/
 instance (priority := 2000) exactDecoder :
     FloatLib.Floats.ExecFloat.ExactDecoder

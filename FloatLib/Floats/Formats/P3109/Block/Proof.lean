@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Mixed.Proof
 # Semantics of P3109 blocks
 
 Lane projection refines the report's exact normalization followed by destination projection.
-The special scale laws include NaN precedence and zero and infinite result scales. Finite
-reductions retain the complete rational sum or product without intermediate rounding.
+The special scale laws cover NaN precedence and zero and infinite result scales. Finite
+reductions keep the whole rational sum or product, with no intermediate rounding.
 -/
 
 @[expose] public section
@@ -25,7 +25,7 @@ open FloatLib.Numerics FloatLib.Floats.ExecFloat Arithmetic
 
 variable {length : ℕ+}
 
-/-- Explicit stochastic words are specialized independently at each lane. -/
+/-- Each lane takes its own word from a block's stochastic rounding words. -/
 @[simp] theorem BlockPolicy.at_stochasticA (width : Nat)
     (words : Vector (BitVec width) length) (saturation : SaturationMode)
     (lane : Fin (length : Nat)) :
@@ -34,7 +34,7 @@ variable {length : ℕ+}
 
 namespace Block
 
-/-- Finite nonzero result scales use ordinary exact division. -/
+/-- A finite nonzero scale normalizes a finite value by exact division. -/
 @[simp] theorem normalize_finite (scale value : Rat) (hscale : scale ≠ 0) :
     normalize (.finite scale) (.finite value) = .finite (value / scale) := by
   simp [normalize, hscale, Arithmetic.div]
@@ -107,7 +107,7 @@ theorem decode_project_lane (format : Format) (policy : BlockPolicy length) (sca
       (format.projectRatValue (policy.at lane)
         (normalize (Mixed.decode scale) values[lane.val])) := by
   simp only [project, Vector.getElem_ofFn]
-  exact ExecFloat.P3109.decode_projectRat _ _
+  exact ExecFloat.P3109.decode_projectRat _ _ _
 
 /-- Conversion out projects the decoded scaled datum of each lane once. -/
 theorem decode_convertFrom_lane (format : Format) (policy : BlockPolicy length)
@@ -116,9 +116,9 @@ theorem decode_convertFrom_lane (format : Format) (policy : BlockPolicy length)
       (ExecFloat.P3109.decode (convertFrom (Destination.p3109 format) policy block)[lane.val])
       (format.projectRatValue (policy.at lane) (decode block)[lane.val]) := by
   simp only [convertFrom, Vector.getElem_ofFn]
-  exact ExecFloat.P3109.decode_projectRat _ _
+  exact ExecFloat.P3109.decode_projectRat _ _ _
 
-/-- Conversion to a block copies the explicit result scale without rounding it. -/
+/-- Conversion to a block keeps the given result scale unchanged. -/
 @[simp] theorem convertTo_scale {Result : Type} (destination : Destination Result)
     (policy : BlockPolicy length) (values : Vector Source length) (scale : Scale) :
     (convertTo destination policy values scale).scale = scale := rfl
@@ -129,7 +129,7 @@ theorem decode_reduceAdd (format : Format) (policy : ProjectionPolicy)
     Format.SameDatum
       (ExecFloat.P3109.decode (reduceAdd (Destination.p3109 format) policy block))
       (format.projectRatValue policy (sumExact (decode block))) :=
-  ExecFloat.P3109.decode_projectRat _ _
+  ExecFloat.P3109.decode_projectRat _ _ _
 
 /-- P3109 product reduction refines one projection of the complete exact product. -/
 theorem decode_reduceMultiply (format : Format) (policy : ProjectionPolicy)
@@ -137,13 +137,13 @@ theorem decode_reduceMultiply (format : Format) (policy : ProjectionPolicy)
     Format.SameDatum
       (ExecFloat.P3109.decode (reduceMultiply (Destination.p3109 format) policy block))
       (format.projectRatValue policy (productExact (decode block))) :=
-  ExecFloat.P3109.decode_projectRat _ _
+  ExecFloat.P3109.decode_projectRat _ _ _
 
 variable {RightScale RightScaleExact Right RightExact : Type}
 variable [ExactDecoder RightScale RightScaleExact] [ExactMap RightScaleExact Rat]
 variable [ExactDecoder Right RightExact] [ExactMap RightExact Rat]
 
-/-- Finite block dots retain the rational sum of all products with independently decoded scales. -/
+/-- A finite dot product of independently scaled blocks is the rational sum of lane products. -/
 theorem dotExact_finite (left : Block Scale Source length) (right : Block RightScale Right length)
     (x y : Vector Rat length) (hx : decode left = x.map NumericalValue.finite)
     (hy : decode right = y.map NumericalValue.finite) :
@@ -162,13 +162,13 @@ theorem dotExact_finite (left : Block Scale Source length) (right : Block RightS
     simp [Arithmetic.mul]
   rw [heq, sumExact_finite]
 
-/-- Independently scaled block dots refine one projection of the complete exact dot. -/
+/-- A dot product of independently scaled blocks refines one projection of the exact dot product. -/
 theorem decode_dotProduct (format : Format) (policy : ProjectionPolicy)
     (left : Block Scale Source length) (right : Block RightScale Right length) :
     Format.SameDatum
       (ExecFloat.P3109.decode (dotProduct (Destination.p3109 format) policy left right))
       (format.projectRatValue policy (dotExact left right)) :=
-  ExecFloat.P3109.decode_projectRat _ _
+  ExecFloat.P3109.decode_projectRat _ _ _
 
 end Block
 end FloatLib.Floats.Formats.P3109

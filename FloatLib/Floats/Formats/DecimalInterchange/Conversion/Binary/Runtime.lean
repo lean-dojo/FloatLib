@@ -13,21 +13,20 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 Both directions evaluate the finite input exactly as a rational before rounding
 once to the destination. Binary-to-decimal conversion prefers quantum zero on
-an exact result; decimal projection supplies the least quantum for an inexact
-result. For an exact result, the selected quantum is closest to zero among its
-representable cohort members. Decimal-to-binary conversion uses the existing
-binary rational kernels.
+an exact result, so it selects the representable cohort member whose quantum is
+closest to zero. For an inexact result, decimal projection supplies the least
+quantum. Decimal-to-binary conversion uses the binary rational kernels.
 Nearest-away first rounds the exact rational to the destination binary grid,
-then encodes that representable dyadic with the existing binary encoder.
+then encodes that dyadic with the binary encoder.
 
 Zeros and infinities retain their signs. NaNs are quieted and raise invalid
 exactly when signaling. The diagnostic payload is interpreted as a natural
 number: it is preserved when it fits the destination, otherwise replaced by
-zero. This is an explicit payload-selection policy, not a claim that IEEE 754
-uniquely specifies a payload when narrowing.
+zero. This is a payload-selection policy, not a claim that IEEE 754 specifies a
+unique payload when narrowing.
 
 Decimal destinations use tininess before rounding. Binary destinations use the
-existing library convention: tininess after rounding to the destination
+library convention: tininess after rounding to the destination
 precision with an unbounded exponent range. The constants for the binary midpoint
 and predecessor are shared with the scalar status implementation.
 
@@ -48,9 +47,9 @@ open FloatLib.Floats.Formats
 def binaryPayload {fmt : BinaryInterchange.FloatFormat} (x : BinaryInterchange.Model fmt) : Nat :=
   BinaryInterchange.Model.fracField x % (2 ^ (fmt.fracWidth - 1))
 
-/-- Convert a binary model to a decimal datum. Exact finite results prefer quantum zero;
-the source zero sign is retained. The numerical path also accepts custom binary models
-according to their descriptors; IEEE class guarantees apply to IEEE source formats. -/
+/-- Convert a binary model to a decimal datum. Exact finite results prefer quantum zero,
+and a zero keeps its source sign. Custom binary models convert through their descriptors,
+but the IEEE class guarantees hold only for IEEE source formats. -/
 def fromBinary {fmt : BinaryInterchange.FloatFormat} (target : Format) (mode : RoundingMode)
     (x : BinaryInterchange.Model fmt) : Outcome :=
   match BinaryInterchange.Model.toRat? x with
@@ -76,7 +75,7 @@ def binaryQuantum (fmt : BinaryInterchange.FloatFormat) (magnitude : ℚ) : Int 
     (Numerics.RationalBinary.floorLog2 magnitude.num.natAbs magnitude.den - fmt.fracWidth)
 
 /-- Round to nearest, ties away, on the destination's binary grid. The significand can
-equal `2^precision` at a carry; this is still exactly representable before overflow. -/
+reach `2^precision` after a carry, and that value is still representable unless it overflows. -/
 def binaryNearestAwayDyadic (fmt : BinaryInterchange.FloatFormat) (negative : Bool)
     (magnitude : ℚ) : Numerics.Dyadic :=
   let exponent := binaryQuantum fmt magnitude
@@ -85,35 +84,35 @@ def binaryNearestAwayDyadic (fmt : BinaryInterchange.FloatFormat) (negative : Bo
       (magnitude / (2 : ℚ) ^ exponent)
     exponent }
 
-/-- Round a signed rational magnitude directly into the binary destination.
-The magnitude is supplied as a nonnegative rational by `toBinary`. -/
+/-- Round a sign and a nonnegative rational magnitude, as `toBinary` supplies them,
+into the binary destination. -/
 def roundBinaryMagnitude (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) : BinaryInterchange.Model fmt :=
   let num := magnitude.num.natAbs
   let den := magnitude.den
   match mode with
   | .nearestEven =>
-      BinaryInterchange.Model.roundRatWithRounding fmt .nearestEven negative num den
+      BinaryInterchange.Model.Internal.Directed.roundRat fmt .nearest negative num den
   | .nearestAway =>
       BinaryInterchange.Model.roundDyadic fmt (binaryNearestAwayDyadic fmt negative magnitude)
   | .towardZero =>
-      BinaryInterchange.Model.roundRatWithRounding fmt .towardZero negative num den
+      BinaryInterchange.Model.Internal.Directed.roundRat fmt .towardZero negative num den
   | .towardPositive =>
-      BinaryInterchange.Model.roundRatWithRounding fmt .towardPositiveInfinity negative num den
+      BinaryInterchange.Model.Internal.Directed.roundRat fmt .up negative num den
   | .towardNegative =>
-      BinaryInterchange.Model.roundRatWithRounding fmt .towardNegativeInfinity negative num den
+      BinaryInterchange.Model.Internal.Directed.roundRat fmt .down negative num den
 
 /-- Whether a directed conversion increases a nonzero magnitude. Nearest modes
-use midpoint rules instead of this directed-mode predicate. -/
+use midpoint rules and give `false` here. -/
 def binaryRoundsAway (mode : RoundingMode) (negative : Bool) : Bool :=
   match mode with
   | .towardPositive => !negative
   | .towardNegative => negative
   | .nearestEven | .nearestAway | .towardZero => false
 
-/-- IEEE overflow compares the precision-rounded unbounded result with the exponent limit.
-For IEEE binary layouts the largest finite significand is odd, so both nearest modes
-include the upper midpoint. -/
+/-- IEEE overflow test: the precision-rounded unbounded result against the exponent limit.
+The largest finite significand of an IEEE binary layout is odd, so both nearest modes
+overflow at the upper midpoint itself. -/
 def binaryOverflow (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) : Bool :=
   match mode with
@@ -125,8 +124,8 @@ def binaryOverflow (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
       else
         decide ((BinaryInterchange.Model.overflowLimit fmt).toRat ≤ magnitude)
 
-/-- Tininess after precision rounding, including exact values which deliver the smallest
-normal but whose unbounded-precision-grid rounding is still tiny. -/
+/-- Tininess after precision rounding, including exact values that deliver the smallest
+normal but whose rounding with an unbounded exponent range is still tiny. -/
 def binaryTiny (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) (rounded : BinaryInterchange.Model fmt) : Bool :=
   BinaryInterchange.Model.isTinyAfterRounding rounded ||
@@ -140,10 +139,10 @@ def binaryTiny (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
           decide (magnitude < (BinaryInterchange.Model.minNormalDyadic fmt).toRat)
 
 /-- Default binary conversion flags, using exact rational comparisons. Invalid and
-divide-by-zero are absent on the finite path; overflow always raises inexact. -/
+divide-by-zero are absent on the finite path. Overflow always raises inexact. -/
 def binaryStatus (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) (rounded : BinaryInterchange.Model fmt) :
-    BinaryInterchange.Model.IEEEStatus :=
+    Numerics.IEEEStatus :=
   let overflow := binaryOverflow fmt mode negative magnitude
   let exact := if negative then -magnitude else magnitude
   let inexact := overflow || decide (BinaryInterchange.Model.toRat? rounded ≠ some exact)
@@ -151,10 +150,21 @@ def binaryStatus (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     inexact
     underflow := !overflow && binaryTiny fmt mode negative magnitude rounded && inexact }
 
+/-- Ternary value of a binary conversion: the delivered value compared with the exact signed
+rational, read through `toRat?` like the inexact flag of `binaryStatus`. A non-finite delivery is
+an overflow and compares by the sign of the exact value. -/
+def binaryTernary (fmt : BinaryInterchange.FloatFormat) (negative : Bool) (magnitude : ℚ)
+    (rounded : BinaryInterchange.Model fmt) : Ordering :=
+  let exact := if negative then -magnitude else magnitude
+  match BinaryInterchange.Model.toRat? rounded with
+  | some delivered => compare delivered exact
+  | none => if negative then .lt else .gt
+
 /-- Convert a decimal datum to an IEEE binary destination in any of the five rounding
 directions. The IEEE descriptor proof excludes finite-only exceptional-value policies.
 Finite input coefficients and quantum exponents are evaluated exactly, so the source
-decimal cohort does not affect the binary result. -/
+decimal cohort does not affect the binary result. The ternary value compares the
+delivered value with the exact decimal value, and infinities and NaNs have `.eq`. -/
 def toBinary (target : BinaryInterchange.FloatFormat) (_hIEEE : target.isIEEE = true)
     (mode : RoundingMode) (x : Datum) : BinaryInterchange.Model.IEEEOutcome target :=
   match x with
@@ -162,10 +172,16 @@ def toBinary (target : BinaryInterchange.FloatFormat) (_hIEEE : target.isIEEE = 
       let magnitude := (coefficient : ℚ) * (10 : ℚ) ^ quantum
       let rounded := roundBinaryMagnitude target mode negative magnitude
       { value := rounded
-        status := binaryStatus target mode negative magnitude rounded }
+        status := binaryStatus target mode negative magnitude rounded
+        ternary := binaryTernary target negative magnitude rounded }
   | .infinity negative =>
-      { value := BinaryInterchange.Model.infinityOrMaxFinite target negative, status := {} }
+      -- An IEEE destination keeps the exact infinity.
+      { value := BinaryInterchange.Model.infinityOrMaxFinite target negative
+        status := {}
+        ternary := .eq }
   | .nan negative signaling payload =>
-      { value := binaryNaN target negative payload, status := { invalid := signaling } }
+      { value := binaryNaN target negative payload
+        status := { invalid := signaling }
+        ternary := .eq }
 
 end FloatLib.Floats.Formats.DecimalInterchange.Conversion

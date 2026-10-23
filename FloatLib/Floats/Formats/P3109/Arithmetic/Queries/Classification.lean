@@ -27,10 +27,11 @@ variable {format : Format}
 
 /-- The raw natural-number decoder and the public decoder have the same exact observation. -/
 theorem decode_eq_decodeNat (value : ExecFloat.P3109 format) :
-    value.decode = format.decodeNat value.toNatBits :=
+    value.decode = format.decodeNat value.toNatBits := by
+  rw [decode_eq_format_decode]
   rfl
 
-/-- The finite query is true precisely when exact decoding produces a finite dyadic. -/
+/-- `isFinite` is true iff exact decoding produces a finite dyadic. -/
 theorem isFinite_iff_decode (value : ExecFloat.P3109 format) :
     value.isFinite = true ↔ ∃ exact, value.decode = .finite exact := by
   rw [decode_eq_decodeNat]
@@ -45,7 +46,7 @@ theorem isFinite_iff_decode (value : ExecFloat.P3109 format) :
       Format.positiveInfinityBits, Format.negativeInfinityBits] <;>
     (try split_ifs) <;> (try simp_all)
 
-/-- The infinity query is true precisely when exact decoding produces either signed infinity. -/
+/-- `isInfinite` is true iff exact decoding produces a signed infinity. -/
 theorem isInfinite_iff_decode (value : ExecFloat.P3109 format) :
     value.isInfinite = true ↔ ∃ negative, value.decode = .infinity negative := by
   rw [decode_eq_decodeNat]
@@ -124,13 +125,13 @@ theorem isSubnormal_iff_decode (value : ExecFloat.P3109 format) :
       format.decodePositiveFinite_strictMono.lt_iff_lt.mp hsubnormal⟩
     exact format.decodePositiveFinite_strictMono.lt_iff_lt.mp (by simpa using hpositive)
 
-/-- The unique zero code is precisely the datum with exact rational observation zero. -/
+/-- The zero code is the only datum whose exact rational observation is zero. -/
 theorem isZero_iff_toClosedRat (value : ExecFloat.P3109 format) :
     value.isZero = true ↔ value.toClosedRat = .finite 0 := by
   simp only [isZero, beq_iff_eq]
   constructor
   · intro hzero
-    change Arithmetic.toRat (format.decodeNat value.toNatBits) = .finite 0
+    rw [toClosedRat, decode_eq_decodeNat]
     rw [hzero]
     have hdecode : format.decodeNat 0 = .finite .zero := by
       simpa only [Format.decode, BitVec.toNat_ofNat, Nat.zero_mod] using format.decode_zero
@@ -157,7 +158,7 @@ theorem isZero_iff_toClosedRat (value : ExecFloat.P3109 format) :
     | exceptional exception =>
         simp only [hdecode, Arithmetic.toRat, Arithmetic.nan, reduceCtorEq] at hzero
 
-/-- The sign query is precisely strict numerical comparison with zero; NaN is unordered. -/
+/-- `isSignMinus` agrees with strict comparison against zero, under which NaN is unordered. -/
 theorem isSignMinus_iff_less_zero (value : ExecFloat.P3109 format) :
     value.isSignMinus = true ↔ value.less zero = true := by
   rw [less_iff_orderIndex]

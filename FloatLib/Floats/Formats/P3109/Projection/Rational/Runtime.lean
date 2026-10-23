@@ -13,18 +13,18 @@ public import FloatLib.Numerics.Exact.RationalBinary
 # Exact-rational P3109 projection
 
 Configured binary floats, posits, integer inputs, and exact finite arithmetic can all supply
-exact rational values. This module projects them directly into any valid P3109 descriptor,
-rounding from the numerator and denominator without an intermediate approximation.
+exact rational values. This module projects them into any valid P3109 descriptor, rounding from
+the numerator and denominator with no intermediate approximation.
 
 The runtime follows the same P3109 projection order as dyadic projection:
 
 1. select the descriptor quantum;
 2. round the exact quotient according to the requested P3109 mode;
 3. apply the shared saturation rule;
-4. encode the resulting datum directly.
+4. encode the resulting datum.
 
-The dyadic entry point remains useful when the caller already owns an exact binary value. Both
-paths share saturation, encoding, and descriptor logic.
+The dyadic entry point suits a caller that already has an exact binary value. Both paths share
+saturation, encoding, and descriptor logic.
 -/
 
 @[expose] public section
@@ -49,8 +49,8 @@ namespace Internal
 /--
 Decide whether exact rational rounding selects the integer above the quotient floor.
 
-`denominator` is positive for every `Rat`. Keeping it explicit makes the stochastic formulas
-match P3109 Section 4.7.4 directly.
+`denominator` is positive, as for every `Rat`. Passing it as its own argument lets the stochastic
+formulas follow P3109 Section 4.7.4 term by term.
 -/
 @[inline] def roundRationalAwayWithParity
     (mode : RoundingMode) (negative lowerEven : Bool)
@@ -61,10 +61,10 @@ match P3109 Section 4.7.4 directly.
     let twiceRemainder := 2 * remainder
     match mode with
     | .towardZero => false
-    | .towardPositive => !negative
-    | .towardNegative => negative
-    | .nearestTiesToAway => decide (denominator ≤ twiceRemainder)
-    | .nearestTiesToEven =>
+    | .up => !negative
+    | .down => negative
+    | .nearestAway => decide (denominator ≤ twiceRemainder)
+    | .nearest =>
         decide (denominator < twiceRemainder) ||
           (denominator == twiceRemainder && !lowerEven)
     | .toOdd => lowerEven
@@ -171,19 +171,25 @@ variable {format : Formats.P3109.Format}
 /--
 Project an exact rational, infinity, or exceptional observation into a P3109 descriptor.
 
-Finite values are rounded once from their exact numerator and denominator. No intermediate binary
-or host floating-point format is involved.
+Finite values are rounded once from their exact numerator and denominator, in `mode`, before
+`saturation` applies. No intermediate binary or host floating-point format is involved.
 -/
 @[inline] def projectRat
-    (policy : Formats.P3109.ProjectionPolicy)
-    (value : NumericalValue Rat) :
+    (value : NumericalValue Rat)
+    (mode : Formats.P3109.RoundingMode := .nearest)
+    (saturation : Formats.P3109.SaturationMode := .none) :
     ExecFloat.P3109 format :=
-  ExecFloat.Codebook.ofCode (format.projectRatCode policy value)
+  ExecFloat.Codebook.ofCode (format.projectRatCode { rounding := mode, saturation } value)
 
-/-- Project one finite exact rational into a P3109 descriptor. -/
+/--
+Round one exact rational into a P3109 descriptor, nearest-even with no saturation request by
+default, as in `ExecFloat.P3109.ofRat (format := .binary8p4se) (1 / 3) (mode := .up)`.
+-/
 @[inline] def ofRat
-    (policy : Formats.P3109.ProjectionPolicy) (value : Rat) :
+    (value : Rat)
+    (mode : Formats.P3109.RoundingMode := .nearest)
+    (saturation : Formats.P3109.SaturationMode := .none) :
     ExecFloat.P3109 format :=
-  projectRat policy (.finite value)
+  projectRat (.finite value) mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

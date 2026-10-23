@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Runtime
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.Runtime
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 
@@ -19,9 +19,9 @@ kernel in `GuardStickyCarrier` keeps the candidate code in `UInt64` during packi
 Only steps with carrier-specific contracts live here: the exact minimum-positive comparison, the
 zero test, and sign restoration.
 
-The kernel is selected by intermediate capacity, not by a named Posit width. Operations that
-continue in a two-limb intermediate import the separate `WordLimb` adapter at that boundary; this
-scalar rounder does not depend on or re-export a second implementation.
+Intermediate capacity selects the kernel, and no named Posit width is special. Operations that
+continue in a two-limb intermediate import the `WordLimb` adapter at that boundary, so this scalar
+rounder neither depends on nor re-exports a second implementation.
 -/
 
 @[expose] public section
@@ -50,9 +50,9 @@ open FloatLib.Numerics
 One-word implementation of the shared candidate carrier.
 
 This transparent record is consumed only by always-inlined helpers, leaving the generated hot path
-in primitive `UInt64` operations. Shifts return zero at and beyond the word width instead of using
-the native modular shift amount; addition and the successor are the wrapping machine operations,
-which the shared rounder applies only to values it has bounded.
+in primitive `UInt64` operations. Shifts return zero at and beyond the word width, where the
+native shift would reduce the amount modulo 64. Addition and the successor are the wrapping machine
+operations, which the shared rounder applies only to values it has bounded.
 -/
 abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier UInt64 where
   bitAt := NativeWord.bitAt
@@ -67,17 +67,19 @@ abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier UInt64 where
   isOdd := isOdd
   log2 := fun value => (FixedWord.log2Word value).toNat
 
-/-- Test a positive scalar target against the format's exact minimum-positive value. -/
+/--
+Test a positive scalar target against the format's exact minimum-positive value, a power of two,
+by comparing the exponent of its leading bit.
+-/
 @[inline] def isLessMinPositive
     (format : Format) (significand : UInt64) (exponent : Int) : Bool :=
   let minExponent := -(4 * Int.ofNat (format.payloadBits - 1))
-  FixedWord.DyadicCompare.isLessNonnegative
-    significand exponent 1 minExponent
+  FixedWord.DyadicCompare.isLessPowerOfTwo significand exponent minExponent
 
 /--
 Round the nonnegative value `significand * 2 ^ exponent` to its complete unsigned code in one word.
 
-Zero maps to code zero and targets below `minPos` to code one; every other target uses the shared
+Zero maps to code zero and targets below `minPos` to code one. Every other target uses the shared
 normalized rounder at the `UInt64` carrier.
 -/
 @[inline] def roundPositiveCodeWord

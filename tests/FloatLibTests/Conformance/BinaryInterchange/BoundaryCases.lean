@@ -15,8 +15,8 @@ import all Batteries.Data.Except
 
 These cases check declared exponent biases, overflow during integral conversion, composition
 of intervals with infinite endpoints, and the binary32 constants of the standard model. Each
-expected result is checked by the kernel. Configured examples also exercise the same `ExecFloat`
-operations used by numerical programs.
+expected result is kernel-checked. Configured examples also exercise the `ExecFloat` operations
+that numerical programs use.
 -/
 
 @[expose] public section
@@ -55,19 +55,29 @@ theorem parse_tenth_real :
       .ok (Model.ofNatBits (fmt := .binary32) 0x3dcccccd) := by
     rw [Model.parse_eq_run, Model.TextParser.run_of_readText _ _ _ _ hread]
     decide +kernel
-  have h := Model.toReal_parse_decimal_nearestEven (fmt := .binary32) (by decide)
+  have h := Model.toReal_parse_decimal_nearest (fmt := .binary32) (by decide)
     "0.1" ⟨false, 1, -1⟩ (Model.ofNatBits 0x3dcccccd)
     hread hparse (by decide +kernel)
   norm_num [Numerics.DecimalText.Decimal.toRat] at h ⊢
   exact h
 
 -- E2M3 cannot represent the nearest integer 8: its finite boundary is 7.5.
-example : (Model.roundToIntegralExactWithStatus
-    (Model.ofNatBits (fmt := .e2m3) 31) .nearestEven).value.toNatBits = 31 := by
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearest (status := true)).value.toNatBits = 31 := by
   decide +kernel
 
-example : (Model.roundToIntegralExactWithStatus
-    (Model.ofNatBits (fmt := .e2m3) 31) .nearestEven).status.overflow = true := by
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearest (status := true)).status.overflow = true := by
+  decide +kernel
+
+-- The saturated result is the input 7.5 itself: inexact is raised, yet the ternary value, which
+-- compares the delivered value with the input, is `.eq`.
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearest (status := true)).status.inexact = true := by
+  decide +kernel
+
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := .e2m3) 31) .nearest (status := true)).ternary = .eq := by
   decide +kernel
 
 private abbrev Narrow := ExecFloat.Binary 2 1 (bias := 2)
@@ -78,8 +88,14 @@ private abbrev NarrowFinite := ExecFloat.Binary 2 1 (encoding := .finite) (bias 
 example : Model.binaryExponentInt (Model.ofNatBits (fmt := .e5m2) 2) =
     ⟨-15, {}⟩ := by decide +kernel
 
-example : (Model.binaryExponentWithStatus (Model.ofNatBits (fmt := .e5m2) 2)).status.inexact =
-    true := by decide +kernel
+example :
+    (Model.binaryExponent (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).status.inexact =
+      true := by decide +kernel
+
+-- The tie -15 rounds to the even -16, below the exact exponent.
+example :
+    (Model.binaryExponent (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).ternary = .lt := by
+  decide +kernel
 
 example : (Model.binaryExponentInt (Model.posZero .binary32)).status.invalid = true := by
   decide +kernel
@@ -94,14 +110,14 @@ example : (Model.binaryExponentInt (Model.canonicalNaN .binary32)).status.invali
   decide +kernel
 
 -- The ceiling is two, outside these descriptors' finite range.
-example : (ExecFloat.Binary.roundToIntegralExactWithStatus (1.5 : Narrow)
-    .towardPositiveInfinity).2.overflow = true := by decide +kernel
+example : (ExecFloat.Binary.roundToIntegral (1.5 : Narrow)
+    .up (status := true)).2.overflow = true := by decide +kernel
 
-example : (ExecFloat.Binary.roundToIntegralExactWithStatus (1.5 : NarrowFinite)
-    .towardPositiveInfinity).2.overflow = true := by decide +kernel
+example : (ExecFloat.Binary.roundToIntegral (1.5 : NarrowFinite)
+    .up (status := true)).2.overflow = true := by decide +kernel
 
 example : ExecFloat.Binary.toRat?
-    (ExecFloat.Binary.roundToIntegral (1.5 : Narrow) .towardNegativeInfinity) = some 1 := by
+    (ExecFloat.Binary.roundToIntegral (1.5 : Narrow) .down) = some 1 := by
   decide +kernel
 
 -- The configured operation and its proof use the same value and rounding argument.
@@ -110,7 +126,7 @@ example (value : Narrow) (rounding : Model.IEEERoundingMode) :
       Model.roundToIntegral (ExecFloat.Binary.toModel value) rounding :=
   ExecFloat.Binary.toModel_roundToIntegral value rounding
 
-example : Model.roundRatWithRounding FloatFormat.e4m3fnuz .nearestEven false 1 1024 =
+example : Model.Internal.Directed.roundRat FloatFormat.e4m3fnuz .nearest false 1 1024 =
     Model.ofNatBits (fmt := FloatFormat.e4m3fnuz) 1 := by decide
 
 -- The rounded-real grid retains the same least subnormal as the executable decoder.
@@ -184,9 +200,9 @@ example (x : ℝ) :
 
 -- Directed rounding doubles both constants.
 example (x : ℝ) :
-    ∃ δ η : ℝ, Model.roundAtDown FloatFormat.binary32 x = x * (1 + δ) + η ∧
+    ∃ δ η : ℝ, Model.roundAt FloatFormat.binary32 x .down = x * (1 + δ) + η ∧
       |δ| ≤ 2 ^ (-23 : ℤ) ∧ |η| ≤ 2 ^ (-149 : ℤ) ∧ δ * η = 0 := by
-  obtain ⟨δ, η, h, hδ, hη, hδη⟩ := Model.roundAtDown_standardModel FloatFormat.binary32 x
+  obtain ⟨δ, η, h, hδ, hη, hδη⟩ := Model.roundAt_down_standardModel FloatFormat.binary32 x
   rw [binary32_unitRoundoffAt] at hδ
   rw [binary32_underflowErrorAt] at hη
   exact ⟨δ, η, h, by norm_num at hδ ⊢; linarith, by norm_num at hη ⊢; linarith, hδη⟩
@@ -225,13 +241,14 @@ theorem truncation_custom_value :
   rw [Model.toReal_roundToIntegral_towardZero_of_isFinite (by decide) value (by decide), hvalue]
   norm_num
 
-example : (Model.roundToIntegralExactWithStatus
-    (Model.ofNatBits (fmt := IntegralNarrow) 23) .towardZero).status.overflow = false :=
-  Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false (by decide) _ (by decide)
+example : (Model.roundToIntegral
+    (Model.ofNatBits (fmt := IntegralNarrow) 23) .towardZero (status := true)).status.overflow =
+      false :=
+  Model.roundToIntegral_towardZero_overflow_eq_false (by decide) _ (by decide)
 
--- Nearest rounding still overflows here; its range guard cannot be dropped wholesale.
+-- Nearest rounding still overflows here, so its range guard cannot be dropped wholesale.
 example : Model.isInf (Model.roundToIntegral
-    (Model.ofNatBits (fmt := IntegralNarrow) 23) .nearestEven) = true := by
+    (Model.ofNatBits (fmt := IntegralNarrow) 23) .nearest) = true := by
   decide +kernel
 
 example : (Model.roundToIntegral
@@ -307,12 +324,12 @@ example : (Model.cast FloatFormat.e4m3fn (FloatFormat.ieee 4 3)
 
 /-- Opposite finite terms cancel through the common sum rounding bridge. -/
 theorem sum_cancellation_real :
-    Model.toReal (Model.sumWithStatus FloatFormat.binary64
-      #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven).value = 0 := by
+    Model.toReal (Model.sum FloatFormat.binary64
+      #[Model.posOne .binary32, Model.negOne .binary32] .nearest (status := true)).value = 0 := by
   have hsum : Model.Reduction.Semantics.finiteSum
       [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32] = 0 := by
     decide +kernel
-  rw [Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite _ _ (by decide)]
+  rw [Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite _ _ (by decide)]
   · change Model.roundAt FloatFormat.binary64
       (Model.Reduction.Semantics.finiteSum
         [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32] : ℝ) = 0
@@ -328,18 +345,21 @@ theorem sum_cancellation_real :
 /-- A cancelling product sum succeeds and uses the common real-rounding theorem at zero. -/
 theorem dot_cancellation_real :
     ∃ outcome : Model.IEEEOutcome FloatFormat.binary64,
-      Model.dotWithStatus FloatFormat.binary64
+      Model.dot FloatFormat.binary64
           #[Model.posOne .binary32, Model.posOne .binary32]
-          #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven = .ok outcome ∧
+          #[Model.posOne .binary32, Model.negOne .binary32] .nearest (status := true) =
+            .ok outcome ∧
         Model.toReal outcome.value = Model.roundAt FloatFormat.binary64 (0 : ℝ) := by
-  let outcome : Model.IEEEOutcome FloatFormat.binary64 := { value := Model.posZero .binary64, status := {} }
-  have houtcome : Model.dotWithStatus FloatFormat.binary64
+  let outcome : Model.IEEEOutcome FloatFormat.binary64 :=
+    { value := Model.posZero .binary64, status := {}, ternary := .eq }
+  have houtcome : Model.dot FloatFormat.binary64
       #[Model.posOne .binary32, Model.posOne .binary32]
-      #[Model.posOne .binary32, Model.negOne .binary32] .nearestEven = .ok outcome := by
+      #[Model.posOne .binary32, Model.negOne .binary32] .nearest (status := true) =
+        .ok outcome := by
     dsimp [outcome]
     decide +kernel
   refine ⟨outcome, houtcome, ?_⟩
-  simpa using Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite
+  simpa using Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite
     _ _ _ 0 outcome (by decide) (by decide)
     (by
       intro position hposition
@@ -358,17 +378,18 @@ theorem dot_cancellation_real :
 /-- Normalized rational conversion supplies both enclosure endpoints without a nonzero premise. -/
 theorem rational_directed_enclosure (fmt : FloatFormat) (q : Rat) (hfmt : fmt.isIEEE = true) :
     ((q : ℝ) : EReal) ∈ Set.Icc
-      (Model.toEReal (Model.roundRatQDown fmt q))
-      (Model.toEReal (Model.roundRatQUp fmt q)) :=
-  ⟨Model.toEReal_roundRatQDown_le fmt q hfmt, Model.le_toEReal_roundRatQUp fmt q hfmt⟩
+      (Model.toEReal (Model.ofRat fmt q (mode := .down)))
+      (Model.toEReal (Model.ofRat fmt q (mode := .up))) :=
+  ⟨Model.toEReal_ofRat_down_le fmt q hfmt, Model.le_toEReal_ofRat_up fmt q hfmt⟩
 
-example : (Model.roundRatQUp FloatFormat.binary16 ((1 : Rat) / 2 ^ 25)).toNatBits = 1 := by
+example : (Model.ofRat FloatFormat.binary16 ((1 : Rat) / 2 ^ 25) (mode := .up)).toNatBits = 1 := by
   decide +kernel
 
-example : (Model.roundRatQUp FloatFormat.binary16 (-(1 : Rat) / 2 ^ 25)).toNatBits = 0x8000 := by
+example :
+    (Model.ofRat FloatFormat.binary16 (-(1 : Rat) / 2 ^ 25) (mode := .up)).toNatBits = 0x8000 := by
   decide +kernel
 
-example : Model.isInf (Model.roundRatQUp FloatFormat.binary16 65536) = true := by
+example : Model.isInf (Model.ofRat FloatFormat.binary16 65536 (mode := .up)) = true := by
   decide +kernel
 
 end FloatLibTests.Conformance.BinaryInterchange.BoundaryCases

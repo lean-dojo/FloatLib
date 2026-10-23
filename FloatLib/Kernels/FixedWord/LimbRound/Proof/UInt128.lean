@@ -8,6 +8,9 @@ module
 
 public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 public import FloatLib.Kernels.FixedWord.Product.Proof
+public import FloatLib.Kernels.FixedWord.Difference.Proof
+public import FloatLib.Numerics.ShiftRightJam
+import FloatLib.Numerics.ShiftRightJam.Proof
 import Mathlib.Tactic.ByContra
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -20,9 +23,9 @@ import Mathlib.Tactic.Ring
 These theorems connect the native `UInt128` shifts, increments, and nearest-even rounding
 operations to their natural-number meanings.
 
-The runtime uses two `UInt64` limbs; the proof model interprets them as one `Nat`.
-Carry propagation, cross-limb shifts, low-bit insertion, and ties-to-even rounding preserve that
-interpretation under the stated capacity bounds.
+The runtime uses two `UInt64` limbs, and the proof model interprets them as one `Nat`.
+Carry propagation, cross-limb shifts, low-bit insertion, ties-to-even rounding, and the sticky
+combination of an aligned sum preserve that interpretation under the stated capacity bounds.
 -/
 
 @[expose] public section
@@ -101,7 +104,7 @@ namespace UInt128
 
 /-! ## Cross-limb shifts -/
 
-/-- The native two-word shift is exact division by two. -/
+/-- The native two-word one-bit shift is floor division by two. -/
 @[simp, grind =] theorem shiftRightOne_toNat (value : UInt128) :
     value.shiftRightOne.toNat = value.toNat / 2 := by
   have hhigh :
@@ -329,5 +332,128 @@ theorem roundShiftRightEven_toNat (value : UInt128) (shift : Nat)
     exact hoddNat
 
 end UInt128
+
+/--
+Native two-limb nearest-even rounding with a two-limb quotient agrees with the common mathematical
+rounder for every shift strictly between zero and 64.
+-/
+theorem UInt128.roundShiftRightEven128_toNat (value : UInt128) (shift : Nat)
+    (hpositive : 0 < shift) (hshift : shift < 64) :
+    (UInt128.roundShiftRightEven128 value shift).toNat =
+      FloatLib.Numerics.roundShiftRightEven value.toNat shift := by
+  have hquotient : (value.shiftRight shift).toNat = value.toNat >>> shift := by
+    rw [UInt128.shiftRight_toNat, Nat.shiftRight_eq_div_pow]
+  have hquotientFit : (value.shiftRight shift).toNat + 1 < 2 ^ 128 := by
+    rw [hquotient, Nat.shiftRight_eq_div_pow]
+    have hlt := value.toNat_lt
+    have hdivLt : value.toNat / 2 ^ shift < 2 ^ 127 := by
+      rw [Nat.div_lt_iff_lt_mul (Nat.two_pow_pos _)]
+      calc value.toNat < 2 ^ 128 := hlt
+        _ = 2 ^ 127 * 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ 127 * 2 ^ shift :=
+          Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by decide) hpositive)
+    have : (2 : Nat) ^ 127 + 1 ≤ 2 ^ 128 := by norm_num
+    omega
+  have hincrement :
+      (value.shiftRight shift).increment.toNat = (value.toNat >>> shift) + 1 := by
+    rw [UInt128.increment_toNat _ hquotientFit, hquotient]
+  have hremainder := uint64_lowBits_toNat value.lo shift hshift
+  have hhalf :
+      (((1 : UInt64) <<< UInt64.ofNat (shift - 1)).toNat) = 2 ^ (shift - 1) :=
+    uint64_powTwo_toNat (shift - 1) (by omega)
+  have hremainderNat :
+      value.toNat - (value.toNat >>> shift <<< shift) = value.lo.toNat % 2 ^ shift := by
+    unfold UInt128.toNat
+    rw [Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq, ← Nat.mod_eq_sub_div_mul]
+    have hpow : 2 ^ 64 = 2 ^ shift * 2 ^ (64 - shift) := by
+      rw [← pow_add, Nat.add_sub_of_le (Nat.le_of_lt hshift)]
+    rw [hpow]
+    have hreassociate :
+        value.hi.toNat * (2 ^ shift * 2 ^ (64 - shift)) =
+          2 ^ shift * (value.hi.toNat * 2 ^ (64 - shift)) := by
+      ring
+    rw [hreassociate, Nat.add_mul_mod_self_left]
+  change
+    value.toNat - (value.toNat.shiftRight shift).shiftLeft shift =
+      value.lo.toNat % 2 ^ shift at hremainderNat
+  have hlowBit : (value.shiftRight shift).lo.toNat % 2 = (value.toNat >>> shift) % 2 := by
+    rw [← hquotient]
+    unfold UInt128.toNat
+    omega
+  have heven :
+      ((value.shiftRight shift).lo &&& 1) == 0 ↔ (value.toNat >>> shift) % 2 == 0 := by
+    rw [← hlowBit]
+    simp [← UInt64.toNat_inj, UInt64.toNat_and, Nat.and_one_is_mod]
+  change (value.shiftRight shift).toNat = value.toNat.shiftRight shift at hquotient
+  change
+    (value.shiftRight shift).increment.toNat = value.toNat.shiftRight shift + 1 at hincrement
+  change
+    ((value.shiftRight shift).lo &&& 1) == 0 ↔ value.toNat.shiftRight shift % 2 == 0 at heven
+  have hgeneric :
+      FloatLib.Numerics.roundShiftRightEven value.toNat shift =
+        if value.lo.toNat % 2 ^ shift < 2 ^ (shift - 1) then
+          value.toNat.shiftRight shift
+        else if value.lo.toNat % 2 ^ shift > 2 ^ (shift - 1) then
+          value.toNat.shiftRight shift + 1
+        else if value.toNat.shiftRight shift % 2 == 0 then
+          value.toNat.shiftRight shift
+        else
+          value.toNat.shiftRight shift + 1 := by
+    rw [FloatLib.Numerics.roundShiftRightEven_def]
+    simp only [beq_iff_eq, Nat.ne_of_gt hpositive, ite_false]
+    rw [hremainderNat]
+  rw [hgeneric]
+  unfold UInt128.roundShiftRightEven128
+  simp only [UInt64.lt_iff_toNat_lt, hremainder, hhalf]
+  by_cases hless : value.lo.toNat % 2 ^ shift < 2 ^ (shift - 1)
+  · simp [hless, hquotient]
+  by_cases hgreater : value.lo.toNat % 2 ^ shift > 2 ^ (shift - 1)
+  · simp [hless, hgreater, hincrement]
+  by_cases hevenNative : ((value.shiftRight shift).lo &&& 1) == 0
+  · have hevenNat := heven.mp hevenNative
+    simp [hless, hgreater, hevenNative, hquotient]
+    change value.toNat.shiftRight shift % 2 = 0
+    simpa only [beq_iff_eq] using hevenNat
+  · have hevenNat : ¬value.toNat.shiftRight shift % 2 == 0 :=
+      fun h => hevenNative (heven.mpr h)
+    have hoddNat : value.toNat.shiftRight shift % 2 = 1 := by
+      have hlt : value.toNat.shiftRight shift % 2 < 2 := Nat.mod_lt _ (by decide)
+      have hne : value.toNat.shiftRight shift % 2 ≠ 0 := by
+        intro hzero
+        apply hevenNat
+        simpa only [beq_iff_eq] using hzero
+      omega
+    simp [hless, hgreater, hevenNative, hincrement]
+    change value.toNat.shiftRight shift % 2 = 1
+    exact hoddNat
+
+
+/-- The two-word sticky combination is the natural-number jam of the exact aligned value. -/
+theorem UInt128.jamCombine_toNat (sameSign exact : Bool) (A q : UInt128) (B d : Nat)
+    (hq : q.toNat = B / 2 ^ d) (hexact : exact = decide (B % 2 ^ d = 0))
+    (hfit : A.toNat + q.toNat < 2 ^ 128)
+    (hsub : sameSign = false → q.toNat + 1 ≤ A.toNat ∧ B ≤ A.toNat * 2 ^ d) :
+    (UInt128.jamCombine sameSign exact A q).toNat =
+      Numerics.shiftRightJam
+        (if sameSign then A.toNat * 2 ^ d + B else A.toNat * 2 ^ d - B) d := by
+  unfold UInt128.jamCombine
+  subst hexact
+  cases sameSign
+  · obtain ⟨hlt, hB⟩ := hsub rfl
+    simp only [Bool.false_eq_true, ite_false]
+    rw [Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hB, ← hq]
+    have hd : (UInt128.sub A q).toNat = A.toNat - q.toNat := UInt128.sub_toNat A q (by omega)
+    have hone : ({ hi := 0, lo := 1 } : UInt128).toNat = 1 := by
+      simp [UInt128.toNat]
+    by_cases hz : B % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true, hd]
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      rw [UInt128.setLowBit_toNat, UInt128.sub_toNat _ _ (by rw [hd, hone]; omega), hd, hone]
+  · simp only [ite_true]
+    rw [Numerics.shiftRightJam_add_mul_two_pow, ← hq]
+    have hv := add128_value_toNat_of_carry_zero A q (add128_carry_eq_zero_of_lt A q hfit)
+    by_cases hz : B % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true, hv]
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false, UInt128.setLowBit_toNat, hv]
 
 end FloatLib.Numerics.FixedWord

@@ -6,18 +6,32 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Add.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Div.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Fma.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 /-!
 # Format-parameterized binary arithmetic runtime
 
-The six model operations use the structural dispatchers selected for a validated format
-descriptor. This module contains only executable definitions; their refinement theorems live in
-`Arithmetic.Proof`.
+Each of the six IEEE arithmetic operations has one name with two options, a rounding direction
+`mode` (nearest-even by default) and `status`, which selects whether the result is the delivered
+value or the complete `IEEEOutcome` with the five exception flags and the ternary value:
+
+```
+Model.sqrt x
+Model.sqrt x (mode := .up)
+Model.sqrt x (mode := .up) (status := true)
+```
+
+With `open FloatLib.Rounding`, the mode can be written `(mode := up)`.
+
+Each operation is a small `@[macro_inline]` selector. It tests `status` first, so a value call
+never computes flags, and then `mode`: nearest-even goes straight to the dispatched kernel in
+`Model.Internal.Nearest`, the other directions to `Model.Internal.Directed`, and status calls to
+`Model.Internal.Status`. With literal options the compiler keeps only the selected kernel call.
+Square root also sends nearest-away to the nearest-even kernel, since an exact square root is
+never a tie.
+
+This module contains only executable definitions, and their refinement theorems live in
+`Arithmetic.Proof` and `Status.Proof`.
 -/
 
 @[expose] public section
@@ -25,29 +39,102 @@ descriptor. This module contains only executable definitions; their refinement t
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-/-- Automatically dispatched addition for any validated format descriptor. -/
-def add {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  AddBackend.word x y
+/--
+IEEE addition, rounded in `mode` (nearest-even by default). With `status := true` the result is
+the `IEEEOutcome` carrying the exception flags and the ternary value.
+-/
+@[macro_inline] def add {fmt : FloatFormat} (x y : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.add x y mode
+  | false =>
+      match mode with
+      | .nearest => Internal.Nearest.add x y
+      | mode => Internal.Directed.add mode x y
 
-/-- Automatically dispatched subtraction for any validated format descriptor. -/
-def sub {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  AddBackend.subWord x y
+/--
+IEEE subtraction, rounded in `mode` (nearest-even by default). With `status := true` the result
+is the `IEEEOutcome` carrying the exception flags and the ternary value.
+-/
+@[macro_inline] def sub {fmt : FloatFormat} (x y : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.sub x y mode
+  | false =>
+      match mode with
+      | .nearest => Internal.Nearest.sub x y
+      | mode => Internal.Directed.sub mode x y
 
-/-- Automatically dispatched multiplication for any validated format descriptor. -/
-def mul {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  MulBackend.word x y
+/--
+IEEE multiplication, rounded in `mode` (nearest-even by default). With `status := true` the
+result is the `IEEEOutcome` carrying the exception flags and the ternary value.
+-/
+@[macro_inline] def mul {fmt : FloatFormat} (x y : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.mul x y mode
+  | false =>
+      match mode with
+      | .nearest => Internal.Nearest.mul x y
+      | mode => Internal.Directed.mul mode x y
 
-/-- Automatically dispatched division for any validated format descriptor. -/
-def div {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  DivBackend.word x y
+/--
+IEEE division, rounded in `mode` (nearest-even by default). With `status := true` the result is
+the `IEEEOutcome` carrying the exception flags and the ternary value.
+-/
+@[macro_inline] def div {fmt : FloatFormat} (x y : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.div x y mode
+  | false =>
+      match mode with
+      | .nearest => Internal.Nearest.div x y
+      | mode => Internal.Directed.div mode x y
 
-/-- Automatically dispatched square root for any validated format descriptor. -/
-def sqrt {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
-  SqrtBackend.dispatch x
+/--
+IEEE square root, rounded in `mode` (nearest-even by default). With `status := true` the result
+is the `IEEEOutcome` carrying the exception flags and the ternary value.
+-/
+@[macro_inline] def sqrt {fmt : FloatFormat} (x : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.sqrt x mode
+  | false =>
+      match mode with
+      | .nearest | .nearestAway => Internal.Nearest.sqrt x
+      | mode => Internal.Directed.sqrt mode x
 
-/-- Automatically dispatched fused multiply-add for any validated format descriptor. -/
-def fma {fmt : FloatFormat} (x y z : Model fmt) : Model fmt :=
-  FmaBackend.dispatch x y z
+/--
+IEEE fused multiply-add `x * y + z` with one rounding in `mode` (nearest-even by default). With
+`status := true` the result is the `IEEEOutcome` carrying the exception flags and the ternary
+value.
+-/
+@[macro_inline] def fma {fmt : FloatFormat} (x y z : Model fmt)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => Internal.Status.fma x y z mode
+  | false =>
+      match mode with
+      | .nearest => Internal.Nearest.fma x y z
+      | mode => Internal.Directed.fma mode x y z
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

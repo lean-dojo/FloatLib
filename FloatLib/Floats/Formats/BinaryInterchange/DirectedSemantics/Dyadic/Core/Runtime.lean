@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 # Executable normalization for directed dyadic rounding
 
 These helpers scale a positive mantissa to a requested leading-bit position. Downward
-normalization discards low bits; upward normalization rounds them toward positive infinity and
-may carry into the next bit.
+normalization discards low bits, while upward normalization rounds them toward positive infinity
+and may carry into the next bit.
 -/
 
 @[expose] public section
@@ -31,7 +31,7 @@ def roundMantissaToLeadingBitDown (mantissa leadingBit : Nat) : Nat :=
 /-- Scale a positive mantissa to `leadingBit` and round up, possibly carrying into the next bit. -/
 def roundMantissaToLeadingBitUp (mantissa leadingBit : Nat) : Nat :=
   if leadingBit ≤ mantissa.log2 then
-    shiftRightCeilPow2 mantissa (mantissa.log2 - leadingBit)
+    Numerics.shiftRightCeil mantissa (mantissa.log2 - leadingBit)
   else
     Nat.shiftLeft mantissa (leadingBit - mantissa.log2)
 

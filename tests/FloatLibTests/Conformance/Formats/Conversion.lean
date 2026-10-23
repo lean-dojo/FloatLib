@@ -13,6 +13,8 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversi
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Proof
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Instances
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
+public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
+public meta import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public meta import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 public meta import FloatLib.Floats.Formats.Block.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.Block.Configured.Conversion.Proof
@@ -52,9 +54,9 @@ interoperability surface:
   quantization; and
 * destinations that require policy or context receive it explicitly.
 
-The cases below cover every currently installed scalar source decoder and every currently
-installed destination class. Source-only families remain source-only: this module does not
-fabricate a rounding rule for logarithmic systems, arbitrary codebooks, quires, or E8M0.
+The cases below cover every installed scalar source decoder and every installed destination
+class. Source-only families stay source-only, so this module invents no rounding rule for
+logarithmic systems, arbitrary codebooks, quires, or E8M0.
 -/
 
 @[expose] public section
@@ -64,23 +66,8 @@ namespace FloatLibTests.Conformance.Formats.Conversion
 open FloatLib.Floats
 open FloatLib.Numerics
 
-private abbrev Binary32 :=
-  ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
-private abbrev Binary64 :=
-  ExecFloat.Binary (exponentBits := 11) (fractionBits := 52)
-
-private abbrev Posit32 :=
-  ExecFloat.Posit (bits := 32)
-
-private abbrev Posit8 :=
-  ExecFloat.Posit (bits := 8)
-
-private abbrev Quire8 :=
-  ExecFloat.Posit.Quire (bits := 8)
-
 private abbrev OCPFloat8 :=
-  ExecFloat Formats.OCP.FP8.E4M3FN
+  E4M3FN
 
 private abbrev ExactCents :=
   ExecFloat.FixedPoint decimalRadix 2
@@ -133,7 +120,7 @@ but is expected to have type
 private def mixedLeft : Binary32 := 6
 private def mixedRight : Posit32 := 4
 private def mixedAddend : OCPFloat8 :=
-  Formats.OCP.FP8.E4M3FN.ofNatBits 0x3c
+  E4M3FN.ofNatBits 0x3c
 
 /-- Decode a successful binary64 destination without hiding conversion failure. -/
 private def binary64Rat? (outcome : ExecFloat.ConversionOutcome Binary64) : Option Rat :=
@@ -144,12 +131,12 @@ Addition, subtraction, multiplication, division, and FMA may use different sourc
 all five compute in exact rational arithmetic and round once into binary64.
 -/
 example :
-    [ binary64Rat? (ExecFloat.addAs (result := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.subAs (result := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.mulAs (result := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.divAs (result := Binary64) mixedLeft mixedRight)
+    [ binary64Rat? (ExecFloat.addAs (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.subAs (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.mulAs (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.divAs (target := Binary64) mixedLeft mixedRight)
     , binary64Rat?
-        (ExecFloat.fmaAs (result := Binary64) mixedLeft mixedRight mixedAddend)
+        (ExecFloat.fmaAs (target := Binary64) mixedLeft mixedRight mixedAddend)
     ] =
       [ some 10, some 2, some 24, some (3 / 2), some (51 / 2) ] := by
   native_decide
@@ -179,6 +166,12 @@ private def logarithmicHundred : Log10 :=
 private def scaleEight : MXScale :=
   ExecFloat.OCP.MX.E8M0.ofExponentSaturating 3
 
+/-- The standard posit and quire names select the matching widths. -/
+example :
+    Posit8 = ExecFloat.Posit 8 ∧ Posit64 = ExecFloat.Posit 64 ∧
+      Quire8 = ExecFloat.Posit.Quire 8 ∧ Quire64 = ExecFloat.Posit.Quire 64 :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
 private def quireThreeHalves : Quire8 :=
   ExecFloat.Posit.Quire.pToQ (1.5 : Posit8)
 
@@ -191,13 +184,13 @@ private def nativeThreeHalves64 : Float :=
 /--
 The homogeneous result list keeps the test compact while exercising binary, posit, nominal FP8,
 exact and bounded fixed point, codebook, logarithmic, E8M0, quire, and both Lean native sources.
-Each source is interpreted by its own decoder; no source is first converted through a host float.
+Each source is interpreted by its own decoder, and no source passes through a host float first.
 -/
 example :
     [ binary64Rat? ((1.5 : Binary32).cast (target := Binary64))
     , binary64Rat? ((2.25 : Posit32).cast (target := Binary64))
     , binary64Rat?
-        ((Formats.OCP.FP8.E4M3FN.ofNatBits 0x3c : OCPFloat8).cast
+        ((E4M3FN.ofNatBits 0x3c : OCPFloat8).cast
           (target := Binary64))
     , binary64Rat? (exactCents.cast (target := Binary64))
     , binary64Rat? (boundedCents.cast (target := Binary64))
@@ -218,26 +211,26 @@ example :
 
 /-- Posit destinations use the standard posit rounder and preserve exact ordinary values. -/
 example :
-    (ExecFloat.addAs (result := Posit32) (1.5 : Binary32) (2.25 : Binary64)).value?.bind
+    (ExecFloat.addAs (target := Posit32) (1.5 : Binary32) (2.25 : Binary64)).value?.bind
         ExecFloat.Posit.toRat? =
       some (15 / 4) := by
   native_decide
 
-/-- Nominal FP8 destinations use the same explicit API and expose their exact meaning. -/
+/-- Nominal FP8 destinations use the same conversion API and expose their exact meaning. -/
 example :
     ((1.5 : Binary32).cast (target := OCPFloat8)).value?.map
         Formats.BinaryInterchange.StaticByte.Conversion.decode =
       some (.finite (3 / 2)) := by
   native_decide
 
-/-- Unbounded fixed point installs an honest default because coefficient overflow is impossible. -/
+/-- Unbounded fixed point has a context-free default because coefficient overflow is impossible. -/
 example :
     ((1.25 : Binary32).cast (target := ExactCents)).value?.map
         ExecFloat.FixedPoint.toRat =
       some (5 / 4) := by
   native_decide
 
-/-- Bounded fixed point defaults to checked conversion rather than hiding wrap or saturation. -/
+/-- Bounded fixed point defaults to checked conversion, so it never wraps or saturates silently. -/
 example :
     ((1.25 : Binary32).cast (target := Cents8)).value?.map
         ExecFloat.BoundedFixedPoint.coefficient =
@@ -247,9 +240,8 @@ example :
 /-- Saturation is available only through an explicit bounded-destination context. -/
 example :
     let outcome :=
-      ExecFloat.addAsWith (result := Cents8)
-        ExecFloat.BoundedFixedPoint.Conversion.OverflowPolicy.saturate
-        (1 : Binary32) (1 : Posit32)
+      ExecFloat.addAs (target := Cents8) (1 : Binary32) (1 : Posit32)
+        (context := ExecFloat.BoundedFixedPoint.OverflowPolicy.saturate)
     outcome.value?.map ExecFloat.BoundedFixedPoint.coefficient = some 127 ∧
       outcome.status?.map (·.overflow) = some true ∧
       outcome.status?.map (·.saturated) = some true := by
@@ -262,11 +254,11 @@ private def fineBlock : Block4 :=
   ExecFloat.SharedScale.quantizeAt (-2) blockInput
 
 /--
-Shared-scale destinations have no context-free default. Their explicit context is the common
-exponent selected by the caller.
+Shared-scale destinations have no context-free default. Their context is the common exponent
+that the caller selects.
 -/
 example :
-    (fineBlock.castWith (target := Block4) (-1 : Int)).value?.map
+    (fineBlock.cast (target := Block4) (context := (-1 : Int))).value?.map
         ExecFloat.SharedScale.exponent =
       some (-1) := by
   native_decide
@@ -278,7 +270,7 @@ private def positiveInfinity : Binary32 :=
 
 /-- Mixed arithmetic rejects a non-finite input before destination quantization. -/
 example :
-    (ExecFloat.addAs (result := Binary64) positiveInfinity (1 : Posit32)).failure? =
+    (ExecFloat.addAs (target := Binary64) positiveInfinity (1 : Posit32)).failure? =
       some (.infinity .left false) := by
   native_decide
 
@@ -298,12 +290,9 @@ private def binary32OverflowMidpoint : Rat := 2 ^ 128 - 2 ^ 103
 /-- Retain the configured conversion's bits and every status flag. -/
 private def binary32Conversion (rounding : RoundingMode) (exact : Rat)
     (entropy : Nat := 0) : ExecFloat.ConversionOutcome Nat :=
-  (ExecFloat.convertWith (target := Binary32) exact
-    ({ quantization := { rounding }, entropy } : ExecFloat.Binary.Conversion.Context)).map
+  (ExecFloat.convert (target := Binary32) exact (context :=
+    ({ quantization := { rounding }, entropy } : ExecFloat.Binary.Conversion.Context))).map
       ExecFloat.Binary.toNatBits
-
-private abbrev Binary16 :=
-  ExecFloat.Binary (exponentBits := 5) (fractionBits := 10)
 
 private structure DiagnosticNaN where
   payload : Nat
@@ -364,11 +353,11 @@ example :
 
 -- Exceeding maxFinite does not itself signal overflow. The midpoint rounds to infinity.
 example :
-    [ binary32Conversion .nearestEven (binary32OverflowMidpoint - 1)
-    , binary32Conversion .nearestEven binary32OverflowMidpoint
-    , binary32Conversion .nearestEven (binary32OverflowMidpoint + 1)
-    , binary32Conversion .nearestEven (-(binary32OverflowMidpoint - 1))
-    , binary32Conversion .nearestEven (-binary32OverflowMidpoint)
+    [ binary32Conversion .nearest (binary32OverflowMidpoint - 1)
+    , binary32Conversion .nearest binary32OverflowMidpoint
+    , binary32Conversion .nearest (binary32OverflowMidpoint + 1)
+    , binary32Conversion .nearest (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .nearest (-binary32OverflowMidpoint)
     ] =
       [ .success 0x7f7fffff { inexact := true }
       , .success 0x7f800000 { inexact := true, overflow := true }
@@ -384,10 +373,10 @@ example :
     [ binary32Conversion .towardZero (binary32OverflowMidpoint - 1)
     , binary32Conversion .towardZero (2 ^ 128 - 1)
     , binary32Conversion .towardZero (2 ^ 128)
-    , binary32Conversion .towardPositive (binary32OverflowMidpoint - 1)
-    , binary32Conversion .towardPositive (-(binary32OverflowMidpoint - 1))
-    , binary32Conversion .towardNegative (binary32OverflowMidpoint - 1)
-    , binary32Conversion .towardNegative (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .up (binary32OverflowMidpoint - 1)
+    , binary32Conversion .up (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .down (binary32OverflowMidpoint - 1)
+    , binary32Conversion .down (-(binary32OverflowMidpoint - 1))
     ] =
       [ .success 0x7f7fffff { inexact := true }
       , .success 0x7f7fffff { inexact := true }
@@ -399,8 +388,35 @@ example :
       ] := by
   decide +kernel
 
--- The policies without an IEEE rounding-mode constructor also classify overflow after rounding.
--- These entropy values select opposite sides of the same stochastic rounding interval.
+-- Rounding away from zero overflows to infinity of either sign above maxFinite. It takes a value
+-- less than half an ulp above one to the next float, where nearest-even keeps one, and a value
+-- far below the least subnormal up to that subnormal. A value that rounds up to the smallest
+-- normal 2^-126 is tiny only up to and including 2^-126 - 2^-150, below the nearest-rounding
+-- boundary 2^-126 - 2^-151, so nearest-even reports underflow where away from zero does not.
+example :
+    [ binary32Conversion .away (binary32OverflowMidpoint - 1)
+    , binary32Conversion .away (-(binary32OverflowMidpoint - 1))
+    , binary32Conversion .away (1 + 1 / (3 * 2 ^ 24))
+    , binary32Conversion .nearest (1 + 1 / (3 * 2 ^ 24))
+    , binary32Conversion .away (1 / 2 ^ 160)
+    , binary32Conversion .away (1 / 2 ^ 126 - 1 / 2 ^ 150)
+    , binary32Conversion .away (1 / 2 ^ 126 - 3 / 2 ^ 152)
+    , binary32Conversion .nearest (1 / 2 ^ 126 - 3 / 2 ^ 152)
+    ] =
+      [ .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0xff800000 { inexact := true, overflow := true }
+      , .success 0x3f800001 { inexact := true }
+      , .success 0x3f800000 { inexact := true }
+      , .success 0x00000001 { inexact := true, underflow := true }
+      , .success 0x00800000 { inexact := true, underflow := true }
+      , .success 0x00800000 { inexact := true }
+      , .success 0x00800000 { inexact := true, underflow := true }
+      ] := by
+  decide +kernel
+
+-- Nearest-away overflow is classified through its `IEEERoundingMode` direction. Stochastic
+-- rounding, the only policy rounding without such a direction, also classifies overflow after
+-- rounding. These entropy values select opposite sides of the same stochastic rounding interval.
 example :
     [ binary32Conversion .nearestAway (binary32OverflowMidpoint - 1)
     , binary32Conversion .nearestAway binary32OverflowMidpoint
@@ -416,20 +432,21 @@ example :
 
 /-- Retain a model cast's destination bits and all five exception indicators. -/
 private def binary32Cast (format : FloatFormat) (bits : Nat)
-    (rounding : Model.IEEERoundingMode := .nearestEven) : Nat × Model.IEEEStatus :=
-  let outcome := Model.castWithStatus FloatFormat.binary32 format (Model.ofNatBits bits) rounding
+    (mode : Model.IEEERoundingMode := .nearest) : Nat × IEEEStatus :=
+  let outcome :=
+    Model.cast FloatFormat.binary32 format (Model.ofNatBits bits) mode (status := true)
   (outcome.value.toNatBits, outcome.status)
 
 -- Infinity follows the destination's native overflow behavior in every rounding mode.
 example :
-    [.nearestEven, .towardZero, .towardPositiveInfinity, .towardNegativeInfinity].map
+    Model.IEEERoundingMode.all.map
       (fun mode =>
         [ binary32Cast FloatFormat.e4m3fn 0x7f800000 mode
         , binary32Cast FloatFormat.e4m3fn 0xff800000 mode
         , binary32Cast FloatFormat.e4m3fnuz 0x7f800000 mode
         , binary32Cast FloatFormat.e4m3fnuz 0xff800000 mode
         ]) =
-      List.replicate 4
+      List.replicate 6
         [ (0x7f, { overflow := true, inexact := true })
         , (0xff, { overflow := true, inexact := true })
         , (0x80, { overflow := true, inexact := true })
@@ -451,7 +468,7 @@ example :
       ] := by
   decide +kernel
 
--- IEEE infinity remains exact; a fully finite encoding selects its signed endpoint.
+-- IEEE infinity stays exact, and a fully finite encoding selects its signed endpoint.
 example :
     [ binary32Cast FloatFormat.binary16 0x7f800000
     , binary32Cast FloatFormat.binary16 0xff800000
@@ -496,8 +513,8 @@ example {format : FloatFormat} {plan : Configured.StoragePlan format}
     (hformat : format.encoding = .finite) :
     (ExecFloat.Binary.Conversion.run (format := format) (plan := plan) (code := code)
         .default (ExecFloat.Binary.decode value)).value? = none ∧
-      (Model.castWithStatus _ format
-        (ExecFloat.Binary.toModel value) mode).status.invalid = true := by
+      (Model.cast _ format
+        (ExecFloat.Binary.toModel value) mode (status := true)).status.invalid = true := by
   obtain ⟨hrun, hinvalid⟩ :=
     ExecFloat.Binary.Conversion.run_default_decode_of_isNaN_of_encoding_finite
       (format := format) (plan := plan) (code := code) value mode hnan hformat
@@ -530,5 +547,150 @@ but is expected to have type
 -/
 #guard_msgs (substring := true) in
 #check (Model.ieeeRoundRatScaled customBias false 1 3 0 : Model customBias)
+
+/-! ## Rounding direction and context options -/
+
+/-- A cast with `mode` delivers the bits of the model cast with the same direction. -/
+private def directedCastAgrees (bits : Nat) (mode : Model.IEEERoundingMode) : Bool :=
+  let x : Binary64 := ExecFloat.Binary.ofNatBits bits
+  let expected : Binary32 :=
+    ExecFloat.Binary.ofModel (Model.cast _ _ (ExecFloat.Binary.toModel x) (mode := mode))
+  (x.cast (target := Binary32) (mode := mode)).value?.map ExecFloat.Binary.toNatBits ==
+    some (ExecFloat.Binary.toNatBits expected)
+
+/-- Directed casts agree with `Model.cast` on ties, overflow, underflow, and signed zero. -/
+example :
+    [ 0x3fb999999999999a, 0xbfb999999999999a, 0x3fd5555555555555, 0x3ff0000010000000
+    , 0xbff0000010000000, 0x7fefffffffffffff, 0xffefffffffffffff, 1, 0x8000000000000001
+    , 0, 0x8000000000000000, 0x3ff0000000000000, 0x7ff0000000000000, 0xfff0000000000000
+    ].all (fun bits => Model.IEEERoundingMode.all.all (directedCastAgrees bits)) = true := by
+  decide +kernel
+
+/-- A nearest-even `mode` is the default context, and a directed `mode` changes the result. -/
+example :
+    let tenth : Binary64 := 0.1
+    [ (tenth.cast (target := Binary32) (mode := .nearest)).map ExecFloat.Binary.toNatBits
+    , (tenth.cast (target := Binary32)).map ExecFloat.Binary.toNatBits
+    , (tenth.cast (target := Binary32) (mode := .down)).map ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (1 / 3 : Rat) (mode := .down)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (1 / 3 : Rat) (mode := .up)).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0x3dcccccd { inexact := true }, .success 0x3dcccccd { inexact := true }
+      , .success 0x3dcccccc { inexact := true }, .success 0x3eaaaaaa { inexact := true }
+      , .success 0x3eaaaaab { inexact := true } ] := by
+  decide +kernel
+
+/-- Nominal FP8 destinations take the same directions. -/
+example :
+    [ ((0.3 : Binary32).cast (target := OCPFloat8) (mode := .down)).value?.map
+        Formats.BinaryInterchange.StaticByte.Conversion.decode
+    , ((0.3 : Binary32).cast (target := OCPFloat8) (mode := .up)).value?.map
+        Formats.BinaryInterchange.StaticByte.Conversion.decode
+    ] =
+      [ some (.finite (9 / 32)), some (.finite (5 / 16)) ] := by
+  decide +kernel
+
+/--
+Mixed operations take the same option. An exactly cancelling sum or difference rounded downward
+is negative zero, and the quotient `1 / 3` rounds to either neighbour.
+-/
+example :
+    [ (ExecFloat.addAs (target := Binary32) (1 : Binary32) (-1 : Posit32)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.addAs (target := Binary32) (1 : Binary32) (-1 : Posit32) (mode := .down)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.subAs (target := Binary32) (1 : Binary32) (1 : Posit32) (mode := .down)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.fmaAs (target := Binary32) (1 : Binary32) (1 : Posit32) (-1 : Binary64)
+        (mode := .down)).map ExecFloat.Binary.toNatBits
+    , (ExecFloat.divAs (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .down)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.divAs (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .up)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.mulAs (target := Binary32) (1 / 3 : Rat) (1 : Posit32) (mode := .up)).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0 {}, .success 0x80000000 {}, .success 0x80000000 {}
+      , .success 0x80000000 {}, .success 0x3eaaaaaa { inexact := true }
+      , .success 0x3eaaaaab { inexact := true }, .success 0x3eaaaaab { inexact := true } ] := by
+  decide +kernel
+
+/-- A directed `ExactExpression.add` keeps the cancellation sign that `roundOnce` then rounds. -/
+private def downwardCancellation : ExecFloat.ConversionOutcome Binary32 :=
+  ExecFloat.roundOnce (mode := .down) do
+    let a ← ExecFloat.ExactExpression.operand 0 (1 : Binary32)
+    let b ← ExecFloat.ExactExpression.operand 1 (-1 : Binary32)
+    ExecFloat.ExactExpression.add (target := Binary32) a b (mode := .down)
+
+/-- Ordinary `SignedRat` addition keeps the nearest-even positive zero. -/
+private def nearestCancellation : ExecFloat.ConversionOutcome Binary32 :=
+  ExecFloat.roundOnce (mode := .down) do
+    let a ← ExecFloat.ExactExpression.operand 0 (1 : Binary32)
+    let b ← ExecFloat.ExactExpression.operand 1 (-1 : Binary32)
+    pure (a + b)
+
+example :
+    [ downwardCancellation.map ExecFloat.Binary.toNatBits
+    , nearestCancellation.map ExecFloat.Binary.toNatBits
+    , (ExecFloat.roundOnce (target := Binary32) (mode := .up) do
+        let a ← ExecFloat.ExactExpression.operand 0 (1 : Binary32)
+        let b ← ExecFloat.ExactExpression.operand 1 (3 : Binary32)
+        ExecFloat.ExactExpression.div a b).map ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0x80000000 {}, .success 0 {}, .success 0x3eaaaaab { inexact := true } ] := by
+  decide +kernel
+
+/-!
+A family without directed conversion rejects a direction when the call is elaborated, and a
+destination without a canonical context requires an explicit one.
+-/
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.RoundingModes Posit32 IEEERoundingMode
+-/
+#guard_msgs (substring := true) in
+open FloatLib.Rounding in
+#check fun (value : Binary32) => value.cast (target := Posit32) (mode := up)
+
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.ModeContext Block4
+-/
+#guard_msgs (substring := true) in
+#check fineBlock.cast (target := Block4)
+
+/-! ## Parse limits -/
+
+/--
+Setting one parse limit takes effect while the other keeps its default, in the descriptor model
+and the configured parser.
+-/
+example :
+    [ (Model.parse FloatFormat.binary64 "1.0" (limits := some { maxBytes := 2 })).toOption.isSome
+    , (Model.parse FloatFormat.binary64 "1e3" (limits := some { maxExponent := 2 })).toOption.isSome
+    , (Model.parse FloatFormat.binary64 "1e3" (limits := some { maxBytes := 2 })).toOption.isSome
+    , (Model.parse FloatFormat.binary64 "1e3" (limits := some {})).toOption.isSome
+    , ((ExecFloat.Binary.parse "1.0" (limits := some { maxBytes := 2 }) :
+        Except Model.ParseError Binary32).toOption.isSome)
+    , ((ExecFloat.Binary.parse "1.0" (limits := some { maxBytes := 3 }) :
+        Except Model.ParseError Binary32).toOption.isSome)
+    ] =
+      [ false, false, false, true, false, true ] := by
+  decide +kernel
+
+/-- The limit errors name the measured quantity and the bound it exceeded. -/
+example :
+    [ match Model.parse FloatFormat.binary64 "1.0" (limits := some { maxBytes := 2 }) with
+      | .error error => decide (error = .inputTooLong 3 2)
+      | .ok _ => false
+    , match Model.parse FloatFormat.binary64 "1e3" (limits := some { maxExponent := 2 })
+          (status := true) with
+      | .error error => decide (error = .exponentTooLarge 3 2)
+      | .ok _ => false
+    ] =
+      [ true, true ] := by
+  decide +kernel
 
 end FloatLibTests.Conformance.Formats.Conversion

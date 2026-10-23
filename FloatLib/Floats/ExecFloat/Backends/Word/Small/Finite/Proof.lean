@@ -16,12 +16,12 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 /-!
 # Correctness of native finite decoding for one-word formats
 
-The executable decoder and arithmetic entry points live in `Finite.Runtime`. Their extracted sign,
-significand, and stored exponent agree with the format-generic decoder. Addition, fused
-multiply-add, and positive square root then reuse the corresponding component kernels.
+The decoder of `Finite.Runtime` extracts the same sign, significand and stored exponent as the
+format-generic decoder. Addition, fused multiply-add and positive square root then reuse the
+corresponding component kernels.
 
-Keeping the bridge here avoids coupling every operation to storage masks and field shifts. Runtime
-imports remain small, and later refinements reason about exact dyadics rather than raw words.
+With this bridge in one place, no operation proof deals with storage masks and field shifts.
+Runtime imports stay small, and the later refinements reason about exact dyadics.
 -/
 
 @[expose] public section
@@ -138,8 +138,8 @@ theorem decode_eq {fmt : FloatFormat}
 /--
 Native-storage finite addition equals the generic compact finite kernel.
 
-The runtime names the compiled `addComponentsImpl`; `addComponentsImpl_eq` identifies it with the
-exact `addComponents` used by `FiniteKernel.add?`.
+The runtime calls the compiled `Internal.addComponents`, and `Internal.addComponents_eq`
+identifies it with the exact `addComponents` behind `FiniteKernel.add?`.
 -/
 theorem addFinite_eq {fmt : FloatFormat}
     (heligible : NativeSmallWord.StorageEligible fmt) (x y : Model fmt) :
@@ -147,15 +147,15 @@ theorem addFinite_eq {fmt : FloatFormat}
   unfold addFinite? FiniteKernel.add?
   rw [decode_eq heligible x, decode_eq heligible y]
   cases FiniteKernel.decode? x <;> cases FiniteKernel.decode? y <;>
-    simp [FiniteKernel.addComponentsImpl_eq]
+    simp [FiniteKernel.Internal.addComponents_eq]
 
-private theorem fmaComponentsImpl_eq_of_zero
+private theorem internal_fmaComponents_eq_of_zero
     {fmt : FloatFormat} (hieee : fmt.isIEEE = true)
     (x y dz : FiniteKernel.Components) (z : Model fmt)
     (hdz : FiniteKernel.decode? z = some dz)
     (hzero : x.mantissa = 0 ∨ y.mantissa = 0)
     (hnonzero : dz.mantissa ≠ 0) :
-    FiniteKernel.fmaComponentsImpl fmt x y dz = z := by
+    FiniteKernel.Internal.fmaComponents fmt x y dz = z := by
   have hdyadic : toDyadic? z = some (dz.toDyadic fmt) := by
     rw [FiniteKernel.toDyadic_eq_decode, hdz]
     rfl
@@ -166,9 +166,9 @@ private theorem fmaComponentsImpl_eq_of_zero
     simp [FiniteKernel.productDyadic, addDyadic, Numerics.Dyadic.add,
       Numerics.Dyadic.addFields, FiniteKernel.Components.toDyadic,
       hproduct, hnonzero]
-  rw [FiniteKernel.fmaComponentsImpl_eq, FiniteKernel.fmaComponents, hsum,
-    ← roundDyadic_eq_roundDyadicImpl]
-  exact roundDyadicWithRounding_toDyadic? hieee .nearestEven hdyadic
+  rw [FiniteKernel.Internal.fmaComponents_eq, FiniteKernel.fmaComponents, hsum,
+    ← roundDyadic_eq_internal]
+  exact Internal.Directed.roundDyadic_toDyadic? hieee .nearest hdyadic
 
 /-- Native-storage finite FMA, including the exact zero-product exit, equals the generic kernel. -/
 theorem fmaFinite_eq {fmt : FloatFormat}
@@ -184,9 +184,9 @@ theorem fmaFinite_eq {fmt : FloatFormat}
   · next hzero =>
       have hzero : (dx.mantissa = 0 ∨ dy.mantissa = 0) ∧ dz.mantissa ≠ 0 := by
         simpa only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq, bne_iff_ne] using hzero
-      rw [← fmaComponentsImpl_eq_of_zero heligible.1 dx dy dz z hz hzero.1 hzero.2,
-        FiniteKernel.fmaComponentsImpl_eq]
-  · rw [FiniteKernel.fmaComponentsImpl_eq]
+      rw [← internal_fmaComponents_eq_of_zero heligible.1 dx dy dz z hz hzero.1 hzero.2,
+        FiniteKernel.Internal.fmaComponents_eq]
+  · rw [FiniteKernel.Internal.fmaComponents_eq]
 
 /-- Native-storage positive square root equals the generic compact finite kernel. -/
 theorem sqrtPositive_eq {fmt : FloatFormat}

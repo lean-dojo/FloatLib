@@ -18,8 +18,8 @@ private def select (format : Format) :
 public def main (args : List String) : IO Unit := do
   let format ← match args[0]?.getD "" with
     | "Binary4p2sf" => pure (Format.signed 4 2 .finite)
-    | "Binary8p4se" => pure (Format.signed 8 4 .extended)
-    | "Binary8p3se" => pure (Format.signed 8 3 .extended)
+    | "Binary8p4se" => pure Format.binary8p4se
+    | "Binary8p3se" => pure Format.binary8p3se
     | _ => throw <| IO.userError "unknown format"
   P3109Comparison.run format.modulus
     (ExecFloat.P3109.ofNatBits (format := format)) (select format) (args.drop 1)

@@ -32,7 +32,7 @@ Expected products use ordinary natural-number multiplication.
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -241,15 +241,15 @@ def formatMatches (fmt : FloatFormat) : Bool :=
   let left : Numerics.Dyadic := { negative := false, significand := 3, exponent := -1 }
   let right : Numerics.Dyadic := { negative := true, significand := 5, exponent := -2 }
   let addend : Numerics.Dyadic := { negative := false, significand := 1, exponent := -1 }
-  mulMatches fmt QuantizationPolicy.nearestEven left right &&
-  fmaMatches fmt QuantizationPolicy.nearestEven left right addend &&
+  mulMatches fmt QuantizationPolicy.nearest left right &&
+  fmaMatches fmt QuantizationPolicy.nearest left right addend &&
   mulMatches fmt QuantizationPolicy.saturating left right &&
   fmaMatches fmt QuantizationPolicy.flushToZero left right addend
 
 def mixedAccumulationMatches : Thunk Bool := ⟨fun _ =>
   let storage := FloatFormat.e4m3fn
   let accumulator := FloatFormat.binary128
-  let policy := QuantizationPolicy.nearestEven
+  let policy := QuantizationPolicy.nearest
   let x := Model.Policy.roundDyadic storage policy 0
     { negative := false, significand := 7, exponent := -2 }
   let y := Model.Policy.roundDyadic storage policy 0

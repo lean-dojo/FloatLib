@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Order
 # Correctness of P3109 neighboring values
 
 The exact numerical ordering of non-NaN values is a consecutive integer interval. The upper
-and lower neighbor operations move by one in that interval, returning NaN precisely when the
+and lower neighbor operations move by one in that interval, returning NaN exactly when the
 requested neighbor does not exist. Infinite endpoints obey the same order as finite values.
 -/
 
@@ -22,7 +22,7 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.Format
 
-/-- Index of the least numerical datum; unsigned formats begin at zero. -/
+/-- Index of the least numerical datum, which is zero for unsigned formats. -/
 def firstOrderIndex (format : Format) : Int :=
   if format.signedness = .signed then 1 - (format.signBoundary : Int) else 0
 
@@ -61,6 +61,7 @@ def orderIndex (value : ExecFloat.P3109 format) : Int :=
 /-- The executable NaN predicate agrees with exact decoding. -/
 theorem isNaN_iff_decode (value : ExecFloat.P3109 format) :
     value.isNaN = true ↔ value.decode = .exceptional (.nan) := by
+  rw [decode_eq_format_decode]
   change (value.toNatBits == format.nanBits) = true ↔
     format.decodeNat value.toNatBits = .exceptional (.nan)
   cases hs : format.signedness <;> cases hd : format.domain <;>
@@ -81,7 +82,7 @@ theorem less_of_isNaN_right (left right : ExecFloat.P3109 format)
   rw [hdecode]
   cases Arithmetic.toRat left.decode <;> rfl
 
-/-- Public strict comparison agrees with integer-index order, with NaN excluded explicitly. -/
+/-- Strict comparison holds iff both operands are non-NaN and their order indices increase. -/
 theorem less_iff_orderIndex (left right : ExecFloat.P3109 format) :
     left.less right = true ↔ left.isNaN = false ∧ right.isNaN = false ∧
       left.orderIndex < right.orderIndex := by
@@ -90,6 +91,8 @@ theorem less_iff_orderIndex (left right : ExecFloat.P3109 format) :
     · have hln : left.toNatBits ≠ format.nanBits := by simpa [isNaN] using hl
       have hrn : right.toNatBits ≠ format.nanBits := by simpa [isNaN] using hr
       simp only [hl, hr, true_and]
+      unfold less toClosedRat
+      rw [decode_eq_format_decode, decode_eq_format_decode]
       change Arithmetic.less (Arithmetic.toRat (format.decodeNat left.toNatBits))
         (Arithmetic.toRat (format.decodeNat right.toNatBits)) = true ↔
           format.orderIndex left.toNatBits < format.orderIndex right.toNatBits

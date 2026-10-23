@@ -13,7 +13,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proo
 
 These theorems describe `nextUp` and `nextDown` at NaNs, zeros, infinities, and saturating finite
 endpoints. They also extend the exact rank-step results from `Adjacent.Proof.Core` to one-sided
-rank inequalities that remain valid at fixed endpoints.
+rank inequalities that hold at fixed endpoints too.
 -/
 
 @[expose] public section
@@ -27,13 +27,13 @@ namespace Model
 theorem nextUp_of_isNaN {fmt : FloatFormat} (x : Model fmt)
     (hx : isNaN x = true) :
   nextUp x = quietNaN x := by
-  simp [nextUp, hx]
+  simp [nextUp, Internal.Value.nextUp, hx]
 
 /-- On a NaN, `nextDown` returns the format's `quietNaN` result. -/
 theorem nextDown_of_isNaN {fmt : FloatFormat} (x : Model fmt)
     (hx : isNaN x = true) :
   nextDown x = quietNaN x := by
-  simp [nextDown, hx]
+  simp [nextDown, Internal.Value.nextDown, hx]
 
 /-- Positive infinity is the fixed upper endpoint of `nextUp`. -/
 theorem nextUp_of_isInf_of_signBit_eq_false
@@ -41,7 +41,7 @@ theorem nextUp_of_isInf_of_signBit_eq_false
     (hinf : isInf x = true) (hsign : signBit x = false) :
     nextUp x = x := by
   have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
-  simp [nextUp, hnan, hinf, hsign]
+  simp [nextUp, Internal.Value.nextUp, hnan, hinf, hsign]
 
 /-- Negative infinity is the fixed lower endpoint of `nextDown`. -/
 theorem nextDown_of_isInf_of_signBit_eq_true
@@ -49,7 +49,7 @@ theorem nextDown_of_isInf_of_signBit_eq_true
     (hinf : isInf x = true) (hsign : signBit x = true) :
     nextDown x = x := by
   have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
-  simp [nextDown, hnan, hinf, hsign]
+  simp [nextDown, Internal.Value.nextDown, hnan, hinf, hsign]
 
 /-- Both signed zeros step upward to the least positive subnormal. -/
 theorem nextUp_of_isZero {fmt : FloatFormat} (x : Model fmt)
@@ -58,7 +58,7 @@ theorem nextUp_of_isZero {fmt : FloatFormat} (x : Model fmt)
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hx
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
   have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
-  simp [nextUp, hx, hnan, hinf]
+  simp [nextUp, Internal.Value.nextUp, hx, hnan, hinf]
 
 /-- Both signed zeros step downward to the negative subnormal of least magnitude. -/
 theorem nextDown_of_isZero {fmt : FloatFormat} (x : Model fmt)
@@ -67,7 +67,7 @@ theorem nextDown_of_isZero {fmt : FloatFormat} (x : Model fmt)
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hx
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
   have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
-  simp [nextDown, hx, hnan, hinf]
+  simp [nextDown, Internal.Value.nextDown, hx, hnan, hinf]
 
 /--
 An unsigned-zero format steps directly from its negative subnormal of least magnitude to zero,
@@ -76,7 +76,7 @@ skipping the reserved sign-mask NaN word.
 theorem nextUp_negMinSubnormal_of_not_supportsSignedZero
     (fmt : FloatFormat) (hfmt : fmt.supportsSignedZero = false) :
     nextUp (negMinSubnormal fmt) = posZero fmt := by
-  simp [nextUp, hfmt]
+  simp [nextUp, Internal.Value.nextUp, hfmt]
 
 /-- A format without infinity saturates `nextUp` at its largest finite value. -/
 theorem nextUp_posMaxFinite_of_not_supportsInfinity
@@ -94,15 +94,15 @@ theorem nextUp_posMaxFinite_of_not_supportsInfinity
         signBit (negMinSubnormal fmt) at hsign
     simp at hsign
   by_cases hsigned : fmt.supportsSignedZero = true
-  · simp [nextUp, hfmt, hsigned, posMaxFinite]
+  · simp [nextUp, Internal.Value.nextUp, hfmt, hsigned, posMaxFinite]
   · have hsignedFalse := Bool.eq_false_of_not_eq_true hsigned
-    simp [nextUp, hfmt, hsignedFalse, hbits, posMaxFinite]
+    simp [nextUp, Internal.Value.nextUp, hfmt, hsignedFalse, hbits, posMaxFinite]
 
 /-- A format without infinity saturates `nextDown` at its most negative finite value. -/
 theorem nextDown_negMaxFinite_of_not_supportsInfinity
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = false) :
     nextDown (negMaxFinite fmt) = negMaxFinite fmt := by
-  simp [nextDown, hfmt, negMaxFinite]
+  simp [nextDown, Internal.Value.nextDown, hfmt, negMaxFinite]
 
 /-- A represented positive infinity is fixed by `nextUp`. -/
 theorem nextUp_posInf_of_supportsInfinity
@@ -110,7 +110,7 @@ theorem nextUp_posInf_of_supportsInfinity
     nextUp (posInf fmt) = posInf fmt := by
   have hinf := isInf_posInf fmt hfmt
   have hnan := isNaN_posInf fmt hfmt
-  simp [nextUp, hinf, hnan]
+  simp [nextUp, Internal.Value.nextUp, hinf, hnan]
 
 /-- A represented negative infinity is fixed by `nextDown`. -/
 theorem nextDown_negInf_of_supportsInfinity
@@ -118,7 +118,7 @@ theorem nextDown_negInf_of_supportsInfinity
     nextDown (negInf fmt) = negInf fmt := by
   have hinf := isInf_negInf fmt hfmt
   have hnan := isNaN_negInf fmt hfmt
-  simp [nextDown, hinf, hnan]
+  simp [nextDown, Internal.Value.nextDown, hinf, hnan]
 
 /-! ## Rank inequalities including saturating endpoints -/
 

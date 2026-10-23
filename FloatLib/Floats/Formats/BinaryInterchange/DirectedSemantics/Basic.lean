@@ -63,12 +63,12 @@ theorem shiftRight_mul_pow2_le (n shift : Nat) :
   simpa [Nat.shiftRight_eq_div_pow, pow2_eq_two_pow, Nat.mul_comm] using h
 
 /-- A ceiling right shift, followed by restoration of its scale, covers the original number. -/
-theorem le_shiftRightCeilPow2_mul_pow2 (n shift : Nat) :
-    n ≤ shiftRightCeilPow2 n shift * pow2 shift := by
+theorem le_shiftRightCeil_mul_pow2 (n shift : Nat) :
+    n ≤ Numerics.shiftRightCeil n shift * pow2 shift := by
   classical
   cases shift with
   | zero =>
-      simp [shiftRightCeilPow2, pow2_eq_two_pow]
+      simp [Numerics.shiftRightCeil, pow2_eq_two_pow]
   | succ shift =>
       set divisor : Nat := pow2 (Nat.succ shift)
       have hdivisor : 0 < divisor := pow2_pos (Nat.succ shift)
@@ -92,15 +92,15 @@ theorem le_shiftRightCeilPow2_mul_pow2 (n shift : Nat) :
       by_cases hzero : remainder = 0
       · have hn' : n = quotient * divisor := by
           simp [hn, hzero]
-        have hceil : shiftRightCeilPow2 n (Nat.succ shift) = quotient := by
+        have hceil : Numerics.shiftRightCeil n (Nat.succ shift) = quotient := by
           have hshiftNonzero : (Nat.succ shift == 0) = false := by
             simp
           simp (config := { zeta := true })
-            [shiftRightCeilPow2, hshiftNonzero]
+            [Numerics.shiftRightCeil, hshiftNonzero]
           rw [hshift', hrem']
           simp [hzero]
         have hceil' :
-            shiftRightCeilPow2 (quotient * divisor) (Nat.succ shift) = quotient := by
+            Numerics.shiftRightCeil (quotient * divisor) (Nat.succ shift) = quotient := by
           simpa [hn'] using hceil
         simp [hn', hceil', divisor]
       · have hnle : n ≤ (quotient + 1) * divisor := by
@@ -112,33 +112,33 @@ theorem le_shiftRightCeilPow2_mul_pow2 (n shift : Nat) :
           have : n ≤ quotient * divisor + divisor := by
             simpa [hn] using hsum
           simpa [hmul] using this
-        have hceil : shiftRightCeilPow2 n (Nat.succ shift) = quotient + 1 := by
+        have hceil : Numerics.shiftRightCeil n (Nat.succ shift) = quotient + 1 := by
           have hshiftNonzero : (Nat.succ shift == 0) = false := by
             simp
           simp (config := { zeta := true })
-            [shiftRightCeilPow2, hshiftNonzero]
+            [Numerics.shiftRightCeil, hshiftNonzero]
           rw [hshift', hrem']
           simp [hzero]
         simp [hceil, hnle, divisor]
 
 /-- A ceiling shift is at most one larger than the corresponding floor shift. -/
-theorem shiftRightCeilPow2_le_shiftRight_add_one (n shift : Nat) :
-    shiftRightCeilPow2 n shift ≤ Nat.shiftRight n shift + 1 := by
+theorem _root_.FloatLib.Numerics.shiftRightCeil_le_shiftRight_add_one (n shift : Nat) :
+    Numerics.shiftRightCeil n shift ≤ Nat.shiftRight n shift + 1 := by
   cases shift with
   | zero =>
-      simp [shiftRightCeilPow2]
+      simp [Numerics.shiftRightCeil]
   | succ shift =>
-      simp (config := { zeta := true }) [shiftRightCeilPow2]
+      simp (config := { zeta := true }) [Numerics.shiftRightCeil]
       split <;> omega
 
 /-- A floor right shift never exceeds the corresponding ceiling right shift. -/
-theorem shiftRight_le_shiftRightCeilPow2 (n shift : Nat) :
-    Nat.shiftRight n shift ≤ shiftRightCeilPow2 n shift := by
+theorem _root_.FloatLib.Numerics.shiftRight_le_shiftRightCeil (n shift : Nat) :
+    Nat.shiftRight n shift ≤ Numerics.shiftRightCeil n shift := by
   cases shift with
   | zero =>
-      simp [shiftRightCeilPow2]
+      simp [Numerics.shiftRightCeil]
   | succ shift =>
-      simp (config := { zeta := true }) [shiftRightCeilPow2]
+      simp (config := { zeta := true }) [Numerics.shiftRightCeil]
       split <;> omega
 
 /-- The leading power of two does not exceed a nonzero natural number. -/
@@ -164,14 +164,14 @@ theorem minSubnormalExponent_lt_minNormalExponent (fmt : FloatFormat) :
     Int.natCast_pos.mpr fmt.fracWidth_pos
   omega
 
-/-- The subnormal exponent plus the explicit fraction width is the minimum normal exponent. -/
+/-- The subnormal exponent plus the stored fraction width is the minimum normal exponent. -/
 theorem minSubnormalExponent_add_fracWidth (fmt : FloatFormat) :
     fmt.minSubnormalExponent + Int.ofNat fmt.fracWidth =
       fmt.minNormalExponent := by
   unfold FloatFormat.minSubnormalExponent
   omega
 
-/-- The smallest positive subnormal is explicit field packing with fraction one. -/
+/-- The smallest positive subnormal packs a clear sign, exponent field zero, and fraction one. -/
 theorem posMinSubnormal_eq_ofFields (fmt : FloatFormat) :
     posMinSubnormal fmt = ofFields fmt false 0 1 := by
   apply congrArg ofBits
@@ -237,8 +237,8 @@ theorem abs_signed_mul_bpow_le_toReal_posMaxFinite
 /--
 Every finite IEEE value lies between the two largest-finite endpoints.
 
-The finiteness hypothesis excludes infinities and NaNs; the bound follows from the descriptor's
-exponent and fraction fields.
+The finiteness hypothesis excludes infinities and NaNs, and the bound follows from the
+descriptor's exponent and fraction fields.
 -/
 theorem abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite
     {fmt : FloatFormat} (x : Model fmt)

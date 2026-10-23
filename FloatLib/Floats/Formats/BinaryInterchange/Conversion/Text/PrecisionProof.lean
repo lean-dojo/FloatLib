@@ -5,7 +5,7 @@ Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Digits
 public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 public import FloatLib.Numerics.Exact.DecimalText.PrecisionProof
 public import FloatLib.Numerics.Exact.HexText.Proof
@@ -32,8 +32,8 @@ open FloatLib.Numerics
   cases mode <;> cases negative <;> simp [roundTextMagnitude, h]
 
 /-- Nearest-even integer output has error at most one half on a nonnegative magnitude. -/
-theorem roundTextMagnitude_nearestEven_error (negative : Bool) (x : Rat) (hx : 0 ≤ x) :
-    |(roundTextMagnitude .nearestEven negative x : Rat) - x| ≤ 1 / 2 := by
+theorem roundTextMagnitude_nearest_error (negative : Bool) (x : Rat) (hx : 0 ≤ x) :
+    |(roundTextMagnitude .nearest negative x : Rat) - x| ≤ 1 / 2 := by
   have hn : 0 ≤ roundRatEven x := by
     simp [roundRatEven, not_lt.mpr (Rat.num_nonneg.mpr hx)]
   have hcast : ((roundRatEven x).natAbs : Rat) = (roundRatEven x : Rat) := by
@@ -41,23 +41,60 @@ theorem roundTextMagnitude_nearestEven_error (negative : Bool) (x : Rat) (hx : 0
       congrArg (fun n : Int => (n : Rat)) (Int.natAbs_of_nonneg hn)
   simpa only [roundTextMagnitude, hcast] using roundRatEven_error_le_half x
 
+/--
+Nearest-away integer output of a nonnegative magnitude exceeds a natural bound exactly when the
+magnitude reaches the bound plus one half.
+-/
+theorem lt_roundTextMagnitude_nearestAway_iff (negative : Bool) (x : Rat) (hx : 0 ≤ x)
+    (bound : Nat) :
+    bound < roundTextMagnitude .nearestAway negative x ↔ (bound : Rat) + 1 / 2 ≤ x := by
+  simp only [roundTextMagnitude]
+  rw [lt_roundQuotient_nearestAway_iff _ _ _ x.den_nz]
+  have hden : (0 : Rat) < (x.den : Rat) := by exact_mod_cast x.den_pos
+  have hvalue : ((x.num.natAbs : Nat) : Rat) / (x.den : Rat) = x := by
+    rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hx), Rat.num_div_den]
+  constructor
+  · intro h
+    have hcast : (((2 * bound + 1) * x.den : Nat) : Rat) ≤ ((2 * x.num.natAbs : Nat) : Rat) := by
+      exact_mod_cast h
+    push_cast at hcast
+    rw [← hvalue, le_div_iff₀ hden]
+    linarith
+  · intro h
+    rw [← hvalue, le_div_iff₀ hden] at h
+    have hcast : (((2 * bound + 1) * x.den : Nat) : Rat) ≤ ((2 * x.num.natAbs : Nat) : Rat) := by
+      push_cast
+      linarith
+    exact_mod_cast hcast
+
 /-- An external magnitude rounder never falls below floor. -/
 theorem floor_le_roundTextMagnitude (mode : IEEERoundingMode)
     (negative : Bool) (x : Rat) :
     ⌊x⌋₊ ≤ roundTextMagnitude mode negative x := by
   cases mode with
-  | nearestEven =>
+  | nearest =>
       by_cases hx : 0 ≤ x
-      · have he := (abs_le.mp (roundTextMagnitude_nearestEven_error negative x hx)).1
+      · have he := (abs_le.mp (roundTextMagnitude_nearest_error negative x hx)).1
         by_contra hn
-        have hn' : (roundTextMagnitude .nearestEven negative x : Rat) + 1 ≤ (⌊x⌋₊ : Rat) := by
+        have hn' : (roundTextMagnitude .nearest negative x : Rat) + 1 ≤ (⌊x⌋₊ : Rat) := by
+          exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge hn)
+        have hf := Nat.floor_le hx
+        linarith
+      · simp [Nat.floor_eq_zero.mpr (by linarith : x < 1)]
+  | nearestAway =>
+      by_cases hx : 0 ≤ x
+      · have hbelow := (lt_roundTextMagnitude_nearestAway_iff negative x hx
+          (roundTextMagnitude .nearestAway negative x)).not.mp (lt_irrefl _)
+        by_contra hn
+        have hn' : (roundTextMagnitude .nearestAway negative x : Rat) + 1 ≤ (⌊x⌋₊ : Rat) := by
           exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge hn)
         have hf := Nat.floor_le hx
         linarith
       · simp [Nat.floor_eq_zero.mpr (by linarith : x < 1)]
   | towardZero => exact le_rfl
-  | towardPositiveInfinity => cases negative <;> simp [roundTextMagnitude, Nat.floor_le_ceil]
-  | towardNegativeInfinity => cases negative <;> simp [roundTextMagnitude, Nat.floor_le_ceil]
+  | up => cases negative <;> simp [roundTextMagnitude, Nat.floor_le_ceil]
+  | down => cases negative <;> simp [roundTextMagnitude, Nat.floor_le_ceil]
+  | away => exact Nat.floor_le_ceil x
 
 /-- An integer upper bound on a magnitude also bounds its rounded coefficient. -/
 theorem roundTextMagnitude_le_nat (mode : IEEERoundingMode)
@@ -66,15 +103,21 @@ theorem roundTextMagnitude_le_nat (mode : IEEERoundingMode)
   have hf : ⌊x⌋₊ ≤ n := by exact_mod_cast (Nat.floor_le hx).trans hn
   have hc : ⌈x⌉₊ ≤ n := Nat.ceil_le.mpr hn
   cases mode with
-  | nearestEven =>
-      have he := (abs_le.mp (roundTextMagnitude_nearestEven_error negative x hx)).2
+  | nearest =>
+      have he := (abs_le.mp (roundTextMagnitude_nearest_error negative x hx)).2
       by_contra h
-      have h' : (n : Rat) + 1 ≤ (roundTextMagnitude .nearestEven negative x : Rat) := by
+      have h' : (n : Rat) + 1 ≤ (roundTextMagnitude .nearest negative x : Rat) := by
         exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge h)
       linarith
+  | nearestAway =>
+      by_contra h
+      have habove := (lt_roundTextMagnitude_nearestAway_iff negative x hx n).mp
+        (Nat.lt_of_not_ge h)
+      linarith
   | towardZero => exact hf
-  | towardPositiveInfinity => cases negative <;> assumption
-  | towardNegativeInfinity => cases negative <;> assumption
+  | up => cases negative <;> assumption
+  | down => cases negative <;> assumption
+  | away => exact hc
 
 /-- Requested decimal output has exactly the requested digit count for nonzero inputs. -/
 theorem significantDecimal_coefficient_bounds (mode : IEEERoundingMode)
@@ -102,7 +145,7 @@ theorem significantDecimal_exact (mode : IEEERoundingMode) (value : DecimalText.
       DecimalText.carryDecimal, DecimalText.roundDecimal, RadixText.significant,
       DecimalText.significantQuantum] using congrArg Neg.neg h
 
-/-- Decimal precision output parses to exactly the grid-rounded value. -/
+/-- Decimal precision output parses to the grid-rounded value. -/
 theorem parse_formatDyadicText_significant_decimal (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) :
     DecimalText.parse (formatDyadicText mode .decimal (.significant digits) value).text =
@@ -117,7 +160,7 @@ theorem parse_formatDyadicText_significant_hexadecimal (mode : IEEERoundingMode)
       some (HexText.significant (roundTextMagnitude mode) value digits) := by
   simp [formatDyadicText]
 
-/-- Decimal output raises inexact precisely when its numerical value changes. -/
+/-- Decimal output raises inexact exactly when its numerical value changes. -/
 theorem formatDyadicText_decimal_inexact_iff (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) :
     (formatDyadicText mode .decimal (.significant digits) value).status.inexact = true ↔
@@ -125,7 +168,7 @@ theorem formatDyadicText_decimal_inexact_iff (mode : IEEERoundingMode)
         (DecimalText.ofDyadic value) digits).toRat ≠ value.toRat := by
   simp [formatDyadicText]
 
-/-- Hexadecimal output raises inexact precisely when its numerical value changes. -/
+/-- Hexadecimal output raises inexact exactly when its numerical value changes. -/
 theorem formatDyadicText_hexadecimal_inexact_iff (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) :
     (formatDyadicText mode .hexadecimal (.significant digits) value).status.inexact = true ↔
@@ -133,8 +176,8 @@ theorem formatDyadicText_hexadecimal_inexact_iff (mode : IEEERoundingMode)
   simp [formatDyadicText]
 
 /-- At a halfway integer, the common output rounder selects the even neighbor. -/
-theorem roundTextMagnitude_nearestEven_midpoint (negative : Bool) (n : Nat) :
-    roundTextMagnitude .nearestEven negative ((n : Rat) + 1 / 2) =
+theorem roundTextMagnitude_nearest_midpoint (negative : Bool) (n : Nat) :
+    roundTextMagnitude .nearest negative ((n : Rat) + 1 / 2) =
       if n % 2 = 0 then n else n + 1 := by
   have h := roundRatEven_half_step (n : Int)
   simp only [Int.cast_natCast] at h
@@ -142,25 +185,25 @@ theorem roundTextMagnitude_nearestEven_midpoint (negative : Bool) (n : Nat) :
   split <;> split <;> simp_all <;> omega
 
 /-- The same half-grid error guarantee holds in any external radix greater than one. -/
-theorem significantMagnitude_nearestEven_error (radix : Nat) (hradix : 1 < radix)
+theorem significantMagnitude_nearest_error (radix : Nat) (hradix : 1 < radix)
     (negative : Bool) (coefficient : Nat) (quantum : Int) (digits : ℕ+) :
-    |((RadixText.significant radix (roundTextMagnitude .nearestEven) negative
+    |((RadixText.significant radix (roundTextMagnitude .nearest) negative
         coefficient quantum digits).1 : Rat) *
-        (radix : Rat) ^ (RadixText.significant radix (roundTextMagnitude .nearestEven)
+        (radix : Rat) ^ (RadixText.significant radix (roundTextMagnitude .nearest)
           negative coefficient quantum digits).2 -
       (coefficient : Rat) * (radix : Rat) ^ quantum| ≤
         (radix : Rat) ^ RadixText.significantQuantum radix coefficient quantum digits / 2 := by
   simpa only [div_eq_mul_inv, one_mul, mul_comm] using
     RadixText.significant_error radix (Nat.zero_lt_of_lt hradix)
-      (roundTextMagnitude .nearestEven) (1 / 2)
-      roundTextMagnitude_nearestEven_error negative coefficient quantum digits
+      (roundTextMagnitude .nearest) (1 / 2)
+      roundTextMagnitude_nearest_error negative coefficient quantum digits
 
 /-- Nearest-even decimal output has at most half a requested decimal grid unit of error. -/
-theorem significantDecimal_nearestEven_error (value : DecimalText.Decimal) (digits : ℕ+) :
-    |(DecimalText.significantDecimal (roundTextMagnitude .nearestEven) value digits).toRat -
+theorem significantDecimal_nearest_error (value : DecimalText.Decimal) (digits : ℕ+) :
+    |(DecimalText.significantDecimal (roundTextMagnitude .nearest) value digits).toRat -
         value.toRat| ≤
       (10 : Rat) ^ DecimalText.significantQuantum value.significand value.exponent digits / 2 := by
-  have h := significantMagnitude_nearestEven_error 10 (by decide) value.negative
+  have h := significantMagnitude_nearest_error 10 (by decide) value.negative
     value.significand value.exponent digits
   cases hs : value.negative <;>
     simpa [DecimalText.Decimal.toRat, DecimalText.significantDecimal,
@@ -168,11 +211,11 @@ theorem significantDecimal_nearestEven_error (value : DecimalText.Decimal) (digi
       RadixText.significant, hs, neg_mul, neg_sub_neg, neg_add_eq_sub, abs_sub_comm] using h
 
 /-- Nearest-even hexadecimal output has at most half a requested hexadecimal grid unit of error. -/
-theorem significantHex_nearestEven_error (value : Numerics.Dyadic) (digits : ℕ+) :
-    |(HexText.significant (roundTextMagnitude .nearestEven) value digits).toRat - value.toRat| ≤
+theorem significantHex_nearest_error (value : Numerics.Dyadic) (digits : ℕ+) :
+    |(HexText.significant (roundTextMagnitude .nearest) value digits).toRat - value.toRat| ≤
       (16 : Rat) ^ RadixText.significantQuantum 16 (HexText.radixPair value).1
         (HexText.radixPair value).2 digits / 2 := by
-  have h := significantMagnitude_nearestEven_error 16 (by decide) value.negative
+  have h := significantMagnitude_nearest_error 16 (by decide) value.negative
     (HexText.radixPair value).1 (HexText.radixPair value).2 digits
   simp only [Nat.cast_ofNat] at h
   rw [HexText.radixPair_value] at h
@@ -191,20 +234,13 @@ theorem significantHex_coefficient_bounds (mode : IEEERoundingMode)
     (floor_le_roundTextMagnitude mode) (roundTextMagnitude_le_nat mode)
   exact Nat.mul_ne_zero hc (Nat.two_pow_pos _).ne'
 
-/-- Exact output raises none of the five exception indicators in either external radix. -/
-@[simp] theorem formatWithStatus_exact_status {fmt : FloatFormat} (mode : IEEERoundingMode)
-    (radix : TextRadix) (value : Model fmt) :
-    (formatWithStatus mode radix .exact value).status = {} := by
-  cases h : exactValue value <;> cases radix <;>
-    simp [formatWithStatus, h, formatDyadicText]
-
 private theorem directedTextBounds (negative : Bool) (magnitude unit : Rat)
     (hmagnitude : 0 ≤ magnitude) (hunit : 0 < unit) :
     let signed := (if negative then (-1 : Rat) else 1) * magnitude
     let rounded := fun mode => (if negative then (-1 : Rat) else 1) *
       (roundTextMagnitude mode negative (magnitude / unit) : Rat) * unit
-    signed ≤ rounded .towardPositiveInfinity ∧
-      rounded .towardNegativeInfinity ≤ signed ∧
+    signed ≤ rounded .up ∧
+      rounded .down ≤ signed ∧
       |rounded .towardZero| ≤ |signed| := by
   dsimp only
   have hx : 0 ≤ magnitude / unit := div_nonneg hmagnitude hunit.le
@@ -224,9 +260,9 @@ private theorem directedTextBounds (negative : Bool) (magnitude unit : Rat)
 
 private theorem significantDecimal_directed_bounds (value : DecimalText.Decimal) (digits : ℕ+) :
     value.toRat ≤
-        (DecimalText.significantDecimal (roundTextMagnitude .towardPositiveInfinity)
+        (DecimalText.significantDecimal (roundTextMagnitude .up)
           value digits).toRat ∧
-      (DecimalText.significantDecimal (roundTextMagnitude .towardNegativeInfinity)
+      (DecimalText.significantDecimal (roundTextMagnitude .down)
         value digits).toRat ≤ value.toRat ∧
       |(DecimalText.significantDecimal (roundTextMagnitude .towardZero) value digits).toRat| ≤
         |value.toRat| := by
@@ -240,16 +276,16 @@ private theorem significantDecimal_directed_bounds (value : DecimalText.Decimal)
     simpa [DecimalText.Decimal.toRat, hs, mul_assoc] using h
 
 /-- Decimal output rounded toward positive infinity is at least the exact input. -/
-theorem significantDecimal_towardPositiveInfinity_le (value : DecimalText.Decimal)
+theorem le_significantDecimal_up (value : DecimalText.Decimal)
     (digits : ℕ+) :
     value.toRat ≤ (DecimalText.significantDecimal
-      (roundTextMagnitude .towardPositiveInfinity) value digits).toRat :=
+      (roundTextMagnitude .up) value digits).toRat :=
   (significantDecimal_directed_bounds value digits).1
 
 /-- Decimal output rounded toward negative infinity is at most the exact input. -/
-theorem significantDecimal_towardNegativeInfinity_le (value : DecimalText.Decimal)
+theorem significantDecimal_down_le (value : DecimalText.Decimal)
     (digits : ℕ+) :
-    (DecimalText.significantDecimal (roundTextMagnitude .towardNegativeInfinity)
+    (DecimalText.significantDecimal (roundTextMagnitude .down)
       value digits).toRat ≤ value.toRat :=
   (significantDecimal_directed_bounds value digits).2.1
 
@@ -260,9 +296,9 @@ theorem significantDecimal_towardZero_abs_le (value : DecimalText.Decimal) (digi
   (significantDecimal_directed_bounds value digits).2.2
 
 private theorem significantHex_directed_bounds (value : Numerics.Dyadic) (digits : ℕ+) :
-    value.toRat ≤ (HexText.significant (roundTextMagnitude .towardPositiveInfinity)
+    value.toRat ≤ (HexText.significant (roundTextMagnitude .up)
         value digits).toRat ∧
-      (HexText.significant (roundTextMagnitude .towardNegativeInfinity)
+      (HexText.significant (roundTextMagnitude .down)
         value digits).toRat ≤ value.toRat ∧
       |(HexText.significant (roundTextMagnitude .towardZero) value digits).toRat| ≤
         |value.toRat| := by
@@ -279,14 +315,14 @@ private theorem significantHex_directed_bounds (value : Numerics.Dyadic) (digits
       HexText.radixPair_value] using h
 
 /-- Hexadecimal output toward positive infinity is at least the exact input. -/
-theorem significantHex_towardPositiveInfinity_le (value : Numerics.Dyadic) (digits : ℕ+) :
-    value.toRat ≤ (HexText.significant (roundTextMagnitude .towardPositiveInfinity)
+theorem le_significantHex_up (value : Numerics.Dyadic) (digits : ℕ+) :
+    value.toRat ≤ (HexText.significant (roundTextMagnitude .up)
       value digits).toRat :=
   (significantHex_directed_bounds value digits).1
 
 /-- Hexadecimal output toward negative infinity is at most the exact input. -/
-theorem significantHex_towardNegativeInfinity_le (value : Numerics.Dyadic) (digits : ℕ+) :
-    (HexText.significant (roundTextMagnitude .towardNegativeInfinity) value digits).toRat ≤
+theorem significantHex_down_le (value : Numerics.Dyadic) (digits : ℕ+) :
+    (HexText.significant (roundTextMagnitude .down) value digits).toRat ≤
       value.toRat :=
   (significantHex_directed_bounds value digits).2.1
 

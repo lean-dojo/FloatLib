@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Draw the four IEEE rounding directions on three exact integer-grid midpoint inputs.
+"""Draw the four rounding directions required for binary formats on three exact integer-grid
+midpoint inputs.
 
 The values -2.5, 2.5 and 3.5 and the four modes come from chapter 02. This is rounding to
 integers, not a claim that these are adjacent values in binary32. Each small number line has
@@ -21,10 +22,10 @@ import figstyle as fs
 OUT_NAME = "ch01-rounding-directions.png"
 INPUTS = [Fraction(-5, 2), Fraction(5, 2), Fraction(7, 2)]
 DIRECTIONS = [
-    ("Nearest even", ".nearestEven", round, fs.BLUE),
+    ("Nearest even", ".nearest", round, fs.BLUE),
     ("Toward zero", ".towardZero", math.trunc, fs.ORANGE),
-    ("Toward +∞", ".towardPositiveInfinity", math.ceil, fs.GREEN),
-    ("Toward −∞", ".towardNegativeInfinity", math.floor, fs.VERMILION),
+    ("Toward +∞", ".up", math.ceil, fs.GREEN),
+    ("Toward −∞", ".down", math.floor, fs.VERMILION),
 ]
 RESULTS = [[fn(value) for value in INPUTS] for _, _, fn, _ in DIRECTIONS]
 assert RESULTS == [[-2, 2, 4], [-2, 2, 3], [-2, 3, 4], [-3, 2, 3]]

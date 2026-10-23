@@ -18,7 +18,7 @@ Binary16 distinguishes an exact accumulator from a reduction that rounds every a
 `(2048 + 1) - 2048` produces zero with repeated rounding, but one with a round-once accumulator.
 The symbolic examples apply the absolute and mixed bounds without global relative assumptions.
 Signed-zero and exceptional-input examples check the result bits and every IEEE status indicator
-in all four rounding modes, including conversions into finite-only destination formats.
+in all six rounding modes, including conversions into finite-only destination formats.
 -/
 
 @[expose] public section
@@ -44,7 +44,7 @@ example : Model.toNatBits (cancellation.eval Model.add id) = 0 := by
   decide
 
 example : Model.toNatBits
-    (Model.sum FloatFormat.binary16 #[large, one, negativeLarge] .nearestEven) = 0x3c00 := by
+    (Model.sum FloatFormat.binary16 #[large, one, negativeLarge] .nearest) = 0x3c00 := by
   decide
 
 /-- Every intermediate in this cancellation example remains finite. -/
@@ -130,28 +130,28 @@ example (combine : ℝ → ℝ → ℝ) (value : Nat → ℝ) (u : ℝ) (hu : 0 
 
 /-- Retain the result bits and all five exception indicators of a binary32-source sum. -/
 private def binary32Sum (destination : FloatFormat) (values : List Nat)
-    (mode : Model.IEEERoundingMode) : Nat × Model.IEEEStatus :=
-  let outcome := Model.sumWithStatus destination
-    (values.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode
+    (mode : Model.IEEERoundingMode) : Nat × IEEEStatus :=
+  let outcome := Model.sum destination
+    (values.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode (status := true)
   (outcome.value.toNatBits, outcome.status)
 
 /-- Retain length errors, result bits, and all five indicators of a binary32-source dot product. -/
 private def binary32Dot (destination : FloatFormat) (left right : List Nat)
     (mode : Model.IEEERoundingMode) :
-    Except FloatLib.Numerics.ReductionError (Nat × Model.IEEEStatus) :=
-  (Model.dotWithStatus destination
+    Except FloatLib.Numerics.ReductionError (Nat × IEEEStatus) :=
+  (Model.dot destination
     (left.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray
-    (right.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode).map
+    (right.map (Model.ofNatBits (fmt := FloatFormat.binary32))).toArray mode (status := true)).map
     (fun outcome => (outcome.value.toNatBits, outcome.status))
 
--- Same-sign zeros retain their sign; only mixed signs and cancellation depend on rounding.
+-- Same-sign zeros keep their sign, and only mixed signs and cancellation depend on rounding.
 example (mode : Model.IEEERoundingMode) :
     [ [], [0], [0, 0], [0x80000000, 0x80000000]
     , [0, 0x80000000], [0x3f800000, 0xbf800000]
     ].map (binary32Sum FloatFormat.binary32 · mode) =
       [(0, {}), (0, {}), (0, {}), (0x80000000, {}),
-        (if mode = .towardNegativeInfinity then 0x80000000 else 0, {}),
-        (if mode = .towardNegativeInfinity then 0x80000000 else 0, {})] := by
+        (if mode = .down then 0x80000000 else 0, {}),
+        (if mode = .down then 0x80000000 else 0, {})] := by
   cases mode <;> decide
 
 -- A quiet NaN before or after an invalid product cannot clear its invalid indicator.
@@ -160,10 +160,10 @@ example (mode : Model.IEEERoundingMode) :
     , binary32Dot FloatFormat.binary32 [0x7fc00000, 0] [0x3f800000, 0x7f800000] mode
     ] = List.replicate 2 (.ok (0x7fc00000, { invalid := true })) := by
   cases mode <;>
-    simp [binary32Dot, Model.dotWithStatus, Model.Reduction.Internal.dotState,
+    simp [binary32Dot, Model.dot, Model.Internal.Status.dot, Model.Reduction.Internal.dotState,
       Model.Reduction.Internal.dotStateLoop] <;> decide
 
--- Opposing infinities raise invalid with a preceding or following NaN; a NaN alone leaves it clear.
+-- Opposing infinities raise invalid with a preceding or following NaN. A NaN alone leaves it clear.
 example (mode : Model.IEEERoundingMode) :
     [ [0x7f800000, 0xff800000, 0x7fc12345], [0x7fc12345, 0x7f800000, 0xff800000]
     , [0x7fc12345]

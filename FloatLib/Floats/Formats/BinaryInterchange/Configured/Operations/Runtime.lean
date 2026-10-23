@@ -13,11 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 # Standard operations for configured binary values
 
 These definitions expose the descriptor-generic operation model on the ordinary
-`ExecFloat.Binary` carrier. They add no arithmetic implementation and preserve exception status
-exactly across the packing boundary.
-
-The definitions call the descriptor-model operations through the storage codec. The companion
-proof module shows that packing changes neither values nor flags.
+`ExecFloat.Binary` carrier. They add no arithmetic implementation: each one calls the
+descriptor-model operation through the storage codec, and `Configured.Operations.Proof` shows
+that packing changes neither values, flags, nor ternary values.
 -/
 
 @[expose] public section
@@ -34,62 +32,88 @@ local notation "Value" =>
     format.expWidth_ge_two format.fracWidth_pos format.exponentBias_pos
     format.exponentBias_le_maxFinite plan code
 
-/-- IEEE remainder, using a nearest-even integral quotient for finite operands. -/
-@[inline] def remainder (dividend divisor : Value) : Value :=
-  ModelCodec.liftBinary (Model := Model format) (plan := plan)
-    Model.remainder dividend divisor
-
-/-- IEEE remainder together with its exception indicators. -/
-@[inline] def remainderWithStatus
-    (dividend divisor : Value) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <|
-    Model.remainderWithStatus
-      (ExecFloat.Binary.toModel dividend)
-      (ExecFloat.Binary.toModel divisor)
+/--
+IEEE remainder, using a nearest-even integral quotient for finite operands. With `status := true`
+the result also carries the `invalid` indicator.
+-/
+@[macro_inline] def remainder (dividend divisor : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.remainder (ExecFloat.Binary.toModel dividend) (ExecFloat.Binary.toModel divisor)
+          (status := true)
+  | false =>
+      ModelCodec.liftBinary (Model := Model format) (plan := plan)
+        (fun x y => Model.remainder x y) dividend divisor
 
 /--
-Round to an integer and encode it in the selected direction. A custom finite-only format can
-saturate; use `roundToIntegralExactWithStatus` to detect that overflow.
+Round to an integer and encode it in `mode` (nearest-even by default). With `status := true` the
+result also reports fractional loss and, for a custom finite-only format that saturates, overflow.
 -/
-@[inline] def roundToIntegral
-    (value : Value) (rounding : Model.IEEERoundingMode) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan)
-    (Model.roundToIntegral · rounding) value
+@[macro_inline] def roundToIntegral (value : Value)
+    (mode : Model.IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.roundToIntegral (ExecFloat.Binary.toModel value) mode (status := true)
+  | false =>
+      ModelCodec.liftUnary (Model := Model format) (plan := plan)
+        (fun x => Model.roundToIntegral x mode) value
 
-/-- Round to an integer, encode it in the same direction, and report fractional loss or overflow. -/
-@[inline] def roundToIntegralExactWithStatus
-    (value : Value) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <|
-    Model.roundToIntegralExactWithStatus (ExecFloat.Binary.toModel value) rounding
-
-/-- Multiply by `2^n` and round in the selected direction (IEEE 754 `scaleB`). -/
-@[inline] def scale
-    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan)
-    (Model.scale · n rounding) value
-
-/-- Power-of-two scaling with the IEEE exception indicators. -/
-@[inline] def scaleWithStatus
-    (value : Value) (n : Int) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <|
-    Model.scaleWithStatus (ExecFloat.Binary.toModel value) n rounding
+/--
+Multiply by `2^n` and round in `mode` (nearest-even by default), IEEE 754 `scaleB`. With
+`status := true` the result also carries the IEEE exception indicators and the ternary value.
+-/
+@[macro_inline] def scale (value : Value) (n : Int)
+    (mode : Model.IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.scale (ExecFloat.Binary.toModel value) n mode (status := true)
+  | false =>
+      ModelCodec.liftUnary (Model := Model format) (plan := plan)
+        (fun x => Model.scale x n mode) value
 
 /-- Exact integer-result IEEE `logB`, with no packing or exponent rounding. -/
 @[inline] def binaryExponentInt (value : Value) : Model.IntegerExponentOutcome :=
   Model.binaryExponentInt (ExecFloat.Binary.toModel value)
 
-/-- Leading binary exponent rounded into the configured format; `binaryExponentInt` is exact. -/
-@[inline] def binaryExponent (value : Value) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.binaryExponent value
+/--
+Leading binary exponent rounded to nearest-even into the configured format. `binaryExponentInt`
+is the exact integer version. With `status := true` the result also carries the IEEE exception
+indicators and the ternary value.
+-/
+@[macro_inline] def binaryExponent (value : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.binaryExponent (ExecFloat.Binary.toModel value) (status := true)
+  | false =>
+      ModelCodec.liftUnary (Model := Model format) (plan := plan)
+        (fun x => Model.binaryExponent x) value
 
-/-- Return the leading binary exponent and its IEEE exception indicators. -/
-@[inline] def binaryExponentWithStatus
-    (value : Value) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <| Model.binaryExponentWithStatus (ExecFloat.Binary.toModel value)
+/--
+The integer that rounds the exact value of a finite configured value in `mode`, toward zero by
+default as a C or Python integer cast does, or `none` for a NaN or an infinity.
+
+The integer is unbounded, so no finite value overflows, while `roundToIntegral` keeps the result
+in the format.
+-/
+@[inline] def toInt? (value : Value) (mode : Model.IEEERoundingMode := .towardZero) :
+    Option Int :=
+  (Model.toDyadic? (ExecFloat.Binary.toModel value)).map (Model.roundDyadicToInt mode)
 
 /-- Copy the numerical sign of `signSource` onto `magnitude`. -/
 @[inline] def copySign (magnitude signSource : Value) : Value :=
@@ -100,13 +124,32 @@ saturate; use `roundToIntegralExactWithStatus` to detect that overflow.
 @[inline] def abs (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.abs value
 
-/-- Next representable configured value in the positive direction. -/
-@[inline] def nextUp (value : Value) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.nextUp value
+/--
+Next representable configured value in the positive direction. With `status := true` the result
+also carries the `invalid` indicator of a signaling NaN.
+-/
+@[macro_inline] def nextUp (value : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true => IEEEOutcome.ofModel <| Model.nextUp (ExecFloat.Binary.toModel value) (status := true)
+  | false =>
+      ModelCodec.liftUnary (Model := Model format) (plan := plan) (fun x => Model.nextUp x) value
 
-/-- Next representable configured value in the negative direction. -/
-@[inline] def nextDown (value : Value) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.nextDown value
+/--
+Next representable configured value in the negative direction. With `status := true` the result
+also carries the `invalid` indicator of a signaling NaN.
+-/
+@[macro_inline] def nextDown (value : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <| Model.nextDown (ExecFloat.Binary.toModel value) (status := true)
+  | false =>
+      ModelCodec.liftUnary (Model := Model format) (plan := plan) (fun x => Model.nextDown x) value
 
 /-- IEEE-2008-style `minNum`, retaining the numeric operand against one quiet NaN. -/
 @[inline] def minNum (left right : Value) : Value :=

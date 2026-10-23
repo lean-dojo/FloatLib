@@ -6,16 +6,15 @@ Authors: FloatLib Team
 
 module
 
+import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
 
 /-!
 # Finite-operand helpers for directed arithmetic
 
 Finite-operand classification facts support the format-generic directed arithmetic proofs.
-Keeping these facts separate lets each arithmetic module focus on its exact intermediate and
-rounding argument.
 -/
 
 @[expose] public section
@@ -91,25 +90,26 @@ theorem toReal_mulDyadic_of_toDyadic?_some
 /-! ## Directed operations on finite operands
 
 For modes other than nearest-even, finite addition and multiplication reduce to rounding an exact
-dyadic intermediate; finite division with a nonzero divisor rounds an exact scaled rational.
-Exact cancellation has a separate signed-zero rule. Square root instead rounds the appropriate
-endpoint of a dyadic bracket around the exact root. These characterisations are shared by the
-enclosure, non-NaN, and finite-format proofs.
+dyadic intermediate, and finite division with a nonzero divisor rounds an exact scaled rational.
+Exact cancellation has its own signed-zero rule. Square root in a directed mode instead rounds
+the appropriate endpoint of a dyadic bracket around the exact root, and both nearest modes use the
+nearest-even `sqrt`. These characterisations are shared by the enclosure, non-NaN, and
+finite-format proofs.
 -/
 
 /--
 For finite operands, a directed addition is the directed rounding of the exact dyadic sum, or the
 rounding direction's signed zero when the sum cancels exactly.
 -/
-theorem addWithRounding_eq_of_toDyadic?_some
-    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearestEven)
+theorem add_eq_of_toDyadic?_some
+    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearest)
     {x y : Model fmt} {dx dy : Numerics.Dyadic}
     (hdx : toDyadic? x = some dx) (hdy : toDyadic? y = some dy) :
-    addWithRounding mode x y =
+    add x y (mode := mode) =
       if (addDyadic dx dy).significand = 0 then
         zeroForExactSum fmt mode dx.negative dy.negative
       else
-        roundDyadicWithRounding fmt mode (addDyadic dx dy) := by
+        Internal.Directed.roundDyadic fmt mode (addDyadic dx dy) := by
   have hx := isFinite_eq_true_of_toDyadic?_some hdx
   have hy := isFinite_eq_true_of_toDyadic?_some hdy
   have hchoose := chooseNaN2_none_of_isFinite x y hx hy
@@ -117,15 +117,15 @@ theorem addWithRounding_eq_of_toDyadic?_some
   have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
   cases mode <;> first
     | exact absurd rfl hmode
-    | simp [addWithRounding, hchoose, hxInf, hyInf, hdx, hdy]
+    | simp [add, Internal.Directed.add, hchoose, hxInf, hyInf, hdx, hdy]
 
 /-- For finite operands, a directed multiplication rounds the exact dyadic product. -/
-theorem mulWithRounding_eq_of_toDyadic?_some
-    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearestEven)
+theorem mul_eq_of_toDyadic?_some
+    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearest)
     {x y : Model fmt} {dx dy : Numerics.Dyadic}
     (hdx : toDyadic? x = some dx) (hdy : toDyadic? y = some dy) :
-    mulWithRounding mode x y =
-      roundDyadicWithRounding fmt mode
+    mul x y (mode := mode) =
+      Internal.Directed.roundDyadic fmt mode
         { negative := Bool.xor dx.negative dy.negative
           significand := dx.significand * dy.significand
           exponent := dx.exponent + dy.exponent } := by
@@ -136,19 +136,19 @@ theorem mulWithRounding_eq_of_toDyadic?_some
   have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
   cases mode <;> first
     | exact absurd rfl hmode
-    | simp [mulWithRounding, hchoose, hxInf, hyInf, hdx, hdy]
+    | simp [mul, Internal.Directed.mul, hchoose, hxInf, hyInf, hdx, hdy]
 
 /--
 For a finite dividend and a finite nonzero divisor, a directed division rounds the exact scaled
 rational quotient.
 -/
-theorem divWithRounding_eq_of_toDyadic?_some
-    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearestEven)
+theorem div_eq_of_toDyadic?_some
+    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearest)
     {x y : Model fmt} {dx dy : Numerics.Dyadic}
     (hdx : toDyadic? x = some dx) (hdy : toDyadic? y = some dy)
     (hy0 : isZero y = false) :
-    divWithRounding mode x y =
-      roundRatWithRoundingScaled fmt mode (Bool.xor dx.negative dy.negative)
+    div x y (mode := mode) =
+      Internal.Directed.roundRatScaled fmt mode (Bool.xor dx.negative dy.negative)
         dx.significand dy.significand (dx.exponent - dy.exponent) := by
   have hx := isFinite_eq_true_of_toDyadic?_some hdx
   have hy := isFinite_eq_true_of_toDyadic?_some hdy
@@ -159,39 +159,45 @@ theorem divWithRounding_eq_of_toDyadic?_some
   by_cases hdxMant : dx.significand = 0
   · cases mode <;> first
       | exact absurd rfl hmode
-      | simp [divWithRounding, hchoose, hxInf, hyInf, hy0, hdx, hdy, hdxMant, hdyMant,
-          roundRatWithRoundingScaled, roundRatMagnitudeDirectedScaled]
+      | simp [div, Internal.Directed.div, hchoose, hxInf, hyInf, hy0, hdx, hdy, hdxMant, hdyMant,
+          Internal.Directed.roundRatScaled, roundRatMagnitudeDirectedScaled,
+            roundRatNearestAwayScaled,
+          rationalIsGridTieScaled, roundRatScaled_num_zero fmt _ _ _ hdyMant]
   · cases mode <;> first
       | exact absurd rfl hmode
-      | simp [divWithRounding, hchoose, hxInf, hyInf, hy0, hdx, hdy, hdxMant]
+      | simp [div, Internal.Directed.div, hchoose, hxInf, hyInf, hy0, hdx, hdy, hdxMant]
 
-/-- Every directed square root fixes a finite zero. -/
-theorem sqrtWithRounding_eq_self_of_isZero
-    {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearestEven)
-    {x : Model fmt} (hfinite : isFinite x = true) (hzero : isZero x = true) :
-    sqrtWithRounding mode x = x := by
+/--
+Square root fixes a finite zero of either sign in every rounding direction, for every descriptor.
+-/
+theorem sqrt_of_isZero {fmt : FloatFormat} {mode : IEEERoundingMode} {x : Model fmt}
+    (hfinite : isFinite x = true) (hzero : isZero x = true) :
+    sqrt x (mode := mode) = x := by
   have hchoose := chooseNaN1_none_of_isFinite x hfinite
   have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
-  cases mode <;> first
-    | exact absurd rfl hmode
-    | simp [sqrtWithRounding, hchoose, hinf, hzero]
+  cases mode
+  case nearest | nearestAway =>
+    change Internal.Nearest.sqrt x = x
+    rw [show Internal.Nearest.sqrt x = Spec.sqrt x from SqrtBackend.dispatch_eq_spec x]
+    simp [Spec.sqrt, hchoose, hinf, hzero]
+  all_goals simp [sqrt, Internal.Directed.sqrt, hchoose, hinf, hzero]
 
-/-- On a finite positive operand, `sqrtDown` rounds the lower square-root bracket downward. -/
-theorem sqrtDown_eq_roundDyadicDown_of_toDyadic?_some
+/-- On a finite positive operand, downward square root rounds the lower bracket downward. -/
+theorem sqrt_down_eq_roundDyadicDown_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hd : toDyadic? x = some d) (hsign : signBit x = false) (hzero : isZero x = false) :
-    sqrtDown x = roundDyadicDown fmt (sqrtDyadicBracket fmt d).lower := by
+    sqrt x (mode := .down) = roundDyadicDown fmt (sqrtDyadicBracket fmt d).lower := by
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
-  simp [sqrtDown, sqrtWithRounding, chooseNaN1_none_of_isFinite x hfinite,
+  simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
     isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
 
-/-- On a finite positive operand, `sqrtUp` rounds the upper square-root bracket upward. -/
-theorem sqrtUp_eq_roundDyadicUp_of_toDyadic?_some
+/-- On a finite positive operand, upward square root rounds the upper bracket upward. -/
+theorem sqrt_up_eq_roundDyadicUp_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hd : toDyadic? x = some d) (hsign : signBit x = false) (hzero : isZero x = false) :
-    sqrtUp x = roundDyadicUp fmt (sqrtDyadicBracket fmt d).upper := by
+    sqrt x (mode := .up) = roundDyadicUp fmt (sqrtDyadicBracket fmt d).upper := by
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
-  simp [sqrtUp, sqrtWithRounding, chooseNaN1_none_of_isFinite x hfinite,
+  simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
     isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
 
 end Model

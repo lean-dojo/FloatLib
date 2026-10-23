@@ -62,6 +62,7 @@ instance configuredBenchmarkCarrier
     | .word16 _ => fun value => UInt64.ofNat value.raw.1.toNat
     | .word32 _ => fun value => UInt64.ofNat value.raw.1.toNat
     | .word64 _ => fun value => value.raw.1
+    | .pair _ _ => fun value => value.raw.1.lo
     | .wide => fun value => UInt64.ofNat value.raw.toNatBits
     | .limbs _ => fun value =>
         (value.raw.1.limb 0).toUInt64 ||| ((value.raw.1.limb 1).toUInt64 <<< 32)
@@ -70,7 +71,7 @@ instance configuredBenchmarkCarrier
 Benchmark-local default for any carrier that can round the exact zero model.
 
 This instance supports bounds-checked array access in benchmark clients. We keep it in the
-benchmark driver rather than the numerical API: importing `Public.Sweep` opts into it explicitly.
+benchmark driver and out of the numerical API, so only importing `Public.Sweep` brings it in.
 -/
 instance benchmarkExecFloatInhabited
     (F : Type) [EncodedFormat F] [carrier : BenchmarkCarrier F FloatFormat Model] :
@@ -83,13 +84,7 @@ abbrev P4 := ExecFloat.Binary (exponentBits := 2) (fractionBits := 3)
 abbrev P5 := ExecFloat.Binary (exponentBits := 3) (fractionBits := 4)
 abbrev P6 := ExecFloat.Binary (exponentBits := 4) (fractionBits := 5)
 abbrev P7 := ExecFloat.Binary (exponentBits := 4) (fractionBits := 6)
-abbrev P8 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 7)
-abbrev P11 := ExecFloat.Binary (exponentBits := 5) (fractionBits := 10)
-abbrev P24 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-abbrev P53 := ExecFloat.Binary (exponentBits := 11) (fractionBits := 52)
-abbrev P113 := ExecFloat.Binary (exponentBits := 15) (fractionBits := 112)
 abbrev P161 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 160)
-abbrev P237 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 236)
 abbrev P493 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 492)
 abbrev P1024 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 1023)
 abbrev P2048 := ExecFloat.Binary (exponentBits := 19) (fractionBits := 2047)
@@ -134,20 +129,20 @@ def inputsX
     (F : Type) [EncodedFormat F] [carrier : BenchmarkCarrier F FloatFormat Model] :
     Array (ExecFloat F) :=
   xs.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 def inputsY
     (F : Type) [EncodedFormat F] [carrier : BenchmarkCarrier F FloatFormat Model] :
     Array (ExecFloat F) :=
   ys.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 /-- Nonnegative shared exact vector used by square root. -/
 def inputsSqrt
     (F : Type) [EncodedFormat F] [carrier : BenchmarkCarrier F FloatFormat Model] :
     Array (ExecFloat F) :=
   sqrtXs.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 def defaultIterations (precision : Nat) : Nat :=
   if precision ≤ 64 then
@@ -224,7 +219,7 @@ private def runUnary
   timeRow operation backend policyProfile expectedCalls precision iterations fun _ =>
     workload iterations xs 0
 
-/-- Time public addition and record the certificate actually selected by the capability. -/
+/-- Time public addition and record the selected certificate. -/
 opaque runAdd
     {F : Type} [ExecFloat.Backend.PolicyFor F] [EncodedFormat F]
     [BenchmarkCarrier F FloatFormat Model] [ExecFloat.Add F]
@@ -235,7 +230,7 @@ opaque runAdd
   runBinary "add" (ExecFloat.Add.selectedCandidate (F := F)).name
     policy.profileName policy.expectedCalls precision workload
 
-/-- Time public subtraction and record the certificate actually selected by the capability. -/
+/-- Time public subtraction and record the selected certificate. -/
 opaque runSub
     {F : Type} [ExecFloat.Backend.PolicyFor F] [EncodedFormat F]
     [BenchmarkCarrier F FloatFormat Model] [ExecFloat.Sub F]
@@ -278,7 +273,7 @@ opaque runSqrt
   runUnary "sqrt" (ExecFloat.Sqrt.selectedCandidate (F := F)).name
     policy.profileName policy.expectedCalls precision workload
 
-/-- Time public FMA and record the certificate actually selected by the capability. -/
+/-- Time public FMA and record the selected certificate. -/
 opaque runFma
     {F : Type} [ExecFloat.Backend.PolicyFor F] [EncodedFormat F]
     [BenchmarkCarrier F FloatFormat Model] [ExecFloat.Fma F]

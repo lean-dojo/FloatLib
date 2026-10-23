@@ -41,10 +41,12 @@ namespace Addition
 
 variable (fmt : FloatFormat)
 
-/-- Same-sign normal pairs accepted by the native equal-exponent path. -/
+/-- Normal pairs accepted by the native storage-word path, including exact cancellation. -/
 def acceptedPairs : Array (Model fmt × Model fmt) :=
   #[
     (value fmt false fmt.bias 0, value fmt false fmt.bias 0),
+    (value fmt false fmt.bias 0, value fmt true fmt.bias 0),
+    (value fmt false fmt.bias 0, value fmt false (fmt.bias + 1) 0),
     (value fmt false fmt.bias 1, value fmt false fmt.bias 0),
     (value fmt false fmt.bias 1, value fmt false fmt.bias 2),
     (value fmt false (fmt.bias + 1) fmt.fracMaskNat, value fmt false (fmt.bias + 1) 1),
@@ -55,11 +57,9 @@ def acceptedPairs : Array (Model fmt × Model fmt) :=
       value fmt false (fmt.expAllOnesNat - 2) fmt.fracMaskNat)
   ]
 
-/-- Values deliberately handled by the exact baseline. -/
+/-- Subnormal sums, zeros, overflow, and exceptional values, handled by the exact baseline. -/
 def baselinePairs : Array (Model fmt × Model fmt) :=
   #[
-    (value fmt false fmt.bias 0, value fmt true fmt.bias 0),
-    (value fmt false fmt.bias 0, value fmt false (fmt.bias + 1) 0),
     (value fmt false 0 1, value fmt false 0 2),
     (posZero fmt, negZero fmt),
     (value fmt false (fmt.expAllOnesNat - 1) 0, value fmt false (fmt.expAllOnesNat - 1) 0),
@@ -91,7 +91,9 @@ def result : NativeHarness.RoutedResult :=
     (fun pair => Model.add pair.1 pair.2)
     (fun pair => Model.AddBackend.generic pair.1 pair.2)
     sameBits
-    (fun pair => NativePair.addNormalSameExponent? pair.1 pair.2)
+    (fun pair =>
+      (NativePair.addFiniteWords? fmt (NativePair.toWords pair.1) (NativePair.toWords pair.2)
+        false).map (NativePair.ofWords fmt))
 
 def totalFailures : Nat :=
   (result fmt).totalFailures
@@ -117,7 +119,9 @@ def result : NativeHarness.RoutedResult :=
     (fun pair => Model.sub pair.1 pair.2)
     (fun pair => Model.AddBackend.generic pair.1 (Model.neg pair.2))
     sameBits
-    (fun pair => NativePair.subNormalSameExponent? pair.1 pair.2)
+    (fun pair =>
+      (NativePair.addFiniteWords? fmt (NativePair.toWords pair.1) (NativePair.toWords pair.2)
+        true).map (NativePair.ofWords fmt))
 
 def totalFailures : Nat :=
   (result fmt).totalFailures
@@ -202,7 +206,7 @@ open FloatLib.Numerics.FixedWord
 
 variable (fmt : FloatFormat)
 
-/-- Explicit certified normal results and exact-baseline cases. -/
+/-- Listed certified normal results and exact-baseline cases. -/
 def fixtures : Array (Model fmt × Model fmt) :=
   #[
     (value fmt false fmt.bias 0, value fmt false fmt.bias 0),
@@ -251,8 +255,8 @@ def result : NativeHarness.RoutedResult :=
 /--
 Whether a routed normal division is accepted by the Algorithm D candidate itself.
 
-`divNormal?` remains correct when this check fails because it selects the proved restoring repair.
-Keeping this metric separate ensures a performance regression cannot silently turn every normal
+`divNormal?` stays correct when this check fails, because it then selects the proved restoring
+repair. A separate metric keeps a performance regression from silently turning every normal
 division into the cold repair path.
 -/
 @[inline] def fastCandidateAccepted (pair : Model fmt × Model fmt) : Bool :=
@@ -353,7 +357,9 @@ def result : NativeHarness.RoutedResult :=
     (fun ⟨x, y, z⟩ => Model.fma x y z)
     (fun ⟨x, y, z⟩ => Model.FmaBackend.generic x y z)
     sameBits
-    (fun ⟨x, y, z⟩ => NativePair.fmaNormalSameSignAligned? x y z)
+    (fun ⟨x, y, z⟩ =>
+      (NativePair.fmaFiniteWords? fmt (NativePair.toWords x) (NativePair.toWords y)
+        (NativePair.toWords z)).map (NativePair.ofWords fmt))
 
 def totalFailures : Nat :=
   (result fmt).totalFailures

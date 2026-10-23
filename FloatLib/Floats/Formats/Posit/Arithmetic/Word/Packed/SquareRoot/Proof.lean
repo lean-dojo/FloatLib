@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.SquareRoot.Runtime
-public import FloatLib.Kernels.FixedWord.RestoringSqrt.Proof
+public import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof
 
@@ -18,8 +18,8 @@ import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 # Correctness of packed native-word Posit square root
 
 The storage adapter decodes once, scales the exact significand into four fixed words, and runs the
-shared restoring square-root kernel. Its proved root and remainder are jammed into the common
-guard/sticky rounder, giving the executable word path exactly the arbitrary-width direct
+checked fixed-word square root, which equals the restoring loop. Its root and remainder are jammed
+into the common guard/sticky rounder, so the executable word path has the arbitrary-width direct
 square-root semantics.
 -/
 
@@ -69,7 +69,7 @@ private theorem directRoundCode_eq_roundPositiveCode
       DyadicRounding.restoreSignCode, hzero]
 
 /--
-For a positive nonzero source, the native root prefix is exactly the direct mathematical prefix.
+For a positive nonzero source, the native root prefix is the direct mathematical prefix.
 -/
 private theorem roundFieldsWord_toNat_eq_direct_of_positive
     (format : Format) (heligible : NativeWord.Eligible format)
@@ -89,7 +89,8 @@ private theorem roundFieldsWord_toNat_eq_direct_of_positive
     change (exponent % 2).toNat < 2
     omega
   unfold roundFieldsWord
-  simp only [beq_iff_eq, hsignificand, Bool.false_eq_true, ite_false]
+  simp only [beq_iff_eq, hsignificand, Bool.false_eq_true, ite_false,
+    CheckedSquareRoot.rootAndRemainder_eq]
   rw [NativeWordLimb.roundCodeWordLow_toNat_eq_direct
     format heligible, jamRoot_toNat]
   set shift := (exponent.emod 2).toNat + 2 * format.payloadBits with hshift
@@ -110,7 +111,7 @@ private theorem roundFieldsWord_toNat_eq_direct_of_positive
     DirectDyadicSquareRoot.scaledRadicand, DirectDyadicSquareRoot.exponentParity,
     hsignificandNat, hshift]
 
-/-- Native field rounding is exactly the common direct square-root domain rule. -/
+/-- Native field rounding equals the common direct square-root domain rule. -/
 theorem roundFieldsWord_toNat_eq_direct
     (format : Format) (heligible : NativeWord.Eligible format)
     (negative : Bool) (significand : UInt64) (exponent : Int) :
@@ -187,7 +188,7 @@ theorem roundFieldsWord_toNat_eq_direct
         rw [NativeWord.signMaskWord_toNat format heligible]
         simp [hnegativeValue]
 
-/-- The packed scalar adapter is exactly the stored-word square-root kernel. -/
+/-- The packed scalar adapter equals the stored-word square-root kernel. -/
 theorem sqrtWordCodeValid_eq
     {format : Format}
     (heligible : NativeWord.Eligible format)
@@ -229,7 +230,7 @@ theorem sqrtWordCodeValid_lt_modulus
   rw [sqrtWordCodeValid_eq]
   exact NativeWordArithmetic.sqrtWordCode_lt_modulus heligible value
 
-/-- The word-valued and natural-number views of the complete root code are identical. -/
+/-- The word-valued and natural-number views of the complete root code agree. -/
 theorem sqrtWordCodeWordValid_toNat
     {format : Format}
     (heligible : NativeWord.Eligible format)

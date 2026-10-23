@@ -12,10 +12,10 @@ public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 # Certified fixed-word division runtime
 
 The radix-`2^32` loop generates a quotient and remainder candidate for two normalized two-limb
-significands of `precision + 1` bits, for any precision from 65 to 126. A separate executable
-certificate checks the exact Euclidean equation and remainder bound. Rejected candidates select
-the allocation-light restoring accumulator. Mathematical soundness, completeness of the repair,
-and equality between that accumulator and the logical recurrence are isolated in
+significands of `precision + 1` bits, for any precision from 65 to 126. An executable
+certificate then checks the Euclidean equation and the remainder bound, and a rejected candidate
+is replaced by the allocation-light restoring accumulator. Soundness, completeness of the repair,
+and equality between that accumulator and the logical recurrence are proved in
 `CertifiedDivision.Proof`.
 -/
 
@@ -28,9 +28,9 @@ open FloatLib.Numerics.FixedWord
 /--
 Scaling distance for a normalized quotient of two `precision + 1`-bit significands.
 
-Division needs exactly these two cases: `precision` when the numerator is at least the
-denominator, and `precision + 1` otherwise. Keeping the choice closed prevents an unsupported
-distance from silently selecting one of the fixed-word layouts.
+Division needs two cases: `precision` when the numerator is at least the denominator, and
+`precision + 1` otherwise. A closed type keeps an unsupported distance from silently selecting
+one of the fixed-word layouts.
 -/
 inductive CandidateShift where
   /-- Scale the numerator by `2^precision`. -/
@@ -51,10 +51,10 @@ end CandidateShift
 /-- A mask selecting the low radix-`2^32` digit of a native word. -/
 def radix32Mask : UInt64 := 0xffffffff
 
-/-- The radix `2^32`, represented in a native 64-bit word. -/
+/-- Radix `2^32` as a native 64-bit word. -/
 def radix32Base : UInt64 := 0x100000000
 
-/-- Read radix-`2^32` digit `index` for `index < 4`; larger indices also return digit 3. -/
+/-- Read radix-`2^32` digit `index` for `index < 4`. Larger indices return digit 3 too. -/
 @[inline] def wordDigit32 (value : FloatLib.Numerics.FixedWord.UInt128) : Nat → UInt64
   | 0 => low32 value.lo
   | 1 => high32 value.lo
@@ -70,18 +70,18 @@ def radix32Base : UInt64 := 0x100000000
   }
 
 /--
-Apply the at-most-two quotient-digit corrections required by normalized Knuth division.
+Apply the at-most-two quotient-digit corrections required by normalized Knuth division and return
+the corrected digit.
+
+The digit and its remainder stay in separate native words, because a pair of `UInt64` values
+would box both components on every step.
 -/
 @[inline] def adjustQuotientDigit
-    (qhat rhat v3 v2 nextDigit : UInt64) : UInt64 × UInt64 :=
-  let adjustOnce (q r : UInt64) : UInt64 × UInt64 :=
-    if r < radix32Base &&
-        q * v2 > (r <<< 32) + nextDigit then
-      (q - 1, r + v3)
-    else
-      (q, r)
-  let first := adjustOnce qhat rhat
-  adjustOnce first.1 first.2
+    (qhat rhat v3 v2 nextDigit : UInt64) : UInt64 :=
+  let first := rhat < radix32Base && qhat * v2 > (rhat <<< 32) + nextDigit
+  let q1 := if first then qhat - 1 else qhat
+  let r1 := if first then rhat + v3 else rhat
+  if r1 < radix32Base && q1 * v2 > (r1 <<< 32) + nextDigit then q1 - 1 else q1
 
 /-- Result of one radix-`2^32` long-division step. -/
 structure Radix32StepResult where
@@ -105,15 +105,10 @@ Consume one radix-`2^32` quotient digit from a five-digit partial dividend.
 @[inline] def radix32Step
     (v0 v1 v2 v3 d0 d1 d2 d3 d4 : UInt64) :
     Radix32StepResult :=
-  let estimate :=
-    if d4 == v3 then
-      (radix32Mask, d3 + v3)
-    else
-      let pair := (d4 <<< 32) + d3
-      (pair / v3, pair % v3)
-  let adjusted :=
-    adjustQuotientDigit estimate.1 estimate.2 v3 v2 d2
-  let qhat := adjusted.1
+  let pair := (d4 <<< 32) + d3
+  let qEstimate := if d4 == v3 then radix32Mask else pair / v3
+  let rEstimate := if d4 == v3 then d3 + v3 else pair % v3
+  let qhat := adjustQuotientDigit qEstimate rEstimate v3 v2 d2
   let product0 := qhat * v0
   let subtrahend0 := low32 product0
   let borrow0 : UInt64 := if d0 < subtrahend0 then 1 else 0
@@ -178,15 +173,15 @@ The intended result is `(num * 2^(shift.toNat precision)) / den` together with t
 remainder. Knuth's Algorithm D runs in radix `2^32` after normalizing the divisor by
 `127 - precision` bits so that its leading bit is bit 127. The numerator receives the same
 normalization, which places the scaled dividend at `num * 2^127` or `num * 2^128` independently
-of the precision, so the digit layout below does not depend on the format. The shift argument has
-only the two layouts supported by this kernel.
+of the precision, so the digit layout below does not depend on the format. The shift argument
+admits only the two layouts this kernel supports.
 
 Algorithm reference: Donald E. Knuth, *The Art of Computer Programming*, vol. 2,
 *Seminumerical Algorithms*, 3rd ed. (1997), §4.3.1, Algorithm D.
 
-The Algorithm D result remains a speculative fast candidate: callers independently check it with
-`certificate`. `checkedCandidate` retains this exact hot path and invokes a proved restoring
-divider only after a failed certificate.
+The Algorithm D result is a speculative fast candidate that callers check with `certificate`.
+`checkedCandidate` keeps this hot path and calls a proved restoring divider only after a failed
+certificate.
 -/
 @[inline] def candidate (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift) :
@@ -239,9 +234,9 @@ divider only after a failed certificate.
   ⟨0, 0, value.hi, value.lo⟩
 
 /--
-Independently certify a quotient/remainder candidate for the selected scaling distance.
+Check a quotient/remainder candidate for the selected scaling distance.
 
-The check is the exact Euclidean equation
+The check is the Euclidean equation
 `quotient * den + remainder = num * 2^(shift.toNat precision)`, computed in 256 bits without
 carry, together with `remainder < den`. For `64 < precision ≤ 126`, `certificate_sound` shows
 that the check implies that the candidate is the true quotient and remainder.
@@ -283,23 +278,22 @@ Recompute a scaled quotient with the allocation-light two-limb restoring loop.
 
 This is a cold repair path. Normalized significands differ by less than a factor of two, so the
 initial quotient is zero or one and the selected shift generates the required `precision + 1`
-quotient bits. `restoringCandidate_eq_quotientSteps128` proves that this direct accumulator call
-equals the logical restoring recurrence.
+quotient bits. `restoringCandidate_eq_quotientSteps128` proves that this accumulator call equals
+the logical restoring recurrence.
 -/
 @[inline] def restoringCandidate (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift) :
     FloatLib.Numerics.FixedWord.RestoringQuotient.QuotientState
       FloatLib.Numerics.FixedWord.UInt128 :=
-  FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128Impl
+  FloatLib.Numerics.FixedWord.RestoringQuotient.Internal.quotientSteps128
     den (shift.toNat precision) (restoringInitial num den)
 
 /--
 Run the fast Algorithm D candidate and repair a failed certificate with restoring division.
 
-The common path is one Algorithm D candidate plus one certificate. If that check rejects the
-candidate, the function selects the restoring-division result instead. The proof module shows
-that this selected pair is exact on the normalized domain, so the backend does not need an
-additional failure branch.
+The common path is one Algorithm D candidate plus one certificate. If the check rejects the
+candidate, the function returns the restoring-division result. The proof module shows that the
+returned pair is correct on the normalized domain, so the backend needs no failure branch.
 -/
 @[inline] def checkedCandidate (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift) :
@@ -316,7 +310,7 @@ additional failure branch.
 Round a certified quotient to nearest, ties to even.
 
 `roundQuotient_toNat` requires `den < 2^127`, `remainder < den`, and the incremented quotient
-below `2^128`; the two-word backends satisfy these for their normalized operands.
+below `2^128`. The two-word backends satisfy these for their normalized operands.
 -/
 @[inline] def roundQuotient
     (den quotient remainder : FloatLib.Numerics.FixedWord.UInt128) :

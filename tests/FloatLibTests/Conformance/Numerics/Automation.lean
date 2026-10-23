@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Automation.Interval
 # Regression checks for representation-independent numerical automation
 
 The examples use the same `numerics` and `numerics_refine` commands across unrelated runtime
-carriers. They also ensure operation contracts can drive proof-indexed execution directly without
+carriers. They also check that operation contracts can drive proof-indexed execution without
 family-specific wrapper theorems.
 
-This is a regression module rather than a second automation API. Its deliberately small examples
-exercise the public syntax, exact contract discovery, and failure boundaries that users see, so a
-change to metaprogramming support cannot silently become tied to one float family.
+This module holds regression tests and adds no automation API of its own. Its deliberately small
+examples exercise the public syntax, exact contract discovery, and failure boundaries that users
+see, so a change to metaprogramming support cannot silently become tied to one float family.
 -/
 
 @[expose] public section
@@ -115,20 +115,11 @@ example (x : ℝ) (_hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : True := by
 
 /-! ## Stable `grind` contracts -/
 
-abbrev Binary32 :=
-  FloatLib.Floats.ExecFloat.Binary
-    (exponentBits := 8) (fractionBits := 23)
-
-abbrev Posit32 := FloatLib.Floats.ExecFloat.Posit (bits := 32)
-
-abbrev Posit32Quire :=
-  FloatLib.Floats.ExecFloat.Posit.Quire (bits := 32)
-
 /--
 The public binary carrier/model equivalence is available to generic proof automation without
 exposing the selected `UInt32` storage representation.
 -/
-example (value : Binary32) :
+example (value : FloatLib.Floats.Binary32) :
     FloatLib.Floats.ExecFloat.Binary.ofModel
         (FloatLib.Floats.ExecFloat.Binary.toModel value) =
       value := by
@@ -138,14 +129,14 @@ example (value : Binary32) :
 The configured posit carrier/model equivalence has the same automation contract as configured
 binary values.
 -/
-example (value : Posit32) :
+example (value : FloatLib.Floats.Posit32) :
     FloatLib.Floats.ExecFloat.Posit.ofModel
         (FloatLib.Floats.ExecFloat.Posit.toModel value) =
       value := by
   grind
 
 /-- Posit successor and predecessor laws can close without unfolding packed storage. -/
-example (value : Posit32) :
+example (value : FloatLib.Floats.Posit32) :
     FloatLib.Floats.ExecFloat.Posit.prior
         (FloatLib.Floats.ExecFloat.Posit.next value) =
       value := by
@@ -154,19 +145,19 @@ example (value : Posit32) :
 /-- Automation retains the Posit Standard's distinguished NaR behavior. -/
 example :
     FloatLib.Floats.ExecFloat.Posit.floor
-        (FloatLib.Floats.ExecFloat.Posit.nar : Posit32) =
-      (FloatLib.Floats.ExecFloat.Posit.nar : Posit32) := by
+        (FloatLib.Floats.ExecFloat.Posit.nar : FloatLib.Floats.Posit32) =
+      (FloatLib.Floats.ExecFloat.Posit.nar : FloatLib.Floats.Posit32) := by
   grind
 
 /-- Converting posit zero to its associated quire preserves the distinguished zero value. -/
 example :
     FloatLib.Floats.ExecFloat.Posit.Quire.pToQ
-        (FloatLib.Floats.ExecFloat.Posit.zero : Posit32) =
-      (FloatLib.Floats.ExecFloat.Posit.Quire.zero : Posit32Quire) := by
+        (FloatLib.Floats.ExecFloat.Posit.zero : FloatLib.Floats.Posit32) =
+      (FloatLib.Floats.ExecFloat.Posit.Quire.zero : FloatLib.Floats.Quire32) := by
   grind
 
 /-- The exact rational view is preserved when a configured posit enters its quire. -/
-example (value : Posit32) :
+example (value : FloatLib.Floats.Posit32) :
     FloatLib.Floats.ExecFloat.Posit.Quire.toRat?
         (FloatLib.Floats.ExecFloat.Posit.Quire.pToQ value) =
       FloatLib.Floats.ExecFloat.Posit.toRat? value := by
@@ -209,9 +200,7 @@ set_option maxHeartbeats 0 in
 example (x : ℝ) (_hl : 0 ≤ x) (_hu : x ≤ 1) : x ≤ x := by
   check_interval_budget_failure
 
-
-
--- The initial enclosure is too wide; subdivision must preserve the original variable bounds.
+-- The initial enclosure is too wide, so subdivision must preserve the original variable bounds.
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
   fail_if_success interval (depth := 0)
   interval (precision := 32) (depth := 4)
@@ -259,7 +248,7 @@ example (x : ℝ) : x = x := by
 
 /-! ## Real powers, base logarithms, and inverse hyperbolic functions -/
 
--- The exponent is a real variable; negative exponents are included in the same enclosure.
+-- The exponent is a real variable, and negative exponents are included in the same enclosure.
 example (x y : ℝ) (hx : x ∈ Set.Icc 1 2) (hy : y ∈ Set.Icc (-2) 2) :
     x ^ y < 5 := by
   interval (depth := 0)
@@ -279,7 +268,7 @@ example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : x ^ (0 : ℝ) ≤ 1 := by
 example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : x ^ (1 / 2 : ℝ) < 3 / 2 := by
   interval (precision := 128) (degree := 24) (depth := 0)
 
--- A base below one reverses the sign of the logarithm; the base may also vary.
+-- A base below one reverses the sign of the logarithm, and the base may also vary.
 example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : Real.logb 2 x < 11 / 10 := by
   interval (depth := 0)
 
@@ -414,7 +403,7 @@ example (A : Matrix (Fin 2) (Fin 3) ℝ) (B : Matrix (Fin 3) (Fin 2) ℝ)
 section
 open scoped Matrix.Norms.Operator
 
--- The operator norm sums a row; it is not the elementwise maximum.
+-- The operator norm is the largest absolute row sum, which differs from the elementwise maximum.
 example (A : Matrix (Fin 2) (Fin 3) ℝ) (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1) :
     ‖A‖ ≤ 3 := by
   fail_if_success have : ‖A‖ ≤ 1 := by interval (depth := 0)

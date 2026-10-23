@@ -17,10 +17,12 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Runtime
 /-!
 # Exact comparisons for two-coordinate arctangent
 
-The input order is `(x, y)`, giving the principal argument of `x + i*y` in `(-π, π]`.
-Ordinary comparisons share reduced arctangent and π enclosures across rounding boundaries.
-Comparisons in units of π use the exact rational quadrant shift and the pi-scaled arctangent
-comparator, including its rational special values.
+The input order is `(x, y)`, giving the principal argument of `x + i*y` in `(-π, π]`. C and MPFR
+write `atan2 (y, x)`, so a wrapper in that convention swaps the coordinates once, before preparing
+the comparator. The point `(-1, 0)` has argument π, which makes `prepareAtan2 (-1) 0` an exact π
+comparator. Ordinary comparisons share reduced arctangent and π enclosures across rounding
+boundaries. Comparisons in units of π use the exact rational quadrant shift and the pi-scaled
+arctangent comparator, including its rational special values.
 
 Both comparators use zero as the value at the origin, matching Mathlib's totalized argument.
 Posit wrappers must reject `(0, 0)` before rounding, as required by the Posit Standard.
@@ -36,7 +38,7 @@ namespace FloatLib.Numerics.TrigonometricComparison
 
 /--
 Prepare comparisons of `arg (x + i*y)` with rational boundaries.
-The first `levels` enclosure depths are cached; refinement beyond that prefix remains unbounded.
+The first `levels` enclosure depths are cached, and refinement past that prefix is unbounded.
 -/
 def prepareAtan2 (x y : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared :=
   if hzero : 0 ≤ x ∧ y = 0 then .direct (fun boundary => cmp 0 boundary)
@@ -53,7 +55,7 @@ def compareAtan2 (x y boundary : ℚ) : Ordering :=
 
 /--
 Prepare comparisons of `arg (x + i*y) / π`, using an exact rational quadrant shift.
-No rounded approximation to π and no intermediate rounding enters the comparison.
+No rounded approximation of π and no intermediate rounding enter the comparison.
 -/
 def prepareAtan2Pi (x y : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared :=
   let reduced := atan2Reduction x y

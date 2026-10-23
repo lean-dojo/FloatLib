@@ -12,7 +12,7 @@ public import FloatLibTests.Accounting
 /-!
 # Regression checks for format-generic executable intervals
 
-The smallest tiny-format pair sweep is exhaustive; a second format and binary32 use representative
+The smallest tiny-format pair sweep is exhaustive. A second format and binary32 use representative
 extrema, units, subnormals, and signed zeros. Arithmetic results must contain every directed corner
 result, and activation checks enumerate representable members.
 
@@ -23,7 +23,7 @@ in its aggregate zero-failure check.
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -92,13 +92,17 @@ def pairArithmeticEnclosed {fmt : FloatFormat}
   let mulResult := Model.Interval.mul A B
   let divResult := Model.Interval.div A B
   hullEncloses A B &&
-    directedCornersEnclosed addResult Model.addDown Model.addUp A B &&
-    directedCornersEnclosed subResult Model.subDown Model.subUp A B &&
-    directedCornersEnclosed mulResult Model.mulDown Model.mulUp A B &&
+    directedCornersEnclosed addResult (Model.add · · (mode := .down)) (Model.add · · (mode := .up))
+        A B &&
+    directedCornersEnclosed subResult (Model.sub · · (mode := .down)) (Model.sub · · (mode := .up))
+        A B &&
+    directedCornersEnclosed mulResult (Model.mul · · (mode := .down)) (Model.mul · · (mode := .up))
+        A B &&
     if Model.Interval.containsZero B then
       sameGenericInterval divResult (Model.Interval.whole fmt)
     else
-      directedCornersEnclosed divResult Model.divDown Model.divUp A B
+      directedCornersEnclosed divResult (Model.div · · (mode := .down))
+          (Model.div · · (mode := .up)) A B
 
 def imageEnclosed {fmt : FloatFormat} (values : List (Model fmt))
     (input output : Model.Interval fmt) (f : Model fmt → Model fmt) : Bool :=

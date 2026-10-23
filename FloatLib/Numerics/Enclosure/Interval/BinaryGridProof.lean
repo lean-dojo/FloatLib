@@ -24,11 +24,11 @@ between grid points. The runtime definitions compute entirely with integers afte
 
 namespace FloatLib.Numerics.Interval.BinaryGrid
 
-/-- The shift-based scale is exactly the corresponding power of two. -/
+/-- The shift-based scale is `2 ^ precision`. -/
 theorem scale_eq_pow (precision : Nat) : scale precision = (2 : Int) ^ precision := by
   simp [scale, Int.shiftLeft_eq]
 
-/-- Every binary grid has a strictly positive scale. -/
+/-- Every binary grid has a positive scale. -/
 theorem scale_pos (precision : Nat) : 0 < scale precision := by
   rw [scale_eq_pow]
   positivity
@@ -141,7 +141,7 @@ theorem divBounds_bounds {α : Type*} [Field α] [LinearOrder α]
   have h := divBounds_rat_bounds a b hb
   exact ⟨by exact_mod_cast h.1, by exact_mod_cast h.2⟩
 
-/-- The signed downward shift is below the exact scaled coefficient. -/
+/-- Rounding down by a signed shift stays below the exact scaled coefficient. -/
 theorem roundDown_le (precision : Nat) (z : Int) :
     (roundDown precision z : ℝ) ≤ value precision z := by
   have h := (divBounds_bounds (α := ℝ) z (scale precision) (ne_of_gt (scale_pos precision))).1
@@ -149,11 +149,34 @@ theorem roundDown_le (precision : Nat) (z : Int) :
   rw [Int.fdiv_eq_ediv_of_nonneg _ (scale_pos precision).le] at h
   simpa [roundDown, value, scale_eq_pow, Int.shiftRight_eq_div_pow] using h
 
-/-- The signed upward shift is above the exact scaled coefficient. -/
+/-- Rounding up by a signed shift stays above the exact scaled coefficient. -/
 theorem le_roundUp (precision : Nat) (z : Int) :
     value precision z ≤ (roundUp precision z : ℝ) := by
   have h := neg_le_neg (roundDown_le precision (-z))
   simpa [roundUp, roundDown] using h
+
+/-- Coarsening a grid interval keeps every real member, on the coarser grid. -/
+theorem containsReal_coarsen {shift precision : Nat} {I : Interval Int} {x : ℝ}
+    (hx : I.ContainsReal (decode (precision + shift)) x) :
+    (coarsen shift I).ContainsReal (decode precision) x := by
+  rw [containsReal_iff] at hx ⊢
+  have hscale : (scale (precision + shift) : ℝ) = scale precision * scale shift := by
+    simp [scale_eq_pow, pow_add]
+  have hvalue (z : Int) : value (precision + shift) z = value shift z / scale precision := by
+    simp only [value, hscale]
+    field_simp
+  constructor
+  · calc value precision (roundDown shift I.lo)
+        = (roundDown shift I.lo : ℝ) / scale precision := rfl
+      _ ≤ value shift I.lo / scale precision :=
+        div_le_div_of_nonneg_right (roundDown_le shift I.lo) (real_scale_pos precision).le
+      _ = value (precision + shift) I.lo := (hvalue I.lo).symm
+      _ ≤ x := hx.1
+  · calc x ≤ value (precision + shift) I.hi := hx.2
+      _ = value shift I.hi / scale precision := hvalue I.hi
+      _ ≤ (roundUp shift I.hi : ℝ) / scale precision :=
+        div_le_div_of_nonneg_right (le_roundUp shift I.hi) (real_scale_pos precision).le
+      _ = value precision (roundUp shift I.hi) := rfl
 
 /-- Conversion from an exact rational produces a containing binary-grid interval. -/
 theorem contains_enclose (precision : Nat) (q : ℚ) :

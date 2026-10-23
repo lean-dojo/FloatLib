@@ -17,30 +17,27 @@ Precision rounding precedes the overflow test (IEEE 754-2019 §7.4). Decimal
 tininess is detected before rounding (§7.5), and the underflow flag requires
 both tininess and inexactness. Exact results select the cohort member closest
 to the preferred quantum (§5.2).
-The magnitude interface requires a nonnegative input; `project` handles either
-sign and receives the sign of an exact zero separately.
+`projectMagnitude` requires a nonnegative input. `project` handles either sign
+and takes the sign of an exact zero as its own argument.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-/-- The shared IEEE exception indicators, also used by binary arithmetic. -/
-abbrev Status := Numerics.IEEEStatus
-
 /-- A decimal result with the exceptions raised by this operation. -/
 structure Outcome where
   /-- The delivered decimal datum. -/
   value : Datum
   /-- Exceptions raised while computing the datum. -/
-  status : Status := {}
+  status : Numerics.IEEEStatus := {}
   deriving DecidableEq, Repr
 
 /-- Least positive normal value, independent of the chosen cohort. -/
 def Format.minNormal (f : Format) : ℚ :=
   (10 : ℚ) ^ (f.precision - 1) * (10 : ℚ) ^ f.minQuantum
 
-/-- Greatest finite magnitude and its largest-quantum representation. -/
+/-- Greatest finite magnitude with sign `negative`, in its largest-quantum representation. -/
 def Format.maxFinite (f : Format) (negative : Bool) : Datum :=
   .finite negative (f.coefficientBound - 1) f.maxQuantum
 
@@ -61,7 +58,7 @@ def RoundingMode.overflowToInfinity (mode : RoundingMode) (negative : Bool) : Bo
   | .towardNegative => negative
 
 /-- Project a nonnegative rational magnitude, retaining the supplied sign even at zero.
-Exact zero selects its cohort directly, without allocating powers for rounding or tininess. -/
+Exact zero selects its cohort without forming the powers used for rounding or tininess. -/
 def projectMagnitude (f : Format) (mode : RoundingMode) (negative : Bool)
     (magnitude : ℚ) (preferred : Int) : Outcome :=
   if magnitude = 0 then

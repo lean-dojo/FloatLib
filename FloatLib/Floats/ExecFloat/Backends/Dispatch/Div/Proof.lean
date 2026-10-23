@@ -21,9 +21,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Division.Proof
 operand pair. The equality includes rounding, signed zeros, infinities, and NaNs.
 
 The specialized kernels provide refinements on their accepted inputs. When an operand or
-intermediate lies outside a kernel's supported domain, the dispatcher uses `generic`, whose
-correctness is established by `generic_eq_spec`. Runtime clients can import `Div.Runtime`
-separately.
+intermediate lies outside a kernel's supported domain, the dispatcher uses `generic`, which is
+correct by `generic_eq_spec`.
 -/
 
 @[expose] public section
@@ -55,7 +54,7 @@ private theorem spec_div_eq_word :
   by_cases h32 : FloatFormat.IsBinary32 fmt
   · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
     subst fmt
-    simp [word, Spec.div, NativeBinary32.divFiniteImpl_eq,
+    simp [word, Spec.div, NativeBinary32.divFiniteWord_eq,
       NativeBinary32.divFinite_eq, generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? y <;>
@@ -65,14 +64,14 @@ private theorem spec_div_eq_word :
       subst fmt
       cases hfinite : FiniteKernel.div? x y with
       | none =>
-          simp [word, h32, NativeBinary64.divFiniteFastImpl_eq,
-            NativeBinary64.divFiniteImpl_eq, hfinite, generic_eq_spec]
+          simp [word, h32, NativeBinary64.divFinite_eq_divFiniteComponents,
+            NativeBinary64.divFiniteComponents_eq, hfinite, generic_eq_spec]
       | some quotient =>
           have hquotient : quotient = Spec.div x y := by
             simpa [generic, FiniteKernel.divRuntime_eq, hfinite] using
               generic_eq_spec x y
-          simp [word, h32, NativeBinary64.divFiniteFastImpl_eq,
-            NativeBinary64.divFiniteImpl_eq, hfinite, hquotient,
+          simp [word, h32, NativeBinary64.divFinite_eq_divFiniteComponents,
+            NativeBinary64.divFiniteComponents_eq, hfinite, hquotient,
             generic_eq_spec]
     · by_cases hpair : NativePair.Eligible fmt
       · cases hfast : NativePair.divNormal? x y with

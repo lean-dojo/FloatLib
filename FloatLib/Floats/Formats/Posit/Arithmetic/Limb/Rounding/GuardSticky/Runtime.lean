@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Runtime
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 
 /-!
@@ -19,8 +19,8 @@ in `GuardStickyCarrier` keeps significands and codes in `UInt128`. Exponents and
 `Int` and `Nat`. Only the steps with carrier-specific contracts live here: the exact
 minimum-positive comparison, the zero test, and exact-width sign restoration.
 
-The kernel is selected by intermediate capacity, not by a particular named Posit format. Every
-format whose storage fits two words may use it whenever the exact significand is below `2^128`.
+Intermediate capacity selects the kernel, and no named Posit format is special. Every format
+whose storage fits two words may use it whenever the exact significand is below `2^128`.
 Wider exact intermediates retain the same field semantics through the arbitrary-width rounder.
 -/
 
@@ -49,9 +49,9 @@ open FloatLib.Numerics
 /--
 Two-limb implementation of the shared candidate carrier.
 
-The transparent record lets inlined helpers use the two-limb primitives directly. Addition drops
-the carry out of the second limb and the successor wraps; the shared rounder applies both only
-to values it has bounded.
+The transparent record lets inlined helpers specialize to the two-limb primitives. Addition
+drops the carry out of the second limb and the successor wraps, but the shared rounder applies
+both only to values it has bounded.
 -/
 abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier FixedWord.UInt128 where
   bitAt := NativeLimb.bitAt
@@ -67,18 +67,23 @@ abbrev candidateCarrier : GuardStickyCarrier.CandidateCarrier FixedWord.UInt128 
   isOdd := isOdd
   log2 := FixedWord.UInt128.log2
 
-/-- Test a positive two-limb target against the format's exact minimum-positive value. -/
+/--
+Test a positive two-limb target against the format's exact minimum-positive value, a power of two,
+by comparing the exponent of its leading bit.
+-/
 @[inline] def isLessMinPositive
     (format : Format) (significand : FixedWord.UInt128) (exponent : Int) : Bool :=
   let minExponent := -(4 * Int.ofNat (format.payloadBits - 1))
-  FixedWord.DyadicCompare.compareNonnegative128ToWord
-      significand exponent 1 minExponent == .lt
+  if NativeLimb.isZero significand then
+    true
+  else
+    decide (exponent + Int.ofNat (FixedWord.UInt128.log2 significand) < minExponent)
 
 /--
 Round the nonnegative value `significand * 2 ^ exponent` to its complete unsigned code in two
 limbs.
 
-Zero maps to code zero and targets below `minPos` to code one; every other target uses the shared
+Zero maps to code zero and targets below `minPos` to code one. Every other target uses the shared
 normalized rounder at the `UInt128` carrier.
 -/
 @[inline] def roundPositiveCodeWord

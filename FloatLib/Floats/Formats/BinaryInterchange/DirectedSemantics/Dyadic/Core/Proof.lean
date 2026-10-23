@@ -37,7 +37,7 @@ theorem roundMantissaToLeadingBitDown_le_up (mantissa leadingBit : Nat) :
   by_cases hle : leadingBit ≤ mantissa.log2
   · simp only [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp,
       ite_eq_left hle]
-    exact shiftRight_le_shiftRightCeilPow2 _ _
+    exact Numerics.shiftRight_le_shiftRightCeil _ _
   · simp [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp, hle]
 
 /-- A nonzero mantissa normalized downward to leading position `p` is at least `2^p`. -/
@@ -61,7 +61,7 @@ theorem pow2_le_roundMantissaToLeadingBitDown
       rw [Nat.mul_comm, Nat.pow_sub_mul_pow 2 (Nat.le_of_not_ge hle)]] at hmul
     simpa [pow2_eq_two_pow, Nat.shiftLeft_eq] using hmul
 
-/-- Downward leading-bit normalization remains strictly below `2^(p+1)`. -/
+/-- Downward leading-bit normalization stays strictly below `2^(p+1)`. -/
 theorem roundMantissaToLeadingBitDown_lt_pow2_succ
     (mantissa leadingBit : Nat) :
     roundMantissaToLeadingBitDown mantissa leadingBit < pow2 (leadingBit + 1) := by
@@ -109,7 +109,7 @@ theorem roundMantissaToLeadingBitUp_le_pow2_succ
   · have hfloor :=
       roundMantissaToLeadingBitDown_lt_pow2_succ mantissa leadingBit
     have hceil :=
-      shiftRightCeilPow2_le_shiftRight_add_one mantissa
+      Numerics.shiftRightCeil_le_shiftRight_add_one mantissa
         (mantissa.log2 - leadingBit)
     simp only [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp, hle,
       ite_true] at hfloor ⊢
@@ -118,7 +118,7 @@ theorem roundMantissaToLeadingBitUp_le_pow2_succ
       roundMantissaToLeadingBitDown_lt_pow2_succ mantissa leadingBit
     simpa [roundMantissaToLeadingBitDown, roundMantissaToLeadingBitUp, hle] using hfloor.le
 
-/-- Upward leading-bit normalization of a nonzero mantissa remains nonzero. -/
+/-- Upward leading-bit normalization of a nonzero mantissa is nonzero. -/
 theorem roundMantissaToLeadingBitUp_ne_zero
     (mantissa leadingBit : Nat) (hm : mantissa ≠ 0) :
     roundMantissaToLeadingBitUp mantissa leadingBit ≠ 0 := by
@@ -127,7 +127,7 @@ theorem roundMantissaToLeadingBitUp_ne_zero
 
 /-! ## Exponent alignment -/
 
-/-- Rounding down at the exponent that places the leading bit at `leadingBit` is direct shift. -/
+/-- Rounding down at the exponent that puts the leading bit at `leadingBit` normalizes downward. -/
 theorem roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown
     (mantissa leadingBit : Nat) (exponent : Int) :
     roundMantissaAtExponentDown mantissa exponent
@@ -157,7 +157,7 @@ theorem roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown
     simp [roundMantissaAtExponentDown, roundMantissaToLeadingBitDown,
       hnotExponentLe, hle, hdistance]
 
-/-- Rounding up at the exponent that places the leading bit at `leadingBit` is direct shift. -/
+/-- Rounding up at the exponent that puts the leading bit at `leadingBit` normalizes upward. -/
 theorem roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp
     (mantissa leadingBit : Nat) (exponent : Int) :
     roundMantissaAtExponentUp mantissa exponent
@@ -226,7 +226,7 @@ theorem roundMantissaAtExponentUp_eq_match
     roundMantissaAtExponentUp mantissa exponent targetExponent =
       match exponent - targetExponent with
       | .ofNat shift => Nat.shiftLeft mantissa shift
-      | .negSucc shift => shiftRightCeilPow2 mantissa (shift + 1) := by
+      | .negSucc shift => Numerics.shiftRightCeil mantissa (shift + 1) := by
   cases hdiff : exponent - targetExponent with
   | ofNat shift =>
       cases shift with
@@ -234,7 +234,7 @@ theorem roundMantissaAtExponentUp_eq_match
           have heq : exponent = targetExponent := by
             norm_num at hdiff
             omega
-          simp [roundMantissaAtExponentUp, heq, shiftRightCeilPow2]
+          simp [roundMantissaAtExponentUp, heq, Numerics.shiftRightCeil]
       | succ shift =>
           have hnot : ¬exponent ≤ targetExponent := by
             norm_num at hdiff
@@ -254,34 +254,34 @@ theorem roundMantissaAtExponentUp_eq_match
 /-! ## Exact rounded-real alignment -/
 
 /-- Positive downward rounded-real semantics is floor alignment at the model target exponent. -/
-theorem roundAtDown_pos_eq
+theorem roundAt_down_pos_eq
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true) (hm : mantissa ≠ 0) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent)
-    roundAtDown fmt ((mantissa : ℝ) * bpow exponent) =
+    roundAt fmt ((mantissa : ℝ) * bpow exponent) .down =
       (roundMantissaAtExponentDown mantissa exponent target : ℝ) *
         bpow target := by
   let d : Numerics.Dyadic := { negative := false, significand := mantissa, exponent := exponent }
   simpa [d, Numerics.Dyadic.toReal, roundSignedMantissaAtExponentDown,
     bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
-    roundAtDown_dyadic_eq fmt d hfmt hm
+    roundAt_down_dyadic_eq fmt d hfmt hm
 
 /-- Positive upward rounded-real semantics is ceiling alignment at the model target exponent. -/
-theorem roundAtUp_pos_eq
+theorem roundAt_up_pos_eq
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true) (hm : mantissa ≠ 0) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent)
-    roundAtUp fmt ((mantissa : ℝ) * bpow exponent) =
+    roundAt fmt ((mantissa : ℝ) * bpow exponent) .up =
       (roundMantissaAtExponentUp mantissa exponent target : ℝ) *
         bpow target := by
   let d : Numerics.Dyadic := { negative := false, significand := mantissa, exponent := exponent }
   simpa [d, Numerics.Dyadic.toReal, roundSignedMantissaAtExponentUp,
     bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
-    roundAtUp_dyadic_eq fmt d hfmt hm
+    roundAt_up_dyadic_eq fmt d hfmt hm
 
 /-- Below the subnormal grid, downward alignment has zero mantissa. -/
 theorem roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
@@ -569,7 +569,7 @@ theorem roundDyadicPosUp_eq_normal_of_no_carry
     ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
-        shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
+        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
       else
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
@@ -617,7 +617,7 @@ theorem roundDyadicPosUp_eq_normal_of_carry
     ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
-        shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
+        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
       else
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
@@ -700,7 +700,7 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_carry_overflow
     ite_eq_right (not_lt_of_ge hnormal')]
   have hrounded :
       (if mantissa.log2 ≥ fmt.fracWidth then
-        shiftRightCeilPow2 mantissa (mantissa.log2 - fmt.fracWidth)
+        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
       else
         Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
         roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
@@ -711,7 +711,7 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_carry_overflow
 /-! ## Subnormal-grid bounds -/
 
 /--
-Downward rounding below the normal range remains strictly below the smallest normal mantissa.
+Downward rounding below the normal range stays strictly below the smallest normal mantissa.
 -/
 theorem roundMantissaAtExponentDown_minSubnormal_lt_pow2
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
@@ -795,9 +795,9 @@ theorem roundMantissaAtExponentUp_minSubnormal_le_pow2
       rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos (by decide))]
       rw [pow2_eq_two_pow, ← Nat.pow_add]
       exact hmLt
-    have hround := shiftRightCeilPow2_le_shiftRight_add_one mantissa shift
+    have hround := Numerics.shiftRightCeil_le_shiftRight_add_one mantissa shift
     simp only [roundMantissaAtExponentUp, hle, ite_true]
-    change shiftRightCeilPow2 mantissa shift ≤ pow2 fmt.fracWidth
+    change Numerics.shiftRightCeil mantissa shift ≤ pow2 fmt.fracWidth
     exact hround.trans (Nat.succ_le_iff.mpr hq)
   · have hlt : fmt.minSubnormalExponent < exponent := lt_of_not_ge hle
     let shift := (exponent - fmt.minSubnormalExponent).toNat

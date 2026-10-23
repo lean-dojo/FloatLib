@@ -36,8 +36,6 @@ abbrev AtValue (fmt : FloatFormat) (v : NumericalValue ℝ) :=
 
 /--
 An executable float bundled with a proof of its finite real interpretation.
-
-This is a refinement view, not a second floating-point representation.
 -/
 abbrev At (fmt : FloatFormat) (r : ℝ) :=
   (numericalSystem fmt).AtFinite r
@@ -56,7 +54,7 @@ noncomputable def toNumericalValue (value : ExactValue)
 end ExactValue
 
 /--
-Forgetting exact encoding distinctions agrees with the existing numerical-system interpretation.
+Forgetting exact encoding distinctions agrees with the numerical-system interpretation.
 -/
 theorem toNumericalValue_eq_exactValue_toNumericalValue
     {fmt : FloatFormat} (x : Model fmt) :
@@ -90,8 +88,8 @@ theorem toNumericalValue_eq_exactValue_toNumericalValue
 /--
 The richer exact interpretation of `Model` and its coherent forgetting map.
 
-This capability is used only by proof-facing APIs. Executable kernels continue to call
-`exactValue`, field decoders, and arithmetic functions directly.
+Only proof APIs use it. Executable kernels call `exactValue`, field decoders, and arithmetic
+functions themselves.
 -/
 noncomputable def exactSemantics (fmt : FloatFormat) :
     ExactSemantics (numericalSystem fmt) where
@@ -104,8 +102,8 @@ noncomputable def exactSemantics (fmt : FloatFormat) :
 /--
 An executable float bundled with a proof of its complete exact interpretation.
 
-This is the generic exact proof view specialized to `Model`. It preserves signed zero and
-complete NaN metadata while retaining exactly one runtime `Model fmt`.
+This is the generic exact proof view specialized to `Model`. It keeps signed zero and complete
+NaN metadata and carries one runtime `Model fmt`.
 -/
 abbrev AtExact (fmt : FloatFormat) (v : ExactValue) :=
   (exactSemantics fmt).At v
@@ -113,9 +111,9 @@ abbrev AtExact (fmt : FloatFormat) (v : ExactValue) :=
 /--
 An IEEE outcome bundled with proofs of both its complete value and its exception status.
 
-The outcome remains the runtime data. Only the two indexing equalities are erased.
+The outcome is the runtime data. Only the two indexing equalities are erased.
 -/
-abbrev OutcomeAt (fmt : FloatFormat) (v : ExactValue) (status : IEEEStatus) :=
+abbrev OutcomeAt (fmt : FloatFormat) (v : ExactValue) (status : Numerics.IEEEStatus) :=
   { outcome : IEEEOutcome fmt //
       exactValue outcome.value = v ∧ outcome.status = status }
 

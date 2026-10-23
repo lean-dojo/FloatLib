@@ -16,12 +16,12 @@ public import FloatLibTests.Accounting
 
 These tests exercise the public, format-independent `ExecFloat` API through the nominal OCP FP8,
 OCP MX, and finite-only FNUZ types. The proof below checks that every family exposes all six
-refinement equations; the executable report checks canonical construction and representative
+refinement equations, and the executable report checks canonical construction and representative
 arithmetic codes.
 
-The exhaustive table-to-specification proofs remain beside their kernels in
-`ExecFloat.Backends.TinyTable`. This module instead guards the new nominal packaging and direct
-byte boundary against integration regressions. It also checks the distinct E8M0 shared-scale
+The exhaustive table-to-specification proofs live beside their kernels in
+`ExecFloat.Backends.TinyTable`. This module guards the nominal packaging and direct byte boundary
+against integration regressions. It also checks the distinct E8M0 shared-scale
 contract and representative block decoding behavior.
 
 ## References
@@ -37,7 +37,7 @@ contract and representative block decoding behavior.
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 namespace FloatLibTests.Conformance.Formats.LowBit
@@ -46,8 +46,6 @@ open FloatLib
 
 open FloatLib.Floats
 open FloatLib.Floats.Formats.BinaryInterchange
-open FloatLib.Floats.Formats.FiniteOnly
-open FloatLib.Floats.Formats.OCP.FP8
 open FloatLib.Floats.Formats.OCP.MX
 open FloatLibTests.Accounting
 
@@ -110,8 +108,8 @@ def arithmeticFailures : Thunk Nat := ⟨fun _ =>
       (FloatLib.Floats.ExecFloat.add
         (E5M2FNUZ.ofNatBits 0x40) (E5M2FNUZ.ofNatBits 0x44)) ==
         0x46
-    , E2M1.toUInt8 (1 : FloatLib.Floats.ExecFloat E2M1) == 0x02
-    , E2M1.toUInt8 (-1 : FloatLib.Floats.ExecFloat E2M1) == 0x0a
+    , E2M1.toUInt8 (1 : FloatLib.Floats.E2M1) == 0x02
+    , E2M1.toUInt8 (-1 : FloatLib.Floats.E2M1) == 0x0a
     ]⟩
 
 /-! ## E8M0 shared-scale checks -/
@@ -150,7 +148,7 @@ example :
   native_decide
 
 example (scale : FloatLib.Floats.ExecFloat.OCP.MX.E8M0)
-    (elements : Array (FloatLib.Floats.ExecFloat E2M1)) :
+    (elements : Array (FloatLib.Floats.E2M1)) :
     FloatLib.Floats.ExecFloat.OCP.MX.Block.values
         (FloatLib.Floats.ExecFloat.OCP.MX.Block.ofElements scale elements) =
       elements.map fun value => StaticByte.toModel value := by
@@ -160,13 +158,13 @@ end E8M0
 
 /-- Number of nominal low-bit packaging regressions. -/
 def totalFailures : Thunk Nat := ⟨fun _ =>
-  constructorFailures E2M1 16 512 +
-  constructorFailures E2M3 64 512 +
-  constructorFailures E3M2 64 512 +
-  constructorFailures E4M3FN 256 512 +
-  constructorFailures E5M2 256 512 +
-  constructorFailures E4M3FNUZ 256 512 +
-  constructorFailures E5M2FNUZ 256 512 +
+  constructorFailures E2M1.Family 16 512 +
+  constructorFailures E2M3.Family 64 512 +
+  constructorFailures E3M2.Family 64 512 +
+  constructorFailures E4M3FN.Family 256 512 +
+  constructorFailures E5M2.Family 256 512 +
+  constructorFailures E4M3FNUZ.Family 256 512 +
+  constructorFailures E5M2FNUZ.Family 256 512 +
   arithmeticFailures.get⟩
 
 /-- Check nominal construction and arithmetic when the core suite runs. -/

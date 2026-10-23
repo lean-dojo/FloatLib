@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 /-!
 # Refinement of P3109 block roots
 
-Finite nonzero result scales normalize the exact real root before precision rounding. The
-executable square comparisons refine the existing real-root reference in every rounding mode.
-The final encoder preserves the signed, rounded, and saturated datum.
+A finite nonzero result scale normalizes the exact real root before precision rounding. The
+executable square comparisons agree with the real-root reference in every rounding mode, and the
+final encoder preserves the signed, rounded, and saturated datum.
 -/
 
 @[expose] public section
@@ -48,7 +48,7 @@ theorem normalize_finite_real (scale radicand : Rat) (hscale : scale ≠ 0)
       exact_mod_cast (lt_of_le_of_ne (not_lt.mp hnegative) (Ne.symm hscale))
     simp [hnegative, abs_of_pos hspos]
 
-/-- Reference signed-root rounding uses the actual real square root and exact thresholds. -/
+/-- Reference signed-root rounding through the real square root. -/
 noncomputable def roundedReal (format : Format) (mode : RoundingMode) (root : BlockRoot) :
     NumericalValue Numerics.Dyadic :=
   applySign root.negative (match root.radicand with
@@ -96,6 +96,7 @@ theorem rounded_fitsPrecisionGrid (format : Format) (mode : RoundingMode) (root 
 theorem decode_project (format : Format) (policy : ProjectionPolicy) (root : BlockRoot) :
     Format.SameDatum (ExecFloat.P3109.decode (project format policy root))
       (value format policy root) := by
+  rw [ExecFloat.P3109.decode_eq_format_decode]
   change Format.SameDatum (format.decode (BitVec.ofNat format.bitWidth
     (Format.Internal.encodeDatumNat format (value format policy root)))) _
   exact format.sameDatum_decode_encodeSaturate policy.saturation policy.rounding _

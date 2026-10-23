@@ -13,15 +13,15 @@ public import Mathlib.Data.PNat.Basic
 # P3109 scaled blocks
 
 Chapter 5 of the unapproved P3109 interim report 4.0.3 defines a nonempty sequence with
-one independently typed scale. Decoding multiplies exact closed rational observations;
+one independently typed scale. Decoding multiplies exact closed rational observations, and
 projection normalizes each exact result before one destination projection. Zero and infinite
 result scales use the special rules of §5.4.2 rather than ordinary division.
 
-The policies retain one saturation mode and one rounding mode across a block. Stochastic
-modes accept one intrinsically bounded random word per lane, all with the same bit width.
-Reductions accumulate exact closed values in lane order and round only the final result.
-The generic elementwise operations cover exact rational closed operations; transcendental
-functions require a separate evaluator and are not installed by this module.
+A policy holds one saturation mode and one rounding mode for the whole block. Stochastic
+modes take one random word per lane, all of the same bit width. Reductions accumulate exact
+closed values in lane order and round only the final result. The generic elementwise operations
+cover exact rational closed operations. Transcendental functions need a separate evaluator, which
+this module does not install.
 
 Reference: §§5.3–5.8 of
 <https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308>.
@@ -39,20 +39,20 @@ open Arithmetic
 structure Block (Scale Element : Type) (length : ℕ+) where
   /-- Shared scale, decoded through its own exact source interface. -/
   scale : Scale
-  /-- Precisely the declared number of scalar element codes. -/
+  /-- Scalar element codes, one per lane. -/
   values : Vector Element length
 
-/-- A shared scalar rounding rule or explicit same-width stochastic words for every lane. -/
+/-- A scalar rounding rule for the whole block, or same-width stochastic words, one per lane. -/
 inductive BlockRounding (length : ℕ+) where
   | scalar (mode : RoundingMode)
   | stochasticA (width : Nat) (words : Vector (BitVec width) length)
   | stochasticB (width : Nat) (words : Vector (BitVec width) length)
   | stochasticC (width : Nat) (words : Vector (BitVec width) length)
 
-/-- Projection attributes shared by a block, with explicit lane-specific random words. -/
+/-- Projection attributes shared by a block, with per-lane random words for stochastic modes. -/
 structure BlockPolicy (length : ℕ+) where
   /-- Scalar rule or the report's sequence of stochastic random words. -/
-  rounding : BlockRounding length := .scalar .nearestTiesToEven
+  rounding : BlockRounding length := .scalar .nearest
   /-- One saturation rule, shared by every element projection. -/
   saturation : SaturationMode := .none
 
@@ -85,8 +85,8 @@ def signum : NumericalValue Rat → NumericalValue Rat
   | .finite value => .finite (if value = 0 then 0 else if value < 0 then -1 else 1)
 
 /--
-Exact §5.4.2 result normalization. NaN takes precedence over zero or infinite scales;
-zero scales map other inputs to zero, and infinite scales map them to signed unit or zero.
+Exact §5.4.2 result normalization. NaN takes precedence over zero or infinite scales. A zero
+scale maps other inputs to zero, and an infinite scale maps them to a signed unit or zero.
 -/
 def normalize : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => Arithmetic.nan
@@ -108,12 +108,12 @@ def convertFrom (destination : Destination Result) (policy : BlockPolicy length)
   Vector.ofFn fun lane : Fin (length : Nat) =>
     destination.project (policy.at lane) values[lane.val]
 
-/-- §5.5.2 conversion to a block whose result scale is an explicit operand. -/
+/-- §5.5.2 conversion to a block whose result scale is given as an operand. -/
 def convertTo (destination : Destination Result) (policy : BlockPolicy length)
     (values : Vector Source length) (scale : Scale) : Block Scale Result length :=
   ⟨scale, project destination policy scale (values.map Mixed.decode)⟩
 
-/-- Maximum finite absolute value; all-NaN and all-infinite blocks follow closed extrema rules. -/
+/-- Maximum finite absolute value. All-NaN and all-infinite blocks follow closed extrema rules. -/
 def maxAbsFinite (values : Vector (NumericalValue Rat) length) : NumericalValue Rat :=
   values.toList.foldl (fun largest value =>
     Arithmetic.maximumFinite largest (Arithmetic.abs value)) Arithmetic.nan
@@ -156,12 +156,12 @@ def dotExact (left : Block Scale Source length) (right : Block RightScale Right 
   sumExact (Vector.ofFn fun lane : Fin (length : Nat) =>
     Arithmetic.mul leftValues[lane.val] rightValues[lane.val])
 
-/-- Project a complete block dot product once; no lane product or partial sum is rounded. -/
+/-- Project a complete block dot product once, with no rounded lane product or partial sum. -/
 def dotProduct (destination : Destination Result) (policy : ProjectionPolicy)
     (left : Block Scale Source length) (right : Block RightScale Right length) : Result :=
   destination.project policy (dotExact left right)
 
-/-- §5.7 unary elementwise operation, followed by normalization at an explicit result scale. -/
+/-- §5.7 unary elementwise operation, followed by normalization at a given result scale. -/
 def unary (destination : Destination Result) (policy : BlockPolicy length)
     (operation : NumericalValue Rat → NumericalValue Rat)
     (block : Block Scale Source length) (resultScale : RightScale) :

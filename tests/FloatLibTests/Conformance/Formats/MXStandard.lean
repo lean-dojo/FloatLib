@@ -34,41 +34,41 @@ open FloatLib.Floats.Formats.OCP.MX
 open Standard FloatLibTests.Accounting
 
 /-- Quantize a rational scalar and expose its element code. -/
-def scalar (profile : Profile) (mode : OverflowMode) (value : Rat) : Nat :=
-  (Element.quantize profile mode (.finite (SignedRat.ofRat value))).toNat
+def scalar (profile : Profile) (overflow : OverflowMode) (value : Rat) : Nat :=
+  (Element.quantize profile (.finite (SignedRat.ofRat value)) overflow).toNat
 
 /-- Normative scalar overflow, saturation, ties, signed zero, and E8M0 endpoints. -/
 def scalarFailures : Thunk Nat := ⟨fun _ => countFailures
-  [ scalar .e4m3 .overflow 464 == 126
-  , scalar .e4m3 .overflow 465 == 127
+  [ scalar .e4m3 .native 464 == 126
+  , scalar .e4m3 .native 465 == 127
   , scalar .e4m3 .saturate 1000 == 126
-  , scalar .e4m3 .overflow (-464) == 254
-  , scalar .e4m3 .overflow (-465) == 255
-  , scalar .e4m3 .overflow (-896) == 255
-  , (Element.quantize .e4m3 .overflow (.infinity true)).toNat == 255
-  , scalar .e5m2 .overflow 61439 == 123
-  , scalar .e5m2 .overflow 61440 == 124
+  , scalar .e4m3 .native (-464) == 254
+  , scalar .e4m3 .native (-465) == 255
+  , scalar .e4m3 .native (-896) == 255
+  , (Element.quantize .e4m3 (.infinity true) (overflow := .native)).toNat == 255
+  , scalar .e5m2 .native 61439 == 123
+  , scalar .e5m2 .native 61440 == 124
   , scalar .e5m2 .saturate 61440 == 123
-  , scalar .e5m2 .overflow (-61440) == 252
+  , scalar .e5m2 .native (-61440) == 252
   , scalar .e2m1 .saturate 5 == 6
   , scalar .e2m1 .saturate 100 == 7
   , scalar .e2m3 .saturate 100 == 31
   , scalar .e3m2 .saturate 100 == 31
   , scalar .int8 .saturate (-2) == 128
   , scalar .int8 .saturate 2 == 127
-  , (Element.quantize .e2m1 .saturate (.finite SignedRat.negZero)).toNat == 8
-  , (Element.quantize .e5m2 .saturate (.infinity true)).toNat == 251
-  , (Element.quantize .e5m2 .overflow (.infinity true)).toNat == 252
+  , (Element.quantize .e2m1 (.finite SignedRat.negZero)).toNat == 8
+  , (Element.quantize .e5m2 (.infinity true)).toNat == 251
+  , (Element.quantize .e5m2 (.infinity true) (overflow := .native)).toNat == 252
   , E8M0.exponent? (E8M0.ofNatBits 0) == some (-127)
   , E8M0.exponent? (E8M0.ofNatBits 254) == some 127
   , E8M0.exponent? (E8M0.ofNatBits 255) == none ]⟩
 
-/-- Positive E2M3 values in units of 1/8; sign is bit 5. -/
+/-- Positive E2M3 values in units of 1/8. The sign is bit 5. -/
 def e2m3Numerators : Array Nat :=
   #[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 40, 44, 48, 52, 56, 60]
 
-/-- Positive E3M2 values in units of 1/16; sign is bit 5. -/
+/-- Positive E3M2 values in units of 1/16. The sign is bit 5. -/
 def e3m2Numerators : Array Nat :=
   #[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 28,
     32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 448]
@@ -89,7 +89,7 @@ def decodeFailures : Thunk Nat := ⟨fun _ =>
       decide (Element.toRat? (profile := .int8) (BitVec.ofNat 8 code) =
         some ((integer : Rat) / 64))⟩
 
-/-- Form a standard block with the same explicitly encoded element in every lane. -/
+/-- Form a standard 32-lane block with the scale code and one element code in every lane. -/
 def constantBlock (profile : Profile) (scale code : Nat) : Block profile :=
   ⟨E8M0.ofNatBits scale, Vector.replicate 32 (BitVec.ofNat profile.width code)⟩
 
@@ -109,7 +109,7 @@ def blockFailures : Thunk Nat := ⟨fun _ =>
   let largeRight : Vector (Block .int8) 3 := Vector.ofFn fun lane =>
     if lane.val = 1 then ones else constantBlock .int8 254 64
   let input := Vector.replicate 32 (SignedRat.ofRat 1)
-  let converted := quantizeFinite .e2m1 .saturate input
+  let converted := quantizeFinite .e2m1 input
   countFailures
     [ decide (left.values.size = 32)
     , decide ((left.decodeLane 0).finite?.map SignedRat.value = some 2)

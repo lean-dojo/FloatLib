@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.Posit.Quire.Model.Core
 /-!
 # Configured posit quire types
 
-The public configured quire type associates a standard quire with its posit width. Runtime
-operations, semantic views, and proofs are installed by separate modules.
+The public configured quire type associates a standard quire with its posit width. Other modules
+install runtime operations, semantic views, and proofs.
 
 A standard `n`-bit posit uses a `16n`-bit quire. The shared `bits` parameter makes mismatched posit
 and quire widths a type error.
@@ -37,4 +37,19 @@ abbrev Quire
   Formats.Posit.Quire.Model (Posit.format bits bits_ge_two)
 
 end ExecFloat.Posit
+
+/-! ## Standard quires -/
+
+/-- The 128-bit quire of `Posit8`. -/
+abbrev Quire8 := ExecFloat.Posit.Quire (bits := 8)
+
+/-- The 256-bit quire of `Posit16`. -/
+abbrev Quire16 := ExecFloat.Posit.Quire (bits := 16)
+
+/-- The 512-bit quire of `Posit32`. -/
+abbrev Quire32 := ExecFloat.Posit.Quire (bits := 32)
+
+/-- The 1024-bit quire of `Posit64`. -/
+abbrev Quire64 := ExecFloat.Posit.Quire (bits := 64)
+
 end FloatLib.Floats

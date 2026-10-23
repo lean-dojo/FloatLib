@@ -19,8 +19,8 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Error.Relative
 
 These bounds relate operations on `Model fmt` to exact real arithmetic. The function `toReal`
 interprets finite values in `ℝ`, and the format parameter selects the corresponding Flocq-style
-grid. This real-valued grid has no upper exponent bound; the executable operation theorems apply
-when the result is finite.
+grid. This real-valued grid has no upper exponent bound, so the executable operation theorems
+apply when the result is finite.
 
 The operation theorems require finite inputs and outputs because infinities and NaNs have no
 real value. Signed zeros both have real value zero.
@@ -56,8 +56,8 @@ instance (fmt : FloatFormat) : MonotoneExp (fexpOf fmt) := by
 /--
 Nearest-even rounding to `fmt` has at most half an ULP of absolute error.
 
-The format-specific `epsilonAt` follows the subnormal grid near zero, so this statement remains
-useful where a uniform relative-error bound is impossible.
+The format-specific `epsilonAt` follows the subnormal grid near zero, so this bound is useful even
+where a uniform relative-error bound is impossible.
 -/
 theorem abs_roundAt_sub_le (fmt : FloatFormat) (x : ℝ) :
     |roundAt fmt x - x| ≤ epsilonAt fmt x := by
@@ -180,7 +180,7 @@ theorem isFinite_cast_of_abs_toReal_le_posMaxFinite {src dst : FloatFormat} (x :
   have hreal : toReal x = d.toReal := by rw [toReal_eq, hd]
   have hround := isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
     dst hdst d (by simpa only [← hreal] using hbound)
-  unfold cast
+  unfold cast Internal.Nearest.cast
   simp only [hnan, hinf, Bool.false_eq_true, ↓reduceDIte]
   split
   · next heq => cases heq; exact hx

@@ -18,7 +18,7 @@ threshold. This decides rounding of the square root even when it is irrational.
 
 Stochastic A and B select the upper candidate at their supplied random threshold. Stochastic C
 uses the half-integer threshold of its nearest-even integer rounding, including its tie parity.
-The random word is an explicit input, as in §4.7.4 of the P3109 4.0.3 working-group report.
+The caller supplies the random word, as in §4.7.4 of the P3109 4.0.3 working-group report.
 
 Square root, reciprocal square root, and hypotenuse follow §§4.10.8 and 4.10.14 of that unapproved
 report. Each evaluates its exact radicand before the one rounding and saturation step.
@@ -46,7 +46,7 @@ Select the upper candidate from exact threshold comparisons.
 
 For stochastic A and B the threshold is the first fraction whose scaled floor reaches the
 required integer. For C it is the midpoint below that integer, with the integer's tie parity.
-The comparison argument permits the executable square comparisons and real semantics to share
+The comparison argument lets the executable square comparisons and the real semantics share
 these policy rules.
 -/
 def sqrtRoundDecision (format : Format) (mode : RoundingMode)
@@ -56,11 +56,11 @@ def sqrtRoundDecision (format : Format) (mode : RoundingMode)
     false
   else
     match mode with
-    | .towardZero | .towardNegative => false
-    | .towardPositive => true
-    | .nearestTiesToAway =>
+    | .towardZero | .down => false
+    | .up => true
+    | .nearestAway =>
         compareThreshold 2 (2 * lower + 1) != .lt
-    | .nearestTiesToEven =>
+    | .nearest =>
         let ordering := compareThreshold 2 (2 * lower + 1)
         ordering == .gt ||
           (ordering == .eq && !format.lowerCodeIsEven quantum lower)
@@ -136,13 +136,13 @@ def sqrtCode (format : Format) (policy : ProjectionPolicy) (value : NumericalVal
   BitVec.ofNat format.bitWidth (Format.Internal.encodeDatumNat format
     (sqrtValue format policy value))
 
-/-- Exact radicand for reciprocal square root, retaining its distinct nonpositive domain. -/
+/-- Exact radicand for reciprocal square root, which is NaN at zero as well as below it. -/
 def rsqrtRadicand : NumericalValue Rat → NumericalValue Rat
   | .exceptional _ | .infinity true => nan
   | .infinity false => .finite 0
   | .finite value => if value ≤ 0 then nan else .finite (1 / value)
 
-/-- Exact sum of squares for hypotenuse; either NaN takes precedence over infinity. -/
+/-- Exact sum of squares for hypotenuse, where a NaN operand takes precedence over infinity. -/
 def hypotRadicand : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => nan
   | .infinity _, _ | _, .infinity _ => .infinity false
@@ -154,42 +154,33 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 open Formats.P3109
 
-variable {source leftFormat rightFormat format : Format}
+variable {format : Format}
 
-/-- Project the exact square root of a closed rational datum. -/
-@[inline] def projectSqrt (destination : Format) (policy : ProjectionPolicy)
-    (value : NumericalValue Rat) : ExecFloat.P3109 destination :=
-  ExecFloat.Codebook.ofCode (Arithmetic.sqrtCode destination policy value)
+/-- Project the exact square root of a closed rational datum, rounding before saturation. -/
+@[inline] def projectSqrt {format : Format} (value : NumericalValue Rat)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 format :=
+  ExecFloat.Codebook.ofCode (Arithmetic.sqrtCode format { rounding := mode, saturation } value)
 
-/-- Square root into an independent destination; negative inputs produce NaN. -/
-@[inline] def sqrtTo (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) : ExecFloat.P3109 destination :=
-  projectSqrt destination policy value.toClosedRat
+/--
+Square root of the exact operand, projected once into `target`, by default the operand's format.
+Negative inputs give NaN.
+-/
+@[inline] def sqrt (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  projectSqrt value.toClosedRat mode saturation
 
-/-- Reciprocal square root with one final projection; nonpositive finite inputs produce NaN. -/
-@[inline] def rsqrtTo (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) : ExecFloat.P3109 destination :=
-  projectSqrt destination policy (Arithmetic.rsqrtRadicand value.toClosedRat)
+/-- Reciprocal square root with one final projection. Zero and negative inputs give NaN. -/
+@[inline] def rsqrt (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  projectSqrt (Arithmetic.rsqrtRadicand value.toClosedRat) mode saturation
 
 /-- Hypotenuse from the exact sum of squares, with no intermediate overflow or rounding. -/
-@[inline] def hypotTo (destination : Format) (policy : ProjectionPolicy)
-    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat) :
-    ExecFloat.P3109 destination :=
-  projectSqrt destination policy (Arithmetic.hypotRadicand left.toClosedRat right.toClosedRat)
-
-/-- Same-format square root, rounding the exact real value. -/
-@[inline] def sqrt (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  sqrtTo format policy value
-
-/-- Same-format reciprocal square root, rounding the exact real value. -/
-@[inline] def rsqrt (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  rsqrtTo format policy value
-
-/-- Same-format hypotenuse with one final projection of the exact norm. -/
-@[inline] def hypot (left right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  hypotTo format policy left right
+@[inline] def hypot (left right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  projectSqrt (Arithmetic.hypotRadicand left.toClosedRat right.toClosedRat) mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

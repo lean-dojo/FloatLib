@@ -86,10 +86,9 @@ end Internal
 /--
 Addition candidates for the carrier selected by `Configured.Code`.
 
-Matching `Code plan` before inspecting `plan` is important for parameterized public types.
-Typeclass discrimination does not unfold an arbitrary `forKnownWidth` expression far enough to
-discover an instance whose head mentions `.byte` directly. This dependent match makes the byte
-table available after the built-in carrier instance has already been selected.
+Parameterized public types need this dependent match on `plan`. Typeclass discrimination does not
+unfold an arbitrary `forKnownWidth` expression far enough to find an instance whose head mentions
+`.byte`, so the byte table is added here, after the built-in carrier instance has been selected.
 -/
 def automaticAddCandidates (format : FloatFormat) (plan : StoragePlan format) :
     CandidateSet (Certified (@Spec.add format plan (Code plan) inferInstance)) :=
@@ -99,6 +98,7 @@ def automaticAddCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => addCandidates format (.word16 width_le)
   | .word32 width_le => addCandidates format (.word32 width_le)
   | .word64 width_le => addCandidates format (.word64 width_le)
+  | .pair width_gt width_le => addCandidates format (.pair width_gt width_le)
   | .wide => addCandidates format .wide
   | .limbs width_gt =>
       addCandidates format (.limbs width_gt) (wideLimbAdd? format width_gt).toList
@@ -112,6 +112,7 @@ def automaticSubCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => subCandidates format (.word16 width_le)
   | .word32 width_le => subCandidates format (.word32 width_le)
   | .word64 width_le => subCandidates format (.word64 width_le)
+  | .pair width_gt width_le => subCandidates format (.pair width_gt width_le)
   | .wide => subCandidates format .wide
   | .limbs width_gt =>
       subCandidates format (.limbs width_gt) (wideLimbSub? format width_gt).toList
@@ -125,6 +126,7 @@ def automaticMulCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => mulCandidates format (.word16 width_le)
   | .word32 width_le => mulCandidates format (.word32 width_le)
   | .word64 width_le => mulCandidates format (.word64 width_le)
+  | .pair width_gt width_le => mulCandidates format (.pair width_gt width_le)
   | .wide => mulCandidates format .wide
   | .limbs width_gt =>
       mulCandidates format (.limbs width_gt) (wideLimbMul? format width_gt).toList
@@ -138,6 +140,7 @@ def automaticDivCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => divCandidates format (.word16 width_le)
   | .word32 width_le => divCandidates format (.word32 width_le)
   | .word64 width_le => divCandidates format (.word64 width_le)
+  | .pair width_gt width_le => divCandidates format (.pair width_gt width_le)
   | .wide => divCandidates format .wide
   | .limbs width_gt =>
       divCandidates format (.limbs width_gt) (wideLimbDiv? format width_gt).toList
@@ -151,6 +154,7 @@ def automaticSqrtCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => sqrtCandidates format (.word16 width_le)
   | .word32 width_le => sqrtCandidates format (.word32 width_le)
   | .word64 width_le => sqrtCandidates format (.word64 width_le)
+  | .pair width_gt width_le => sqrtCandidates format (.pair width_gt width_le)
   | .wide => sqrtCandidates format .wide
   | .limbs width_gt =>
       sqrtCandidates format (.limbs width_gt) (wideLimbSqrt? format width_gt).toList
@@ -164,6 +168,7 @@ def automaticFmaCandidates (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => fmaCandidates format (.word16 width_le)
   | .word32 width_le => fmaCandidates format (.word32 width_le)
   | .word64 width_le => fmaCandidates format (.word64 width_le)
+  | .pair width_gt width_le => fmaCandidates format (.pair width_gt width_le)
   | .wide => fmaCandidates format .wide
   | .limbs width_gt =>
       fmaCandidates format (.limbs width_gt) (wideLimbFma? format width_gt).toList

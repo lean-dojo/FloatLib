@@ -43,6 +43,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Reduction
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Agreement
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Profile
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
@@ -55,7 +57,7 @@ arithmetic, software backends, and refinement proofs. The descriptors cover IEEE
 finite-only exceptional-value policies.
 
 `Configured` supplies the `ExecFloat.Binary` API. The descriptor-level `Model` supports bit-level
-and mathematical proofs. Scalar conversions and finite reductions are included; reductions
+and mathematical proofs. Scalar conversions and finite reductions are included. Reductions
 accumulate the exact sum or dot product and round the final result once.
 Square, reciprocal square root, hypotenuse, integer powers, and integer-degree roots also
 round once, with real-rounding theorems for conventional IEEE descriptors.
@@ -69,22 +71,23 @@ round once, with real-rounding theorems for conventional IEEE descriptors.
 
 ## Runtime
 
-Public runtime entry point for the generic kernel (`Model fmt`): layout, the four implemented
-IEEE rounding modes,
-exception status, dyadic/rational rounding, arithmetic, comparisons, format casts,
-outward-rounded intervals, mixed-precision `mulAcc` / `dotSequential` / `matmul`, and
-standard numeric instances.
+Public runtime entry point for the generic kernel (`Model fmt`): layout, the five IEEE rounding
+directions and rounding away from zero, exception status, dyadic/rational rounding, arithmetic,
+comparisons, format casts, outward-rounded intervals, mixed-precision `mulAcc` / `dotSequential` /
+`matmul`, and standard numeric instances.
 
-Elementary functions (`exp`, `log`, `sin`, ...) and `Model.pow` are not on this import.
-Import `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the
-model barrel `BinaryInterchange.Transcendentals`) by name to install `Model.exp`,
-`Model.pow`, and `MathFunctions`. These are software approximation kernels without a general
-accuracy theorem; they do not call the host FPU. For an IEEE descriptor, `Model.pow` with a finite
-nonzero base and a finite integral exponent is correctly rounded whenever its result is finite
-(`Model.Power.toReal_pow_of_eq_intCast`). Certified `sqrt` and `abs` are available here; their
-`MathFunctions` aliases require the elementary-function import.
+Elementary functions (`exp`, `log`, `sin`, ...) and `Model.pow` are not on this import. Import
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the model barrel
+`BinaryInterchange.Transcendentals`) by name to install `Model.exp`, `Model.pow`, and
+`MathFunctions`. These are software approximation kernels without a general accuracy theorem, and
+they do not call the host FPU. For an IEEE descriptor, `Model.pow` with a finite nonzero base and a
+finite integral exponent is correctly rounded whenever its result is finite
+(`Model.Power.toReal_pow_of_eq_intCast`), and a finite positive base with any other finite exponent
+is correctly rounded whenever its certified enclosure search settles
+(`Model.Power.pow_spec_of_certified`). Certified `sqrt` and `abs` are available here, but their
+`MathFunctions` aliases need the elementary-function import.
 
-Import `FloatLib.Floats.ExecFloat` for the universal capability API, or this module directly for
+Import `FloatLib.Floats.ExecFloat` for the universal capability API, or this module for
 descriptor-model execution. Import `FloatLib.Floats.Formats.BinaryInterchange.Semantics` for the
 descriptor model's real-refinement theorems.
 -/

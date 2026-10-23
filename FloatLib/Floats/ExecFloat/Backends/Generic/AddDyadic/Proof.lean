@@ -14,11 +14,11 @@ import Mathlib.Data.Int.NatAbs
 /-!
 # Correctness of signed-magnitude dyadic addition
 
-The runtime aligns dyadic significands and adds their natural-number magnitudes with separate
-signs. `addDyadicImpl_eq` identifies this implementation with exact dyadic addition, including
+The runtime aligns dyadic significands and combines their natural-number magnitudes by sign.
+`Internal.addDyadic_eq` identifies this implementation with exact dyadic addition, including
 cancellation and the signed-zero rule.
 
-The `@[csimp]` theorem `addDyadic_eq_addDyadicImpl` supplies the equality used by the compiler
+The `@[csimp]` theorem `addDyadic_eq_internal` supplies the equality used by the compiler
 substitution. The remaining public lemmas describe equal- and adjacent-exponent cases used by
 native arithmetic refinements.
 -/
@@ -32,7 +32,7 @@ private theorem natAbs_natCast_add (left right : Nat) :
   rw [← Int.natCast_add left right, Int.natAbs_natCast]
 
 /--
-Adding two nonzero dyadics with the same sign and exponent adds only their significands.
+Adding two nonzero dyadics with the same sign and exponent adds their significands.
 -/
 theorem addDyadic_sameSign_sameExponent
     (sign : Bool) (left right : Nat) (exponent : Int)
@@ -46,10 +46,10 @@ theorem addDyadic_sameSign_sameExponent
       sign left right exponent hleft hright
 
 /--
-Subtract equal-exponent dyadic magnitudes when the left operand has the larger magnitude.
+Adding equal-exponent dyadics of opposite signs subtracts the smaller magnitude from the larger
+left one.
 
-Opposite signs turn addition into exact subtraction; the result keeps the sign of the larger
-magnitude and needs no rounding or exponent adjustment.
+The result keeps the sign of the larger magnitude and needs no rounding or exponent adjustment.
 -/
 theorem addDyadic_oppositeSign_sameExponent_largeLeft
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
@@ -64,7 +64,8 @@ theorem addDyadic_oppositeSign_sameExponent_largeLeft
       largeSign smallSign large small exponent hlarge hsmall hsign hlt
 
 /--
-Subtract equal-exponent dyadic magnitudes when the right operand has the larger magnitude.
+Adding equal-exponent dyadics of opposite signs subtracts the smaller left magnitude from the
+larger right one.
 -/
 theorem addDyadic_oppositeSign_sameExponent_largeRight
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
@@ -90,7 +91,7 @@ theorem addDyadic_oppositeSign_sameExponent_eq_zero
     Numerics.Dyadic.add_opposite_sign_same_exponent_eq_zero
       leftSign rightSign magnitude exponent hmagnitude hsign
 
-/-- Opposite-sign subtraction with the larger left operand one exponent higher. -/
+/-- Opposite signs with the larger left operand one exponent higher give `2 * large - small`. -/
 theorem addDyadic_oppositeSign_adjacentExponent_largeLeft
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
     (hlarge : large ≠ 0) (hsmall : small ≠ 0)
@@ -105,7 +106,7 @@ theorem addDyadic_oppositeSign_adjacentExponent_largeLeft
     Numerics.Dyadic.add_opposite_sign_adjacent_exponent_large_left
       largeSign smallSign large small exponent hlarge hsmall hsign hlt
 
-/-- Opposite-sign subtraction with the larger right operand one exponent higher. -/
+/-- Opposite signs with the larger right operand one exponent higher give `2 * large - small`. -/
 theorem addDyadic_oppositeSign_adjacentExponent_largeRight
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
     (hsmall : small ≠ 0) (hlarge : large ≠ 0)
@@ -276,10 +277,10 @@ private theorem addDyadicMagnitudes_eq
       exact natAbs_natCast_add left right
     simp [addDyadicMagnitudes, hsumNeg, hsumNe, hnatAbs]
 
-/-- Signed-magnitude dyadic addition is equal to the public exact definition. -/
-theorem addDyadicImpl_eq (a b : Numerics.Dyadic) :
-    addDyadicImpl a b = addDyadic a b := by
-  unfold addDyadicImpl addDyadic Numerics.Dyadic.add Numerics.Dyadic.addFields
+/-- Signed-magnitude dyadic addition equals `Model.addDyadic`. -/
+theorem Internal.addDyadic_eq (a b : Numerics.Dyadic) :
+    Internal.addDyadic a b = Model.addDyadic a b := by
+  unfold Internal.addDyadic Model.addDyadic Numerics.Dyadic.add Numerics.Dyadic.addFields
   simp only [beq_iff_eq]
   by_cases ha : a.significand = 0
   · simp [ha]
@@ -308,10 +309,10 @@ theorem addDyadic_comm (a b : Numerics.Dyadic) :
     addDyadic a b = addDyadic b a := by
   exact Numerics.Dyadic.add_comm a b
 
-/-- Compile exact dyadic addition through the verified signed-magnitude implementation. -/
-@[csimp] theorem addDyadic_eq_addDyadicImpl :
-    addDyadic = addDyadicImpl := by
+/-- Compiled code runs exact dyadic addition as the signed-magnitude `Internal.addDyadic`. -/
+@[csimp] theorem addDyadic_eq_internal :
+    addDyadic = Internal.addDyadic := by
   funext a b
-  exact (addDyadicImpl_eq a b).symm
+  exact (Internal.addDyadic_eq a b).symm
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

@@ -35,8 +35,8 @@ theorem signBit_eq_true_iff_signMaskNat_le
     omega
   have hfit : x.toNatBits < 2 ^ (index + 1) := by
     simpa [hwidth] using toNatBits_lt_two_pow x
-  rw [signBit_eq_signBitImpl_apply]
-  unfold signBitImpl
+  rw [signBit_eq_internal_apply]
+  unfold Internal.signBit
   rw [Nat.testBit_eq_true_iff_two_pow_le_of_lt hfit]
   unfold FloatFormat.signMaskNat FloatFormat.signBitIndex
   rw [hwidth]
@@ -133,7 +133,7 @@ private theorem ofFields_bits_eq_signMask_iff
 
 /-! ## Field classification -/
 
-/-- Classification of an in-range explicit field tuple as zero. -/
+/-- Classification of an in-range field tuple as zero. -/
 theorem isZero_ofFields
     (fmt : FloatFormat) (sign : Bool) (exponent fraction : Nat)
     (hexponent : exponent < 2 ^ fmt.expWidth)
@@ -153,7 +153,7 @@ theorem isZero_ofFields
     cases sign <;> simp
   · simp [isZero, hencoding, IEEE.isZero, hExp, hFrac]
 
-/-- Classification of an in-range explicit field tuple as finite. -/
+/-- Classification of an in-range field tuple as finite. -/
 theorem isFinite_ofFields
     (fmt : FloatFormat) (sign : Bool) (exponent fraction : Nat)
     (hexponent : exponent < 2 ^ fmt.expWidth)
@@ -371,7 +371,7 @@ theorem toDyadic?_ofFields_normal (fmt : FloatFormat) (sign : Bool)
 
 /-! ## Closed-form real semantics -/
 
-/-- Closed-form real value of an explicitly packed subnormal. -/
+/-- Closed-form real value of a packed subnormal. -/
 theorem toReal_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
     (fraction : Nat) (hfractionPos : fraction ≠ 0)
     (hfraction : fraction < 2 ^ fmt.fracWidth) :
@@ -385,7 +385,7 @@ theorem toReal_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
     simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
       Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
-/-- Closed-form real value of explicitly packed normal fields. -/
+/-- Closed-form real value of packed normal fields. -/
 theorem toReal_ofFields_normal (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) (hexponentPos : exponent ≠ 0)
     (hexponent : exponent < FloatFormat.expAllOnesNat fmt)

@@ -9,7 +9,8 @@ module
 public import FloatLib.Floats.Formats.Posit.Algebraic.RationalPower.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Comparison.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
-public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Proof
+public import FloatLib.Numerics.Exact.RationalPower.Proof
+public import FloatLib.Numerics.Order.Comparison
 
 /-!
 # Real semantics of rational powers and fused minus-one exponentials
@@ -17,10 +18,11 @@ public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Proof
 For nonnegative bases in the stated domain, the executable result equals Section 4.1
 rounding of the exact real power. Negative bases with integral exponents round the exact rational
 integer power. NaR, zero to a nonpositive power, and negative bases with nonintegral exponents
-have explicit exceptional-value theorems.
+have their own exceptional-value theorems.
 
-The proofs establish correctness, including ties and saturation, without a claim about feasible
-running time for large rational numerators or denominators.
+The proofs establish correctness, including ties and saturation. Exact boundary equality makes
+the logarithm search terminate at every boundary, but no theorem bounds its running time near a
+tie.
 -/
 
 @[expose] public section
@@ -37,7 +39,7 @@ private theorem roundRat_eq_roundPositive_of_nonneg (q : Rat) (hq : 0 ≤ q) :
     simp [roundPositiveRat, roundPositiveCode, zero]
   · simp [roundRat, hq0, not_lt.mpr hq]
 
-/-- Certified boundary comparisons round a positive-base real power exactly once. -/
+/-- Exact boundary comparisons round a positive-base real power exactly once. -/
 theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 < base) :
     roundPositiveRatPower format base exponent =
       RealRounding.roundPositive format ((base : ℝ) ^ (exponent : ℝ)) := by
@@ -50,8 +52,7 @@ theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 
     exact roundRat_eq_roundPositive_of_nonneg _ (zpow_nonneg hbase.le _)
   · apply ComparisonRounding.round_eq_real
     intro candidate
-    exact FloatLib.Numerics.RationalPower.compareWithEnclosure_eq_real
-      base exponent candidate (format.bits + 8) hbase
+    exact FloatLib.Numerics.RationalPower.compare_eq_real base exponent candidate hbase.le
 
 private theorem roundPositiveRatPower_eq_roundRat (base exponent : Rat) (hbase : 0 < base)
     (hinteger : exponent.den = 1) :
@@ -62,7 +63,7 @@ private theorem roundPositiveRatPower_eq_roundRat (base exponent : Rat) (hbase :
 
 /--
 In its nonnegative real domain, the executable power rounds the exact real power once.
-A zero base requires a positive exponent; every exponent is allowed for a positive base.
+A zero base requires a positive exponent, and a positive base allows every exponent.
 -/
 theorem roundRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 ≤ base)
     (hdomain : base ≠ 0 ∨ 0 < exponent) :
@@ -100,7 +101,7 @@ theorem roundRatPower_eq_roundRat_of_neg (base exponent : Rat) (hbase : base < 0
     simp [roundRat, hq.ne', not_lt.mpr hq.le, neg_ne_zero.mpr hq.ne',
       neg_lt_zero.mpr hq]
 
-/-- A negative base with nonintegral exponent is outside the supported real branch. -/
+/-- A negative base with a nonintegral exponent produces NaR. -/
 theorem roundRatPower_eq_nar_of_neg_nonintegral (base exponent : Rat) (hbase : base < 0)
     (hinteger : exponent.den ≠ 1) :
     roundRatPower format base exponent = nar format := by
@@ -204,9 +205,9 @@ theorem roundRatPowerMinusOne_eq_round (base exponent : Rat) (hbase : 0 < base) 
       (RealRounding.round_ratCast format (base ^ exponent.num - 1)).symm
   · apply ComparisonRounding.roundSigned_eq_real
     intro candidate
-    rw [FloatLib.Numerics.RationalPower.compareWithEnclosure_eq_real
-      base exponent (candidate + 1) (format.bits + 8) hbase, Rat.cast_add, Rat.cast_one]
-    simp only [cmp, cmpUsing, sub_lt_iff_lt_add, lt_sub_iff_add_lt]
+    rw [FloatLib.Numerics.RationalPower.compare_eq_real
+      base exponent (candidate + 1) hbase.le, Rat.cast_add, Rat.cast_one,
+      FloatLib.Numerics.cmp_sub_eq_cmp_add]
 
 /-- Every finite input gives a single rounding of the exact base-two power minus one. -/
 theorem exp2Minus1_eq_round (value : Model format) {e : Rat}

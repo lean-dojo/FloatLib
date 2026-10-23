@@ -24,19 +24,17 @@ binary execution boundary:
 * representative Posit Standard widths spanning byte, native-word, fixed-pair, and
   arbitrary-precision carriers.
 
-The certificate is not a test result. Its fields are the `run = spec` equations required by the
-operation typeclasses, so failure to provide any backend refinement prevents this module from
-compiling.
+A certificate is more than a test result. Its fields are the `run = spec` equations that the
+operation typeclasses require, so a missing backend refinement stops this module from compiling.
 -/
 
 @[expose] public section
 
 namespace FloatLibTests.Conformance.Execution.Certificates
 
+open FloatLib.Floats
 open FloatLib.Floats.ExecFloat.Proof
 open FloatLib.Floats.Formats.BinaryInterchange
-open FloatLib.Floats.Formats.FiniteOnly
-open FloatLib.Floats.Formats.OCP.FP8
 open FloatLib.Floats.Formats.OCP.MX
 
 universe u
@@ -58,32 +56,32 @@ Concrete witnesses make accidental loss of any public family registration a comp
 generic `staticByte` theorem proves the mathematics; these declarations audit the exported names.
 -/
 
-theorem ocpE4M3FN : FullArithmeticCertificate E4M3FN :=
-  fullArithmeticCertificate E4M3FN
+theorem ocpE4M3FN : FullArithmeticCertificate E4M3FN.Family :=
+  fullArithmeticCertificate E4M3FN.Family
 
-theorem ocpE5M2 : FullArithmeticCertificate E5M2 :=
-  fullArithmeticCertificate E5M2
+theorem ocpE5M2 : FullArithmeticCertificate E5M2.Family :=
+  fullArithmeticCertificate E5M2.Family
 
-theorem ocpE2M1 : FullArithmeticCertificate E2M1 :=
-  fullArithmeticCertificate E2M1
+theorem ocpE2M1 : FullArithmeticCertificate E2M1.Family :=
+  fullArithmeticCertificate E2M1.Family
 
-theorem ocpE2M3 : FullArithmeticCertificate E2M3 :=
-  fullArithmeticCertificate E2M3
+theorem ocpE2M3 : FullArithmeticCertificate E2M3.Family :=
+  fullArithmeticCertificate E2M3.Family
 
-theorem ocpE3M2 : FullArithmeticCertificate E3M2 :=
-  fullArithmeticCertificate E3M2
+theorem ocpE3M2 : FullArithmeticCertificate E3M2.Family :=
+  fullArithmeticCertificate E3M2.Family
 
-theorem onnxe4m3fnuz : FullArithmeticCertificate E4M3FNUZ :=
-  fullArithmeticCertificate E4M3FNUZ
+theorem onnxe4m3fnuz : FullArithmeticCertificate E4M3FNUZ.Family :=
+  fullArithmeticCertificate E4M3FNUZ.Family
 
-theorem onnxe5m2fnuz : FullArithmeticCertificate E5M2FNUZ :=
-  fullArithmeticCertificate E5M2FNUZ
+theorem onnxe5m2fnuz : FullArithmeticCertificate E5M2FNUZ.Family :=
+  fullArithmeticCertificate E5M2FNUZ.Family
 
 /-!
 These concrete posit witnesses cover both sides of every storage boundary. The generic format
-proof lives with the posit conformance theory; these declarations verify that public
-type-directed instance synthesis reaches a complete selected-backend certificate without
-requiring a separately registered family for any width.
+proof lives with the posit conformance theory. These declarations check that public type-directed
+instance synthesis reaches a complete selected-backend certificate without a separately
+registered family for any width.
 -/
 
 theorem posit2 :

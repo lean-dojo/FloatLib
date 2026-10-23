@@ -13,7 +13,7 @@ public import Init.Data.UInt.Log2
 
 A `LimbArray` stores a natural number as a little-endian array of 32-bit limbs: limb `i` carries
 weight `2^(32 i)`, and reading beyond the stored limbs yields zero, so an array denotes the same
-number after zero limbs are appended. The value of an array is `toNat`; `Core.Proof` relates the
+number after zero limbs are appended. The value of an array is `toNat`. `Core.Proof` relates the
 accessors to this value, and the arithmetic and shift modules provide their own value theorems.
 
 Using `UInt32` limbs lets each limb product, plus an accumulator limb and a carry, fit in a
@@ -32,13 +32,13 @@ namespace FloatLib.Numerics
 
 /-- A natural number stored as little-endian 32-bit limbs. -/
 structure LimbArray where
-  /-- Little-endian limbs; limb `i` has weight `2^(32 i)`. -/
+  /-- Little-endian limbs, where limb `i` has weight `2^(32 i)`. -/
   limbs : Array UInt32
   deriving DecidableEq, Repr
 
 namespace LimbArray
 
-/-- The limb radix `2^32`. -/
+/-- Limb radix `2^32`. -/
 abbrev radix : Nat := 4294967296
 
 /-- Number of stored limbs. -/
@@ -59,7 +59,7 @@ def segment (v : LimbArray) (start : Nat) : Nat → Nat
   | 0 => 0
   | count + 1 => (v.limb start).toNat + radix * segment v (start + 1) count
 
-/-- The natural number denoted by a limb array. -/
+/-- Natural number denoted by a limb array. -/
 def toNat (v : LimbArray) : Nat :=
   segment v 0 v.size
 
@@ -71,10 +71,10 @@ def hornerFrom (v : LimbArray) : Nat → Nat → Nat
 /--
 Executable evaluation of `toNat`.
 
-`Core.Proof.toNat_eq_toNatImpl` registers this tail-recursive Horner loop as the compiled form of
+`Core.Proof.toNat_eq_internal` registers this tail-recursive Horner loop as the compiled form of
 `toNat`, whose front recursion is convenient for proofs but not tail recursive.
 -/
-def toNatImpl (v : LimbArray) : Nat :=
+def Internal.toNat (v : LimbArray) : Nat :=
   hornerFrom v v.size 0
 
 /-- Append the `count` low base-`2^32` digits of `n` to an accumulator array. -/
@@ -99,7 +99,7 @@ def topLimb (v : LimbArray) : Nat → Nat
 @[inline] def isZero (v : LimbArray) : Bool :=
   topLimb v v.size == 0
 
-/-- Position of the leading set bit; zero for the zero array. -/
+/-- Position of the leading set bit, or zero for the zero array. -/
 def log2 (v : LimbArray) : Nat :=
   match topLimb v v.size with
   | 0 => 0
@@ -118,7 +118,7 @@ def log2 (v : LimbArray) : Nat :=
     (v.limb (lo / 32) >>> UInt32.ofNat r) |||
       (v.limb (lo / 32 + 1) <<< UInt32.ofNat (32 - r))
 
-/-- The mask of the low `r` bits of a limb, for `r < 32`. -/
+/-- Mask of the low `r` bits of a limb, for `r < 32`. -/
 @[inline] def lowMask32 (r : Nat) : UInt32 :=
   ((1 : UInt32) <<< UInt32.ofNat r) - 1
 
@@ -143,7 +143,7 @@ def anyLimbBelow (v : LimbArray) : Nat → Bool
   anyLimbBelow v (min (k / 32) v.size) ||
     (v.limb (k / 32) &&& lowMask32 (k % 32)) != 0
 
-/-- Set the low bit when `sticky` holds; an empty array remains empty. -/
+/-- Set the low bit when `sticky` holds. An empty array stays empty. -/
 @[inline] def orLowBit (v : LimbArray) (sticky : Bool) : LimbArray :=
   if sticky then ⟨v.limbs.setIfInBounds 0 (v.limb 0 ||| 1)⟩ else v
 

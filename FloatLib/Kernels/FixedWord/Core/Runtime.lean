@@ -16,9 +16,9 @@ Fixed-format and fixed-limb backends share a native-integer toolbox for bounded 
 implements nearest-even shifts and quotients, two-word arithmetic, and restoring square-root
 state without committing to a floating-point format.
 
-The common case stays in `UInt64` or `UInt128` so a specialized backend does not pay for arbitrary
-precision arithmetic merely to manipulate a few limbs. Every boundary where truncation or
-overflow could matter is kept explicit, and `Core.Proof` relates these routines to their
+The common case stays in `UInt64` or `UInt128`, so a specialized backend does not pay for
+arbitrary-precision arithmetic to manipulate a few limbs. Every boundary where truncation or
+overflow could matter is visible in the code, and `Core.Proof` relates these routines to their
 unbounded-natural specifications. Wider inputs use the general numerical kernel rather than an
 approximate host operation.
 -/
@@ -61,7 +61,7 @@ Use native nearest-even shifting whenever the input fits in one machine word.
 `Core.Proof.Rounding` registers this dispatcher as the `@[csimp]` replacement for
 `Numerics.roundShiftRightEven`. Wider inputs retain the guard bit with the quotient and reuse
 those bits to test for a discarded suffix. Only a set guard bit with an even quotient needs that
-test; no halfway marker or remainder is constructed.
+test, and no halfway marker or remainder is constructed.
 -/
 @[inline] def roundShiftRightEvenNat (value shift : Nat) : Nat :=
   if _hvalue : value < 2 ^ 64 then
@@ -85,10 +85,10 @@ test; no halfway marker or remainder is constructed.
 Round the native quotient `num / den` to nearest, with ties to even.
 
 Since `num % den < den`, comparing the remainder with `den - remainder` decides `2 * remainder`
-against `den` without leaving the word: the subtraction is exact and no doubling can wrap. For
-`den = 0` the kernel returns `0`. This differs from `Numerics.roundQuotientEven num 0`, which
-inherits Lean's `n / 0 = 0` and `n % 0 = n` and so returns `1` for nonzero `num`;
-`roundQuotientEven_toNat` accordingly assumes `den ≠ 0`.
+against `den` without leaving the word, because the subtraction cannot underflow and nothing is
+doubled. For `den = 0` the kernel returns `0`. This differs from `Numerics.roundQuotientEven num 0`,
+which inherits Lean's `n / 0 = 0` and `n % 0 = n` and so returns `1` for nonzero `num`. So
+`roundQuotientEven_toNat` assumes `den ≠ 0`.
 -/
 @[inline] def roundQuotientEven (num den : UInt64) : UInt64 :=
   if den == 0 then
@@ -112,8 +112,8 @@ is a nonzero machine word.
 
 The numerator bound keeps the incremented quotient below `2^64`. `Core.Proof.Rounding` registers
 this dispatcher as the `@[csimp]` replacement for `Numerics.roundQuotientEven`, so the
-arbitrary-precision branch repeats the logical definition instead of calling it; compiler
-simplification must not recurse through the replacement theorem.
+arbitrary-precision branch repeats the logical definition instead of calling it. A call would make
+compiler simplification recurse through the replacement theorem.
 -/
 @[inline] def roundQuotientEvenNat (num den : Nat) : Nat :=
   if _hfit : num < 2 ^ 63 ∧ 0 < den ∧ den < 2 ^ 64 then
@@ -138,24 +138,24 @@ namespace FloatLib.Numerics.FixedWord
 /--
 Root and remainder produced by a restoring square-root loop.
 
-The carrier is selected by exact capacity. Restoring kernels over one or more native words share
-this state and the same square/remainder invariant.
+The carrier is chosen by capacity. Restoring kernels over one or more native words share this
+state and the same square/remainder invariant.
 -/
 structure RestoringRootState (α : Type u) where
   /-- Current floor-root prefix. -/
   root : α
-  /-- Exact remainder after the consumed base-four digits. -/
+  /-- Remainder after the consumed base-four digits. -/
   remainder : α
   deriving DecidableEq, Repr
 
 /-! ## Representation-independent nearest-even selection -/
 
 /--
-Select one of two adjacent natural-number codes from an exact midpoint comparison.
+Select one of two adjacent natural-number codes from a midpoint comparison.
 
 The comparison is `target` versus `midpoint`. Equality uses the low bit of the lower code for
-ties-to-even. Numerical formats may share this decision primitive while retaining their own
-decoders, candidate construction, and exceptional-value semantics.
+ties-to-even. Numerical formats share this decision while keeping their own decoders, candidate
+construction, and exceptional-value semantics.
 -/
 @[inline] def selectNearestEvenNat
     (comparison : Ordering) (lower upper : Nat) : Nat :=
@@ -167,8 +167,8 @@ decoders, candidate construction, and exceptional-value semantics.
 /--
 Machine-word sibling of `selectNearestEvenNat`.
 
-Keeping the parity test in `UInt64` prevents an otherwise unnecessary arbitrary-precision
-conversion in fixed-carrier rounding kernels.
+The parity test stays in `UInt64`, so fixed-carrier rounding kernels avoid a conversion to
+`Nat`.
 -/
 @[inline] def selectNearestEvenWord
     (comparison : Ordering) (lower upper : UInt64) : UInt64 :=
@@ -188,13 +188,13 @@ conversion in fixed-carrier rounding kernels.
   offset + next rest
 
 /--
-Floor binary logarithm using at most four word stages and a packed lookup; zero maps to zero.
+Floor binary logarithm from at most four word stages and a packed lookup, with zero mapped to zero.
 
-Zero and one return immediately. Other four-bit values use the packed lookup directly, and
-larger byte-sized values need only the final stage.
-For larger words, each preceding stage halves the range of possible leading-bit positions. The
-remaining four-bit value indexes a two-bit entry in the scalar constant `0xffffaa50`. All work stays
-in machine words, with no loop whose length grows with the position of the leading bit.
+Zero and one return immediately. Other four-bit values go straight to the packed lookup, and
+larger byte-sized values need only the final stage. For larger words, each preceding stage halves
+the range of possible leading-bit positions. The remaining four-bit value indexes a two-bit entry
+in the scalar constant `0xffffaa50`. All work stays in machine words, with no loop whose length
+grows with the position of the leading bit.
 `Core.Proof.Word` proves equality with `UInt64.log2` on the entire word range.
 -/
 @[inline] def log2Word (value : UInt64) : UInt64 :=
@@ -214,10 +214,10 @@ in machine words, with no loop whose length grows with the position of the leadi
 /--
 Read one bit from a machine word using a machine-word index.
 
-Lean's `UInt64` shifts reduce their count modulo 64. The explicit range check is therefore part of
-the semantics: an index outside the stored word returns `false` instead of wrapping to a different
+Lean's `UInt64` shifts reduce their count modulo 64, so the range check is part of the
+semantics: an index outside the stored word returns `false` instead of wrapping to a different
 bit. Format backends should keep statically bounded field widths in this representation throughout
-their hot decoder and cross to `Nat` only at an exact arbitrary-precision boundary.
+their hot decoder and cross to `Nat` only at an arbitrary-precision boundary.
 -/
 @[inline] def bitAtWord (value index : UInt64) : Bool :=
   if index < 64 then
@@ -244,7 +244,7 @@ The complete-width branch avoids the modulo-64 interpretation of `1 <<< 64`.
 Count leading zeroes in the retained low-width field without crossing through `Nat`.
 
 Callers establish `width ≤ 64`. For a nonzero field, `log2Word` gives its highest set-bit index,
-so the result is `width - bitLength`; the subtraction is exact under that capacity contract.
+so the result is `width - bitLength`, and under that contract the subtraction cannot underflow.
 -/
 @[inline] def countLeadingZerosWord (value width : UInt64) : UInt64 :=
   let truncated := lowBitsWord value width
@@ -257,7 +257,7 @@ so the result is `width - bitLength`; the subtraction is exact under that capaci
 Count a leading equal-bit run in a low-width machine field.
 
 Leading ones are leading zeroes after whole-word complementation. Bits above `width` are discarded
-by `lowBitsWord`, so the complement has exactly the intended fixed-field meaning.
+by `lowBitsWord`, so complementing the whole word gives the fixed-field count.
 -/
 @[inline] def countLeadingRunWord
     (value width : UInt64) (bit : Bool) : UInt64 :=
@@ -269,6 +269,16 @@ Shift right by a machine-word amount, returning zero at and beyond the carrier w
 @[inline] def shiftRightWord (value shift : UInt64) : UInt64 :=
   if shift < 64 then value >>> shift else 0
 
+/--
+The sticky quotient `shiftRightJam (A * 2^d + B) d`, or of `A * 2^d - B` when the signs differ,
+from `q = B / 2^d` and whether that division was exact (`jamCombine_toNat`).
+-/
+@[inline] def jamCombine (sameSign exact : Bool) (A q : UInt64) : UInt64 :=
+  if sameSign then
+    if exact then A + q else (A + q) ||| 1
+  else
+    if exact then A - q else (A - q - 1) ||| 1
+
 /-- A 128-bit unsigned value represented by two native 64-bit limbs. -/
 structure UInt128 where
   /-- Bits 64 through 127. -/
@@ -279,8 +289,16 @@ structure UInt128 where
 
 namespace UInt128
 
-/-- Mathematical value of a two-limb unsigned integer. -/
-def toNat (value : UInt128) : Nat :=
+/--
+Mathematical value of a two-limb unsigned integer.
+
+The definition is irreducible. Unfolding it during reduction would expand
+`value.hi.toNat * 2 ^ 64` one successor at a time and exhaust the recursion limit, and `#eval`
+reduces the type of a two-word storage code, whose bound mentions this function, while it looks
+for a `ToExpr` instance. Proofs unfold it with `simp [UInt128.toNat]`, `unfold UInt128.toNat`, or
+`UInt128.toNat.eq_1`, since `rfl`, `change`, `show`, and `decide` do not unfold it.
+-/
+@[irreducible] def toNat (value : UInt128) : Nat :=
   value.lo.toNat + value.hi.toNat * 2 ^ 64
 
 /-- Split the residue of a natural number modulo `2^128` into two native 64-bit limbs. -/
@@ -298,7 +316,7 @@ end UInt128
   value >>> 32
 
 /--
-Exact native multiplication of two 64-bit words.
+Full 128-bit product of two 64-bit words in native arithmetic.
 
 The same half-word carry decomposition appears in Go 1.23.0, `math/bits.Mul64`:
 https://github.com/golang/go/blob/go1.23.0/src/math/bits/bits.go#L470-L483

@@ -11,12 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # Finite-only E5M2FNUZ
 
-`E5M2FNUZ` gives the ONNX finite, NaN-supporting, unsigned-zero E5M2 variant a distinct Lean type.
-That nominal identity prevents accidental interchange with OCP E5M2, whose infinity and signed
-zero behavior differs even though both formats occupy one byte.
+`FloatLib.Floats.E5M2FNUZ` gives the ONNX finite, NaN-supporting, unsigned-zero E5M2 variant a
+distinct Lean type, with type-level identity `E5M2FNUZ.Family`. That identity prevents accidental
+interchange with OCP E5M2, whose infinity and signed zero behavior differs even though both formats
+occupy one byte.
 
-The runtime carrier is one `UInt8`. Balanced and throughput policies select exhaustive proved
-byte tables for addition, subtraction, multiplication, division, and square root; latency uses
+The runtime carrier is one `UInt8`. Balanced and throughput policies select exhaustive proved byte
+tables for addition, subtraction, multiplication, division, and square root. The latency policy uses
 the exact arithmetic baseline. Fused multiply-add uses the proved generic single-rounding kernel.
 
 ## Reference
@@ -27,89 +28,100 @@ the exact arithmetic baseline. Fused multiply-add uses the proved generic single
 
 @[expose] public section
 
-namespace FloatLib.Floats.Formats.FiniteOnly
+namespace FloatLib.Floats
 
 open FloatLib.Numerics
 open FloatLib.Floats.ExecFloat.Backend
 open FloatLib.Floats.Formats.BinaryInterchange
 
-/-- Finite E5M2FNUZ with one NaN code, unsigned zero, and direct byte storage. -/
-inductive E5M2FNUZ : Type
+namespace E5M2FNUZ
+
+/-- Type-level identity of `E5M2FNUZ`, selecting its descriptor, carrier, and kernels. -/
+inductive Family : Type
 
 /-- The E5M2FNUZ encoding fits in its direct byte carrier. -/
-theorem e5m2fnuz_width_le_eight : FloatFormat.e5m2fnuz.bitWidth ≤ 8 := by decide
+theorem width_le_eight : FloatFormat.e5m2fnuz.bitWidth ≤ 8 := by decide
 
 /-- Certified direct-byte E5M2FNUZ addition table. -/
-def e5m2fnuzAddTable :
+def addTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight)
+      (StaticByte.encoding FloatFormat.e5m2fnuz width_le_eight)
       Model.Spec.add :=
-  StaticByte.Tables.add FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight
+  StaticByte.Tables.add FloatFormat.e5m2fnuz width_le_eight
 
 /-- Certified direct-byte E5M2FNUZ subtraction table. -/
-def e5m2fnuzSubTable :
+def subTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight)
+      (StaticByte.encoding FloatFormat.e5m2fnuz width_le_eight)
       Model.Spec.sub :=
-  StaticByte.Tables.sub FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight
+  StaticByte.Tables.sub FloatFormat.e5m2fnuz width_le_eight
 
 /-- Certified direct-byte E5M2FNUZ multiplication table. -/
-def e5m2fnuzMulTable :
+def mulTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight)
+      (StaticByte.encoding FloatFormat.e5m2fnuz width_le_eight)
       Model.Spec.mul :=
-  StaticByte.Tables.mul FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight
+  StaticByte.Tables.mul FloatFormat.e5m2fnuz width_le_eight
 
 /-- Certified direct-byte E5M2FNUZ division table. -/
-def e5m2fnuzDivTable :
+def divTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight)
+      (StaticByte.encoding FloatFormat.e5m2fnuz width_le_eight)
       Model.Spec.div :=
-  StaticByte.Tables.div FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight
+  StaticByte.Tables.div FloatFormat.e5m2fnuz width_le_eight
 
 /-- Certified direct-byte E5M2FNUZ square-root table. -/
-def e5m2fnuzSqrtTable :
+def sqrtTable :
     TinyTable.CertifiedUnary
-      (StaticByte.encoding FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight)
+      (StaticByte.encoding FloatFormat.e5m2fnuz width_le_eight)
       Model.Spec.sqrt :=
-  StaticByte.Tables.sqrt FloatFormat.e5m2fnuz e5m2fnuz_width_le_eight
+  StaticByte.Tables.sqrt FloatFormat.e5m2fnuz width_le_eight
 
 /-- Package the five byte tables with the proved arithmetic FMA baseline. -/
-@[always_inline] instance : StaticByte.Family E5M2FNUZ where
+@[always_inline] instance : StaticByte.Family E5M2FNUZ.Family where
   format := FloatFormat.e5m2fnuz
-  width_le_eight := e5m2fnuz_width_le_eight
-  kernels := StaticByte.Kernels.fromTablesWithModelFma e5m2fnuz_width_le_eight
-    e5m2fnuzAddTable e5m2fnuzSubTable e5m2fnuzMulTable e5m2fnuzDivTable
-    e5m2fnuzSqrtTable Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
+  width_le_eight := width_le_eight
+  kernels := StaticByte.Kernels.fromTablesWithModelFma width_le_eight
+    addTable subTable mulTable divTable
+    sqrtTable Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
-meta instance : StaticByte.FamilyInfo E5M2FNUZ where
+meta instance : StaticByte.FamilyInfo E5M2FNUZ.Family where
   standard := "ONNX float8 E5M2FNUZ"
 
-@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E5M2FNUZ where
+@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E5M2FNUZ.Family where
   namePrefix := "FNUZ E5M2"
   addSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  addTable := e5m2fnuzAddTable
+  addTable := addTable
   subSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  subTable := e5m2fnuzSubTable
+  subTable := subTable
   mulSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  mulTable := e5m2fnuzMulTable
+  mulTable := mulTable
   divSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  divTable := e5m2fnuzDivTable
+  divTable := divTable
   sqrtSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  sqrtTable := e5m2fnuzSqrtTable
+  sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E5M2FNUZ] :
-    FloatLib.Floats.ExecFloat.Fma E5M2FNUZ :=
-  StaticByte.Plans.modelFmaCapability e5m2fnuz_width_le_eight
+    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E5M2FNUZ.Family] :
+    FloatLib.Floats.ExecFloat.Fma E5M2FNUZ.Family :=
+  StaticByte.Plans.modelFmaCapability width_le_eight
     Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
+end E5M2FNUZ
+
+/--
+ONNX E5M2FNUZ: 5 exponent and 2 fraction bits with bias 16, one zero, no infinity, and the
+negative-zero code as the sole NaN. Values are stored in one byte and their arithmetic reads
+certified byte tables.
+-/
+abbrev E5M2FNUZ := ExecFloat E5M2FNUZ.Family
+
 /-- Construct E5M2FNUZ from a natural bit pattern, reduced to eight bits. -/
-@[inline] def E5M2FNUZ.ofNatBits (bits : Nat) : FloatLib.Floats.ExecFloat E5M2FNUZ :=
-  StaticByte.ofNatBits E5M2FNUZ bits
+@[inline] def E5M2FNUZ.ofNatBits (bits : Nat) : E5M2FNUZ :=
+  StaticByte.ofNatBits E5M2FNUZ.Family bits
 
 /-- Read the complete E5M2FNUZ encoding byte. -/
-@[inline] def E5M2FNUZ.toUInt8 (value : FloatLib.Floats.ExecFloat E5M2FNUZ) : UInt8 :=
+@[inline] def E5M2FNUZ.toUInt8 (value : E5M2FNUZ) : UInt8 :=
   StaticByte.toUInt8 value
 
-end FloatLib.Floats.Formats.FiniteOnly
+end FloatLib.Floats

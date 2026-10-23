@@ -16,12 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 /-!
 # Certified two-word normal division
 
-The radix-`2^32` loop generates the first quotient candidate. A failed certificate selects the
-proved
-two-limb restoring result. The selected quotient is certified for every normalized input of an
-eligible layout, so this backend has no candidate-failure branch. Exceptional values, subnormal
-operands and results, and overflow boundaries retain the generic exact-rational backend. Start with
-`divNormal_refines`.
+The radix-`2^32` loop produces the first quotient candidate, and a failed certificate selects the
+proved two-limb restoring result. The selected quotient is certified for every normalized input
+of an eligible layout, so this backend has no candidate-failure branch. Exceptional values,
+subnormal operands and results, and overflow boundaries go to the generic exact-rational backend.
+The main theorem is `divNormal_refines`.
 -/
 
 @[expose] public section
@@ -51,7 +50,7 @@ private def roundNormalSpec? (fmt : FloatFormat)
       let normalized := if carry then pow2 fmt.fracWidth else rounded
       some <| ofFields fmt sign resultExponent.toNat (normalized - pow2 fmt.fracWidth)
 
-/-- The precision of an eligible descriptor is within the certified division range. -/
+/-- An eligible fraction width satisfies `64 < fracWidth ≤ 126`, the certified division range. -/
 theorem Eligible.precision_bounds (h : Eligible fmt) :
     64 < fmt.fracWidth ∧ fmt.fracWidth ≤ 126 := by
   have := h.frac_le
@@ -384,13 +383,13 @@ private theorem divNormal_accepted
       (Bool.xor (signBit fmt xWords.hi) (signBit fmt yWords.hi))
       rounded carry result
   by_cases hxZero : xExponent = 0
-  · simp [divNormal?, xWords, xExponent, hxZero] at hresult
+  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxZero] at hresult
   by_cases hxAll : xExponent = expAllOnes fmt
-  · simp [divNormal?, xWords, xExponent, hxAll] at hresult
+  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxAll] at hresult
   by_cases hyZero : yExponent = 0
-  · simp [divNormal?, yWords, yExponent, hyZero] at hresult
+  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyZero] at hresult
   by_cases hyAll : yExponent = expAllOnes fmt
-  · simp [divNormal?, yWords, yExponent, hyAll] at hresult
+  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyAll] at hresult
   have hroute :
       ¬totalExponent < fmt.ieeeMinNormalExponent ∧
         ((0 < resultExponent ∧ resultExponent < Int.ofNat fmt.expAllOnesNat) ∧
@@ -399,7 +398,8 @@ private theorem divNormal_accepted
               (UInt64.ofNat resultExponent.toNat)
               (normalizeCarry fmt carry rounded) =
             result) := by
-    simpa [divNormal?, xWords, yWords, xExponent, yExponent,
+    simpa [divNormal?, divNormalWords?, packNormal, and_assoc, xWords, yWords, xExponent,
+      yExponent,
       num, den, less, rationalExponent, totalExponent, candidateShift, shift,
       checked, rounded, carry, resultExponent,
       hxZero, hxAll, hyZero, hyAll, Bool.not_eq_true] using hresult
@@ -665,13 +665,13 @@ theorem divNormal_refines (h : Eligible fmt)
   let totalExponent :=
     rationalExponent + (Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat)
   by_cases hxZero : xExponent = 0
-  · simp [divNormal?, xWords, xExponent, hxZero] at hresult
+  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxZero] at hresult
   by_cases hxAll : xExponent = expAllOnes fmt
-  · simp [divNormal?, xWords, xExponent, hxAll] at hresult
+  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxAll] at hresult
   by_cases hyZero : yExponent = 0
-  · simp [divNormal?, yWords, yExponent, hyZero] at hresult
+  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyZero] at hresult
   by_cases hyAll : yExponent = expAllOnes fmt
-  · simp [divNormal?, yWords, yExponent, hyAll] at hresult
+  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyAll] at hresult
   have hnumBounds :
       2 ^ fmt.fracWidth ≤ num.toNat ∧ num.toNat < 2 ^ (fmt.fracWidth + 1) :=
     normalMantissa_bounds h (fracHigh fmt (toWords x).hi) (toWords x).lo
@@ -682,7 +682,7 @@ theorem divNormal_refines (h : Eligible fmt)
       (fracHigh_lt h (toWords y).hi)
   have hlowNative : ¬totalExponent < fmt.ieeeMinNormalExponent := by
     have hroute := hresult
-    simp [divNormal?, xWords, yWords, xExponent, yExponent,
+    simp [divNormal?, divNormalWords?, and_assoc, xWords, yWords, xExponent, yExponent,
       hxZero, hxAll, hyZero, hyAll] at hroute
     apply not_lt.mpr
     simpa [totalExponent, rationalExponent, less, num, den,

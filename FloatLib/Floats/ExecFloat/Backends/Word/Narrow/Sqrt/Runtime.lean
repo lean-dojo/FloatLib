@@ -8,14 +8,15 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Finite.Runtime
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Runtime
+import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 
 /-!
 # Native binary32 square root
 
 Positive finite inputs are scaled to a 47- or 48-bit radicand, so the exact floor square root and
-nearest-even decision fit entirely in `UInt64`. The complete operation retains IEEE NaN,
-infinity, negative-input, and signed-zero behavior. Correctness lives in `Sqrt.Proof`.
+the nearest-even decision fit in `UInt64`. Around the kernel, `sqrt` keeps the IEEE NaN, infinity,
+negative-input and signed-zero behavior. `Sqrt.Proof` has the proofs.
 -/
 
 @[expose] public section

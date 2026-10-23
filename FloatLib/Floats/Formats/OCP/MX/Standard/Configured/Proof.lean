@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.OCP.MX.Standard.Proof
 /-!
 # Certified configured standard MX conversion
 
-The common destination capability is backed by the numerical nearest-even and shared-scale
-contracts. SAT is the default specified by this implementation of the recommendation in §6.3;
-the explicit context also permits FP8 OVF conversion.
+The numerical nearest-even and shared-scale contracts back the common destination capability.
+SAT is the default in this implementation of the recommendation in §6.3, and the context also
+permits FP8 OVF conversion.
 -/
 
 @[expose] public section
@@ -34,18 +34,18 @@ theorem exactDecoder_eq_denote (value : Standard profile) :
 
 namespace Conversion
 
-/-- Configured conversion satisfies the numerical block contract for both explicit modes. -/
+/-- Configured conversion satisfies the numerical block contract in both overflow modes. -/
 theorem implements_run :
     Quantization.Spec.Implements (spec (profile := profile)) (run (profile := profile)) := by
-  intro mode input
+  intro overflow input
   cases input with
   | finite exact =>
-    exact ⟨quantize mode exact, rfl,
-      Formats.OCP.MX.Standard.quantizeFinite_quantizes profile mode exact⟩
+    exact ⟨quantize exact overflow, rfl,
+      Formats.OCP.MX.Standard.quantizeFinite_quantizes profile overflow exact⟩
   | infinity sign => rfl
   | exceptional value => rfl
 
-/-- The standard block destination quantizer has an explicit FP8 overflow policy context. -/
+/-- Standard block destination quantizer, with the FP8 overflow mode as its context. -/
 instance quantizer : ExecFloat.Quantizer (Standard profile) (Vector SignedRat 32) where
   Context := OverflowMode
   run := run

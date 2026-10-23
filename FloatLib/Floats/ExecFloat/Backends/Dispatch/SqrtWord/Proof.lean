@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.SqrtWord.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Sqrt.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Sqrt.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Sqrt.Proof
@@ -16,13 +16,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Packing
 /-!
 # Correctness of word-specialized square-root dispatch
 
-Binary32 and binary64 have direct word kernels. Other descriptors use native one-word decoding
+Binary32 and binary64 have their own word kernels. Other descriptors use native one-word decoding
 when eligible, or the generic square-root kernel. `word_eq_spec` proves that all these routes
 agree with `Model.Spec.sqrt` for every input.
 
-The fixed-format theorems include the NaN, infinity, signed-zero, and negative-input cases. The
-positive finite cases reuse the corresponding kernel refinements. Runtime clients can import
-`SqrtWord.Runtime` separately.
+The fixed-format theorems cover the NaN, infinity, signed-zero, and negative-input cases, and the
+positive finite cases reuse the corresponding kernel refinements.
 -/
 
 @[expose] public section
@@ -34,7 +33,7 @@ namespace Model
 
 namespace NativeBinary32
 
-/-- The direct binary32 square root preserves the exact specification. -/
+/-- Native binary32 square root agrees with `Model.Spec.sqrt`. -/
 theorem sqrt_eq_spec (x : Value) :
     sqrt x = Model.Spec.sqrt x := by
   have hcanonical :
@@ -167,7 +166,7 @@ end NativeBinary32
 
 namespace NativeBinary64
 
-/-- The direct binary64 square root preserves the exact specification. -/
+/-- Native binary64 square root agrees with `Model.Spec.sqrt`. -/
 theorem sqrt_eq_spec (x : Value) :
     sqrt x = Model.Spec.sqrt x := by
   unfold sqrt Model.Spec.sqrt
@@ -230,7 +229,7 @@ end NativeBinary64
 
 namespace SqrtBackend
 
-/-- The generic square-root dispatcher agrees with `Spec.sqrt` on every input. -/
+/-- Generic square root agrees with `Spec.sqrt` on every input. -/
 theorem generic_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     generic x = Spec.sqrt x := by
   unfold generic
@@ -273,7 +272,7 @@ theorem generic_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     rw [withNaNSelection_of_some _ _ nan hchoose]
     simp [Spec.sqrt, hchoose]
 
-/-- Native one-word decoding preserves the compact generic square-root implementation. -/
+/-- One-word square root with native decoding agrees with `generic`. -/
 theorem smallWord_eq_generic {fmt : FloatFormat}
     (heligible : NativeSmallWord.StorageEligible fmt) (x : Model fmt) :
     smallWord heligible x = generic x := by
@@ -287,9 +286,9 @@ theorem smallWord_eq_generic {fmt : FloatFormat}
     · rfl
     · split
       · rfl
-      · rw [NativeSmallWordFinite.sqrtPositive_eq_runtime]
+      · rw [NativeSmallWordSqrt.sqrtPositive_eq, NativeSmallWordFinite.sqrtPositive_eq_runtime]
 
-/-- The width-specialized dispatcher preserves the logical format-generic square root. -/
+/-- The width-specialized dispatcher agrees with `Spec.sqrt` on every input. -/
 theorem word_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     word x = Spec.sqrt x := by
   by_cases h32 : FloatFormat.IsBinary32 fmt

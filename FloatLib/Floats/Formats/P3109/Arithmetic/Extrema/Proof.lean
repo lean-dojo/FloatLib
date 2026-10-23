@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 # Mathematical order and extrema for P3109
 
 Finite extrema agree with the rational field's minimum and maximum. Comparisons agree with
-rational order, while NaN remains unordered. Magnitude ties and the preference for finite values
-are stated separately from rounding. The executable extrema use the same `binaryTo` refinement
+rational order, while NaN stays unordered. Magnitude ties and the preference for finite values
+are stated apart from rounding. The executable extrema use the same `binary` refinement
 as arithmetic, so these identities describe the expression at their single projection boundary.
 Clamping rejects reversed bounds and agrees with the rational interval clamp for ordered bounds.
 -/
@@ -25,18 +25,18 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.Arithmetic
 
-/-- Finite strict comparison is precisely rational strict order. -/
+/-- Finite strict comparison is rational strict order. -/
 @[simp] theorem less_finite (left right : Rat) :
     less (.finite left) (.finite right) = true ↔ left < right := by
   simp [less]
 
-/-- Finite non-strict comparison is precisely rational order. -/
+/-- Finite non-strict comparison is rational order. -/
 @[simp] theorem lessEqual_finite (left right : Rat) :
     lessEqual (.finite left) (.finite right) = true ↔ left ≤ right := by
   simp only [lessEqual, less, equal, Bool.or_eq_true, decide_eq_true_eq, beq_iff_eq]
   exact ⟨fun h => h.elim le_of_lt le_of_eq, lt_or_eq_of_le⟩
 
-/-- Finite comparison equality is precisely equality of rational values. -/
+/-- Finite comparison equality is equality of rational values. -/
 @[simp] theorem equal_finite (left right : Rat) :
     equal (.finite left) (.finite right) = true ↔ left = right := by
   simp [equal]
@@ -117,7 +117,7 @@ theorem clamp_of_reversed (value lower upper : Numerics.NumericalValue Rat)
     (hbounds : greater lower upper = true) : clamp value lower upper = nan := by
   simp [clamp, hbounds]
 
-/-- Clamping a finite value between ordered finite bounds is the rational interval clamp. -/
+/-- Clamping a finite value between ordered finite bounds gives the rational interval clamp. -/
 theorem clamp_finite (value lower upper : Rat) (hbounds : lower ≤ upper) :
     clamp (.finite value) (.finite lower) (.finite upper) =
       .finite (min (max value lower) upper) := by
@@ -129,13 +129,12 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 open Formats.P3109
 
-/-- Mixed clamp encoding refines the exact closed clamp followed by report projection. -/
-theorem decode_clampTo {source lowerFormat upperFormat : Format} (destination : Format)
-    (policy : ProjectionPolicy) (value : ExecFloat.P3109 source)
-    (lower : ExecFloat.P3109 lowerFormat) (upper : ExecFloat.P3109 upperFormat) :
-    Format.SameDatum (decode (clampTo destination policy value lower upper))
-      (destination.projectRatValue policy
+/-- Clamp encoding refines the exact closed clamp followed by one report projection. -/
+theorem decode_clamp {format : Format} (value lower upper : ExecFloat.P3109 format)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    Format.SameDatum (decode (clamp value lower upper target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation }
         (Arithmetic.clamp value.toClosedRat lower.toClosedRat upper.toClosedRat)) :=
-  decode_projectRat _ _
+  decode_projectRat _ mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

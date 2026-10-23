@@ -12,6 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLibTests.Accounting
@@ -28,6 +29,7 @@ Computational checks for the format-generic `Model` implementation:
 - **custom formats**: exhaustive square-root agreement with Lean's logical model at small widths
 - **directed arithmetic**: exhaustive tiny-format enclosure checks
 - **exception status**: focused IEEE edge cases
+- **ternary values**: MPFR-oriented comparison of each delivered value with the exact result
 - **algebraic operations**: signed zeros, exact powers and roots, and norms whose squares overflow
 - **character input**: exact decimal and radix-two parsing, errors, and formatting round trips
 - **mixed precision**: golden bf16-storage / binary32-accumulator cases
@@ -38,7 +40,7 @@ Computational checks for the format-generic `Model` implementation:
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -190,8 +192,8 @@ def addEnclosed {fmt : FloatFormat} (x y : Model fmt) : Bool :=
   match Model.toDyadic? x, Model.toDyadic? y with
   | some left, some right =>
       let exact := Model.addDyadic left right
-      dyadicLowerEncloses exact (Model.addDown x y) &&
-      dyadicUpperEncloses exact (Model.addUp x y)
+      dyadicLowerEncloses exact (Model.add x y (mode := .down)) &&
+      dyadicUpperEncloses exact (Model.add x y (mode := .up))
   | _, _ => true
 
 def mulEnclosed {fmt : FloatFormat} (x y : Model fmt) : Bool :=
@@ -201,8 +203,8 @@ def mulEnclosed {fmt : FloatFormat} (x y : Model fmt) : Bool :=
         { negative := Bool.xor left.negative right.negative
           significand := left.significand * right.significand
           exponent := left.exponent + right.exponent }
-      dyadicLowerEncloses exact (Model.mulDown x y) &&
-      dyadicUpperEncloses exact (Model.mulUp x y)
+      dyadicLowerEncloses exact (Model.mul x y (mode := .down)) &&
+      dyadicUpperEncloses exact (Model.mul x y (mode := .up))
   | _, _ => true
 
 def divEnclosed {fmt : FloatFormat} (x y : Model fmt) : Bool :=
@@ -214,9 +216,9 @@ def divEnclosed {fmt : FloatFormat} (x y : Model fmt) : Bool :=
         let sign := Bool.xor left.negative right.negative
         let exponentDifference := left.exponent - right.exponent
         rationalLowerEnclosesScaled sign left.significand right.significand exponentDifference
-            (Model.divDown x y) &&
+            (Model.div x y (mode := .down)) &&
           rationalUpperEnclosesScaled sign left.significand right.significand exponentDifference
-            (Model.divUp x y)
+            (Model.div x y (mode := .up))
   | _, _ => true
 
 def squaredDyadic (value : Numerics.Dyadic) : Numerics.Dyadic :=
@@ -231,8 +233,8 @@ def sqrtEnclosed {fmt : FloatFormat} (x : Model fmt) : Bool :=
       if exact.negative && exact.significand != 0 then
         true
       else
-        match Model.toDyadic? (Model.sqrtDown x),
-            Model.toDyadic? (Model.sqrtUp x) with
+        match Model.toDyadic? (Model.sqrt x (mode := .down)),
+            Model.toDyadic? (Model.sqrt x (mode := .up)) with
         | some lower, some upper =>
             Model.cmpDyadic (squaredDyadic lower) exact != .gt &&
             Model.cmpDyadic exact (squaredDyadic upper) != .gt
@@ -276,9 +278,9 @@ def failExactParsing : Thunk Nat := ⟨fun _ =>
   let checks :=
     [ parsedAs (Model.parse f32 " 1.5 ")
         (Model.ofNatBits (fmt := f32) 0x3fc00000)
-    , parsedAs (Model.parse f32 "0.1" (rounding := .towardZero))
+    , parsedAs (Model.parse f32 "0.1" (mode := .towardZero))
         (Model.ofNatBits (fmt := f32) 0x3dcccccc)
-    , parsedAs (Model.parse f32 "-0.1" (rounding := .towardNegativeInfinity))
+    , parsedAs (Model.parse f32 "-0.1" (mode := .down))
         (Model.ofNatBits (fmt := f32) 0xbdcccccd)
     , parsedAs (Model.parse f32 "3 * 2^-1")
         (Model.ofNatBits (fmt := f32) 0x3fc00000)
@@ -301,10 +303,10 @@ def failSignedZeroModes : Thunk Nat := ⟨fun _ =>
   let negOne := Model.negOne fmt
   countWhereFailures Model.IEEERoundingMode.all fun mode =>
     let expected :=
-      if mode == .towardNegativeInfinity then Model.negZero fmt else Model.posZero fmt
-    sameBits (Model.addWithRounding mode one negOne) expected &&
-    sameBits (Model.addWithRounding mode (Model.negZero fmt)
-      (Model.negZero fmt)) (Model.negZero fmt)⟩
+      if mode == .down then Model.negZero fmt else Model.posZero fmt
+    sameBits (Model.add one negOne (mode := mode)) expected &&
+    sameBits (Model.add (Model.negZero fmt)
+      (Model.negZero fmt) (mode := mode)) (Model.negZero fmt)⟩
 
 def failOverflowModes : Thunk Nat := ⟨fun _ =>
   let fmt := FloatFormat.binary32
@@ -316,24 +318,24 @@ def failOverflowModes : Thunk Nat := ⟨fun _ =>
   -- after rounding to the destination precision with an unbounded exponent range. Directions
   -- toward the finite side therefore keep both the finite result and a clear overflow flag here.
   let checks :=
-    [ outcomeIs (Model.addWithStatus maximum increment .nearestEven)
-        maximum false false false false true
-    , outcomeIs (Model.addWithStatus maximum increment .towardZero)
-        maximum false false false false true
-    , outcomeIs (Model.addWithStatus maximum increment .towardPositiveInfinity)
-        (Model.posInf fmt) false false true false true
-    , outcomeIs (Model.addWithStatus maximum increment .towardNegativeInfinity)
-        maximum false false false false true
-    , outcomeIs (Model.addWithStatus negativeMaximum negativeIncrement .nearestEven)
-        negativeMaximum false false false false true
-    , outcomeIs (Model.addWithStatus negativeMaximum negativeIncrement .towardZero)
-        negativeMaximum false false false false true
-    , outcomeIs (Model.addWithStatus negativeMaximum negativeIncrement .towardPositiveInfinity)
-        negativeMaximum false false false false true
-    , outcomeIs (Model.addWithStatus negativeMaximum negativeIncrement .towardNegativeInfinity)
-        (Model.negInf fmt) false false true false true
-    , outcomeIs (Model.addWithStatus maximum maximum .nearestEven)
-        (Model.posInf fmt) false false true false true
+    [ outcomeIs (Model.add maximum increment (mode := .nearest) (status := true))
+        maximum false false false false true .lt
+    , outcomeIs (Model.add maximum increment (mode := .towardZero) (status := true))
+        maximum false false false false true .lt
+    , outcomeIs (Model.add maximum increment (mode := .up) (status := true))
+        (Model.posInf fmt) false false true false true .gt
+    , outcomeIs (Model.add maximum increment (mode := .down) (status := true))
+        maximum false false false false true .lt
+    , outcomeIs (Model.add negativeMaximum negativeIncrement (mode := .nearest) (status := true))
+        negativeMaximum false false false false true .gt
+    , outcomeIs (Model.add negativeMaximum negativeIncrement (mode := .towardZero) (status := true))
+        negativeMaximum false false false false true .gt
+    , outcomeIs (Model.add negativeMaximum negativeIncrement (mode := .up) (status := true))
+        negativeMaximum false false false false true .gt
+    , outcomeIs (Model.add negativeMaximum negativeIncrement (mode := .down) (status := true))
+        (Model.negInf fmt) false false true false true .lt
+    , outcomeIs (Model.add maximum maximum (mode := .nearest) (status := true))
+        (Model.posInf fmt) false false true false true .gt
     ]
   countFailures checks⟩
 
@@ -347,39 +349,37 @@ def failUnderflowModes : Thunk Nat := ⟨fun _ =>
   -- With two significand bits, upward `sqrt (1/2)` first rounds to the tiny value `3/4` on
   -- the unbounded-exponent grid. Its delivered encoding is the smallest normal value, `1`, but
   -- tininess-after-rounding still raises underflow because the precision-rounded value is tiny.
-  let upwardSqrt := Model.sqrtWithStatus half .towardPositiveInfinity
+  let upwardSqrt := Model.sqrt half (mode := .up) (status := true)
   -- These fused operations land on the smallest normal encoding from just below it. Tininess
   -- after rounding depends on both the direction and the sign, even though the stored result is
   -- normal. Berkeley TestFloat exposed both boundaries during the conformance campaign.
   let negativeFma :=
-    Model.fmaWithStatus
+    Model.fma
       (Model.ofNatBits (fmt := f16) 0x876F)
       (Model.ofNatBits (fmt := f16) 0x1387)
-      (Model.ofNatBits (fmt := f16) 0x83FE)
-      .towardNegativeInfinity
+      (Model.ofNatBits (fmt := f16) 0x83FE) (mode := .down) (status := true)
   let positiveFma :=
-    Model.fmaWithStatus
+    Model.fma
       (Model.ofNatBits (fmt := f16) 0x0001)
       (Model.ofNatBits (fmt := f16) 0xB5E0)
-      (Model.ofNatBits (fmt := f16) 0x0400)
-      .towardPositiveInfinity
+      (Model.ofNatBits (fmt := f16) 0x0400) (mode := .up) (status := true)
   let checks :=
-    [ outcomeIs (Model.divWithStatus minimum two .nearestEven)
-        (Model.posZero fmt) false false false true true
-    , outcomeIs (Model.divWithStatus minimum two .towardPositiveInfinity)
-        minimum false false false true true
-    , outcomeIs (Model.divWithStatus minimum two .towardNegativeInfinity)
-        (Model.posZero fmt) false false false true true
-    , outcomeIs (Model.divWithStatus negativeMinimum two .towardNegativeInfinity)
-        negativeMinimum false false false true true
-    , outcomeIs (Model.divWithStatus negativeMinimum two .towardPositiveInfinity)
-        (Model.negZero fmt) false false false true true
+    [ outcomeIs (Model.div minimum two (mode := .nearest) (status := true))
+        (Model.posZero fmt) false false false true true .lt
+    , outcomeIs (Model.div minimum two (mode := .up) (status := true))
+        minimum false false false true true .gt
+    , outcomeIs (Model.div minimum two (mode := .down) (status := true))
+        (Model.posZero fmt) false false false true true .lt
+    , outcomeIs (Model.div negativeMinimum two (mode := .down) (status := true))
+        negativeMinimum false false false true true .lt
+    , outcomeIs (Model.div negativeMinimum two (mode := .up) (status := true))
+        (Model.negZero fmt) false false false true true .gt
     , outcomeIs negativeFma (Model.ofNatBits (fmt := f16) 0x8400)
-        false false false false true
+        false false false false true .lt
     , outcomeIs positiveFma (Model.ofNatBits (fmt := f16) 0x0400)
-        false false false false true
+        false false false false true .gt
     , outcomeIs upwardSqrt (Model.posOne tiny)
-        false false false true true
+        false false false true true .gt
     ]
   countFailures checks⟩
 
@@ -387,17 +387,17 @@ def failInvalidAndDivideByZero : Thunk Nat := ⟨fun _ =>
   let fmt := FloatFormat.binary32
   let signalingNaN := Model.ofFields fmt false (FloatFormat.expAllOnesNat fmt) 1
   let checks :=
-    [ statusIs (Model.divWithStatus (Model.posZero fmt)
-        (Model.posZero fmt)).status true false false false false
-    , statusIs (Model.divWithStatus (Model.posOne fmt)
-        (Model.posZero fmt)).status false true false false false
-    , statusIs (Model.mulWithStatus (Model.posInf fmt)
-        (Model.posZero fmt)).status true false false false false
-    , statusIs (Model.fmaWithStatus (Model.posInf fmt)
-        (Model.posZero fmt) (Model.posOne fmt)).status true false false false false
-    , statusIs (Model.sqrtWithStatus (Model.negOne fmt)).status
+    [ statusIs (Model.div (Model.posZero fmt)
+        (Model.posZero fmt) (status := true)).status true false false false false
+    , statusIs (Model.div (Model.posOne fmt)
+        (Model.posZero fmt) (status := true)).status false true false false false
+    , statusIs (Model.mul (Model.posInf fmt)
+        (Model.posZero fmt) (status := true)).status true false false false false
+    , statusIs (Model.fma (Model.posInf fmt)
+        (Model.posZero fmt) (Model.posOne fmt) (status := true)).status true false false false false
+    , statusIs (Model.sqrt (Model.negOne fmt) (status := true)).status
         true false false false false
-    , statusIs (Model.addWithStatus signalingNaN (Model.posOne fmt)).status
+    , statusIs (Model.add signalingNaN (Model.posOne fmt) (status := true)).status
         true false false false false
     ]
   countFailures checks⟩
@@ -434,51 +434,51 @@ def failStandardOperations : Thunk Nat := ⟨fun _ =>
   let signalingNaN :=
     Model.ofFields fmt false (FloatFormat.expAllOnesNat fmt) 1
   let checks :=
-    [ outcomeIs (Model.remainderWithStatus five two)
-        one false false false false false
-    , outcomeIs (Model.remainderWithStatus seven two)
-        negativeOne false false false false false
-    , outcomeIs (Model.remainderWithStatus six four)
-        negativeTwo false false false false false
-    , outcomeIs (Model.remainderWithStatus negativeSeven two)
-        one false false false false false
-    , outcomeIs (Model.remainderWithStatus seven negativeTwo)
-        negativeOne false false false false false
-    , outcomeIs (Model.remainderWithStatus negativeZero two)
-        negativeZero false false false false false
-    , outcomeIs (Model.remainderWithStatus five (Model.posInf fmt))
-        five false false false false false
-    , outcomeIs (Model.remainderWithStatus (Model.posInf fmt) two)
-        (Model.invalidResult fmt) true false false false false
-    , outcomeIs (Model.remainderWithStatus one zero)
-        (Model.invalidResult fmt) true false false false false
-    , outcomeIs (Model.remainderWithStatus signalingNaN two)
-        (Model.quietNaN signalingNaN) true false false false false
-    , outcomeIs (Model.remainderWithStatus quietNaN two)
-        quietNaN false false false false false
+    [ outcomeIs (Model.remainder five two (status := true))
+        one false false false false false .eq
+    , outcomeIs (Model.remainder seven two (status := true))
+        negativeOne false false false false false .eq
+    , outcomeIs (Model.remainder six four (status := true))
+        negativeTwo false false false false false .eq
+    , outcomeIs (Model.remainder negativeSeven two (status := true))
+        one false false false false false .eq
+    , outcomeIs (Model.remainder seven negativeTwo (status := true))
+        negativeOne false false false false false .eq
+    , outcomeIs (Model.remainder negativeZero two (status := true))
+        negativeZero false false false false false .eq
+    , outcomeIs (Model.remainder five (Model.posInf fmt) (status := true))
+        five false false false false false .eq
+    , outcomeIs (Model.remainder (Model.posInf fmt) two (status := true))
+        (Model.invalidResult fmt) true false false false false .eq
+    , outcomeIs (Model.remainder one zero (status := true))
+        (Model.invalidResult fmt) true false false false false .eq
+    , outcomeIs (Model.remainder signalingNaN two (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
+    , outcomeIs (Model.remainder quietNaN two (status := true))
+        quietNaN false false false false false .eq
     , outcomeIs
-        (Model.roundToIntegralExactWithStatus oneAndHalf .nearestEven)
-        two false false false false true
+        (Model.roundToIntegral oneAndHalf .nearest (status := true))
+        two false false false false true .gt
     , outcomeIs
-        (Model.roundToIntegralExactWithStatus oneAndHalf .towardZero)
-        one false false false false true
+        (Model.roundToIntegral oneAndHalf .towardZero (status := true))
+        one false false false false true .lt
     , outcomeIs
-        (Model.roundToIntegralExactWithStatus negativeOneAndHalf
-          .towardNegativeInfinity)
-        negativeTwo false false false false true
+        (Model.roundToIntegral negativeOneAndHalf
+          .down (status := true))
+        negativeTwo false false false false true .lt
     , outcomeIs
-        (Model.roundToIntegralExactWithStatus three .nearestEven)
-        three false false false false false
-    , outcomeIs (Model.scaleWithStatus one 3 .nearestEven)
-        eight false false false false false
-    , outcomeIs (Model.binaryExponentWithStatus eight)
-        three false false false false false
-    , outcomeIs (Model.binaryExponentWithStatus half)
-        negativeOne false false false false false
-    , outcomeIs (Model.binaryExponentWithStatus zero)
-        (Model.negInf fmt) false true false false false
-    , outcomeIs (Model.binaryExponentWithStatus (Model.posInf fmt))
-        (Model.posInf fmt) false false false false false
+        (Model.roundToIntegral three .nearest (status := true))
+        three false false false false false .eq
+    , outcomeIs (Model.scale one 3 .nearest (status := true))
+        eight false false false false false .eq
+    , outcomeIs (Model.binaryExponent eight (status := true))
+        three false false false false false .eq
+    , outcomeIs (Model.binaryExponent half (status := true))
+        negativeOne false false false false false .eq
+    , outcomeIs (Model.binaryExponent zero (status := true))
+        (Model.negInf fmt) false true false false false .eq
+    , outcomeIs (Model.binaryExponent (Model.posInf fmt) (status := true))
+        (Model.posInf fmt) false false false false false .eq
     , sameBits (Model.copySign seven negativeOne) negativeSeven
     , sameBits (Model.abs negativeSeven) seven
     , sameBits (Model.nextUp zero) (Model.posMinSubnormal fmt)
@@ -489,14 +489,189 @@ def failStandardOperations : Thunk Nat := ⟨fun _ =>
     , sameBits (Model.minimumNumber signalingNaN two) two
     , sameBits (Model.maximumNumber two signalingNaN) two
     , sameBits (Model.minimumNumber quietNaN two) two
-    , outcomeIs (Model.minimumNumberWithStatus signalingNaN two)
-        two true false false false false
-    , outcomeIs (Model.minimumNumberWithStatus quietNaN two)
-        two false false false false false
-    , outcomeIs (Model.nextUpWithStatus signalingNaN)
-        (Model.quietNaN signalingNaN) true false false false false
+    , outcomeIs (Model.minimumNumber signalingNaN two (status := true))
+        two true false false false false .eq
+    , outcomeIs (Model.minimumNumber quietNaN two (status := true))
+        two false false false false false .eq
+    , outcomeIs (Model.nextUp signalingNaN (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
     ]
   countFailures checks⟩
+
+/-! ## ternary values -/
+
+/--
+Check the ternary value, MPFR's comparison of the delivered value with the exact result, over the
+conventions it uses: an inexact quotient under every direction, overflow delivered as infinity and
+saturated, an exact infinity delivered as itself, saturated, or as an overflow NaN, NaN operands,
+division by zero with and without infinities, cancellation, square root, a rounded `logB`, signed
+zero in FNUZ, exact casts, integral rounding that saturates to its own input, and the default
+outcome.
+-/
+def failTernaryValues : Thunk Nat := ⟨fun _ =>
+  let fmt := FloatFormat.binary32
+  let integer := fun coefficient : Int =>
+    Model.roundDyadic fmt (Numerics.Dyadic.ofScaledInt coefficient 0)
+  let one := integer 1
+  let negativeOne := integer (-1)
+  let two := integer 2
+  let three := integer 3
+  let four := integer 4
+  let maximum := Model.posMaxFinite fmt
+  let negativeMaximum := Model.negMaxFinite fmt
+  let quietNaN := Model.canonicalNaN fmt
+  let signalingNaN := Model.ofFields fmt false (FloatFormat.expAllOnesNat fmt) 1
+  let thirdAbove : Model fmt := Model.ofNatBits 0x3eaaaaab
+  let thirdBelow : Model fmt := Model.ofNatBits 0x3eaaaaaa
+  let rootTwoBelow : Model fmt := Model.ofNatBits 0x3fb504f3
+  let rootTwoAbove : Model fmt := Model.ofNatBits 0x3fb504f4
+  let e4 := FloatFormat.e4m3fn
+  let fnuz := FloatFormat.e4m3fnuz
+  let e2 := FloatFormat.e2m3
+  let lowPrecision := FloatFormat.ieee 5 1
+  let narrowCustom := FloatFormat.custom 5 7 12 .ieee
+  let wideCustom := FloatFormat.custom 5 10 12 .ieee
+  let overflowInexact := (false, false, true, false, true)
+  let inexact := (false, false, false, false, true)
+  let check {target : FloatFormat} (outcome : Model.IEEEOutcome target) (expected : Model target)
+      (flags : Bool × Bool × Bool × Bool × Bool) (ternary : Ordering) : Bool :=
+    let (invalid, divideByZero, overflow, underflow, inexactFlag) := flags
+    outcomeIs outcome expected invalid divideByZero overflow underflow inexactFlag ternary
+  -- One third and minus one third: a directed or nearest neighbour above or below the quotient.
+  let thirds := Model.IEEERoundingMode.all.map fun mode =>
+    let (positive, positiveTernary, negative, negativeTernary) :
+        Model fmt × Ordering × Model fmt × Ordering :=
+      match mode with
+      | .towardZero => (thirdBelow, .lt, Model.neg thirdBelow, .gt)
+      | .down => (thirdBelow, .lt, Model.neg thirdAbove, .lt)
+      | .up => (thirdAbove, .gt, Model.neg thirdBelow, .gt)
+      | .nearest | .nearestAway | .away =>
+          (thirdAbove, .gt, Model.neg thirdAbove, .lt)
+    check (Model.div one three (mode := mode) (status := true)) positive inexact positiveTernary &&
+      check (Model.div negativeOne three (mode := mode) (status := true)) negative inexact
+          negativeTernary
+  countFailures thirds +
+  countFailures
+    [ -- Overflow to infinity lies above a positive exact value; saturation lies below it.
+      check (Model.mul maximum two (mode := .nearest) (status := true)) (Model.posInf fmt)
+          overflowInexact .gt
+    , check (Model.mul maximum two (mode := .towardZero) (status := true)) maximum
+        overflowInexact .lt
+    , check (Model.mul negativeMaximum two (mode := .nearest) (status := true)) (Model.negInf fmt)
+        overflowInexact .lt
+    , check (Model.mul negativeMaximum two (mode := .towardZero) (status := true)) negativeMaximum
+        overflowInexact .gt
+      -- E4M3FN overflows to its NaN word, which takes the sign of the exact value.
+    , check (Model.cast fmt e4 (integer 500) .nearest (status := true)) (Model.ofNatBits 0x7f)
+        overflowInexact .gt
+    , check (Model.cast fmt e4 (integer 500) .towardZero (status := true)) (Model.ofNatBits 0x7e)
+        overflowInexact .lt
+    , check (Model.cast fmt e4 (integer (-500)) .nearest (status := true)) (Model.ofNatBits 0xff)
+        overflowInexact .lt
+      -- An exact infinity is `.eq` when kept, and otherwise `.lt` for `+∞` and `.gt` for `-∞`.
+    , check (Model.cast fmt .binary16 (Model.posInf fmt) .nearest (status := true))
+        (Model.posInf .binary16) (false, false, false, false, false) .eq
+    , check (Model.cast fmt e4 (Model.posInf fmt) .nearest (status := true)) (Model.ofNatBits 0x7f)
+        overflowInexact .lt
+    , check (Model.cast fmt e4 (Model.negInf fmt) .nearest (status := true)) (Model.ofNatBits 0xff)
+        overflowInexact .gt
+    , check (Model.cast fmt fnuz (Model.posInf fmt) .nearest (status := true))
+        (Model.ofNatBits 0x80) overflowInexact .lt
+    , check (Model.cast fmt fnuz (Model.negInf fmt) .nearest (status := true))
+        (Model.ofNatBits 0x80) overflowInexact .gt
+    , check (Model.cast fmt e2 (Model.posInf fmt) .nearest (status := true)) (Model.ofNatBits 0x1f)
+        overflowInexact .lt
+    , check (Model.cast fmt e2 (Model.negInf fmt) .nearest (status := true)) (Model.ofNatBits 0x3f)
+        overflowInexact .gt
+    , check (Model.sum e2 #[Model.posInf fmt] .nearest (status := true)) (Model.ofNatBits 0x1f)
+        overflowInexact .lt
+    , check (Model.sum fnuz #[Model.negInf fmt] .nearest (status := true)) (Model.ofNatBits 0x80)
+        overflowInexact .gt
+      -- NaN operands give the convention `.eq`.
+    , check (Model.add quietNaN one (mode := .nearest) (status := true)) quietNaN
+        (false, false, false, false, false) .eq
+    , check (Model.add signalingNaN one (mode := .towardZero) (status := true))
+        (Model.quietNaN signalingNaN)
+        (true, false, false, false, false) .eq
+      -- Division by zero has an exact infinity. Without infinities the replacement is ordered.
+    , check (Model.div one (Model.posZero fmt) (mode := .nearest) (status := true))
+        (Model.posInf fmt)
+        (false, true, false, false, false) .eq
+    , check (Model.div negativeOne (Model.posZero fmt) (mode := .nearest) (status := true))
+        (Model.negInf fmt)
+        (false, true, false, false, false) .eq
+    , check (Model.div (Model.posOne e4) (Model.posZero e4) (mode := .nearest) (status := true))
+        (Model.ofNatBits 0x7f) (false, true, false, false, false) .lt
+    , check (Model.div (Model.posOne e2) (Model.posZero e2) (mode := .nearest) (status := true))
+        (Model.ofNatBits 0x1f) (false, true, false, false, false) .lt
+    , check (Model.div (Model.negOne e2) (Model.posZero e2) (mode := .nearest) (status := true))
+        (Model.ofNatBits 0x3f) (false, true, false, false, false) .gt
+      -- Exact cancellation is exact in every direction.
+    , check (Model.add one negativeOne (mode := .nearest) (status := true)) (Model.posZero fmt)
+        (false, false, false, false, false) .eq
+    , check (Model.add one negativeOne (mode := .down) (status := true)) (Model.negZero fmt)
+        (false, false, false, false, false) .eq
+      -- Square root compares the square of the delivered root with the radicand.
+    , check (Model.sqrt two (mode := .towardZero) (status := true)) rootTwoBelow inexact .lt
+    , check (Model.sqrt two (mode := .nearest) (status := true)) rootTwoBelow inexact .lt
+    , check (Model.sqrt two (mode := .up) (status := true)) rootTwoAbove inexact .gt
+    , check (Model.sqrt four (mode := .towardZero) (status := true)) two
+        (false, false, false, false, false) .eq
+      -- `logB(2^13)` in `ieee 5 1` rounds the exponent 13 to 12.
+    , check
+        (Model.binaryExponent
+          (Model.roundDyadic lowPrecision { negative := false, significand := 1, exponent := 13 })
+            (status := true))
+        (Model.roundDyadic lowPrecision (Numerics.Dyadic.ofScaledInt 12 0)) inexact .lt
+      -- `logB(0)` is `-∞`. Formats without infinity deliver a NaN or saturate, above it.
+    , check (Model.binaryExponent (Model.posZero fmt) (status := true)) (Model.negInf fmt)
+        (false, true, false, false, false) .eq
+    , check (Model.binaryExponent (Model.posZero e4) (status := true)) (Model.ofNatBits 0xff)
+        (false, true, false, false, false) .gt
+    , check (Model.binaryExponent (Model.posZero e2) (status := true)) (Model.ofNatBits 0x3f)
+        (false, true, false, false, false) .gt
+      -- FNUZ has one zero: exact zero is `.eq`, and the zero a negative value rounds to lies
+      -- above it.
+    , check (Model.add (Model.posOne fnuz) (Model.negOne fnuz) (mode := .nearest) (status := true))
+        (Model.posZero fnuz) (false, false, false, false, false) .eq
+    , check
+        (Model.mul (Model.negMinSubnormal fnuz)
+          (Model.roundDyadic fnuz { negative := false, significand := 1, exponent := -1 })
+          (status := true))
+        (Model.posZero fnuz) (false, false, false, true, true) .gt
+      -- Identity casts and compatible widenings are exact, including a custom bias.
+    , check (Model.cast fmt fmt thirdAbove .towardZero (status := true)) thirdAbove
+        (false, false, false, false, false) .eq
+    , check
+        (Model.cast .binary16 fmt (Model.ofNatBits (fmt := .binary16) 0x3555)
+          .nearest (status := true))
+        (Model.cast .binary16 fmt (Model.ofNatBits (fmt := .binary16) 0x3555))
+        (false, false, false, false, false) .eq
+    , check
+        (Model.cast narrowCustom wideCustom
+          (Model.roundDyadic narrowCustom { negative := false, significand := 129, exponent := -7 })
+          .towardZero (status := true))
+        (Model.roundDyadic wideCustom { negative := false, significand := 129, exponent := -7 })
+        (false, false, false, false, false) .eq
+    , check
+        (Model.cast wideCustom narrowCustom
+          (Model.roundDyadic wideCustom
+            { negative := false, significand := 1025, exponent := -10 })
+          .nearest (status := true))
+        (Model.posOne narrowCustom) inexact .lt
+      -- E2M3 saturates the integer 8 back to its input 7.5: inexact, and equal to the input.
+    , check (Model.roundToIntegral (Model.ofNatBits (fmt := e2) 31) .nearest (status := true))
+        (Model.ofNatBits 31) overflowInexact .eq
+      -- Integer conversion compares with the integer.
+    , check
+        (ExecDType.intToFloat .binary16
+          (FloatLib.Numerics.Representations.FixedInt.ofInt (width := 32) 2049) .nearest
+          (status := true))
+        (Model.roundDyadic .binary16 (Numerics.Dyadic.ofScaledInt 2048 0)) inexact .lt
+      -- The default outcome is an exact positive zero with a clear status.
+    , check (default : Model.IEEEOutcome fmt) (Model.posZero fmt)
+        (false, false, false, false, false) .eq
+    ]⟩
 
 /-! ## single-round algebraic operations -/
 
@@ -574,58 +749,58 @@ def failCorrectlyRoundedReductions : Thunk Nat := ⟨fun _ =>
   let productRight := #[one, one, Model.negOne fmt]
   let checks :=
     [ outcomeIs
-        (Model.sumWithStatus fmt cancellation .nearestEven)
-        one false false false false false
+        (Model.sum fmt cancellation .nearest (status := true))
+        one false false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus fmt #[one, Model.negOne fmt] .nearestEven)
-        (Model.posZero fmt) false false false false false
+        (Model.sum fmt #[one, Model.negOne fmt] .nearest (status := true))
+        (Model.posZero fmt) false false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus fmt #[one, Model.negOne fmt] .towardNegativeInfinity)
-        (Model.negZero fmt) false false false false false
+        (Model.sum fmt #[one, Model.negOne fmt] .down (status := true))
+        (Model.negZero fmt) false false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus fmt #[Model.negZero fmt, Model.negZero fmt] .nearestEven)
-        (Model.negZero fmt) false false false false false
+        (Model.sum fmt #[Model.negZero fmt, Model.negZero fmt] .nearest (status := true))
+        (Model.negZero fmt) false false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus fmt #[maximum, maximum] .nearestEven)
-        (Model.posInf fmt) false false true false true
+        (Model.sum fmt #[maximum, maximum] .nearest (status := true))
+        (Model.posInf fmt) false false true false true .gt
     , outcomeIs
-        (Model.sumWithStatus half #[minimum] .nearestEven)
-        (Model.posZero half) false false false true true
+        (Model.sum half #[minimum] .nearest (status := true))
+        (Model.posZero half) false false false true true .lt
     , outcomeIs
-        (Model.sumWithStatus half #[minimum] .towardPositiveInfinity)
-        (Model.posMinSubnormal half) false false false true true
+        (Model.sum half #[minimum] .up (status := true))
+        (Model.posMinSubnormal half) false false false true true .gt
     , outcomeIs
-        (Model.sumWithStatus half #[minimum] .towardZero)
-        (Model.posZero half) false false false true true
+        (Model.sum half #[minimum] .towardZero (status := true))
+        (Model.posZero half) false false false true true .lt
     , outcomeIs
-        (Model.sumWithStatus fmt #[Model.posInf fmt, one] .nearestEven)
-        (Model.posInf fmt) false false false false false
+        (Model.sum fmt #[Model.posInf fmt, one] .nearest (status := true))
+        (Model.posInf fmt) false false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus finiteWithNaN #[Model.posInf fmt, one] .nearestEven)
-        (Model.ofNatBits 0x7f) false false true false true
+        (Model.sum finiteWithNaN #[Model.posInf fmt, one] .nearest (status := true))
+        (Model.ofNatBits 0x7f) false false true false true .lt
     , outcomeIs
-        (Model.sumWithStatus finiteWithNaN #[Model.negInf fmt] .nearestEven)
-        (Model.ofNatBits 0xff) false false true false true
+        (Model.sum finiteWithNaN #[Model.negInf fmt] .nearest (status := true))
+        (Model.ofNatBits 0xff) false false true false true .gt
     , statusIs
-        (Model.sumWithStatus fmt #[Model.posInf fmt, Model.negInf fmt]
-          .nearestEven).status
+        (Model.sum fmt #[Model.posInf fmt, Model.negInf fmt]
+          .nearest (status := true)).status
         true false false false false
     , outcomeIs
-        (Model.sumWithStatus fmt #[quietNaN, signalingNaN] .nearestEven)
-        (Model.quietNaN signalingNaN) true false false false false
+        (Model.sum fmt #[quietNaN, signalingNaN] .nearest (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
     , outcomeIs
-        (Model.sumWithStatus fmt #[quietNaN, one] .nearestEven)
-        quietNaN false false false false false
-    , match Model.dotWithStatus fmt productLeft productRight .nearestEven with
+        (Model.sum fmt #[quietNaN, one] .nearest (status := true))
+        quietNaN false false false false false .eq
+    , match Model.dot fmt productLeft productRight .nearest (status := true) with
       | .ok outcome =>
-          outcomeIs outcome one false false false false false
+          outcomeIs outcome one false false false false false .eq
       | .error _ => false
-    , match Model.dotWithStatus fmt #[Model.posZero fmt] #[Model.posInf fmt]
-          .nearestEven with
+    , match Model.dot fmt #[Model.posZero fmt] #[Model.posInf fmt]
+          .nearest (status := true) with
       | .ok outcome =>
           statusIs outcome.status true false false false false
       | .error _ => false
-    , match Model.dotWithStatus fmt #[one, one] #[one] .nearestEven with
+    , match Model.dot fmt #[one, one] #[one] .nearest (status := true) with
       | .error (.lengthMismatch 2 1) => true
       | _ => false
     ]
@@ -706,9 +881,9 @@ def failZeroDenominatorRounders : Thunk Nat := ⟨fun _ =>
 Check generated zero, invalid, overflow, and adjacency results for every encoding policy.
 
 These checks exercise the public logical `Model` operations. They do not call the configured
-`NativeFPU.Unchecked` host operations. `Conformance.BinaryInterchange.NativeExecution` separately
-samples that opt-in API and the certified public operations; matching host values do not prove a
-refinement theorem.
+`NativeFPU.Unchecked` host operations. `Conformance.BinaryInterchange.NativeExecution` samples
+that opt-in API and the certified public operations, and matching host values prove no refinement
+theorem.
 -/
 def failFormatPolicies : Thunk Nat := ⟨fun _ =>
   let fnuz := FloatFormat.e4m3fnuz
@@ -764,30 +939,30 @@ def failFormatPolicies : Thunk Nat := ⟨fun _ =>
         (Model.div (Model.posOne ieee) (Model.zero ieee false))
     , Model.isNaN
         (Model.div (Model.zero ieee false) (Model.zero ieee false))
-    , !(Model.dyadicRoundingOverflows fn .nearestEven fnMidpoint)
-    , Model.dyadicRoundingOverflows fn .nearestEven fnAboveMidpoint
+    , !(Model.dyadicRoundingOverflows fn .nearest fnMidpoint)
+    , Model.dyadicRoundingOverflows fn .nearest fnAboveMidpoint
     , !(Model.dyadicRoundingOverflows fn .towardZero fnMidpoint)
-    , !(Model.dyadicRoundingOverflows fn .towardNegativeInfinity fnMidpoint)
-    , Model.dyadicRoundingOverflows fn .towardPositiveInfinity fnMidpoint
+    , !(Model.dyadicRoundingOverflows fn .down fnMidpoint)
+    , Model.dyadicRoundingOverflows fn .up fnMidpoint
     , !(Model.dyadicRoundingOverflows fn .towardZero fnNegativeMidpoint)
-    , !(Model.dyadicRoundingOverflows fn .towardPositiveInfinity fnNegativeMidpoint)
-    , Model.dyadicRoundingOverflows fn .towardNegativeInfinity fnNegativeMidpoint
+    , !(Model.dyadicRoundingOverflows fn .up fnNegativeMidpoint)
+    , Model.dyadicRoundingOverflows fn .down fnNegativeMidpoint
     , Model.dyadicRoundingOverflows fn .towardZero fnOverflowLimit
-    , Model.dyadicRoundingOverflows fnuz .nearestEven fnuzMidpoint
-    , Model.dyadicRoundingOverflows finite .nearestEven finiteMidpoint
-    , !(Model.rationalRoundingOverflowsScaled fn .nearestEven false
+    , Model.dyadicRoundingOverflows fnuz .nearest fnuzMidpoint
+    , Model.dyadicRoundingOverflows finite .nearest finiteMidpoint
+    , !(Model.rationalRoundingOverflowsScaled fn .nearest false
         fnMidpoint.significand 1 fnMidpoint.exponent)
     , !(Model.rationalRoundingOverflowsScaled fn .towardZero false
         fnMidpoint.significand 1 fnMidpoint.exponent)
-    , Model.rationalRoundingOverflowsScaled fn .towardPositiveInfinity false
+    , Model.rationalRoundingOverflowsScaled fn .up false
         fnMidpoint.significand 1 fnMidpoint.exponent
-    , !(Model.rationalRoundingOverflowsScaled fn .towardPositiveInfinity true
+    , !(Model.rationalRoundingOverflowsScaled fn .up true
         fnMidpoint.significand 1 fnMidpoint.exponent)
-    , Model.rationalRoundingOverflowsScaled fn .towardNegativeInfinity true
+    , Model.rationalRoundingOverflowsScaled fn .down true
         fnMidpoint.significand 1 fnMidpoint.exponent
     , Model.rationalRoundingOverflowsScaled fn .towardZero false
         fnOverflowLimit.significand 1 fnOverflowLimit.exponent
-    , Model.rationalRoundingOverflowsScaled fnuz .nearestEven false
+    , Model.rationalRoundingOverflowsScaled fnuz .nearest false
         fnuzMidpoint.significand 1 fnuzMidpoint.exponent
     ]
   countFailures checks⟩
@@ -808,6 +983,7 @@ def failureRows : Thunk (List (String × Nat)) := ⟨fun _ =>
   , ("underflowModes", failUnderflowModes.get)
   , ("invalidAndDivideByZero", failInvalidAndDivideByZero.get)
   , ("standardOperations", failStandardOperations.get)
+  , ("ternaryValues", failTernaryValues.get)
   , ("algebraicOperations", failAlgebraicOperations.get)
   , ("correctlyRoundedReductions", failCorrectlyRoundedReductions.get)
   , ("mixedBf16Dot", failMixedBf16Dot.get)

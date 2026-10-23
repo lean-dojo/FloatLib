@@ -7,7 +7,7 @@ open Lake DSL
 
 Benchmarks depend on the library through its public package boundary. This workspace owns
 performance experiments and generated code probes. Repository scripts reuse the library's
-external build directory; correctness checks have a separate workspace under `tests/`.
+external build directory, and correctness checks have their own workspace under `tests/`.
 -/
 
 package floatlibBenchmarks where
@@ -49,7 +49,7 @@ lean_exe execFloatTensorLibComparison where
 lean_exe execFloatPositVectors where
   root := `FloatLibBenchmarks.Public.PositVectors
 
-/-- Report the actual certified backend selected for every benchmark format and operation. -/
+/-- Report the certified backend selected for every benchmark format and operation. -/
 lean_exe execFloatSelectionMatrix where
   root := `FloatLibBenchmarks.Public.SelectionMatrix
 
@@ -92,3 +92,11 @@ lean_exe execFloatExhaustive where
 /-- IEEE results and flags for listed operands, used to check other libraries. -/
 lean_exe execFloatOracleList where
   root := `FloatLibBenchmarks.Public.OracleList
+
+/-- Time the public binary and posit operations on listed operands. -/
+lean_exe execFloatTimeList where
+  root := `FloatLibBenchmarks.Public.TimeList
+
+/-- Time the public operations beyond the six nearest-even kernels on mixed operands. -/
+lean_exe execFloatTimeOps where
+  root := `FloatLibBenchmarks.Public.TimeOps

@@ -31,11 +31,11 @@ The local stochastic choice in `roundQuot` is deterministic given `entropy` and 
 for quantization with saturation, overflow, or flush-to-zero.
 
 `roundDyadicGeneral` always executes the rational policy algorithm below. The ordinary
-`roundDyadic` entry point dispatches the four `IEEERoundingMode` choices with native overflow
+`roundDyadic` entry point dispatches the six `IEEERoundingMode` choices with native overflow
 and gradual underflow to the shift-based rounders in `Rounding.Directed.Dyadic`. Every other
-policy uses the general engine. Keeping these two implementations independent makes the
-agreement theorem in `Rounding.Policy.Agreement` meaningful rather than a consequence of
-delegation.
+policy uses the general engine. The two implementations are independent, so the agreement
+theorems in `Rounding.Policy.Agreement` and `Rounding.Policy.NearestAwayAgreement` do not hold
+merely by delegation.
 
 Both engines resolve overflow through `directedOverflow`, so a finite-with-NaN encoding such as
 E4M3FN saturates to its largest finite value in the truncating direction and produces its NaN word
@@ -61,7 +61,8 @@ namespace Policy
 /--
 Round `num / den` to a natural number according to `mode`.
 
-`sign` is needed only by directed modes. For stochastic rounding with `den > 0`,
+`sign` is needed only by the two infinity-directed modes. Rounding away from zero takes the upper
+integer of every inexact quotient. For stochastic rounding with `den > 0`,
 `entropy % den < num % den` chooses the upper integer. A uniform `entropy % den` therefore selects
 the upper value with probability equal to the fractional part of `num / den`.
 -/
@@ -72,7 +73,7 @@ the upper value with probability equal to the fractional part of `num / den`.
     quotient
   else
     match mode with
-    | .nearestEven =>
+    | .nearest =>
         let twice := 2 * remainder
         if twice < den then quotient
         else if twice > den then quotient + 1
@@ -80,28 +81,31 @@ the upper value with probability equal to the fractional part of `num / den`.
     | .nearestAway =>
         if 2 * remainder < den then quotient else quotient + 1
     | .towardZero => quotient
-    | .towardPositive => if sign then quotient else quotient + 1
-    | .towardNegative => if sign then quotient + 1 else quotient
+    | .up => if sign then quotient else quotient + 1
+    | .down => if sign then quotient + 1 else quotient
+    | .away => quotient + 1
     | .stochastic => if entropy % den < remainder then quotient + 1 else quotient
 
 /--
 The `IEEERoundingMode` constructor with the same direction as `mode`, when available.
 
-This type has no nearest-away or stochastic constructor, so those modes map to `none`.
+That type has no stochastic constructor, so stochastic rounding maps to `none`.
 -/
 def ieeeRoundingMode? : RoundingMode → Option IEEERoundingMode
-  | .nearestEven => some .nearestEven
+  | .nearest => some .nearest
+  | .nearestAway => some .nearestAway
   | .towardZero => some .towardZero
-  | .towardPositive => some .towardPositiveInfinity
-  | .towardNegative => some .towardNegativeInfinity
-  | .nearestAway | .stochastic => none
+  | .up => some .up
+  | .down => some .down
+  | .away => some .away
+  | .stochastic => none
 
 /--
-The IEEE rounding direction that `policy` reduces to, if any.
+The `IEEERoundingMode` direction that `policy` reduces to, if any.
 
 This returns a direction when overflow is native, underflow is gradual, and the rounding mode
-has an `IEEERoundingMode` constructor. `roundDyadic` executes such
-policies with the directed rounders instead of the general engine.
+has an `IEEERoundingMode` constructor. `roundDyadic` executes such policies with the directed
+rounders instead of the general engine.
 -/
 def policyIEEERoundingMode? (policy : QuantizationPolicy) : Option IEEERoundingMode :=
   match policy.overflow, policy.underflow with
@@ -111,28 +115,31 @@ def policyIEEERoundingMode? (policy : QuantizationPolicy) : Option IEEERoundingM
 /--
 Whether an overflowing magnitude of sign `sign` is carried upward under `mode`.
 
-This is the direction test of IEEE 754-2019 Section 7.4 on the policy vocabulary; see
-`directedOverflow`. Nearest-away and stochastic rounding overflow as the nearest modes do.
+This is the direction test of IEEE 754-2019 Section 7.4 on the policy vocabulary, as in
+`directedOverflow`. Rounding away from zero carries every magnitude upward, and stochastic rounding
+overflows as the nearest modes do.
 -/
 @[inline] def overflowRoundsMagnitudeUp (mode : RoundingMode) (sign : Bool) : Bool :=
   match mode with
   | .towardZero => false
-  | .towardPositive => !sign
-  | .towardNegative => sign
-  | .nearestEven | .nearestAway | .stochastic => true
+  | .up => !sign
+  | .down => sign
+  | .nearest | .nearestAway | .away | .stochastic => true
 
 /--
 Whether a positive magnitude below half the least subnormal rounds up to that subnormal.
 
 The answer is `none` for stochastic rounding, where it depends on the entropy. Nearest modes and
-toward-zero rounding take such a magnitude to zero; the two infinity-directed modes take it to the
-least subnormal when the direction carries the magnitude away from zero.
+toward-zero rounding take such a magnitude to zero. Rounding away from zero takes it to the least
+subnormal, and so do the two infinity-directed modes when the direction carries the magnitude away
+from zero.
 -/
 @[inline] def tinyRoundsMagnitudeUp? (mode : RoundingMode) (sign : Bool) : Option Bool :=
   match mode with
-  | .towardPositive => some (!sign)
-  | .towardNegative => some sign
-  | .nearestEven | .nearestAway | .towardZero => some false
+  | .up => some (!sign)
+  | .down => some sign
+  | .away => some true
+  | .nearest | .nearestAway | .towardZero => some false
   | .stochastic => none
 
 /--
@@ -208,8 +215,8 @@ def roundRatGeneralOfDenNeZero (fmt : FloatFormat) (policy : QuantizationPolicy)
 Round the nonnegative rational magnitude `num / den` into `fmt` with the requested sign.
 
 A zero denominator returns `none`. Otherwise the function first performs gradual quantization and
-then applies `policy.underflow`; this matters at the normal/subnormal boundary, where a value below
-the smallest normal can nevertheless round up to that normal value.
+then applies `policy.underflow`. The order matters at the normal/subnormal boundary, where a value
+below the smallest normal can still round up to that normal value.
 -/
 def roundRatGeneral (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (sign : Bool) (num den : Nat) : Option (Model fmt) :=
@@ -222,15 +229,15 @@ def roundRatGeneral (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy :
 Round an exact rational magnitude into `fmt` under `policy`.
 
 Nearest-even with native overflow and gradual underflow is the canonical `Model.roundRat`
-operation for every complete format descriptor. Other rounding, overflow, or
-underflow policies use the explicit general algorithm above. A zero denominator returns `none`
-uniformly, including for finite-only formats that have no NaN encoding.
+operation for every complete format descriptor. Other rounding, overflow, or underflow policies
+use the general algorithm above. A zero denominator returns `none` uniformly, including for
+finite-only formats that have no NaN encoding.
 -/
 def roundRat (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (sign : Bool) (num den : Nat) : Option (Model fmt) :=
   if hden : den = 0 then
     none
-  else if policy == QuantizationPolicy.nearestEven then
+  else if policy == QuantizationPolicy.nearest then
     some (Model.roundRat fmt sign num den)
   else
     some (roundRatGeneralOfDenNeZero fmt policy entropy sign num den hden)
@@ -238,9 +245,8 @@ def roundRat (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
 /--
 Round an exact signed dyadic with the independent rational policy algorithm.
 
-This definition deliberately does not dispatch to the directed dyadic rounders. It is the
-general implementation used for policies outside the directed dispatch. It is compared
-independently with `roundDyadicWithRounding` in `Rounding.Policy.Agreement`.
+It never dispatches to the directed dyadic rounders. It serves the policies outside the directed
+dispatch, and `Rounding.Policy.Agreement` compares it with `Internal.Directed.roundDyadic`.
 -/
 def roundDyadicGeneral (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (value : Numerics.Dyadic) : Model fmt :=
@@ -255,17 +261,17 @@ def roundDyadicGeneral (fmt : FloatFormat) (policy : QuantizationPolicy) (entrop
 /--
 Round an exact signed dyadic into a policy-aware format.
 
-IEEE directions with native overflow and gradual underflow use the dedicated directed dyadic
-rounders. Other policies use `roundDyadicGeneral`, including nearest-away, stochastic, saturating,
-and flush-to-zero policies.
+The six `IEEERoundingMode` directions with native overflow and gradual underflow use the dedicated
+dyadic rounders of `Internal.Directed.roundDyadic`. Other policies use `roundDyadicGeneral`,
+including stochastic, saturating, and flush-to-zero policies.
 -/
 @[inline] def roundDyadic (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (value : Numerics.Dyadic) : Model fmt :=
   match policyIEEERoundingMode? policy with
-  | some mode => roundDyadicWithRounding fmt mode value
+  | some mode => Internal.Directed.roundDyadic fmt mode value
   | none => roundDyadicGeneral fmt policy entropy value
 
-/-- Quantize a finite source value. NaN and infinity require an explicit cast policy. -/
+/-- Quantize a finite source value. NaN and infinity give `none` and need a cast policy. -/
 def castFinite? (src dst : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x : Model src) : Option (Model dst) :=
   (Model.toDyadic? x).map (roundDyadic dst policy entropy)

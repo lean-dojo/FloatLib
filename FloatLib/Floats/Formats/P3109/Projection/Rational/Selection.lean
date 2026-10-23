@@ -36,10 +36,10 @@ def nearestEven (value : Rat) : Nat :=
 def roundAway (mode : RoundingMode) (negative lowerEven : Bool) (fraction : Rat) : Bool :=
   match mode with
   | .towardZero => false
-  | .towardPositive => decide (0 < fraction) && !negative
-  | .towardNegative => decide (0 < fraction) && negative
-  | .nearestTiesToAway => decide (1 / 2 ≤ fraction)
-  | .nearestTiesToEven =>
+  | .up => decide (0 < fraction) && !negative
+  | .down => decide (0 < fraction) && negative
+  | .nearestAway => decide (1 / 2 ≤ fraction)
+  | .nearest =>
       decide (1 / 2 < fraction) || (decide (fraction = 1 / 2) && !lowerEven)
   | .toOdd => decide (0 < fraction) && lowerEven
   | .stochasticA random =>
@@ -65,7 +65,7 @@ theorem div_eq_quotient_add_fraction (numerator denominator : Nat) (hd : 0 < den
             congrArg (fun x : Rat => x / (denominator : Rat)) hcast
     _ = _ := by field_simp
 
-/-- The exact remainder fraction is below one half precisely under the integer comparison. -/
+/-- A remainder fraction is below one half exactly when `2 * remainder < denominator`. -/
 theorem fraction_lt_half (remainder denominator : Nat) (hd : 0 < denominator) :
     (remainder : Rat) / denominator < 1 / 2 ↔ 2 * remainder < denominator := by
   have hd' : (0 : Rat) < denominator := by exact_mod_cast hd
@@ -73,7 +73,7 @@ theorem fraction_lt_half (remainder denominator : Nat) (hd : 0 < denominator) :
   norm_cast
   omega
 
-/-- Equality at a halfway point is an exact integer equality. -/
+/-- A remainder fraction is one half exactly when `denominator = 2 * remainder`. -/
 theorem fraction_eq_half (remainder denominator : Nat) (hd : 0 < denominator) :
     (remainder : Rat) / denominator = 1 / 2 ↔ denominator = 2 * remainder := by
   have hd' : (denominator : Rat) ≠ 0 := by positivity

@@ -13,7 +13,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 # Native finite decoding for one-word formats
 
 A flat `UInt64` field decoder serves every conventional IEEE format covered by
-`NativeSmallWord.StorageEligible`. The executable operations have refinements in `Finite.Proof`.
+`NativeSmallWord.StorageEligible`. `Finite.Proof` has their refinements.
 -/
 
 @[expose] public section
@@ -31,8 +31,8 @@ open NativeSmallWord
 /--
 Decode a finite value through native storage fields.
 
-An all-ones exponent returns `none`; zeros, subnormals, and normals retain the exact compact
-component representation used by `FiniteKernel`.
+An all-ones exponent returns `none`. Zeros, subnormals and normals decode to the compact
+components used by `FiniteKernel`.
 -/
 @[inline] def decode? {fmt : FloatFormat}
     (x : Model fmt) : Option FiniteKernel.Components :=
@@ -50,26 +50,24 @@ component representation used by `FiniteKernel`.
 /--
 Native-storage finite addition through the compiled unsigned-scale component kernel.
 
-The body names `FiniteKernel.addComponentsImpl` rather than the exact-dyadic `addComponents`.
-The two are proved equal in `Kernel.Proof`, but a runtime module cannot import that proof, so
-naming the compiled kernel here is what keeps the exact-dyadic body out of generated code.
+Its body calls `FiniteKernel.Internal.addComponents`, which `Kernel.Proof` proves equal to the
+exact-dyadic `addComponents`. A runtime module cannot import that proof, so calling the compiled
+kernel by name keeps the exact-dyadic body out of generated code.
 -/
 @[inline] def addFinite? {fmt : FloatFormat}
     (x y : Model fmt) : Option (Model fmt) :=
   match decode? x, decode? y with
-  | some dx, some dy => some <| FiniteKernel.addComponentsImpl fmt dx dy
+  | some dx, some dy => some <| FiniteKernel.Internal.addComponents fmt dx dy
   | _, _ => none
 
 /--
 Native-storage finite FMA through the compiled unsigned-scale component kernel.
 
 If either multiplicand is zero and the addend is nonzero, the addend is already the exact result.
-Returning its stored word avoids normalization and rounding. Zero addends retain the kernel's
+Returning its stored word avoids normalization and rounding. Zero addends keep the kernel's
 signed-zero rule.
 
-As for `addFinite?`, the body names `FiniteKernel.fmaComponentsImpl`, the compiled twin of the
-exact `fmaComponents`, because the equality between them is proved in a module this runtime cannot
-import.
+As in `addFinite?`, the body calls the compiled twin `FiniteKernel.Internal.fmaComponents`.
 -/
 @[inline] def fmaFinite? {fmt : FloatFormat}
     (x y z : Model fmt) : Option (Model fmt) :=
@@ -78,7 +76,7 @@ import.
       if (dx.mantissa == 0 || dy.mantissa == 0) && dz.mantissa != 0 then
         some z
       else
-        some <| FiniteKernel.fmaComponentsImpl fmt dx dy dz
+        some <| FiniteKernel.Internal.fmaComponents fmt dx dy dz
   | _, _, _ => none
 
 /-- Native-storage positive square root using the shared compact finite kernel. -/
@@ -91,9 +89,9 @@ import.
 /--
 Native-storage square root for an input already proved positive, finite, and nonzero.
 
-The proofs state the exact contract of the unchecked field kernel and are erased by compilation.
-The implementation keeps the one-word decoder and enters the same descriptor-generic square-root
-kernel used by the arbitrary-width path.
+The proof arguments state the contract of the unchecked field kernel and are erased by
+compilation. Its body uses the one-word decoder and the descriptor-generic square-root kernel of
+the arbitrary-width path.
 -/
 @[inline] def sqrtPositive {fmt : FloatFormat}
     (_heligible : NativeSmallWord.StorageEligible fmt)

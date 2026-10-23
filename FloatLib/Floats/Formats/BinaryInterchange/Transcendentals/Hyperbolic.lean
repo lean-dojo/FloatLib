@@ -18,13 +18,13 @@ exponential kernel, so the same algorithms elaborate for arbitrary binary descri
 
 The small-argument branches evaluate the polynomial stored in `Config.sinhCoeffsAsc` exactly.
 For generated configurations, `Config.sinhTerms` selects its length from the destination fraction
-width using a Taylor-tail target; binary32's coefficient table has one additional term.
+width using a Taylor-tail target, while binary32 keeps its pinned six-term table.
 `sinh` rounds the polynomial once. `cosh` integrates it exactly before one final rational rounding.
 `tanh` approximates `s / sqrt (1 + s^2)`, where `s` is the truncated `sinh` value, using an integer
 square root with `tanhGuardBits` extra bits. Larger arguments use dyadic approximations from the
 exponential polynomial, combined before destination rounding. Bounded alignment preserves the
 sign of tiny contributions at rounding midpoints. These algorithms have no proved general
-real-error or ULP bound yet.
+real-error or ULP bound.
 
 The provider entry points inspect the decoded input exponent before requesting approximation data.
 For nonzero inputs with leading exponent below `-(fracWidth + 2)`, `sinh` and `tanh` return the
@@ -43,53 +43,7 @@ namespace Model
 
 namespace Transcendentals
 
-/-- Exact dyadic multiplication without rounding. -/
-@[inline] def mulDyadic (left right : Numerics.Dyadic) : Numerics.Dyadic :=
-  { negative := Bool.xor left.negative right.negative
-    significand := left.significand * right.significand
-    exponent := left.exponent + right.exponent }
-
-/-- Embed an integer as an exact dyadic. -/
-@[inline] def dyadicOfInt (value : Int) : Numerics.Dyadic :=
-  { negative := value < 0
-    significand := value.natAbs
-    exponent := 0 }
-
-/-- Exact dyadic one. -/
-@[inline] def oneDyadic : Numerics.Dyadic :=
-  { negative := false, significand := 1, exponent := 0 }
-
-/-- Exact dyadic zero. -/
-@[inline] def zeroDyadic : Numerics.Dyadic :=
-  { negative := false, significand := 0, exponent := 0 }
-
-/--
-Evaluate ascending integer coefficients as an exact polynomial in a dyadic argument.
-
-An empty coefficient list evaluates to zero.
--/
-def evalDyadicPolyAsc
-    (coefficients : List Int) (value : Numerics.Dyadic) : Numerics.Dyadic :=
-  let step (state : Numerics.Dyadic × Numerics.Dyadic)
-      (coefficient : Int) : Numerics.Dyadic × Numerics.Dyadic :=
-    let power := state.1
-    let accumulator := state.2
-    let term := mulDyadic (dyadicOfInt coefficient) power
-    (mulDyadic power value, addDyadic accumulator term)
-  (coefficients.foldl step (oneDyadic, zeroDyadic)).2
-
-/--
-Round `value / denominator` to the destination format for a positive denominator.
-A zero numerator preserves its sign; a zero denominator with nonzero numerator gives `invalidResult`.
--/
-def roundDyadicDivNat
-    (fmt : FloatFormat) (value : Numerics.Dyadic) (denominator : Nat) : Model fmt :=
-  if value.significand == 0 then
-    zero fmt value.negative
-  else
-    roundRatScaled fmt value.negative value.significand denominator value.exponent
-
-/-- Round a nonnegative natural number directly into the destination format. -/
+/-- Round a nonnegative natural number into the destination format. -/
 @[inline] def ofNat (fmt : FloatFormat) (value : Nat) : Model fmt :=
   roundDyadic fmt { negative := false, significand := value, exponent := 0 }
 
@@ -133,7 +87,7 @@ def coshTaylorSmallWith {fmt : FloatFormat}
       roundDyadicDivNat fmt numerator denominator
 
 /-- Extra bits carried by the integer square root in the small-argument `tanh` branch. -/
-def tanhGuardBits : Nat := 8
+def tanhGuardBits : Nat := 32
 
 /--
 Approximate `tanh` for small arguments from a truncated `sinh` series.
@@ -141,9 +95,12 @@ Approximate `tanh` for small arguments from a truncated `sinh` series.
 The real identity is `tanh x = sinh x / sqrt (1 + sinh x ^ 2)`. Substituting the truncated
 series gives an approximation whose magnitude is `a / sqrt b`, after clearing powers of two
 from its numerator and denominator. The implementation computes
-`q = floor (sqrt (a^2 * 4^k / b))`, restores the input sign, and rounds `q * 2^(-k)` once.
-The choice of `k` gives the square-root calculation extra working bits controlled by
-`tanhGuardBits`; a real-error or ULP bound for the complete calculation remains unproved.
+`q = floor (sqrt (a^2 * 4^k / b))` and rounds `(2q + s) * 2^(-k-1)` once, where the sticky bit
+`s` is one exactly when the division or the square root discarded a nonzero remainder. The
+sticky bit keeps the truncated magnitude on the same side of every rounding midpoint as the
+quotient of the truncated series. Without it a value just above a midpoint rounded down. The
+choice of `k` gives the square-root calculation extra working bits controlled by
+`tanhGuardBits`. A real-error or ULP bound for the complete calculation is not proved.
 -/
 def tanhTaylorSmallWith {fmt : FloatFormat}
     (config : Config) (x : Model fmt) : Model fmt :=
@@ -164,16 +121,18 @@ def tanhTaylorSmallWith {fmt : FloatFormat}
         zero fmt exact.negative
       else
         let k := fmt.fracWidth + tanhGuardBits + (Nat.log2 b + 1) / 2 + 1 - Nat.log2 a
-        let q := Nat.sqrt (a * a * pow2 (2 * k) / b)
-        roundDyadic fmt { negative := exact.negative, significand := q, exponent := -(Int.ofNat k) }
+        let scaled := a * a * pow2 (2 * k)
+        let quotient := scaled / b
+        let q := Nat.sqrt quotient
+        let sticky := if scaled % b == 0 && q * q == quotient then 0 else 1
+        roundDyadic fmt
+          { negative := exact.negative, significand := 2 * q + sticky
+            exponent := -(Int.ofNat k) - 1 }
 
 /-- Keep the exponential polynomial's dyadic result until its caller finishes the operation. -/
 def expDyadicWith (config : Config) (exact : Numerics.Dyadic) : Numerics.Dyadic :=
   let fixed := config.fixed
-  let xFixed := fixed.ofDyadic exact
-  let yFixed := fixed.mul xFixed config.invLn2Fixed
-  let exponent := FixedPoint.roundDivPow2Even yFixed fixed
-  let remainder := yFixed - exponent * fixed.one
+  let (exponent, remainder) := expReduce config exact
   let polynomial := fixed.evalPolyDesc config.exp2PolyCoeffsDesc remainder
   if polynomial ≤ 0 then
     zeroDyadic
@@ -221,8 +180,9 @@ def addExpDyadics (fmt : FloatFormat) (left right : Numerics.Dyadic) :
 /--
 Approximate `exp x * scale` for a finite input, scaling before destination-format rounding.
 
-The range reduction and polynomial are the same as in `expWithProvider`. Scaling the dyadic before
-classifying its range retains the upper finite interval when `scale = 1/2`.
+The range reduction (`expReduce`) and polynomial are those of `expWithProvider` for arguments of
+magnitude at least one half. Scaling the dyadic before classifying its range retains the upper
+finite interval when `scale = 1/2`.
 -/
 def expMulDyadicWith {fmt : FloatFormat}
     (config : Config) (x : Model fmt) (scale : Numerics.Dyadic) : Model fmt :=
@@ -242,7 +202,7 @@ def hyperbolicSumWith (fmt : FloatFormat) (config : Config)
 Form `(exp (2*x) - 1) / (exp (2*x) + 1)` before destination rounding.
 
 Doubling the decoded argument avoids an intermediate overflow. Outside the quotient's transition
-range, return its rounded limit before aligning with one; the remaining shifts are bounded by the
+range, return its rounded limit before aligning with one. The remaining shifts are bounded by the
 polynomial's bit length and the destination precision.
 -/
 def tanhExpWith (fmt : FloatFormat) (config : Config) (exact : Numerics.Dyadic) :
@@ -291,9 +251,10 @@ Evaluate hyperbolic sine with a delayed configuration provider.
 
 Tiny inputs return unchanged before configuration generation. A decoded leading exponent above
 `log2 (abs maxNormalExponent + 2)` implies magnitude greater than `abs maxNormalExponent + 2`,
-where the result overflows; use the descriptor's overflow policy without evaluating an exponential.
-The remaining inputs below the encoded half use the exact truncated series; larger inputs combine
-dyadic exponential approximations scaled by that encoded half before rounding.
+where the result overflows, so the descriptor's overflow policy applies without evaluating an
+exponential. The remaining inputs below the encoded half use the exact truncated series, and
+larger inputs combine dyadic exponential approximations scaled by that encoded half before
+rounding.
 -/
 def sinhWithProvider {fmt : FloatFormat}
     (getConfig : Unit → Transcendentals.Config) (x : Model fmt) : Model fmt :=

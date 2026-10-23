@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Proof
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
@@ -16,15 +16,14 @@ public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
 # Correctness of direct one-word guard-and-sticky Posit rounding
 
 `candidateCarrierLawful` proves that the `UInt64` candidate carrier satisfies the shared carrier
-laws at capacity 64. The shared theorems then establish the packing and rounding refinement;
-the remaining proofs connect the one-word entry points, which add the zero test, the exact
+laws at capacity 64. The shared theorems then establish the packing and rounding refinement.
+The remaining proofs connect the one-word entry points, which add the zero test, the exact
 minimum-positive comparison, and sign restoration, to the arbitrary-width direct rounder. The
 one-word kernel and the two-limb kernel are therefore execution refinements of one rounding rule,
 selected only by exact intermediate capacity.
 
-The separate `WordLimb` proof module establishes the cross-carrier projection theorem used by
-operations with a genuine two-limb intermediate. Importing this scalar proof does not load the
-complete two-limb rounding proof.
+The `WordLimb` proof module proves the cross-carrier projection theorem for operations with a
+two-limb intermediate. Importing this scalar proof does not load the two-limb rounding proof.
 -/
 
 @[expose] public section
@@ -115,8 +114,7 @@ private theorem isLessMinPositive_eq
   rw [DyadicRounding.minPositive_eq_fields]
   unfold isLessMinPositive
   dsimp only
-  rw [FixedWord.DyadicCompare.isLessNonnegative_eq]
-  simp only [UInt64.toNat_one]
+  rw [FixedWord.DyadicCompare.isLessPowerOfTwo_eq]
   rw [Dyadic.isLessNonnegativeFields_eq, Dyadic.isLessFields_eq]
 
 /-! ## Positive rounding -/

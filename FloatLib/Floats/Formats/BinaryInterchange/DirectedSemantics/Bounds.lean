@@ -19,6 +19,11 @@ upper bound.
 
 Infinities are handled by the positive-magnitude results. Negative inputs follow by swapping the
 magnitude rounders and reversing order under negation.
+
+For every descriptor, the directed rounders, the nearest-even general rounder, and the packing
+helpers they share turn a nonnegative exact value into a value with a nonnegative real meaning. A
+value that is not finite denotes zero, which covers the NaN that a finite-unsigned-zero encoding
+delivers on overflow.
 -/
 
 @[expose] public section
@@ -181,6 +186,129 @@ theorem le_toEReal_roundDyadicUp (fmt : FloatFormat) (d : Numerics.Dyadic) :
         Numerics.Dyadic.toReal, hmant, hsign,
         bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
         le_toEReal_roundDyadicPosUp fmt d.significand d.exponent hfmt hmant
+
+/-! ## Nonnegative results of positive rounding -/
+
+/-- A value that is not finite denotes zero. -/
+theorem toReal_eq_zero_of_isFinite_eq_false {fmt : FloatFormat} {x : Model fmt}
+    (hfinite : isFinite x = false) : toReal x = 0 := by
+  have hnone : toDyadic? x = none := by
+    cases hdecode : toDyadic? x with
+    | none => rfl
+    | some d =>
+        rw [isFinite_eq_true_of_toDyadic?_some hdecode] at hfinite
+        contradiction
+  simp [toReal_eq, hnone]
+
+/-- A value with a clear sign bit has a nonnegative real value, whether or not it is finite. -/
+theorem toReal_nonneg_of_signBit_eq_false {fmt : FloatFormat} {x : Model fmt}
+    (hsign : signBit x = false) : 0 ≤ toReal x := by
+  cases hdecode : toDyadic? x with
+  | none => simp [toReal_eq, hdecode]
+  | some d =>
+      have hnegative : d.negative = false :=
+        (sign_eq_signBit_of_toDyadic?_some hdecode).trans hsign
+      have hreal : toReal x = d.toReal := by
+        simp [toReal_eq, hdecode]
+      rw [hreal, Numerics.Dyadic.toReal]
+      simp only [Numerics.Dyadic.cast_signedSignificand, hnegative, Bool.false_eq_true, ite_false,
+        one_mul]
+      exact mul_nonneg (Nat.cast_nonneg _) (zpow_pos (by norm_num : (0 : ℝ) < 2) _).le
+
+/-- The positive native overflow value has a nonnegative real value in every encoding. -/
+theorem toReal_nativeOverflow_false_nonneg (fmt : FloatFormat) :
+    0 ≤ toReal (nativeOverflow fmt false) := by
+  cases hencoding : fmt.encoding with
+  | ieee =>
+      exact toReal_nonneg_of_signBit_eq_false (by simp [nativeOverflow, hencoding])
+  | finiteMaxNaN =>
+      exact toReal_nonneg_of_signBit_eq_false (by simp [nativeOverflow, propagatedNaN, hencoding])
+  | finiteUnsignedZero =>
+      rw [toReal_eq_zero_of_isFinite_eq_false]
+      apply isFinite_eq_false_of_isNaN
+      simp [nativeOverflow, invalidResult, negZero, isNaN, hencoding, ofBits]
+  | finite =>
+      exact toReal_nonneg_of_signBit_eq_false (by simp [nativeOverflow, hencoding])
+
+/-- Packing a positive normal significand gives a nonnegative value when `overflow` is one. -/
+private theorem toReal_packRoundedNormal_false_nonneg (fmt : FloatFormat) (overflow : Model fmt)
+    (totalExponent : Int) (roundedMantissa : Nat) (hoverflow : 0 ≤ toReal overflow) :
+    0 ≤ toReal (packRoundedNormal fmt false overflow totalExponent roundedMantissa) := by
+  unfold packRoundedNormal
+  dsimp only
+  split_ifs <;> first | exact hoverflow | exact toReal_nonneg_of_signBit_eq_false (by simp)
+
+/-- Packing a positive subnormal significand gives a nonnegative value when `zeroResult` is one. -/
+private theorem toReal_packRoundedSubnormal_false_nonneg (fmt : FloatFormat)
+    (zeroResult : Model fmt) (fraction : Nat) (hzero : 0 ≤ toReal zeroResult) :
+    0 ≤ toReal (packRoundedSubnormal fmt false zeroResult fraction) := by
+  unfold packRoundedSubnormal
+  split_ifs <;> first | exact hzero | exact toReal_nonneg_of_signBit_eq_false (by simp)
+
+/-- Rounding a positive magnitude downward gives a nonnegative value. -/
+theorem toReal_roundDyadicMagnitudeDown_false_nonneg (fmt : FloatFormat) (mantissa : Nat)
+    (exponent : Int) : 0 ≤ toReal (roundDyadicMagnitudeDown fmt false mantissa exponent) := by
+  apply toReal_nonneg_of_signBit_eq_false
+  unfold roundDyadicMagnitudeDown
+  dsimp only
+  split_ifs <;> simp
+
+/-- Rounding a positive magnitude upward gives a nonnegative value. -/
+theorem toReal_roundDyadicMagnitudeUp_false_nonneg (fmt : FloatFormat) (mantissa : Nat)
+    (exponent : Int) : 0 ≤ toReal (roundDyadicMagnitudeUp fmt false mantissa exponent) := by
+  have hoverflow := toReal_nativeOverflow_false_nonneg fmt
+  have hsubnormal := fun fraction =>
+    toReal_packRoundedSubnormal_false_nonneg fmt (ofFields fmt false 0 1) fraction
+      (toReal_nonneg_of_signBit_eq_false (by simp))
+  have hnormal := fun totalExponent roundedMantissa =>
+    toReal_packRoundedNormal_false_nonneg fmt (nativeOverflow fmt false) totalExponent
+      roundedMantissa hoverflow
+  unfold roundDyadicMagnitudeUp
+  dsimp only
+  split_ifs <;> first
+    | with_reducible exact hoverflow
+    | with_reducible exact hsubnormal _
+    | with_reducible exact hnormal _ _
+    | exact toReal_nonneg_of_signBit_eq_false (by simp)
+
+/-- Nearest-even rounding of a nonnegative dyadic gives a nonnegative value. -/
+theorem toReal_roundDyadicGeneral_nonneg (fmt : FloatFormat) (value : Numerics.Dyadic)
+    (hvalue : value.negative = false) : 0 ≤ toReal (roundDyadicGeneral fmt value) := by
+  have hoverflow := toReal_nativeOverflow_false_nonneg fmt
+  have hsubnormal := fun fraction =>
+    toReal_packRoundedSubnormal_false_nonneg fmt (zero fmt false) fraction
+      (toReal_nonneg_of_signBit_eq_false (by simp))
+  have hnormal := fun totalExponent roundedMantissa =>
+    toReal_packRoundedNormal_false_nonneg fmt (nativeOverflow fmt false) totalExponent
+      roundedMantissa hoverflow
+  unfold roundDyadicGeneral
+  dsimp only
+  rw [hvalue]
+  split_ifs <;> first
+    | with_reducible exact hoverflow
+    | with_reducible exact hsubnormal _
+    | with_reducible exact hnormal _ _
+    | exact toReal_nonneg_of_signBit_eq_false (by simp)
+
+/-- Rounding a nonnegative dyadic upward gives a nonnegative value. -/
+theorem toReal_roundDyadicUp_nonneg (fmt : FloatFormat) (value : Numerics.Dyadic)
+    (hvalue : value.negative = false) : 0 ≤ toReal (roundDyadicUp fmt value) := by
+  unfold roundDyadicUp
+  rw [hvalue]
+  split_ifs <;> first
+    | with_reducible exact toReal_roundDyadicMagnitudeUp_false_nonneg fmt _ _
+    | exact toReal_nonneg_of_signBit_eq_false (by simp)
+    | simp_all
+
+/-- Rounding a nonnegative dyadic downward gives a nonnegative value. -/
+theorem toReal_roundDyadicDown_nonneg (fmt : FloatFormat) (value : Numerics.Dyadic)
+    (hvalue : value.negative = false) : 0 ≤ toReal (roundDyadicDown fmt value) := by
+  unfold roundDyadicDown
+  rw [hvalue]
+  split_ifs <;> first
+    | with_reducible exact toReal_roundDyadicMagnitudeDown_false_nonneg fmt _ _
+    | exact toReal_nonneg_of_signBit_eq_false (by simp)
+    | simp_all
 
 end
 

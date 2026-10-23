@@ -26,29 +26,27 @@ namespace Model
 section
 
 /-- Downward-rounded addition is a lower bound on exact real addition for finite operands. -/
-theorem toEReal_addDown_le
+theorem toEReal_add_down_le
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    toEReal (addDown x y) ≤ ((toReal x + toReal y : ℝ) : EReal) := by
+    toEReal (add x y (mode := .down)) ≤ ((toReal x + toReal y : ℝ) : EReal) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy, addDown,
-    addWithRounding_eq_of_toDyadic?_some .towardNegativeInfinity nofun hdx hdy]
+  rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy, add_eq_of_toDyadic?_some .down nofun hdx hdy]
   split_ifs with hzero
   · simp [Numerics.Dyadic.toReal, hzero]
   · exact toEReal_roundDyadicDown_le fmt _ hfmt
 
 /-- Exact real addition is bounded above by upward-rounded addition for finite operands. -/
-theorem le_toEReal_addUp
+theorem le_toEReal_add_up
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    ((toReal x + toReal y : ℝ) : EReal) ≤ toEReal (addUp x y) := by
+    ((toReal x + toReal y : ℝ) : EReal) ≤ toEReal (add x y (mode := .up)) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy, addUp,
-    addWithRounding_eq_of_toDyadic?_some .towardPositiveInfinity nofun hdx hdy]
+  rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy, add_eq_of_toDyadic?_some .up nofun hdx hdy]
   split_ifs with hzero
   · simp [Numerics.Dyadic.toReal, hzero]
   · exact le_toEReal_roundDyadicUp fmt _ hfmt

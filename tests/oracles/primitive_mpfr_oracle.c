@@ -108,13 +108,41 @@ static size_t operation_arity(enum operation operation) {
   return 2;
 }
 
-static mpfr_rnd_t parse_rounding(size_t line_number, const char *text) {
-  if (strcmp(text, "nearestEven") == 0) return MPFR_RNDN;
-  if (strcmp(text, "towardZero") == 0) return MPFR_RNDZ;
-  if (strcmp(text, "towardPositive") == 0) return MPFR_RNDU;
-  if (strcmp(text, "towardNegative") == 0) return MPFR_RNDD;
+/*
+ * A FloatLib rounding direction. MPFR has no rounding to nearest with ties away
+ * from zero that supports subnormalization, so `nearestAway` runs MPFR_RNDN and
+ * corrects the value at an exact tie (see nearest_away_tie).
+ */
+struct rounding {
+  mpfr_rnd_t mpfr;
+  int nearest_away;
+};
+
+static struct rounding parse_rounding(size_t line_number, const char *text) {
+  struct rounding rounding = {MPFR_RNDN, 0};
+  if (strcmp(text, "nearestEven") == 0) return rounding;
+  if (strcmp(text, "nearestAway") == 0) {
+    rounding.nearest_away = 1;
+    return rounding;
+  }
+  if (strcmp(text, "awayFromZero") == 0) {
+    rounding.mpfr = MPFR_RNDA;
+    return rounding;
+  }
+  if (strcmp(text, "towardZero") == 0) {
+    rounding.mpfr = MPFR_RNDZ;
+    return rounding;
+  }
+  if (strcmp(text, "towardPositive") == 0) {
+    rounding.mpfr = MPFR_RNDU;
+    return rounding;
+  }
+  if (strcmp(text, "towardNegative") == 0) {
+    rounding.mpfr = MPFR_RNDD;
+    return rounding;
+  }
   fail_line(line_number, "unknown rounding mode");
-  return MPFR_RNDN;
+  return rounding;
 }
 
 static uint64_t fraction_mask(const struct format *format) {
@@ -207,7 +235,15 @@ static int generated_invalid(enum operation operation,
       const int opposite_infinite_addend =
           product_is_infinite && is_infinity(operands[2], format) &&
           sign_bit(operands[2], format) != product_sign;
-      return invalid_product || opposite_infinite_addend;
+      /*
+       * FloatLib raises invalid for the product 0 x infinity even beside a
+       * quiet NaN addend (Model.fma with status := true), but a NaN operand
+       * propagates instead of an opposite infinite addend.
+       */
+      const int any_nan = is_nan(operands[0], format) ||
+                          is_nan(operands[1], format) ||
+                          is_nan(operands[2], format);
+      return invalid_product || (!any_nan && opposite_infinite_addend);
     }
   }
   return 0;
@@ -246,6 +282,181 @@ static void decode(mpfr_t value, uint64_t bits,
   if (negative) {
     mpfr_neg(value, value, MPFR_RNDN);
   }
+}
+
+/* MPFR's exponent range when the program starts, used for exact reference arithmetic. */
+static mpfr_exp_t wide_emin;
+static mpfr_exp_t wide_emax;
+
+/* Apply one primitive operation with MPFR's own rounding and return its ternary value. */
+static int run_operation(mpfr_ptr result, enum operation operation,
+                         mpfr_t operands[3], mpfr_rnd_t rounding) {
+  switch (operation) {
+    case OP_ADD:
+      return mpfr_add(result, operands[0], operands[1], rounding);
+    case OP_SUB:
+      return mpfr_sub(result, operands[0], operands[1], rounding);
+    case OP_MUL:
+      return mpfr_mul(result, operands[0], operands[1], rounding);
+    case OP_DIV:
+      return mpfr_div(result, operands[0], operands[1], rounding);
+    case OP_SQRT:
+      return mpfr_sqrt(result, operands[0], rounding);
+    case OP_FMA:
+      return mpfr_fma(result, operands[0], operands[1], operands[2], rounding);
+  }
+  return 0;
+}
+
+/*
+ * Round in the destination: one MPFR rounding in the destination exponent range, then IEEE
+ * subnormal rounding. Zero, infinity, and NaN results are already final, so only regular values
+ * are subnormalized.
+ */
+static int round_in_destination(mpfr_ptr result, enum operation operation,
+                                mpfr_t operands[3], mpfr_rnd_t rounding) {
+  int ternary = run_operation(result, operation, operands, rounding);
+  if (mpfr_regular_p(result)) {
+    ternary = mpfr_subnormalize(result, ternary, rounding);
+  }
+  return ternary;
+}
+
+/* Lowest and highest bit positions of a nonzero finite value: |x| < 2^high, x in 2^low Z. */
+static void bit_span(mpfr_srcptr x, mpfr_exp_t *low, mpfr_exp_t *high) {
+  *high = mpfr_get_exp(x);
+  *low = *high - (mpfr_exp_t)mpfr_min_prec(x);
+}
+
+/*
+ * A precision at which addition, subtraction, multiplication, or fused multiply-add of these
+ * finite operands is exact: the span from the lowest bit of the terms to the highest, plus one
+ * bit for a carry. Binary64 fused multiply-add needs up to about 3,200 bits.
+ */
+static mpfr_prec_t exact_precision(enum operation operation, mpfr_t operands[3]) {
+  int have_term = 0;
+  mpfr_exp_t low = 0;
+  mpfr_exp_t high = 0;
+  mpfr_exp_t term_low = 0;
+  mpfr_exp_t term_high = 0;
+  mpfr_exp_t other_low = 0;
+  mpfr_exp_t other_high = 0;
+#define FLOATLIB_ADD_TERM(term_low_value, term_high_value)          \
+  do {                                                              \
+    if (!have_term || (term_low_value) < low) low = (term_low_value); \
+    if (!have_term || (term_high_value) > high) high = (term_high_value); \
+    have_term = 1;                                                  \
+  } while (0)
+  switch (operation) {
+    case OP_ADD:
+    case OP_SUB:
+      for (size_t index = 0; index < 2; ++index) {
+        if (mpfr_regular_p(operands[index])) {
+          bit_span(operands[index], &term_low, &term_high);
+          FLOATLIB_ADD_TERM(term_low, term_high);
+        }
+      }
+      break;
+    case OP_MUL:
+    case OP_FMA:
+      if (mpfr_regular_p(operands[0]) && mpfr_regular_p(operands[1])) {
+        bit_span(operands[0], &term_low, &term_high);
+        bit_span(operands[1], &other_low, &other_high);
+        FLOATLIB_ADD_TERM(term_low + other_low, term_high + other_high);
+      }
+      if (operation == OP_FMA && mpfr_regular_p(operands[2])) {
+        bit_span(operands[2], &term_low, &term_high);
+        FLOATLIB_ADD_TERM(term_low, term_high);
+      }
+      break;
+    case OP_DIV:
+    case OP_SQRT:
+      break;
+  }
+#undef FLOATLIB_ADD_TERM
+  if (!have_term) {
+    return MPFR_PREC_MIN;
+  }
+  mpfr_exp_t required = high - low + 1;
+  if (required < MPFR_PREC_MIN) {
+    return MPFR_PREC_MIN;
+  }
+  return (mpfr_prec_t)required;
+}
+
+/*
+ * Whether the exact result of an inexact finite operation lies exactly halfway between its two
+ * destination neighbours, `toward_zero` from MPFR_RNDZ and `away` from MPFR_RNDA, both rounded
+ * in the destination range. An infinite `away` stands for the first grid value above the largest
+ * finite one, 2^maximum_exponent in MPFR's exponent convention, as in FloatLib's overflowLimit.
+ *
+ * Every comparison is exact in MPFR's wide exponent range. Addition, subtraction, multiplication,
+ * and fused multiply-add compute the exact result at exact_precision. Division compares the
+ * dividend with the midpoint times the divisor, and square root compares the radicand with the
+ * squared midpoint, which is nonnegative. The caller restores the destination range.
+ */
+static int nearest_away_tie(size_t line_number, enum operation operation,
+                            mpfr_t operands[3], mpfr_srcptr toward_zero,
+                            mpfr_srcptr away, mpfr_exp_t maximum_exponent,
+                            mpfr_prec_t precision) {
+  if (mpfr_set_emin(wide_emin) != 0 || mpfr_set_emax(wide_emax) != 0) {
+    fail_line(line_number, "could not restore MPFR's wide exponent range");
+  }
+  mpfr_t upper;
+  mpfr_t midpoint;
+  mpfr_init2(upper, precision);
+  mpfr_init2(midpoint, precision + 2);
+  if (mpfr_inf_p(away)) {
+    mpfr_set_ui_2exp(upper, 1, maximum_exponent, MPFR_RNDN);
+    if (mpfr_signbit(away)) {
+      mpfr_neg(upper, upper, MPFR_RNDN);
+    }
+  } else {
+    mpfr_set(upper, away, MPFR_RNDN);
+  }
+  if (mpfr_add(midpoint, toward_zero, upper, MPFR_RNDN) != 0) {
+    fail_line(line_number, "inexact nearest-away midpoint");
+  }
+  mpfr_div_2ui(midpoint, midpoint, 1, MPFR_RNDN);
+  int tie = 0;
+  switch (operation) {
+    case OP_ADD:
+    case OP_SUB:
+    case OP_MUL:
+    case OP_FMA: {
+      mpfr_t exact;
+      mpfr_init2(exact, exact_precision(operation, operands));
+      if (run_operation(exact, operation, operands, MPFR_RNDN) != 0) {
+        fail_line(line_number, "exact reference precision was too small");
+      }
+      tie = mpfr_equal_p(exact, midpoint);
+      mpfr_clear(exact);
+      break;
+    }
+    case OP_DIV: {
+      mpfr_t product;
+      mpfr_init2(product, mpfr_get_prec(midpoint) + mpfr_get_prec(operands[1]));
+      if (mpfr_mul(product, midpoint, operands[1], MPFR_RNDN) != 0) {
+        fail_line(line_number, "inexact midpoint times divisor");
+      }
+      tie = mpfr_equal_p(product, operands[0]);
+      mpfr_clear(product);
+      break;
+    }
+    case OP_SQRT: {
+      mpfr_t square;
+      mpfr_init2(square, 2 * mpfr_get_prec(midpoint));
+      if (mpfr_sqr(square, midpoint, MPFR_RNDN) != 0) {
+        fail_line(line_number, "inexact squared midpoint");
+      }
+      tie = mpfr_equal_p(square, operands[0]);
+      mpfr_clear(square);
+      break;
+    }
+  }
+  mpfr_clear(upper);
+  mpfr_clear(midpoint);
+  return tie;
 }
 
 static void check_flag(size_t line_number, const char *case_name,
@@ -300,7 +511,7 @@ static void check_line(size_t line_number, char *line) {
       parse_operation(line_number, operation_text);
   const char *rounding_text =
       next_token(line_number, &cursor, "rounding mode");
-  const mpfr_rnd_t rounding = parse_rounding(line_number, rounding_text);
+  const struct rounding rounding = parse_rounding(line_number, rounding_text);
   struct format format;
   format.exponent_bits = (unsigned)parse_u64(
       line_number, "exponent width",
@@ -378,32 +589,43 @@ static void check_line(size_t line_number, char *line) {
     fail_line(line_number, "trailing vector fields");
   }
 
-  mpfr_clear_flags();
-  int ternary = 0;
-  switch (operation) {
-    case OP_ADD:
-      ternary = mpfr_add(result, operands[0], operands[1], rounding);
-      break;
-    case OP_SUB:
-      ternary = mpfr_sub(result, operands[0], operands[1], rounding);
-      break;
-    case OP_MUL:
-      ternary = mpfr_mul(result, operands[0], operands[1], rounding);
-      break;
-    case OP_DIV:
-      ternary = mpfr_div(result, operands[0], operands[1], rounding);
-      break;
-    case OP_SQRT:
-      ternary = mpfr_sqrt(result, operands[0], rounding);
-      break;
-    case OP_FMA:
-      ternary = mpfr_fma(result, operands[0], operands[1], operands[2],
-                         rounding);
-      break;
+  /*
+   * Rounding to nearest with ties away from zero differs from MPFR_RNDN only in the value
+   * delivered at an exact tie of the destination grid. Its flags are those of MPFR_RNDN for these
+   * IEEE formats: both nearest rules overflow from the midpoint above the largest finite value,
+   * whose significand is odd, and both are tiny exactly below the midpoint under the smallest
+   * normal value, which both round up. The neighbours and the tie test come first, so their
+   * MPFR operations stay outside the flag window of the checked operation.
+   */
+  int nearest_away_takes_away = 0;
+  mpfr_t away;
+  mpfr_init2(away, precision);
+  if (rounding.nearest_away) {
+    mpfr_t toward_zero;
+    mpfr_init2(toward_zero, precision);
+    const int toward_zero_ternary =
+        round_in_destination(toward_zero, operation, operands, MPFR_RNDZ);
+    (void)round_in_destination(away, operation, operands, MPFR_RNDA);
+    if (toward_zero_ternary != 0 && !mpfr_nan_p(toward_zero)) {
+      nearest_away_takes_away =
+          nearest_away_tie(line_number, operation, operands, toward_zero, away,
+                           maximum_exponent, precision);
+      if (mpfr_set_emin(minimum_exponent) != 0 ||
+          mpfr_set_emax(maximum_exponent) != 0) {
+        fail_line(line_number, "MPFR rejected the IEEE exponent range");
+      }
+    }
+    mpfr_clear(toward_zero);
   }
-  (void)mpfr_subnormalize(result, ternary, rounding);
+
+  mpfr_clear_flags();
+  (void)round_in_destination(result, operation, operands, rounding.mpfr);
 
   const struct ieee_flags flags = ieee_flags_from_mpfr();
+  if (nearest_away_takes_away) {
+    mpfr_set(result, away, MPFR_RNDN);
+  }
+  mpfr_clear(away);
   const int invalid_combination =
       generated_invalid(operation, operand_bits, &format);
   if (!any_nan && (invalid_combination != flags.invalid)) {
@@ -440,6 +662,8 @@ static void check_line(size_t line_number, char *line) {
 int main(void) {
   const mpfr_exp_t original_emin = mpfr_get_emin();
   const mpfr_exp_t original_emax = mpfr_get_emax();
+  wide_emin = original_emin;
+  wide_emax = original_emax;
   char *line = NULL;
   size_t capacity = 0;
   size_t line_number = 0;

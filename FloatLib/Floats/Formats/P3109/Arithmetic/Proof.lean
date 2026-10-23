@@ -38,7 +38,7 @@ theorem mul_comm (left right : NumericalValue Rat) :
   rename_i left right
   cases left <;> cases right <;> rfl
 
-/-- Exact closed addition is associative; opposite infinities remain indeterminate. -/
+/-- Exact closed addition is associative, and opposite infinities stay indeterminate. -/
 theorem add_assoc (left middle right : NumericalValue Rat) :
     add (add left middle) right = add left (add middle right) := by
   cases left <;> cases middle <;> cases right <;>
@@ -115,41 +115,44 @@ open Formats.P3109
 variable {source leftFormat rightFormat thirdFormat : Format}
 
 /-- The executable unary operation decodes to one projection of its exact closed result. -/
-theorem decode_unaryTo (destination : Format) (policy : ProjectionPolicy)
-    (operation : NumericalValue Rat → NumericalValue Rat)
-    (value : ExecFloat.P3109 source) :
-    Format.SameDatum (decode (unaryTo destination policy operation value))
-      (destination.projectRatValue policy (operation value.toClosedRat)) :=
-  decode_projectRat policy _
+theorem decode_unary (operation : NumericalValue Rat → NumericalValue Rat)
+    (value : ExecFloat.P3109 source) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Format.SameDatum (decode (unary operation value target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation } (operation value.toClosedRat)) :=
+  decode_projectRat _ mode saturation
 
 /-- The executable binary operation decodes to one projection of its exact closed result. -/
-theorem decode_binaryTo (destination : Format) (policy : ProjectionPolicy)
+theorem decode_binary
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)
-    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat) :
-    Format.SameDatum (decode (binaryTo destination policy operation left right))
-      (destination.projectRatValue policy (operation left.toClosedRat right.toClosedRat)) :=
-  decode_projectRat policy _
+    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    Format.SameDatum (decode (binary operation left right target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation }
+        (operation left.toClosedRat right.toClosedRat)) :=
+  decode_projectRat _ mode saturation
 
 /-- The executable fused operation decodes to one projection of the whole exact expression. -/
-theorem decode_ternaryTo (destination : Format) (policy : ProjectionPolicy)
+theorem decode_ternary
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat →
       NumericalValue Rat)
     (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
-    (third : ExecFloat.P3109 thirdFormat) :
-    Format.SameDatum (decode (ternaryTo destination policy operation left right third))
-      (destination.projectRatValue policy
+    (third : ExecFloat.P3109 thirdFormat) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Format.SameDatum (decode (ternary operation left right third target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation }
         (operation left.toClosedRat right.toClosedRat third.toClosedRat)) :=
-  decode_projectRat policy _
+  decode_projectRat _ mode saturation
 
 /-- Finite FMA is one projection of the exact rational product plus addend. -/
-theorem decode_fmaTo_finite (destination : Format) (policy : ProjectionPolicy)
-    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
-    (addend : ExecFloat.P3109 thirdFormat) (x y z : Rat)
+theorem decode_fma_finite {format : Format}
+    (left right addend : ExecFloat.P3109 format) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) (x y z : Rat)
     (hleft : left.toClosedRat = .finite x) (hright : right.toClosedRat = .finite y)
     (haddend : addend.toClosedRat = .finite z) :
-    Format.SameDatum (decode (fmaTo destination policy left right addend))
-      (destination.projectRatValue policy (.finite (x * y + z))) := by
-  simpa [fmaTo, hleft, hright, haddend] using
-    decode_ternaryTo destination policy Arithmetic.fma left right addend
+    Format.SameDatum (decode (fma left right addend target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation } (.finite (x * y + z))) := by
+  simpa [fma, hleft, hright, haddend] using
+    decode_ternary Arithmetic.fma left right addend target mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

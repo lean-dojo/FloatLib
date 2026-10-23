@@ -11,7 +11,7 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Executable signed-magnitude dyadic addition
 
-Exact dyadic addition uses separate signs and natural-number magnitudes. Correctness proofs and
+Exact dyadic addition in sign-magnitude form, on natural-number magnitudes. Correctness proofs and
 the compiler substitution live in `AddDyadic.Proof`.
 -/
 
@@ -32,13 +32,13 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
     { negative := leftSign, significand := left - right, exponent := exponent }
 
 /--
-Exact dyadic addition using separate signs and natural-number magnitudes.
+Exact dyadic addition in sign-magnitude form.
 
 Zero operands are handled before alignment. For two nonzero operands, the significand with the
 larger exponent is shifted to the smaller exponent before the magnitudes are combined. No
 rounding occurs here.
 -/
-@[inline] def addDyadicImpl (a b : Numerics.Dyadic) : Numerics.Dyadic :=
+@[inline] def Internal.addDyadic (a b : Numerics.Dyadic) : Numerics.Dyadic :=
   if a.significand == 0 then
     if b.significand == 0 then
       { negative := a.negative && b.negative, significand := 0, exponent := 0 }

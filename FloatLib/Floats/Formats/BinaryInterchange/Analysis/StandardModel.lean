@@ -58,13 +58,13 @@ noncomputable abbrev underflowErrorAt (fmt : FloatFormat) : ℝ :=
   FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
     (FloatFormat.minSubnormalExponent fmt - 1)
 
-/-- The unit roundoff as an explicit power of two. -/
+/-- The unit roundoff as a power of two. -/
 theorem unitRoundoffAt_eq (fmt : FloatFormat) :
     unitRoundoffAt fmt = (2 : ℝ) ^ (-((fmt.fracWidth : ℤ) + 1)) := by
   simp [unitRoundoffAt, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
     Numerics.Radix.toReal]
 
-/-- The underflow allowance as an explicit power of two. -/
+/-- The underflow allowance as a power of two. -/
 theorem underflowErrorAt_eq (fmt : FloatFormat) :
     underflowErrorAt fmt = (2 : ℝ) ^ (FloatFormat.minSubnormalExponent fmt - 1) := by
   simp [underflowErrorAt, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
@@ -241,14 +241,14 @@ theorem roundAt_standardModel (fmt : FloatFormat) (x : ℝ) :
   round_standardModel_of_nearest fmt nearestEven x
 
 /-- Standard model with gradual underflow for downward rounding onto the grid of `fmt`. -/
-theorem roundAtDown_standardModel (fmt : FloatFormat) (x : ℝ) :
-    ∃ δ η : ℝ, roundAtDown fmt x = x * (1 + δ) + η ∧
+theorem roundAt_down_standardModel (fmt : FloatFormat) (x : ℝ) :
+    ∃ δ η : ℝ, roundAt fmt x .down = x * (1 + δ) + η ∧
       |δ| ≤ 2 * unitRoundoffAt fmt ∧ |η| ≤ 2 * underflowErrorAt fmt ∧ δ * η = 0 :=
   round_standardModel fmt floorRound x
 
 /-- Standard model with gradual underflow for upward rounding onto the grid of `fmt`. -/
-theorem roundAtUp_standardModel (fmt : FloatFormat) (x : ℝ) :
-    ∃ δ η : ℝ, roundAtUp fmt x = x * (1 + δ) + η ∧
+theorem roundAt_up_standardModel (fmt : FloatFormat) (x : ℝ) :
+    ∃ δ η : ℝ, roundAt fmt x .up = x * (1 + δ) + η ∧
       |δ| ≤ 2 * unitRoundoffAt fmt ∧ |η| ≤ 2 * underflowErrorAt fmt ∧ δ * η = 0 :=
   round_standardModel fmt ceilRound x
 

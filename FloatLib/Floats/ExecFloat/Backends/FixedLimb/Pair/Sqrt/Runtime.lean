@@ -7,15 +7,17 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
-public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
+public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
 import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
+import FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 
 /-!
 # Two-word square-root runtime
 
-The proved restoring loop computes the exact floor square root and remainder for a positive normal
-input of any eligible two-word layout whose fraction has at most 124 bits and whose bias exceeds
-the fraction width. Correctness proofs live in `Sqrt.Proof`.
+`CheckedSquareRoot.rootAndRemainder`, which equals the proved restoring loop, computes the floor
+square root and remainder for a positive normal input of any eligible two-word layout whose
+fraction has at most 124 bits and whose bias exceeds the fraction width. Correctness proofs live
+in `Sqrt.Proof`.
 -/
 
 @[expose] public section
@@ -54,11 +56,40 @@ Descriptor specialization follows the pattern described in `Dispatch.Add.Runtime
       let mantissa := normalMantissa fmt (fracHigh fmt words.hi) words.lo
       let shift := if (exponent &&& 1) == 1 then fmt.fracWidth else fmt.fracWidth + 1
       let radicand := alignSqrtRadicand mantissa shift
-      let state := rootAndRemainder radicand (fmt.fracWidth + 1)
+      let state :=
+        FloatLib.Numerics.FixedWord.CheckedSquareRoot.rootAndRemainder radicand
+          (fmt.fracWidth + 1)
       let rounded := roundRoot state
       let carry := isCarry fmt rounded
       let resultExponent :=
         (exponent + UInt64.ofNat fmt.bias) / 2 + if carry then 1 else 0
       some <| packNormal fmt false resultExponent (normalizeCarry fmt carry rounded)
+
+/--
+`sqrtNormal?` on the storage words of the operand, returning the storage words of an accepted
+root. Two-word carriers call this form, and `Sqrt.Proof.sqrtNormal?_of_words` relates the two.
+-/
+@[inline] def sqrtNormalWords? (fmt : FloatFormat) (words : FloatLib.Numerics.FixedWord.UInt128) :
+    Option FloatLib.Numerics.FixedWord.UInt128 :=
+  if signBit fmt words.hi then
+    none
+  else if fmt.bias < fmt.fracWidth + 1 || 124 < fmt.fracWidth then
+    none
+  else
+    let exponent := expField fmt words.hi
+    if exponent == 0 || exponent == expAllOnes fmt then
+      none
+    else
+      let mantissa := normalMantissa fmt (fracHigh fmt words.hi) words.lo
+      let shift := if (exponent &&& 1) == 1 then fmt.fracWidth else fmt.fracWidth + 1
+      let radicand := alignSqrtRadicand mantissa shift
+      let state :=
+        FloatLib.Numerics.FixedWord.CheckedSquareRoot.rootAndRemainder radicand
+          (fmt.fracWidth + 1)
+      let rounded := roundRoot state
+      let carry := isCarry fmt rounded
+      let resultExponent :=
+        (exponent + UInt64.ofNat fmt.bias) / 2 + if carry then 1 else 0
+      some <| packNormalWords fmt false resultExponent (normalizeCarry fmt carry rounded)
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair

@@ -20,8 +20,8 @@ a block of operand pairs in one rounding direction. The pair with index `i` has 
 `i / 65536` and second operand `i % 65536`, so 65,536 blocks of one first operand each cover all
 `2^32` ordered pairs. For binary32, `sqrt` evaluates a block of consecutive encodings.
 
-Each result records the encoded value and the five IEEE exception flags of
-`Model.*WithStatus`. In nearest-even mode it also records whether the planner-selected kernel
+Each result records the encoded value and the five IEEE exception flags of the `Model` operation
+with `status := true`. In nearest-even mode it also records whether the planner-selected kernel
 behind the ordinary operator (`+`, `-`, `*`, `/`, `ExecFloat.sqrt`) returns a different encoding.
 An external program compares the block with Berkeley SoftFloat or MPFR.
 
@@ -36,11 +36,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 namespace FloatLibBenchmarks.Public.Exhaustive
 
-abbrev H := ExecFloat.Binary 5 10
-abbrev BF := ExecFloat.Binary 8 7
-abbrev S := ExecFloat.Binary 8 23
-
-def statusBits (status : Model.IEEEStatus) : Nat :=
+def statusBits (status : FloatLib.Numerics.IEEEStatus) : Nat :=
   (if status.inexact then 1 else 0) +
   (if status.underflow then 2 else 0) +
   (if status.overflow then 4 else 0) +
@@ -48,10 +44,10 @@ def statusBits (status : Model.IEEEStatus) : Nat :=
   (if status.invalid then 16 else 0)
 
 def parseRounding? : String → Option Model.IEEERoundingMode
-  | "near_even" => some .nearestEven
+  | "near_even" => some .nearest
   | "minMag" => some .towardZero
-  | "min" => some .towardNegativeInfinity
-  | "max" => some .towardPositiveInfinity
+  | "min" => some .down
+  | "max" => some .up
   | _ => none
 
 /-- One operation of one format: the kernel result and the model's value and flags. -/
@@ -67,16 +63,16 @@ macro "binaryOperation%" name:term : term =>
   `(match ($name : String) with
     | "add" => some (Operation.mk ExecFloat.Binary.ofNatBits ExecFloat.Binary.toNatBits
         ExecFloat.Binary.isNaN (· + ·) fun x y m =>
-          let o := ExecFloat.Binary.addWithStatus x y m; (o.1, statusBits o.2))
+          let o := ExecFloat.Binary.add x y (mode := m) (status := true); (o.1, statusBits o.2))
     | "sub" => some (Operation.mk ExecFloat.Binary.ofNatBits ExecFloat.Binary.toNatBits
         ExecFloat.Binary.isNaN (· - ·) fun x y m =>
-          let o := ExecFloat.Binary.subWithStatus x y m; (o.1, statusBits o.2))
+          let o := ExecFloat.Binary.sub x y (mode := m) (status := true); (o.1, statusBits o.2))
     | "mul" => some (Operation.mk ExecFloat.Binary.ofNatBits ExecFloat.Binary.toNatBits
         ExecFloat.Binary.isNaN (· * ·) fun x y m =>
-          let o := ExecFloat.Binary.mulWithStatus x y m; (o.1, statusBits o.2))
+          let o := ExecFloat.Binary.mul x y (mode := m) (status := true); (o.1, statusBits o.2))
     | "div" => some (Operation.mk ExecFloat.Binary.ofNatBits ExecFloat.Binary.toNatBits
         ExecFloat.Binary.isNaN (· / ·) fun x y m =>
-          let o := ExecFloat.Binary.divWithStatus x y m; (o.1, statusBits o.2))
+          let o := ExecFloat.Binary.div x y (mode := m) (status := true); (o.1, statusBits o.2))
     | _ => none)
 
 /-- The kernel fields of a result word: bit 0 for a different non-NaN encoding, bit 1 for
@@ -94,7 +90,7 @@ def pairs {T : Type} (op : Operation T) (mode : Model.IEEERoundingMode)
     let x := op.ofBits (n / 65536)
     let y := op.ofBits (n % 65536)
     let (value, flags) := op.status x y mode
-    let kernel := if mode == .nearestEven then kernelBits op (op.kernel x y) value else 0
+    let kernel := if mode == .nearest then kernelBits op (op.kernel x y) value else 0
     let w : UInt32 := (op.toBits value + flags * 65536 + kernel * 16777216).toUInt32
     buf := ((buf.push w.toUInt8).push (w >>> 8).toUInt8).push (w >>> 16).toUInt8
       |>.push (w >>> 24).toUInt8
@@ -104,11 +100,11 @@ def sqrtRange (mode : Model.IEEERoundingMode) (start count : Nat) (out : System.
     IO Unit := do
   let mut buf := ByteArray.emptyWithCapacity (8 * count)
   for i in [0:count] do
-    let x : S := ExecFloat.Binary.ofNatBits (start + i)
-    let o := ExecFloat.Binary.sqrtWithStatus x mode
+    let x : Binary32 := ExecFloat.Binary.ofNatBits (start + i)
+    let o := ExecFloat.Binary.sqrt x (mode := mode) (status := true)
     let value := ExecFloat.Binary.toNatBits o.1
     let kernel :=
-      if mode == .nearestEven then
+      if mode == .nearest then
         let k := ExecFloat.Binary.toNatBits (ExecFloat.sqrt x)
         if k == value then 0
         else if ExecFloat.Binary.isNaN (ExecFloat.sqrt x) && ExecFloat.Binary.isNaN o.1 then 2
@@ -134,11 +130,11 @@ public def main (args : List String) : IO UInt32 := do
       | some mode =>
         match kind, format with
         | "pairs", "f16" =>
-            match (binaryOperation% name : Option (Operation H)) with
+            match (binaryOperation% name : Option (Operation Binary16)) with
             | some op => pairs op mode start.toNat! count.toNat! out; return 0
             | none => IO.eprintln usage; return 1
         | "pairs", "bf16" =>
-            match (binaryOperation% name : Option (Operation BF)) with
+            match (binaryOperation% name : Option (Operation BFloat16)) with
             | some op => pairs op mode start.toNat! count.toNat! out; return 0
             | none => IO.eprintln usage; return 1
         | "sqrt", "f32" =>

@@ -20,7 +20,7 @@ public meta import FloatLib.Floats.Formats.IEEE754.Native.Info
 `ExecFloat.Binary` family to Lean's runtime `Float32` and binary64 `Float` types. IEEE layouts,
 semantics, and certified execution remain in `Formats.BinaryInterchange`; there is no second
 width-specific executable carrier. The representation proofs connect those adapters to Lean's
-packed models, including the named NaN and infinity constants exposed in Lean 4.34.
+packed models, including Lean's named NaN and infinity constants.
 Integer conversion proofs connect the newly exposed constructors and signed casts to FloatLib's
 rounding specifications. Arithmetic bridges cover addition and subtraction on finite inputs and
 square root on every input, with NaNs canonicalized at the native boundary.

@@ -9,9 +9,15 @@ import csv
 import json
 import re
 import sqlite3
+import sys
 from collections import Counter
+from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import transcendental_report
 
 
 RELEASE_STATUSES = {
@@ -27,8 +33,37 @@ RELEASE_STATUSES = {
     "09-ibm-fpgen": "pass",
     "10-smt-qf-fp": "pass",
     "11-softposit": "external-limitation",
-    "12-transcendentals": "observational-complete",
 }
+
+# The status of 12-transcendentals follows the kind of its retained summary: the saved
+# campaign recorded differences without a gate. A run of the known-failure gate fails on
+# any difference from MPFR that the known-failure list does not name, on a listed case
+# that changes or now matches, and on any difference in a correctly rounded domain. The
+# list is empty, so a passing run has no listed differences; it is a qualified pass
+# because the CORE-MATH, OpenLibm, and RLIBM comparisons beside the gate stay observational.
+TRANSCENDENTAL_RELEASE_STATUSES = {
+    "observational": "observational-complete",
+    "known-failure gate": "qualified-pass",
+}
+
+# Gate counts that must be zero in a passing known-failure gate summary.
+TRANSCENDENTAL_GATE_FAILURES = (
+    "new_mismatches",
+    "changed_known_failures",
+    "correctly_rounded_mismatches",
+    "stale_known_failures",
+)
+
+# The external providers every retained transcendental comparison evaluates.
+TRANSCENDENTAL_PROVIDERS = set(transcendental_report.PROVIDER_SYMBOLS)
+
+# The census entry of the retained runs' invocation: `--random-count 256`, default tier.
+# A retained gate run must embed this entry of the checked-in census, so recording the
+# census again requires retaining a new release campaign.
+TRANSCENDENTAL_CENSUS = "release"
+TRANSCENDENTAL_CENSUS_FILE = (
+    Path(__file__).resolve().parent / "data" / "transcendental-census.json"
+)
 
 ECOSYSTEM_CLASSIFICATIONS = {
     "daisy": ("upstream-qualification", "pass"),
@@ -125,8 +160,11 @@ def json_object(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise ValueError(f"missing retained evidence file: {path}")
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=transcendental_report.unique_keys,
+        )
+    except ValueError as error:
         raise ValueError(f"invalid JSON in {path}: {error}") from error
     if not isinstance(value, dict):
         raise ValueError(f"expected a JSON object in {path}")
@@ -171,16 +209,35 @@ def summary_rows(
     return rows
 
 
+def transcendental_kind(root: Path) -> str:
+    path = root / "summary.json"
+    kind = json_object(path).get("comparison_kind")
+    require(
+        kind in TRANSCENDENTAL_RELEASE_STATUSES,
+        f"unknown transcendental comparison kind in {path}: {kind!r}",
+    )
+    return kind
+
+
+def expected_release_statuses(release: Path) -> dict[str, str]:
+    kind = transcendental_kind(release / "12-transcendentals")
+    return {
+        **RELEASE_STATUSES,
+        "12-transcendentals": TRANSCENDENTAL_RELEASE_STATUSES[kind],
+    }
+
+
 def verify_release_summary(release: Path) -> None:
     rows = summary_rows(
         release / "summary.tsv",
         ["suite", "status", "seconds", "log"],
     )
     actual = {row["suite"]: row["status"] for row in rows}
-    if actual != RELEASE_STATUSES:
+    expected = expected_release_statuses(release)
+    if actual != expected:
         raise ValueError(
             "release suite status differs: "
-            f"expected={RELEASE_STATUSES!r}, actual={actual!r}"
+            f"expected={expected!r}, actual={actual!r}"
         )
     rendering = (release / "rendering-status.txt").read_text(encoding="utf-8")
     if rendering != "status=rendered\n":
@@ -767,25 +824,16 @@ def verify_softposit(root: Path) -> None:
     )
 
 
-def verify_transcendental(root: Path) -> None:
-    path = root / "summary.json"
-    summary = json_object(path)
-    require(
-        summary.get("comparison_kind") == "observational",
-        f"transcendental comparison kind differs in {path}",
-    )
-    require(
-        summary.get("conformance") is False,
-        f"transcendental observation is mislabeled as conformance in {path}",
-    )
-    require(
-        summary.get("status") == "observational_complete",
-        f"transcendental observation is incomplete in {path}",
-    )
-    require(
-        integer(summary.get("cases"), f"{path}:cases", minimum=1) == 4109,
-        f"transcendental retained input count differs in {path}",
-    )
+def verify_transcendental_providers(
+    summary: dict[str, Any],
+    path: Path,
+    rows: list[dict[str, Any]],
+) -> None:
+    """Each provider evaluated what it supports, and its rows count those cases."""
+
+    evaluated: Counter[str] = Counter()
+    for row in rows:
+        evaluated[str(row.get("candidate"))] += int(row["cases"])
     coverage = summary.get("provider_coverage")
     require(isinstance(coverage, list) and coverage, f"missing provider coverage in {path}")
     providers: set[str] = set()
@@ -815,13 +863,30 @@ def verify_transcendental(root: Path) -> None:
             f"provider coverage is incomplete for {name!r} in {path}: "
             f"{actual} != {expected}",
         )
+        require(
+            evaluated[name] == actual,
+            f"summary rows of {name!r} cover {evaluated[name]} cases, not its "
+            f"{actual} evaluations, in {path}",
+        )
+    require(
+        providers == TRANSCENDENTAL_PROVIDERS,
+        f"transcendental providers differ in {path}: {sorted(providers)!r}",
+    )
+
+
+def verify_transcendental_rows(
+    summary: dict[str, Any],
+    path: Path,
+    keys: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    """Check each summary row and that `keys` identify the rows uniquely."""
 
     summaries = summary.get("summaries")
     require(
-        isinstance(summaries, list) and len(summaries) == 46,
-        f"expected 46 transcendental summary rows in {path}",
+        isinstance(summaries, list) and summaries,
+        f"missing transcendental summary rows in {path}",
     )
-    identities: set[tuple[str, str, str]] = set()
+    identities: set[tuple[str, ...]] = set()
     buckets = [
         "ulp_0",
         "ulp_1",
@@ -835,10 +900,7 @@ def verify_transcendental(root: Path) -> None:
             isinstance(row, dict),
             f"invalid transcendental summary row {row_number} in {path}",
         )
-        identity = tuple(
-            str(row.get(name, ""))
-            for name in ("candidate", "format_name", "operation")
-        )
+        identity = tuple(str(row.get(name, "")) for name in keys)
         require(
             all(identity) and identity not in identities,
             f"empty or duplicate transcendental summary identity in {path}: "
@@ -874,6 +936,202 @@ def verify_transcendental(root: Path) -> None:
             bucket_total == finite,
             f"ULP buckets do not cover finite pairs in {path}: {identity!r}",
         )
+    return summaries
+
+
+def verify_observational_transcendental(
+    summary: dict[str, Any],
+    path: Path,
+) -> list[dict[str, Any]]:
+    """The retained campaign, which predates the gate."""
+
+    require(
+        summary.get("status") == "observational_complete",
+        f"transcendental observation is incomplete in {path}",
+    )
+    require(
+        integer(summary.get("cases"), f"{path}:cases", minimum=1) == 4109,
+        f"transcendental retained input count differs in {path}",
+    )
+    rows = verify_transcendental_rows(
+        summary,
+        path,
+        ("candidate", "format_name", "operation"),
+    )
+    require(len(rows) == 46, f"expected 46 transcendental summary rows in {path}")
+    return rows
+
+
+def json_count(value: object, context: str) -> int:
+    """A nonnegative JSON integer, not a string, float or Boolean."""
+    require(
+        type(value) is int and value >= 0,
+        f"{context} is not a nonnegative integer: {value!r}",
+    )
+    return value
+
+
+def canonical(value: object) -> str:
+    """JSON text that tells 7 from 7.0 and "7", for exact comparisons."""
+    return json.dumps(value, sort_keys=True)
+
+
+def verify_gated_transcendental(
+    summary: dict[str, Any],
+    root: Path,
+    census: Path,
+) -> list[dict[str, Any]]:
+    """A known-failure gate run: the gate passed, its coverage matched the release entry
+    of `census`, and its summary rows and provider coverage are what the report computes
+    from the retained `details.tsv`, whose case ids reproduce that entry.
+
+    The details cannot replay the gate itself: they hold no FloatLib ternary and the
+    run's known-failures list is not retained, so the gate's classification and its
+    counts of matched and unexercised known failures are trusted beyond the bounds
+    checked here, as are the MPFR results, the provider libraries and the run itself.
+    """
+
+    path = root / "summary.json"
+    require(
+        summary.get("status") == "gate_pass",
+        f"transcendental gate did not pass in {path}",
+    )
+    gate = summary.get("gate")
+    require(isinstance(gate, dict), f"missing transcendental gate counts in {path}")
+    for name in TRANSCENDENTAL_GATE_FAILURES:
+        require(
+            json_count(gate.get(name), f"{path}:gate:{name}") == 0,
+            f"transcendental gate records {name} in {path}",
+        )
+    matched = json_count(gate.get("known_failures_matched"), f"{path}:gate:matched")
+    json_count(gate.get("known_failures_not_exercised"), f"{path}:gate:not_exercised")
+
+    coverage = summary.get("coverage")
+    require(
+        isinstance(coverage, dict)
+        and coverage.get("status") == "checked"
+        and coverage.get("census") == TRANSCENDENTAL_CENSUS
+        and coverage.get("differences") == [],
+        f"transcendental coverage did not match census entry "
+        f"{TRANSCENDENTAL_CENSUS!r} in {path}",
+    )
+    recorded = transcendental_report.read_census(census)
+    require(
+        TRANSCENDENTAL_CENSUS in recorded,
+        f"{census} has no entry {TRANSCENDENTAL_CENSUS!r}",
+    )
+    entry = asdict(recorded[TRANSCENDENTAL_CENSUS])
+    require(
+        canonical(coverage.get("entry")) == canonical(entry),
+        f"the census entry in {path} is not the {TRANSCENDENTAL_CENSUS!r} entry "
+        f"of {census}",
+    )
+    manifest = summary.get("manifest")
+    require(
+        isinstance(manifest, dict)
+        and all(
+            isinstance(values, list) and all(isinstance(value, str) for value in values)
+            for values in manifest.values()
+        ),
+        f"invalid transcendental manifest in {path}",
+    )
+    recorded_manifest = transcendental_report.manifest_entries(list(entry["manifest"]))
+    require(
+        {key: sorted(values) for key, values in manifest.items()}
+        == {key: sorted(values) for key, values in recorded_manifest.items()},
+        f"transcendental manifest differs from its census entry in {path}",
+    )
+
+    details = root / "details.tsv"
+    require(details.is_file(), f"missing retained transcendental details: {details}")
+    cases, results = transcendental_report.read_details(details)
+    require(
+        list(results) == ["FloatLib", *transcendental_report.PROVIDER_SYMBOLS],
+        f"transcendental details candidates differ in {details}: {list(results)!r}",
+    )
+    # A provider has a result exactly for the cases it supports, as the report runs it.
+    for name, symbols in transcendental_report.PROVIDER_SYMBOLS.items():
+        groups = set(symbols())
+        for case, output in zip(cases, results[name], strict=True):
+            supported = transcendental_report.supported_by(groups, case)
+            require(
+                (output is not None) == supported,
+                f"{name} has a result for {case.case_id} in {details} exactly when it "
+                "does not support it",
+            )
+    requests, counts, digest = transcendental_report.census_counts(cases)
+    recorded_counts = (
+        entry["requests"],
+        entry["requests_by_operation"],
+        entry["case_ids_sha256"],
+    )
+    require(
+        (requests, counts, digest) == recorded_counts,
+        f"the case ids in {details} do not reproduce the census entry",
+    )
+    require(
+        json_count(summary.get("cases"), f"{path}:cases") == requests,
+        f"transcendental case count differs from {details} in {path}",
+    )
+    rows = summary.get("summaries")
+    expected_rows = [
+        asdict(row) for row in transcendental_report.summarize(cases, results)
+    ]
+    require(
+        canonical(rows) == canonical(expected_rows),
+        f"transcendental summary rows differ from those computed from {details}",
+    )
+    expected_coverage = [
+        transcendental_report.provider_coverage(
+            name, set(symbols()), cases, results[name]
+        )
+        for name, symbols in transcendental_report.PROVIDER_SYMBOLS.items()
+    ]
+    require(
+        canonical(summary.get("provider_coverage")) == canonical(expected_coverage),
+        f"transcendental provider coverage differs from {details} in {path}",
+    )
+    providers = summary.get("providers")
+    require(
+        isinstance(providers, list)
+        and [
+            provider.get("name") if isinstance(provider, dict) else None
+            for provider in providers
+        ]
+        == list(transcendental_report.PROVIDER_SYMBOLS)
+        and summary.get("rounding_environment") == "FE_TONEAREST",
+        f"transcendental provider metadata differs in {path}",
+    )
+    # Every value mismatch of a passing gate is a matched known failure; a ternary-only
+    # difference is one too, so the count may exceed the value mismatches.
+    mismatches = sum(
+        not transcendental_report.value_matches(case.floatlib, case.mpfr, case.fmt)
+        for case in cases
+    )
+    require(
+        mismatches <= matched <= requests,
+        f"{matched} matched known failures cannot cover {mismatches} FloatLib value "
+        f"mismatches in {requests} cases in {path}",
+    )
+    return rows
+
+
+def verify_transcendental(
+    root: Path,
+    census: Path = TRANSCENDENTAL_CENSUS_FILE,
+) -> None:
+    path = root / "summary.json"
+    summary = json_object(path)
+    kind = transcendental_kind(root)
+    require(
+        summary.get("conformance") is False,
+        f"transcendental comparison is mislabeled as conformance in {path}",
+    )
+    if kind == "observational":
+        rows = verify_observational_transcendental(summary, path)
+    else:
+        rows = verify_gated_transcendental(summary, root, census)
+    verify_transcendental_providers(summary, path, rows)
 
 
 def verify_zero_exit(raw: Path, suite: str) -> None:

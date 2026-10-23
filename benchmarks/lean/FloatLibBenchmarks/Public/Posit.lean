@@ -14,27 +14,26 @@ import FloatLibBenchmarks.Support.Posit
 
 This executable measures all six user-facing `ExecFloat` operations over representative,
 type-static posit widths from 2 through 4,096 bits. Every timed loop is monomorphic, consumes the
-public packed carrier, records the certified backend actually selected by the dispatcher, and
-mixes result words into an observable sink.
+public packed carrier, records the certified backend the dispatcher selected, and mixes result
+words into an observable sink.
 
-The static dispatcher selects each kernel from the width, operation, and execution policy, and
-every row records the actual choice. Under the balanced policy, the very smallest formats use
-exhaustive encoded-value tables, while byte-wide binary operations stay on direct packed-word
-kernels because constructing a full binary table is too expensive for ordinary cold execution;
-the much smaller byte-wide square-root table remains worthwhile. Selected lazy resources are
+The static dispatcher selects each kernel from the width, operation, and execution policy. Under
+the balanced policy, the smallest formats use exhaustive encoded-value tables, while byte-wide
+binary operations stay on direct packed-word kernels because constructing a full binary table is
+too expensive for ordinary cold execution. But the much smaller byte-wide square-root table is
+worth building. Selected lazy resources are
 warmed outside the timed interval. Widths through 64 otherwise use direct packed-word kernels.
-The public carrier remains a built-in word throughout that tier. Multiplication remains on the
-direct packed-word kernel; fused multiply-add from width 37 widens only its internal exact kernel
-to two `UInt64` limbs. The static dispatcher leaves no runtime width test in the generated
+The public carrier stays a built-in word throughout that tier. Multiplication stays on the
+direct packed-word kernel, and fused multiply-add from width 37 widens only its internal exact
+kernel to two `UInt64` limbs. The static dispatcher leaves no runtime width test in the generated
 operation body.
 Widths from 65 through 128 use direct packed-pair kernels: persistent operands are read from two
 fixed `UInt64` limbs and exact arithmetic avoids rational normalization. Addition, subtraction,
 multiplication, and fused multiply-add use packed exact-dyadic kernels. Division and square root
 decode the packed fields directly and reuse the same destination-width quotient-prefix and
 integer-root-prefix kernels as arbitrary-width Posits. Their exact remainders provide the sticky
-information needed for nearest-even rounding; there is no candidate validation or fallback
-search. Wider widths use those same proved prefix constructions over arbitrary-precision integer
-carriers.
+information needed for nearest-even rounding, with no candidate validation or fallback search.
+Wider widths use those same proved prefix constructions over arbitrary-precision integer carriers.
 
 The x-axis is total encoded posit width, not a constant significand precision. Posit precision is
 tapered and therefore depends on the represented value. Comparisons with fixed-precision binary,
@@ -94,10 +93,6 @@ abbrev P4 := ExecFloat.Posit 4
 abbrev P5 := ExecFloat.Posit 5
 abbrev P6 := ExecFloat.Posit 6
 abbrev P7 := ExecFloat.Posit 7
-abbrev P8 := ExecFloat.Posit 8
-abbrev P16 := ExecFloat.Posit 16
-abbrev P32 := ExecFloat.Posit 32
-abbrev P64 := ExecFloat.Posit 64
 abbrev P128 := ExecFloat.Posit 128
 abbrev P256 := ExecFloat.Posit 256
 abbrev P512 := ExecFloat.Posit 512
@@ -147,33 +142,33 @@ posit_binary_workload p7Div : P7 using ExecFloat.div
 posit_unary_workload p7Sqrt : P7 using ExecFloat.sqrt
 posit_ternary_workload p7Fma : P7 using ExecFloat.fma
 
-posit_binary_workload p8Add : P8 using ExecFloat.add
-posit_binary_workload p8Sub : P8 using ExecFloat.sub
-posit_binary_workload p8Mul : P8 using ExecFloat.mul
-posit_binary_workload p8Div : P8 using ExecFloat.div
-posit_unary_workload p8Sqrt : P8 using ExecFloat.sqrt
-posit_ternary_workload p8Fma : P8 using ExecFloat.fma
+posit_binary_workload p8Add : Posit8 using ExecFloat.add
+posit_binary_workload p8Sub : Posit8 using ExecFloat.sub
+posit_binary_workload p8Mul : Posit8 using ExecFloat.mul
+posit_binary_workload p8Div : Posit8 using ExecFloat.div
+posit_unary_workload p8Sqrt : Posit8 using ExecFloat.sqrt
+posit_ternary_workload p8Fma : Posit8 using ExecFloat.fma
 
-posit_binary_workload p16Add : P16 using ExecFloat.add
-posit_binary_workload p16Sub : P16 using ExecFloat.sub
-posit_binary_workload p16Mul : P16 using ExecFloat.mul
-posit_binary_workload p16Div : P16 using ExecFloat.div
-posit_unary_workload p16Sqrt : P16 using ExecFloat.sqrt
-posit_ternary_workload p16Fma : P16 using ExecFloat.fma
+posit_binary_workload p16Add : Posit16 using ExecFloat.add
+posit_binary_workload p16Sub : Posit16 using ExecFloat.sub
+posit_binary_workload p16Mul : Posit16 using ExecFloat.mul
+posit_binary_workload p16Div : Posit16 using ExecFloat.div
+posit_unary_workload p16Sqrt : Posit16 using ExecFloat.sqrt
+posit_ternary_workload p16Fma : Posit16 using ExecFloat.fma
 
-posit_binary_workload p32Add : P32 using ExecFloat.add
-posit_binary_workload p32Sub : P32 using ExecFloat.sub
-posit_binary_workload p32Mul : P32 using ExecFloat.mul
-posit_binary_workload p32Div : P32 using ExecFloat.div
-posit_unary_workload p32Sqrt : P32 using ExecFloat.sqrt
-posit_ternary_workload p32Fma : P32 using ExecFloat.fma
+posit_binary_workload p32Add : Posit32 using ExecFloat.add
+posit_binary_workload p32Sub : Posit32 using ExecFloat.sub
+posit_binary_workload p32Mul : Posit32 using ExecFloat.mul
+posit_binary_workload p32Div : Posit32 using ExecFloat.div
+posit_unary_workload p32Sqrt : Posit32 using ExecFloat.sqrt
+posit_ternary_workload p32Fma : Posit32 using ExecFloat.fma
 
-posit_binary_workload p64Add : P64 using ExecFloat.add
-posit_binary_workload p64Sub : P64 using ExecFloat.sub
-posit_binary_workload p64Mul : P64 using ExecFloat.mul
-posit_binary_workload p64Div : P64 using ExecFloat.div
-posit_unary_workload p64Sqrt : P64 using ExecFloat.sqrt
-posit_ternary_workload p64Fma : P64 using ExecFloat.fma
+posit_binary_workload p64Add : Posit64 using ExecFloat.add
+posit_binary_workload p64Sub : Posit64 using ExecFloat.sub
+posit_binary_workload p64Mul : Posit64 using ExecFloat.mul
+posit_binary_workload p64Div : Posit64 using ExecFloat.div
+posit_unary_workload p64Sqrt : Posit64 using ExecFloat.sqrt
+posit_ternary_workload p64Fma : Posit64 using ExecFloat.fma
 
 posit_binary_workload p128Add : P128 using ExecFloat.add
 posit_binary_workload p128Sub : P128 using ExecFloat.sub
@@ -336,9 +331,9 @@ def defaultIterations (width : Nat) : Nat :=
   else 10
 
 /--
-The three distinct counts make cold initialization, cache and branch-predictor warmup, and
-steady-state work explicit. Lean produces ahead-of-time native code here; no JIT compilation is
-part of the benchmark. The default warmup is long enough to move beyond a one-cache-line toy run
+The three counts separate cold initialization, cache and branch-predictor warmup, and
+steady-state work. Lean produces ahead-of-time native code here, so no JIT compilation is part of
+the benchmark. The default warmup is long enough to move beyond a one-cache-line toy run
 while staying bounded for arbitrary-precision formats whose measured count is intentionally small.
 -/
 private structure RunCounts where

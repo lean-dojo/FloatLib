@@ -16,7 +16,7 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Runtime
 # IEEE results with flags for listed operands
 
 Reads one line of encoded operands per case, evaluates one IEEE operation in one rounding
-direction with `ExecFloat.Binary.*WithStatus`, and prints the encoded result and the five
+direction with `status := true` on `ExecFloat.Binary`, and prints the encoded result and the five
 exception flags (inexact 1, underflow 2, overflow 4, divide by zero 8, invalid 16). Unary and
 binary operations ignore the operands they do not use.
 
@@ -29,7 +29,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 namespace FloatLibBenchmarks.Public.OracleList
 
-def statusBits (status : Model.IEEEStatus) : Nat :=
+def statusBits (status : FloatLib.Numerics.IEEEStatus) : Nat :=
   (if status.inexact then 1 else 0) +
   (if status.underflow then 2 else 0) +
   (if status.overflow then 4 else 0) +
@@ -37,10 +37,10 @@ def statusBits (status : Model.IEEEStatus) : Nat :=
   (if status.invalid then 16 else 0)
 
 def parseRounding? : String → Option Model.IEEERoundingMode
-  | "near_even" => some .nearestEven
+  | "near_even" => some .nearest
   | "minMag" => some .towardZero
-  | "min" => some .towardNegativeInfinity
-  | "max" => some .towardPositiveInfinity
+  | "min" => some .down
+  | "max" => some .up
   | _ => none
 
 /-- One operation of one format on three encoded operands, as value bits and flags. -/
@@ -49,16 +49,26 @@ abbrev Evaluator := Nat → Nat → Nat → Model.IEEERoundingMode → Nat × Na
 /-- The evaluator of the named operation on the configured binary format `T`. -/
 macro "evaluator%" T:term "," name:term : term =>
   `(let dec : Nat → $T := ExecFloat.Binary.ofNatBits
-    let enc : $T × Model.IEEEStatus → Nat × Nat :=
-      fun o => (ExecFloat.Binary.toNatBits o.1, statusBits o.2)
+    let enc : $T → FloatLib.Numerics.IEEEStatus → Nat × Nat :=
+      fun value status => (ExecFloat.Binary.toNatBits value, statusBits status)
     match ($name : String) with
-    | "add" => some fun a b _ m => enc (ExecFloat.Binary.addWithStatus (dec a) (dec b) m)
-    | "sub" => some fun a b _ m => enc (ExecFloat.Binary.subWithStatus (dec a) (dec b) m)
-    | "mul" => some fun a b _ m => enc (ExecFloat.Binary.mulWithStatus (dec a) (dec b) m)
-    | "div" => some fun a b _ m => enc (ExecFloat.Binary.divWithStatus (dec a) (dec b) m)
-    | "sqrt" => some fun a _ _ m => enc (ExecFloat.Binary.sqrtWithStatus (dec a) m)
+    | "add" => some fun a b _ m =>
+        let o := ExecFloat.Binary.add (dec a) (dec b) (mode := m) (status := true);
+        enc o.value o.status
+    | "sub" => some fun a b _ m =>
+        let o := ExecFloat.Binary.sub (dec a) (dec b) (mode := m) (status := true);
+        enc o.value o.status
+    | "mul" => some fun a b _ m =>
+        let o := ExecFloat.Binary.mul (dec a) (dec b) (mode := m) (status := true);
+        enc o.value o.status
+    | "div" => some fun a b _ m =>
+        let o := ExecFloat.Binary.div (dec a) (dec b) (mode := m) (status := true);
+        enc o.value o.status
+    | "sqrt" => some fun a _ _ m =>
+        let o := ExecFloat.Binary.sqrt (dec a) (mode := m) (status := true); enc o.value o.status
     | "fma" => some fun a b c m =>
-        enc (ExecFloat.Binary.fmaWithStatus (dec a) (dec b) (dec c) m)
+        let o := ExecFloat.Binary.fma (dec a) (dec b) (dec c) (mode := m) (status := true);
+        enc o.value o.status
     | _ => (none : Option Evaluator))
 
 def evaluator? (format name : String) : Option Evaluator :=

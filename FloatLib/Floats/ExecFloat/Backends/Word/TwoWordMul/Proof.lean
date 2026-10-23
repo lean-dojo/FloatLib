@@ -23,10 +23,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Correctness of native two-word finite multiplication
 
-The executable `64 x 64 -> 128` normal-product tier lives in `TwoWordMul.Runtime`. Its refinement
-theorem identifies every successful native result with the exact format-generic product rounder.
-The proof separates the two-word product and its leading-bit bounds from the shared one-word
-carry and packing stage. Declined inputs remain the dispatcher's responsibility.
+Every accepted result of the `64 x 64 -> 128` normal-product tier in `TwoWordMul.Runtime` is the
+exact format-generic product rounding. The proof separates the two-word product and its leading-bit
+bounds from the shared one-word carry and packing stage. The dispatcher handles declined inputs.
 -/
 
 @[expose] public section
@@ -36,7 +35,7 @@ namespace Model.NativeTwoWordMul
 
 open NativeSmallWord
 
-/-- Binary64 is the standard specialization of the reusable two-word capacity tier. -/
+/-- Binary64 satisfies the two-word capacity contract. -/
 theorem binary64_eligible : Eligible FloatFormat.binary64 := by
   decide
 
@@ -283,7 +282,7 @@ private theorem roundNormalProduct_eq_spec
     rw [UInt64.toNat_ofNat', Nat.mod_eq_of_lt]
     norm_num at hbias ⊢
     omega
-  unfold roundNormalProduct? FiniteProductRound.normalSpec?
+  unfold roundNormalProduct? roundNormalProductWord? FiniteProductRound.normalSpec?
   dsimp only
   rw [show FloatLib.Numerics.FixedWord.mul64 xMantissa yMantissa = product by rfl]
   rw [show xMantissa.toNat * yMantissa.toNat = productNat by rfl]
@@ -301,6 +300,7 @@ private theorem roundNormalProduct_eq_spec
       rw [hposition, hnormalThreshold]
       exact hsubnormal
     rw [ite_eq_left hsubnormalWord, ite_eq_left hsubnormal]
+    rfl
   have hsubnormalWord :
       ¬position < UInt64.ofNat
         (fmt.bias + 2 * fmt.fracWidth - 1) := by
@@ -484,8 +484,9 @@ theorem roundNormalProduct_refines
 /--
 A successful two-word normal multiplication agrees with the compact finite kernel.
 
-The native tier handles normal operands for one-storage-word IEEE formats with precisions 33
-through 62. Exceptional operands and boundary results return `none` and retain the generic path.
+The native tier handles normal operands of one-storage-word IEEE formats with fraction widths 32
+through 62. Zero, subnormal and exceptional operands and boundary results return `none` and take
+the generic path.
 -/
 theorem mulNormal_refines {fmt : FloatFormat}
     (heligible : Eligible fmt) (x y result : Model fmt)
@@ -503,7 +504,21 @@ theorem mulNormal_refines {fmt : FloatFormat}
       hfracLower hfracUpper sign
       xExponent yExponent xMantissa yMantissa
       hxExponent hyExponent hxMantissa hyMantissa candidate hround
-  · simpa [mulNormal?] using hresult
+  · have hpair :
+        mulNormal? x y = NativeSmallWord.withNormalPair? x y (roundNormalProduct? fmt) := by
+      simp only [mulNormal?, mulNormalWord?, NativeSmallWord.withNormalPair?,
+        NativeSmallWord.withNormalPairWord?]
+      split_ifs <;> rfl
+    rwa [hpair] at hresult
+
+/-! ## Storage-word entry points -/
+
+/-- On storage words below the radix, `mulNormal?` is the `ofWord` image of `mulNormalWord?`. -/
+theorem mulNormal?_ofWord {fmt : FloatFormat} {xBits yBits : UInt64}
+    (hx : xBits.toNat < 2 ^ fmt.bitWidth) (hy : yBits.toNat < 2 ^ fmt.bitWidth) :
+    mulNormal? (ofWord (fmt := fmt) xBits) (ofWord yBits) =
+      (mulNormalWord? fmt xBits yBits).map ofWord := by
+  rw [mulNormal?, toWord_ofWord_of_lt hx, toWord_ofWord_of_lt hy]
 
 end Model.NativeTwoWordMul
 end FloatLib.Floats.Formats.BinaryInterchange

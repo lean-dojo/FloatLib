@@ -14,12 +14,12 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 # Configured standard OCP MX destinations
 
 `ExecFloat.OCP.MX.Standard profile` is a constrained 32-lane destination on the common carrier.
-It is separate from the existing arbitrary-length raw block family. Conversion selects the
-recommended max-binade scale; explicit element SAT/OVF policy is the conversion context.
+It is separate from the arbitrary-length raw block family. Conversion selects the recommended
+max-binade scale, and the element SAT/OVF policy is the conversion context.
 
 The generic exact domain is a vector of signed rationals. A stored block containing non-finite
 lanes has no value in that domain and is summarized as NaN. The lane-wise `decode` accessor
-retains all individual NaNs, infinities, and finite neighbors.
+keeps every individual NaN, infinity, and finite neighbor.
 -/
 
 @[expose] public section
@@ -69,16 +69,20 @@ variable {profile : Profile}
 @[inline] def decode (value : Standard profile) : Vector (NumericalValue SignedRat) 32 :=
   value.toCode.decode
 
-/-- Direct quantization of finite exact inputs under the chosen FP8 overflow mode. -/
-@[inline] def quantize (mode : OverflowMode) (input : Vector SignedRat 32) :
+/--
+Quantize finite exact inputs, saturating by default. `(overflow := .native)` selects the FP8 OVF
+element mode.
+-/
+@[inline] def quantize (input : Vector SignedRat 32) (overflow : OverflowMode := .saturate) :
     Standard profile :=
-  ofCode (Formats.OCP.MX.Standard.quantizeFinite profile mode input)
+  ofCode (Formats.OCP.MX.Standard.quantizeFinite profile input overflow)
 
 namespace Conversion
 
 /--
-Whether a normalized lane lies outside its signed finite endpoint. For these block conversions,
-range flags use the exact endpoint test, not the binary scalar after-rounding convention.
+Whether a normalized lane lies outside its signed finite endpoint. Block conversions test range
+flags against the exact endpoint and do not follow the binary scalar convention of testing after
+rounding.
 -/
 def outsideFinite (value : SignedRat) : Bool :=
   match Element.toRat? (Element.endpoint profile value.negative) with
@@ -86,10 +90,10 @@ def outsideFinite (value : SignedRat) : Bool :=
   | some endpoint => |endpoint| < |value.value|
 
 /--
-Conversion flags. `overflow` includes an unrepresentable shared scale or a normalized lane
-outside its exact finite range; `saturated` records such a lane stored at its finite endpoint.
-`underflow` records a nonzero input lane becoming zero. `inexact` compares complete signed
-finite observations, including zero signs.
+Conversion flags. `overflow` covers an unrepresentable shared scale or a normalized lane outside
+its exact finite range, and `saturated` records such a lane stored at its finite endpoint.
+`underflow` records a nonzero input lane becoming zero. `inexact` compares complete signed finite
+observations, including zero signs.
 -/
 def status (input : Vector SignedRat 32) (rounded : Standard profile) :
     ExecFloat.ConversionStatus :=
@@ -110,21 +114,21 @@ def status (input : Vector SignedRat 32) (rounded : Standard profile) :
           decide (Element.toRat? block.values[lane.val] = some 0) }
 
 /-- Convert one exact block observation, recording exceptional sources with a NaN scale. -/
-def run (mode : OverflowMode) :
+def run (overflow : OverflowMode) :
     NumericalValue (Vector SignedRat 32) → ExecFloat.ConversionOutcome (Standard profile)
   | .finite input =>
-    let rounded := quantize mode input
+    let rounded := quantize input overflow
     .success rounded (status input rounded)
   | .infinity _ | .exceptional _ =>
     .success (ofCode (Block.nan profile)) { mappedSpecial := true }
 
 /-- Destination specification uses the numerical lane-rounding relation at the selected scale. -/
-def spec (mode : OverflowMode) (input : NumericalValue (Vector SignedRat 32))
+def spec (overflow : OverflowMode) (input : NumericalValue (Vector SignedRat 32))
     (outcome : ExecFloat.ConversionOutcome (Standard profile)) : Prop :=
   match input with
   | .finite exact =>
     ∃ rounded, outcome = .success rounded (status exact rounded) ∧
-      Formats.OCP.MX.Standard.Quantizes profile mode exact rounded.toCode
+      Formats.OCP.MX.Standard.Quantizes profile overflow exact rounded.toCode
   | .infinity _ | .exceptional _ =>
     outcome = .success (ofCode (Block.nan profile)) { mappedSpecial := true }
 

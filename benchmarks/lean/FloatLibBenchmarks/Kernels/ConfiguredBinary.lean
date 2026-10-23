@@ -28,15 +28,14 @@ at two otherwise identical observation boundaries:
 
 Both rows consume the same preconstructed values, execute the same monomorphic tail-recursive
 loop, mix the same raw result into the same sink, and are checked for pointwise and whole-loop
-equality before timing. Consequently, their ratio measures residual public-dispatch cost rather
-than a different numerical algorithm. Odd and even trials reverse the pair order through
-`BENCH_REVERSE`, reducing systematic placement bias.
+equality before timing. So their ratio measures the residual public-dispatch cost with the
+numerical algorithm held fixed. Odd and even trials reverse the pair order through
+`BENCH_REVERSE`, which reduces systematic placement bias.
 
-All twelve public and direct rows use the proved fixed-format word kernels. The explicit
-`NativeFPU.Unchecked` host API is intentionally outside this abstraction-cost benchmark. The
-generated-code contract in `benchmarks/scripts/checks/configured-binary-codegen.sh` separately
-checks native carrier signatures, absence of runtime capability closures, and the opt-in host
-surface.
+All twelve public/direct pairs use the proved fixed-format word kernels. The opt-in
+`NativeFPU.Unchecked` host API is deliberately left out of this abstraction-cost benchmark. The
+generated-code contract in `benchmarks/scripts/checks/configured-binary-codegen.sh` checks native
+carrier signatures, the absence of runtime capability closures, and the opt-in host surface.
 -/
 
 namespace FloatLibBenchmarks.Kernels.ConfiguredBinary
@@ -44,14 +43,6 @@ namespace FloatLibBenchmarks.Kernels.ConfiguredBinary
 open FloatLib.Floats
 open FloatLibBenchmarks.Support.Environment
 open FloatLib.Floats.Formats.BinaryInterchange
-
-/-- The user spelling for IEEE 754 binary32 used by the benchmark. -/
-abbrev Binary32 :=
-  ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
-/-- The user spelling for IEEE 754 binary64 used by the benchmark. -/
-abbrev Binary64 :=
-  ExecFloat.Binary (exponentBits := 11) (fractionBits := 52)
 
 private instance : Inhabited Binary32 :=
   ⟨Configured.NativeFPU.ofBinary32Bits 0⟩

@@ -23,7 +23,7 @@ share one set of instances. Numerical literals are rounded once from exact ratio
 comparison, equality, and hashing operate on the exact-width model, independently of the packed
 carrier.
 
-Two different notions of equality are installed and callers must keep them apart.
+Two different notions of equality are installed:
 
 * `==` (`BEq`) is IEEE numerical equality through `ExecFloat.compareEqual`: `NaN == NaN` is
   `false` and `-0 == +0` is `true` when the format represents these values. `List.contains`,
@@ -96,8 +96,7 @@ instance : Inhabited (FloatLib.Floats.ExecFloat (Configured.Family format code p
 Structural equality of the stored interchange word.
 
 This differs from `==`: distinct signed-zero encodings are unequal and a NaN equals itself.
-Deciding equality on the
-exact-width model keeps the instance independent of the packed carrier.
+Deciding equality on the exact-width model keeps the instance independent of the packed carrier.
 -/
 instance : DecidableEq (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
   fun left right =>
@@ -270,7 +269,7 @@ instance {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     OfNat (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) value where
   ofNat :=
     Configured.Family.ofModel <|
-      Model.roundRatQ format (value : Rat)
+      Model.ofRat format (value : Rat)
 
 /--
 Scientific and decimal literals are rounded once from their exact rational value into the
@@ -281,7 +280,7 @@ instance {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
     OfScientific (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) where
   ofScientific mantissa exponentSign decimalExponent :=
     Configured.Family.ofModel <|
-      Model.roundRatQ format <|
+      Model.ofRat format <|
         (OfScientific.ofScientific mantissa exponentSign decimalExponent : Rat)
 
 /-- Negation follows the destination format's signed-zero and exceptional-value policy. -/

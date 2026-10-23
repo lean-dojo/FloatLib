@@ -1,0 +1,19 @@
+# FloatLib transcendental results known to differ from MPFR, keyed by case id
+# (format/operation/mode/argument encodings). Columns: case id, kind (value: a
+# different encoding; nan: NaN where MPFR is not; ternary: a different ternary
+# sign), the encoding FloatLib returns, the ternary FloatLib reports (- when the
+# emitter sends none), the design item that repairs it, and a note. The gate
+# fails on any unlisted mismatch, on a listed case whose kind, encoding or
+# ternary changes, and on a listed case that now matches, so a fix deletes its
+# rows. Regenerate with transcendental_compare.sh --write-known-failures.
+# manifest emitter transcendentalEmitter
+# manifest exhaustive16 true
+# manifest hard tests/oracles/data/transcendental-hard-cases.tsv
+# manifest random-count 256
+# manifest seed bfloat16 589684135938649225
+# manifest seed binary128 4983270260364809079
+# manifest seed binary16 11820040416388919760
+# manifest seed binary32 2611923443488327891
+# manifest seed binary64 1376283091369227076
+# manifest seed ieee31_23 13714699805381954668
+# manifest tier slow

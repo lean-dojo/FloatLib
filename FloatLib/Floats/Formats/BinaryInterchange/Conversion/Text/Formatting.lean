@@ -6,104 +6,114 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
-public import FloatLib.Numerics.Exact.DecimalText.Precision
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Shortest
 public import FloatLib.Numerics.Exact.DecimalText.Special
-public import FloatLib.Numerics.Exact.HexText.Runtime
-public import FloatLib.Numerics.Exact.Dyadic.Format
-public import FloatLib.Numerics.IEEEStatus
-public import FloatLib.Numerics.Quantization.Deterministic.Rational
 
 /-!
 # Binary external character output
 
-Exact decimal and hexadecimal output preserve finite values, signed zeros,
-infinities and NaN diagnostics. Requested precision is an arbitrary positive
-digit count. Both radices use the shared digit-grid and carry calculation.
-Exponents are unbounded integers, so output can raise inexact but cannot overflow
-or underflow. Signaling NaNs retain their signaling state without invalid.
+`format value` writes a decimal that reads back as `value`, normally the shortest one or the exact
+value when that is short, and `toString`, `repr` and `#eval` show the same text. The `style` option
+selects every other output: exact decimal and hexadecimal digits, a count of significant digits, and
+fixed or scientific notation with a count of places. Styles that round do so once, in the `mode`
+option, and `(status := true)` returns the text with the inexact indicator of that rounding.
+Exponents are unbounded, so output cannot overflow or underflow.
 
-External conversion is explicit through `formatDecimal`, `formatHex`, or
-`formatWithStatus`. The existing `format` and `ToString` retain the compact dyadic
-diagnostic display, which omits NaN metadata.
+The display writes `inf`, `-inf` and `nan`. The other styles keep the complete spellings of
+infinities and NaNs, including the sign, signaling state and payload of a NaN.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
-/-- Radix of the external significand; hexadecimal output still has a decimal binary exponent. -/
-inductive TextRadix where
-  /-- Decimal digits and an optional e exponent. -/
-  | decimal
-  /-- Hexadecimal digits with a 0x prefix and mandatory p exponent. -/
-  | hexadecimal
-  deriving DecidableEq, Repr
+/-- How `format` writes a binary value. -/
+inductive TextStyle where
+  /-- The shortest decimal that reads back as the value, or a short exact value: the display. -/
+  | shortest
+  /-- Every digit of the exact decimal value, as a significand and a decimal exponent. -/
+  | exact
+  /-- This many significant decimal digits, as a significand and a decimal exponent. -/
+  | significant (digits : ℕ+)
+  /-- Ordinary decimal notation with exactly this many digits after the point. -/
+  | fixed (places : Nat)
+  /-- One digit before the point, this many after it, and an `e` exponent. -/
+  | scientific (places : Nat)
+  /-- A hexadecimal significand with a `p` binary exponent, exact or to significant digits. -/
+  | hex (precision : Numerics.DecimalText.Precision := .exact)
 
-/-- Exact output or an arbitrary positive significant-digit count, shared with decimal formats. -/
-abbrev TextPrecision := Numerics.DecimalText.Precision
+namespace Internal.Status
 
-/-- A generated external character sequence and the exceptions raised while producing it. -/
-structure TextOutcome where
-  /-- Decimal, hexadecimal, infinity or diagnostic NaN text. -/
-  text : String
-  /-- Output rounding can raise inexact; all other exception indicators remain clear. -/
-  status : Numerics.IEEEStatus := {}
-  deriving DecidableEq, Repr
+/-- Text of the finite value `value`, with exact value `exact`, in `style`, and its status. -/
+@[inline] def formatFinite {fmt : FloatFormat} (style : TextStyle) (mode : IEEERoundingMode)
+    (value : Model fmt) (exact : Numerics.Dyadic) : TextOutcome :=
+  match style with
+  | .shortest =>
+      let record := Shortest.decimal mode value exact
+      { text := String.ofList (Shortest.characters (Shortest.digits fmt) record)
+        status := { inexact := decide (record.toRat ≠ exact.toRat) } }
+  | .exact => formatDyadicText mode .decimal .exact exact
+  | .significant digits => formatDyadicText mode .decimal (.significant digits) exact
+  | .fixed places => fixedText mode places exact
+  | .scientific places => scientificText mode places exact
+  | .hex precision => formatDyadicText mode .hexadecimal precision exact
 
-/-- Integer magnitude rounding for an external digit grid, using existing exact integer rounders. -/
-def roundTextMagnitude (mode : IEEERoundingMode) (negative : Bool) (x : Rat) : Nat :=
-  match mode with
-  | .nearestEven => (Numerics.roundRatEven x).natAbs
-  | .towardZero => ⌊x⌋₊
-  | .towardPositiveInfinity => if negative then ⌊x⌋₊ else ⌈x⌉₊
-  | .towardNegativeInfinity => if negative then ⌈x⌉₊ else ⌊x⌋₊
-
-/-- Exact or significant-digit output for an unrounded dyadic, with numerical inexactness. -/
-def formatDyadicText (mode : IEEERoundingMode) (radix : TextRadix)
-    (precision : TextPrecision) (value : Numerics.Dyadic) : TextOutcome :=
-  match radix, precision with
-  | .decimal, .exact => { text := Numerics.DecimalText.formatDyadic value }
-  | .hexadecimal, .exact => { text := Numerics.HexText.format value }
-  | .decimal, .significant digits =>
-      let original := Numerics.DecimalText.ofDyadic value
-      let result := Numerics.DecimalText.significantDecimal (roundTextMagnitude mode)
-        original digits
-      { text := result.format, status := { inexact := decide (result.toRat ≠ original.toRat) } }
-  | .hexadecimal, .significant digits =>
-      let result := Numerics.HexText.significant (roundTextMagnitude mode) value digits
-      { text := Numerics.HexText.format result,
-        status := { inexact := decide (result.toRat ≠ value.toRat) } }
-
-/-- Format any binary descriptor at exact or requested precision, preserving special metadata. -/
-def formatWithStatus {fmt : FloatFormat} (mode : IEEERoundingMode) (radix : TextRadix)
-    (precision : TextPrecision) (value : Model fmt) : TextOutcome :=
+/-- Text of `value` in `style` with the inexact indicator of its rounding in `mode`. -/
+@[inline] def format {fmt : FloatFormat} (value : Model fmt) (style : TextStyle)
+    (mode : IEEERoundingMode) : TextOutcome :=
   match exactValue value with
-  | .finite exact => formatDyadicText mode radix precision exact
+  | .finite exact => formatFinite style mode value exact
   | .infinity negative =>
-      { text := String.ofList (Numerics.SpecialText.infinityCharacters negative) }
+      match style with
+      | .shortest => { text := if negative then "-inf" else "inf" }
+      | _ => { text := String.ofList (Numerics.SpecialText.infinityCharacters negative) }
   | .nan negative signaling payload =>
-      { text := String.ofList (Numerics.SpecialText.nanCharacters negative signaling payload) }
+      match style with
+      | .shortest => { text := "nan" }
+      | _ =>
+          { text := String.ofList (Numerics.SpecialText.nanCharacters negative signaling payload) }
 
-/-- Exact decimal external output, preserving signed zero and complete NaN metadata. -/
-def formatDecimal {fmt : FloatFormat} (value : Model fmt) : String :=
-  (formatWithStatus .nearestEven .decimal .exact value).text
+end Internal.Status
 
-/-- Exact hexadecimal display, including the complete diagnostic spelling for a NaN. -/
-def formatHex {fmt : FloatFormat} (value : Model fmt) : String :=
-  (formatWithStatus .nearestEven .hexadecimal .exact value).text
+/--
+Write a value of any binary descriptor as text.
 
-/-- Host-independent diagnostic display, using compact dyadic text for finite values.
-Use `formatDecimal` or `formatHex` for external conversion with NaN metadata. -/
-def format {fmt : FloatFormat} (value : Model fmt) : String :=
-  match exactValue value with
-  | .finite exact => exact.format
-  | .infinity true => "-inf"
-  | .infinity false => "inf"
-  | .nan _ _ _ => "nan"
+By default this is the display: the exact value when it has at most `d` significant digits (`d` is
+17 for binary64), and otherwise the shortest decimal the search finds that `parse` reads back as
+`value`, with the exact value as the fallback. It uses fixed notation from `0.0001` up to `10^d` and
+an `e` exponent otherwise. `toString`, `repr` and `#eval` use it. `style` selects the exact decimal
+or hexadecimal digits, significant digits, or fixed or scientific notation. Styles that round do so
+once in `mode`, and with `mode` the display reads back in that mode. With `status := true` the
+result also carries the inexact indicator of that rounding.
+-/
+@[inline] def format {fmt : FloatFormat} (value : Model fmt) (style : TextStyle := .shortest)
+    (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
+    match status with
+    | true => TextOutcome
+    | false => String :=
+  match status with
+  | true => Internal.Status.format value style mode
+  | false => (Internal.Status.format value style mode).text
 
+/-- Values print as a decimal that reads back as the same value, normally the shortest. -/
 instance {fmt : FloatFormat} : ToString (Model fmt) where
-  toString := format
+  toString value := format value
+
+/-- `#eval` and `repr` show the same decimal, parenthesized when negative inside an argument. -/
+instance {fmt : FloatFormat} : Repr (Model fmt) where
+  reprPrec value precedence :=
+    let text := format value
+    if text.startsWith "-" then Repr.addAppParen text precedence else text
+
+/-- `#eval` shows the three fields, displaying the value as `toString` does. -/
+instance {fmt : FloatFormat} : Repr (IEEEOutcome fmt) where
+  reprPrec outcome _ :=
+    Std.Format.bracket "{ "
+      (Std.Format.joinSep
+        [f!"value := {repr outcome.value}", f!"status := {repr outcome.status}",
+          f!"ternary := {repr outcome.ternary}"]
+        ("," ++ Std.Format.line))
+      " }"
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

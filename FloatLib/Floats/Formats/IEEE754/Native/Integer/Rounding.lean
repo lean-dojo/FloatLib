@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof.RoundToIntegral
 public import Init.Data.SInt.Float
 public import Init.Data.SInt.Float32
@@ -15,8 +15,8 @@ public import Init.Data.SInt.Float32
 /-!
 # Shared integer rounding at the native boundary
 
-These proofs identify Lean's integer conversion kernels with FloatLib's existing rational
-quantizer and dyadic integral rounder. The arguments do not depend on a machine integer width.
+These proofs identify Lean's integer conversion kernels with FloatLib's rational quantizer and
+dyadic integral rounder. The arguments do not depend on a machine integer width.
 -/
 
 @[expose] public section
@@ -55,10 +55,10 @@ theorem roundRat_den_one_eq_roundDyadic (fmt : FloatFormat)
     (hfmt : fmt.isIEEE = true) (sign : Bool) (n : Nat) :
     roundRat fmt sign n 1 =
       roundDyadic fmt { negative := sign, significand := n, exponent := 0 } := by
-  rw [roundDyadic, ite_eq_left hfmt, ieeeRoundDyadic_eq_ieeeRoundDyadicImpl]
+  rw [roundDyadic, ite_eq_left hfmt, ieeeRoundDyadic_eq_internal]
   by_cases hn : n = 0
   · subst n
-    simp [roundRat, roundRatScaled, hfmt, ieeeRoundRatScaled, ieeeRoundDyadicImpl]
+    simp [roundRat, roundRatScaled, hfmt, ieeeRoundRatScaled, Internal.ieeeRoundDyadic]
   have hmin : FloatFormat.ieeeMinNormalExponent fmt ≤ 0 := by
     unfold FloatFormat.ieeeMinNormalExponent FloatFormat.bias
     have hp : 2 ≤ 2 ^ (fmt.expWidth - 1) :=
@@ -72,7 +72,7 @@ theorem roundRat_den_one_eq_roundDyadic (fmt : FloatFormat)
   have hunder : ¬ (n.log2 : Int) < -Int.ofNat (FloatFormat.normalMantissaExpOffset fmt) :=
     by simp only [Int.ofNat_eq_natCast]; omega
   simp only [roundRat, roundRatScaled, hfmt, ↓reduceDIte, ieeeRoundRatScaled,
-    ieeeRoundDyadicImpl, beq_iff_eq, hn, Nat.one_ne_zero, ite_false,
+    Internal.ieeeRoundDyadic, beq_iff_eq, hn, Nat.one_ne_zero, ite_false,
     floorLog2_den_one n hn, Int.add_zero, hnormal, hunder]
   simp only [Int.ofNat_eq_natCast, roundQuotientEven_scale_den_one]
   split_ifs <;> first | rfl | omega
@@ -110,8 +110,8 @@ private theorem extendedMantissa_shift_mantissa (em : ExtendedMantissa) (shift :
       simp only [ExtendedMantissa.shiftRightOne, ih, Nat.div_div_eq_div_mul, pow_succ]
 
 /--
-Lean's finite conversion kernel truncates exactly the dyadic interpreted by FloatLib.
-No rounding of the floating-point value occurs before truncation.
+Lean's finite conversion kernel truncates toward zero the same dyadic that FloatLib decodes.
+No rounding of the floating-point value happens before the truncation.
 -/
 theorem roundToInt_eq_roundDyadicToInt (sign : Sign) (mantissa : Nat) (exponent : Int) :
     Float.Model.UnpackedFloat.roundToInt sign mantissa exponent =

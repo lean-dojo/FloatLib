@@ -11,10 +11,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # Direct generic dyadic rounding
 
-Generic dyadic rounding executes directly with integer arithmetic. `RoundDyadicImpl.Proof`
-proves that these functions refine the logical float model and registers the compiler
-substitutions. Keeping the implementation here lets runtime backends avoid importing the
-substantially larger normalization proof.
+Generic dyadic rounding runs on integer arithmetic. `RoundingKernel.Proof` proves that these
+functions refine the logical float model and registers the compiler substitutions. With the
+implementation here, runtime backends need not import the much larger normalization proof.
 -/
 
 @[expose] public section
@@ -28,7 +27,7 @@ This is the compiled counterpart of `ieeeRoundDyadic`. It handles subnormal alig
 normalization carry, signed underflow to zero, and overflow without constructing a logical model
 value.
 -/
-@[inline] def ieeeRoundDyadicImpl (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
+@[inline] def Internal.ieeeRoundDyadic (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
   if d.significand == 0 then
     if d.negative then negZero fmt else posZero fmt
   else
@@ -42,9 +41,9 @@ value.
       if fraction == 0 then
         if d.negative then negZero fmt else posZero fmt
       else if fraction == pow2 fmt.fracWidth then
-        ofFields fmt d.negative 1 0
+        Model.ofFields fmt d.negative 1 0
       else
-        ofFields fmt d.negative 0 fraction
+        Model.ofFields fmt d.negative 0 fraction
     else
       let roundedMantissa :=
         if fmt.fracWidth ≤ leading then
@@ -58,14 +57,14 @@ value.
       else
         let normalizedMantissa :=
           if carry then pow2 fmt.fracWidth else roundedMantissa
-        ofFields fmt d.negative
+        Model.ofFields fmt d.negative
           (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
           (normalizedMantissa - pow2 fmt.fracWidth)
 
 /-- Compiled nearest-even dyadic rounding for every complete format descriptor. -/
-@[inline] def roundDyadicImpl (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
+@[inline] def Internal.roundDyadic (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
   if fmt.isIEEE then
-    ieeeRoundDyadicImpl fmt d
+    Internal.ieeeRoundDyadic fmt d
   else
     roundDyadicGeneral fmt d
 

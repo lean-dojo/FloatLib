@@ -7,16 +7,17 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Runtime
+public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
 
 /-!
 # Native binary64 square-root runtime
 
 Positive finite inputs are scaled to a 105- or 106-bit radicand held in two `UInt64` limbs. A
-53-step restoring square-root loop computes the floor root and remainder using native words. The
-remainder classifies the nearest-even result directly, after which the binary64 exponent and
-fraction are packed without constructing a generic unpacked-float model.
+checked Newton candidate, or a 53-step restoring loop when the check fails, gives the floor root
+and remainder in native words. The remainder decides the nearest-even result, and the binary64
+exponent and fraction are packed without building a generic unpacked-float model.
 
-Correctness proofs and the `Nat.sqrt` model are isolated in `Sqrt.Proof`.
+`Sqrt.Proof` has the proofs and the `Nat.sqrt` model.
 -/
 
 @[expose] public section
@@ -26,7 +27,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64
 open FloatLib.Numerics.FixedWord
 open FloatLib.Numerics.FixedWord
 
-/-- Shift a binary64 significand into two limbs; callers supply a positive shift below 128
+/-- Shift a binary64 significand into two limbs. Callers supply a positive shift below 128
 and a result that fits in 128 bits. -/
 @[inline] def shiftedRadicand
     (mantissa : UInt64) (shift : Nat) : FloatLib.Numerics.FixedWord.UInt128 :=
@@ -47,8 +48,8 @@ and a result that fits in 128 bits. -/
 /--
 Consume one base-four digit in the restoring square-root recurrence.
 
-For the binary64 radicands constructed above, `53` iterations produce a 53-bit floor root. The
-remainder and trial divisor remain below one native word.
+For the binary64 radicands built above, 53 iterations produce a 53-bit floor root, and the
+remainder and trial divisor fit in one native word.
 -/
 @[inline] def rootStep (digit : UInt64)
     (state : RestoringRootState UInt64) : RestoringRootState UInt64 :=
@@ -61,7 +62,7 @@ remainder and trial divisor remain below one native word.
     { root := state.root * 2
       remainder := expanded }
 
-/-- Consume a requested number of radicand digits from most significant to least significant. -/
+/-- Consume the given number of radicand digits, most significant first. -/
 @[inline] def rootLoop
     (radicand : FloatLib.Numerics.FixedWord.UInt128) :
     Nat → RestoringRootState UInt64 → RestoringRootState UInt64
@@ -75,13 +76,33 @@ remainder and trial divisor remain below one native word.
     (mantissa : UInt64) (shift : Nat) : RestoringRootState UInt64 :=
   rootLoop (shiftedRadicand mantissa shift) 53 { root := 0, remainder := 0 }
 
+/-! ## Checked Newton root
+
+The restoring loop takes 53 serial steps. `rootAndRemainderChecked` takes the candidate and exact
+square check of `CheckedSquareRoot` instead. Inputs outside the loop's verified range and rejected
+candidates still run the loop, so the result is `rootAndRemainder` on every input
+(`rootAndRemainderChecked_eq` in `Sqrt.Proof`).
+-/
+
+/-- `rootAndRemainder` through a checked Newton candidate where the loop's range conditions hold. -/
+@[inline] def rootAndRemainderChecked (mantissa : UInt64) (shift : Nat) :
+    RestoringRootState UInt64 :=
+  if 0 < shift && shift < 128 &&
+      (mantissa == 0 || (FloatLib.Numerics.FixedWord.log2Word mantissa).toNat + shift < 106) then
+    let radicand := shiftedRadicand mantissa shift
+    match CheckedSquareRoot.checkRoot? radicand (CheckedSquareRoot.approxRoot radicand) with
+    | some state => state
+    | none => rootAndRemainder mantissa shift
+  else
+    rootAndRemainder mantissa shift
+
 /--
-Direct positive-finite binary64 square root.
+Positive finite binary64 square root of a decoded significand and scale, as a packed word.
 
 For a nonzero significand below `2^53` and a scale at most 2045, the input value is
-`mantissa * 2^(scale - 1074)`, with subtraction in the exponent interpreted in `Int`. Parity
-chooses a 105- or 106-bit integer radicand. Its square root cannot be a half-integer, so
-`remainder ≤ root` is precisely the round-down condition.
+`mantissa * 2^(scale - 1074)`, with the exponent subtraction in `Int`. Parity chooses a 105- or
+106-bit integer radicand. Its square root cannot be a half-integer, so the result rounds down
+exactly when `remainder ≤ root`.
 -/
 @[inline] def sqrtPositiveFiniteCore
     (mantissa scale : UInt64) : UInt64 :=
@@ -92,7 +113,7 @@ chooses a 105- or 106-bit integer radicand. Its square root cannot be a half-int
       104 - leading.toNat
     else
       105 - leading.toNat
-  let state := rootAndRemainder mantissa shift
+  let state := rootAndRemainderChecked mantissa shift
   let roundedRoot :=
     if state.remainder ≤ state.root then state.root else state.root + 1
   let carry := roundedRoot == 0x0020000000000000

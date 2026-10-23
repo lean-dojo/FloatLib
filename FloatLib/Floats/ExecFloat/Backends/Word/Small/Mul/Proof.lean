@@ -19,13 +19,12 @@ import Mathlib.Tactic.Positivity
 /-!
 # Correctness of native one-word finite multiplication
 
-The one-word kernel uses a high-bit sentinel to decline cases outside its guarded normal-result
-region. The sentinel proof rules out collisions with valid packed results, and the main refinement
-identifies every successful proposal with the format-generic finite multiplication kernel.
+The one-word kernel declines with a high-bit sentinel outside its guarded normal-result region.
+The sentinel never collides with a valid packed result, and the main refinement identifies every
+accepted result with the format-generic finite multiplication kernel.
 
-`Mul.Runtime` contains the word-valued and optional entry points. Their agreement theorem allows
-the dispatcher to use the sentinel interface and continue to the generic implementation on a
-decline.
+`Mul.Runtime` has a word-valued and an optional entry point. Because they agree, the dispatcher
+can use the sentinel form and fall back to the generic implementation on a decline.
 -/
 
 @[expose] public section
@@ -41,10 +40,10 @@ open NativeSmallWord
   decide
 
 /--
-Decode the word-valued normal-product result to the optional result.
+The word-valued normal-product result decodes to the optional result.
 
-The high decline bit is outside every eligible storage word, so successful packed results cannot
-collide with the sentinel.
+Since the high decline bit is outside every eligible storage word, successful packed results
+cannot collide with the sentinel.
 -/
 theorem roundNormalProductWord_decode
     (fmt : FloatFormat)
@@ -280,8 +279,8 @@ private theorem roundNormalProduct_eq_spec
 /--
 A successful native normal-product round agrees with the exact finite-product rounder.
 
-The hypotheses state only the machine-capacity and normalized-input bounds needed by the
-`UInt64` implementation.
+Its hypotheses are the machine-capacity and normalized-input bounds that the `UInt64`
+implementation needs, and nothing more.
 -/
 theorem roundNormalProduct_refines
     (fmt : FloatFormat)
@@ -317,7 +316,7 @@ theorem roundNormalProduct_refines
       xMantissa.toNat yMantissa.toNat
       hxMantissa.1 hyMantissa.1 result hresult
 
-/-- Decode the flat tagged execution result back to the proof-facing optional result. -/
+/-- The flat sentinel-tagged word result decodes to the optional result `mulNormal?`. -/
 theorem mulNormalWord_decode {fmt : FloatFormat}
     (heligible : Eligible fmt) (x y : Model fmt) :
     (if mulNormalWord x y == declineWord then
@@ -346,9 +345,11 @@ theorem mulNormalWord_decode {fmt : FloatFormat}
       (xExponent == 0 || xExponent == allOnes ||
         yExponent == 0 || yExponent == allOnes) = true
   · simp [mulNormalWord, mulNormal?, NativeSmallWord.withNormalPair?,
+      NativeSmallWord.withNormalPairWord?,
       xBits, yBits, xExponent,
       yExponent, allOnes, hinvalid]
   · simpa [mulNormalWord, mulNormal?, NativeSmallWord.withNormalPair?,
+      NativeSmallWord.withNormalPairWord?,
       xBits, yBits, xExponent,
       yExponent, allOnes, xMantissa, yMantissa, sign, hinvalid] using
       roundNormalProductWord_decode fmt hwidth hstorage sign
@@ -357,8 +358,8 @@ theorem mulNormalWord_decode {fmt : FloatFormat}
 /--
 A successful one-word normal multiplication agrees with the compact finite kernel.
 
-The native path deliberately handles only normal IEEE operands whose intermediate fields fit in
-one word. Every other input returns `none`, so callers can retain the exact baseline.
+The native path handles only normal IEEE operands whose intermediate fields fit in one word.
+Every other input returns `none`, and callers fall back to the exact kernel.
 -/
 theorem mulNormal_refines {fmt : FloatFormat}
     (heligible : Eligible fmt) (x y result : Model fmt)

@@ -16,14 +16,14 @@ public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 /-!
 # Native addition and subtraction
 
-These bridges are checked against the logical floating-point model shipped with Lean.
-Finite inputs include both signed zeros. The result is unrestricted: cancellation, subnormal
-rounding, and overflow to infinity all preserve the complete packed word through the existing
-native adapters.
+These theorems relate FloatLib's addition and subtraction to the logical floating-point model
+shipped with Lean. Finite inputs include both signed zeros. The result is unrestricted, so
+cancellation, subnormal rounding and overflow to infinity are covered, and the equations hold on
+the complete packed word through the native adapters.
 
-The finite-input hypotheses exclude NaNs and infinities. FloatLib preserves NaN details that
-Lean canonicalizes; subtraction also negates the right operand's NaN sign. These model
-equalities do not verify the external machine instructions used by compiled native code.
+The finite-input hypotheses exclude NaNs and infinities, because FloatLib preserves NaN details
+that Lean canonicalizes and its subtraction also negates the right operand's NaN sign. These model
+equalities do not verify the machine instructions used by compiled native code.
 -/
 
 @[expose] public section
@@ -42,13 +42,13 @@ private theorem round_decoded_eq_ofModel {fmt : FloatFormat} (hfmt : fmt.isIEEE 
       simp only [toModel, unpack, he, hm, ite_true, ite_false]
     rw [toDyadic?_ieee_eq_model fmt hfmt x, hnan] at hd
     cases hd
-  change roundDyadicWithRounding fmt .nearestEven d = canonicalizeModel x
-  rw [roundDyadicWithRounding_toDyadic? hfmt .nearestEven hd,
+  change Internal.Directed.roundDyadic fmt .nearest d = canonicalizeModel x
+  rw [Internal.Directed.roundDyadic_toDyadic? hfmt .nearest hd,
     canonicalizeModel_eq_self x hcanonical]
 
 /--
-For finite operands, including signed zeros, dispatched addition produces precisely the word
-obtained by adding and packing in Lean's unpacked model. The result may overflow to infinity.
+For finite operands, including signed zeros, dispatched addition gives the word that Lean's
+unpacked model gets by adding and packing. The result may overflow to infinity.
 -/
 theorem add_eq_ofModel_add_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (x y : Model fmt) (hx : (toModel x).isFinite = true)
@@ -146,11 +146,11 @@ namespace FloatLib.Floats.ExecFloat.Binary
 
 open Formats.BinaryInterchange
 
-/-- Native binary32 addition commutes with the existing import adapter for all finite inputs. -/
+/-- Native binary32 addition commutes with the import adapter on finite inputs. -/
 theorem toModel_ofFloat32_add_of_isFinite (x y : Float32)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    toModel (ofFloat32 (x + y)) =
-      Model.add (toModel (ofFloat32 x)) (toModel (ofFloat32 y)) := by
+    toModel (ofFloat32 (x + y) : Binary32) =
+      Model.add (toModel (ofFloat32 x : Binary32)) (toModel (ofFloat32 y : Binary32)) := by
   rw [toModel_ofFloat32, toModel_ofFloat32, toModel_ofFloat32]
   change Model.ofFloat32Model (Float32.Model.add x.toModel y.toModel) = _
   rw [Float32.Model.add, Model.ofFloat32Model_pack]
@@ -166,8 +166,8 @@ theorem toModel_ofFloat32_add_of_isFinite (x y : Float32)
 /-- Native binary32 subtraction commutes with the import adapter, including signed-zero inputs. -/
 theorem toModel_ofFloat32_sub_of_isFinite (x y : Float32)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    toModel (ofFloat32 (x - y)) =
-      Model.sub (toModel (ofFloat32 x)) (toModel (ofFloat32 y)) := by
+    toModel (ofFloat32 (x - y) : Binary32) =
+      Model.sub (toModel (ofFloat32 x : Binary32)) (toModel (ofFloat32 y : Binary32)) := by
   rw [toModel_ofFloat32, toModel_ofFloat32, toModel_ofFloat32]
   change Model.ofFloat32Model (Float32.Model.sub x.toModel y.toModel) = _
   rw [Float32.Model.sub, Model.ofFloat32Model_pack]
@@ -180,11 +180,11 @@ theorem toModel_ofFloat32_sub_of_isFinite (x y : Float32)
   rw [Model.toModel_ofFloat32Model, Model.toModel_ofFloat32Model] at h
   exact h.symm
 
-/-- Native binary64 addition commutes with the existing import adapter for all finite inputs. -/
+/-- Native binary64 addition commutes with the import adapter on finite inputs. -/
 theorem toModel_ofFloat_add_of_isFinite (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    toModel (ofFloat (x + y)) =
-      Model.add (toModel (ofFloat x)) (toModel (ofFloat y)) := by
+    toModel (ofFloat (x + y) : Binary64) =
+      Model.add (toModel (ofFloat x : Binary64)) (toModel (ofFloat y : Binary64)) := by
   rw [toModel_ofFloat, toModel_ofFloat, toModel_ofFloat]
   change Model.ofFloatModel (Float.Model.add x.toModel y.toModel) = _
   rw [Float.Model.add, Model.ofFloatModel_pack]
@@ -200,8 +200,8 @@ theorem toModel_ofFloat_add_of_isFinite (x y : Float)
 /-- Native binary64 subtraction commutes with the import adapter, including signed-zero inputs. -/
 theorem toModel_ofFloat_sub_of_isFinite (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    toModel (ofFloat (x - y)) =
-      Model.sub (toModel (ofFloat x)) (toModel (ofFloat y)) := by
+    toModel (ofFloat (x - y) : Binary64) =
+      Model.sub (toModel (ofFloat x : Binary64)) (toModel (ofFloat y : Binary64)) := by
   rw [toModel_ofFloat, toModel_ofFloat, toModel_ofFloat]
   change Model.ofFloatModel (Float.Model.sub x.toModel y.toModel) = _
   rw [Float.Model.sub, Model.ofFloatModel_pack]
@@ -240,18 +240,18 @@ certified software operation. Finite inputs may produce zero, a subnormal, or in
 -/
 theorem ofFloat32_add_of_isFinite (x y : Float32)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    ofFloat32 (x + y) = ofFloat32 x + ofFloat32 y := by
+    (ofFloat32 (x + y) : Binary32) = ofFloat32 x + ofFloat32 y := by
   apply Configured.Family.toModel_injective
-  change toModel (ofFloat32 (x + y)) = toModel (ofFloat32 x + ofFloat32 y)
+  change toModel (ofFloat32 (x + y) : Binary32) = toModel (ofFloat32 x + ofFloat32 y : Binary32)
   rw [toModel_execAdd, ← Model.Proof.add_eq_spec]
   exact toModel_ofFloat32_add_of_isFinite x y hx hy
 
 /-- Importing a native binary32 difference equals certified software subtraction of the imports. -/
 theorem ofFloat32_sub_of_isFinite (x y : Float32)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    ofFloat32 (x - y) = ofFloat32 x - ofFloat32 y := by
+    (ofFloat32 (x - y) : Binary32) = ofFloat32 x - ofFloat32 y := by
   apply Configured.Family.toModel_injective
-  change toModel (ofFloat32 (x - y)) = toModel (ofFloat32 x - ofFloat32 y)
+  change toModel (ofFloat32 (x - y) : Binary32) = toModel (ofFloat32 x - ofFloat32 y : Binary32)
   rw [toModel_execSub, ← Model.Proof.sub_eq_spec]
   exact toModel_ofFloat32_sub_of_isFinite x y hx hy
 
@@ -261,18 +261,18 @@ certified software operation, including cancellation and overflow.
 -/
 theorem ofFloat_add_of_isFinite (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    ofFloat (x + y) = ofFloat x + ofFloat y := by
+    (ofFloat (x + y) : Binary64) = ofFloat x + ofFloat y := by
   apply Configured.Family.toModel_injective
-  change toModel (ofFloat (x + y)) = toModel (ofFloat x + ofFloat y)
+  change toModel (ofFloat (x + y) : Binary64) = toModel (ofFloat x + ofFloat y : Binary64)
   rw [toModel_execAdd, ← Model.Proof.add_eq_spec]
   exact toModel_ofFloat_add_of_isFinite x y hx hy
 
 /-- Importing a native binary64 difference equals certified software subtraction of the imports. -/
 theorem ofFloat_sub_of_isFinite (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    ofFloat (x - y) = ofFloat x - ofFloat y := by
+    (ofFloat (x - y) : Binary64) = ofFloat x - ofFloat y := by
   apply Configured.Family.toModel_injective
-  change toModel (ofFloat (x - y)) = toModel (ofFloat x - ofFloat y)
+  change toModel (ofFloat (x - y) : Binary64) = toModel (ofFloat x - ofFloat y : Binary64)
   rw [toModel_execSub, ← Model.Proof.sub_eq_spec]
   exact toModel_ofFloat_sub_of_isFinite x y hx hy
 

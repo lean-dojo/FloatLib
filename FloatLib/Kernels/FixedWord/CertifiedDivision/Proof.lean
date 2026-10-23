@@ -19,10 +19,10 @@ import FloatLib.Kernels.FixedWord.Quotient.Compiler
 # Verified fixed-word division candidates
 
 The radix-`2^32` runtime loop is a candidate generator. Its quotient and remainder are
-accepted when native multiplication and addition independently certify the exact Euclidean
-division equation and remainder bound. If that check rejects the candidate, the runtime selects a
-restoring accumulator; this module proves that accumulator equal to the logical recurrence and
-certifies its result on normalized inputs of `precision + 1` bits with `64 < precision ≤ 126`.
+accepted when native multiplication and addition confirm the Euclidean division equation and the
+remainder bound. If that check rejects the candidate, the runtime falls back to a restoring
+accumulator. This module proves that accumulator equal to the logical recurrence and certifies its
+result on normalized inputs of `precision + 1` bits with `64 < precision ≤ 126`.
 -/
 
 @[expose] public section
@@ -114,7 +114,7 @@ theorem certificate_complete (precision : Nat)
       hremainder⟩
 
 /--
-A successful native certificate proves the exact quotient/remainder decomposition and Euclidean
+A successful native certificate gives the quotient/remainder decomposition and the Euclidean
 remainder bound. The proof does not depend on the radix-`2^32` candidate generator.
 -/
 theorem certificate_sound (precision : Nat)
@@ -153,8 +153,8 @@ theorem certificate_sound (precision : Nat)
 /--
 The allocation-light restoring repair agrees with the logical two-limb recurrence.
 
-Runtime code calls the primitive-word accumulator directly. This theorem is the proof boundary
-that lets the mathematical argument continue through `quotientSteps128`.
+Runtime code calls the primitive-word accumulator, and proofs continue from this theorem through
+`quotientSteps128`.
 -/
 theorem restoringCandidate_eq_quotientSteps128 (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift) :
@@ -163,7 +163,7 @@ theorem restoringCandidate_eq_quotientSteps128 (precision : Nat)
         den (shift.toNat precision) (restoringInitial num den) := by
   unfold restoringCandidate
   exact
-    FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128Impl_eq_quotientSteps128
+    FloatLib.Numerics.FixedWord.RestoringQuotient.Internal.quotientSteps128_eq
       den (shift.toNat precision) (restoringInitial num den)
 
 /--
@@ -171,7 +171,7 @@ The restoring repair produces a certified candidate for normalized `precision + 
 significands.
 
 The shift is `precision` when the numerator is at least the denominator and `precision + 1`
-otherwise. Those are exactly the two cases selected by the two-limb backends.
+otherwise, as the two-limb backends choose it.
 -/
 theorem restoringCandidate_complete (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126)
@@ -303,9 +303,9 @@ theorem restoringCandidate_complete (precision : Nat)
     exact hcertificate
 
 /--
-An independently rejected Algorithm D candidate selects the restoring repair.
+A rejected Algorithm D candidate selects the restoring repair.
 
-The conclusion holds for any operands whose candidate fails the certificate.
+No hypothesis on the operands is needed beyond the failed certificate.
 -/
 theorem checkedCandidate_eq_repair_of_certificate_false (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift)
@@ -322,9 +322,9 @@ theorem checkedCandidate_eq_repair_of_certificate_false (precision : Nat)
 /--
 The checked candidate is complete on the normalized two-limb division domain.
 
-The fast candidate is used when its independent certificate succeeds; otherwise the proved
-restoring loop supplies the quotient and remainder. Thus the selected pair itself is certified,
-without a second runtime check or an unreachable backend fallback.
+Either the fast candidate passes its certificate, or the proved restoring loop supplies the
+quotient and remainder. Either way the returned pair is certified, with no second runtime check
+and no unreachable backend fallback.
 -/
 theorem checkedCandidate_complete (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126)
@@ -360,8 +360,8 @@ theorem checkedCandidate_complete (precision : Nat)
 /--
 The candidate selected by the fast-check-or-repair runtime path satisfies Euclidean division.
 
-This is the consumer-facing form of `checkedCandidate_complete`: callers receive the exact
-equation and strict remainder bound directly, without reopening the executable certificate.
+It combines `checkedCandidate_complete` with `certificate_sound`, so callers get the equation
+and the strict remainder bound without unfolding the executable certificate.
 -/
 theorem checkedCandidate_sound (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126)

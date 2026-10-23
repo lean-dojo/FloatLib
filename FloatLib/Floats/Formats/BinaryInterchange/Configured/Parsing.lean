@@ -14,7 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 # Character input for configured binary values
 
 Configured binary values use the descriptor model's exact character parser. A successful parse
-changes only the storage representation; the decoded numerical value is unchanged.
+differs from the model's only in storage representation, so the decoded numerical value is the
+same.
 -/
 
 @[expose] public section
@@ -29,39 +30,42 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 /--
 Parse decimal, hexadecimal, dyadic, or special text with nearest-even rounding by default.
 
-Set `rounding` to choose another direction. With `limits := true`, `maxBytes` bounds the
-original UTF-8 input and `maxExponent` bounds its adjusted exponent before exact conversion.
-Set `status := true` to return the value together with all five IEEE exception flags.
-Malformed or oversized input returns `Model.ParseError`.
+Set `mode` to choose another direction. With `limits := some bounds`, `bounds.maxBytes` bounds the
+original UTF-8 input and `bounds.maxExponent` bounds its adjusted exponent before exact conversion,
+and `some {}` selects the default bounds. Set `status := true` to return the value together with
+all five IEEE exception flags and the ternary value. Malformed or oversized input returns
+`Model.ParseError`.
 -/
-def parse (input : String) (rounding : Model.IEEERoundingMode := .nearestEven)
-    (limits : Bool := false) (maxBytes : Nat := 4096) (maxExponent : Nat := 10000)
-    (status : Bool := false) :
+def parse (input : String) (mode : Model.IEEERoundingMode := .nearest)
+    (limits : Option Model.ParseLimits := none) (status : Bool := false) :
     Except Model.ParseError (match status with
       | true => IEEEOutcome (format := format) (plan := plan) (code := code)
       | false => FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
   match status with
   | true =>
-      (Model.parse format input rounding limits maxBytes maxExponent true).map IEEEOutcome.ofModel
+      (Model.parse format input mode limits true).map IEEEOutcome.ofModel
   | false =>
-      (Model.parse format input rounding limits maxBytes maxExponent false).map ofModel
+      (Model.parse format input mode limits false).map ofModel
 
-/-- Decoding a parsed configured value recovers exactly the descriptor-model result. -/
-theorem map_toModel_parse (input : String) (rounding : Model.IEEERoundingMode)
-    (limits : Bool) (maxBytes maxExponent : Nat) :
+/-- Decoding a parsed configured value gives the descriptor-model result. -/
+theorem map_toModel_parse (input : String) (mode : Model.IEEERoundingMode)
+    (limits : Option Model.ParseLimits) :
     (parse (format := format) (plan := plan) (code := code)
-      input rounding limits maxBytes maxExponent).map toModel =
-      Model.parse format input rounding limits maxBytes maxExponent := by
-  cases h : Model.parse format input rounding limits maxBytes maxExponent <;>
+      input mode limits).map toModel =
+      Model.parse format input mode limits := by
+  cases h : Model.parse format input mode limits <;>
     simp [parse, h, Except.map]
 
-/-- Requesting status preserves every model bit and IEEE flag across the storage conversion. -/
-theorem map_toModel_parse_status (input : String) (rounding : Model.IEEERoundingMode)
-    (limits : Bool) (maxBytes maxExponent : Nat) :
+/--
+Requesting status preserves every model bit, IEEE flag, and the ternary value across the storage
+conversion.
+-/
+theorem map_toModel_parse_status (input : String) (mode : Model.IEEERoundingMode)
+    (limits : Option Model.ParseLimits) :
     (parse (format := format) (plan := plan) (code := code)
-      input rounding limits maxBytes maxExponent (status := true)).map IEEEOutcome.toModel =
-      Model.parse format input rounding limits maxBytes maxExponent (status := true) := by
-  cases h : Model.parse format input rounding limits maxBytes maxExponent (status := true) <;>
+      input mode limits (status := true)).map IEEEOutcome.toModel =
+      Model.parse format input mode limits (status := true) := by
+  cases h : Model.parse format input mode limits (status := true) <;>
     simp [parse, h, Except.map]
 
 end FloatLib.Floats.ExecFloat.Binary

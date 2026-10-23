@@ -9,7 +9,7 @@ module
 public import FloatLib.Floats.Formats.Posit.Logarithm.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Comparison.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
-public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Proof
+public import FloatLib.Numerics.Exact.RationalPower.Proof
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 /-!
@@ -26,15 +26,15 @@ namespace FloatLib.Floats.Formats.Posit.Model
 
 namespace Logarithm
 
-/-- Inverse power comparisons have exactly the real-logarithm ordering. -/
-theorem compareTarget_eq_real (base argument candidate : Rat) (degree : Nat)
+/-- For `1 < base` and a positive argument, the power comparison orders the real logarithm. -/
+theorem compareTarget_eq_real (base argument candidate : Rat)
     (hbase : 1 < base) (hargument : 0 < argument) :
-    compareTarget base argument candidate degree =
+    compareTarget base argument candidate =
       cmp (Real.logb (base : ℝ) (argument : ℝ)) (candidate : ℝ) := by
   have hbaseReal : (1 : ℝ) < base := by exact_mod_cast hbase
   have hargumentReal : (0 : ℝ) < argument := by exact_mod_cast hargument
-  rw [compareTarget, FloatLib.Numerics.RationalPower.compareWithEnclosure_eq_real
-    base candidate argument degree (by linarith), cmp_swap]
+  rw [compareTarget, FloatLib.Numerics.RationalPower.compare_eq_real
+    base candidate argument (by linarith), cmp_swap]
   simp only [cmp, cmpUsing,
     Real.logb_lt_iff_lt_rpow hbaseReal hargumentReal,
     Real.lt_logb_iff_rpow_lt hbaseReal hargumentReal]
@@ -46,9 +46,9 @@ theorem roundRat_eq_real (format : Format) (base argument : Rat)
       RealRounding.round format (Real.logb (base : ℝ) (argument : ℝ)) := by
   rw [roundRat, ite_eq_right (not_le_of_gt hargument)]
   exact ComparisonRounding.roundSigned_eq_real format _ _
-    (fun candidate => compareTarget_eq_real base argument candidate _ hbase hargument)
+    (fun candidate => compareTarget_eq_real base argument candidate hbase hargument)
 
-/-- Nonpositive logarithm arguments are rejected before real logarithm evaluation. -/
+/-- A nonpositive logarithm argument gives NaR. -/
 theorem roundRat_eq_nar (format : Format) (base argument : Rat) (hargument : argument ≤ 0) :
     roundRat format base argument = nar format := by
   simp [roundRat, hargument]
@@ -114,22 +114,22 @@ theorem log10Plus1_eq_real (value : Model format) {q : Rat}
 /-- Base-ten `Plus1` propagates NaR. -/
 @[simp] theorem log10Plus1_nar : log10Plus1 (nar format) = nar format := Logarithm.apply_nar _ _
 
-/-- Base-two logarithm rejects zero and negative finite inputs. -/
+/-- Base-two logarithm sends zero and negative finite inputs to NaR. -/
 theorem log2_eq_nar_of_nonpos (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : q ≤ 0) : log2 value = nar format :=
   Logarithm.apply_eq_nar 2 0 value hvalue (by simpa using hq)
 
-/-- Base-ten logarithm rejects zero and negative finite inputs. -/
+/-- Base-ten logarithm sends zero and negative finite inputs to NaR. -/
 theorem log10_eq_nar_of_nonpos (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : q ≤ 0) : log10 value = nar format :=
   Logarithm.apply_eq_nar 10 0 value hvalue (by simpa using hq)
 
-/-- Base-two `Plus1` rejects finite inputs at or below `-1`. -/
+/-- Base-two `Plus1` sends finite inputs at or below `-1` to NaR. -/
 theorem log2Plus1_eq_nar_of_le_neg_one (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : q ≤ -1) : log2Plus1 value = nar format :=
   Logarithm.apply_eq_nar 2 1 value hvalue (by linarith)
 
-/-- Base-ten `Plus1` rejects finite inputs at or below `-1`. -/
+/-- Base-ten `Plus1` sends finite inputs at or below `-1` to NaR. -/
 theorem log10Plus1_eq_nar_of_le_neg_one (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : q ≤ -1) : log10Plus1 value = nar format :=
   Logarithm.apply_eq_nar 10 1 value hvalue (by linarith)

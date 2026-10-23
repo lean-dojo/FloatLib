@@ -254,8 +254,8 @@ meta def profile (bits : Nat) (storage : String) : FormatProfile where
         numericalGuarantee? := some {
           kinds := [.rounding]
           statement :=
-            "Exact integer shortcuts and certified logarithmic comparisons with an exact " ++
-            "power fallback select one real rounding. Minus1 subtracts before rounding, " ++
+            "Exact integer shortcuts, exact boundary equality, and certified logarithmic " ++
+            "separation select one real rounding. Minus1 subtracts before rounding, " ++
             "including exact-boundary cases." } }
     , { topic := "base-two and base-ten logarithms"
         declarations :=
@@ -272,8 +272,8 @@ meta def profile (bits : Nat) (storage : String) : FormatProfile where
           kinds := [.rounding]
           statement :=
             "Each result equals signed real posit rounding of the exact logarithm. Plus1 " ++
-            "forms its addition exactly. Boundary comparisons use proved logarithm bounds " ++
-            "with an exact rational-power fallback, including ties." } }
+            "forms its addition exactly. Boundary comparisons decide exact rational-power " ++
+            "equality first, including ties, and then use proved logarithm bounds." } }
     , { topic := "natural exponential and logarithm"
         declarations :=
           [ ``Model.exp_eq_real
@@ -603,10 +603,10 @@ private meta def readStorage (plan : Expr) : MetaM String := do
   throwError "failed to inspect posit storage plan"
 
 /--
-Width-generic certified operations available directly on the posit proof model.
+Width-generic certified operations of the posit proof model.
 
-These remain separate from universal `ExecFloat` capabilities because the raw model deliberately
-has no configured storage plan or capability-selection dictionary.
+They are listed apart from the `ExecFloat` capabilities because the raw model has no configured
+storage plan or capability-selection dictionary.
 -/
 private meta def modelOperations : List InfoEntry :=
   [ ⟨"add",

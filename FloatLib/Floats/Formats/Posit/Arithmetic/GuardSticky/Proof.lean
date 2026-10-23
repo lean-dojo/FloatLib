@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 import Mathlib.Tactic.NormNum
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Spec
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Spec
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
@@ -16,7 +16,7 @@ import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Numerics.Exact.Dyadic.Comparison.Proof
 
 /-!
-# Laws and correctness of shared fixed-carrier guard-and-sticky rounding
+# Laws and correctness of carrier-generic guard-and-sticky rounding
 
 `LawfulTailCarrier` and `LawfulCandidateCarrier` state the natural-number meaning of the carrier
 operations that `GuardStickyCarrier` uses. Each law is as narrow as the shared kernel needs: the
@@ -39,7 +39,7 @@ variable {α : Type}
 /--
 Natural-number semantics of a finite-tail carrier.
 
-This explicit record lives in `Prop`; the executable carrier contains only the operations.
+This record lives in `Prop`, and the executable carrier contains only the operations.
 -/
 structure LawfulTailCarrier
     (carrier : TailCarrier α) (toNat : α → Nat) : Prop where
@@ -56,7 +56,7 @@ Natural-number semantics of a candidate carrier of `capacity` bits.
 
 Each law holds only under the bound the shared rounder establishes before applying the operation,
 so the record can be instantiated by wrapping machine arithmetic. Like `LawfulTailCarrier`, it is
-an explicit proof record rather than a typeclass.
+a proof record that callers pass as an argument.
 -/
 structure LawfulCandidateCarrier
     (carrier : CandidateCarrier α) (toNat : α → Nat) (capacity : Nat) : Prop
@@ -197,8 +197,8 @@ namespace FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding
 open FloatLib.Numerics
 
 /--
-The direct rounder's leading-bit underflow test is exact comparison against the smallest positive
-posit. This fact is independent of the native carrier used by a backend.
+The direct rounder's leading-bit underflow test is comparison against the smallest positive
+posit, whatever native carrier a backend uses.
 -/
 theorem isLessPowerOfTwoAtLeading_leadingBit_eq_isLess_minPositive
     (format : Format) (significand : Nat) (exponent : Int) :
@@ -221,6 +221,24 @@ theorem emod_four_toNat_lt (scale : Int) : (scale.emod 4).toNat < 4 := by
 theorem toNat_ofNat_emod_four_toNat (scale : Int) :
     (UInt64.ofNat (scale.emod 4).toNat).toNat = (scale.emod 4).toNat :=
   UInt64.toNat_ofNat_of_lt ((emod_four_toNat_lt scale).trans (by decide))
+
+/-- The regime of a scale is its arithmetic right shift by two. -/
+theorem shiftRight_two_eq_ediv (scale : Int) : scale >>> 2 = scale.ediv 4 := by
+  rw [Int.shiftRight_eq_div_pow]
+  rfl
+
+/-- The low two bits of the wrapped scale are its exponent field. -/
+theorem toUInt64_ofInt_and_three (scale : Int) :
+    (Int64.ofInt scale).toUInt64 &&& 3 = UInt64.ofNat (scale.emod 4).toNat := by
+  apply UInt64.toNat_inj.mp
+  rw [toNat_ofNat_emod_four_toNat, UInt64.toNat_and]
+  have hwrap : (Int64.ofInt scale).toUInt64.toNat = (scale % 2 ^ 64).toNat := by
+    rw [← UInt64.toNat_toBitVec, Int64.toBitVec_toUInt64]
+    exact BitVec.toNat_ofInt scale
+  rw [hwrap, show (3 : UInt64).toNat = 2 ^ 2 - 1 by decide, Nat.and_two_pow_sub_one_eq_mod]
+  change (scale % 2 ^ 64).toNat % 2 ^ 2 = (scale % 4).toNat
+  norm_num
+  omega
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding
 
@@ -460,6 +478,8 @@ theorem roundNormalizedPositive_toNat_eq_direct
   rw [← GuardStickyRounding.isLessPowerOfTwoAtLeading_leadingBit_eq_isLess_minPositive]
     at hnotUnderflow
   unfold DirectDyadicPacking.roundPositiveCode roundNormalizedPositive
+  simp only [GuardStickyRounding.shiftRight_two_eq_ediv,
+    GuardStickyRounding.toUInt64_ofInt_and_three]
   simp only [hzero, Bool.false_or, Bool.false_eq_true, ite_false, hnotUnderflow]
   simp only [DirectDyadicPacking.leadingBit_eq_log2, lawful.log2_eq]
   split_ifs with hregime hsaturated hsaturated

@@ -12,16 +12,15 @@ public import FloatLib.Floats.ExecFloat.Carrier
 /-!
 # Executable arithmetic capabilities
 
-A capability supplies an operation's specification, certified implementations, and cost estimates.
-The selector starts with a mandatory baseline and considers alternatives within the resource
-limits using those estimates. This indexed
-contract is used by the named operations in `ExecFloat.Core.Operations`.
+A capability bundles an operation's specification, its certified implementations, and their cost
+estimates. The selector starts from a mandatory baseline and uses the estimates to consider
+alternatives within the resource limits. The named operations in `ExecFloat.Core.Operations` use
+this indexed contract.
 
-`Capability.run_eq_spec` proves equality of Lean definitions. The binary software kernels use
-proved refinements and `@[csimp]` replacements; their compiled correctness also depends on the
-compiler. The explicit binary32/binary64
-`NativeFPU.Unchecked` host functions are deliberately not capabilities because they do not yet
-have the packed-word equality theorem required by `Backend.Certified`.
+`Capability.run_eq_spec` is an equality of Lean definitions. The binary software kernels use proved
+refinements and `@[csimp]` replacements, so their compiled correctness also depends on the
+compiler. The binary32/binary64 `NativeFPU.Unchecked` host functions are not capabilities, because
+they have no packed-word equality theorem of the kind `Backend.Certified` requires.
 -/
 
 @[expose] public section
@@ -37,11 +36,10 @@ variable (F : Type u) [EncodedFormat F]
     [planning : Backend.PolicyFor F]
 
 /--
-Function type of a universal arithmetic operation over one encoded format.
+Function type of each arithmetic operation over one encoded format.
 
-Indexing the operation package by `Backend.Operation` keeps addition, subtraction,
-multiplication, division, square root, and FMA as distinct capabilities even when some operations
-have the same Lean function type.
+Indexing by `Backend.Operation` keeps addition, subtraction, multiplication, division, square
+root, and FMA distinct capabilities even when two of them share a Lean function type.
 -/
 abbrev OperationSignature : Backend.Operation → Type _
   | .add | .sub | .mul | .div => ExecFloat F → ExecFloat F → ExecFloat F
@@ -51,62 +49,57 @@ abbrev OperationSignature : Backend.Operation → Type _
 /--
 Semantics, certified kernels, and static selection for one arithmetic operation.
 
-The operation index prevents accidental instance sharing between operations while avoiding six
-structurally identical planner records.
+The operation index keeps the instances of different operations apart without six structurally
+identical planner records.
 -/
 class Capability (operation : Backend.Operation) where
-  /-- Clear reference operation for `F`. -/
+  /-- Reference operation for `F`. -/
   spec : OperationSignature F operation
   /-- Certified kernels offered by this capability for the operation on `F`. -/
   candidates : Backend.CandidateSet (Backend.Certified spec)
   /--
-  Lazy, memoized automatic selection for capabilities that do not materialize a direct winner.
+  Lazy, memoized automatic selection, for capabilities that do not store a winner.
 
-  The first projection evaluates the planner; subsequent projections reuse the selected
-  certificate. Static built-in formats may bypass even this projection by supplying
-  `implementation` directly.
+  The first projection runs the planner and later projections reuse the selected certificate.
+  Static built-in formats skip even this projection by supplying `implementation`.
   -/
   selection : Thunk (Backend.Certified spec) :=
     Thunk.mk fun _ => Backend.selectCertified planning.policy candidates
   /--
-  Certified implementation executed by public arithmetic.
+  Certified implementation whose `run` public arithmetic computes.
 
   The default reads the memoized automatic selection. A statically specialized package may store
-  the planner's already-known winner directly, allowing Lean to erase both planning and closure
-  dispatch from the generated hot path.
+  the planner's known winner, so Lean can erase both planning and closure dispatch from the
+  generated hot path.
   -/
   implementation : Backend.Certified spec :=
     selection.get
   /--
-  The stored certificate is, in Lean's logic, the winner of the advertised candidate plan under
-  the policy in scope.
+  The stored certificate is the planner's winner over `candidates` under the policy in scope.
 
-  A static package may materialize the winner for code generation, but it must then prove that
-  the planner selects that same certificate. Inspection tools such as `#float_info` report
-  `implementation`; `execute_eq_implementation` relates the public entry point to its logical
-  operation. These equations establish equality of behavior in Lean, not identity of generated
-  machine code.
+  A static package that stores the winner for code generation must prove that the planner selects
+  that same certificate. Inspection tools such as `#float_info` report `implementation`. The
+  equation holds in Lean's logic and says nothing about the generated machine code.
   -/
   implementation_is_selected :
     implementation = Backend.selectCertified planning.policy candidates := by
     rfl
   /--
-  First-order executable entry point used by public arithmetic.
+  First-order executable entry point that public arithmetic runs.
 
-  The default projects the selected certificate. Static formats may name the same proved kernel
-  directly, which lets Lean erase the certificate and typeclass dictionaries from monomorphic
-  calls without changing either selection metadata or the correctness boundary.
+  The default projects the selected certificate. A static format may name the proved kernel
+  itself, which lets Lean erase the certificate and typeclass dictionaries from monomorphic calls
+  without changing the selection metadata or the correctness boundary.
   -/
   execute : OperationSignature F operation :=
     implementation.run
   /--
-  In Lean's logic, the first-order entry point is propositionally equal to the selected
-  certificate's `run`.
+  The entry point `execute` is propositionally equal to the selected certificate's `run`.
 
   When a package supplies `execute := implementation.run`, or names the certificate's kernel and
-  proves this field by `rfl`, the compiled code of `execute` is that certificate's kernel. Code
-  named here must not acquire an unproved compiler replacement: this equation identifies the
-  logical kernel but could not establish equality with such a substitute.
+  proves this field by `rfl`, the compiled code of `execute` is that kernel. Code named here must
+  not acquire an unproved compiler replacement, because the equation is about the logical kernel
+  and says nothing about such a substitute.
   -/
   execute_eq_implementation :
     execute = implementation.run := by
@@ -136,11 +129,11 @@ variable {F : Type u} [EncodedFormat F]
 namespace Capability
 
 /--
-Build a capability from a policy-selected portfolio and a first-order dispatcher.
+Build a capability from a candidate set and a first-order dispatcher equal to `spec`.
 
-The candidates remain authoritative for inspection and certification. Naming `execute`
-separately lets a format expose the same selected behavior without retaining a certificate
-projection in monomorphic generated code.
+The candidates stay authoritative for inspection and certification. A separate `execute` lets a
+format run the selected behavior without keeping a certificate projection in monomorphic
+generated code.
 -/
 @[always_inline, instance_reducible] def ofCandidates
     (operation : Backend.Operation)
@@ -157,11 +150,10 @@ projection in monomorphic generated code.
     Backend.firstOrder_eq_selected planning.policy candidates execute execute_eq_spec
 
 /--
-Build a singleton capability whose public entry point names its certified kernel directly.
+Build a singleton capability from one certified kernel and an entry point equal to its `run`.
 
-This is the common package for formats whose planner has one genuine implementation. The
-singleton still participates in inspection and selection proofs, while `execute` remains a
-first-order format kernel.
+Formats whose planner has one implementation use this package. The singleton still takes part in
+inspection and selection proofs, and `execute` stays a first-order format kernel.
 -/
 @[always_inline, instance_reducible] def ofDirectKernel
     (operation : Backend.Operation)
@@ -177,11 +169,10 @@ first-order format kernel.
   execute_eq_implementation := execute_eq_certified
 
 /--
-Build a direct capability from a certificate whose stored kernel is the public entry point.
+Build a singleton capability whose entry point is the certificate's stored kernel `certified.run`.
 
-This is the common case for statically selected backends. It keeps operation-specific planners
-from repeating the same certificate projection and reflexive equality, while preserving the
-first-order kernel stored in `certified.run`.
+Statically selected backends use it, so operation-specific planners do not repeat the same
+certificate projection and `rfl` proof.
 -/
 @[always_inline, instance_reducible] def ofCertified
     (operation : Backend.Operation)
@@ -210,19 +201,37 @@ theorem selected_eq_planner {operation : Backend.Operation}
 /--
 Execute the selected logical operation.
 
-The operation is certified in Lean; a family-specific compiled replacement may have an additional
-trust boundary documented by that family.
+The operation is certified in Lean. A family-specific compiled replacement may add a trust
+boundary, which that family documents.
 -/
 @[inline] def run {operation : Backend.Operation}
     [self : Capability F operation] : OperationSignature F operation :=
   self.execute
 
-/-- The selected executable operation agrees with its reference semantics. -/
+/-- `run` agrees with the capability's reference semantics. -/
 theorem run_eq_spec {operation : Backend.Operation}
     [self : Capability F operation] :
     run (F := F) (operation := operation) = self.spec :=
   self.execute_eq_implementation.trans
     (selected (F := F) (operation := operation)).run_eq_spec
+
+/--
+`HasSpec cap spec` states that the capability `cap` has the reference operation `spec`.
+
+Instance search proves it whenever `cap.spec` unfolds to `spec`, as it does for every capability
+instance that names its reference operation. A theorem about a function that runs the selected
+capability takes `HasSpec` as an instance argument to learn which reference the kernel computes,
+and `run_eq_spec` then rewrites the kernel to that reference.
+-/
+class HasSpec {operation : Backend.Operation} (cap : Capability F operation)
+    (spec : outParam (OperationSignature F operation)) : Prop where
+  /-- The capability's reference operation is `spec`. -/
+  spec_eq : cap.spec = spec
+
+/-- Every capability has its own reference operation. -/
+instance {operation : Backend.Operation} (cap : Capability F operation) :
+    HasSpec cap cap.spec :=
+  ⟨rfl⟩
 
 end Capability
 end ExecFloat

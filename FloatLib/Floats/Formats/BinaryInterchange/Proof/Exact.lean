@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Core
 These definitions attach exact, total, or finite semantic evidence to an executable model and
 move between the three proof-indexed views without changing its runtime bits.
 
-The views let later theorems ask for precisely the exceptional-value hypothesis they need instead
-of carrying a record of unrelated facts. Constructors and projections pass through the underlying
-model value; their semantic proofs are erased.
+The views let later theorems ask for the exceptional-value hypothesis they need instead of
+carrying a record of unrelated facts. Constructors and projections pass the underlying model
+value through, and their semantic proofs are erased.
 -/
 
 @[expose] public section
@@ -65,19 +65,19 @@ namespace OutcomeAt
   ⟨outcome, rfl, rfl⟩
 
 /-- The bundled outcome's value has its indexed exact interpretation. -/
-@[simp] theorem denote {fmt : FloatFormat} {v : ExactValue} {status : IEEEStatus}
+@[simp] theorem denote {fmt : FloatFormat} {v : ExactValue} {status : Numerics.IEEEStatus}
     (outcome : OutcomeAt fmt v status) :
     exactValue outcome.1.value = v :=
   outcome.2.1
 
 /-- The bundled outcome has its indexed IEEE exception status. -/
-@[simp] theorem status_eq {fmt : FloatFormat} {v : ExactValue} {status : IEEEStatus}
+@[simp] theorem status_eq {fmt : FloatFormat} {v : ExactValue} {status : Numerics.IEEEStatus}
     (outcome : OutcomeAt fmt v status) :
     outcome.1.status = status :=
   outcome.2.2
 
 /-- Project the outcome's value to its exact proof-indexed view. -/
-@[inline] def toAtExact {fmt : FloatFormat} {v : ExactValue} {status : IEEEStatus}
+@[inline] def toAtExact {fmt : FloatFormat} {v : ExactValue} {status : Numerics.IEEEStatus}
     (outcome : OutcomeAt fmt v status) : AtExact fmt v :=
   ⟨outcome.1.value, outcome.2.1⟩
 

@@ -15,21 +15,20 @@ public import FloatLib.Numerics.Exact.SignedRat
 # Binary-interchange conversion runtime
 
 Every binary-interchange family uses the same representation-independent conversion policy.
-A concrete carrier supplies only a `pack` function from its
-`Model format`; configured machine-word formats and nominal static-byte formats therefore share
-one exact quantizer.
+A concrete carrier supplies only a `pack` function from its `Model format`, so configured
+machine-word formats and nominal static-byte formats share one exact quantizer.
 
 The exact domain is `SignedRat`, so the sign of a zero input reaches the destination. Finite values
 are rounded once by `Model.Policy.roundRat`, with the sign bit taken from the signed rational and
-the magnitude from its value. Infinity and exceptional observations use separate explicit policies
+the magnitude from its value. Infinity and exceptional observations have their own policies
 because finite-only formats cannot preserve every IEEE value class. Status flags are computed from
 exact rational comparisons, never through a host floating-point value.
 
 `specWith pack` preserves the complete executable outcome and adds an independent nearest-value
 predicate for nearest-even/native-overflow/gradual-underflow conversion to conventional IEEE
 descriptors. Its proof uses the descriptor's real rounding semantics. The nearest-value clause
-applies when the delivered model has a finite rational denotation; overflow, tie selection, signed
-zero, status, and the other policies retain the complete executable-outcome clause.
+applies when the delivered model has a finite rational denotation. Overflow, tie selection, signed
+zero, status, and the other policies are covered by the complete executable-outcome clause.
 -/
 
 @[expose] public section
@@ -46,7 +45,7 @@ universe u
 
 /-- Policy for an infinity presented to a binary-interchange destination. -/
 inductive InfinityPolicy where
-  /-- Preserve infinity when the destination encoding supports it; otherwise reject the cast. -/
+  /-- Preserve infinity when the destination encoding supports it, and otherwise reject the cast. -/
   | preserve
   /-- Clamp infinity to the finite destination value of greatest magnitude with the same sign. -/
   | saturate
@@ -69,10 +68,10 @@ inductive ExceptionalPolicy where
   | reject
   deriving DecidableEq, Repr
 
-/-- Complete explicit context for conversion into a binary-interchange destination. -/
+/-- Complete context for conversion into a binary-interchange destination. -/
 structure Context where
   /-- Finite rounding, overflow, and underflow behavior. -/
-  quantization : QuantizationPolicy := .nearestEven
+  quantization : QuantizationPolicy := .nearest
   /-- Entropy consumed only by stochastic finite rounding. -/
   entropy : Nat := 0
   /-- Treatment of source infinity. -/
@@ -85,8 +84,8 @@ structure Context where
 Canonical binary conversion context.
 
 Finite values use nearest-even/native-overflow/gradual-underflow behavior. Infinities and
-exceptional values retain their value class when the destination encoding supports that class;
-otherwise conversion fails explicitly. An IEEE destination quiets a NaN, keeps its sign and any
+exceptional values keep their value class when the destination encoding supports that class, and
+otherwise conversion fails. An IEEE destination quiets a NaN, keeps its sign and any
 payload that fits, and replaces an oversized payload with zero. Maximum-NaN encodings keep only
 the sign, while FNUZ has a single NaN. A signaling NaN raises `invalid`.
 -/
@@ -95,31 +94,68 @@ def Context.default : Context := {}
 namespace Context
 
 /--
-Canonical conversion context with one caller-selected finite rounding direction.
+Canonical conversion context with finite rounding direction `mode`.
 
-Native overflow, gradual underflow, infinity preservation, and NaN propagation retain their
-default behavior. Use a record update when any of those policies must also change.
+This is the context a conversion's `(mode := ...)` option selects for a binary destination.
+Native overflow, gradual underflow, infinity preservation, and NaN propagation keep their
+default behavior. Use a record update when any of those policies must also change, or when the
+finite rounding is stochastic.
 -/
-@[inline] def withRounding (rounding : RoundingMode) : Context :=
-  { quantization := { rounding } }
+@[inline] def withRounding (mode : Model.IEEERoundingMode) : Context :=
+  { quantization := { rounding := mode.toRoundingMode } }
 
 end Context
 
 /-- Exact addition with the destination's cancellation-sign rule, before rounding. -/
 @[inline] def addExact (context : Context) (left right : SignedRat) : SignedRat :=
-  SignedRat.addWithCancellationSign (context.quantization.rounding == .towardNegative) left right
+  SignedRat.addWithCancellationSign (context.quantization.rounding == .down) left right
 
 /-- Exact subtraction applies the same cancellation rule to the negated right operand. -/
 @[inline] def subExact (context : Context) (left right : SignedRat) : SignedRat :=
   addExact context left (-right)
 
 /--
+Overflow and tininess of the exact magnitude `numerator / denominator` from its significand rounded
+under `rounding` with an unbounded exponent range, as a pair `(overflow, tiny)`.
+
+The denominator must be nonzero, as it is for every `Rat`. A zero numerator gives
+`(false, false)`: an exact zero neither overflows nor underflows. Otherwise the significand is the
+quotient scaled to `fracWidth + 1` significant bits and rounded by `Policy.roundQuot`, with `sign`
+and `entropy` for the directions and stochastic rounding that need them. It overflows above the
+largest finite significand of the top binade. Below the normal range it is tiny unless rounding
+carries it up to the smallest normal value. `finiteStatus` uses this calculation for rounding
+modes without an `IEEERoundingMode` direction.
+-/
+@[inline] def roundedSignificandStatus (format : FloatFormat) (rounding : RoundingMode)
+    (entropy : Nat) (sign : Bool) (numerator denominator : Nat) : Bool × Bool :=
+  if numerator == 0 then
+    (false, false)
+  else
+    let exponent := Numerics.RationalBinary.floorLog2 numerator denominator
+    let (scaledNum, scaledDen) := Numerics.RationalBinary.scaleByPowerOfTwo
+      numerator denominator (Int.ofNat format.fracWidth - exponent)
+    let mantissa := Model.Policy.roundQuot rounding sign entropy scaledNum scaledDen
+    let overflow := exponent > format.maxNormalExponent ||
+      (exponent == format.maxNormalExponent &&
+        mantissa > (Model.maxFiniteDyadic format).significand)
+    let tiny := exponent < format.minNormalExponent &&
+      (exponent + 1 < format.minNormalExponent ||
+        mantissa < 2 ^ (format.fracWidth + 1))
+    (overflow, tiny)
+
+/--
 Status derived from exact rational binary rounding.
 
 Overflow and tininess use the precision-rounded value with an unbounded exponent range. Merely
 exceeding the largest finite value does not signal overflow when rounding brings the value back
-into range. Nearest-away and stochastic policies use their own integer rounding rule, including
-the supplied entropy, at the same precision boundary.
+into range. Rounding modes with an `IEEERoundingMode` direction use the exact classifiers
+`rationalRoundingOverflows` and `rationalIsTinyAfterRoundingScaled`. Stochastic policies use
+`roundedSignificandStatus`, with their own integer rounding rule and the supplied entropy, at the
+same precision boundary.
+
+`rounded` must be the value that `Policy.roundRat` delivers for `exact` under `context`, as in
+`quantizeFiniteWith`. The flags read it, and the direction classifiers count a delivered zero or
+subnormal as tiny, so a status computed for an unrelated pair has no meaning.
 -/
 @[inline] def finiteStatus {format : FloatFormat}
     (context : Context) (exact : Rat) (rounded : Model format) :
@@ -134,21 +170,8 @@ the supplied entropy, at the same precision boundary.
           Model.rationalIsTinyAfterRoundingScaled format mode sign
             numerator denominator 0 rounded)
     | none =>
-        if numerator == 0 then
-          (false, false)
-        else
-          let exponent := Numerics.RationalBinary.floorLog2 numerator denominator
-          let (scaledNum, scaledDen) := Numerics.RationalBinary.scaleByPowerOfTwo
-            numerator denominator (Int.ofNat format.fracWidth - exponent)
-          let mantissa := Model.Policy.roundQuot context.quantization.rounding
-            sign context.entropy scaledNum scaledDen
-          let overflow := exponent > format.maxNormalExponent ||
-            (exponent == format.maxNormalExponent &&
-              mantissa > (Model.maxFiniteDyadic format).significand)
-          let tiny := exponent < format.minNormalExponent &&
-            (exponent + 1 < format.minNormalExponent ||
-              mantissa < 2 ^ (format.fracWidth + 1))
-          (overflow, tiny)
+        roundedSignificandStatus format context.quantization.rounding context.entropy sign
+          numerator denominator
   let inexact := Model.toRat? rounded != some exact
   { inexact
     overflow
@@ -161,8 +184,8 @@ Round one finite signed rational and pack the resulting binary model into a dest
 
 The sign bit of the result comes from `exact.negative`, so a negative zero rounds to the
 destination's negative zero when the encoding has one. `pack` is the only representation-specific
-argument. It is deliberately applied after exact rounding, so changing storage or an execution
-backend cannot change numerical meaning.
+argument. It is applied after exact rounding, so changing storage or an execution backend cannot
+change numerical meaning.
 -/
 @[inline] def quantizeFiniteWith {format : FloatFormat} {Destination : Type u}
     (pack : Model format → Destination) (context : Context) (exact : SignedRat) :
@@ -180,10 +203,10 @@ Apply the exceptional-value policy and pack a destination NaN.
 A signaling NaN raises `invalid` under either NaN-producing policy (IEEE 754-2019 §7.2). Under
 `propagateNaN` a source NaN becomes `Model.propagatedNaN format negative payload`, with the payload
 supplied by the source decoder without encoding markers. Binary decoders use `Model.nanPayload`,
-so this is exactly the NaN that `Model.castWithStatus` delivers across unequal descriptors.
-It stays in the NaN class, so `mappedSpecial` is clear. NaR, reserved, and
-undefined observations, and every observation under `canonicalNaN`, become the canonical NaN with
-`mappedSpecial`. A destination without a NaN encoding rejects the conversion.
+so this is the NaN that `Model.cast` delivers across unequal descriptors. It stays in the NaN
+class, so `mappedSpecial` is clear. NaR, reserved, and undefined observations, and every
+observation under `canonicalNaN`, become the canonical NaN with `mappedSpecial`. A destination
+without a NaN encoding rejects the conversion.
 -/
 @[inline] def quantizeExceptionalWith {format : FloatFormat} {Destination : Type u}
     (pack : Model format → Destination) (context : Context)
@@ -246,7 +269,7 @@ def NearestFinite {format : FloatFormat} (exact : Rat) (rounded : Model format) 
 Complete conversion outcome, together with an independent nearest-value clause for IEEE defaults.
 
 The rational predicate is runtime-free: its proof uses real rounding only in `Conversion.Proof`.
-Complete outcome equality additionally preserves overflow, tie selection, zero signs, all status
+Complete outcome equality also preserves overflow, tie selection, zero signs, all status
 fields, and every nondefault policy. A nonfinite result has no nearest finite denotation.
 -/
 def specWith {format : FloatFormat} {Destination : Type u}
@@ -257,7 +280,7 @@ def specWith {format : FloatFormat} {Destination : Type u}
     outcome = runWith pack context input ∧
       match input with
       | .finite exact =>
-          context.quantization = QuantizationPolicy.nearestEven → format.isIEEE = true →
+          context.quantization = QuantizationPolicy.nearest → format.isIEEE = true →
             ∃ rounded : Model format,
               outcome = .success (pack rounded) (finiteStatus context exact.value rounded) ∧
                 NearestFinite exact.value rounded

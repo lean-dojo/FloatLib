@@ -11,13 +11,12 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Parameterized posit `ExecFloat` types
 
-The public configured posit type is parameterized by its total encoded width. The total encoded
-width selects both the mathematical descriptor and the persistent storage plan. Arithmetic
-capabilities, value operations, notation instances, and proofs are installed by separate
-modules.
+The public configured posit type is parameterized by its total encoded width, which selects both
+the mathematical descriptor and the persistent storage plan. Other modules install arithmetic
+capabilities, value operations, notation instances, and proofs.
 
-Keeping type construction independent from operation dispatch gives tooling, serialization code,
-and future backends a small dependency boundary while preserving the single user-facing type
+Type construction does not depend on operation dispatch, so tooling, serialization code, and new
+backends get a small dependency boundary, and users still see the single type
 `ExecFloat.Posit (bits := n)`.
 -/
 
@@ -64,4 +63,19 @@ abbrev Posit
   FloatLib.Floats.ExecFloat (Posit.Family bits bits_ge_two)
 
 end ExecFloat
+
+/-! ## Standard formats -/
+
+/-- The 8-bit posit of the Posit Standard (2022). -/
+abbrev Posit8 := ExecFloat.Posit (bits := 8)
+
+/-- The 16-bit posit of the Posit Standard (2022). -/
+abbrev Posit16 := ExecFloat.Posit (bits := 16)
+
+/-- The 32-bit posit of the Posit Standard (2022). -/
+abbrev Posit32 := ExecFloat.Posit (bits := 32)
+
+/-- The 64-bit posit of the Posit Standard (2022). -/
+abbrev Posit64 := ExecFloat.Posit (bits := 64)
+
 end FloatLib.Floats

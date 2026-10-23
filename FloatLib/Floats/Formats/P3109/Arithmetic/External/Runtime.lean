@@ -15,13 +15,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 # P3109 arithmetic with external binary destinations
 
 The report's projection uses the external format's actual precision, bias, and finite endpoints.
-It retains all nine rounding modes and all three saturation modes, with explicit stochastic bits.
-Finite overflow under `SaturationMode.propagate` clamps, while an infinite exact input remains
-infinite.
-The destination encoder writes positive zero and canonical quiet NaN, as required by §4.8.2.
+It keeps all nine rounding modes and all three saturation modes, with caller-supplied stochastic
+bits. Finite overflow under `SaturationMode.propagate` clamps, while an infinite exact input stays
+infinite. The destination encoder writes positive zero and canonical quiet NaN, as required by
+§4.8.2.
 
-Finite encoding uses the proved binary dyadic encoder on an already rounded, in-range datum;
-the proof facet establishes that this encoding does not introduce another rounding error.
+Finite encoding uses the proved binary dyadic encoder on an already rounded, in-range datum, and
+`External.Proof` shows that this encoding adds no second rounding error.
 The adapters accept IEEE-style encoding descriptors, including binary16, binary32, binary64,
 and BFloat16. They do not change the ordinary IEEE arithmetic or signed-zero conversion APIs.
 
@@ -73,13 +73,13 @@ def finiteOverflow (format : FloatFormat) (policy : ProjectionPolicy) (negative 
   | .none =>
       match policy.rounding with
       | .towardZero => .finite (endpoint format negative)
-      | .towardPositive =>
+      | .up =>
           if negative then .finite (endpoint format true) else .infinity false
-      | .towardNegative =>
+      | .down =>
           if negative then .infinity true else .finite (endpoint format false)
       | _ => .infinity negative
 
-/-- Saturate after rounding; `.propagate` distinguishes finite overflow from infinity. -/
+/-- Saturate after rounding. Under `.propagate`, finite overflow clamps but infinity stays. -/
 def saturate (format : FloatFormat) (policy : ProjectionPolicy) :
     NumericalValue Numerics.Dyadic → NumericalValue Numerics.Dyadic
   | .exceptional _ => .exceptional (.nan)
@@ -105,7 +105,7 @@ def encode (format : FloatFormat) : NumericalValue Numerics.Dyadic → Model for
       if value.significand == 0 then Model.zero format false
       else Model.roundDyadic format value
 
-/-- External report projection; the evidence excludes non-IEEE exceptional encodings. -/
+/-- External report projection. The `isIEEE` evidence excludes non-IEEE exceptional encodings. -/
 def project (format : FloatFormat) (_ieee : format.isIEEE = true)
     (policy : ProjectionPolicy) (value : NumericalValue Rat) : Model format :=
   encode format (projectValue format policy value)
@@ -149,7 +149,7 @@ def configuredDestination (format : FloatFormat)
 /-- External fraction-field width. -/
 @[inline] def trailingSignificandBitwidthOf (format : FloatFormat) : Nat := format.fracWidth
 
-/-- The actual external bias; no P3109 bias is substituted. -/
+/-- The external format's own bias, with no P3109 bias substituted. -/
 @[inline] def exponentBiasOf (format : FloatFormat) : Nat := format.exponentBias
 
 /-- Largest finite external datum. -/

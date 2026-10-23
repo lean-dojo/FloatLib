@@ -11,12 +11,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 /-!
 # Basic policy-rounding facts
 
-This lightweight module contains the facts needed by arithmetic and conversion proofs: deterministic
+This module contains the facts needed by arithmetic and conversion proofs: deterministic
 nearest-even behavior, flush-to-zero behavior, IEEE dispatch, and overflow policy equations.
 
 The independent proof that the general rational policy engine agrees with the directed dyadic
-engine lives in `Rounding.Policy.Agreement`. Keeping that larger proof separate prevents ordinary
-finite arithmetic and conversion modules from inheriting its directed-semantics dependency graph.
+engine lives in `Rounding.Policy.Agreement`, so ordinary finite arithmetic and conversion modules
+do not inherit its larger directed-semantics dependency graph.
 -/
 
 @[expose] public section
@@ -28,34 +28,34 @@ open FloatLib.Numerics
 namespace Policy
 
 /-- Nearest-even quotient rounding does not inspect the entropy source. -/
-theorem roundQuot_nearestEven_eq_zero (sign : Bool) (entropy num den : Nat) :
-    roundQuot .nearestEven sign entropy num den =
-      roundQuot .nearestEven sign 0 num den := by
+theorem roundQuot_nearest_eq_zero (sign : Bool) (entropy num den : Nat) :
+    roundQuot .nearest sign entropy num den =
+      roundQuot .nearest sign 0 num den := by
   rfl
 
-private theorem roundRatGeneralOfDenNeZero_nearestEven_eq_zero
+private theorem roundRatGeneralOfDenNeZero_nearest_eq_zero
     (fmt : FloatFormat) (entropy : Nat) (sign : Bool) (num den : Nat) (hden : den ≠ 0) :
-    roundRatGeneralOfDenNeZero fmt QuantizationPolicy.nearestEven entropy sign num den hden =
-      roundRatGeneralOfDenNeZero fmt QuantizationPolicy.nearestEven 0 sign num den hden := by
+    roundRatGeneralOfDenNeZero fmt QuantizationPolicy.nearest entropy sign num den hden =
+      roundRatGeneralOfDenNeZero fmt QuantizationPolicy.nearest 0 sign num den hden := by
   unfold roundRatGeneralOfDenNeZero
-  simp only [QuantizationPolicy.nearestEven, roundQuot_nearestEven_eq_zero]
+  simp only [QuantizationPolicy.nearest, roundQuot_nearest_eq_zero]
 
 /-- Nearest-even dyadic quantization is independent of the entropy argument. -/
-theorem roundDyadic_nearestEven_eq_zero (fmt : FloatFormat) (entropy : Nat)
+theorem roundDyadic_nearest_eq_zero (fmt : FloatFormat) (entropy : Nat)
     (value : Numerics.Dyadic) :
-    roundDyadic fmt QuantizationPolicy.nearestEven entropy value =
-      roundDyadic fmt QuantizationPolicy.nearestEven 0 value :=
+    roundDyadic fmt QuantizationPolicy.nearest entropy value =
+      roundDyadic fmt QuantizationPolicy.nearest 0 value :=
   rfl
 
 /-- Nearest-even general quantization is independent of the entropy argument. -/
-theorem roundDyadicGeneral_nearestEven_eq_zero (fmt : FloatFormat) (entropy : Nat)
+theorem roundDyadicGeneral_nearest_eq_zero (fmt : FloatFormat) (entropy : Nat)
     (value : Numerics.Dyadic) :
-    roundDyadicGeneral fmt QuantizationPolicy.nearestEven entropy value =
-      roundDyadicGeneral fmt QuantizationPolicy.nearestEven 0 value := by
+    roundDyadicGeneral fmt QuantizationPolicy.nearest entropy value =
+      roundDyadicGeneral fmt QuantizationPolicy.nearest 0 value := by
   unfold roundDyadicGeneral
   cases value.exponent
-  · exact roundRatGeneralOfDenNeZero_nearestEven_eq_zero _ _ _ _ _ _
-  · exact roundRatGeneralOfDenNeZero_nearestEven_eq_zero _ _ _ _ _ _
+  · exact roundRatGeneralOfDenNeZero_nearest_eq_zero _ _ _ _ _ _
+  · exact roundRatGeneralOfDenNeZero_nearest_eq_zero _ _ _ _ _ _
 
 /-- Flushing a subnormal result produces the format's corresponding zero. -/
 theorem applyUnderflow_flush_of_subnormal (fmt : FloatFormat) (x : Model fmt)
@@ -74,16 +74,16 @@ Default rational quantization is the canonical format-parameterized nearest-even
 
 The entropy argument is irrelevant because nearest-even rounding is deterministic.
 -/
-theorem roundRat_nearestEven_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
+theorem roundRat_nearest_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
     (sign : Bool) (num den : Nat) (hden : den ≠ 0) :
-    roundRat fmt QuantizationPolicy.nearestEven entropy sign num den =
+    roundRat fmt QuantizationPolicy.nearest entropy sign num den =
       some (Model.roundRat fmt sign num den) := by
-  simp [roundRat, QuantizationPolicy.nearestEven, hden]
+  simp [roundRat, QuantizationPolicy.nearest, hden]
 
 /-- Default dyadic quantization is the canonical format-parameterized nearest-even rounder. -/
-theorem roundDyadic_nearestEven_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
+theorem roundDyadic_nearest_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
     (value : Numerics.Dyadic) :
-    roundDyadic fmt QuantizationPolicy.nearestEven entropy value =
+    roundDyadic fmt QuantizationPolicy.nearest entropy value =
       Model.roundDyadic fmt value :=
   rfl
 
@@ -100,11 +100,18 @@ theorem roundDyadic_nearestEven_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
   cases mode <;> rfl
 
 /-- Each embedded `IEEERoundingMode` dispatches to the directed engine. -/
-theorem roundDyadic_toRoundingMode_eq_roundDyadicWithRounding (fmt : FloatFormat)
+theorem roundDyadic_toRoundingMode (fmt : FloatFormat)
     (mode : IEEERoundingMode) (entropy : Nat) (value : Numerics.Dyadic) :
     roundDyadic fmt { rounding := mode.toRoundingMode, overflow := .native, underflow := .gradual }
         entropy value =
-      roundDyadicWithRounding fmt mode value := by
+      Internal.Directed.roundDyadic fmt mode value := by
+  cases mode <;> rfl
+
+/--
+The policy overflow direction of an embedded IEEE mode is the IEEE mode's own overflow direction.
+-/
+theorem overflowRoundsMagnitudeUp_toRoundingMode (mode : IEEERoundingMode) (sign : Bool) :
+    overflowRoundsMagnitudeUp mode.toRoundingMode sign = mode.overflowRoundsMagnitudeUp sign := by
   cases mode <;> rfl
 
 /-- Native policy overflow is the shared directed overflow rule. -/
@@ -115,8 +122,18 @@ theorem overflowResult_native_eq_directedOverflow (fmt : FloatFormat) (rounding 
   rfl
 
 /-- Nearest rounding overflows to the format's native overflow value. -/
-theorem overflowResult_native_nearestEven (fmt : FloatFormat) (sign : Bool) :
-    overflowResult fmt .native .nearestEven sign = nativeOverflow fmt sign :=
+theorem overflowResult_native_nearest (fmt : FloatFormat) (sign : Bool) :
+    overflowResult fmt .native .nearest sign = nativeOverflow fmt sign :=
+  rfl
+
+/-- Nearest rounding with ties away from zero overflows to the format's native overflow value. -/
+theorem overflowResult_native_nearestAway (fmt : FloatFormat) (sign : Bool) :
+    overflowResult fmt .native .nearestAway sign = nativeOverflow fmt sign :=
+  rfl
+
+/-- Rounding away from zero overflows to the format's native overflow value of either sign. -/
+theorem overflowResult_native_away (fmt : FloatFormat) (sign : Bool) :
+    overflowResult fmt .native .away sign = nativeOverflow fmt sign :=
   rfl
 
 /-- Toward-zero rounding saturates to the largest finite magnitude with the requested sign. -/
@@ -125,14 +142,14 @@ theorem overflowResult_native_towardZero (fmt : FloatFormat) (sign : Bool) :
   rfl
 
 /-- Positive-direction rounding selects native positive overflow and saturates negative overflow. -/
-theorem overflowResult_native_towardPositive (fmt : FloatFormat) (sign : Bool) :
-    overflowResult fmt .native .towardPositive sign =
+theorem overflowResult_native_up (fmt : FloatFormat) (sign : Bool) :
+    overflowResult fmt .native .up sign =
       if sign then maxFinite fmt true else nativeOverflow fmt false := by
   cases sign <;> rfl
 
 /-- Negative-direction rounding selects native negative overflow and saturates positive overflow. -/
-theorem overflowResult_native_towardNegative (fmt : FloatFormat) (sign : Bool) :
-    overflowResult fmt .native .towardNegative sign =
+theorem overflowResult_native_down (fmt : FloatFormat) (sign : Bool) :
+    overflowResult fmt .native .down sign =
       if sign then nativeOverflow fmt true else maxFinite fmt false := by
   cases sign <;> rfl
 

@@ -14,9 +14,8 @@ public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 /-!
 # Native binary64 division runtime
 
-The normal-result binary64 path performs restoring division on `UInt64`. Inputs outside the
-normal-result kernel fall back to the exact generic finite implementation. Correctness proofs are
-isolated in `Division.Proof`.
+The normal-result binary64 path performs restoring division on `UInt64`. Inputs outside that
+kernel fall back to the exact generic finite implementation. `Division.Proof` has the proofs.
 -/
 
 @[expose] public section
@@ -27,14 +26,15 @@ open FloatLib.Numerics.FixedWord.RestoringQuotient
 open FloatLib.Numerics.FixedWord
 
 /--
-Try the common finite division path whose rounded result is normal.
+Divide two binary64 storage words on the common path whose rounded result is normal, returning the
+packed result word. Carriers that store binary64 as a `UInt64` call it on their words, so a normal
+quotient never becomes an exact-width model value.
 
-Returning `none` delegates zeros, subnormals, overflow boundaries, and exceptional encodings to
-the generic exact-rational implementation.
+It returns `none` for zeros, subnormal or overflowing results, and exceptional encodings. Declined
+finite cases go to the generic finite kernel, and the dispatcher sends exceptional operands to
+`Spec.divSpecial`.
 -/
-@[inline] def divNormal? (x y : Value) : Option Value :=
-  let xBits := toUInt64 x
-  let yBits := toUInt64 y
+@[inline] def divNormalWord? (xBits yBits : UInt64) : Option UInt64 :=
   let xExponent := expField xBits
   let yExponent := expField yBits
   if xExponent == 0x7ff || yExponent == 0x7ff then
@@ -68,18 +68,22 @@ the generic exact-rational implementation.
           let encodedExponent :=
             UInt64.ofNat (Int.toNat (normalizedExponent + 1023))
           let fraction := normalizedMantissa - 0x0010000000000000
-          some <| ofUInt64 <|
+          some <|
             packFieldsWord
               (Bool.xor (signBit xBits) (signBit yBits))
               encodedExponent fraction
 
+/-- `divNormalWord?` as a model value. -/
+@[inline] def divNormal? (x y : Value) : Option Value :=
+  (divNormalWord? (toUInt64 x) (toUInt64 y)).map ofUInt64
+
 /--
-Use the native normal-result divider when it accepts the operands, otherwise retain the exact
-generic finite binary64 implementation.
+Finite binary64 division through the native normal-result divider, falling back to the generic
+component kernel `divFiniteComponents?`.
 -/
-@[inline] def divFiniteFastImpl? (x y : Value) : Option Value :=
+@[inline] def divFinite? (x y : Value) : Option Value :=
   match divNormal? x y with
   | some quotient => some quotient
-  | none => NativeBinary64.divFiniteImpl? x y
+  | none => NativeBinary64.divFiniteComponents? x y
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

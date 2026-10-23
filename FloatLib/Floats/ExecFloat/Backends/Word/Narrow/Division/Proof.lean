@@ -14,13 +14,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Quotient.Proof
 /-!
 # Correctness of native-word division for binary32
 
-The proof connects the native logarithm, quotient rounding, and complete finite divider to the
-generic exact-rational specification. Runtime clients can import `Division.Runtime` without this
-development.
+These proofs connect the native logarithm, quotient rounding and finite divider to the generic
+exact-rational specification. Runtime clients can import `Division.Runtime` without them.
 
-For significands below `2^24`, the scaling shifts and rounded quotient fit in `UInt64`.
-The proof uses those bounds to connect native quotient-and-remainder rounding to exact rational
-rounding, including ties, subnormal results, and overflow.
+For significands below `2^24` the scaling shifts and rounded quotient fit in `UInt64`, and those
+bounds connect native quotient-and-remainder rounding to exact rational rounding, with ties,
+subnormal results and overflow included.
 -/
 
 @[expose] public section
@@ -241,7 +240,7 @@ private theorem roundNormalWord_eq
     simp [hnativeCarry, hgenericCarryNat, hmantissa,
       Model.pow2_eq_two_pow]
 
-/-- Native-word rational rounding agrees with the existing exact binary32 rounder. -/
+/-- Native-word rational rounding agrees with the exact binary32 rounder `roundRatScaled`. -/
 theorem roundRatScaledWord_eq
     (sign : Bool) (num den : UInt64) (exponent : Int)
     (hnumFit : num.toNat < 2 ^ 24)
@@ -358,10 +357,10 @@ theorem roundRatScaledWord_eq
           (num.toNat <<< shift) den.toNat)
         hfraction
 
-/-- The one-word finite division kernel equals the generic exact-rational implementation. -/
-theorem divFiniteImpl_eq (x y : Value) :
-    divFiniteImpl? x y = divFinite? x y := by
-  unfold divFiniteImpl? divFinite?
+/-- One-word finite division equals the exact-rational `divFinite?`. -/
+theorem divFiniteWord_eq (x y : Value) :
+    divFiniteWord? x y = divFinite? x y := by
+  unfold divFiniteWord? divFinite?
   rw [toDyadic_eq_finiteComponents x, toDyadic_eq_finiteComponents y]
   dsimp only
   simp only [Bool.or_eq_true, beq_iff_eq]

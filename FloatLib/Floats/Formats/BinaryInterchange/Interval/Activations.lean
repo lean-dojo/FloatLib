@@ -44,12 +44,12 @@ def abs {fmt : FloatFormat} (A : Interval fmt) : Interval fmt :=
 /--
 Outward-rounded square-root image.
 
-The executable operation is total. A real-valued enclosure theorem additionally requires
-a conventional IEEE descriptor and a valid input interval with nonnegative lower endpoint.
+The executable operation is total. A real-valued enclosure theorem also requires a conventional
+IEEE descriptor and a valid input interval with nonnegative lower endpoint.
 -/
 @[inline] def sqrt {fmt : FloatFormat} (A : Interval fmt) : Interval fmt :=
-  { lo := Model.sqrtDown A.lo
-    hi := Model.sqrtUp A.hi }
+  { lo := Model.sqrt A.lo (mode := .down)
+    hi := Model.sqrt A.hi (mode := .up) }
 
 end Interval
 end Model

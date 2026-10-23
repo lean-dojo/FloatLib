@@ -23,8 +23,8 @@ to arithmetic execution.
 @[expose] public section
 
 /--
-Print a concise guide to configuring numerical types, inspecting their semantics, and finding
-the family-specific constructors exported by the currently imported FloatLib package.
+Print a short guide to configuring numerical types, inspecting their semantics, and finding the
+family entry points.
 -/
 syntax (name := floatHelpCmd) "#float_help" : command
 
@@ -33,39 +33,49 @@ namespace FloatLib.Floats.ExecFloat.FloatHelp.Command
 open Lean Elab Command
 
 /--
-The stable, family-independent part of the interactive help text.
+Help text printed by `#float_help`, the same whatever formats are imported.
 
-The guide introduces the shared `ExecFloat` carrier and operation notation. Format packages
-register their own `#float_info` renderers.
+It introduces the shared `ExecFloat` carrier, the operation notation, and the family entry points.
+Format packages register their own `#float_info` renderers.
 -/
 private meta def helpText : String :=
   String.intercalate "\n"
     [ "FloatLib executable-number help"
     , ""
-    , "1. Configure a type, usually with a short project-local abbreviation:"
-    , "     abbrev F32 := ExecFloat.Binary"
-    , "       (exponentBits := 8) (fractionBits := 23)"
-    , "     abbrev P32 := ExecFloat.Posit (bits := 32)"
+    , "1. Pick a type. The standard formats have names after `open FloatLib.Floats`:"
+    , "     Binary16  BFloat16  Binary32  Binary64  Binary128  Binary256"
+    , "     Posit8  Posit16  Posit32  Posit64     quires Quire8 to Quire64"
+    , "     E4M3FN  E5M2  E4M3FNUZ  E5M2FNUZ      E2M1  E2M3  E3M2 (OCP FP8, ONNX, OCP MX)"
+    , "   Any other format is selected by its parameters:"
+    , "     ExecFloat.Binary (exponentBits := 5) (fractionBits := 2)"
+    , "     ExecFloat.Posit (bits := 12)"
     , ""
     , "2. Inspect the format and its proved surface:"
-    , "     #float_info F32"
+    , "     #float_info Binary32"
     , "   Focus on checked type-level range, roundoff, and exactness contracts:"
-    , "     #float_info [errors] F32"
+    , "     #float_info [errors] Binary32"
     , "   Include theorem declarations and full hypotheses:"
-    , "     #float_info! [errors] F32"
+    , "     #float_info! [errors] Binary32"
     , "   Request the complete theorem and backend audit only when needed:"
-    , "     #float_info! F32"
+    , "     #float_info! Binary32"
     , ""
     , "3. Use ordinary literals and arithmetic:"
-    , "     def x : F32 := 1.5"
-    , "     def y : F32 := x + 2.25"
+    , "     def x : Binary32 := 1.5"
+    , "     def y : Binary32 := x + 2.25"
+    , "   Choose a rounding direction, or ask for the IEEE flags and ternary value:"
+    , "     open FloatLib.Rounding"
+    , "     #eval ExecFloat.Binary.sqrt x (mode := up) (status := true)"
+    , "   Round a rational once, read an integer, or use a format constant:"
+    , "     #eval (ExecFloat.Binary.ofRat (1 / 3) (mode := up) : Binary32)"
+    , "     #eval x.toInt? (mode := nearest)"
+    , "     #eval (ExecFloat.Binary.epsilon : Binary32)"
+    , "   `#eval y` prints the shortest decimal that reads back as `y`; `format` writes the rest:"
+    , "     #eval ExecFloat.Binary.format y (style := .scientific 3)"
     , ""
     , "4. Name the destination of every cross-format operation:"
-    , "     abbrev F64 := ExecFloat.Binary"
-    , "       (exponentBits := 11) (fractionBits := 52)"
-    , "     #eval x.cast (target := F64)"
-    , "     #eval ExecFloat.addAs (result := F64) x (1 : P32)"
-    , "     #eval ExecFloat.convert (target := F64) (3 / 2 : Rat)"
+    , "     #eval x.cast (target := Binary64)"
+    , "     #eval ExecFloat.addAs (target := Binary64) x (1 : Posit32)"
+    , "     #eval ExecFloat.convert (target := Binary64) (3 / 2 : Rat)"
     , "   These calls return `ConversionOutcome`, preserving status or an explicit failure."
     , ""
     , "Core configurable and family entry points:"
@@ -77,7 +87,6 @@ private meta def helpText : String :=
     , "  ExecFloat.Codebook                finite lookup encodings"
     , "  ExecFloat.P3109 format            IEEE P3109 representation and projection"
     , "  ExecFloat.SharedScale             generic shared-scale blocks"
-    , "  ExecFloat Formats.OCP...          standard-backed OCP scalar packages"
     , "  ExecFloat.OCP.MX.E8M0             OCP exponent-only block scale"
     , "  ExecFloat.OCP.MX.Block            OCP jointly stored MX blocks"
     , "  BinaryInterchange.ExecComplex fmt two-component rounded complex arithmetic"
@@ -119,7 +128,7 @@ syntax (name := floatInfoCmd) "#float_info " term : command
 /-- Focus the report on checked range, roundoff, and exactness contracts. -/
 syntax (name := floatInfoErrorsCmd) "#float_info" "[" "errors" "]" term : command
 
-/-- Enable the complete theorem, backend-planning, and trust-boundary audit report. -/
+/-- Print the full report: theorems, backend planning, and the trust boundary. -/
 syntax (name := floatInfoDetailedCmd) "#float_info! " term : command
 
 /-- Show the detailed theorem inventory for numerical-analysis contracts only. -/
@@ -142,7 +151,7 @@ open Lean Elab Command Meta
 /--
 Elaborate and fully instantiate the numerical type supplied to `#float_info`.
 
-Every family renderer uses this same command boundary before inspecting its carrier shape.
+Every family renderer reaches it through `withElaboratedType`.
 -/
 meta def elaborateType (type : Syntax) : TermElabM Expr := do
   let typeExpr ← Term.elabType type
@@ -150,9 +159,9 @@ meta def elaborateType (type : Syntax) : TermElabM Expr := do
   instantiateMVars typeExpr
 
 /--
-Run one family renderer against a fully elaborated type without mutating the environment.
+Run one family renderer on a fully elaborated type without modifying the environment.
 
-This keeps every `#float_info` extension on the same command-elaboration boundary.
+Every `#float_info` extension goes through this one command-elaboration boundary.
 -/
 meta def withElaboratedType
     (type : Syntax) (render : Expr → TermElabM Unit) : CommandElabM Unit :=
@@ -160,11 +169,11 @@ meta def withElaboratedType
     render (← elaborateType type)
 
 /--
-Run a `#float_info` renderer only when the supplied type uses one exact `ExecFloat` family.
+Run a `#float_info` renderer when the supplied type is an `ExecFloat` family built by
+`familyName` with `arity` arguments.
 
-A family mismatch raises `unsupportedSyntax`, which lets Lean try the next registered format
-renderer. The callback receives the user-facing value type, the recovered family, and the checked
-family arguments. Format modules supply their own report data.
+A mismatch raises `unsupportedSyntax`, so Lean tries the next registered format renderer. The
+callback receives the value type, the recovered family, and the family arguments.
 -/
 meta def withExecFamilyApplication
     (type : Syntax) (familyName : Name) (arity : Nat)
@@ -179,8 +188,8 @@ meta def withExecFamilyApplication
 /--
 Report an unsupported type after every imported representation family has declined it.
 
-Family-specific rules use `throwUnsupportedSyntax` when their exact carrier shape does not match,
-so future numerical families can add renderers without modifying this module.
+Family-specific rules call `throwUnsupportedSyntax` when their carrier shape does not match, so a
+new numerical family can add a renderer without modifying this module.
 -/
 elab_rules : command
   | `(#float_info%$tk $_type:term) =>

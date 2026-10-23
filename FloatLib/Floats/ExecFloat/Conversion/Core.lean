@@ -14,11 +14,13 @@ public import Mathlib.Algebra.Order.Field.Basic
 # Core conversion capabilities and outcomes
 
 A source's `ExactDecoder` gives its exact value. An `ExactMap` embeds that value into the
-destination's exact domain, and a `Quantizer` rounds it under an explicit policy.
+destination's exact domain, and a `Quantizer` rounds it under the policy of its context.
 `ConversionOutcome` retains the resulting value and flags, or the reason conversion failed.
+`RoundingModes` and `ModeContext` give the type of a conversion's `(mode := ...)` option and the
+destination context each mode selects.
 
-The entry points are in `Conversion.Runtime`; their correctness theorems and the laws for
-composing outcomes are in `Conversion.Proof`.
+`Conversion.Runtime` has the entry points, and `Conversion.Proof` has their correctness theorems
+and the laws for composing outcomes.
 -/
 
 @[expose] public section
@@ -62,8 +64,8 @@ inductive ConversionFailure where
 An exact scalar computation that may reject a non-finite input or an undefined operation.
 
 Successful expressions contain an unrounded value in the destination's exact domain. Applying
-`roundOnce` or `roundOnceWith` quantizes the result once. The `Except` alias supports ordinary
-`do` notation and stops at the first failure.
+`roundOnce` quantizes the result once. The `Except` alias supports ordinary `do` notation and stops
+at the first failure.
 -/
 abbrev ExactExpression (Exact : Type u) :=
   Except ConversionFailure Exact
@@ -72,17 +74,17 @@ abbrev ExactExpression (Exact : Type u) :=
 Representation-independent information about a successful quantization.
 
 Flags describe one conversion. `saturated` and `wrapped` distinguish clamping from modular
-reduction; either can also be `inexact`. Composing successful outcomes with `bind` combines their
-flags with Boolean OR. A failed continuation returns its failure reason without accumulated flags.
+reduction, and either can also be `inexact`. Composing successful outcomes with `bind` combines
+their flags with Boolean OR.
 -/
 structure ConversionStatus where
   /-- The stored destination does not denote the exact finite input. -/
   inexact : Bool := false
   /-- The rounded result did not fit the destination's finite range. Binary destinations set this
-  after rounding, in the IEEE 754 sense; each quantizer documents its own rule. -/
+  after rounding, in the IEEE 754 sense. Each quantizer documents its own rule. -/
   overflow : Bool := false
   /-- The result was tiny. Binary destinations use the IEEE 754 rule, tiny after rounding and
-  inexact; P3109 reports a nonzero exact input below its least positive datum. -/
+  inexact. P3109 reports a nonzero exact input below its least positive datum. -/
   underflow : Bool := false
   /-- The result was clamped to a finite endpoint. -/
   saturated : Bool := false
@@ -113,7 +115,7 @@ end ConversionStatus
 inductive ConversionOutcome (α : Type u) where
   /-- A destination value together with conversion status. -/
   | success (value : α) (status : ConversionStatus := {})
-  /-- A conversion rejected by its explicit policy or by finite-only mixed arithmetic. -/
+  /-- A conversion rejected by its policy or by finite-only mixed arithmetic. -/
   | failure (reason : ConversionFailure)
   deriving DecidableEq, Repr
 
@@ -193,26 +195,27 @@ end ExactDecoder
 /--
 Context-indexed quantization capability for one destination value type.
 
-The specification is relational so stochastic, state-indexed, and otherwise nondeterministic
-mathematics remain expressible even when `run` chooses one executable result.
+Its specification is relational, so stochastic, state-indexed and otherwise nondeterministic
+mathematics stay expressible even when `run` chooses one executable result.
 
-`Exact` is an output parameter: a destination has one canonical mathematical input domain.
-Alternative execution backends must refine that same semantics rather than changing the domain
-seen by users. Sources with a different exact domain reach it through an explicit `ExactMap`.
+`Exact` is an output parameter, so a destination has one canonical mathematical input domain.
+Alternative execution backends must refine that semantics and keep the domain users see. Sources
+with a different exact domain reach it through an `ExactMap`.
 
 Mixed addition and subtraction also consult this context before quantization. The default
-operations are those of `Exact`; a signed-zero domain can refine the sign of an exact cancellation
-without changing its numerical value. Multiplication and division use the exact domain directly.
+operations are those of `Exact`, and a signed-zero domain can refine the sign of an exact
+cancellation without changing its numerical value. Multiplication and division use the operations
+of the exact domain.
 
-Preservation of the numerical sum and difference is a separate family-specific proof obligation.
-`correct` relates `run` to `spec`; it does not constrain these arithmetic hooks. The generic
-prepared-spec theorems compose quantization with the supplied hooks. An arithmetic correctness
-result also needs their numerical preservation lemmas, as supplied by the binary instances.
+`correct` relates `run` to `spec` and does not constrain these arithmetic hooks, so a family
+proves separately that its hooks keep the numerical sum and difference. The generic prepared-spec
+theorems compose quantization with the supplied hooks, and an arithmetic correctness result also
+needs those preservation lemmas, as the binary instances supply.
 
-The relation's content is a separate obligation: choosing `Spec.ofFunction run` makes `correct`
-reflexive and supplies no independent rounding property. A family contract can expose denotation,
-coefficient, or policy predicates while retaining complete output and status equality. The generic
-conversion theorems transport precisely the clauses that the installed relation contains.
+What `spec` says is up to the family. Choosing `Spec.ofFunction run` makes `correct` reflexive and
+gives no rounding property of its own. A family contract can expose denotation, coefficient or
+policy predicates while keeping full output and status equality, and the generic conversion
+theorems transport the clauses that the installed relation contains and no others.
 -/
 class Quantizer (Destination : Type u) (Exact : outParam (Type v)) where
   /--
@@ -239,11 +242,61 @@ class Quantizer (Destination : Type u) (Exact : outParam (Type v)) where
   -/
   subExact : [Sub Exact] → Context → Exact → Exact → Exact := fun _ left right => left - right
 
-/-- The default context used when a conversion omits an explicit policy. -/
+/--
+The canonical context used when a conversion or mixed operation names neither `mode` nor
+`context`.
+-/
 class DefaultQuantizer (Destination : Type u) (Exact : outParam (Type v))
     [Quantizer Destination Exact] where
-  /-- Context selected by the context-free `cast` and mixed-operation helpers. -/
+  /-- Context selected by a conversion that names neither `mode` nor `context`. -/
   defaultContext : Quantizer.Context Destination
+
+/--
+The type of the `mode` option of conversions into `Destination`, with the direction used when a
+call names none.
+
+Binary destinations use `IEEERoundingMode`, nearest-even by default. A destination without
+directed conversion falls back to `RoundingModes.unit`, so naming a direction for it is a type
+error rather than an ignored option.
+-/
+class RoundingModes (Destination : Type u) (Mode : outParam Type) where
+  /-- The direction used when a call names no `mode`. -/
+  default : Mode
+
+/-- A destination without selectable rounding directions has the single mode `()`. -/
+instance (priority := low) RoundingModes.unit {Destination : Type u} :
+    RoundingModes Destination Unit where
+  default := ()
+
+/--
+The context type of `Destination`, indexed by the `mode` that selects its default.
+
+Conversions take `(context : ContextFor target mode := ...)`. The index lets the default value
+find `ModeContext target mode`, and a caller's context of type `Quantizer.Context target` fits
+because the two types are definitionally equal.
+-/
+abbrev ContextFor (Destination : Type u) {Exact : Type v}
+    [quantizer : Quantizer Destination Exact] {Mode : Type} (_mode : Mode) : Type :=
+  quantizer.Context
+
+/--
+The destination context that a conversion's `mode` option selects when it names no `context`.
+
+`ModeContext.canonical` gives the canonical context to every destination with a
+`DefaultQuantizer` and no rounding directions. Binary destinations install an instance for every
+direction. A destination without a canonical context, such as a shared-scale block, has no
+instance and needs a `context` argument.
+-/
+class ModeContext (Destination : Type u) (Exact : outParam (Type v))
+    [Quantizer Destination Exact] {Mode : Type} (mode : Mode) where
+  /-- The context that rounds in direction `mode`. -/
+  context : ContextFor Destination mode
+
+/-- A destination without rounding directions uses its canonical context for its one mode. -/
+@[inline] instance ModeContext.canonical {Destination : Type u} {Exact : Type v}
+    [Quantizer Destination Exact] [defaults : DefaultQuantizer Destination Exact] (mode : Unit) :
+    ModeContext Destination Exact mode where
+  context := defaults.defaultContext
 
 end ExecFloat
 end FloatLib.Floats

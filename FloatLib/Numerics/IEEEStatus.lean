@@ -10,7 +10,7 @@ module
 # Shared IEEE exception indicators
 
 Binary and decimal operations signal the same five exceptions. Their numerical conditions,
-including tininess detection, belong to each format; the flag record and sticky accumulation
+including tininess detection, belong to each format. The flag record and sticky accumulation
 do not depend on radix, precision, storage, or rounding direction.
 -/
 
@@ -42,6 +42,9 @@ inductive IEEEException where
   deriving DecidableEq, Repr
 
 namespace IEEEStatus
+
+/-- No exception was raised. -/
+def clear : IEEEStatus := {}
 
 /-- Accumulate exceptions, preserving every flag raised by either computation. -/
 def union (earlier raised : IEEEStatus) : IEEEStatus where

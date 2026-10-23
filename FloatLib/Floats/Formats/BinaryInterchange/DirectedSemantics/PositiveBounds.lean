@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 /-!
 # Bounds for positive directed dyadic rounding
 
-Positive executable dyadic rounding satisfies lower and upper bounds and agrees with real floor
-or ceiling rounding in the stated finite cases. Downward overflow saturates at the largest
-finite value, while upward overflow produces positive infinity.
+For conventional IEEE formats, positive executable dyadic rounding satisfies lower and upper
+bounds and agrees with real floor or ceiling rounding in the stated finite cases. Downward
+overflow saturates at the largest finite value, while upward overflow produces positive infinity.
 
 The proofs separate underflow, subnormal, normal, and normalization-carry regimes. The public
 results hide those packing details behind real and extended-real bounds. Formats without infinity
@@ -93,12 +93,12 @@ theorem toReal_roundDyadicPosDown_eq_roundAt_of_le_max
       (mantissa.log2 : Int) + exponent ≤
         fmt.maxNormalExponent) :
     toReal (roundDyadicPosDown fmt mantissa exponent) =
-      roundAtDown fmt ((mantissa : ℝ) * bpow exponent) := by
+      roundAt fmt ((mantissa : ℝ) * bpow exponent) .down := by
   by_cases hunderflow :
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent
   · rw [roundDyadicPosDown_eq_zero_of_underflow fmt mantissa exponent hunderflow]
     rw [toReal_zero]
-    rw [roundAtDown_pos_eq fmt mantissa exponent hfmt hm]
+    rw [roundAt_down_pos_eq fmt mantissa exponent hfmt hm]
     rw [targetExponent_eq_minSubnormal_of_lt_minNormal fmt mantissa exponent
       (by
         rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
@@ -123,7 +123,7 @@ theorem toReal_roundDyadicPosDown_eq_roundAt_of_le_max
         roundMantissaAtExponentDown_minSubnormal_lt_pow2
           fmt mantissa exponent hsubnormal
       rw [toReal_roundSubnormalDown fmt rounded hrounded]
-      rw [roundAtDown_pos_eq fmt mantissa exponent hfmt hm]
+      rw [roundAt_down_pos_eq fmt mantissa exponent hfmt hm]
       rw [targetExponent_eq_minSubnormal_of_lt_minNormal
         fmt mantissa exponent (by
           rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
@@ -154,7 +154,7 @@ theorem toReal_roundDyadicPosDown_eq_roundAt_of_le_max
         (isFinite_ofFields_normalized fmt hfmt rounded
           ((mantissa.log2 : Int) + exponent)
           hnormal hmax)]
-      rw [roundAtDown_pos_eq fmt mantissa exponent hfmt hm]
+      rw [roundAt_down_pos_eq fmt mantissa exponent hfmt hm]
       rw [targetExponent_eq_normal fmt mantissa exponent (by
         rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
         exact hnormal)]
@@ -285,7 +285,7 @@ private theorem roundDyadicPosUp_underflow_finite_roundAt
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent) :
     isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
       toReal (roundDyadicPosUp fmt mantissa exponent) =
-        roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
+        roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
   have hround :=
     roundDyadicPosUp_eq_posMinSubnormal_of_underflow
       fmt mantissa exponent hunderflow
@@ -293,7 +293,7 @@ private theorem roundDyadicPosUp_underflow_finite_roundAt
   · rw [hround]
     exact isFinite_posMinSubnormal fmt
   · rw [hround, toReal_posMinSubnormal]
-    rw [roundAtUp_pos_eq fmt mantissa exponent hfmt hm]
+    rw [roundAt_up_pos_eq fmt mantissa exponent hfmt hm]
     rw [targetExponent_eq_minSubnormal_of_lt_minNormal fmt mantissa exponent
       (by
         rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
@@ -314,7 +314,7 @@ private theorem roundDyadicPosUp_subnormal_finite_roundAt
         fmt.minNormalExponent) :
     isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
       toReal (roundDyadicPosUp fmt mantissa exponent) =
-        roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
+        roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
   let rounded :=
     roundMantissaAtExponentUp mantissa exponent
       (fmt.minSubnormalExponent)
@@ -330,7 +330,7 @@ private theorem roundDyadicPosUp_subnormal_finite_roundAt
     exact isFinite_roundSubnormalUp fmt hfmt rounded
   · rw [hround]
     rw [toReal_roundSubnormalUp fmt rounded hroundedNe hroundedHigh]
-    rw [roundAtUp_pos_eq fmt mantissa exponent hfmt hm]
+    rw [roundAt_up_pos_eq fmt mantissa exponent hfmt hm]
     rw [targetExponent_eq_minSubnormal_of_lt_minNormal
       fmt mantissa exponent (by
         rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
@@ -352,7 +352,7 @@ private theorem roundDyadicPosUp_normal_no_carry_finite_roundAt
         pow2 (fmt.fracWidth + 1)) :
     isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
       toReal (roundDyadicPosUp fmt mantissa exponent) =
-        roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
+        roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
   let rounded :=
     roundMantissaToLeadingBitUp mantissa fmt.fracWidth
   have hroundedLow : pow2 fmt.fracWidth ≤ rounded :=
@@ -385,7 +385,7 @@ private theorem roundDyadicPosUp_normal_no_carry_finite_roundAt
       (isFinite_ofFields_normalized fmt hfmt rounded
         ((mantissa.log2 : Int) + exponent)
         hnormal hmax)]
-    rw [roundAtUp_pos_eq fmt mantissa exponent hfmt hm]
+    rw [roundAt_up_pos_eq fmt mantissa exponent hfmt hm]
     rw [targetExponent_eq_normal fmt mantissa exponent (by
       rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
       exact hnormal)]
@@ -453,7 +453,7 @@ private theorem toReal_roundDyadicPosUp_normal_of_carry_eq_roundAt
       (mantissa.log2 : Int) + exponent + 1 ≤
         fmt.maxNormalExponent) :
     toReal (roundDyadicPosUp fmt mantissa exponent) =
-      roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
+      roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
   have hnormalCarry :
       fmt.minNormalExponent ≤
         (mantissa.log2 : Int) + exponent + 1 := by
@@ -499,8 +499,8 @@ private theorem toReal_roundDyadicPosUp_normal_of_carry_eq_roundAt
             ((mantissa.log2 : Int) + exponent + 1 -
               Int.ofNat fmt.fracWidth) :=
       hpack
-    _ = roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
-      rw [roundAtUp_pos_eq fmt mantissa exponent hfmt hm]
+    _ = roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
+      rw [roundAt_up_pos_eq fmt mantissa exponent hfmt hm]
       rw [targetExponent_eq_normal fmt mantissa exponent (by
         rw [← FloatFormat.minNormalExponent_eq_ieee fmt hfmt]
         exact hnormal)]
@@ -521,7 +521,7 @@ theorem roundDyadicPosUp_eq_posInf_or_finite_roundAt
     roundDyadicPosUp fmt mantissa exponent = posInf fmt ∨
       (isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
         toReal (roundDyadicPosUp fmt mantissa exponent) =
-          roundAtUp fmt ((mantissa : ℝ) * bpow exponent)) := by
+          roundAt fmt ((mantissa : ℝ) * bpow exponent) .up) := by
   by_cases hoverflow :
       fmt.maxNormalExponent <
         (mantissa.log2 : Int) + exponent
@@ -594,7 +594,7 @@ theorem roundDyadicPosUp_finite_roundAt_of_le_max_of_no_carry
         pow2 (fmt.fracWidth + 1)) :
     isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
       toReal (roundDyadicPosUp fmt mantissa exponent) =
-        roundAtUp fmt ((mantissa : ℝ) * bpow exponent) := by
+        roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
   by_cases hunderflow :
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent
   · exact roundDyadicPosUp_underflow_finite_roundAt

@@ -23,7 +23,7 @@ a scalar carrier that already performs the rounding step.
 
 The public constructor remains available because proof developments sometimes embed an arbitrary
 real as a comparison value. Such a value need not be representable. `NF.IsRepresentable` records the
-grid invariant when a theorem needs it; `NF.ofReal` and arithmetic results establish that invariant.
+grid invariant when a theorem needs it, and `NF.ofReal` and the arithmetic results establish it.
 
 Addition, for example, satisfies:
 
@@ -36,11 +36,10 @@ Trust boundary:
 - `NF` and `FloatRep` model real values and rounding in Lean.
 - Instantiating `NF` with IEEE single parameters + round-to-nearest-even models domain-valid,
   finite, no-overflow arithmetic with binary32's precision and gradual-underflow grid. The format
-  has no upper exponent bound, and Mathlib's real division, square root, and logarithm are totalized;
-  exceptional IEEE behavior belongs to
-  `ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)` and its binary-interchange model.
-- Correspondence to hardware float32 / Lean's builtin `Float` is not proved in this file; that
-  connection is an external assumption/interface boundary (or requires a separate verified kernel).
+  has no upper exponent bound, and Mathlib's real division, square root, and logarithm are
+  totalized. Exceptional IEEE behavior belongs to `Binary32` and its binary-interchange model.
+- This file does not relate `NF` to hardware float32 or to Lean's builtin `Float`. That link is
+  an external assumption, or the job of a separate verified kernel.
 -/
 
 @[expose] public section
@@ -98,11 +97,11 @@ noncomputable instance : Inhabited (NF β fexp rnd) where
 noncomputable instance : NatCast (NF β fexp rnd) where
   natCast n := ofReal (β := β) (fexp := fexp) (rnd := rnd) (n : ℝ)
 
-/-- `0` and `1` for `NF` are defined via `ofReal`, so they live on the target grid. -/
+/-- `0 : NF` is `ofReal 0`, so it lies on the target grid. -/
 noncomputable instance : Zero (NF β fexp rnd) where
   zero := ofReal (β := β) (fexp := fexp) (rnd := rnd) 0
 
-/-- `1 : NF` is `ofReal 1`, i.e. the rounded real `1` on the target grid. -/
+/-- `1 : NF` is `ofReal 1`, the rounded real `1`. -/
 noncomputable instance : One (NF β fexp rnd) where
   one := ofReal (β := β) (fexp := fexp) (rnd := rnd) 1
 
@@ -128,7 +127,7 @@ noncomputable instance : Mul (NF β fexp rnd) where
 noncomputable instance : Div (NF β fexp rnd) where
   div a b := ofReal (β := β) (fexp := fexp) (rnd := rnd) (a.val / b.val)
 
-/-- Checked rounded division. Unlike the totalized `Div` instance, this rejects a zero divisor. -/
+/-- Checked rounded division. It rejects a zero divisor, while the `Div` instance is total. -/
 noncomputable def checkedDiv (a b : NF β fexp rnd) : Option (NF β fexp rnd) :=
   if b.val = 0 then none else some (a / b)
 
@@ -166,7 +165,7 @@ Positive bases accept every real exponent. Negative bases accept integer exponen
 negative integer exponents. Zero uses the usual natural-power convention for nonnegative integer
 exponents, maps positive noninteger exponents to zero, and rejects negative exponents. Thus the
 remaining rejected case is a negative base with a noninteger exponent. Natural powers can also use
-`powNat` directly.
+`powNat`.
 -/
 noncomputable def checkedRealPow (a b : NF β fexp rnd) : Option (NF β fexp rnd) := by
   classical
@@ -205,7 +204,8 @@ theorem checkedRealPow_zero_of_pos_not_int (a b : NF β fexp rnd) (ha : a.val = 
 
 /--
 Evaluate each mathematical function in `ℝ` and round once. These noncomputable specifications use
-Mathlib's totalized real functions; `checkedSqrt` and `checkedLog` enforce their usual real domains.
+Mathlib's totalized real functions, and `checkedSqrt` and `checkedLog` enforce the usual real
+domains.
 -/
 noncomputable instance : MathFunctions (NF β fexp rnd) where
   exp  x := ofReal (β := β) (fexp := fexp) (rnd := rnd) (Real.exp x.val)
@@ -219,7 +219,7 @@ noncomputable instance : MathFunctions (NF β fexp rnd) where
   cos  x := ofReal (β := β) (fexp := fexp) (rnd := rnd) (Real.cos x.val)
   sin  x := ofReal (β := β) (fexp := fexp) (rnd := rnd) (Real.sin x.val)
 
-/-- Checked rounded square root; negative inputs are rejected instead of using real totalization. -/
+/-- Checked rounded square root, which rejects negative inputs instead of totalizing. -/
 noncomputable def checkedSqrt (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
   if 0 ≤ x.val then
     some (ofReal (β := β) (fexp := fexp) (rnd := rnd) (Real.sqrt x.val))
@@ -232,7 +232,7 @@ omit [ValidRnd rnd] in
     checkedSqrt x = none ↔ ¬0 ≤ x.val := by
   simp [checkedSqrt]
 
-/-- Checked rounded logarithm; zero and negative inputs are rejected. -/
+/-- Checked rounded logarithm, which rejects zero and negative inputs. -/
 noncomputable def checkedLog (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
   if 0 < x.val then
     some (ofReal (β := β) (fexp := fexp) (rnd := rnd) (Real.log x.val))

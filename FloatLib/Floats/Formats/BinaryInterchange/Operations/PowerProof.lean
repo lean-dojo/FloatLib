@@ -11,18 +11,21 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
 
 /-!
-# Correct rounding of integral powers
+# Correct rounding of powers
 
 `Model.pow` sends a finite nonzero base with a finite integral exponent to
 `Power.integerPower?`. This file proves that the result is the nearest-even rounding of the
-exact real power.
+exact real power. A finite positive base with a non-integral exponent goes to the certified
+enclosure search `Transcendentals.Certified.pow`. Whenever that search succeeds, `pow` returns
+its result, which is the nearest-even rounding of the real power (`pow_spec_of_certified`).
 
 The executable kernel has three routes. Small exact problems call `powInt`, which rounds the
 exact rational power once. A base of magnitude one gives a signed one. Every other case brackets
 the exact power between two dyadic endpoints (`powBounds`, `squareScreen`) and accepts the
-rounding only when both endpoints round to the same finite value (`roundEnclosure?`); if no
+rounding only when both endpoints round to the same finite value (`roundEnclosure?`). If no
 working precision decides, `powInt` is the fallback. The endpoint lemmas show that the
 brackets are sound, `toReal_of_attempt` turns an accepted bracket into correct rounding, and
 `toReal_integerPowerWith` combines the three routes.
@@ -538,13 +541,17 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand]
     have : (b.significand : ℝ) ≠ 0 := by exact_mod_cast hsig
     split <;> simp [this, zpow_ne_zero]
+  have hbaseQuiet : isSNaN base = false :=
+    isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
   unfold pow at hfinite ⊢
   by_cases hz : isZero exponent = true
-  · rw [ite_eq_left hz]
+  · have hcond : (isZero exponent && !isSNaN base) = true := by simp [hz, hbaseQuiet]
+    rw [ite_eq_left hcond]
     have : (n : ℝ) = 0 := by rw [← hn]; exact toReal_eq_zero_of_isZero exponent hz
     have hn0 : n = 0 := by exact_mod_cast this
     simp [hn0, hroundOne]
-  rw [ite_eq_right hz] at hfinite ⊢
+  have hcond : ¬ (isZero exponent && !isSNaN base) = true := by simp [hz]
+  rw [ite_eq_right hcond] at hfinite ⊢
   by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
   · rw [ite_eq_left hunit]
     simp only [Bool.and_eq_true] at hunit
@@ -602,5 +609,117 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
       dsimp only at hfinite ⊢
       rw [toReal_integerPowerWith hfmt exactBitBudget hb hbzero y.negative magnitude shift
         hfinite, hint]
+
+/-- The parts found by `integralParts?` recombine to the dyadic's unsigned value. -/
+private theorem significand_mul_zpow_eq_of_integralParts?_eq_some {y : Numerics.Dyadic}
+    {magnitude shift : Nat}
+    (h : integralParts? y = some (magnitude, shift)) :
+    (y.significand : ℝ) * (2 : ℝ) ^ y.exponent = ((magnitude <<< shift : Nat) : ℝ) := by
+  unfold integralParts? at h
+  rcases hexp : y.exponent with s | s <;> rw [hexp] at h
+  · simp only [Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    rw [Nat.shiftLeft_eq]
+    push_cast
+    rw [Int.ofNat_eq_natCast, zpow_natCast]
+  · dsimp only at h
+    split at h
+    · rename_i hexact
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have hsig : (y.significand : ℝ) = ((y.significand >>> (s + 1) : Nat) : ℝ) * 2 ^ (s + 1) := by
+        have h' := beq_iff_eq.mp hexact
+        rw [Nat.shiftLeft_eq] at h'
+        exact_mod_cast h'.symm
+      rw [zpow_negSucc, hsig, Nat.shiftLeft_zero]
+      field_simp
+    · simp at h
+
+/-- An exponent whose real value is not an integer leaves the integral-power route. -/
+theorem integerPower?_eq_none_of_ne_intCast {fmt : FloatFormat} {base exponent : Model fmt}
+    (hnonintegral : ∀ n : ℤ, toReal exponent ≠ n) : integerPower? base exponent = none := by
+  unfold integerPower?
+  split
+  · rename_i b y _ hy
+    cases hparts : integralParts? y with
+    | none => rfl
+    | some parts =>
+        exfalso
+        obtain ⟨magnitude, shift⟩ := parts
+        apply hnonintegral (integralValue y.negative magnitude shift)
+        have hreal : toReal exponent = y.toReal := by rw [toReal_eq, hy]
+        rw [hreal]
+        simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand, mul_assoc,
+          significand_mul_zpow_eq_of_integralParts?_eq_some hparts, integralValue, Nat.shiftLeft_eq]
+        split <;> push_cast <;> ring
+  · rfl
+
+/--
+Main correctness theorem for non-integral exponents: for a finite positive base and a finite
+exponent whose value is not an integer, whenever the certified enclosure search
+`Transcendentals.Certified.pow` succeeds (which happens only for IEEE descriptors), `pow`
+returns a finite nearest-even rounding of the real power `toReal base ^ toReal exponent`.
+-/
+theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
+    (hbase : isFinite base = true) (hpositive : 0 < toReal base)
+    (hexp : isFinite exponent = true) (hnonintegral : ∀ n : ℤ, toReal exponent ≠ n)
+    (hsettled :
+      (Transcendentals.Certified.pow base exponent certifiedOptions).isOk = true) :
+    isFinite (pow base exponent) = true ∧
+      toReal (pow base exponent) = roundAt fmt (toReal base ^ toReal exponent) := by
+  obtain ⟨result, hresult⟩ : ∃ result,
+      Transcendentals.Certified.pow base exponent certifiedOptions = .ok result := by
+    cases h : Transcendentals.Certified.pow base exponent certifiedOptions with
+    | error _ => simp [h, Except.isOk, Except.toBool] at hsettled
+    | ok result => exact ⟨result, rfl⟩
+  have hone_finite : isFinite (posOne fmt) = true := isFinite_posOne fmt
+  have hroundOne : roundAt fmt 1 = 1 := by
+    simpa using roundAt_toReal_eq (posOne fmt) hone_finite
+  have hbaseQuiet : isSNaN base = false :=
+    isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
+  have hexpZero : isZero exponent = false := by
+    cases hzero : isZero exponent
+    · rfl
+    · exact absurd (by simpa using toReal_eq_zero_of_isZero exponent hzero) (hnonintegral 0)
+  have hsign : signBit base = false := by
+    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hbase
+    rw [← sign_eq_signBit_of_toDyadic?_some hd]
+    cases hnegative : d.negative
+    · rfl
+    · exfalso
+      have hreal : toReal base = d.toReal := by rw [toReal_eq, hd]
+      have hnonpos : d.toReal ≤ 0 := by
+        simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand, hnegative,
+          ↓reduceIte, neg_mul]
+        exact neg_nonpos.mpr (by positivity)
+      linarith
+  unfold pow
+  rw [ite_eq_right (by simp [hexpZero])]
+  by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
+  · rw [ite_eq_left hunit]
+    simp only [Bool.and_eq_true] at hunit
+    have h1 : toReal base = 1 := by
+      simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base (posOne fmt) hbase
+        hone_finite).mp (of_decide_eq_true hunit.1)
+    simp [h1, hroundOne]
+  rw [ite_eq_right hunit, chooseNaN2_none_of_isFinite base exponent hbase hexp]
+  dsimp only
+  have hexpOne : compare exponent (posOne fmt) ≠ some .eq := fun h =>
+    hnonintegral 1 (by simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite exponent
+      (posOne fmt) hexp hone_finite).mp h)
+  rw [ite_eq_right hexpOne,
+    ite_eq_right (by simp [isInf_eq_false_of_isFinite_eq_true exponent hexp])]
+  have hbaseZero : compare base (zero fmt false) ≠ some .eq := fun h =>
+    hpositive.ne' (by simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base
+      (zero fmt false) hbase (isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false))).mp h)
+  split
+  · rename_i hc
+    exact absurd hc hbaseZero
+  · rw [ite_eq_right (by simp [isInf_eq_false_of_isFinite_eq_true base hbase]),
+      integerPower?_eq_none_of_ne_intCast hnonintegral]
+    dsimp only
+    rw [hsign, ite_eq_right Bool.false_ne_true, hresult]
+    exact ⟨Transcendentals.Certified.isFinite_of_pow_eq_ok hresult,
+      Transcendentals.Certified.toReal_of_pow_eq_ok hresult⟩
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.Power

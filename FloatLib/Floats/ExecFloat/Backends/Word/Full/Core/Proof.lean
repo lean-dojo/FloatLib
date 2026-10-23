@@ -19,16 +19,16 @@ import Mathlib.Tactic.Positivity
 # Native-storage finite arithmetic for binary64
 
 Native binary64 field decoding agrees with the generic finite decoder, and accepted two-limb
-products agree with exact nearest-even rounding. The public value remains `Model
+products agree with exact nearest-even rounding. Throughout, the public value is `Model
 FloatFormat.binary64`.
 
-A product of normal significands needs at most 106 bits. The multiplication path keeps it in two
-`UInt64` limbs through normalization and rounding. The finite adapters defined here supply the
-shared-kernel baseline for addition, division, and fused multiply-add; their specialized paths
-are proved in the corresponding operation modules.
+A product of normal significands needs at most 106 bits, and the multiplication path keeps it in
+two `UInt64` limbs through normalization and rounding. For addition, division and fused
+multiply-add, the finite adapters here are the shared-kernel baseline, and their specialized paths
+are proved in the operation modules.
 
-Non-finite policy remains in `Model.Arithmetic`; finite entry points return `none` whenever an
-operand has an all-ones exponent.
+NaN and infinity handling stays in the shared dispatchers. Finite entry points return `none`
+whenever an operand has an all-ones exponent.
 -/
 
 @[expose] public section
@@ -119,7 +119,7 @@ theorem signBit_eq (x : Value) :
     have h := congrArg UInt64.toBitVec hNative
     simpa using h
 
-/-- The binary64 fraction field has 52 explicit bits. -/
+/-- The binary64 fraction field is 52 bits wide. -/
 theorem binary64_fracWidth :
     FloatFormat.binary64.fracWidth = 52 := by
   decide
@@ -239,10 +239,9 @@ theorem finiteScale_le
     omega
 
 /--
-Decoding a finite native binary64 value exposes the fields used by the generic finite kernels.
-
-An all-ones exponent characterizes non-finite values, so callers that have ruled out that
-exponent can replace the optional decoder with these concrete components.
+A native binary64 value without an all-ones exponent decodes to its sign, exponent field and
+significand. Callers that have ruled out that exponent can use these components in place of the
+optional decoder.
 -/
 theorem decode_of_finiteExponent (x : Value)
     (hfinite : expField (toUInt64 x) ≠ 0x7ff) :
@@ -257,62 +256,40 @@ theorem decode_of_finiteExponent (x : Value)
   simp [hfinite]
 
 /--
-Fixed-limb normal rounding is the normal branch of the generic product rounder.
+Every result of `roundScaled?` is the generic binary64 product rounding of the same magnitude at
+the same scale.
 
-The magnitude bound includes one extra bit beyond a binary64 significand product so fused
-multiply-add can reuse the same native rounding and packing pipeline after exact alignment.
+The magnitude bound `product < 2 ^ 116` also admits the exact sums of fused multiply-add, whose
+leading bit can sit above that of a 106-bit significand product.
 -/
-theorem roundNormalProduct_refines
-    (sign : Bool) (xExponent yExponent : UInt64)
+theorem roundScaled_refines
+    (sign : Bool) (scale : UInt64)
     (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64)
-    (hxExponent : 0 < xExponent.toNat ∧ xExponent.toNat < 2047)
-    (hyExponent : 0 < yExponent.toNat ∧ yExponent.toNat < 2047)
+    (hscaleBound : scale.toNat < 2 ^ 32)
     (hleading : leading.toNat = product.toNat.log2)
-    (hleadingRange : 53 ≤ leading.toNat ∧ leading.toNat ≤ 106)
+    (hleadingRange : 53 ≤ leading.toNat ∧ leading.toNat ≤ 115)
     (hproductLower : 2 ^ 52 ≤ product.toNat)
-    (hproduct : product.toNat < 2 ^ 107)
+    (hproduct : product.toNat < 2 ^ 116)
     (result : Value)
     (hresult :
-      roundNormalProduct? sign xExponent yExponent product leading =
-        some result) :
+      roundScaled? sign scale product leading = some result) :
     result =
       FiniteProductRound.round FloatFormat.binary64 sign product.toNat
-        ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
-  unfold roundNormalProduct? at hresult
-  let scale := (xExponent - 1) + (yExponent - 1)
+        scale.toNat := by
+  unfold roundScaled? roundScaledWord? at hresult
+  simp only [apply_ite (Option.map ofUInt64), Option.map_none, Option.map_some,
+    packFieldsWord_eq_ofNat] at hresult
   let position := leading + scale
-  have hxOne : (1 : UInt64) ≤ xExponent := by
-    apply UInt64.le_iff_toNat_le.mpr
-    simp only [UInt64.reduceToNat]
-    omega
-  have hyOne : (1 : UInt64) ≤ yExponent := by
-    apply UInt64.le_iff_toNat_le.mpr
-    simp only [UInt64.reduceToNat]
-    omega
-  have hxScale :
-      (xExponent - 1).toNat = xExponent.toNat - 1 := by
-    exact UInt64.toNat_sub_of_le xExponent 1 hxOne
-  have hyScale :
-      (yExponent - 1).toNat = yExponent.toNat - 1 := by
-    exact UInt64.toNat_sub_of_le yExponent 1 hyOne
-  have hscale :
-      scale.toNat = (xExponent.toNat - 1) + (yExponent.toNat - 1) := by
-    unfold scale
-    rw [UInt64.toNat_add, hxScale, hyScale]
-    apply Nat.mod_eq_of_lt
-    omega
   have hposition :
-      position.toNat =
-        product.toNat.log2 +
-          ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
+      position.toNat = product.toNat.log2 + scale.toNat := by
     unfold position
-    rw [UInt64.toNat_add, hleading, hscale]
+    rw [UInt64.toNat_add, hleading]
     apply Nat.mod_eq_of_lt
     omega
   by_cases hsubnormal : position < 1126
-  · simp [position, scale, hsubnormal] at hresult
+  · simp [position, hsubnormal] at hresult
   change
-    ¬leading + (xExponent - 1 + (yExponent - 1)) < 1126 at hsubnormal
+    ¬leading + scale < 1126 at hsubnormal
   let rounded := product.roundShiftRightEven (leading - 52).toNat
   let carry := rounded == 0x0020000000000000
   let normalizedPosition := if carry then position + 1 else position
@@ -320,7 +297,7 @@ theorem roundNormalProduct_refines
   · have hprocessed := hresult
     simp [hsubnormal] at hprocessed
     have hle : normalizedPosition ≤ (3171 : UInt64) := by
-      simpa [normalizedPosition, carry, rounded, position, scale] using
+      simpa [normalizedPosition, carry, rounded, position] using
         hprocessed.1
     have hleNat := UInt64.le_iff_toNat_le.mp hle
     have hltNat := UInt64.lt_iff_toNat_lt.mp hoverflow
@@ -333,7 +310,7 @@ theorem roundNormalProduct_refines
           ((if carry then (0x0010000000000000 : UInt64) else rounded).toNat -
             0x0010000000000000) =
         result := by
-    simpa [position, scale, rounded, carry, normalizedPosition] using
+    simpa [position, rounded, carry, normalizedPosition] using
       hprocessed.2
   have hresultValue :
       result =
@@ -346,7 +323,7 @@ theorem roundNormalProduct_refines
   have hproductNe : product.toNat ≠ 0 := by omega
   have hnormal :
       ¬product.toNat.log2 +
-          ((xExponent.toNat - 1) + (yExponent.toNat - 1)) < 1126 := by
+          scale.toNat < 1126 := by
     intro h
     apply hsubnormal
     apply UInt64.lt_iff_toNat_lt.mpr
@@ -362,7 +339,7 @@ theorem roundNormalProduct_refines
     change leading.toNat - 52 = product.toNat.log2 - 52
     rw [hleading]
   have hshiftRange :
-      1 ≤ (leading - 52).toNat ∧ (leading - 52).toNat ≤ 54 := by
+      1 ≤ (leading - 52).toNat ∧ (leading - 52).toNat ≤ 63 := by
     rw [hshift, ← hleading]
     omega
   have hhigh :
@@ -418,7 +395,7 @@ theorem roundNormalProduct_refines
   have hfracLe : 52 ≤ product.toNat.log2 := by
     rw [← hleading]
     omega
-  have hlog2Le : product.toNat.log2 ≤ 106 := by
+  have hlog2Le : product.toNat.log2 ≤ 115 := by
     rw [← hleading]
     omega
   have hpositionAdd :
@@ -441,10 +418,10 @@ theorem roundNormalProduct_refines
       normalizedPosition.toNat =
         if rounded.toNat = pow2 (52 + 1) then
           product.toNat.log2 +
-            ((xExponent.toNat - 1) + (yExponent.toNat - 1)) + 1
+            scale.toNat + 1
         else
           product.toNat.log2 +
-            ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
+            scale.toNat := by
     by_cases hcarryTrue : carry = true
     · rw [ite_eq_left (hcarry.mp hcarryTrue)]
       simp [normalizedPosition, hcarryTrue, hpositionAdd, hposition]
@@ -455,10 +432,10 @@ theorem roundNormalProduct_refines
       ¬3171 <
         if rounded.toNat = pow2 (52 + 1) then
           product.toNat.log2 +
-            ((xExponent.toNat - 1) + (yExponent.toNat - 1)) + 1
+            scale.toNat + 1
         else
           product.toNat.log2 +
-            ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
+            scale.toNat := by
     rw [← hnormalized]
     intro h
     apply hoverflow
@@ -489,6 +466,43 @@ theorem roundNormalProduct_refines
       apply hcarry.mpr
       simpa using h
     simp [hcarryFalse, hroundedNot]
+
+/--
+Every result of `roundNormalProduct?` is the generic product rounding at scale
+`(xExponent - 1) + (yExponent - 1)`. It shares the bound of `roundScaled_refines`, so fused
+multiply-add reuses this pipeline after exact alignment.
+-/
+theorem roundNormalProduct_refines
+    (sign : Bool) (xExponent yExponent : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt128) (leading : UInt64)
+    (hxExponent : 0 < xExponent.toNat ∧ xExponent.toNat < 2047)
+    (hyExponent : 0 < yExponent.toNat ∧ yExponent.toNat < 2047)
+    (hleading : leading.toNat = product.toNat.log2)
+    (hleadingRange : 53 ≤ leading.toNat ∧ leading.toNat ≤ 115)
+    (hproductLower : 2 ^ 52 ≤ product.toNat)
+    (hproduct : product.toNat < 2 ^ 116)
+    (result : Value)
+    (hresult :
+      roundNormalProduct? sign xExponent yExponent product leading =
+        some result) :
+    result =
+      FiniteProductRound.round FloatFormat.binary64 sign product.toNat
+        ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
+  have hxOne : (1 : UInt64) ≤ xExponent :=
+    UInt64.le_iff_toNat_le.mpr (by simp only [UInt64.reduceToNat]; omega)
+  have hyOne : (1 : UInt64) ≤ yExponent :=
+    UInt64.le_iff_toNat_le.mpr (by simp only [UInt64.reduceToNat]; omega)
+  have hscale :
+      ((xExponent - 1) + (yExponent - 1)).toNat =
+        (xExponent.toNat - 1) + (yExponent.toNat - 1) := by
+    rw [UInt64.toNat_add, UInt64.toNat_sub_of_le xExponent 1 hxOne,
+      UInt64.toNat_sub_of_le yExponent 1 hyOne]
+    apply Nat.mod_eq_of_lt
+    simp only [UInt64.reduceToNat]
+    omega
+  rw [← hscale]
+  exact roundScaled_refines sign _ product leading (by rw [hscale]; omega) hleading
+    hleadingRange hproductLower hproduct result hresult
 
 private theorem roundNormalLimb_refines
     (sign : Bool) (xExponent yExponent : UInt64)
@@ -562,12 +576,13 @@ private theorem roundNormalLimb_refines
   simpa [roundNormalLimb?, product, leading] using hresult
 
 /--
-Every result returned by the binary64 normal-product kernel is the exact compact finite result.
+Every result of the binary64 normal-product kernel `mulNormalLimb?` is also the result of
+`mulFinite?`.
 -/
 theorem mulNormalLimb_refines
     (x y result : Value)
     (hresult : mulNormalLimb? x y = some result) :
-    mulFiniteImpl? x y = some result := by
+    mulFinite? x y = some result := by
   let xBits := toUInt64 x
   let yBits := toUInt64 y
   let xExponent := expField xBits
@@ -618,7 +633,7 @@ theorem mulNormalLimb_refines
       xExponent yExponent xMantissa yMantissa
       hxExponentBounds hyExponentBounds hxMantissaBounds hyMantissaBounds
       result hround
-  unfold mulFiniteImpl?
+  unfold mulFinite?
   simp only
   rw [ite_eq_right (by simp [xExponent, xBits, hxExceptional, yExponent, yBits,
     hyExceptional])]
@@ -629,9 +644,9 @@ theorem mulNormalLimb_refines
     xMantissa, yMantissa, finiteMantissa, hxZero, hyZero] using
       hrefines.symm
 
-private theorem mulFiniteImpl_eq_spec (x y : Value) :
-    mulFiniteImpl? x y = mulFiniteSpec? x y := by
-  unfold mulFiniteImpl? mulFiniteSpec? decode?
+private theorem mulFinite_eq_spec (x y : Value) :
+    mulFinite? x y = mulFiniteSpec? x y := by
+  unfold mulFinite? mulFiniteSpec? decode?
   dsimp only
   let xBits := toUInt64 x
   let yBits := toUInt64 y
@@ -726,20 +741,20 @@ theorem decode_eq (x : Value) :
 /--
 Native-storage finite addition equals the width-generic compact kernel.
 
-The runtime names the compiled `addComponentsImpl`; `addComponentsImpl_eq` identifies it with the
-exact `addComponents` used by `FiniteKernel.add?`.
+The runtime calls the compiled `Internal.addComponents`, and `Internal.addComponents_eq`
+identifies it with the exact `addComponents` behind `FiniteKernel.add?`.
 -/
-theorem addFiniteImpl_eq (x y : Value) :
-    addFiniteImpl? x y = FiniteKernel.add? x y := by
-  unfold addFiniteImpl? FiniteKernel.add?
+theorem addFiniteComponents_eq (x y : Value) :
+    addFiniteComponents? x y = FiniteKernel.add? x y := by
+  unfold addFiniteComponents? FiniteKernel.add?
   rw [decode_eq x, decode_eq y]
   cases FiniteKernel.decode? x <;> cases FiniteKernel.decode? y <;>
-    simp [FiniteKernel.addComponentsImpl_eq]
+    simp [FiniteKernel.Internal.addComponents_eq]
 
 /-- Native-storage finite addition is commutative. -/
-theorem addFiniteImpl_comm (x y : Value) :
-    addFiniteImpl? x y = addFiniteImpl? y x := by
-  unfold addFiniteImpl?
+theorem addFiniteComponents_comm (x y : Value) :
+    addFiniteComponents? x y = addFiniteComponents? y x := by
+  unfold addFiniteComponents?
   cases hx : decode? x with
   | none =>
       cases decode? y <;> simp
@@ -747,13 +762,13 @@ theorem addFiniteImpl_comm (x y : Value) :
       cases hy : decode? y with
       | none => simp
       | some dy =>
-          simp only [Option.some.injEq, FiniteKernel.addComponentsImpl_eq]
+          simp only [Option.some.injEq, FiniteKernel.Internal.addComponents_eq]
           exact FiniteKernel.addComponents_comm FloatFormat.binary64 dx dy
 
-/-- Native-storage finite multiplication equals the generic proved finite kernel. -/
-theorem mulFiniteImpl_eq (x y : Value) :
-    mulFiniteImpl? x y = FiniteKernel.mul? x y := by
-  rw [mulFiniteImpl_eq_spec]
+/-- Native-storage finite multiplication equals the generic finite kernel `FiniteKernel.mul?`. -/
+theorem mulFinite_eq (x y : Value) :
+    mulFinite? x y = FiniteKernel.mul? x y := by
+  rw [mulFinite_eq_spec]
   unfold mulFiniteSpec? FiniteKernel.mul?
   rw [decode_eq x, decode_eq y]
   cases hx : FiniteKernel.decode? x with
@@ -774,23 +789,23 @@ theorem mulFiniteImpl_eq (x y : Value) :
         rw [ite_eq_left (by decide : FloatFormat.binary64.isIEEE = true)]
 
 /-- Native-storage finite division equals the width-generic compact kernel. -/
-theorem divFiniteImpl_eq (x y : Value) :
-    divFiniteImpl? x y = FiniteKernel.div? x y := by
-  unfold divFiniteImpl? FiniteKernel.div?
+theorem divFiniteComponents_eq (x y : Value) :
+    divFiniteComponents? x y = FiniteKernel.div? x y := by
+  unfold divFiniteComponents? FiniteKernel.div?
   rw [decode_eq x, decode_eq y]
   rfl
 
 /--
 Native-storage finite FMA equals the width-generic compact kernel.
 
-The runtime names the compiled `fmaComponentsImpl`; `fmaComponentsImpl_eq` identifies it with the
-exact `fmaComponents` used by `FiniteKernel.fma?`.
+As for addition, `Internal.fmaComponents_eq` identifies the compiled kernel with the exact
+`fmaComponents` behind `FiniteKernel.fma?`.
 -/
-theorem fmaFiniteImpl_eq (x y z : Value) :
-    fmaFiniteImpl? x y z = FiniteKernel.fma? x y z := by
-  unfold fmaFiniteImpl? FiniteKernel.fma?
+theorem fmaFiniteComponents_eq (x y z : Value) :
+    fmaFiniteComponents? x y z = FiniteKernel.fma? x y z := by
+  unfold fmaFiniteComponents? FiniteKernel.fma?
   rw [decode_eq x, decode_eq y, decode_eq z]
   cases FiniteKernel.decode? x <;> cases FiniteKernel.decode? y <;>
-    cases FiniteKernel.decode? z <;> simp [FiniteKernel.fmaComponentsImpl_eq]
+    cases FiniteKernel.decode? z <;> simp [FiniteKernel.Internal.fmaComponents_eq]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

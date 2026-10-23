@@ -18,7 +18,7 @@ public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
 # Native logical-model bridges
 
 These regressions apply the public FloatLib bridges to symbolic inputs and selected boundary
-cases. Concrete results are checked by the kernel; no host floating-point operation is executed.
+cases. Concrete results are kernel-checked, and no host floating-point operation runs.
 -/
 
 @[expose] public section
@@ -33,12 +33,12 @@ open FloatLib.Numerics.Representations
 
 /-- Every native binary32 value survives the public import/export roundtrip. -/
 theorem native32_roundtrip (value : Float32) :
-    ExecFloat.Binary.toFloat32 (ExecFloat.Binary.ofFloat32 value) = value :=
+    ExecFloat.Binary.toFloat32 (ExecFloat.Binary.ofFloat32 value : Binary32) = value :=
   ExecFloat.Binary.toFloat32_ofFloat32 value
 
 /-- Every native binary64 value survives the public import/export roundtrip. -/
 theorem native64_roundtrip (value : Float) :
-    ExecFloat.Binary.toFloat (ExecFloat.Binary.ofFloat value) = value :=
+    ExecFloat.Binary.toFloat (ExecFloat.Binary.ofFloat value : Binary64) = value :=
   ExecFloat.Binary.toFloat_ofFloat value
 
 /-- A negative signaling NaN loses its sign and payload at the native boundary. -/
@@ -60,21 +60,23 @@ theorem integer_conversion_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (
 /-- At the first binary32 integer tie, the even endpoint is the lower integer. -/
 theorem int64_to_native32_tie_down :
     (ExecFloat.Binary.toModel
-      (ExecFloat.Binary.ofFloat32 (16777217 : Int64).toFloat32)).toNatBits = 0x4b800000 := by
+      (ExecFloat.Binary.ofFloat32 (16777217 : Int64).toFloat32 : Binary32)).toNatBits =
+      0x4b800000 := by
   rw [ExecFloat.Binary.toModel_ofFloat32_int64ToFloat32]
   decide +kernel
 
 /-- At the next tie, the even endpoint is the upper integer. -/
 theorem int64_to_native32_tie_up :
     (ExecFloat.Binary.toModel
-      (ExecFloat.Binary.ofFloat32 (16777219 : Int64).toFloat32)).toNatBits = 0x4b800002 := by
+      (ExecFloat.Binary.ofFloat32 (16777219 : Int64).toFloat32 : Binary32)).toNatBits =
+      0x4b800002 := by
   rw [ExecFloat.Binary.toModel_ofFloat32_int64ToFloat32]
   decide +kernel
 
 /-- Natural construction beyond `UInt64` still rounds a binary32 tie to the even endpoint. -/
 theorem nat_to_native32_large_tie :
     (ExecFloat.Binary.toModel
-      (ExecFloat.Binary.ofFloat32 (Float32.ofNat (2 ^ 80 + 2 ^ 56)))).toNatBits =
+      (ExecFloat.Binary.ofFloat32 (Float32.ofNat (2 ^ 80 + 2 ^ 56)) : Binary32)).toNatBits =
       0x67800000 := by
   rw [ExecFloat.Binary.toModel_ofFloat32_ofNat]
   decide +kernel
@@ -82,7 +84,7 @@ theorem nat_to_native32_large_tie :
 /-- An unbounded negative integer rounds directly to binary64 without narrowing its magnitude. -/
 theorem int_to_native64_large_negative_tie :
     (ExecFloat.Binary.toModel
-      (ExecFloat.Binary.ofFloat ((-(2 ^ 80 + 2 ^ 27) : Int).toFloat))).toNatBits =
+      (ExecFloat.Binary.ofFloat ((-(2 ^ 80 + 2 ^ 27) : Int).toFloat) : Binary64)).toNatBits =
       0xc4f0000000000000 := by
   rw [ExecFloat.Binary.toModel_ofFloat_intToFloat]
   decide +kernel
@@ -128,9 +130,9 @@ theorem checked32_int8_quiet_nan_metadata :
 /-- Import commutes with both public binary64 operations on arbitrary finite native operands. -/
 theorem native64_add_sub_commute (x y : Float)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
-    ExecFloat.Binary.ofFloat (x + y) =
+    (ExecFloat.Binary.ofFloat (x + y) : Binary64) =
         ExecFloat.Binary.ofFloat x + ExecFloat.Binary.ofFloat y ∧
-      ExecFloat.Binary.ofFloat (x - y) =
+      (ExecFloat.Binary.ofFloat (x - y) : Binary64) =
         ExecFloat.Binary.ofFloat x - ExecFloat.Binary.ofFloat y :=
   ⟨ExecFloat.Binary.ofFloat_add_of_isFinite x y hx hy,
     ExecFloat.Binary.ofFloat_sub_of_isFinite x y hx hy⟩

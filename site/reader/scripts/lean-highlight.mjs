@@ -37,7 +37,7 @@ function escapeHtml(value) {
 /**
  * An identifier as HTML, with a break opportunity after every dot and underscore inside it. In a
  * scrolling block (white-space: pre) a <wbr> does nothing; in a wrapped statement it lets a name
- * such as `Configured.StoragePlan` or `sumWithStatus_eq_round_of_finite_nonzero` wrap at its
+ * such as `Configured.StoragePlan` or `sum_status_eq_round_of_finite_nonzero` wrap at its
  * joints instead of mid-word. <wbr> has no text content, so copied text is unchanged.
  */
 function identifierHtml(text) {
@@ -52,7 +52,7 @@ const COMMENT_JOINT_MIN_LENGTH = 32;
 /**
  * Comment text as HTML, with a break opportunity after a dot or underscore that sits between
  * word characters inside a long token (a name such as
- * `FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode.nearestEven` printed by
+ * `FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode.nearestAway` printed by
  * #eval). Comment lines wrap when the block is at its wide stop, and without these joints a long
  * printed name broke mid-word. Sentence punctuation (a dot before a space) and numbers (a dot
  * before a digit) get no break. Tokens are split on whitespace after escaping; the entities

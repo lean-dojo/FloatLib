@@ -16,6 +16,7 @@ import FloatLibTests.Regression.BinaryInterchange.SmallWord
 import FloatLibTests.Regression.BinaryInterchange.TinyArithmetic
 import FloatLibTests.Regression.BinaryInterchange.TwoWordMul
 import FloatLibTests.Regression.BinaryInterchange.WideLimb
+import FloatLibTests.Regression.RationalPower
 
 /-!
 # Conformance and regression modules

@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 # Correctness of configured binary reductions
 
 The configured API is a lossless carrier adaptation of the descriptor-model reducer. These
-theorems expose that connection directly, so proofs can reason about the one model definition
-without depending on byte, word, or wide storage choices.
+theorems state that connection, so proofs can reason about the one model definition without
+depending on byte, word, or wide storage choices.
 -/
 
 @[expose] public section
@@ -30,72 +30,83 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /--
-Decoding a configured correctly rounded sum recovers the descriptor-model sum and all status
-indicators exactly.
+Decoding a configured correctly rounded sum gives the descriptor-model sum, status indicators
+included.
 -/
-theorem IEEEOutcome.toModel_sumWithStatus
-    (values : Array Value) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome.toModel (sumWithStatus values rounding) =
-      Model.sumWithStatus format (values.map ExecFloat.Binary.toModel) rounding := by
-  simpa only [sumWithStatus] using
+theorem IEEEOutcome.toModel_sum
+    (values : Array Value) (mode : Model.IEEERoundingMode) :
+    IEEEOutcome.toModel (sum values mode (status := true)) =
+      Model.sum format (values.map ExecFloat.Binary.toModel) mode (status := true) := by
+  simpa only [sum] using
     (IEEEOutcome.toModel_ofModel
       (plan := plan) (code := code)
-      (Model.sumWithStatus format
-        (values.map ExecFloat.Binary.toModel) rounding))
+      (Model.sum format (values.map ExecFloat.Binary.toModel) mode (status := true)))
 
 /--
 Decoding the value-only configured sum gives the value component of the descriptor-model sum.
 -/
 @[simp, grind =] theorem toModel_sum
-    (values : Array Value) (rounding : Model.IEEERoundingMode) :
-    ExecFloat.Binary.toModel (sum values rounding) =
-      Model.sum format (values.map ExecFloat.Binary.toModel) rounding := by
-  change
-    (IEEEOutcome.toModel (sumWithStatus values rounding)).value =
-      (Model.sumWithStatus format
-        (values.map ExecFloat.Binary.toModel) rounding).value
-  rw [IEEEOutcome.toModel_sumWithStatus]
+    (values : Array Value) (mode : Model.IEEERoundingMode) :
+    ExecFloat.Binary.toModel (sum values mode) =
+      Model.sum format (values.map ExecFloat.Binary.toModel) mode :=
+  ExecFloat.Binary.toModel_ofModel _
+
+/-- The configured sum with `status := true` delivers the value of the configured sum. -/
+@[simp] theorem value_sum (values : Array Value) (mode : Model.IEEERoundingMode) :
+    (sum values mode (status := true)).value = sum values mode :=
+  rfl
 
 /--
-Configured dot-product execution is exactly the descriptor-model dot product, including a
-length-mismatch error and every IEEE status indicator.
+Configured dot-product execution with `status := true` is the descriptor-model dot product,
+including a length-mismatch error and every IEEE status indicator.
 -/
-theorem dotWithStatus_eq_model
-    (left right : Array Value) (rounding : Model.IEEERoundingMode) :
-    dotWithStatus left right rounding =
-      (Model.dotWithStatus format
+theorem dot_status_eq_model
+    (left right : Array Value) (mode : Model.IEEERoundingMode) :
+    dot left right mode (status := true) =
+      (Model.dot format
         (left.map ExecFloat.Binary.toModel)
         (right.map ExecFloat.Binary.toModel)
-        rounding).map IEEEOutcome.ofModel := by
+        mode (status := true)).map IEEEOutcome.ofModel := by
   rfl
 
 /--
 On a successful configured dot product, decoding the delivered value gives the descriptor-model
-value exactly.
+value.
 -/
 theorem toModel_dot_of_eq_ok
-    (left right : Array Value) (rounding : Model.IEEERoundingMode) (result : Value)
-    (hresult : dot left right rounding = .ok result) :
+    (left right : Array Value) (mode : Model.IEEERoundingMode) (result : Value)
+    (hresult : dot left right mode = .ok result) :
     Model.dot format
         (left.map ExecFloat.Binary.toModel)
         (right.map ExecFloat.Binary.toModel)
-        rounding =
+        mode =
       .ok (ExecFloat.Binary.toModel result) := by
   cases hmodel :
-      Model.dotWithStatus format
+      Model.dot format
         (left.map ExecFloat.Binary.toModel)
         (right.map ExecFloat.Binary.toModel)
-        rounding with
+        mode with
   | error error =>
       have : False := by
-        simp [dot, dotWithStatus, hmodel, Except.map] at hresult
+        simp [dot, hmodel, Except.map] at hresult
       exact this.elim
-  | ok outcome =>
-      have hpacked : ExecFloat.Binary.ofModel outcome.value = result := by
-        simpa [dot, dotWithStatus, hmodel, IEEEOutcome.ofModel, Except.map] using hresult
-      have hdecoded : ExecFloat.Binary.toModel result = outcome.value := by
-        rw [← hpacked]
-        exact ExecFloat.Binary.toModel_ofModel outcome.value
-      simp [Model.dot, hmodel, Except.map, hdecoded]
+  | ok value =>
+      have hpacked : ExecFloat.Binary.ofModel value = result := by
+        simpa [dot, hmodel, Except.map] using hresult
+      rw [← hpacked, ExecFloat.Binary.toModel_ofModel]
+
+/--
+The configured dot product with `status := true` has the value and the length check of the
+value-only configured dot product.
+-/
+@[simp] theorem map_value_dot (left right : Array Value) (mode : Model.IEEERoundingMode) :
+    (dot left right mode (status := true)).map (·.value) = dot left right mode := by
+  unfold dot Model.dot Model.Internal.Status.dot Model.Internal.Value.dot
+  by_cases hsize :
+      (left.map ExecFloat.Binary.toModel).size = (right.map ExecFloat.Binary.toModel).size
+  · simp only [dite_eq_left hsize]
+    rfl
+  · simp only [dite_eq_right hsize]
+    rfl
 
 end FloatLib.Floats.ExecFloat.Binary

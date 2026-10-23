@@ -30,8 +30,8 @@ open Lean Elab Command Meta
 /--
 Recover the descriptor from the lower-level `Model format` proof carrier.
 
-The recursive abbreviation unfolding stops as soon as the exact model constructor is exposed,
-so an expert-defined local alias remains inspectable without reducing the model to its fields.
+Abbreviation unfolding stops as soon as the model constructor is exposed, so a local alias stays
+inspectable without reducing the model to its fields.
 -/
 private meta def extractModelFormat? (type : Expr) : MetaM (Option Expr) := do
   let some model ←
@@ -73,8 +73,8 @@ private meta def executionIdentity
 /--
 Certified operations exposed directly by the descriptor-indexed proof model.
 
-They are listed as specialized operations because `Model format` intentionally does not install
-the configured `ExecFloat` capability planner.
+They are listed as specialized operations because `Model format` does not install the configured
+`ExecFloat` capability planner.
 -/
 private meta def modelOperations :
     List FloatLib.Floats.ExecFloat.InfoEntry :=
@@ -91,9 +91,11 @@ private meta def modelOperations :
   , ⟨"fma",
       "`Model.fma`; single-rounding automatic dispatch, with `Model.Proof.fma_eq_spec`"⟩
   , ⟨"directed arithmetic",
-      "`*WithRounding`, `*Down`, and `*Up` expose explicit IEEE rounding directions"⟩
+      "`(mode := m)` on each operation selects one of six rounding directions, " ++
+        "including MPFR's away-from-zero rounding"⟩
   , ⟨"status-bearing arithmetic",
-      "`*WithStatus` returns the encoded result with invalid, divide-by-zero, overflow, underflow, and inexact flags"⟩
+      "`(status := true)` returns the encoded result with invalid, divide-by-zero, overflow, " ++
+        "underflow, and inexact flags and the ternary value"⟩
   ]
 
 /-- Persistent storage specified by the configured family's selected plan. -/

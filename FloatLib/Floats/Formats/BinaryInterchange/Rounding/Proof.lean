@@ -11,9 +11,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 public import FloatLib.Floats.Formats.Flocq.Calculation.Round
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 
@@ -24,11 +26,11 @@ For conventional IEEE descriptors, `Model.roundDyadic` delegates normalization t
 logical float model. This module relates that executable result to the independent Flocq-style
 rounded-real semantics in `FloatLib.Floats.Formats.Flocq.FloatRep`. Exponent and fraction widths
 remain symbolic. The grid membership and preservation results also cover custom biases and
-encoding policies; the executable rounding refinement requires `fmt.isIEEE = true`.
+encoding policies, but the executable rounding refinement requires `fmt.isIEEE = true`.
 
-The rounded-real model has gradual underflow but no infinities. Consequently refinement theorems
-carry an explicit hypothesis that the executable result is finite; an overflowing IEEE result
-cannot equal a real-valued rounding function.
+The rounded-real model has gradual underflow but no infinities. So refinement theorems assume that
+the executable result is finite, since an overflowing IEEE result cannot equal a real-valued
+rounding function.
 
 ## References
 
@@ -55,36 +57,60 @@ instance (fmt : FloatFormat) : ValidExp (fexpOf fmt) :=
     (prec := fmt.fracWidth + 1) (by positivity)
 
 /--
-Nearest-even rounding with the descriptor's precision, bias, and gradual underflow.
+Rounding of a real onto the precision and gradual-underflow grid of `fmt`, with the descriptor's
+bias, in the direction `mode`, nearest-even by default.
 
 The real grid has no upper exponent bound. Overflow and exceptional encodings belong to the
-executable operation; its equality to `roundAt` needs the corresponding refinement hypotheses.
+executable operation, and its equality to `roundAt` needs the corresponding refinement hypotheses.
+Nearest-even rounding and the two infinity directions unfold to Flocq's `round` with
+`nearestEven`, `ceilRound`, and `floorRound`, and every direction is
+`round (roundingFunction mode)` (`roundAt_eq_round`).
 -/
-noncomputable abbrev roundAt (fmt : FloatFormat) (x : ℝ) : ℝ :=
-  round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) nearestEven x
+noncomputable def roundAt (fmt : FloatFormat) (x : ℝ)
+    (mode : IEEERoundingMode := .nearest) : ℝ :=
+  match mode with
+  | .nearest => round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) nearestEven x
+  | .up => round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) ceilRound x
+  | .down => round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) floorRound x
+  | mode => round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) (roundingFunction mode) x
 
-/-- Nearest-even rounding on a binary format fixes zero. -/
-theorem roundAt_zero (fmt : FloatFormat) : roundAt fmt 0 = 0 := by
-  exact round_preserves_generic nearestEven 0 generic_format_zero
+/-- Rounding in every direction is Flocq's rounding with the direction's integer rule. -/
+theorem roundAt_eq_round (fmt : FloatFormat) (x : ℝ) (mode : IEEERoundingMode) :
+    roundAt fmt x mode =
+      round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) (roundingFunction mode) x := by
+  cases mode <;> rfl
 
-/-- Nearest-even rounding on a binary format commutes with negation. -/
-@[simp] theorem roundAt_neg (fmt : FloatFormat) (x : ℝ) :
-    roundAt fmt (-x) = -roundAt fmt x := by
-  change
-    round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
-        nearestEven (-x) =
-      -round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
-        nearestEven x
-  rw [round_neg]
-  have hrnd : negRound nearestEven = nearestEven := by
-    funext value
-    simp [negRound, nearestEven_neg]
-  rw [hrnd]
+/-- Every rounding direction fixes zero. -/
+@[simp] theorem roundAt_zero (fmt : FloatFormat) (mode : IEEERoundingMode := .nearest) :
+    roundAt fmt 0 mode = 0 := by
+  rw [roundAt_eq_round]
+  exact round_preserves_generic (roundingFunction mode) 0 generic_format_zero
 
-/-- Nearest-even rounding is monotone on the exact real input. -/
-theorem roundAt_mono (fmt : FloatFormat) {x y : ℝ} (hxy : x ≤ y) :
-    roundAt fmt x ≤ roundAt fmt y := by
-  exact round_mono nearestEven hxy
+/--
+Rounding a negated real gives the negation of rounding the real in the mirrored direction
+`mode.negate`, which exchanges the two infinity directions and fixes the other four. Nearest-even
+rounding commutes with negation.
+-/
+@[simp] theorem roundAt_neg (fmt : FloatFormat) (x : ℝ) (mode : IEEERoundingMode := .nearest) :
+    roundAt fmt (-x) mode = -roundAt fmt x mode.negate := by
+  have hrnd : negRound (roundingFunction mode) = roundingFunction mode.negate := by
+    cases mode with
+    | nearest =>
+        funext value
+        simp [IEEERoundingMode.negate, roundingFunction, negRound, nearestEven_neg]
+    | nearestAway => exact negRound_nearestChoice_tieAway
+    | towardZero => exact negRound_truncRound
+    | up => exact negRound_ceilRound
+    | down => exact negRound_floorRound
+    | away => exact negRound_awayRound
+  rw [roundAt_eq_round, roundAt_eq_round, round_neg, hrnd]
+
+/-- Every rounding direction is monotone in the real input. -/
+theorem roundAt_mono (fmt : FloatFormat) {x y : ℝ} (hxy : x ≤ y)
+    (mode : IEEERoundingMode := .nearest) :
+    roundAt fmt x mode ≤ roundAt fmt y mode := by
+  rw [roundAt_eq_round, roundAt_eq_round]
+  exact round_mono (roundingFunction mode) hxy
 
 /--
 Every finite decoded word belongs to its descriptor's precision and gradual-underflow grid.
@@ -136,7 +162,7 @@ theorem toReal_genericFormat_of_isFinite {fmt : FloatFormat} (x : Model fmt)
         Int.ofNat_eq_natCast]
       omega
 
-/-- Rounding a finite decoded value back to its own format is an exact identity. -/
+/-- Rounding a finite decoded value back to its own format is the identity. -/
 @[simp] theorem roundAt_toReal_eq {fmt : FloatFormat} (x : Model fmt)
     (hfin : isFinite x = true) :
     roundAt fmt (toReal x) = toReal x := by
@@ -306,7 +332,7 @@ theorem roundAt_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
 Real value of a finished rounded mantissa on the subnormal grid.
 
 The mantissa may be zero, in which case the packed value is a signed zero, or reach
-`2 ^ fracWidth`, in which case it is the least normal value; both have the stated real value.
+`2 ^ fracWidth`, in which case it is the least normal value. Both have the stated real value.
 -/
 theorem toReal_ofModel_finishRoundedMantissa_minSubnormal
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (sign : Float.Model.UnpackedFloat.Sign) (rounded : Nat)
@@ -328,7 +354,7 @@ theorem toReal_ofModel_finishRoundedMantissa_minSubnormal
 /--
 Real value of a finished normalized rounded mantissa with leading bit at unbiased exponent `k`.
 
-The mantissa lies in `[2 ^ fracWidth, 2 ^ (fracWidth + 1)]`; the upper endpoint is the carry that
+The mantissa lies in `[2 ^ fracWidth, 2 ^ (fracWidth + 1)]`. The upper endpoint is the carry that
 `finishRoundedMantissa` renormalizes to exponent `k + 1`. The finiteness hypothesis excludes IEEE
 overflow, which has no value in `ℝ`.
 -/
@@ -383,8 +409,7 @@ theorem toReal_ofModel_finishRoundedMantissa_normal
 Executable dyadic rounding refines the rounded-real semantics for conventional IEEE descriptors.
 
 The finiteness hypothesis excludes the one case that has no value in `ℝ`: IEEE overflow to
-infinity. Both the IEEE-descriptor condition and result finiteness are explicit hypotheses; custom
-widths are allowed when they satisfy that descriptor condition.
+infinity. Custom widths are allowed when they satisfy the IEEE-descriptor condition.
 -/
 theorem toReal_roundDyadic_eq_roundAt
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (d : Numerics.Dyadic)

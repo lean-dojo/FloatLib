@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 
 /-!
@@ -17,8 +17,8 @@ The executable arithmetic refinement theorems are stated over real values, but I
 observable only on the encoded result. This module connects those views: an exact dyadic whose
 magnitude is at most the largest finite value of the destination format cannot round to infinity.
 
-The result is uniform in the exponent and fraction widths and is intended as the common foundation
-for operation-specific no-overflow theorems.
+The result is uniform in the exponent and fraction widths and is the common foundation for
+operation-specific no-overflow theorems.
 -/
 
 @[expose] public section
@@ -211,10 +211,10 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (d : Numerics.Dyadic)
     (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
     isFinite (roundDyadic fmt d) = true := by
-  rw [roundDyadic_eq_roundDyadicImpl]
-  simp only [roundDyadicImpl, hfmt, ite_true]
+  rw [roundDyadic_eq_internal]
+  simp only [Internal.roundDyadic, hfmt, ite_true]
   by_cases hm : d.significand = 0
-  · rw [ieeeRoundDyadicImpl]
+  · rw [Internal.ieeeRoundDyadic]
     simp only [beq_iff_eq, hm, ite_true]
     exact isFinite_signedZero_ieee fmt hfmt d.negative
   · let k : Int := Int.ofNat d.significand.log2 + d.exponent
@@ -227,7 +227,7 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
           (d.significand.log2 : Int) + d.exponent <
             FloatFormat.ieeeMinNormalExponent fmt := by
         simpa [k] using hsub
-      rw [ieeeRoundDyadicImpl]
+      rw [Internal.ieeeRoundDyadic]
       simp only [beq_iff_eq, hm, ite_false]
       rw [ite_eq_left hsub']
       let fraction :=
@@ -275,7 +275,7 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
             rounded := by
         rfl
       have himpl :
-          ieeeRoundDyadicImpl fmt d =
+          Internal.ieeeRoundDyadic fmt d =
             let carry := rounded == pow2 (fmt.fracWidth + 1)
             let normalizedExponent := if carry then k + 1 else k
             if normalizedExponent >
@@ -287,7 +287,7 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
               ofFields fmt d.negative
                 (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
                 (normalizedMantissa - pow2 fmt.fracWidth) := by
-        unfold ieeeRoundDyadicImpl
+        unfold Internal.ieeeRoundDyadic
         simp only [beq_iff_eq, hm, ite_false]
         rw [ite_eq_right (not_lt_of_ge hnormal'), hraw]
         rfl

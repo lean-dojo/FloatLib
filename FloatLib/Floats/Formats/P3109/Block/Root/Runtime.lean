@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 /-!
 # P3109 block square roots and norms
 
-Normalize the exact root at the result scale before rounding. A finite nonzero scale `s`
-turns `sqrt(q) / s` into the signed root of `q / s²`. Exact square comparisons then perform
-one destination rounding, including negative scales and lane-specific stochastic words.
-The zero, infinite, and NaN scale rules are the same rules as ordinary block projection.
+Block roots normalize the exact root at the result scale before rounding. A finite nonzero
+scale `s` turns `sqrt(q) / s` into the signed root of `q / s²`. Exact square comparisons then
+perform one destination rounding, including negative scales and lane-specific stochastic words.
+The zero, infinite, and NaN scale rules are those of ordinary block projection.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ open FloatLib.Numerics FloatLib.Floats.ExecFloat Arithmetic
 structure BlockRoot where
   /-- Sign of the result after normalization at a possibly negative scale. -/
   negative : Bool := false
-  /-- Squared magnitude; negative finite radicands are rejected by square-root rounding. -/
+  /-- Squared magnitude. Square-root rounding sends a negative finite radicand to NaN. -/
   radicand : NumericalValue Rat
   deriving DecidableEq, Repr
 
@@ -53,8 +53,8 @@ def normalize (scale radicand : NumericalValue Rat) : BlockRoot :=
 
 /-- Directed rounding of a negative root reverses the direction on its positive magnitude. -/
 def magnitudeMode (negative : Bool) : RoundingMode → RoundingMode
-  | .towardPositive => if negative then .towardNegative else .towardPositive
-  | .towardNegative => if negative then .towardPositive else .towardNegative
+  | .up => if negative then .down else .up
+  | .down => if negative then .up else .down
   | mode => mode
 
 /-- Apply a root's sign after magnitude rounding, retaining the closed exceptional rules. -/
@@ -64,13 +64,13 @@ def applySign (negative : Bool) : NumericalValue Numerics.Dyadic →
   | .infinity sign => .infinity (negative != sign)
   | .exceptional _ => .exceptional .nan
 
-/-- One exact square-comparison precision rounding of the normalized signed root. -/
+/-- Round the normalized signed root once to the destination precision by exact square tests. -/
 def rounded (format : Format) (mode : RoundingMode) (root : BlockRoot) :
     NumericalValue Numerics.Dyadic :=
   applySign root.negative
     (Arithmetic.sqrtRounded format (magnitudeMode root.negative mode) root.radicand)
 
-/-- Saturation follows signed precision rounding and uses the original requested direction. -/
+/-- Saturate the rounded signed root in the requested direction, not the magnitude direction. -/
 def value (format : Format) (policy : ProjectionPolicy) (root : BlockRoot) :
     NumericalValue Numerics.Dyadic :=
   format.saturate policy.saturation policy.rounding (rounded format policy.rounding root)

@@ -7,22 +7,26 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Runtime
-public import FloatLib.Numerics.Exact.RationalPower.Proof
-public import FloatLib.Numerics.Enclosure.Elementary.Proof
+public import FloatLib.Numerics.Enclosure.Comparison.Proof
+public import FloatLib.Numerics.Enclosure.Elementary.Convergence
+public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 /-!
-# Correctness of power comparison from logarithm bounds
+# Containment and refinement of rational-power logarithm bounds
 
-The real logarithm is strictly increasing on positive values. Consequently a strict sign
-certificate for the logarithm difference determines the original comparison. When no such
-certificate is available, the exact denominator-clearing theorem supplies the result.
+The logarithm enclosures contain the exact logarithms, and their endpoints converge as the degree
+grows. Scaling and subtraction preserve both properties. Doubling the degree therefore separates
+the logarithm difference from zero whenever the power differs from the target, and the comparison
+that relies on this decides the equality case beforehand.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.RationalPower
 
-open RationalInterval
+open Filter RationalInterval
+open scoped Topology
 
 /-- The executable interval contains the exact difference of real logarithms. -/
 theorem contains_logDifference (base exponent target : ℚ) (degree : Nat)
@@ -34,63 +38,49 @@ theorem contains_logDifference (base exponent target : ℚ) (degree : Nat)
     contains_sub (contains_scale (Enclosure.contains_log base degree hbase) exponent)
       (Enclosure.contains_log target degree htarget)
 
-/-- A strictly negative upper bound proves that the real power is below the target. -/
-theorem rpow_lt_of_logDifference_hi_neg (base exponent target : ℚ) (degree : Nat)
+/-- Lower endpoints converge to the exact logarithm difference. -/
+theorem tendsto_logDifference_lo (base exponent target : ℚ)
+    (hbase : 0 < base) (htarget : 0 < target) :
+    Tendsto (fun degree : Nat => ((logDifference base exponent target degree).lo : ℝ)) atTop
+      (𝓝 (Real.log ((base : ℝ) ^ (exponent : ℝ)) - Real.log (target : ℝ))) := by
+  have hbaseReal : 0 < (base : ℝ) := by exact_mod_cast hbase
+  rw [Real.log_rpow hbaseReal]
+  exact tendsto_sub_lo
+    (tendsto_scale_lo (Enclosure.tendsto_log_lo base hbase)
+      (Enclosure.tendsto_log_hi base hbase) exponent)
+    (Enclosure.tendsto_log_hi target htarget)
+
+/-- Upper endpoints converge to the exact logarithm difference. -/
+theorem tendsto_logDifference_hi (base exponent target : ℚ)
+    (hbase : 0 < base) (htarget : 0 < target) :
+    Tendsto (fun degree : Nat => ((logDifference base exponent target degree).hi : ℝ)) atTop
+      (𝓝 (Real.log ((base : ℝ) ^ (exponent : ℝ)) - Real.log (target : ℝ))) := by
+  have hbaseReal : 0 < (base : ℝ) := by exact_mod_cast hbase
+  rw [Real.log_rpow hbaseReal]
+  exact tendsto_sub_hi
+    (tendsto_scale_hi (Enclosure.tendsto_log_lo base hbase)
+      (Enclosure.tendsto_log_hi base hbase) exponent)
+    (Enclosure.tendsto_log_lo target htarget)
+
+/--
+When the power differs from the target, doubling the degree eventually gives a logarithm bound
+that excludes zero.
+-/
+theorem exists_logDifference_separating (base exponent target : ℚ)
     (hbase : 0 < base) (htarget : 0 < target)
-    (hnegative : (logDifference base exponent target degree).hi < 0) :
-    (base : ℝ) ^ (exponent : ℝ) < (target : ℝ) := by
+    (hne : (base : ℝ) ^ (exponent : ℝ) ≠ (target : ℝ)) :
+    ∃ level, Enclosure.Comparison.Separates (logDifference base exponent target (2 ^ level)) 0 := by
   have hbaseReal : 0 < (base : ℝ) := by exact_mod_cast hbase
   have htargetReal : 0 < (target : ℝ) := by exact_mod_cast htarget
-  have hbound := (contains_logDifference base exponent target degree hbase htarget).2
-  have hnegativeReal : ((logDifference base exponent target degree).hi : ℝ) < 0 := by
-    exact_mod_cast hnegative
-  apply (Real.log_lt_log_iff (Real.rpow_pos_of_pos hbaseReal _) htargetReal).mp
-  linarith
-
-/-- A strictly positive lower bound proves that the target is below the real power. -/
-theorem lt_rpow_of_logDifference_lo_pos (base exponent target : ℚ) (degree : Nat)
-    (hbase : 0 < base) (htarget : 0 < target)
-    (hpositive : 0 < (logDifference base exponent target degree).lo) :
-    (target : ℝ) < (base : ℝ) ^ (exponent : ℝ) := by
-  have hbaseReal : 0 < (base : ℝ) := by exact_mod_cast hbase
-  have htargetReal : 0 < (target : ℝ) := by exact_mod_cast htarget
-  have hbound := (contains_logDifference base exponent target degree hbase htarget).1
-  have hpositiveReal : (0 : ℝ) < (logDifference base exponent target degree).lo := by
-    exact_mod_cast hpositive
-  apply (Real.log_lt_log_iff htargetReal (Real.rpow_pos_of_pos hbaseReal _)).mp
-  linarith
-
-/-- The bounds and exact fallback together always return the real-power ordering. -/
-theorem compareWithEnclosure_eq_real (base exponent target : ℚ) (degree : Nat)
-    (hbase : 0 < base) :
-    compareWithEnclosure base exponent target degree =
-      cmp ((base : ℝ) ^ (exponent : ℝ)) (target : ℝ) := by
-  have hbaseReal : 0 < (base : ℝ) := by exact_mod_cast hbase
-  unfold compareWithEnclosure
-  split
-  · rename_i hunit
-    have hpower : (base : ℝ) ^ (exponent : ℝ) = 1 := by
-      rcases hunit with rfl | rfl <;> simp
-    rw [hpower]
-    have hlt : (1 : ℚ) < target ↔ (1 : ℝ) < target := by norm_cast
-    have hgt : target < (1 : ℚ) ↔ (target : ℝ) < 1 := by norm_cast
-    simp only [cmp, cmpUsing, hlt, hgt]
-  · split
-    · rename_i htarget
-      have htargetReal : (target : ℝ) ≤ 0 := by exact_mod_cast htarget
-      exact (cmp_eq_gt_iff _ _).mpr
-        (htargetReal.trans_lt (Real.rpow_pos_of_pos hbaseReal _)) |>.symm
-    · rename_i htarget
-      have ht : 0 < target := lt_of_not_ge htarget
-      dsimp only
-      split
-      · rename_i hnegative
-        exact (cmp_eq_lt_iff _ _).mpr
-          (rpow_lt_of_logDifference_hi_neg base exponent target degree hbase ht hnegative) |>.symm
-      · split
-        · rename_i hpositive
-          exact (cmp_eq_gt_iff _ _).mpr
-            (lt_rpow_of_logDifference_lo_pos base exponent target degree hbase ht hpositive) |>.symm
-        · exact compare_eq_real base exponent target hbase ht.le
+  have hdifference :
+      Real.log ((base : ℝ) ^ (exponent : ℝ)) - Real.log (target : ℝ) ≠ ((0 : ℚ) : ℝ) := by
+    rw [Rat.cast_zero, sub_ne_zero]
+    intro hlog
+    exact hne (Real.log_injOn_pos (Real.rpow_pos_of_pos hbaseReal _) htargetReal hlog)
+  exact Enclosure.Comparison.exists_separating 0 hdifference
+    ((tendsto_logDifference_lo base exponent target hbase htarget).comp
+      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+    ((tendsto_logDifference_hi base exponent target hbase htarget).comp
+      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
 
 end FloatLib.Numerics.RationalPower

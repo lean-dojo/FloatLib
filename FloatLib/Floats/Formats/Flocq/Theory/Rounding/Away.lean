@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 /-!
 # Rounding Away from Zero
 
-Away-from-zero rounding uses ceiling on nonnegative inputs and floor on negative inputs.  Together
+Away-from-zero rounding uses ceiling on nonnegative inputs and floor on negative inputs. Together
 with toward-zero rounding, it supplies the second endpoint decomposition for arbitrary valid
 integer rounding modes.
 -/
@@ -63,6 +63,16 @@ instance awayRoundValid : ValidRnd awayRound where
     · simp [awayRound, hn]
     · simp [awayRound, hn]
 
+/-- Away-from-zero integer rounding commutes with negation. -/
+theorem negRound_awayRound : negRound awayRound = awayRound := by
+  funext x
+  rcases lt_trichotomy x 0 with hx | rfl | hx
+  · have hnx : ¬-x < 0 := not_lt.mpr (neg_nonneg.mpr hx.le)
+    simp [negRound, awayRound, hx, hnx, Int.ceil_neg]
+  · simp [negRound, awayRound]
+  · have hnx : -x < 0 := neg_neg_of_pos hx
+    simp [negRound, awayRound, not_lt.mpr hx.le, hnx, Int.floor_neg]
+
 /-- Arbitrary valid integer rounding chooses toward-zero or away-from-zero. -/
 theorem valid_round_eq_trunc_or_away (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     rnd x = truncRound x ∨ rnd x = awayRound x := by
@@ -74,7 +84,7 @@ theorem valid_round_eq_trunc_or_away (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ
     · exact Or.inr (hceil.trans (awayRound_eq_ceil hx).symm)
     · exact Or.inl (hceil.trans (truncRound_eq_ceil (le_of_not_ge hx)).symm)
 
-/-- Upward rounding on nonnegative inputs and downward rounding on nonpositive inputs. -/
+/-- Point rounding away from zero: upward for nonnegative `x` and downward for nonpositive `x`. -/
 def RoundAwayFromZeroPoint (F : ℝ → Prop) (x f : ℝ) : Prop :=
   (0 ≤ x → RoundUpPoint F x f) ∧ (x ≤ 0 → RoundDownPoint F x f)
 

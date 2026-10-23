@@ -15,13 +15,15 @@ public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridRuntime
 
 The logarithm comparator first tries a finite binary-grid enclosure. Inconclusive probes fall
 back to exact rational enclosures, doubling the Taylor degree until the ordering is known.
-The grid precision limits only the precheck, not the accuracy of the total comparison.
+The grid precision limits the precheck and never the result of the comparison.
 The imported termination proof is erased during compilation.
 
 `compareExp` uses `exp x < y ↔ x < log y` for positive `y`. This avoids materializing an
-enormous exponential when the destination will saturate. `prepareExp` instead caches direct
-exponential enclosures for arguments in `[-8, 8]`, and uses the logarithmic comparison outside
-that interval.
+enormous exponential when the destination will saturate. `prepareExp` instead caches exponential
+enclosures for arguments in `[-8, 8]`, and uses the logarithmic comparison outside that interval.
+
+The constant `log 2` needs no comparator of its own: `prepareLog 2` compares it with rational
+boundaries and shares its enclosures across them.
 -/
 
 @[expose] public section
@@ -50,7 +52,7 @@ def compareExp (argument boundary : ℚ) : Ordering :=
 
 /--
 Prepare a logarithm comparator that shares its first `levels` enclosures across boundaries.
-Cached levels are reused across boundary queries; levels beyond this prefix are computed on demand.
+Deeper levels are computed on demand.
 -/
 def prepareLog (argument : ℚ) (levels : Nat) (hpositive : 0 < argument) :
     Enclosure.Comparison.Prepared :=
@@ -67,7 +69,7 @@ Prepare an exponential comparator, sharing enclosures for arguments in `[-8, 8]`
 
 Repeated squaring can create large rational intermediates even when the final comparison is
 easy. Outside this moderate interval the logarithm-of-boundary comparison avoids that growth.
-The threshold selects an algorithm; it does not restrict the function's domain or accuracy.
+The threshold selects an algorithm. It does not restrict the function's domain or accuracy.
 -/
 def prepareExp (argument : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared :=
   if hzero : argument = 0 then .direct (fun boundary => cmp 1 boundary)

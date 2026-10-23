@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Shared.GuardSticky.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
@@ -17,7 +17,7 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 # Correctness of direct two-limb guard-and-sticky rounding
 
 `candidateCarrierLawful` proves that the `UInt128` candidate carrier satisfies the shared carrier
-laws at capacity 128. The shared theorems then give the packing and rounding refinement; the
+laws at capacity 128. The shared theorems then give the packing and rounding refinement. The
 remaining proofs connect the two-limb entry points, which add the zero test, the exact
 minimum-positive comparison, and exact-width sign restoration, to the arbitrary-width direct
 rounder.
@@ -104,7 +104,8 @@ theorem candidateCarrierLawful :
     show (NativeLimb.lowBits ⟨0xffffffffffffffff, 0xffffffffffffffff⟩ width).toNat =
       2 ^ width - 1
     have hmax :
-        (FixedWord.UInt128.mk 0xffffffffffffffff 0xffffffffffffffff).toNat = 2 ^ 128 - 1 :=
+        (FixedWord.UInt128.mk 0xffffffffffffffff 0xffffffffffffffff).toNat = 2 ^ 128 - 1 := by
+      unfold FixedWord.UInt128.toNat
       rfl
     have hpow : 2 ^ 128 = 2 ^ width * 2 ^ (128 - width) := by
       rw [← pow_add, Nat.add_sub_of_le hwidth.le]
@@ -133,12 +134,17 @@ theorem isLessMinPositive_eq
          exponent } : FloatLib.Numerics.Dyadic).isLess
         (DyadicRounding.minPositive format) := by
   rw [DyadicRounding.minPositive_eq_fields]
-  unfold isLessMinPositive
-  dsimp only
-  rw [FixedWord.DyadicCompare.compareNonnegative128ToWord_eq]
-  simp only [UInt64.toNat_one]
-  rw [← Dyadic.isLessNonnegativeFields.eq_1, Dyadic.isLessNonnegativeFields_eq,
-    Dyadic.isLessFields_eq]
+  have hpower : isLessMinPositive format significand exponent =
+      Dyadic.isLessPowerOfTwoAtLeading significand.toNat exponent
+        (FixedWord.UInt128.log2 significand) (-(4 * Int.ofNat (format.payloadBits - 1))) := by
+    unfold isLessMinPositive Dyadic.isLessPowerOfTwoAtLeading
+    have hzero : NativeLimb.isZero significand = (significand.toNat == 0) := by
+      apply Bool.eq_iff_iff.mpr
+      rw [NativeLimb.isZero_eq_true_iff, beq_iff_eq]
+    rw [hzero]
+  rw [hpower, Dyadic.isLessPowerOfTwoAtLeading_eq _ _ _ _
+      (FixedWord.UInt128.log2_toNat significand),
+    Dyadic.isLessNonnegativeFields_eq, Dyadic.isLessFields_eq]
 
 /-! ## Complete carrier refinement -/
 
@@ -163,6 +169,7 @@ theorem roundPositiveCodeWord_toNat_eq_direct
     unfold roundPositiveCodeWord
     rw [ite_eq_left hzero]
     simp [DirectDyadicPacking.roundPositiveCode, hzeroNat]
+    unfold FixedWord.UInt128.toNat
     rfl
   · have hnonzero : significand.toNat ≠ 0 := by
       intro equality
@@ -199,7 +206,7 @@ private theorem roundPositiveCodeWord_lt_signMask_direct
 /--
 Two-limb sign restoration is exact-width Posit sign restoration.
 
-The positive code must lie below the sign mask; zero is unchanged under either sign.
+The positive code must lie below the sign mask, and zero is unchanged under either sign.
 -/
 theorem restoreSignWord_toNat
     (format : Format) (heligible : NativeLimb.Eligible format)
@@ -218,6 +225,7 @@ theorem restoreSignWord_toNat
       · have hzeroNat : positiveCode.toNat = 0 :=
           (NativeLimb.isZero_eq_true_iff positiveCode).1 hzero
         simp [hzero, hzeroNat, DyadicRounding.restoreSignCode]
+        unfold FixedWord.UInt128.toNat
         rfl
       · have hnonzero : positiveCode.toNat ≠ 0 := by
           intro equality

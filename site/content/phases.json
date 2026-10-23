@@ -304,7 +304,19 @@
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt",
-          "title": "Nearest-even rounding on the real grid"
+          "title": "Rounding on the real grid in any direction"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Flocq.roundingFunction",
+          "title": "The Flocq rule of each direction"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_eq_round",
+          "title": "Every direction is Flocq rounding"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_neg",
+          "title": "Negation mirrors the rounding direction"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundDyadic_eq_roundAt",
@@ -453,15 +465,15 @@
           "title": "Widening with compatible exponents is exact"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.dotWithStatus",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.dot",
           "title": "Correctly rounded dot product"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sumWithStatus_eq_round_of_finite_nonzero",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sum_status_eq_round_of_finite_nonzero",
           "title": "A sum rounds once"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dotWithStatus_eq_round_of_finite_nonzero",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dot_status_eq_round_of_finite_nonzero",
           "title": "A dot product rounds once"
         },
         {
@@ -485,11 +497,11 @@
           "title": "Finer IEEE grids preserve finite sources"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite",
           "title": "One rounding for finite sums including zero"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite",
           "title": "One rounding for finite dot products including zero"
         }
       ]
@@ -500,10 +512,10 @@
       "nodes": [
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode",
-          "title": "The four IEEE rounding directions"
+          "title": "The six rounding directions"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEStatus",
+          "name": "FloatLib.Numerics.IEEEStatus",
           "title": "The five exception flags"
         },
         {
@@ -512,10 +524,18 @@
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome",
-          "title": "A value with its flags"
+          "title": "A value with its flags and ternary value"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundDyadicWithRounding",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.dyadicTernary",
+          "title": "The ternary value of one rounding"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.dyadicRoundingOutcome",
+          "title": "Flags and ternary value of one rounding"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Internal.Directed.roundDyadic",
           "title": "Directed rounding of a dyadic"
         },
         {
@@ -523,19 +543,19 @@
           "title": "Policy-driven rounding"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addWithRounding",
-          "title": "Directed addition"
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.add_eq_of_toDyadic?_some",
+          "title": "Directed addition rounds the exact sum once"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal",
           "title": "Extended-real value of a word"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_addDown_le",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_add_down_le",
           "title": "Downward addition is a lower bound"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_addUp",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_add_up",
           "title": "Upward addition is an upper bound"
         },
         {
@@ -559,27 +579,35 @@
           "title": "When overflow is raised"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addWithStatus",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.add_status_of_toDyadic",
           "title": "Addition with flags"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addWithStatus_value",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.value_add",
           "title": "Returning flags preserves the result value"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addWithStatus_invalid",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.add_invalid",
           "title": "When addition is invalid"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.divWithStatus_divideByZero",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.div_divideByZero",
           "title": "Division by zero"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.sqrtWithStatus_invalid",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.sqrt_invalid",
           "title": "When square root is invalid"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_nearestEven",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.sqrt_inexact_eq_ternary_bne_eq",
+          "title": "Square-root inexactness is a nonzero ternary value"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.sqrt_inexact_iff",
+          "title": "Square root is inexact exactly when it misses the real root"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_nearest",
           "title": "Integral rounding to nearest even"
         },
         {
@@ -591,7 +619,7 @@
           "title": "Finite truncation remains finite"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundToIntegral_towardZero_overflow_eq_false",
           "title": "Truncation never signals overflow"
         },
         {
@@ -663,12 +691,90 @@
           "title": "Configured interval addition encloses the exact sum"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_roundRatQDown_le",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_ofRat_down_le",
           "title": "Exact rational conversion is a lower bound"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_roundRatQUp",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_ofRat_up",
           "title": "Exact rational conversion is an upper bound"
+        }
+      ]
+    },
+    {
+      "id": "elementary-functions",
+      "title": "Elementary functions",
+      "nodes": [
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Power.toReal_pow_of_eq_intCast",
+          "title": "Integral powers are correctly rounded"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Certified.pow",
+          "title": "Power by enclosure refinement"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Enclosure.toReal_eq_roundAt_of_roundScaled?_eq_some",
+          "title": "A settled scaled enclosure gives the rounded value"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Certified.toReal_of_pow_eq_ok",
+          "title": "An accepted power is correctly rounded"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Power.pow_spec_of_certified",
+          "title": "Power is correctly rounded when its search settles"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Constants.piLevel",
+          "title": "pi/2 and 2/pi at a given precision"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Constants.piLevel_halfPi_spec",
+          "title": "The cached pi/2 is within two units"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Constants.piLevel_twoOverPi_spec",
+          "title": "The cached 2/pi is within two units"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Constants.ln2Fixed",
+          "title": "log 2 at a given precision"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Constants.ln2Fixed_spec",
+          "title": "The cached log 2 is within two units"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.pi",
+          "title": "pi in a binary format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_pi",
+          "title": "pi is correctly rounded"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.QuarterTurns",
+          "title": "An argument reduced modulo pi/2"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.reduceWindow",
+          "title": "Payne-Hanek reduction with a window of 2/pi"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.reduceWindow_spec",
+          "title": "Every window reduces its argument"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.QuarterTurns.accepts_spec",
+          "title": "An accepted reduction keeps the requested relative bits"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.exists_accepting_window",
+          "title": "A wide enough window is always accepted"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.QuarterTurns.Reduces.exists_sin_cos_eq_rotate",
+          "title": "Sine and cosine from the reduced argument"
         }
       ]
     },
@@ -895,10 +1001,6 @@
           "title": "Convert between formats"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.castWith",
-          "title": "Conversion with an explicit destination context"
-        },
-        {
           "name": "FloatLib.Floats.ExecFloat.roundOnce",
           "title": "Evaluate exactly, round once"
         },
@@ -985,15 +1087,15 @@
           "title": "Exactly the binary32 layout"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.addFiniteImpl?",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.addFiniteWord?",
           "title": "Monomorphic binary32 addition"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.addFiniteImpl_eq",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.addFiniteWord_eq",
           "title": "Binary32 addition equals the generic kernel"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64.addFiniteFastImpl_eq",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64.addFinite_eq_addFiniteComponents",
           "title": "Binary64 fast addition is bit-exact"
         },
         {
@@ -1051,11 +1153,15 @@
           "title": "The configured binary type"
         },
         {
+          "name": "FloatLib.Floats.Binary32",
+          "title": "The standard binary32 type"
+        },
+        {
           "name": "FloatLib.Floats.ExecFloat.BinaryLimbs",
           "title": "Limb-stored wide formats"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.format",
+          "name": "FloatLib.Floats.ExecFloat.Binary.descriptor",
           "title": "The descriptor behind a type"
         },
         {
@@ -1129,23 +1235,35 @@
           "title": "Exact signed-rational value of a configured word"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.addWithRounding",
-          "title": "Configured directed addition"
+          "name": "FloatLib.Floats.ExecFloat.Binary.add",
+          "title": "Configured addition in any direction"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.divWithRounding",
-          "title": "Configured directed division"
+          "name": "FloatLib.Floats.ExecFloat.Binary.div",
+          "title": "Configured division in any direction"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_addWithRounding",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_add",
           "title": "Configured addition decodes to the model"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.addWithStatus",
-          "title": "Configured addition with flags"
+          "name": "FloatLib.Floats.ExecFloat.Binary.toModel_hAdd",
+          "title": "The sum a + b decodes to model addition"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_addWithStatus",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_add",
+          "title": "A finite sum a + b is the rounded real sum"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.abs_toReal_add_sub_le",
+          "title": "A finite sum is within half an ulp"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.value_add",
+          "title": "Configured addition with flags keeps the value"
+        },
+        {
+          "name": "FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_add",
           "title": "Repacking preserves the value and flags"
         },
         {
@@ -1153,7 +1271,7 @@
           "title": "Configured dot product"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.dotWithStatus_eq_model",
+          "name": "FloatLib.Floats.ExecFloat.Binary.dot_status_eq_model",
           "title": "Configured dot product is the model dot product"
         },
         {
@@ -1197,11 +1315,11 @@
           "title": "Squaring preserves the multiplication result"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_expMinus1_eq_some",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_of_expMinus1_eq_ok",
           "title": "Certified binary exp-minus-one"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_logPlus1_eq_some",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_of_logPlus1_eq_ok",
           "title": "Certified binary log-plus-one"
         },
         {
@@ -1427,6 +1545,10 @@
           "title": "A signed descriptor"
         },
         {
+          "name": "FloatLib.Floats.Formats.P3109.Format.binary8p4se",
+          "title": "The report's Binary8p4se"
+        },
+        {
           "name": "FloatLib.Floats.Formats.P3109.Format.decode",
           "title": "Exact decoding"
         },
@@ -1463,7 +1585,7 @@
           "title": "Every mode returns a grid value"
         },
         {
-          "name": "FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearestTiesToEven_abs_sub_le",
+          "name": "FloatLib.Floats.Formats.P3109.Format.roundFiniteToPrecision_nearest_abs_sub_le",
           "title": "Nearest even is within half a quantum"
         },
         {
@@ -1545,12 +1667,12 @@
           "title": "The configured bounded fixed-point type"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_checkedAdd_eq_some",
-          "title": "Successful checked addition is exact"
+          "name": "FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_add_eq_some",
+          "title": "Successful rejecting addition is exact"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.BoundedFixedPoint.Conversion.OverflowPolicy",
-          "title": "Overflow policy for conversion into bounded fixed point"
+          "name": "FloatLib.Floats.ExecFloat.BoundedFixedPoint.OverflowPolicy",
+          "title": "Overflow policy of bounded fixed-point conversion and arithmetic"
         },
         {
           "name": "FloatLib.Floats.ExecFloat.BoundedFixedPoint.Conversion.quantizeFinite",
@@ -1611,19 +1733,23 @@
       "title": "Compiler assumptions",
       "nodes": [
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundDyadic_eq_roundDyadicImpl",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundDyadic_eq_internal",
           "title": "A compiler substitution: rounding"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addDyadic_eq_addDyadicImpl",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.addDyadic_eq_internal",
           "title": "A compiler substitution: exact addition"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.dyadicRoundingOutcome_eq_internal",
+          "title": "A compiler substitution: flags and ternary value from one comparison"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel.add_eq_addRuntime",
           "title": "A compiler substitution: finite addition"
         },
         {
-          "name": "FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128_eq_quotientSteps128Impl",
+          "name": "FloatLib.Numerics.FixedWord.RestoringQuotient.quotientSteps128_eq_internal",
           "title": "A compiler substitution: two-limb division"
         },
         {
@@ -1635,7 +1761,7 @@
           "title": "A compiler substitution: shift rounding"
         },
         {
-          "name": "FloatLib.Numerics.LimbArray.toNat_eq_toNatImpl",
+          "name": "FloatLib.Numerics.LimbArray.toNat_eq_internal",
           "title": "A compiler substitution: limb evaluation"
         },
         {

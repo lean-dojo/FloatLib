@@ -20,7 +20,7 @@ is enough. If four neighbouring lanes share a magnitude, one exponent can serve 
 is what a shared-scale block and an OCP MX block do. Each section below constructs such a value,
 computes with it, and decodes the result.
 
-`BasicOperations` introduces the ordinary scalar interface; each representation here has its own
+`BasicOperations` introduces the ordinary scalar interface. Each representation here has its own
 operations.
 -/
 
@@ -96,9 +96,10 @@ private def sharedScaleReport : Int × Array Int × Array Rat :=
 
 /-
 The lane count is part of the type, so building the input vector includes a proof of its length.
-Exponent `-2` puts every lane on a grid with spacing `2^-2 = 1/4`; the integer coefficients are the
-inputs divided by that spacing. The first three inputs sit on the grid. The last, `3/8`, is halfway
-between `1/4` and `1/2`, and ties-to-even chooses the even coefficient 2, so it decodes as `1/2`.
+Exponent `-2` puts every lane on a grid with spacing `2^-2 = 1/4`, and the integer coefficients
+are the inputs divided by that spacing. The first three inputs sit on the grid. The last, `3/8`, is
+halfway between `1/4` and `1/2`, and ties-to-even chooses the even coefficient 2, so it decodes as
+`1/2`.
 -/
 
 /-! ## Combine an E8M0 scale with E2M1 elements -/
@@ -110,7 +111,7 @@ private def scaleTwo : ExecFloat.OCP.MX.E8M0 :=
   ExecFloat.OCP.MX.E8M0.ofExponentSaturating 1
 
 private abbrev MXElement :=
-  ExecFloat Formats.OCP.MX.E2M1
+  E2M1
 
 private def elementValues : Array MXElement :=
   #[1, -1]
@@ -128,7 +129,7 @@ private def mxRationals : Option (Array Rat) :=
 -- some #[2, -2]
 
 /-
-The elements are stored unscaled as E2M1 values `1` and `-1`; the shared E8M0 scale is applied
+The elements are stored unscaled as E2M1 values `1` and `-1`. The shared E8M0 scale is applied
 during block decoding, which is why both decoded dyadics are `±2`. Decoding returns `none` when the
 shared scale is the exceptional E8M0 code, so a block is either entirely finite or entirely
 undefined.

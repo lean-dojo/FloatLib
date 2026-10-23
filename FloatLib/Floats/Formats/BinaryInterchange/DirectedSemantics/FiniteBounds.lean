@@ -14,7 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 
 Every word of an `Encoding.finite` descriptor denotes a finite real. Outward rounding therefore
 has a real enclosure contract exactly while the exact value lies between the largest negative and
-positive finite values. Unlike the IEEE theorem, no infinity is available outside that range.
+positive finite values. Outside that range there is no infinity to fall back on, as the IEEE
+theorem has.
 
 These results are specific to `Encoding.finite`. Formats using `Encoding.finiteMaxNaN` or
 `Encoding.finiteUnsignedZero` reserve exceptional words and need their own boundary arguments.
@@ -337,73 +338,73 @@ theorem le_toReal_roundDyadicUp_of_encoding_finite
           fmt d.significand d.exponent hfmt hmant hmagnitude
 
 /-- Range-limited downward addition is a real lower bound in a finite-only format. -/
-theorem toReal_addDown_le_of_encoding_finite
+theorem toReal_add_down_le_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x + toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal (addDown x y) ≤ toReal x + toReal y := by
+    toReal (add x y (mode := .down)) ≤ toReal x + toReal y := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt x)
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt y)
   rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy] at hbound ⊢
-  rw [addDown, addWithRounding_eq_of_toDyadic?_some .towardNegativeInfinity nofun hdx hdy]
+  rw [add_eq_of_toDyadic?_some .down nofun hdx hdy]
   split_ifs with hzero
   · simp [Numerics.Dyadic.toReal, hzero]
   · exact toReal_roundDyadicDown_le_of_encoding_finite fmt _ hfmt hbound
 
 /-- Range-limited upward addition is a real upper bound in a finite-only format. -/
-theorem le_toReal_addUp_of_encoding_finite
+theorem le_toReal_add_up_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x + toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal x + toReal y ≤ toReal (addUp x y) := by
+    toReal x + toReal y ≤ toReal (add x y (mode := .up)) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt x)
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt y)
   rw [← toReal_addDyadic_of_toDyadic?_some hdx hdy] at hbound ⊢
-  rw [addUp, addWithRounding_eq_of_toDyadic?_some .towardPositiveInfinity nofun hdx hdy]
+  rw [add_eq_of_toDyadic?_some .up nofun hdx hdy]
   split_ifs with hzero
   · simp [Numerics.Dyadic.toReal, hzero]
   · exact le_toReal_roundDyadicUp_of_encoding_finite fmt _ hfmt hbound
 
 /-- Range-limited downward subtraction is a real lower bound in a finite-only format. -/
-theorem toReal_subDown_le_of_encoding_finite
+theorem toReal_sub_down_le_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x - toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal (subDown x y) ≤ toReal x - toReal y := by
+    toReal (sub x y (mode := .down)) ≤ toReal x - toReal y := by
   have hy := isFinite_eq_true_of_encoding_finite hfmt y
-  change toReal (addDown x (neg y)) ≤ toReal x - toReal y
+  change toReal (add x (neg y) (mode := .down)) ≤ toReal x - toReal y
   simpa [toReal_neg y hy, sub_eq_add_neg] using
-    toReal_addDown_le_of_encoding_finite x (neg y) hfmt
+    toReal_add_down_le_of_encoding_finite x (neg y) hfmt
       (by simpa [toReal_neg y hy, sub_eq_add_neg] using hbound)
 
 /-- Range-limited upward subtraction is a real upper bound in a finite-only format. -/
-theorem le_toReal_subUp_of_encoding_finite
+theorem le_toReal_sub_up_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x - toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal x - toReal y ≤ toReal (subUp x y) := by
+    toReal x - toReal y ≤ toReal (sub x y (mode := .up)) := by
   have hy := isFinite_eq_true_of_encoding_finite hfmt y
-  change toReal x - toReal y ≤ toReal (addUp x (neg y))
+  change toReal x - toReal y ≤ toReal (add x (neg y) (mode := .up))
   simpa [toReal_neg y hy, sub_eq_add_neg] using
-    le_toReal_addUp_of_encoding_finite x (neg y) hfmt
+    le_toReal_add_up_of_encoding_finite x (neg y) hfmt
       (by simpa [toReal_neg y hy, sub_eq_add_neg] using hbound)
 
 /-- Range-limited downward multiplication is a real lower bound in a finite-only format. -/
-theorem toReal_mulDown_le_of_encoding_finite
+theorem toReal_mul_down_le_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x * toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal (mulDown x y) ≤ toReal x * toReal y := by
+    toReal (mul x y (mode := .down)) ≤ toReal x * toReal y := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt x)
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt y)
   rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy] at hbound ⊢
-  rw [mulDown, mulWithRounding_eq_of_toDyadic?_some .towardNegativeInfinity nofun hdx hdy]
+  rw [mul_eq_of_toDyadic?_some .down nofun hdx hdy]
   exact toReal_roundDyadicDown_le_of_encoding_finite fmt _ hfmt hbound
 
 /-- Range-limited upward multiplication is a real upper bound in a finite-only format. -/
-theorem le_toReal_mulUp_of_encoding_finite
+theorem le_toReal_mul_up_of_encoding_finite
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.encoding = .finite)
     (hbound : |toReal x * toReal y| ≤ toReal (posMaxFinite fmt)) :
-    toReal x * toReal y ≤ toReal (mulUp x y) := by
+    toReal x * toReal y ≤ toReal (mul x y (mode := .up)) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt x)
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite (isFinite_eq_true_of_encoding_finite hfmt y)
   rw [← toReal_mulDyadic_of_toDyadic?_some hdx hdy] at hbound ⊢
-  rw [mulUp, mulWithRounding_eq_of_toDyadic?_some .towardPositiveInfinity nofun hdx hdy]
+  rw [mul_eq_of_toDyadic?_some .up nofun hdx hdy]
   exact le_toReal_roundDyadicUp_of_encoding_finite fmt _ hfmt hbound
 
 end

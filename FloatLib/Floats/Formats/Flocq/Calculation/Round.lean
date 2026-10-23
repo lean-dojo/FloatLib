@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Calculation.Bracket
 public import FloatLib.Floats.Formats.Flocq.Calculation.Operations
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Away
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 
 /-!
@@ -15,7 +16,11 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 
 The effective calculation layer identifies a unit interval `[m, m + 1)` and a location inside it.
 This file turns that finite location data into the integer selected by directed or nearest rounding
-and proves agreement with the rounded-real definitions.
+and proves agreement with the rounded-real definitions. Every named rounding mode is covered:
+floor, ceiling, truncation, rounding away from zero, and nearest rounding with any tie choice.
+
+Nearest rounding with ties away from zero differs from every other nearest rounding only at an
+exact midpoint, where it agrees with `awayRound`.
 
 Source counterparts are in Flocq 4.2.2, `src/Calc/Round.v`: `inbetween_int_NE` for
 nearest-even selection, `truncate_correct` for the canonical bracket after truncation, and
@@ -82,7 +87,76 @@ theorem nearestChoice_even_eq (x : ℝ) :
       · simp [heven]
       · simp [heven]
 
-/-- A certified unit bracket determines floor exactly. -/
+/-- Away from a midpoint, nearest rounding does not depend on the tie choice. -/
+theorem nearestChoice_eq_of_fract_ne_half (chooseUp chooseUp' : ℤ → Bool) {x : ℝ}
+    (hx : Int.fract x ≠ 1 / 2) :
+    nearestChoice chooseUp x = nearestChoice chooseUp' x := by
+  rcases lt_or_gt_of_ne hx with hlt | hgt
+  · simp only [nearestChoice, ite_eq_left hlt]
+  · simp only [nearestChoice, ite_eq_right (not_lt.mpr hgt.le), ite_eq_left hgt]
+
+/-- At a midpoint, nearest rounding with ties away from zero is rounding away from zero. -/
+theorem nearestChoice_tieAway_eq_awayRound_of_fract_eq_half {x : ℝ}
+    (hx : Int.fract x = 1 / 2) :
+    nearestChoice nearestAwayChoice x = awayRound x := by
+  have hfloor : x = ⌊x⌋ + 1 / 2 := by
+    rw [← hx, Int.floor_add_fract]
+  have hnotint : x ∉ Set.range ((↑·) : ℤ → ℝ) := by
+    rintro ⟨n, rfl⟩
+    norm_num at hx
+  have hceil : ⌈x⌉ = ⌊x⌋ + 1 := (Int.ceil_eq_floor_add_one_iff_notMem x).2 hnotint
+  have htie : nearestChoice nearestAwayChoice x =
+      if nearestAwayChoice ⌊x⌋ then ⌊x⌋ + 1 else ⌊x⌋ := by
+    simp [nearestChoice, hx]
+  rw [htie]
+  by_cases hf : 0 ≤ ⌊x⌋
+  · have hx0 : 0 ≤ x := by
+      have : (0 : ℝ) ≤ ⌊x⌋ := by exact_mod_cast hf
+      linarith
+    rw [awayRound_eq_ceil hx0]
+    simp [nearestAwayChoice, hf, ceilRound, hceil]
+  · have hneg : x < 0 := by
+      have : (⌊x⌋ : ℝ) ≤ -1 := by exact_mod_cast (show ⌊x⌋ ≤ -1 by omega)
+      linarith
+    rw [awayRound_eq_floor hneg]
+    simp [nearestAwayChoice, hf, floorRound]
+
+/-- Conjugating nearest rounding by negation mirrors its tie choice. -/
+theorem negRound_nearestChoice (chooseUp : ℤ → Bool) :
+    negRound (nearestChoice chooseUp) = nearestChoice (fun f => !chooseUp (-f - 1)) := by
+  funext x
+  by_cases hint : x ∈ Set.range ((↑·) : ℤ → ℝ)
+  · obtain ⟨n, rfl⟩ := hint
+    have hneg : nearestChoice chooseUp (-(n : ℝ)) = -n := by
+      simpa using nearestChoice_intCast chooseUp (-n)
+    simp [negRound, hneg]
+  · have hceil : ⌈x⌉ = ⌊x⌋ + 1 := (Int.ceil_eq_floor_add_one_iff_notMem x).2 hint
+    have hfloorNeg : ⌊-x⌋ = -⌊x⌋ - 1 := by
+      rw [Int.floor_neg, hceil]
+      ring
+    have hfract : Int.fract x ≠ 0 := by
+      intro hzero
+      apply hint
+      refine ⟨⌊x⌋, ?_⟩
+      show ((⌊x⌋ : ℤ) : ℝ) = x
+      linarith [Int.floor_add_fract x]
+    have hfractNeg : Int.fract (-x) = 1 - Int.fract x := Int.fract_neg hfract
+    simp only [negRound, nearestChoice, hfloorNeg, hfractNeg]
+    split_ifs <;> first
+      | omega
+      | (exfalso; linarith)
+      | simp_all
+
+/-- Nearest rounding with ties away from zero commutes with negation. -/
+theorem negRound_nearestChoice_tieAway :
+    negRound (nearestChoice nearestAwayChoice) = nearestChoice nearestAwayChoice := by
+  rw [negRound_nearestChoice]
+  congr 1
+  funext f
+  simp only [nearestAwayChoice]
+  by_cases hf : 0 ≤ f <;> simp [hf] <;> omega
+
+/-- A certified unit bracket determines the floor. -/
 theorem inbetweenInt_floor {m : ℤ} {x : ℝ} {location : Location}
     (hl : InbetweenInt m x location) : floorRound x = m := by
   unfold floorRound
@@ -159,6 +233,51 @@ theorem inbetweenInt_nearestEven {m : ℤ} {x : ℝ} {location : Location}
   rw [← nearestChoice_even_eq]
   exact inbetweenInt_nearestChoice nearestEvenChoice hl
 
+/-- A certified unit bracket places its input in `[m, m + 1)`. -/
+theorem inbetweenInt_bounds {m : ℤ} {x : ℝ} {location : Location}
+    (hl : InbetweenInt m x location) : (m : ℝ) ≤ x ∧ x < m + 1 := by
+  have hbounds := inbetween_bounds (by push_cast; linarith) hl
+  push_cast at hbounds
+  exact hbounds
+
+/--
+A certified unit bracket computes toward-zero rounding: floor when the lower integer is
+nonnegative and ceiling when it is negative.
+-/
+theorem inbetweenInt_trunc {m : ℤ} {x : ℝ} {location : Location}
+    (hl : InbetweenInt m x location) :
+    truncRound x =
+      if m < 0 then conditionalIncrement (roundUpLocation location) m else m := by
+  have hbounds := inbetweenInt_bounds hl
+  split_ifs with hm
+  · have hx : x < 0 := by
+      have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
+      linarith [hbounds.2]
+    rw [truncRound_eq_ceil hx.le]
+    exact inbetweenInt_ceil hl
+  · have hx : 0 ≤ x := le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1
+    rw [truncRound_eq_floor hx]
+    exact inbetweenInt_floor hl
+
+/--
+A certified unit bracket computes rounding away from zero: ceiling when the lower integer is
+nonnegative and floor when it is negative.
+-/
+theorem inbetweenInt_away {m : ℤ} {x : ℝ} {location : Location}
+    (hl : InbetweenInt m x location) :
+    awayRound x =
+      if m < 0 then m else conditionalIncrement (roundUpLocation location) m := by
+  have hbounds := inbetweenInt_bounds hl
+  split_ifs with hm
+  · have hx : x < 0 := by
+      have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
+      linarith [hbounds.2]
+    rw [awayRound_eq_floor hx]
+    exact inbetweenInt_floor hl
+  · have hx : 0 ≤ x := le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1
+    rw [awayRound_eq_ceil hx]
+    exact inbetweenInt_ceil hl
+
 /-! ## Mantissa truncation -/
 
 /-- Mantissa, exponent, and location carried by an effective rounding calculation. -/
@@ -200,8 +319,8 @@ theorem TruncationState.mantissa_nonneg_of_brackets
 
 /--
 For a positive input and a bracket with sufficient precision, the lower mantissa's digit count
-determines the canonical exponent. This is
-the representation-level counterpart of Flocq's `cexp_inbetween_float`.
+determines the canonical exponent. This is the representation-level counterpart of Flocq's
+`cexp_inbetween_float`.
 -/
 theorem cexp_eq_fexp_digits_of_brackets
     {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
@@ -329,7 +448,7 @@ theorem TruncationState.scaledBrackets_of_exponent_eq
 
 /--
 Discard `shift` low radix digits and transfer their information into the refined location.
-Positive shifts are the intended use; correctness theorems state that premise explicitly.
+Positive shifts are the intended use, and the correctness theorems assume `0 < shift`.
 -/
 def truncateAux (β : Numerics.Radix) (state : TruncationState)
     (shift : ℤ) : TruncationState :=
@@ -581,6 +700,37 @@ theorem round_nearestEven_of_scaledBracket (x : ℝ) {m : ℤ}
   apply round_eq_toReal_of_scaled_round_eq
   exact inbetweenInt_nearestEven hl
 
+/-- A scaled-mantissa bracket computes format-level nearest rounding with any tie choice. -/
+theorem round_nearestChoice_of_scaledBracket (chooseUp : ℤ → Bool) (x : ℝ) {m : ℤ}
+    {location : Location}
+    (hl : InbetweenInt m (scaledMantissa β fexp x) location) :
+    round (β := β) (fexp := fexp) (nearestChoice chooseUp) x =
+      toReal (β := β) {
+        mantissa := conditionalIncrement (roundNearestLocation chooseUp m location) m
+        exponent := cexp β fexp x } := by
+  apply round_eq_toReal_of_scaled_round_eq
+  exact inbetweenInt_nearestChoice chooseUp hl
+
+/-- A scaled-mantissa bracket computes format-level rounding toward zero. -/
+theorem round_trunc_of_scaledBracket (x : ℝ) {m : ℤ} {location : Location}
+    (hl : InbetweenInt m (scaledMantissa β fexp x) location) :
+    round (β := β) (fexp := fexp) truncRound x =
+      toReal (β := β) {
+        mantissa := if m < 0 then conditionalIncrement (roundUpLocation location) m else m
+        exponent := cexp β fexp x } := by
+  apply round_eq_toReal_of_scaled_round_eq
+  exact inbetweenInt_trunc hl
+
+/-- A scaled-mantissa bracket computes format-level rounding away from zero. -/
+theorem round_away_of_scaledBracket (x : ℝ) {m : ℤ} {location : Location}
+    (hl : InbetweenInt m (scaledMantissa β fexp x) location) :
+    round (β := β) (fexp := fexp) awayRound x =
+      toReal (β := β) {
+        mantissa := if m < 0 then m else conditionalIncrement (roundUpLocation location) m
+        exponent := cexp β fexp x } := by
+  apply round_eq_toReal_of_scaled_round_eq
+  exact inbetweenInt_away hl
+
 /-- Nearest-even integer selected from the real input's floor bracket. -/
 noncomputable def nearestEvenMantissa (x : ℝ) : ℤ :=
   conditionalIncrement
@@ -597,7 +747,7 @@ theorem round_nearestEven_computed (x : ℝ) :
 
 /--
 Nearest-even selection after canonical truncation agrees with generic rounded-real semantics.
-The input must be positive, and `hexp` requires sufficient precision in the initial bracket;
+The input must be positive, and `hexp` requires sufficient precision in the initial bracket.
 `truncate_brackets` alone does not establish the canonical-exponent condition.
 -/
 theorem roundTruncatedNearestEven_correct

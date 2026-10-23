@@ -6,8 +6,9 @@
 // (chapter HTML from the build step).
 
 export function updateOverflow(element: HTMLElement): void {
+  // Table-column rounding can spill two pixels while all cell text remains visible.
   element.classList.toggle('has-more-right',
-    element.scrollLeft + element.clientWidth < element.scrollWidth - 1);
+    element.scrollLeft + element.clientWidth < element.scrollWidth - 2);
 }
 
 export function watchOverflow(element: HTMLElement): () => void {

@@ -9,25 +9,21 @@ module
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals.Certified
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 
 /-!
 # Certified binary exponential and logarithm on encoded inputs
 
 Reads one encoded binary16, bfloat16, binary32, or binary64 word per line, calls
-`ExecFloat.Binary.Certified.exp`, `log`, `expMinus1`, or `logPlus1` with default options, and
-prints the encoded result or `none`, then the elapsed nanoseconds. The `range` mode evaluates a
-block of consecutive binary32 encodings and writes the results as binary words.
+`ExecFloat.Binary.exp` or `log` with `certify := true`, or `expMinus1` or `logPlus1`, with the
+default budget, and prints the encoded result (or `none` for a failure) and then the elapsed
+nanoseconds. The `range` mode evaluates a block of consecutive binary32 encodings and writes the
+results as binary words.
 -/
 
 open FloatLib.Floats
 
 namespace FloatLibBenchmarks.Public.CertifiedExpLog
-
-abbrev S := ExecFloat.Binary 8 23
-abbrev D := ExecFloat.Binary 11 52
-abbrev H := ExecFloat.Binary 5 10
-abbrev BF := ExecFloat.Binary 8 7
 
 /-- The four certified functions of one binary format, with their encodings. -/
 structure Functions (T : Type) where
@@ -40,15 +36,16 @@ structure Functions (T : Type) where
 
 /-- Fill `Functions` from the configured binary instance of one format. -/
 macro "functions%" : term =>
-  `({ exp := (ExecFloat.Binary.Certified.exp ·), log := (ExecFloat.Binary.Certified.log ·),
-      expMinus1 := (ExecFloat.Binary.Certified.expMinus1 ·),
-      logPlus1 := (ExecFloat.Binary.Certified.logPlus1 ·),
+  `({ exp := fun x => (ExecFloat.Binary.exp x (certify := true)).toOption,
+      log := fun x => (ExecFloat.Binary.log x (certify := true)).toOption,
+      expMinus1 := fun x => (ExecFloat.Binary.expMinus1 x).toOption,
+      logPlus1 := fun x => (ExecFloat.Binary.logPlus1 x).toOption,
       ofBits := ExecFloat.Binary.ofNatBits, toBits := ExecFloat.Binary.toNatBits })
 
-def single : Functions S := functions%
-def double : Functions D := functions%
-def half : Functions H := functions%
-def brain : Functions BF := functions%
+def single : Functions Binary32 := functions%
+def double : Functions Binary64 := functions%
+def half : Functions Binary16 := functions%
+def brain : Functions BFloat16 := functions%
 
 /-- The function named `exp`, `log`, `expm1`, or `log1p`. -/
 def Functions.pick {T : Type} (F : Functions T) : String → Option (T → Option T)
@@ -76,7 +73,8 @@ def run {T : Type} (F : Functions T) (f : T → Option T) (words : Array Nat) : 
 
 /-- Evaluate `count` consecutive binary32 encodings from `start` and write little-endian results,
 with `0xFFFFFFFF` (a NaN encoding, never a certified result) for `none`. -/
-def rangeS (f : S → Option S) (start count : Nat) (out : System.FilePath) : IO Unit := do
+def rangeS (f : Binary32 → Option Binary32) (start count : Nat) (out : System.FilePath) :
+    IO Unit := do
   let mut buf := ByteArray.emptyWithCapacity (4 * count)
   for i in [0:count] do
     let v : UInt32 := match f (ExecFloat.Binary.ofNatBits (start + i)) with

@@ -37,36 +37,220 @@ namespace FloatLibTests.Conformance.Formats.Configured
 open FloatLib.Numerics
 open FloatLib.Floats
 
-private abbrev Binary32 := ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
--- Field notation must reach the certified default operations, including on limb-backed values.
+-- Field notation reaches the configured operations, which decode to the model operation, also on
+-- limb-backed values. `ExecFloat.sqrt` and `ExecFloat.fma` are the certified selected defaults.
 example (x y z : Binary32) :
-    x.sqrt = ExecFloat.Spec.sqrt x ∧ x.fma y z = ExecFloat.Spec.fma x y z :=
+    x.sqrt.toModel = Formats.BinaryInterchange.Model.sqrt x.toModel ∧
+      (x.fma y z).toModel = Formats.BinaryInterchange.Model.fma x.toModel y.toModel z.toModel :=
+  ⟨ExecFloat.Binary.toModel_sqrt x .nearest, ExecFloat.Binary.toModel_fma x y z .nearest⟩
+
+example (x y z : ExecFloat.BinaryLimbs 19 236) :
+    x.sqrt.toModel = Formats.BinaryInterchange.Model.sqrt x.toModel ∧
+      (x.fma y z).toModel = Formats.BinaryInterchange.Model.fma x.toModel y.toModel z.toModel :=
+  ⟨ExecFloat.Binary.toModel_sqrt x .nearest, ExecFloat.Binary.toModel_fma x y z .nearest⟩
+
+example (x y z : Binary32) :
+    ExecFloat.sqrt x = ExecFloat.Spec.sqrt x ∧ ExecFloat.fma x y z = ExecFloat.Spec.fma x y z :=
   ⟨ExecFloat.Proof.sqrt_eq_spec x, ExecFloat.Proof.fma_eq_spec x y z⟩
 
 example (x y z : ExecFloat.BinaryLimbs 19 236) :
-    x.sqrt = ExecFloat.Spec.sqrt x ∧ x.fma y z = ExecFloat.Spec.fma x y z :=
+    ExecFloat.sqrt x = ExecFloat.Spec.sqrt x ∧ ExecFloat.fma x y z = ExecFloat.Spec.fma x y z :=
   ⟨ExecFloat.Proof.sqrt_eq_spec x, ExecFloat.Proof.fma_eq_spec x y z⟩
 
 -- Chained representation methods and directed rounding retain the configured receiver type.
 example :
     (-4 : Binary32).abs.nextUp.toNatBits = 0x40800001 ∧
       (4 : Binary32).isFinite = true ∧
-      ((4 : Binary32).sqrtWithRounding .towardPositiveInfinity).toNatBits = 0x40000000 := by
+      ((4 : Binary32).sqrt (mode := .up)).toNatBits = 0x40000000 := by
   decide +kernel
 
 example (x : ExecFloat.BinaryLimbs 19 236) :
     x.abs.nextUp.toNatBits = ExecFloat.Binary.toNatBits
       (ExecFloat.Binary.nextUp (ExecFloat.Binary.abs x)) := rfl
 
+-- The default configured operation is the selected kernel that the operators run, whether it is
+-- written qualified, with an explicit nearest-even mode, or by field notation.
+-- benchmarks/scripts/checks/configured-binary-codegen.sh checks the generated code.
+example (x y z : Binary32) :
+    x.add y = x + y ∧ ExecFloat.Binary.sub x y (mode := .nearest) = x - y ∧ x.mul y = x * y ∧
+      x.div y = x / y ∧ x.sqrt = ExecFloat.sqrt x ∧ x.fma y z = ExecFloat.fma x y z :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+-- Partial application and higher-order use keep the default options.
+example (xs ys : List Binary32) :
+    List.zipWith ExecFloat.Binary.add xs ys = List.zipWith (· + ·) xs ys := rfl
+
+example : (ExecFloat.Binary.sqrt : Binary32 → Binary32) = ExecFloat.sqrt := rfl
+
+-- A symbolic `status` determines the result type by cases.
+example (x y : Binary32) (status : Bool) :
+    ExecFloat.Binary.add x y (mode := .up) (status := status) =
+      match status with
+      | true => ExecFloat.Binary.add x y (mode := .up) (status := true)
+      | false => ExecFloat.Binary.add x y (mode := .up) := by
+  cases status <;> rfl
+
 -- A codec for an unrelated format must not change inference for a concrete binary receiver.
 example {format : Formats.BinaryInterchange.FloatFormat}
     {plan : Formats.BinaryInterchange.Configured.StoragePlan format} {code : Type}
     [ExecFloat.ModelCodec plan (Formats.BinaryInterchange.Model format) code]
     (x : ExecFloat.Binary 8 23) :
-    (Formats.BinaryInterchange.Model.castWithStatus _ format x.abs.nextUp.toModel).value =
-      (Formats.BinaryInterchange.Model.castWithStatus _ format
-        (ExecFloat.Binary.toModel (ExecFloat.Binary.nextUp (ExecFloat.Binary.abs x)))).value := rfl
+    (Formats.BinaryInterchange.Model.cast _ format x.abs.nextUp.toModel (status := true)).value =
+      (Formats.BinaryInterchange.Model.cast _ format
+        (ExecFloat.Binary.toModel (ExecFloat.Binary.nextUp (ExecFloat.Binary.abs x)))
+        (status := true)).value := rfl
+
+-- The same unrelated codec leaves configured arithmetic on its selected capability, and the
+-- decoding theorem still applies by `simp`, with instance search proving its capability-reference
+-- argument.
+example {format : Formats.BinaryInterchange.FloatFormat}
+    {plan : Formats.BinaryInterchange.Configured.StoragePlan format} {code : Type}
+    [ExecFloat.ModelCodec plan (Formats.BinaryInterchange.Model format) code]
+    (x y : ExecFloat.Binary 8 23) :
+    x.add y = x + y ∧ (x.add y).toModel = Formats.BinaryInterchange.Model.add x.toModel y.toModel :=
+  ⟨rfl, by simp⟩
+
+/-!
+## Capability references of the decoding theorems
+
+The configured decoding theorems `ExecFloat.Binary.toModel_add` through `toModel_sqrt` and the
+projections `value_add` through `value_sqrt` take the instance argument
+`ExecFloat.Capability.HasSpec cap Configured.Spec.add` (and its siblings). Instance search proves it
+when the selected capability's reference operation unfolds to the configured model operation, as
+for every capability the library declares. A capability whose reference is only propositionally
+equal needs an explicit witness, and one with a different reference does not get the theorems.
+-/
+
+section CapabilityReference
+
+open Formats.BinaryInterchange
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+    [ExecFloat.ModelCodec plan (Model format) code]
+    [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+-- On a receiver with a caller-supplied codec and planning policy, the generic capabilities name
+-- the configured model operations, so the decoding and projection theorems apply by name and by
+-- `simp` in every rounding direction.
+example (x y z : ExecFloat (Configured.Family format code plan)) (mode : Model.IEEERoundingMode) :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.add x y (mode := mode)) =
+        Model.add (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y) (mode := mode) ∧
+      (ExecFloat.Binary.fma x y z (mode := mode) (status := true)).value =
+        ExecFloat.Binary.fma x y z (mode := mode) :=
+  ⟨ExecFloat.Binary.toModel_add x y mode, ExecFloat.Binary.value_fma x y z mode⟩
+
+example (x y z : ExecFloat (Configured.Family format code plan)) (mode : Model.IEEERoundingMode) :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.sub x y (mode := mode)) =
+        Model.sub (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y) (mode := mode) ∧
+      ExecFloat.Binary.toModel (ExecFloat.Binary.mul x y (mode := mode)) =
+        Model.mul (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y) (mode := mode) ∧
+      ExecFloat.Binary.toModel (ExecFloat.Binary.div x y (mode := mode)) =
+        Model.div (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y) (mode := mode) ∧
+      ExecFloat.Binary.toModel (ExecFloat.Binary.sqrt x (mode := mode)) =
+        Model.sqrt (ExecFloat.Binary.toModel x) (mode := mode) ∧
+      ExecFloat.Binary.toModel (ExecFloat.Binary.fma x y z (mode := mode)) =
+        Model.fma (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)
+          (ExecFloat.Binary.toModel z) (mode := mode) ∧
+      (ExecFloat.Binary.add x y (mode := mode) (status := true)).value =
+        ExecFloat.Binary.add x y (mode := mode) ∧
+      (ExecFloat.Binary.sub x y (mode := mode) (status := true)).value =
+        ExecFloat.Binary.sub x y (mode := mode) ∧
+      (ExecFloat.Binary.mul x y (mode := mode) (status := true)).value =
+        ExecFloat.Binary.mul x y (mode := mode) ∧
+      (ExecFloat.Binary.div x y (mode := mode) (status := true)).value =
+        ExecFloat.Binary.div x y (mode := mode) ∧
+      (ExecFloat.Binary.sqrt x (mode := mode) (status := true)).value =
+        ExecFloat.Binary.sqrt x (mode := mode) := by
+  simp
+
+/-- An addition capability whose reference re-encodes the decoded configured sum. -/
+@[instance_reducible] private def reencodedAdd :
+    ExecFloat.Add (Configured.Family format code plan) :=
+  ExecFloat.Capability.ofCertified .add
+    (ExecFloat.Backend.Certified.reference
+      { name := "reencoded", kind := .generic, steadyCost := 1 }
+      (fun x y => ExecFloat.ModelCodec.encode (F := Configured.Family format code plan)
+        (Model := Model format) (plan := plan)
+        (ExecFloat.ModelCodec.decode (Model := Model format) (plan := plan)
+          (Configured.Spec.add x y))))
+
+/-- The re-encoded reference is configured model addition by the codec's round-trip law. -/
+private theorem reencodedAdd_hasSpec :
+    ExecFloat.Capability.HasSpec (reencodedAdd (format := format) (plan := plan) (code := code))
+      Configured.Spec.add :=
+  ⟨funext fun _ => funext fun _ => ExecFloat.ModelCodec.encode_decode _⟩
+
+-- That equality is not definitional, so instance search does not find it.
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.Capability.HasSpec reencodedAdd Configured.Spec.add
+-/
+#guard_msgs (substring := true) in
+example :
+    ExecFloat.Capability.HasSpec (reencodedAdd (format := format) (plan := plan) (code := code))
+      Configured.Spec.add :=
+  inferInstance
+
+attribute [local instance] reencodedAdd reencodedAdd_hasSpec
+
+-- With the capability selected and its witness in scope, both theorems apply to it.
+example : (inferInstance : ExecFloat.Add (Configured.Family format code plan)) = reencodedAdd :=
+  rfl
+
+example (x y : ExecFloat (Configured.Family format code plan)) (mode : Model.IEEERoundingMode) :
+    ExecFloat.Binary.toModel (ExecFloat.Binary.add x y (mode := mode)) =
+        Model.add (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y) (mode := mode) ∧
+      (ExecFloat.Binary.add x y (mode := mode) (status := true)).value =
+        ExecFloat.Binary.add x y (mode := mode) :=
+  ⟨ExecFloat.Binary.toModel_add x y mode, ExecFloat.Binary.value_add x y mode⟩
+
+end CapabilityReference
+
+section MismatchedReference
+
+open Formats.BinaryInterchange
+
+/-- An addition capability whose reference operation is configured subtraction. -/
+@[instance_reducible] private def subtractingAdd
+    {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+    [ExecFloat.ModelCodec plan (Model format) code]
+    [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] :
+    ExecFloat.Add (Configured.Family format code plan) :=
+  ExecFloat.Capability.ofCertified .add
+    (ExecFloat.Backend.Certified.reference
+      { name := "subtracting", kind := .generic, steadyCost := 1 } Configured.Spec.sub)
+
+attribute [local instance] subtractingAdd
+
+-- The default call runs the capability and the status call runs the model, so with this capability
+-- `value_add` would be false: `1 + 1` is zero by default and two with status.
+example :
+    ExecFloat.Binary.toNatBits ((1 : Binary32).add 1) = 0 ∧
+      ExecFloat.Binary.toNatBits ((1 : Binary32).add 1 (status := true)).value = 0x40000000 := by
+  decide +kernel
+
+-- Without a witness, which cannot exist here, neither theorem applies.
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.Capability.HasSpec subtractingAdd Configured.Spec.add
+-/
+#guard_msgs (substring := true) in
+example (x y : Binary32) : (x.add y).toModel = Model.add x.toModel y.toModel :=
+  ExecFloat.Binary.toModel_add x y .nearest
+
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.Capability.HasSpec subtractingAdd Configured.Spec.add
+-/
+#guard_msgs (substring := true) in
+example (x y : Binary32) : (x.add y (status := true)).value = x.add y :=
+  ExecFloat.Binary.value_add x y .nearest
+
+example (x y : Binary32) (_h : (x.add y).toModel ≠ Model.add x.toModel y.toModel) : True := by
+  fail_if_success simp only [ExecFloat.Binary.toModel_add] at _h
+  trivial
+
+end MismatchedReference
 
 /-- Numerical comparison keeps signed-zero equality and NaN unorderedness separate from bits. -/
 example :
@@ -141,23 +325,47 @@ def boundedMaximum : Bounded8 := ExecFloat.BoundedFixedPoint.ofCoefficient 127
 def boundedOne : Bounded8 := ExecFloat.BoundedFixedPoint.ofCoefficient 1
 
 example :
-    (ExecFloat.BoundedFixedPoint.ofRat? (radix := decimalRadix)
+    (ExecFloat.BoundedFixedPoint.ofRat (radix := decimalRadix)
       (fractionalDigits := 2) (width := 8) (5 / 4)).map
         ExecFloat.BoundedFixedPoint.coefficient = some 125 := by
   native_decide
 
+-- The coefficient 200 of `2` does not fit eight bits: the default rejects it, `.wrap` reduces it
+-- to `200 - 256`, and `.saturate` clamps it to 127.
+example :
+    let ofRat := ExecFloat.BoundedFixedPoint.ofRat (radix := decimalRadix)
+      (fractionalDigits := 2) (width := 8) 2
+    (ofRat.map ExecFloat.BoundedFixedPoint.coefficient,
+      (ExecFloat.BoundedFixedPoint.ofRat (radix := decimalRadix) (fractionalDigits := 2)
+        (width := 8) 2 (overflow := .wrap)).coefficient,
+      (ExecFloat.BoundedFixedPoint.ofRat (radix := decimalRadix) (fractionalDigits := 2)
+        (width := 8) 2 (overflow := .saturate)).coefficient) = (none, -56, 127) := by
+  decide +kernel
+
 example :
     ExecFloat.BoundedFixedPoint.coefficient
-      (ExecFloat.BoundedFixedPoint.wrapAdd boundedMaximum boundedOne) = -128 := by
+      (ExecFloat.BoundedFixedPoint.add boundedMaximum boundedOne (overflow := .wrap)) = -128 := by
   decide
 
 example :
-    ExecFloat.BoundedFixedPoint.checkedAdd boundedMaximum boundedOne = none := by
+    ExecFloat.BoundedFixedPoint.add boundedMaximum boundedOne = none := by
   decide
 
 example :
     ExecFloat.BoundedFixedPoint.coefficient
-      (ExecFloat.BoundedFixedPoint.saturatingAdd boundedMaximum boundedOne) = 127 := by
+      (ExecFloat.BoundedFixedPoint.add boundedMaximum boundedOne (overflow := .saturate)) =
+        127 := by
+  decide
+
+-- The exact product 16129 needs fifteen bits: eight bits reject, wrap to 1, or saturate to 127,
+-- and sixteen bits hold it.
+example :
+    ((ExecFloat.BoundedFixedPoint.mul 8 boundedMaximum boundedMaximum).map
+        ExecFloat.BoundedFixedPoint.coefficient,
+      (ExecFloat.BoundedFixedPoint.mul 8 boundedMaximum boundedMaximum .wrap).coefficient,
+      (ExecFloat.BoundedFixedPoint.mul 8 boundedMaximum boundedMaximum .saturate).coefficient,
+      (ExecFloat.BoundedFixedPoint.mul 16 boundedMaximum boundedMaximum).map
+        ExecFloat.BoundedFixedPoint.coefficient) = (none, 1, 127, some 16129) := by
   decide
 
 abbrev Bipolar := ExecFloat.Codebook Formats.Codebook.Catalog.bipolar1
@@ -200,12 +408,10 @@ example :
     ExecFloat.Codebook.Catalog.ternary2.neg? ternaryReserved = none := by
   decide
 
-abbrev Shared3 := ExecFloat.SharedScale 3
-
 def sharedInput : Vector Rat 3 :=
   Vector.ofFn fun lane => (lane.val : Rat) / 2
 
-def shared : Shared3 := ExecFloat.SharedScale.quantizeAt (-1) sharedInput
+def shared : ExecFloat.SharedScale 3 := ExecFloat.SharedScale.quantizeAt (-1) sharedInput
 
 example : ExecFloat.SharedScale.exponent shared = -1 := rfl
 
@@ -285,7 +491,7 @@ example :
       { value := .finite false 20 (-1) } := by
   decide +kernel
 
--- The smallest quantum here is +2; root(100, 2) lies between zero and 100 on this grid.
+-- The smallest quantum here is +2, so root(100, 2) lies between zero and 100 on this grid.
 example :
     rootN positiveQuantum .nearestEven (.finite false 1 2) 2 =
       { value := .finite false 0 2, status := { underflow := true, inexact := true } } ∧

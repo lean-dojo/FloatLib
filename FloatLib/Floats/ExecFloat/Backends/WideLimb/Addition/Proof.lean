@@ -18,12 +18,12 @@ unsigned-scale exact sum `FiniteScaleAdd.roundSum` of the two signed magnitudes.
 the two routes of the kernel. On the jammed route the limb value of the combined significand is
 `shiftRightJam` of the exact aligned sum or difference (`shiftRightJam_add_mul_two_pow`,
 `shiftRightJam_mul_two_pow_sub`), and the exact value has enough bits above the jam for
-`Round.Proof.roundNormal?_jammed`. On the exact route the limb value is the exact sum or difference
-and `roundNormal?_exact` applies; equal magnitudes of opposite sign give positive zero as the
-specification demands.
+`roundNormal?_jammed`. On the exact route the limb value is the exact sum or difference and
+`roundNormal?_exact` applies. Equal magnitudes of opposite sign give positive zero, as the
+specification requires.
 
 `addNormal?_refines` decodes two normal stored values into the core and identifies the result with
-`FiniteKernel.add?`; `toModel_add` and `toModel_sub` finish with the reference operations.
+`FiniteKernel.add?`, and `toModel_add` and `toModel_sub` finish with the reference operations.
 -/
 
 @[expose] public section
@@ -66,7 +66,7 @@ theorem roundNormal?_jammed (hexp : fmt.expWidth ≤ 32) (sign : Bool) (S : Limb
 
 /-! ## The alignment core -/
 
-/-- Positive zero from the packing kernel. -/
+/-- Packing a zero significand with a clear sign bit gives positive zero. -/
 theorem toModel_pack_zero (hexp : fmt.expWidth ≤ 32) :
     toModel (pack fmt false 0 (LimbArray.zero 0)) = posZero fmt := by
   rw [toModel_pack_of_lt _ _ _ hexp (by simp) (by simp)]
@@ -252,14 +252,14 @@ theorem alignAndRound?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : B
 
 /-! ## Addition and subtraction of stored values -/
 
-/-- The decoded components of a normal stored value. -/
+/-- A normal stored value decodes to its sign, exponent field, and normal significand. -/
 theorem decode?_normal (h : Eligible fmt) (v : Value fmt)
     (hfinite : expField v ≠ fmt.expAllOnesNat) (hnormal : expField v ≠ 0) :
     FiniteKernel.decode? (toModel v) =
       some ⟨signBit v, expField v, (normalMantissa v).toNat⟩ := by
   rw [decode?_toModel v h.isIEEE h.exp_le hfinite, decodeMantissa_eq_normalMantissa v hnormal]
 
-/-- The decoded components of a normal stored value, possibly negated. -/
+/-- Decoding a normal stored value, possibly negated, flips its sign when `negate` is set. -/
 theorem decode?_signed (h : Eligible fmt) (negate : Bool) (v : Value fmt)
     (hfinite : expField v ≠ fmt.expAllOnesNat) (hnormal : expField v ≠ 0) :
     FiniteKernel.decode? (if negate then neg (toModel v) else toModel v) =
@@ -294,8 +294,8 @@ theorem addNormal?_refines (h : Eligible fmt) (negateY : Bool) (x y r : Value fm
     unfold FiniteKernel.add?
     rw [decode?_normal h x hxeFinite hxe0, decode?_signed h negateY y hyeFinite hye0]
     simp only [Option.some.injEq]
-    rw [← FiniteKernel.addComponentsImpl_eq]
-    unfold FiniteKernel.addComponentsImpl
+    rw [← FiniteKernel.Internal.addComponents_eq]
+    unfold FiniteKernel.Internal.addComponents
     rw [ite_eq_left h.isIEEE, hsum]
     have hxe0' : (expField x == 0) = false := by simpa using hxe0
     have hye0' : (expField y == 0) = false := by simpa using hye0

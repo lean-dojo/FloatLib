@@ -12,8 +12,8 @@ import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
 /-!
 # Exact reduction vectors for an external MPFR oracle
 
-`oracle reductions` evaluates logical `Model.sumWithStatus` and `Model.dotWithStatus`, then emits
-the finite cases as exact signed dyadics. The external checker selects MPFR precision and exponent
+`oracle reductions` evaluates logical `Model.sum` and `Model.dot`, then emits the finite cases
+as exact signed dyadics. The external checker selects MPFR precision and exponent
 bounds from each destination descriptor, evaluates the same mathematical reduction, and compares
 the rounded value and IEEE status indicators.
 
@@ -267,7 +267,7 @@ private def encodeExact (destination : FloatFormat)
     IO (Array (Model (sourceFormat destination)) ×
       Array FloatLib.Numerics.Dyadic) := do
   let encoded := values.map fun exact =>
-    Model.roundDyadicWithRounding (sourceFormat destination) .nearestEven exact
+    Model.Internal.Directed.roundDyadic (sourceFormat destination) .nearest exact
   let decoded ← encoded.mapM decodeFinite
   for (intended, actual) in values.zip decoded do
     let sameZeroSign :=
@@ -301,9 +301,9 @@ private def emitCase (destination : FloatFormat)
   let outcome ←
     match test.operation with
     | .sum =>
-        pure <| Model.sumWithStatus destination left mode
+        pure <| Model.sum destination left mode (status := true)
     | .dot =>
-        match Model.dotWithStatus destination left right mode with
+        match Model.dot destination left right mode (status := true) with
         | .ok result => pure result
         | .error error =>
             throw <| IO.userError
@@ -331,7 +331,7 @@ private def emitCase (destination : FloatFormat)
 private def emitFormat (format : FloatFormat) : IO Unit := do
   for test in cases format do
     for mode in Model.IEEERoundingMode.all do
-      emitCase format test mode (toString mode)
+      emitCase format test mode mode.name
 
 /-- Emit finite sum and dot-product vectors. -/
 public def run : IO Unit := do

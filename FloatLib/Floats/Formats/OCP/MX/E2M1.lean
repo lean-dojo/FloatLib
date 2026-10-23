@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP MX E2M1
 
-`E2M1` is the four-bit floating element used by OCP microscaling formats. This nominal package
-stores its code in the low four bits of a `UInt8`; the high-bit invariant is erased at runtime.
-Balanced and throughput planning select exhaustive proved tables for all six operations,
-including the 4,096-entry fused-multiply-add table. Latency planning selects arithmetic kernels.
+`FloatLib.Floats.E2M1` is the four-bit floating element used by OCP microscaling formats, with
+type-level identity `E2M1.Family`. It stores its code in the low four bits of a `UInt8`, and the
+high-bit invariant is erased at runtime. Balanced and throughput planning select exhaustive proved
+tables for all six operations, including the 4,096-entry fused-multiply-add table. Latency planning
+selects arithmetic kernels.
 
 This package implements the scalar element format. OCP block semantics and scale selection are
 defined under `FloatLib.Floats.Formats.OCP.MX.Standard`.
@@ -27,91 +28,102 @@ defined under `FloatLib.Floats.Formats.OCP.MX.Standard`.
 
 @[expose] public section
 
-namespace FloatLib.Floats.Formats.OCP.MX
+namespace FloatLib.Floats
 
 open FloatLib.Numerics
 open FloatLib.Floats.ExecFloat.Backend
 open FloatLib.Floats.Formats.BinaryInterchange
 
-/-- OCP MX E2M1 four-bit element format with byte-backed storage. -/
-inductive E2M1 : Type
+namespace E2M1
+
+/-- Type-level identity of `E2M1`, selecting its descriptor, carrier, and kernels. -/
+inductive Family : Type
 
 /-- The E2M1 encoding fits in its direct byte carrier. -/
-theorem e2m1_width_le_eight : FloatFormat.e2m1.bitWidth ≤ 8 := by decide
+theorem width_le_eight : FloatFormat.e2m1.bitWidth ≤ 8 := by decide
 
 /-- Certified direct-byte E2M1 addition table. -/
-def e2m1AddTable :
+def addTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.add :=
-  StaticByte.Tables.add FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.add :=
+  StaticByte.Tables.add FloatFormat.e2m1 width_le_eight
 
 /-- Certified direct-byte E2M1 subtraction table. -/
-def e2m1SubTable :
+def subTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.sub :=
-  StaticByte.Tables.sub FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.sub :=
+  StaticByte.Tables.sub FloatFormat.e2m1 width_le_eight
 
 /-- Certified direct-byte E2M1 multiplication table. -/
-def e2m1MulTable :
+def mulTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.mul :=
-  StaticByte.Tables.mul FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.mul :=
+  StaticByte.Tables.mul FloatFormat.e2m1 width_le_eight
 
 /-- Certified direct-byte E2M1 division table. -/
-def e2m1DivTable :
+def divTable :
     TinyTable.CertifiedBinary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.div :=
-  StaticByte.Tables.div FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.div :=
+  StaticByte.Tables.div FloatFormat.e2m1 width_le_eight
 
 /-- Certified direct-byte E2M1 square-root table. -/
-def e2m1SqrtTable :
+def sqrtTable :
     TinyTable.CertifiedUnary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.sqrt :=
-  StaticByte.Tables.sqrt FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.sqrt :=
+  StaticByte.Tables.sqrt FloatFormat.e2m1 width_le_eight
 
 /-- Certified direct-byte E2M1 fused-multiply-add table. -/
-def e2m1FmaTable :
+def fmaTable :
     TinyTable.CertifiedTernary
-      (StaticByte.encoding FloatFormat.e2m1 e2m1_width_le_eight) Model.Spec.fma :=
-  StaticByte.Tables.fma FloatFormat.e2m1 e2m1_width_le_eight
+      (StaticByte.encoding FloatFormat.e2m1 width_le_eight) Model.Spec.fma :=
+  StaticByte.Tables.fma FloatFormat.e2m1 width_le_eight
 
-@[always_inline] instance : StaticByte.Family E2M1 where
+@[always_inline] instance : StaticByte.Family E2M1.Family where
   format := FloatFormat.e2m1
-  width_le_eight := e2m1_width_le_eight
-  kernels := StaticByte.Kernels.fromTables e2m1_width_le_eight
-    e2m1AddTable e2m1SubTable e2m1MulTable e2m1DivTable e2m1SqrtTable e2m1FmaTable
+  width_le_eight := width_le_eight
+  kernels := StaticByte.Kernels.fromTables width_le_eight
+    addTable subTable mulTable divTable sqrtTable fmaTable
 
-meta instance : StaticByte.FamilyInfo E2M1 where
+meta instance : StaticByte.FamilyInfo E2M1.Family where
   standard := "Open Compute Project MX E2M1 element format"
 
-@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E2M1 where
+@[always_inline, instance_reducible] instance : StaticByte.Plans.TablePlan E2M1.Family where
   namePrefix := "OCP MX E2M1"
   addSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  addTable := e2m1AddTable
+  addTable := addTable
   subSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  subTable := e2m1SubTable
+  subTable := subTable
   mulSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  mulTable := e2m1MulTable
+  mulTable := mulTable
   divSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  divTable := e2m1DivTable
+  divTable := divTable
   sqrtSelection := .balancedAndThroughput (by decide) (by decide) (by decide)
-  sqrtTable := e2m1SqrtTable
+  sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M1] :
-    FloatLib.Floats.ExecFloat.Fma E2M1 :=
+    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M1.Family] :
+    FloatLib.Floats.ExecFloat.Fma E2M1.Family :=
   StaticByte.Plans.fmaTableCapability
     "OCP MX E2M1 fused-multiply-add table"
     (.balancedAndThroughput (by decide) (by decide) (by decide))
-    e2m1_width_le_eight e2m1FmaTable
+    width_le_eight fmaTable
     Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
+end E2M1
+
+/--
+OCP MX FP4 E2M1 element: 2 exponent bits and 1 fraction bit with bias 1, every code finite, stored
+in the low four bits of a byte. Under balanced and throughput planning, arithmetic, including
+fused multiply-add, reads certified byte tables.
+-/
+abbrev E2M1 := ExecFloat E2M1.Family
+
 /-- Construct E2M1 from a natural pattern, reduced to four bits. -/
-@[inline] def E2M1.ofNatBits (bits : Nat) : FloatLib.Floats.ExecFloat E2M1 :=
-  StaticByte.ofNatBits E2M1 bits
+@[inline] def E2M1.ofNatBits (bits : Nat) : E2M1 :=
+  StaticByte.ofNatBits E2M1.Family bits
 
 /-- Read the byte whose low four bits contain the E2M1 code. -/
-@[inline] def E2M1.toUInt8 (value : FloatLib.Floats.ExecFloat E2M1) : UInt8 :=
+@[inline] def E2M1.toUInt8 (value : E2M1) : UInt8 :=
   StaticByte.toUInt8 value
 
-end FloatLib.Floats.Formats.OCP.MX
+end FloatLib.Floats

@@ -12,22 +12,22 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Proof
 /-!
 # Refinement of unary binary squaring
 
-Each single-operand decoder is related to the corresponding multiplication kernel on equal
-operands. The existing multiplication proofs then supply exact rounding and equality of the
-complete result encoding, including NaN signs and payloads.
+Each single-operand kernel equals the corresponding multiplication kernel on equal operands. The
+multiplication proofs then supply correct rounding and the complete result encoding, including
+NaN signs and payloads.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.SquareBackend
 
-/-- The single finite decode agrees with multiplication's two-operand decoder. -/
+/-- Finite squaring with one decode equals the finite product `mulRuntime? x x`. -/
 theorem finite_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     finite? x = FiniteKernel.mulRuntime? x x := by
   simp only [finite?, FiniteKernel.mulRuntime?, FiniteKernel.withFinite_eq]
   cases FiniteKernel.decode? x <;> simp [FiniteKernel.mulFields]
 
-/-- Generic squaring preserves multiplication's complete encoded result. -/
+/-- Generic squaring equals generic multiplication of `x` by itself. -/
 theorem generic_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     generic x = MulBackend.generic x x := by
   unfold generic
@@ -35,28 +35,35 @@ theorem generic_eq_mul {fmt : FloatFormat} (x : Model fmt) :
   cases hfinite : FiniteKernel.mulRuntime? x x <;>
     simp [MulBackend.generic, hfinite]
 
-/-- The binary32 unary kernel preserves the certified finite product. -/
+/-- Binary32 squaring agrees with `NativeBinary32.mulFiniteWord? x x`. -/
 theorem binary32_eq_mul (x : NativeBinary32.Value) :
-    binary32? x = NativeBinary32.mulFiniteImpl? x x := by
-  simp [binary32?, NativeBinary32.mulFiniteImpl?]
+    binary32? x = NativeBinary32.mulFiniteWord? x x := by
+  simp [binary32?, NativeBinary32.mulFiniteWord?]
 
-/-- The one-word unary kernel preserves both successful results and the decline sentinel. -/
+/-- One-word squaring agrees with `mulNormalWord x x`, decline sentinel included. -/
 theorem smallWord_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     smallWord x = NativeSmallWordMul.mulNormalWord x x := by
   simp [smallWord, NativeSmallWordMul.mulNormalWord, or_left_comm, or_comm]
 
-/-- The two-word unary kernel preserves the certified normal product. -/
+/-- Two-word squaring agrees with `NativeTwoWordMul.mulNormal? x x`. -/
 theorem twoWord_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     twoWord? x = NativeTwoWordMul.mulNormal? x x := by
-  simp [twoWord?, NativeTwoWordMul.mulNormal?, NativeSmallWord.withNormalPair?,
-    or_left_comm, or_comm]
+  unfold twoWord? NativeTwoWordMul.mulNormal? NativeTwoWordMul.mulNormalWord?
+    NativeSmallWord.withNormalPairWord? NativeTwoWordMul.roundNormalProduct?
+  dsimp only
+  cases hzero : (NativeSmallWord.exponentField fmt (NativeSmallWord.toWord x) == 0) <;>
+    cases hmask : (NativeSmallWord.exponentField fmt (NativeSmallWord.toWord x) ==
+      NativeSmallWord.exponentMask fmt) <;>
+    simp
 
-/-- The fixed-pair unary kernel preserves the certified four-limb product. -/
+/-- Fixed-pair squaring agrees with the four-limb product `mulNormalLimb? x x`. -/
 theorem pair_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     pair? x = NativePair.mulNormalLimb? x x := by
-  simp [pair?, NativePair.mulNormalLimb?, or_left_comm, or_comm]
+  simp [pair?, NativePair.mulNormalLimb?, NativePair.mulNormalWords?, NativePair.roundNormalLimb?,
+    NativePair.roundNormalProduct?, apply_ite (Option.map (NativePair.ofWords fmt)), or_left_comm,
+    or_comm]
 
-/-- Every unary dispatch branch preserves the existing multiplication dispatcher. -/
+/-- Squaring dispatch agrees with the multiplication dispatcher on `x * x`, branch by branch. -/
 theorem dispatch_eq_mul {fmt : FloatFormat} (x : Model fmt) :
     dispatch x = MulBackend.word x x := by
   simp only [dispatch, MulBackend.word, binary32_eq_mul, twoWord_eq_mul, pair_eq_mul,

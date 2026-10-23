@@ -16,38 +16,38 @@ public meta import Lean.Elab.Command
 
 We wanted one comparison where every implementation consumes the same exact inputs and follows
 the same dependency chain. This executable compares current-standard posits with binary encodings
-at equal total storage widths wherever both families exist. Posits begin at their two-bit minimum;
-configured binary formats begin at four bits. For widths four through eight, the binary exponent field is
-`width / 2` and the fraction field consumes the remaining non-sign bits. This single rule reaches
+at equal total storage widths wherever both families exist. Posits begin at their two-bit minimum
+and configured binary formats at four bits. For widths four through eight, the binary exponent
+field is `width / 2` and the fraction field consumes the remaining non-sign bits. This single rule
+reaches
 the existing E4M3 layout at eight bits without inventing per-width formats. Widths 16, 32, 64, and
 128 use the corresponding IEEE 754 binary interchange layouts. Widths 96 and 112 keep the
 binary128 exponent field with 80- and 96-bit fractions, so the two-word kernel is measured at three
 storage widths. Widths 24 and 48 probe the machine-word tier between the IEEE widths with
 documented custom layouts (8 exponent bits with 15 fraction bits, and 11 exponent bits with 36
-fraction bits). Wider rows deliberately use a
-documented custom binary layout with 19 exponent bits and all remaining non-sign bits as fraction
-bits; they are never labelled IEEE formats. Every lane begins from the exact rational vectors in
-`Benchmarks.Support.ExactWorkload`; each format rounds those mathematical inputs once, before
-timing. The comparison therefore does not assume that unlike encodings represent the same set.
+fraction bits). Wider rows deliberately use a documented custom binary layout with 19 exponent bits
+and all remaining non-sign bits as fraction bits, and they are never labelled IEEE formats. Every
+lane begins from the exact rational vectors in `FloatLibBenchmarks.Support.ExactWorkload`, and each
+format rounds those mathematical inputs once, before timing. So the comparison does not assume
+that unlike encodings represent the same set.
 
 This executable emits only `proved-software` rows. Public binary32 and binary64 dispatch already
-selects the proved fixed-word kernels; their specialized rows pin those same kernels directly so
-the benchmark label does not depend on planner metadata. The cross-implementation runner
+selects the proved fixed-word kernels. Their specialized rows pin those same kernels, so the
+benchmark label does not depend on planner metadata. The cross-implementation runner
 compiles its binary32/64 hardware ceiling as a separate C executable and validates every measured
 result against MPFR before timing. Keeping that external lane out of this module prevents a
 Lean-native diagnostic from being mistaken for the independent C baseline.
 
 Every timed loop is latency-oriented: an observed result selects the next member of the fixed,
-ordinary-input vector. We adapted the dependency-chain part directly from Abel and Reineke's
+ordinary-input vector. We adapted the dependency-chain part from Abel and Reineke's
 uops.info methodology (https://doi.org/10.1145/3297858.3304062), then used a finite fixture set so
 multiply, divide, and square root do not collapse into overflow, underflow, or a fixed point. The
-CSV calls this `result-dependent-fixture-chain`; the comparison plot rejects raw runs that mix
+CSV calls this `result-dependent-fixture-chain`, and the comparison plot rejects raw runs that mix
 this method with the earlier counter-indexed loop.
 
-The 8-bit binary row is explicitly the library's E4M3 binary encoding, not a generic “IEEE
-binary8”: IEEE 754 does not define a binary8 interchange format, and practical E4M3/E5M2
-encodings have distinct exceptional-value policies. Specialized FP8 variants remain in the
-dedicated FP8 comparison.
+The 8-bit binary row is the library's E4M3 binary encoding. IEEE 754 defines no binary8
+interchange format, and practical E4M3/E5M2 encodings have their own exceptional-value policies.
+Specialized FP8 variants have their own FP8 comparison.
 -/
 
 open FloatLib.Floats
@@ -134,13 +134,11 @@ private def nanTag : UInt64 :=
 /--
 Return the shared dependency token for an IEEE-style binary result.
 
-For formats that fit in one machine word, the token records the normalized
-sign, exponent, and significand. This is the same calculation used by the C,
-MPFR, SoftFloat, and CPython adapters. Above 64 bits, the normalized
-significand's low word is already the encoding's low fraction word, so we use
-that directly instead of putting an arbitrary-precision decode in the timed
-loop. The runner checks FloatLib and MPFR sinks and fixture traces before it
-accepts a campaign.
+For formats that fit in one machine word, the token records the normalized sign, exponent, and
+significand. This is the same calculation used by the C, MPFR, SoftFloat, and CPython adapters.
+Above 64 bits, the normalized significand's low word is already the encoding's low fraction word, so
+we use it and keep an arbitrary-precision decode out of the timed loop. The runner checks FloatLib
+and MPFR sinks and fixture traces before it accepts a campaign.
 -/
 @[inline] def resultBits
     {F : Type} [EncodedFormat F]
@@ -191,7 +189,7 @@ def binaryInputsX
       FloatLib.Floats.Formats.BinaryInterchange.Model] :
     Array (ExecFloat F) :=
   Exact.xs.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 /-- Round the second shared exact vector into one configured binary format. -/
 def binaryInputsY
@@ -200,7 +198,7 @@ def binaryInputsY
       FloatLib.Floats.Formats.BinaryInterchange.Model] :
     Array (ExecFloat F) :=
   Exact.ys.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 /-- Round the nonnegative shared exact vector into one configured binary format. -/
 def binaryInputsSqrt
@@ -209,15 +207,15 @@ def binaryInputsSqrt
       FloatLib.Floats.Formats.BinaryInterchange.Model] :
     Array (ExecFloat F) :=
   Exact.sqrtXs.map fun value =>
-    carrier.ofModel <| Model.roundRatQ carrier.format value
+    carrier.ofModel <| Model.ofRat carrier.format value
 
 syntax "comparison_binary_workload " ident " : " term " using " term " observing " term : command
 syntax "comparison_unary_workload " ident " : " term " using " term " observing " term : command
 syntax "comparison_ternary_workload " ident " : " term " using " term " observing " term : command
 
 /-!
-We retain the fixture trace separately from the result sink because the old counter-indexed loop
-could still produce a convincing-looking checksum. The shell runner now rejects that old sequence.
+We keep the fixture trace apart from the result sink because the old counter-indexed loop could
+still produce a convincing-looking checksum. The shell runner rejects that old sequence.
 -/
 private structure Measurement where
   sink : UInt64

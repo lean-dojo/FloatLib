@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 public import FloatLib.Numerics.Core.Representation
 public import FloatLib.Numerics.Quantization.Spec
 
@@ -16,15 +17,15 @@ public import FloatLib.Numerics.Quantization.Spec
 The radix/exponent-function model of `FloatRep` supplies a representation-independent
 `EncodedFormat` interface.
 
-The runtime code is a canonical integer-mantissa/integer-exponent pair.  Its proof of canonicality
-is erased by Lean, while its denotation is the corresponding real number.  The central theorem
-`representable_iff_genericFormat` proves that common-system representability is exactly
+The runtime code is a canonical integer-mantissa/integer-exponent pair. Lean erases its proof of
+canonicality, and its denotation is the corresponding real number. The central theorem
+`representable_iff_genericFormat` proves that common-system representability coincides with
 `genericFormat`.
 
 The definitions mirror the separation in Flocq between:
 
-- `generic_format`, which characterizes representable real values;
-- `Valid_exp`, which constrains exponent-selection functions; and
+- `generic_format`, which characterizes representable real values,
+- `Valid_exp`, which constrains exponent-selection functions,
 - a rounding operator proved to return a generic-format value.
 
 Primary references:
@@ -41,11 +42,12 @@ Primary references:
 namespace FloatLib.Floats.Formats.Flocq
 
 open FloatLib.Numerics
+open FloatLib.Floats.Formats.BinaryInterchange.Model (IEEERoundingMode)
 
 /--
 Type-level identity of the generic radix/exponent-function format.
 
-The constructor carries no format data.  The radix and exponent function are type parameters, so
+The constructor carries no format data. The radix and exponent function are type parameters, so
 specialized users do not pass a runtime descriptor through arithmetic kernels.
 -/
 inductive GenericFormat (β : Numerics.Radix) (fexp : ℤ → ℤ) where
@@ -75,7 +77,7 @@ variable (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp]
   simp
 
 /--
-Common FloatLib representability coincides exactly with the Flocq-style `generic_format`
+Common FloatLib representability coincides with the Flocq-style `generic_format`
 predicate.
 -/
 theorem representable_iff_genericFormat (x : ℝ) :
@@ -95,8 +97,8 @@ theorem representable_iff_genericFormat (x : ℝ) :
 /--
 Choose a canonical code for a value already known to belong to the generic format.
 
-This function is proof-facing and noncomputable.  Concrete fixed-precision format families supply
-their own executable packing kernels.
+It is noncomputable and meant for proofs. Concrete fixed-precision format families supply their
+own executable packing kernels.
 -/
 noncomputable def encodeGeneric (x : ℝ) (hx : genericFormat β fexp x) :
     FormatCode (GenericFormat β fexp) :=
@@ -111,25 +113,25 @@ theorem encodeGeneric_represents (x : ℝ) (hx : genericFormat β fexp x) :
     (canonical_exists_of_generic (β := β) (fexp := fexp) hx)).1.symm
 
 /-- Round a real input and choose a canonical code for the rounded generic-format value. -/
-noncomputable def roundCode (mode : RoundingMode) (x : ℝ) :
+noncomputable def roundCode (mode : IEEERoundingMode) (x : ℝ) :
     FormatCode (GenericFormat β fexp) :=
   encodeGeneric β fexp
-    (mode.round (β := β) (fexp := fexp) x)
-    (generic_format_round mode.roundingFunction x)
+    (round (β := β) (fexp := fexp) (roundingFunction mode) x)
+    (generic_format_round (roundingFunction mode) x)
 
-/-- The selected code denotes exactly the standard-mode rounded result. -/
-theorem roundCode_represents (mode : RoundingMode) (x : ℝ) :
+/-- The selected code denotes the rounded result in the given direction. -/
+theorem roundCode_represents (mode : IEEERoundingMode) (x : ℝ) :
     FormatRepresents (GenericFormat β fexp) (roundCode β fexp mode x)
-      (mode.round (β := β) (fexp := fexp) x) := by
+      (round (β := β) (fexp := fexp) (roundingFunction mode) x) := by
   exact encodeGeneric_represents β fexp _ _
 
-/-- Relational quantization contract for standard Flocq-style rounding modes. -/
+/-- Relational quantization contract for the six rounding directions of `IEEERoundingMode`. -/
 noncomputable def roundingSpec :
-    Numerics.Quantization.Spec RoundingMode ℝ
+    Numerics.Quantization.Spec IEEERoundingMode ℝ
       (FormatCode (GenericFormat β fexp)) :=
   Numerics.Quantization.Spec.represents
     (formatSystem (GenericFormat β fexp))
-    fun mode x => mode.round (β := β) (fexp := fexp) x
+    fun mode x => round (β := β) (fexp := fexp) (roundingFunction mode) x
 
 /-- `roundCode` implements the common relational quantization contract. -/
 theorem roundCode_refines :
@@ -141,9 +143,9 @@ theorem roundCode_refines :
 theorem roundCode_of_representable {x : ℝ}
     (hx : (formatSystem (GenericFormat β fexp)).Representable x) :
     FormatRepresents (GenericFormat β fexp)
-      (roundCode β fexp .nearestEven x) x := by
+      (roundCode β fexp .nearest x) x := by
   rw [representable_iff_genericFormat β fexp x] at hx
-  simpa [RoundingMode.round_eq_of_generic .nearestEven hx] using
-    roundCode_represents β fexp .nearestEven x
+  simpa [round_preserves_generic (roundingFunction .nearest) x hx] using
+    roundCode_represents β fexp .nearest x
 
 end FloatLib.Floats.Formats.Flocq

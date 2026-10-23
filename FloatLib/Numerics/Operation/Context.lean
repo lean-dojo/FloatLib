@@ -13,8 +13,8 @@ Rounding direction, overflow handling, and treatment of tiny outputs describe ho
 written into a finite numerical representation. They are operation context rather than properties
 of a binary bit layout, so they live in the family-independent operation layer.
 
-A concrete format may support only part of this vocabulary.  Its quantizer is responsible for
-giving each policy a precise meaning or rejecting unsupported combinations at a higher API layer.
+A concrete format may support only part of this vocabulary. Its quantizer gives each policy a
+meaning or rejects unsupported combinations at a higher API layer.
 -/
 
 @[expose] public section
@@ -23,12 +23,22 @@ namespace FloatLib.Numerics
 
 /-- Rule used when an exact value lies between adjacent representable values. -/
 inductive RoundingMode where
-  | nearestEven
+  /-- Take the nearer neighbour, breaking a tie toward an even significand. -/
+  | nearest
+  /-- Take the nearer neighbour, breaking a tie toward the neighbour of larger magnitude. -/
   | nearestAway
+  /-- Take the neighbour of smaller magnitude. -/
   | towardZero
-  | towardPositive
-  | towardNegative
-  /-- Randomized rounding driven by explicit entropy supplied to the operation. -/
+  /-- Take the neighbour toward positive infinity. -/
+  | up
+  /-- Take the neighbour toward negative infinity. -/
+  | down
+  /--
+  Take the neighbour of larger magnitude whenever the value is not representable. This is GNU
+  MPFR's `MPFR_RNDA`, which is not an IEEE 754 rounding-direction attribute.
+  -/
+  | away
+  /-- Randomized rounding driven by entropy supplied to the operation. -/
   | stochastic
   deriving DecidableEq, Repr
 
@@ -51,7 +61,7 @@ inductive UnderflowMode where
 /-- Shared policy for converting an exact scalar to a finite numerical representation. -/
 structure QuantizationPolicy where
   /-- Rule used to choose between adjacent representable values. -/
-  rounding : RoundingMode := .nearestEven
+  rounding : RoundingMode := .nearest
   /-- Rule used when the exact magnitude exceeds the finite range. -/
   overflow : OverflowMode := .native
   /-- Rule used for nonzero results below the normal range. -/
@@ -61,7 +71,7 @@ structure QuantizationPolicy where
 namespace QuantizationPolicy
 
 /-- Nearest-even rounding with native overflow and gradual underflow. -/
-def nearestEven : QuantizationPolicy := {}
+def nearest : QuantizationPolicy := {}
 
 /-- Nearest-even rounding with saturation and gradual underflow. -/
 def saturating : QuantizationPolicy := { overflow := .saturate }

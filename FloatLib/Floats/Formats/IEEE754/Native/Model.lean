@@ -17,9 +17,8 @@ The conversions below connect the descriptor-indexed `Model` to Lean's packed bi
 binary64 models. Converting from a native model retains every bit. Converting to one canonicalizes
 NaN signs and payloads, as required by Lean's packed-value invariant.
 
-Lean 4.33 introduced these logical floating-point models. Lean 4.34 adds public `nan` and `inf`
-constants for `Float32`, `Float`, and their packed models, and strengthens the generic format
-invariant to require at least two exponent bits. These additions let both native widths share the
+Lean has public `nan` and `inf` constants for `Float32`, `Float`, and their packed models, and its
+generic format invariant requires at least two exponent bits. These let both native widths share the
 representation and constant proofs below.
 
 The generic representation lemmas imported here separate this normalization from arithmetic

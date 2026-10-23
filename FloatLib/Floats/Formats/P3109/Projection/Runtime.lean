@@ -13,15 +13,15 @@ public import FloatLib.Numerics.Quantization.Deterministic
 /-!
 # P3109 projection
 
-P3109 projection has three distinct steps:
+P3109 projection has three steps:
 
 1. round finite dyadics to the descriptor's precision, preserve infinities, and map exceptions
    to NaN;
 2. apply the selected saturation rule at the descriptor's finite endpoints;
 3. encode the resulting datum.
 
-This module follows that order directly. All integer widths, exponent bounds, and special codes
-come from `Format`; there are no named-width branches or host floating-point conversions.
+This module follows that order. All integer widths, exponent bounds, and special codes
+come from `Format`, with no named-width branches or host floating-point conversions.
 
 The stochastic modes receive a caller-supplied `BitVec`, whose width enforces the random-word
 range.
@@ -43,7 +43,7 @@ namespace FloatLib.Floats.Formats.P3109
 structure RandomBits where
   /-- Number of random bits (`N` in the report). -/
   width : Nat
-  /-- Unsigned random integer, intrinsically restricted to `0 ≤ R < 2^N`. -/
+  /-- Unsigned random integer `R`, with `0 ≤ R < 2^N` by its type. -/
   bits : BitVec width
   deriving Repr
 
@@ -59,44 +59,59 @@ namespace RandomBits
 
 end RandomBits
 
-/-- Rounding modes defined by P3109 Section 4.7.4. -/
+/--
+Rounding modes defined by P3109 Section 4.7.4.
+
+The five modes shared with IEEE 754 use the names of the binary `IEEERoundingMode`. The report's
+names are TowardZero, TowardPositive, TowardNegative, NearestTiesToAway, and NearestTiesToEven.
+-/
 inductive RoundingMode where
+  /-- TowardZero: the neighbour of smaller magnitude. -/
   | towardZero
-  | towardPositive
-  | towardNegative
-  | nearestTiesToAway
-  | nearestTiesToEven
+  /-- TowardPositive: the neighbour toward positive infinity. -/
+  | up
+  /-- TowardNegative: the neighbour toward negative infinity. -/
+  | down
+  /-- NearestTiesToAway: the nearer neighbour, ties to the larger magnitude. -/
+  | nearestAway
+  /-- NearestTiesToEven: the nearer neighbour, ties to the candidate with an even code. -/
+  | nearest
+  /-- ToOdd: an inexact value takes the neighbour with an odd code. -/
   | toOdd
+  /-- StochasticA: round away when the scaled fraction plus `random` reaches `2^N`. -/
   | stochasticA (random : RandomBits)
+  /-- StochasticB: as `stochasticA` with one more fraction bit and an offset of one half. -/
   | stochasticB (random : RandomBits)
+  /-- StochasticC: as `stochasticA` with the scaled fraction rounded to nearest-even. -/
   | stochasticC (random : RandomBits)
   deriving Repr
 
 /-- Saturation modes defined by P3109 Section 4.7.5. -/
 inductive SaturationMode where
+  /-- SatFinite: clamp every out-of-range result, including infinities, to a finite endpoint. -/
   | finite
+  /-- SatPropagate: clamp finite overflow but keep an infinity the format can represent. -/
   | propagate
+  /--
+  SatNone: overflow to infinity, or to NaN where the format has no infinity. A directed mode that
+  rounds toward the finite range still returns its endpoint.
+  -/
   | none
   deriving DecidableEq, Repr
 
-/-- Complete policy used by one P3109 projection. -/
+/--
+Complete policy of one P3109 projection.
+
+The default `{}` is nearest-even rounding with no saturation request. Executable operations take
+the two fields as their `mode` and `saturation` options. This record is the conversion context of
+P3109 destinations and the parameter of the specification functions such as `projectValue`.
+-/
 structure ProjectionPolicy where
   /-- Rule used when precision rounding discards nonzero low bits. -/
-  rounding : RoundingMode := .nearestTiesToEven
+  rounding : RoundingMode := .nearest
   /-- Rule used after rounding produces a value outside the target datum set. -/
   saturation : SaturationMode := .none
   deriving Repr
-
-namespace ProjectionPolicy
-
-/-- FloatLib default projection: nearest-even rounding and no finite saturation request. -/
-def nearestEven : ProjectionPolicy := {}
-
-/-- Nearest-even projection clamped to the finite range. -/
-def finite : ProjectionPolicy :=
-  { saturation := .finite }
-
-end ProjectionPolicy
 
 namespace Format
 
@@ -158,10 +173,10 @@ namespace Internal
     let half := Nat.shiftLeft 1 (discardedBits - 1)
     match mode with
     | .towardZero => false
-    | .towardPositive => !negative
-    | .towardNegative => negative
-    | .nearestTiesToAway => decide (half ≤ remainder)
-    | .nearestTiesToEven =>
+    | .up => !negative
+    | .down => negative
+    | .nearestAway => decide (half ≤ remainder)
+    | .nearest =>
         decide (half < remainder) ||
           (remainder == half && !format.lowerCodeIsEven quantumExponent lower)
     | .toOdd => format.lowerCodeIsEven quantumExponent lower
@@ -245,7 +260,7 @@ namespace Internal
   | .finite | .propagate => .finite format.minFinite
   | .none =>
       match rounding with
-      | .towardZero | .towardPositive => .finite format.minFinite
+      | .towardZero | .up => .finite format.minFinite
       | _ =>
           match format.signedness, format.domain with
           | .signed, .extended => .infinity true
@@ -260,7 +275,7 @@ namespace Internal
   | .finite | .propagate => .finite format.maxFinite
   | .none =>
       match rounding with
-      | .towardZero | .towardNegative => .finite format.maxFinite
+      | .towardZero | .down => .finite format.maxFinite
       | _ =>
           match format.domain with
           | .extended => .infinity false
@@ -303,9 +318,7 @@ end Internal
         .finite finite
 
 /--
-Mathematical result of P3109 projection before representation encoding.
-
-Precision rounding is followed by saturation. The result gives the datum meaning before encoding.
+Mathematical result of P3109 projection before encoding: precision rounding, then saturation.
 -/
 @[inline] def projectValue
     (format : Format) (policy : ProjectionPolicy)
@@ -320,7 +333,7 @@ namespace Internal
 Encode a positive finite datum.
 
 The caller supplies a value already rounded to precision and inside the finite range. This is the
-integer form of Section 4.7.6; it does not enumerate the codebook.
+integer form of Section 4.7.6 and does not enumerate the codebook.
 -/
 @[inline] def encodePositiveFinite
     (format : Format) (value : Numerics.Dyadic) : Nat :=
@@ -394,8 +407,9 @@ payload is not semantically observable here.
 /--
 Encode a value only when it belongs to this descriptor's datum set.
 
-Unlike projection, this operation performs no rounding or saturation. It computes the direct
-P3109 code, decodes it, and accepts the result only when the numerical datum is unchanged.
+There is no rounding or saturation. The operation computes the P3109 code, decodes it, and
+accepts the code only when the decoded datum has the same P3109 numerical meaning as `value`
+(`SameDatum`).
 -/
 @[inline] def encode?
     (format : Format) (value : NumericalValue Numerics.Dyadic) :
@@ -424,21 +438,23 @@ variable {format : Formats.P3109.Format}
 /--
 Project an exact finite, infinite, or NaN value into a P3109 descriptor.
 
-The operation rounds once to P3109 precision, applies saturation, and encodes the result directly.
-It never routes through IEEE 754 or a host float.
+The operation rounds once to P3109 precision in `mode`, applies `saturation`, and encodes the
+result, never going through IEEE 754 or a host float.
 -/
 @[inline] def project
-    (policy : Formats.P3109.ProjectionPolicy)
-    (value : NumericalValue Numerics.Dyadic) :
+    (value : NumericalValue Numerics.Dyadic)
+    (mode : Formats.P3109.RoundingMode := .nearest)
+    (saturation : Formats.P3109.SaturationMode := .none) :
     ExecFloat.P3109 format :=
-  ExecFloat.Codebook.ofCode (format.projectCode policy value)
+  ExecFloat.Codebook.ofCode (format.projectCode { rounding := mode, saturation } value)
 
-/-- Project one exact finite dyadic into a P3109 descriptor. -/
+/-- Project one exact finite dyadic into a P3109 descriptor, with the options of `project`. -/
 @[inline] def ofDyadic
-    (policy : Formats.P3109.ProjectionPolicy)
-    (value : Numerics.Dyadic) :
+    (value : Numerics.Dyadic)
+    (mode : Formats.P3109.RoundingMode := .nearest)
+    (saturation : Formats.P3109.SaturationMode := .none) :
     ExecFloat.P3109 format :=
-  project policy (.finite value)
+  project (.finite value) mode saturation
 
 /-- Encode an already representable P3109 datum without rounding it. -/
 @[inline] def encode?

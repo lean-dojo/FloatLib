@@ -123,10 +123,11 @@ private theorem sameDatum_decode_encodeSaturateAbove
       format.sameDatum_decode_encodePositiveInfinity]
 
 /--
-Direct encoding and decoding preserve any saturated datum whose finite branch lies on the
-descriptor precision grid.
+Encoding then decoding preserves a saturated datum whose finite branch lies on the descriptor's
+precision grid.
 
-This theorem is the shared representation boundary for dyadic and exact-rational projection.
+Dyadic projection, exact-rational projection, square roots and block roots all go through this
+theorem.
 -/
 theorem sameDatum_decode_encodeSaturate
     (format : Format) (mode : SaturationMode)
@@ -201,10 +202,10 @@ theorem sameDatum_decode_encodeSaturate
               exact hnonpos.trans format.maxFinite_toRat_pos.le
 
 /--
-Decoding an executable projection returns its exact round-then-saturate datum.
+Decoding an executable projection returns its round-then-saturate datum, for every valid P3109
+descriptor and every rounding and saturation policy.
 
-The theorem is uniform over every valid P3109 descriptor and every rounding and saturation
-policy. No descriptor width or named low-precision format is treated as a special proof case.
+No descriptor width or named low-precision format is a special proof case.
 -/
 theorem sameDatum_decode_projectCode
     (format : Format) (policy : ProjectionPolicy)
@@ -250,15 +251,14 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 variable {format : Formats.P3109.Format}
 
-/-- Decoding `project` exposes the exact P3109 round-then-saturate specification. -/
+/-- Decoding `project` gives the P3109 round-then-saturate specification. -/
 theorem decode_project
-    (policy : Formats.P3109.ProjectionPolicy)
-    (value : NumericalValue Numerics.Dyadic) :
+    (value : NumericalValue Numerics.Dyadic)
+    (mode : Formats.P3109.RoundingMode) (saturation : Formats.P3109.SaturationMode) :
     Formats.P3109.Format.SameDatum
-      (decode (project (format := format) policy value))
-      (format.projectValue policy value) := by
-  exact
-    Formats.P3109.Format.sameDatum_decode_projectCode
-      format policy value
+      (decode (project (format := format) value mode saturation))
+      (format.projectValue { rounding := mode, saturation } value) := by
+  rw [decode_eq_format_decode]
+  exact Formats.P3109.Format.sameDatum_decode_projectCode format _ value
 
 end FloatLib.Floats.ExecFloat.P3109

@@ -13,12 +13,14 @@ public import Mathlib.Data.Rat.Defs
 # Integer arithmetic on a binary interval grid
 
 At `precision` fractional bits, an integer coefficient `z` represents `z / 2^precision`.
-Endpoints use the existing `Interval Int`; the scale is supplied to operations rather than
-stored in each interval. Coefficients have unbounded magnitude, so arithmetic cannot overflow.
+Intervals are the existing `Interval Int`, and each operation takes the scale as an argument
+instead of storing it in the interval. Coefficients have unbounded magnitude, so arithmetic cannot
+overflow.
 
 Addition, subtraction, and negation are exact. Multiplication rounds the smallest and largest
-integer products with signed shifts. Division uses four integer quotients and rejects intervals
-containing zero. Rational decoding is needed at the interface, not between arithmetic steps.
+integer products with signed shifts. Division uses four integer quotients and rejects a divisor
+interval containing zero. Values are decoded to rationals at the interface, never between
+arithmetic steps.
 
 The endpoint construction follows S. M. Rump,
 [Verification methods: Rigorous results using floating-point
@@ -30,7 +32,7 @@ arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010
 
 namespace FloatLib.Numerics.Interval.BinaryGrid
 
-/-- The positive integer scale for a grid with `precision` fractional bits. -/
+/-- Positive integer scale `2 ^ precision` of a grid with `precision` fractional bits. -/
 def scale (precision : Nat) : Int :=
   (1 : Int) <<< precision
 
@@ -38,17 +40,21 @@ def scale (precision : Nat) : Int :=
 def toRat (precision : Nat) (z : Int) : ℚ :=
   Rat.divInt z (scale precision)
 
-/-- Every integer coefficient has a finite rational interpretation. -/
+/-- Decode a coefficient as its rational value. Every coefficient is finite. -/
 def decode (precision : Nat) (z : Int) : Option ℚ :=
   some (toRat precision z)
 
-/-- Floor of `z / 2^precision`; the signed shift also rounds negative values downward. -/
+/-- Floor of `z / 2^precision`. The signed shift rounds negative values downward too. -/
 def roundDown (precision : Nat) (z : Int) : Int :=
   z >>> precision
 
 /-- Ceiling of `z / 2^precision`, obtained by negating a downward-rounded negative. -/
 def roundUp (precision : Nat) (z : Int) : Int :=
   -((-z) >>> precision)
+
+/-- Coarsen a grid interval by `shift` fractional bits, rounding both endpoints outward. -/
+def coarsen (shift : Nat) (I : Interval Int) : Interval Int :=
+  ⟨roundDown shift I.lo, roundUp shift I.hi⟩
 
 /--
 Integer floor and ceiling of `a / b`, for a nonzero denominator of either sign.
@@ -124,8 +130,8 @@ namespace Internal
 /--
 Repeated squaring for the endpoint evaluations in `BinaryGrid.pow`.
 
-Keeping this helper separate lets the public operation use monotonicity before interval evaluation.
-The exponent-one branch avoids multiplying by a scaled representation of one.
+With the squaring in its own helper, the public operation can use monotonicity before interval
+evaluation. The exponent-one branch avoids multiplying by a scaled representation of one.
 -/
 def pow (precision : Nat) (I : Interval Int) (n : Nat) : Interval Int :=
   if h : n = 0 then
@@ -142,10 +148,10 @@ end Internal
 /--
 Natural powers with logarithmically many interval operations.
 
-Odd powers are increasing, so their lower and upper bounds come from separate endpoint evaluations.
+Odd powers are increasing, so their lower and upper bounds come from evaluating at each endpoint.
 Even powers use the absolute-value interval. These choices avoid treating repeated occurrences of
 the input as independent values. Each evaluation still rounds outward at intermediate steps.
-Exponents zero and one are exact; a point interval needs only one repeated-squaring evaluation.
+Exponents zero and one are exact, and a point interval needs one repeated-squaring evaluation.
 -/
 def pow (precision : Nat) (I : Interval Int) (n : Nat) : Interval Int :=
   if n = 0 then point (scale precision)

@@ -2,8 +2,8 @@
 """Draw content/assets/ch03-binary32-accumulation.png: ten thousand binary32 additions of 0.1.
 
 The history chapter (site/content/chapters/03-a-short-history-of-floating-point.md, the Vancouver section) adds the
-binary32 value of 0.1 to itself ten thousand times with `ExecFloat.Binary.addWithStatus`, once
-rounding to nearest even and once toward zero, and prints 999.90289306640625 and
+binary32 value of 0.1 to itself ten thousand times with `ExecFloat.Binary.add` and
+`(status := true)`, once rounding to nearest even and once toward zero, and prints 999.90289306640625 and
 999.80487060546875. This script recomputes both sequences exactly and plots the running total
 minus k/10 against the number of additions k, with the binade boundaries the total crosses marked.
 

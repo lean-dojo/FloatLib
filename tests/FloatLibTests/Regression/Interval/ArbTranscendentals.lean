@@ -13,9 +13,9 @@ public import FloatLibTests.Regression.BinaryInterchange.Harness
 /-!
 # Arb-backed arbitrary-format regression checks
 
-These opt-in IO checks cross the external python-flint trust boundary. They exercise every unary
-wrapper over binary16, bfloat16, binary32, and a custom format, then check adaptive scalar rounding
-and its explicit failure policy.
+These opt-in IO checks cross the external python-flint trust boundary. They run every interval
+wrapper over binary16, bfloat16, binary32, and a custom format, every rounded scalar wrapper over
+binary16, `pi` in four rounding directions, and a zero attempt budget, which must be rejected.
 -/
 
 @[expose] public section
@@ -32,8 +32,8 @@ def customFormat : FloatFormat :=
   FloatFormat.ieee 4 5
 
 def intervalOfRats (fmt : FloatFormat) (lower upper : Rat) : Model.Interval fmt :=
-  { lo := Model.roundRatQDown fmt lower
-    hi := Model.roundRatQUp fmt upper }
+  { lo := Model.ofRat fmt lower (mode := .down)
+    hi := Model.ofRat fmt upper (mode := .up) }
 
 def intervalIsFiniteOrdered {fmt : FloatFormat} (X : Model.Interval fmt) : Bool :=
   Model.isFinite X.lo &&
@@ -58,10 +58,10 @@ def runIntervalSuite (name : String) (fmt : FloatFormat) : IO Nat := do
   let positive := intervalOfRats fmt (1 / 2) 2
   let nonnegative := intervalOfRats fmt 0 2
   let zero := Model.posZero fmt
-  let half := Model.roundRatQ fmt (1 / 2)
+  let half := Model.ofRat fmt (1 / 2)
   let one := Model.posOne fmt
-  let three := Model.roundRatQ fmt 3
-  let four := Model.roundRatQ fmt 4
+  let three := Model.ofRat fmt 3
+  let four := Model.ofRat fmt 4
   let mut failures := 0
   failures := failures + (← runCheck s!"{name}.exp.interval" do
     let result ← expArb symmetric (precBits := 128) (digits := 80)
@@ -100,32 +100,32 @@ def runIntervalSuite (name : String) (fmt : FloatFormat) : IO Nat := do
 def runScalarWrapperSuite : IO Nat := do
   let fmt := FloatFormat.binary16
   let one := Model.posOne fmt
-  let two := Model.roundRatQ fmt 2
+  let two := Model.ofRat fmt 2
   let config : ArbRoundingConfig :=
     { initialPrecBits := 128
       initialDigits := 80
       maxAttempts := 4 }
   let mut failures := 0
   failures := failures + (← runCheck "binary16.exp.scalar" do
-    pure <| Model.isFinite (← expArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← expArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.log.scalar" do
-    pure <| Model.isFinite (← logArbWithRounding two .nearestEven config))
+    pure <| Model.isFinite (← logArbRounded two .nearest config))
   failures := failures + (← runCheck "binary16.sinh.scalar" do
-    pure <| Model.isFinite (← sinhArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← sinhArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.cosh.scalar" do
-    pure <| Model.isFinite (← coshArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← coshArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.tanh.scalar" do
-    pure <| Model.isFinite (← tanhArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← tanhArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.sin.scalar" do
-    pure <| Model.isFinite (← sinArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← sinArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.cos.scalar" do
-    pure <| Model.isFinite (← cosArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← cosArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.sqrt.scalar" do
-    pure <| Model.isFinite (← sqrtArbWithRounding two .nearestEven config))
+    pure <| Model.isFinite (← sqrtArbRounded two .nearest config))
   failures := failures + (← runCheck "binary16.sigmoid.scalar" do
-    pure <| Model.isFinite (← sigmoidArbWithRounding one .nearestEven config))
+    pure <| Model.isFinite (← sigmoidArbRounded one .nearest config))
   failures := failures + (← runCheck "binary16.pi.scalar" do
-    pure <| Model.isFinite (← piArbWithRounding fmt .nearestEven config))
+    pure <| Model.isFinite (← piArbRounded fmt .nearest config))
   pure failures
 
 def runRoundingModeSuite (name : String) (fmt : FloatFormat) : IO Nat :=
@@ -134,10 +134,10 @@ def runRoundingModeSuite (name : String) (fmt : FloatFormat) : IO Nat :=
       { initialPrecBits := 128
         initialDigits := 80
         maxAttempts := 4 }
-    let nearest ← piArbWithRounding fmt .nearestEven config
-    let towardZero ← piArbWithRounding fmt .towardZero config
-    let upward ← piArbWithRounding fmt .towardPositiveInfinity config
-    let downward ← piArbWithRounding fmt .towardNegativeInfinity config
+    let nearest ← piArbRounded fmt .nearest config
+    let towardZero ← piArbRounded fmt .towardZero config
+    let upward ← piArbRounded fmt .up config
+    let downward ← piArbRounded fmt .down config
     pure <|
       Model.isFinite nearest &&
       Model.isFinite towardZero &&
@@ -150,7 +150,7 @@ def runRoundingModeSuite (name : String) (fmt : FloatFormat) : IO Nat :=
 def zeroAttemptRejected : IO Bool := do
   try
     discard <|
-      piArbWithRounding FloatFormat.binary16 .nearestEven
+      piArbRounded FloatFormat.binary16 .nearest
         { initialPrecBits := 32, initialDigits := 20, maxAttempts := 0 }
     pure false
   catch _ =>

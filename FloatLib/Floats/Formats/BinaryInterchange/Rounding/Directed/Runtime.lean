@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Nearest
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
@@ -14,13 +14,16 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # Executable directed rounding
 
-Exact rational intermediates support the four `IEEERoundingMode` choices; together with the
-dyadic rounders of `Rounding.Directed.Dyadic`, they implement addition, subtraction,
-multiplication, division, fused multiply-add, and square root.
+Exact rational intermediates support the six `IEEERoundingMode` choices. Together with the
+dyadic rounders of `Rounding.Directed.Dyadic`, they implement the directed kernels of addition,
+subtraction, multiplication, division, fused multiply-add, and square root in
+`Model.Internal.Directed`. `Model.add x y (mode := .up)` and its siblings in `Arithmetic.Runtime`
+call them for every direction except nearest-even. `roundRatNearestAwayScaled` and its tie test
+`rationalIsGridTieScaled` are the rational twins of the dyadic nearest-away rounder.
 
 Rounding thresholds, signed-zero behavior, and exceptional results follow the `FloatFormat`
-descriptor. Real and extended-real correctness theorems are provided separately by
-`DirectedSemantics` with their format and input hypotheses.
+descriptor. `DirectedSemantics` proves the real and extended-real correctness theorems, with
+their format and input hypotheses.
 -/
 
 @[expose] public section
@@ -71,65 +74,131 @@ def roundRatMagnitudeDirectedScaled (fmt : FloatFormat) (roundMagnitudeUp sign :
       packRoundedNormal fmt sign (directedOverflow fmt sign roundMagnitudeUp)
         totalExponent roundedMantissa
 
-/-- Round an exact scaled signed rational according to an IEEE rounding direction. -/
-def roundRatWithRoundingScaled (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
+/--
+Whether the scaled rational `(numerator / denominator) * 2^exponent` lies exactly halfway between
+two adjacent values of the binary grid of `fmt` with gradual underflow and no upper exponent bound.
+
+This is the rational twin of `dyadicIsGridTie`, on the same grid. The rational is scaled as
+`roundRatScaledGeneral` scales it, to the subnormal spacing below the normal range and to
+`fracWidth + 1` significant bits above it, and it is a tie when twice the remainder of that
+quotient equals its denominator. A zero numerator or denominator is never a tie. A magnitude below
+half the least subnormal is recognized from its leading exponent alone, so the subnormal shift
+stays bounded by the operand widths and the destination precision.
+-/
+def rationalIsGridTieScaled (fmt : FloatFormat) (numerator denominator : Nat)
+    (exponent : Int) : Bool :=
+  if denominator == 0 || numerator == 0 then
+    false
+  else
+    let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
+    let totalExponent := rationalExponent + exponent
+    if totalExponent + 1 < fmt.minSubnormalExponent then
+      false
+    else
+      let shift : Int :=
+        if totalExponent < fmt.minNormalExponent then
+          exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1)
+        else
+          Int.ofNat fmt.fracWidth - rationalExponent
+      let (scaledNumerator, scaledDenominator) :=
+        Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
+      2 * (scaledNumerator % scaledDenominator) == scaledDenominator
+
+/--
+Round an exact scaled signed rational to nearest with ties away from zero, IEEE 754-2019
+`roundTiesToAway`.
+
+This is the rational twin of `roundDyadicNearestAway`. Off a grid tie it is nearest-even rounding,
+`roundRatScaled`. At a tie the magnitude rounds up with `roundRatMagnitudeDirectedScaled`. A zero
+denominator is never a tie and takes the result of `roundRatScaled`.
+-/
+def roundRatNearestAwayScaled (fmt : FloatFormat) (sign : Bool)
+    (numerator denominator : Nat) (exponent : Int) : Model fmt :=
+  if rationalIsGridTieScaled fmt numerator denominator exponent then
+    roundRatMagnitudeDirectedScaled fmt true sign numerator denominator exponent
+  else
+    roundRatScaled fmt sign numerator denominator exponent
+
+namespace Internal.Directed
+
+/--
+Round the exact scaled signed rational `±(numerator / denominator) * 2^exponent` in the direction
+`mode`. Nearest-even is `Model.roundRatScaled`.
+-/
+def roundRatScaled (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) : Model fmt :=
   match mode with
-  | .nearestEven => roundRatScaled fmt sign numerator denominator exponent
+  | .nearest => Model.roundRatScaled fmt sign numerator denominator exponent
+  | .nearestAway => roundRatNearestAwayScaled fmt sign numerator denominator exponent
   | .towardZero =>
       roundRatMagnitudeDirectedScaled fmt false sign numerator denominator exponent
-  | .towardPositiveInfinity =>
+  | .up =>
       roundRatMagnitudeDirectedScaled fmt (!sign) sign numerator denominator exponent
-  | .towardNegativeInfinity =>
+  | .down =>
       roundRatMagnitudeDirectedScaled fmt sign sign numerator denominator exponent
+  | .away =>
+      roundRatMagnitudeDirectedScaled fmt true sign numerator denominator exponent
 
-/-- Round an exact signed rational according to an IEEE rounding direction. -/
-def roundRatWithRounding (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
+/--
+Round the exact signed rational `±numerator / denominator` in the direction `mode`. Nearest-even
+is `Model.roundRat`.
+-/
+def roundRat (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (numerator denominator : Nat) : Model fmt :=
-  roundRatWithRoundingScaled fmt mode sign numerator denominator 0
+  roundRatScaled fmt mode sign numerator denominator 0
+
+end Internal.Directed
 
 /-- Round an exact scaled signed rational toward negative infinity. -/
 @[inline] def roundRatDownScaled (fmt : FloatFormat) (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) : Model fmt :=
-  roundRatWithRoundingScaled fmt .towardNegativeInfinity sign numerator denominator exponent
+  Internal.Directed.roundRatScaled fmt .down sign numerator denominator exponent
 
 /-- Round an exact scaled signed rational toward positive infinity. -/
 @[inline] def roundRatUpScaled (fmt : FloatFormat) (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) : Model fmt :=
-  roundRatWithRoundingScaled fmt .towardPositiveInfinity sign numerator denominator exponent
+  Internal.Directed.roundRatScaled fmt .up sign numerator denominator exponent
 
 /-- Round an exact signed rational toward negative infinity. -/
 @[inline] def roundRatDown (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat) :
     Model fmt :=
-  roundRatWithRounding fmt .towardNegativeInfinity sign numerator denominator
+  Internal.Directed.roundRat fmt .down sign numerator denominator
 
 /-- Round an exact signed rational toward positive infinity. -/
 @[inline] def roundRatUp (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat) :
     Model fmt :=
-  roundRatWithRounding fmt .towardPositiveInfinity sign numerator denominator
+  Internal.Directed.roundRat fmt .up sign numerator denominator
 
 /-! ## Arithmetic under an explicit rounding direction -/
 
-/-- Signed zero for an exact addition result under `mode`. -/
+/--
+Zero for an exactly cancelling addition under `mode`. It requests the sign
+`IEEERoundingMode.zeroSumSign`, and `zero` delivers positive zero instead in a format without a
+signed zero.
+-/
 @[inline] def zeroForExactSum (fmt : FloatFormat) (mode : IEEERoundingMode)
     (leftSign rightSign : Bool) : Model fmt :=
-  match mode with
-  | .towardNegativeInfinity =>
-      zero fmt (leftSign || rightSign)
-  | .nearestEven | .towardZero | .towardPositiveInfinity =>
-      zero fmt (leftSign && rightSign)
+  zero fmt (mode.zeroSumSign leftSign rightSign)
 
-/-- IEEE addition under an explicit rounding direction. -/
-def addWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+namespace Internal.Directed
+
+/--
+IEEE addition in rounding direction `mode`, the kernel of `Model.add x y (mode := mode)`.
+
+Nearest-even addition is the dispatched `Nearest.add`, and every other direction rounds the exact
+dyadic sum once.
+-/
+def add {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x y : Model fmt) : Model fmt :=
   match mode with
-  | .nearestEven => add x y
-  | .towardZero | .towardPositiveInfinity | .towardNegativeInfinity =>
+  | .nearest => Nearest.add x y
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
         if hxInf : isInf x then
           if isInf y then
-            if signBit x == signBit y then x else invalidResult fmt
+            if Model.signBit x == Model.signBit y then x else invalidResult fmt
           else
             x
         else if hyInf : isInf y then
@@ -143,31 +212,40 @@ def addWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
               (Bool.eq_false_of_not_eq_true hyInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
-          let exact := addDyadic dx dy
+          let exact := Model.addDyadic dx dy
           if exact.significand == 0 then
             zeroForExactSum fmt mode dx.negative dy.negative
           else
-            roundDyadicWithRounding fmt mode exact
+            Internal.Directed.roundDyadic fmt mode exact
 
-/-- IEEE subtraction under an explicit rounding direction. -/
-@[inline] def subWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+/--
+IEEE subtraction in rounding direction `mode`, the kernel of `Model.sub x y (mode := mode)`:
+directed addition of the negated right operand.
+-/
+@[inline] def sub {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x y : Model fmt) : Model fmt :=
-  addWithRounding mode x (neg y)
+  add mode x (neg y)
 
-/-- IEEE multiplication under an explicit rounding direction. -/
-def mulWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+/--
+IEEE multiplication in rounding direction `mode`, the kernel of `Model.mul x y (mode := mode)`.
+
+Nearest-even multiplication is the dispatched `Nearest.mul`, and every other direction rounds the
+exact dyadic product once.
+-/
+def mul {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x y : Model fmt) : Model fmt :=
   match mode with
-  | .nearestEven => mul x y
-  | .towardZero | .towardPositiveInfinity | .towardNegativeInfinity =>
+  | .nearest => Nearest.mul x y
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
         if hxInf : isInf x then
           if isZero y then invalidResult fmt
-          else nativeOverflow fmt (signBit x != signBit y)
+          else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else if hyInf : isInf y then
           if isZero x then invalidResult fmt
-          else nativeOverflow fmt (signBit x != signBit y)
+          else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else
           let hxFinite :=
             isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
@@ -181,24 +259,30 @@ def mulWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
             { negative := Bool.xor dx.negative dy.negative
               significand := dx.significand * dy.significand
               exponent := dx.exponent + dy.exponent }
-          roundDyadicWithRounding fmt mode exact
+          Internal.Directed.roundDyadic fmt mode exact
 
-/-- IEEE division under an explicit rounding direction. -/
-def divWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+/--
+IEEE division in rounding direction `mode`, the kernel of `Model.div x y (mode := mode)`.
+
+Nearest-even division is the dispatched `Nearest.div`, and every other direction rounds the exact
+scaled rational quotient once.
+-/
+def div {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x y : Model fmt) : Model fmt :=
   match mode with
-  | .nearestEven => div x y
-  | .towardZero | .towardPositiveInfinity | .towardNegativeInfinity =>
+  | .nearest => Nearest.div x y
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
         if hxInf : isInf x then
           if isInf y then invalidResult fmt
-          else nativeOverflow fmt (signBit x != signBit y)
+          else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else if hyInf : isInf y then
-          zero fmt (signBit x != signBit y)
+          zero fmt (Model.signBit x != Model.signBit y)
         else if isZero y then
           if isZero x then invalidResult fmt
-          else nativeOverflow fmt (signBit x != signBit y)
+          else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else
           let hxFinite :=
             isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
@@ -212,25 +296,32 @@ def divWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
           if dx.significand == 0 then
             zero fmt sign
           else
-            roundRatWithRoundingScaled fmt mode sign dx.significand dy.significand
+            Internal.Directed.roundRatScaled fmt mode sign dx.significand dy.significand
               (dx.exponent - dy.exponent)
 
-/-- IEEE fused multiply-add under an explicit rounding direction. -/
-def fmaWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+/--
+IEEE fused multiply-add in rounding direction `mode`, the kernel of
+`Model.fma x y z (mode := mode)`.
+
+Nearest-even FMA is the dispatched `Nearest.fma`, and every other direction rounds the exact
+dyadic `x * y + z` once.
+-/
+def fma {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x y z : Model fmt) : Model fmt :=
   match mode with
-  | .nearestEven => fma x y z
-  | .towardZero | .towardPositiveInfinity | .towardNegativeInfinity =>
+  | .nearest => Nearest.fma x y z
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
       withNaNSelection (chooseNaN3 x y z) fun hnan =>
         let hnotNaN := (chooseNaN3_eq_none_iff x y z).1 hnan
         if hxyInf : isInf x || isInf y then
           if isZero x || isZero y then
             invalidResult fmt
           else
-            let productSign := Bool.xor (signBit x) (signBit y)
+            let productSign := Bool.xor (Model.signBit x) (Model.signBit y)
             let productInfinity := nativeOverflow fmt productSign
             if isInf z then
-              if signBit z != productSign then invalidResult fmt else productInfinity
+              if Model.signBit z != productSign then invalidResult fmt else productInfinity
             else
               productInfinity
         else if hzInf : isInf z then
@@ -258,11 +349,13 @@ def fmaWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
             { negative := Bool.xor dx.negative dy.negative
               significand := dx.significand * dy.significand
               exponent := dx.exponent + dy.exponent }
-          let exact := addDyadic product dz
+          let exact := Model.addDyadic product dz
           if exact.significand == 0 then
             zeroForExactSum fmt mode product.negative dz.negative
           else
-            roundDyadicWithRounding fmt mode exact
+            Internal.Directed.roundDyadic fmt mode exact
+
+end Internal.Directed
 
 /-! ## Directed square root -/
 
@@ -292,19 +385,31 @@ def sqrtDyadicBracket (fmt : FloatFormat) (value : Numerics.Dyadic) : SqrtDyadic
         significand := if remainder == 0 then lowerMantissa else lowerMantissa + 1
         exponent := endpointExponent } }
 
-/-- IEEE square root under an explicit rounding direction. -/
-def sqrtWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
+namespace Internal.Directed
+
+/--
+IEEE square root in rounding direction `mode`, the kernel of `Model.sqrt x (mode := mode)`.
+
+Both nearest modes use the dispatched nearest-even `Nearest.sqrt`. The exact square root of a
+value of the format is never halfway between two adjacent values of the format's grid, because the
+square of such a midpoint is not a value of the format: in a normal binade its odd part has more
+significant bits than any significand, and below the normal range it is not a multiple of the least
+subnormal. Nearest-away rounding therefore never meets a tie here. The directed modes round an
+endpoint of `sqrtDyadicBracket`: the upper one when the positive result rounds up, toward positive
+infinity or away from zero, and the lower one otherwise.
+-/
+def sqrt {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x : Model fmt) : Model fmt :=
   match mode with
-  | .nearestEven => sqrt x
-  | .towardZero | .towardPositiveInfinity | .towardNegativeInfinity =>
+  | .nearest | .nearestAway => Nearest.sqrt x
+  | .towardZero | .up | .down | .away =>
       withNaNSelection (chooseNaN1 x) fun hnan =>
         let hnotNaN := (chooseNaN1_eq_none_iff x).1 hnan
         if hxInf : isInf x then
-          if signBit x then invalidResult fmt else nativeOverflow fmt false
+          if Model.signBit x then invalidResult fmt else nativeOverflow fmt false
         else if isZero x then
           x
-        else if signBit x then
+        else if Model.signBit x then
           invalidResult fmt
         else
           let hfinite :=
@@ -313,59 +418,11 @@ def sqrtWithRounding {fmt : FloatFormat} (mode : IEEERoundingMode)
           let value := finiteDyadic x hfinite
           let bracket := sqrtDyadicBracket fmt value
           match mode with
-          | .towardPositiveInfinity => roundDyadicUp fmt bracket.upper
-          | .towardZero | .towardNegativeInfinity => roundDyadicDown fmt bracket.lower
-          | .nearestEven => sqrt x
+          | .up | .away => roundDyadicUp fmt bracket.upper
+          | .towardZero | .down => roundDyadicDown fmt bracket.lower
+          | .nearest | .nearestAway => Nearest.sqrt x
 
-/-! ## Interval-friendly operation names -/
-
-/-- Addition rounded toward negative infinity. -/
-@[inline] def addDown {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  addWithRounding .towardNegativeInfinity x y
-
-/-- Addition rounded toward positive infinity. -/
-@[inline] def addUp {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  addWithRounding .towardPositiveInfinity x y
-
-/-- Subtraction rounded toward negative infinity. -/
-@[inline] def subDown {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  subWithRounding .towardNegativeInfinity x y
-
-/-- Subtraction rounded toward positive infinity. -/
-@[inline] def subUp {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  subWithRounding .towardPositiveInfinity x y
-
-/-- Multiplication rounded toward negative infinity. -/
-@[inline] def mulDown {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  mulWithRounding .towardNegativeInfinity x y
-
-/-- Multiplication rounded toward positive infinity. -/
-@[inline] def mulUp {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  mulWithRounding .towardPositiveInfinity x y
-
-/-- Division rounded toward negative infinity. -/
-@[inline] def divDown {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  divWithRounding .towardNegativeInfinity x y
-
-/-- Division rounded toward positive infinity. -/
-@[inline] def divUp {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  divWithRounding .towardPositiveInfinity x y
-
-/-- Fused multiply-add rounded toward negative infinity. -/
-@[inline] def fmaDown {fmt : FloatFormat} (x y z : Model fmt) : Model fmt :=
-  fmaWithRounding .towardNegativeInfinity x y z
-
-/-- Fused multiply-add rounded toward positive infinity. -/
-@[inline] def fmaUp {fmt : FloatFormat} (x y z : Model fmt) : Model fmt :=
-  fmaWithRounding .towardPositiveInfinity x y z
-
-/-- Square root rounded toward negative infinity. -/
-@[inline] def sqrtDown {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
-  sqrtWithRounding .towardNegativeInfinity x
-
-/-- Square root rounded toward positive infinity. -/
-@[inline] def sqrtUp {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
-  sqrtWithRounding .towardPositiveInfinity x
+end Internal.Directed
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

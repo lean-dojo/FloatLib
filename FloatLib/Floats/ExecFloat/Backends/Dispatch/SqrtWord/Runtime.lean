@@ -9,20 +9,19 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Sqrt.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Sqrt.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Sqrt.Runtime
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 
 /-!
 # Executable word-specialized square-root dispatch
 
-Only executable square-root kernels and their format dispatcher live here. Correctness theorems
-remain in `SqrtWord.Proof`, so runtime-only clients do not load the native refinement developments.
+Executable square-root kernels and their format dispatcher live here. Correctness theorems are in
+`SqrtWord.Proof`, so runtime-only clients do not load the native refinement proofs.
 
-Selection is based on proved format and capacity conditions: binary32 and binary64 use their native
-paths, suitable smaller formats use the shared word kernel, and the general implementation remains
-available outside those envelopes. These are implementations of one operation contract, not
-format-specific definitions of square root.
+Binary32 and binary64 use their native paths, other one-word IEEE formats use the shared word
+kernel, and every remaining format uses the general implementation. All of these implement one
+square-root specification.
 -/
 
 @[expose] public section
@@ -34,9 +33,9 @@ namespace SqrtBackend
 /--
 Width-generic compiled square root.
 
-The outer dispatcher retains NaN payload, infinity, signed-zero, and negative-input policy.
-Positive finite nonzero values use the compact decoder and checked model square root. Their
-classification proof makes the finite decoder total, so this path has no exceptional fallback.
+The outer cases handle NaN payloads, infinities, signed zeros and negative inputs. Positive
+finite nonzero values use the compact decoder and checked model square root. Their classification
+proof makes the finite decoder total, so this path needs no fallback.
 -/
 @[specialize fmt] def generic {fmt : FloatFormat}
     (x : Model fmt) : Model fmt :=
@@ -59,9 +58,10 @@ classification proof makes the finite decoder total, so this path has no excepti
 /--
 One-word square root with native finite-field decoding.
 
-The outer cases intentionally match `SqrtBackend.generic`; only the positive finite decoder is
-replaced. Eligibility and classification evidence are erased, leaving the native field kernel in
-compiled code without an impossible fallback.
+The outer cases match `SqrtBackend.generic`. Only the positive finite kernel changes: it becomes
+the one-word root of `NativeSmallWordSqrt` where the format allows it. Eligibility and
+classification evidence are erased, so compiled code keeps the native field kernel without an
+impossible fallback.
 -/
 @[inline] def smallWord {fmt : FloatFormat}
     (heligible : NativeSmallWord.StorageEligible fmt)
@@ -78,16 +78,16 @@ compiled code without an impossible fallback.
       let hfinite :=
         isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN
           (Bool.eq_false_of_not_eq_true hxInf)
-      NativeSmallWordFinite.sqrtPositive heligible x hfinite
+      NativeSmallWordSqrt.sqrtPositive heligible x hfinite
         (Bool.eq_false_of_not_eq_true hxZero)
         (Bool.eq_false_of_not_eq_true hxSign)
 
 /--
 Word-specialized compiled implementation of `sqrt`.
 
-Binary32 uses the checked direct `UInt32`/`UInt64` backend. Binary64 uses the two-limb restoring
-kernel. Other eligible one-word IEEE formats use native storage decoding before entering the
-shared square-root kernel. Remaining formats use `SqrtBackend.generic`. The dispatcher is
+Binary32 uses the checked `UInt32`/`UInt64` backend. Binary64 uses the two-limb restoring
+kernel. Other eligible one-word IEEE formats use native storage decoding and, when the radicand
+fits one word, the one-word root. Remaining formats use `SqrtBackend.generic`. The dispatcher is
 specialized on the descriptor, as described in `Dispatch.Add.Runtime`.
 -/
 @[specialize fmt] def word {fmt : FloatFormat} (x : Model fmt) : Model fmt :=

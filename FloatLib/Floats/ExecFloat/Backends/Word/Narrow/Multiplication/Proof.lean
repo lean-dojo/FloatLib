@@ -16,9 +16,8 @@ import Mathlib.Tactic.Set
 /-!
 # Correctness of native-word finite multiplication for generic binary32
 
-The direct `UInt64` multiplication kernel is proved equivalent to its exact-dyadic finite
-specification. Runtime clients can import `Multiplication.Runtime` without the component and
-rounding developments.
+The `UInt64` multiplication kernel equals its exact-dyadic finite specification. Runtime clients
+can import `Multiplication.Runtime` without the component and rounding proofs.
 
 The significands have at most 24 bits, so their product is exact in `UInt64`. The proof bounds
 the unsigned product scale and applies the native rounder theorem for `FloatFormat.binary32`.
@@ -28,10 +27,10 @@ the unsigned product scale and applies the native rounder theorem for `FloatForm
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 
-/-- The direct `UInt64` finite multiply kernel equals the exact-dyadic reference operation. -/
-theorem mulFiniteImpl_eq (x y : Value) :
-    mulFiniteImpl? x y = mulFinite? x y := by
-  unfold mulFiniteImpl? mulFinite?
+/-- Word-level finite multiplication equals the exact-dyadic `mulFinite?`. -/
+theorem mulFiniteWord_eq (x y : Value) :
+    mulFiniteWord? x y = mulFinite? x y := by
+  unfold mulFiniteWord? mulFinite?
   rw [toDyadic_eq_finiteComponents x, toDyadic_eq_finiteComponents y]
   dsimp only
   simp only [Bool.or_eq_true, beq_iff_eq]

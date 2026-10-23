@@ -25,14 +25,14 @@ kernels with the exact baseline on 192-, 256-, and 1024-bit IEEE layouts. Every 
 structured operands (zeros, subnormals, the smallest and largest normals, infinities, NaN) with
 deterministic pseudo-random normal operands at chosen exponent distances, including the
 cancellation, sticky-bit, carry, overflow, and underflow boundaries, and checks that both the limb
-kernel and the exact baseline route are exercised. A separate set of explicit 256-bit fixtures
-checks the public `ExecFloat.BinaryLimbs` carrier, its planner selections, and all six operations.
+kernel and the exact baseline route are exercised. Hand-written 256-bit fixtures check the
+public `ExecFloat.BinaryLimbs` carrier, its planner selections, and all six operations.
 -/
 
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -243,7 +243,7 @@ example :
     ] = [.wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs, .wideLimbs] := by
   rfl
 
-/-- Construct a public limb value from explicit encoded fields. -/
+/-- Construct a public limb value from its encoded fields. -/
 def limbValue (sign : Bool) (exponent fraction : Nat) : Limb256 :=
   ExecFloat.Binary.ofModel (Model.ofFields wide256 sign exponent fraction)
 
@@ -252,12 +252,12 @@ def sameLimbBits (x y : Limb256) : Bool :=
   ExecFloat.Binary.toNatBits x == ExecFloat.Binary.toNatBits y
 
 /--
-Public operations checked against explicit expected encodings.
+Public operations checked against hand-written expected encodings.
 
 The carry fixtures cross each limb boundary. With `u = 2⁻²³⁶`, the FMA fixture must retain
-`(1 + u) * (1 - u) - 1 = -u²`; separately rounded multiplication would lose that residual.
+`(1 + u) * (1 - u) - 1 = -u²`, which separately rounded multiplication would lose.
 For `1 / 3`, the nearest 237-bit significand is `(2²³⁸ - 1) / 3`.
-Directed checks select the adjacent significand explicitly for both signs. Subnormal division
+Directed checks expect the adjacent significand for both signs. Subnormal division
 checks both tie parities, and square roots just below a midpoint check the remainder comparison.
 -/
 def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
@@ -281,9 +281,9 @@ def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   let quietNaN := limbValue true wide256.expAllOnesNat (2 ^ (f - 1) + 5)
   let thirdFraction := (2 ^ (f + 2) - 1) / 3 - 2 ^ f
   let directedThird (mode : IEEERoundingMode) (negative : Bool) :=
-    Model.WideLimb.toModel (Model.WideLimb.divWithRounding wide256 mode
+    Model.WideLimb.toModel (Model.WideLimb.div wide256
       (Model.WideLimb.ofModel (Model.ofFields wide256 negative bias 0))
-      (Model.WideLimb.ofModel (ExecFloat.Binary.toModel three)))
+      (Model.WideLimb.ofModel (ExecFloat.Binary.toModel three)) (mode := mode))
   [ ("codec",
       (structured wide256).all fun x =>
         ExecFloat.Binary.toNatBits (ExecFloat.Binary.ofModel x : Limb256) == x.toNatBits)
@@ -317,13 +317,13 @@ def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
       (limbValue false (bias - 2) thirdFraction))
   , ("divTowardZero", sameBits (directedThird .towardZero false)
       (Model.ofFields wide256 false (bias - 2) thirdFraction))
-  , ("divTowardPositive", sameBits (directedThird .towardPositiveInfinity false)
+  , ("divTowardPositive", sameBits (directedThird .up false)
       (Model.ofFields wide256 false (bias - 2) (thirdFraction + 1)))
-  , ("divTowardNegative", sameBits (directedThird .towardNegativeInfinity false)
+  , ("divTowardNegative", sameBits (directedThird .down false)
       (Model.ofFields wide256 false (bias - 2) thirdFraction))
-  , ("divNegativeTowardPositive", sameBits (directedThird .towardPositiveInfinity true)
+  , ("divNegativeTowardPositive", sameBits (directedThird .up true)
       (Model.ofFields wide256 true (bias - 2) thirdFraction))
-  , ("divNegativeTowardNegative", sameBits (directedThird .towardNegativeInfinity true)
+  , ("divNegativeTowardNegative", sameBits (directedThird .down true)
       (Model.ofFields wide256 true (bias - 2) (thirdFraction + 1)))
   , ("divSubnormalHalfEven", sameLimbBits (subnormal / two) zero)
   , ("divSubnormalHalfOdd", sameLimbBits (limbValue false 0 3 / two) (limbValue false 0 2))

@@ -405,6 +405,7 @@ run_transcendentals() {
   tests/oracles/transcendental_compare.sh \
     --output-dir "$results/12-transcendentals" \
     --random-count 256 \
+    --require-census release \
     --jobs "$workers" \
     --core-math-root "$core_math_root" \
     --openlibm-root "$openlibm_root" \
@@ -427,7 +428,7 @@ if [[ "$profile" == release ]]; then
   run_suite "10-smt-qf-fp" run_smt
   run_suite "11-softposit" run_softposit
   run_suite \
-    --success-status observational-complete \
+    --success-status qualified-pass \
     "12-transcendentals" \
     run_transcendentals
 fi

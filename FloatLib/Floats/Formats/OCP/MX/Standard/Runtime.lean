@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Core
 public import FloatLib.Numerics.Exact.RationalBinary
+public import FloatLib.Numerics.Operation.Context
 public import Mathlib.Data.List.MinMax
 public import Mathlib.Order.Prod.Lex.Basic
 
@@ -17,9 +18,9 @@ public import Mathlib.Order.Prod.Lex.Basic
 The default conversion implements the recommended algorithm of OCP MX 1.0 §6.3: select the
 largest input binade, subtract the element's largest power-of-two exponent, and quantize each
 scaled input with nearest-even rounding and saturation. The all-zero block uses scale `2^0`.
-An exponent below `-127` is clamped to `-127`; one above `127` produces a NaN block.
+An exponent below `-127` is clamped to `-127`, and one above `127` produces a NaN block.
 Non-finite input lanes also produce a NaN block. These choices resolve cases for which §6.3
-does not prescribe a scale. They are distinct from decoding existing non-finite element words.
+does not prescribe a scale, and they do not affect how stored non-finite element words decode.
 
 Nearest rounding is relative to the selected scale, not to all possible block encodings.
 For example, a constant E4M3 block with value `15/8` selects scale `2^-8` and saturates to `7/4`,
@@ -30,9 +31,10 @@ reference kernel covers floating and two's-complement elements through the same 
 contract. Its cost depends on the size of the exact input rationals, not on an unbounded shift
 derived from an exponent field. Signed floating zeros are retained.
 
-FP8's required SAT and OVF element-conversion modes (§5.3.1, Table 3) are explicit. The block
-default is SAT as recommended in §6.3. FP4, FP6, and INT8 always saturate. Their scalar NaN
-conversion maps to zero; block conversion instead records a NaN scale.
+FP8's required SAT and OVF element-conversion modes (§5.3.1, Table 3) are the `(overflow := ...)`
+option, `.saturate` or `.native`, of `Numerics.OverflowMode`. The default is SAT, as recommended
+in §6.3. FP4, FP6, and INT8 always saturate. Their scalar NaN conversion maps to zero, while block
+conversion records a NaN scale.
 
 Reference: OCP, *Microscaling Formats (MX) Specification*, version 1.0, September 2023,
 §§5.3 and 6.3,
@@ -44,11 +46,6 @@ Reference: OCP, *Microscaling Formats (MX) Specification*, version 1.0, Septembe
 namespace FloatLib.Floats.Formats.OCP.MX.Standard
 
 open FloatLib.Numerics
-
-/-- FP8 element overflow choice. Other concrete element encodings use finite saturation. -/
-inductive OverflowMode where
-  | saturate | overflow
-  deriving DecidableEq, Repr
 
 namespace Element
 
@@ -67,7 +64,7 @@ def roundingKey {profile : Profile} (input : SignedRat) (candidate : Element pro
     2 * (candidate.1.toNat % 2) + if negative candidate.1 == input.negative then 0 else 1)
 
 /--
-Finite nearest-even conversion minimizes absolute error; ties favor an even low bit and then
+Finite nearest-even conversion minimizes absolute error. Ties favor an even low bit and then
 the input's zero sign. This relation is independent of how candidates are enumerated.
 -/
 def Quantizes {profile : Profile} (input : SignedRat) (word : Element profile) : Prop :=
@@ -92,7 +89,7 @@ def endpoint (profile : Profile) (negative : Bool) : Element profile :=
     (if profile = .int8 then magnitude
      else magnitude + if negative then 2 ^ (profile.width - 1) else 0)
 
-/-- Canonical scalar NaN when supported; zero for the finite-only scalar encodings. -/
+/-- Canonical scalar NaN when the element has one, and zero for the finite-only encodings. -/
 def nan (profile : Profile) : Element profile :=
   BitVec.ofNat profile.width <|
     match profile with
@@ -108,7 +105,7 @@ def overflow (profile : Profile) (negative : Bool) : Element profile :=
 
 /--
 FP8 overflow after nearest-even rounding.
-The E4M3 midpoint 464 rounds to the even finite 448; the E5M2 midpoint 61440 rounds to overflow.
+The E4M3 midpoint 464 rounds to the even finite 448, and the E5M2 midpoint 61440 overflows.
 -/
 def roundsOut (profile : Profile) (input : Rat) : Bool :=
   match profile with
@@ -116,22 +113,28 @@ def roundsOut (profile : Profile) (input : Rat) : Bool :=
   | .e5m2 => 61440 ≤ |input|
   | _ => false
 
-/-- Convert a scalar observation to an element, before applying any shared block scale. -/
-def quantize (profile : Profile) (mode : OverflowMode) :
-    NumericalValue SignedRat → Element profile
+/--
+Convert a scalar observation to an element, before applying any shared block scale.
+
+`overflow := .saturate` (the default) is the SAT conversion mode of §5.3.1 and `.native` the OVF
+mode, which only FP8 elements distinguish: other profiles saturate under both.
+-/
+def quantize (profile : Profile) (value : NumericalValue SignedRat)
+    (overflow : OverflowMode := .saturate) : Element profile :=
+  match value with
   | .finite input =>
-      if mode = .overflow && roundsOut profile input.value then
-        overflow profile input.negative
+      if overflow = .native && roundsOut profile input.value then
+        Element.overflow profile input.negative
       else quantizeFinite profile input
   | .infinity negative =>
-      if mode = .overflow then overflow profile negative else endpoint profile negative
+      if overflow = .native then Element.overflow profile negative else endpoint profile negative
   | .exceptional _ => nan profile
 
-/-- Numerical element contract with an explicit FP8 after-rounding overflow alternative. -/
-def QuantizesWith {profile : Profile} (mode : OverflowMode) (input : SignedRat)
+/-- Numerical element contract, with the FP8 after-rounding overflow alternative. -/
+def QuantizesWith {profile : Profile} (overflow : OverflowMode) (input : SignedRat)
     (word : Element profile) : Prop :=
-  if mode = .overflow ∧ roundsOut profile input.value = true then
-    word = overflow profile input.negative
+  if overflow = .native ∧ roundsOut profile input.value = true then
+    word = Element.overflow profile input.negative
   else Quantizes input word
 
 end Element
@@ -147,48 +150,49 @@ def requestedExponent (profile : Profile) (input : Vector SignedRat 32) : Int :=
   else RationalBinary.floorLog2 largest.num.natAbs largest.den - profile.maxPowerExponent
 
 /--
-Recommended max-binade scale, with explicit zero, underflow, and overflow policies.
-Only finite E8M0 exponents reach rational scaling in the element kernel.
+Recommended max-binade scale. An all-zero block gets `2^0`, an exponent below `-127` clamps to
+`-127`, and one above `127` gives the NaN scale, so only finite E8M0 exponents reach rational
+scaling in the element kernel.
 -/
 def selectScale (profile : Profile) (input : Vector SignedRat 32) : E8M0 :=
   let exponent := requestedExponent profile input
   if 127 < exponent then E8M0.ofNatBits 255 else E8M0.ofExponentSaturating exponent
 
-/-- Quantize an already finite vector at an explicit scale, or produce a canonical NaN block. -/
-def quantizeAt (profile : Profile) (mode : OverflowMode) (scale : E8M0)
-    (input : Vector SignedRat 32) : Block profile :=
+/-- Quantize a finite vector at the given scale, or produce the canonical NaN block. -/
+def quantizeAt (profile : Profile) (scale : E8M0) (input : Vector SignedRat 32)
+    (overflow : OverflowMode := .saturate) : Block profile :=
   match scale.exponent? with
   | none => Block.nan profile
   | some exponent =>
       ⟨scale, input.map fun value =>
-        Element.quantize profile mode (.finite (scaleFinite (-exponent) value))⟩
+        Element.quantize profile (.finite (scaleFinite (-exponent) value)) overflow⟩
 
 /-- Recommended scale selection followed by one rounding of each exact scaled lane. -/
-def quantizeFinite (profile : Profile) (mode : OverflowMode)
-    (input : Vector SignedRat 32) : Block profile :=
-  quantizeAt profile mode (selectScale profile input) input
+def quantizeFinite (profile : Profile) (input : Vector SignedRat 32)
+    (overflow : OverflowMode := .saturate) : Block profile :=
+  quantizeAt profile (selectScale profile input) input overflow
 
 /--
 Destination contract: use the chosen shared scale and round each normalized lane
 according to the numerical element contract, or propagate an unrepresentable scale as NaN.
 -/
-def Quantizes (profile : Profile) (mode : OverflowMode) (input : Vector SignedRat 32)
+def Quantizes (profile : Profile) (overflow : OverflowMode) (input : Vector SignedRat 32)
     (block : Block profile) : Prop :=
   match (selectScale profile input).exponent? with
   | none => block = Block.nan profile
   | some exponent =>
     block.scale = selectScale profile input ∧
-      ∀ lane : Fin 32, Element.QuantizesWith mode
+      ∀ lane : Fin 32, Element.QuantizesWith overflow
         (scaleFinite (-exponent) input[lane.val]) block.values[lane.val]
 
 /--
 Convert a vector of scalar observations. Any non-finite lane produces a NaN shared scale.
 Finite neighbors are preserved when decoding a stored block, but not during this scale selection.
 -/
-def quantize (profile : Profile) (mode : OverflowMode)
-    (input : Vector (NumericalValue SignedRat) 32) : Block profile :=
+def quantize (profile : Profile) (input : Vector (NumericalValue SignedRat) 32)
+    (overflow : OverflowMode := .saturate) : Block profile :=
   if input.toList.all NumericalValue.isFinite then
-    quantizeFinite profile mode (input.map fun value => value.finite?.getD 0)
+    quantizeFinite profile (input.map fun value => value.finite?.getD 0) overflow
   else Block.nan profile
 
 end FloatLib.Floats.Formats.OCP.MX.Standard

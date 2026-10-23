@@ -134,12 +134,12 @@ private theorem round_dyadic_eq_of_scaled_round_eq
       rfl
 
 /-- Rounded-real semantics of downward rounding for a nonzero signed dyadic. -/
-theorem roundAtDown_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
+theorem roundAt_down_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
     (hfmt : fmt.isIEEE = true) (hm : d.significand ≠ 0) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent d.significand d.exponent)
-    roundAtDown fmt d.toReal =
+    roundAt fmt d.toReal .down =
       (roundSignedMantissaAtExponentDown d.negative d.significand d.exponent target : ℝ) *
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix target := by
   dsimp only
@@ -147,12 +147,12 @@ theorem roundAtDown_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
   exact floor_scaledDyadic d.negative d.significand d.exponent _
 
 /-- Rounded-real semantics of upward rounding for a nonzero signed dyadic. -/
-theorem roundAtUp_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
+theorem roundAt_up_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
     (hfmt : fmt.isIEEE = true) (hm : d.significand ≠ 0) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent d.significand d.exponent)
-    roundAtUp fmt d.toReal =
+    roundAt fmt d.toReal .up =
       (roundSignedMantissaAtExponentUp d.negative d.significand d.exponent target : ℝ) *
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix target := by
   dsimp only

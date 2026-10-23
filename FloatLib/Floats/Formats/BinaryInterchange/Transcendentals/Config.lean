@@ -8,24 +8,23 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.FixedPoint
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public import FloatLib.Numerics.Enclosure.Constants.Runtime
 
 /-!
 # Configuration for format-generic transcendental execution
 
-IEEE 754 §9.2 recommends elementary operations with a correct-rounding contract; it does not
+IEEE 754 §9.2 recommends elementary operations with a correct-rounding contract, but it does not
 require them in every implementation or prescribe their algorithms. These kernels provide
-deterministic approximations. `Config` records their integer approximation data, while accuracy
-and correct rounding require separate proofs. The binary32 configuration is pinned explicitly
-for reproducible results. Other formats use a generated configuration controlled by an explicit
-`GenerationPolicy`.
+deterministic approximations. `Config` records their integer approximation data, and accuracy
+and correct rounding need their own proofs. The binary32 configuration is pinned for reproducible
+results, and other formats use a configuration generated under a `GenerationPolicy`.
 
-The default policy bounds the exponent range accepted by trigonometric reduction. The checked
-trigonometric entry points report inputs beyond this budget as failures; the value-only entry
-points return the format's invalid result. This prevents a wide exponent field from silently
-constructing constants with hundreds of thousands or billions of bits. `generatedFullRange`
-remains available as an explicit expensive choice.
+Generated configurations depend on the fraction width only, never on the exponent range:
+trigonometric reduction and the reduction of large exponential arguments take their extra
+precision from the shared constants cache of `Numerics.Enclosure.Constants` at the size each
+argument needs. The generated `log 2` is its `ln2Faithful` read, proved within one unit.
 
-Generated data is an execution policy, not an accuracy theorem. Real-error claims remain separate
+Generated data is an execution policy, not an accuracy theorem. Real-error claims are separate
 approximation contracts.
 -/
 
@@ -34,18 +33,10 @@ approximation contracts.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model.Transcendentals
 
-/--
-Resource policy for generated transcendental approximation data.
-
-`trigExponentBudget` bounds the destination exponent contribution to the fixed-point scale used for
-trigonometric reduction. Reduction rejects arguments beyond that budget instead of using an
-insufficiently precise approximation to `pi / 2`.
--/
+/-- Resource policy for generated transcendental approximation data. -/
 structure GenerationPolicy where
   /-- Extra fixed-point precision used for generated constants and working arithmetic. -/
   guardBits : Nat := 32
-  /-- Cap on the exponent-range contribution to trigonometric working precision. -/
-  trigExponentBudget : Nat := 4096
   deriving Repr, DecidableEq
 
 namespace GenerationPolicy
@@ -60,15 +51,12 @@ Integer approximation data consumed by the transcendental kernels.
 
 The fields store coefficients and scales without proofs of their accuracy or validity.
 `binary32` and `generatedWith` supply the Taylor coefficients and positive denominators described
-below; callers constructing their own configurations must establish the properties they need.
+below. Callers constructing their own configurations must establish the properties they need.
 -/
 structure Config where
-  /--
-  Base working scale for `exp` and `log`, also reserved after trigonometric reduction.
-  `log` increases it near one.
-  -/
+  /-- Base working scale for `exp` and `log`, which `log` increases near one. -/
   fixed : FixedPoint
-  /-- Fixed-point approximation to `log 2`. -/
+  /-- Fixed-point approximation to `log 2` at scale `fixed`. -/
   ln2Fixed : Int
   /-- Fixed-point approximation to `1 / log 2`. -/
   invLn2Fixed : Int
@@ -78,20 +66,24 @@ structure Config where
   logTerms : Nat
   /--
   Ascending exact numerator coefficients of the odd Taylor polynomial in `x ^ 2` shared by the
-  small-argument branches of `sinh` and `tanh`; entry `i` is `sinhDenominator / (2i+1)!`.
+  small-argument branches of `sinh`, `cosh` and `tanh`. Entry `i` is `sinhDenominator / (2i+1)!`.
   -/
   sinhCoeffsAsc : List Int
   /-- Positive common denominator for `sinhCoeffsAsc`. -/
   sinhDenominator : Nat
-  /-- Working scale used for trigonometric argument reduction. -/
-  trigFixed : FixedPoint
-  /-- Fixed-point approximation to `pi / 2` at scale `trigFixed`. -/
-  halfPiFixed : Int
-  /-- Ascending exact numerator coefficients for the reduced sine polynomial. -/
+  /--
+  Ascending exact numerator coefficients of the alternating Taylor series of sine in `x ^ 2`;
+  entry `i` is `(-1)^i * sinDenominator / (2i+1)!`. The kernel evaluates a prefix of the list
+  whose length it chooses from the argument, and the whole list for tiny arguments.
+  -/
   sinCoeffsAsc : List Int
   /-- Positive common denominator for `sinCoeffsAsc`. -/
   sinDenominator : Nat
-  /-- Ascending exact numerator coefficients for the reduced cosine polynomial. -/
+  /--
+  Ascending exact numerator coefficients of the alternating Taylor series of cosine in `x ^ 2`;
+  entry `i` is `(-1)^i * cosDenominator / (2i)!`. The kernel evaluates a prefix of the list whose
+  length it chooses from the argument.
+  -/
   cosCoeffsAsc : List Int
   /-- Positive common denominator for `cosCoeffsAsc`. -/
   cosDenominator : Nat
@@ -99,73 +91,10 @@ structure Config where
 
 namespace Config
 
-/--
-Largest leading input exponent accepted by trigonometric reduction.
-
-Reserving `fixed` bits after reduction leaves `trigFixed - fixed` bits for the argument's
-exponent. For generated configurations this is exactly the capped exponent contribution.
-This resource check is not an accuracy certificate for the constants or polynomials.
--/
-def trigMaxExponent (config : Config) : Int :=
-  Int.ofNat config.trigFixed - Int.ofNat config.fixed
-
 /-- Factorial used to construct exact common-denominator Taylor polynomials. -/
 def factorial : Nat → Nat
   | 0 => 1
   | n + 1 => (n + 1) * factorial n
-
-/--
-Approximate the first `terms` terms of the odd reciprocal series
-
-`sum_k sign(k) / ((2k+1) * q^(2k+1))`
-
-at the supplied fixed-point scale, with `q > 1`. The infinite series is `atanh (1/q)` when
-`alternating = false` and `atan (1/q)` when `alternating = true`. Each division rounds to the
-working scale.
--/
-def oddReciprocalSeries
-    (fixed : FixedPoint) (q terms : Nat) (alternating : Bool) : Int :=
-  let qSquared := Int.ofNat (q * q)
-  let initialPower := FixedPoint.roundQuotientEven fixed.one (Int.ofNat q)
-  let step (state : Int × Int) (index : Nat) : Int × Int :=
-    let power := state.1
-    let denominator := 2 * index + 1
-    let term := fixed.divByNat power denominator
-    let accumulator :=
-      if alternating && index % 2 == 1 then state.2 - term else state.2 + term
-    let nextPower := FixedPoint.roundQuotientEven power qSquared
-    (nextPower, accumulator)
-  ((List.range terms).foldl step (initialPower, 0)).2
-
-/--
-Approximate `log 2 * 2^scale` using `log 2 = 2 * atanh (1/3)` and an explicit guard budget.
-The truncated fixed-point series is rounded back to the requested scale.
--/
-def generateLn2FixedWith (guardBits scale : Nat) : Int :=
-  let work : FixedPoint := scale + guardBits
-  let terms := scale / 3 + guardBits / 2 + 4
-  FixedPoint.roundDivPow2Even
-    (2 * oddReciprocalSeries work 3 terms false) guardBits
-
-/-- Approximate `log 2 * 2^scale` with the default guard budget. -/
-def generateLn2Fixed (scale : Nat) : Int :=
-  generateLn2FixedWith 32 scale
-
-/--
-Approximate `(pi/2) * 2^scale` with Machin's formula
-`pi/2 = 8 * atan (1/5) - 2 * atan (1/239)` and an explicit guard budget.
--/
-def generateHalfPiFixedWith (guardBits scale : Nat) : Int :=
-  let work : FixedPoint := scale + guardBits
-  let atanFiveTerms := scale / 4 + guardBits / 2 + 4
-  let atanTwoThirtyNineTerms := scale / 14 + guardBits / 8 + 4
-  let atanFive := oddReciprocalSeries work 5 atanFiveTerms true
-  let atanTwoThirtyNine := oddReciprocalSeries work 239 atanTwoThirtyNineTerms true
-  FixedPoint.roundDivPow2Even (8 * atanFive - 2 * atanTwoThirtyNine) guardBits
-
-/-- Approximate `(pi/2) * 2^scale` with the default guard budget. -/
-def generateHalfPiFixed (scale : Nat) : Int :=
-  generateHalfPiFixedWith 32 scale
 
 /-- Generate descending coefficients for a Taylor polynomial approximating `2 ^ x`. -/
 def generateExp2CoeffsDesc
@@ -203,7 +132,7 @@ def sinhTaylorData (terms : Nat) : Nat × List Int :=
   (denominator, coefficients)
 
 /--
-Search upward from `count` for the first term count whose truncation target is met; `fuel`
+Search upward from `count` for the first term count whose truncation target is met. `fuel`
 bounds the search so the definition is structurally total.
 -/
 def sinhTermsAux (target : Nat) : Nat → Nat → Nat
@@ -212,17 +141,22 @@ def sinhTermsAux (target : Nat) : Nat → Nat → Nat
       if target ≤ Model.pow2 (2 * count) * factorial (2 * count + 1) then count
       else sinhTermsAux target fuel (count + 1)
 
+/-- Bits kept beyond the destination fraction width by the small-argument `sinh` series. -/
+def sinhGuardBits : Nat := 36
+
 /--
 Number of odd Taylor terms of `sinh` selected for a fraction width.
 
 The search targets the first `n ≥ 1` with
-`2^(2n) * (2n+1)! ≥ 2^(fracWidth + 4)`. This condition comes from the usual Taylor-tail estimate
-for `|x| ≤ 1/2`, and the linear fuel budget is chosen to exceed the point where the power-of-two
-factor alone reaches the target. The corresponding analytic error argument is not yet formalized
-as a theorem in this library.
+`2^(2n) * (2n+1)! ≥ 2^(fracWidth + sinhGuardBits)`, so for `|x| ≤ 1/2` the first omitted term
+is below `2^-(fracWidth + sinhGuardBits + 1)`. The small-argument branches of `sinh`, `cosh` and
+`tanh` share this series, and a target only four bits beyond the fraction width misrounded
+binary128 results near one half. The linear fuel budget is chosen to exceed the point where the
+power-of-two factor alone reaches the target. The corresponding analytic error argument is not
+formalized as a theorem in this library.
 -/
 def sinhTerms (fracWidth : Nat) : Nat :=
-  sinhTermsAux (Model.pow2 (fracWidth + 4)) (fracWidth + 4) 1
+  sinhTermsAux (Model.pow2 (fracWidth + sinhGuardBits)) (fracWidth + sinhGuardBits) 1
 
 /--
 Exact common-denominator coefficients for
@@ -258,9 +192,6 @@ def binary32 : Config where
   logTerms := 8
   sinhCoeffsAsc := [39916800, 6652800, 332640, 7920, 110, 1]
   sinhDenominator := 39916800
-  trigFixed := 256
-  halfPiFixed :=
-    181885788445883162140117471388864931326696688664196214979386075558969447233093
   sinCoeffsAsc :=
     [6227020800, -1037836800, 51891840, -1235520, 17160, -156, 1]
   sinDenominator := 6227020800
@@ -269,26 +200,17 @@ def binary32 : Config where
   cosDenominator := 479001600
 
 /--
-Fixed-point scale used for trigonometric reduction under `policy`.
+Generate a deterministic configuration sized for `fmt` under a resource policy.
 
-The fraction width and guard bits contribute in full; the exponent-range contribution is capped.
--/
-def generatedTrigScale (policy : GenerationPolicy) (fmt : FloatFormat) : Nat :=
-  Nat.min (Int.toNat fmt.maxNormalExponent) policy.trigExponentBudget +
-    fmt.fracWidth + policy.guardBits
-
-/--
-Generate a deterministic configuration sized for `fmt` under an explicit resource policy.
-
-The bounded trigonometric scale keeps ordinary generation practical for formats with wide exponent
-fields. This is a deterministic approximation policy and does not imply a proved error bound.
+Every field depends on the fraction width only. `log 2` comes from the shared constants cache and
+is within one unit of its exact scaled value. The other fields are a deterministic approximation
+policy and carry no proved error bound.
 -/
 def generatedWith (policy : GenerationPolicy) (fmt : FloatFormat) : Config :=
   let fixed : FixedPoint := fmt.fracWidth + policy.guardBits
-  let ln2Fixed := generateLn2FixedWith policy.guardBits fixed
+  let ln2Fixed : Int := Numerics.Enclosure.Constants.ln2Faithful fixed
   let invLn2Fixed := fixed.div fixed.one ln2Fixed
   let expDegree := fmt.fracWidth / 3 + 10
-  let trigFixed : FixedPoint := generatedTrigScale policy fmt
   let trigTerms := fmt.fracWidth / 6 + 8
   let sinData := sinTaylorData trigTerms
   let cosData := cosTaylorData trigTerms
@@ -300,48 +222,67 @@ def generatedWith (policy : GenerationPolicy) (fmt : FloatFormat) : Config :=
     logTerms := fmt.fracWidth / 3 + 10
     sinhCoeffsAsc := sinhData.2
     sinhDenominator := sinhData.1
-    trigFixed
-    halfPiFixed := generateHalfPiFixedWith policy.guardBits trigFixed
     sinCoeffsAsc := sinData.2
     sinDenominator := sinData.1
     cosCoeffsAsc := cosData.2
     cosDenominator := cosData.1 }
 
-/-- Generated reduction data accepts exactly its declared exponent contribution. -/
-theorem trigMaxExponent_generatedWith (policy : GenerationPolicy) (fmt : FloatFormat) :
-    (generatedWith policy fmt).trigMaxExponent =
-      Int.ofNat (Nat.min (Int.toNat fmt.maxNormalExponent) policy.trigExponentBudget) := by
-  simp [trigMaxExponent, generatedWith, generatedTrigScale, Nat.cast_add]
-
-/-- Generate a configuration with the default bounded resource policy. -/
+/-- Generate a configuration with the default resource policy. -/
 def generated (fmt : FloatFormat) : Config :=
   generatedWith GenerationPolicy.standard fmt
 
-/-- Generate a full-range configuration with a caller-selected guard budget. -/
-def generatedFullRangeWith (guardBits : Nat) (fmt : FloatFormat) : Config :=
-  generatedWith
-    { guardBits
-      trigExponentBudget := Int.toNat fmt.maxNormalExponent }
-    fmt
-
 /--
-Generate an unbounded full-exponent-range configuration.
-
-For formats with wide exponent fields this can allocate extremely large integers. Callers should
-normally prefer `generated`.
+`generated fmt`, kept out of line and out of closed-term extraction so the cached catalog
+configurations below are generated on first use rather than at module initialization.
 -/
-def generatedFullRange (fmt : FloatFormat) : Config :=
-  generatedFullRangeWith 32 fmt
+@[noinline, never_extract] def Internal.generate (fmt : FloatFormat) : Config :=
+  generated fmt
+
+/-- Generated binary16 configuration, computed on first use and then reused. -/
+def Internal.generatedBinary16 : Thunk Config :=
+  Thunk.mk fun _ => Internal.generate FloatFormat.binary16
+
+/-- Generated bfloat16 configuration, computed on first use and then reused. -/
+def Internal.generatedBFloat16 : Thunk Config :=
+  Thunk.mk fun _ => Internal.generate FloatFormat.bfloat16
+
+/-- Generated binary64 configuration, computed on first use and then reused. -/
+def Internal.generatedBinary64 : Thunk Config :=
+  Thunk.mk fun _ => Internal.generate FloatFormat.binary64
+
+/-- Generated binary128 configuration, computed on first use and then reused. -/
+def Internal.generatedBinary128 : Thunk Config :=
+  Thunk.mk fun _ => Internal.generate FloatFormat.binary128
+
+/-- Generated binary256 configuration, computed on first use and then reused. -/
+def Internal.generatedBinary256 : Thunk Config :=
+  Thunk.mk fun _ => Internal.generate FloatFormat.binary256
 
 /--
 Default configuration for a format.
 
-Binary32 selects its pinned table; every other layout receives bounded generated data.
-Callers that need a different speed/accuracy point can use `generatedWith`, `generatedFullRange`,
-or construct and reuse an explicit `Config`.
+Binary32 selects its pinned table. The other catalog binary formats reuse one generated
+configuration per program run, and every other layout generates its data on each call. The result
+equals `generated fmt` for every layout except binary32. Callers that need a different
+speed/accuracy point can use `generatedWith`, or build and reuse a `Config`.
 -/
 def forFormat (fmt : FloatFormat) : Config :=
-  if fmt = FloatFormat.binary32 then binary32 else generated fmt
+  if fmt = FloatFormat.binary32 then binary32
+  else if fmt = FloatFormat.binary64 then Numerics.Internal.forceCache Internal.generatedBinary64
+  else if fmt = FloatFormat.binary128 then Numerics.Internal.forceCache Internal.generatedBinary128
+  else if fmt = FloatFormat.binary16 then Numerics.Internal.forceCache Internal.generatedBinary16
+  else if fmt = FloatFormat.bfloat16 then Numerics.Internal.forceCache Internal.generatedBFloat16
+  else if fmt = FloatFormat.binary256 then Numerics.Internal.forceCache Internal.generatedBinary256
+  else generated fmt
+
+/-- The cached catalog configurations are the generated ones. -/
+theorem forFormat_eq (fmt : FloatFormat) :
+    forFormat fmt = if fmt = FloatFormat.binary32 then binary32 else generated fmt := by
+  unfold forFormat
+  by_cases h32 : fmt = FloatFormat.binary32
+  · simp [h32]
+  · simp only [h32, ite_false]
+    split_ifs <;> subst_vars <;> rfl
 
 end Config
 

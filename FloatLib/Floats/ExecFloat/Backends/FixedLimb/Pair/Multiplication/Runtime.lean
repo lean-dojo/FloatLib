@@ -14,8 +14,8 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 # Two-word multiplication runtime
 
 The partial four-limb product kernel multiplies normal operands in every eligible two-word
-layout. The operation dispatcher owns the exact baseline for declined cases. Refinement proofs
-are isolated in `Multiplication.Proof`.
+layout. The operation dispatcher handles declined cases, and refinement proofs are in
+`Multiplication.Proof`.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ open FloatLib.Numerics.FixedWord
 Multiply two two-word values into four limbs.
 
 Keeping each column sum and carry as a native word avoids boxing the polymorphic `AddResult`
-values used by `mul128`. The four output words are identical.
+values used by `mul128`. The four output words are those of `mul128`.
 -/
 @[inline] def multiplyLimbs (x y : UInt128) : UInt256 :=
   let p00 := mul64 x.lo y.lo
@@ -50,9 +50,9 @@ values used by `mul128`. The four output words are identical.
   ⟨p11.hi + carry2, third2, second1, p00.lo⟩
 
 /--
-Round with the convention of `UInt256.roundShiftRightEven128`, keeping the increment and its
-carry as scalar words. Its mathematical rounding contract requires `64 < shift < 128`; the
-total function also agrees with that kernel outside this range.
+Round like `UInt256.roundShiftRightEven128`, keeping the increment and its carry as scalar
+words. The rounding contract needs `64 < shift < 128`, but the function agrees with that kernel
+for every shift.
 -/
 @[inline] def roundProduct (value : UInt256) (shift : Nat) : UInt128 :=
   let quotient := value.shiftRight128 shift
@@ -67,15 +67,16 @@ total function also agrees with that kernel outside this range.
   ⟨quotient.hi + (if roundedLo < quotient.lo then 1 else 0), roundedLo⟩
 
 /--
-Round and pack a four-limb normal product whose leading set bit is at position `leading`.
+Round and pack a four-limb normal product whose leading set bit is at position `leading`,
+returning the two storage words of an accepted result.
 
-The product of two normal significands, or the aligned sum used by fused multiply-add, is
-rounded to `fracWidth + 1` bits by shifting out `leading - fracWidth` bits with ties to even. A
-magnitude below the normal range, or a rounded result above the largest finite exponent, is
-declined.
+The product of two normal significands is rounded to `fracWidth + 1` bits by shifting out
+`leading - fracWidth` bits with ties to even. A magnitude below the normal range, or a rounded
+result above the largest finite exponent, is declined.
 -/
-@[inline] def roundNormalProduct? {fmt : FloatFormat} (sign : Bool) (xExponent yExponent : UInt64)
-    (product : FloatLib.Numerics.FixedWord.UInt256) (leading : UInt64) : Option (Model fmt) :=
+@[inline] def roundNormalProductWords? (fmt : FloatFormat) (sign : Bool)
+    (xExponent yExponent : UInt64) (product : FloatLib.Numerics.FixedWord.UInt256)
+    (leading : UInt64) : Option UInt128 :=
   let scale := (xExponent - 1) + (yExponent - 1)
   let position := leading + scale
   if position < UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 1) then
@@ -88,9 +89,14 @@ declined.
     if UInt64.ofNat (3 * fmt.bias + 2 * fmt.fracWidth - 2) < normalizedPosition then
       none
     else
-      some <| packNormal fmt sign
+      some <| packNormalWords fmt sign
         (normalizedPosition - UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 2))
         (normalizeCarry fmt carry rounded)
+
+/-- `roundNormalProductWords?` as a model value. -/
+@[inline] def roundNormalProduct? {fmt : FloatFormat} (sign : Bool) (xExponent yExponent : UInt64)
+    (product : FloatLib.Numerics.FixedWord.UInt256) (leading : UInt64) : Option (Model fmt) :=
+  (roundNormalProductWords? fmt sign xExponent yExponent product leading).map (ofWords fmt)
 
 /-- Multiply two decoded normal significands in fixed limbs. -/
 @[inline] def roundNormalLimb? {fmt : FloatFormat} (sign : Bool) (xExponent yExponent : UInt64)
@@ -99,23 +105,29 @@ declined.
   roundNormalProduct? sign xExponent yExponent product (UInt64.ofNat product.log2)
 
 /--
-Decode two values and try the fixed-limb normal product.
-
-Descriptor specialization follows the pattern described in `Dispatch.Add.Runtime`.
+Decode two values given by their storage words and try the fixed-limb normal product, returning
+the storage words of an accepted product. Two-word carriers call this form, so an accepted product
+never becomes a model value.
 -/
-@[specialize fmt] def mulNormalLimb? {fmt : FloatFormat} (x y : Model fmt) : Option (Model fmt) :=
-  let xWords := toWords x
-  let yWords := toWords y
-  let xExponent := expField fmt xWords.hi
-  let yExponent := expField fmt yWords.hi
+@[inline] def mulNormalWords? (fmt : FloatFormat) (x y : UInt128) : Option UInt128 :=
+  let xExponent := expField fmt x.hi
+  let yExponent := expField fmt y.hi
   if xExponent == 0 || xExponent == expAllOnes fmt ||
       yExponent == 0 || yExponent == expAllOnes fmt then
     none
   else
-    roundNormalLimb?
-      (Bool.xor (signBit fmt xWords.hi) (signBit fmt yWords.hi))
-      xExponent yExponent
-      (normalMantissa fmt (fracHigh fmt xWords.hi) xWords.lo)
-      (normalMantissa fmt (fracHigh fmt yWords.hi) yWords.lo)
+    let product :=
+      multiplyLimbs (normalMantissa fmt (fracHigh fmt x.hi) x.lo)
+        (normalMantissa fmt (fracHigh fmt y.hi) y.lo)
+    roundNormalProductWords? fmt (Bool.xor (signBit fmt x.hi) (signBit fmt y.hi))
+      xExponent yExponent product (UInt64.ofNat product.log2)
+
+/--
+`mulNormalWords?` on the storage words of two model values, as a model value.
+
+Descriptor specialization follows the pattern described in `Dispatch.Add.Runtime`.
+-/
+@[specialize fmt] def mulNormalLimb? {fmt : FloatFormat} (x y : Model fmt) : Option (Model fmt) :=
+  (mulNormalWords? fmt (toWords x) (toWords y)).map (ofWords fmt)
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair

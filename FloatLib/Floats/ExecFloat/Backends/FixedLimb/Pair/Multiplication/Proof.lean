@@ -18,9 +18,8 @@ The runtime kernel multiplies two normal significands exactly in four native wor
 product of at most `2 * fracWidth + 2` bits to nearest-even, and packs a normal result. Subnormal
 operands and results, overflow, NaNs, and infinities are left to the operation dispatcher.
 
-`roundNormalProduct_refines` is shared with the fused multiply-add kernel: it accepts any
-four-limb magnitude in `[2^(2 * fracWidth), 2^(2 * fracWidth + 3))` together with its
-leading-bit position, which covers both the product and the aligned product-plus-addend sum.
+`roundNormalProduct_refines` accepts any four-limb magnitude in
+`[2^(2 * fracWidth), 2^(2 * fracWidth + 3))` together with its leading-bit position.
 -/
 
 @[expose] public section
@@ -33,11 +32,11 @@ variable {fmt : FloatFormat}
 
 /-! ## Scalar carry arithmetic -/
 
-/-- Scalar column carries preserve all four words of the fixed-limb product. -/
+/-- `multiplyLimbs`, with its scalar carries, is `mul128`. -/
 @[simp] theorem multiplyLimbs_eq_mul128 (x y : UInt128) :
     multiplyLimbs x y = mul128 x y := rfl
 
-/-- Scalar rounding carries preserve both result words for every shift amount. -/
+/-- `roundProduct`, with its scalar carries, is `roundShiftRightEven128` for every shift. -/
 @[simp] theorem roundProduct_eq_roundShiftRightEven128 (value : UInt256) (shift : Nat) :
     roundProduct value shift = value.roundShiftRightEven128 shift := by
   dsimp only [roundProduct, UInt256.roundShiftRightEven128]
@@ -114,7 +113,8 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
   have hfracWord := fracWidth_toNat h
   have hlog2Le : product.toNat.log2 ≤ 2 * fmt.fracWidth + 2 := hleading ▸ hleadingRange.2
   have hlog2Ge : 2 * fmt.fracWidth ≤ product.toNat.log2 := hleading ▸ hleadingRange.1
-  unfold roundNormalProduct? at hresult
+  obtain ⟨words, hresult, hwords⟩ := Option.map_eq_some_iff.mp hresult
+  unfold roundNormalProductWords? at hresult
   let scale := (xExponent - 1) + (yExponent - 1)
   let position := leading + scale
   have hxOne : (1 : UInt64) ≤ xExponent := by
@@ -166,6 +166,8 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
           (normalizedPosition - UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 2))
           (normalizeCarry fmt carry rounded) =
         result := by
+    rw [packNormal, ← hwords]
+    congr 1
     simpa [position, scale, rounded, carry, normalizedPosition] using hprocessed.2
   have hproductNe : product.toNat ≠ 0 :=
     Nat.ne_of_gt (lt_of_lt_of_le (Nat.two_pow_pos _) hproductLower)
@@ -379,7 +381,7 @@ private theorem roundNormalLimb_refines (h : Eligible fmt)
     (by rw [hleading]; omega) hproductLower result
   simpa [roundNormalLimb?, product] using hresult
 
-/-- Every result accepted by the pair multiplication kernel equals the exact finite kernel. -/
+/-- Every result the pair multiplication kernel accepts is also returned by `FiniteKernel.mul?`. -/
 theorem mulNormalLimb_refines (h : Eligible fmt)
     (x y result : Model fmt)
     (hresult : mulNormalLimb? x y = some result) :
@@ -393,20 +395,20 @@ theorem mulNormalLimb_refines (h : Eligible fmt)
   let xMantissa := normalMantissa fmt xHigh xWords.lo
   let yMantissa := normalMantissa fmt yHigh yWords.lo
   by_cases hxZero : xExponent = 0
-  · simp [mulNormalLimb?, xWords, xExponent, hxZero] at hresult
+  · simp [mulNormalLimb?, mulNormalWords?, xWords, xExponent, hxZero] at hresult
   by_cases hxExceptional : xExponent = expAllOnes fmt
-  · simp [mulNormalLimb?, xWords, xExponent, hxExceptional] at hresult
+  · simp [mulNormalLimb?, mulNormalWords?, xWords, xExponent, hxExceptional] at hresult
   by_cases hyZero : yExponent = 0
-  · simp [mulNormalLimb?, yWords, yExponent, hyZero] at hresult
+  · simp [mulNormalLimb?, mulNormalWords?, yWords, yExponent, hyZero] at hresult
   by_cases hyExceptional : yExponent = expAllOnes fmt
-  · simp [mulNormalLimb?, yWords, yExponent, hyExceptional] at hresult
+  · simp [mulNormalLimb?, mulNormalWords?, yWords, yExponent, hyExceptional] at hresult
   have hround :
       roundNormalLimb?
           (Bool.xor (signBit fmt xWords.hi) (signBit fmt yWords.hi))
           xExponent yExponent xMantissa yMantissa =
         some result := by
-    simpa [mulNormalLimb?, xWords, yWords, xExponent, yExponent,
-      xHigh, yHigh, xMantissa, yMantissa, hxZero, hxExceptional,
+    simpa [mulNormalLimb?, mulNormalWords?, roundNormalLimb?, roundNormalProduct?, xWords, yWords,
+      xExponent, yExponent, xHigh, yHigh, xMantissa, yMantissa, hxZero, hxExceptional,
       hyZero, hyExceptional] using hresult
   have hxExponentBounds :=
     normalExponent_bounds h x hxZero hxExceptional

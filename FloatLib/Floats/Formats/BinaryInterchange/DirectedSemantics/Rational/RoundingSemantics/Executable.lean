@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 # Executable packing semantics
 
 For a descriptor with `fmt.isIEEE = true` and a nonzero denominator, a finite result produced
-by `roundRatScaled` denotes exactly `roundAt` applied to the corresponding real value.
+by `roundRatScaled` denotes `roundAt` applied to the corresponding real value.
 
 The positive proof covers underflow, subnormal and normal results, including a carry into the next
 exponent. Finiteness excludes the overflow branches. The signed theorem restores the sign through
@@ -161,12 +161,13 @@ theorem toReal_roundRatScaled_eq_roundAt
       rw [toReal_neg _ hfiniteFalse,
         toReal_roundRatScaled_false_eq_roundAt
           fmt numerator denominator exponent hfmt hnumerator hdenominator hfiniteFalse]
-      simp [signedScaledRatToReal]
+      simp [signedScaledRatToReal, roundAt_neg]
 
 
 /--
 Finite scaled-rational rounding agrees with nearest-even real rounding, including a zero
-numerator. A nonzero denominator is still required; zero denominators produce an invalid result.
+numerator. A nonzero denominator is still required, because zero denominators produce an invalid
+result.
 -/
 theorem toReal_roundRatScaled_eq_roundAt_of_isFinite
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)

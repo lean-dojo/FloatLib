@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.OCP.MX.E8M0.Core
 public import FloatLib.Numerics.Core.Proof
 public import FloatLib.Numerics.Operation.Semantics
@@ -13,7 +14,7 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Block-scaled numerical systems
 
-Microscaling formats store one E8M0 scale beside a block of low-precision element codes.  The block
+Microscaling formats store one E8M0 scale beside a block of low-precision element codes. The block
 is therefore the numerical code: an element word by itself does not carry its complete magnitude.
 This module exposes that joint representation through `NumericalSystem` and interprets successful
 decoding as an array of exact dyadic values.
@@ -52,7 +53,7 @@ def blockSystem (fmt : FloatFormat) : NumericalSystem where
     | some values => .finite values
     | none => .exceptional .nan
 
-/-- A block represents an exact dyadic array precisely when its joint decoder succeeds. -/
+/-- A block represents `values` exactly when its joint decoder returns `values`. -/
 theorem blockSystem_represents_iff {fmt : FloatFormat} (block : BlockCode fmt)
     (values : Array Numerics.Dyadic) :
     (blockSystem fmt).Represents block values ↔

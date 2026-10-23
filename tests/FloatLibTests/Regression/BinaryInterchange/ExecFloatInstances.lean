@@ -17,7 +17,7 @@ public import FloatLibTests.Accounting
 These are compile-time and executable API regressions, not a second implementation of binary
 arithmetic. A deliberately nonstandard format exercises literals, algebraic instances,
 comparisons, special values, printing, and policy-aware `ExecFloat` capabilities on the default
-surface, plus elementary functions after the explicit `Configured.Transcendentals` import.
+surface, plus elementary functions after importing `Configured.Transcendentals`.
 
 Additional wide-exponent cases guard against accidentally constructing integers whose size grows
 with the exponent range. Keeping the checks together makes instance regressions visible without
@@ -27,7 +27,7 @@ scattering test-only modules through the format implementation.
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -141,44 +141,46 @@ def failWideExponentClassification : Thunk Nat := ⟨fun _ =>
 
 /-! ## Configured correctly rounded reductions -/
 
-/-- IEEE binary32 through the public configured carrier. -/
-abbrev Binary32 :=
-  FloatLib.Floats.ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
 /--
 Exercise List and Array reducers through the configured API, including every rounding direction
-and explicit dot-product length errors.
+and dot-product length errors.
 -/
 def failConfiguredReductions : Thunk Nat := ⟨fun _ =>
-  let one : Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x3f800000
-  let tiny : Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x00000001
-  let large : Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x4b800000
-  let negativeLarge : Binary32 :=
+  let one : FloatLib.Floats.Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x3f800000
+  let tiny : FloatLib.Floats.Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x00000001
+  let large : FloatLib.Floats.Binary32 := FloatLib.Floats.ExecFloat.Binary.ofNatBits 0x4b800000
+  let negativeLarge : FloatLib.Floats.Binary32 :=
     FloatLib.Floats.ExecFloat.Binary.ofNatBits 0xcb800000
   let exactCancellation :=
     FloatLib.Floats.ExecFloat.Binary.sumList
-      [large, one, negativeLarge] .nearestEven
+      [large, one, negativeLarge] .nearest
   let nearest :=
-    FloatLib.Floats.ExecFloat.Binary.sum #[one, tiny] .nearestEven
+    FloatLib.Floats.ExecFloat.Binary.sum #[one, tiny] .nearest
   let towardZero :=
     FloatLib.Floats.ExecFloat.Binary.sum #[one, tiny] .towardZero
   let downward :=
     FloatLib.Floats.ExecFloat.Binary.sum
-      #[one, tiny] .towardNegativeInfinity
+      #[one, tiny] .down
   let upward :=
     FloatLib.Floats.ExecFloat.Binary.sum
-      #[one, tiny] .towardPositiveInfinity
+      #[one, tiny] .up
+  let nearestAway :=
+    FloatLib.Floats.ExecFloat.Binary.sum #[one, tiny] .nearestAway
+  let away :=
+    FloatLib.Floats.ExecFloat.Binary.sum #[one, tiny] .away
   let dot :=
     FloatLib.Floats.ExecFloat.Binary.dot
-      #[large, one, large] #[one, one, -one] .nearestEven
+      #[large, one, large] #[one, one, -one] .nearest
   let mismatch :=
-    FloatLib.Floats.ExecFloat.Binary.dot #[one, one] #[one] .nearestEven
+    FloatLib.Floats.ExecFloat.Binary.dot #[one, one] #[one] .nearest
   countFailures
     [ FloatLib.Floats.ExecFloat.Binary.toNatBits exactCancellation == 0x3f800000
     , FloatLib.Floats.ExecFloat.Binary.toNatBits nearest == 0x3f800000
     , FloatLib.Floats.ExecFloat.Binary.toNatBits towardZero == 0x3f800000
     , FloatLib.Floats.ExecFloat.Binary.toNatBits downward == 0x3f800000
     , FloatLib.Floats.ExecFloat.Binary.toNatBits upward == 0x3f800001
+    , FloatLib.Floats.ExecFloat.Binary.toNatBits nearestAway == 0x3f800000
+    , FloatLib.Floats.ExecFloat.Binary.toNatBits away == 0x3f800001
     , match dot with
       | .ok value =>
           FloatLib.Floats.ExecFloat.Binary.toNatBits value == 0x3f800000
@@ -196,7 +198,7 @@ def modelBinary32 (bits : Nat) : Model FloatFormat.binary32 :=
 
 /--
 Integral exponents round the exact power once. The first case was off by one ulp when `pow`
-multiplied step by step; the others exercise exponents far beyond any exact computation.
+multiplied step by step, and the others exercise exponents far beyond any exact computation.
 -/
 def failIntegralPowers : Thunk Nat := ⟨fun _ =>
   let bits (base exponent : Nat) :=
@@ -212,7 +214,7 @@ def failIntegralPowers : Thunk Nat := ⟨fun _ =>
     , bits 0x40000000 0x7f000000 == 0x7f800000
     , bits 0xbf800000 0x7f000000 == 0x3f800000
     , bits 0xbf800000 0x4b7fffff == 0xbf800000
-    -- 2^(-2^127) underflows to zero; (-2)^(-(2^24 - 1)) keeps its sign.
+    -- 2^(-2^127) underflows to zero, and (-2)^(-(2^24 - 1)) keeps its sign.
     , bits 0x40000000 0xff000000 == 0x00000000
     , bits 0xc0000000 0xcb7fffff == 0x80000000
     ]⟩
@@ -232,5 +234,39 @@ def report : Thunk String := ⟨fun _ =>
     , s!"integralPowers: {failIntegralPowers.get}"
     , s!"TOTAL: {totalFailures.get}"
     ]⟩
+
+/-! ## Standard names and decoding of operator notation -/
+
+section Standard
+
+open FloatLib.Floats
+
+/-- The standard binary names are the parameterized type at the IEEE and bfloat16 widths. -/
+example :
+    Binary16 = ExecFloat.Binary 5 10 ∧ BFloat16 = ExecFloat.Binary 8 7 ∧
+      Binary32 = ExecFloat.Binary 8 23 ∧ Binary64 = ExecFloat.Binary 11 52 ∧
+      Binary128 = ExecFloat.Binary 15 112 ∧ Binary256 = ExecFloat.Binary 19 236 :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- `simp` moves decoded operator notation, negation included, to the model operations. -/
+example (a b : Binary32) :
+    ExecFloat.Binary.toModel ((a + b) * -a - b / a) =
+      Model.sub
+        (Model.mul (Model.add (ExecFloat.Binary.toModel a) (ExecFloat.Binary.toModel b))
+          (Model.neg (ExecFloat.Binary.toModel a)))
+        (Model.div (ExecFloat.Binary.toModel b) (ExecFloat.Binary.toModel a)) := by
+  simp
+
+/-- The generic square root decodes the same way, here at binary64. -/
+example (a : Binary64) :
+    ExecFloat.Binary.toModel (ExecFloat.sqrt a) = Model.sqrt (ExecFloat.Binary.toModel a) := by
+  simp
+
+/-- The real value of a configured value is absent exactly when the value is not finite. -/
+example (a : Binary16) :
+    ExecFloat.Binary.toReal? a = none ↔ ExecFloat.Binary.isFinite a = false := by
+  simp
+
+end Standard
 
 end FloatLibTests.Regression.BinaryInterchange.ExecFloatInstances

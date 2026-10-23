@@ -6,22 +6,22 @@ Authors: FloatLib Team
 
 module
 
-import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 import FloatLibTests.Fixtures.NativeIEEE
 
 /-!
 # Primitive IEEE vectors for an external MPFR oracle
 
-`oracle primitives` emits results from logical `Model.*WithStatus` operations for binary32 and
-binary64. A compact named suite covers NaNs, infinities, invalid operations, division by
-zero, and exact subnormal results, which must not report underflow. Additional operands are generated at runtime by a fixed-seed generator; generated corpora
-are deliberately not checked in. Every diagnostic identifier contains the seed and sample index
-needed to reproduce a failure.
+`oracle primitives` emits results from logical `Model` operations with `status := true` for
+binary32 and binary64. A compact named suite covers NaNs, infinities, invalid operations,
+division by zero, and exact subnormal results, which must not report underflow. A fixed-seed
+generator makes more operands at runtime, and generated corpora are deliberately not checked in.
+Every diagnostic identifier contains the seed and sample index needed to reproduce a failure.
 
 The external checker treats MPFR as the finite arithmetic oracle. IEEE signaling-NaN detection,
 NaN payload policy, and invalid-operation precedence cannot be delegated to MPFR, whose number
-type has only a single NaN class. The checker therefore compares NaN result class and decodes the
-IEEE invalid causes directly from the operand encodings.
+type has only a single NaN class. So the checker compares the NaN result class and decodes the
+IEEE invalid causes from the operand encodings itself.
 -/
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -111,7 +111,7 @@ rounding direction. They exist because MPFR's `mpfr_subnormalize` raises its own
 for an exact subnormal, which the external checker must not mistake for IEEE underflow.
 
 Bit patterns below the smallest normal encode `k` times the smallest subnormal as the integer
-`k`; a normal power of two encodes as its biased exponent shifted into the exponent field. For
+`k`, and a normal power of two encodes as its biased exponent shifted into the exponent field. For
 binary32 the multiplication is `2^-100 * 2^-40 = 2^-140` and the division is `2^-140 / 2`.
 -/
 private def exactSubnormalCases (format : FloatFormat) : Array RawCase :=
@@ -160,12 +160,12 @@ private def applyOperation {format : FloatFormat}
     (operation : Operation) (operands : Array (Model format))
     (mode : Model.IEEERoundingMode) : IO (Model.IEEEOutcome format) :=
   match operation, operands.toList with
-  | .add, [left, right] => pure <| Model.addWithStatus left right mode
-  | .sub, [left, right] => pure <| Model.subWithStatus left right mode
-  | .mul, [left, right] => pure <| Model.mulWithStatus left right mode
-  | .div, [left, right] => pure <| Model.divWithStatus left right mode
-  | .sqrt, [value] => pure <| Model.sqrtWithStatus value mode
-  | .fma, [left, right, addend] => pure <| Model.fmaWithStatus left right addend mode
+  | .add, [left, right] => pure <| Model.add left right (mode := mode) (status := true)
+  | .sub, [left, right] => pure <| Model.sub left right (mode := mode) (status := true)
+  | .mul, [left, right] => pure <| Model.mul left right (mode := mode) (status := true)
+  | .div, [left, right] => pure <| Model.div left right (mode := mode) (status := true)
+  | .sqrt, [value] => pure <| Model.sqrt value (mode := mode) (status := true)
+  | .fma, [left, right, addend] => pure <| Model.fma left right addend (mode := mode) (status := true)
   | _, _ => throw <| IO.userError s!"invalid arity for {operation.label}"
 
 private def emitCase (format : FloatFormat) (test : RawCase)
@@ -193,7 +193,7 @@ private def emitCase (format : FloatFormat) (test : RawCase)
 private def emitFormat (format : FloatFormat) (tests : Array RawCase) : IO Unit := do
   for test in tests do
     for mode in Model.IEEERoundingMode.all do
-      emitCase format test mode (toString mode)
+      emitCase format test mode mode.name
 
 /-- Emit primitive binary32 and binary64 vectors. -/
 public def run : IO Unit := do

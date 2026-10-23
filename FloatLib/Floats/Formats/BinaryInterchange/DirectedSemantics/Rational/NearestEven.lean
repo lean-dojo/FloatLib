@@ -15,8 +15,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 
 Lean's logical floating-point model represents an inexact quotient by its integer quotient and an
 `Accuracy` value computed from the remainder. `Model.roundRatScaled` rounds the same rational
-after moving a binary exponent into its numerator or denominator. This module proves that those
-representations remain equivalent through model normalization.
+after moving a binary exponent into its numerator or denominator. This module proves that the two
+representations agree through model normalization.
 
 All results are independent of a particular floating-point format.
 -/
@@ -48,10 +48,10 @@ theorem roundQuotDirected_false_le_roundQuotientEven_le_true
   have hdenominatorPos : 0 < denominator :=
     Nat.pos_of_ne_zero hdenominator
   by_cases hremainder : remainder = 0
-  · simp [roundQuotDirected, roundQuotientEven, quotCeil, hdenominator,
+  · simp [roundQuotDirected, roundQuotientEven, Numerics.roundQuotient_up_eq, hdenominator,
       remainder, hremainder, hdenominatorPos]
-  · have hceil : quotCeil numerator denominator = quotient + 1 := by
-      simp [quotCeil, hdenominator, quotient, remainder, hremainder]
+  · have hceil : Numerics.roundQuotient .up numerator denominator = quotient + 1 := by
+      simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainder]
     have hnearest :
         roundQuotientEven numerator denominator = quotient ∨
           roundQuotientEven numerator denominator = quotient + 1 := by

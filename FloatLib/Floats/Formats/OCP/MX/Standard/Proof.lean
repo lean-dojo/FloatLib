@@ -34,7 +34,7 @@ open FloatLib.Numerics
   have hnonneg : ¬(2 : Rat) ^ exponent < 0 := not_lt.mpr (le_of_lt (zpow_pos (by norm_num) _))
   simp [scaleFinite, hnonneg]
 
-/-- A zero-length or otherwise malformed array cannot become a standard block. -/
+/-- `Block.ofArray?` rejects exactly the arrays whose size is not 32. -/
 theorem Block.ofArray?_eq_none_iff {profile : Profile} (scale : E8M0)
     (values : Array (Element profile)) :
     Block.ofArray? scale values = none ↔ values.size ≠ 32 := by
@@ -100,29 +100,30 @@ theorem Block.decodeLane_value {profile : Profile} (block : Block profile)
   | infinity sign => simp [hdecode] at hvalue
   | exceptional value => simp [hdecode] at hvalue
 
-/-- Both explicit element overflow modes refine their numerical contract. -/
-theorem Element.quantize_quantizesWith (profile : Profile) (mode : OverflowMode)
+/-- Both element overflow modes refine their numerical contract. -/
+theorem Element.quantize_quantizesWith (profile : Profile) (overflow : OverflowMode)
     (input : SignedRat) :
-    Element.QuantizesWith mode input (Element.quantize profile mode (.finite input)) := by
+    Element.QuantizesWith overflow input (Element.quantize profile (.finite input) overflow) := by
   unfold Element.quantize Element.QuantizesWith
-  by_cases h : mode = .overflow ∧ Element.roundsOut profile input.value = true
+  by_cases h : overflow = .native ∧ Element.roundsOut profile input.value = true
   · simp [h.1, h.2]
-  · have hbool : (decide (mode = .overflow) && Element.roundsOut profile input.value) = false :=
+  · have hbool :
+        (decide (overflow = .native) && Element.roundsOut profile input.value) = false :=
       Bool.eq_false_iff.mpr (by simpa using h)
     simp only [hbool, Bool.false_eq_true, ↓reduceIte, ite_eq_right h]
     exact Element.quantizeFinite_quantizes profile input
 
 /-- Automatic shared-scale conversion satisfies the standard destination relation. -/
-theorem quantizeFinite_quantizes (profile : Profile) (mode : OverflowMode)
+theorem quantizeFinite_quantizes (profile : Profile) (overflow : OverflowMode)
     (input : Vector SignedRat 32) :
-    Quantizes profile mode input (quantizeFinite profile mode input) := by
+    Quantizes profile overflow input (quantizeFinite profile input overflow) := by
   unfold Quantizes quantizeFinite quantizeAt
   cases hscale : (selectScale profile input).exponent? with
   | none => rfl
   | some exponent =>
     refine ⟨rfl, fun lane => ?_⟩
     simp only [Vector.getElem_map]
-    exact Element.quantize_quantizesWith profile mode _
+    exact Element.quantize_quantizesWith profile overflow _
 
 private theorem scaled_error (exponent : Int) (input value : Rat) :
     |value * (2 : Rat) ^ exponent - input| =
@@ -142,12 +143,12 @@ theorem quantizeFinite_error_le (profile : Profile) (input : Vector SignedRat 32
     (lane : Fin 32) {exponent : Int}
     (hscale : (selectScale profile input).exponent? = some exponent) :
     ∃ value,
-      ((quantizeFinite profile .saturate input).decodeLane lane).finite?.map SignedRat.value =
+      ((quantizeFinite profile input).decodeLane lane).finite?.map SignedRat.value =
         some value ∧
       ∀ (other : Element profile) (otherValue : Rat), Element.toRat? other = some otherValue →
         |value - input[lane.val].value| ≤
           |otherValue * (2 : Rat) ^ exponent - input[lane.val].value| := by
-  let block := quantizeFinite profile .saturate input
+  let block := quantizeFinite profile input
   have hblock := quantizeFinite_quantizes profile .saturate input
   simp only [Quantizes, hscale] at hblock
   have hround : Element.Quantizes (scaleFinite (-exponent) input[lane.val])

@@ -25,8 +25,8 @@ and nominal OCP formats use the same `PolicyFor` mechanism, and custom carriers 
 The selector minimizes a workload-weighted cost among already-certified candidates. These tests
 therefore check both halves of the contract:
 
-* public execution is exactly the certificate selected by the planner for every configured
-  carrier and descriptor; and
+* public execution is the certificate the planner selects, for every configured carrier and
+  descriptor; and
 * closed representative formats reduce to different kernels when width, representation, or the
   expected workload changes.
 -/
@@ -38,8 +38,6 @@ namespace FloatLibTests.Conformance.Execution.AutomaticDispatch
 open FloatLib.Floats
 open FloatLib.Floats.ExecFloat.Backend
 open FloatLib.Floats.Formats.BinaryInterchange
-open FloatLib.Floats.Formats.OCP.FP8
-open FloatLib.Floats.Formats.OCP.MX
 open FloatLib.Numerics
 
 /-! ## Workload crossover and resource ceilings -/
@@ -80,37 +78,37 @@ variable (format : FloatFormat) (plan : Configured.StoragePlan format) (code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
     [planning : PolicyFor (Configured.Family format code plan)]
 
-/-- Configured addition executes precisely the certificate selected from its complete portfolio. -/
+/-- Configured addition runs the certificate selected from its complete portfolio. -/
 example :
     ExecFloat.Add.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.addCandidates format plan) := by
   exact ExecFloat.Add.selected_eq_planner
 
-/-- Configured subtraction executes precisely the selected certified implementation. -/
+/-- Configured subtraction runs the selected certified implementation. -/
 example :
     ExecFloat.Sub.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.subCandidates format plan) := by
   exact ExecFloat.Sub.selected_eq_planner
 
-/-- Configured multiplication executes precisely the selected certified implementation. -/
+/-- Configured multiplication runs the selected certified implementation. -/
 example :
     ExecFloat.Mul.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.mulCandidates format plan) := by
   exact ExecFloat.Mul.selected_eq_planner
 
-/-- Configured division executes precisely the selected certified implementation. -/
+/-- Configured division runs the selected certified implementation. -/
 example :
     ExecFloat.Div.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.divCandidates format plan) := by
   exact ExecFloat.Div.selected_eq_planner
 
-/-- Configured square root executes precisely the selected certified implementation. -/
+/-- Configured square root runs the selected certified implementation. -/
 example :
     ExecFloat.Sqrt.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.sqrtCandidates format plan) := by
   exact ExecFloat.Sqrt.selected_eq_planner
 
-/-- Configured FMA executes precisely the selected certified implementation. -/
+/-- Configured FMA runs the selected certified implementation. -/
 example :
     ExecFloat.Fma.selected (F := Configured.Family format code plan) =
       selectCertified planning.policy (Configured.Plan.fmaCandidates format plan) := by
@@ -125,37 +123,37 @@ section EveryBinaryDescriptor
 variable (format : FloatFormat)
     [planning : PolicyFor (Descriptor format)]
 
-/-- Arbitrary-format addition executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format addition runs the planner's selected certificate. -/
 example :
     ExecFloat.Add.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.addCandidates format) := by
   exact ExecFloat.Add.selected_eq_planner
 
-/-- Arbitrary-format subtraction executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format subtraction runs the planner's selected certificate. -/
 example :
     ExecFloat.Sub.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.subCandidates format) := by
   exact ExecFloat.Sub.selected_eq_planner
 
-/-- Arbitrary-format multiplication executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format multiplication runs the planner's selected certificate. -/
 example :
     ExecFloat.Mul.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.mulCandidates format) := by
   exact ExecFloat.Mul.selected_eq_planner
 
-/-- Arbitrary-format division executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format division runs the planner's selected certificate. -/
 example :
     ExecFloat.Div.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.divCandidates format) := by
   exact ExecFloat.Div.selected_eq_planner
 
-/-- Arbitrary-format square root executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format square root runs the planner's selected certificate. -/
 example :
     ExecFloat.Sqrt.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.sqrtCandidates format) := by
   exact ExecFloat.Sqrt.selected_eq_planner
 
-/-- Arbitrary-format fused multiply-add executes precisely the planner's selected certificate. -/
+/-- Arbitrary-format fused multiply-add runs the planner's selected certificate. -/
 example :
     ExecFloat.Fma.selected (F := Descriptor format) =
       selectCertified planning.policy (Descriptor.Plan.fmaCandidates format) := by
@@ -169,9 +167,9 @@ end EveryBinaryDescriptor
 private abbrev TinyBinary := ExecFloat.Binary.Family 2 1
 private abbrev Binary7 := ExecFloat.Binary.Family 3 3
 private abbrev Binary8 := ExecFloat.Binary.Family 4 3
-private abbrev Binary32 := ExecFloat.Binary.Family 8 23
-private abbrev Binary64 := ExecFloat.Binary.Family 11 52
-private abbrev Binary128 := ExecFloat.Binary.Family 15 112
+private abbrev Binary32Family := ExecFloat.Binary.Family 8 23
+private abbrev Binary64Family := ExecFloat.Binary.Family 11 52
+private abbrev Binary128Family := ExecFloat.Binary.Family 15 112
 private abbrev Binary4096 := ExecFloat.Binary.Family 19 4095
 private abbrev FiniteE4M3 :=
   ExecFloat.Binary.Family 4 3 (encoding := .finite)
@@ -179,8 +177,8 @@ private abbrev CustomBiasBinary16 :=
   ExecFloat.Binary.Family 5 10 (encoding := .finite) (bias := 11)
 
 /-!
-The descriptor planner exposes one truthful structural route, not one candidate per name attached
-to the same dispatcher. Tiny formats may additionally expose one exhaustive table.
+The descriptor planner exposes a single structural route, so names attached to the same
+dispatcher do not each add a candidate. Tiny formats may also expose one exhaustive table.
 -/
 
 example :
@@ -202,23 +200,23 @@ example :
 
 /-- A configured binary32 value is stored in a `UInt32` carrier chosen from its encoded width. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := Binary32)).storage = .word32 := by
+    (ExecFloat.Add.selectedCandidate (F := Binary32Family)).storage = .word32 := by
   rfl
 
 /-- Public configured binary32 uses certified fixed-format software for all six operations. -/
 example :
     [ (ExecFloat.Add.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     , (ExecFloat.Sub.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     , (ExecFloat.Mul.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     , (ExecFloat.Div.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     , (ExecFloat.Sqrt.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     , (ExecFloat.Fma.selectedCandidate
-        (F := Binary32)).kind
+        (F := Binary32Family)).kind
     ] =
       [ .fixedFormat, .fixedFormat, .fixedFormat
       , .fixedFormat, .fixedFormat, .fixedFormat
@@ -226,8 +224,8 @@ example :
   rfl
 
 /--
-A 4,115-bit IEEE encoding with 4,096 significand bits remains supported and, on its default
-proof-model carrier, selects the generic exact baselines: the wide-limb kernels require the
+A 4,115-bit IEEE encoding with 4,096 significand bits is supported and, on its default
+proof-model carrier, selects the generic exact baselines. The wide-limb kernels require the
 opt-in limb carrier of `ExecFloat.BinaryLimbs`, so no certified kernel is eligible here.
 -/
 example :
@@ -266,8 +264,8 @@ example :
 
 /--
 A nonstandard exponent bias changes semantics but not the planner architecture. The sixteen-bit
-finite encoding selects the exact generic implementation because the current proved word kernels
-require IEEE exceptional-value semantics. It remains automatically planned and needs no
+finite encoding selects the exact generic implementation because the proved word kernels
+require IEEE exceptional-value semantics. It is still planned automatically and needs no
 format-specific registration.
 -/
 example :
@@ -279,33 +277,33 @@ example :
 
 /-- Binary64 uses fixed-format software for all six operations. -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := Binary64)).kind
-    , (ExecFloat.Sub.selectedCandidate (F := Binary64)).kind
-    , (ExecFloat.Mul.selectedCandidate (F := Binary64)).kind
-    , (ExecFloat.Div.selectedCandidate (F := Binary64)).kind
-    , (ExecFloat.Sqrt.selectedCandidate (F := Binary64)).kind
-    , (ExecFloat.Fma.selectedCandidate (F := Binary64)).kind
+    [ (ExecFloat.Add.selectedCandidate (F := Binary64Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := Binary64Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := Binary64Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := Binary64Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := Binary64Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := Binary64Family)).kind
     ] =
       [ .fixedFormat, .fixedFormat, .fixedFormat
       , .fixedFormat, .fixedFormat, .fixedFormat
       ] := by
   rfl
 
-/-- Binary128 remains an ordinary fixed-limb input to the format-independent planner. -/
+/-- Binary128 is an ordinary fixed-limb input to the format-independent planner. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := Binary128)).kind = .fixedLimbs := by
+    (ExecFloat.Add.selectedCandidate (F := Binary128Family)).kind = .fixedLimbs := by
   rfl
 
 /--
 Balanced OCP FP8 amortizes all admissible direct-byte tables and keeps FMA on the exact baseline.
 -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := E4M3FN)).kind
-    , (ExecFloat.Sub.selectedCandidate (F := E4M3FN)).kind
-    , (ExecFloat.Mul.selectedCandidate (F := E4M3FN)).kind
-    , (ExecFloat.Div.selectedCandidate (F := E4M3FN)).kind
-    , (ExecFloat.Sqrt.selectedCandidate (F := E4M3FN)).kind
-    , (ExecFloat.Fma.selectedCandidate (F := E4M3FN)).kind
+    [ (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := E4M3FN.Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := E4M3FN.Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := E4M3FN.Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := E4M3FN.Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := E4M3FN.Family)).kind
     ] =
       [ .exhaustiveTable, .exhaustiveTable, .exhaustiveTable
       , .exhaustiveTable, .exhaustiveTable, .generic
@@ -313,7 +311,7 @@ example :
   rfl
 
 /-!
-The balanced priors below are intentionally tested at the measured crossover points, not merely
+The balanced priors below are deliberately tested at the measured crossover points as well as
 at convenient named formats. Three isolated 100,000-call calibration trials compare first-use
 plus warmed execution for every certified candidate. These examples make a future cost-model
 change explain which structural selection changed.
@@ -321,7 +319,7 @@ change explain which structural selection changed.
 
 /--
 At three bits of significand precision, complete FMA lookup still wins over the exact baseline.
-The extra table dimension stops paying for itself at four bits, and the five-bit format remains on
+The extra table dimension stops paying for itself at four bits, and the five-bit format stays on
 the baseline.
 -/
 example :
@@ -354,7 +352,7 @@ open scoped FloatLib.Floats.ExecFloat.Backend.PlanningLatency
 
 /--
 A first-call configured four-bit IEEE workload avoids table setup. Five operations use their
-allocation-free native-word alternatives; FMA uses the lower-latency exact baseline.
+allocation-free native-word alternatives, and FMA uses the lower-latency exact baseline.
 -/
 example :
     [ (ExecFloat.Add.selectedCandidate (F := TinyBinary)).kind
@@ -371,17 +369,17 @@ example :
 
 /-- A first-call OCP FP8 workload avoids paying for the lazy 65,536-entry addition table. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := E4M3FN)).kind = .generic := by
+    (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind = .generic := by
   rfl
 
 /-- A first-call OCP MX workload avoids setup for all six four-bit operation tables. -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Sub.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Mul.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Div.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Sqrt.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Fma.selectedCandidate (F := E2M1)).kind
+    [ (ExecFloat.Add.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := E2M1.Family)).kind
     ] =
       [ .generic, .generic, .generic, .generic, .generic, .generic ] := by
   rfl
@@ -408,14 +406,14 @@ example :
 
 /-- Sustained OCP FP8 addition amortizes its direct-byte exhaustive table. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := E4M3FN)).kind = .exhaustiveTable := by
+    (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind = .exhaustiveTable := by
   rfl
 
 /--
 The sustained profile crosses the measured configured-binary FMA threshold at seven encoded
-bits. The seven-bit table occupies two mebibytes and amortizes after roughly 3.5 million calls;
-the sixteen-mebibyte eight-bit table remains too expensive to build at the five-million-call
-horizon.
+bits. The seven-bit table occupies two mebibytes and amortizes after roughly 3.5 million calls.
+But the sixteen-mebibyte eight-bit table is still too expensive to build at the
+five-million-call horizon.
 -/
 example :
     [ (ExecFloat.Fma.selectedCandidate (F := Binary7)).kind
@@ -425,12 +423,12 @@ example :
 
 /-- Sustained OCP MX arithmetic amortizes every complete four-bit operation table. -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Sub.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Mul.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Div.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Sqrt.selectedCandidate (F := E2M1)).kind
-    , (ExecFloat.Fma.selectedCandidate (F := E2M1)).kind
+    [ (ExecFloat.Add.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := E2M1.Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := E2M1.Family)).kind
     ] =
       [ .exhaustiveTable, .exhaustiveTable, .exhaustiveTable
       , .exhaustiveTable, .exhaustiveTable, .exhaustiveTable
@@ -438,8 +436,8 @@ example :
   rfl
 
 /--
-An eight-bit descriptor also receives the throughput policy structurally; it is not required to
-have a nominal standard-owned wrapper for the table planner to apply.
+An eight-bit descriptor also receives the throughput policy structurally. It needs no nominal
+standard-owned wrapper for the table planner to apply.
 -/
 example :
     (ExecFloat.Add.selectedCandidate
@@ -448,7 +446,7 @@ example :
 
 /--
 The same throughput policy applies to a parameterized non-IEEE configured type. Binary and unary
-tables are selected, while the sixteen-megabyte eight-bit FMA table remains too costly to
+tables are selected, while the sixteen-mebibyte eight-bit FMA table is still too costly to
 construct at the sustained profile's call horizon.
 -/
 example :

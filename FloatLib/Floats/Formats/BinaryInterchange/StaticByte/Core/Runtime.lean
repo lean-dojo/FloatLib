@@ -35,7 +35,7 @@ Each descriptor still determines its own exceptional-value policy.
 
 Lean represents subtypes identically to their data carrier, so `Code F` has the runtime
 representation of `UInt8`; its bound is proof-only. See Lean `Init.Prelude`,
-<https://github.com/leanprover/lean4/blob/v4.34.0/src/Init/Prelude.lean#L641-L643>.
+<https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>.
 
 `benchmarks/scripts/checks/static-lowbit-codegen.sh` checks the intended allocation and
 specialization properties.

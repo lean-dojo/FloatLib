@@ -17,9 +17,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Verified fixed-limb differences
 
-These helpers compare, subtract, normalize, and shift two-word unsigned values without converting
-the executable path to `Nat`. Their theorems expose the corresponding mathematical values for
-format-specific subtraction proofs.
+The helpers of `Difference.Runtime` compare, subtract, normalize, and shift two-word unsigned
+values without converting the executable path to `Nat`. The theorems here give their mathematical
+values for format-specific subtraction proofs.
 -/
 
 @[expose] public section
@@ -67,9 +67,7 @@ namespace FloatLib.Numerics.FixedWord.UInt128
 theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     (sub x y).toNat = x.toNat - y.toNat := by
   unfold sub UInt128.toNat
-  change
-    y.lo.toNat + y.hi.toNat * 2 ^ 64 ≤
-      x.lo.toNat + x.hi.toNat * 2 ^ 64 at hordered
+  unfold UInt128.toNat at hordered
   have hxLow := x.lo.toNat_lt
   have hyLow := y.lo.toNat_lt
   have hxHigh := x.hi.toNat_lt
@@ -125,10 +123,11 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hhighNat : value.hi.toNat ≠ 0 := by
       intro hzero
       exact hhigh (UInt64.toNat_inj.mp (by simpa using hzero))
+    unfold UInt128.toNat
     exact (log2_low_add_high_mul_pow
       value.lo.toNat value.hi.toNat 64 value.lo.toNat_lt hhighNat).symm
 
-/-- The total native two-word right shift is exact division by a power of two. -/
+/-- Native two-word right shift, defined for every shift, is floor division by a power of two. -/
 @[simp, grind =] theorem shiftRight_toNat (value : UInt128) (shift : Nat) :
     (shiftRight value shift).toNat = value.toNat / 2 ^ shift := by
   by_cases hzero : shift = 0
@@ -257,7 +256,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
         Nat.pow_le_pow_right (by decide) hlarge
       simp only [shiftRight, hzero, beq_iff_eq, ite_false,
         hsmall, hwidth]
-      unfold UInt128.toNat
+      unfold UInt128.toNat at hvalue ⊢
       simp only [UInt64.reduceToNat, zero_mul, add_zero]
       exact (Nat.div_eq_of_lt (hvalue.trans_le hpower)).symm
 
@@ -289,7 +288,7 @@ theorem singleBit_toNat_of_lt (index : Nat) (hindex : index < 128) :
           2 ^ ((index - 64) + 64) := by rw [pow_add]
       _ = 2 ^ index := by congr; omega
 
-/-- A bounded native two-word left shift has its exact mathematical value. -/
+/-- A two-word left shift that does not overflow agrees with the natural-number shift. -/
 theorem shiftLeft_toNat (value : UInt128) (shift : Nat)
     (hshift : shift < 128)
     (hfit : value.toNat <<< shift < 2 ^ 128) :
@@ -450,5 +449,39 @@ theorem shiftLeft_of_ge (value : UInt128) (shift : Nat) (hshift : 128 ≤ shift)
   have hsmall : ¬ shift < 64 := by omega
   have hmid : ¬ shift < 128 := by omega
   simp [shiftLeft, hzero, hsmall, hmid]
+
+/-- Shifting a nonzero two-word value right and back left returns it exactly when the shift drops
+only zero bits. -/
+theorem shiftRight_shiftLeft_beq (low : UInt128) (d : Nat) (hlowNe : low.toNat ≠ 0) :
+    ((low.shiftRight d).shiftLeft d == low) = decide (low.toNat % 2 ^ d = 0) := by
+  by_cases hsmall : d < 128
+  · have hfit : (low.toNat / 2 ^ d) <<< d < 2 ^ 128 := by
+      rw [Nat.shiftLeft_eq]
+      exact (Nat.div_mul_le_self _ _).trans_lt low.toNat_lt
+    have hshift :
+        ((low.shiftRight d).shiftLeft d).toNat = low.toNat / 2 ^ d * 2 ^ d := by
+      rw [UInt128.shiftLeft_toNat _ _ hsmall (by rw [UInt128.shiftRight_toNat]; exact hfit),
+        UInt128.shiftRight_toNat, Nat.shiftLeft_eq]
+    apply Bool.eq_iff_iff.mpr
+    rw [beq_iff_eq, decide_eq_true_eq]
+    constructor
+    · intro heq
+      have hnat := congrArg UInt128.toNat heq
+      rw [hshift] at hnat
+      exact Nat.mod_eq_zero_of_dvd ⟨low.toNat / 2 ^ d, by rw [Nat.mul_comm]; exact hnat.symm⟩
+    · intro hmod
+      apply UInt128.toNat_injective
+      rw [hshift, Nat.div_mul_cancel (Nat.dvd_of_mod_eq_zero hmod)]
+  · have hlowSmall : low.toNat < 2 ^ d :=
+      low.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+    have hmodNe : ¬low.toNat % 2 ^ d = 0 := by
+      rw [Nat.mod_eq_of_lt hlowSmall]
+      exact hlowNe
+    rw [decide_eq_false hmodNe]
+    apply Bool.eq_false_iff.mpr
+    intro heq
+    have hnat := congrArg UInt128.toNat (beq_iff_eq.mp heq)
+    rw [UInt128.shiftLeft_of_ge _ _ (by omega)] at hnat
+    exact hlowNe (by simpa [UInt128.toNat] using hnat.symm)
 
 end FloatLib.Numerics.FixedWord.UInt128

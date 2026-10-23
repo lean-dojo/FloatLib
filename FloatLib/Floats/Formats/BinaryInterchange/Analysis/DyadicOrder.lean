@@ -239,6 +239,14 @@ theorem cmpDyadic_gt_iff (a b : Numerics.Dyadic) :
           exact_mod_cast habReal
       simp [hcmp, compare_gt_iff_gt, hgt]
 
+/-- Executable dyadic comparison is the comparison of the real values. -/
+theorem cmpDyadic_eq_compare (a b : Numerics.Dyadic) :
+    cmpDyadic a b = compare a.toReal b.toReal := by
+  cases h : cmpDyadic a b
+  · exact (compare_lt_iff_lt.mpr ((cmpDyadic_lt_iff a b).mp h)).symm
+  · exact (compare_eq_iff_eq.mpr ((cmpDyadic_eq_iff a b).mp h)).symm
+  · exact (compare_gt_iff_gt.mpr ((cmpDyadic_gt_iff a b).mp h)).symm
+
 end
 
 end Model

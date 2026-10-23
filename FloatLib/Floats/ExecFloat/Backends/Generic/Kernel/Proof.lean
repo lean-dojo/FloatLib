@@ -14,7 +14,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Correctness of width-generic finite arithmetic
@@ -58,7 +58,7 @@ theorem Components.toDyadic_exp_of_mantissa_ne_zero
     (value.toDyadic fmt).exponent = dyadicExponent fmt value.exponent := by
   simp [Components.toDyadic, h]
 
-/-- Scalar finite decoding is extensionally equal to binding the component decoder. -/
+/-- Scalar finite decoding equals binding the component decoder `decode?`. -/
 theorem withFinite_eq {fmt : FloatFormat} {α : Type}
     (x : Model fmt) (k : Bool → Nat → Nat → Option α) :
     withFinite? x k =
@@ -71,9 +71,9 @@ theorem withFinite_eq {fmt : FloatFormat} {α : Type}
     unfold decode? isFinite IEEE.isFinite
     rw [hencoding]
     simp only
-    rw [signBit_eq_signBitImpl_apply, expField_eq_expFieldImpl_apply,
-      fracField_eq_fracFieldImpl_apply]
-    unfold signBitImpl expFieldImpl fracFieldImpl
+    rw [signBit_eq_internal_apply, expField_eq_internal_apply,
+      fracField_eq_internal_apply]
+    unfold Internal.signBit Internal.expField Internal.fracField
     by_cases hexponent :
         x.toNatBits >>> fmt.fracWidth &&& fmt.expAllOnesNat =
           fmt.expAllOnesNat <;>
@@ -154,7 +154,7 @@ theorem addComponents_sameSign_sameExponent
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
     ring
   unfold addComponents
-  rw [← roundDyadic_eq_roundDyadicImpl, hleftDyadic, hrightDyadic,
+  rw [← roundDyadic_eq_internal, hleftDyadic, hrightDyadic,
     Model.addDyadic_sameSign_sameExponent sign left right
       (dyadicExponent fmt exponent) hleft hright,
     FiniteProductRound.round_eq_roundDyadic fmt hfmt, hscale]
@@ -196,7 +196,7 @@ private theorem addScaleDyadics_eq
     by_cases hy : y.mantissa = 0 <;>
     simp [Components.toDyadic, addDyadic, hx, hy]
 
-/-- Compact decoding produces exactly the same finite dyadic as `toDyadic?`. -/
+/-- Compact decoding produces the same finite dyadic as `toDyadic?`. -/
 theorem toDyadic_eq_decode {fmt : FloatFormat} (x : Model fmt) :
     toDyadic? x = (decode? x).map (Components.toDyadic fmt) := by
   by_cases hfinite : isFinite x = true
@@ -234,22 +234,22 @@ theorem addComponents_comm
   unfold addComponents
   rw [addDyadic_comm]
 
-/-- Unsigned-scale finite addition is extensionally equal to the public component operation. -/
-theorem addComponentsImpl_eq
+/-- Unsigned-scale finite addition equals the public component operation `addComponents`. -/
+theorem Internal.addComponents_eq
     (fmt : FloatFormat) (x y : Components) :
-    addComponentsImpl fmt x y = addComponents fmt x y := by
-  unfold addComponentsImpl addComponents
-  simp only [← roundDyadic_eq_roundDyadicImpl]
+    Internal.addComponents fmt x y = FiniteKernel.addComponents fmt x y := by
+  unfold Internal.addComponents FiniteKernel.addComponents
+  simp only [← roundDyadic_eq_internal]
   by_cases hfmt : fmt.isIEEE = true
   · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaleDyadics_eq fmt hfmt]
   · rw [ite_eq_right hfmt]
 
 /-- Compile finite addition through unsigned scale alignment on conventional IEEE formats. -/
-@[csimp] theorem addComponents_eq_addComponentsImpl :
-    addComponents = addComponentsImpl := by
+@[csimp] theorem addComponents_eq_internal :
+    addComponents = Internal.addComponents := by
   funext fmt x y
-  exact (addComponentsImpl_eq fmt x y).symm
+  exact (Internal.addComponents_eq fmt x y).symm
 
 /-- Compact finite addition equals the public exact-dyadic finite path. -/
 theorem add_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
@@ -261,7 +261,7 @@ theorem add_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
   unfold add?
   cases decode? x <;>
     cases decode? y <;>
-    simp [addComponents, ← roundDyadic_eq_roundDyadicImpl]
+    simp [addComponents, ← roundDyadic_eq_internal]
 
 private theorem exponent_add_eq_scales (fmt : FloatFormat) (x y : Nat) :
     dyadicExponent fmt x + dyadicExponent fmt y =
@@ -277,7 +277,7 @@ private theorem exponent_sub_eq_scales (fmt : FloatFormat) (x y : Nat) :
   rw [exponent_eq_scale, exponent_eq_scale]
   omega
 
-/-- The compact finite multiplication kernel equals the public exact-dyadic finite path. -/
+/-- Compact finite multiplication equals the public exact-dyadic finite path. -/
 theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     mul? x y =
       match toDyadic? x, toDyadic? y with
@@ -293,7 +293,7 @@ theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
       | _, _ => none := by
   rw [toDyadic_eq_decode x, toDyadic_eq_decode y]
   unfold mul?
-  simp only [← roundDyadic_eq_roundDyadicImpl]
+  simp only [← roundDyadic_eq_internal]
   cases hx : decode? x with
   | none =>
       cases decode? y <;> simp
@@ -327,7 +327,7 @@ theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
                     (scale dx.exponent + scale dy.exponent)
             · simp [hieee]
 
-/-- The compact finite division kernel equals the public exact-dyadic finite path. -/
+/-- Compact finite division equals the public exact-dyadic finite path. -/
 theorem div_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     div? x y =
       match toDyadic? x, toDyadic? y with
@@ -414,12 +414,12 @@ private theorem addScaledProduct_eq
   · simp [Components.toDyadic, productDyadic, addDyadic, hz]
   · simp [productDyadic, Components.toDyadic, hz]
 
-/-- Unsigned-scale FMA is extensionally equal to the public exact component operation. -/
-theorem fmaComponentsImpl_eq
+/-- Unsigned-scale FMA equals the public component operation `fmaComponents`. -/
+theorem Internal.fmaComponents_eq
     (fmt : FloatFormat) (x y z : Components) :
-    fmaComponentsImpl fmt x y z = fmaComponents fmt x y z := by
-  unfold fmaComponentsImpl fmaComponents
-  simp only [← roundDyadic_eq_roundDyadicImpl]
+    Internal.fmaComponents fmt x y z = FiniteKernel.fmaComponents fmt x y z := by
+  unfold Internal.fmaComponents FiniteKernel.fmaComponents
+  simp only [← roundDyadic_eq_internal]
   by_cases hfmt : fmt.isIEEE = true
   · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaledProduct_eq fmt hfmt]
@@ -428,8 +428,8 @@ theorem fmaComponentsImpl_eq
 /--
 An aligned same-sign FMA reduces to one product-round call for every IEEE binary format.
 
-The caller supplies the significand alignment width. The exponent offset remains descriptor
-derived, so binary32, binary64, binary128, and custom IEEE descriptors share this proof.
+The caller supplies the significand alignment width. As in
+`addComponents_sameSign_sameExponent`, the exponent offset comes from the descriptor.
 -/
 theorem fmaComponents_sameSign_aligned
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (alignment : Nat)
@@ -458,8 +458,8 @@ theorem fmaComponents_sameSign_aligned
         (Bool.xor xSign ySign)
         (xMantissa * yMantissa + (zMantissa <<< alignment))
         ((xExponent - 1) + (yExponent - 1)) := by
-  rw [← fmaComponentsImpl_eq]
-  unfold fmaComponentsImpl
+  rw [← Internal.fmaComponents_eq]
+  unfold Internal.fmaComponents
   rw [ite_eq_left hfmt]
   unfold FiniteScaleAdd.roundSum
   simp only [scale, hxExponent, hyExponent, hzExponent,
@@ -493,12 +493,12 @@ theorem fmaComponents_sameSign_aligned
   rw [hshift]
 
 /-- Compile finite FMA through the verified unsigned-scale implementation on IEEE formats. -/
-@[csimp] theorem fmaComponents_eq_fmaComponentsImpl :
-    fmaComponents = fmaComponentsImpl := by
+@[csimp] theorem fmaComponents_eq_internal :
+    fmaComponents = Internal.fmaComponents := by
   funext fmt x y z
-  exact (fmaComponentsImpl_eq fmt x y z).symm
+  exact (Internal.fmaComponents_eq fmt x y z).symm
 
-/-- The compact finite FMA kernel equals the public exact-dyadic finite path. -/
+/-- Compact finite FMA equals the public exact-dyadic finite path. -/
 theorem fma_eq_spec {fmt : FloatFormat} (x y z : Model fmt) :
     fma? x y z =
       match toDyadic? x, toDyadic? y, toDyadic? z with
@@ -526,7 +526,7 @@ theorem fma_eq_spec {fmt : FloatFormat} (x y z : Model fmt) :
       | some dz =>
           simp only [Option.map_some]
           unfold fmaComponents
-          rw [← roundDyadic_eq_roundDyadicImpl, add_productDyadic_eq]
+          rw [← roundDyadic_eq_internal, add_productDyadic_eq]
 
 /-- Scalar-field addition agrees with component addition. -/
 theorem addFields_eq
@@ -538,13 +538,13 @@ theorem addFields_eq
         { sign := xSign, exponent := xExponent, mantissa := xMantissa }
         { sign := ySign, exponent := yExponent, mantissa := yMantissa } := by
   by_cases hieee : fmt.isIEEE = true
-  · simpa [addFields, addComponentsImpl, hieee] using
-      addComponentsImpl_eq fmt
+  · simpa [addFields, Internal.addComponents, hieee] using
+      Internal.addComponents_eq fmt
         { sign := xSign, exponent := xExponent, mantissa := xMantissa }
         { sign := ySign, exponent := yExponent, mantissa := yMantissa }
   · simp [addFields, hieee]
 
-/-- The scalar-field addition entry point preserves `add?`. -/
+/-- Scalar-field addition `addRuntime?` agrees with `add?`. -/
 theorem addRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
     addRuntime? x y = add? x y := by
   simp only [addRuntime?, withFinite_eq]
@@ -559,7 +559,7 @@ theorem addRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
   funext fmt x y
   exact (addRuntime_eq x y).symm
 
-/-- The scalar-field multiplication entry point preserves `mul?`. -/
+/-- Scalar-field multiplication `mulRuntime?` agrees with `mul?`. -/
 theorem mulRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
     mulRuntime? x y = mul? x y := by
   simp only [mulRuntime?, withFinite_eq]
@@ -592,7 +592,7 @@ private theorem decode?_mantissa_normal {fmt : FloatFormat} {x : Model fmt} {c :
     rw [pow_succ]
     omega
 
-/-- The scalar-field division entry point preserves `div?`. -/
+/-- Scalar-field division `divRuntime?` agrees with `div?`. -/
 theorem divRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
     divRuntime? x y = div? x y := by
   simp only [divRuntime?, withFinite_eq]
@@ -641,14 +641,14 @@ theorem fmaFields_eq
         { sign := ySign, exponent := yExponent, mantissa := yMantissa }
         { sign := zSign, exponent := zExponent, mantissa := zMantissa } := by
   by_cases hieee : fmt.isIEEE = true
-  · simpa [fmaFields, fmaComponentsImpl, hieee] using
-      fmaComponentsImpl_eq fmt
+  · simpa [fmaFields, Internal.fmaComponents, hieee] using
+      Internal.fmaComponents_eq fmt
         { sign := xSign, exponent := xExponent, mantissa := xMantissa }
         { sign := ySign, exponent := yExponent, mantissa := yMantissa }
         { sign := zSign, exponent := zExponent, mantissa := zMantissa }
   · simp [fmaFields, hieee]
 
-/-- The scalar-field FMA entry point preserves `fma?`. -/
+/-- Scalar-field FMA `fmaRuntime?` agrees with `fma?`. -/
 theorem fmaRuntime_eq {fmt : FloatFormat} (x y z : Model fmt) :
     fmaRuntime? x y z = fma? x y z := by
   simp only [fmaRuntime?, withFinite_eq]
@@ -658,14 +658,14 @@ theorem fmaRuntime_eq {fmt : FloatFormat} (x y z : Model fmt) :
     cases decode? z <;>
     simp [fmaFields_eq]
 
-/-- The straight-line decoder agrees with the continuation decoder. -/
+/-- The straight-line `fmaRuntimeFlat?` agrees with the continuation form `fmaRuntime?`. -/
 theorem fmaRuntimeFlat_eq {fmt : FloatFormat} (x y z : Model fmt) :
     fmaRuntimeFlat? x y z = fmaRuntime? x y z := by
   by_cases hieee : fmt.isIEEE = true
   · simp [fmaRuntimeFlat?, fmaRuntime?, withFinite?, decodeMantissa, hieee]
   · simp [fmaRuntimeFlat?, hieee]
 
-/-- Compile finite FMA through the scalar decoder. -/
+/-- Compile finite FMA through the straight-line scalar decoder `fmaRuntimeFlat?`. -/
 @[csimp] theorem fma_eq_fmaRuntime :
     @fma? = @fmaRuntimeFlat? := by
   funext fmt x y z

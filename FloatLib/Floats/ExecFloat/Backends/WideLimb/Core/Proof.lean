@@ -18,10 +18,9 @@ storage invariant. The storage invariant `topLimbFits` is shown equivalent to th
 below `2 ^ bitWidth` (`topLimbFits_iff`), which gives the codec laws `toModel_ofModel` and
 `ofModel_toModel`. The field accessors then agree with `Model.signBit`, `Model.expField`, and
 `Model.fracField`, so the compact finite decoder `FiniteKernel.decode?` of a stored value is
-read off the limbs (`decode?_toModel`). Finally `toModel_pack` states the exact model that
-`pack` produces; every arithmetic kernel of this backend ends in `pack`, so this is the contract
-each refinement proof uses. The main storage and packing results are `Value.toNat_lt` and
-`toModel_pack`.
+read off the limbs (`decode?_toModel`). Finally `toModel_pack` states the model that `pack`
+produces. Every arithmetic kernel of this backend ends in `pack`, so this is the contract each
+refinement proof uses. The main storage result is `Value.toNat_lt`.
 -/
 
 @[expose] public section
@@ -40,7 +39,7 @@ theorem Eligible.isIEEE (h : Eligible fmt) : fmt.isIEEE = true := h.1
 /-- An eligible descriptor is wider than 128 bits. -/
 theorem Eligible.width_gt (h : Eligible fmt) : 128 < fmt.bitWidth := h.2.1
 
-/-- An eligible exponent field fits one machine word. -/
+/-- An eligible exponent field has at most 32 bits. -/
 theorem Eligible.exp_le (h : Eligible fmt) : fmt.expWidth ≤ 32 := h.2.2
 
 /-- Every descriptor has at least three encoded bits. -/
@@ -61,7 +60,7 @@ theorem limbBits_lt_bitWidth (fmt : FloatFormat) : 32 * (limbCount fmt - 1) < fm
   have := three_le_bitWidth fmt
   omega
 
-/-- Every descriptor needs at least one limb; backend eligibility is not required. -/
+/-- Every descriptor needs at least one limb, eligible or not. -/
 theorem limbCount_pos (fmt : FloatFormat) : 0 < limbCount fmt := by
   unfold limbCount
   have := three_le_bitWidth fmt
@@ -194,7 +193,7 @@ theorem toModel_injective {v w : Value fmt} (h : toModel v = toModel w) : v = w 
 
 /-- The stored sign bit is the model sign. -/
 theorem signBit_eq (v : Value fmt) : signBit v = Model.signBit (toModel v) := by
-  rw [Model.signBit_eq_signBitImpl_apply, Model.signBitImpl, toNatBits_toModel, signBit,
+  rw [Model.signBit_eq_internal_apply, Model.Internal.signBit, toNatBits_toModel, signBit,
     LimbArray.testBit_eq]
 
 /-- The exponent mask has `expWidth` low bits set, for exponent widths of at most 32. -/
@@ -230,8 +229,9 @@ theorem normalExponent_of_expWord (h : Eligible fmt) (v : Value fmt) (hzero : ex
 /-- The stored exponent field is the model exponent field. -/
 theorem expField_eq (v : Value fmt) (h : fmt.expWidth ≤ 32) :
     expField v = Model.expField (toModel v) := by
-  rw [Model.expField_eq_expFieldImpl_apply, Model.expFieldImpl, toNatBits_toModel, expField, expWord,
-    UInt32.toNat_and, LimbArray.bitsAt32_toNat, expMask32_toNat h, FloatFormat.expAllOnesNat,
+  rw [Model.expField_eq_internal_apply, Model.Internal.expField, toNatBits_toModel,
+    expField, expWord, UInt32.toNat_and, LimbArray.bitsAt32_toNat, expMask32_toNat h,
+    FloatFormat.expAllOnesNat,
     Nat.and_two_pow_sub_one_eq_mod, Nat.and_two_pow_sub_one_eq_mod, LimbArray.radix_eq,
     Nat.shiftRight_eq_div_pow]
   exact Nat.mod_mod_of_dvd _ (Nat.pow_dvd_pow 2 h)
@@ -244,7 +244,7 @@ theorem expField_lt (v : Value fmt) (h : fmt.expWidth ≤ 32) :
 
 /-- The fraction limbs denote the model fraction field. -/
 theorem fraction_toNat (v : Value fmt) : (fraction v).toNat = Model.fracField (toModel v) := by
-  rw [Model.fracField_eq_fracFieldImpl_apply, Model.fracFieldImpl, toNatBits_toModel, fraction,
+  rw [Model.fracField_eq_internal_apply, Model.Internal.fracField, toNatBits_toModel, fraction,
     LimbArray.toNat_lowBits, FloatFormat.fracMaskNat, Nat.and_two_pow_sub_one_eq_mod]
 
 /-- The fraction of a stored value has the format's limb count. -/
@@ -320,12 +320,12 @@ theorem decodeMantissa_eq_normalMantissa (v : Value fmt) (hnormal : expField v �
 
 /-! ## Packing -/
 
-/-- The exponent word masked to the exponent field. -/
+/-- Masking an exponent word keeps its value modulo `2 ^ expWidth`. -/
 theorem expWord_and_mask_toNat (exponent : UInt32) (h : fmt.expWidth ≤ 32) :
     (exponent &&& expMask32 fmt).toNat = exponent.toNat % 2 ^ fmt.expWidth := by
   rw [UInt32.toNat_and, expMask32_toNat h, Nat.and_two_pow_sub_one_eq_mod]
 
-/-- The limbs produced by `pack`, before the storage wrapper. -/
+/-- The limbs that `pack` builds, before the storage wrapper, denote the masked fields. -/
 theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
     (h : fmt.expWidth ≤ 32) :
     let base := (fraction.lowBits fmt.fracWidth).resize (limbCount fmt)
@@ -406,7 +406,7 @@ theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray
         simp only [ite_true] at hs
         exact lt_of_lt_of_le hs hradix
 
-/-- `pack` produces exactly the model field constructor on the masked fields. -/
+/-- `pack` is the model field constructor on the masked fields. -/
 theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
     (h : fmt.expWidth ≤ 32) :
     toModel (pack fmt sign exponent fraction) =
@@ -415,8 +415,8 @@ theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
   obtain ⟨hvalue, hsize, hlt⟩ := pack_limbs_toNat (fmt := fmt) sign exponent fraction h
   unfold pack toModel
   rw [ofLimbs_val _ hsize hlt, hvalue]
-  rw [Model.ofFields_eq_ofFieldsImpl]
-  unfold Model.ofFieldsImpl Model.mkBitsImpl Model.ofNatBits
+  rw [Model.ofFields_eq_internal]
+  unfold Model.Internal.ofFields Model.Internal.mkBits Model.ofNatBits
   congr 1
   apply BitVec.eq_of_toNat_eq
   rw [BitVec.toNat_ofNatLT, FloatFormat.ofWordNat, BitVec.toNat_ofNat]
@@ -463,7 +463,7 @@ theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
   rw [hvalue] at hlt
   exact hlt
 
-/-- `pack` on in-range fields produces exactly the model field constructor. -/
+/-- On in-range fields, `pack` is the model field constructor. -/
 theorem toModel_pack_of_lt (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
     (h : fmt.expWidth ≤ 32) (hexp : exponent.toNat < 2 ^ fmt.expWidth)
     (hfrac : fraction.toNat < 2 ^ fmt.fracWidth) :

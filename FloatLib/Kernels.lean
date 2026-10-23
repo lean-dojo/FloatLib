@@ -31,8 +31,10 @@ route compiled `Numerics.roundShiftRightEven`, `Numerics.roundQuotientEven`, and
 through native-word dispatchers. Shifting and square root use the native kernels for values
 below `2^64`; quotient rounding requires a numerator below `2^63` and a nonzero denominator
 below `2^64`. In particular, `IntegerSquareRoot.natSqrt_eq_sqrtNat` affects every compiled
-`Nat.sqrt` in downstream code. Each substitution is justified by a proved equation, and the
-arbitrary-precision branch of each replacement is the unchanged logical definition.
+`Nat.sqrt` in downstream code. Each substitution is justified by a proved equation. Outside the
+word range, quotient rounding uses the logical definition, shifting keeps a guard bit and tests
+the discarded bits only when it has to, and square root checks an increasing-precision Newton
+candidate before falling back to `Nat.sqrt.iter`.
 -/
 
 @[expose] public section

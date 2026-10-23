@@ -12,16 +12,16 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
 
 `scale` implements IEEE 754-2019 §5.3.3 `scaleB`: multiply by an exact integral
 power of ten, then round once. Its preferred exponent is the input quantum plus the scale.
-The integer argument is unbounded; it does not impose the coefficient restriction
-of the older General Decimal Arithmetic `scaleb` operation.
+The integer argument is unbounded, without the coefficient restriction of the
+older General Decimal Arithmetic `scaleb` operation.
 
 `decimalExponent` implements `logB` with an integer result format. For zero, infinity and NaN
 §5.3.3 asks for a value outside the range `±2 × (emax + p - 1)`, where `emax` is the largest
 exponent of a finite value in scientific form. The sentinel is `2 × (emax + p - 1) + 1`, enlarged
 if needed so that it also exceeds twice the absolute bound on every finite exponent, and zero
 gets its negation. Exceptional inputs raise invalid, including quiet NaNs, as specified for an
-integer `logBFormat` in §5.3.3. These are default
-exception results, without a mutable environment or alternate exception handling.
+integer `logBFormat` in §5.3.3. These are default exception results, without a mutable
+environment or alternate exception handling.
 -/
 
 @[expose] public section
@@ -42,8 +42,8 @@ def scale (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) : Outcome :=
 structure DecimalExponentOutcome where
   /-- Radix exponent for a nonzero finite input, or the signed exceptional sentinel. -/
   value : Int
-  /-- Default exception flags; exceptional integer deliveries signal invalid. -/
-  status : Status := {}
+  /-- Default exception flags. Exceptional integer results signal invalid. -/
+  status : Numerics.IEEEStatus := {}
   deriving DecidableEq, Repr
 
 /-- The IEEE 754-2019 §5.3.3 bound `emax + p - 1` for an integer `logB` result. Here

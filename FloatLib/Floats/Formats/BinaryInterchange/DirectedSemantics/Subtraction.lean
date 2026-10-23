@@ -23,26 +23,26 @@ namespace Model
 section
 
 /-- Downward-rounded subtraction is a lower bound on exact real subtraction. -/
-theorem toEReal_subDown_le
+theorem toEReal_sub_down_le
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    toEReal (subDown x y) ≤ ((toReal x - toReal y : ℝ) : EReal) := by
+    toEReal (sub x y (mode := .down)) ≤ ((toReal x - toReal y : ℝ) : EReal) := by
   have hyNeg : isFinite (neg y) = true := by
     simpa using hy
-  change toEReal (addDown x (neg y)) ≤ ((toReal x - toReal y : ℝ) : EReal)
+  change toEReal (add x (neg y) (mode := .down)) ≤ ((toReal x - toReal y : ℝ) : EReal)
   simpa [toReal_neg y hy, sub_eq_add_neg] using
-    toEReal_addDown_le x (neg y) hfmt hx hyNeg
+    toEReal_add_down_le x (neg y) hfmt hx hyNeg
 
 /-- Exact real subtraction is bounded above by upward-rounded subtraction. -/
-theorem le_toEReal_subUp
+theorem le_toEReal_sub_up
     {fmt : FloatFormat} (x y : Model fmt) (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    ((toReal x - toReal y : ℝ) : EReal) ≤ toEReal (subUp x y) := by
+    ((toReal x - toReal y : ℝ) : EReal) ≤ toEReal (sub x y (mode := .up)) := by
   have hyNeg : isFinite (neg y) = true := by
     simpa using hy
-  change ((toReal x - toReal y : ℝ) : EReal) ≤ toEReal (addUp x (neg y))
+  change ((toReal x - toReal y : ℝ) : EReal) ≤ toEReal (add x (neg y) (mode := .up))
   simpa [toReal_neg y hy, sub_eq_add_neg] using
-    le_toEReal_addUp x (neg y) hfmt hx hyNeg
+    le_toEReal_add_up x (neg y) hfmt hx hyNeg
 
 end
 

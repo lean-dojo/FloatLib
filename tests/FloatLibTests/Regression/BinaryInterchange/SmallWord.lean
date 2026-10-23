@@ -21,7 +21,7 @@ the small-arithmetic precision boundary, and a custom 64-bit encoding.
 @[expose] public section
 
 -- Keep lazy regression bodies out of module initialization, including closed subexpressions.
--- This affects native code generation only; elaboration and kernel checking are unchanged.
+-- This affects native code generation only. Elaboration and kernel checking are unchanged.
 set_option compiler.extract_closed false
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -37,6 +37,14 @@ abbrev custom37 : FloatFormat :=
 
 abbrev custom64 : FloatFormat :=
   FloatFormat.ieee 2 61
+
+/-- The widest significand of the one-word `UInt64` FMA kernel, with a narrow exponent. -/
+abbrev custom36 : FloatFormat :=
+  FloatFormat.ieee 6 29
+
+/-- The widest significand and exponent of the one-word `UInt64` FMA kernel. -/
+abbrev custom60 : FloatFormat :=
+  FloatFormat.ieee 30 29
 
 def samples (fmt : FloatFormat) : Array (Model fmt) :=
   #[
@@ -111,9 +119,12 @@ def custom37Failures : Thunk Nat := ⟨fun _ =>
 def custom64Failures : Thunk Nat := ⟨fun _ =>
   formatFailures custom64⟩
 
+def fmaBoundaryFailures : Thunk Nat := ⟨fun _ =>
+  fmaFailures custom36 + fmaFailures custom60⟩
+
 def totalFailures : Thunk Nat := ⟨fun _ =>
   binary16Failures.get + bfloat16Failures.get + custom37Failures.get + custom64Failures.get +
-    NativeBinary64Addition.totalFailures.get⟩
+    fmaBoundaryFailures.get + NativeBinary64Addition.totalFailures.get⟩
 
 def report : Thunk String := ⟨fun _ =>
   String.intercalate "\n"
@@ -121,6 +132,7 @@ def report : Thunk String := ⟨fun _ =>
     , s!"bfloat16: {bfloat16Failures.get}"
     , s!"custom37: {custom37Failures.get}"
     , s!"custom64: {custom64Failures.get}"
+    , s!"FMA kernel boundary: {fmaBoundaryFailures.get}"
     , NativeBinary64Addition.report.get
     , s!"TOTAL: {totalFailures.get}"
     ]⟩
@@ -195,7 +207,7 @@ open Model
 abbrev custom37 : FloatFormat :=
   FloatFormat.ieee 6 30
 
-/-- The first fraction width beyond the old small-arithmetic capacity. -/
+/-- One fraction bit wider than `custom37`, past the 30-bit limit of `NativeSmallWord.Eligible`. -/
 abbrev custom40 : FloatFormat :=
   FloatFormat.ieee 8 31
 

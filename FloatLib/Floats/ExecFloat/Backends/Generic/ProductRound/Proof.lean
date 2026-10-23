@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Numerics.ShiftRightJam.Proof
 
@@ -28,11 +28,11 @@ addition.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteProductRound
 
 /--
-Proof-facing specification of the successful normal-product path.
+Specification of the successful normal-product path.
 
-The optimized word backends use different integer representations, but successful normal results
-all have this format-independent meaning. Keeping the specification here prevents one specialized
-backend from becoming a proof dependency of another.
+The word backends use different integer representations, but their successful normal results all
+have this format-independent meaning. Keeping it here stops one specialized backend from becoming
+a proof dependency of another.
 -/
 def normalSpec? (fmt : FloatFormat) (sign : Bool)
     (xExponent yExponent xMantissa yMantissa : Nat) :
@@ -63,8 +63,8 @@ def normalSpec? (fmt : FloatFormat) (sign : Bool)
         (normalizedMantissa - pow2 fmt.fracWidth)
 
 /--
-A successful normal-product specification result is exactly the arbitrary-precision product
-rounder.
+A successful `normalSpec?` result is the result of the arbitrary-precision product rounder
+`round`.
 -/
 theorem normalSpec_refines
     (fmt : FloatFormat) (sign : Bool)
@@ -339,10 +339,10 @@ theorem round_eq_roundDyadic
         exponent :=
           Int.ofNat scale -
             Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) } := by
-  rw [roundDyadic_eq_roundDyadicImpl]
-  unfold roundDyadicImpl
+  rw [roundDyadic_eq_internal]
+  unfold Internal.roundDyadic
   rw [ite_eq_left hfmt]
-  unfold round ieeeRoundDyadicImpl
+  unfold round Internal.ieeeRoundDyadic
   dsimp only
   by_cases hproduct : product = 0
   · simp [hproduct]

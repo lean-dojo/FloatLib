@@ -18,7 +18,7 @@ single final result is packed back into the configured carrier.
 
 For finite operands, `sum` forms the exact mathematical sum and rounds once. `dot` forms every
 product exactly, sums those products exactly, and rounds once. The configured type fixes the
-source and destination format, while the rounding direction remains an explicit argument.
+source and destination format, and the rounding direction is an optional argument.
 -/
 
 @[expose] public section
@@ -36,60 +36,64 @@ local notation "Value" =>
     format.exponentBias_le_maxFinite plan code
 
 /--
-Correctly sum configured values and return the result with IEEE exception indicators.
+Correctly rounded sum of configured values in `mode` (nearest-even by default).
 
 Every operand is decoded exactly, the complete sum is accumulated without intermediate rounding,
-and the result is rounded once in `rounding`.
+and the result is rounded once. With `status := true` the result also carries the IEEE exception
+indicators and the ternary value. The value form packs the value-only descriptor-model sum, which
+computes no exception indicators.
 -/
-def sumWithStatus (values : Array Value) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  IEEEOutcome.ofModel <|
-    Model.sumWithStatus format (values.map ExecFloat.Binary.toModel) rounding
+@[macro_inline] def sum (values : Array Value) (mode : Model.IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.sum format (values.map ExecFloat.Binary.toModel) mode (status := true)
+  | false =>
+      ExecFloat.Binary.ofModel (Model.sum format (values.map ExecFloat.Binary.toModel) mode)
 
-/-- Correctly sum configured values with one final rounding. -/
-@[inline] def sum (values : Array Value) (rounding : Model.IEEERoundingMode) : Value :=
-  (sumWithStatus values rounding).1
-
-/-- List entry point for correctly rounded configured summation with status. -/
-@[inline] def sumListWithStatus
-    (values : List Value) (rounding : Model.IEEERoundingMode) :
-    IEEEOutcome (format := format) (plan := plan) (code := code) :=
-  sumWithStatus values.toArray rounding
-
-/-- List entry point for correctly rounded configured summation. -/
-@[inline] def sumList (values : List Value) (rounding : Model.IEEERoundingMode) : Value :=
-  sum values.toArray rounding
+/-- List entry point for correctly rounded configured summation, with the options of `sum`. -/
+@[macro_inline] def sumList (values : List Value) (mode : Model.IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  sum values.toArray mode status
 
 /--
-Correctly compute a configured dot product and return IEEE exception indicators.
+Correctly rounded dot product of configured values in `mode` (nearest-even by default).
 
 Products and their sum are exact until one final rounding. Unequal lengths return
-`ReductionError.lengthMismatch`; no pair is silently discarded.
+`ReductionError.lengthMismatch`, so no pair is silently dropped. With `status := true` a
+successful result also carries the IEEE exception indicators and the ternary value. The value
+form packs the value-only descriptor-model dot product, which computes no exception indicators.
 -/
-def dotWithStatus (left right : Array Value) (rounding : Model.IEEERoundingMode) :
-    Except Numerics.ReductionError
-      (IEEEOutcome (format := format) (plan := plan) (code := code)) :=
-  (Model.dotWithStatus format
-      (left.map ExecFloat.Binary.toModel)
-      (right.map ExecFloat.Binary.toModel)
-      rounding).map IEEEOutcome.ofModel
+@[macro_inline] def dot (left right : Array Value) (mode : Model.IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    Except Numerics.ReductionError (match status with
+      | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+      | false => Value) :=
+  match status with
+  | true =>
+      (Model.dot format
+          (left.map ExecFloat.Binary.toModel)
+          (right.map ExecFloat.Binary.toModel)
+          mode (status := true)).map IEEEOutcome.ofModel
+  | false =>
+      (Model.dot format
+          (left.map ExecFloat.Binary.toModel)
+          (right.map ExecFloat.Binary.toModel)
+          mode).map ExecFloat.Binary.ofModel
 
-/-- Correctly compute a configured dot product with one final rounding. -/
-@[inline] def dot (left right : Array Value) (rounding : Model.IEEERoundingMode) :
-    Except Numerics.ReductionError Value :=
-  (dotWithStatus left right rounding).map Prod.fst
-
-/-- List entry point for a correctly rounded configured dot product with status. -/
-@[inline] def dotListWithStatus
-    (left right : List Value) (rounding : Model.IEEERoundingMode) :
-    Except Numerics.ReductionError
-      (IEEEOutcome (format := format) (plan := plan) (code := code)) :=
-  dotWithStatus left.toArray right.toArray rounding
-
-/-- List entry point for a correctly rounded configured dot product. -/
-@[inline] def dotList
-    (left right : List Value) (rounding : Model.IEEERoundingMode) :
-    Except Numerics.ReductionError Value :=
-  dot left.toArray right.toArray rounding
+/-- List entry point for a correctly rounded configured dot product, with the options of `dot`. -/
+@[macro_inline] def dotList (left right : List Value) (mode : Model.IEEERoundingMode := .nearest)
+    (status : Bool := false) :
+    Except Numerics.ReductionError (match status with
+      | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+      | false => Value) :=
+  dot left.toArray right.toArray mode status
 
 end FloatLib.Floats.ExecFloat.Binary

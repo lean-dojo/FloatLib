@@ -16,7 +16,7 @@ import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof.RoundToIntegra
 # Mathematical semantics of executable scalar conversions
 
 Executable integer, Boolean, and arbitrary-format float conversions have exact mathematical
-contracts. Integer-to-float conversion performs one explicitly directed destination rounding.
+contracts. Integer-to-float conversion performs one destination rounding in the given direction.
 Float-to-integer conversion uses the central unbounded-integer rounding operation, then rejects
 results outside the signed destination range.
 -/
@@ -31,31 +31,31 @@ open FloatLib.Numerics.Representations
 open Model (toReal isFinite)
 open FixedInt (toInt)
 
-/-- `intToFloat` is exactly the value component of its status-bearing operation. -/
-@[simp] theorem intToFloat_eq_value {fmt : FloatFormat} {width : Nat}
-    (x : FixedInt width) (rounding : Model.IEEERoundingMode) :
-    intToFloat fmt x rounding = (intToFloatWithStatus fmt x rounding).value :=
+/-- The value of a conversion with `status := true` is the conversion without it. -/
+@[simp] theorem value_intToFloat {fmt : FloatFormat} {width : Nat}
+    (x : FixedInt width) (mode : Model.IEEERoundingMode) :
+    (intToFloat fmt x (mode := mode) (status := true)).value = intToFloat fmt x (mode := mode) :=
   rfl
 
 /-- A finite nearest-even conversion to a conventional IEEE format agrees with real rounding. -/
-theorem intToFloat_nearestEven_eq_round {fmt : FloatFormat} {width : Nat}
+theorem intToFloat_nearest_eq_round {fmt : FloatFormat} {width : Nat}
     (x : FixedInt width)
     (hfmt : fmt.isIEEE = true)
-    (hfin : isFinite (intToFloat fmt x .nearestEven) = true) :
-    toReal (intToFloat fmt x .nearestEven) =
+    (hfin : isFinite (intToFloat fmt x .nearest) = true) :
+    toReal (intToFloat fmt x .nearest) =
       Model.roundAt fmt (FixedInt.toInt x : ℝ) := by
   let n := FixedInt.toInt x
   simp only [intToFloat] at hfin ⊢
-  simp only [intToFloatWithStatus]
+  simp only [Internal.Status.intToFloat]
   change isFinite
-      (Model.roundDyadicWithRounding fmt .nearestEven
+      (Model.Internal.Directed.roundDyadic fmt .nearest
         ({ negative := decide (n < 0), significand := n.natAbs, exponent := 0 } :
           Numerics.Dyadic)) = true at hfin
   change toReal
-      (Model.roundDyadicWithRounding fmt .nearestEven
+      (Model.Internal.Directed.roundDyadic fmt .nearest
         ({ negative := decide (n < 0), significand := n.natAbs, exponent := 0 } :
           Numerics.Dyadic)) = Model.roundAt fmt (n : ℝ)
-  simp only [Model.roundDyadicWithRounding] at hfin ⊢
+  simp only [Model.Internal.Directed.roundDyadic] at hfin ⊢
   rw [Model.toReal_roundDyadic_eq_roundAt fmt hfmt _ hfin]
   congr 1
   cases n <;> simp [Numerics.Dyadic.toReal]
@@ -66,53 +66,53 @@ integer lies in the signed destination range.
 -/
 theorem floatToInt_of_exactValue_eq_finite_of_inRange
     {fmt : FloatFormat} {width : Nat} (x : Model fmt)
-    (rounding : Model.IEEERoundingMode) (exact : Numerics.Dyadic)
+    (mode : Model.IEEERoundingMode) (exact : Numerics.Dyadic)
     (hvalue : Model.exactValue x = .finite exact)
-    (hrange : FixedInt.InRange width (Model.roundDyadicToInt rounding exact)) :
-    floatToInt (width := width) x rounding =
+    (hrange : FixedInt.InRange width (Model.roundDyadicToInt mode exact)) :
+    floatToInt (width := width) x mode =
       .success
-        (FixedInt.ofInt (Model.roundDyadicToInt rounding exact))
+        (FixedInt.ofInt (Model.roundDyadicToInt mode exact))
         { inexact := !Model.dyadicIsIntegral exact } := by
   simp [floatToInt, hvalue, hrange]
 
 /-- A finite rounded integer outside the signed destination range is rejected. -/
 theorem floatToInt_of_exactValue_eq_finite_of_not_inRange
     {fmt : FloatFormat} {width : Nat} (x : Model fmt)
-    (rounding : Model.IEEERoundingMode) (exact : Numerics.Dyadic)
+    (mode : Model.IEEERoundingMode) (exact : Numerics.Dyadic)
     (hvalue : Model.exactValue x = .finite exact)
-    (hrange : ¬FixedInt.InRange width (Model.roundDyadicToInt rounding exact)) :
-    floatToInt (width := width) x rounding = .failure .outOfRange := by
+    (hrange : ¬FixedInt.InRange width (Model.roundDyadicToInt mode exact)) :
+    floatToInt (width := width) x mode = .failure .outOfRange := by
   simp [floatToInt, hvalue, hrange]
 
 /-- Float-to-integer conversion rejects infinity and retains its sign in the failure. -/
 theorem floatToInt_of_exactValue_eq_infinity
     {fmt : FloatFormat} {width : Nat} (x : Model fmt)
-    (rounding : Model.IEEERoundingMode) (negative : Bool)
+    (mode : Model.IEEERoundingMode) (negative : Bool)
     (hvalue : Model.exactValue x = .infinity negative) :
-    floatToInt (width := width) x rounding =
+    floatToInt (width := width) x mode =
       .failure (.infinity .source negative) := by
   simp [floatToInt, hvalue]
 
 /-- NaN conversion failures retain the source sign, signaling class, and payload. -/
 theorem floatToInt_of_exactValue_eq_nan
     {fmt : FloatFormat} {width : Nat} (x : Model fmt)
-    (rounding : Model.IEEERoundingMode)
+    (mode : Model.IEEERoundingMode)
     (negative signaling : Bool) (payload : Nat)
     (hvalue : Model.exactValue x = .nan negative signaling payload) :
-    floatToInt (width := width) x rounding =
+    floatToInt (width := width) x mode =
       .failure (.exceptional .source
         (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling)) := by
   simp [floatToInt, hvalue]
 
 /-- Successful finite conversion stores the selected integer exactly at positive width. -/
 theorem toInt_of_floatToInt_finite
-    {width : Nat} (rounding : Model.IEEERoundingMode)
+    {width : Nat} (mode : Model.IEEERoundingMode)
     (exact : Numerics.Dyadic)
     (hwidth : 0 < width)
-    (hrange : FixedInt.InRange width (Model.roundDyadicToInt rounding exact)) :
+    (hrange : FixedInt.InRange width (Model.roundDyadicToInt mode exact)) :
     (FixedInt.ofInt
-      (width := width) (Model.roundDyadicToInt rounding exact)).toInt =
-        Model.roundDyadicToInt rounding exact := by
+      (width := width) (Model.roundDyadicToInt mode exact)).toInt =
+        Model.roundDyadicToInt mode exact := by
   exact FixedInt.toInt_ofInt_eq_self hwidth hrange
 
 /-- Toward-zero conversion uses floor for nonnegative inputs and ceiling for negative inputs. -/

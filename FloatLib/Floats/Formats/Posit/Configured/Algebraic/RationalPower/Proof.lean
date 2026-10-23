@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 
 The configured operations refine the model kernels for every lawful storage codec. Their real
 semantics hold under the same domain conditions, independently of storage width. These are
-correctness results for certified comparison and exact fallback, not bounds on execution cost.
+correctness results for exact boundary comparison, not bounds on execution cost.
 -/
 
 @[expose] public section
@@ -32,27 +32,27 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Configured power preserves the exact model result. -/
+/-- Configured power decodes to the model `pow` of the decoded operands. -/
 @[simp] theorem toModel_pow (base exponent : Value) :
     toModel (pow base exponent) = Model.pow (toModel base) (toModel exponent) := by
   simp [pow, toModel, Configured.Family.toModel]
 
-/-- Configured base-two exponential preserves the exact model result. -/
+/-- Configured base-two exponential decodes to the model `exp2`. -/
 @[simp] theorem toModel_exp2 (value : Value) :
     toModel (exp2 value) = Model.exp2 (toModel value) := by
   simp [exp2, toModel, Configured.Family.toModel]
 
-/-- Configured base-ten exponential preserves the exact model result. -/
+/-- Configured base-ten exponential decodes to the model `exp10`. -/
 @[simp] theorem toModel_exp10 (value : Value) :
     toModel (exp10 value) = Model.exp10 (toModel value) := by
   simp [exp10, toModel, Configured.Family.toModel]
 
-/-- Configured base-two exponential minus one preserves the fused model result. -/
+/-- Configured base-two exponential minus one decodes to the fused model `exp2Minus1`. -/
 @[simp] theorem toModel_exp2Minus1 (value : Value) :
     toModel (exp2Minus1 value) = Model.exp2Minus1 (toModel value) := by
   simp [exp2Minus1, toModel, Configured.Family.toModel]
 
-/-- Configured base-ten exponential minus one preserves the fused model result. -/
+/-- Configured base-ten exponential minus one decodes to the fused model `exp10Minus1`. -/
 @[simp] theorem toModel_exp10Minus1 (value : Value) :
     toModel (exp10Minus1 value) = Model.exp10Minus1 (toModel value) := by
   simp [exp10Minus1, toModel, Configured.Family.toModel]
@@ -74,7 +74,7 @@ theorem pow_eq_roundRat_of_neg (base exponent : Value) {b e : Rat}
   rw [toModel_pow]
   exact Model.pow_eq_roundRat_of_neg _ _ hbase hexponent hb hinteger
 
-/-- A negative configured base with nonintegral exponent produces NaR. -/
+/-- A negative configured base with a nonintegral exponent produces NaR. -/
 theorem pow_eq_nar_of_neg_nonintegral (base exponent : Value) {b e : Rat}
     (hbase : toRat? base = some b) (hexponent : toRat? exponent = some e)
     (hb : b < 0) (hinteger : e.den ≠ 1) :

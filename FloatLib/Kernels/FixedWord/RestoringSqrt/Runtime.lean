@@ -13,8 +13,8 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 # Fixed-word restoring square-root runtime
 
 The restoring loop consumes a four-word radicand two bits at a time and retains the root and
-remainder in two words. `RestoringSqrt.Proof` proves exactness under the digit-count and capacity
-bounds stated below.
+remainder in two words. `RestoringSqrt.Proof` proves the result correct under the digit-count and
+capacity bounds stated below.
 -/
 
 @[expose] public section
@@ -105,17 +105,17 @@ def rootLoopWords
           doubledRootHi (doubledRootLo ||| 1)
           (expandedHi - trialHi - borrow) (expandedLo - trialLo)
 
-/-- The word-accumulator implementation of `rootLoop`, including its wrapping arithmetic. -/
-@[inline] def rootLoopImpl
+/-- Word-accumulator implementation of `rootLoop`, including its wrapping arithmetic. -/
+@[inline] def Internal.rootLoop
     (radicand : FloatLib.Numerics.FixedWord.UInt256) (steps : Nat)
     (state : RestoringRootState FloatLib.Numerics.FixedWord.UInt128) :
     RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
   rootLoopWords radicand steps state.root.hi state.root.lo state.remainder.hi state.remainder.lo
 
 /--
-Compute the floor root and exact square remainder from the requested base-four digits.
+Compute the floor root and square remainder from the requested base-four digits.
 
-The digit count fixes the verified capacity: `rootAndRemainder_spec` covers radicands below
+The digit count fixes the verified capacity, and `rootAndRemainder_spec` covers radicands below
 `2^(2 * steps)` for any digit count from 64 to 125. Larger radicands lose their leading digits,
 so the result need not be the root of the original radicand.
 -/
@@ -126,7 +126,7 @@ so the result need not be the root of the original radicand.
     { root := ⟨0, 0⟩, remainder := ⟨0, 0⟩ }
 
 /-- Run the word-accumulator loop from zero root and remainder. -/
-@[inline] def rootAndRemainderImpl
+@[inline] def Internal.rootAndRemainder
     (radicand : FloatLib.Numerics.FixedWord.UInt256) (steps : Nat) :
     RestoringRootState FloatLib.Numerics.FixedWord.UInt128 :=
   rootLoopWords radicand steps 0 0 0 0

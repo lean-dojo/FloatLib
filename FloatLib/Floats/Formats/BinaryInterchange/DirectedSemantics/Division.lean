@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Directed division soundness for conventional IEEE formats
 
-For finite operands and a nonzero divisor, `divDown` and `divUp` round the exact rational quotient
-in opposite directions. The extended-real statements remain valid when outward rounding
-overflows.
+For finite operands and a nonzero divisor, `div x y (mode := .down)` and `div x y (mode := .up)`
+round the exact rational quotient in opposite directions. The extended-real statements hold even
+when outward rounding overflows.
 
 The bounds hold for every descriptor satisfying `fmt.isIEEE = true`, with no restriction to named
-widths. The operands must be finite and the divisor nonzero; the result may be infinite.
+widths.
 -/
 
 @[expose] public section
@@ -38,30 +38,30 @@ theorem signedScaledRatToReal_of_toDyadic?_some
   simp [toReal_eq, hdx, hdy]
 
 /-- Downward-rounded division is a lower bound on the exact real quotient. -/
-theorem toEReal_divDown_le
+theorem toEReal_div_down_le
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true)
     (hy0 : isZero y = false) :
-    toEReal (divDown x y) ≤ ((toReal x / toReal y : ℝ) : EReal) := by
+    toEReal (div x y (mode := .down)) ≤ ((toReal x / toReal y : ℝ) : EReal) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← signedScaledRatToReal_of_toDyadic?_some hdx hdy, divDown,
-    divWithRounding_eq_of_toDyadic?_some .towardNegativeInfinity nofun hdx hdy hy0]
+  rw [← signedScaledRatToReal_of_toDyadic?_some hdx hdy,
+    div_eq_of_toDyadic?_some .down nofun hdx hdy hy0]
   exact toEReal_roundRatDownScaled_le fmt _ _ _ _ hfmt
     (significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hdy hy0)
 
 /-- The exact real quotient is bounded above by upward-rounded division. -/
-theorem le_toEReal_divUp
+theorem le_toEReal_div_up
     {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) (hy : isFinite y = true)
     (hy0 : isZero y = false) :
-    ((toReal x / toReal y : ℝ) : EReal) ≤ toEReal (divUp x y) := by
+    ((toReal x / toReal y : ℝ) : EReal) ≤ toEReal (div x y (mode := .up)) := by
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
-  rw [← signedScaledRatToReal_of_toDyadic?_some hdx hdy, divUp,
-    divWithRounding_eq_of_toDyadic?_some .towardPositiveInfinity nofun hdx hdy hy0]
+  rw [← signedScaledRatToReal_of_toDyadic?_some hdx hdy,
+    div_eq_of_toDyadic?_some .up nofun hdx hdy hy0]
   exact le_toEReal_roundRatUpScaled fmt _ _ _ _ hfmt
     (significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hdy hy0)
 

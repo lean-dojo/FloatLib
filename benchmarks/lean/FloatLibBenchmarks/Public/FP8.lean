@@ -20,9 +20,9 @@ This executable compares each supported eight-bit floating-point format at two p
 * the same exact `FloatFormat` through the general descriptor carrier.
 
 Both carriers use the shared `BenchmarkCarrier` input generation and workload templates, so they
-round the same exact rationals before timing. This also keeps their result sinks comparable. Timed
-loops are monomorphic, table initialization occurs during warmup, and every row records the
-selected steady-state backend. The FMA rows deliberately identify the proved arithmetic fallback:
+round the same exact rationals before timing and their result sinks stay comparable. Timed loops
+are monomorphic, table initialization occurs during warmup, and every row records the selected
+steady-state backend. The FMA rows deliberately identify the proved arithmetic fallback:
 an exhaustive eight-bit ternary table would require 16,777,216 entries per format.
 -/
 
@@ -30,8 +30,6 @@ open FloatLib.Floats
 open FloatLibBenchmarks.Public.Sweep
 open FloatLib.Floats.Formats.BinaryInterchange
 open FloatLib.Floats.Formats.BinaryInterchange.StaticByte
-open FloatLib.Floats.Formats.FiniteOnly
-open FloatLib.Floats.Formats.OCP.FP8
 open FloatLib.Numerics
 open scoped FloatLib.Floats.ExecFloat.Backend.PlanningThroughput
 
@@ -43,11 +41,6 @@ private instance staticByteBenchmarkCarrier (F : Type) [Family F] :
   toModel := StaticByte.toModel
   ofModel := StaticByte.ofModel
   lowBits := fun value => UInt64.ofNat (StaticByte.toNatBits value)
-
-abbrev OcpE4M3FN := ExecFloat E4M3FN
-abbrev OcpE5M2 := ExecFloat E5M2
-abbrev OnnxE4M3FNUZ := ExecFloat E4M3FNUZ
-abbrev OnnxE5M2FNUZ := ExecFloat E5M2FNUZ
 
 abbrev DescriptorE4M3FN := ExecFloat (Descriptor FloatFormat.e4m3fn)
 abbrev DescriptorE5M2 := ExecFloat (Descriptor FloatFormat.e5m2)
@@ -117,55 +110,55 @@ private def runUnary
   timeNamedRow implementation formatName 8 precision candidate policy operation iterations fun _ =>
     workload iterations xs 0
 
-binary_sweep_workload nominalE4M3FNAdd : OcpE4M3FN using ExecFloat.add
-binary_sweep_workload nominalE5M2Add : OcpE5M2 using ExecFloat.add
-binary_sweep_workload nominalE4M3FNUZAdd : OnnxE4M3FNUZ using ExecFloat.add
-binary_sweep_workload nominalE5M2FNUZAdd : OnnxE5M2FNUZ using ExecFloat.add
+binary_sweep_workload nominalE4M3FNAdd : E4M3FN using ExecFloat.add
+binary_sweep_workload nominalE5M2Add : E5M2 using ExecFloat.add
+binary_sweep_workload nominalE4M3FNUZAdd : E4M3FNUZ using ExecFloat.add
+binary_sweep_workload nominalE5M2FNUZAdd : E5M2FNUZ using ExecFloat.add
 binary_sweep_workload descriptorE4M3FNAdd : DescriptorE4M3FN using ExecFloat.add
 binary_sweep_workload descriptorE5M2Add : DescriptorE5M2 using ExecFloat.add
 binary_sweep_workload descriptorE4M3FNUZAdd : DescriptorE4M3FNUZ using ExecFloat.add
 binary_sweep_workload descriptorE5M2FNUZAdd : DescriptorE5M2FNUZ using ExecFloat.add
 
-binary_sweep_workload nominalE4M3FNSub : OcpE4M3FN using ExecFloat.sub
-binary_sweep_workload nominalE5M2Sub : OcpE5M2 using ExecFloat.sub
-binary_sweep_workload nominalE4M3FNUZSub : OnnxE4M3FNUZ using ExecFloat.sub
-binary_sweep_workload nominalE5M2FNUZSub : OnnxE5M2FNUZ using ExecFloat.sub
+binary_sweep_workload nominalE4M3FNSub : E4M3FN using ExecFloat.sub
+binary_sweep_workload nominalE5M2Sub : E5M2 using ExecFloat.sub
+binary_sweep_workload nominalE4M3FNUZSub : E4M3FNUZ using ExecFloat.sub
+binary_sweep_workload nominalE5M2FNUZSub : E5M2FNUZ using ExecFloat.sub
 binary_sweep_workload descriptorE4M3FNSub : DescriptorE4M3FN using ExecFloat.sub
 binary_sweep_workload descriptorE5M2Sub : DescriptorE5M2 using ExecFloat.sub
 binary_sweep_workload descriptorE4M3FNUZSub : DescriptorE4M3FNUZ using ExecFloat.sub
 binary_sweep_workload descriptorE5M2FNUZSub : DescriptorE5M2FNUZ using ExecFloat.sub
 
-binary_sweep_workload nominalE4M3FNMul : OcpE4M3FN using ExecFloat.mul
-binary_sweep_workload nominalE5M2Mul : OcpE5M2 using ExecFloat.mul
-binary_sweep_workload nominalE4M3FNUZMul : OnnxE4M3FNUZ using ExecFloat.mul
-binary_sweep_workload nominalE5M2FNUZMul : OnnxE5M2FNUZ using ExecFloat.mul
+binary_sweep_workload nominalE4M3FNMul : E4M3FN using ExecFloat.mul
+binary_sweep_workload nominalE5M2Mul : E5M2 using ExecFloat.mul
+binary_sweep_workload nominalE4M3FNUZMul : E4M3FNUZ using ExecFloat.mul
+binary_sweep_workload nominalE5M2FNUZMul : E5M2FNUZ using ExecFloat.mul
 binary_sweep_workload descriptorE4M3FNMul : DescriptorE4M3FN using ExecFloat.mul
 binary_sweep_workload descriptorE5M2Mul : DescriptorE5M2 using ExecFloat.mul
 binary_sweep_workload descriptorE4M3FNUZMul : DescriptorE4M3FNUZ using ExecFloat.mul
 binary_sweep_workload descriptorE5M2FNUZMul : DescriptorE5M2FNUZ using ExecFloat.mul
 
-binary_sweep_workload nominalE4M3FNDiv : OcpE4M3FN using ExecFloat.div
-binary_sweep_workload nominalE5M2Div : OcpE5M2 using ExecFloat.div
-binary_sweep_workload nominalE4M3FNUZDiv : OnnxE4M3FNUZ using ExecFloat.div
-binary_sweep_workload nominalE5M2FNUZDiv : OnnxE5M2FNUZ using ExecFloat.div
+binary_sweep_workload nominalE4M3FNDiv : E4M3FN using ExecFloat.div
+binary_sweep_workload nominalE5M2Div : E5M2 using ExecFloat.div
+binary_sweep_workload nominalE4M3FNUZDiv : E4M3FNUZ using ExecFloat.div
+binary_sweep_workload nominalE5M2FNUZDiv : E5M2FNUZ using ExecFloat.div
 binary_sweep_workload descriptorE4M3FNDiv : DescriptorE4M3FN using ExecFloat.div
 binary_sweep_workload descriptorE5M2Div : DescriptorE5M2 using ExecFloat.div
 binary_sweep_workload descriptorE4M3FNUZDiv : DescriptorE4M3FNUZ using ExecFloat.div
 binary_sweep_workload descriptorE5M2FNUZDiv : DescriptorE5M2FNUZ using ExecFloat.div
 
-unary_sweep_workload nominalE4M3FNSqrt : OcpE4M3FN using ExecFloat.sqrt
-unary_sweep_workload nominalE5M2Sqrt : OcpE5M2 using ExecFloat.sqrt
-unary_sweep_workload nominalE4M3FNUZSqrt : OnnxE4M3FNUZ using ExecFloat.sqrt
-unary_sweep_workload nominalE5M2FNUZSqrt : OnnxE5M2FNUZ using ExecFloat.sqrt
+unary_sweep_workload nominalE4M3FNSqrt : E4M3FN using ExecFloat.sqrt
+unary_sweep_workload nominalE5M2Sqrt : E5M2 using ExecFloat.sqrt
+unary_sweep_workload nominalE4M3FNUZSqrt : E4M3FNUZ using ExecFloat.sqrt
+unary_sweep_workload nominalE5M2FNUZSqrt : E5M2FNUZ using ExecFloat.sqrt
 unary_sweep_workload descriptorE4M3FNSqrt : DescriptorE4M3FN using ExecFloat.sqrt
 unary_sweep_workload descriptorE5M2Sqrt : DescriptorE5M2 using ExecFloat.sqrt
 unary_sweep_workload descriptorE4M3FNUZSqrt : DescriptorE4M3FNUZ using ExecFloat.sqrt
 unary_sweep_workload descriptorE5M2FNUZSqrt : DescriptorE5M2FNUZ using ExecFloat.sqrt
 
-ternary_sweep_workload nominalE4M3FNFma : OcpE4M3FN using ExecFloat.fma
-ternary_sweep_workload nominalE5M2Fma : OcpE5M2 using ExecFloat.fma
-ternary_sweep_workload nominalE4M3FNUZFma : OnnxE4M3FNUZ using ExecFloat.fma
-ternary_sweep_workload nominalE5M2FNUZFma : OnnxE5M2FNUZ using ExecFloat.fma
+ternary_sweep_workload nominalE4M3FNFma : E4M3FN using ExecFloat.fma
+ternary_sweep_workload nominalE5M2Fma : E5M2 using ExecFloat.fma
+ternary_sweep_workload nominalE4M3FNUZFma : E4M3FNUZ using ExecFloat.fma
+ternary_sweep_workload nominalE5M2FNUZFma : E5M2FNUZ using ExecFloat.fma
 ternary_sweep_workload descriptorE4M3FNFma : DescriptorE4M3FN using ExecFloat.fma
 ternary_sweep_workload descriptorE5M2Fma : DescriptorE5M2 using ExecFloat.fma
 ternary_sweep_workload descriptorE4M3FNUZFma : DescriptorE4M3FNUZ using ExecFloat.fma
@@ -173,29 +166,29 @@ ternary_sweep_workload descriptorE5M2FNUZFma : DescriptorE5M2FNUZ using ExecFloa
 
 def runAdd : IO Unit := do
   runBinary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Add.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Add.policy (F := E4M3FN)) "add" 4 nominalE4M3FNAdd
+    (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Add.policy (F := E4M3FN.Family)) "add" 4 nominalE4M3FNAdd
   runBinary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Add.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Add.policy (F := Descriptor FloatFormat.e4m3fn))
     "add" 4 descriptorE4M3FNAdd
   runBinary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Add.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Add.policy (F := E4M3FNUZ)) "add" 4 nominalE4M3FNUZAdd
+    (ExecFloat.Add.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Add.policy (F := E4M3FNUZ.Family)) "add" 4 nominalE4M3FNUZAdd
   runBinary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Add.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Add.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "add" 4 descriptorE4M3FNUZAdd
   runBinary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Add.selectedCandidate (F := E5M2))
-    (ExecFloat.Add.policy (F := E5M2)) "add" 3 nominalE5M2Add
+    (ExecFloat.Add.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Add.policy (F := E5M2.Family)) "add" 3 nominalE5M2Add
   runBinary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Add.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Add.policy (F := Descriptor FloatFormat.e5m2))
     "add" 3 descriptorE5M2Add
   runBinary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Add.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Add.policy (F := E5M2FNUZ)) "add" 3 nominalE5M2FNUZAdd
+    (ExecFloat.Add.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Add.policy (F := E5M2FNUZ.Family)) "add" 3 nominalE5M2FNUZAdd
   runBinary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Add.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Add.policy (F := Descriptor FloatFormat.e5m2fnuz))
@@ -203,29 +196,29 @@ def runAdd : IO Unit := do
 
 def runSub : IO Unit := do
   runBinary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Sub.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Sub.policy (F := E4M3FN)) "sub" 4 nominalE4M3FNSub
+    (ExecFloat.Sub.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Sub.policy (F := E4M3FN.Family)) "sub" 4 nominalE4M3FNSub
   runBinary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Sub.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Sub.policy (F := Descriptor FloatFormat.e4m3fn))
     "sub" 4 descriptorE4M3FNSub
   runBinary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Sub.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Sub.policy (F := E4M3FNUZ)) "sub" 4 nominalE4M3FNUZSub
+    (ExecFloat.Sub.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Sub.policy (F := E4M3FNUZ.Family)) "sub" 4 nominalE4M3FNUZSub
   runBinary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Sub.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Sub.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "sub" 4 descriptorE4M3FNUZSub
   runBinary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Sub.selectedCandidate (F := E5M2))
-    (ExecFloat.Sub.policy (F := E5M2)) "sub" 3 nominalE5M2Sub
+    (ExecFloat.Sub.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Sub.policy (F := E5M2.Family)) "sub" 3 nominalE5M2Sub
   runBinary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Sub.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Sub.policy (F := Descriptor FloatFormat.e5m2))
     "sub" 3 descriptorE5M2Sub
   runBinary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Sub.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Sub.policy (F := E5M2FNUZ)) "sub" 3 nominalE5M2FNUZSub
+    (ExecFloat.Sub.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Sub.policy (F := E5M2FNUZ.Family)) "sub" 3 nominalE5M2FNUZSub
   runBinary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Sub.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Sub.policy (F := Descriptor FloatFormat.e5m2fnuz))
@@ -233,29 +226,29 @@ def runSub : IO Unit := do
 
 def runMul : IO Unit := do
   runBinary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Mul.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Mul.policy (F := E4M3FN)) "mul" 4 nominalE4M3FNMul
+    (ExecFloat.Mul.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Mul.policy (F := E4M3FN.Family)) "mul" 4 nominalE4M3FNMul
   runBinary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Mul.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Mul.policy (F := Descriptor FloatFormat.e4m3fn))
     "mul" 4 descriptorE4M3FNMul
   runBinary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Mul.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Mul.policy (F := E4M3FNUZ)) "mul" 4 nominalE4M3FNUZMul
+    (ExecFloat.Mul.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Mul.policy (F := E4M3FNUZ.Family)) "mul" 4 nominalE4M3FNUZMul
   runBinary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Mul.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Mul.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "mul" 4 descriptorE4M3FNUZMul
   runBinary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Mul.selectedCandidate (F := E5M2))
-    (ExecFloat.Mul.policy (F := E5M2)) "mul" 3 nominalE5M2Mul
+    (ExecFloat.Mul.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Mul.policy (F := E5M2.Family)) "mul" 3 nominalE5M2Mul
   runBinary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Mul.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Mul.policy (F := Descriptor FloatFormat.e5m2))
     "mul" 3 descriptorE5M2Mul
   runBinary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Mul.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Mul.policy (F := E5M2FNUZ)) "mul" 3 nominalE5M2FNUZMul
+    (ExecFloat.Mul.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Mul.policy (F := E5M2FNUZ.Family)) "mul" 3 nominalE5M2FNUZMul
   runBinary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Mul.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Mul.policy (F := Descriptor FloatFormat.e5m2fnuz))
@@ -263,29 +256,29 @@ def runMul : IO Unit := do
 
 def runDiv : IO Unit := do
   runBinary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Div.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Div.policy (F := E4M3FN)) "div" 4 nominalE4M3FNDiv
+    (ExecFloat.Div.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Div.policy (F := E4M3FN.Family)) "div" 4 nominalE4M3FNDiv
   runBinary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Div.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Div.policy (F := Descriptor FloatFormat.e4m3fn))
     "div" 4 descriptorE4M3FNDiv
   runBinary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Div.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Div.policy (F := E4M3FNUZ)) "div" 4 nominalE4M3FNUZDiv
+    (ExecFloat.Div.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Div.policy (F := E4M3FNUZ.Family)) "div" 4 nominalE4M3FNUZDiv
   runBinary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Div.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Div.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "div" 4 descriptorE4M3FNUZDiv
   runBinary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Div.selectedCandidate (F := E5M2))
-    (ExecFloat.Div.policy (F := E5M2)) "div" 3 nominalE5M2Div
+    (ExecFloat.Div.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Div.policy (F := E5M2.Family)) "div" 3 nominalE5M2Div
   runBinary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Div.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Div.policy (F := Descriptor FloatFormat.e5m2))
     "div" 3 descriptorE5M2Div
   runBinary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Div.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Div.policy (F := E5M2FNUZ)) "div" 3 nominalE5M2FNUZDiv
+    (ExecFloat.Div.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Div.policy (F := E5M2FNUZ.Family)) "div" 3 nominalE5M2FNUZDiv
   runBinary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Div.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Div.policy (F := Descriptor FloatFormat.e5m2fnuz))
@@ -293,29 +286,29 @@ def runDiv : IO Unit := do
 
 def runSqrt : IO Unit := do
   runUnary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Sqrt.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Sqrt.policy (F := E4M3FN)) "sqrt" 4 nominalE4M3FNSqrt
+    (ExecFloat.Sqrt.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Sqrt.policy (F := E4M3FN.Family)) "sqrt" 4 nominalE4M3FNSqrt
   runUnary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Sqrt.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Sqrt.policy (F := Descriptor FloatFormat.e4m3fn))
     "sqrt" 4 descriptorE4M3FNSqrt
   runUnary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Sqrt.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Sqrt.policy (F := E4M3FNUZ)) "sqrt" 4 nominalE4M3FNUZSqrt
+    (ExecFloat.Sqrt.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Sqrt.policy (F := E4M3FNUZ.Family)) "sqrt" 4 nominalE4M3FNUZSqrt
   runUnary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Sqrt.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Sqrt.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "sqrt" 4 descriptorE4M3FNUZSqrt
   runUnary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Sqrt.selectedCandidate (F := E5M2))
-    (ExecFloat.Sqrt.policy (F := E5M2)) "sqrt" 3 nominalE5M2Sqrt
+    (ExecFloat.Sqrt.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Sqrt.policy (F := E5M2.Family)) "sqrt" 3 nominalE5M2Sqrt
   runUnary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Sqrt.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Sqrt.policy (F := Descriptor FloatFormat.e5m2))
     "sqrt" 3 descriptorE5M2Sqrt
   runUnary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Sqrt.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Sqrt.policy (F := E5M2FNUZ)) "sqrt" 3 nominalE5M2FNUZSqrt
+    (ExecFloat.Sqrt.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Sqrt.policy (F := E5M2FNUZ.Family)) "sqrt" 3 nominalE5M2FNUZSqrt
   runUnary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Sqrt.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Sqrt.policy (F := Descriptor FloatFormat.e5m2fnuz))
@@ -323,29 +316,29 @@ def runSqrt : IO Unit := do
 
 def runFma : IO Unit := do
   runTernary "ExecFloat nominal" "OCP E4M3FN"
-    (ExecFloat.Fma.selectedCandidate (F := E4M3FN))
-    (ExecFloat.Fma.policy (F := E4M3FN)) "fma" 4 nominalE4M3FNFma
+    (ExecFloat.Fma.selectedCandidate (F := E4M3FN.Family))
+    (ExecFloat.Fma.policy (F := E4M3FN.Family)) "fma" 4 nominalE4M3FNFma
   runTernary "ExecFloat descriptor" "OCP E4M3FN"
     (ExecFloat.Fma.selectedCandidate (F := Descriptor FloatFormat.e4m3fn))
     (ExecFloat.Fma.policy (F := Descriptor FloatFormat.e4m3fn))
     "fma" 4 descriptorE4M3FNFma
   runTernary "ExecFloat nominal" "ONNX E4M3FNUZ"
-    (ExecFloat.Fma.selectedCandidate (F := E4M3FNUZ))
-    (ExecFloat.Fma.policy (F := E4M3FNUZ)) "fma" 4 nominalE4M3FNUZFma
+    (ExecFloat.Fma.selectedCandidate (F := E4M3FNUZ.Family))
+    (ExecFloat.Fma.policy (F := E4M3FNUZ.Family)) "fma" 4 nominalE4M3FNUZFma
   runTernary "ExecFloat descriptor" "ONNX E4M3FNUZ"
     (ExecFloat.Fma.selectedCandidate (F := Descriptor FloatFormat.e4m3fnuz))
     (ExecFloat.Fma.policy (F := Descriptor FloatFormat.e4m3fnuz))
     "fma" 4 descriptorE4M3FNUZFma
   runTernary "ExecFloat nominal" "OCP E5M2"
-    (ExecFloat.Fma.selectedCandidate (F := E5M2))
-    (ExecFloat.Fma.policy (F := E5M2)) "fma" 3 nominalE5M2Fma
+    (ExecFloat.Fma.selectedCandidate (F := E5M2.Family))
+    (ExecFloat.Fma.policy (F := E5M2.Family)) "fma" 3 nominalE5M2Fma
   runTernary "ExecFloat descriptor" "OCP E5M2"
     (ExecFloat.Fma.selectedCandidate (F := Descriptor FloatFormat.e5m2))
     (ExecFloat.Fma.policy (F := Descriptor FloatFormat.e5m2))
     "fma" 3 descriptorE5M2Fma
   runTernary "ExecFloat nominal" "ONNX E5M2FNUZ"
-    (ExecFloat.Fma.selectedCandidate (F := E5M2FNUZ))
-    (ExecFloat.Fma.policy (F := E5M2FNUZ)) "fma" 3 nominalE5M2FNUZFma
+    (ExecFloat.Fma.selectedCandidate (F := E5M2FNUZ.Family))
+    (ExecFloat.Fma.policy (F := E5M2FNUZ.Family)) "fma" 3 nominalE5M2FNUZFma
   runTernary "ExecFloat descriptor" "ONNX E5M2FNUZ"
     (ExecFloat.Fma.selectedCandidate (F := Descriptor FloatFormat.e5m2fnuz))
     (ExecFloat.Fma.policy (F := Descriptor FloatFormat.e5m2fnuz))

@@ -11,14 +11,14 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 /-!
 # Shared native-word product finishing
 
-The one-word and two-word multiplication kernels use different representations for the exact
-product. After rounding that product to a `UInt64` significand, both kernels perform the same
-carry adjustment, overflow test, and field packing. Keeping that final stage here gives the two
-backends one executable definition as well as one proof.
+The one-word and two-word multiplication kernels represent the exact product differently. After
+rounding it to a `UInt64` significand, both do the same carry adjustment, overflow test and field
+packing, so that final stage lives here with one executable definition and one proof.
 
-`finishWord` returns a word rather than an `Option`; its caller chooses a decline marker outside
-the valid packed range. Both definitions request inlining. The overflow threshold and exponent
-offset are formed from `NativeSmallWord.biasWord` using machine-word arithmetic.
+`finish?` is `finishWord?` mapped to model values. `finishWord` returns a word in place of an
+`Option`, and its caller picks a decline marker outside the valid packed range. The overflow
+threshold and exponent offset are computed from `NativeSmallWord.biasWord` in machine-word
+arithmetic.
 -/
 
 @[expose] public section
@@ -28,9 +28,15 @@ namespace Model.NativeWordProduct
 
 open NativeSmallWord
 
-/-- Finish a rounded native-word product already in the normal range, declining on overflow. -/
-@[always_inline, inline] def finish? (fmt : FloatFormat) (sign : Bool)
-    (position rounded : UInt64) : Option (Model fmt) :=
+/--
+Finish a rounded native-word product in the normal range as a packed storage word, declining on
+overflow.
+
+Carriers that store the encoding as a `UInt64` use this form so an accepted result never becomes
+an exact-width model value.
+-/
+@[always_inline, inline] def finishWord? (fmt : FloatFormat) (sign : Bool)
+    (position rounded : UInt64) : Option UInt64 :=
   let carry := rounded == carryBit fmt
   let normalizedPosition := if carry then position + 1 else position
   let overflowThreshold :=
@@ -44,13 +50,17 @@ open NativeSmallWord
       biasWord fmt + 2 * UInt64.ofNat fmt.fracWidth - 2
     let exponent := normalizedPosition - exponentOffset
     let fraction := normalizedMantissa - hiddenBit fmt
-    some <| NativeSmallWord.ofWord <|
-      NativeSmallWord.packFields fmt sign exponent fraction
+    some <| NativeSmallWord.packFields fmt sign exponent fraction
+
+/-- `finishWord?` as a model value. -/
+@[always_inline, inline] def finish? (fmt : FloatFormat) (sign : Bool)
+    (position rounded : UInt64) : Option (Model fmt) :=
+  (finishWord? fmt sign position rounded).map NativeSmallWord.ofWord
 
 /--
-Finish a rounded native-word product without constructing an `Option`.
+Finish a rounded native-word product without building an `Option`.
 
-On overflow the function returns `decline`; otherwise it returns the packed storage word.
+It returns `decline` on overflow and the packed storage word otherwise.
 -/
 @[always_inline, inline] def finishWord (fmt : FloatFormat) (decline : UInt64)
     (sign : Bool) (position rounded : UInt64) : UInt64 :=

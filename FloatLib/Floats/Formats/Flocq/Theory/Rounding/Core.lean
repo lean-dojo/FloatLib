@@ -20,8 +20,8 @@ and validity contracts:
 - the standard bound `abs(round … x - x) ≤ ulp(x)/2` for round-to-nearest.
 
 These definitions are used by `NF` (the rounded scalar type) and by
-`BinaryInterchange.Model.roundAt`, which connects generic proofs to the finite semantics of an
-explicit binary descriptor.
+`BinaryInterchange.Model.roundAt`, which connects generic proofs to the finite semantics of a
+concrete binary descriptor.
 
 ## References
 
@@ -39,13 +39,13 @@ namespace FloatLib.Floats.Formats.Flocq
 
 variable {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
 
-/-- Round toward negative infinity (floor) -/
+/-- Round toward negative infinity (floor). -/
 noncomputable def floorRound : ℝ → ℤ := fun x => ⌊x⌋
 
-/-- Round toward positive infinity (ceiling) -/
+/-- Round toward positive infinity (ceiling). -/
 noncomputable def ceilRound : ℝ → ℤ := fun x => ⌈x⌉
 
-/-- Round toward zero (truncation) -/
+/-- Round toward zero (truncation). -/
 noncomputable def truncRound : ℝ → ℤ := fun x =>
   if x < 0 then ⌈x⌉ else ⌊x⌋
 
@@ -62,7 +62,7 @@ theorem truncRound_eq_ceil {x : ℝ} (hx : x ≤ 0) :
     simp [truncRound, ceilRound]
   · simp [truncRound, ceilRound, lt_of_le_of_ne hx hzero]
 
-/-- Round to nearest, ties to even -/
+/-- Round to nearest, ties to even. -/
 noncomputable def nearestEven : ℝ → ℤ := fun x =>
   let f := ⌊x⌋
   if x - f < 1/2 then f
@@ -79,10 +79,9 @@ class ValidRnd (rnd : ℝ → ℤ) : Prop where
   id : ∀ n : ℤ, rnd n = n
 
 /--
-Rounding modes with a half-unit error bound on the rounded integer.
+Valid integer roundings with the half-unit error bound `|rnd x - x| ≤ 1/2` for all `x`.
 
-This matches "round-to-nearest" style roundings (ties can be resolved arbitrarily):
-`|rnd x - x| ≤ 1/2` for all `x`.
+Every round-to-nearest rule satisfies it, whatever its tie choice.
 -/
 class ValidRndToNearest (rnd : ℝ → ℤ) : Prop extends ValidRnd rnd where
   /-- Rounding changes a real input by at most one half on the integer grid. -/
@@ -92,9 +91,9 @@ class ValidRndToNearest (rnd : ℝ → ℤ) : Prop extends ValidRnd rnd where
 Round `x` to the integer grid with spacing `step`.
 
 This fixed-scale operation is the common core of fixed-point arithmetic and affine quantization.
-Unlike `round`, the scale is supplied explicitly rather than chosen from the magnitude of
-`x` by an exponent format. Requiring positivity prevents a zero scale from silently turning the
-operation into the constant-zero map through totalized real division.
+The caller supplies the scale, where `round` chooses it from the magnitude of `x` through an
+exponent format. The positivity hypothesis keeps a zero scale from turning the operation into the
+constant-zero map through totalized real division.
 -/
 noncomputable def roundAtScale (rnd : ℝ → ℤ) (step : ℝ) (_hstep : 0 < step) (x : ℝ) : ℝ :=
   (rnd (x / step) : ℝ) * step
@@ -137,10 +136,9 @@ instance : ValidRnd truncRound where
     · simp [truncRound, hn]
 
 /--
-Basic bounds for nearest-even rounding.
+Nearest-even rounding lies between `⌊x⌋` and its successor.
 
-The rounded integer is either `⌊x⌋` or its successor. This localizes the monotonicity proof to the
-case where two inputs have the same floor.
+This localizes the monotonicity proof to the case where two inputs have the same floor.
 -/
 lemma nearestEven_bounds (x : ℝ) :
     ⌊x⌋ ≤ nearestEven x ∧ nearestEven x ≤ ⌊x⌋ + 1 := by
@@ -316,7 +314,7 @@ theorem scaledMantissa_eq_div (x : ℝ) :
   simp [scaledMantissa, bpow.neg_exp, div_eq_mul_inv]
 
 /--
-An exactly representable value has an integral mantissa at its canonical exponent.
+A value in the generic format has an integral mantissa at its canonical exponent.
 -/
 theorem scaled_mantissa_int_of_generic (x : ℝ) (hx : genericFormat β fexp x) :
     ∃ n : ℤ, scaledMantissa β fexp x = n := by
@@ -341,7 +339,7 @@ theorem scaled_mantissa_int_of_generic (x : ℝ) (hx : genericFormat β fexp x) 
     _ = ↑m                                                  := by simp
 
 /--
-Rounding preserves exactly-representable numbers.
+Rounding fixes every value of the generic format.
 
 This is the Flocq-style `round_generic` law: every valid integer rounder fixes the integral
 canonical mantissa, so reconstructing the value returns the original grid point.
@@ -376,7 +374,7 @@ lemma scaled_mantissa_mul_bpow (x : ℝ) :
   simp only [bpow]
   simp [Numerics.Radix.toReal, mul_one]
 
-/-- An integral canonical scaled mantissa is sufficient for exact representability. -/
+/-- An integral canonical scaled mantissa puts a value in the generic format. -/
 theorem generic_format_of_scaled_mantissa_int (x : ℝ) (n : ℤ)
     (h : scaledMantissa β fexp x = n) : genericFormat β fexp x := by
   unfold genericFormat toReal
@@ -387,7 +385,7 @@ theorem generic_format_of_scaled_mantissa_int (x : ℝ) (n : ℤ)
     _ = (⌊scaledMantissa β fexp x⌋ : ℝ) *
           bpow β (cexp β fexp x) := by rw [h]; simp
 
-/-- Exact representability is equivalent to integrality of the canonical scaled mantissa. -/
+/-- A value is in the generic format exactly when its canonical scaled mantissa is an integer. -/
 theorem generic_format_iff_scaled_mantissa_int (x : ℝ) :
     genericFormat β fexp x ↔ ∃ n : ℤ, scaledMantissa β fexp x = n := by
   constructor
@@ -426,71 +424,5 @@ theorem error_bound_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
     have hbnonneg : 0 ≤ bpow β e := le_of_lt hbpos
     have hmul := mul_le_mul_of_nonneg_right h hbnonneg
     simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm, mul_right_comm] using hmul
-
-/-! ## Named standard modes -/
-
-/-- The four standard rounding-direction attributes used by the generic float model. -/
-inductive RoundingMode where
-  /--
-  Round to the nearest value, resolving a tie toward an even integer at the selected scale.
-
-  Under the usual Flocq conditions (in particular, excluding the precision-one even-radix corner
-  case), this agrees with the familiar even canonical-significand description.
-  -/
-  | nearestEven
-  /-- Round toward zero. -/
-  | towardZero
-  /-- Round toward positive infinity. -/
-  | towardPositive
-  /-- Round toward negative infinity. -/
-  | towardNegative
-  deriving DecidableEq, Repr
-
-namespace RoundingMode
-
-/-- Interpret a named mode as the integer-rounding function used by `round`. -/
-noncomputable def roundingFunction : RoundingMode → ℝ → ℤ
-  | .nearestEven => FloatLib.Floats.Formats.Flocq.nearestEven
-  | .towardZero => truncRound
-  | .towardPositive => ceilRound
-  | .towardNegative => floorRound
-
-/-- Every named standard mode satisfies the generic rounding-function laws. -/
-instance (mode : RoundingMode) : ValidRnd mode.roundingFunction := by
-  cases mode with
-  | nearestEven =>
-      change ValidRnd FloatLib.Floats.Formats.Flocq.nearestEven
-      infer_instance
-  | towardZero => change ValidRnd truncRound; infer_instance
-  | towardPositive => change ValidRnd ceilRound; infer_instance
-  | towardNegative => change ValidRnd floorRound; infer_instance
-
-/-- Round a real value into a generic format using a named standard mode. -/
-noncomputable def round (mode : RoundingMode) {β : Numerics.Radix} {fexp : ℤ → ℤ}
-    [ValidExp fexp] (x : ℝ) : ℝ :=
-  FloatLib.Floats.Formats.Flocq.round
-    (β := β) (fexp := fexp) mode.roundingFunction x
-
-/-- Package `round` as a mantissa/exponent value in the selected format. -/
-noncomputable def roundedFloat (mode : RoundingMode) {β : Numerics.Radix} {fexp : ℤ → ℤ}
-    [ValidExp fexp] (x : ℝ) : FloatRep β :=
-  { mantissa := mode.roundingFunction (scaledMantissa β fexp x)
-    exponent := cexp β fexp x }
-
-/-- `roundedFloat` represents exactly the value returned by `round`. -/
-@[simp] theorem toReal_roundedFloat (mode : RoundingMode) {β : Numerics.Radix}
-    {fexp : ℤ → ℤ} [ValidExp fexp] (x : ℝ) :
-    toReal (mode.roundedFloat (β := β) (fexp := fexp) x) =
-      mode.round (β := β) (fexp := fexp) x := by
-  rfl
-
-/-- Every named standard mode fixes values already in the generic format. -/
-theorem round_eq_of_generic (mode : RoundingMode) {β : Numerics.Radix}
-    {fexp : ℤ → ℤ} [ValidExp fexp] {x : ℝ}
-    (hx : genericFormat (β := β) (fexp := fexp) x) :
-    mode.round (β := β) (fexp := fexp) x = x := by
-  exact round_preserves_generic mode.roundingFunction x hx
-
-end RoundingMode
 
 end FloatLib.Floats.Formats.Flocq

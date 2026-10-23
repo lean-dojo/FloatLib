@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 
 /-!
@@ -14,13 +15,17 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 
 Every valid P3109 descriptor supplies addition, subtraction, multiplication, division, square
 root, and fused multiply-add through common `ExecFloat` dispatch. Each has one exact arithmetic
-kernel followed by the report projection. The supplied backend planning policy is retained.
+kernel followed by the report projection. The caller's backend planning policy is kept.
 
-Context-free operations use FloatLib's nearest-even, no-saturation projection policy. Explicit
-rounding, stochastic random words, saturation, and mixed-format destinations remain available
-through `ExecFloat.P3109.*To`. These operations neither raise nor synthesize IEEE exception flags.
+Context-free operations use FloatLib's nearest-even, no-saturation projection policy. Other
+rounding modes, stochastic random words, saturation, and mixed-format destinations are available
+through the `mode`, `saturation`, and `target` options of `ExecFloat.P3109.add` and its siblings.
+These operations neither raise nor synthesize IEEE exception flags.
 
-The rational real-embedding and decoding proofs are in `Arithmetic.Proof`; the irrational-root
+Literals round once from their exact rational value with the same default policy, and `==` is
+numerical equality: NaN compares unequal to every value, itself included.
+
+The rational real-embedding and decoding proofs are in `Arithmetic.Proof`. The irrational-root
 refinement and decoding proofs are in `Arithmetic.Sqrt.Proof`.
 -/
 
@@ -64,6 +69,19 @@ end Plan
 /-- Report-default negation, including projection of unsigned results. -/
 instance negInstance : Neg (ExecFloat.P3109 format) where
   neg value := neg value
+
+/-- A natural literal rounds once, nearest-even with no saturation request. -/
+instance (value : Nat) : OfNat (ExecFloat.P3109 format) value where
+  ofNat := ofRat (value : Rat)
+
+/-- A decimal or scientific literal rounds once from its exact rational value. -/
+instance : OfScientific (ExecFloat.P3109 format) where
+  ofScientific mantissa exponentSign decimalExponent :=
+    ofRat (OfScientific.ofScientific mantissa exponentSign decimalExponent)
+
+/-- `==` is numerical equality, so NaN compares unequal to every value, itself included. -/
+instance comparison : ExecFloat.Comparison (Codebook.Family format.codebook) where
+  compare := compare
 
 /-- Exact addition with one nearest-even report projection. -/
 @[always_inline] instance addCapability

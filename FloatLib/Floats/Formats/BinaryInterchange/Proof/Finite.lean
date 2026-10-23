@@ -79,81 +79,81 @@ theorem represents {fmt : FloatFormat} {r : ℝ} (x : At fmt r) :
   rw [Model.toEReal_eq_coe_toReal_of_isFinite x.1 (isFinite x), toReal x]
 
 /-- Downward-rounded addition of represented inputs is a lower bound on their exact sum. -/
-theorem toEReal_addDown_le {fmt : FloatFormat} {r s : ℝ}
+theorem toEReal_add_down_le {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    Model.toEReal (Model.addDown x.1 y.1) ≤ ((r + s : ℝ) : EReal) := by
+    Model.toEReal (Model.add x.1 y.1 (mode := .down)) ≤ ((r + s : ℝ) : EReal) := by
   simpa using
-    Model.toEReal_addDown_le x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.toEReal_add_down_le x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /-- Upward-rounded addition of represented inputs is an upper bound on their exact sum. -/
-theorem le_toEReal_addUp {fmt : FloatFormat} {r s : ℝ}
+theorem le_toEReal_add_up {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    ((r + s : ℝ) : EReal) ≤ Model.toEReal (Model.addUp x.1 y.1) := by
+    ((r + s : ℝ) : EReal) ≤ Model.toEReal (Model.add x.1 y.1 (mode := .up)) := by
   simpa using
-    Model.le_toEReal_addUp x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.le_toEReal_add_up x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /--
 Downward-rounded subtraction of represented inputs is a lower bound on their exact difference.
 -/
-theorem toEReal_subDown_le {fmt : FloatFormat} {r s : ℝ}
+theorem toEReal_sub_down_le {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    Model.toEReal (Model.subDown x.1 y.1) ≤ ((r - s : ℝ) : EReal) := by
+    Model.toEReal (Model.sub x.1 y.1 (mode := .down)) ≤ ((r - s : ℝ) : EReal) := by
   simpa using
-    Model.toEReal_subDown_le x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.toEReal_sub_down_le x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /-- Upward-rounded subtraction of represented inputs is an upper bound on their exact difference. -/
-theorem le_toEReal_subUp {fmt : FloatFormat} {r s : ℝ}
+theorem le_toEReal_sub_up {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    ((r - s : ℝ) : EReal) ≤ Model.toEReal (Model.subUp x.1 y.1) := by
+    ((r - s : ℝ) : EReal) ≤ Model.toEReal (Model.sub x.1 y.1 (mode := .up)) := by
   simpa using
-    Model.le_toEReal_subUp x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.le_toEReal_sub_up x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /--
 Downward-rounded multiplication of represented inputs is a lower bound on their exact product.
 -/
-theorem toEReal_mulDown_le {fmt : FloatFormat} {r s : ℝ}
+theorem toEReal_mul_down_le {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    Model.toEReal (Model.mulDown x.1 y.1) ≤ ((r * s : ℝ) : EReal) := by
+    Model.toEReal (Model.mul x.1 y.1 (mode := .down)) ≤ ((r * s : ℝ) : EReal) := by
   simpa using
-    Model.toEReal_mulDown_le x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.toEReal_mul_down_le x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /-- Upward-rounded multiplication of represented inputs is an upper bound on their exact product. -/
-theorem le_toEReal_mulUp {fmt : FloatFormat} {r s : ℝ}
+theorem le_toEReal_mul_up {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true) :
-    ((r * s : ℝ) : EReal) ≤ Model.toEReal (Model.mulUp x.1 y.1) := by
+    ((r * s : ℝ) : EReal) ≤ Model.toEReal (Model.mul x.1 y.1 (mode := .up)) := by
   simpa using
-    Model.le_toEReal_mulUp x.1 y.1 hfmt (isFinite x) (isFinite y)
+    Model.le_toEReal_mul_up x.1 y.1 hfmt (isFinite x) (isFinite y)
 
 /-- Downward-rounded division bounds the exact quotient when the represented divisor is nonzero. -/
-theorem toEReal_divDown_le {fmt : FloatFormat} {r s : ℝ}
+theorem toEReal_div_down_le {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true)
     (hy0 : Model.isZero y.1 = false) :
-    Model.toEReal (Model.divDown x.1 y.1) ≤ ((r / s : ℝ) : EReal) := by
+    Model.toEReal (Model.div x.1 y.1 (mode := .down)) ≤ ((r / s : ℝ) : EReal) := by
   simpa using
-    Model.toEReal_divDown_le x.1 y.1 hfmt (isFinite x) (isFinite y) hy0
+    Model.toEReal_div_down_le x.1 y.1 hfmt (isFinite x) (isFinite y) hy0
 
 /-- Upward-rounded division bounds the exact quotient when the represented divisor is nonzero. -/
-theorem le_toEReal_divUp {fmt : FloatFormat} {r s : ℝ}
+theorem le_toEReal_div_up {fmt : FloatFormat} {r s : ℝ}
     (x : At fmt r) (y : At fmt s) (hfmt : fmt.isIEEE = true)
     (hy0 : Model.isZero y.1 = false) :
-    ((r / s : ℝ) : EReal) ≤ Model.toEReal (Model.divUp x.1 y.1) := by
+    ((r / s : ℝ) : EReal) ≤ Model.toEReal (Model.div x.1 y.1 (mode := .up)) := by
   simpa using
-    Model.le_toEReal_divUp x.1 y.1 hfmt (isFinite x) (isFinite y) hy0
+    Model.le_toEReal_div_up x.1 y.1 hfmt (isFinite x) (isFinite y) hy0
 
 /-- Downward-rounded square root bounds the exact square root of a nonnegative represented value. -/
-theorem toEReal_sqrtDown_le {fmt : FloatFormat} {r : ℝ}
+theorem toEReal_sqrt_down_le {fmt : FloatFormat} {r : ℝ}
     (x : At fmt r) (hfmt : fmt.isIEEE = true) (hr : 0 ≤ r) :
-    Model.toEReal (Model.sqrtDown x.1) ≤ ((Real.sqrt r : ℝ) : EReal) := by
+    Model.toEReal (Model.sqrt x.1 (mode := .down)) ≤ ((Real.sqrt r : ℝ) : EReal) := by
   simpa using
-    Model.toEReal_sqrtDown_le_of_nonnegative x.1 hfmt (isFinite x)
+    Model.toEReal_sqrt_down_le_of_nonnegative x.1 hfmt (isFinite x)
       (show 0 ≤ Model.toReal x.1 by simpa using hr)
 
 /-- Upward-rounded square root bounds the exact square root of a nonnegative represented value. -/
-theorem le_toEReal_sqrtUp {fmt : FloatFormat} {r : ℝ}
+theorem le_toEReal_sqrt_up {fmt : FloatFormat} {r : ℝ}
     (x : At fmt r) (hfmt : fmt.isIEEE = true) (hr : 0 ≤ r) :
-    ((Real.sqrt r : ℝ) : EReal) ≤ Model.toEReal (Model.sqrtUp x.1) := by
+    ((Real.sqrt r : ℝ) : EReal) ≤ Model.toEReal (Model.sqrt x.1 (mode := .up)) := by
   simpa using
-    Model.le_toEReal_sqrtUp_of_nonnegative x.1 hfmt (isFinite x)
+    Model.le_toEReal_sqrt_up_of_nonnegative x.1 hfmt (isFinite x)
       (show 0 ≤ Model.toReal x.1 by simpa using hr)
 
 /-- Negation transports the real index exactly. -/

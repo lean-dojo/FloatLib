@@ -77,7 +77,7 @@ private theorem roundRoot_eq (root remainder shift : Nat) :
             ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
             Accuracy.roundToNearestEven, hb, hsticky]
 
-/-- The scaled kernel preserves the complete result of the original full-radicand algorithm. -/
+/-- The scaled kernel `sqrtGeneral` equals the full-radicand algorithm. -/
 theorem sqrtGeneral_eq_unscaled
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) :
     sqrtGeneral fmt mantissa exponent =
@@ -89,15 +89,15 @@ theorem sqrtGeneral_eq_unscaled
         let scaledMantissa := mantissa <<< (exponent - 2 * rootExponent).toNat
         let root := Nat.sqrt scaledMantissa
         let remainder := scaledMantissa - root * root
-        roundDyadicImpl fmt
+        Internal.roundDyadic fmt
           { negative := false
             significand := roundRoot root remainder (finalExponent - rootExponent).toNat
             exponent := finalExponent } := by
   simp only [sqrtGeneral, ScaledSqrt.shifted_eq, ScaledSqrt.accuracy, ← roundRoot_eq]
 
 /--
-For a conventional IEEE descriptor, exact-dyadic square root agrees with the established unpacked
-model applied to the original encoded value.
+For a conventional IEEE descriptor, exact-dyadic square root agrees with the unpacked model
+`UnpackedFloat.sqrt` applied to the encoded value.
 -/
 theorem sqrtPositiveDyadic_eq_model_of_ieee
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt) (value : Numerics.Dyadic)
@@ -114,7 +114,7 @@ theorem sqrtPositiveDyadic_eq_model_of_ieee
   simp [sqrtPositiveDyadic, hfmt, hmantissa, hmodel, hsign,
     NativeModelSqrt.sqrt_eq]
 
-/-- Compact positive square root preserves the exact-dyadic specification. -/
+/-- Compact positive square root agrees with the exact-dyadic specification. -/
 theorem sqrtPositive_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     sqrtPositive? x =
       match toDyadic? x with
@@ -142,7 +142,7 @@ theorem sqrtPositive_eq_spec {fmt : FloatFormat} (x : Model fmt) :
         · simp [sqrtPositive?, sqrtComponents?, hdecode, hsignFalse,
             FiniteKernel.Components.toDyadic, hzero]
 
-/-- The scalar-field square-root entry point preserves `sqrtPositive?`. -/
+/-- Scalar-field square root `sqrtPositiveRuntime?` agrees with `sqrtPositive?`. -/
 theorem sqrtPositiveRuntime_eq {fmt : FloatFormat} (x : Model fmt) :
     sqrtPositiveRuntime? x = sqrtPositive? x := by
   simp only [sqrtPositiveRuntime?, FiniteKernel.withFinite_eq]
@@ -151,7 +151,7 @@ theorem sqrtPositiveRuntime_eq {fmt : FloatFormat} (x : Model fmt) :
     rfl
 
 /--
-On its positive finite contract, the optional scalar decoder returns the direct runtime result.
+On a positive finite nonzero input, the optional scalar decoder returns `sqrtPositiveRuntime`.
 -/
 theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
     (x : Model fmt)
@@ -164,27 +164,27 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
   by_cases hieee : fmt.isIEEE = true
   · simp only [hieee, ite_true]
     change
-      (if expFieldImpl x == FloatFormat.expAllOnesNat fmt then
+      (if Internal.expField x == FloatFormat.expAllOnesNat fmt then
           none
         else
-          sqrtFields? fmt (signBitImpl x) (expFieldImpl x)
-            (FiniteKernel.decodeMantissa fmt (expFieldImpl x) (fracFieldImpl x))) =
+          sqrtFields? fmt (Internal.signBit x) (Internal.expField x)
+            (FiniteKernel.decodeMantissa fmt (Internal.expField x) (Internal.fracField x))) =
         some
           (sqrtPositiveDyadic fmt
-            (FiniteKernel.decodeMantissa fmt (expFieldImpl x) (fracFieldImpl x))
-            (FiniteKernel.dyadicExponent fmt (expFieldImpl x)))
+            (FiniteKernel.decodeMantissa fmt (Internal.expField x) (Internal.fracField x))
+            (FiniteKernel.dyadicExponent fmt (Internal.expField x)))
     have hencoding : fmt.encoding = .ieee :=
       ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
     have hexponent :
-        expFieldImpl x ≠ FloatFormat.expAllOnesNat fmt := by
-      rw [← expField_eq_expFieldImpl_apply]
+        Internal.expField x ≠ FloatFormat.expAllOnesNat fmt := by
+      rw [← expField_eq_internal_apply]
       simpa [isFinite, hencoding, IEEE.isFinite] using hfinite
     split
     · rename_i heq
       exact (hexponent ((beq_iff_eq).1 heq)).elim
-    · rw [signBit_eq_signBitImpl_apply] at hpositive
-      rw [← expField_eq_expFieldImpl_apply x]
-      rw [← fracField_eq_fracFieldImpl_apply x]
+    · rw [signBit_eq_internal_apply] at hpositive
+      rw [← expField_eq_internal_apply x]
+      rw [← fracField_eq_internal_apply x]
       unfold sqrtFields?
       simp only [hpositive, Bool.false_eq_true, ite_false]
       by_cases hexponentZero : expField x = 0
@@ -234,8 +234,8 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
       simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
 
 /--
-The proof-guided runtime entry point computes square root from the exact dyadic represented by its
-finite input.
+`sqrtPositiveRuntime` takes the square root of the exact dyadic that its finite input
+represents.
 -/
 theorem sqrtPositiveRuntime_eq_finiteDyadic {fmt : FloatFormat}
     (x : Model fmt)

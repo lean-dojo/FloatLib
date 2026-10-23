@@ -14,9 +14,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 # Native-word division for binary32
 
 Finite division uses native-word significands and quotient arithmetic, with `Int` exponents and
-natural-number coordinates for final packing. Finite division by zero is handled here;
-`divFiniteImpl?` returns `none` for NaN or infinity operands so the caller can apply their policy.
-Correctness lives in `Division.Proof`.
+natural-number coordinates for the final packing. Finite division by zero is handled here.
+`divFiniteWord?` returns `none` for NaN or infinity operands, and the caller applies their policy.
+`Division.Proof` has the proofs.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ open FloatLib.Numerics.FixedWord.RestoringQuotient
 Round the signed magnitude `(num / den) * 2^exponent` to binary32 with native quotient
 arithmetic and an `Int` exponent.
 
-Callers supply significands below `2^24`; the proof module establishes that every shift and
+Callers supply significands below `2^24`, and the proof module shows that every shift and
 division stays within `UInt64`.
 -/
 @[inline] def roundRatScaledWord
@@ -71,11 +71,11 @@ division stays within `UInt64`.
         mkBits sign encodedExponent fraction
 
 /--
-Fast finite binary32 division using one-word significands and the native-word rounder.
+Finite binary32 division with one-word significands and the native-word rounder.
 
-`none` means at least one operand is a NaN or infinity; the caller applies the generic policy.
+It returns `none` when an operand is a NaN or infinity.
 -/
-@[inline] def divFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def divFiniteWord? (x y : Value) : Option Value :=
   let xBits := toUInt32 x
   let yBits := toUInt32 y
   let xExponent := expField xBits

@@ -24,8 +24,8 @@ calculation from destination rounding:
 
 The checked operations return `Option`. `none` means that an input was NaN or infinity, or that
 division encountered a zero denominator. A successful result can still overflow according to the
-selected output policy. This avoids inventing arithmetic rules for
-storage formats whose standards specify encodings and conversions but no standalone arithmetic.
+selected output policy. Returning `none` avoids inventing arithmetic rules for storage formats
+whose standards specify encodings and conversions but no standalone arithmetic.
 A hardware-specific layer can add its documented exceptional-value behavior and prove refinement
 to these finite paths.
 -/
@@ -89,19 +89,19 @@ private theorem roundDyadic_mant_zero
         Model.posZero_eq_ofModel_zero, Model.negZero_eq_ofModel_zero]
   · simp [Model.roundDyadic, hfmt, Model.roundDyadicGeneral]
 
-private theorem mulFiniteSpec_nearestEven_eq_mul_of_finite
+private theorem mulFiniteSpec_nearest_eq_mul_of_finite
     (fmt : FloatFormat) (entropy : Nat) (x y : Model fmt)
     (hx : Model.isFinite x = true) (hy : Model.isFinite y = true) :
-    mulFiniteSpec? fmt QuantizationPolicy.nearestEven entropy x y =
+    mulFiniteSpec? fmt QuantizationPolicy.nearest entropy x y =
       some (Model.mul x y) := by
   obtain ⟨dx, hdx⟩ := Model.exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := Model.exists_toDyadic?_of_isFinite hy
   unfold mulFiniteSpec?
   rw [hdx, hdy]
-  change some (Policy.roundDyadic fmt .nearestEven entropy (mulDyadic dx dy)) =
+  change some (Policy.roundDyadic fmt .nearest entropy (mulDyadic dx dy)) =
     some (Model.mul x y)
   apply congrArg some
-  rw [Policy.roundDyadic_nearestEven_eq_execFloat]
+  rw [Policy.roundDyadic_nearest_eq_execFloat]
   rw [show Model.mul x y = Model.Spec.mul x y by
     exact Model.Proof.mul_eq_spec x y]
   unfold Model.Spec.mul
@@ -118,12 +118,12 @@ private theorem mulFiniteSpec_nearestEven_eq_mul_of_finite
 Compiled finite multiplication.
 
 Nearest-even finite multiplication reuses the canonical `Model.mul`, including its native
-word and exhaustive tiny-table backends. Every other policy retains the generic exact dyadic
+word and exhaustive tiny-table backends. Every other policy keeps the generic exact dyadic
 implementation.
 -/
-@[inline] def mulFiniteImpl? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
+@[inline] def Internal.mulFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x y : Model fmt) : Option (Model fmt) :=
-  if _hpolicy : policy = .nearestEven then
+  if _hpolicy : policy = .nearest then
     if Model.isFinite x && Model.isFinite y then
       some (Model.mul x y)
     else
@@ -142,22 +142,22 @@ The compiled nearest-even finite path is extensionally equal to generic exact mu
 This theorem installs the canonical operation in generated code while proofs continue to unfold
 `mulFinite?` to the format-independent policy specification.
 -/
-@[csimp] theorem mulFinite_eq_mulFiniteImpl :
-    @mulFinite? = @mulFiniteImpl? := by
+@[csimp] theorem mulFinite_eq_internal :
+    @mulFinite? = @Internal.mulFinite? := by
   funext fmt policy entropy x y
-  unfold mulFinite? mulFiniteImpl?
+  unfold mulFinite? Internal.mulFinite?
   split <;> rename_i _hpolicy
   · subst policy
     split <;> rename_i hfinite
-    · exact mulFiniteSpec_nearestEven_eq_mul_of_finite fmt entropy x y
+    · exact mulFiniteSpec_nearest_eq_mul_of_finite fmt entropy x y
         ((Bool.and_eq_true _ _).mp hfinite).1 ((Bool.and_eq_true _ _).mp hfinite).2
     · cases hspec :
-        mulFiniteSpec? fmt QuantizationPolicy.nearestEven entropy x y with
+        mulFiniteSpec? fmt QuantizationPolicy.nearest entropy x y with
       | none => rfl
       | some result =>
           exfalso
           apply hfinite
-          rw [← mulFiniteSpec_isSome fmt QuantizationPolicy.nearestEven entropy x y]
+          rw [← mulFiniteSpec_isSome fmt QuantizationPolicy.nearest entropy x y]
           simp [hspec]
   · rfl
 
@@ -189,8 +189,8 @@ def divFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
 /--
 Fused multiply-add from one storage format into a potentially wider accumulator format.
 
-For example, `x` and `y` may be FP8 while `acc` is BF16, FP16,
-FP32, or a custom wider format. There is no intermediate rounding of the product.
+For example, `x` and `y` may be FP8 while `acc` is BF16, FP16, FP32, or a custom wider format.
+There is no intermediate rounding of the product.
 -/
 def mulAddFinite? (storage accumulator : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x y : Model storage) (acc : Model accumulator) : Option (Model accumulator) := do

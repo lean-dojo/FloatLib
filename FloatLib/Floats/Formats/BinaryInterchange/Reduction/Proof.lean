@@ -15,12 +15,12 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 # Correctness of sums and dot products
 
 Finite operands accumulate exactly as dyadics and undergo one final rounding. `Semantics`
-defines the rational list and array-slice specifications; `Internal` proves that the accumulator
-preserves them. The final theorems connect these invariants to `sumWithStatus` and `dotWithStatus`.
+defines the rational list and array-slice specifications, and `Internal` proves that the
+accumulator preserves them. The final theorems connect these invariants to `sum` and `dot`.
 
 The zero-result theorems preserve the signed-zero rules. The real-valued rounding theorems require
 a finite output, since overflow to infinity has no real denotation. Permutation invariance applies
-to the finite accumulator; NaN selection can depend on traversal order.
+to the finite accumulator, while NaN selection can depend on traversal order.
 
 Nonempty sums of same-sign zeros preserve that sign in every rounding mode. Generated invalid
 indicators survive later dot-product terms, including NaNs. Infinite singleton sums agree with
@@ -35,7 +35,7 @@ namespace Reduction
 
 namespace Semantics
 
-/-- Exact rational contribution to the accumulator; exceptional encodings contribute zero. -/
+/-- Exact rational contribution to the accumulator. Exceptional encodings contribute zero. -/
 def finiteContribution {format : FloatFormat} (value : Model format) : Rat :=
   match toDyadic? value with
   | some exact => exact.toRat
@@ -45,7 +45,7 @@ def finiteContribution {format : FloatFormat} (value : Model format) : Rat :=
 def finiteSum {format : FloatFormat} (values : List (Model format)) : Rat :=
   (values.map finiteContribution).sum
 
-/-- Exact sum of pairwise products, with an explicit error for unequal lengths. -/
+/-- Exact sum of pairwise products, with an error for unequal lengths. -/
 def finiteDot {leftFormat rightFormat : FloatFormat}
     (left : List (Model leftFormat)) (right : List (Model rightFormat)) :
     Except Numerics.ReductionError Rat :=
@@ -108,7 +108,7 @@ theorem finiteDotSlice_eq_zipWith_sum
       simp only [List.take_succ_cons, List.zipWith_cons_cons, List.sum_cons]
       rw [ih]
 
-/-- On equal-sized arrays, the list and bounded-Array dot specifications agree exactly. -/
+/-- On equal-sized arrays, the list and bounded-Array dot specifications agree. -/
 theorem finiteDot_toList_eq_slice
     {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
@@ -125,7 +125,7 @@ theorem finiteSum_eq_of_perm
     finiteSum left = finiteSum right :=
   (hperm.map finiteContribution).sum_eq
 
-/-- A one-pair finite dot product is exactly the product of the two contributions. -/
+/-- A one-pair finite dot product is the product of the two contributions. -/
 @[simp] theorem finiteDot_singleton
     {leftFormat rightFormat : FloatFormat}
     (left : Model leftFormat) (right : Model rightFormat) :
@@ -164,7 +164,7 @@ theorem State.HasOnlyFiniteTerms.pushExact
     (state.pushExact value).HasOnlyFiniteTerms := by
   simpa [State.HasOnlyFiniteTerms, State.pushExact] using hstate
 
-/-- A finite encoded value takes exactly the `pushExact` branch. -/
+/-- A finite encoded value takes the `pushExact` branch. -/
 theorem State.pushValue_eq_pushExact
     {destination source : FloatFormat}
     (state : State destination) (value : Model source)
@@ -184,7 +184,7 @@ theorem State.HasOnlyFiniteTerms.pushValue
   rw [State.pushValue_eq_pushExact state value hfinite]
   exact hstate.pushExact _
 
-/-- A finite pair takes exactly the exact-product branch. -/
+/-- A finite pair takes the exact-product branch. -/
 theorem State.pushProduct_eq_pushExact
     {destination leftFormat rightFormat : FloatFormat}
     (state : State destination)
@@ -301,7 +301,7 @@ theorem dotStateLoop_generatedInvalid
       rw [dotStateLoop]
       exact ih _ _ _ _ (state.pushProduct_generatedInvalid _ _ hinvalid)
 
-/-- Consuming one value changes the exact field by precisely its finite rational contribution. -/
+/-- Consuming one value changes the exact field by its finite rational contribution. -/
 theorem State.pushValue_exact_toRat
     {destination source : FloatFormat}
     (state : State destination) (value : Model source) :
@@ -467,7 +467,7 @@ end Internal
 The executable sum accumulator has the same exact rational value after any permutation.
 
 This theorem concerns the finite accumulator field, not the complete exceptional result. NaN
-selection deliberately remains traversal-order dependent.
+selection depends on traversal order.
 -/
 theorem sumAccumulator_toRat_eq_of_perm
     {destination source : FloatFormat}
@@ -484,7 +484,7 @@ theorem sumAccumulator_toRat_eq_of_perm
 /--
 A mathematically nonzero finite sum gives a nonzero exact accumulator.
 
-This keeps callers in the rational specification and hides the dyadic accumulator's internal
+Callers can stay in the rational specification without seeing the dyadic accumulator's internal
 representation.
 -/
 theorem sumAccumulator_significand_ne_zero_of_finiteSum_ne_zero
@@ -505,7 +505,7 @@ theorem sumAccumulator_significand_ne_zero_of_finiteSum_ne_zero
 /--
 A mathematically nonzero finite dot product gives a nonzero exact accumulator.
 
-The premise uses the public list specification; equal array lengths rule out the error branch.
+The premise uses the public list specification, and equal array lengths rule out the error branch.
 -/
 theorem dotAccumulator_significand_ne_zero_of_finiteDot_ne_zero
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
@@ -529,23 +529,29 @@ theorem dotAccumulator_significand_ne_zero_of_finiteDot_ne_zero
   exact (Numerics.Dyadic.toRat_eq_zero_iff _).2 hzero
 
 /--
-A nonzero sum of finite inputs performs one final dyadic rounding and reports exactly that
-rounding's status.
+A nonzero sum of finite inputs performs one final dyadic rounding and reports that rounding's
+status and ternary value.
 -/
-theorem sumWithStatus_eq_round_of_finite_nonzero
+theorem sum_status_eq_round_of_finite_nonzero
     (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode)
     (hfinite : ∀ value ∈ values.toList, isFinite value = true)
     (hnonzero : Semantics.finiteSum values.toList ≠ 0) :
-    sumWithStatus destination values mode =
+    sum destination values mode (status := true) =
       {
-        value := roundDyadicWithRounding destination mode
+        value := Internal.Directed.roundDyadic destination mode
           (values.foldl Internal.State.pushValue
             ({} : Internal.State destination)).exact
         status := dyadicRoundingStatus destination mode
           (values.foldl Internal.State.pushValue
             ({} : Internal.State destination)).exact
-          (roundDyadicWithRounding destination mode
+          (Internal.Directed.roundDyadic destination mode
+            (values.foldl Internal.State.pushValue
+              ({} : Internal.State destination)).exact)
+        ternary := dyadicTernary
+          (values.foldl Internal.State.pushValue
+            ({} : Internal.State destination)).exact
+          (Internal.Directed.roundDyadic destination mode
             (values.foldl Internal.State.pushValue
               ({} : Internal.State destination)).exact)
       } := by
@@ -558,7 +564,7 @@ theorem sumWithStatus_eq_round_of_finite_nonzero
     rw [← Array.foldl_toList]
     exact Internal.foldl_pushValue_hasOnlyFiniteTerms
       ({} : Internal.State destination) values.toList (by simp) hfinite
-  simp [sumWithStatus, Internal.State.finish,
+  simp [sum, Internal.Status.sum, Internal.State.finish, dyadicRoundingOutcome,
     Internal.State.HasOnlyFiniteTerms] at hstate ⊢
   simp [hstate, haccumulator]
 
@@ -569,19 +575,19 @@ mathematical sum followed by one destination-format rounding.
 The result-finiteness premise excludes overflow to infinity, whose encoding has no real
 denotation. Exact accumulation itself is established independently of this premise.
 -/
-theorem sumWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+theorem sum_status_value_toReal_eq_roundAt_of_finite_nonzero
     (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source))
     (hfmt : destination.isIEEE = true)
     (hfinite : ∀ value ∈ values.toList, isFinite value = true)
     (hnonzero : Semantics.finiteSum values.toList ≠ 0)
     (hresult :
-      isFinite (sumWithStatus destination values .nearestEven).value = true) :
-    toReal (sumWithStatus destination values .nearestEven).value =
+      isFinite (sum destination values .nearest (status := true)).value = true) :
+    toReal (sum destination values .nearest (status := true)).value =
       roundAt destination (Semantics.finiteSum values.toList : ℝ) := by
-  rw [sumWithStatus_eq_round_of_finite_nonzero
-    destination values .nearestEven hfinite hnonzero] at hresult ⊢
-  simp only [roundDyadicWithRounding] at hresult ⊢
+  rw [sum_status_eq_round_of_finite_nonzero
+    destination values .nearest hfinite hnonzero] at hresult ⊢
+  simp only [Internal.Directed.roundDyadic] at hresult ⊢
   rw [toReal_roundDyadic_eq_roundAt destination hfmt _ hresult]
   congr 1
   rw [← Numerics.Dyadic.cast_toRat,
@@ -591,14 +597,14 @@ theorem sumWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
 A finite sum whose exact accumulator is zero returns the specified signed zero and raises no
 status indicator.
 -/
-theorem sumWithStatus_eq_zero_of_finite
+theorem sum_status_eq_zero_of_finite
     (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode)
     (hfinite : ∀ value ∈ values.toList, isFinite value = true)
     (hzero :
       (values.foldl Internal.State.pushValue
         ({} : Internal.State destination)).exact.significand = 0) :
-    sumWithStatus destination values mode =
+    sum destination values mode (status := true) =
       {
         value := zero destination <|
           (values.foldl Internal.State.pushValue
@@ -607,8 +613,9 @@ theorem sumWithStatus_eq_zero_of_finite
               ({} : Internal.State destination)).allTermsNegativeZero ||
             (!(values.foldl Internal.State.pushValue
                 ({} : Internal.State destination)).allTermsPositiveZero &&
-              mode == .towardNegativeInfinity))
+              mode == .down))
         status := .clear
+        ternary := .eq
       } := by
   have hstate :
       (values.foldl Internal.State.pushValue
@@ -616,31 +623,31 @@ theorem sumWithStatus_eq_zero_of_finite
     rw [← Array.foldl_toList]
     exact Internal.foldl_pushValue_hasOnlyFiniteTerms
       ({} : Internal.State destination) values.toList (by simp) hfinite
-  simp [sumWithStatus, Internal.State.finish,
+  simp [sum, Internal.Status.sum, Internal.State.finish,
     Internal.State.HasOnlyFiniteTerms] at hstate ⊢
   simp [hstate, hzero, outcomeWithInvalid]
 
 /--
 Every finite-input nearest-even sum with a finite result is one real rounding of the exact sum.
-Zero totals include empty input, signed zeros, and cancellation; their stored signs are specified
-by `sumWithStatus_eq_zero_of_finite` and disappear only in the real-valued conclusion.
+Zero totals include empty input, signed zeros, and cancellation. Their stored signs are specified
+by `sum_status_eq_zero_of_finite` and disappear only in the real-valued conclusion.
 -/
-theorem sumWithStatus_value_toReal_eq_roundAt_of_finite
+theorem sum_status_value_toReal_eq_roundAt_of_finite
     (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source))
     (hfmt : destination.isIEEE = true)
     (hfinite : ∀ value ∈ values.toList, isFinite value = true)
-    (hresult : isFinite (sumWithStatus destination values .nearestEven).value = true) :
-    toReal (sumWithStatus destination values .nearestEven).value =
+    (hresult : isFinite (sum destination values .nearest (status := true)).value = true) :
+    toReal (sum destination values .nearest (status := true)).value =
       roundAt destination (Semantics.finiteSum values.toList : ℝ) := by
   by_cases hzero : Semantics.finiteSum values.toList = 0
   · have hsig : (values.foldl Internal.State.pushValue
         ({} : Internal.State destination)).exact.significand = 0 := by
       apply (Numerics.Dyadic.toRat_eq_zero_iff _).mp
       rw [Internal.array_foldl_pushValue_exact_toRat, hzero]
-    rw [sumWithStatus_eq_zero_of_finite destination values .nearestEven hfinite hsig]
+    rw [sum_status_eq_zero_of_finite destination values .nearest hfinite hsig]
     simp [hzero]
-  · exact sumWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+  · exact sum_status_value_toReal_eq_roundAt_of_finite_nonzero
       destination values hfmt hfinite hzero hresult
 
 /--
@@ -649,14 +656,14 @@ A nonempty sum of zeros with one common sign preserves that sign in every roundi
 The destination's zero constructor accounts for formats without a negative zero. The hypotheses
 refer only to the input values, independently of the accumulator's signed-zero flags.
 -/
-theorem sumWithStatus_eq_zero_of_same_sign_zeros
+theorem sum_status_eq_zero_of_same_sign_zeros
     (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode) (negative : Bool)
     (hnonempty : values ≠ #[])
     (hzero : ∀ value ∈ values.toList, isZero value = true)
     (hsign : ∀ value ∈ values.toList, signBit value = negative) :
-    sumWithStatus destination values mode =
-      { value := zero destination negative, status := .clear } := by
+    sum destination values mode (status := true) =
+      { value := zero destination negative, status := .clear, ternary := .eq } := by
   let state : Internal.State destination :=
     { sawFiniteTerm := true
       allTermsNegativeZero := negative
@@ -669,7 +676,7 @@ theorem sumWithStatus_eq_zero_of_same_sign_zeros
     rw [Internal.State.pushValue_eq_pushExact _ _ hfinite,
       finiteDyadic_eq_of_toDyadic hfinite
         (toDyadic?_eq_zero_of_isZero_eq_true value (hzero value hmem)), hsign value hmem]
-  unfold sumWithStatus
+  unfold sum Internal.Status.sum
   rw [← Array.foldl_toList]
   cases hlist : values.toList with
   | nil => exact (hnonempty (Array.toList_eq_nil_iff.mp hlist)).elim
@@ -686,23 +693,25 @@ theorem sumWithStatus_eq_zero_of_same_sign_zeros
       rw [List.foldl_cons, hfirst, hrest]
       cases negative <;> simp [state, Internal.State.finish, outcomeWithInvalid]
 
-/-- A singleton infinity has exactly the value and exception indicators of a destination cast. -/
-theorem sumWithStatus_singleton_eq_castWithStatus_of_isInf
+/-- A singleton infinity has the value and exception indicators of a destination cast. -/
+theorem sum_status_singleton_eq_cast_status_of_isInf
     (destination : FloatFormat) {source : FloatFormat}
     (value : Model source) (mode : IEEERoundingMode)
     (hinf : isInf value = true) :
-    sumWithStatus destination #[value] mode = castWithStatus source destination value mode := by
+    sum destination #[value] mode (status := true) =
+      cast source destination value mode (status := true) := by
   have hnan := isNaN_eq_false_of_isInf_eq_true value hinf
   cases mode <;> cases hsign : signBit value <;>
-    simp [sumWithStatus, Internal.State.pushValue, Internal.State.pushInfinity,
-      Internal.State.finish, castWithStatus, castWithRounding, cast, hnan, hinf, hsign] <;>
+    simp [sum, Internal.Status.sum, Internal.State.pushValue, Internal.State.pushInfinity,
+      Internal.State.finish, cast, Internal.Status.cast, Internal.Directed.cast,
+      Internal.Nearest.cast, hnan, hinf, hsign] <;>
     split <;> rfl
 
 /--
-A nonzero dot product of finite inputs performs one final dyadic rounding and reports exactly that
-rounding's status.
+A nonzero dot product of finite inputs performs one final dyadic rounding and reports that
+rounding's status and ternary value.
 -/
-theorem dotWithStatus_eq_round_of_finite_nonzero
+theorem dot_status_eq_round_of_finite_nonzero
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (mode : IEEERoundingMode) (hsize : left.size = right.size)
@@ -713,15 +722,21 @@ theorem dotWithStatus_eq_round_of_finite_nonzero
       ∀ position (hposition : position < right.size),
         isFinite right[position] = true)
     (hnonzero : Semantics.finiteDot left.toList right.toList ≠ .ok 0) :
-    dotWithStatus destination left right mode =
+    dot destination left right mode (status := true) =
       .ok {
-        value := roundDyadicWithRounding destination mode
+        value := Internal.Directed.roundDyadic destination mode
           (Internal.dotState left right hsize :
             Internal.State destination).exact
         status := dyadicRoundingStatus destination mode
           (Internal.dotState left right hsize :
             Internal.State destination).exact
-          (roundDyadicWithRounding destination mode
+          (Internal.Directed.roundDyadic destination mode
+            (Internal.dotState left right hsize :
+              Internal.State destination).exact)
+        ternary := dyadicTernary
+          (Internal.dotState left right hsize :
+            Internal.State destination).exact
+          (Internal.Directed.roundDyadic destination mode
             (Internal.dotState left right hsize :
               Internal.State destination).exact)
       } := by
@@ -733,7 +748,7 @@ theorem dotWithStatus_eq_round_of_finite_nonzero
         Internal.State destination).HasOnlyFiniteTerms :=
     Internal.dotState_hasOnlyFiniteTerms
       left right hsize hleftFinite hrightFinite
-  simp [dotWithStatus, hsize, Internal.State.finish,
+  simp [dot, Internal.Status.dot, hsize, Internal.State.finish, dyadicRoundingOutcome,
     Internal.State.HasOnlyFiniteTerms] at hstate ⊢
   simp [hstate, haccumulator]
 
@@ -744,7 +759,7 @@ reduction is the mathematical list dot product followed by one destination-forma
 `outcome` names the successful result of the `Except`-valued API. Its finiteness premise excludes
 overflow to infinity, whose encoding has no real denotation.
 -/
-theorem dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+theorem dot_status_value_toReal_eq_roundAt_of_finite_nonzero
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (exact : Rat) (outcome : IEEEOutcome destination)
@@ -759,7 +774,7 @@ theorem dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
     (hspec : Semantics.finiteDot left.toList right.toList = .ok exact)
     (hnonzero : exact ≠ 0)
     (houtcome :
-      dotWithStatus destination left right .nearestEven = .ok outcome)
+      dot destination left right .nearest (status := true) = .ok outcome)
     (hresult : isFinite outcome.value = true) :
     toReal outcome.value = roundAt destination (exact : ℝ) := by
   have hspecNonzero :
@@ -767,12 +782,12 @@ theorem dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
     intro hzero
     rw [hspec] at hzero
     exact hnonzero (Except.ok.inj hzero)
-  rw [dotWithStatus_eq_round_of_finite_nonzero
-    destination left right .nearestEven hsize
+  rw [dot_status_eq_round_of_finite_nonzero
+    destination left right .nearest hsize
       hleftFinite hrightFinite hspecNonzero] at houtcome
   simp only [Except.ok.injEq] at houtcome
   subst outcome
-  simp only [roundDyadicWithRounding] at hresult ⊢
+  simp only [Internal.Directed.roundDyadic] at hresult ⊢
   rw [toReal_roundDyadic_eq_roundAt destination hfmt _ hresult]
   congr 1
   rw [← Numerics.Dyadic.cast_toRat,
@@ -786,7 +801,7 @@ theorem dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
 A finite dot product whose exact accumulator is zero returns the specified signed zero and raises
 no status indicator.
 -/
-theorem dotWithStatus_eq_zero_of_finite
+theorem dot_status_eq_zero_of_finite
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (mode : IEEERoundingMode) (hsize : left.size = right.size)
@@ -799,7 +814,7 @@ theorem dotWithStatus_eq_zero_of_finite
     (hzero :
       (Internal.dotState left right hsize :
         Internal.State destination).exact.significand = 0) :
-    dotWithStatus destination left right mode =
+    dot destination left right mode (status := true) =
       .ok {
         value := zero destination <|
           (Internal.dotState left right hsize :
@@ -808,24 +823,25 @@ theorem dotWithStatus_eq_zero_of_finite
               Internal.State destination).allTermsNegativeZero ||
             (!(Internal.dotState left right hsize :
                 Internal.State destination).allTermsPositiveZero &&
-              mode == .towardNegativeInfinity))
+              mode == .down))
         status := .clear
+        ternary := .eq
       } := by
   have hstate :
       (Internal.dotState left right hsize :
         Internal.State destination).HasOnlyFiniteTerms :=
     Internal.dotState_hasOnlyFiniteTerms
       left right hsize hleftFinite hrightFinite
-  simp [dotWithStatus, hsize, Internal.State.finish,
+  simp [dot, Internal.Status.dot, hsize, Internal.State.finish,
     Internal.State.HasOnlyFiniteTerms] at hstate ⊢
   simp [hstate, hzero, outcomeWithInvalid]
 
 /--
 Every successful finite-input nearest-even dot product with a finite result is one real rounding
-of the exact product sum, including cancellation to zero. Equal input lengths are required, and
-exceptional outputs remain excluded from this real-valued statement.
+of the exact product sum, including cancellation to zero. It requires equal input lengths and
+excludes exceptional outputs.
 -/
-theorem dotWithStatus_value_toReal_eq_roundAt_of_finite
+theorem dot_status_value_toReal_eq_roundAt_of_finite
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (exact : Rat) (outcome : IEEEOutcome destination)
@@ -833,7 +849,7 @@ theorem dotWithStatus_value_toReal_eq_roundAt_of_finite
     (hleftFinite : ∀ position (hposition : position < left.size), isFinite left[position] = true)
     (hrightFinite : ∀ position (hposition : position < right.size), isFinite right[position] = true)
     (hspec : Semantics.finiteDot left.toList right.toList = .ok exact)
-    (houtcome : dotWithStatus destination left right .nearestEven = .ok outcome)
+    (houtcome : dot destination left right .nearest (status := true) = .ok outcome)
     (hresult : isFinite outcome.value = true) :
     toReal outcome.value = roundAt destination (exact : ℝ) := by
   by_cases hzero : exact = 0
@@ -845,39 +861,60 @@ theorem dotWithStatus_value_toReal_eq_roundAt_of_finite
       rw [hspec] at hbridge
       exact (Except.ok.inj hbridge).symm
     have hsig := (Numerics.Dyadic.toRat_eq_zero_iff _).mp hrat
-    rw [dotWithStatus_eq_zero_of_finite destination left right .nearestEven hsize
+    rw [dot_status_eq_zero_of_finite destination left right .nearest hsize
       hleftFinite hrightFinite hsig] at houtcome
     simp only [Except.ok.injEq] at houtcome
     subst outcome
     simp
-  · exact dotWithStatus_value_toReal_eq_roundAt_of_finite_nonzero
+  · exact dot_status_value_toReal_eq_roundAt_of_finite_nonzero
       destination left right exact outcome hfmt hsize hleftFinite hrightFinite
       hspec hzero houtcome hresult
 
-/-- The empty correctly rounded sum is positive zero with no exception indicator. -/
-@[simp] theorem sumWithStatus_empty
+/-- The empty correctly rounded sum is an exact positive zero with no exception indicator. -/
+@[simp] theorem sum_status_empty
     (destination source : FloatFormat) (mode : IEEERoundingMode) :
-    sumWithStatus destination (#[] : Array (Model source)) mode =
-      { value := zero destination false, status := .clear } := by
-  simp [sumWithStatus, Internal.State.finish, outcomeWithInvalid]
+    sum destination (#[] : Array (Model source)) mode (status := true) =
+      { value := zero destination false, status := .clear, ternary := .eq } := by
+  simp [sum, Internal.Status.sum, Internal.State.finish, outcomeWithInvalid]
 
 /-- A mismatched dot product reports both observed lengths and performs no reduction. -/
-theorem dotWithStatus_lengthMismatch
+theorem dot_status_lengthMismatch
     (destination : FloatFormat) {leftFormat rightFormat : FloatFormat}
     (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
     (mode : IEEERoundingMode) (hsize : left.size ≠ right.size) :
-    dotWithStatus destination left right mode =
+    dot destination left right mode (status := true) =
       .error (.lengthMismatch left.size right.size) := by
-  simp [dotWithStatus, hsize]
+  simp [dot, Internal.Status.dot, hsize]
 
-/-- The empty correctly rounded dot product is positive zero with no exception indicator. -/
-@[simp] theorem dotWithStatus_empty
+/--
+The empty correctly rounded dot product is an exact positive zero with no exception indicator.
+-/
+@[simp] theorem dot_status_empty
     (destination leftFormat rightFormat : FloatFormat) (mode : IEEERoundingMode) :
-    dotWithStatus destination
-        (#[] : Array (Model leftFormat)) (#[] : Array (Model rightFormat)) mode =
-      .ok { value := zero destination false, status := .clear } := by
-  simp [dotWithStatus, Internal.dotState, Internal.dotStateLoop,
+    dot destination
+        (#[] : Array (Model leftFormat)) (#[] : Array (Model rightFormat)) mode (status := true) =
+      .ok { value := zero destination false, status := .clear, ternary := .eq } := by
+  simp [dot, Internal.Status.dot, Internal.dotState, Internal.dotStateLoop,
     Internal.State.finish, outcomeWithInvalid]
+
+/-- The sum with `status := true` delivers the value of the sum in the same direction. -/
+@[simp] theorem value_sum (destination : FloatFormat) {source : FloatFormat}
+    (values : Array (Model source)) (mode : IEEERoundingMode) :
+    (sum destination values mode (status := true)).value = sum destination values mode :=
+  rfl
+
+/--
+The dot product with `status := true` has the value and the length check of the dot product in
+the same direction.
+-/
+@[simp] theorem map_value_dot (destination : FloatFormat)
+    {leftFormat rightFormat : FloatFormat}
+    (left : Array (Model leftFormat)) (right : Array (Model rightFormat))
+    (mode : IEEERoundingMode) :
+    (dot destination left right mode (status := true)).map IEEEOutcome.value =
+      dot destination left right mode := by
+  unfold dot Internal.Status.dot Internal.Value.dot
+  split <;> rfl
 
 end Reduction
 end Model

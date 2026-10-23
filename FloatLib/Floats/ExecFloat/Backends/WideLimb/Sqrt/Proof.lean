@@ -15,8 +15,8 @@ public import FloatLib.Floats.ExecFloat.Backends.SqrtNormalRounding
 # Correctness of wide-limb square root
 
 The integer candidate is certified by square inequalities. For positive normal inputs, its
-exact root and remainder implement the shared square-root rounding theorem. All other inputs
-retain the reference operation, including its signed-zero and NaN payload behavior.
+exact root and remainder meet the hypotheses of the shared square-root rounding theorem. All other
+inputs use the reference operation, including its signed-zero and NaN payload behavior.
 -/
 
 @[expose] public section
@@ -27,12 +27,12 @@ open FloatLib.Numerics
 
 variable {fmt : FloatFormat}
 
-/-- The direct significand read agrees with the stored normal significand. -/
+/-- The significand read of `sqrtMantissa` agrees with the stored normal significand. -/
 theorem sqrtMantissa_eq_normalMantissa (x : Value fmt) :
     sqrtMantissa x = (normalMantissa x).toNat := by
   unfold sqrtMantissa
-  rw [normalMantissa_toNat, LimbArray.toNatImpl_eq, Nat.shiftLeft_eq, Nat.one_mul,
-    Model.fracField_eq_fracFieldImpl_apply, Model.fracFieldImpl, toNatBits_toModel,
+  rw [normalMantissa_toNat, LimbArray.Internal.toNat_eq, Nat.shiftLeft_eq, Nat.one_mul,
+    Model.fracField_eq_internal_apply, Model.Internal.fracField, toNatBits_toModel,
     FloatFormat.fracMaskNat]
 
 private theorem toModel_pack_sqrt_fields (h : fmt.expWidth ≤ 32) (exponent fraction : Nat) :
@@ -157,7 +157,7 @@ private theorem sqrt_toModel_positive_normal (h : Eligible fmt) (x : Value fmt)
     Model.toModel_eq_finite_of_ieeeToDyadic?_eq_some (toModel x) false (sqrtMantissa x)
       ((expField x : Int) - (fmt.bias + fmt.fracWidth : Nat)) hm.ne' hieee
 
-/-- Every accepted normal candidate has exactly the reference square-root encoding. -/
+/-- Every accepted normal candidate has the reference square-root encoding. -/
 theorem sqrtNormal?_refines (h : Eligible fmt) (x result : Value fmt)
     (hresult : sqrtNormal? fmt x = some result) :
     toModel result = Spec.sqrt (toModel x) := by
@@ -199,8 +199,8 @@ theorem sqrtNormal?_refines (h : Eligible fmt) (x result : Value fmt)
     (Nat.pos_of_ne_zero hexp.1) hexpLt hbounds.1 hbounds.2
 
 /--
-The general wide-limb square root agrees with the public specification on every eligible value.
-The equality includes exact rounding, special values, signed zeros, and NaN payloads.
+Wide-limb square root agrees with `Spec.sqrt` on every eligible value, including rounding,
+special values, signed zeros, and NaN payloads.
 -/
 theorem toModel_sqrt (h : Eligible fmt) (x : Value fmt) :
     toModel (sqrt fmt x) = Spec.sqrt (toModel x) := by

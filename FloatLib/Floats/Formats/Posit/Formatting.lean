@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Model.Decode
 public import FloatLib.Floats.Formats.Posit.Formatting.Parsing
-public import FloatLib.Numerics.Exact.Dyadic.Format
 public import FloatLib.Numerics.Exact.DecimalText.Notation
 
 /-!
@@ -16,8 +15,8 @@ public import FloatLib.Numerics.Exact.DecimalText.Notation
 
 Ordinary posits print as exact decimals without redundant fractional zeros, so `1.5` prints as
 `1.5` and `6` as `6`. Values whose fixed notation would be longer, such as tiny magnitudes, use a
-decimal exponent instead. The unique exceptional word is printed as `NaR`, matching the Posit
-Standard terminology. The output always denotes the exact value at every width.
+decimal exponent instead. The unique exceptional word prints as `NaR`, the Posit Standard's
+name for it. At every width the output denotes the exact value.
 -/
 
 @[expose] public section
@@ -27,9 +26,9 @@ namespace FloatLib.Floats.Formats.Posit.Model
 /--
 Host-independent display string of one posit value.
 
-Ordinary values print through the compact exact decimal formatter; the unique exceptional word
-prints as `NaR`. There is no radix-two fallback. `Formatting.Proof` proves that `parse` recovers
-every input word, including NaR.
+Ordinary values print through the compact exact decimal formatter, and the unique exceptional
+word prints as `NaR`. There is no radix-two fallback. `Formatting.Proof` proves that `parse`
+recovers every input word, including NaR.
 -/
 def display {format : Format} (value : Model format) : String :=
   match value.toDyadic? with

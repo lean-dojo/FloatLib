@@ -15,11 +15,11 @@ import all Init.Data.Float.Float32
 /-!
 # Arbitrary integer constructors
 
-Lean 4.33 introduced the logical floating-point models. Lean 4.34 exposes the definitions of
-`Float.ofNat`, `Float.ofInt`, and their binary32 counterparts.
-The arbitrary-integer casts use these constructors, whose scientific-literal path includes a
-small-input optimization. These proofs account for both branches before applying the shared
-integer conversion specification.
+Lean exposes the definitions of `Float.ofNat`, `Float.ofInt`, and their binary32 counterparts on
+top of its logical floating-point models.
+The arbitrary-integer casts use these constructors, whose scientific-literal path has a
+small-input fast path. The proofs here cover both branches before applying the shared integer
+conversion specification.
 -/
 
 @[expose] public section
@@ -332,7 +332,8 @@ private theorem float32_ofInt_eq_ofModel (n : Int) :
 
 /-- Binary64 natural construction is nearest-even rounding of a denominator-one rational. -/
 theorem toModel_ofFloat_ofNat (n : Nat) :
-    toModel (ofFloat (Float.ofNat n)) = Model.roundRat FloatFormat.binary64 false n 1 := by
+    toModel (ofFloat (Float.ofNat n) : Binary64) =
+      Model.roundRat FloatFormat.binary64 false n 1 := by
   rw [float_ofNat_eq_ofModel, toModel_ofFloat]
   change Model.ofModel FloatFormat.binary64
     (Float.Model.UnpackedFloat.ofInt FloatFormat.binary64.toModel (n : Int)) = _
@@ -341,7 +342,8 @@ theorem toModel_ofFloat_ofNat (n : Nat) :
 
 /-- Binary32 natural construction is nearest-even rounding of a denominator-one rational. -/
 theorem toModel_ofFloat32_ofNat (n : Nat) :
-    toModel (ofFloat32 (Float32.ofNat n)) = Model.roundRat FloatFormat.binary32 false n 1 := by
+    toModel (ofFloat32 (Float32.ofNat n) : Binary32) =
+      Model.roundRat FloatFormat.binary32 false n 1 := by
   rw [float32_ofNat_eq_ofModel, toModel_ofFloat32]
   change Model.ofModel FloatFormat.binary32
     (Float.Model.UnpackedFloat.ofInt FloatFormat.binary32.toModel (n : Int)) = _
@@ -350,27 +352,27 @@ theorem toModel_ofFloat32_ofNat (n : Nat) :
 
 /-- Binary64 integer construction uses the shared dyadic rounder, including signed overflow. -/
 theorem toModel_ofFloat_ofInt (n : Int) :
-    toModel (ofFloat (Float.ofInt n)) =
+    toModel (ofFloat (Float.ofInt n) : Binary64) =
       Model.roundDyadic FloatFormat.binary64 (Dyadic.ofScaledInt n 0) := by
   rw [float_ofInt_eq_ofModel, toModel_ofFloat]
   exact Model.ofModel_ofInt_eq_roundDyadic FloatFormat.binary64 (by decide) n
 
 /-- Binary32 integer construction uses the shared dyadic rounder, including signed overflow. -/
 theorem toModel_ofFloat32_ofInt (n : Int) :
-    toModel (ofFloat32 (Float32.ofInt n)) =
+    toModel (ofFloat32 (Float32.ofInt n) : Binary32) =
       Model.roundDyadic FloatFormat.binary32 (Dyadic.ofScaledInt n 0) := by
   rw [float32_ofInt_eq_ofModel, toModel_ofFloat32]
   exact Model.ofModel_ofInt_eq_roundDyadic FloatFormat.binary32 (by decide) n
 
-/-- The arbitrary-precision integer cast to binary64 has the same rounding specification. -/
+/-- `Int.toFloat` has the same rounding specification as `Float.ofInt`. -/
 theorem toModel_ofFloat_intToFloat (n : Int) :
-    toModel (ofFloat n.toFloat) =
+    toModel (ofFloat n.toFloat : Binary64) =
       Model.roundDyadic FloatFormat.binary64 (Dyadic.ofScaledInt n 0) :=
   toModel_ofFloat_ofInt n
 
-/-- The arbitrary-precision integer cast to binary32 has the same rounding specification. -/
+/-- `Int.toFloat32` has the same rounding specification as `Float32.ofInt`. -/
 theorem toModel_ofFloat32_intToFloat32 (n : Int) :
-    toModel (ofFloat32 n.toFloat32) =
+    toModel (ofFloat32 n.toFloat32 : Binary32) =
       Model.roundDyadic FloatFormat.binary32 (Dyadic.ofScaledInt n 0) :=
   toModel_ofFloat32_ofInt n
 

@@ -17,8 +17,8 @@ report's exact rounding thresholds. The executable rounder computes the same res
 natural-number square roots and products. Neither implementation first projects a rational
 approximation of the root.
 
-The final decoding theorem composes this equality with the existing report saturation and
-encoding theorem. Reciprocal square root and hypotenuse reuse the same rounder after forming
+`decode_projectSqrt` composes this equality with the report's saturation and encoding
+theorem. Reciprocal square root and hypotenuse reuse the same rounder after forming
 their exact rational radicands.
 -/
 
@@ -52,7 +52,7 @@ theorem sqrtRoundAway_eq_real (format : Format) (mode : RoundingMode)
 
 /--
 Reference precision rounding takes the floor and threshold comparisons of a real root.
-As in the executable precision helper, the radicand magnitude is used; the closed operation
+As in the executable precision helper, the radicand magnitude is used, and the closed operation
 rejects negative inputs before calling this helper.
 -/
 noncomputable def roundSqrtRealToPrecision (format : Format) (mode : RoundingMode)
@@ -67,7 +67,7 @@ noncomputable def roundSqrtRealToPrecision (format : Format) (mode : RoundingMod
       if sqrtRoundAwayReal format mode quantum scaled.1 scaled.2 lower then lower + 1 else lower
     if rounded == 0 then .zero else ⟨false, rounded, quantum⟩
 
-/-- The executable precision rounder equals the rounder defined with the actual real root. -/
+/-- The executable precision rounder equals the rounder defined with the real root. -/
 theorem roundSqrtRatToPrecision_eq_real (format : Format) (mode : RoundingMode)
     (radicand : Rat) :
     roundSqrtRatToPrecision format mode radicand =
@@ -135,39 +135,37 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 open Formats.P3109
 
-variable {source leftFormat rightFormat : Format}
+variable {format : Format}
 
 /-- Decoding the square-root projector returns the real-root report reference. -/
-theorem decode_projectSqrt (destination : Format) (policy : ProjectionPolicy)
-    (value : NumericalValue Rat) :
-    Format.SameDatum (decode (projectSqrt destination policy value))
-      (Arithmetic.sqrtRealValue destination policy value) := by
-  change Format.SameDatum
-    (destination.decode (Arithmetic.sqrtCode destination policy value)) _
-  rw [← Arithmetic.sqrtValue_eq_real]
-  exact Arithmetic.sameDatum_decode_sqrtCode destination policy value
+theorem decode_projectSqrt (value : NumericalValue Rat) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Format.SameDatum (decode (projectSqrt (format := format) value mode saturation))
+      (Arithmetic.sqrtRealValue format { rounding := mode, saturation } value) := by
+  rw [decode_eq_format_decode, ← Arithmetic.sqrtValue_eq_real]
+  exact Arithmetic.sameDatum_decode_sqrtCode format _ value
 
-/-- Mixed-format square root evaluates the source value and rounds once into the destination. -/
-theorem decode_sqrtTo (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) :
-    Format.SameDatum (decode (sqrtTo destination policy value))
-      (Arithmetic.sqrtRealValue destination policy value.toClosedRat) :=
-  decode_projectSqrt destination policy value.toClosedRat
+/-- Square root evaluates the source value and rounds once into the target. -/
+theorem decode_sqrt (value : ExecFloat.P3109 format) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Format.SameDatum (decode (sqrt value target mode saturation))
+      (Arithmetic.sqrtRealValue target { rounding := mode, saturation } value.toClosedRat) :=
+  decode_projectSqrt value.toClosedRat mode saturation
 
 /-- Reciprocal square root projects the root of the exact reciprocal, with its report domain. -/
-theorem decode_rsqrtTo (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) :
-    Format.SameDatum (decode (rsqrtTo destination policy value))
-      (Arithmetic.sqrtRealValue destination policy
+theorem decode_rsqrt (value : ExecFloat.P3109 format) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    Format.SameDatum (decode (rsqrt value target mode saturation))
+      (Arithmetic.sqrtRealValue target { rounding := mode, saturation }
         (Arithmetic.rsqrtRadicand value.toClosedRat)) :=
-  decode_projectSqrt destination policy _
+  decode_projectSqrt _ mode saturation
 
 /-- Hypotenuse projects the root of the exact sum of squares without intermediate overflow. -/
-theorem decode_hypotTo (destination : Format) (policy : ProjectionPolicy)
-    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat) :
-    Format.SameDatum (decode (hypotTo destination policy left right))
-      (Arithmetic.sqrtRealValue destination policy
+theorem decode_hypot (left right : ExecFloat.P3109 format)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    Format.SameDatum (decode (hypot left right target mode saturation))
+      (Arithmetic.sqrtRealValue target { rounding := mode, saturation }
         (Arithmetic.hypotRadicand left.toClosedRat right.toClosedRat)) :=
-  decode_projectSqrt destination policy _
+  decode_projectSqrt _ mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

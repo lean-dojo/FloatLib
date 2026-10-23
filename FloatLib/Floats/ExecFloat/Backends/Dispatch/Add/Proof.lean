@@ -12,7 +12,6 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Addition.Proof
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Addition.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Subtraction.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Dyadic
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Agreement
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Addition.Proof
@@ -25,9 +24,9 @@ kernel of `NativeSmallWordAdd`, native small-word decoding into the compiled com
 binary32, binary64, and fixed limbs. They all refine the same format-generic `Spec.add` and
 `Spec.sub`.
 
-Accepted specialized results agree with the finite kernel; declined paths use `generic`.
-Together, these refinements give `word_eq_spec` and `subWord_eq_spec` for every descriptor and
-operand pair, including exceptional values. Runtime clients can import `Add.Runtime` separately.
+Accepted specialized results agree with the finite kernel, and declined paths use `generic`.
+Together these refinements give `word_eq_spec` and `subWord_eq_spec` for every descriptor and
+operand pair, including exceptional values.
 -/
 
 @[expose] public section
@@ -53,7 +52,7 @@ private theorem spec_add_eq_word :
   by_cases h32 : FloatFormat.IsBinary32 fmt
   · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
     subst fmt
-    simp [word, Spec.add, NativeBinary32.addFiniteImpl_eq,
+    simp [word, Spec.add, NativeBinary32.addFiniteWord_eq,
       NativeBinary32.addFinite_eq, generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? y <;>
@@ -73,14 +72,14 @@ private theorem spec_add_eq_word :
       | none =>
           cases hfinite : FiniteKernel.add? x y with
           | none =>
-              simp [word, h32, hnative, NativeBinary64.addFiniteFastImpl_eq,
-                NativeBinary64.addFiniteImpl_eq, hfinite, generic_eq_spec]
+              simp [word, h32, hnative, NativeBinary64.addFinite_eq_addFiniteComponents,
+                NativeBinary64.addFiniteComponents_eq, hfinite, generic_eq_spec]
           | some sum =>
               have hsum : sum = Spec.add x y := by
                 simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
                   generic_eq_spec x y
-              simp [word, h32, hnative, NativeBinary64.addFiniteFastImpl_eq,
-                NativeBinary64.addFiniteImpl_eq, hfinite, hsum, generic_eq_spec]
+              simp [word, h32, hnative, NativeBinary64.addFinite_eq_addFiniteComponents,
+                NativeBinary64.addFiniteComponents_eq, hfinite, hsum, generic_eq_spec]
     · by_cases hpair : NativePair.Eligible fmt
       · cases hfinite : FiniteKernel.add? x y with
         | none =>
@@ -135,7 +134,7 @@ private theorem spec_sub_eq_subWord :
   by_cases h32 : FloatFormat.IsBinary32 fmt
   · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
     subst fmt
-    simp [subWord, Spec.sub, Spec.add, NativeBinary32.addFiniteImpl_eq,
+    simp [subWord, Spec.sub, Spec.add, NativeBinary32.addFiniteWord_eq,
       NativeBinary32.addFinite_eq, generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? (neg y) <;>
@@ -158,14 +157,16 @@ private theorem spec_sub_eq_subWord :
       | none =>
           cases hfinite : FiniteKernel.add? x (neg y) with
           | none =>
-              simp [subWord, Spec.sub, h32, hnative, NativeBinary64.subFiniteFastImpl_eq,
-                NativeBinary64.addFiniteImpl_eq, hfinite, generic_eq_spec]
+              simp [subWord, Spec.sub, h32, hnative,
+                NativeBinary64.subFinite_eq_addFiniteComponents_negate,
+                NativeBinary64.addFiniteComponents_eq, hfinite, generic_eq_spec]
           | some difference =>
               have hdifference : difference = Spec.add x (neg y) := by
                 simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
                   generic_eq_spec x (neg y)
-              simp [subWord, Spec.sub, h32, hnative, NativeBinary64.subFiniteFastImpl_eq,
-                NativeBinary64.addFiniteImpl_eq, hfinite, hdifference,
+              simp [subWord, Spec.sub, h32, hnative,
+                NativeBinary64.subFinite_eq_addFiniteComponents_negate,
+                NativeBinary64.addFiniteComponents_eq, hfinite, hdifference,
                 generic_eq_spec]
     · by_cases hpair : NativePair.Eligible fmt
       · cases hfinite : FiniteKernel.add? x (neg y) with

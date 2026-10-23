@@ -10,13 +10,13 @@ module
 # Values of encoded numerical systems
 
 An encoded numerical system may contain ordinary values, signed infinities, and exceptional bit
-patterns.  These possibilities are not specific to IEEE floating point: posits have `NaR`, some
+patterns. None of this is specific to IEEE floating point: posits have `NaR`, some
 low-precision formats reserve individual words, and fixed-point systems may have no exceptional
 values at all.
 
-`NumericalValue` records this common semantic shape without prescribing a storage layout.  The
-finite value type remains a parameter, so a system may denote real numbers, rational numbers,
-integers, complex numbers, or another exact mathematical domain.
+`NumericalValue` records this common semantic shape without prescribing a storage layout. The
+finite value type is a parameter, so a system may denote real numbers, rational numbers, integers,
+complex numbers, or another exact mathematical domain.
 -/
 
 @[expose] public section
@@ -29,8 +29,8 @@ universe u v w
 inductive ExceptionalValue where
   /--
   A NaN encoding, optionally carrying its diagnostic payload, together with its sign bit and
-  whether it is a signaling NaN. The payload excludes encoding markers such as an IEEE quiet bit;
-  source decoders remove those markers before constructing this representation-independent value.
+  whether it is a signaling NaN. The payload excludes encoding markers such as an IEEE quiet bit,
+  which source decoders remove before constructing this representation-independent value.
   Encodings without these distinctions use the defaults: no payload, positive, and quiet.
   -/
   | nan (payload : Option Nat := none) (negative : Bool := false) (signaling : Bool := false)
@@ -50,9 +50,9 @@ inductive ExceptionalValue where
 /--
 The mathematical meaning of one encoded value.
 
-The sign on `infinity` is `true` for negative infinity.  Signed finite zero, when a format
-distinguishes it, should be retained by the finite semantic type.  For example, FloatLib's
-exact `Dyadic` representation stores the sign of a zero mantissa.
+The sign on `infinity` is `true` for negative infinity. Signed finite zero, when a format
+distinguishes it, belongs to the finite semantic type: FloatLib's exact `Dyadic` representation,
+for example, stores the sign of a zero mantissa.
 -/
 inductive NumericalValue (α : Type u) where
   | finite (value : α)
@@ -63,6 +63,19 @@ inductive NumericalValue (α : Type u) where
 namespace NumericalValue
 
 variable {α : Type u} {β : Type v} {γ : Type w}
+
+/--
+Text of a value: the scalar's own text, `inf` or `-inf`, `nan`, and `NaR`, `reserved` or
+`undefined` for the other exceptional values.
+-/
+instance [ToString α] : ToString (NumericalValue α) where
+  toString
+    | .finite x => toString x
+    | .infinity negative => if negative then "-inf" else "inf"
+    | .exceptional (.nan ..) => "nan"
+    | .exceptional .notAReal => "NaR"
+    | .exceptional (.reserved _) => "reserved"
+    | .exceptional .undefined => "undefined"
 
 /-- Apply a function to an ordinary value while preserving infinities and exceptional values. -/
 def map (f : α → β) : NumericalValue α → NumericalValue β

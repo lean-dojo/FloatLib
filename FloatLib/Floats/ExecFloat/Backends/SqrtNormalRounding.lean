@@ -8,18 +8,18 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import Init.Data.Float.Model.Unpacked.Operations.Sqrt
 public import Mathlib.Data.Nat.Sqrt
 
 /-!
 # Model square root of a normalized positive value
 
-The binary32, binary64 and binary128 square-root kernels compute the same recipe: shift the
-significand so that its integer square root has exactly `fracWidth + 1` bits, take the integer
-root, round it by comparing the remainder with the root, and pack the result with a possible
-carry into the exponent field. This module proves once, for every IEEE format, that the recipe
-agrees with `Float.Model.UnpackedFloat.sqrt` on the proof model.
+The binary32, binary64, one-word, two-word, and wide-limb square-root kernels compute the same
+recipe: shift the significand so that its integer square root has exactly `fracWidth + 1` bits, take
+the integer root, round it by comparing the remainder with the root, and pack the result with a
+possible carry into the exponent field. This module proves once, for every IEEE format, that the
+recipe agrees with `Float.Model.UnpackedFloat.sqrt` on the proof model.
 
 Each kernel proves that its word arithmetic computes this recipe, that the scaled radicand and
 encoded exponent satisfy the stated bounds, and that its scaling constants satisfy `htarget`
@@ -33,13 +33,13 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 open FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
 
 /--
-Rounding a normalized square-root core result back to packed fields.
+The model square root of a positive finite `m * 2 ^ inputExponent` is the packed, rounded integer
+root.
 
-The input is the positive finite value `m * 2 ^ inputExponent`. The root exponent is `q - bias`,
-and `shift` scales the significand so that the integer root of `m <<< shift` has exactly
-`fracWidth + 1` bits. Under these conditions the model square root is the packed encoding of the
-remainder-rounded root, with a carry into the exponent field when rounding reaches
-`2 ^ (fracWidth + 1)`.
+The root's biased exponent before a rounding carry is `q`, and `shift` scales the significand so
+that the integer root of `m <<< shift` has exactly `fracWidth + 1` bits. Rounding compares the
+remainder with the root, and a rounded root of `2 ^ (fracWidth + 1)` carries into the exponent
+field.
 -/
 theorem ofModel_sqrt_finite_positive_eq_ofFields (fmt : FloatFormat)
     (m shift q : Nat) (inputExponent : Int) (hm : 0 < m)

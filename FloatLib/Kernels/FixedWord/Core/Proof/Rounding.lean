@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
+public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Numerics.ShiftRightJam.Proof
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.SplitIfs
@@ -16,7 +17,8 @@ import Mathlib.Tactic.SplitIfs
 
 The one-word nearest-even shift and quotient kernels agree with the shared arbitrary-precision
 definitions. The compiler substitutions therefore change only the representation used for
-bounded inputs, not the numerical result.
+bounded inputs, not the numerical result. `jamCombine_toNat` gives the sticky combination of an
+aligned sum or difference its `shiftRightJam` value.
 -/
 
 @[expose] public section
@@ -59,7 +61,7 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
   simp only [UInt64.reduceToNat]
   rw [Nat.mod_eq_of_lt hsum]
 
-/-- Native word rounding agrees exactly with the generic natural-number rounder. -/
+/-- Native word rounding agrees with the generic natural-number rounder. -/
 @[simp, grind =] theorem roundShiftRightEven_toNat (value : UInt64) (shift : Nat) :
     (roundShiftRightEven value shift).toNat =
       Numerics.roundShiftRightEven value.toNat shift := by
@@ -162,8 +164,8 @@ for wider inputs.
 Native quotient rounding agrees with natural-number quotient rounding whenever the denominator is
 nonzero and the incremented quotient fits in one word.
 
-No bound on `den` is needed: the kernel compares the remainder with `den - remainder` instead of
-doubling it, so its intermediates never wrap.
+No bound on `den` is needed, because the kernel compares the remainder with `den - remainder`
+instead of doubling it, so its intermediates never wrap.
 -/
 theorem roundQuotientEven_toNat (num den : UInt64)
     (hden : den ≠ 0)
@@ -242,5 +244,40 @@ definition otherwise.
     Numerics.roundQuotientEven = roundQuotientEvenNat := by
   funext num den
   exact (roundQuotientEvenNat_eq_roundQuotientEven num den).symm
+
+
+/-- The word sticky combination is the natural-number jam of the exact aligned value. -/
+theorem jamCombine_toNat (sameSign exact : Bool) (A q : UInt64) (B d : Nat)
+    (hq : q.toNat = B / 2 ^ d) (hexact : exact = decide (B % 2 ^ d = 0))
+    (hfit : A.toNat + q.toNat + 1 < 2 ^ 64)
+    (hsub : sameSign = false → q.toNat + 1 ≤ A.toNat ∧ B ≤ A.toNat * 2 ^ d) :
+    (jamCombine sameSign exact A q).toNat =
+      Numerics.shiftRightJam
+        (if sameSign then A.toNat * 2 ^ d + B else A.toNat * 2 ^ d - B) d := by
+  unfold jamCombine
+  subst hexact
+  cases sameSign
+  · obtain ⟨hlt, hB⟩ := hsub rfl
+    simp only [Bool.false_eq_true, ite_false]
+    rw [Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hB, ← hq]
+    have hle : q ≤ A := UInt64.le_iff_toNat_le.mpr (by omega)
+    have hd : (A - q).toNat = A.toNat - q.toNat := UInt64.toNat_sub_of_le _ _ hle
+    by_cases hz : B % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true, hd]
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      have hone : (1 : UInt64) ≤ A - q :=
+        UInt64.le_iff_toNat_le.mpr (by rw [hd]; simp only [UInt64.reduceToNat]; omega)
+      rw [UInt64.toNat_or, UInt64.toNat_sub_of_le _ _ hone, hd]
+      rfl
+  · simp only [ite_true]
+    rw [Numerics.shiftRightJam_add_mul_two_pow, ← hq]
+    have hsum : (A + q).toNat = A.toNat + q.toNat := by
+      rw [UInt64.toNat_add]
+      exact Nat.mod_eq_of_lt (by omega)
+    by_cases hz : B % 2 ^ d = 0
+    · simp only [hz, decide_true, ite_true, hsum]
+    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      rw [UInt64.toNat_or, hsum]
+      rfl
 
 end FloatLib.Numerics.FixedWord

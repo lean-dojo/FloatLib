@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 
 /-!
 # Rank semantics of adjacent-value operations
@@ -14,11 +15,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 Numerical ranks specify `nextUp` and `nextDown` for every binary format descriptor. The central
 device is `adjacencyRank`: it reverses the raw encoding order for negative values, preserves it
 for positive values, and assigns both signed-zero words one rank. The unsigned-zero policy has
-one reserved NaN word at the sign boundary; `nextUp` skips that word explicitly.
+one reserved NaN word at the sign boundary, which `nextUp` skips.
 
 The public contracts show that each ordinary step changes the rank by exactly one, so no
 representable numerical rank lies between the input and output. Exceptional values, saturating
-endpoints, and non-strict rank inequalities are stated separately in `Adjacent.Proof.Boundaries`.
+endpoints, and non-strict rank inequalities are in `Adjacent.Proof.Boundaries`.
 
 No theorem depends on a named format or fixed field width.
 -/
@@ -31,8 +32,8 @@ namespace Model
 /--
 Discrete rank used to state adjacency of representable numerical values.
 
-The two signed-zero encodings have the same rank. NaN words are intentionally not assigned
-numerical semantics; public stepping theorems therefore state their NaN preconditions explicitly.
+The two signed-zero encodings have the same rank. NaN words are not given numerical meaning, so
+the stepping theorems state their NaN preconditions.
 -/
 def adjacencyRank {fmt : FloatFormat} (x : Model fmt) : Nat :=
   if signBit x then
@@ -226,9 +227,9 @@ private theorem upperPositiveCode_eq_ofFields_allOnes
       ofFields fmt false fmt.expAllOnesNat fmt.fracMaskNat := by
   unfold ofNatBits ofFields
   apply congrArg ofBits
-  rw [mkBits_eq_mkBitsImpl_apply]
+  rw [mkBits_eq_internal_apply]
   apply BitVec.eq_of_toNat_eq
-  unfold mkBitsImpl FloatFormat.signMaskNat FloatFormat.signBitIndex
+  unfold Internal.mkBits FloatFormat.signMaskNat FloatFormat.signBitIndex
     FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
     FloatFormat.ofWordNat FloatFormat.bitWidth
   simp only [BitVec.ofNatLT_eq_ofNat, BitVec.toNat_ofNat,
@@ -281,9 +282,9 @@ private theorem topCode_eq_ofFields_allOnes
       ofFields fmt true fmt.expAllOnesNat fmt.fracMaskNat := by
   unfold ofNatBits ofFields
   apply congrArg ofBits
-  rw [mkBits_eq_mkBitsImpl_apply]
+  rw [mkBits_eq_internal_apply]
   apply BitVec.eq_of_toNat_eq
-  unfold mkBitsImpl FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
+  unfold Internal.mkBits FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
     FloatFormat.ofWordNat FloatFormat.bitWidth
   simp only [BitVec.ofNatLT_eq_ofNat, BitVec.toNat_ofNat,
     ite_true, Nat.and_self]
@@ -647,13 +648,13 @@ theorem adjacencyRank_nextUp
             simp [hsign] at hsignTrue
         have hraw :=
           toNatBits_add_one_lt_signMaskNat x hsign hnan hmax
-        simpa [nextUp, hnan, hinfFalse, hzero,
+        simpa [nextUp, Internal.Value.nextUp, hnan, hinfFalse, hzero,
           hfnuz, hupperEndpoint, hsign] using
           adjacencyRank_ofBits_add_one x hraw
       · have hraw :=
           signMaskNat_lt_toNatBits_of_nonzero_nonNaN
             x hsign hzero hnan
-        simpa [nextUp, hnan, hpositiveInfinity, hzero,
+        simpa [nextUp, Internal.Value.nextUp, hnan, hpositiveInfinity, hzero,
           hfnuz, hupperEndpoint, hsign] using
           adjacencyRank_ofBits_sub_one x hraw
     · have hparts :
@@ -665,14 +666,14 @@ theorem adjacencyRank_nextUp
       have hsignedZero : fmt.supportsSignedZero = false := by
         simpa using hparts.1
       subst x
-      simp [nextUp, hsignedZero, adjacencyRank]
+      simp [nextUp, Internal.Value.nextUp, hsignedZero, adjacencyRank]
       have hwidth :=
         two_mul_signMaskNat_eq_two_pow_bitWidth fmt
       have hsignPositive : 0 < fmt.signMaskNat := by
         unfold FloatFormat.signMaskNat
         positivity
       omega
-  · simp [nextUp, hnan, hpositiveInfinity, hzero,
+  · simp [nextUp, Internal.Value.nextUp, hnan, hpositiveInfinity, hzero,
       adjacencyRank_eq_signMaskNat_of_isZero]
 
 /--
@@ -712,7 +713,7 @@ theorem adjacencyRank_nextDown
   cases hzero : isZero x
   · cases hsign : signBit x
     · have hpositive := toNatBits_pos_of_isZero_eq_false x hzero
-      simpa [nextDown, hnan, hnegativeInfinity, hzero,
+      simpa [nextDown, Internal.Value.nextDown, hnan, hnegativeInfinity, hzero,
         hlowerEndpoint, hsign] using
         adjacencyRank_ofBits_sub_one_of_positive
           x hpositive hsign
@@ -726,11 +727,11 @@ theorem adjacencyRank_nextDown
       have hfit :=
         toNatBits_add_one_lt_two_pow_of_negative
           x hnan hmin
-      simpa [nextDown, hnan, hinfFalse, hzero,
+      simpa [nextDown, Internal.Value.nextDown, hnan, hinfFalse, hzero,
         hlowerEndpoint, hsign] using
         adjacencyRank_ofBits_add_one_of_negative
           x hnegative hfit
-  · simp [nextDown, hnan, hnegativeInfinity, hzero,
+  · simp [nextDown, Internal.Value.nextDown, hnan, hnegativeInfinity, hzero,
       adjacencyRank_eq_signMaskNat_of_isZero]
     have hwidth :=
       two_mul_signMaskNat_eq_two_pow_bitWidth fmt

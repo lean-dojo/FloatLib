@@ -62,7 +62,7 @@ theorem roundQuotientEven_le_one_of_lt
     roundQuotDirected_false_le_roundQuotientEven_le_true
       numerator denominator hdenominator
   have hceil : roundQuotDirected true numerator denominator = 1 := by
-    simp [roundQuotDirected, quotCeil, hdenominator,
+    simp [roundQuotDirected, Numerics.roundQuotient_up_eq, hdenominator,
       Nat.div_eq_of_lt hlt, Nat.mod_eq_of_lt hlt, hnumerator]
   exact hsandwich.2.trans_eq hceil
 

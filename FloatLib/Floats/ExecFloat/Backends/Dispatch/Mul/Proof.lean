@@ -22,10 +22,9 @@ Every route through the multiplication dispatcher meets `Spec.mul`: binary32, bi
 fixed-pair, parameterized one-word, two-word, and generic implementations differ only in storage
 and execution strategy.
 
-Each fast kernel is allowed to decline when its structural or finite-input preconditions fail.
-The proof shows that successful results are exact refinements and that every decline reaches the
-single generic specification-preserving path. Runtime clients can import `Mul.Runtime` without
-loading these theorems.
+Each fast kernel may decline when its structural or finite-input preconditions fail. The proof
+shows that accepted results refine `Spec.mul` and that every decline reaches `generic`. Runtime
+clients can import `Mul.Runtime` without loading these theorems.
 -/
 
 @[expose] public section
@@ -54,7 +53,8 @@ theorem generic_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
             simp [hzero]
 
 /--
-The native fixed-format and parameterized one- and two-word dispatches preserve multiplication.
+Multiplication through the native fixed-format and parameterized one- and two-word kernels
+agrees with `Spec.mul`.
 -/
 theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     word x y = Spec.mul x y := by
@@ -64,16 +64,16 @@ theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     cases hx : toDyadic? x with
     | none =>
         cases hy : toDyadic? y <;>
-          simp [word, Spec.mul, NativeBinary32.mulFiniteImpl_eq,
+          simp [word, Spec.mul, NativeBinary32.mulFiniteWord_eq,
             NativeBinary32.mulFinite_eq, generic_eq_spec, hx, hy]
     | some dx =>
         cases hy : toDyadic? y with
         | none =>
-            simp [word, Spec.mul, NativeBinary32.mulFiniteImpl_eq,
+            simp [word, Spec.mul, NativeBinary32.mulFiniteWord_eq,
               NativeBinary32.mulFinite_eq, generic_eq_spec, hx, hy]
         | some dy =>
             by_cases hzero : dx.significand = 0 ∨ dy.significand = 0 <;>
-              simp [word, Spec.mul, NativeBinary32.mulFiniteImpl_eq,
+              simp [word, Spec.mul, NativeBinary32.mulFiniteWord_eq,
                 NativeBinary32.mulFinite_eq, hx, hy, hzero]
   · by_cases h64 : FloatFormat.IsBinary64 fmt
     · have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
@@ -96,7 +96,7 @@ theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
               have hrefines :=
                 NativeBinary64.mulNormalLimb_refines x y product hfast
               have hfinite : FiniteKernel.mul? x y = some product := by
-                rw [← NativeBinary64.mulFiniteImpl_eq]
+                rw [← NativeBinary64.mulFinite_eq]
                 exact hrefines
               have hproduct : product = Spec.mul x y := by
                 calc

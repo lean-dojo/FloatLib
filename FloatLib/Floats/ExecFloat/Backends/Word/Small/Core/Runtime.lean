@@ -12,14 +12,12 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Native storage for one-word floating-point formats
 
-The native storage interface represents formats whose complete encoding fits in `UInt64`. It
-deliberately excludes refinement proofs so native kernels can depend on the storage operations
-without importing theorem developments.
+This module has the native storage operations for formats whose whole encoding fits in `UInt64`,
+and no refinement proofs, so native kernels can use it without importing the theorem modules.
 
-Field masks, the implicit bit, the conventional bias, and the storage mask use `UInt64` shifts.
-This avoids computing these constants with arbitrary-precision powers when a descriptor remains
-a runtime argument. `Core.Proof` gives their natural-number values under the one-word capacity
-bound.
+Field masks, the implicit bit, the conventional bias and the storage mask use `UInt64` shifts,
+which avoids arbitrary-precision powers when the descriptor is a runtime argument. `Core.Proof`
+gives their natural-number values under the one-word capacity bound.
 -/
 
 @[expose] public section
@@ -30,8 +28,8 @@ namespace Model.NativeSmallWord
 /--
 Capacity contract for native decoding of a complete floating-point storage word.
 
-Unlike `Eligible`, this predicate does not constrain arithmetic intermediates. It is suitable for
-operations that only decode fields in `UInt64` before entering an exact shared kernel.
+It bounds the storage word, while `Eligible` also bounds the arithmetic intermediates, so it suits
+operations that just decode fields in `UInt64` before entering an exact shared kernel.
 -/
 def StorageEligible (fmt : FloatFormat) : Prop :=
   fmt.isIEEE = true ∧ fmt.bitWidth ≤ 64
@@ -39,17 +37,17 @@ def StorageEligible (fmt : FloatFormat) : Prop :=
 /--
 Storage eligibility is decided from the descriptor fields.
 
-The explicit conditional and inline attribute allow a dispatcher specialized to a closed
-descriptor to simplify the eligibility check.
+Because the conditional is inlined, a dispatcher specialized to a closed descriptor can simplify
+the check.
 -/
 @[inline] instance (fmt : FloatFormat) : Decidable (StorageEligible fmt) :=
   if h : fmt.isIEEE = true ∧ fmt.bitWidth ≤ 64 then isTrue h else isFalse h
 
 /--
-Conservative capacity contract shared by one-word native kernels.
+Conservative capacity contract for one-word native kernels.
 
-The IEEE condition selects the existing exact binary semantics. The width bounds ensure storage,
-exponent arithmetic, and normalized significands fit in the flat `UInt64` implementations.
+The IEEE condition selects the exact binary semantics, and the width bounds keep storage, exponent
+arithmetic and normalized significands inside the flat `UInt64` implementations.
 -/
 def Eligible (fmt : FloatFormat) : Prop :=
   fmt.isIEEE = true ∧
@@ -57,7 +55,7 @@ def Eligible (fmt : FloatFormat) : Prop :=
     fmt.expWidth ≤ 30 ∧
     fmt.fracWidth ≤ 30
 
-/-- Kernel eligibility is decided from the descriptor fields; see `StorageEligible`. -/
+/-- Kernel eligibility is decided from the descriptor fields, inlined as for `StorageEligible`. -/
 @[inline] instance (fmt : FloatFormat) : Decidable (Eligible fmt) :=
   if h : fmt.isIEEE = true ∧ fmt.bitWidth ≤ 64 ∧ fmt.expWidth ≤ 30 ∧ fmt.fracWidth ≤ 30 then
     isTrue h
@@ -105,9 +103,9 @@ theorem storageMask_toNat_lt (fmt : FloatFormat) :
 /--
 Truncate one native word into an exact-width floating-point carrier.
 
-The low `fmt.bitWidth` bits are kept by `storageMask`, and the model word is built with
+`storageMask` keeps the low `fmt.bitWidth` bits, and the model word is built with
 `BitVec.ofNatLT` from `storageMask_toNat_lt`. The executable body masks the word and converts it
-to `Nat`; the power in its bound belongs to the erased proof. `Core.Proof` shows the value is
+to `Nat`, and the power in its bound belongs to the erased proof. `Core.Proof` shows the value is
 `bits.toNat % 2 ^ fmt.bitWidth`.
 -/
 @[inline] def ofWord {fmt : FloatFormat} (bits : UInt64) : Model fmt :=
@@ -120,7 +118,7 @@ to `Nat`; the power in its bound belongs to the erased proof. `Core.Proof` shows
 /--
 The conventional IEEE bias `2 ^ (expWidth - 1) - 1` as one machine word.
 
-It is exact for every format that fits one word; `Core.Proof` proves `biasWord_toNat`.
+It is exact for every format that fits one word (`biasWord_toNat` in `Core.Proof`).
 -/
 @[inline] def biasWord (fmt : FloatFormat) : UInt64 :=
   ((1 : UInt64) <<< (UInt64.ofNat fmt.expWidth - 1)) - 1
@@ -130,7 +128,7 @@ The conventional IEEE bias as an integer, read from `biasWord`.
 
 Division compares its unbiased exponent with `1 - biasInt fmt` and `biasInt fmt`, which are the
 conventional IEEE normal exponent bounds `ieeeMinNormalExponent` and `ieeeMaxNormalExponent`, and
-adds `biasInt fmt` to encode the result; `Core.Proof` proves `biasInt_eq`.
+adds `biasInt fmt` to encode the result. `Core.Proof` proves `biasInt_eq`.
 -/
 @[inline] def biasInt (fmt : FloatFormat) : Int :=
   Int.ofNat (biasWord fmt).toNat
@@ -147,7 +145,7 @@ adds `biasInt fmt` to encode the result; `Core.Proof` proves `biasInt_eq`.
 @[inline] def exponentField (fmt : FloatFormat) (bits : UInt64) : UInt64 :=
   (bits >>> UInt64.ofNat fmt.fracWidth) &&& exponentMask fmt
 
-/-- Extract the explicit fraction using one native mask. -/
+/-- Extract the stored fraction field with one native mask. -/
 @[inline] def fractionField (fmt : FloatFormat) (bits : UInt64) : UInt64 :=
   bits &&& fractionMask fmt
 
@@ -174,17 +172,15 @@ adds `biasInt fmt` to encode the result; `Core.Proof` proves `biasInt_eq`.
   (1 : UInt64) <<< UInt64.ofNat (fmt.fracWidth + 1)
 
 /--
-Decode two normal finite operands and pass their native fields to a multiplicative kernel.
+Decode two normal finite storage words and pass their native fields to a multiplicative kernel.
 
 The callback receives the XOR of the operand signs, followed by both biased exponents and both
 normalized significands. Zero, subnormal, and exceptional operands return `none`.
 -/
-@[always_inline, inline] def withNormalPair? {fmt : FloatFormat} {α : Type}
-    (x y : Model fmt)
+@[always_inline, inline] def withNormalPairWord? (fmt : FloatFormat) {α : Type}
+    (xBits yBits : UInt64)
     (kernel : Bool → UInt64 → UInt64 → UInt64 → UInt64 → Option α) :
     Option α :=
-  let xBits := toWord x
-  let yBits := toWord y
   let xExponent := exponentField fmt xBits
   let yExponent := exponentField fmt yBits
   let allOnes := exponentMask fmt
@@ -197,6 +193,13 @@ normalized significands. Zero, subnormal, and exceptional operands return `none`
       xExponent yExponent
       (fractionField fmt xBits ||| hiddenBit fmt)
       (fractionField fmt yBits ||| hiddenBit fmt)
+
+/-- `withNormalPairWord?` on the storage words of two model values. -/
+@[always_inline, inline] def withNormalPair? {fmt : FloatFormat} {α : Type}
+    (x y : Model fmt)
+    (kernel : Bool → UInt64 → UInt64 → UInt64 → UInt64 → Option α) :
+    Option α :=
+  withNormalPairWord? fmt (toWord x) (toWord y) kernel
 
 end Model.NativeSmallWord
 end FloatLib.Floats.Formats.BinaryInterchange

@@ -8,15 +8,15 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.ModelSqrt.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
 
 
 /-!
 # Executable compact finite square root
 
 The compiled path consumes the sign, significand, and exponent from `FiniteKernel.Components`,
-avoiding a second storage decode. Conventional IEEE descriptors use the unpacked-model kernel;
-other descriptors use an arbitrary-precision integer square root. Correctness proofs live in
+avoiding a second storage decode. Conventional IEEE descriptors use the unpacked-model kernel,
+and other descriptors use an arbitrary-precision integer square root. Correctness proofs live in
 `Sqrt.Proof`.
 -/
 
@@ -35,9 +35,8 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteSqrt
 /--
 Round an integer square-root approximation after discarding `shift` low root bits.
 
-`remainder` records the positive irrational tail: zero means the scaled radicand was a perfect
-square. At an exact half-way discarded-bit pattern, any nonzero square-root remainder moves the
-exact result above the tie.
+`remainder` is the square-root remainder, zero when the scaled radicand is a perfect square. At a
+half-way discarded-bit pattern, a nonzero remainder puts the exact result above the tie.
 -/
 @[inline] def roundRoot
     (root remainder shift : Nat) : Nat :=
@@ -57,10 +56,9 @@ exact result above the tie.
       quotient + 1
 
 /--
-Descriptor-aware positive square root for formats not represented by Lean's conventional IEEE
-model.
+Descriptor-aware positive square root for descriptors that are not conventional IEEE.
 
-The radicand and root use natural-number arithmetic; exponents use `Int`. The root is computed
+The radicand and root use natural-number arithmetic, and exponents use `Int`. The root is computed
 at the destination scale with one guard bit and an exact sticky flag, so a large exponent gap
 does not force an oversized integer square root.
 -/
@@ -75,7 +73,7 @@ does not force an oversized integer square root.
     let scaledMantissa := mantissa <<< radicandShift
     let roundingShift := (finalExponent - rootExponent).toNat
     let roundedRoot := (ScaledSqrt.shifted scaledMantissa roundingShift).roundedMantissa
-    roundDyadicImpl fmt
+    Internal.roundDyadic fmt
       { negative := false
         significand := roundedRoot
         exponent := finalExponent }
@@ -83,8 +81,8 @@ does not force an oversized integer square root.
 /--
 Positive finite square root from an exact dyadic.
 
-The IEEE branch deliberately retains the established logical model and native replacement theorem.
-The non-IEEE branch follows the complete descriptor and never converts through `Float.Model`.
+The IEEE branch uses the logical model `NativeModelSqrt.sqrt` and its native replacement theorem.
+The non-IEEE branch follows the descriptor and never converts through `Float.Model`.
 -/
 @[inline] def sqrtPositiveDyadic
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) : Model fmt :=
@@ -120,7 +118,7 @@ Square root of a positive finite nonzero value from compact decoded fields.
   | none => none
   | some value => sqrtComponents? fmt value
 
-/-- Square root directly from scalar finite fields. -/
+/-- Square root from scalar finite fields. -/
 @[inline] def sqrtFields?
     (fmt : FloatFormat) (sign : Bool) (exponent mantissa : Nat) :
     Option (Model fmt) :=
@@ -141,8 +139,8 @@ Square root of a positive finite nonzero value from compact decoded fields.
 /--
 Square root of a value already classified as positive, finite, and nonzero.
 
-The evidence is erased. IEEE descriptors decode the storage word once; other descriptors use their
-policy-aware fields. Both paths call `sqrtPositiveDyadic`, which selects the conventional IEEE
+The evidence is erased. IEEE descriptors decode the storage word once, and other descriptors read
+their policy-aware fields. Both paths call `sqrtPositiveDyadic`, which selects the conventional IEEE
 model or the descriptor-aware integer square-root kernel.
 -/
 @[inline] def sqrtPositiveRuntime {fmt : FloatFormat}

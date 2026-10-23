@@ -22,6 +22,10 @@ every validated `FloatFormat`.
 These theorems connect the arithmetic dispatchers to the format's specifications before a result
 is transported to configured storage. Each dispatcher proof covers its optimized backends and
 generic fallback.
+
+The `Internal.Directed.add_eq` family and its status counterparts state that each kernel computes
+the public operation with the same options, so proofs that unfold a kernel can return to the
+public form.
 -/
 
 @[expose] public section
@@ -61,5 +65,82 @@ namespace Proof
   FmaBackend.dispatch_eq_spec x y z
 
 end Proof
+
+/-! ## Kernels of the public operations -/
+
+namespace Internal.Directed
+
+/-- The directed addition kernel computes `add` in every rounding direction. -/
+theorem add_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x y : Model fmt) :
+    add mode x y = Model.add x y (mode := mode) := by
+  cases mode <;> rfl
+
+/-- The directed subtraction kernel computes `sub` in every rounding direction. -/
+theorem sub_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x y : Model fmt) :
+    sub mode x y = Model.sub x y (mode := mode) := by
+  cases mode
+  case nearest =>
+    change Nearest.add x (neg y) = Nearest.sub x y
+    rw [show Nearest.add x (neg y) = Spec.add x (neg y) from AddBackend.word_eq_spec x (neg y),
+      show Nearest.sub x y = Spec.sub x y from AddBackend.subWord_eq_spec x y]
+    rfl
+  all_goals rfl
+
+/-- The directed multiplication kernel computes `mul` in every rounding direction. -/
+theorem mul_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x y : Model fmt) :
+    mul mode x y = Model.mul x y (mode := mode) := by
+  cases mode <;> rfl
+
+/-- The directed division kernel computes `div` in every rounding direction. -/
+theorem div_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x y : Model fmt) :
+    div mode x y = Model.div x y (mode := mode) := by
+  cases mode <;> rfl
+
+/-- The directed square-root kernel computes `sqrt` in every rounding direction. -/
+theorem sqrt_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x : Model fmt) :
+    sqrt mode x = Model.sqrt x (mode := mode) := by
+  cases mode <;> rfl
+
+/-- The directed FMA kernel computes `fma` in every rounding direction. -/
+theorem fma_eq {fmt : FloatFormat} (mode : IEEERoundingMode) (x y z : Model fmt) :
+    fma mode x y z = Model.fma x y z (mode := mode) := by
+  cases mode <;> rfl
+
+end Internal.Directed
+
+namespace Internal.Status
+
+/-- The status addition kernel is `add` with `status := true`. -/
+theorem add_eq {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
+    add x y mode = Model.add x y (mode := mode) (status := true) :=
+  rfl
+
+/-- The status subtraction kernel is `sub` with `status := true`. -/
+theorem sub_eq {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
+    sub x y mode = Model.sub x y (mode := mode) (status := true) :=
+  rfl
+
+/-- The status multiplication kernel is `mul` with `status := true`. -/
+theorem mul_eq {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
+    mul x y mode = Model.mul x y (mode := mode) (status := true) :=
+  rfl
+
+/-- The status division kernel is `div` with `status := true`. -/
+theorem div_eq {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
+    div x y mode = Model.div x y (mode := mode) (status := true) :=
+  rfl
+
+/-- The status square-root kernel is `sqrt` with `status := true`. -/
+theorem sqrt_eq {fmt : FloatFormat} (x : Model fmt) (mode : IEEERoundingMode) :
+    sqrt x mode = Model.sqrt x (mode := mode) (status := true) :=
+  rfl
+
+/-- The status FMA kernel is `fma` with `status := true`. -/
+theorem fma_eq {fmt : FloatFormat} (x y z : Model fmt) (mode : IEEERoundingMode) :
+    fma x y z mode = Model.fma x y z (mode := mode) (status := true) :=
+  rfl
+
+end Internal.Status
+
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

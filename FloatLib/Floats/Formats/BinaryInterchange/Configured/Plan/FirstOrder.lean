@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Automati
 
 Word and pair storage can call a structural kernel without projecting a certificate closure.
 The guard below uses the same eligibility and cost comparison as the complete portfolio. Its
-selection proofs unfold that portfolio; they do not identify different algorithms through their
-common numerical specification.
+selection proofs unfold that portfolio and show that the direct call is the selected candidate's
+own function, not another algorithm with the same numerical specification.
 
 The generic winner also has a direct entry point for carriers without a table or limb candidate.
 This exposes constant format parameters to the compiler at arbitrary precision.
@@ -28,7 +28,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Configured
 limb closure. This is a storage eligibility test, not a selection decision. -/
 @[inline] def StoragePlan.firstOrderDispatch {format : FloatFormat} : StoragePlan format → Bool
   | .word16 _ | .word32 _ | .word64 _ => true
-  | .wide => decide (Model.NativePair.Eligible format)
+  | .pair _ _ | .wide => decide (Model.NativePair.Eligible format)
   | .byte _ | .limbs _ => false
 
 namespace Plan
@@ -46,8 +46,8 @@ open FloatLib.Floats.ExecFloat.Backend
 
 /-- Whether a direct structural call executes the winner of the complete configured portfolio.
 
-Keep this decision out of the arithmetic body: closed format/plan/policy applications are cached
-by the compiler, while the selected structural branch remains available for specialization. -/
+It is kept out of the arithmetic body: the compiler caches closed format/plan/policy applications,
+and the selected structural branch stays open to specialization. -/
 @[noinline] def firstOrderSelected {format : FloatFormat}
     (policy : Policy) (plan : StoragePlan format) (operation : Operation) : Bool :=
   plan.firstOrderDispatch && structuralSelected policy plan operation

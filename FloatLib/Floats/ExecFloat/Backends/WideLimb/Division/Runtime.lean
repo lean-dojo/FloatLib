@@ -13,14 +13,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Division
 /-!
 # Width-generic wide-limb division
 
-Finite inputs are decoded directly from their limb fields. Division uses one arbitrary-precision
+Finite inputs are decoded from their limb fields. Division uses one arbitrary-precision
 integer quotient, fusing significand scaling with the extra bit needed for nearest-even rounding.
 For normal operands, a significand comparison determines the ratio's leading exponent. Subnormal
 operands use the general leading-exponent computation and the same certified rounder.
 
-The finite path includes zero operands, subnormal results, underflow, and overflow in every IEEE
-rounding direction. Only non-finite operands use the reference operation. Their value result is
-independent of rounding direction. `Division.Proof` establishes the complete codec refinement.
+The finite path includes zero operands, subnormal results, underflow, and overflow in every
+rounding direction. Only non-finite operands use the reference operation, whose value result does
+not depend on the rounding direction. `Division.Proof` proves the refinement through the codec.
 -/
 
 @[expose] public section
@@ -38,9 +38,9 @@ open FloatLib.Numerics
   if expWord x == 0 || expWord y == 0 then RationalBinary.floorLog2 num den
   else if den ≤ num then 0 else -1
 
-/-- Try finite wide-limb division, in any IEEE rounding direction and without a precision bound. -/
-def divFiniteWithRounding? (fmt : FloatFormat) (mode : IEEERoundingMode)
-    (x y : Value fmt) : Option (Value fmt) :=
+/-- Try finite wide-limb division, in any rounding direction and without a precision bound. -/
+def divFinite? (fmt : FloatFormat) (x y : Value fmt) (mode : IEEERoundingMode) :
+    Option (Value fmt) :=
   if expWord x == expAllOnes fmt || expWord y == expAllOnes fmt then
     none
   else
@@ -59,15 +59,14 @@ def divFiniteWithRounding? (fmt : FloatFormat) (mode : IEEERoundingMode)
           (divisionRatioExponent x y num den)
     some (ofModel result)
 
-/-- Total wide-limb division with the reference exceptional-value policy. -/
-def divWithRounding (fmt : FloatFormat) (mode : IEEERoundingMode)
-    (x y : Value fmt) : Value fmt :=
-  match divFiniteWithRounding? fmt mode x y with
+/--
+Total wide-limb division rounded in `mode`, nearest-even by default, with the reference
+exceptional-value policy. The configured wide-limb backend uses the default.
+-/
+def div (fmt : FloatFormat) (x y : Value fmt) (mode : IEEERoundingMode := .nearest) :
+    Value fmt :=
+  match divFinite? fmt x y mode with
   | some result => result
   | none => ofModel (Spec.div (toModel x) (toModel y))
-
-/-- Nearest-even division for the configured wide-limb backend. -/
-@[inline] def div (fmt : FloatFormat) (x y : Value fmt) : Value fmt :=
-  divWithRounding fmt .nearestEven x y
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

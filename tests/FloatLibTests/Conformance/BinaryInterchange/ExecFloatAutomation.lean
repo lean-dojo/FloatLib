@@ -11,12 +11,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation
 /-!
 # Regression checks for `Model` proof automation
 
-These examples are acceptance tests for the user-facing proof workflow. They ensure `grind`,
+These examples are acceptance tests for the user-facing proof workflow. They check that `grind`,
 `binary_interchange_spec`, and `numerics` can move from executable operations to exact or
 error-bounded statements using local finiteness hypotheses.
 
 The custom format is intentional: a proof tactic that works only because binary32 or binary64 has
-a special theorem should fail here. Concrete standard formats remain in the suite to catch
+a special theorem should fail here. Concrete standard formats stay in the suite to catch
 instance and literal elaboration regressions.
 -/
 
@@ -180,11 +180,11 @@ example : AtExact customFormat (.nan true true 1) :=
 
 example :
     OutcomeAt customFormat (.infinity false) { divideByZero := true } :=
-  numerics_refine (divWithStatus (posOne customFormat) (posZero customFormat))
+  numerics_refine (div (posOne customFormat) (posZero customFormat) (status := true))
 
 example :
     OutcomeAt customFormat (.nan false false 16) { invalid := true } :=
-  numerics_refine (divWithStatus (posZero customFormat) (posZero customFormat))
+  numerics_refine (div (posZero customFormat) (posZero customFormat) (status := true))
 
 example (x : At customFormat (3 : ℝ)) :
     toReal x.1 = 3 := by

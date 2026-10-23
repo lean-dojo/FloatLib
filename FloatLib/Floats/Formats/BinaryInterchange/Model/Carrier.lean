@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 /-!
 # Descriptor-indexed binary-interchange proof model
 
-`Model fmt` is the bit-exact specification carrier for the binary-interchange family.
-Statically declared formats use
-`FloatLib.Floats.ExecFloat F`, whose runtime representation is selected by `EncodedFormat F`.
+`Model fmt` is the bit-exact specification carrier for the binary-interchange family. Statically
+declared formats use `FloatLib.Floats.ExecFloat F`, whose runtime representation is selected by
+`EncodedFormat F`.
 
 This model stores `BitVec fmt.bitWidth` so descriptor-generic specifications and refinement proofs
 can quantify over a runtime-selected layout. Concrete format packages bridge their direct runtime
@@ -35,12 +35,12 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 /--
 Descriptor-indexed bit-level proof model for format `fmt`.
 
-The carrier is `BitVec fmt.bitWidth`; every stored bit is part of the format.
+The carrier is `BitVec fmt.bitWidth`, and every stored bit is part of the format.
 -/
 structure Model (fmt : FloatFormat) where
   /-- Raw binary storage pattern. -/
   bits : FloatFormat.ExecWord fmt
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 namespace Model
 
@@ -236,7 +236,7 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def posZero (fmt : FloatFormat) : Model fmt :=
   ofNatBits 0
 
-/-- The negative-zero bit pattern; it denotes NaN in FNUZ formats. -/
+/-- The negative-zero bit pattern, which denotes NaN in FNUZ formats. -/
 @[inline] def negZero (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.signMask fmt)
 
@@ -248,11 +248,11 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def negOne (fmt : FloatFormat) : Model fmt :=
   ofFields fmt true fmt.exponentBias 0
 
-/-- The positive-infinity IEEE bit pattern; use `infinity?` for policy-aware construction. -/
+/-- The positive-infinity IEEE bit pattern. Use `infinity?` for policy-aware construction. -/
 @[inline] def posInf (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.expMask fmt)
 
-/-- The negative-infinity IEEE bit pattern; use `infinity?` for policy-aware construction. -/
+/-- The negative-infinity IEEE bit pattern. Use `infinity?` for policy-aware construction. -/
 @[inline] def negInf (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.signMask fmt ||| FloatFormat.expMask fmt)
 
@@ -268,7 +268,7 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def negMaxFinite (fmt : FloatFormat) : Model fmt :=
   maxFinite fmt true
 
-/-- The canonical IEEE quiet-NaN bit pattern; use `canonicalNaN?` for other encodings. -/
+/-- The canonical IEEE quiet-NaN bit pattern. Use `canonicalNaN?` for other encodings. -/
 @[inline] def canonicalNaN (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.expMask fmt ||| FloatFormat.quietBit fmt)
 
@@ -346,8 +346,8 @@ The IEEE 754 §9.7 payload of a binary NaN fraction field: the field without its
 
 The quiet bit is the most significant fraction bit. It is therefore the highest set bit of a quiet
 NaN's field and clear in a signaling NaN's field, so the payload is recovered without knowing the
-fraction width. A zero field has payload zero. Non-IEEE encodings have no diagnostic payload bits and
-therefore carry payload zero.
+fraction width. A zero field has payload zero. Non-IEEE encodings have no diagnostic payload bits,
+so their payload is zero.
 -/
 @[inline] def payloadOfNaNField (signaling : Bool) (field : Nat)
     (encoding : FloatFormat.Encoding := .ieee) : Nat :=
@@ -363,7 +363,7 @@ therefore carry payload zero.
 A quiet NaN of `fmt` carrying a source NaN's sign and payload, following IEEE 754-2019 §6.2.3.
 
 IEEE encodings keep the sign, set the quiet bit, and keep the payload when it fits below the quiet
-bit; a payload that does not fit is replaced by zero, the canonical payload. The maximum-NaN
+bit. A payload that does not fit is replaced by zero, the canonical payload. The maximum-NaN
 encoding keeps only the sign, FNUZ has a single NaN, and a fully finite encoding returns
 `invalidResult fmt`, positive zero.
 -/
@@ -401,8 +401,8 @@ encoding keeps only the sign, FNUZ has a single NaN, and a fully finite encoding
 /--
 Return a selected NaN, or continue with evidence that NaN selection produced no result.
 
-The continuation proof is erased. Keeping this dependent boundary beside the NaN selectors lets
-operations rule out impossible ordinary branches without duplicating selection logic.
+The continuation proof is erased. Operations use it to rule out impossible ordinary branches
+without duplicating selection logic.
 -/
 @[inline] def withNaNSelection {fmt : FloatFormat}
     (selected : Option (Model fmt))
@@ -610,7 +610,7 @@ Copy the numerical sign of `signSource` onto `magnitude`.
 
 For formats with signed zero, this is the usual quiet sign-bit operation. An unsigned-zero format
 uses its sign-bit word as the NaN encoding, so zero and NaN are preserved instead of being changed
-into one another. Every other finite value still receives the requested stored sign.
+into one another. Every other finite value receives the requested stored sign.
 -/
 @[inline] def copySign {fmt : FloatFormat}
     (magnitude signSource : Model fmt) : Model fmt :=
@@ -659,20 +659,22 @@ reserved NaN word intact, avoiding the raw-bit alias between those two encodings
 @[inline] def negMinSubnormal (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.signMask fmt ||| FloatFormat.ofWordNat fmt 1)
 
+namespace Internal.Value
+
 /--
-The next representable value strictly greater than `x`.
+The next representable value strictly greater than `x`, the kernel of `Model.nextUp x`.
 
 A quiet NaN and the positive endpoint are fixed. A signaling NaN becomes the corresponding quiet
-NaN; since this value-only operation carries no status, the `invalid` signal IEEE 754-2019 §5.3.1
-owes to a signaling operand is reported by `nextUpWithStatus` in `Operations.Runtime`. Formats
-without infinity saturate at their largest finite value. In an unsigned-zero encoding, the word
-immediately below the negative minimum subnormal is reserved for NaN, so that transition goes
-directly to the format's unique zero.
+NaN, and the `invalid` signal IEEE 754-2019 §5.3.1 owes to a signaling operand is reported by
+`Model.nextUp x (status := true)` in `Operations.Runtime`. Formats without infinity saturate at
+their largest finite value. In an unsigned-zero encoding, the word immediately below the negative
+minimum subnormal is reserved for NaN, so that transition goes directly to the format's unique
+zero.
 -/
 @[inline] def nextUp {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x && !signBit x then
+  else if isInf x && !Model.signBit x then
     x
   else if isZero x then
     posMinSubnormal fmt
@@ -680,31 +682,33 @@ directly to the format's unique zero.
     posZero fmt
   else if !fmt.supportsInfinity && x.bits == (posMaxFinite fmt).bits then
     x
-  else if signBit x then
+  else if Model.signBit x then
     ofBits (x.bits - 1)
   else
     ofBits (x.bits + 1)
 
 /--
-The next representable value strictly less than `x`.
+The next representable value strictly less than `x`, the kernel of `Model.nextDown x`.
 
 A quiet NaN and the negative endpoint are fixed. A signaling NaN becomes the corresponding quiet
-NaN; the `invalid` signal it owes is reported by `nextDownWithStatus` in `Operations.Runtime`.
-Formats without infinity saturate at their most negative finite value.
+NaN, and the `invalid` signal it owes is reported by `Model.nextDown x (status := true)` in
+`Operations.Runtime`. Formats without infinity saturate at their most negative finite value.
 -/
 @[inline] def nextDown {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x && signBit x then
+  else if isInf x && Model.signBit x then
     x
   else if isZero x then
     negMinSubnormal fmt
   else if !fmt.supportsInfinity && x.bits == (negMaxFinite fmt).bits then
     x
-  else if signBit x then
+  else if Model.signBit x then
     ofBits (x.bits + 1)
   else
     ofBits (x.bits - 1)
+
+end Internal.Value
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

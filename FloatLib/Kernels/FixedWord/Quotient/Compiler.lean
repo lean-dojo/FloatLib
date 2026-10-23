@@ -7,17 +7,19 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
+import FloatLib.Kernels.FixedWord.Quotient.Proof
 
 /-!
 # Compiler certificates for restoring quotient loops
 
 The logical restoring loop is convenient for proofs, while the primitive-word accumulator avoids
-allocating a state at every generated quotient bit. This module proves the one- and two-limb loops
-extensionally equal and registers the optimized direction with `@[csimp]`.
+allocating a state at every generated quotient bit. This module proves the logical and accumulator
+forms of the one- and two-limb loops equal and registers the accumulator direction with `@[csimp]`.
 
-Keeping this certificate separate from `Quotient.Proof` matters for executable clients: they can
-enable the verified compiler rewrite without importing the much larger rational-arithmetic proof
-development.
+The compiled scaled quotient also tries a floating-point candidate, checked in exact integer
+arithmetic, before the loop. Its certificate uses the loop's arithmetic specification from
+`Quotient.Proof`, imported here privately so executable clients get the rewrite without
+re-exporting that development.
 -/
 
 @[expose] public section
@@ -34,18 +36,18 @@ theorem quotientStepsWords_eq (den : UInt64) (n : Nat) (quotient remainder : UIn
       simp only [quotientStepsWords, quotientSteps, quotientStep]
       split <;> exact ih _ _
 
-/-- The one-word implementation agrees for every state and iteration count. -/
-theorem quotientStepsImpl_eq_quotientSteps
+/-- The one-word accumulator agrees with the logical loop for every state and iteration count. -/
+theorem Internal.quotientSteps_eq
     (den : UInt64) (n : Nat) (state : QuotientState UInt64) :
-    quotientStepsImpl den n state = quotientSteps den n state := by
+    Internal.quotientSteps den n state = RestoringQuotient.quotientSteps den n state := by
   exact quotientStepsWords_eq den n state.quotient state.remainder
 
 /-- Compile one-word restoring division through primitive accumulators. -/
 -- grind: no rule; this equation selects a compiler implementation.
-@[csimp] theorem quotientSteps_eq_quotientStepsImpl :
-    quotientSteps = quotientStepsImpl := by
+@[csimp] theorem quotientSteps_eq_internal :
+    quotientSteps = Internal.quotientSteps := by
   funext den n state
-  exact (quotientStepsImpl_eq_quotientSteps den n state).symm
+  exact (Internal.quotientSteps_eq den n state).symm
 
 /--
 Compile scaled quotient rounding through the same accumulator.
@@ -54,10 +56,50 @@ This equation also replaces calls whose original body was compiled before the lo
 was imported.
 -/
 -- grind: no rule; this equation selects a compiler implementation.
-@[csimp] theorem roundScaledQuotient_eq_roundScaledQuotientImpl :
-    roundScaledQuotient = roundScaledQuotientImpl := by
+@[csimp] theorem roundScaledQuotient_eq_internal :
+    roundScaledQuotient = Internal.roundScaledQuotient := by
   funext num den shift
-  simp only [roundScaledQuotient, roundScaledQuotientImpl, quotientStepsWords_eq]
+  have hloop : roundQuotientState den
+      (quotientStepsWords den shift (num / den) (num % den)) = roundScaledQuotient num den shift := by
+    simp only [roundScaledQuotient, quotientStepsWords_eq]
+  unfold Internal.roundScaledQuotient
+  split
+  · rename_i hguard
+    simp only [Bool.and_eq_true, bne_iff_ne, ne_eq, decide_eq_true_eq] at hguard
+    obtain ⟨⟨hden, hdenSmall⟩, hshift⟩ := hguard
+    have hdenFit : den.toNat < 2 ^ 63 := UInt64.lt_iff_toNat_lt.mp hdenSmall
+    have hnum : ({ hi := 0, lo := num } : UInt128).toNat = num.toNat := by
+      simp [UInt128.toNat]
+    have hscaled :
+        (UInt128.shiftLeft { hi := 0, lo := num } shift).toNat = num.toNat <<< shift := by
+      rw [UInt128.shiftLeft_toNat _ _ (by omega) (by
+        rw [hnum, Nat.shiftLeft_eq]
+        calc num.toNat * 2 ^ shift < 2 ^ 64 * 2 ^ 64 :=
+              Nat.mul_lt_mul'' num.toNat_lt (Nat.pow_lt_pow_right (by decide) hshift)
+          _ = 2 ^ 128 := by norm_num), hnum]
+    have hchecked (guess : UInt64)
+        (hguess :
+          isFloorQuotient (UInt128.shiftLeft { hi := 0, lo := num } shift) den guess = true) :
+        roundScaledQuotient num den shift =
+          roundQuotientState den
+            { quotient := guess,
+              remainder :=
+                (quotientRemainder (UInt128.shiftLeft { hi := 0, lo := num } shift) den guess).lo
+            } := by
+      obtain ⟨hq, hr, hfit⟩ := isFloorQuotient_spec hguess
+      rw [hscaled] at hq hr
+      apply UInt64.toNat_inj.mp
+      rw [roundScaledQuotient_toNat num den shift hden hdenFit (by omega),
+        roundQuotientState_toNat den _ _ hden hdenFit hq hr (by omega)]
+    dsimp only
+    split
+    · exact hchecked _ ‹_›
+    · split
+      · exact hchecked _ ‹_›
+      · split
+        · exact hchecked _ ‹_›
+        · exact hloop.symm
+  · exact hloop.symm
 
 /-- Reassemble one primitive-word accumulator step as a two-limb quotient state. -/
 private def quotientStep128WordsState
@@ -126,20 +168,20 @@ private theorem quotientSteps128Words_eq
               { quotient := quotient, remainder := remainder }).remainder
 
 /-- The primitive-word accumulator implements the logical two-limb restoring recurrence. -/
-theorem quotientSteps128Impl_eq_quotientSteps128
+theorem Internal.quotientSteps128_eq
     (den : FloatLib.Numerics.FixedWord.UInt128) (n : Nat)
     (state : QuotientState FloatLib.Numerics.FixedWord.UInt128) :
-    quotientSteps128Impl den n state =
-      quotientSteps128 den n state := by
-  unfold quotientSteps128Impl
+    Internal.quotientSteps128 den n state =
+      RestoringQuotient.quotientSteps128 den n state := by
+  unfold Internal.quotientSteps128
   simpa using
     quotientSteps128Words_eq den n state.quotient state.remainder
 
 /-- Compile the logical two-limb quotient loop through its verified word accumulator. -/
 -- grind: no rule; this compiler substitution exposes an implementation accumulator.
-@[csimp] theorem quotientSteps128_eq_quotientSteps128Impl :
-    quotientSteps128 = quotientSteps128Impl := by
+@[csimp] theorem quotientSteps128_eq_internal :
+    quotientSteps128 = Internal.quotientSteps128 := by
   funext den n state
-  exact (quotientSteps128Impl_eq_quotientSteps128 den n state).symm
+  exact (Internal.quotientSteps128_eq den n state).symm
 
 end FloatLib.Numerics.FixedWord.RestoringQuotient

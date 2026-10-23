@@ -60,7 +60,7 @@ theorem precision_le_bitWidth_of_unsigned
     format.precision ≤ format.bitWidth := by
   simpa [unsigned] using format.precision_bound
 
-/-- The P3109 exponent field is nonempty for every valid descriptor. -/
+/-- Every valid descriptor has a nonempty exponent field. -/
 theorem exponentBits_pos (format : Format) :
     0 < format.exponentBits := by
   cases hs : format.signedness with
@@ -125,7 +125,7 @@ theorem two_lt_modulus (format : Format) :
     omega
   simpa using Nat.pow_lt_pow_right (a := 2) (by decide) hwidth
 
-/-- The single P3109 NaN code is never the all-zero code. -/
+/-- P3109's NaN code is never the all-zero code. -/
 theorem nanBits_pos (format : Format) :
     0 < format.nanBits := by
   cases hs : format.signedness with
@@ -156,7 +156,7 @@ theorem negativeInfinityBits_pos (format : Format) :
   simp [negativeInfinityBits]
   omega
 
-/-- The sole P3109 NaN code fits in the declared code space. -/
+/-- P3109's NaN code fits in the declared code space. -/
 theorem nanBits_lt_modulus (format : Format) :
     format.nanBits < format.modulus := by
   cases hs : format.signedness with
@@ -207,7 +207,7 @@ theorem negativeInfinityBits_ne_signBoundary_of_signed
   rw [modulus_eq]
   omega
 
-/-- The two infinity codes are distinct in every signed descriptor. -/
+/-- In every signed descriptor the two infinity codes differ. -/
 theorem negativeInfinityBits_ne_positiveInfinityBits_of_signed
     (format : Format) (signed : format.signedness = .signed) :
     format.negativeInfinityBits ≠ format.positiveInfinityBits := by
@@ -226,10 +226,17 @@ theorem positiveInfinityBits_ne_nanBits_of_unsigned
   simp [positiveInfinityBits, nanBits, unsigned]
   omega
 
-/-- The generic numerical-system wrapper denotes exactly the P3109 decode function. -/
+/-- The codebook of a descriptor denotes each code by the P3109 decoder. -/
+@[simp, grind =] theorem codebook_denote (format : Format) :
+    format.codebook.denote = format.decode := by
+  unfold codebook
+  rfl
+
+/-- The generic numerical-system wrapper denotes each code by the P3109 decode function. -/
 @[simp, grind =] theorem numericalSystem_denote
     (format : Format) (code : BitVec format.bitWidth) :
-    format.numericalSystem.denote code = format.decode code :=
+    format.numericalSystem.denote code = format.decode code := by
+  unfold numericalSystem codebook
   rfl
 
 /-- The all-zero positive finite code decodes to the unique P3109 zero. -/
@@ -417,34 +424,37 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 variable {format : Formats.P3109.Format}
 
-/-- The user-facing zero constructor denotes P3109's unique finite zero. -/
+/-- Executable P3109 decoding is the descriptor's exact decoding function. -/
+@[simp, grind =] theorem decode_eq_format_decode (value : ExecFloat.P3109 format) :
+    decode value = format.decode (ExecFloat.Codebook.toCode value) := by
+  change format.codebook.denote _ = _
+  rw [Formats.P3109.Format.codebook_denote]
+
+/-- The `zero` constructor decodes to P3109's unique finite zero. -/
 @[grind =] theorem decode_zero :
     decode (zero (format := format)) = .finite .zero := by
-  change format.decode (BitVec.ofNat format.bitWidth 0) = .finite .zero
+  rw [decode_eq_format_decode]
   exact format.decode_zero
 
-/-- The user-facing NaN constructor denotes the format's sole exceptional NaN value. -/
+/-- The `nan` constructor decodes to the format's single NaN. -/
 @[grind =] theorem decode_nan :
     decode (nan (format := format)) = .exceptional (.nan) := by
-  change format.decode (BitVec.ofNat format.bitWidth format.nanBits) =
-    .exceptional (.nan)
+  rw [decode_eq_format_decode]
   exact format.decode_nanBits
 
-/-- The positive-infinity constructor has its advertised meaning in every extended format. -/
+/-- In every extended format, `positiveInfinity` decodes to positive infinity. -/
 @[grind =] theorem decode_positiveInfinity
     (extended : format.domain = .extended) :
     decode (positiveInfinity (format := format) extended) = .infinity false := by
-  change format.decode
-      (BitVec.ofNat format.bitWidth format.positiveInfinityBits) = .infinity false
+  rw [decode_eq_format_decode]
   exact format.decode_positiveInfinityBits extended
 
-/-- The negative-infinity constructor has its advertised meaning in signed extended formats. -/
+/-- In signed extended formats, `negativeInfinity` decodes to negative infinity. -/
 @[grind =] theorem decode_negativeInfinity
     (signed : format.signedness = .signed)
     (extended : format.domain = .extended) :
     decode (negativeInfinity (format := format) signed extended) = .infinity true := by
-  change format.decode
-      (BitVec.ofNat format.bitWidth format.negativeInfinityBits) = .infinity true
+  rw [decode_eq_format_decode]
   exact format.decode_negativeInfinityBits signed extended
 
 /-- Natural-number construction reduces modulo `2^K`, where `K` is the encoded width. -/
@@ -452,11 +462,6 @@ variable {format : Formats.P3109.Format}
     toNatBits (ofNatBits (format := format) bits) =
       bits % 2 ^ format.bitWidth :=
   ExecFloat.Codebook.toNatBits_ofNatBits bits
-
-/-- Executable P3109 decoding is definitionally the descriptor's exact decoding function. -/
-@[simp, grind =] theorem decode_eq_format_decode (value : ExecFloat.P3109 format) :
-    decode value = format.decode (ExecFloat.Codebook.toCode value) :=
-  rfl
 
 private theorem exists_decode_finite_of_checked_candidate_eq_some
     (candidate value : ExecFloat.P3109 format)
@@ -474,9 +479,9 @@ private theorem exists_decode_finite_of_checked_candidate_eq_some
   | exceptional exceptional => simp [decoded] at success
 
 /--
-A successful structured-field construction is guaranteed to denote an ordinary finite value.
+A successful structured-field construction denotes an ordinary finite value.
 
-This theorem is the elimination rule for `ofFiniteFields?`: callers need not reason about the
+This is the elimination rule for `ofFiniteFields?`, so callers need not reason about the
 descriptor's reserved code points after the constructor succeeds.
 -/
 theorem exists_decode_finite_of_ofFiniteFields?_eq_some

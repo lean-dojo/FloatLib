@@ -10,6 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Sqrt.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Proof
 public import FloatLib.Kernels.FixedWord.RestoringSqrt.Proof
+import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 public import FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
 public import FloatLib.Floats.ExecFloat.Backends.SqrtNormalRounding
 public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
@@ -23,10 +24,10 @@ information. `sqrtNormal_refines` identifies each accepted result with the publi
 square-root specification.
 
 The kernel accepts only eligible layouts with `fracWidth ≤ 124` and `fracWidth + 1 ≤ bias`. The
-first bound keeps the doubled remainder inside the two-word restoring state; the second is the
+first bound keeps the doubled remainder inside the two-word restoring state, and the second is the
 hypothesis under which `SqrtArithmetic.target_exponent` identifies the model's target exponent
 with the kernel's affine exponent formula. Exceptional, subnormal, and unsupported inputs are
-left to the operation dispatcher. Runtime clients can import `Sqrt.Runtime` separately.
+left to the operation dispatcher.
 -/
 
 @[expose] public section
@@ -112,7 +113,7 @@ private theorem model_minExponent (h : Eligible fmt) :
   push_cast
   omega
 
-/-- The model's significand width, including the implicit bit. -/
+/-- The model's significand width is `fracWidth + 1`, counting the implicit bit. -/
 private theorem model_mantissaBits :
     ((FloatFormat.toModel fmt).mantissaBits : Int) = Int.ofNat (fmt.fracWidth + 1) := by
   simp [Float.Model.Format.mantissaBits, FloatFormat.toModel, Nat.add_comm]
@@ -278,7 +279,8 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
   have hresult : result = packNormal fmt false resultExponent normalized := by
     simpa [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, words, exponent, hexponentZero,
       hexponentAll, mantissa, shift, radicand, state, rounded, carry, normalized,
-      resultExponent] using hfast.symm
+      resultExponent, FloatLib.Numerics.FixedWord.CheckedSquareRoot.rootAndRemainder_eq]
+      using hfast.symm
   have hexponentBounds : 0 < exponent.toNat ∧ exponent.toNat < fmt.expAllOnesNat :=
     normalExponent_bounds h x hexponentZero hexponentAll
   have hexponentPositive : 0 < exponent.toNat := hexponentBounds.1
@@ -453,7 +455,7 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
   simp only [sqrtNormalSpec, scale, position, modelShift, scaled, root, remainder,
     genericRounded, genericCarry, encodedExponent, genericNormalized]
 
-/-- Every accepted two-word square root agrees with the exact specification. -/
+/-- Every accepted two-word square root agrees with `Model.Spec.sqrt`. -/
 theorem sqrtNormal_refines (h : Eligible fmt)
     (x result : Model fmt) (hfast : sqrtNormal? x = some result) :
     result = Model.Spec.sqrt x := by
@@ -511,5 +513,22 @@ theorem sqrtNormal_refines (h : Eligible fmt)
       rw [toModel_of_positive_normal h x hsignNative hexponentZero hexponentFinite]
       exact hmodel
     _ = Model.Spec.sqrt x := hpublic.symm
+
+/-- `sqrtNormal?` is the `ofWords` image of `sqrtNormalWords?` on the operand's storage words. -/
+theorem sqrtNormal?_eq_map (h : Eligible fmt) (x : Model fmt) :
+    sqrtNormal? x = (sqrtNormalWords? fmt (toWords x)).map (ofWords fmt) := by
+  have hsign : x.bits.msb = signBit fmt (toWords x).hi := by
+    rw [signBit_eq h x, Model.signBit_eq_msb]
+  unfold sqrtNormal? sqrtNormalWords? packNormal
+  rw [hsign]
+  dsimp only
+  split_ifs <;> rfl
+
+/-- An accepted storage-word root is the model-level two-word root. -/
+theorem sqrtNormal?_of_words (h : Eligible fmt) (x : Model fmt)
+    (words : FloatLib.Numerics.FixedWord.UInt128)
+    (hwords : sqrtNormalWords? fmt (toWords x) = some words) :
+    sqrtNormal? x = some (ofWords fmt words) := by
+  rw [sqrtNormal?_eq_map h x, hwords, Option.map_some]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair

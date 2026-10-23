@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 
 /-!
@@ -15,8 +16,8 @@ Closed executable intervals have `Model fmt` endpoints, an endpoint order, and
 format-independent constructors. Outward-rounded arithmetic and activation ranges live in later
 modules.
 
-The executable layer is separate from soundness theorems so applications can choose an exact
-real, extended-real, or format-model interpretation without changing the interval representation.
+The executable layer carries no soundness theorems, so applications can choose an exact real,
+extended-real, or format-model interpretation without changing the interval representation.
 -/
 
 @[expose] public section
@@ -30,11 +31,15 @@ structure Interval (fmt : FloatFormat) where
   lo : Model fmt
   /-- Upper endpoint. -/
   hi : Model fmt
-  deriving DecidableEq, Repr
+  deriving DecidableEq
+
+/-- `#eval` shows both endpoints as their values. -/
+instance {fmt : FloatFormat} : Repr (Interval fmt) where
+  reprPrec interval _ := f!"\{ lo := {repr interval.lo}, hi := {repr interval.hi} }"
 
 namespace Interval
 
-/-- Membership using the numerical order of `Model`; NaNs are unordered. -/
+/-- Membership using the numerical order of `Model`, in which NaNs are unordered. -/
 def mem {fmt : FloatFormat} (I : Interval fmt) (x : Model fmt) : Prop :=
   Model.le I.lo x ∧ Model.le x I.hi
 
@@ -50,18 +55,22 @@ instance {fmt : FloatFormat} : Membership (Model fmt) (Interval fmt) where
 /--
 An interval is valid when both endpoints are finite and ordered.
 
-For formats with infinity, `whole` is intentionally not valid under this finite-endpoint
-predicate. For finite formats, `whole` uses the two maximal finite endpoints and is valid.
+For formats with infinity, `whole` is not valid under this finite-endpoint predicate. For finite
+formats, `whole` uses the two maximal finite endpoints and is valid.
 -/
 def Valid {fmt : FloatFormat} (I : Interval fmt) : Prop :=
   Model.isFinite I.lo = true ∧
     Model.isFinite I.hi = true ∧
     Model.le I.lo I.hi
 
+/-- Validity is decided by classifying and comparing the endpoints. -/
+instance {fmt : FloatFormat} (I : Interval fmt) : Decidable I.Valid :=
+  inferInstanceAs (Decidable (_ ∧ _ ∧ _))
+
 /--
 An interval is extended-valid when both endpoints are non-NaN and are ordered.
 
-Unlike `Valid`, this predicate permits infinite endpoints. It is the closure invariant for
+This predicate permits infinite endpoints. It is the closure invariant for
 outward-rounded IEEE operations: a finite input interval may produce an infinite endpoint on
 overflow without ceasing to denote an ordered interval.
 -/
@@ -69,6 +78,10 @@ def ValidExtended {fmt : FloatFormat} (I : Interval fmt) : Prop :=
   Model.isNaN I.lo = false ∧
     Model.isNaN I.hi = false ∧
     Model.le I.lo I.hi
+
+/-- Extended validity is decided by classifying and comparing the endpoints. -/
+instance {fmt : FloatFormat} (I : Interval fmt) : Decidable I.ValidExtended :=
+  inferInstanceAs (Decidable (_ ∧ _ ∧ _))
 
 /-- Degenerate interval `[x, x]`. -/
 @[inline] def point {fmt : FloatFormat} (x : Model fmt) : Interval fmt :=
@@ -90,14 +103,14 @@ def ValidExtended {fmt : FloatFormat} (I : Interval fmt) : Prop :=
 /--
 Conservative interval spanning the complete numerical range of `fmt`.
 
-Formats with infinity use `[-∞, +∞]`; formats without infinity use their two maximal finite
+Formats with infinity use `[-∞, +∞]`, and formats without infinity use their two maximal finite
 endpoints.
 -/
 @[inline] def whole (fmt : FloatFormat) : Interval fmt :=
   ⟨Model.infinityOrMaxFinite fmt true,
     Model.infinityOrMaxFinite fmt false⟩
 
-/-- Executable `x ≤ y`; unordered comparisons return `false`. -/
+/-- Executable `x ≤ y`, which is `false` for unordered comparisons. -/
 @[inline] def leB {fmt : FloatFormat} (x y : Model fmt) : Bool :=
   match Model.compare x y with
   | some .lt | some .eq => true
@@ -108,10 +121,9 @@ Build an enclosure from ordered, non-NaN endpoints, or use the whole range.
 
 The candidate pair is kept only when `leB lo hi` holds. It is replaced by `whole fmt` when either
 endpoint is a NaN (so the comparison is unordered) and also when `lo > hi` numerically, which can
-happen when a caller supplies reversed bounds. An indeterminate expression such as `0 * ∞`
-can instead produce NaN endpoints. Indeterminate endpoint
-calculations cannot justify a narrower bound; for formats with infinity the fallback encloses
-every real number and permits interval arithmetic to compose.
+happen when a caller supplies reversed bounds. An indeterminate expression such as `0 * ∞` can
+produce NaN endpoints instead. Such endpoint calculations cannot justify a narrower bound, and for
+formats with infinity the fallback encloses every real number, so interval arithmetic composes.
 -/
 @[inline] def ofBounds {fmt : FloatFormat} (lo hi : Model fmt) : Interval fmt :=
   if leB lo hi then ⟨lo, hi⟩ else whole fmt

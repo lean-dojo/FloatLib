@@ -7,13 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Product.Runtime
+public import FloatLib.Kernels.FixedWord.Difference.Runtime
 
 /-!
 # Fixed-limb rounding
 
 Two- and four-limb shifts and nearest-even rounding, with guard, sticky, and carry results.
 Fixed tuples give these small kernels a statically sized representation. Callers handle exponents
-and packing; `LimbRound.Proof` relates the operations to natural-number arithmetic.
+and packing, and `LimbRound.Proof` relates the operations to natural-number arithmetic.
 -/
 
 @[expose] public section
@@ -24,6 +25,17 @@ namespace FloatLib.Numerics.FixedWord
 @[inline] def UInt128.increment (value : UInt128) : UInt128 :=
   let sum := add64 value.lo 1
   ⟨value.hi + sum.carry, sum.value⟩
+
+/-- `UInt128.increment` with the low-word carry kept as a native word. -/
+@[inline] def UInt128.Internal.increment (value : UInt128) : UInt128 :=
+  let low := value.lo + 1
+  ⟨value.hi + (if low < value.lo then 1 else 0), low⟩
+
+/-- Compiled code runs `UInt128.increment` as `UInt128.Internal.increment`. The two are equal by
+`rfl`. -/
+-- grind: no rule; this equation selects a compiler implementation.
+@[csimp] theorem UInt128.increment_eq_internal :
+    @UInt128.increment = @UInt128.Internal.increment := rfl
 
 /-- Set the least-significant bit of a two-limb value. -/
 @[inline] def UInt128.setLowBit (value : UInt128) : UInt128 :=
@@ -41,7 +53,7 @@ namespace UInt128
 /--
 Round a two-word value right by one bit using round-to-nearest, ties-to-even.
 
-For a one-bit shift, incrementing is required exactly when the two low input bits are `11`.
+For a one-bit shift, the quotient is incremented exactly when the two low input bits are `11`.
 -/
 @[inline] def roundShiftRightOneEven (value : UInt128) : UInt128 :=
   let quotient := value.shiftRightOne
@@ -75,6 +87,34 @@ fits one word, and callers also keep the incremented quotient below `2^64`.
   else
     quotient + 1
 
+/--
+Round a two-limb value right by `shift` using round-to-nearest, ties-to-even, keeping both limbs.
+
+The kernel is meaningful for `0 < shift < 64`, the contract of
+`UInt128.roundShiftRightEven128_toNat`.
+-/
+@[inline] def roundShiftRightEven128 (value : UInt128) (shift : Nat) : UInt128 :=
+  let quotient := value.shiftRight shift
+  let remainder := value.lo &&& ((1 <<< UInt64.ofNat shift) - 1)
+  let half := (1 : UInt64) <<< UInt64.ofNat (shift - 1)
+  if remainder < half then
+    quotient
+  else if remainder > half then
+    quotient.increment
+  else if (quotient.lo &&& 1) == 0 then
+    quotient
+  else
+    quotient.increment
+
+/-- `FixedWord.jamCombine` on two-word values (`UInt128.jamCombine_toNat`). -/
+@[inline] def jamCombine (sameSign exact : Bool) (A q : UInt128) : UInt128 :=
+  if sameSign then
+    let sum := (add128 A q).value
+    if exact then sum else sum.setLowBit
+  else
+    let difference := A.sub q
+    if exact then difference else (difference.sub ⟨0, 1⟩).setLowBit
+
 end UInt128
 
 namespace UInt256
@@ -82,9 +122,9 @@ namespace UInt256
 /--
 Low 128 bits of a four-word right shift.
 
-The operation is total: shifts at and beyond 256 return zero. Callers that need the complete
-quotient establish separately that no nonzero bit remains above the returned two-word window.
-The explicit limb ranges avoid the modulo reduction performed by native machine-word shifts.
+Shifts at and beyond 256 return zero. A caller that needs the complete quotient must show that
+no nonzero bit remains above the returned two-word window. The limb ranges avoid the modulo
+reduction performed by native machine-word shifts.
 -/
 @[inline] def shiftRight128 (value : UInt256) (shift : Nat) : UInt128 :=
   if shift == 0 then
@@ -173,8 +213,8 @@ For the floating-point formulation, see Sylvie Boldo and Guillaume Melquiond,
 /--
 Number of low bits discarded when reducing a four-limb value to a normalized two-limb value.
 
-Values already fitting below bit 128 use a zero shift. Wider values retain their leading bit at
-position 127, independently of the arithmetic operation that produced them.
+Values already below `2^128` use a zero shift. Wider values keep their leading bit at position
+127.
 -/
 @[inline] def normalizationShift128 (value : UInt256) : Nat :=
   value.log2 - 127
@@ -192,11 +232,11 @@ two more bits.
 /--
 Round a four-limb value right by `shift`, returning a two-limb result.
 
-The kernel is only valid for `64 < shift < 128`: the discarded field is read from `limb1` and
-`limb0`, and the halfway marker is built inside `limb1`. Callers also keep
+The kernel is only valid for `64 < shift < 128`, because the discarded field is read from `limb1`
+and `limb0` and the halfway marker is built inside `limb1`. Callers also keep
 `value.limb3 < 2^(shift - 64)` and the incremented quotient below `2^128`, so that
-`shiftRight128` returns the complete quotient. `roundShiftRightEven128_toNat` states exactly
-these hypotheses. Two-word products call this with shifts `fracWidth` or `fracWidth + 1`, which
+`shiftRight128` returns the complete quotient. `roundShiftRightEven128_toNat` states these
+hypotheses. Two-word products call this with shifts `fracWidth` or `fracWidth + 1`, which
 is 112 or 113 for binary128.
 -/
 @[inline] def roundShiftRightEven128 (value : UInt256) (shift : Nat) : UInt128 :=
@@ -214,6 +254,51 @@ is 112 or 113 for binary128.
   else
     quotient.increment
 
+
+/-- Bitwise complement of a four-word value. -/
+@[inline] def complement (value : UInt256) : UInt256 :=
+  ⟨~~~value.limb3, ~~~value.limb2, ~~~value.limb1, ~~~value.limb0⟩
+
+/--
+Subtract two four-word values modulo `2^256` by adding the two's complement of the subtrahend.
+`sub_toNat` gives the natural-number difference when the subtrahend is at most the minuend.
+-/
+@[inline] def sub (x y : UInt256) : UInt256 :=
+  (add256 x (add256 y.complement ⟨0, 0, 0, 1⟩).value).value
+
+/-- Compare two four-word values. -/
+@[inline] def less (x y : UInt256) : Bool :=
+  x.limb3 < y.limb3 || (x.limb3 == y.limb3 && (x.limb2 < y.limb2 || (x.limb2 == y.limb2 &&
+    (x.limb1 < y.limb1 || (x.limb1 == y.limb1 && x.limb0 < y.limb0)))))
+
+/-- Set the least-significant bit of a four-word value. -/
+@[inline] def setLowBit (value : UInt256) : UInt256 :=
+  ⟨value.limb3, value.limb2, value.limb1, value.limb0 ||| 1⟩
+
+/-- Double a four-word value modulo `2^256`. -/
+@[inline] def double (value : UInt256) : UInt256 :=
+  (add256 value value).value
+
 end UInt256
+
+/--
+Embed a two-word value shifted left by `shift < 128` bits into four words. Every shift below 128
+is supported, including those `UInt256.ofUInt128ShiftedLeft` does not cover.
+-/
+@[inline] def UInt128.shiftLeft256 (value : UInt128) (shift : Nat) : UInt256 :=
+  if shift == 0 then
+    UInt256.ofUInt128 value
+  else if shift < 64 then
+    let complement := 64 - shift
+    {
+      limb3 := 0
+      limb2 := value.hi >>> UInt64.ofNat complement
+      limb1 := (value.lo >>> UInt64.ofNat complement) ||| (value.hi <<< UInt64.ofNat shift)
+      limb0 := value.lo <<< UInt64.ofNat shift
+    }
+  else if shift == 64 then
+    ⟨0, value.hi, value.lo, 0⟩
+  else
+    UInt256.ofUInt128ShiftedLeft value shift
 
 end FloatLib.Numerics.FixedWord

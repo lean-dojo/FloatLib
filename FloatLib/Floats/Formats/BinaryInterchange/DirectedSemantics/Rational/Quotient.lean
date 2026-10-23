@@ -15,7 +15,9 @@ import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 
 The quotient operations used by directed rational rounding satisfy format-independent order
 bounds. Floor rounding lies below the exact real quotient, ceiling rounding lies above it, and
-integer lower and upper thresholds are preserved in the expected directions.
+integer lower and upper thresholds are preserved in the expected directions. The ceiling is
+`Numerics.roundQuotient .up`. Whether a quotient is an exact tie, as nearest-away rounding needs to
+know, depends only on the rational it represents.
 -/
 
 @[expose] public section
@@ -30,22 +32,22 @@ section
 /-! ## Natural quotient bounds -/
 
 /-- The floor quotient is no larger than the ceiling quotient. -/
-theorem div_le_quotCeil (numerator denominator : Nat) :
-    numerator / denominator ≤ quotCeil numerator denominator := by
+theorem div_le_roundQuotient_up (numerator denominator : Nat) :
+    numerator / denominator ≤ Numerics.roundQuotient .up numerator denominator := by
   by_cases hdenominator : denominator = 0
-  · simp [hdenominator, quotCeil]
+  · simp [hdenominator, Numerics.roundQuotient_up_eq]
   · by_cases hremainder : numerator % denominator = 0
-    · simp [quotCeil, hdenominator, hremainder]
-    · simp [quotCeil, hdenominator, hremainder]
+    · simp [Numerics.roundQuotient_up_eq, hdenominator, hremainder]
+    · simp [Numerics.roundQuotient_up_eq, hdenominator, hremainder]
 
 /-- The ceiling quotient is at most one larger than the floor quotient. -/
-theorem quotCeil_le_div_add_one (numerator denominator : Nat) :
-    quotCeil numerator denominator ≤ numerator / denominator + 1 := by
+theorem roundQuotient_up_le_div_add_one (numerator denominator : Nat) :
+    Numerics.roundQuotient .up numerator denominator ≤ numerator / denominator + 1 := by
   by_cases hdenominator : denominator = 0
-  · simp [hdenominator, quotCeil]
+  · simp [hdenominator, Numerics.roundQuotient_up_eq]
   · by_cases hremainder : numerator % denominator = 0
-    · simp [quotCeil, hdenominator, hremainder]
-    · simp [quotCeil, hdenominator, hremainder]
+    · simp [Numerics.roundQuotient_up_eq, hdenominator, hremainder]
+    · simp [Numerics.roundQuotient_up_eq, hdenominator, hremainder]
 
 /-- Multiplying the floor quotient back by its denominator does not exceed the numerator. -/
 theorem div_mul_le_numerator (numerator denominator : Nat) :
@@ -53,9 +55,9 @@ theorem div_mul_le_numerator (numerator denominator : Nat) :
   Nat.div_mul_le_self numerator denominator
 
 /-- Multiplying the ceiling quotient back by a nonzero denominator covers the numerator. -/
-theorem numerator_le_quotCeil_mul
+theorem numerator_le_roundQuotient_up_mul
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
-    numerator ≤ quotCeil numerator denominator * denominator := by
+    numerator ≤ Numerics.roundQuotient .up numerator denominator * denominator := by
   let quotient := numerator / denominator
   let remainder := numerator % denominator
   have hnumerator : numerator = quotient * denominator + remainder := by
@@ -64,28 +66,28 @@ theorem numerator_le_quotCeil_mul
   have hremainderLt : remainder < denominator :=
     Nat.mod_lt numerator (Nat.pos_of_ne_zero hdenominator)
   by_cases hremainderZero : remainder = 0
-  · have hceil : quotCeil numerator denominator = quotient := by
-      simp [quotCeil, hdenominator, quotient, remainder, hremainderZero]
+  · have hceil : Numerics.roundQuotient .up numerator denominator = quotient := by
+      simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainderZero]
     calc
       numerator = quotient * denominator := by
         simpa [hremainderZero] using hnumerator
-      _ ≤ quotCeil numerator denominator * denominator := by simp [hceil]
-  · have hceil : quotCeil numerator denominator = quotient + 1 := by
-      simp [quotCeil, hdenominator, quotient, remainder, hremainderZero]
+      _ ≤ Numerics.roundQuotient .up numerator denominator * denominator := by simp [hceil]
+  · have hceil : Numerics.roundQuotient .up numerator denominator = quotient + 1 := by
+      simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainderZero]
     calc
       numerator = quotient * denominator + remainder := hnumerator
       _ ≤ quotient * denominator + denominator :=
         Nat.add_le_add_left hremainderLt.le _
-      _ ≤ quotCeil numerator denominator * denominator := by
+      _ ≤ Numerics.roundQuotient .up numerator denominator * denominator := by
         simp [hceil, Nat.add_mul]
 
 /-! ## Exact real enclosure -/
 
 /-- The executable natural ceiling is the exact integer ceiling of the represented real quotient. -/
-theorem ceil_real_nat_div_eq_quotCeil
+theorem ceil_div_eq_roundQuotient_up
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
     (⌈(numerator : Real) / (denominator : Real)⌉ : Int) =
-      Int.ofNat (quotCeil numerator denominator) := by
+      Int.ofNat (Numerics.roundQuotient .up numerator denominator) := by
   let quotient := numerator / denominator
   let remainder := numerator % denominator
   have hdivision :
@@ -106,7 +108,7 @@ theorem ceil_real_nat_div_eq_quotCeil
     simpa [Nat.cast_div] using h.symm
   by_cases hremainder : remainder = 0
   · rw [hsplit, hremainder]
-    simp [quotCeil, hdenominator, quotient, remainder, hremainder]
+    simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainder]
   · have hdenominatorPos : (0 : Real) < denominator := by
       exact_mod_cast Nat.pos_of_ne_zero hdenominator
     have hremainderPos : (0 : Real) < remainder := by
@@ -119,10 +121,10 @@ theorem ceil_real_nat_div_eq_quotCeil
     have hfractionLe :
         (remainder : Real) / (denominator : Real) ≤ 1 :=
       (div_le_one hdenominatorPos).2 hremainderLt.le
-    have hquotCeil :
-        quotCeil numerator denominator = quotient + 1 := by
-      simp [quotCeil, hdenominator, quotient, remainder, hremainder]
-    rw [hsplit, hquotCeil, Int.ceil_eq_iff]
+    have hroundUp :
+        Numerics.roundQuotient .up numerator denominator = quotient + 1 := by
+      simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainder]
+    rw [hsplit, hroundUp, Int.ceil_eq_iff]
     constructor <;> norm_num <;> linarith
 
 /-- The natural floor quotient lies below the exact real quotient. -/
@@ -136,14 +138,14 @@ theorem natCast_div_le_div
   exact_mod_cast div_mul_le_numerator numerator denominator
 
 /-- The exact real quotient lies below its natural ceiling quotient. -/
-theorem div_le_natCast_quotCeil
+theorem div_le_natCast_roundQuotient_up
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
     (numerator : Real) / (denominator : Real) ≤
-      (quotCeil numerator denominator : Real) := by
+      (Numerics.roundQuotient .up numerator denominator : Real) := by
   have hdenominatorPos : (0 : Real) < denominator := by
     exact_mod_cast Nat.pos_of_ne_zero hdenominator
   rw [div_le_iff₀ hdenominatorPos]
-  exact_mod_cast numerator_le_quotCeil_mul numerator denominator hdenominator
+  exact_mod_cast numerator_le_roundQuotient_up_mul numerator denominator hdenominator
 
 /-- Downward quotient rounding is a lower bound on the exact real quotient. -/
 theorem natCast_roundQuotDirected_false_le
@@ -159,7 +161,7 @@ theorem le_natCast_roundQuotDirected_true
     (numerator : Real) / (denominator : Real) ≤
       (roundQuotDirected true numerator denominator : Real) := by
   simpa [roundQuotDirected] using
-    div_le_natCast_quotCeil numerator denominator hdenominator
+    div_le_natCast_roundQuotient_up numerator denominator hdenominator
 
 /-! ## Exact rational invariance -/
 
@@ -187,13 +189,13 @@ theorem roundQuotDirected_eq_of_rat_eq
   · simp only [roundQuotDirected, ite_true]
     apply Int.ofNat_inj.mp
     calc
-      Int.ofNat (quotCeil numerator denominator) =
+      Int.ofNat (Numerics.roundQuotient .up numerator denominator) =
           ⌈(numerator : Real) / (denominator : Real)⌉ :=
-        (ceil_real_nat_div_eq_quotCeil numerator denominator hdenominator).symm
+        (ceil_div_eq_roundQuotient_up numerator denominator hdenominator).symm
       _ = ⌈(numerator' : Real) / (denominator' : Real)⌉ :=
         congrArg Int.ceil hvalue
-      _ = Int.ofNat (quotCeil numerator' denominator') :=
-        ceil_real_nat_div_eq_quotCeil numerator' denominator' hdenominator'
+      _ = Int.ofNat (Numerics.roundQuotient .up numerator' denominator') :=
+        ceil_div_eq_roundQuotient_up numerator' denominator' hdenominator'
 
 /-- Successive exact binary scalings may be combined before directed quotient rounding. -/
 theorem roundQuotDirected_scaleByPowerOfTwo_add
@@ -229,6 +231,60 @@ theorem roundQuotDirected_scaleByPowerOfTwo_add
     exact scaledRatToReal_mul_bpow
       numerator denominator firstExponent secondExponent
 
+/--
+Whether a quotient is an exact tie, twice its remainder equal to its denominator, depends only on
+the represented nonnegative rational.
+-/
+theorem two_mul_mod_eq_iff_of_rat_eq
+    (numerator denominator numerator' denominator' : Nat)
+    (hdenominator : denominator ≠ 0) (hdenominator' : denominator' ≠ 0)
+    (hvalue :
+      (numerator : Real) / (denominator : Real) =
+        (numerator' : Real) / (denominator' : Real)) :
+    2 * (numerator % denominator) = denominator ↔
+      2 * (numerator' % denominator') = denominator' := by
+  apply Numerics.two_mul_mod_eq_iff_of_mul_eq _ _ _ _ hdenominator hdenominator'
+  have hdenominatorReal : (denominator : Real) ≠ 0 := by
+    exact_mod_cast hdenominator
+  have hdenominatorReal' : (denominator' : Real) ≠ 0 := by
+    exact_mod_cast hdenominator'
+  rw [div_eq_div_iff hdenominatorReal hdenominatorReal'] at hvalue
+  exact_mod_cast hvalue
+
+/-- Successive exact binary scalings may be combined before testing for an exact quotient tie. -/
+theorem two_mul_mod_scaleByPowerOfTwo_add_iff
+    (numerator denominator : Nat)
+    (firstExponent secondExponent : Int) (hdenominator : denominator ≠ 0) :
+    let first :=
+      Numerics.RationalBinary.scaleByPowerOfTwo
+        numerator denominator firstExponent
+    let second :=
+      Numerics.RationalBinary.scaleByPowerOfTwo
+        first.1 first.2 secondExponent
+    let combined :=
+      Numerics.RationalBinary.scaleByPowerOfTwo
+        numerator denominator (firstExponent + secondExponent)
+    2 * (second.1 % second.2) = second.2 ↔
+      2 * (combined.1 % combined.2) = combined.2 := by
+  dsimp only
+  apply two_mul_mod_eq_iff_of_rat_eq
+  · exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero _ _ _
+      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
+        numerator denominator firstExponent hdenominator)
+  · exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
+      numerator denominator (firstExponent + secondExponent) hdenominator
+  · rw [scaleByPowerOfTwo_real, scaleByPowerOfTwo_real]
+    change
+      ((Numerics.RationalBinary.scaleByPowerOfTwo
+          numerator denominator firstExponent).1 : Real) /
+            ((Numerics.RationalBinary.scaleByPowerOfTwo
+              numerator denominator firstExponent).2 : Real) *
+          bpow secondExponent =
+        scaledRatToReal numerator denominator (firstExponent + secondExponent)
+    rw [scaleByPowerOfTwo_real]
+    exact scaledRatToReal_mul_bpow
+      numerator denominator firstExponent secondExponent
+
 /-! ## Preservation of integer thresholds -/
 
 /-- An integer lower bound on a quotient survives either directed integer rounding. -/
@@ -244,7 +300,7 @@ theorem le_roundQuotDirected_of_mul_le
   | false => simpa [roundQuotDirected] using hfloor
   | true =>
       simpa [roundQuotDirected] using
-        hfloor.trans (div_le_quotCeil numerator denominator)
+        hfloor.trans (div_le_roundQuotient_up numerator denominator)
 
 /-- A strict integer upper bound on a quotient bounds either directed integer rounding. -/
 theorem roundQuotDirected_le_of_lt_mul
@@ -260,7 +316,7 @@ theorem roundQuotDirected_le_of_lt_mul
       simpa [roundQuotDirected] using hfloor.le
   | true =>
       simp only [roundQuotDirected, ite_true]
-      exact (quotCeil_le_div_add_one numerator denominator).trans (by omega)
+      exact (roundQuotient_up_le_div_add_one numerator denominator).trans (by omega)
 
 /-- A real power-of-two lower bound survives either directed integer rounding. -/
 theorem pow2_le_roundQuotDirected_of_le_div

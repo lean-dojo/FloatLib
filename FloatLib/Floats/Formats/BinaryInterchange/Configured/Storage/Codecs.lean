@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Code.
 /-!
 # Storage codecs for configured binary formats
 
-Every storage plan uses the same canonical `Code` conversion pair. The plan remains reducible, so
-a closed executable format still specializes to its ordinary unboxed carrier.
+Every storage plan uses the same canonical `Code` conversion pair. The plan is reducible, so a
+closed executable format specializes to its ordinary unboxed carrier.
 -/
 
 @[expose] public section
@@ -35,10 +35,10 @@ abbrev canonicalCodec (format : FloatFormat) (plan : StoragePlan format) :
 /--
 The lossless codec selected by an arbitrary static storage plan.
 
-The match deliberately precedes codec-record construction. Lean's native compiler must see the
-selected primitive carrier before compiling the record projections; otherwise a dependent
-`UInt8`, `UInt16`, `UInt32`, or `UInt64` result can be assigned the boxed calling convention.
-All branches still use the same generic codec definition.
+The match comes before the codec record because Lean's native compiler must see the selected
+primitive carrier before compiling the record projections. Otherwise a dependent `UInt8`,
+`UInt16`, `UInt32`, or `UInt64` result can be given the boxed calling convention. Every branch
+uses the same generic codec definition.
 -/
 abbrev codecForPlan (format : FloatFormat) (plan : StoragePlan format) :
     FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) (Code plan) :=
@@ -47,6 +47,7 @@ abbrev codecForPlan (format : FloatFormat) (plan : StoragePlan format) :
   | .word16 width_le => canonicalCodec format (.word16 width_le)
   | .word32 width_le => canonicalCodec format (.word32 width_le)
   | .word64 width_le => canonicalCodec format (.word64 width_le)
+  | .pair width_gt width_le => canonicalCodec format (.pair width_gt width_le)
   | .wide => canonicalCodec format .wide
   | .limbs width_gt => canonicalCodec format (.limbs width_gt)
 

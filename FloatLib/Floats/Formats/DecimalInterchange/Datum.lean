@@ -6,7 +6,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Format
+public import FloatLib.Numerics.Exact.DecimalText.Notation
 public import Mathlib.Algebra.Field.Rat
+public import Mathlib.Data.Nat.Log
 
 /-!
 # Decimal datums and cohorts
@@ -30,9 +32,36 @@ inductive Datum where
   | finite (negative : Bool) (coefficient : Nat) (quantum : Int)
   | infinity (negative : Bool)
   | nan (negative : Bool) (signaling : Bool) (payload : Nat)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 namespace Datum
+
+/--
+Text of a datum with its coefficient and quantum: plain notation such as `1.50` or `120` when
+the quantum is not positive and the leading digit is at most six places after the point,
+otherwise one leading digit and an `e` exponent, such as `1.2e4` for coefficient 12 and quantum
+3. Both read back as the same coefficient and quantum. Infinities print as `inf` and `-inf`, NaNs
+as `nan`.
+-/
+def display : Datum → String
+  | .finite negative coefficient quantum =>
+      let record : Numerics.DecimalText.Decimal := ⟨negative, coefficient, quantum⟩
+      if quantum ≤ 0 ∧ -6 ≤ (Nat.log 10 coefficient : Int) + quantum then
+        String.ofList record.fixedCharacters
+      else
+        String.ofList record.scientificCharacters
+  | .infinity negative => if negative then "-inf" else "inf"
+  | .nan .. => "nan"
+
+/-- Datums print with their coefficient and quantum, as `display` writes them. -/
+instance : ToString Datum where
+  toString := display
+
+/-- `#eval` and `repr` show the same text, parenthesized when negative inside an argument. -/
+instance : Repr Datum where
+  reprPrec value precedence :=
+    let text := display value
+    if text.startsWith "-" then Repr.addAppParen text precedence else text
 
 /-- Representability at the selected precision and quantum range.
 NaN payloads have one fewer decimal digit than finite coefficients. -/
@@ -46,7 +75,7 @@ def Valid (f : Format) : Datum → Prop
 instance (f : Format) (d : Datum) : Decidable (d.Valid f) := by
   cases d <;> unfold Valid <;> infer_instance
 
-/-- The exact rational value of a finite datum; infinities and NaNs have no rational value.
+/-- The rational value of a finite datum, or `none` for infinities and NaNs.
 Signed zeros remain distinct datums even though both map to zero. Zero bypasses the
 radix power, so its quantum does not determine the size of an intermediate integer. -/
 def toRat? : Datum → Option ℚ
@@ -65,8 +94,8 @@ theorem toRat?_eq (d : Datum) :
   | infinity s => rfl
   | nan s t p => rfl
 
-/-- IEEE 754-2019 §§2.1 and 3.5.1 cohorts preserve the sign, including the sign of zero.
-Each infinity forms a singleton cohort. NaNs have no cohort. Width-specific cohorts
+/-- Cohort relation of IEEE 754-2019 §§2.1 and 3.5.1: equal value and equal sign, including the
+sign of zero. Each infinity forms a singleton cohort. NaNs have no cohort. Width-specific cohorts
 restrict this relation to datums satisfying `Valid`. -/
 def SameCohort : Datum → Datum → Prop
   | .finite s c q, .finite t d r =>
@@ -74,7 +103,7 @@ def SameCohort : Datum → Datum → Prop
   | .infinity s, .infinity t => s = t
   | _, _ => False
 
-/-- Biased exponent reconstructed by either decoder. -/
+/-- Finite datum from a coefficient and a biased exponent, as either decoder rebuilds it. -/
 def ofBiased (f : Format) (s : Bool) (c e : Nat) : Datum :=
   .finite s c ((e : Int) - f.bias)
 

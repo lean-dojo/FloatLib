@@ -16,10 +16,11 @@ public import FloatLib.Floats.ExecFloat.Core.Operations
 /-!
 # Inspecting proof-carrying capabilities and backend plans
 
-Capability inspection reads the instances used by execution. It reports which universal
-operations exist, the candidate selected by each capability, and the planner decisions behind
-that selection. The selected candidate comes from the capability; diagnostic assessments rerun
-the shared selector on that capability's candidate estimates and policy.
+Capability inspection reads the instances that execution uses. It reports the installed
+conversions, which universal operations exist, the candidate selected by each capability, and the
+planner decisions behind that selection. The selected candidate comes from the capability itself.
+Diagnostic assessments rerun the shared selector on the capability's candidate estimates and
+policy.
 -/
 
 @[expose] public section
@@ -32,9 +33,8 @@ open Lean.Meta
 /--
 Synthesize a two-parameter capability whose second parameter is an output exact domain.
 
-Both `ExactDecoder` and `Quantizer` use this shape. Returning the instantiated output parameter
-lets the report show the actual mathematical domain selected by the execution instance instead
-of repeating family-maintained prose.
+Both `ExactDecoder` and `Quantizer` have this shape. Returning the instantiated output parameter
+lets the report show the domain the execution instance selects, with no family-written prose.
 -/
 private meta def outputExactDomain?
     (className : Name) (valueType : Expr) : MetaM (Option Expr) := do
@@ -77,11 +77,11 @@ private meta def quantizerContextDescription
   return toString (← ppExpr (← instantiateMVars contextType))
 
 /--
-Inspect the explicit conversion capabilities installed for one user-facing value type.
+Inspect the explicit conversion capabilities installed for one value type.
 
 Source decoding, destination quantization, and a default context are inspected independently.
-A source-only family can supply operands to casts or mixed arithmetic; a destination without
-a default context requires an explicit context.
+A source-only family can supply operands to casts or mixed arithmetic. A destination without a
+default context needs a `(context := ...)` argument.
 -/
 meta def conversions (valueType : Expr) : MetaM (List InfoEntry) := do
   let sourceExact? ←
@@ -113,7 +113,7 @@ meta def conversions (valueType : Expr) : MetaM (List InfoEntry) := do
         if ← hasDefaultQuantizer valueType exactType then
           pure "installed; `cast` and destination-driven `*As` helpers may omit the context"
         else
-          pure "none; callers must use `castWith` or `*AsWith` and supply the context"
+          pure "none; callers must supply `(context := ...)` to `cast` and the `*As` helpers"
     | none =>
         pure "not applicable because no destination quantizer is installed"
   let mixedDescription :=
@@ -161,8 +161,8 @@ meta def execFamily? (valueType : Expr) : MetaM (Option Expr) := do
   return some tag.getAppArgs[0]!
 
 /--
-Recover an `ExecFloat` family only when it is an application of the expected declaration and
-arity. The returned argument array is safe to index below `arity`.
+Recover an `ExecFloat` family that is an application of `familyName` to `arity` arguments,
+together with those arguments. The returned array is safe to index below `arity`.
 -/
 meta def execFamilyApplication?
     (familyName : Name) (arity : Nat) (valueType : Expr) :
@@ -201,9 +201,9 @@ private meta def selectedProjection : Backend.Operation → Name
   | .fma => ``Fma.selectedCandidate
 
 /--
-Synthesize the actual encoded-format, policy, and arithmetic capability dictionaries.
+Whether `family` has `EncodedFormat`, `Backend.PolicyFor`, and `className` instances.
 
-The result is proof-backed availability, not a declaration-name or storage-width heuristic.
+Availability comes from instance synthesis, never from declaration names or storage widths.
 -/
 meta def hasCapability (className : Name) (family : Expr) : MetaM Bool := do
   let encodedFormatClass ←
@@ -216,7 +216,7 @@ meta def hasCapability (className : Name) (family : Expr) : MetaM Bool := do
   let capabilityClass ← mkConstWithFreshMVarLevels className
   return (← synthInstance? (mkApp3 capabilityClass family encodedFormat planning)).isSome
 
-/-- Inspect all six universal operation capabilities for one exact configured family. -/
+/-- Inspect all six universal operation capabilities for one configured family. -/
 meta def coreOperations (family : Expr) : MetaM CoreOperationCoverage := do
   if floatlib.floatInfo.errors.get (← getOptions) then
     return .none
@@ -224,10 +224,9 @@ meta def coreOperations (family : Expr) : MetaM CoreOperationCoverage := do
     pure (operation, ← hasCapability (capabilityClass operation) family)
 
 /--
-Reduce one projection from a closed expression.
+Reduce the projection `fieldName` of a closed expression at full transparency.
 
-Format-specific `#float_info` elaborators use this helper to inspect embedded descriptors without
-duplicating projection construction or transparency policy.
+Format-specific `#float_info` elaborators use it to inspect embedded descriptors.
 -/
 meta def reduceProjection (fieldName : Name) (object : Expr) : MetaM Expr := do
   let field ← mkConstWithFreshMVarLevels fieldName
@@ -236,8 +235,8 @@ meta def reduceProjection (fieldName : Name) (object : Expr) : MetaM Expr := do
 /--
 Read a closed two-constructor projection as a Boolean report field.
 
-The caller supplies the constructors that mean `true` and `false`; inspection compares declaration
-identities directly and never relies on printed names or constructor order.
+The caller names the constructors that mean `true` and `false`. The reduced value is compared with
+those constructor names, never with printed names or constructor order.
 -/
 meta def readFlagProjection
     (description : String)
@@ -253,9 +252,8 @@ meta def readFlagProjection
 /--
 Read a closed natural-number expression after reduction.
 
-Family-specific `#float_info` elaborators use this helper for static widths, radix bases, and
-scale parameters. Keeping the reduction and diagnostic policy here prevents each representation
-family from maintaining a slightly different copy.
+Family-specific `#float_info` elaborators use it for static widths, radix bases, and scale
+parameters, so every family shares one reduction and one error message.
 -/
 meta def readNat (description : String) (value : Expr) : MetaM Nat := do
   let value ← withTransparency .all <| whnf value
@@ -266,8 +264,8 @@ meta def readNat (description : String) (value : Expr) : MetaM Nat := do
 /--
 Read a natural-number-valued projection from a closed expression.
 
-The description identifies the embedded descriptor or plan in diagnostics, while the projection
-name identifies the exact field that failed to reduce.
+The error message names the embedded descriptor or plan by `description` and the field that
+failed to reduce by `fieldName`.
 -/
 meta def readNatProjection
     (description : String) (fieldName : Name) (object : Expr) : MetaM Nat := do
@@ -320,13 +318,13 @@ private meta def readCandidateStorage (candidate : Expr) : MetaM String := do
   let display ← mkConstWithFreshMVarLevels ``Backend.StorageClass.display
   readString "selected-kernel storage class" (mkApp display storage)
 
-/-- Render the concise identity of one reduced backend candidate. -/
+/-- Render a backend candidate as its kernel class and storage class. -/
 private meta def selectedCandidateDescription (candidate : Expr) : MetaM String := do
   let kind ← readCandidateKind candidate
   let storage ← readCandidateStorage candidate
   pure s!"{kind} ({storage})"
 
-/-- Render the complete engineering estimate of one candidate under a closed policy. -/
+/-- Render a candidate's name, classes, and full cost estimate under a closed policy. -/
 private meta def detailedCandidateDescription
     (policy candidate : Expr) : MetaM String := do
   let expectedCallsProjection ← mkConstWithFreshMVarLevels ``Backend.Policy.expectedCalls
@@ -388,10 +386,10 @@ private meta def detailedCandidateDescription
       s!"{setup}{setupAllocationText}{memory})"
 
 /--
-Inspect the exact candidate selected by one synthesized proof-carrying capability.
+Inspect the candidate selected by one synthesized proof-carrying capability.
 
-The selected declaration is applied to the same dictionaries used by execution, so the report
-cannot silently drift to a separate planning calculation.
+The selected-candidate projection is applied to the dictionaries that execution uses, so the
+report cannot drift to a separate planning calculation.
 -/
 private meta def inspectSelectedCandidate
     (operation : Backend.Operation) (family : Expr) : MetaM (Option Expr) := do
@@ -480,10 +478,10 @@ private meta def candidatePlanDescription
     candidates.map fun (status, description) => s!"{status}: {description}"
 
 /--
-Inspect selected backends and all alternatives for every synthesized universal capability.
+Report the selected backend and every alternative for each synthesized universal capability.
 
-Families append these entries to their own representation- and semantics-specific execution
-profile. This keeps selection reporting uniform without imposing a common numerical model.
+Families append these entries to their own execution profile, so selection reports look the same
+across families without imposing a common numerical model.
 -/
 meta def selectedBackends (family : Expr) : MetaM (List InfoEntry) := do
   if floatlib.floatInfo.errors.get (← getOptions) then

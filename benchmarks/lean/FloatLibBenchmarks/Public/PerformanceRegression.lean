@@ -13,7 +13,7 @@ import FloatLibBenchmarks.Support.Posit
 # Public arithmetic performance regressions
 
 The runtime half of `benchmarks/scripts/performance-regression.sh` covers all six core operations
-on a fixed catalog of binary and posit carriers. Ordinary inputs cover every format; a smaller
+on a fixed catalog of binary and posit carriers. Ordinary inputs cover every format, and a smaller
 set also exercises zeros, subnormals, cancellation, exponent gaps, and exact rounding ties.
 The manifest in the script is deliberately independent: missing or unexpected rows fail closed.
 
@@ -30,16 +30,9 @@ open FloatLibBenchmarks.Support.Environment
 
 namespace FloatLibBenchmarks.Public.PerformanceRegression
 
-abbrev Binary16 := FloatLibBenchmarks.Public.Sweep.P11
-abbrev Binary32 := FloatLibBenchmarks.Public.Sweep.P24
-abbrev Binary64 := FloatLibBenchmarks.Public.Sweep.P53
-abbrev Binary128 := FloatLibBenchmarks.Public.Sweep.P113
-abbrev Binary256 := FloatLibBenchmarks.Public.Sweep.P237
 abbrev Descriptor24 := ExecFloat (Descriptor (FloatFormat.ieee 7 16))
 abbrev Descriptor48 := ExecFloat (Descriptor (FloatFormat.ieee 7 40))
 abbrev Descriptor64 := ExecFloat (Descriptor (FloatFormat.ieee 2 61))
-abbrev Posit16 := ExecFloat.Posit 16
-abbrev Posit32 := ExecFloat.Posit 32
 abbrev Posit65 := ExecFloat.Posit 65
 
 private def formats : List String :=

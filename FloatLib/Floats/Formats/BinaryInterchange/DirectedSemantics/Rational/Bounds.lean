@@ -93,12 +93,12 @@ theorem toEReal_roundRatDownScaled_le
       (signedScaledRatToReal sign numerator denominator exponent : EReal) := by
   by_cases hnumerator : numerator = 0
   · cases sign <;>
-      simp [roundRatDownScaled, roundRatWithRoundingScaled,
+      simp [roundRatDownScaled, Internal.Directed.roundRatScaled,
         roundRatMagnitudeDirectedScaled, signedScaledRatToReal,
         scaledRatToReal, hnumerator, hdenominator, hfmt]
   · cases sign with
     | false =>
-      simpa [roundRatDownScaled, roundRatWithRoundingScaled,
+      simpa [roundRatDownScaled, Internal.Directed.roundRatScaled,
         signedScaledRatToReal] using
         toEReal_roundRatMagnitudeDirectedScaled_pos_down_le
           fmt numerator denominator exponent hfmt hnumerator hdenominator
@@ -128,12 +128,12 @@ theorem le_toEReal_roundRatUpScaled
       toEReal (roundRatUpScaled fmt sign numerator denominator exponent) := by
   by_cases hnumerator : numerator = 0
   · cases sign <;>
-      simp [roundRatUpScaled, roundRatWithRoundingScaled,
+      simp [roundRatUpScaled, Internal.Directed.roundRatScaled,
         roundRatMagnitudeDirectedScaled, signedScaledRatToReal,
         scaledRatToReal, hnumerator, hdenominator, hfmt]
   · cases sign with
     | false =>
-      simpa [roundRatUpScaled, roundRatWithRoundingScaled,
+      simpa [roundRatUpScaled, Internal.Directed.roundRatScaled,
         signedScaledRatToReal] using
         le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
           fmt numerator denominator exponent hfmt hnumerator hdenominator
@@ -162,11 +162,11 @@ theorem isNaN_roundRatDownScaled_eq_false
     isNaN (roundRatDownScaled fmt sign numerator denominator exponent) = false := by
   by_cases hnumerator : numerator = 0
   · cases sign <;>
-      simp [roundRatDownScaled, roundRatWithRoundingScaled,
+      simp [roundRatDownScaled, Internal.Directed.roundRatScaled,
         roundRatMagnitudeDirectedScaled, hnumerator, hdenominator, hfmt]
   · cases sign with
     | false =>
-      simpa [roundRatDownScaled, roundRatWithRoundingScaled] using
+      simpa [roundRatDownScaled, Internal.Directed.roundRatScaled] using
         isNaN_roundRatMagnitudeDirectedScaled_pos_down_eq_false
           fmt numerator denominator exponent hfmt hnumerator hdenominator
     | true =>
@@ -187,11 +187,11 @@ theorem isNaN_roundRatUpScaled_eq_false
     isNaN (roundRatUpScaled fmt sign numerator denominator exponent) = false := by
   by_cases hnumerator : numerator = 0
   · cases sign <;>
-      simp [roundRatUpScaled, roundRatWithRoundingScaled,
+      simp [roundRatUpScaled, Internal.Directed.roundRatScaled,
         roundRatMagnitudeDirectedScaled, hnumerator, hdenominator, hfmt]
   · cases sign with
     | false =>
-      simpa [roundRatUpScaled, roundRatWithRoundingScaled] using
+      simpa [roundRatUpScaled, Internal.Directed.roundRatScaled] using
         isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
           fmt numerator denominator exponent hfmt hnumerator hdenominator
     | true =>

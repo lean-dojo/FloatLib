@@ -31,23 +31,25 @@ public meta import FloatLib.Floats.Formats.P3109.Info
 # P3109 formats
 
 Signed and unsigned P3109 descriptors, exact arithmetic, round-then-saturate projection, and
-`ExecFloat.P3109` conversions. `ofDyadic` and `ofRat` project exact values directly; `convert`,
+`ExecFloat.P3109` conversions. `ofDyadic` and `ofRat` project exact values, and `convert`,
 `cast`, and mixed-expression operations use the same projection rules. Named constructors provide
-zero, NaN, and supported infinities. `ofFiniteFields?` checks field widths and reserved encodings;
-`ofNatBits` accepts serialized codes.
+zero, NaN, and supported infinities. `ofFiniteFields?` checks field widths and reserved encodings,
+and `ofNatBits` accepts serialized codes.
 
 Core arithmetic evaluates exact rational intermediates and performs one destination projection.
 Square root uses exact integer comparisons with a proof against `Real.sqrt`. The common
-`ExecFloat` capabilities provide add, subtract, multiply, divide, square root, and FMA;
-`ExecFloat.P3109.*To` also permits independent P3109 source and destination descriptors.
-`square` and `squareTo` project the exact square once, using the same projection policies.
+`ExecFloat` capabilities provide add, subtract, multiply, divide, square root, and FMA. Each
+`ExecFloat.P3109` operation also accepts operands of independent descriptors and takes
+`(target := ...)`, `(mode := ...)`, and `(saturation := ...)` options. Literals round once from
+their exact value, and `==` is numerical equality with NaN unequal to itself. `square` projects
+the exact square once.
 The mixed-operation interface covers fused addition, scaled arithmetic, and external
 binary16, binary32, and BFloat16 destinations. Extrema, classification, format queries, and
 neighbor operations follow the same descriptor's datum set.
 
 `Block` stores a nonempty sequence with an independently typed scale. Its conversion,
 maximum-finite scale selection, exact reductions, and mixed block dots follow chapter 5.
-Generic elementwise closed arithmetic and explicit lane rounding words share one projection
+Generic elementwise closed arithmetic and per-lane stochastic rounding words share one projection
 interface. Block square root, reciprocal square root, and hypotenuse normalize the exact
 radicand before one destination rounding, including zero, infinite, and negative result scales.
 

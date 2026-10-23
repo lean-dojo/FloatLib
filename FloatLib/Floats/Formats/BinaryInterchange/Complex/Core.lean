@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 
 /-!
@@ -17,8 +18,8 @@ not fixed to binary32: the same definition supports binary16, bfloat16, binary64
 binary256, and custom exponent/fraction widths.
 
 Complex multiplication uses four scalar multiplications followed by one subtraction and one
-addition. This explicit evaluation order matters in floating-point arithmetic and is reflected by
-the semantic theorem in `Complex.Semantics`.
+addition. This evaluation order matters in floating-point arithmetic, and the semantic theorem in
+`Complex.Semantics` states it.
 
 Division uses the larger denominator component to form a ratio. Magnitude scales both components
 before squaring. These evaluation orders avoid squaring large unscaled components, but do not
@@ -35,7 +36,11 @@ structure ExecComplex (fmt : FloatFormat) where
   re : Model fmt
   /-- Imaginary component. -/
   im : Model fmt
-  deriving DecidableEq, Repr
+  deriving DecidableEq
+
+/-- `#eval` shows both components as their values. -/
+instance {fmt : FloatFormat} : Repr (ExecComplex fmt) where
+  reprPrec z _ := f!"\{ re := {repr z.re}, im := {repr z.im} }"
 
 namespace ExecComplex
 
@@ -68,9 +73,9 @@ namespace Internal
 end Internal
 
 /--
-Floating-point complex multiplication with an explicit non-fused evaluation order.
+Floating-point complex multiplication with a fixed non-fused evaluation order.
 
-Each of the four component products is rounded in `fmt`; the real subtraction and imaginary
+Each of the four component products is rounded in `fmt`, and the real subtraction and imaginary
 addition are then rounded once more in the same format.
 -/
 @[inline] def mul {fmt : FloatFormat} (x y : ExecComplex fmt) : ExecComplex fmt :=
@@ -122,7 +127,7 @@ Complex division by a component-ratio formula.
 
 When the imaginary denominator component is larger, both inputs exchange coordinates and the
 computed quotient is conjugated. This includes an exact sign change after the final imaginary
-division. Scalar kernels determine exceptional results; there is no complex infinity recovery.
+division. Scalar kernels determine exceptional results, and there is no complex infinity recovery.
 Finite inputs alone do not exclude overflow, underflow, or a zero rounded denominator.
 -/
 @[inline] def div {fmt : FloatFormat} (x y : ExecComplex fmt) : ExecComplex fmt :=
@@ -135,15 +140,15 @@ Finite inputs alone do not exclude overflow, underflow, or a zero rounded denomi
 Magnitude computed by scaling before squaring and restoring the scale after square root.
 
 A zero scale returns positive zero on finite IEEE inputs. All finite arithmetic uses the component
-kernels; the result need not be one rounding of the exact norm. An infinite component gives positive
-infinity even when the other component is a quiet NaN. If either component is a signaling NaN,
-or neither is infinite, nonfinite inputs use the scalar sum of absolute components and its NaN
-selection and quieting policy.
+kernels, so the result need not be one rounding of the exact norm. An infinite component gives
+positive infinity even when the other component is a quiet NaN. If either component is a
+signaling NaN, or neither is infinite, nonfinite inputs use the scalar sum of absolute components
+and its NaN selection and quieting policy.
 
 The format must also have enough range for the normalized intermediate sum. For example,
 `FloatFormat.custom 2 2 2 .ieee` maps `(0.5, 0.5)` to infinity because the normalized sum `2`
 overflows, although the nearest rounded exact norm is `0.75`. This custom bias also fails
-`fmt.isIEEE`; the finite rounded-semantics theorem does not apply.
+`fmt.isIEEE`, so the finite rounded-semantics theorem does not apply.
 -/
 @[inline] def magnitude {fmt : FloatFormat} (z : ExecComplex fmt) : Model fmt :=
   if isFinite z then

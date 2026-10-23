@@ -15,9 +15,9 @@ import all Init.Data.SInt.Float32
 /-!
 # Native floating point to signed integers
 
-Lean 4.34 gives the signed native casts logical definitions using the floating-point models
-introduced in Lean 4.33. They truncate toward zero, saturate overflow and infinities, and send
-NaN to zero. FloatLib's checked conversion reports those exceptional cases as errors.
+Lean defines the signed native casts through its logical floating-point models. They truncate toward
+zero, saturate overflow and infinities, and send NaN to zero. FloatLib's checked conversion reports
+those exceptional cases as errors.
 
 The shared policy below uses the same exact decoder and integral rounder as the checked
 conversion. In-range means that the *truncated integer* is in range: for example, `127.75`
@@ -32,8 +32,8 @@ open FloatLib.Numerics
 open Float.Model.UnpackedFloat
 
 /--
-Lean's integer conversion reads FloatLib's exact interpretation and truncates its finite dyadic.
-Infinity endpoints are supplied by the destination; NaN maps to zero before saturation.
+Lean's integer conversion truncates FloatLib's exact finite value toward zero. Infinities map to
+the caller's `lower` and `upper` endpoints, and NaN maps to zero.
 -/
 theorem toInt_toModel_eq {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) (lower upper : Int) :
@@ -80,7 +80,7 @@ open FloatLib.Numerics.Representations
 /--
 Toward-zero signed conversion with Lean's native exceptional-value policy.
 
-This uses the checked conversion's exact decoder and integral rounder, then saturates finite
+It uses the checked conversion's exact decoder and integral rounder, then saturates finite
 overflow. Infinities select their signed endpoint and NaN selects zero.
 -/
 def floatToIntSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt) : FixedInt width :=
@@ -89,7 +89,7 @@ def floatToIntSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt) : Fix
   | .infinity negative => if negative then FixedInt.minCode width else FixedInt.maxCode width
   | .nan _ _ _ => FixedInt.ofInt 0
 
-/-- The native policy is the existing saturating integer encoder applied to Lean's model result. -/
+/-- The native policy is the saturating integer encoder applied to Lean's model result. -/
 theorem floatToIntSaturating_eq_ofIntSaturating_toModel
     {fmt : FloatFormat} {width : Nat} (hfmt : fmt.isIEEE = true) (hwidth : 0 < width)
     (x : Model fmt) :
@@ -162,7 +162,8 @@ theorem floatToIntSaturating_of_exactValue_eq_infinity
     floatToInt_of_exactValue_eq_infinity x .towardZero negative hvalue⟩
 
 /--
-NaN maps to zero natively. The checked failure retains its sign, signaling class, and diagnostic payload without the quiet bit.
+NaN maps to zero natively. The checked failure keeps its sign, signaling class, and diagnostic
+payload without the quiet bit.
 -/
 theorem floatToIntSaturating_of_exactValue_eq_nan
     {fmt : FloatFormat} (width : Nat) (x : Model fmt) (negative signaling : Bool) (payload : Nat)
@@ -239,35 +240,35 @@ open Numerics.Representations
 /-- Native binary64 to `Int8` uses the shared toward-zero, saturation, and NaN-to-zero policy. -/
 theorem floatToInt8_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
-      ExecDType.floatToIntSaturating 8 (toModel (ofFloat x)) := by
+      ExecDType.floatToIntSaturating 8 (toModel (ofFloat x : Binary64)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary64 to `Int16` uses the shared signed conversion policy. -/
 theorem floatToInt16_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
-      ExecDType.floatToIntSaturating 16 (toModel (ofFloat x)) := by
+      ExecDType.floatToIntSaturating 16 (toModel (ofFloat x : Binary64)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary64 to `Int32` uses the shared signed conversion policy. -/
 theorem floatToInt32_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
-      ExecDType.floatToIntSaturating 32 (toModel (ofFloat x)) := by
+      ExecDType.floatToIntSaturating 32 (toModel (ofFloat x : Binary64)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary64 to `Int64` uses the shared signed conversion policy. -/
 theorem floatToInt64_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
-      ExecDType.floatToIntSaturating 64 (toModel (ofFloat x)) := by
+      ExecDType.floatToIntSaturating 64 (toModel (ofFloat x : Binary64)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary64 to `ISize` saturates to the platform's signed interval. -/
 theorem floatToISize_eq_floatToIntSaturating (x : Float) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
-      ExecDType.floatToIntSaturating System.Platform.numBits (toModel (ofFloat x)) := by
+      ExecDType.floatToIntSaturating System.Platform.numBits (toModel (ofFloat x : Binary64)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)
     (by cases System.Platform.numBits_eq <;> omega)]
   change (⟨(ISize.ofIntClamp
@@ -282,35 +283,36 @@ theorem floatToISize_eq_floatToIntSaturating (x : Float) :
 /-- Native binary32 to `Int8` uses the shared toward-zero, saturation, and NaN-to-zero policy. -/
 theorem float32ToInt8_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
-      ExecDType.floatToIntSaturating 8 (toModel (ofFloat32 x)) := by
+      ExecDType.floatToIntSaturating 8 (toModel (ofFloat32 x : Binary32)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary32 to `Int16` uses the shared signed conversion policy. -/
 theorem float32ToInt16_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
-      ExecDType.floatToIntSaturating 16 (toModel (ofFloat32 x)) := by
+      ExecDType.floatToIntSaturating 16 (toModel (ofFloat32 x : Binary32)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary32 to `Int32` uses the shared signed conversion policy. -/
 theorem float32ToInt32_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
-      ExecDType.floatToIntSaturating 32 (toModel (ofFloat32 x)) := by
+      ExecDType.floatToIntSaturating 32 (toModel (ofFloat32 x : Binary32)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary32 to `Int64` uses the shared signed conversion policy. -/
 theorem float32ToInt64_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
-      ExecDType.floatToIntSaturating 64 (toModel (ofFloat32 x)) := by
+      ExecDType.floatToIntSaturating 64 (toModel (ofFloat32 x : Binary32)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary32 to `ISize` saturates to the platform's signed interval. -/
 theorem float32ToISize_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
-      ExecDType.floatToIntSaturating System.Platform.numBits (toModel (ofFloat32 x)) := by
+      ExecDType.floatToIntSaturating System.Platform.numBits
+        (toModel (ofFloat32 x : Binary32)) := by
   rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)
     (by cases System.Platform.numBits_eq <;> omega)]
   change (⟨(ISize.ofIntClamp

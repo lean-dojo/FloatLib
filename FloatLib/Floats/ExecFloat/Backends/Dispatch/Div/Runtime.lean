@@ -16,11 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Div.Runtime
 /-!
 # Executable division backends
 
-The width-generic divider and fixed-width dispatcher live here. Their correctness theorems are
-kept in `Div.Proof`.
+The width-generic divider and fixed-width dispatcher live here, and their correctness theorems
+in `Div.Proof`.
 
 The dispatcher selects native kernels by format capability. A selected kernel may decline when
-its operand or intermediate bounds fail; the generic implementation then supplies the result,
+its operand or intermediate bounds fail, and the generic implementation then supplies the result,
 including the descriptor's exceptional-value policy.
 -/
 
@@ -33,7 +33,7 @@ namespace DivBackend
 /--
 Width-generic compiled division.
 
-Finite operands use the compact scale kernel; exceptional operands retain `Spec.divSpecial`.
+Finite operands use the compact scale kernel, and every other case goes to `Spec.divSpecial`.
 -/
 @[specialize fmt] def generic {fmt : FloatFormat}
     (x y : Model fmt) : Model fmt :=
@@ -46,9 +46,8 @@ Compiled implementation of `div`.
 
 Binary32 and binary64 finite operands use native-word decoding. Structurally eligible pair layouts
 use the certified radix-`2^32` normal quotient kernel. Every other one-word IEEE layout uses
-restoring division. Every declined or ineligible case enters the single exact width-generic
-baseline here. The dispatcher is specialized on the descriptor, as described in
-`Dispatch.Add.Runtime`.
+restoring division. Every declined or ineligible case falls back to `generic`. The dispatcher is
+specialized on the descriptor, as described in `Dispatch.Add.Runtime`.
 -/
 @[specialize fmt] def word {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if h32 : FloatFormat.IsBinary32 fmt then
@@ -56,7 +55,7 @@ baseline here. The dispatcher is specialized on the descriptor, as described in
     let hcarrier := congrArg Model hfmt
     let x32 : NativeBinary32.Value := Eq.mp hcarrier x
     let y32 : NativeBinary32.Value := Eq.mp hcarrier y
-    match NativeBinary32.divFiniteImpl? x32 y32 with
+    match NativeBinary32.divFiniteWord? x32 y32 with
     | some quotient => Eq.mpr hcarrier quotient
     | none => generic x y
   else if h64 : FloatFormat.IsBinary64 fmt then
@@ -64,7 +63,7 @@ baseline here. The dispatcher is specialized on the descriptor, as described in
     let hcarrier := congrArg Model hfmt
     let x64 : NativeBinary64.Value := Eq.mp hcarrier x
     let y64 : NativeBinary64.Value := Eq.mp hcarrier y
-    match NativeBinary64.divFiniteFastImpl? x64 y64 with
+    match NativeBinary64.divFinite? x64 y64 with
     | some quotient => Eq.mpr hcarrier quotient
     | none => generic x y
   else if _hpair : NativePair.Eligible fmt then

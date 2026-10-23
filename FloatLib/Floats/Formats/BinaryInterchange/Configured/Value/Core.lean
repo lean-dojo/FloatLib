@@ -18,9 +18,9 @@ A configured binary format chooses its storage plan statically, but numerical pr
 need separate APIs for byte, word, fixed-limb, and wide carriers. This module exposes one
 storage-independent boundary for packing, exact decoding, classification, and special values.
 
-Conversions through the logical `Model` are explicit and exact. The module does not register
-arithmetic backends, so representation and conversion code can use configured values without
-importing the operation planner or native-width dispatch instances.
+`toModel` and `ofModel` convert through the logical `Model` without loss. The module does not
+register arithmetic backends, so representation and conversion code can use configured values
+without importing the operation planner or native-width dispatch instances.
 -/
 
 @[expose] public section
@@ -115,7 +115,7 @@ Use `toRat?` when only the rational value of a finite number matters.
     (value : Value) : Bool :=
   Model.isSNaN (toModel value)
 
-/-- Whether the value is an infinity; finite encodings always return `false`. -/
+/-- Whether the value is an infinity. Finite encodings always return `false`. -/
 @[inline] def isInfinite
     (value : Value) : Bool :=
   Model.isInf (toModel value)
@@ -136,29 +136,30 @@ Use `toRat?` when only the rational value of a finite number matters.
   Model.isSubnormal (toModel value)
 
 /--
-Construct zero with the requested sign.
+Construct zero, positive by default. `(sign := true)` requests negative zero.
 
 Encodings with one unsigned zero canonicalize a requested negative zero to positive zero.
 -/
-@[inline] def zero (sign : Bool) :
+@[inline] def zero (sign : Bool := false) :
     Value :=
   ofModel (Model.zero format sign)
 
 /--
-Construct signed infinity when the configured encoding represents it.
+Construct infinity, positive by default, when the configured encoding represents it.
 
-IEEE encodings return `some`; finite-only, maximum-NaN, and FNUZ encodings return `none`.
+IEEE encodings return `some`, while finite-only, maximum-NaN, and FNUZ encodings return `none`.
 -/
-@[inline] def infinity? (sign : Bool) :
+@[inline] def infinity? (sign : Bool := false) :
     Option (Value) :=
   (Model.infinity? format sign).map ofModel
 
 /--
-Construct signed infinity when the configured encoding is statically known to support it.
+Construct infinity, positive by default, when the configured encoding is statically known to
+support it.
 
 Calling this constructor for a finite encoding fails during elaboration.
 -/
-@[inline] def infinity (sign : Bool)
+@[inline] def infinity (sign : Bool := false)
     (_supportsInfinity : format.supportsInfinity = true := by decide) :
     Value :=
   ofModel (if sign then Model.negInf format else Model.posInf format)
@@ -166,7 +167,7 @@ Calling this constructor for a finite encoding fails during elaboration.
 /--
 Construct the encoding's canonical quiet NaN when it has a NaN representation.
 
-IEEE, maximum-NaN, and FNUZ encodings return `some`; fully finite encodings return `none`.
+IEEE, maximum-NaN, and FNUZ encodings return `some`, while fully finite encodings return `none`.
 -/
 @[inline] def canonicalNaN? :
     Option (Value) :=
@@ -182,10 +183,50 @@ Fully finite encodings reject this constructor during elaboration.
     Value :=
   ofModel (Model.invalidResult format)
 
-/-- Construct the finite value of greatest magnitude with the requested sign. -/
-@[inline] def maxFinite (sign : Bool) :
+/-- The finite value of greatest magnitude, positive by default. -/
+@[inline] def maxFinite (sign : Bool := false) :
     Value :=
   ofModel (Model.maxFinite format sign)
+
+/-- The normal value of least magnitude, `2 ^ minNormalExponent`, positive by default. -/
+@[inline] def minNormal (sign : Bool := false) :
+    Value :=
+  ofModel (Model.ofFields format sign 1 0)
+
+/--
+The subnormal value of least magnitude, `2 ^ minSubnormalExponent`, positive by default.
+
+Every binary encoding has gradual underflow, so this is the least nonzero magnitude.
+-/
+@[inline] def minSubnormal (sign : Bool := false) :
+    Value :=
+  ofModel (Model.ofFields format sign 0 1)
+
+/--
+Unit in the last place: the spacing of the representable values in the binade of `value`, as
+Java's `Math.ulp`. A finite value with exponent `e` gives `2 ^ (e - fractionBits)`. Subnormals and
+zeros use the least normal exponent, so `ulp 0` is `minSubnormal`. Infinity gives positive
+infinity and a NaN the format's invalid result.
+-/
+@[inline] def ulp (value : Value) :
+    Value :=
+  let x := toModel value
+  if Model.isNaN x then ofModel (Model.invalidResult format)
+  else if Model.isInf x then ofModel (Model.posInf format)
+  else
+    let field := max (Model.expField x) 1
+    ofModel <|
+      if format.fracWidth < field then Model.ofFields format false (field - format.fracWidth) 0
+      else Model.ofFields format false 0 (1 <<< (field - 1))
+
+/--
+Machine epsilon `2 ^ -fractionBits`, the gap between one and the next larger value: `ulp 1`, as
+C's `DBL_EPSILON` and PyTorch's `finfo.eps`. It is twice `Model.epsilonAt format 1`, the half-ulp
+rounding bound of the error theorems.
+-/
+@[inline] def epsilon :
+    Value :=
+  ulp (ofModel (Model.posOne format))
 
 end ExecFloat.Binary
 end FloatLib.Floats

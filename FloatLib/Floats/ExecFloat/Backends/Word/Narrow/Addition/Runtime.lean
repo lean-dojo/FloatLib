@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # Native-word addition for generic binary32
 
-The nonzero finite path extracts fields and packs the result with `UInt32` and `UInt64`. Non-finite
-IEEE policy remains outside this module; the entry points return `none` when
-either operand is a NaN or infinity. Correctness lives in `Addition.Proof`.
+The nonzero finite path extracts fields and packs the result with `UInt32` and `UInt64`. Both
+entry points return `none` when either operand is a NaN or infinity, and the caller applies the
+IEEE policy for those. `Addition.Proof` has the proofs.
 -/
 
 @[expose] public section
@@ -26,8 +26,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 /--
 Finite binary32 addition through exact dyadic coordinates.
 
-`none` means at least one operand is a NaN or infinity; the caller applies the generic IEEE
-special-value policy in that case.
+It returns `none` when an operand is a NaN or infinity.
 -/
 @[inline] def addFinite? (x y : Value) : Option Value :=
   match toDyadic? (toUInt32 x), toDyadic? (toUInt32 y) with
@@ -38,11 +37,11 @@ special-value policy in that case.
 /--
 Machine-word implementation of finite binary32 addition.
 
-When exponent alignment fits in 39 bits, both exact significands and their sum fit in one
+When the exponent gap is at most 39, both aligned significands and their sum fit in one
 `UInt64`. At larger gaps the smaller finite significand is strictly below half an ulp, so
-nearest-even rounding returns the dominant operand directly.
+nearest-even rounding returns the dominant operand.
 -/
-@[inline] def addFiniteImpl? (x y : Value) : Option Value :=
+@[inline] def addFiniteWord? (x y : Value) : Option Value :=
   let xBits := toUInt32 x
   let yBits := toUInt32 y
   let xExponent := expField xBits

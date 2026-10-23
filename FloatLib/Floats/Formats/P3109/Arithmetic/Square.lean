@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 /-!
 # Once-projected P3109 squares
 
-Squaring uses the existing exact multiplication and projects once into the requested destination.
+Squaring reuses exact multiplication and projects once into the requested destination.
 The source and destination may have different widths, precisions, signedness, and domains.
 -/
 
@@ -21,29 +21,30 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 open Formats.P3109
 
-variable {source format : Format}
+variable {format : Format}
 
-/-- Square an exact decoded operand and project once into the destination format. -/
-@[inline] def squareTo (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) : ExecFloat.P3109 destination :=
-  mulTo destination policy value value
+/--
+Square the exact decoded operand and project once into `target`, by default the operand's format,
+with multiplication's NaN and infinity behavior.
+-/
+@[inline] def square (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  mul value value target mode saturation
 
-/-- Same-format square with one projection and multiplication's NaN and infinity behavior. -/
-@[inline] def square (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  squareTo format policy value
-
-/-- Squaring preserves the complete encoded multiplication result for every projection policy. -/
-theorem square_eq_mul (value : ExecFloat.P3109 format) (policy : ProjectionPolicy) :
-    square value policy = mul value value policy :=
+/-- Squaring is multiplication of the operand by itself, for every projection option. -/
+theorem square_eq_mul (value : ExecFloat.P3109 format) (target : Format)
+    (mode : RoundingMode) (saturation : SaturationMode) :
+    square value target mode saturation = mul value value target mode saturation :=
   rfl
 
 /-- A finite square is projected from the exact rational square with no intermediate rounding. -/
-theorem decode_squareTo_finite (destination : Format) (policy : ProjectionPolicy)
-    (value : ExecFloat.P3109 source) (q : Rat) (hvalue : value.toClosedRat = .finite q) :
-    Format.SameDatum (decode (squareTo destination policy value))
-      (destination.projectRatValue policy (.finite (q * q))) := by
-  simpa [squareTo, mulTo, hvalue, Arithmetic.mul] using
-    decode_binaryTo destination policy Arithmetic.mul value value
+theorem decode_square_finite (value : ExecFloat.P3109 format) (target : Format)
+    (mode : RoundingMode) (saturation : SaturationMode) (q : Rat)
+    (hvalue : value.toClosedRat = .finite q) :
+    Format.SameDatum (decode (square value target mode saturation))
+      (target.projectRatValue { rounding := mode, saturation } (.finite (q * q))) := by
+  simpa [square, mul, hvalue, Arithmetic.mul] using
+    decode_binary Arithmetic.mul value value target mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

@@ -26,10 +26,10 @@ namespace Model
 variable {format : Format}
 
 /--
-Decode a nonzero finite posit code directly into the shared dyadic execution carrier.
+Decode a nonzero finite posit code into the shared dyadic execution carrier.
 
-The sign and complete encoded word are supplied separately so callers that already classified the
-word can reuse the same extraction. `decodeFiniteDyadic` below remains the model-facing boundary.
+The sign and the encoded word are separate arguments, so callers that already classified the word
+can reuse the extraction. `decodeFiniteDyadic` below is the model-facing entry point.
 -/
 @[noinline] def decodeFiniteDyadicCode
     (format : Format) (negative : Bool) (code : Nat) :
@@ -74,17 +74,17 @@ word can reuse the same extraction. `decodeFiniteDyadic` below remains the model
   }
 
 /--
-Decode a nonzero finite posit directly into the shared dyadic execution carrier.
+Decode a nonzero finite posit into the shared dyadic execution carrier.
 
 This decoder computes sign restoration, regime scanning, and trailing-field powers once.
-`decodeFields` exposes the same quantities as independent projections for proofs; the theorem
-below establishes their equality.
+`decodeFields` exposes the same quantities as independent projections for proofs, and the theorem
+below proves the two agree.
 -/
 @[inline] def decodeFiniteDyadic
     (value : Model format) : FloatLib.Numerics.Dyadic :=
   decodeFiniteDyadicCode format value.signBit value.toNatBits
 
-/-- The one-pass execution decoder agrees exactly with the proof-facing field decoder. -/
+/-- The one-pass execution decoder agrees with the field decoder used in proofs. -/
 theorem decodeFiniteDyadic_eq_decodeFields_toDyadic
     (value : Model format) :
     value.decodeFiniteDyadic = value.decodeFields.toDyadic := by
@@ -115,7 +115,7 @@ One-pass compiled implementation of the optional exact-dyadic decoder.
 Zero and NaR are handled before calling `decodeFiniteDyadic`, which decodes the nonzero finite
 branch.
 -/
-@[inline] private def toDyadicImpl?
+@[inline] private def Internal.toDyadic?
     (value : Model format) : Option FloatLib.Numerics.Dyadic :=
   let code := value.toNatBits
   if code == format.signMaskNat then
@@ -140,12 +140,12 @@ theorem decodeExact_eq_finite_iff
       simp [decodeExact, hnarFalse, hzeroFalse]
 
 /--
-Decode the ordinary value directly into the shared exact dyadic carrier.
+Decode the ordinary value into the shared exact dyadic carrier.
 
-`none` identifies NaR exactly. The unique posit zero maps to the canonical dyadic zero; all other
-words retain their exact sign, integer significand, and binary scale.
+`none` means NaR and nothing else. The unique posit zero maps to the canonical dyadic zero, and all
+other words keep their exact sign, integer significand, and binary scale.
 -/
-@[implemented_by toDyadicImpl?, inline] def toDyadic?
+@[implemented_by Internal.toDyadic?, inline] def toDyadic?
     (value : Model format) : Option FloatLib.Numerics.Dyadic :=
   match value.decodeExact with
   | .zero => some FloatLib.Numerics.Dyadic.zero
@@ -157,12 +157,12 @@ The one-pass compiled decoder is extensionally equal to the transparent logical 
 
 This proves equality of the Lean definitions used by `toDyadic?`'s `implemented_by` refinement.
 -/
-private theorem toDyadicImpl?_eq_toDyadic?
+private theorem Internal.toDyadic?_eq
     (value : Model format) :
-    value.toDyadicImpl? = value.toDyadic? := by
+    Internal.toDyadic? value = value.toDyadic? := by
   by_cases hnar : value = nar format
   · subst value
-    simp [toDyadicImpl?, toDyadic?, decodeExact]
+    simp [Internal.toDyadic?, Model.toDyadic?, decodeExact]
   · have hnarCode : value.toNatBits ≠ format.signMaskNat := by
       intro equality
       apply hnar
@@ -173,7 +173,7 @@ private theorem toDyadicImpl?_eq_toDyadic?
       have hsignMask : (0 : Nat) ≠ format.signMaskNat := by
         simpa [Format.signMaskNat] using
           (Nat.ne_of_lt (Nat.two_pow_pos format.signIndex))
-      simp [toDyadicImpl?, toDyadic?, decodeExact, hsignMask]
+      simp [Internal.toDyadic?, Model.toDyadic?, decodeExact, hsignMask]
     · have hzeroCode : value.toNatBits ≠ 0 := by
         intro equality
         apply hzero
@@ -188,7 +188,7 @@ private theorem toDyadicImpl?_eq_toDyadic?
             value.decodeFields.toDyadic := by
         simpa only [decodeFiniteDyadic] using
           decodeFiniteDyadic_eq_decodeFields_toDyadic value
-      simp [toDyadicImpl?, toDyadic?, decodeExact, hnarCode, hzeroCode,
+      simp [Internal.toDyadic?, Model.toDyadic?, decodeExact, hnarCode, hzeroCode,
         hnarFalse, hzeroFalse, hdecode]
 
 /-- Exact decoding recognizes the unique posit zero word. -/

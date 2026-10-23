@@ -15,8 +15,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Square
 # Squaring configured binary values
 
 Word and model carriers transport the unary square kernel through their lossless codec.
-Byte tables and limb carriers retain their selected multiplication kernel. Both routes preserve
-the complete configured multiplication result.
+Byte tables, two-word carriers, and limb carriers keep their selected multiplication kernel.
+Both routes agree with configured multiplication.
 -/
 
 @[expose] public section
@@ -36,7 +36,7 @@ local notation "Value" =>
 
 /-- Square with one nearest-even rounding, retaining the descriptor's full encoding policy. -/
 @[inline] def square (value : Value) : Value :=
-  if (match plan with | .byte _ | .limbs _ => true | _ => false) then
+  if (match plan with | .byte _ | .pair _ _ | .limbs _ => true | _ => false) then
     ExecFloat.mul value value
   else
     ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.square value
@@ -57,7 +57,7 @@ theorem square_eq_mul (value : Value) :
     square value = ExecFloat.mul value value :=
   (square_eq_spec value).trans (ExecFloat.Proof.mul_eq_spec value value).symm
 
-/-- Decoding a configured square gives the exact encoded model square. -/
+/-- Decoding a configured square gives the model square of the decoded value. -/
 @[simp, grind =] theorem toModel_square (value : Value) :
     toModel (square value) = Model.square (toModel value) := by
   rw [square_eq_spec, Model.square_eq_spec]

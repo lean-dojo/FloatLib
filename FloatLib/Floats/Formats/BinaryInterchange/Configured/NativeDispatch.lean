@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.NativeCandidates
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Type
 public import FloatLib.Floats.ExecFloat.Core.Capability
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Direct.Proof
 
 /-!
 # First-order dispatch for binary32 and binary64
@@ -22,8 +23,8 @@ Each instance names the fixed-format certificate it executes.
 certificate under every `Policy`. The kernel that runs is therefore the proved kernel
 `#float_info` reports, whichever `PolicyFor` instance is in scope.
 
-The explicit guarded host operations remain in `Configured.NativeFPU.Unchecked`, but no compiler
-substitution or certified candidate places them behind these capabilities.
+The guarded host operations live in `Configured.NativeFPU.Unchecked`, and no compiler
+substitution or certified candidate puts them behind these capabilities.
 -/
 
 @[expose] public section
@@ -35,13 +36,12 @@ open FloatLib.Floats.Formats.BinaryInterchange
 namespace ExecFloat.Binary
 
 /--
-Configured IEEE binary32 and binary64 operations name their first-order software kernels directly.
+Configured IEEE binary32 and binary64 operations name their first-order software kernels.
 
-These instances are attached to the public parameterized families rather than to a storage-plan
-constructor. Lean's typeclass index preserves `Binary.Family 8 23` and `Binary.Family 11 52`,
-while it does not always unfold their computed `forKnownWidth` plans during instance search.
-All six operations execute the proved fixed-format word kernels. Guarded host-primitive
-experiments are separate functions and are not candidates until an exact equality proof exists.
+These instances are attached to the public parameterized families, not to a storage-plan
+constructor, because Lean's typeclass index keeps `Binary.Family 8 23` and `Binary.Family 11 52`
+but does not always unfold their computed `forKnownWidth` plans during instance search. All six
+operations execute the proved fixed-format word kernels.
 -/
 @[always_inline] instance (priority := 400) binary32AddCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 8 23)] :
@@ -109,6 +109,35 @@ experiments are separate functions and are not candidates until an exact equalit
   execute := Configured.Backend.wordFma
   execute_eq_implementation := rfl
 
+/--
+Binary64 addition on the stored words, compiled once as a specialized function. The instance
+calls it rather than inlining the word kernel into every caller, which keeps arithmetic loops
+small.
+-/
+def Internal.binary64Add (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
+    FloatLib.Floats.ExecFloat (Family 11 52) :=
+  Configured.Backend.binary64Add (by decide) left right
+
+/-- Binary64 subtraction on the stored words, compiled once as a specialized function. -/
+def Internal.binary64Sub (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
+    FloatLib.Floats.ExecFloat (Family 11 52) :=
+  Configured.Backend.binary64Sub (by decide) left right
+
+/-- Binary64 multiplication on the stored words, compiled once as a specialized function. -/
+def Internal.binary64Mul (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
+    FloatLib.Floats.ExecFloat (Family 11 52) :=
+  Configured.Backend.binary64Mul (by decide) left right
+
+/-- Binary64 division on the stored words, compiled once as a specialized function. -/
+def Internal.binary64Div (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
+    FloatLib.Floats.ExecFloat (Family 11 52) :=
+  Configured.Backend.binary64Div (by decide) left right
+
+/-- Binary64 fused multiply-add on the stored words, compiled once as a specialized function. -/
+def Internal.binary64Fma (left right addend : FloatLib.Floats.ExecFloat (Family 11 52)) :
+    FloatLib.Floats.ExecFloat (Family 11 52) :=
+  Configured.Backend.binary64Fma (by decide) left right addend
+
 @[always_inline] instance (priority := 400) binary64AddCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :
     FloatLib.Floats.ExecFloat.Add (Family 11 52) where
@@ -117,8 +146,10 @@ experiments are separate functions and are not candidates until an exact equalit
   implementation := Configured.Plan.softwareAdd64Certified _
   implementation_is_selected :=
     (Configured.Plan.selectCertified_binary64AddCandidates planning.policy _).symm
-  execute := Configured.Backend.wordAdd
-  execute_eq_implementation := rfl
+  execute := Internal.binary64Add
+  execute_eq_implementation := by
+    funext left right
+    exact Configured.Backend.binary64Add_eq (by decide) (by decide) left right
 
 @[always_inline] instance (priority := 400) binary64SubCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :
@@ -128,8 +159,10 @@ experiments are separate functions and are not candidates until an exact equalit
   implementation := Configured.Plan.softwareSub64Certified _
   implementation_is_selected :=
     (Configured.Plan.selectCertified_binary64SubCandidates planning.policy _).symm
-  execute := Configured.Backend.wordSub
-  execute_eq_implementation := rfl
+  execute := Internal.binary64Sub
+  execute_eq_implementation := by
+    funext left right
+    exact Configured.Backend.binary64Sub_eq (by decide) (by decide) left right
 
 @[always_inline] instance (priority := 400) binary64MulCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :
@@ -139,8 +172,10 @@ experiments are separate functions and are not candidates until an exact equalit
   implementation := Configured.Plan.softwareMul64Certified _
   implementation_is_selected :=
     (Configured.Plan.selectCertified_binary64MulCandidates planning.policy _).symm
-  execute := Configured.Backend.wordMul
-  execute_eq_implementation := rfl
+  execute := Internal.binary64Mul
+  execute_eq_implementation := by
+    funext left right
+    exact Configured.Backend.binary64Mul_eq (by decide) (by decide) left right
 
 @[always_inline] instance (priority := 400) binary64DivCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :
@@ -150,8 +185,10 @@ experiments are separate functions and are not candidates until an exact equalit
   implementation := Configured.Plan.softwareDiv64Certified _
   implementation_is_selected :=
     (Configured.Plan.selectCertified_binary64DivCandidates planning.policy _).symm
-  execute := Configured.Backend.wordDiv
-  execute_eq_implementation := rfl
+  execute := Internal.binary64Div
+  execute_eq_implementation := by
+    funext left right
+    exact Configured.Backend.binary64Div_eq (by decide) (by decide) left right
 
 @[always_inline] instance (priority := 400) binary64SqrtCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :
@@ -172,7 +209,9 @@ experiments are separate functions and are not candidates until an exact equalit
   implementation := Configured.Plan.softwareFma64Certified _
   implementation_is_selected :=
     (Configured.Plan.selectCertified_binary64FmaCandidates planning.policy _).symm
-  execute := Configured.Backend.wordFma
-  execute_eq_implementation := rfl
+  execute := Internal.binary64Fma
+  execute_eq_implementation := by
+    funext left right addend
+    exact Configured.Backend.binary64Fma_eq (by decide) (by decide) left right addend
 
 end FloatLib.Floats.ExecFloat.Binary

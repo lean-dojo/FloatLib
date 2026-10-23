@@ -18,8 +18,8 @@ public meta import Mathlib.Algebra.GroupWithZero.Nat
 
 These compiled checks exercise the parameterized projection kernel independently of its proof
 layer. The small matrix covers every valid signedness, domain, bit width, precision, and code point
-for `K = 3...10`. Larger descriptors use boundary samples so validation remains quick while still
-exercising arbitrary-width natural-number storage.
+for `K = 3...10`. Larger descriptors use boundary samples, so validation stays quick and still
+exercises arbitrary-width natural-number storage.
 
 The mode checks include P3109's special `P = 1` nearest-even parity rule, to-odd rounding,
 stochastic A/B/C, directed overflow, finite saturation, infinity propagation, and unsigned
@@ -43,7 +43,6 @@ The fixed rows below provide an independent anchor for the generated round-trip 
 come from the working group's hexadecimal value tables for Binary6p1sf, Binary6p1uf, and
 Binary6p5se at commit `aa9d236d7a31b38fbe43b703a0bfdfc3d8be5d45`:
 <https://github.com/P3109/Public/tree/aa9d236d7a31b38fbe43b703a0bfdfc3d8be5d45/Value%20Tables/Hexadecimal/K6>.
-These checks follow the cited P3109 working-group tables.
 -/
 
 example :
@@ -135,6 +134,13 @@ def boundaryRoundTripFailures (format : P3109.Format) : Nat :=
 /-- Boundary samples pass through descriptors as wide as 4096 bits. -/
 example : (wideFormats.map boundaryRoundTripFailures).sum = 0 := by
   native_decide
+
+/-- The report's named eight-bit descriptors have the field widths and biases their names give. -/
+example :
+    (P3109.Format.binary8p3se.exponentBits, P3109.Format.binary8p3se.exponentBias,
+      P3109.Format.binary8p4se.exponentBits, P3109.Format.binary8p4se.exponentBias) =
+      (5, 16, 4, 8) := by
+  decide
 
 /-- Six-bit, one-bit-precision signed finite profile used for tie-rule checks. -/
 def binary6p1sf : P3109.Format :=
@@ -265,8 +271,8 @@ example :
 /-- Finite saturation reports the exact overflow and the endpoint clamp separately. -/
 example :
     let outcome :=
-      ExecFloat.convertWith (target := Binary6p5seValue) (2 : Rat)
-        Formats.P3109.ProjectionPolicy.finite
+      ExecFloat.convert (target := Binary6p5seValue) (2 : Rat)
+        (context := { saturation := .finite })
     outcome.value?.map ExecFloat.P3109.toNatBits =
         some binary6p5se.maxFiniteBits ∧
       outcome.status?.map (fun status =>
@@ -279,7 +285,7 @@ example :
     let outcome :=
       ExecFloat.P3109.Conversion.run
         (format := binary6p5se)
-        .nearestEven
+        {}
         (.infinity false)
     outcome.value?.map ExecFloat.P3109.toNatBits =
         some binary6p5se.positiveInfinityBits ∧

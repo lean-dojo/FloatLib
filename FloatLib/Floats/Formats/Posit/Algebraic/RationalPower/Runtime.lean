@@ -8,28 +8,27 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Comparison.Runtime
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Runtime
-public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Runtime
+public import FloatLib.Numerics.Exact.RationalPower.Runtime
 
 /-!
 # Once-rounded powers with rational exponents
 
-Powers are compared with rational posit boundaries using certified logarithm intervals. If a
-comparison remains undecided, an exact integer-power comparison resolves it, including equality.
-The preliminary series degree follows the output width; it does not limit correctness or guess
-a result. Negative integral powers use the same magnitude comparison and exact sign parity.
-Integer exponents with magnitude at most the output width use direct rational exponentiation,
-so simple integer powers do not pay for logarithm intervals.
-
-This avoids denominator-sized integer powers when the interval decides the comparison.
-The exact fallback still has potentially impractical cost for large exponent numerators or
-denominators. There is no resource-bound completion guarantee.
+Powers are compared with rational posit boundaries by `RationalPower.compare`. It decides
+equality with a boundary exactly, from the exact-root classification of the power and capped
+exponentiation, and separates every other boundary with logarithm enclosures of increasing
+degree. No boundary is raised to a power, and the base's root is raised to the exponent's
+numerator only by capped exponentiation, which stops once a partial power exceeds the boundary's
+numerator or denominator. Large exponent numerators and denominators create no large integers.
+A negative base with an integral exponent uses the same magnitude comparison and takes its sign
+from the exponent's parity. Integer exponents of magnitude at most the posit width use exact
+rational exponentiation, so simple integer powers do not pay for logarithm intervals.
 
 The minus-one exponentials compare the power with `candidate + 1`. Thus subtraction is fused:
 the power is never first rounded to a posit, even when the result is very close to zero.
 
 NaR propagates. Zero to a nonpositive exponent produces NaR. A negative base requires an integral
-exponent; all other dyadic exponents give nonreal powers. Finite posit exponents are dyadic,
-so this condition covers the real domain for negative posit bases.
+exponent, because every other dyadic exponent gives a nonreal power. Finite posit exponents are
+dyadic, so this condition covers the real domain for negative posit bases.
 
 ## References
 
@@ -43,21 +42,19 @@ so this condition covers the real domain for negative posit bases.
 namespace FloatLib.Floats.Formats.Posit.Model
 
 /--
-Round a positive-base rational power using certified comparisons with rational boundaries.
-The real semantics require `0 < base`. Small integer exponents are evaluated exactly; otherwise
-an inconclusive enclosure uses exact algebraic fallback.
+Round a positive-base rational power using exact comparisons with rational boundaries.
+The real semantics require `0 < base`. Small integer exponents are evaluated exactly, and other
+exponents use the exact rational-power comparator.
 -/
 @[noinline] def roundPositiveRatPower (format : Format) (base exponent : Rat) : Model format :=
   if exponent.den = 1 ∧ exponent.num.natAbs ≤ format.bits then
     roundRat format (base ^ exponent.num)
   else
-    ComparisonRounding.round format
-      (fun candidate => FloatLib.Numerics.RationalPower.compareWithEnclosure
-        base exponent candidate (format.bits + 8))
+    ComparisonRounding.round format (FloatLib.Numerics.RationalPower.compare base exponent)
 
 /--
 Round an exact rational power once. Negative bases require integral exponents, and zero
-requires a positive exponent. Magnitude comparisons use enclosures before exact fallback.
+requires a positive exponent. A negative base rounds its magnitude and restores the sign.
 -/
 @[noinline] def roundRatPower (format : Format) (base exponent : Rat) : Model format :=
   if base = 0 then
@@ -73,25 +70,21 @@ requires a positive exponent. Magnitude comparisons use enclosures before exact 
     roundPositiveRatPower format base exponent
 
 /--
-General posit power with one final rounding and standard NaR propagation.
-Certified enclosures precede exact comparison; difficult fallback cases can remain expensive.
+General posit power with one final rounding and standard NaR propagation. Boundary comparisons
+are exact.
 -/
 @[inline] def pow {format : Format} (base exponent : Model format) : Model format :=
   match base.toRat?, exponent.toRat? with
   | some b, some e => roundRatPower format b e
   | _, _ => nar format
 
-/--
-Base-two exponential, rounded once using certified enclosures with exact comparison fallback.
--/
+/-- Base-two exponential, rounded once using exact rational-power comparisons. -/
 @[inline] def exp2 {format : Format} (value : Model format) : Model format :=
   match value.toRat? with
   | some e => roundRatPower format 2 e
   | none => nar format
 
-/--
-Base-ten exponential, rounded once using certified enclosures with exact comparison fallback.
--/
+/-- Base-ten exponential, rounded once using exact rational-power comparisons. -/
 @[inline] def exp10 {format : Format} (value : Model format) : Model format :=
   match value.toRat? with
   | some e => roundRatPower format 10 e
@@ -99,7 +92,8 @@ Base-ten exponential, rounded once using certified enclosures with exact compari
 
 /--
 Round a positive-base power minus one with a single signed rounding.
-The real semantics require `0 < base`; shifting the candidates preserves exact cancellation.
+The real semantics require `0 < base`. Shifting the candidates by one keeps the cancellation
+exact.
 Small integer exponents use exact rational exponentiation and subtraction before rounding.
 -/
 @[noinline] def roundRatPowerMinusOne (format : Format) (base exponent : Rat) : Model format :=
@@ -107,8 +101,7 @@ Small integer exponents use exact rational exponentiation and subtraction before
     roundRat format (base ^ exponent.num - 1)
   else
     ComparisonRounding.roundSigned format
-      (fun candidate => FloatLib.Numerics.RationalPower.compareWithEnclosure
-        base exponent (candidate + 1) (format.bits + 8))
+      (fun candidate => FloatLib.Numerics.RationalPower.compare base exponent (candidate + 1))
 
 /-- Base-two exponential minus one, with fused subtraction and NaR propagation. -/
 @[inline] def exp2Minus1 {format : Format} (value : Model format) : Model format :=

@@ -17,10 +17,11 @@ Both checks precede exact numerical conversion. Accepted values are never clampe
 to satisfy a limit: their value and exception status agree with `TextParser.run`.
 
 Infinity and NaN spellings have exponent magnitude zero. Their text, including every NaN payload
-digit, remains subject to the byte limit.
+digit, counts toward the byte limit.
 
-`Model.parse` is the caller-facing entrypoint. Resource limits are opt-in with `limits := true`;
-`status := true` includes all IEEE exception flags. The `TextParser` namespace contains
+`Model.parse` is the caller-facing entrypoint. Resource limits are opt-in with
+`limits := some { maxBytes := 100, maxExponent := 1000 }`, where an omitted field keeps its default,
+and `status := true` includes all IEEE exception flags. The `TextParser` namespace contains
 implementation helpers used by this entrypoint and its correctness proofs.
 -/
 
@@ -36,7 +37,7 @@ structure ParseLimits where
   maxExponent : Nat := 10000
   deriving DecidableEq, Repr, Inhabited
 
-/-- Magnitude of the adjusted decimal or binary exponent; special values have no exponent. -/
+/-- Magnitude of the adjusted decimal or binary exponent. Special values have magnitude zero. -/
 def TextValue.exponentMagnitude : TextValue → Nat
   | .decimal value => value.exponent.natAbs
   | .dyadic value => value.exponent.natAbs
@@ -53,7 +54,7 @@ def readTextInput (input : String) : Except ParseError TextValue :=
         | some value => .ok value
         | none => .error (.invalidSyntax input)
 
-/-- The existing parser is exactly this scan followed by its original numerical conversion. -/
+/-- `TextParser.run` is this scan followed by its numerical conversion. -/
 theorem TextParser.run_eq_bind_readTextInput (fmt : FloatFormat) (mode : IEEERoundingMode)
     (input : String) :
     run fmt mode input = (readTextInput input).bind (convertText fmt mode) := by
@@ -80,7 +81,9 @@ def readTextWithLimits (limits : ParseLimits) (input : String) : Except ParseErr
   else
     .error (.inputTooLong input.utf8ByteSize limits.maxBytes)
 
-/-- Implementation core with explicit resource limits, retaining the complete IEEE status. -/
+/--
+Implementation core with resource limits, keeping the complete IEEE status and the ternary value.
+-/
 def TextParser.runBounded (fmt : FloatFormat) (mode : IEEERoundingMode)
     (limits : ParseLimits) (input : String) : Except ParseError (IEEEOutcome fmt) :=
   (readTextWithLimits limits input).bind (convertText fmt mode)
@@ -129,7 +132,10 @@ theorem readTextWithLimits_eq_readTextInput (limits : ParseLimits) (input : Stri
   | ok value =>
       simp [readTextWithLimits, hbytes, hread, Except.bind, hexponent value hread]
 
-/-- Within the declared limits, bounded and original parsing agree on every value, flag, and error. -/
+/--
+Within the declared limits, bounded and original parsing agree on every value, flag, ternary value,
+and error.
+-/
 theorem TextParser.runBounded_eq_run (fmt : FloatFormat) (mode : IEEERoundingMode)
     (limits : ParseLimits) (input : String)
     (hbytes : input.utf8ByteSize ≤ limits.maxBytes)
@@ -165,7 +171,10 @@ theorem TextParser.runBounded_eq_ok_iff (fmt : FloatFormat) (mode : IEEERounding
       ⟨hbytes, hread, hexponent⟩
     simpa [runBounded, hbounded, Except.bind] using hconvert
 
-/-- A bounded success is exactly the original parser's outcome, including all exception flags. -/
+/--
+A bounded success is the unlimited parser's outcome, including all exception flags and the
+ternary value.
+-/
 theorem TextParser.run_eq_of_runBounded_eq_ok
     {fmt : FloatFormat} {mode : IEEERoundingMode} {limits : ParseLimits} {input : String}
     {outcome : IEEEOutcome fmt} (hparse : runBounded fmt mode limits input = .ok outcome) :
@@ -175,76 +184,91 @@ theorem TextParser.run_eq_of_runBounded_eq_ok
   simpa [run_eq_bind_readTextInput, hread, Except.bind] using hconvert
 
 /--
-Parse text with optional rounding, resource limits, and IEEE exception status.
+Parse text with an optional rounding direction `mode`, resource limits, and IEEE exception
+status.
 
 By default, conversion uses nearest-even rounding without resource limits and returns the value.
-With `limits := true`, `maxBytes` bounds the original UTF-8 input before scanning and
-`maxExponent` bounds the adjusted decimal or binary exponent before numerical conversion.
-With `status := true`, the result also carries all five IEEE exception flags.
+With `limits := some bounds`, `bounds.maxBytes` bounds the original UTF-8 input before scanning and
+`bounds.maxExponent` bounds the adjusted decimal or binary exponent before numerical conversion,
+and `some {}` selects the default bounds. With `status := true`, the result also carries all five
+IEEE exception flags and the ternary value. Without it, the scanned text goes through
+`Internal.Value.convertText`, so finite numeric input runs no rounding classifier.
 -/
-def parse (fmt : FloatFormat) (input : String) (rounding : IEEERoundingMode := .nearestEven)
-    (limits : Bool := false) (maxBytes : Nat := 4096) (maxExponent : Nat := 10000)
+def parse (fmt : FloatFormat) (input : String)
+    (mode : IEEERoundingMode := .nearest) (limits : Option ParseLimits := none)
     (status : Bool := false) :
     Except ParseError (match status with
       | true => IEEEOutcome fmt
       | false => Model fmt) :=
-  let result := if limits then
-      TextParser.runBounded fmt rounding { maxBytes, maxExponent } input
-    else
-      TextParser.run fmt rounding input
   match status with
-  | true => result
-  | false => result.map (·.value)
+  | true =>
+      match limits with
+      | some bounds => TextParser.runBounded fmt mode bounds input
+      | none => TextParser.run fmt mode input
+  | false =>
+      let scanned :=
+        match limits with
+        | some bounds => readTextWithLimits bounds input
+        | none => readTextInput input
+      scanned.bind (Internal.Value.convertText fmt mode)
 
 /-- With limits and status disabled, parsing returns the exact core's value. -/
-@[simp] theorem parse_eq_run (fmt : FloatFormat) (input : String) (rounding : IEEERoundingMode) :
-    parse fmt input (rounding := rounding) =
-      (TextParser.run fmt rounding input).map (·.value) := rfl
+@[simp] theorem parse_eq_run (fmt : FloatFormat) (input : String) (mode : IEEERoundingMode) :
+    parse fmt input (mode := mode) =
+      (TextParser.run fmt mode input).map (·.value) := by
+  rw [TextParser.run_eq_bind_readTextInput]
+  change (readTextInput input).bind (Internal.Value.convertText fmt mode) = _
+  cases readTextInput input with
+  | error error => rfl
+  | ok value => exact Internal.Value.convertText_eq_map fmt mode value
 
 /-- Status-enabled parsing without limits returns the complete exact core outcome. -/
 @[simp] theorem parse_status_eq_run (fmt : FloatFormat) (input : String)
-    (rounding : IEEERoundingMode) (maxBytes maxExponent : Nat) :
-    parse fmt input (rounding := rounding) (maxBytes := maxBytes) (maxExponent := maxExponent)
-        (status := true) =
-      TextParser.run fmt rounding input := rfl
+    (mode : IEEERoundingMode) :
+    parse fmt input (mode := mode) (status := true) = TextParser.run fmt mode input := rfl
 
 /-- With limits enabled and status disabled, parsing returns the bounded core's value. -/
 @[simp] theorem parse_limits_eq_runBounded_map (fmt : FloatFormat) (input : String)
-    (rounding : IEEERoundingMode) (maxBytes maxExponent : Nat) :
-    parse fmt input (rounding := rounding) (limits := true) (maxBytes := maxBytes)
-        (maxExponent := maxExponent) =
-      (TextParser.runBounded fmt rounding { maxBytes, maxExponent } input).map (·.value) := rfl
+    (mode : IEEERoundingMode) (limits : ParseLimits) :
+    parse fmt input (mode := mode) (limits := some limits) =
+      (TextParser.runBounded fmt mode limits input).map (·.value) := by
+  change (readTextWithLimits limits input).bind (Internal.Value.convertText fmt mode) =
+    ((readTextWithLimits limits input).bind (convertText fmt mode)).map (·.value)
+  cases readTextWithLimits limits input with
+  | error error => rfl
+  | ok value => exact Internal.Value.convertText_eq_map fmt mode value
 
 /-- With limits and status enabled, parsing returns the complete bounded core outcome. -/
 @[simp] theorem parse_limits_status_eq_runBounded (fmt : FloatFormat) (input : String)
-    (rounding : IEEERoundingMode) (maxBytes maxExponent : Nat) :
-    parse fmt input (rounding := rounding) (limits := true) (maxBytes := maxBytes)
-        (maxExponent := maxExponent) (status := true) =
-      TextParser.runBounded fmt rounding { maxBytes, maxExponent } input := rfl
+    (mode : IEEERoundingMode) (limits : ParseLimits) :
+    parse fmt input (mode := mode) (limits := some limits) (status := true) =
+      TextParser.runBounded fmt mode limits input := rfl
 
-/-- A successful bounded parse returns exactly the value produced by unlimited parsing. -/
+/-- A successful bounded parse returns the value of unlimited parsing. -/
 theorem parse_eq_of_parse_limits_eq_ok
-    {fmt : FloatFormat} {input : String} {rounding : IEEERoundingMode}
-    {maxBytes maxExponent : Nat} {value : Model fmt}
-    (hparse : parse fmt input (rounding := rounding) (limits := true) (maxBytes := maxBytes)
-      (maxExponent := maxExponent) = .ok value) :
-    parse fmt input (rounding := rounding) = .ok value := by
+    {fmt : FloatFormat} {input : String} {mode : IEEERoundingMode}
+    {limits : ParseLimits} {value : Model fmt}
+    (hparse : parse fmt input (mode := mode) (limits := some limits) = .ok value) :
+    parse fmt input (mode := mode) = .ok value := by
   rw [parse_limits_eq_runBounded_map] at hparse
   rw [parse_eq_run]
-  cases hrun : TextParser.runBounded fmt rounding { maxBytes, maxExponent } input with
+  cases hrun : TextParser.runBounded fmt mode limits input with
   | error error =>
       simp [hrun, Except.map] at hparse
   | ok outcome =>
       rw [TextParser.run_eq_of_runBounded_eq_ok hrun]
       simpa [hrun, Except.map] using hparse
 
-/-- A bounded parse with status preserves the unlimited parser's value and every exception flag. -/
+/--
+A bounded parse with status preserves the unlimited parser's value, every exception flag, and the
+ternary value.
+-/
 theorem parse_status_eq_of_parse_limits_status_eq_ok
-    {fmt : FloatFormat} {input : String} {rounding : IEEERoundingMode}
-    {maxBytes maxExponent : Nat} {outcome : IEEEOutcome fmt}
-    (hparse : parse fmt input (rounding := rounding) (limits := true) (maxBytes := maxBytes)
-      (maxExponent := maxExponent) (status := true) = .ok outcome) :
-    parse fmt input (rounding := rounding) (status := true) = .ok outcome := by
+    {fmt : FloatFormat} {input : String} {mode : IEEERoundingMode}
+    {limits : ParseLimits} {outcome : IEEEOutcome fmt}
+    (hparse : parse fmt input (mode := mode) (limits := some limits) (status := true) =
+      .ok outcome) :
+    parse fmt input (mode := mode) (status := true) = .ok outcome := by
   rw [parse_limits_status_eq_runBounded] at hparse
   rw [parse_status_eq_run]
   exact TextParser.run_eq_of_runBounded_eq_ok hparse

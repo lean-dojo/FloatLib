@@ -12,13 +12,13 @@ public import FloatLib.Numerics.Exact.DecimalText.Precision
 # Selecting decimal output precision
 
 IEEE 754 §5.12.2 distinguishes preserving the source quantum from requesting a
-number of significant digits. `Precision` makes this choice explicit. Requested
+number of significant digits, and `Precision` names that choice. Requested
 precision has no format-width cap: the coefficient is rounded once on the
 requested decimal grid, and extra requested digits are supplied by exact zeros.
 The text exponent is an unbounded integer, so output has no exponent overflow.
 
 Zero at precision `p` is written with quantum `1-p`. Special values keep their
-exact spellings and fields. Only inexact can be raised during finite output.
+spellings and fields. Only inexact can be raised during finite output.
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ namespace FloatLib.Floats.Formats.DecimalInterchange.Formatting
 
 open FloatLib.Numerics.DecimalText
 
-/-- Preserving the original quantum and requesting a digit count are separate operations. -/
+/-- Output precision: keep the source quantum or request a significant-digit count. -/
 abbrev Precision := FloatLib.Numerics.DecimalText.Precision
 
 /-- Correctly rounded significant-digit output, with an unbounded requested precision. -/
@@ -38,12 +38,12 @@ abbrev significantDecimal (mode : RoundingMode) :=
 structure TextOutcome where
   /-- The generated external decimal character sequence. -/
   text : String
-  /-- Exceptions raised by this conversion; output rounding can raise only inexact. -/
-  status : Status := {}
+  /-- Exceptions raised by this conversion. Output rounding can raise only inexact. -/
+  status : Numerics.IEEEStatus := {}
   deriving DecidableEq, Repr
 
 /-- Format a datum either exactly or to a requested significant-digit count.
-The inexact flag records numerical rounding, rather than a change of quantum. -/
+The inexact flag records a change of value, not a change of quantum. -/
 def format (mode : RoundingMode) (precision : Precision) (value : Datum) : TextOutcome :=
   match precision, value with
   | .significant digits, .finite negative coefficient quantum =>

@@ -23,7 +23,7 @@ and the quotient parity needed to resolve a tie.
 
 The finite kernel has this exact rational semantics. For finite inputs and a nonzero divisor in
 an IEEE encoding, the resulting dyadic is representable, so its final encoding loses no precision.
-Separate equations specify the value and status for zero divisors and infinities.
+Zero divisors and infinities have their own value and status equations.
 -/
 
 @[expose] public section
@@ -253,7 +253,7 @@ The optimized finite remainder kernel has the exact unbounded nearest-even quoti
 
 When the dividend exponent is larger, modular exponentiation recovers the aligned numerator's
 quotient parity and remainder without constructing it. In the other direction, a sufficiently
-large exponent gap guarantees that the nearest quotient is zero, allowing an early return.
+large exponent gap guarantees that the nearest quotient is zero, so the kernel returns early.
 Both paths agree with the unbounded aligned calculation below.
 -/
 theorem remainderDyadic_toRat
@@ -304,75 +304,75 @@ theorem remainderDyadic_toRat
     remainderDyadic dividend divisor hdivisor = dividend := by
   simp [remainderDyadic, hzero]
 
-/-- `remainder` is exactly the value component of its status-bearing operation. -/
-@[simp] theorem remainder_eq_value {fmt : FloatFormat}
+/-- Remainder with `status := true` delivers the value of remainder. -/
+@[simp] theorem value_remainder {fmt : FloatFormat}
     (dividend divisor : Model fmt) :
-    remainder dividend divisor = (remainderWithStatus dividend divisor).value :=
+    (remainder dividend divisor (status := true)).value = remainder dividend divisor :=
   rfl
 
 /-! ## Status-bearing exceptional branches -/
 
 /--
 For two finite operands with a nonzero divisor, the runtime encodes the selected dyadic remainder
-and returns clear status. A zero result uses the dividend's sign, subject to the format's zero
-policy.
+and returns clear status and the ternary value `.eq`. A zero result uses the dividend's sign,
+subject to the format's zero policy.
 -/
-theorem remainderWithStatus_of_finite
+theorem remainder_status_of_finite
     {fmt : FloatFormat} (dividend divisor : Model fmt)
     (exactDividend exactDivisor : Numerics.Dyadic)
     (hdividend : exactValue dividend = .finite exactDividend)
     (hdivisor : exactValue divisor = .finite exactDivisor)
     (hnonzero : exactDivisor.significand ≠ 0) :
-    remainderWithStatus dividend divisor =
+    remainder dividend divisor (status := true) =
       let exact := remainderDyadic exactDividend exactDivisor hnonzero
       let value :=
         if exact.significand == 0 then
           zero fmt exactDividend.negative
         else
           roundDyadic fmt exact
-      { value, status := .clear } := by
-  simp [remainderWithStatus, hdividend, hdivisor, hnonzero, outcomeWithInvalid]
+      { value, status := .clear, ternary := .eq } := by
+  simp [remainder, Internal.Status.remainder, hdividend, hdivisor, hnonzero, outcomeWithInvalid]
 
 /-- A finite zero divisor makes IEEE remainder invalid. -/
-theorem remainderWithStatus_of_zero_divisor
+theorem remainder_status_of_zero_divisor
     {fmt : FloatFormat} (dividend divisor : Model fmt)
     (exactDividend exactDivisor : Numerics.Dyadic)
     (hdividend : exactValue dividend = .finite exactDividend)
     (hdivisor : exactValue divisor = .finite exactDivisor)
     (hzero : exactDivisor.significand = 0) :
-    remainderWithStatus dividend divisor =
-      { value := invalidResult fmt, status := { invalid := true } } := by
-  simp [remainderWithStatus, hdividend, hdivisor, hzero, outcomeWithInvalid]
+    remainder dividend divisor (status := true) =
+      { value := invalidResult fmt, status := { invalid := true }, ternary := .eq } := by
+  simp [remainder, Internal.Status.remainder, hdividend, hdivisor, hzero, outcomeWithInvalid]
 
 /-- A finite dividend is unchanged when the divisor is infinite. -/
-theorem remainderWithStatus_of_finite_of_infinity
+theorem remainder_status_of_finite_of_infinity
     {fmt : FloatFormat} (dividend divisor : Model fmt)
     (exact : Numerics.Dyadic) (negative : Bool)
     (hdividend : exactValue dividend = .finite exact)
     (hdivisor : exactValue divisor = .infinity negative) :
-    remainderWithStatus dividend divisor =
-      { value := dividend, status := .clear } := by
-  simp [remainderWithStatus, hdividend, hdivisor, outcomeWithInvalid]
+    remainder dividend divisor (status := true) =
+      { value := dividend, status := .clear, ternary := .eq } := by
+  simp [remainder, Internal.Status.remainder, hdividend, hdivisor, outcomeWithInvalid]
 
 /-- An infinite dividend and finite divisor make IEEE remainder invalid. -/
-theorem remainderWithStatus_of_infinity_of_finite
+theorem remainder_status_of_infinity_of_finite
     {fmt : FloatFormat} (dividend divisor : Model fmt)
     (dividendNegative : Bool) (exactDivisor : Numerics.Dyadic)
     (hdividend : exactValue dividend = .infinity dividendNegative)
     (hdivisor : exactValue divisor = .finite exactDivisor) :
-    remainderWithStatus dividend divisor =
-      { value := invalidResult fmt, status := { invalid := true } } := by
-  simp [remainderWithStatus, hdividend, hdivisor, outcomeWithInvalid]
+    remainder dividend divisor (status := true) =
+      { value := invalidResult fmt, status := { invalid := true }, ternary := .eq } := by
+  simp [remainder, Internal.Status.remainder, hdividend, hdivisor, outcomeWithInvalid]
 
 /-- Two infinite operands make IEEE remainder invalid. -/
-theorem remainderWithStatus_of_infinity_of_infinity
+theorem remainder_status_of_infinity_of_infinity
     {fmt : FloatFormat} (dividend divisor : Model fmt)
     (dividendNegative divisorNegative : Bool)
     (hdividend : exactValue dividend = .infinity dividendNegative)
     (hdivisor : exactValue divisor = .infinity divisorNegative) :
-    remainderWithStatus dividend divisor =
-      { value := invalidResult fmt, status := { invalid := true } } := by
-  simp [remainderWithStatus, hdividend, hdivisor, outcomeWithInvalid]
+    remainder dividend divisor (status := true) =
+      { value := invalidResult fmt, status := { invalid := true }, ternary := .eq } := by
+  simp [remainder, Internal.Status.remainder, hdividend, hdivisor, outcomeWithInvalid]
 
 /-! ## Exactness of the encoded remainder -/
 
@@ -416,7 +416,7 @@ private theorem remainderFromDivision_significand_le_numerator
 /--
 The exact remainder is either the dividend itself or a dyadic at the exponent of one operand whose
 significand is no larger than that operand's. These bounds establish representability in
-`remainderWithStatus_exact`.
+`remainder_exact`.
 -/
 theorem remainderDyadic_eq_or_le
     (dividend divisor : Numerics.Dyadic) (hdivisor : divisor.significand ≠ 0) :
@@ -455,7 +455,7 @@ With a nonzero divisor, the remainder of two finite operands is exactly represen
 encoding. The final rounding preserves the exact dyadic's real value and produces a finite
 result, justifying the clear status on this branch.
 -/
-theorem remainderWithStatus_exact
+theorem remainder_exact
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (dividend divisor : Model fmt)
     (exactDividend exactDivisor : Numerics.Dyadic)
     (hdividend : exactValue dividend = .finite exactDividend)
@@ -478,8 +478,8 @@ theorem remainderWithStatus_exact
   have hsigB := toDyadic?_significand_lt divisor hdb
   have hexpA := minSubnormalExponent_le_toDyadic? dividend hda
   have hexpB := minSubnormalExponent_le_toDyadic? divisor hdb
-  rw [remainder_eq_value,
-    remainderWithStatus_of_finite dividend divisor exactDividend exactDivisor hdividend hdivisor
+  rw [← value_remainder,
+    remainder_status_of_finite dividend divisor exactDividend exactDivisor hdividend hdivisor
       hnonzero]
   dsimp only
   by_cases hzero : (remainderDyadic exactDividend exactDivisor hnonzero).significand = 0

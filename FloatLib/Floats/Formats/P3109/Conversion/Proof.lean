@@ -32,32 +32,35 @@ variable {format : Formats.P3109.Format}
     (policy : Formats.P3109.ProjectionPolicy)
     (input : NumericalValue Rat) :
     run (format := format) policy input =
-      .success (ExecFloat.P3109.projectRat policy input)
+      .success (ExecFloat.P3109.projectRat input policy.rounding policy.saturation)
         (status format policy input) :=
   rfl
 
-/-- Finite conversion uses the exact rational projection path directly. -/
+/-- Finite conversion goes through the exact rational projection `ofRat`. -/
 @[grind =] theorem run_finite
     (policy : Formats.P3109.ProjectionPolicy) (exact : Rat) :
     run (format := format) policy (.finite exact) =
-      .success (ExecFloat.P3109.ofRat policy exact)
+      .success (ExecFloat.P3109.ofRat exact policy.rounding policy.saturation)
         (status format policy (.finite exact)) :=
   rfl
 
-/-- Infinity conversion is controlled entirely by the named P3109 projection policy. -/
+/-- Converting an infinity follows the P3109 projection policy. -/
 @[simp, grind =] theorem run_infinity
     (policy : Formats.P3109.ProjectionPolicy) (negative : Bool) :
     run (format := format) policy (.infinity negative) =
-      .success (ExecFloat.P3109.projectRat policy (.infinity negative))
+      .success
+        (ExecFloat.P3109.projectRat (.infinity negative) policy.rounding policy.saturation)
         (status format policy (.infinity negative)) :=
   rfl
 
-/-- Exceptional conversion is controlled entirely by the named P3109 projection policy. -/
+/-- Converting an exceptional value follows the P3109 projection policy. -/
 @[simp, grind =] theorem run_exceptional
     (policy : Formats.P3109.ProjectionPolicy)
     (exceptional : ExceptionalValue) :
     run (format := format) policy (.exceptional exceptional) =
-      .success (ExecFloat.P3109.projectRat policy (.exceptional exceptional))
+      .success
+        (ExecFloat.P3109.projectRat (.exceptional exceptional) policy.rounding
+          policy.saturation)
         (status format policy (.exceptional exceptional)) :=
   rfl
 
@@ -67,19 +70,21 @@ theorem sameDatum_decode_run_value
     (input : NumericalValue Rat) :
     Formats.P3109.Format.SameDatum
       (ExecFloat.P3109.decode
-        (ExecFloat.P3109.projectRat (format := format) policy input))
+        (ExecFloat.P3109.projectRat (format := format) input policy.rounding
+          policy.saturation))
       (format.projectRatValue policy input) :=
-  ExecFloat.P3109.decode_projectRat policy input
+  ExecFloat.P3109.decode_projectRat input policy.rounding policy.saturation
 
-/-- The codec bridge supplies the semantic clause as well as the complete word and status. -/
+/-- `run` meets the quantizer contract `spec`: word, status, and decoded datum. -/
 theorem implements_run :
     Quantization.Spec.Implements
       (spec (format := format))
       (run (format := format)) := by
   intro policy input
-  exact ⟨rfl, rfl, ExecFloat.P3109.decode_projectRat policy input⟩
+  exact ⟨rfl, rfl,
+    ExecFloat.P3109.decode_projectRat input policy.rounding policy.saturation⟩
 
-/-- The semantic contract retains the converter's complete outcome, including its status. -/
+/-- An outcome meets `spec` exactly when it is the outcome of `run`, status included. -/
 theorem spec_iff_eq_run
     (policy : Formats.P3109.ProjectionPolicy) (input : NumericalValue Rat)
     (outcome : FloatLib.Floats.ExecFloat.ConversionOutcome (ExecFloat.P3109 format)) :
@@ -103,7 +108,7 @@ theorem sameDatum_of_spec
       (ExecFloat.P3109.decode value) (format.projectRatValue policy input) :=
   h.2.2
 
-/-- The installed P3109 exact decoder exposes exact rational denotations. -/
+/-- The installed P3109 exact decoder is `decodeRat`. -/
 @[simp, grind =] theorem exactDecoder_run
     (value : ExecFloat.P3109 format) :
     FloatLib.Floats.ExecFloat.ExactDecoder.run value =

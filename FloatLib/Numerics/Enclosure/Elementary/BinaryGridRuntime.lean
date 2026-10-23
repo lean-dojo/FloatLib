@@ -13,13 +13,14 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
 # Elementary enclosures evaluated on a binary grid
 
 Taylor polynomials and remainder bounds use integer interval arithmetic at `precision` fractional
-bits. Each multiplication and scalar division rounds outward on that grid. Exact rational
-arithmetic is used for argument reduction and scalar factors; only the final endpoints are decoded.
+bits. Each multiplication and scalar division rounds outward on that grid. Argument reduction and
+scalar factors use exact rational arithmetic, and only the final endpoints are decoded.
 
 The degree selects the same Taylor polynomial as the rational kernels in `Elementary.Runtime`.
-Containment holds at every precision, including zero. Coarse grids can give wide bounds.
+Containment holds at every degree and precision, including zero, so the precision and degree
+estimates below guide refinement and never affect soundness. Coarse grids can give wide bounds.
 
-Long logarithm polynomials share a table of powers through rectangular splitting; see Section 4
+Long logarithm polynomials share a table of powers through rectangular splitting, as in Section 4
 of Fredrik Johansson, [*Efficient implementation of elementary functions in the medium-precision
 range*](https://arxiv.org/abs/1410.7176).
 -/
@@ -38,7 +39,7 @@ def workingPrecision (targetBits degree : Nat) : Nat :=
 Choose a grid width relative to a nonzero result scale.
 
 The integer logarithms estimate the extra fractional bits needed for a small result. Consumers
-handle exact zero separately; increasing the degree also increases the rounding allowance.
+handle exact zero themselves. A higher degree also raises the rounding allowance.
 -/
 def relativePrecision (targetBits : Nat) (scale : ℚ) (degree : Nat) : Nat :=
   workingPrecision (targetBits + (scale.den.log2 - scale.num.natAbs.log2)) degree
@@ -47,7 +48,6 @@ def relativePrecision (targetBits : Nat) (scale : ℚ) (degree : Nat) : Nat :=
 Allow for repeated squaring and small exponential results when choosing a grid width.
 
 Subtracting one also needs enough fractional bits to retain a small input's contribution.
-These estimates guide refinement; endpoint containment holds independently of them.
 -/
 def expPrecision (targetBits : Nat) (x : ℚ) (degree : Nat) (subtractOne : Bool := false) :
     Nat :=
@@ -79,7 +79,7 @@ def divideNat (I : Interval Int) (n : Nat) : Interval Int :=
 
 namespace Internal
 
-/-- Integer floor and ceiling division; a zero divisor gives the zero interval. -/
+/-- Integer floor and ceiling division. A zero divisor gives the zero interval. -/
 @[inline] def divideNat (I : Interval Int) (n : Nat) : Interval Int :=
   ⟨I.lo / (n : Int), -((-I.hi) / (n : Int))⟩
 
@@ -92,7 +92,7 @@ private theorem divBounds_hi_neg_fdiv (a b : Int) (hb : b ≠ 0) :
       exact h ⟨a.fdiv b, by simpa [Int.mul_comm] using heq.symm⟩
     simp [divBounds, Int.neg_fdiv, hb, h, hne, add_comm]
 
-/-- A point factor needs only two corner products, including for reversed input endpoints. -/
+/-- Grid multiplication with two corner products when either factor is a point, in any order. -/
 @[inline] def mul (precision : Nat) (I J : Interval Int) : Interval Int :=
   if I.lo = I.hi then
     let a := I.lo * J.lo
@@ -112,7 +112,7 @@ private theorem divBounds_hi_neg_fdiv (a b : Int) (hb : b ≠ 0) :
 
 end Internal
 
-/-- Compile natural scalar division directly on integers, preserving both endpoints. -/
+/-- `divideNat` equals the integer floor and ceiling division that compiled code runs. -/
 @[csimp] theorem divideNat_eq_direct : divideNat = Internal.divideNat := by
   funext I n
   by_cases hn : n = 0
@@ -126,7 +126,7 @@ end Internal
   rw [Internal.divBounds_hi_neg_fdiv I.hi n hnz]
   simp [Internal.divideNat, Int.fdiv_eq_ediv_of_nonneg _ (Int.natCast_nonneg n)]
 
-/-- Compile point-factor multiplication with two products, preserving both interval endpoints. -/
+/-- Grid multiplication equals `Internal.mul`, which needs two products for a point factor. -/
 @[csimp] theorem mul_eq_point : Interval.BinaryGrid.mul = Internal.mul := by
   funext precision I J
   dsimp only [Internal.mul]
@@ -183,7 +183,7 @@ def logOddHornerIter (precision : Nat) (X Q : Interval Int) (start n : Nat) : In
   Internal.reverseHorner (fun k tail => add (divideNat X (2 * k + 1)) (mul precision Q tail))
     start n (Interval.point 0)
 
-/-- Compile exponential Horner evaluation as a loop, preserving both interval endpoints. -/
+/-- Exponential Horner evaluation equals the accumulator loop that compiled code runs. -/
 @[csimp] theorem expHorner_eq_iter : expHorner = expHornerIter := by
   funext precision X start n
   dsimp only [expHornerIter]
@@ -192,7 +192,7 @@ def logOddHornerIter (precision : Nat) (X Q : Interval Int) (start n : Nat) : In
   | succ n ih =>
     rw [expHorner, Internal.reverseHorner_succ, ih]
 
-/-- Compile odd logarithm Horner evaluation as a loop, preserving both interval endpoints. -/
+/-- Odd logarithm Horner evaluation equals the accumulator loop that compiled code runs. -/
 @[csimp] theorem logOddHorner_eq_iter : logOddHorner = logOddHornerIter := by
   funext precision X Q start n
   dsimp only [logOddHornerIter]
@@ -206,12 +206,12 @@ def expRadius (precision : Nat) (X : Interval Int) (n : Nat) : Interval Int :=
   scaleRat (pow precision (abs X) n)
     (((n + 1 : Nat) : ℚ) / ((n.factorial : ℚ) * n))
 
-/-- Enclose the small exponential with the original Taylor polynomial and remainder bound. -/
+/-- Enclose the exponential of a small argument with its Taylor polynomial and remainder bound. -/
 def expSmall (x : ℚ) (degree precision : Nat) : Interval Int :=
   let X := enclose precision x
   around (expHorner precision X 0 (degree + 1)) (expRadius precision X (degree + 1))
 
-/-- Restore exponential range reduction, rounding outward after each square. -/
+/-- Square `n` times, rounding outward after each square, to undo exponential range reduction. -/
 def squareRepeat (precision : Nat) (I : Interval Int) : Nat → Interval Int
   | 0 => I
   | n + 1 => square precision (squareRepeat precision I n)
@@ -219,15 +219,15 @@ def squareRepeat (precision : Nat) (I : Interval Int) : Nat → Interval Int
 /--
 Balance Taylor work against extra squarings using the degree and requested grid width.
 
-The square-root estimate limits squaring work while the degree is small; the quotient reduces it
-as refinement raises the degree. A small input already supplies some reduction without squaring.
-These estimates guide refinement; containment does not depend on their accuracy.
+The square-root estimate limits squaring work while the degree is small, and the quotient reduces
+it as refinement raises the degree. A small input already supplies some reduction without
+squaring.
 -/
 def expExtraScale (x : ℚ) (degree precision : Nat) : Nat :=
   min (Nat.sqrt (4 * precision)) (precision / (degree + 1)) -
     (x.den.log2 - x.num.natAbs.log2)
 
-/-- Enclose the exponential, adding grid bits to compensate for the extra range-restoring squares. -/
+/-- Enclose the exponential, with extra grid bits to cover the extra range-restoring squares. -/
 def exp (x : ℚ) (degree precision : Nat) : RationalInterval :=
   let extra := expExtraScale x degree precision
   let reduction := Enclosure.expScale x + extra
@@ -256,7 +256,7 @@ def blockSumAux (powers : Array (Interval Int)) (start : Nat) :
     blockSumAux powers start n
       (add (divideNat (powers[n]?.getD (Interval.point 0)) (2 * (start + n) + 1)) total)
 
-/-- The sum of a block uses only scalar division and grid addition. -/
+/-- Sum of one block, by scalar division and grid addition alone. -/
 def blockSum (powers : Array (Interval Int)) (start n : Nat) : Interval Int :=
   blockSumAux powers start n (Interval.point 0)
 
@@ -279,7 +279,7 @@ def logOddRectangular (precision : Nat) (X Q : Interval Int) (start n blockSize 
 
 end LogPolynomial
 
-/-- Share a power table across longer odd logarithm polynomials. -/
+/-- Odd logarithm polynomial: Horner steps up to four terms, rectangular splitting above. -/
 def logOddPolynomial (precision : Nat) (X Q : Interval Int) (start n : Nat) : Interval Int :=
   if n ≤ 4 then logOddHorner precision X Q start n
   else LogPolynomial.logOddRectangular precision X Q start n (max 1 n.sqrt)
@@ -301,6 +301,27 @@ def logSeries (x : ℚ) (degree precision : Nat) : Interval Int :=
   let n := (degree + 1) / 2
   let half := around (logOddPolynomial precision X Q 0 n) (logOddRadius precision X Q t n)
   add half half
+
+/--
+A logarithm series degree for a positive `value` whose truncation error is below about
+`2 ^ -bits`.
+
+For `value = n / d` in lowest terms the series runs in `t = (n - d) / (n + d)`, so each pair of
+degrees gains `log₂ (1 / t²)` bits. The estimate uses the integer part of `1 / t²`.
+-/
+def logSeriesDegree (value : ℚ) (bits : Nat) : Nat :=
+  let numerator := value.num.natAbs
+  let gap := if numerator ≤ value.den then value.den - numerator else numerator - value.den
+  if gap = 0 then 1
+  else 2 * (bits / max 1 ((numerator + value.den) ^ 2 / gap ^ 2).log2 + 1) - 1
+
+/--
+Enclose `log value` for a positive rational on the grid of `precision` fractional bits with the
+transformed series in `(value - 1) / (value + 1)`, without the argument reduction of `log`. It
+suits values near one.
+-/
+def logUnreduced (value : ℚ) (precision : Nat) : Interval Int :=
+  logSeries value (logSeriesDegree value precision) precision
 
 /-- Remove a power of two and restore its multiple of `log 2`, omitting a zero multiple. -/
 def logLarge (x : ℚ) (degree precision : Nat) : Interval Int :=

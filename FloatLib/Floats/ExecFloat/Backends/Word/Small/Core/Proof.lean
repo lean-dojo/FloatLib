@@ -15,15 +15,14 @@ import Mathlib.Tactic.NormNum
 /-!
 # Correctness of native storage for one-word floating-point formats
 
-The executable representation boundary lives in `Core.Runtime`. Its word conversions, field
-operations, and packing are proved against the exact-width carrier under the actual capacity
-requirements. The result therefore applies to every configured binary format that fits one
-machine word rather than to a list of familiar IEEE widths.
+The word conversions, field operations and packing of `Core.Runtime` are proved against the
+exact-width carrier under the real capacity requirement, so the results hold for every configured
+binary format that fits one machine word.
 
-Later arithmetic proofs reuse this boundary instead of repeating masking and truncation arguments
-for each operation. The descriptor constants of `Core.Runtime` are machine words computed by
-shifts; `exponentMask_toNat`, `fractionMask_toNat`, `biasWord_toNat`, and the threshold lemmas at
-the end of this module give their natural-number values under the one-word capacity bound.
+Arithmetic proofs reuse these facts and don't repeat masking and truncation arguments for each
+operation. The descriptor constants of `Core.Runtime` are machine words computed by shifts.
+`exponentMask_toNat`, `fractionMask_toNat`, `biasWord_toNat` and the threshold lemmas at the end
+of this module give their natural-number values under the one-word capacity bound.
 -/
 
 @[expose] public section
@@ -158,8 +157,8 @@ theorem biasInt_eq {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64) :
 theorem exponentField_toNat {fmt : FloatFormat}
     (hwidth : fmt.bitWidth ≤ 64) (x : Model fmt) :
     (exponentField fmt (toWord x)).toNat = Model.expField x := by
-  rw [Model.expField_eq_expFieldImpl_apply]
-  unfold exponentField Model.expFieldImpl
+  rw [Model.expField_eq_internal_apply]
+  unfold exponentField Model.Internal.expField
   rw [UInt64.toNat_and,
     FloatLib.Numerics.FixedWord.shiftRight_toNat _ _ (fracWidth_lt_64 fmt hwidth),
     toWord_toNat hwidth, exponentMask_toNat hwidth]
@@ -167,9 +166,9 @@ theorem exponentField_toNat {fmt : FloatFormat}
 /--
 Bounds for a nonzero exponent extracted through the one-word representation.
 
-Arithmetic kernels commonly establish nonzeroness while rejecting zero and subnormal operands.
-This lemma supplies the remaining format-width bound without making each kernel repeat the bridge
-from `UInt64` fields to `Model.expField`.
+Arithmetic kernels know the exponent is nonzero once they reject zero and subnormal operands.
+This lemma adds the format-width bound, so no kernel repeats the bridge from `UInt64` fields to
+`Model.expField`.
 -/
 theorem exponentField_bounds_of_ne_zero {fmt : FloatFormat}
     (hwidth : fmt.bitWidth ≤ 64) (x : Model fmt)
@@ -189,8 +188,8 @@ theorem exponentField_bounds_of_ne_zero {fmt : FloatFormat}
 theorem fractionField_toNat {fmt : FloatFormat}
     (hwidth : fmt.bitWidth ≤ 64) (x : Model fmt) :
     (fractionField fmt (toWord x)).toNat = Model.fracField x := by
-  rw [Model.fracField_eq_fracFieldImpl_apply]
-  unfold fractionField Model.fracFieldImpl
+  rw [Model.fracField_eq_internal_apply]
+  unfold fractionField Model.Internal.fracField
   rw [UInt64.toNat_and, fractionMask_toNat hwidth, toWord_toNat hwidth]
 
 /-- Natural-number value of the implicit leading bit for a small one-word format. -/
@@ -244,8 +243,8 @@ theorem normalMantissa_toNat_of_width {fmt : FloatFormat}
 /--
 The implicit-bit significand extracted from a one-word value is normalized.
 
-Only the stored fraction-width bound is needed; classification of the source value is handled by
-the calling kernel before it treats this word as a normal significand.
+Only the stored fraction-width bound is needed. The calling kernel classifies the source value
+before it treats this word as a normal significand.
 -/
 theorem normalMantissa_bounds_of_width {fmt : FloatFormat}
     (hwidth : fmt.bitWidth ≤ 64) (x : Model fmt) :
@@ -279,12 +278,12 @@ theorem ofWord_packFields {fmt : FloatFormat}
     (exponent fraction : UInt64) :
     ofWord (fmt := fmt) (packFields fmt sign exponent fraction) =
       Model.ofFields fmt sign exponent.toNat fraction.toNat := by
-  rw [Model.ofFields_eq_ofFieldsImpl]
-  unfold Model.ofFieldsImpl
+  rw [Model.ofFields_eq_internal]
+  unfold Model.Internal.ofFields
   apply congrArg Model.ofBits
   apply BitVec.eq_of_toNat_eq
   rw [BitVec.toNat_ofNatLT, and_storageMask_toNat]
-  unfold packFields Model.mkBitsImpl
+  unfold packFields Model.Internal.mkBits
   simp only [BitVec.ofNatLT_eq_ofNat, BitVec.toNat_ofNat]
   rw [UInt64.toNat_or, UInt64.toNat_or]
   have hfrac : fmt.fracWidth < 64 := fracWidth_lt_64 fmt hwidth
@@ -493,6 +492,13 @@ theorem exponentOffset_toNat {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64) 
   rw [UInt64.toNat_sub_of_le, hsum, show (2 : UInt64).toNat = 2 by decide]
   rw [UInt64.le_iff_toNat_le, hsum, show (2 : UInt64).toNat = 2 by decide]
   omega
+
+/-- A storage word below the radix survives the round trip through the model. -/
+theorem toWord_ofWord_of_lt {fmt : FloatFormat} {bits : UInt64}
+    (hbits : bits.toNat < 2 ^ fmt.bitWidth) :
+    toWord (ofWord (fmt := fmt) bits) = bits := by
+  unfold toWord
+  rw [toNatBits_ofWord, Nat.mod_eq_of_lt hbits, UInt64.ofNat_toNat]
 
 end Model.NativeSmallWord
 end FloatLib.Floats.Formats.BinaryInterchange

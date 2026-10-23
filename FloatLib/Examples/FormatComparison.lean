@@ -22,7 +22,7 @@ lake -d tests exe check example
 ```
 
 Compiled arithmetic on Lean's builtin `Float` and `Float32` uses native runtime primitives.
-FloatLib operations have reference semantics and refinement proofs. Explicit calls through
+FloatLib operations have reference semantics and refinement proofs. Opt-in calls through
 `Configured.NativeFPU.Unchecked` also depend on the compiler, host FPU, and environment. Posit32
 uses nearest-even rounding and has no selectable IEEE rounding mode.
 
@@ -38,21 +38,7 @@ public section
 namespace FloatLib.Examples.FormatComparison
 
 open FloatLib.Floats
-open FloatLib.Floats.Formats.BinaryInterchange
-
-/-! ## Choose the types -/
-
-/-- FloatLib's IEEE binary32 configuration. -/
-abbrev Binary32 :=
-  ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)
-
-/-- FloatLib's IEEE binary64 configuration. -/
-abbrev Binary64 :=
-  ExecFloat.Binary (exponentBits := 11) (fractionBits := 52)
-
-/-- A 32-bit posit as defined by the Posit Standard (2022). -/
-abbrev Posit32 :=
-  ExecFloat.Posit (bits := 32)
+open FloatLib.Rounding
 
 /-! ## Evaluate the same expression -/
 
@@ -78,14 +64,16 @@ private def posit32Result : Posit32 :=
 
 /-
 Only the type annotation differs between these five definitions. Lean calls its native binary64
-type `Float`; `Binary64` is the FloatLib type with the same layout. The native types print with
-six decimals, FloatLib types print their exact stored value.
+type `Float`, `Binary64` is the FloatLib type with the same layout, and `Binary32` and `Posit32`
+are the standard names of the other two FloatLib formats. The native types print with six
+decimals. FloatLib binary values print a decimal that reads back as their stored value, and posits
+print their exact value.
 -/
 
 /-! ## Convert when another API expects a different type -/
 
 -- These functions preserve finite native values through their IEEE interchange words.
--- Native conversion canonicalizes NaNs; use the `ofBits32`/`toBits32` API for stored payloads.
+-- Native conversion canonicalizes NaNs, so use the `ofBits32`/`toBits32` API for stored payloads.
 example (value : Float32) : Binary32 :=
   ExecFloat.Binary.ofFloat32 value
 
@@ -94,22 +82,22 @@ example (value : Binary32) : Float32 :=
   ExecFloat.Binary.toFloat32 value
 
 -- A cast between FloatLib formats names its destination and returns an outcome carrying the
--- value and its conversion status, or an explicit failure. `value?` keeps just the value.
+-- value and its conversion status, or a failure. `value?` keeps just the value.
 example (value : Binary32) : ExecFloat.ConversionOutcome Posit32 :=
   value.cast (target := Posit32)
 
 /-! ## Compare the exact values produced by rounding -/
 
-private def third (rounding : Model.IEEERoundingMode) : Binary32 :=
-  ExecFloat.Binary.divWithRounding 1 3 (rounding := rounding)
--- third .nearestEven = 11184811 * 2^-25
--- third .towardZero = 5592405 * 2^-24
--- third .towardPositiveInfinity = 11184811 * 2^-25
--- third .towardNegativeInfinity = 5592405 * 2^-24
+private def third (mode : IEEERoundingMode) : Binary32 :=
+  ExecFloat.Binary.div 1 3 (mode := mode)
+-- third nearest = 0.33333334
+-- third towardZero = 0.3333333
+-- third up = 0.33333334
+-- third down = 0.3333333
 
 /-
-One third lies between two binary32 neighbours, 0.33333331 below and 0.33333334 above. Nearest-even
-and toward `+∞` choose the upper one; toward zero and toward `-∞` choose the lower one, and they
+One third lies between two binary32 neighbours, 0.3333333 below and 0.33333334 above. Nearest-even
+and `up` choose the upper one. `towardZero` and `down` choose the lower one, and they
 agree because the value is positive. In Posit32 the same quotient is `178956971 * 2^-29`, closer to
 one third than either binary32 neighbour because a 32-bit posit has more fraction bits near one.
 -/
@@ -124,17 +112,17 @@ private def showArithmetic : IO Unit := do
 
 private def showRounding : IO Unit := do
   IO.println "Binary32 1 / 3: exact stored values"
-  let modes : List (String × Model.IEEERoundingMode) :=
-    [("nearest, ties to even", .nearestEven), ("toward zero", .towardZero),
-     ("toward +infinity", .towardPositiveInfinity), ("toward -infinity", .towardNegativeInfinity)]
+  let modes : List (String × IEEERoundingMode) :=
+    [("nearest, ties to even", nearest), ("toward zero", towardZero),
+     ("toward +infinity", up), ("toward -infinity", down)]
   for (label, mode) in modes do
     IO.println s!"  {label}: {third mode}"
   IO.println "  Nearest-even selects the upper neighbor for this input."
 
 /-
-String interpolation uses the shared `ToString` instance. Binary values and posits display exactly:
-a short decimal when one is exact, otherwise an integer times a power of two. The formatters also
-handle signed zero, infinities, NaNs, and NaR where the format has them.
+String interpolation uses the shared `ToString` instance, so these lines print what `#eval`
+prints: a round-trip decimal for binary values and the exact decimal for posits. The
+formatters also handle signed zero, infinities, NaNs, and NaR where the format has them.
 -/
 
 /-- Print the two calculations above. Run with `lake -d tests exe check example`. -/

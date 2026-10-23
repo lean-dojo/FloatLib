@@ -6,8 +6,9 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
+public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
 import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
+import FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Runtime
 
@@ -15,10 +16,12 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Run
 # Packed native-word Posit square root
 
 The packed square-root adapter connects native posit storage to the width-generic direct kernel.
-A proved-valid `UInt64` encoding is decoded once into native dyadic fields. A fixed-word
-restoring root computes the complete destination-width prefix and the common two-limb
-guard/sticky packer selects the Posit code. The significand, root, and remainder stay in
-fixed-width carriers.
+A proved-valid `UInt64` encoding is decoded once into native dyadic fields. A fixed-word root
+computes the complete destination-width prefix from a candidate accepted only after an exact
+square check, with the restoring loop as fallback. `CheckedSqrt.Compiler` extends the checked
+candidate to radicands of at least `2 ^ 128` in compiled code. The common two-limb guard/sticky
+packer then selects the Posit code. The significand, root, and remainder stay in fixed-width
+carriers.
 -/
 
 @[expose] public section
@@ -32,8 +35,8 @@ open FloatLib.Numerics.FixedWord.RestoringSquareRoot
 /--
 Scale one native significand for destination-width square-root prefix generation.
 
-For an eligible one-word Posit, `payloadBits ≤ 63`; exponent parity therefore makes `shift < 128`.
-The exact product fits below bit 192 and is consumed by the 96-digit restoring kernel.
+For an eligible one-word Posit, `payloadBits ≤ 63`, so with the exponent parity `shift < 128`.
+The exact product fits below bit 192 and is consumed by the 96-step root kernel.
 -/
 @[inline] def scaledRadicandWord
     (significand : UInt64) (shift : Nat) : UInt256 :=
@@ -54,7 +57,7 @@ The exact product fits below bit 192 and is consumed by the 96-digit restoring k
     let parity := (exponent.emod 2).toNat
     let scaled :=
       scaledRadicandWord significand (parity + 2 * precision)
-    let state := rootAndRemainder scaled 96
+    let state := CheckedSquareRoot.rootAndRemainder scaled 96
     let rootPrefix :=
       if NativeLimb.isZero state.remainder then
         state.root

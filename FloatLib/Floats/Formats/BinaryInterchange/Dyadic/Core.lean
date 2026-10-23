@@ -18,9 +18,9 @@ Finite binary interchange values decode exactly to a sign, natural significand, 
 power-of-two exponent. This module defines that bridge and the exact comparison used by
 arithmetic, conversions, and rounding.
 
-The decoding layer is intentionally independent of any arithmetic operation. Addition,
-multiplication, FMA, conversion, and directed rounding can all share the same exact domain and
-prove their own final packing step.
+The decoding layer depends on no arithmetic operation, so addition, multiplication, FMA,
+conversion, and directed rounding share the same exact domain and each prove their own final
+packing step.
 -/
 
 @[expose] public section
@@ -184,6 +184,23 @@ theorem cmpDyadic_eq_cmpDyadicAligned (a b : Numerics.Dyadic) :
       split_ifs <;> first | rfl | omega
 
 /--
+Exchanging the operands of the exact comparison reverses its result.
+
+Both operands are aligned to the same smaller exponent whichever comes first, so the aligned
+form reduces this to `Int.compare_swap`.
+-/
+theorem cmpDyadic_swap (a b : Numerics.Dyadic) : (cmpDyadic a b).swap = cmpDyadic b a := by
+  rw [cmpDyadic_eq_cmpDyadicAligned, cmpDyadic_eq_cmpDyadicAligned]
+  unfold cmpDyadicAligned
+  have hexponent : (if b.exponent ≤ a.exponent then b.exponent else a.exponent) =
+      (if a.exponent ≤ b.exponent then a.exponent else b.exponent) := by
+    split <;> split <;> omega
+  rw [hexponent, Bool.and_comm]
+  split
+  · rfl
+  · exact Int.compare_swap _ _
+
+/--
 Decode an IEEE bit pattern into an exact dyadic.
 
 - NaN / Inf → `none`
@@ -191,7 +208,7 @@ Decode an IEEE bit pattern into an exact dyadic.
 - subnormal → `mant = frac`, `exp = ieeeMinSubnormalExponent fmt`
 - normal → `mant = 2^fracWidth + frac`, `exp = e_biased - (bias + fracWidth)`
 
-Every threshold is derived from `fmt`; no fixed-width constants are used.
+Every threshold is derived from `fmt`, and no fixed-width constants are used.
 -/
 @[inline] def ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   if IEEE.isNaN x || IEEE.isInf x then
@@ -221,7 +238,7 @@ The storage word is converted to `Nat` once, then all three fields are extracted
 value. The exponent field alone determines whether an IEEE encoding is exceptional, so the
 decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and `IEEE.isInf`.
 -/
-@[inline] def ieeeToDyadicImpl? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
+@[inline] def Internal.ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   let bits := x.toNatBits
   let e := (bits >>> fmt.fracWidth) &&& FloatFormat.expAllOnesNat fmt
   if e == FloatFormat.expAllOnesNat fmt then
@@ -243,17 +260,17 @@ decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and 
         Int.ofNat e - Int.ofNat (FloatFormat.ieeeNormalMantissaExpOffset fmt)
       some { negative := s, significand, exponent := exp }
 
-/-- The compiler uses the single-pass field decoder while proofs retain `ieeeToDyadic?`. -/
-@[csimp] theorem toDyadic_eq_toDyadicImpl :
-    @ieeeToDyadic? = @ieeeToDyadicImpl? := by
+/-- The compiler uses the single-pass field decoder while proofs keep `ieeeToDyadic?`. -/
+@[csimp] theorem ieeeToDyadic_eq_internal :
+    @ieeeToDyadic? = @Internal.ieeeToDyadic? := by
   funext fmt x
   change ieeeToDyadic? x =
-    (let e := expFieldImpl x
+    (let e := Internal.expField x
      if e == FloatFormat.expAllOnesNat fmt then
        none
      else
-       let s := signBitImpl x
-       let f := fracFieldImpl x
+       let s := Internal.signBit x
+       let f := Internal.fracField x
        if e == 0 then
          if f == 0 then
            some { negative := s, significand := 0, exponent := 0 }
@@ -267,8 +284,8 @@ decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and 
          let exp : Int :=
            Int.ofNat e - Int.ofNat (FloatFormat.ieeeNormalMantissaExpOffset fmt)
          some { negative := s, significand, exponent := exp })
-  rw [← expField_eq_expFieldImpl_apply x, ← signBit_eq_signBitImpl_apply x,
-    ← fracField_eq_fracFieldImpl_apply x]
+  rw [← expField_eq_internal_apply x, ← signBit_eq_internal_apply x,
+    ← fracField_eq_internal_apply x]
   by_cases he : expField x = FloatFormat.expAllOnesNat fmt
   · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, he]
   · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, he]

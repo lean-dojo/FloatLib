@@ -112,21 +112,58 @@ static enum operation parse_operation(size_t line_number,
   return OP_SUM;
 }
 
-static mpfr_rnd_t parse_rounding(size_t line_number, const char *text) {
+/*
+ * A FloatLib rounding direction. MPFR has no rounding to nearest with ties away
+ * from zero that supports subnormalization, so `nearestAway` runs MPFR_RNDN and
+ * corrects the value at an exact tie of the destination grid.
+ */
+struct rounding {
+  mpfr_rnd_t mpfr;
+  int nearest_away;
+};
+
+static struct rounding parse_rounding(size_t line_number, const char *text) {
+  struct rounding rounding = {MPFR_RNDN, 0};
   if (strcmp(text, "nearestEven") == 0) {
-    return MPFR_RNDN;
+    return rounding;
+  }
+  if (strcmp(text, "nearestAway") == 0) {
+    rounding.nearest_away = 1;
+    return rounding;
+  }
+  if (strcmp(text, "awayFromZero") == 0) {
+    rounding.mpfr = MPFR_RNDA;
+    return rounding;
   }
   if (strcmp(text, "towardZero") == 0) {
-    return MPFR_RNDZ;
+    rounding.mpfr = MPFR_RNDZ;
+    return rounding;
   }
   if (strcmp(text, "towardPositive") == 0) {
-    return MPFR_RNDU;
+    rounding.mpfr = MPFR_RNDU;
+    return rounding;
   }
   if (strcmp(text, "towardNegative") == 0) {
-    return MPFR_RNDD;
+    rounding.mpfr = MPFR_RNDD;
+    return rounding;
   }
   fail_line(line_number, "unknown rounding mode");
-  return MPFR_RNDN;
+  return rounding;
+}
+
+/*
+ * Round a nonzero exact value `significand * 2^exponent` into the destination exponent range,
+ * then apply IEEE subnormal rounding. Values in the extended exponent range still need it. Zero
+ * and infinity are already final, so only regular values are subnormalized.
+ */
+static int round_exact(mpfr_ptr result, const mpz_t significand, mpfr_exp_t exponent,
+                       mpfr_rnd_t rounding) {
+  int ternary = mpfr_set_z_2exp(result, significand, exponent, rounding);
+  ternary = mpfr_check_range(result, ternary, rounding);
+  if (mpfr_regular_p(result)) {
+    ternary = mpfr_subnormalize(result, ternary, rounding);
+  }
+  return ternary;
 }
 
 static void parse_exact(size_t line_number, char **cursor,
@@ -266,7 +303,7 @@ static void check_line(size_t line_number, char *line,
   enum operation operation = parse_operation(line_number, operation_text);
   const char *rounding_text =
       next_token(line_number, &cursor, "rounding mode");
-  mpfr_rnd_t rounding = parse_rounding(line_number, rounding_text);
+  struct rounding rounding = parse_rounding(line_number, rounding_text);
   unsigned long exponent_bits =
       parse_ulong(line_number, "exponent width",
                   next_token(line_number, &cursor, "exponent width"));
@@ -378,9 +415,9 @@ static void check_line(size_t line_number, char *line,
     mpfr_init2(zero_probe, precision);
     int zero_ternary =
         operation == OP_SUM
-            ? mpfr_sum(zero_probe, (const mpfr_ptr *)left, count, rounding)
+            ? mpfr_sum(zero_probe, (const mpfr_ptr *)left, count, rounding.mpfr)
             : mpfr_dot(zero_probe, (const mpfr_ptr *)left,
-                       (const mpfr_ptr *)right, count, rounding);
+                       (const mpfr_ptr *)right, count, rounding.mpfr);
     if (zero_ternary != 0 || !mpfr_zero_p(zero_probe)) {
       fail_line(line_number, "MPFR zero-sign probe was not exact zero");
     }
@@ -396,26 +433,67 @@ static void check_line(size_t line_number, char *line,
     fail_line(line_number, "MPFR rejected the destination exponent range");
   }
 
+  /*
+   * Rounding to nearest with ties away from zero differs from MPFR_RNDN only in the value
+   * delivered at an exact tie of the destination grid; its flags are those of MPFR_RNDN for IEEE
+   * formats, whose largest finite significand is odd. The tie test compares the exact result with
+   * the midpoint of its MPFR_RNDZ and MPFR_RNDA neighbours in MPFR's wide exponent range, with the
+   * first grid value 2^maximum_exponent above the largest finite one in place of an infinite
+   * neighbour. It runs before the flag window of the checked rounding.
+   */
+  int nearest_away_takes_away = 0;
+  mpfr_t away;
+  mpfr_init2(away, precision);
+  if (rounding.nearest_away && mpz_sgn(exact_significand) != 0) {
+    mpfr_t toward_zero;
+    mpfr_init2(toward_zero, precision);
+    const int toward_zero_ternary =
+        round_exact(toward_zero, exact_significand, exact_exponent, MPFR_RNDZ);
+    (void)round_exact(away, exact_significand, exact_exponent, MPFR_RNDA);
+    if (toward_zero_ternary != 0) {
+      if (mpfr_set_emin(original_emin) != 0 ||
+          mpfr_set_emax(original_emax) != 0) {
+        fail_line(line_number, "could not restore the MPFR exponent range");
+      }
+      mpfr_t upper;
+      mpfr_t midpoint;
+      mpfr_init2(upper, precision);
+      mpfr_init2(midpoint, precision + 2);
+      if (mpfr_inf_p(away)) {
+        mpfr_set_ui_2exp(upper, 1, maximum_exponent, MPFR_RNDN);
+        if (mpfr_signbit(away)) {
+          mpfr_neg(upper, upper, MPFR_RNDN);
+        }
+      } else {
+        mpfr_set(upper, away, MPFR_RNDN);
+      }
+      if (mpfr_add(midpoint, toward_zero, upper, MPFR_RNDN) != 0) {
+        fail_line(line_number, "inexact nearest-away midpoint");
+      }
+      mpfr_div_2ui(midpoint, midpoint, 1, MPFR_RNDN);
+      nearest_away_takes_away = mpfr_equal_p(exact_result, midpoint);
+      mpfr_clear(upper);
+      mpfr_clear(midpoint);
+      if (mpfr_set_emin(minimum_exponent) != 0 ||
+          mpfr_set_emax(maximum_exponent) != 0) {
+        fail_line(line_number, "MPFR rejected the destination exponent range");
+      }
+    }
+    mpfr_clear(toward_zero);
+  }
+
   mpfr_clear_flags();
-  int ternary = 0;
   if (mpz_sgn(exact_significand) == 0) {
     mpfr_set_zero(result, exact_zero_negative ? -1 : 1);
   } else {
-    ternary =
-        mpfr_set_z_2exp(result, exact_significand, exact_exponent, rounding);
-    ternary = mpfr_check_range(result, ternary, rounding);
-    /*
-     * Values in the extended exponent range still need IEEE subnormal
-     * rounding. Zero and infinity are already final, and MPFR 4.1 rejects
-     * subnormalization of an underflowed zero with a nonzero ternary value.
-     */
-    if (mpfr_regular_p(result)) {
-      ternary = mpfr_subnormalize(result, ternary, rounding);
-    }
+    (void)round_exact(result, exact_significand, exact_exponent, rounding.mpfr);
   }
-  (void)ternary;
 
   const struct ieee_flags flags = ieee_flags_from_mpfr();
+  if (nearest_away_takes_away) {
+    mpfr_set(result, away, MPFR_RNDN);
+  }
+  mpfr_clear(away);
   int actual_invalid = flags.invalid;
   int actual_divide_by_zero = flags.divide_by_zero;
   int actual_overflow = flags.overflow;

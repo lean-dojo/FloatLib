@@ -102,7 +102,7 @@ meta def encodingName : FloatFormat.Encoding → String
   | .finiteUnsignedZero => "finite values with unsigned zero (FNUZ)"
   | .finite => "finite-only"
 
-/-- Identify named IEEE layouts; arbitrary widths retain the more general IEEE-style label. -/
+/-- Name the standard IEEE layouts. Other IEEE-style widths get a general label. -/
 meta def standardName (summary : Summary) : String :=
   if summary.isIEEE then
     match summary.expWidth, summary.fracWidth with
@@ -178,6 +178,48 @@ meta def integralApplicability (summary : Summary) : TheoremApplicability :=
     .unavailable
       "the theorem requires `fracWidth ≤ maxNormalExponent`; this descriptor fails that range premise"
 
+/--
+Six significant decimal digits of the positive dyadic `significand * 2 ^ exponent`, as
+`3.40282e38`, computed exactly and rounded half up. It is `none` for zero or an exponent of
+magnitude beyond a million, whose expansion would be slow.
+-/
+meta def sixDigits (significand : Nat) (exponent : Int) : Option String :=
+  if significand = 0 || exponent.natAbs > 1000000 then none
+  else
+    let num := if 0 ≤ exponent then significand <<< exponent.toNat else significand
+    let den := if 0 ≤ exponent then 1 else 1 <<< exponent.natAbs
+    -- The digit counts give the decimal exponent of `num / den` up to one.
+    let estimate : Int := ((toString num).length : Int) - (toString den).length
+    let below :=
+      if 0 ≤ estimate then num < den * 10 ^ estimate.toNat else num * 10 ^ estimate.natAbs < den
+    let power := if below then estimate - 1 else estimate
+    let shift := 5 - power
+    let scaledNum := if 0 ≤ shift then num * 10 ^ shift.toNat else num
+    let scaledDen := if 0 ≤ shift then den else den * 10 ^ shift.natAbs
+    let digits := (2 * scaledNum + scaledDen) / (2 * scaledDen)
+    let (digits, power) := if digits ≥ 1000000 then (digits / 10, power + 1) else (digits, power)
+    let text := toString digits
+    some s!"{text.take 1}.{text.drop 1}e{power}"
+
+/-- An exact text with the six-digit decimal approximation of a dyadic, when one is cheap. -/
+meta def withApproximation (exact : String) (significand : Nat) (exponent : Int) : String :=
+  match sixDigits significand exponent with
+  | some approximation => s!"{exact} ≈ {approximation}"
+  | none => exact
+
+/-- A power of two `2 ^ exponent` with its decimal approximation. -/
+meta def twoPower (exponent : Int) : String :=
+  withApproximation s!"2^{exponent}" 1 exponent
+
+/--
+The largest finite value, `(2 - 2 ^ -k) * 2 ^ maxNormalExponent`, where `k` is the fraction width,
+or `k - 1` when the all-ones fraction at the top exponent is a NaN.
+-/
+meta def largestFinite (summary : Summary) : String :=
+  let gap := if summary.encoding == .finiteMaxNaN then summary.fracWidth - 1 else summary.fracWidth
+  withApproximation s!"(2 - 2^-{gap}) * 2^{summary.maxNormalExponent}"
+    (2 ^ (gap + 1) - 1) (summary.maxNormalExponent - gap)
+
 /-- Build the complete user-facing inspection profile for a binary descriptor. -/
 meta def profile
     (summary : Summary)
@@ -201,7 +243,12 @@ meta def profile
     , ⟨"encoding", encodingName summary.encoding⟩
     ]
   values :=
-    [ ⟨"finite numbers", "yes"⟩
+    [ ⟨"largest finite value (maxFinite)", largestFinite summary⟩
+    , ⟨"least normal value (minNormal)", twoPower summary.minNormalExponent⟩
+    , ⟨"least subnormal value (minSubnormal)",
+        twoPower (summary.minNormalExponent - summary.fracWidth)⟩
+    , ⟨"machine epsilon (epsilon)", twoPower (-(summary.fracWidth : Int))⟩
+    , ⟨"finite numbers", "yes"⟩
     , ⟨"subnormals", "yes; exponent field zero with a nonzero fraction"⟩
     , ⟨"distinct signed zeros", yesNo (summary.encoding != .finiteUnsignedZero)⟩
     , ⟨"signed infinities", yesNo (summary.encoding == .ieee)⟩
@@ -259,36 +306,40 @@ meta def profile
             "Each listed finite primitive equals one nearest-even rounding of its exact real operation." } }
     , { topic := "status-bearing operations and flag classifiers"
         declarations :=
-          [ ``Model.addWithStatus_value
-          , ``Model.subWithStatus_value
-          , ``Model.mulWithStatus_value
-          , ``Model.divWithStatus_value
-          , ``Model.sqrtWithStatus_value
-          , ``Model.fmaWithStatus_value
-          , ``Model.addWithStatus_of_toDyadic
-          , ``Model.mulWithStatus_of_toDyadic
-          , ``Model.divWithStatus_of_toDyadic_nonzero
-          , ``Model.fmaWithStatus_of_toDyadic
-          , ``Model.addWithStatus_invalid
-          , ``Model.mulWithStatus_invalid
-          , ``Model.divWithStatus_invalid
-          , ``Model.divWithStatus_divideByZero
-          , ``Model.sqrtWithStatus_invalid
-          , ``Model.fmaWithStatus_invalid
+          [ ``Model.value_add
+          , ``Model.value_sub
+          , ``Model.value_mul
+          , ``Model.value_div
+          , ``Model.value_sqrt
+          , ``Model.value_fma
+          , ``Model.add_status_of_toDyadic
+          , ``Model.mul_status_of_toDyadic
+          , ``Model.div_status_of_toDyadic_nonzero
+          , ``Model.fma_status_of_toDyadic
+          , ``Model.sqrt_status_of_toDyadic
+          , ``Model.add_invalid
+          , ``Model.mul_invalid
+          , ``Model.div_invalid
+          , ``Model.div_divideByZero
+          , ``Model.sqrt_invalid
+          , ``Model.sqrt_inexact_iff
+          , ``Model.sqrt_inexact_eq_ternary_bne_eq
+          , ``Model.sqrt_inexact_of_underflow
+          , ``Model.fma_invalid
           , ``Model.dyadicRoundingStatus_inexact_of_underflow
           , ``Model.dyadicRoundingStatus_inexact_of_overflow
           , ``Model.rationalRoundingStatusScaled_inexact_of_underflow
           , ``Model.rationalRoundingStatusScaled_inexact_of_overflow
           ]
         definitions :=
-          [ ``Model.IEEEStatus
+          [ ``Numerics.IEEEStatus
           , ``Model.OutcomeAt
-          , ``Model.addWithStatus
-          , ``Model.subWithStatus
-          , ``Model.mulWithStatus
-          , ``Model.divWithStatus
-          , ``Model.sqrtWithStatus
-          , ``Model.fmaWithStatus
+          , ``Model.add
+          , ``Model.sub
+          , ``Model.mul
+          , ``Model.div
+          , ``Model.sqrt
+          , ``Model.fma
           ]
         applicability := .verifiedForType
         scope :=
@@ -306,21 +357,21 @@ meta def profile
           , ``Model.toEReal_maximumNumber_eq_max
           , ``Model.minimumNumber_of_isNaN_left
           , ``Model.maximumNumber_of_isNaN_left
-          , ``Model.minimumNumberWithStatus_invalid
-          , ``Model.maximumNumberWithStatus_invalid
-          , ``Model.nextUpWithStatus_invalid
-          , ``Model.nextDownWithStatus_invalid
+          , ``Model.minimumNumber_invalid
+          , ``Model.maximumNumber_invalid
+          , ``Model.nextUp_invalid
+          , ``Model.nextDown_invalid
           , ``Model.adjacencyRank_nextUp
           , ``Model.adjacencyRank_nextDown
           , ``Model.no_rank_between_nextUp
           , ``Model.no_rank_between_nextDown
           , ``Model.remainderDyadic_toRat
-          , ``Model.remainderWithStatus_of_finite
-          , ``Model.remainderWithStatus_of_zero_divisor
-          , ``Model.roundToIntegralExactWithStatus_of_finite
-          , ``Model.roundToIntegralExactWithStatus_inexact_iff
-          , ``Model.scaleWithStatus_of_finite
-          , ``Model.binaryExponentWithStatus_of_finite_nonzero
+          , ``Model.remainder_status_of_finite
+          , ``Model.remainder_status_of_zero_divisor
+          , ``Model.roundToIntegral_status_of_finite
+          , ``Model.roundToIntegral_inexact_iff
+          , ``Model.scale_status_of_finite
+          , ``Model.binaryExponent_status_of_finite_nonzero
           , ``Model.binaryExponentInt_of_finite_nonzero
           , ``Model.binaryExponentInt_bounds
           , ``Model.binaryExponentInt_of_zero
@@ -346,16 +397,12 @@ meta def profile
           , ``Model.maxNum
           , ``Model.minimumNumber
           , ``Model.maximumNumber
-          , ``Model.minimumNumberWithStatus
-          , ``Model.maximumNumberWithStatus
           , ``Model.nextUp
           , ``Model.nextDown
-          , ``Model.nextUpWithStatus
-          , ``Model.nextDownWithStatus
-          , ``Model.remainderWithStatus
-          , ``Model.roundToIntegralExactWithStatus
-          , ``Model.scaleWithStatus
-          , ``Model.binaryExponentWithStatus
+          , ``Model.remainder
+          , ``Model.roundToIntegral
+          , ``Model.scale
+          , ``Model.binaryExponent
           , ``Model.binaryExponentInt
           ]
         applicability := .verifiedForType
@@ -363,36 +410,38 @@ meta def profile
           "all binary descriptors under the non-NaN, finite, nonzero, and endpoint hypotheses stated by each theorem; the declaration list is validated when the inspection profile is constructed" }
     , { topic := "IEEE exact remainder and integral truncation"
         declarations :=
-          [ ``Model.remainderWithStatus_exact
+          [ ``Model.remainder_exact
           , ``Model.isFinite_roundToIntegral_towardZero
           , ``Model.toReal_roundToIntegral_towardZero_of_isFinite
-          , ``Model.roundToIntegralExactWithStatus_towardZero_overflow_eq_false
+          , ``Model.roundToIntegral_towardZero_overflow_eq_false
           ]
         applicability := ieeeApplicability summary
         scope := "IEEE-style descriptor; finite inputs and a nonzero remainder divisor as stated by each theorem" }
     , { topic := "IEEE rounding to representable integers"
         declarations :=
-          [ ``Model.roundToIntegralExactWithStatus_overflow_eq_false
+          [ ``Model.roundToIntegral_overflow_eq_false
           , ``Model.isFinite_roundToIntegral
-          , ``Model.toReal_roundToIntegral_towardNegativeInfinity
-          , ``Model.toReal_roundToIntegral_towardPositiveInfinity
+          , ``Model.toReal_roundToIntegral_down
+          , ``Model.toReal_roundToIntegral_up
           , ``Model.toReal_roundToIntegral_towardZero
-          , ``Model.toReal_roundToIntegral_nearestEven
+          , ``Model.toReal_roundToIntegral_nearest
+          , ``Model.toReal_roundToIntegral_nearestAway
+          , ``Model.toReal_roundToIntegral_away
           ]
         applicability := integralApplicability summary
         scope := "IEEE-style descriptor with fracWidth ≤ maxNormalExponent; finite inputs as stated by each theorem" }
     , { topic := "IEEE directed rounding and interval enclosures"
         declarations :=
-          [ ``Model.toEReal_addDown_le
-          , ``Model.le_toEReal_addUp
-          , ``Model.toEReal_subDown_le
-          , ``Model.le_toEReal_subUp
-          , ``Model.toEReal_mulDown_le
-          , ``Model.le_toEReal_mulUp
-          , ``Model.toEReal_divDown_le
-          , ``Model.le_toEReal_divUp
-          , ``Model.toEReal_sqrtDown_le
-          , ``Model.le_toEReal_sqrtUp
+          [ ``Model.toEReal_add_down_le
+          , ``Model.le_toEReal_add_up
+          , ``Model.toEReal_sub_down_le
+          , ``Model.le_toEReal_sub_up
+          , ``Model.toEReal_mul_down_le
+          , ``Model.le_toEReal_mul_up
+          , ``Model.toEReal_div_down_le
+          , ``Model.le_toEReal_div_up
+          , ``Model.toEReal_sqrt_down_le
+          , ``Model.le_toEReal_sqrt_up
           , ``Model.Interval.add_sound
           , ``Model.Interval.sub_sound
           , ``Model.Interval.mul_sound
@@ -410,12 +459,12 @@ meta def profile
         declarations :=
           [ ``Model.toReal_roundDyadicDown_le_of_encoding_finite
           , ``Model.le_toReal_roundDyadicUp_of_encoding_finite
-          , ``Model.toReal_addDown_le_of_encoding_finite
-          , ``Model.le_toReal_addUp_of_encoding_finite
-          , ``Model.toReal_subDown_le_of_encoding_finite
-          , ``Model.le_toReal_subUp_of_encoding_finite
-          , ``Model.toReal_mulDown_le_of_encoding_finite
-          , ``Model.le_toReal_mulUp_of_encoding_finite
+          , ``Model.toReal_add_down_le_of_encoding_finite
+          , ``Model.le_toReal_add_up_of_encoding_finite
+          , ``Model.toReal_sub_down_le_of_encoding_finite
+          , ``Model.le_toReal_sub_up_of_encoding_finite
+          , ``Model.toReal_mul_down_le_of_encoding_finite
+          , ``Model.le_toReal_mul_up_of_encoding_finite
           , ``Model.Interval.add_sound_of_encoding_finite
           , ``Model.Interval.sub_sound_of_encoding_finite
           , ``Model.Interval.mul_sound_of_encoding_finite
@@ -473,13 +522,13 @@ meta def profile
             "Sequential dot products and matrix entries are bounded by the sum of their checked per-site rounding residual budgets." } }
     , { topic := "requested-precision decimal and hexadecimal output"
         declarations :=
-          [ ``Model.significantDecimal_nearestEven_error
-          , ``Model.significantHex_nearestEven_error
-          , ``Model.significantDecimal_towardPositiveInfinity_le
-          , ``Model.significantDecimal_towardNegativeInfinity_le
+          [ ``Model.significantDecimal_nearest_error
+          , ``Model.significantHex_nearest_error
+          , ``Model.le_significantDecimal_up
+          , ``Model.significantDecimal_down_le
           , ``Model.significantDecimal_towardZero_abs_le
-          , ``Model.significantHex_towardPositiveInfinity_le
-          , ``Model.significantHex_towardNegativeInfinity_le
+          , ``Model.le_significantHex_up
+          , ``Model.significantHex_down_le
           , ``Model.significantHex_towardZero_abs_le
           ]
         applicability := .verifiedForType
@@ -538,8 +587,8 @@ meta def profile
             "sources; a finer destination grid preserves the source real value." } }
     , { topic := "IEEE rational conversion enclosures"
         declarations :=
-          [ ``Model.toEReal_roundRatQDown_le
-          , ``Model.le_toEReal_roundRatQUp
+          [ ``Model.toEReal_ofRat_down_le
+          , ``Model.le_toEReal_ofRat_up
           ]
         applicability := ieeeApplicability summary
         scope := "all normalized rationals, including zero and overflow to infinity"
@@ -549,8 +598,8 @@ meta def profile
             "Directed conversion encloses the exact rational between extended-real bounds." } }
     , { topic := "IEEE destination reduction semantics"
         declarations :=
-          [ ``Model.Reduction.sumWithStatus_value_toReal_eq_roundAt_of_finite
-          , ``Model.Reduction.dotWithStatus_value_toReal_eq_roundAt_of_finite
+          [ ``Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite
+          , ``Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite
           ]
         applicability := ieeeApplicability summary
         scope := "finite operands and result; dot products additionally require equal input lengths"
@@ -586,8 +635,8 @@ meta def profile
   nonclaims :=
     [ "equivalence between compiled Float32/Float arithmetic and this type; only the explicit conversion boundary is checked"
     , "every clause of IEEE 754 follows from the six backend-refinement equations"
-    , "bitwise NaN round trips through compact diagnostic `format`; use explicit " ++
-        "formatDecimal or formatHex output to retain NaN metadata"
+    , "bitwise NaN round trips through the display `format`; use " ++
+        "`format (style := .exact)` or `(style := .hex)` output to retain NaN metadata"
     , "the built-in deterministic transcendental kernels currently carry a whole-algorithm approximation or correctly-rounded certificate"
     , "external MPFR, Arb, compiler lowering, or FFI behavior is inside this certificate"
     ]

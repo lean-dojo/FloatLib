@@ -32,6 +32,7 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Away
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Double
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Odd
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
@@ -49,15 +50,14 @@ negation and multiplication, and the rounded scalar `NF`. The theory is independ
 IEEE bit encodings. Its main definitions are `FloatRep`, `genericFormat`, `round`, `ulp`, and
 `bpow`.
 
-Import a child module for a smaller dependency set; import this module for the full theory.
+Import a child module for a smaller dependency set, or this module for the full theory.
 
 ## Analysis
 
 The `Analysis` modules provide ULP functions, adjacent representable values, and Sterbenz
-exact-subtraction results. The
-representability of the rounded-addition error, which is the specification of the TwoSum and
-FastTwoSum error-free transformations, is proved in `Theory.Error.Addition`; the operation-level
-exactness of those algorithms is not formalized.
+exact-subtraction results. The representability of the rounded-addition error, which is the
+specification of the TwoSum and FastTwoSum error-free transformations, is proved in
+`Theory.Error.Addition`. The operation-level exactness of those algorithms is not formalized.
 
 ## Error
 
@@ -75,13 +75,14 @@ defining module without the rounding and error theory.
 
 The `Rounding` modules contain rounding functions and their semantic laws: directed modes, nearest
 choices, order properties, round-to-odd, round-away, and double rounding. A format supplies the
-representable grid and a rounding policy selects a point on that grid.
+representable grid and a rounding policy selects a point on that grid. `Rounding.Modes` names six
+of these rules: the five IEEE 754 rounding-direction attributes and rounding away from zero.
 
 ## Scalar
 
 `NF` is the scalar-facing interface to generic rounding. This folder keeps the carrier and its
-representability invariant together. The raw carrier may contain any real value; statements that
-require membership in the declared grid use `NF.IsRepresentable` explicitly.
+representability invariant together. The raw carrier may contain any real value, so statements
+that require membership in the declared grid assume `NF.IsRepresentable`.
 
 ## References
 

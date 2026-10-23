@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Reference arithmetic with exact dyadic intermediates
@@ -19,8 +19,8 @@ ties to even. Exceptional operands follow the descriptor's NaN, infinity, overfl
 policy. In particular, FMA does not round its product before adding the third operand.
 
 These definitions are the stable proof targets for the dispatched arithmetic kernels. Quotients
-use the rational specification in `Spec.Division`; roots use `Spec.SquareRoot`. Explicit rounding
-directions and exception-status results belong to their separate operation APIs.
+use the rational specification in `Spec.Division`, and roots use `Spec.SquareRoot`. Other rounding
+directions and exception-status results belong to the operation APIs.
 
 These specifications also execute when a backend declines an operand. The rounding refinement
 must be imported before they are defined: it replaces the logical rounder's repeated one-bit

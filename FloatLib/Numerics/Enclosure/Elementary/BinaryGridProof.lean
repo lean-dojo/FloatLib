@@ -129,7 +129,7 @@ theorem containsReal_logOddHorner (precision : Nat) {X Q : Interval Int} {x : �
     · congr 1
       omega
 
-/-- The rounded exponential radius contains the original rational Taylor remainder bound. -/
+/-- The rounded exponential radius contains the rational remainder bound `Enclosure.expRadius`. -/
 theorem containsReal_expRadius (precision : Nat) {X : Interval Int} {x : ℚ}
     (hx : X.ContainsReal (decode precision) (x : ℝ)) (n : Nat) :
     (expRadius precision X n).ContainsReal (decode precision) (Enclosure.expRadius x n : ℝ) := by
@@ -138,7 +138,7 @@ theorem containsReal_expRadius (precision : Nat) {X : Interval Int} {x : ℚ}
     (((n + 1 : Nat) : ℚ) / ((n.factorial : ℚ) * n))
   simpa [expRadius, Enclosure.expRadius, mul_div_assoc, mul_comm] using h
 
-/-- The original exponential Taylor estimate remains valid after outward grid evaluation. -/
+/-- For `|x| ≤ 1`, the grid Taylor enclosure `expSmall` contains `exp x`. -/
 theorem containsReal_expSmall (x : ℚ) (degree precision : Nat) (hx : |x| ≤ 1) :
     (expSmall x degree precision).ContainsReal (decode precision) (Real.exp (x : ℝ)) := by
   have hgrid := containsReal_enclose precision x
@@ -172,7 +172,7 @@ private theorem exp_div_pow_two_pow (x : ℚ) (n : Nat) :
   push_cast
   field_simp
 
-/-- Extra range reduction and its compensating grid bits preserve exponential containment. -/
+/-- The binary-grid exponential encloses `exp x` at every degree and precision. -/
 theorem contains_exp (x : ℚ) (degree precision : Nat) :
     (exp x degree precision).Contains (Real.exp (x : ℝ)) := by
   let extra := expExtraScale x degree precision
@@ -183,7 +183,7 @@ theorem contains_exp (x : ℚ) (degree precision : Nat) :
 
 namespace LogPolynomial
 
-/-- The table extension adds exactly its requested powers. -/
+/-- Extending a table by `n` steps appends `n + 1` powers. -/
 theorem size_powerTableAux (precision : Nat) (Q : Interval Int) (n : Nat)
     (current : Interval Int) (powers : Array (Interval Int)) :
     (powerTableAux precision Q n current powers).size = powers.size + n + 1 := by
@@ -191,7 +191,7 @@ theorem size_powerTableAux (precision : Nat) (Q : Interval Int) (n : Nat)
   | zero => simp [powerTableAux]
   | succ n ih => simp [powerTableAux, ih, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
 
-/-- A power table includes the zeroth power and its requested final power. -/
+/-- A power table up to `n` has `n + 1` entries, from the zeroth power to the `n`th. -/
 theorem size_powerTable (precision : Nat) (Q : Interval Int) (n : Nat) :
     (powerTable precision Q n).size = n + 1 := by
   simp [powerTable, size_powerTableAux]
@@ -239,7 +239,7 @@ theorem containsReal_powerTable (precision : Nat) {Q : Interval Int} {q : ℝ}
     simp at hi
   · simp [Interval.point]
 
-/-- The even-power sum before multiplication by the odd logarithm argument. -/
+/-- Even-power sum that gives the odd logarithm polynomial once multiplied by the argument. -/
 noncomputable def evenSum (q : ℝ) (start n : Nat) : ℝ :=
   ∑ i ∈ Finset.range n, q ^ i / ((2 * (start + i) + 1 : Nat) : ℝ)
 
@@ -283,7 +283,10 @@ theorem containsReal_blockSum (precision : Nat) {powers : Array (Interval Int)} 
   simpa only [blockSum, add_zero] using containsReal_blockSumAux precision hpowers start n hn
     (Interval.point 0) (a := 0) (by simp [Interval.point])
 
-/-- Block Horner evaluation encloses a full prefix and its appropriately shifted tail. -/
+/--
+Block Horner evaluation encloses the sum over the full blocks plus `q ^ (blockSize * blocks)` times
+the tail.
+-/
 theorem containsReal_blockHorner (precision : Nat) {powers : Array (Interval Int)} {q : ℝ}
     (hpowers : ∀ (i : Nat) (hi : i < powers.size),
       powers[i].ContainsReal (decode precision) (q ^ i))
@@ -399,6 +402,11 @@ theorem containsReal_logSeries (x : ℚ) (degree precision : Nat) (hx : 0 < x) :
   have htwo : (1 / 2 : ℝ) * Real.log (x : ℝ) + 1 / 2 * Real.log (x : ℝ) =
       Real.log (x : ℝ) := by ring
   simpa only [logSeries, t, htwo] using h
+
+/-- The unreduced series encloses the logarithm of every positive rational. -/
+theorem containsReal_logUnreduced {value : ℚ} (hvalue : 0 < value) (precision : Nat) :
+    (logUnreduced value precision).ContainsReal (decode precision) (Real.log (value : ℝ)) :=
+  containsReal_logSeries value _ precision hvalue
 
 /-- Binary reduction and the rounded multiple of `log 2` preserve logarithm containment. -/
 theorem containsReal_logLarge (x : ℚ) (degree precision : Nat) (hx : 0 < x) :

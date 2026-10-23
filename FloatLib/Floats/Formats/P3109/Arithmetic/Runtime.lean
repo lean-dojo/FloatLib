@@ -15,9 +15,11 @@ The closed operations in `Arithmetic` evaluate finite operands in `Rat`, retaini
 and the report's single NaN. In particular, division by zero returns NaN, including infinity
 divided by zero. FMA and fused add-add form the complete exact expression before projection.
 
-The `ExecFloat.P3109.*To` operations accept independent source and destination descriptors and
-an explicit projection policy. Same-format operations use FloatLib's nearest-even,
-no-saturation policy by default. No IEEE exception flags or floating-point environment are used.
+Each `ExecFloat.P3109` operation projects into `(target := ...)`, by default the format of its
+operands, with `(mode := ...)` and `(saturation := ...)` options that default to nearest-even
+rounding and no saturation request. `unary`, `binary`, and `ternary` apply any exact closed
+operation to operands of independent descriptors. No IEEE exception flags or floating-point
+environment are used.
 
 Exact rational intermediates can require large integers when the descriptor has a wide exponent
 range. This implementation does not promise a fixed workspace bound for arbitrary descriptors.
@@ -64,7 +66,7 @@ def copySign (value sign : NumericalValue Rat) : NumericalValue Rat :=
   | .infinity negative => if negative then neg (abs value) else abs value
   | .finite sign => if sign < 0 then neg (abs value) else abs value
 
-/-- Exact addition; opposite infinities have the indeterminate result NaN. -/
+/-- Exact addition, with the indeterminate result NaN for opposite infinities. -/
 def add : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => nan
   | .infinity left, .infinity right =>
@@ -76,7 +78,7 @@ def add : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
 def sub (left right : NumericalValue Rat) : NumericalValue Rat :=
   add left (neg right)
 
-/-- Exact multiplication; zero times infinity is NaN. -/
+/-- Exact multiplication, with NaN for zero times infinity. -/
 def mul : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => nan
   | .infinity left, .infinity right => .infinity (left != right)
@@ -84,7 +86,7 @@ def mul : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
       if value == 0 then nan else .infinity (negative != decide (value < 0))
   | .finite left, .finite right => .finite (left * right)
 
-/-- Exact division; every zero denominator and infinity divided by infinity yield NaN. -/
+/-- Exact division, with NaN for every zero denominator and for infinity over infinity. -/
 def div : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => nan
   | .infinity _, .infinity _ => nan
@@ -118,134 +120,98 @@ variable {source leftFormat rightFormat thirdFormat format : Format}
 @[inline] def toClosedRat (value : ExecFloat.P3109 source) : NumericalValue Rat :=
   Arithmetic.toRat value.decode
 
-/-- Project an exact unary closed operation into an independently chosen destination. -/
-@[inline] def unaryTo (destination : Format) (policy : ProjectionPolicy)
-    (operation : NumericalValue Rat → NumericalValue Rat)
-    (value : ExecFloat.P3109 source) : ExecFloat.P3109 destination :=
-  projectRat policy (operation value.toClosedRat)
+/--
+Apply an exact unary closed operation and project the result once into `target`, by default the
+operand's format, rounding in `mode` before `saturation` applies.
+-/
+@[inline] def unary (operation : NumericalValue Rat → NumericalValue Rat)
+    (value : ExecFloat.P3109 source) (target : Format := source)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  projectRat (operation value.toClosedRat) mode saturation
 
-/-- Project an exact binary closed operation once, after evaluating both operands. -/
-@[inline] def binaryTo (destination : Format) (policy : ProjectionPolicy)
+/--
+Apply an exact binary closed operation to both decoded operands, then project once into
+`target`, by default the left operand's format.
+-/
+@[inline] def binary
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)
-    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat) :
-    ExecFloat.P3109 destination :=
-  projectRat policy (operation left.toClosedRat right.toClosedRat)
+    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
+    (target : Format := leftFormat) (mode : RoundingMode := .nearest)
+    (saturation : SaturationMode := .none) : ExecFloat.P3109 target :=
+  projectRat (operation left.toClosedRat right.toClosedRat) mode saturation
 
-/-- Project an exact ternary closed operation once, after the complete expression. -/
-@[inline] def ternaryTo (destination : Format) (policy : ProjectionPolicy)
+/--
+Evaluate a complete exact ternary closed expression, then project once into `target`, by default
+the first operand's format.
+-/
+@[inline] def ternary
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat →
       NumericalValue Rat)
     (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
-    (third : ExecFloat.P3109 thirdFormat) : ExecFloat.P3109 destination :=
-  projectRat policy (operation left.toClosedRat right.toClosedRat third.toClosedRat)
+    (third : ExecFloat.P3109 thirdFormat) (target : Format := leftFormat)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  projectRat (operation left.toClosedRat right.toClosedRat third.toClosedRat) mode saturation
 
-/-- Negate and project into the requested destination. -/
-@[inline] def negTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 source → ExecFloat.P3109 destination :=
-  unaryTo (source := source) destination policy Arithmetic.neg
+/-- Negation followed by one projection, which also covers negative results in unsigned targets. -/
+@[inline] def neg (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  unary Arithmetic.neg value target mode saturation
 
-/-- Take absolute value and project into the requested destination. -/
-@[inline] def absTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 source → ExecFloat.P3109 destination :=
-  unaryTo (source := source) destination policy Arithmetic.abs
+/-- Absolute value followed by one projection. -/
+@[inline] def abs (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  unary Arithmetic.abs value target mode saturation
 
-/-- Copy the sign, propagating either NaN, and project once. -/
-@[inline] def copySignTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 destination :=
-  binaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    destination policy Arithmetic.copySign
+/-- Copy the sign of `sign`, propagating either NaN, and project once. -/
+@[inline] def copySign (value sign : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  binary Arithmetic.copySign value sign target mode saturation
 
-/-- Add exact decoded operands and project once. -/
-@[inline] def addTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 destination :=
-  binaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    destination policy Arithmetic.add
+/-- Add the exact decoded operands and project once. -/
+@[inline] def add (left right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  binary Arithmetic.add left right target mode saturation
 
-/-- Subtract exact decoded operands and project once. -/
-@[inline] def subTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 destination :=
-  binaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    destination policy Arithmetic.sub
+/-- Subtract the exact decoded operands and project once. -/
+@[inline] def sub (left right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  binary Arithmetic.sub left right target mode saturation
 
-/-- Multiply exact decoded operands and project once. -/
-@[inline] def mulTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 destination :=
-  binaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    destination policy Arithmetic.mul
+/-- Multiply the exact decoded operands and project once. -/
+@[inline] def mul (left right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  binary Arithmetic.mul left right target mode saturation
 
-/-- Divide exact decoded operands, returning NaN for a zero denominator, and project once. -/
-@[inline] def divTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 destination :=
-  binaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    destination policy Arithmetic.div
+/-- Divide the exact decoded operands and project once. A zero denominator gives NaN. -/
+@[inline] def div (left right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  binary Arithmetic.div left right target mode saturation
 
-/-- Take the exact reciprocal and project once. -/
-@[inline] def recipTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 source → ExecFloat.P3109 destination :=
-  unaryTo (source := source) destination policy Arithmetic.recip
+/-- Take the exact reciprocal and project once. Zero gives NaN. -/
+@[inline] def recip (value : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  unary Arithmetic.recip value target mode saturation
 
-/-- Fused multiply-add across independently chosen source and destination formats. -/
-@[inline] def fmaTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 thirdFormat →
-      ExecFloat.P3109 destination :=
-  ternaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    (thirdFormat := thirdFormat) destination policy Arithmetic.fma
+/-- Fused multiply-add: the exact `left * right + addend`, projected once. -/
+@[inline] def fma (left right addend : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  ternary Arithmetic.fma left right addend target mode saturation
 
-/-- Fused add-add across independently chosen source and destination formats. -/
-@[inline] def faaTo (destination : Format) (policy : ProjectionPolicy) :
-    ExecFloat.P3109 leftFormat → ExecFloat.P3109 rightFormat → ExecFloat.P3109 thirdFormat →
-      ExecFloat.P3109 destination :=
-  ternaryTo (leftFormat := leftFormat) (rightFormat := rightFormat)
-    (thirdFormat := thirdFormat) destination policy Arithmetic.faa
-
-/-- Same-format negation followed by the supplied projection. -/
-@[inline] def neg (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  negTo format policy value
-
-/-- Same-format absolute value followed by the supplied projection. -/
-@[inline] def abs (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  absTo format policy value
-
-/-- Same-format sign copying followed by the supplied projection. -/
-@[inline] def copySign (value sign : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  copySignTo format policy value sign
-
-/-- Same-format addition with one final projection. -/
-@[inline] def add (left right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  addTo format policy left right
-
-/-- Same-format subtraction with one final projection. -/
-@[inline] def sub (left right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  subTo format policy left right
-
-/-- Same-format multiplication with one final projection. -/
-@[inline] def mul (left right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  mulTo format policy left right
-
-/-- Same-format division with one final projection; a zero denominator yields NaN. -/
-@[inline] def div (left right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  divTo format policy left right
-
-/-- Same-format reciprocal with one final projection. -/
-@[inline] def recip (value : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  recipTo format policy value
-
-/-- Same-format fused multiply-add with one final projection. -/
-@[inline] def fma (left right addend : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  fmaTo format policy left right addend
-
-/-- Same-format fused add-add with one final projection. -/
-@[inline] def faa (left middle right : ExecFloat.P3109 format)
-    (policy : ProjectionPolicy := .nearestEven) : ExecFloat.P3109 format :=
-  faaTo format policy left middle right
+/-- Fused add-add: the exact `left + middle + right`, projected once. -/
+@[inline] def faa (left middle right : ExecFloat.P3109 format) (target : Format := format)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
+    ExecFloat.P3109 target :=
+  ternary Arithmetic.faa left middle right target mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

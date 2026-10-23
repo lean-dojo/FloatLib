@@ -60,22 +60,22 @@ theorem rootLoopWords_eq (radicand : UInt256) (steps : Nat) (root remainder : UI
       rw [rootLoopWords_succ, rootLoop, rootStepWordsState_eq]
       exact ih _ _
 
-/-- The word implementation preserves every initial state and iteration count. -/
-theorem rootLoopImpl_eq_rootLoop (radicand : UInt256) (steps : Nat)
+/-- The word implementation agrees with `rootLoop` for every initial state and iteration count. -/
+theorem Internal.rootLoop_eq (radicand : UInt256) (steps : Nat)
     (state : RestoringRootState UInt128) :
-    rootLoopImpl radicand steps state = rootLoop radicand steps state :=
+    Internal.rootLoop radicand steps state = RestoringSquareRoot.rootLoop radicand steps state :=
   rootLoopWords_eq radicand steps state.root state.remainder
 
 /-- Compile the state recurrence through its equal word-accumulator recurrence. -/
 -- grind: no rule; this equation selects a compiler implementation.
-@[csimp] theorem rootLoop_eq_rootLoopImpl : rootLoop = rootLoopImpl := by
+@[csimp] theorem rootLoop_eq_internal : rootLoop = Internal.rootLoop := by
   funext radicand steps state
-  exact (rootLoopImpl_eq_rootLoop radicand steps state).symm
+  exact (Internal.rootLoop_eq radicand steps state).symm
 
 /-- Compile the zero-initialized loop through the same word accumulators. -/
 -- grind: no rule; this equation selects a compiler implementation.
-@[csimp] theorem rootAndRemainder_eq_rootAndRemainderImpl :
-    rootAndRemainder = rootAndRemainderImpl := by
+@[csimp] theorem rootAndRemainder_eq_internal :
+    rootAndRemainder = Internal.rootAndRemainder := by
   funext radicand steps
   exact (rootLoopWords_eq radicand steps ⟨0, 0⟩ ⟨0, 0⟩).symm
 

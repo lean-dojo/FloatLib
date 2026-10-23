@@ -14,7 +14,7 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 # Bounded fixed-point conversion proofs
 
 The fixed-integer codec theorems connect each conversion policy to its signed coefficient:
-checked conversion preserves an in-range coefficient, wrapping takes centered reduction, and
+rejecting conversion preserves an in-range coefficient, wrapping takes centered reduction, and
 saturation clamps to the signed range. These relations retain the complete outcome and status.
 -/
 
@@ -31,8 +31,8 @@ namespace Conversion
 variable {radix : Radix} {fractionalDigits width : Nat}
 
 /-- Wrapping delivers the centered remainder of the nearest-even coefficient. -/
-theorem coefficient_ofRatWrapping (exact : Rat) :
-    coefficient (ofRatWrapping exact :
+theorem coefficient_ofRat_wrap (exact : Rat) :
+    coefficient (ofRat exact .wrap :
       ExecFloat.BoundedFixedPoint radix fractionalDigits width) =
         (roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)).bmod
           (2 ^ width) :=
@@ -54,14 +54,14 @@ theorem coefficient_ofCoefficient_of_inRange (stored : Int)
       exact FixedInt.toInt_ofInt_eq_self (Nat.succ_pos width) h
 
 /-- Saturating conversion delivers the clamped nearest-even coefficient at every width. -/
-theorem coefficient_ofRatSaturating (exact : Rat) :
-    coefficient (ofRatSaturating exact :
+theorem coefficient_ofRat_saturate (exact : Rat) :
+    coefficient (ofRat exact .saturate :
       ExecFloat.BoundedFixedPoint radix fractionalDigits width) =
         FixedInt.clamp width
           (roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)) := by
   cases width with
   | zero =>
-      simp [coefficient, ofRatSaturating, toCode, ofCode,
+      simp [coefficient, ofRat, toCode, ofCode,
         Formats.FixedPoint.Bounded.coefficient, FixedInt.toInt, FixedInt.ofIntSaturating,
         FixedInt.ofInt, FixedInt.clamp, FixedInt.minValue, FixedInt.maxValue,
         Quantization.Saturating.clamp, show (BitVec.intMin 0).toInt = 0 from rfl]
@@ -90,7 +90,7 @@ theorem coefficient_ofRatSaturating (exact : Rat) :
       .failure (.exceptional .source exceptional) :=
   rfl
 
-/-- The fixed-integer codec laws establish the independent coefficient and range clauses. -/
+/-- `run` meets `spec`: its outcomes satisfy the coefficient, range, and status clauses. -/
 theorem implements_run :
     Quantization.Spec.Implements
       (spec (radix := radix) (fractionalDigits := fractionalDigits) (width := width))
@@ -102,12 +102,12 @@ theorem implements_run :
       | reject =>
           by_cases h : FixedInt.InRange width
               (Formats.FixedPoint.Bounded.coefficientOf radix fractionalDigits exact)
-          · simp only [run, quantizeFinite, ofRat?, ite_eq_left h]
+          · simp only [run, quantizeFinite, ofRat, ite_eq_left h]
             exact ⟨⟨h, coefficient_ofCoefficient_of_inRange _ h⟩, rfl⟩
-          · simp only [run, quantizeFinite, ofRat?, ite_eq_right h]
+          · simp only [run, quantizeFinite, ofRat, ite_eq_right h]
             exact ⟨rfl, h, rfl⟩
-      | wrap => exact ⟨coefficient_ofRatWrapping exact, rfl⟩
-      | saturate => exact ⟨coefficient_ofRatSaturating exact, rfl⟩
+      | wrap => exact ⟨coefficient_ofRat_wrap exact, rfl⟩
+      | saturate => exact ⟨coefficient_ofRat_saturate exact, rfl⟩
   | infinity negative => rfl
   | exceptional exceptional => rfl
 
@@ -120,7 +120,7 @@ private theorem coefficient_injective :
   rw [← FixedInt.ofInt_toInt left.toCode, ← FixedInt.ofInt_toInt right.toCode]
   exact congrArg FixedInt.ofInt h
 
-/-- The coefficient policy and full status determine a unique complete outcome. -/
+/-- For each policy and input, `spec` admits at most one outcome. -/
 theorem spec_deterministic :
     (spec (radix := radix) (fractionalDigits := fractionalDigits)
       (width := width)).Deterministic := by
@@ -155,7 +155,7 @@ theorem spec_deterministic :
   | exceptional exceptional =>
       cases left <;> cases right <;> simp_all [spec]
 
-/-- The independent coefficient contract preserves the converter's complete word and status. -/
+/-- An outcome meets `spec` exactly when it is the outcome of `run`. -/
 theorem spec_iff_eq_run (policy : OverflowPolicy) (input : NumericalValue Rat)
     (outcome : FloatLib.Floats.ExecFloat.ConversionOutcome
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width)) :
@@ -174,11 +174,11 @@ theorem spec_iff_eq_run (policy : OverflowPolicy) (input : NumericalValue Rat)
       .finite (ExecFloat.BoundedFixedPoint.toRat value) :=
   rfl
 
-/-- Checked conversion reports `outOfRange` exactly when the checked constructor fails. -/
+/-- Rejecting conversion reports `outOfRange` exactly when the rejecting constructor fails. -/
 @[grind =] theorem run_reject_eq (exact : Rat) :
     run (radix := radix) (fractionalDigits := fractionalDigits) (width := width)
         .reject (.finite exact) =
-      match ExecFloat.BoundedFixedPoint.ofRat? exact with
+      match ExecFloat.BoundedFixedPoint.ofRat exact with
       | some rounded => .success rounded (finiteStatus .reject exact rounded)
       | none => .failure .outOfRange :=
   rfl

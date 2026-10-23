@@ -16,29 +16,35 @@ public import FloatLib.Floats.ExecFloat.ExactMap
 Name the destination type when converting a value or combining different formats:
 
 ```lean
-abbrev Binary64 :=
-  ExecFloat.Binary (exponentBits := 11) (fractionBits := 52)
-
 source.cast (target := Binary64)
-ExecFloat.addAs (result := Binary64) left right
+source.cast (target := Binary32) (mode := .up)
+ExecFloat.addAs (target := Binary64) left right
 ```
 
 Each operation decodes its operands, maps them into the destination's exact domain through
-`ExactMap`, and quantizes the result once. Casts pass infinities and exceptional observations to the
-destination's
-policy. Mixed arithmetic requires finite inputs and reports the first rejected operand; division
-also rejects a denominator satisfying the exact domain's `ExactZero` predicate.
+`ExactMap`, and quantizes the result once. Every entry point takes the same two options. `mode`
+selects the rounding direction of the destination's canonical context, through `ModeContext`.
+Binary and nominal static-byte destinations accept the six `IEEERoundingMode` directions. A family
+without directed conversion has the single mode `()`, so naming a direction for it is a type
+error. `context` replaces the canonical context with a family-specific policy, such as a rejected
+infinity, a saturating bounded fixed point, or a shared block exponent. A context carries its own
+rounding direction, so give one option or the other. Destinations without
+a canonical context, such as shared-scale blocks, require `context`.
+
+Casts pass infinities and exceptional observations to the destination's policy. Mixed arithmetic
+requires finite inputs and reports the first rejected operand. Division also rejects a denominator
+satisfying the exact domain's `ExactZero` predicate.
 
 Binary destinations use `SignedRat` as their exact domain, so a signed zero survives a cast and
 mixed addition, subtraction, and FMA select a cancellation sign from the destination's rounding
 context. Posit destinations use `Rat`, with a single zero.
 
 For longer finite calculations, `ExactExpression.operand` and `roundOnce` use the same path with
-an ordinary `Except`-based `do` expression. Use `ExactExpression.addWith` and `subWith` when a
+an ordinary `Except`-based `do` expression. Use `ExactExpression.add` and `sub` with a `mode` when a
 directed cancellation sign is required inside that expression. `Conversion.Proof` proves that each
 entry point satisfies the destination's `Quantization.Spec` relation. These composition theorems
-use the supplied exact-domain operations; numerical preservation of the maps and arithmetic hooks
-is a separate family-specific obligation, as described in `Conversion.Core`.
+use the supplied exact-domain operations. That the maps and arithmetic hooks preserve numerical
+values has to be proved separately for each family.
 -/
 
 @[expose] public section
@@ -75,7 +81,7 @@ namespace Quantizer
 
 variable {Destination : Type u} {Exact : Type v}
 
-/-- Quantize one complete exact observation with explicit destination context. -/
+/-- Quantize one complete exact observation under a given destination context. -/
 @[inline] def quantize [self : Quantizer Destination Exact]
     (context : self.Context) (value : NumericalValue Exact) :
     ConversionOutcome Destination :=
@@ -84,52 +90,41 @@ variable {Destination : Type u} {Exact : Type v}
 end Quantizer
 
 /--
-Convert any exactly decodable source into a named destination under family-specific context.
+Convert any exactly decodable source into the destination `target`, rounding once.
 
-This function-form API also supports sources outside the `ExecFloat` carrier when an integration
-module supplies their exact decoder. Ordinary `ExecFloat` values may also use
-`value.castWith` through field notation.
+`mode` selects the rounding direction of the destination's canonical context, nearest-even by
+default, and `context` replaces that context with a family-specific policy. This function form
+also accepts sources outside the `ExecFloat` carrier, such as `Rat`, `Int`, or a native
+float, when a module supplies their exact decoder. `ExecFloat` values may use `value.cast`.
 -/
-@[inline] def convertWith {Source : Type u} (value : Source)
-    {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
-    [ExactDecoder Source SourceExact] [ExactMap SourceExact TargetExact]
-    [quantizer : Quantizer target TargetExact]
-    (context : quantizer.Context) : ConversionOutcome target :=
-  quantizer.run context (ExactDecoder.decodeTo value)
-
-/-- Convert any exactly decodable source using the destination's canonical context. -/
 @[inline] def convert {Source : Type u} (value : Source)
     {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
     [ExactDecoder Source SourceExact] [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    [defaults : DefaultQuantizer target TargetExact] : ConversionOutcome target :=
-  convertWith value defaults.defaultContext
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
+  quantizer.run context (ExactDecoder.decodeTo value)
 
 /--
-Convert an `ExecFloat` value under explicit destination context, with field notation.
+Convert an `ExecFloat` value with field notation, as in
+`value.cast (target := Binary64)` or `value.cast (target := Binary32) (mode := .up)`.
 
-The source type lets Lean resolve `value.castWith`; the destination can be a local alias such as
-`Binary64` or `Posit32`. Use `convertWith` for source types outside `ExecFloat`.
+The `mode` and `context` options are those of `convert`.
 -/
-@[inline] def castWith {F : Type u} [EncodedFormat F]
-    (value : FloatLib.Floats.ExecFloat F)
-    {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
-    [ExactDecoder (FloatLib.Floats.ExecFloat F) SourceExact]
-    [ExactMap SourceExact TargetExact]
-    [quantizer : Quantizer target TargetExact]
-    (context : quantizer.Context) : ConversionOutcome target :=
-  convertWith value context
-
-/-- Convert an `ExecFloat` value using the destination's canonical context. -/
 @[inline] def cast {F : Type u} [EncodedFormat F]
     (value : FloatLib.Floats.ExecFloat F)
     {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
     [ExactDecoder (FloatLib.Floats.ExecFloat F) SourceExact]
     [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    [defaults : DefaultQuantizer target TargetExact] : ConversionOutcome target :=
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   convert (target := target) (SourceExact := SourceExact)
-    (TargetExact := TargetExact) value
+    (TargetExact := TargetExact) value mode context
 
 namespace Conversion
 
@@ -153,8 +148,7 @@ namespace Conversion
 Prepare exact finite division and reject a zero exact denominator.
 
 `ExactZero` states and decides which values the exact domain declares to be zero. Domains with
-several zero representations justify that choice in their own bridge theorems, not in this
-algorithm.
+several zero representations justify that choice in their own bridge theorems.
 -/
 @[inline] def prepareDiv {Exact : Type u} [Zero Exact] [ExactZero Exact] [Div Exact]
     (left right : NumericalValue Exact) :
@@ -208,7 +202,7 @@ namespace ExactExpression
 Decode one numbered operand into the exact domain used by an enclosing expression.
 
 Finite inputs are mapped without rounding through `ExactMap`. The chosen exact domain determines
-which representation metadata survives; mapping a `SignedRat` into `Rat` forgets its zero sign.
+which representation metadata survives, so mapping a `SignedRat` into `Rat` forgets its zero sign.
 Infinity and exceptional observations become position-indexed failures, so a longer expression
 still reports which operand was rejected.
 -/
@@ -218,28 +212,38 @@ still reports which operand was rejected.
   Conversion.requireFinite (.operand index) (ExactDecoder.decodeTo value)
 
 /--
-Add exact values under the destination context without quantizing.
+Add exact values with the cancellation-sign rule of the destination `target`, without quantizing.
 
-For signed-rational destinations this selects the sign of exact cancellation before a later
-`roundOnceWith`. Name `result` when the context alone does not determine the destination type.
+For signed-rational destinations, `(mode := .down)` gives an exact cancellation the negative zero
+that a later `roundOnce (mode := .down)` keeps, while ordinary `+` keeps the nearest-even positive
+zero. Name `target`: the exact domain alone does not determine it. The options are those of
+`convert`.
 -/
-@[inline] def addWith {result : Type u} {Exact : Type v} [Add Exact]
-    [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left right : Exact) : ExactExpression Exact :=
+@[inline] def add {target : Type u} {Exact : Type v} [Add Exact]
+    [quantizer : Quantizer target Exact] (left right : Exact)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ExactExpression Exact :=
   .ok (quantizer.addExact context left right)
 
-/-- Subtract exact values using the destination's cancellation-sign rule, without quantizing. -/
-@[inline] def subWith {result : Type u} {Exact : Type v} [Sub Exact]
-    [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left right : Exact) : ExactExpression Exact :=
+/--
+Subtract exact values with the cancellation-sign rule of the destination `target`, without
+quantizing. The options are those of `add`.
+-/
+@[inline] def sub {target : Type u} {Exact : Type v} [Sub Exact]
+    [quantizer : Quantizer target Exact] (left right : Exact)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ExactExpression Exact :=
   .ok (quantizer.subExact context left right)
 
 /--
 Divide two exact finite values, rejecting a denominator declared zero by `ExactZero`.
 
-Use this inside a `do` expression. Ordinary exact-domain operations remain available for
-calculations without an additional failure case; `addWith` and `subWith` also respect the
-destination's cancellation-sign rule.
+Use this inside a `do` expression. Ordinary exact-domain operations stay available for steps that
+cannot fail, and `add` and `sub` also follow the destination's cancellation-sign rule.
 -/
 @[inline] def div {Exact : Type u} [Zero Exact] [ExactZero Exact] [Div Exact]
     (numerator denominator : Exact) : ExactExpression Exact :=
@@ -257,133 +261,108 @@ destination's cancellation-sign rule.
 end ExactExpression
 
 /--
-Evaluate an exact scalar expression and quantize its result once under an explicit context.
+Evaluate an exact scalar expression and quantize its result once into `target`.
 
 The expression may contain any executable operation supported by its exact domain. A failed
 operand or checked division bypasses the quantizer and is returned unchanged.
 For signed-rational binary destinations that support signed zero, quantization preserves the
-supplied zero sign; it cannot recover how that zero arose. Ordinary `SignedRat` addition and
+supplied zero sign, but it cannot recover how that zero arose. Ordinary `SignedRat` addition and
 subtraction use their nearest-even cancellation convention. For directed cancellation, use
-`ExactExpression.addWith` and `subWith` with the intended destination and context.
+`ExactExpression.add` and `sub` with the same `target` and `mode`. The options are those of
+`convert`.
 -/
-@[inline] def roundOnceWith {result : Type u} {Exact : Type v}
-    [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (expression : ExactExpression Exact) :
-    ConversionOutcome result :=
+@[inline] def roundOnce {target : Type u} {Exact : Type v}
+    [quantizer : Quantizer target Exact] (expression : ExactExpression Exact)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   Conversion.quantizePrepared context expression.toPrepared
-
-/-- Evaluate an exact scalar expression and quantize its result once using the default context. -/
-@[inline] def roundOnce {result : Type u} {Exact : Type v}
-    [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (expression : ExactExpression Exact) : ConversionOutcome result :=
-  roundOnceWith defaults.defaultContext expression
 
 section Binary
 
-variable {Left : Type u} {Right : Type v} {result : Type w}
+variable {Left : Type u} {Right : Type v} {target : Type w}
   {LeftExact : Type x} {RightExact : Type y} {Exact : Type z}
   [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
   [ExactDecoder Right RightExact] [ExactMap RightExact Exact]
 
-/-- Add finite values exactly and quantize once into `result` under explicit context. -/
-@[inline] def addAsWith
-    [Add Exact] [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left : Left) (right : Right) :
-    ConversionOutcome result :=
+/--
+Add finite values exactly and quantize once into `target`, with the options of `convert`.
+
+The exact sum uses the destination context's cancellation-sign rule, so `(mode := .down)` gives
+an exactly cancelling binary sum the negative zero of IEEE 754.
+-/
+@[inline] def addAs
+    [Add Exact] [quantizer : Quantizer target Exact]
+    (left : Left) (right : Right)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   Conversion.quantizePrepared context <|
     Conversion.prepareBinary (quantizer.addExact context)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
-/-- Add finite values exactly and quantize once using the destination's canonical context. -/
-@[inline] def addAs
-    [Add Exact] [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (left : Left) (right : Right) : ConversionOutcome result :=
-  addAsWith defaults.defaultContext left right
-
-/-- Subtract finite values exactly and quantize once into `result` under explicit context. -/
-@[inline] def subAsWith
-    [Sub Exact] [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left : Left) (right : Right) :
-    ConversionOutcome result :=
+/-- Subtract finite values exactly and quantize once into `target`, with `addAs`'s options. -/
+@[inline] def subAs
+    [Sub Exact] [quantizer : Quantizer target Exact]
+    (left : Left) (right : Right)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   Conversion.quantizePrepared context <|
     Conversion.prepareBinary (quantizer.subExact context)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
-/-- Subtract finite values exactly and quantize once using the destination's canonical context. -/
-@[inline] def subAs
-    [Sub Exact] [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (left : Left) (right : Right) : ConversionOutcome result :=
-  subAsWith defaults.defaultContext left right
-
-/-- Multiply finite values exactly and quantize once into `result` under explicit context. -/
-@[inline] def mulAsWith
-    [Mul Exact] [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left : Left) (right : Right) :
-    ConversionOutcome result :=
+/-- Multiply finite values exactly and quantize once into `target`, with `convert`'s options. -/
+@[inline] def mulAs
+    [Mul Exact] [quantizer : Quantizer target Exact]
+    (left : Left) (right : Right)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   Conversion.quantizePrepared context <|
     Conversion.prepareBinary (· * ·)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
-/-- Multiply finite values exactly and quantize once using the destination's canonical context. -/
-@[inline] def mulAs
-    [Mul Exact] [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (left : Left) (right : Right) : ConversionOutcome result :=
-  mulAsWith defaults.defaultContext left right
-
-/-- Divide finite values exactly and quantize once into `result` under explicit context. -/
-@[inline] def divAsWith
-    [Zero Exact] [ExactZero Exact] [Div Exact]
-    [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left : Left) (right : Right) :
-    ConversionOutcome result :=
-  Conversion.quantizePrepared context <|
-    Conversion.prepareDiv (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
-
-/-- Divide finite values exactly and quantize once using the destination's canonical context. -/
+/-- Divide finite values exactly and quantize once into `target`, with `convert`'s options. -/
 @[inline] def divAs
     [Zero Exact] [ExactZero Exact] [Div Exact]
-    [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (left : Left) (right : Right) : ConversionOutcome result :=
-  divAsWith defaults.defaultContext left right
+    [quantizer : Quantizer target Exact]
+    (left : Left) (right : Right)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
+  Conversion.quantizePrepared context <|
+    Conversion.prepareDiv (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
 end Binary
 
 /--
-Compute finite `left * right + addend` exactly and quantize once into `result`.
+Compute finite `left * right + addend` exactly and quantize once into `target`.
 
 The exact product is added to `addend` under the context's cancellation-sign rule before the
-destination quantizer runs.
+destination quantizer runs. The options are those of `addAs`.
 -/
-@[inline] def fmaAsWith {Left : Type u} {Right : Type v} {Addend : Type w}
-    {result : Type x} {LeftExact : Type y} {RightExact : Type z}
+@[inline] def fmaAs {Left : Type u} {Right : Type v} {Addend : Type w}
+    {target : Type x} {LeftExact : Type y} {RightExact : Type z}
     {AddendExact : Type a} {Exact : Type b}
     [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
     [ExactDecoder Right RightExact] [ExactMap RightExact Exact]
     [ExactDecoder Addend AddendExact] [ExactMap AddendExact Exact]
-    [Mul Exact] [Add Exact] [quantizer : Quantizer result Exact]
-    (context : quantizer.Context) (left : Left) (right : Right) (addend : Addend) :
-    ConversionOutcome result :=
+    [Mul Exact] [Add Exact] [quantizer : Quantizer target Exact]
+    (left : Left) (right : Right) (addend : Addend)
+    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    (context : ContextFor target mode :=
+      by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
+    ConversionOutcome target :=
   Conversion.quantizePrepared context <|
     Conversion.prepareFmaWith (quantizer.addExact context)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
       (ExactDecoder.decodeTo addend)
-
-/-- Fused multiply-add using the destination's canonical quantization context. -/
-@[inline] def fmaAs {Left : Type u} {Right : Type v} {Addend : Type w}
-    {result : Type x} {LeftExact : Type y} {RightExact : Type z}
-    {AddendExact : Type a} {Exact : Type b}
-    [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
-    [ExactDecoder Right RightExact] [ExactMap RightExact Exact]
-    [ExactDecoder Addend AddendExact] [ExactMap AddendExact Exact]
-    [Mul Exact] [Add Exact] [quantizer : Quantizer result Exact]
-    [defaults : DefaultQuantizer result Exact]
-    (left : Left) (right : Right) (addend : Addend) : ConversionOutcome result :=
-  fmaAsWith defaults.defaultContext left right addend
 
 end ExecFloat
 end FloatLib.Floats

@@ -34,16 +34,16 @@ def addSpec
     FloatLib.Floats.ExecFloat TestByte :=
   left
 
-/-- Independently named fast kernel used to exercise custom-format planning. -/
-@[inline] def addFast
+/-- Independently named kernel used to exercise custom-format planning. -/
+@[inline] def addKernel
     (left _right : FloatLib.Floats.ExecFloat TestByte) :
     FloatLib.Floats.ExecFloat TestByte :=
   left
 
 /--
 The candidate portfolio deliberately exposes a cold-versus-warm crossover and an inadmissible
-resident-memory choice. Every candidate executes the same proved function; only its engineering
-estimate differs.
+resident-memory choice. Every candidate executes the same proved function, and only its
+engineering estimate differs.
 -/
 instance [FloatLib.Floats.ExecFloat.Backend.PolicyFor TestByte] :
     FloatLib.Floats.ExecFloat.Add TestByte where
@@ -55,18 +55,18 @@ instance [FloatLib.Floats.ExecFloat.Backend.PolicyFor TestByte] :
           kind := .custom "custom oversized table" 0
           steadyCost := 0
           residentBytes := 32 * 1024 * 1024 }
-        addSpec addFast (fun _ _ => rfl),
+        addSpec addKernel (fun _ _ => rfl),
       FloatLib.Floats.ExecFloat.Backend.Certified.binary
         { name := "custom TestByte lazy specialization"
           kind := .custom "custom lazy specialization" 1
           steadyCost := 1
           setupCost := 1000000 }
-        addSpec addFast (fun _ _ => rfl),
+        addSpec addKernel (fun _ _ => rfl),
       FloatLib.Floats.ExecFloat.Backend.Certified.binary
         { name := "custom TestByte projection kernel"
           kind := .custom "custom projection kernel" 2
           steadyCost := 10 }
-        addSpec addFast (fun _ _ => rfl)
+        addSpec addKernel (fun _ _ => rfl)
     ]
     baseline := FloatLib.Floats.ExecFloat.Backend.Certified.binary
       { name := "custom TestByte exact baseline"

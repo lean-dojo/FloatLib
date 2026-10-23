@@ -10,7 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.Formats.BinaryInterchange.RoundDyadicImpl.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
 
 /-!
 # Executable width-generic finite arithmetic
@@ -28,8 +28,8 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel
 Decoded finite fields before conversion to a signed dyadic exponent.
 
 For a nonzero value, the magnitude is
-`mantissa * 2^(scale exponent - finiteScaleOffset fmt)`, with the subtraction interpreted in `Int`.
-The separate sign field determines its sign.
+`mantissa * 2^(scale exponent - finiteScaleOffset fmt)`, with the subtraction interpreted in `Int`,
+and `sign` gives its sign.
 -/
 structure Components where
   /-- Sign bit of the encoded value. -/
@@ -58,7 +58,7 @@ structure Components where
 /--
 Decode the integer significand from finite exponent and fraction fields.
 
-Subnormal values use the stored fraction directly. Normal values restore the implicit leading bit.
+Subnormal values use the stored fraction as is. Normal values restore the implicit leading bit.
 The formula is width-generic and shared by every natural-number finite decoder.
 -/
 @[inline] def decodeMantissa (fmt : FloatFormat) (exponent fraction : Nat) : Nat :=
@@ -76,8 +76,8 @@ The formula is width-generic and shared by every natural-number finite decoder.
 /--
 Decode the sign, exponent, and significand of a finite value.
 
-`none` means the complete format descriptor classifies the input as non-finite. No
-precision-specific constant occurs here.
+`none` means the format descriptor classifies the input as non-finite. No precision-specific
+constant occurs here.
 -/
 @[inline] def decode? {fmt : FloatFormat} (x : Model fmt) : Option Components :=
   if !isFinite x then
@@ -92,7 +92,7 @@ precision-specific constant occurs here.
 Run `k` on scalar fields when `x` is finite.
 
 The IEEE branch converts the storage word to `Nat` once and does not allocate an intermediate
-`Components` value. Other encodings retain the descriptor-aware decoder.
+`Components` value. Other encodings use the descriptor-aware `decode?`.
 -/
 @[inline] def withFinite? {fmt : FloatFormat} {α : Type}
     (x : Model fmt) (k : Bool → Nat → Nat → Option α) : Option α :=
@@ -116,30 +116,30 @@ Compiled finite addition aligns unsigned field scales before entering the rounde
 
 For non-IEEE descriptors it evaluates the same exact-dyadic definition used in the logic.
 -/
-@[inline] def addComponentsImpl
+@[inline] def Internal.addComponents
     (fmt : FloatFormat) (x y : Components) : Model fmt :=
   if fmt.isIEEE then
     FiniteScaleAdd.roundSum fmt (finiteScaleOffset fmt)
       x.sign y.sign x.mantissa (scale x.exponent)
       y.mantissa (scale y.exponent)
   else
-    roundDyadicImpl fmt <| addDyadic (x.toDyadic fmt) (y.toDyadic fmt)
+    Internal.roundDyadic fmt <| addDyadic (x.toDyadic fmt) (y.toDyadic fmt)
 
 /--
 Add two already-decoded finite values and round once to `fmt`.
 
-The exact dyadic sum is rounded by the descriptor-generic integer implementation. Importing
-`Kernel.Proof` also enables the verified compiler substitution to `addComponentsImpl`, which
-uses unsigned scale alignment on IEEE descriptors.
+`Internal.roundDyadic` rounds the exact dyadic sum. Importing `Kernel.Proof` also enables the
+verified compiler substitution to `Internal.addComponents`, which uses unsigned scale alignment on
+IEEE descriptors.
 -/
 def addComponents
     (fmt : FloatFormat) (x y : Components) : Model fmt :=
-  roundDyadicImpl fmt <| addDyadic (x.toDyadic fmt) (y.toDyadic fmt)
+  Internal.roundDyadic fmt <| addDyadic (x.toDyadic fmt) (y.toDyadic fmt)
 
 /--
 Finite addition through the compact decoder.
 
-The component operation is kept separate so fixed-width storage backends can reuse the same exact
+`addComponents` is its own definition so fixed-width storage backends can reuse the same exact
 dyadic addition and rounding policy after a cheaper field decode.
 -/
 @[inline] def add? {fmt : FloatFormat}
@@ -151,8 +151,9 @@ dyadic addition and rounding policy after a cheaper field decode.
 /--
 Finite multiplication using compact field scales.
 
-The exact significand product remains a `Nat`, preserving arbitrary precision. Only the two
-operand decodes and exponent algebra are fused; final rounding still uses the generic rounder.
+The exact significand product stays a `Nat`, so precision is unbounded. Only the two operand
+decodes and the exponent algebra are fused. IEEE descriptors round with `FiniteProductRound.round`
+and other encodings with the exact-dyadic rounder.
 -/
 @[inline] def mul? {fmt : FloatFormat}
     (x y : Model fmt) : Option (Model fmt) :=
@@ -167,7 +168,7 @@ operand decodes and exponent algebra are fused; final rounding still uses the ge
         if fmt.isIEEE then
           some <| FiniteProductRound.round fmt sign product productScale
         else
-          some <| roundDyadicImpl fmt {
+          some <| Internal.roundDyadic fmt {
             negative := sign
             significand := product
             exponent :=
@@ -178,8 +179,8 @@ operand decodes and exponent algebra are fused; final rounding still uses the ge
 /--
 Finite division using compact field scales.
 
-The format-dependent exponent offset cancels between numerator and denominator. The quotient still
-uses the exact arbitrary-precision rational rounder; only decoding and exponent construction are
+The format-dependent exponent offset cancels between numerator and denominator. The quotient uses
+the exact rational rounder `roundRatScaled`, and only decoding and exponent construction are
 fused.
 -/
 @[inline] def divComponents
@@ -206,8 +207,8 @@ fused.
 /--
 Exact product used by the finite fused-multiply-add kernel.
 
-The exponent is expressed with nonnegative field scales. When either significand is zero this
-exponent is observationally irrelevant: `addDyadic` identifies a zero from its mantissa and applies
+The exponent is expressed with nonnegative field scales. When either significand is zero the
+exponent does not matter, because `addDyadic` recognizes a zero from its significand and applies
 the same signed-zero rule as the public dyadic path.
 -/
 @[inline] def productDyadic (fmt : FloatFormat) (x y : Components) : Numerics.Dyadic :=
@@ -220,10 +221,10 @@ the same signed-zero rule as the public dyadic path.
 /--
 Compiled finite FMA adds the exact product and addend in one unsigned scale coordinate.
 
-The addend scale receives one format offset so both operands use the product rounder's
+Adding one format offset to the addend scale puts both operands in the product rounder's
 two-offset coordinate. No intermediate dyadic exponent is allocated on the IEEE fast path.
 -/
-@[inline] def fmaComponentsImpl
+@[inline] def Internal.fmaComponents
     (fmt : FloatFormat) (x y z : Components) : Model fmt :=
   if fmt.isIEEE then
     FiniteScaleAdd.roundSum fmt 0
@@ -231,24 +232,24 @@ two-offset coordinate. No intermediate dyadic exponent is allocated on the IEEE 
       (x.mantissa * y.mantissa) (scale x.exponent + scale y.exponent)
       z.mantissa (scale z.exponent + finiteScaleOffset fmt)
   else
-    roundDyadicImpl fmt <| addDyadic (productDyadic fmt x y) (z.toDyadic fmt)
+    Internal.roundDyadic fmt <| addDyadic (productDyadic fmt x y) (z.toDyadic fmt)
 
 /--
 Exact finite fused multiply-add from three already-decoded values.
 
-The exact dyadic result is rounded once by the descriptor-generic integer implementation.
-Importing `Kernel.Proof` also enables the verified compiler substitution to `fmaComponentsImpl`,
-which uses unsigned scale alignment on IEEE descriptors.
+`Internal.roundDyadic` rounds the exact dyadic result once. Importing `Kernel.Proof` also enables
+the verified compiler substitution to `Internal.fmaComponents`, which uses unsigned scale alignment
+on IEEE descriptors.
 -/
 def fmaComponents
     (fmt : FloatFormat) (x y z : Components) : Model fmt :=
-  roundDyadicImpl fmt <| addDyadic (productDyadic fmt x y) (z.toDyadic fmt)
+  Internal.roundDyadic fmt <| addDyadic (productDyadic fmt x y) (z.toDyadic fmt)
 
 /--
 Finite fused multiply-add using compact field scales for the exact product.
 
-All three inputs are decoded once. The product and addend remain exact dyadics and the result is
-rounded only once, so this is still a true fused operation at every supported precision.
+All three inputs are decoded once. The product and addend stay exact dyadics and the result is
+rounded once, at every precision.
 -/
 @[inline] def fma? {fmt : FloatFormat}
     (x y z : Model fmt) : Option (Model fmt) :=
@@ -294,7 +295,7 @@ rounded only once, so this is still a true fused operation at every supported pr
     if fmt.isIEEE then
       FiniteProductRound.round fmt sign product productScale
     else
-      roundDyadicImpl fmt {
+      Internal.roundDyadic fmt {
         negative := sign
         significand := product
         exponent :=
@@ -312,8 +313,8 @@ rounded only once, so this is still a true fused operation at every supported pr
 /--
 Divide finite scalar fields using the compact exponent difference.
 
-Formats whose precision fits in a word, zero exponent fields, and boundary results retain the
-reference rounder. For normalized mantissas, the ratio exponent is zero or minus one, so both
+Formats whose precision fits in a word, zero exponent fields, and boundary results use the reference
+rounder `roundRatScaled`. For normalized mantissas, the ratio exponent is zero or minus one, so both
 possible total exponents must lie in the normal range before selecting the quotient rounder.
 Comparing the decoded normal mantissas gives this ratio exponent without recomputing their
 leading-bit positions.
@@ -337,7 +338,7 @@ leading-bit positions.
         decide (fmt.maxNormalExponent < exponent) then
       roundRatScaled fmt sign xMantissa yMantissa exponent
     else
-      FiniteQuotientRound.roundAtExponent fmt .nearestEven sign xMantissa yMantissa exponent
+      FiniteQuotientRound.roundAtExponent fmt .nearest sign xMantissa yMantissa exponent
         (if yMantissa ≤ xMantissa then 0 else -1)
 
 /-- Compiled finite division with scalar field decoding. -/
@@ -378,8 +379,8 @@ leading-bit positions.
 /--
 Straight-line IEEE FMA decoder.
 
-This calls the same `fmaFields` kernel as `fmaRuntime?`, with the three decodes written directly
-instead of through nested continuations. `fmaRuntimeFlat_eq` proves their equality.
+It calls the same `fmaFields` kernel as `fmaRuntime?`, with the three decodes written inline
+instead of through nested continuations. `fmaRuntimeFlat_eq` proves the two equal.
 -/
 @[inline] def fmaRuntimeFlat? {fmt : FloatFormat}
     (x y z : Model fmt) : Option (Model fmt) :=

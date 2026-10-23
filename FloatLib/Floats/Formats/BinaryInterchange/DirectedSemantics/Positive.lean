@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
 
 /-!
@@ -16,6 +17,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quot
 The shift-based directed rounders used by `Model` are related to the independent Flocq-style
 real semantics at the scaled-mantissa boundary, before subnormal and normal values are packed
 into interchange fields.
+
+`roundAt fmt x mode` is the real rounding of every `IEEERoundingMode` on the same grid, Flocq's
+`round` with `nearestEven`, `ceilRound`, and `floorRound` for nearest-even and the two infinity
+directions. Nearest-away rounding is Flocq's `nearestChoice` with the tie choice
+`nearestAwayChoice`, and rounding away from zero is `awayRound`.
 
 All definitions are uniform in `FloatFormat`.
 -/
@@ -30,25 +36,109 @@ open FloatLib.Floats.Formats.Flocq
 
 section
 
-/-! ## Independent directed semantics -/
+/-! ## Real rounding in every direction -/
 
-/-- Round a real downward on the gradual-underflow grid of `fmt`, before overflow handling. -/
-noncomputable abbrev roundAtDown (fmt : FloatFormat) (x : ℝ) : ℝ :=
-  round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) floorRound x
+/-- Nearest-away rounding rounds the scaled mantissa with ties away from zero. -/
+@[simp] theorem roundAt_nearestAway (fmt : FloatFormat) (x : ℝ) :
+    roundAt fmt x .nearestAway =
+      round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
+        (nearestChoice nearestAwayChoice) x :=
+  rfl
 
-/-- Round a real upward on the gradual-underflow grid of `fmt`, before overflow handling. -/
-noncomputable abbrev roundAtUp (fmt : FloatFormat) (x : ℝ) : ℝ :=
-  round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) ceilRound x
+/-- Rounding toward zero truncates the scaled mantissa. -/
+@[simp] theorem roundAt_towardZero (fmt : FloatFormat) (x : ℝ) :
+    roundAt fmt x .towardZero =
+      round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) truncRound x :=
+  rfl
 
-/-- Downward rounding fixes zero. -/
-theorem roundAtDown_zero (fmt : FloatFormat) :
-    roundAtDown fmt 0 = 0 := by
-  exact round_preserves_generic floorRound 0 generic_format_zero
+/-- Rounding away from zero rounds the scaled mantissa away from zero. -/
+@[simp] theorem roundAt_away (fmt : FloatFormat) (x : ℝ) :
+    roundAt fmt x .away =
+      round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) awayRound x :=
+  rfl
 
-/-- Upward rounding fixes zero. -/
-theorem roundAtUp_zero (fmt : FloatFormat) :
-    roundAtUp fmt 0 = 0 := by
-  exact round_preserves_generic ceilRound 0 generic_format_zero
+/-- Every rounding direction returns a value on the grid of `fmt`. -/
+theorem genericFormat_roundAt (fmt : FloatFormat) (x : ℝ) (mode : IEEERoundingMode := .nearest) :
+    genericFormat Numerics.binaryRadix (fexpOf fmt) (roundAt fmt x mode) := by
+  rw [roundAt_eq_round]
+  exact generic_format_round (roundingFunction mode) x
+
+/-- Every rounding direction fixes a value already on the grid of `fmt`. -/
+theorem roundAt_of_genericFormat (fmt : FloatFormat) {x : ℝ}
+    (hx : genericFormat Numerics.binaryRadix (fexpOf fmt) x)
+    (mode : IEEERoundingMode := .nearest) :
+    roundAt fmt x mode = x := by
+  rw [roundAt_eq_round]
+  exact round_preserves_generic (roundingFunction mode) x hx
+
+/--
+On a nonnegative real a directed mode is upward rounding when it rounds positive results away
+from zero, and downward rounding otherwise. The two nearest modes are not directed.
+-/
+theorem roundAt_of_nonneg (fmt : FloatFormat) {mode : IEEERoundingMode}
+    (hnearest : mode ≠ .nearest) (hnearestAway : mode ≠ .nearestAway) {x : ℝ}
+    (hx : 0 ≤ x) :
+    roundAt fmt x mode =
+      if mode.roundsAwayFromZero false then roundAt fmt x .up else roundAt fmt x .down := by
+  have hs : 0 ≤ scaledMantissa Numerics.binaryRadix (fexpOf fmt) x := by
+    rw [scaledMantissa_eq_div]
+    exact div_nonneg hx (bpow.nonneg _ _)
+  cases mode with
+  | nearest => exact absurd rfl hnearest
+  | nearestAway => exact absurd rfl hnearestAway
+  | towardZero =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) truncRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) floorRound x
+      unfold Flocq.round
+      rw [truncRound_eq_floor hs]
+  | up => rfl
+  | down => rfl
+  | away =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) awayRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) ceilRound x
+      unfold Flocq.round
+      rw [awayRound_eq_ceil hs]
+
+/--
+Two reals with the same canonical exponent whose scaled mantissas have the same integer bracket
+and the same location in it round alike in every direction.
+-/
+theorem roundAt_eq_of_scaledBracket (fmt : FloatFormat) (mode : IEEERoundingMode)
+    {x y : ℝ} {m : ℤ} {location : Location}
+    (hcexp : cexp Numerics.binaryRadix (fexpOf fmt) x =
+      cexp Numerics.binaryRadix (fexpOf fmt) y)
+    (hx : InbetweenInt m (scaledMantissa Numerics.binaryRadix (fexpOf fmt) x) location)
+    (hy : InbetweenInt m (scaledMantissa Numerics.binaryRadix (fexpOf fmt) y) location) :
+    roundAt fmt x mode = roundAt fmt y mode := by
+  cases mode with
+  | nearest =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) nearestEven x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) nearestEven y
+      rw [round_nearestEven_of_scaledBracket x hx, round_nearestEven_of_scaledBracket y hy,
+        hcexp]
+  | towardZero =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) truncRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) truncRound y
+      rw [round_trunc_of_scaledBracket x hx, round_trunc_of_scaledBracket y hy, hcexp]
+  | up =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) ceilRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) ceilRound y
+      rw [round_ceil_of_scaledBracket x hx, round_ceil_of_scaledBracket y hy, hcexp]
+  | down =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) floorRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) floorRound y
+      rw [round_floor_of_scaledBracket x hx, round_floor_of_scaledBracket y hy, hcexp]
+  | nearestAway =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
+          (nearestChoice nearestAwayChoice) x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
+          (nearestChoice nearestAwayChoice) y
+      rw [round_nearestChoice_of_scaledBracket nearestAwayChoice x hx,
+        round_nearestChoice_of_scaledBracket nearestAwayChoice y hy, hcexp]
+  | away =>
+      change round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) awayRound x =
+        round (β := Numerics.binaryRadix) (fexp := fexpOf fmt) awayRound y
+      rw [round_away_of_scaledBracket x hx, round_away_of_scaledBracket y hy, hcexp]
 
 /-! ## Executable scaled-mantissa rounding -/
 
@@ -64,7 +154,7 @@ def roundMantissaAtExponentDown
 def roundMantissaAtExponentUp
     (mantissa : Nat) (exponent targetExponent : Int) : Nat :=
   if exponent ≤ targetExponent then
-    shiftRightCeilPow2 mantissa (targetExponent - exponent).toNat
+    Numerics.shiftRightCeil mantissa (targetExponent - exponent).toNat
   else
     Nat.shiftLeft mantissa (exponent - targetExponent).toNat
 
@@ -74,7 +164,7 @@ theorem roundMantissaAtExponentUp_ne_zero
     roundMantissaAtExponentUp mantissa exponent targetExponent ≠ 0 := by
   by_cases hle : exponent ≤ targetExponent
   · let shift := (targetExponent - exponent).toNat
-    have hcover := le_shiftRightCeilPow2_mul_pow2 mantissa shift
+    have hcover := le_shiftRightCeil_mul_pow2 mantissa shift
     simp only [roundMantissaAtExponentUp, hle, ite_true]
     intro hzero
     rw [hzero] at hcover
@@ -89,7 +179,7 @@ theorem roundMantissaAtExponentDown_le_up
       roundMantissaAtExponentUp mantissa exponent targetExponent := by
   by_cases hle : exponent ≤ targetExponent
   · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, ite_true]
-    exact shiftRight_le_shiftRightCeilPow2 _ _
+    exact Numerics.shiftRight_le_shiftRightCeil _ _
   · simp [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle]
 
 /-- Ceiling alignment is at most one unit above floor alignment. -/
@@ -99,59 +189,18 @@ theorem roundMantissaAtExponentUp_le_down_add_one
       roundMantissaAtExponentDown mantissa exponent targetExponent + 1 := by
   by_cases hle : exponent ≤ targetExponent
   · simp only [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle, ite_true]
-    exact shiftRightCeilPow2_le_shiftRight_add_one _ _
+    exact Numerics.shiftRightCeil_le_shiftRight_add_one _ _
   · simp [roundMantissaAtExponentDown, roundMantissaAtExponentUp, hle]
 
-private theorem shiftRightCeilPow2_eq_div_add_one
+private theorem shiftRightCeil_eq_div_add_one
     (numerator shift : Nat) :
-    shiftRightCeilPow2 numerator shift =
+    Numerics.shiftRightCeil numerator shift =
       if numerator % pow2 shift = 0 then
         numerator / pow2 shift
       else
         numerator / pow2 shift + 1 := by
-  cases shift with
-  | zero =>
-      simp [shiftRightCeilPow2, pow2_eq_two_pow, Nat.mod_one]
-  | succ shift =>
-      let distance := Nat.succ shift
-      let denominator := pow2 distance
-      let quotient := numerator / denominator
-      let remainder := numerator % denominator
-      have hshift :
-          Nat.shiftRight numerator distance = quotient := by
-        simp [quotient, denominator, Nat.shiftRight_eq_div_pow, pow2_eq_two_pow]
-      have hleft :
-          Nat.shiftLeft quotient distance = quotient * denominator := by
-        simp [Nat.shiftLeft_eq, denominator, pow2_eq_two_pow]
-      have hn :
-          numerator = quotient * denominator + remainder := by
-        simpa [quotient, remainder, Nat.mul_comm, Nat.mul_left_comm,
-          Nat.mul_assoc] using (Nat.div_add_mod numerator denominator).symm
-      have hsub :
-          numerator - Nat.shiftLeft quotient distance = remainder := by
-        rw [hleft, hn]
-        simp
-      have hshift' : numerator >>> (shift + 1) = quotient := by
-        simpa [distance, Nat.succ_eq_add_one] using hshift
-      have hsub' : numerator - quotient <<< (shift + 1) = remainder := by
-        simpa [distance, Nat.succ_eq_add_one] using hsub
-      have hmod : numerator % pow2 (shift + 1) = remainder := by
-        simp [remainder, denominator, distance, Nat.succ_eq_add_one]
-      have hdiv : numerator / pow2 (shift + 1) = quotient := by
-        simp [quotient, denominator, distance, Nat.succ_eq_add_one]
-      by_cases hzero : remainder = 0
-      · have hceil : shiftRightCeilPow2 numerator (shift + 1) = quotient := by
-          simp (config := { zeta := true }) [shiftRightCeilPow2]
-          rw [hshift', hsub']
-          simp [hzero]
-        rw [hceil, hmod, hdiv, hzero]
-        simp
-      · have hceil : shiftRightCeilPow2 numerator (shift + 1) = quotient + 1 := by
-          simp (config := { zeta := true }) [shiftRightCeilPow2]
-          rw [hshift', hsub']
-          simp [hzero]
-        rw [hceil, hmod, hdiv]
-        simp [hzero]
+  rw [Numerics.shiftRightCeil_eq, pow2_eq_two_pow]
+  split_ifs <;> simp
 
 /-- Downward shifting computes the integer floor of a scaled positive dyadic. -/
 theorem floor_scaledMagnitude
@@ -218,10 +267,10 @@ theorem ceil_scaledMagnitude
         pow2_eq_two_pow, div_eq_mul_inv]
     rw [hvalue]
     simp only [roundMantissaAtExponentUp, ite_eq_left hle]
-    rw [shiftRightCeilPow2_eq_div_add_one]
+    rw [shiftRightCeil_eq_div_add_one]
     have hpow2 : pow2 shift ≠ 0 := Nat.ne_of_gt (pow2_pos shift)
-    simpa [ceilRound, shift, quotCeil, hpow2] using
-      ceil_real_nat_div_eq_quotCeil mantissa (pow2 shift) hpow2
+    simpa [ceilRound, shift, Numerics.roundQuotient_up_eq, hpow2] using
+      ceil_div_eq_roundQuotient_up mantissa (pow2 shift) hpow2
   · let shift := (exponent - targetExponent).toNat
     have hshiftInt : (shift : Int) = exponent - targetExponent :=
       Int.toNat_of_nonneg (sub_nonneg.mpr (le_of_not_ge hle))

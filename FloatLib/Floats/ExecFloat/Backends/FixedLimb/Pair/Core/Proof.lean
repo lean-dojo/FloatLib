@@ -20,8 +20,8 @@ import Mathlib.Tactic.Ring
 # Two-word pair-kernel storage
 
 The field helpers in `Core.Runtime` agree with the width-generic carrier under
-`NativePair.Eligible`. The eligibility bounds ensure that field extraction and packing do not
-lose bits to native-word overflow.
+`NativePair.Eligible`, whose bounds keep field extraction and packing from losing bits to
+native-word overflow.
 
 `packNormal_eq_ofFields` relates native packing to the canonical field constructor for an
 in-range exponent field and a normalized significand. `decode_of_normalExponent` gives the
@@ -48,7 +48,7 @@ theorem Eligible.frac_gt (h : Eligible fmt) : 64 < fmt.fracWidth := h.2.1
 /-- An eligible descriptor fits in two words. -/
 theorem Eligible.width_le (h : Eligible fmt) : fmt.bitWidth ≤ 128 := h.2.2
 
-/-- The exponent and fraction of an eligible descriptor share at most 127 bits. -/
+/-- Exponent and fraction of an eligible descriptor share at most 127 bits. -/
 theorem Eligible.sum_le (h : Eligible fmt) :
     fmt.expWidth + fmt.fracWidth ≤ 127 := by
   have hwidth := h.width_le
@@ -75,7 +75,7 @@ theorem Eligible.encoding (h : Eligible fmt) : fmt.encoding = .ieee :=
 theorem Eligible.exponentBias_eq (h : Eligible fmt) : fmt.exponentBias = fmt.bias :=
   ((FloatFormat.isIEEE_eq_true_iff fmt).mp h.1).2
 
-/-- The bias of an eligible descriptor is below `2^61`. -/
+/-- An eligible bias is below `2^61`. -/
 theorem Eligible.bias_lt (h : Eligible fmt) : fmt.bias < 2 ^ 61 := by
   have hpow : 2 ^ fmt.expWidth ≤ 2 ^ 62 :=
     Nat.pow_le_pow_right (by decide) h.exp_le
@@ -187,8 +187,8 @@ theorem ofWords_toNat (words : UInt128)
 /-- Native sign extraction agrees with the public carrier. -/
 theorem signBit_eq (h : Eligible fmt) (x : Model fmt) :
     signBit fmt (toWords x).hi = Model.signBit x := by
-  rw [Model.signBit_eq_signBitImpl_apply]
-  unfold signBit Model.signBitImpl
+  rw [Model.signBit_eq_internal_apply]
+  unfold signBit Model.Internal.signBit
   have hsum := h.sum_le
   have hfrac := h.frac_gt
   apply Bool.eq_iff_iff.mpr
@@ -201,8 +201,8 @@ theorem signBit_eq (h : Eligible fmt) (x : Model fmt) :
 /-- Native exponent extraction agrees with the public carrier. -/
 theorem expField_toNat (h : Eligible fmt) (x : Model fmt) :
     (expField fmt (toWords x).hi).toNat = Model.expField x := by
-  rw [Model.expField_eq_expFieldImpl_apply]
-  unfold expField Model.expFieldImpl
+  rw [Model.expField_eq_internal_apply]
+  unfold expField Model.Internal.expField
   have hfrac := h.frac_gt
   have hfracLe := h.frac_le
   rw [UInt64.toNat_and, UInt64.toNat_shiftRight, high_word_toNat h x,
@@ -216,8 +216,8 @@ theorem expField_toNat (h : Eligible fmt) (x : Model fmt) :
 theorem fraction_toNat (h : Eligible fmt) (x : Model fmt) :
     (fracHigh fmt (toWords x).hi).toNat * 2 ^ 64 + (toWords x).lo.toNat =
       Model.fracField x := by
-  rw [Model.fracField_eq_fracFieldImpl_apply]
-  unfold fracHigh Model.fracFieldImpl FloatFormat.fracMaskNat
+  rw [Model.fracField_eq_internal_apply]
+  unfold fracHigh Model.Internal.fracField FloatFormat.fracMaskNat
   have hfrac := h.frac_gt
   rw [UInt64.toNat_and, high_word_toNat h x, low_word_toNat, fracHighMask_toNat h,
     Nat.and_two_pow_sub_one_eq_mod, Nat.and_two_pow_sub_one_eq_mod,
@@ -321,7 +321,7 @@ theorem carryMantissa_toNat (h : Eligible fmt) :
   congr 1
   omega
 
-/-- The two-limb carry test is exactly the carry produced by `fracWidth + 1`-bit rounding. -/
+/-- The two-limb carry test holds exactly when the significand is `2^(fracWidth + 1)`. -/
 theorem isCarry_iff (h : Eligible fmt) (value : UInt128) :
     isCarry fmt value = true ↔ value.toNat = pow2 (fmt.fracWidth + 1) := by
   rw [pow2_eq_two_pow]
@@ -386,7 +386,7 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
   set X := exponent.toNat with hX
   set hi := mantissa.hi.toNat with hhi
   set lo := mantissa.lo.toNat with hlo
-  have hm : mantissa.toNat = lo + hi * 2 ^ 64 := rfl
+  have hm : mantissa.toNat = lo + hi * 2 ^ 64 := UInt128.toNat.eq_1 mantissa
   have hloLt : lo < 2 ^ 64 := mantissa.lo.toNat_lt
   have hpowF : 2 ^ F = 2 ^ k * 2 ^ 64 := by
     rw [← pow_add]
@@ -497,12 +497,12 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
     rw [hpowEFsucc]
     cases sign <;> simp only [Bool.false_eq_true, ↓reduceIte] <;> omega
   -- Compare the two encodings bit for bit through their natural-number values.
-  rw [Model.ofFields_eq_ofFieldsImpl]
-  unfold packNormal ofWords Model.ofFieldsImpl
+  rw [Model.ofFields_eq_internal]
+  unfold packNormal packNormalWords ofWords Model.Internal.ofFields
   apply congrArg Model.ofBits
   apply BitVec.eq_of_toNat_eq
   simp only [BitVec.toNat_setWidth, BitVec.toNat_append, UInt64.toNat_toBitVec,
-    Model.mkBitsImpl, BitVec.toNat_ofNatLT]
+    Model.Internal.mkBits, BitVec.toNat_ofNatLT]
   rw [hhighValue, ← hlo, ← Nat.shiftLeft_add_eq_or_of_lt hloLt, Nat.shiftLeft_eq, htotal,
     hbitWidth, Nat.mod_eq_of_lt htotalLt]
   unfold FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
@@ -517,7 +517,7 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
 
 /-! ## Finite decoding -/
 
-/-- Decode a normal finite value directly from its two native storage words. -/
+/-- A normal finite value decodes to the fields read from its two native storage words. -/
 theorem decode_of_normalExponent (h : Eligible fmt) (x : Model fmt)
     (hexponentZero : expField fmt (toWords x).hi ≠ 0)
     (hexponentFinite : expField fmt (toWords x).hi ≠ expAllOnes fmt) :
@@ -561,7 +561,10 @@ theorem decode_of_normalExponent (h : Eligible fmt) (x : Model fmt)
   rw [ite_eq_right (by simpa using hexponentZeroNat)]
   rw [← hexponent, ← hsign, hmantissa]
 
-/-- Interpret normal finite-kernel components as their exact dyadic value. -/
+/--
+Normal finite-kernel components have sign `sign` and magnitude
+`mantissa * 2^(exponent - bias - fracWidth)`.
+-/
 theorem normalComponents_toDyadic (h : Eligible fmt)
     (sign : Bool) (exponent mantissa : Nat)
     (hexponent : exponent ≠ 0) (hmantissa : mantissa ≠ 0) :
@@ -576,7 +579,7 @@ theorem normalComponents_toDyadic (h : Eligible fmt)
     hexponent, hmantissa, h.exponentBias_eq]
   omega
 
-/-- Normalize the scale used by the product-round kernels. -/
+/-- The product-round scale of an eligible format simplifies to `exponent - bias - fracWidth`. -/
 theorem roundScaleExponent (h : Eligible fmt) (exponent : Nat) :
     Int.ofNat (exponent + (fmt.bias + fmt.fracWidth - 2)) -
         Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) =

@@ -16,8 +16,8 @@ Increasing the fraction width while retaining the exponent width shifts all thre
 same number of bits. A single shift of the stored word therefore agrees with extracting and
 repacking its fields. The destination bound is proved before compilation, avoiding a modulus.
 
-This is a storage identity for every bit pattern. The cast runtime separately checks bias and
-encoding compatibility and handles exceptional values before using it as a numerical conversion.
+This is a storage identity for every bit pattern. Before using it as a numerical conversion, the
+cast runtime checks bias and encoding compatibility and handles exceptional values.
 -/
 
 @[expose] public section
@@ -31,8 +31,8 @@ private theorem toNatBits_ofFields_of_lt (fmt : FloatFormat) (sign : Bool)
     (ofFields fmt sign exponent fraction).toNatBits =
       (if sign then 1 <<< (fmt.expWidth + fmt.fracWidth) else 0) |||
         (exponent <<< fmt.fracWidth) ||| fraction := by
-  rw [ofFields_eq_ofFieldsImpl]
-  simp only [ofFieldsImpl, mkBitsImpl, ofBits, toNatBits, BitVec.toNat_ofNatLT,
+  rw [ofFields_eq_internal]
+  simp only [Internal.ofFields, Internal.mkBits, ofBits, toNatBits, BitVec.toNat_ofNatLT,
     FloatFormat.expAllOnesNat, FloatFormat.fracMaskNat,
     Nat.and_two_pow_sub_one_of_lt_two_pow he, Nat.and_two_pow_sub_one_of_lt_two_pow hf]
   rfl
@@ -50,15 +50,15 @@ theorem toNatBits_shiftLeft_lt {src dst : FloatFormat} (x : Model src)
 /--
 Increase the stored fraction width by shifting the entire word.
 
-This operation preserves fields, without interpreting them. Numerical casts must additionally
-check bias and encoding compatibility and apply their exceptional-value policy.
+This operation preserves fields without interpreting them. Numerical casts must also check bias
+and encoding compatibility and apply their exceptional-value policy.
 -/
 @[inline] def widenBits {src dst : FloatFormat} (x : Model src)
     (he : src.expWidth = dst.expWidth) (hf : src.fracWidth ≤ dst.fracWidth) : Model dst :=
   ofBits (BitVec.ofNatLT (x.toNatBits <<< (dst.fracWidth - src.fracWidth))
     (toNatBits_shiftLeft_lt x he hf))
 
-/-- Shifting the complete word agrees bit for bit with widening its explicit fields. -/
+/-- Shifting the complete word agrees bit for bit with widening its three fields. -/
 theorem widenBits_eq_ofFields {src dst : FloatFormat} (x : Model src)
     (he : src.expWidth = dst.expWidth) (hf : src.fracWidth ≤ dst.fracWidth) :
     widenBits x he hf = ofFields dst (signBit x) (expField x)

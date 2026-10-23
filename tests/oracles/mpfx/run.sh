@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Compare MPFX with FloatLib on one format, operation, and operand set in all four IEEE directions.
+# Compare MPFX with FloatLib on one format, operation, and operand set in the four rounding
+# directions required for binary formats.
 #
 # FloatLib's results and flags come from `execFloatOracleList`; mpfx_list.cpp evaluates MPFX's
 # hardware round-to-odd and error-free-transformation engines in the double container and, when

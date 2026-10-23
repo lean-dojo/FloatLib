@@ -21,15 +21,15 @@ public import FloatLib.Floats.Interval.RealBounds
 /-!
 # Arithmetic enclosures for executable binary intervals
 
-Read this module after `IntervalSemantics.Order` for the proofs behind negation, addition,
+Building on `IntervalSemantics.Order`, this module proves the enclosures for negation, addition,
 subtraction, multiplication, division, and reciprocal. The four-corner arguments for products and
-quotients are kept with the operations that consume them. `IntervalSemantics.Finite` supplies the
-separate range-checked results for all-words-finite encodings.
+quotients are kept with the operations that consume them. `IntervalSemantics.Finite` supplies
+range-checked results for all-words-finite encodings.
 
 IEEE binary arithmetic starts with finite valid inputs and encloses exact real results in `EReal`,
 allowing overflow at the output. Negation also accepts infinite input endpoints. The validity
-theorems explain which results can be passed to later interval operations; division through zero
-and indeterminate candidate bounds use the whole interval.
+theorems say which results can be passed to later interval operations. Division through zero and
+indeterminate candidate bounds use the whole interval.
 
 `Interval.Arithmetic` contains the executable definitions. `IntervalSemantics.Activations` builds
 ReLU, absolute-value, and square-root enclosures on the results here.
@@ -81,14 +81,16 @@ theorem add_sound
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
     ERealMem (add A B) ((x + y : ℝ) : EReal) := by
   constructor
-  · apply (ofBounds_lower_le (Model.addDown A.lo B.lo) (Model.addUp A.hi B.hi) hfmt).trans
+  · apply (ofBounds_lower_le (Model.add A.lo B.lo (mode := .down))
+      (Model.add A.hi B.hi (mode := .up)) hfmt).trans
     exact
-      (toEReal_addDown_le A.lo B.lo hfmt hA.lo_isFinite hB.lo_isFinite).trans
+      (toEReal_add_down_le A.lo B.lo hfmt hA.lo_isFinite hB.lo_isFinite).trans
         ((EReal.coe_le_coe_iff).2 (add_le_add hx.1 hy.1))
-  · apply le_trans ?_ (le_ofBounds_upper (Model.addDown A.lo B.lo) (Model.addUp A.hi B.hi) hfmt)
+  · apply le_trans ?_ (le_ofBounds_upper (Model.add A.lo B.lo (mode := .down))
+      (Model.add A.hi B.hi (mode := .up)) hfmt)
     exact
       ((EReal.coe_le_coe_iff).2 (add_le_add hx.2 hy.2)).trans
-        (le_toEReal_addUp A.hi B.hi hfmt hA.hi_isFinite hB.hi_isFinite)
+        (le_toEReal_add_up A.hi B.hi hfmt hA.hi_isFinite hB.hi_isFinite)
 
 /-- Outward-rounded addition always returns ordered IEEE bounds without NaNs. -/
 theorem add_validExtended
@@ -105,14 +107,16 @@ theorem sub_sound
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
     ERealMem (sub A B) ((x - y : ℝ) : EReal) := by
   constructor
-  · apply (ofBounds_lower_le (Model.subDown A.lo B.hi) (Model.subUp A.hi B.lo) hfmt).trans
+  · apply (ofBounds_lower_le (Model.sub A.lo B.hi (mode := .down))
+      (Model.sub A.hi B.lo (mode := .up)) hfmt).trans
     exact
-      (toEReal_subDown_le A.lo B.hi hfmt hA.lo_isFinite hB.hi_isFinite).trans
+      (toEReal_sub_down_le A.lo B.hi hfmt hA.lo_isFinite hB.hi_isFinite).trans
         ((EReal.coe_le_coe_iff).2 (sub_le_sub hx.1 hy.2))
-  · apply le_trans ?_ (le_ofBounds_upper (Model.subDown A.lo B.hi) (Model.subUp A.hi B.lo) hfmt)
+  · apply le_trans ?_ (le_ofBounds_upper (Model.sub A.lo B.hi (mode := .down))
+      (Model.sub A.hi B.lo (mode := .up)) hfmt)
     exact
       ((EReal.coe_le_coe_iff).2 (sub_le_sub hx.2 hy.1)).trans
-        (le_toEReal_subUp A.hi B.lo hfmt hA.hi_isFinite hB.lo_isFinite)
+        (le_toEReal_sub_up A.hi B.lo hfmt hA.hi_isFinite hB.lo_isFinite)
 
 /-- Outward-rounded subtraction always returns ordered IEEE bounds without NaNs. -/
 theorem sub_validExtended
@@ -181,11 +185,12 @@ theorem mul_sound
     (hA : Valid A) (hB : Valid B)
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
     ERealMem (mul A B) ((x * y : ℝ) : EReal) :=
-  eRealMem_ofBounds_corners A B hfmt hA hB mulDown mulUp (· * ·)
+  eRealMem_ofBounds_corners A B hfmt hA hB (Model.mul · · (mode := .down))
+    (Model.mul · · (mode := .up)) (· * ·)
     (fun a b ha hb _ =>
-      ⟨isNaN_mulDown_eq_false_of_isFinite a b hfmt ha hb, toEReal_mulDown_le a b hfmt ha hb⟩)
+      ⟨isNaN_mul_down_eq_false_of_isFinite a b hfmt ha hb, toEReal_mul_down_le a b hfmt ha hb⟩)
     (fun a b ha hb _ =>
-      ⟨isNaN_mulUp_eq_false_of_isFinite a b hfmt ha hb, le_toEReal_mulUp a b hfmt ha hb⟩)
+      ⟨isNaN_mul_up_eq_false_of_isFinite a b hfmt ha hb, le_toEReal_mul_up a b hfmt ha hb⟩)
     (FloatLib.Floats.Interval.mul_bounds_Icc _ _ _ _ x y hx hy)
 
 /-- Outward-rounded multiplication always returns ordered IEEE bounds without NaNs. -/
@@ -228,7 +233,7 @@ Outward-rounded interval division encloses every represented real quotient.
 The theorem is total in the denominator: when `B` contains zero the result is `whole fmt`, which
 encloses every real, and otherwise the four directed corner quotients bracket `x / y`. Both
 intervals must be `Valid` (finite ordered endpoints) because the directed division kernels are
-specified only on finite operands; an extended version with infinite endpoints would need
+specified only on finite operands. An extended version with infinite endpoints would need
 directed-division semantics for infinite arguments, which the library does not provide.
 -/
 theorem div_sound
@@ -245,13 +250,14 @@ theorem div_sound
       · exact isZero_eq_false_of_sign_stable B hsign le_rfl hB.toReal_ordered
       · exact isZero_eq_false_of_sign_stable B hsign hB.toReal_ordered le_rfl
     rw [div, ite_eq_right hcontains]
-    exact eRealMem_ofBounds_corners A B hfmt hA hB divDown divUp (· / ·)
+    exact eRealMem_ofBounds_corners A B hfmt hA hB (Model.div · · (mode := .down))
+      (Model.div · · (mode := .up)) (· / ·)
       (fun a b ha hb hb' =>
-        ⟨isNaN_divDown_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
-          toEReal_divDown_le a b hfmt ha hb (hzero b hb')⟩)
+        ⟨isNaN_div_down_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
+          toEReal_div_down_le a b hfmt ha hb (hzero b hb')⟩)
       (fun a b ha hb hb' =>
-        ⟨isNaN_divUp_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
-          le_toEReal_divUp a b hfmt ha hb (hzero b hb')⟩)
+        ⟨isNaN_div_up_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
+          le_toEReal_div_up a b hfmt ha hb (hzero b hb')⟩)
       (FloatLib.Floats.Interval.div_bounds_Icc _ _ _ _ x y hx hy hsign)
 
 /-- Outward-rounded division always returns ordered IEEE bounds without NaNs. -/

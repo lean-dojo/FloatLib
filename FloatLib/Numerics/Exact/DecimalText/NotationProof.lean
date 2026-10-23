@@ -49,7 +49,7 @@ private theorem naturalDigits_are_digits (coefficient : Nat) :
   exact ⟨digit, hdigit⟩
 
 /-- Inserting a point preserves the coefficient and subtracts the fractional digit count.
-The suffix may be empty or an exponent accepted by the existing decimal scanner. -/
+The suffix may be empty or an exponent accepted by the decimal scanner. -/
 theorem parseMagnitude_pointCharacters (whole fraction tail : List Char) (exponent : Int)
     (hwhole : whole ≠ [])
     (hdigits : ∀ c ∈ whole ++ fraction, ∃ digit, digitValue? c = some digit)
@@ -193,7 +193,7 @@ theorem parseCharacters_fractionalCharacters (negative : Bool) (coefficient plac
     (splitSign_fractionalCharacters coefficient places tail)
     (parseMagnitude_fractionalCharacters coefficient places tail exponent htail hexponent)
 
-/-- Fixed notation recovers the coefficient after absorbing any positive exponent. -/
+/-- Fixed text parses back to `fixedRepresentation`, which absorbs a positive exponent. -/
 @[simp] theorem parseCharacters_fixedCharacters (value : Decimal) :
     parseCharacters value.fixedCharacters = some value.fixedRepresentation := by
   rcases value with ⟨negative, coefficient, exponent⟩
@@ -207,7 +207,7 @@ theorem parseCharacters_fractionalCharacters (negative : Bool) (coefficient plac
         parseCharacters_fractionalCharacters negative coefficient (exponent + 1) [] 0
           (by simp) rfl
 
-/-- Fixed notation retains the complete record when its exponent specifies fractional places. -/
+/-- `fixedRepresentation` is the record itself when the exponent is not positive. -/
 theorem Decimal.fixedRepresentation_eq_self (value : Decimal) (hexponent : value.exponent ≤ 0) :
     value.fixedRepresentation = value := by
   rcases value with ⟨negative, coefficient, exponent⟩
@@ -218,7 +218,7 @@ theorem Decimal.fixedRepresentation_eq_self (value : Decimal) (hexponent : value
       simp [fixedRepresentation]
   | negSucc exponent => rfl
 
-/-- In particular, printing a decimal rounded to exponent `-places` preserves the exact record. -/
+/-- Fixed text of a decimal with a nonpositive exponent parses back to the same record. -/
 theorem parseCharacters_fixedCharacters_of_nonpos (value : Decimal)
     (hexponent : value.exponent ≤ 0) :
     parseCharacters value.fixedCharacters = some value := by
@@ -307,7 +307,49 @@ theorem Decimal.trimTrailingZerosLoop_toRat (fuel : Nat) (value : Decimal) :
     value.trimTrailingZeros.toRat = value.toRat :=
   Decimal.trimTrailingZerosLoop_toRat _ value
 
-/-- Compact dyadic text parses back to exactly the dyadic's rational value. -/
+/-- Moving trailing zeros into the exponent with any amount of fuel preserves the value. -/
+theorem Decimal.compactLoop_toRat (fuel : Nat) (value : Decimal) :
+    (Decimal.compactLoop fuel value).toRat = value.toRat := by
+  induction fuel generalizing value with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold Decimal.compactLoop
+      split
+      · rename_i h
+        rw [ih]
+        obtain ⟨-, hmod⟩ := h
+        obtain ⟨q, hq⟩ : ∃ q, value.significand = 10 * q := ⟨value.significand / 10, by omega⟩
+        have hdiv : value.significand / 10 = q := by omega
+        rcases value with ⟨negative, significand, exponent⟩
+        simp only at hq hdiv ⊢
+        subst hq
+        rw [hdiv]
+        have hpow : (10 : Rat) ^ (exponent + 1) = (10 : Rat) ^ exponent * 10 := by
+          rw [zpow_add_one₀ (by norm_num)]
+        cases negative <;> simp [Decimal.toRat, hpow] <;> ring
+      · rfl
+
+/-- Moving trailing zeros into the exponent with any amount of fuel preserves the sign. -/
+theorem Decimal.compactLoop_negative (fuel : Nat) (value : Decimal) :
+    (Decimal.compactLoop fuel value).negative = value.negative := by
+  induction fuel generalizing value with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold Decimal.compactLoop
+      split
+      · rw [ih]
+      · rfl
+
+/-- Moving trailing zeros into the exponent preserves the exact rational value. -/
+@[simp] theorem Decimal.compact_toRat (value : Decimal) : value.compact.toRat = value.toRat :=
+  Decimal.compactLoop_toRat _ value
+
+/-- Moving trailing zeros into the exponent preserves the sign, including the sign of zero. -/
+@[simp] theorem Decimal.compact_negative (value : Decimal) :
+    value.compact.negative = value.negative :=
+  Decimal.compactLoop_negative _ value
+
+/-- Compact dyadic text parses back to the dyadic's rational value. -/
 @[simp] theorem parse_formatDyadicCompact (value : Dyadic) :
     parse (formatDyadicCompact value) = some value.toRat := by
   simp only [formatDyadicCompact]

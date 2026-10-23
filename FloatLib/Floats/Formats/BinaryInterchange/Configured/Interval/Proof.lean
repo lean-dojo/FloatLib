@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
@@ -14,8 +15,8 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 # Configured interval correctness
 
 Packing and decoding are inverse on complete endpoint encodings, including signed zeros and NaNs.
-Every configured operation decodes to the existing model operation. Soundness and validity are
-transported from `Model.Interval`, retaining its format and finiteness hypotheses.
+Every configured operation decodes to the corresponding model operation. Soundness and validity
+are transported from `Model.Interval`, with its format and finiteness hypotheses.
 
 In particular, arithmetic soundness starts from finite valid intervals and concludes membership
 in extended-real bounds: overflow is permitted. Totalized real decoding alone is not a sound
@@ -68,7 +69,7 @@ theorem toModel_injective : Function.Injective (toModel (plan := plan) (code := 
     toModel (point x) = Model.Interval.point (Binary.toModel x) := by
   simp [point]
 
-/-- The configured whole range has exactly the model's endpoints. -/
+/-- The configured whole range has the model's endpoints. -/
 @[simp] theorem toModel_whole :
     toModel (whole (format := format) (plan := plan) (code := code)) =
       Model.Interval.whole format := by
@@ -131,8 +132,13 @@ theorem toModel_injective : Function.Injective (toModel (plan := plan) (code := 
 
 section
 
-/-- Real membership in decoded bounds; meaningful as an interval interpretation under `Valid`. -/
+/-- Real membership in decoded bounds, meaningful as an interval interpretation under `Valid`. -/
 abbrev RealMem (I : Bounds) (x : ℝ) : Prop := Model.Interval.RealMem I.toModel x
+
+/-- Real membership is the pair of inequalities between `x` and the endpoints' real values. -/
+theorem realMem_iff (I : Bounds) (x : ℝ) :
+    RealMem I x ↔ Binary.toReal I.lo ≤ x ∧ x ≤ Binary.toReal I.hi :=
+  Iff.rfl
 
 /-- Extended-real membership, permitting infinite endpoints under `ValidExtended`. -/
 abbrev ERealMem (I : Bounds) (x : EReal) : Prop := Model.Interval.ERealMem I.toModel x

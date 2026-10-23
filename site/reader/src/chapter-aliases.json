@@ -236,7 +236,7 @@
       },
       "integer-conversions-in-lean-434": {
         "slug": "lean-native-floats",
-        "heading": "integer-conversions-in-lean-434"
+        "heading": "integer-conversions"
       },
       "arithmetic-through-the-same-model": {
         "slug": "lean-native-floats",
@@ -268,56 +268,56 @@
     "slug": "external-validation",
     "headings": {
       "decimal-values-cohorts-and-flags": {
-        "slug": "external-validation",
-        "heading": "decimal-datums-and-exact-text"
+        "slug": "decimal-arithmetic",
+        "heading": "encoding-the-complete-datum"
       },
       "posit-exponentials-and-logarithms": {
-        "slug": "external-validation",
-        "heading": "rounding-transcendental-results"
+        "slug": "posits-and-the-quire",
+        "heading": "exponentials-and-logarithms"
       },
       "posit-hyperbolic-functions": {
-        "slug": "external-validation",
-        "heading": "rounding-transcendental-results"
+        "slug": "posits-and-the-quire",
+        "heading": "hyperbolic-functions"
       },
       "exact-trigonometric-comparisons": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "trigonometric-functions-in-radians"
       },
       "posit-trigonometric-functions": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "trigonometric-functions-in-radians"
       },
       "pi-scaled-posit-trigonometric-functions": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "angles-in-units-of-pi"
       },
       "posit-atan2": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "trigonometric-functions-in-radians"
       },
       "posit-decimal-text": {
-        "slug": "external-validation",
-        "heading": "decimal-datums-and-exact-text"
+        "slug": "posits-and-the-quire",
+        "heading": "printing-and-parsing-decimal-text"
       },
       "posit-integer-conversion": {
-        "slug": "external-validation",
-        "heading": "words-flags-and-conversion-success"
+        "slug": "posits-and-the-quire",
+        "heading": "converting-to-integers"
       },
       "natural-posit-exponentials-and-logarithms": {
-        "slug": "external-validation",
-        "heading": "rounding-transcendental-results"
+        "slug": "posits-and-the-quire",
+        "heading": "exponentials-and-logarithms"
       },
       "ordinary-posit-trigonometric-results": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "trigonometric-functions-in-radians"
       },
       "pi-scaled-posit-trigonometric-results": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "angles-in-units-of-pi"
       },
       "two-coordinate-posit-angles": {
-        "slug": "external-validation",
-        "heading": "trigonometric-ordering-and-argument-reduction"
+        "slug": "posits-and-the-quire",
+        "heading": "trigonometric-functions-in-radians"
       }
     }
   }

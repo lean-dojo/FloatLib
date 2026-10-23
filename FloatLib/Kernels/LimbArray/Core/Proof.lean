@@ -28,8 +28,8 @@ of a limb array. The contracts use three groups of lemmas.
   `toNat_lowBits`, `toNat_resize`, `anyBelow_eq_true_iff`, `toNat_orLowBit`, `compare_eq`,
   `isZero_eq_true_iff`, and `log2_eq`.
 
-The compiler certificate `toNat_eq_toNatImpl` replaces the proof-facing `toNat` by its Horner
-loop. `limb_toNat_eq` and `limb_testBit` connect limb access to value-level proofs.
+The compiler certificate `toNat_eq_internal` replaces `toNat` in compiled code by its Horner
+loop.
 -/
 
 @[expose] public section
@@ -185,7 +185,7 @@ theorem toNat_eq_segment_of_size_le {v : LimbArray} {n : Nat} (h : v.size ≤ n)
   intro i hi _
   exact limb_eq_zero_of_size_le v (by omega)
 
-/-- The value is below `radix ^ size`. -/
+/-- A limb array's value is below `radix ^ size`. -/
 theorem toNat_lt (v : LimbArray) : toNat v < radix ^ v.size :=
   segment_lt v 0 v.size
 
@@ -286,17 +286,17 @@ theorem hornerFrom_eq (v : LimbArray) (n acc : Nat) :
       rw [hornerFrom, ih, segment_succ_back, Nat.zero_add]
       ring
 
-/-- The Horner loop computes the value. -/
-theorem toNatImpl_eq (v : LimbArray) : toNatImpl v = toNat v := by
-  unfold toNatImpl toNat
+/-- `Internal.toNat` computes the value. -/
+theorem Internal.toNat_eq (v : LimbArray) : Internal.toNat v = LimbArray.toNat v := by
+  unfold Internal.toNat LimbArray.toNat
   rw [hornerFrom_eq]
   simp
 
-/-- Compile the proof-facing front recursion of `toNat` as its tail-recursive Horner loop. -/
+/-- Compile the front recursion of `toNat` as its tail-recursive Horner loop. -/
 -- grind: no rule; this compiler substitution exposes an implementation accumulator.
-@[csimp] theorem toNat_eq_toNatImpl : @toNat = @toNatImpl := by
+@[csimp] theorem toNat_eq_internal : @toNat = @Internal.toNat := by
   funext v
-  exact (toNatImpl_eq v).symm
+  exact (Internal.toNat_eq v).symm
 
 /-! ## Construction from a natural number -/
 
@@ -354,7 +354,7 @@ theorem limb_ofNat (n count j : Nat) (hj : j < count) :
     getElem_ofNatLoop]
   simp
 
-/-- The constructed array holds `n` modulo `radix ^ count`. -/
+/-- `ofNat n count` holds `n` modulo `radix ^ count`. -/
 @[simp, grind =] theorem toNat_ofNat (n count : Nat) :
     toNat (ofNat n count) = n % radix ^ count := by
   unfold toNat
@@ -363,7 +363,7 @@ theorem limb_ofNat (n count j : Nat) (hj : j < count) :
   intro j hj
   rw [limb_ofNat n count j hj, UInt32.toNat_ofNat']
 
-/-- The constructed array holds `n` when `n` fits `count` limbs. -/
+/-- `ofNat n count` holds `n` itself when `n` fits `count` limbs. -/
 theorem toNat_ofNat_of_lt {n count : Nat} (h : n < radix ^ count) :
     toNat (ofNat n count) = n := by
   rw [toNat_ofNat, Nat.mod_eq_of_lt h]
@@ -376,7 +376,7 @@ theorem ofNat_toNat (v : LimbArray) : ofNat (toNat v) v.size = v := by
 
 /-! ## Zero -/
 
-/-- The zero array has the requested limb count. -/
+/-- `zero count` has `count` limbs. -/
 @[simp] theorem size_zero (count : Nat) : (zero count).size = count := by
   simp [zero, size]
 
@@ -389,7 +389,7 @@ theorem limb_zero (count i : Nat) : (zero count).limb i = 0 := by
   · rw [Array.getElem?_eq_none (by simpa using h)]
     rfl
 
-/-- The zero array denotes zero. -/
+/-- `zero count` denotes zero. -/
 @[simp, grind =] theorem toNat_zero (count : Nat) : toNat (zero count) = 0 := by
   unfold toNat
   apply segment_eq_zero_of_limb_eq_zero
@@ -458,13 +458,13 @@ theorem topLimb_spec (v : LimbArray) (n i : Nat) (h : topLimb v n = i + 1) :
           subst this
           simpa using hn
 
-/-- The zero test decides whether the value is zero. -/
+/-- `isZero` decides whether the value is zero. -/
 theorem isZero_eq_true_iff (v : LimbArray) : isZero v = true ↔ toNat v = 0 := by
   unfold isZero toNat
   rw [beq_iff_eq, topLimb_eq_zero_iff, segment_eq_zero_iff]
   simp
 
-/-- The zero test as a decision. -/
+/-- `isZero` as a decision. -/
 theorem isZero_eq (v : LimbArray) : isZero v = decide (toNat v = 0) := by
   by_cases h : toNat v = 0
   · simp [h, (isZero_eq_true_iff v).mpr h]

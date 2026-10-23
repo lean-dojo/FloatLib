@@ -1,16 +1,16 @@
 # Rounded-real theory (`Flocq/Theory`)
 
-Here we develop rounded arithmetic over `ℝ`: radix powers, FIX/FLX/FLT and abrupt-underflow
-formats, rounding modes, ULPs, error bounds, and Sterbenz's lemma for exact subtraction.
-The theory is independent of any bit encoding or executable kernel.
+This is where we develop rounded arithmetic over `ℝ`: radix powers, FIX/FLX/FLT and
+abrupt-underflow formats, rounding modes, ULPs, error bounds, and Sterbenz's lemma for exact
+subtraction. None of it depends on a bit encoding or an executable kernel.
 
-We follow Flocq's organization while developing the theory in Lean. The scope here excludes
-its specialized algorithm proofs and Coq application modules. We connect the theory to
-executable binary arithmetic in `Formats/BinaryInterchange/` through finite-result bridge theorems.
-`Flocq/Calculation/` builds on this theory with brackets and truncation.
+We develop the theory in Lean following Flocq's organization, but leave out its specialized
+algorithm proofs and Coq application modules. Finite-result bridge theorems in
+`Formats/BinaryInterchange/` connect it to executable binary arithmetic, and
+`Flocq/Calculation/` builds brackets and truncation on top of it.
 
-The main definitions are `bpow`, `genericFormat`, `ulp`, and `round`. Individual module imports
-keep dependencies small; `FloatLib.Floats.Formats.Flocq.Theory` brings in the full theory.
+Its main definitions are `bpow`, `genericFormat`, `ulp`, and `round`. Import individual modules
+to keep dependencies small, or `FloatLib.Floats.Formats.Flocq.Theory` for the full theory.
 
 | Mathematical role | Definitions |
 | --- | --- |
@@ -19,7 +19,7 @@ keep dependencies small; `FloatLib.Floats.Formats.Flocq.Theory` brings in the fu
 | Finite real meaning of those bits | `Model.toReal`, `Model.roundAt fmt` |
 | Host / accelerator result | separately stated conformance, not this layer |
 
-The raw `NF` constructor admits off-grid comparison values, while `NF.ofReal` rounds onto the
-grid. We state `NF.IsRepresentable` explicitly when a theorem needs an input on that grid.
-Affine quantization over exact rationals lives separately in `FloatLib.Numerics.Quantization`;
-`FloatRep` supplies the real-valued rounding model.
+The raw `NF` constructor accepts off-grid comparison values, and `NF.ofReal` rounds onto the
+grid. When a theorem needs its input on the grid, it says so with an `NF.IsRepresentable`
+hypothesis. Affine quantization over exact rationals lives elsewhere, in
+`FloatLib.Numerics.Quantization`. Here, `FloatRep` supplies the real-valued rounding model.

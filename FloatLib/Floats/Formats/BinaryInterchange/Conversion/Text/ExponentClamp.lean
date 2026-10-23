@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 /-!
 # Decimal exponent clamping preserves binary conversion
 
-`convertDecimalText` clamps the written decimal exponent before forming the exact rational. Far
-above the overflow threshold every rational rounds to the same overflow result with the same
-flags, and far below the least subnormal every positive rational rounds to the same tiny result
-with the same flags. This file proves both saturation facts for scaled rationals and concludes
-`convertDecimalText_eq_exact`.
+`convertDecimalText` clamps a decimal exponent outside the format's range before forming the exact
+rational. Far above the overflow threshold every rational rounds to the same overflow result with
+the same flags, and far below the least subnormal every positive rational rounds to the same tiny
+result with the same flags. In both regions every finite value lies on the same side of the
+rational, so the ternary value is preserved too. This file proves these saturation facts for
+scaled rationals and concludes `convertDecimalText_eq_exact`.
 -/
 
 @[expose] public section
@@ -53,13 +54,13 @@ private theorem bpow_lead_le_toReal (v : Numerics.Dyadic) (hv : v.negative = fal
 /-! ## Saturated rounding values -/
 
 /-- Above `decimalSaturationHigh`, the rounded value does not depend on the exact rational. -/
-theorem roundRatWithRoundingScaled_eq_of_high (fmt : FloatFormat) (mode : IEEERoundingMode)
+theorem Internal.Directed.roundRatScaled_eq_of_high (fmt : FloatFormat) (mode : IEEERoundingMode)
     (sign : Bool) {n₁ d₁ n₂ d₂ : Nat} {e₁ e₂ : Int}
     (hn₁ : n₁ ≠ 0) (hd₁ : d₁ ≠ 0) (hn₂ : n₂ ≠ 0) (hd₂ : d₂ ≠ 0)
     (h₁ : decimalSaturationHigh fmt ≤ RationalBinary.floorLog2 n₁ d₁ + e₁)
     (h₂ : decimalSaturationHigh fmt ≤ RationalBinary.floorLog2 n₂ d₂ + e₂) :
-    roundRatWithRoundingScaled fmt mode sign n₁ d₁ e₁ =
-      roundRatWithRoundingScaled fmt mode sign n₂ d₂ e₂ := by
+    Internal.Directed.roundRatScaled fmt mode sign n₁ d₁ e₁ =
+      Internal.Directed.roundRatScaled fmt mode sign n₂ d₂ e₂ := by
   simp only [decimalSaturationHigh, max_le_iff] at h₁ h₂
   have a₁ : fmt.maxNormalExponent < RationalBinary.floorLog2 n₁ d₁ + e₁ := by omega
   have b₁ : (FloatFormat.ieeeMaxNormalExponent fmt : Int) <
@@ -67,19 +68,20 @@ theorem roundRatWithRoundingScaled_eq_of_high (fmt : FloatFormat) (mode : IEEERo
   have a₂ : fmt.maxNormalExponent < RationalBinary.floorLog2 n₂ d₂ + e₂ := by omega
   have b₂ : (FloatFormat.ieeeMaxNormalExponent fmt : Int) <
       RationalBinary.floorLog2 n₂ d₂ + e₂ := by omega
-  cases mode <;>
-    simp [roundRatWithRoundingScaled, roundRatScaled, ieeeRoundRatScaled,
-      roundRatScaledGeneral, roundRatMagnitudeDirectedScaled, hn₁, hd₁, hn₂, hd₂,
-      a₁, b₁, a₂, b₂]
+  -- Nearest-away rounding may meet a tie here, but its two branches deliver the same overflow.
+  by_cases hfmt : fmt.isIEEE = true <;> cases mode <;>
+    simp [Internal.Directed.roundRatScaled, Model.roundRatScaled, ieeeRoundRatScaled,
+      roundRatScaledGeneral, roundRatMagnitudeDirectedScaled, roundRatNearestAwayScaled,
+      directedOverflow, hfmt, hn₁, hd₁, hn₂, hd₂, a₁, b₁, a₂, b₂]
 
 /-- Below `decimalSaturationLow`, the rounded value does not depend on the exact rational. -/
-theorem roundRatWithRoundingScaled_eq_of_low (fmt : FloatFormat) (mode : IEEERoundingMode)
+theorem Internal.Directed.roundRatScaled_eq_of_low (fmt : FloatFormat) (mode : IEEERoundingMode)
     (sign : Bool) {n₁ d₁ n₂ d₂ : Nat} {e₁ e₂ : Int}
     (hn₁ : n₁ ≠ 0) (hd₁ : d₁ ≠ 0) (hn₂ : n₂ ≠ 0) (hd₂ : d₂ ≠ 0)
     (h₁ : RationalBinary.floorLog2 n₁ d₁ + e₁ ≤ decimalSaturationLow fmt)
     (h₂ : RationalBinary.floorLog2 n₂ d₂ + e₂ ≤ decimalSaturationLow fmt) :
-    roundRatWithRoundingScaled fmt mode sign n₁ d₁ e₁ =
-      roundRatWithRoundingScaled fmt mode sign n₂ d₂ e₂ := by
+    Internal.Directed.roundRatScaled fmt mode sign n₁ d₁ e₁ =
+      Internal.Directed.roundRatScaled fmt mode sign n₂ d₂ e₂ := by
   simp only [decimalSaturationLow, le_min_iff] at h₁ h₂
   have a₁ : ¬ fmt.maxNormalExponent < RationalBinary.floorLog2 n₁ d₁ + e₁ := by omega
   have b₁ : ¬ (FloatFormat.ieeeMaxNormalExponent fmt : Int) <
@@ -95,10 +97,11 @@ theorem roundRatWithRoundingScaled_eq_of_low (fmt : FloatFormat) (mode : IEEERou
   have c₂' : RationalBinary.floorLog2 n₂ d₂ + e₂ < fmt.minSubnormalExponent := by omega
   have k₂ : RationalBinary.floorLog2 n₂ d₂ + e₂ <
       -(FloatFormat.normalMantissaExpOffset fmt : Int) := by omega
+  -- Below half the least subnormal no value is a grid tie, so nearest-away is nearest-even.
   cases mode <;>
-    simp [roundRatWithRoundingScaled, roundRatScaled, ieeeRoundRatScaled,
-      roundRatScaledGeneral, roundRatMagnitudeDirectedScaled, hn₁, hd₁, hn₂, hd₂,
-      a₁, b₁, a₂, b₂, c₁, c₂, c₁', c₂', k₁, k₂]
+    simp [Internal.Directed.roundRatScaled, Model.roundRatScaled, ieeeRoundRatScaled,
+      roundRatScaledGeneral, roundRatMagnitudeDirectedScaled, roundRatNearestAwayScaled,
+      rationalIsGridTieScaled, hn₁, hd₁, hn₂, hd₂, a₁, b₁, a₂, b₂, c₁, c₂, c₁', c₂', k₁, k₂]
 
 /-! ## Saturated status classification -/
 
@@ -167,7 +170,7 @@ theorem rationalRoundingOverflowsScaled_of_high (fmt : FloatFormat) (mode : IEEE
     simp [rationalMagnitudeOverflowsScaled, hn, hd, a, not_lt_of_gt a]
   cases mode <;> cases sign <;>
     simp [rationalRoundingOverflowsScaled, rationalNearestEvenOverflowsScaled,
-      rationalTruncationOverflowsScaled, hm, hl, hmag]
+      rationalNearestAwayOverflowsScaled, rationalTruncationOverflowsScaled, hm, hl, hmag]
 
 /-- Below `decimalSaturationLow`, no rounding direction reports overflow. -/
 theorem rationalRoundingOverflowsScaled_of_low (fmt : FloatFormat) (mode : IEEERoundingMode)
@@ -184,7 +187,7 @@ theorem rationalRoundingOverflowsScaled_of_low (fmt : FloatFormat) (mode : IEEER
     simp [rationalMagnitudeOverflowsScaled, hn, hd, a]
   cases mode <;> cases sign <;>
     simp [rationalRoundingOverflowsScaled, rationalNearestEvenOverflowsScaled,
-      rationalTruncationOverflowsScaled, hm, hl, hmag]
+      rationalNearestAwayOverflowsScaled, rationalTruncationOverflowsScaled, hm, hl, hmag]
 
 /-- Below `decimalSaturationLow`, every result is tiny after rounding. -/
 theorem rationalIsTinyAfterRoundingScaled_of_low (fmt : FloatFormat)
@@ -199,7 +202,7 @@ theorem rationalIsTinyAfterRoundingScaled_of_low (fmt : FloatFormat)
   have hp := compare_lt_of_lead (e := e) (underflowPredecessor fmt) hn hd
     (by simp [underflowPredecessor]) (underflowPredecessor_significand_ne_zero fmt) (by omega)
   cases mode <;> cases sign <;>
-    simp [rationalIsTinyAfterRoundingScaled, roundsAwayFromZero, hm, hl, hp]
+    simp [rationalIsTinyAfterRoundingScaled, IEEERoundingMode.roundsAwayFromZero, hm, hl, hp]
 
 /-- Below `decimalSaturationLow`, a positive rational never equals a finite result. -/
 theorem rationalEqualsDyadicScaled_finite_of_low (fmt : FloatFormat) (sign : Bool)
@@ -254,6 +257,156 @@ theorem rationalRoundingStatusScaled_eq_of_low (fmt : FloatFormat) (mode : IEEER
         rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hn₁ hd₁ h₁,
         rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hn₂ hd₂ h₂]
   · rfl
+
+/-! ## Saturated ternary values -/
+
+/-- A real of magnitude below two positive bounds compares alike with either bound of one sign. -/
+private theorem compare_signed_eq_of_abs_lt {value first second : ℝ} (sign : Bool)
+    (hfirst : |value| < first) (hsecond : |value| < second) :
+    compare value (if sign then -first else first) =
+      compare value (if sign then -second else second) := by
+  have hbound : ∀ bound : ℝ, |value| < bound →
+      compare value (if sign then -bound else bound) = if sign then .gt else .lt := by
+    intro bound hvalue
+    cases sign
+    · simp only [Bool.false_eq_true, ↓reduceIte]
+      exact compare_lt_iff_lt.mpr (lt_of_le_of_lt (le_abs_self value) hvalue)
+    · simp only [↓reduceIte]
+      exact compare_gt_iff_gt.mpr (lt_of_lt_of_le (neg_lt_neg hvalue) (neg_abs_le value))
+  rw [hbound first hfirst, hbound second hsecond]
+
+/--
+A real compares alike with two nonzero reals of one sign when it is zero or larger in magnitude
+than both.
+-/
+private theorem compare_signed_eq_of_lt_abs {value first second : ℝ} (sign : Bool)
+    (hfirst : 0 < first) (hsecond : 0 < second)
+    (hfirstValue : value ≠ 0 → first < |value|) (hsecondValue : value ≠ 0 → second < |value|) :
+    compare value (if sign then -first else first) =
+      compare value (if sign then -second else second) := by
+  rcases lt_trichotomy value 0 with hnegative | hzero | hpositive
+  · have hbound : ∀ bound : ℝ, 0 < bound → (value ≠ 0 → bound < |value|) →
+        compare value (if sign then -bound else bound) = .lt := by
+      intro bound hbound hvalue
+      have hmagnitude := hvalue hnegative.ne
+      rw [abs_of_neg hnegative] at hmagnitude
+      apply compare_lt_iff_lt.mpr
+      cases sign
+      · simp only [Bool.false_eq_true, ↓reduceIte]
+        linarith
+      · simp only [↓reduceIte]
+        linarith
+    rw [hbound first hfirst hfirstValue, hbound second hsecond hsecondValue]
+  · subst hzero
+    cases sign
+    · simp only [Bool.false_eq_true, ↓reduceIte]
+      rw [compare_lt_iff_lt.mpr hfirst, compare_lt_iff_lt.mpr hsecond]
+    · simp only [↓reduceIte]
+      rw [compare_gt_iff_gt.mpr (neg_lt_zero.mpr hfirst),
+        compare_gt_iff_gt.mpr (neg_lt_zero.mpr hsecond)]
+  · have hbound : ∀ bound : ℝ, 0 < bound → (value ≠ 0 → bound < |value|) →
+        compare value (if sign then -bound else bound) = .gt := by
+      intro bound hbound hvalue
+      have hmagnitude := hvalue hpositive.ne'
+      rw [abs_of_pos hpositive] at hmagnitude
+      apply compare_gt_iff_gt.mpr
+      cases sign
+      · simp only [Bool.false_eq_true, ↓reduceIte]
+        linarith
+      · simp only [↓reduceIte]
+        linarith
+    rw [hbound first hfirst hfirstValue, hbound second hsecond hsecondValue]
+
+/--
+Above `decimalSaturationHigh`, the ternary value does not depend on the exact rational.
+
+Every finite value lies below `2^(maxNormalExponent + 1)` in magnitude, so a finite delivery is
+on the same side of both rationals. A non-finite delivery compares by the sign alone.
+-/
+theorem rationalTernaryScaled_eq_of_high (fmt : FloatFormat) (sign : Bool)
+    {n₁ d₁ n₂ d₂ : Nat} {e₁ e₂ : Int}
+    (hn₁ : n₁ ≠ 0) (hd₁ : d₁ ≠ 0) (hn₂ : n₂ ≠ 0) (hd₂ : d₂ ≠ 0)
+    (h₁ : decimalSaturationHigh fmt ≤ RationalBinary.floorLog2 n₁ d₁ + e₁)
+    (h₂ : decimalSaturationHigh fmt ≤ RationalBinary.floorLog2 n₂ d₂ + e₂)
+    (rounded : Model fmt) :
+    rationalTernaryScaled sign n₁ d₁ e₁ rounded =
+      rationalTernaryScaled sign n₂ d₂ e₂ rounded := by
+  cases hfinite : isFinite rounded
+  · rw [rationalTernaryScaled_of_isFinite_eq_false _ _ _ _ hfinite,
+      rationalTernaryScaled_of_isFinite_eq_false _ _ _ _ hfinite]
+  · rw [rationalTernaryScaled_eq_compare _ _ _ _ hd₁ hfinite,
+      rationalTernaryScaled_eq_compare _ _ _ _ hd₂ hfinite]
+    unfold signedScaledRatToReal
+    have hbound : |toReal rounded| < bpow (fmt.maxNormalExponent + 1) := by
+      rw [toReal_eq_toReal_finiteDyadic hfinite]
+      exact abs_toReal_lt_bpow_of_toDyadic?_some rounded (by simp [finiteDyadic])
+    have hmaximum : fmt.maxNormalExponent + 1 ≤ decimalSaturationHigh fmt := by
+      simp only [decimalSaturationHigh]
+      omega
+    have hlarge : ∀ {n d : Nat} {e : Int}, n ≠ 0 → d ≠ 0 →
+        decimalSaturationHigh fmt ≤ RationalBinary.floorLog2 n d + e →
+        |toReal rounded| < scaledRatToReal n d e := by
+      intro n d e hn hd h
+      exact lt_of_lt_of_le hbound
+        ((bpow_le_bpow_of_le (hmaximum.trans h)).trans
+          (scaledRatToReal_floorLog2_bounds n d e hn hd).1)
+    exact compare_signed_eq_of_abs_lt sign (hlarge hn₁ hd₁ h₁) (hlarge hn₂ hd₂ h₂)
+
+/--
+Below `decimalSaturationLow`, the ternary value does not depend on the exact rational.
+
+Both rationals lie strictly between zero and the least positive subnormal in magnitude, so every
+finite delivery, zero included, is on the same side of both. A non-finite delivery compares by the
+sign alone.
+-/
+theorem rationalTernaryScaled_eq_of_low (fmt : FloatFormat) (sign : Bool)
+    {n₁ d₁ n₂ d₂ : Nat} {e₁ e₂ : Int}
+    (hn₁ : n₁ ≠ 0) (hd₁ : d₁ ≠ 0) (hn₂ : n₂ ≠ 0) (hd₂ : d₂ ≠ 0)
+    (h₁ : RationalBinary.floorLog2 n₁ d₁ + e₁ ≤ decimalSaturationLow fmt)
+    (h₂ : RationalBinary.floorLog2 n₂ d₂ + e₂ ≤ decimalSaturationLow fmt)
+    (rounded : Model fmt) :
+    rationalTernaryScaled sign n₁ d₁ e₁ rounded =
+      rationalTernaryScaled sign n₂ d₂ e₂ rounded := by
+  cases hfinite : isFinite rounded
+  · rw [rationalTernaryScaled_of_isFinite_eq_false _ _ _ _ hfinite,
+      rationalTernaryScaled_of_isFinite_eq_false _ _ _ _ hfinite]
+  · rw [rationalTernaryScaled_eq_compare _ _ _ _ hd₁ hfinite,
+      rationalTernaryScaled_eq_compare _ _ _ _ hd₂ hfinite]
+    unfold signedScaledRatToReal
+    have hminimum : decimalSaturationLow fmt + 1 ≤ fmt.minSubnormalExponent := by
+      simp only [decimalSaturationLow]
+      omega
+    have hnonzero : toReal rounded ≠ 0 →
+        bpow fmt.minSubnormalExponent ≤ |toReal rounded| := by
+      intro hvalue
+      have hdecode : toDyadic? rounded = some (finiteDyadic rounded hfinite) := by
+        simp [finiteDyadic]
+      rw [toReal_eq_toReal_finiteDyadic hfinite] at hvalue ⊢
+      have hsignificand : (finiteDyadic rounded hfinite).significand ≠ 0 := by
+        intro hzero
+        apply hvalue
+        simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
+      have hexponent := minSubnormalExponent_le_toDyadic? rounded hdecode
+      have hone : (1 : ℝ) ≤ (finiteDyadic rounded hfinite).significand := by
+        exact_mod_cast Nat.one_le_iff_ne_zero.mpr hsignificand
+      rw [Dyadic.abs_toReal]
+      calc bpow fmt.minSubnormalExponent
+          ≤ bpow (finiteDyadic rounded hfinite).exponent := bpow_le_bpow_of_le hexponent
+        _ = 1 * bpow (finiteDyadic rounded hfinite).exponent := (one_mul _).symm
+        _ ≤ ((finiteDyadic rounded hfinite).significand : ℝ) *
+              bpow (finiteDyadic rounded hfinite).exponent :=
+          mul_le_mul_of_nonneg_right hone (bpow_nonneg _)
+    have hsmall : ∀ {n d : Nat} {e : Int}, n ≠ 0 → d ≠ 0 →
+        RationalBinary.floorLog2 n d + e ≤ decimalSaturationLow fmt →
+        toReal rounded ≠ 0 → scaledRatToReal n d e < |toReal rounded| := by
+      intro n d e hn hd h hvalue
+      exact lt_of_lt_of_le
+        ((scaledRatToReal_floorLog2_bounds n d e hn hd).2.trans_le
+          (bpow_le_bpow_of_le (by omega)))
+        (hnonzero hvalue)
+    exact compare_signed_eq_of_lt_abs sign
+      (scaledRatToReal_pos n₁ d₁ e₁ hn₁ hd₁) (scaledRatToReal_pos n₂ d₂ e₂ hn₂ hd₂)
+      (hsmall hn₁ hd₁ h₁) (hsmall hn₂ hd₂ h₂)
 
 /-! ## Decimal magnitudes -/
 
@@ -342,12 +495,17 @@ private theorem convertDecimalTextExact_eq_of_high (fmt : FloatFormat)
   have h₁ := floorLog2_decimalMagnitude x hx
   have h₂ := floorLog2_decimalMagnitude y hy
   simp only [decimalMagnitude] at h₁ h₂
-  simp only [convertDecimalTextExact, roundRatWithRounding, rationalRoundingStatus, hneg]
-  rw [roundRatWithRoundingScaled_eq_of_high fmt mode y.negative
+  simp only [convertDecimalTextExact, rationalRoundingOutcomeScaled, Internal.Directed.roundRat,
+    hneg]
+  rw [Internal.Directed.roundRatScaled_eq_of_high fmt mode y.negative
     (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
     (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
     (by rw [add_zero, h₁]; exact hxH) (by rw [add_zero, h₂]; exact hyH)]
   rw [rationalRoundingStatusScaled_eq_of_high fmt mode y.negative
+    (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
+    (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
+    (by rw [add_zero, h₁]; exact hxH) (by rw [add_zero, h₂]; exact hyH)]
+  rw [rationalTernaryScaled_eq_of_high fmt y.negative
     (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
     (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
     (by rw [add_zero, h₁]; exact hxH) (by rw [add_zero, h₂]; exact hyH)]
@@ -361,8 +519,9 @@ private theorem convertDecimalTextExact_eq_of_low (fmt : FloatFormat)
   have h₁ := floorLog2_decimalMagnitude x hx
   have h₂ := floorLog2_decimalMagnitude y hy
   simp only [decimalMagnitude] at h₁ h₂
-  simp only [convertDecimalTextExact, roundRatWithRounding, rationalRoundingStatus, hneg]
-  rw [roundRatWithRoundingScaled_eq_of_low fmt mode y.negative
+  simp only [convertDecimalTextExact, rationalRoundingOutcomeScaled, Internal.Directed.roundRat,
+    hneg]
+  rw [Internal.Directed.roundRatScaled_eq_of_low fmt mode y.negative
     (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
     (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
     (by rw [add_zero, h₁]; exact hxL) (by rw [add_zero, h₂]; exact hyL)]
@@ -370,14 +529,19 @@ private theorem convertDecimalTextExact_eq_of_low (fmt : FloatFormat)
     (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
     (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
     (by rw [add_zero, h₁]; exact hxL) (by rw [add_zero, h₂]; exact hyL)]
+  rw [rationalTernaryScaled_eq_of_low fmt y.negative
+    (decimalMagnitude_num_ne_zero x hx) (Rat.den_nz _)
+    (decimalMagnitude_num_ne_zero y hy) (Rat.den_nz _)
+    (by rw [add_zero, h₁]; exact hxL) (by rw [add_zero, h₂]; exact hyL)]
 
 /-! ## The clamp preserves every outcome -/
 
 /--
-Clamping the decimal exponent never changes the value or status of a binary conversion.
+Clamping the decimal exponent never changes the value, status, or ternary value of a binary
+conversion.
 
 Outside the clamp range the exact rational is either above every overflow threshold or below every
-underflow threshold, and the rounded value and flags depend only on that side.
+underflow threshold, and the rounded value, flags, and ternary value depend only on that side.
 -/
 theorem convertDecimalTextExact_clampDecimalExponent (fmt : FloatFormat)
     (mode : IEEERoundingMode) (x : DecimalText.Decimal) :
@@ -407,7 +571,10 @@ theorem convertDecimalTextExact_clampDecimalExponent (fmt : FloatFormat)
 /-- The fast decimal conversion agrees with the exact reference conversion on every input. -/
 theorem convertDecimalText_eq_exact (fmt : FloatFormat) (mode : IEEERoundingMode)
     (x : DecimalText.Decimal) :
-    convertDecimalText fmt mode x = convertDecimalTextExact fmt mode x :=
-  convertDecimalTextExact_clampDecimalExponent fmt mode x
+    convertDecimalText fmt mode x = convertDecimalTextExact fmt mode x := by
+  unfold convertDecimalText
+  split
+  · rfl
+  · exact convertDecimalTextExact_clampDecimalExponent fmt mode x
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

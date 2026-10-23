@@ -12,14 +12,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
 /-!
 # Division with one integer quotient
 
-The nearest-even kernel divides a doubled numerator. The low quotient bit distinguishes values
-below a rounding midpoint; the next bit resolves ties whose retained significand is odd. Only the
-remaining case needs an exactness check. A machine-word product often disproves exactness before
-the full product is needed. Equality of machine words never certifies equality of natural numbers.
+The nearest-even kernel divides a doubled numerator. The low quotient bit distinguishes values below
+a rounding midpoint, and the next bit resolves ties whose retained significand is odd. Only the
+remaining case needs an exactness check. A machine-word product often disproves exactness before the
+full product is needed. Equality of machine words never certifies equality of natural numbers.
 
 Scaling and the extra quotient bit share one numerator shift. Neither the fraction width nor the
 integer division has a fixed limb bound. `GeneralProof` proves agreement with the exact rational
-rounders, including subnormal results and all four IEEE rounding directions.
+rounders, including subnormal results and all six rounding directions.
+
+Nearest-away rounding first tests for a grid tie with `isGridTieAtExponent`, which costs one more
+remainder, and then rounds the magnitude up at a tie and to nearest-even otherwise.
 -/
 
 @[expose] public section
@@ -33,7 +36,7 @@ Round `doubled / (2 * den)` to nearest, with ties to even.
 
 Callers supply an even `doubled` and a nonzero denominator. Computing the extra quotient bit
 avoids a second arbitrary-precision division for a remainder. A failed low-word comparison
-certifies inexactness; a successful comparison still requires equality of the full product.
+certifies inexactness, but a successful one still needs equality of the full product.
 -/
 @[inline] def roundEvenDoubled (doubled den : Nat) : Nat :=
   let quotient := doubled / den
@@ -50,14 +53,14 @@ certifies inexactness; a successful comparison still requires equality of the fu
   | .ofNat shift => roundEvenDoubled (num <<< (shift + 1)) den
   | .negSucc shift => roundEvenDoubled (num <<< 1) (den <<< (shift + 1))
 
-/-- Ceiling division using one quotient, with the reference convention for a zero denominator. -/
-@[inline] def ceilQuotient (num den : Nat) : Nat :=
-  if num == 0 || den == 0 then 0 else (num - 1) / den + 1
+/--
+Directed quotient rounding after an exact binary scale.
 
-/-- Directed quotient rounding after an exact binary scale. -/
+The ceiling is `roundQuotient .up`, which needs one integer division.
+-/
 @[inline] def roundDirectedScaled (up : Bool) (num den : Nat) (shift : Int) : Nat :=
   let (scaledNum, scaledDen) := RationalBinary.scaleByPowerOfTwo num den shift
-  if up then ceilQuotient scaledNum scaledDen else scaledNum / scaledDen
+  if up then roundQuotient .up scaledNum scaledDen else scaledNum / scaledDen
 
 /--
 IEEE nearest-even rational rounding with a supplied rational exponent.
@@ -148,20 +151,64 @@ division use a single significand comparison when both operands are normal.
       let rounded := roundDirectedScaled up num den (Int.ofNat precision - rationalExponent)
       packRoundedNormal fmt sign (directedOverflow fmt sign up) totalExponent rounded
 
-/-- Rational rounding in any IEEE direction, reusing a supplied rational exponent. -/
+/--
+Nearest-even rational rounding with a supplied rational exponent, selecting the IEEE branch for a
+conventional IEEE descriptor and the descriptor-generic branch otherwise.
+-/
+@[inline] def nearestEvenRoundAtExponent (fmt : FloatFormat) (sign : Bool) (num den : Nat)
+    (exponent rationalExponent : Int) : Model fmt :=
+  if fmt.isIEEE then ieeeRoundAtExponent fmt sign num den exponent rationalExponent
+  else generalRoundAtExponent fmt sign num den exponent rationalExponent
+
+/--
+Whether `(num / den) * 2^exponent` lies exactly halfway between two adjacent values of the binary
+grid of `fmt`, reusing a supplied rational exponent.
+
+`rationalExponent` must equal `RationalBinary.floorLog2 num den`. The test is then
+`rationalIsGridTieScaled` (`isGridTieAtExponent_eq`), and with another exponent it scales the
+quotient to the wrong grid. The quotient is scaled as the nearest-even and directed branches scale
+it, to the subnormal spacing below the normal range and to `fracWidth + 1` significant bits above
+it, and it is a tie when twice the remainder equals the denominator. A zero numerator or
+denominator and a magnitude below half the least subnormal are never ties.
+-/
+@[inline] def isGridTieAtExponent (fmt : FloatFormat) (num den : Nat)
+    (exponent rationalExponent : Int) : Bool :=
+  if den == 0 || num == 0 then
+    false
+  else
+    let totalExponent := rationalExponent + exponent
+    if totalExponent + 1 < fmt.minSubnormalExponent then
+      false
+    else
+      let shift : Int :=
+        if totalExponent < fmt.minNormalExponent then
+          exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1)
+        else
+          Int.ofNat fmt.fracWidth - rationalExponent
+      let (scaledNum, scaledDen) := RationalBinary.scaleByPowerOfTwo num den shift
+      2 * (scaledNum % scaledDen) == scaledDen
+
+/-- Rational rounding in any direction, reusing a supplied rational exponent. -/
 @[inline] def roundAtExponent (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (num den : Nat) (exponent rationalExponent : Int) : Model fmt :=
   match mode with
-  | .nearestEven =>
-      if fmt.isIEEE then ieeeRoundAtExponent fmt sign num den exponent rationalExponent
-      else generalRoundAtExponent fmt sign num den exponent rationalExponent
+  | .nearest => nearestEvenRoundAtExponent fmt sign num den exponent rationalExponent
+  | .nearestAway =>
+      if isGridTieAtExponent fmt num den exponent rationalExponent then
+        directedRoundAtExponent fmt true sign num den exponent rationalExponent
+      else
+        nearestEvenRoundAtExponent fmt sign num den exponent rationalExponent
   | .towardZero => directedRoundAtExponent fmt false sign num den exponent rationalExponent
-  | .towardPositiveInfinity =>
+  | .up =>
       directedRoundAtExponent fmt (!sign) sign num den exponent rationalExponent
-  | .towardNegativeInfinity =>
+  | .down =>
       directedRoundAtExponent fmt sign sign num den exponent rationalExponent
+  | .away => directedRoundAtExponent fmt true sign num den exponent rationalExponent
 
-/-- Round with one integer quotient, inlining the thresholds for fixed descriptors. -/
+/--
+Round with one integer quotient, inlining the thresholds for fixed descriptors. Nearest-away
+rounding also takes the remainder of its tie test.
+-/
 @[inline] def roundScaled (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
     (num den : Nat) (exponent : Int) : Model fmt :=
   roundAtExponent fmt mode sign num den exponent (RationalBinary.floorLog2 num den)
