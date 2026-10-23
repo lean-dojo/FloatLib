@@ -14,7 +14,7 @@ The reusable numerical library. Validation and benchmarks have separate workspac
 -/
 
 package floatlib where
-  version := v!"0.1.0"
+  version := v!"2.0.0"
   description := "Executable numerical representations with proof-backed semantics in Lean 4."
   keywords := #["numerics", "floating-point", "IEEE-754", "quantization", "verification", "mathlib"]
   license := "MIT"
