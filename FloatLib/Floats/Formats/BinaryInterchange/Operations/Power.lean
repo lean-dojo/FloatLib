@@ -31,11 +31,11 @@ controlled by the floating-point exponent field, which formats with wide exponen
 
 A finite positive base with any other finite exponent uses `Transcendentals.Certified.pow`,
 which refines proved enclosures of `exp (y * log x)` until both endpoints round to the same
-finite value, so an accepted result is nearest-even rounding of the real power. Only when that
-search fails (an overflow, an exact result on a rounding boundary, an exhausted budget, or a
-descriptor other than IEEE) does `pow` fall back to the approximate composition of the generic
-`exp`, `mul` and `log` kernels. `Operations.PowerProof` proves both correctly rounded cases under
-the IEEE and finiteness hypotheses above.
+finite value, so an accepted result is nearest-even rounding of the real power. A certified range
+failure delivers positive overflow directly. Other failures (an exact result on a rounding
+boundary, an exhausted budget, or a descriptor other than IEEE) fall back to the approximate
+composition of the generic `exp`, `mul` and `log` kernels. `Operations.PowerProof` proves both
+correctly rounded finite cases under the IEEE and finiteness hypotheses above.
 -/
 
 @[expose] public section
@@ -334,7 +334,8 @@ The special cases, in branch order:
   descriptor, a finite result is correctly rounded;
 * otherwise a finite negative base is invalid, and a positive one uses the certified enclosure
   search `Transcendentals.Certified.pow`, whose accepted results are correctly rounded, with
-  `exp (y * log x)` as the fallback when the search fails.
+  positive overflow for a certified range failure and `exp (y * log x)` as the fallback for
+  other failures.
 -/
 def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
   if isZero exponent && !isSNaN base then
@@ -385,6 +386,7 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
                     else
                       match Transcendentals.Certified.pow base exponent Power.certifiedOptions with
                       | .ok result => result
+                      | .error .range => nativeOverflow fmt false
                       | .error _ => exp (mul exponent (log base))
 
 end Model

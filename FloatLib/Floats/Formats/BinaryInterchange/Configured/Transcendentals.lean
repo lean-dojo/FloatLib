@@ -97,8 +97,8 @@ The power `base ^ exponent`, by `Model.pow` by default.
 
 `Model.pow` gives zeros, infinities, and NaNs their IEEE 754 special cases. For an IEEE
 descriptor, a finite result for a nonzero base and an integral exponent is correctly rounded, and
-a positive base with any other exponent runs the certified search first, falling back to the
-approximation `exp (exponent * log base)` when the search does not settle. With
+a positive base with any other exponent runs the certified search first. A certified range
+failure delivers positive overflow; other failures fall back to `exp (exponent * log base)`. With
 `certify := true` only the certified search runs, for a finite positive base and a finite exponent,
 and its failure is returned instead of the fallback.
 -/

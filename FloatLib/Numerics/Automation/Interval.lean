@@ -23,7 +23,7 @@ when its first enclosure is inconclusive.
 
 Finite sums, dot products, matrix products, and supported norms expand using Mathlib equalities.
 Pointwise hypotheses supply the bounds of their entries. Real and nonnegative-real inequalities
-use the same checker.
+use the same checker; nonnegative-real inputs supply their zero lower bound automatically.
 
 The options `precision`, `degree`, and `depth` control fractional endpoint bits, elementary-function
 approximation degree, and subdivision depth. A closed Boolean check is verified by Lean's kernel;

@@ -177,7 +177,11 @@ def reifyBox (bounds : Array Bound) : List Q(ℝ) → MetaM ReifiedBox
     let membership : Lean.Expr := q(Box.containsReal_nil (fun i => ([] : List ℝ)[i]?.getD 0))
     return ⟨box, reals, membership⟩
   | term :: tail => do
-    let mut lower : Option Bound := none
+    -- The nonnegative-real carrier supplies a lower endpoint without a local hypothesis.
+    let mut lower : Option Bound ← match term with
+      | ~q((($x : NNReal) : ℝ)) => do
+        return (← boundsOfLE q(NNReal.coe_nonneg $x)).find? (·.lower)
+      | _ => pure none
     let mut upper : Option Bound := none
     for bound in bounds do
       unless ← withReducible (isDefEq term bound.term) do continue

@@ -390,6 +390,16 @@ example (x : ℝ) (hx : x ∈ Set.Icc (-1) 1) : |x| ^ 2 + 1 ≤ 2 := by
   change square + 1 ≤ 2
   interval (depth := 0)
 
+-- Nonnegative-real inputs need only an upper bound; stronger explicit lower bounds still apply.
+example (x : NNReal) (hx : x ≤ 1) : x * x ≤ 1 := by
+  interval
+
+example (x : NNReal) (hx : x < 1) : x < 2 := by
+  interval
+
+example (x : NNReal) (hlo : 1 ≤ x) (hhi : x ≤ 2) : 1 ≤ x := by
+  interval
+
 example (A : Matrix (Fin 2) (Fin 3) ℝ) (x : Fin 3 → ℝ)
     (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1) (hx : ∀ i, x i ∈ Set.Icc (-1) 1) :
     ‖WithLp.toLp 1 (A.mulVec x)‖₊ ≤ (6 : NNReal) := by

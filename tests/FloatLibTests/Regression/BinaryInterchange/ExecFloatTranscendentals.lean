@@ -550,12 +550,13 @@ def failCertifiedStableRejection : Thunk Nat := ⟨fun _ =>
 The certified power, with the budget `Model.pow` gives it, settles exact and irrational results,
 the binary16 tie `4^-12.5` at `+0`, and `2^(1024 - 2^-43)` just below binary64's overflow
 threshold. It rounds an underflow to `+0` and leaves overflow, the exact midpoints of the
-fixtures, and nonpositive bases to their failures. `Model.pow` then falls back and still overflows
-to infinity, also for `2^(1024 + 2^-42)` just above the threshold. An empty budget is inconclusive
-only when the screens do not decide the result: in the 31-bit-exponent format the least subnormal
-raised to `1.5` underflows to `+0` without a refinement attempt, and without forming half the least
-subnormal, a rational of about a billion bits. In that format, three to the least subnormal power
-rounds to one from the stored fields alone. Expected encodings are MPFR 4.1.0 results.
+fixtures, and nonpositive bases to their failures. `Model.pow` preserves certified overflow as
+infinity, including the power of seven whose approximate fallback was spuriously finite. An empty
+budget is inconclusive only when the screens do not decide the result: in the 31-bit-exponent
+format the least subnormal raised to `1.5` underflows to `+0` without a refinement attempt or
+forming half the least subnormal, a rational of about a billion bits. In that format, three to
+the least subnormal power rounds to one from the stored fields alone. Expected encodings are
+MPFR results.
 -/
 def failCertifiedPow : Thunk Nat := ⟨fun _ =>
   let f64 := FloatFormat.binary64
@@ -588,6 +589,11 @@ def failCertifiedPow : Thunk Nat := ⟨fun _ =>
         0x7ff0000000000000
     , failedWith (certified two (double 0x4090000000000001)) .range
     , (Model.pow two (double 0x4090000000000001)).toNatBits == 0x7ff0000000000000
+    , (Model.pow (double 0x401c000000000000) (double 0x4076cc193acea9b4)).toNatBits ==
+        0x7feffffffffffc90
+    , failedWith (certified (double 0x401c000000000000) (double 0x4076cc193acea9b5)) .range
+    , (Model.pow (double 0x401c000000000000) (double 0x4076cc193acea9b5)).toNatBits ==
+        0x7ff0000000000000
     , failedWith (certified (double 0x422ffff000020000) (double 0x3ff8000000000000))
         .inconclusive
     , failedWith (certified (Model.ofNatBits (fmt := f32) 0x47810080) (Model.ofNatBits 0x3fc00000))
