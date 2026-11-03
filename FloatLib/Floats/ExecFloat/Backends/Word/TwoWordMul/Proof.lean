@@ -14,11 +14,7 @@ public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.ExecFloat.Backends.Word.NormalPair.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-import Mathlib.Tactic.ByContra
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Correctness of native two-word finite multiplication

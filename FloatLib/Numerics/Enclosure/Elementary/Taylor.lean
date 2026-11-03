@@ -11,7 +11,6 @@ public import Mathlib.Data.Nat.Factorial.Basic
 public import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Data.Nat.Factorial.BigOperators
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 
 /-!
 # Exact Taylor sums by binary splitting

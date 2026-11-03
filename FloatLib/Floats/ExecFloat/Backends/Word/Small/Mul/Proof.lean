@@ -11,10 +11,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Mul.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 import FloatLib.Floats.ExecFloat.Backends.Word.NormalPair.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Correctness of native one-word finite multiplication

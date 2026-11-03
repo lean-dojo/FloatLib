@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
 public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
-import Mathlib.Tactic.Linarith
 
 /-!
 # Real containment for interval arcsine and arccosine

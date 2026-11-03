@@ -12,9 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Real
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
 
 /-!

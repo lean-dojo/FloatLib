@@ -9,10 +9,8 @@ module
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rounding
 public import Mathlib.Analysis.Real.Sqrt
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Exact square-root bounds for P3109

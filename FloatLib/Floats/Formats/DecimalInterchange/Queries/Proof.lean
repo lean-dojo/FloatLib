@@ -9,7 +9,7 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Queries.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Basic
 import Mathlib.Algebra.Order.Field.Power
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Numerical classification, cohorts and stored canonicality

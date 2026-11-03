@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Core
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 
 /-!
 # Order of interval endpoints

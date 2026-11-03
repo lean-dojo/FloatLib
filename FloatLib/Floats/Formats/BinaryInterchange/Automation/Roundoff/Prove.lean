@@ -37,16 +37,23 @@ may rest on obligations recorded as pending. -/
 def prove (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := do
   let type ← instantiateMVars (← goal.getType)
   -- A premise that reads a container through a surface getter is normalized like the analyzed
-  -- program, which reads its coordinates. Normalizing assigns the premise, so a normal form
-  -- left unproved undoes it.
+  -- program, which reads its coordinates. Without metavariables, and when it was stated in this
+  -- local context, it shares the program's normalization there (`Session.normalize`). Normalizing
+  -- assigns the premise, so a normal form left unproved undoes it.
   let surfaces := (← extension).surfaces
   if (type.find? fun term => surfaces.any term.isAppOf).isSome then
-    let (context, procedures) ← coordinateSimpContext (← read)
+    let session ← read
+    let (context, procedures) ← coordinateSimpContext session
     let saved ← Tactic.saveState
     let initial ← get
     let normalized? ← attempt? 10000 do
-      let (next, _) ← simpTarget goal context procedures
-      return some next
+      if type.hasMVar || (← goal.getDecl).lctx.getFVarIds != (← getLCtx).getFVarIds then
+        let (next, _) ← simpTarget goal context procedures
+        return some next
+      goal.withContext do
+        goal.checkNotAssigned `simp
+        return some (← applySimpResult? goal type
+          (← session.normalize `coordinate type context procedures))
     if let some next := normalized? then
       let some next := next | return true
       if next != goal then

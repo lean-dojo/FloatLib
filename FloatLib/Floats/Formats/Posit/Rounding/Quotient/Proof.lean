@@ -11,7 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Runtime
 
 import FloatLib.Numerics.Exact.Dyadic.Order
 import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Correctness of rational-free exact posit quotient rounding

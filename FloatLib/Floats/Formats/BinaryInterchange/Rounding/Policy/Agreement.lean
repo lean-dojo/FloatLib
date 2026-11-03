@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Agreement between policy and directed dyadic rounding

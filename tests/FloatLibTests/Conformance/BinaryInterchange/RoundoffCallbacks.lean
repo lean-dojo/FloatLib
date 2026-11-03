@@ -650,4 +650,105 @@ example (n : Nat) (y : Value) : True := by
     trivial
   trivial
 
+-- A function on a type parameter of the theorem, applied at a value of it. The theorem can be
+-- specialized to a numerical type, so the value counts as numerical.
+/--
+error: roundoff: ↑(f x) casts an integer computed from real or floating-point values, so the
+reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_error :=
+  fun {β : Type} (f : β → Nat) (x : β) => ((f x : Nat) : ℝ)
+
+-- The same function read from a list.
+/--
+error: roundoff: ↑(callAt fs i x) casts an integer computed from real or floating-point values, so
+the reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_list_error :=
+  fun {β : Type} (fs : List (β → Nat)) (i : Nat) (x : β) => ((callAt fs i x : Nat) : ℝ)
+
+-- The same function as a field of a pair.
+/--
+error: roundoff: ↑(p.1 x) casts an integer computed from real or floating-point values, so the
+reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_pair_error :=
+  fun {β : Type} (p : (β → Nat) × Nat) (x : β) => ((p.1 x : Nat) : ℝ)
+
+-- A comparison of values of a type parameter through a dictionary of it, which can compute.
+/--
+error: roundoff: ↑(List.count y xs) casts an integer computed from real or floating-point values,
+so the reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_count_error :=
+  fun {β : Type} [BEq β] (xs : List β) (y : β) => ((xs.count y : Nat) : ℝ)
+
+/-- The length of a stored list of a type parameter, also through a map, stays index data. -/
+roundoff theorem type_parameter_length_error :=
+  fun {β : Type} (f : β → Nat) (xs : List β) => (((xs.map f).length : Nat) : ℝ)
+
+/-- A type under another name. -/
+abbrev Alias (α : Type) := α
+
+/-- A function on `X` cast from a value of a type `F`, applied to `x`. -/
+def castApply {F X : Type} (h : F = (X → Nat)) (f : Alias F) (x : Alias X) : Nat := (cast h f) x
+
+-- The same through the alias of type parameters, which a helper unfolds to a function.
+/--
+error: roundoff: ↑(castApply h f x) casts an integer computed from real or floating-point values,
+so the reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_alias_error :=
+  fun {F X : Type} (h : F = (X → Nat)) (f : Alias F) (x : Alias X) =>
+    ((castApply h f x : Nat) : ℝ)
+
+/-- A type under another name, behind a definition that only default transparency unfolds. -/
+def Hidden (α : Type) := α
+
+/-- `castApply` on values of hidden types. -/
+def castHidden {F X : Type} (h : F = (X → Nat)) (f : Hidden F) (x : Hidden X) : Nat :=
+  (cast h f) x
+
+-- The same through that definition.
+/--
+error: roundoff: ↑(castHidden h f x) casts an integer computed from real or floating-point values,
+so the reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_hidden_error :=
+  fun {F X : Type} (h : F = (X → Nat)) (f : Hidden F) (x : Hidden X) =>
+    ((castHidden h f x : Nat) : ℝ)
+
+/-- A type parameter or `Float`, as a flag chooses. -/
+def Pick (b : Bool) (α : Type) : Type := if b then α else Float
+
+-- The same through a definition that names a carrier but gives the type parameter here.
+/--
+error: roundoff: ↑(castApply h f x) casts an integer computed from real or floating-point values,
+so the reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_parameter_pick_error :=
+  fun {F X : Type} (h : F = (X → Nat)) (f : Pick true F) (x : Pick true X) =>
+    ((@castApply F X h f x : Nat) : ℝ)
+
+/-- A class that holds a type, which no read trusts. -/
+class TypeClass where
+  /-- The type. -/
+  ty : Type
+
+-- A function on the type that an instance argument of such a class holds.
+/--
+error: roundoff: ↑(f x) casts an integer computed from real or floating-point values, so the
+reference would keep them; compute it from index data
+-/
+#guard_msgs (whitespace := lax) in
+roundoff theorem type_class_error :=
+  fun [b : TypeClass] (f : b.ty → Nat) (x : b.ty) => ((f x : Nat) : ℝ)
+
 end FloatLibTests.Conformance.BinaryInterchange.RoundoffCallbacks

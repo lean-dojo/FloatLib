@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Proof
 
 /-!
 # Packing correctness for configured binary values

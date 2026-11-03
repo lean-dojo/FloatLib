@@ -8,9 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.P3109.Proof
 public import FloatLib.Numerics.Exact.Dyadic.Order
-import Mathlib.Order.Monotone.Basic
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Order of positive finite IEEE P3109 codes

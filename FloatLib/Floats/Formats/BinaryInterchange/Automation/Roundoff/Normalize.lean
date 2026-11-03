@@ -245,8 +245,15 @@ A producer with a registered read (`Extension.readRules`), in `reads`, stays fol
 shape is not literal, so that its read applies. -/
 def programStep (boundaries containerProducers reads : NameSet) (containerFree : IO.Ref NameSet) :
     Simp.DSimproc := fun value => do
-  if (← isType value) || (← isProof value) then return .continue
   let storage := (← extension).storage
+  -- Only a projection or an application of a constant outside FloatLib and the registered storage
+  -- can step; the others are left before their types are inferred.
+  match value.getAppFn with
+  | .proj .. => pure ()
+  | .const name _ =>
+      if (`FloatLib).isPrefixOf name || storage.any (·.isPrefixOf name) then return .continue
+  | _ => return .continue
+  if (← isType value) || (← isProof value) then return .continue
   if let .proj structureName index receiver := value.getAppFn then
     if isClass (← getEnv) structureName then return .continue
     let some producer := receiver.getAppFn.constName? | return .continue
@@ -312,6 +319,29 @@ def programStep (boundaries containerProducers reads : NameSet) (containerFree :
   if let some reduced ← reduce (unfoldDefinition? value) then
     if reduced != value then return .visit reduced
   return .continue
+
+/-- `procedure` with its steps kept in `memo`, by term and configuration, for the other
+simplifications of the call that meet the same term, while `active` holds: `Session.normalize` sets
+it in a local context without metavariables. The step of `programStep` depends only on the term
+and the configuration when, in addition, the term has no metavariable, no unfolding predicate is
+set, no local definition is tracked or chosen for unfolding, no instance problem or universe
+approximation is in progress, and the step does not consult the registered `Extension.symbolic`
+tests, which may read the context: `consults` names those terms. Otherwise the step is computed
+afresh. -/
+def memoizeStep (memo : IO.Ref (Std.HashMap (Lean.Expr × UInt64) Simp.DStep))
+    (active : IO.Ref Bool) (consults : Lean.Expr → Bool) (procedure : Simp.DSimproc) :
+    Simp.DSimproc := fun value => do
+  let context ← readThe Meta.Context
+  if !(← active.get) || value.hasMVar || consults value ||
+      context.customCanUnfoldPredicate?.isSome || context.trackZetaDelta ||
+      !context.zetaDeltaSet.isEmpty || context.inTypeClassResolution || context.univApprox ||
+      context.synthPendingDepth > 0 then
+    return ← procedure value
+  let key := (value, (← getConfigWithKey).key)
+  if let some step := (← memo.get).get? key then return step
+  let step ← procedure value
+  memo.modify (·.insert key step)
+  return step
 
 /-- Whether `term` has the heads of `pattern` in its explicit data arguments, to the given depth:
 a cheap test before a law is unified with `term`. -/
@@ -617,8 +647,16 @@ def Session.prepare : MetaM Session := do
           continue
     reads := reads.push (producer, name)
   let readProducers := reads.foldl (fun producers (producer, _) => producers.insert producer) {}
+  let steps ← IO.mkRef {}
+  let memoized ← IO.mkRef false
+  -- `programStep` consults the registered symbolic tests for a producer with a registered read.
+  let consults (value : Lean.Expr) : Bool := match value.getAppFn with
+    | .proj _ _ receiver => receiver.getAppFn.constName?.any readProducers.contains
+    | .const name _ => readProducers.contains name
+    | _ => false
   let mut procedures := ({} : Simp.Simprocs).addCore #[.star] ``programStep false
-    (.inr (programStep boundaries containerProducers readProducers containerFree))
+    (.inr (memoizeStep steps memoized consults
+      (programStep boundaries containerProducers readProducers containerFree)))
   procedures := procedures.addCore #[.star] ``observeBranch false (.inl observeBranch)
   let sums ← sumReads
   unless sums.isEmpty do
@@ -666,6 +704,7 @@ def Session.prepare : MetaM Session := do
     givenBounds := (← IO.mkRef {})
     hypothesisSimp := (← IO.mkRef {})
     normalized := (← IO.mkRef {})
+    memoized
     procedures := #[procedures]
     coordinate := (← coordinateTheorems rewrites)
     fold := (← foldTheorems rewrites)
@@ -674,15 +713,42 @@ def Session.prepare : MetaM Session := do
     semantic := (← semanticTheorems false)
     classifiers := (← semanticTheorems true) }
 
+/-- Whether no declaration of `context` has a metavariable in its type or value, so that no
+assignment can change what the declarations state. -/
+def isRigidContext (context : LocalContext) : Bool :=
+  context.all fun declaration =>
+    !declaration.type.hasMVar && !((declaration.value? true).any (·.hasMVar))
+
+/-- Whether a simplification here may share the session's caches: the local context has no
+metavariable (`isRigidContext`) and the Meta context sets no unfolding predicate, no tracked or
+chosen local definitions, no instance problem and no universe approximation, so that a cached
+result is the one a fresh simplification with the same simplification context gives. -/
+def isCacheableContext : MetaM Bool := do
+  let metaContext ← readThe Meta.Context
+  return isRigidContext metaContext.lctx && metaContext.customCanUnfoldPredicate?.isNone &&
+    !metaContext.trackZetaDelta && metaContext.zetaDeltaSet.isEmpty &&
+    !metaContext.inTypeClassResolution && !metaContext.univApprox &&
+    metaContext.synthPendingDepth == 0
+
+/-- The variables and the local instances of the current local context, by which
+`Session.normalize` and `Session.tidyTerm` key the caches they share there. -/
+def contextKey : MetaM (Array FVarId × Array FVarId) :=
+  return ((← getLCtx).getFVarIds, (← getLocalInstances).map (·.fvar.fvarId!))
+
 /-- The simplification context of the normalizer `kind` in the current local context: `theorems`
-with the local rewrites (`addLocalRewrites`), built once per local context. -/
+with the local rewrites (`addLocalRewrites`), built once per local context without metavariables
+(`isRigidContext`). -/
 def Session.localContext (session : Session) (kind : Name) (theorems : SimpTheorems)
     (config : Simp.Config) (congruences : Bool) : MetaM Simp.Context := do
+  -- A context is kept only while no local declaration has a metavariable that an assignment could
+  -- turn into another rewrite.
+  let rigid := isRigidContext (← getLCtx)
   let key := (kind, (← getLCtx).getFVarIds)
-  if let some context := (← session.contexts.get).get? key then return context
+  if rigid then
+    if let some context := (← session.contexts.get).get? key then return context
   let congruences ← if congruences then getSimpCongrTheorems else pure {}
   let context ← Simp.mkContext config #[← addLocalRewrites theorems] congruences
-  session.contexts.modify (·.insert key context)
+  if rigid then session.contexts.modify (·.insert key context)
   return context
 
 /-- Normalize container observations without unfolding their buffers or arithmetic dictionaries. -/
@@ -722,27 +788,49 @@ def decodingSimpContext (session : Session) :
     { implicitDefEqProofs := false } false
   return (context, session.procedures)
 
+/-- The caches of a simplification state: its results, congruence theorems and `dsimp` results,
+without its counters, so that a later simplification in the same setting starts from them. -/
+def simpCaches (state : Simp.State) : Simp.State :=
+  { cache := state.cache, congrCache := state.congrCache, dsimpCache := state.dsimpCache }
+
 /-- Simplify `term` with the normalizer `kind`, given as `context` and `procedures` for the current
-local context. A term without metavariables shares the normalizer's cache in this context, so
-the subterms that the analysis normalizes again at each level are simplified once. -/
+local context. A term without metavariables shares the normalizer's caches in this context, by its
+variables and instances, so the subterms that the analysis normalizes again at each level are
+simplified once, while no local declaration has a metavariable that an assignment could change and
+the Meta context sets no unfolding predicate, no tracked or chosen local definitions, no instance
+problem and no universe approximation; otherwise it is simplified afresh. -/
 def Session.normalize (session : Session) (kind : Name) (term : Lean.Expr)
     (context : Simp.Context) (procedures : Simp.SimprocsArray) : MetaM Simp.Result := do
-  if term.hasMVar then return (← simp term context procedures).1
-  let key := (kind, (← getLCtx).getFVarIds)
-  -- The cache leaves the table while simp extends it, so that the extension does not copy it.
-  let cache ← session.normalized.modifyGet fun caches => (caches.getD key {}, caches.erase key)
-  let (result, state) ← simpCore term context procedures (s := { cache })
-  session.normalized.modify (·.insert key state.cache)
+  if term.hasMVar || !(← isCacheableContext) then
+    -- Nor are program steps kept below it.
+    let outer ← session.memoized.swap false
+    return (← tryFinally (simp term context procedures) (session.memoized.set outer)).1
+  let key := (kind, ← contextKey)
+  -- The caches leave the table while simp extends them, so that the extension does not copy them.
+  let caches ← session.normalized.modifyGet fun states => (states.getD key {}, states.erase key)
+  -- Program steps are kept (`memoizeStep`) here; the binders simp enters below a term without
+  -- metavariables have none either.
+  let outer ← session.memoized.swap true
+  let (result, state) ← tryFinally (simpCore term context procedures (s := caches))
+    (session.memoized.set outer)
+  session.normalized.modify (·.insert key (simpCaches state))
   return result
 
-/-- Simplify `term` with the identities of zero and one in `context`. A term without metavariables
-shares the session's cache of tidied terms, which no local hypothesis affects. -/
+/-- Simplify `term` with the identities of zero and one in `context`, built in the current local
+context. A term without metavariables shares the session's caches of tidied terms in this context,
+by its variables and instances, where `isCacheableContext` holds; otherwise it is simplified afresh.
+No result is shared across local contexts: Lean's default discharger can close a premise of a
+registered read rewrite with a local hypothesis. The caches are not keyed by `context`, so every
+caller of one session passes the same simplification theorems, as the analysis does with the
+session's own. -/
 def Session.tidyTerm (session : Session) (term : Lean.Expr) (context : Simp.Context) :
     MetaM Simp.Result := do
-  if term.hasMVar then return (← simp term context).1
-  let cache ← session.tidied.modifyGet fun cache => (cache, {})
-  let (result, state) ← simpCore term context (s := { cache })
-  session.tidied.set state.cache
+  if term.hasMVar || !(← isCacheableContext) then return (← simp term context).1
+  let key ← contextKey
+  -- The caches leave the table while simp extends them, so that the extension does not copy them.
+  let caches ← session.tidied.modifyGet fun states => (states.getD key {}, states.erase key)
+  let (result, state) ← simpCore term context (s := caches)
+  session.tidied.modify (·.insert key (simpCaches state))
   return result
 
 /-- Continue `goal` at the simplification `result` of its target `target`, as `simpTarget` does:

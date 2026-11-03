@@ -6,7 +6,6 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.NormNum
 public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Spec
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
@@ -14,6 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Numerics.Exact.Dyadic.Comparison.Proof
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Laws and correctness of carrier-generic guard-and-sticky rounding

@@ -6,8 +6,11 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.NormNum
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Precision-grid proofs for P3109 projection

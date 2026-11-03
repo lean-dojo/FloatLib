@@ -12,9 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Field
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Refinement of direct two-limb posit decoding

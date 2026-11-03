@@ -9,8 +9,10 @@ module
 public import FloatLib.Numerics.Enclosure.Rational.Runtime
 public import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Rat.Cast.Lemmas
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
 
 /-!
 # Soundness of rational interval operations

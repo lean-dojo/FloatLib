@@ -6,9 +6,13 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.NormNum
 public import FloatLib.Numerics.Quantization.Deterministic.Quotient
 public import Mathlib.Data.Nat.Log
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Deterministic nearest-even shift rounding

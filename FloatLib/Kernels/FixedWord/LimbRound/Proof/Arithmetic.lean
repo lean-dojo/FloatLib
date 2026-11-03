@@ -8,8 +8,11 @@ module
 
 public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 public import FloatLib.Kernels.FixedWord.Product.Proof
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Four-word subtraction, comparison, and widening

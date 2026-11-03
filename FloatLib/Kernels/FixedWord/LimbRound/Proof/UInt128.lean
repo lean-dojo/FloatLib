@@ -11,11 +11,14 @@ public import FloatLib.Kernels.FixedWord.Product.Proof
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.ByContra
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Verified two-limb rounding

@@ -9,9 +9,12 @@ module
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Runtime
 public import Mathlib.Data.Nat.Sqrt
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Verified native and arbitrary-precision integer square root

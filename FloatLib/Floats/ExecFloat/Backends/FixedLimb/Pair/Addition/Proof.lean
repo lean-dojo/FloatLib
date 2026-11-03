@@ -9,17 +9,11 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Addition.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
-import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Proof
 import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Multiplication.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
-import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import FloatLib.Kernels.FixedWord.Difference.Proof
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.NormNum
 
 /-!
 # Correctness of two-word finite addition

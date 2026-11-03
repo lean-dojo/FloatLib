@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Interval.Operations
 public import FloatLib.Numerics.Enclosure.Interval.Real
-import Mathlib.Algebra.Order.Ring.Abs
-import Mathlib.Algebra.Order.Ring.Basic
 
 /-!
 # Containment for interval powers and set operations

@@ -9,9 +9,6 @@ module
 public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Runtime
 public import FloatLib.Numerics.Enclosure.Constants.Proof
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.LinearCombination
-import Mathlib.Tactic.Ring
 
 /-!
 # Correctness of Payne-Hanek reduction

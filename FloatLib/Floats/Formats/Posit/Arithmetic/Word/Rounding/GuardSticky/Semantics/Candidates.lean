@@ -6,7 +6,6 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Layout
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Midpoint
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Stream
@@ -14,6 +13,7 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 import FloatLib.Numerics.Exact.Dyadic.Order
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Candidate semantics for direct Posit field rounding

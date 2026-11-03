@@ -8,9 +8,12 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaledSqrt.Runtime
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Proof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Tauto
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Exact square roots at the rounding scale

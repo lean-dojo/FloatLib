@@ -10,7 +10,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
-import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Correctness of native storage for one-word floating-point formats

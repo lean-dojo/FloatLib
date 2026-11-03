@@ -8,15 +8,11 @@ module
 
 public import Mathlib.Algebra.Order.Floor.Defs
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Signed
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
-import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
-import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 
 /-!
 # Integral-rounding contracts

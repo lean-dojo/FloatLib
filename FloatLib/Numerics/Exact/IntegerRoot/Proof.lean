@@ -9,7 +9,11 @@ module
 public import FloatLib.Numerics.Exact.IntegerRoot.Runtime
 public import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Exactness of seeded integer roots

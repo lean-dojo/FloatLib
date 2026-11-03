@@ -12,8 +12,6 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
 public import FloatLib.Numerics.Enclosure.Trigonometric.AtanProof
 public import Mathlib.Analysis.Complex.ExponentialBounds
 public import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 
 /-!
 # Bounds for the cached constants

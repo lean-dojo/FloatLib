@@ -6,9 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.RadixText.Precision
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Positivity.Finset
 
 /-! # Laws of significant-digit rounding in any radix
 

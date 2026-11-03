@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 
-import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 

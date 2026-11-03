@@ -9,8 +9,6 @@ module
 public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
 public import FloatLib.Numerics.Enclosure.Interval.Real
 public import Mathlib.Data.Rat.Floor
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 
 /-!
 # Real containment for integer binary-grid intervals

@@ -6,13 +6,16 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FieldSimp
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Order
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Rounding-direction theorems for P3109 projection

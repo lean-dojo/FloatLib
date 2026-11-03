@@ -11,8 +11,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtim
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.NearestEven
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Scaled-dyadic lemmas for the policy agreement proofs

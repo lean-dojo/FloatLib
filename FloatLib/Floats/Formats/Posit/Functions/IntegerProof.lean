@@ -9,8 +9,10 @@ public import FloatLib.Floats.Formats.Posit.Functions.Basic
 public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
 import FloatLib.Floats.Formats.Posit.Cast.Widening
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Candidates
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Exact integer-valued posit functions

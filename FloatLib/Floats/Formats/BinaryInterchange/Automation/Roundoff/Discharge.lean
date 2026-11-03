@@ -421,6 +421,33 @@ def primitiveObservation? (conclusion : Lean.Expr) : Option Lean.Expr :=
       (·.isAppOf ``ExecFloat.Binary.toReal)
   else none
 
+/-- Whether the head of `term`, read through applications, metadata and `let` bodies as
+`Expr.toHeadIndex` reads it, may be the constant `name`. A `let` or a bound variable on the way
+counts, since the head behind it is known only after instantiation. -/
+partial def mayHaveHead (name : Name) : Lean.Expr → Bool
+  | .const head _ => head == name
+  | .app function _ => mayHaveHead name function
+  | .mdata _ inner => mayHaveHead name inner
+  | .letE .. | .bvar _ => true
+  | _ => false
+
+/-- `kabstract expression pattern` for a closed constant application `pattern`, with each distinct
+subterm of `expression` visited once where `kabstract` walks it as a tree. `kabstract` compares with
+`pattern` the subterms without loose bound variables that have its head and arity; when each of them
+is `pattern` itself, the outermost of them are abstracted directly, which is what `kabstract` does,
+and otherwise `kabstract` runs. The result is the expression `kabstract` returns. -/
+def abstractOccurrences (expression pattern : Lean.Expr) : MetaM Lean.Expr := do
+  let expression ← instantiateMVars expression
+  let some name := pattern.getAppFn.constName? | kabstract expression pattern
+  if pattern.hasLooseBVars then return ← kabstract expression pattern
+  let arity := pattern.getAppNumArgs
+  if (expression.find? fun term => !term.hasLooseBVars && term.headNumArgs == arity &&
+      mayHaveHead name term && term != pattern).isSome then
+    return ← kabstract expression pattern
+  let marker := mkFVar (← mkFreshFVarId)
+  return (expression.replace fun term => if term == pattern then some marker else none).abstract
+    #[marker]
+
 /-- Instantiate the primitive theorem `rule`, whose conclusion observes one primitive call, at
 `source`. The source is that primitive or the dictionary method of one of `contract`'s
 implementation theorems; the method must unify with that theorem's, selected instance
@@ -464,7 +491,7 @@ def instantiatePrimitive (contract : PrimitiveContract) (rule : Name)
   -- the primitive call.
   let primitive ← instantiateMVars primitive
   let motive := Lean.mkLambda `call .default (← inferType primitive)
-    (← kabstract (← instantiateMVars conclusion) primitive)
+    (← abstractOccurrences conclusion primitive)
   return some (← mkEqMPR (← mkCongrArg motive (← instantiateMVars identity)) proof, pending)
 
 /-- Prove a primitive call finite by its contract, returning the contract's open premises. -/

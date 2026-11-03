@@ -7,8 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
 public import Mathlib.Analysis.Real.Sqrt
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Correct rounding of the square-root coefficient

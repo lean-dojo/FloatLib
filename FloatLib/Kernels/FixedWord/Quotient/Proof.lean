@@ -10,11 +10,11 @@ public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Numerics.Exact.RationalBinary
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
-import Mathlib.Data.Nat.Bitwise
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.SplitIfs
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Correctness of restoring quotient generation

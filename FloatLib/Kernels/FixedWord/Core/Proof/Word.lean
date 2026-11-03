@@ -7,14 +7,16 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Runtime
-import Lean.Compiler.CSimpAttr
 import Mathlib.Tactic.Bound
-import Mathlib.Tactic.ByContra
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Verified single-word primitives for executable numerical arithmetic

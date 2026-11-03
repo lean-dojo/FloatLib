@@ -1458,4 +1458,18 @@ run_cmd liftTermElabM do
   Roundoff.checkObligations residual #[residual.mvarId!]
   Roundoff.checkObligations premise #[premise.mvarId!]
 
+-- `abstractOccurrences` returns what `kabstract` returns, also when a `let` around the pattern
+-- matches it as a whole and an occurrence sits in the type of its value.
+open Lean Meta in
+run_meta withLocalDeclD `n (mkConst ``Nat) fun n => withLocalDeclD `q (mkConst ``Nat) fun q => do
+  let pattern := mkApp (mkConst ``Nat.succ) n
+  withLocalDeclD `h (← mkEq q pattern) fun h => do
+    let predicate ← withLocalDeclD `v (mkConst ``Nat) fun v => do
+      mkLambdaFVars #[v] (← mkEq v pattern)
+    let value ← mkAppOptM ``Subtype.mk #[mkConst ``Nat, predicate, q, h]
+    let expression := mkLet `z (← inferType value) value pattern
+    unless (← Roundoff.abstractOccurrences expression pattern) ==
+        (← kabstract expression pattern) do
+      throwError "abstractOccurrences differs from kabstract"
+
 end FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions

@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
+import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 
 /-!
 # Square-root specification

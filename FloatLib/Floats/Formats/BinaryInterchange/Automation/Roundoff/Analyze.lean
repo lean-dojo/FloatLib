@@ -562,7 +562,7 @@ def build (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate := d
       let estimate ← r.analyze next fuel
       return ← rewriteActual estimate equality
   if let some entry := (← extension).reads.find? fun read =>
-      source.isAppOf read.head && read.selects source then
+      source.isAppOf read.head && read.selects source && read.isCertified then
     let position := source.getAppNumArgs - entry.fromEnd
     let container := source.getAppArgs[position]!
     let containerType ← withDefault (whnf (← inferType container))
@@ -578,7 +578,9 @@ def build (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate := d
       -- Its index is not checked, as a tensor read at an index chosen by comparing stored values,
       -- such as the pivot of a log-softmax, needs; an index computed from rounded values would
       -- keep that choice in the reference. The value of an input option is an input container.
-      if (← isInputValue container) || (← isInputOptionGet container) then
+      -- Only the read at its own arguments selects; a further argument applies the selected entry.
+      if source.getAppNumArgs == entry.arity &&
+          ((← isInputValue container) || (← isInputOptionGet container)) then
         return ← exactEstimate mixed actual
       -- Producers are analyzed through reads whose container is followed by the index only.
       unless position + 2 == source.getAppNumArgs do

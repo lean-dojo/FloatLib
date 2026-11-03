@@ -62,16 +62,141 @@ structure Read where
   /-- For a class method, the position of its dictionary, counted back from the end of the
   arguments. -/
   dictionary : Option Nat := none
-  /-- The dictionaries through which the method selects a stored entry. A read through another
+  /-- The dictionaries through which the method selects a stored entry, which must be those of
+  Lean's own getters of lists, arrays and vectors (`getterDictionaries`). A read through another
   one, which may compute with the entry, is not this read. -/
   dictionaries : Array Name := #[]
   /-- Dictionaries that pass the read on to the dictionary they take last, which must be one of
   `dictionaries` or of these in turn, such as `Fin.instGetElemFinVal`. -/
   forwarding : Array Name := #[]
-  /-- The classes, such as the storage of a tensor, whose dictionaries the read trusts to store and
-  fetch entries without computing with them. Index data may use any dictionary of them. -/
+  /-- The classes, such as the storage of a tensor, whose dictionaries the read trusts. When the
+  read selects stored entries (`Read.isCertified`), index data may use any dictionary of them, and
+  their methods are trusted, not checked, to store and fetch entries. -/
   trusts : Array Name := #[]
+  /-- The methods of `trusts` that observe the entries a container holds, such as the array view of
+  a buffer, which a selection certificate may read an entry from. -/
+  observers : Array Name := #[]
+  /-- A theorem that the read selects a stored entry (`Read.checkSelection`): for the read of its
+  own variables, an entry that a getter of lists, arrays and vectors, or an earlier selecting read,
+  takes from an observation of the container through its structure fields and `observers`. A read
+  without a dictionary selects entries only with one; otherwise it is analyzed as the function it
+  is. -/
+  selection : Option Name := none
   deriving Inhabited
+
+/-- The dictionaries through which Lean's getter `GetElem.getElem` selects a stored entry of a list,
+an array or a vector, the only reads that may select through dictionaries (`Read.dictionaries`). -/
+def getterDictionaries : Array Name :=
+  #[``List.instGetElemNatLtLength, ``Array.instGetElemNatLtSize, ``Vector.instGetElemNatLt]
+
+/-- The dictionaries that pass Lean's getter on to one of `getterDictionaries`, as
+`Fin.instGetElemFinVal` does for an index of `Fin n` (`Read.forwarding`). -/
+def getterForwarding : Array Name := #[``Fin.instGetElemFinVal]
+
+/-- Whether the `.olean` of `module` lies in the library directory of the running Lean. -/
+def leanLibraryModule (module : Name) : IO Bool := do
+  try
+    let olean ← IO.FS.realPath (← findOLean module)
+    let library ← IO.FS.realPath (← getLibDir (← getBuildDir))
+    return library.components.isPrefixOf olean.components
+  catch _ => return false
+
+/-- Whether `name` is a constant of Lean's core library other than `Classical.choice`: of a module
+under `Init`, `Std` or `Lean` that Lean's own library holds (`leanLibraryModule`), not of another
+package that takes such a name. The module system exports many core definitions without their
+values, such as `Nat.land`, which every compiled sparse match uses. The only other core axiom that
+is data stands for a `sorry`, which the build already rejects. -/
+def coreConstant (name : Name) : CoreM Bool := do
+  if name == ``Classical.choice then return false
+  let environment ← getEnv
+  let some index := environment.getModuleIdxFor? name | return false
+  let some module := environment.header.moduleNames[index.toNat]? | return false
+  unless [`Init, `Std, `Lean].contains module.getRoot do return false
+  leanLibraryModule module
+
+/-- Whether the dictionary `dictionary` is one through which `read` selects a stored entry
+(`Read.dictionaries`), directly or through `Read.forwarding`. -/
+partial def Read.selectsThrough (read : Read) (dictionary : Lean.Expr) : Bool :=
+  match dictionary.consumeMData.getAppFn.constName? with
+  | some name =>
+      read.dictionaries.contains name ||
+        (read.forwarding.contains name && dictionary.getAppNumArgs > 0 &&
+          read.selectsThrough dictionary.consumeMData.appArg!)
+  | none => false
+
+/-- Whether `value`, an application of `read`'s head, is this read: a read without a registered
+dictionary always is, a class method only through one of its `Read.dictionaries`. -/
+def Read.selects (read : Read) (value : Lean.Expr) : Bool :=
+  match read.dictionary with
+  | none => true
+  | some fromEnd =>
+      value.getAppNumArgs ≥ fromEnd &&
+        read.selectsThrough value.getAppArgs[value.getAppNumArgs - fromEnd]!
+
+/-- Whether stored-read status may be granted to `read`: a getter through Lean's own dictionaries
+(`Read.dictionaries`), or a read with a selection certificate (`Read.selection`), both of which
+registration checks. -/
+def Read.isCertified (read : Read) : Bool :=
+  read.dictionary.isSome || read.selection.isSome
+
+/-- Whether `term` observes `container` through structure fields and the `observers` of `read`
+only: it is `container`, a field of an observation, or an observer applied to one of
+`dictionaries` and to one observation, its only argument after the dictionary that is neither a
+type nor a proof. -/
+partial def Read.observes (read : Read) (dictionaries : Array Lean.Expr)
+    (container term : Lean.Expr) : MetaM Bool := do
+  let term := term.consumeMData
+  if term == container then return true
+  if let .proj owner _ record := term then
+    return !isClass (← getEnv) owner && (← read.observes dictionaries container record)
+  let some name := term.getAppFn.constName? | return false
+  let some field ← getProjectionFnInfo? name | return false
+  let arguments := term.getAppArgs
+  if arguments.size ≤ field.numParams then return false
+  unless field.fromClass do
+    return arguments.size == field.numParams + 1 &&
+      (← read.observes dictionaries container arguments[field.numParams]!)
+  unless read.observers.contains name && dictionaries.contains arguments[field.numParams]! do
+    return false
+  let data ← (arguments.extract (field.numParams + 1) arguments.size).filterM fun argument => do
+    return !(← isType argument) && !(← isProof argument)
+  let #[receiver] := data | return false
+  read.observes dictionaries container receiver
+
+/-- Check the selection certificate of `read` (`Read.selection`), given the reads registered
+before it. Its statement must conclude, for variables standing for every argument of the read in
+order, that the read of them equals a read of `earlier` that selects stored entries, at an
+observation of the read's container (`Read.observes`). The error, if any, says what is wrong. -/
+def Read.checkSelection (read : Read) (earlier : Array Read) : MetaM (Option MessageData) := do
+  let some certificate := read.selection | return none
+  let name := MessageData.ofConstName certificate
+  let some info := (← getEnv).find? certificate | return some m!"`{name}` is not declared"
+  forallTelescopeReducing info.type fun binders conclusion => do
+    let fail (message : MessageData) : MetaM (Option MessageData) := do
+      return some (← addMessageContext m!"`{name}` {message}")
+    let some (_, left, right) := conclusion.consumeMData.eq? |
+      fail m!"does not conclude an equality"
+    unless left.isAppOfArity read.head read.arity && left.getAppArgs == binders do
+      return ← fail m!"does not state the read `{.ofConstName read.head}` of its own variables"
+    -- The read at every universe, not one instance of them.
+    let levels := left.getAppFn.constLevels!
+    let parameters := (← getConstInfo read.head).levelParams.length
+    let names := levels.filterMap fun | .param name => some name | _ => none
+    unless levels.length == parameters && names.length == parameters &&
+        names.eraseDups.length == parameters do
+      return ← fail m!"states the read `{.ofConstName read.head}` at fixed universes"
+    let container := binders[read.arity - read.fromEnd]!
+    let right := right.consumeMData
+    let some selecting := earlier.find? fun other =>
+        right.isAppOfArity other.head other.arity && other.selects right && other.isCertified |
+      fail m!"does not equate the read with a read that selects entries"
+    let observed := right.getAppArgs[right.getAppNumArgs - selecting.fromEnd]!
+    let dictionaries ← binders.filterM fun binder => do
+      return (← isClass? (← inferType binder)).any read.trusts.contains
+    unless ← read.observes dictionaries container observed do
+      return ← fail m!"reads `{observed}`, which is not an observation of the container through \
+        its fields and the observers of the read"
+    return none
 
 /-- A loop the analysis carries a relational invariant through, with the lemmas that lift the
 bound of one step through it. The positions locate the element type, the accumulator type, the
@@ -317,8 +442,10 @@ initialize extensions : ScopedEnvExtension Name (Name × Extension) Registered �
              extension := registered.extension.append extension } }
 
 /-- Check that `extension`, the value of `declaration`, names declared constants, apart from the
-coordinate laws, which may be missing, and gives argument positions within the arities it states.
-The error names the field and the declaration. -/
+coordinate laws, which may be missing, gives argument positions within the arities it states, reads
+a class method only at its dictionary through instances of Lean's own library, and gives each
+read's selection certificate the statement it needs (`Read.checkSelection`). The error names the
+field and the declaration. -/
 def Extension.validate (extension : Extension) (declaration : Name) : CoreM Unit := do
   let fail (field : String) (message : MessageData) : CoreM Unit :=
     throwError "roundoff_extension: `{field}` of `{.ofConstName declaration}`: {message}"
@@ -332,12 +459,40 @@ def Extension.validate (extension : Extension) (declaration : Name) : CoreM Unit
     declared field name
     let count ← arguments name
     unless arity ≤ count do fail field m!"`{name}` takes {count} arguments, not {arity}"
+  let mut earlier := (extensions.getState (← getEnv)).extension.reads
   for read in extension.reads do
     applied "reads" read.head read.arity
     unless 0 < read.fromEnd && read.fromEnd ≤ read.arity do
       fail "reads" m!"the container of `{read.head}` is argument {read.fromEnd} from the end \
         of {read.arity}"
     for type in read.types do declared "reads" type
+    if let some position := read.dictionary then
+      -- A read through dictionaries is a method of a class, at its dictionary, through instances of
+      -- Lean's own library: Lean's getters of lists, arrays and vectors.
+      let method ← getProjectionFnInfo? read.head
+      unless method.any (fun method => method.fromClass &&
+          read.arity - position == method.numParams) && position ≤ read.arity do
+        fail "reads" m!"`{.ofConstName read.head}` is not a class method read at its dictionary"
+      for name in read.dictionaries ++ read.forwarding do
+        declared "reads" name
+        unless Meta.isInstanceCore (← getEnv) name && (← coreConstant name) do
+          fail "reads" m!"`{.ofConstName name}` is not an instance of Lean's own library"
+      -- A dictionary that takes another dictionary passes the read on to it, so it forwards.
+      for name in read.dictionaries do
+        let forwards ← MetaM.run' <| forallTelescopeReducing (← getConstInfo name).type
+          fun binders _ => binders.anyM fun binder => do
+            return (← isClass? (← inferType binder)).isSome
+        if forwards then
+          fail "reads" m!"`{.ofConstName name}` passes the read on to another dictionary; it \
+            belongs to `forwarding`"
+      -- Of these, only Lean's getters of lists, arrays and vectors select stored entries.
+      unless read.head == ``GetElem.getElem && read.arity == 8 && read.fromEnd == 3 &&
+          position == 4 && read.dictionaries.all getterDictionaries.contains &&
+          read.forwarding.all getterForwarding.contains do
+        fail "reads" m!"`{.ofConstName read.head}` at these positions and dictionaries is not \
+          Lean's getter of lists, arrays and vectors"
+    if let some message ← MetaM.run' (read.checkSelection earlier) then fail "reads" message
+    earlier := earlier.push read
   for loop in extension.loops do
     applied "loops" loop.fold loop.arity
     for (part, position) in [("element", loop.element), ("state", loop.state),

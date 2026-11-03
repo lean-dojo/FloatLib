@@ -14,13 +14,8 @@ public import FloatLib.Floats.Formats.IEEE754.Native.Representation
 public import FloatLib.Floats.ExecFloat.Instances
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.NonNaN
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Branches
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.RoundedReal
 
 /-!
 # Native multiplication and division

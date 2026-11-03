@@ -877,7 +877,8 @@ def exposeObservation (session : Session) (observation : Lean.Expr) :
   let source := observation.getAppArgs.back!
   let observe := mkAppN observation.getAppFn observation.getAppArgs.pop
   let name := source.getAppFn.constName?.getD .anonymous
-  if let some position ← readPosition? source (getters := true) (strict := false) then
+  if let some position ← readPosition? source (getters := true) (strict := false)
+      (certified := true) then
     let (context, procedures) ← coordinateSimpContext session
     let normalized ← session.normalize `coordinate observation context procedures
     if normalized.expr != observation then

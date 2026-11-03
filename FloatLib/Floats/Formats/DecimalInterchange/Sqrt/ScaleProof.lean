@@ -8,8 +8,7 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.ScaleProof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.FormatProof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Coefficient range for decimal square root

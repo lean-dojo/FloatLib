@@ -9,8 +9,7 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Runtime
 public import FloatLib.Kernels.IntegerRoot.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Rounding an integer-degree root on the coefficient grid

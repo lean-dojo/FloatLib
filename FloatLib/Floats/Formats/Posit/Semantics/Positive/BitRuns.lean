@@ -9,10 +9,13 @@ module
 public import FloatLib.Floats.Formats.Posit.Model.Decode
 public import FloatLib.Numerics.Bitwise
 import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.Positivity
 public import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Zify
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Fixed-width bit runs in positive Posit encodings

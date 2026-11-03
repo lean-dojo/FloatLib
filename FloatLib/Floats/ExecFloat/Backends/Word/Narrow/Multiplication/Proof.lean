@@ -9,9 +9,10 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Finite.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Multiplication.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Rounding.Proof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Set
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
 
 /-!
 # Correctness of native-word finite multiplication for generic binary32

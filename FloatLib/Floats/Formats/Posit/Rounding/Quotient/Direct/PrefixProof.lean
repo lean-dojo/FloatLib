@@ -9,9 +9,12 @@ module
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Jamming
 import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Runtime
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Normalization and correctness of direct quotient prefixes

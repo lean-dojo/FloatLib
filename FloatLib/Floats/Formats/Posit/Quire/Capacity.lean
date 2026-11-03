@@ -8,9 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Proof
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Zify
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Standard posit quire capacity

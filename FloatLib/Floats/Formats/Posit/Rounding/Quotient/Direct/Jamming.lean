@@ -11,8 +11,11 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky
 
 import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Exact quotient comparisons preserved by jamming

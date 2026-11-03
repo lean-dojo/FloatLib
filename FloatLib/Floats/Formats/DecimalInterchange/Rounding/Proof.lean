@@ -6,8 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Runtime
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Numerical guarantees for exact coefficient rounding

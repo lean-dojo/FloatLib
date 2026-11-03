@@ -9,9 +9,6 @@ module
 public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Runtime
 public import FloatLib.Numerics.Enclosure.Trigonometric.Proof
 import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 
 /-!
 # Correctness of rational trigonometric period reduction

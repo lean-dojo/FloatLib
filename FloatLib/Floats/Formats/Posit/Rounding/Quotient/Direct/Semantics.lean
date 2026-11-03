@@ -8,7 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.PrefixProof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Interior
-import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Posit semantics of direct quotient prefixes

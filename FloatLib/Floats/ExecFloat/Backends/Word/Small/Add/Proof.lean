@@ -9,15 +9,10 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
 public import FloatLib.Numerics.ShiftRightJam
-import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
 import FloatLib.Numerics.ShiftRightJam.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-import Mathlib.Tactic.NormNum
 
 /-!
 # Correctness of native one-word finite addition

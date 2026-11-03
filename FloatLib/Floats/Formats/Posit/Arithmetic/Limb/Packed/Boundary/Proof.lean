@@ -10,7 +10,6 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Boundary.Runtime
 public import FloatLib.Floats.Formats.Posit.Model.Basic
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
-import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
 
 /-!
 # Range and refinement laws for packed two-limb boundaries

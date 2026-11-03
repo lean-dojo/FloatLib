@@ -9,15 +9,10 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Fma.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Addition.Proof
 import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Proof
-import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Multiplication.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
-import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import FloatLib.Kernels.FixedWord.Difference.Proof
-import FloatLib.Kernels.FixedWord.Product.Proof
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.NormNum
+import FloatLib.Kernels.FixedWord.LimbRound.Proof.UInt256
+import FloatLib.Kernels.FixedWord.LimbRound.Proof.Arithmetic
 
 /-!
 # Correctness of two-word fused multiply-add

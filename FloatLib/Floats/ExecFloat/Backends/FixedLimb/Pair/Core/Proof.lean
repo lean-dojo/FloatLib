@@ -10,12 +10,13 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
-import Mathlib.Tactic.Convert
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Two-word pair-kernel storage

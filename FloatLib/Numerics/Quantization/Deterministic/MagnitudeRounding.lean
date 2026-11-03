@@ -7,7 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Quantization.Deterministic.ShiftRight
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Algebra.Order.Sub.Basic
+import Mathlib.Algebra.Order.Group.Nat
 
 /-!
 # Magnitude rounding rules

@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
-import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 import FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Runtime

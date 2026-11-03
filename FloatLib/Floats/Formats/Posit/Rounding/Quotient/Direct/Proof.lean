@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Semantics
 
 import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Proof
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Positivity
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Correctness of direct posit quotient packing

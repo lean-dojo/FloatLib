@@ -13,9 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Tininess
 public import FloatLib.Numerics.IEEEStatus.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.NonNaN
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.SquareRoot
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 
 /-!
 # Correctness of IEEE exception status

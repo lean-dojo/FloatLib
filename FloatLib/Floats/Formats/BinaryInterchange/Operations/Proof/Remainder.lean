@@ -9,13 +9,8 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-import FloatLib.Numerics.Exact.Dyadic.Order
-import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Signed
-import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics
-import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 
 /-!
 # IEEE remainder contracts

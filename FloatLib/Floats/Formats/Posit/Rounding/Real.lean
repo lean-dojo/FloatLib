@@ -9,7 +9,10 @@ module
 public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
 
 /-!
 # Real-valued posit rounding specification

@@ -11,8 +11,6 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
-import Mathlib.Tactic.NormNum
 
 /-!
 # Correctness of native one-word finite fused multiply-add

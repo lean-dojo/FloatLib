@@ -8,10 +8,13 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Order of positive Posit encodings

@@ -10,8 +10,6 @@ public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
 public import FloatLib.Numerics.Enclosure.Interval.OperationsProof
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
 
 /-!
 # Containment for tangent and hyperbolic interval bounds

@@ -9,7 +9,6 @@ module
 public import FloatLib.Numerics.Enclosure.Elementary.Transcendental
 public import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 import Mathlib.Analysis.Complex.Basic
-import Mathlib.Data.Nat.Prime.Int
 
 /-!
 # Exponentials at purely imaginary rational arguments

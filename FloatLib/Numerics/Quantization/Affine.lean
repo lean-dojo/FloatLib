@@ -9,12 +9,15 @@ module
 import Mathlib.Algebra.Order.Ring.Abs
 public import Mathlib.Order.Interval.Set.Defs
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
 public import FloatLib.Numerics.Core.Proof
 public import FloatLib.Numerics.Operation.Semantics
 public import FloatLib.Numerics.Quantization.Deterministic
 public import FloatLib.Numerics.Quantization.Saturating
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Executable affine rational quantization

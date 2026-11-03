@@ -11,8 +11,6 @@ public import FloatLib.Numerics.Enclosure.Interval.Real
 public import FloatLib.Numerics.Enclosure.Elementary.Proof
 public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
 public import Mathlib.Analysis.Real.Sqrt
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import Mathlib.Tactic.Linarith
 
 /-!
 # Real containment for interval elementary functions

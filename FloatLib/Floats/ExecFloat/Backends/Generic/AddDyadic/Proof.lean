@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
-import Mathlib.Data.Int.NatAbs
 
 /-!
 # Correctness of signed-magnitude dyadic addition

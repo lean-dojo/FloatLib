@@ -11,10 +11,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Proof
 public import FloatLib.Floats.ExecFloat.Conversion.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
-import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 
 /-!
 # Binary-interchange conversion proofs

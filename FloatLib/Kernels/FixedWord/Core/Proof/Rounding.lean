@@ -9,8 +9,11 @@ module
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.SplitIfs
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Verified native-word rounding

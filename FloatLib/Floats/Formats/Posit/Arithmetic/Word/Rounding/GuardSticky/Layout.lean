@@ -6,12 +6,11 @@ Authors: FloatLib Team
 
 module
 
-import FloatLib.Numerics.Bitwise
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
 public import Mathlib.Data.Nat.Bitwise
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Semantics of interior Posit field layouts

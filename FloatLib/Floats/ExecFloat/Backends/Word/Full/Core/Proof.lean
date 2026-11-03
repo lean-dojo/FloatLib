@@ -11,10 +11,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
-import Mathlib.Tactic.ByContra
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Native-storage finite arithmetic for binary64

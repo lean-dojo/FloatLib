@@ -12,10 +12,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.GeneralPr
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
-import FloatLib.Kernels.FixedWord.Core.Proof
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
+import FloatLib.Kernels.FixedWord.Core.Proof.Rounding
 
 /-!
 # Correctness of width-generic finite arithmetic

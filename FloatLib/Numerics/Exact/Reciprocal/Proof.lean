@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Numerics.Exact.Reciprocal.Runtime
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Data.Rat.Cast.CharZero
-import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Real semantics of reciprocal comparisons

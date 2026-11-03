@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.RoundedReal
-import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 
 /-!
 # Executable packing semantics

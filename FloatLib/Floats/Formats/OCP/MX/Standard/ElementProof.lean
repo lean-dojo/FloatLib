@@ -8,9 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.SplitIfs
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
 
 /-!
 # Numerical contracts for OCP MX element rounding

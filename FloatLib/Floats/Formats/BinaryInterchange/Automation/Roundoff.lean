@@ -113,23 +113,28 @@ through it, so that the reference is the model at the exact argument. A model it
 such as a real function the program takes, keeps the model at the decoded computed argument: the
 statement shows that argument, and its rounding is not part of the bound.
 
-Trust assumptions. The reference is faithful to the program under these assumptions, which the
-analysis does not check: the modules of the running Lean's own library, whose opaque constants and
-axioms other than `Classical.choice` hold no number when their types hold none; FloatLib's order
-dictionaries on configured values and its comparison `ExecFloat.Binary.instComparisonFamily`, which
-compare the decoded values; the codec and storage plan of a configured type, which define what its
-stored words mean; the dictionaries of the list, array and vector getters and the reads that
-extensions register, which select stored entries, together with the classes a read names as
-trusted, whose dictionaries store and fetch entries without computing with them. A stored container
-read at an index computed from rounded values keeps that choice in the reference, as said above, and
-so does a branch whose condition compares computed values: the reference takes the branch the program
-takes, and a test of exact values of a loop component that such a read or such a branch chose reads
-that index or condition, while an agreement test whose references would read it is rejected. The
-reference reads the program as Lean states it: a variable without a visible value, such as one that
-a `have` in a tactic proof introduces, is an input whatever computed it, and an entry of a container
-`o.get h` that an input option `o` holds is read as stored; a value of a type variable is classified
-as not numerical, so a theorem generic in a type keeps the functions it applies when it is
-specialized to a numerical type.
+Trust assumptions. The kernel checks the displayed proposition from its hypotheses and
+dependencies, and the axiom audit lists the axioms it rests on. Neither shows that the displayed
+reference agrees with an exact-arithmetic specification written independently, and that agreement
+rests on what follows. Two conditions are checked by the analysis. A registered read counts as a
+stored read only when it uses the dictionaries of Lean's own getters or has a checked selection
+equality to such a read (`Read.isCertified`), and a value of a type parameter of the statement
+counts as possibly numerical, unless a dictionary of a class that a certified read trusts supplies
+its type. The rest is assumed. The opaque constants and axioms of the running Lean's own library,
+other than `Classical.choice`, hold no number when their types hold none. FloatLib's IEEE
+comparisons on a configured type compare its decoded models, while its decidable equality compares
+the stored values, so the two zeros differ and a NaN equals itself. A configured type's codec and
+storage plan define what its stored words mean. Lean's list, array and vector getters, with their
+forwarding instance for `Fin` indices, select stored entries, and the observers a read registers
+mean what they say about its storage. A class that a certified read names in `Read.trusts` is
+exempt as a whole, wherever its dictionaries occur, and is assumed to store and fetch entries
+without computing with them. A local value without a visible definition or a supplied error bound,
+such as one a `have` in a tactic proof introduces, is an input whatever computed it, and an entry
+that the genuine getter of an input option returns is a stored input. Some choices stay as the
+program makes them: a stored read keeps the program's index, also one chosen from rounded values, a
+branch whose condition the analysis cannot decide keeps the program's condition, and an exact test
+of a loop component can inherit such a choice through the component's reference, while an
+agreement test whose references depend on it is rejected.
 
 A call of FloatLib's correctly rounded exponential, logarithm, `expMinus1`, `logPlus1` or `expMul`
 on an IEEE descriptor contributes half an ulp of local error at its real result in the absolute

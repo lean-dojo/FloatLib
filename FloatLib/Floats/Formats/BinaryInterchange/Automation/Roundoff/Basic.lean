@@ -387,41 +387,24 @@ partial def containerProducerHeads (containerFree : IO.Ref NameSet) (expression 
     type := body.instantiate1 argument
   return names
 
-/-- Whether the dictionary `dictionary` is one through which `read` selects a stored entry
-(`Read.dictionaries`), directly or through `Read.forwarding`. -/
-partial def Read.selectsThrough (read : Read) (dictionary : Lean.Expr) : Bool :=
-  match dictionary.consumeMData.getAppFn.constName? with
-  | some name =>
-      read.dictionaries.contains name ||
-        (read.forwarding.contains name && dictionary.getAppNumArgs > 0 &&
-          read.selectsThrough dictionary.consumeMData.appArg!)
-  | none => false
-
-/-- Whether `value`, an application of `read`'s head, selects a stored entry: a read without a
-registered dictionary always does, a class method only through one of its `Read.dictionaries`. -/
-def Read.selects (read : Read) (value : Lean.Expr) : Bool :=
-  match read.dictionary with
-  | none => true
-  | some fromEnd =>
-      value.getAppNumArgs ≥ fromEnd &&
-        read.selectsThrough value.getAppArgs[value.getAppNumArgs - fromEnd]!
-
 /-- The position of the container in `value`, a registered read of one entry. Only the
 canonical reads count unless `getters`; with `strict` the read must have its registered number of
-arguments. A class method read through another dictionary (`Read.selects`) is no read. -/
+arguments, and with `certified` it must select stored entries (`Read.isCertified`). A class method
+read through another dictionary (`Read.selects`) is no read. -/
 def Read.position? (reads : Array Read) (value : Lean.Expr) (getters : Bool := false)
-    (strict : Bool := true) : Option Nat :=
+    (strict : Bool := true) (certified : Bool := false) : Option Nat :=
   reads.findSome? fun read =>
     if !getters && !read.canonical then none
+    else if certified && !read.isCertified then none
     else if (if strict then value.isAppOfArity read.head read.arity else value.isAppOf read.head) &&
         read.selects value
     then some (value.getAppNumArgs - read.fromEnd)
     else none
 
 /-- `Read.position?` for the registered reads. -/
-def readPosition? (value : Lean.Expr) (getters : Bool := false) (strict : Bool := true) :
-    CoreM (Option Nat) :=
-  return Read.position? (← extension).reads value getters strict
+def readPosition? (value : Lean.Expr) (getters : Bool := false) (strict : Bool := true)
+    (certified : Bool := false) : CoreM (Option Nat) :=
+  return Read.position? (← extension).reads value getters strict certified
 
 /-- Whether a registered extension shows that `value`, a container, has a shape that is not
 literal. -/
@@ -677,7 +660,8 @@ abbrev CarrierCache := IO.Ref (Std.HashMap (Name × Nat) Bool)
 
 /-- The rules, normalizers and memo tables of one `roundoff` call. The simp sets depend only on
 the environment and each normalizer adds its local hypotheses, while `bounds` is normalized under
-the main goal's hypotheses and `failures` is keyed by the facts of a scope. -/
+the main goal's hypotheses and `failures` is keyed by the facts of a scope. Only `Session.prepare`
+builds a session; its fields are the engine's own and change with it. -/
 structure Session where
   /-- Producers that program normalization keeps intact. -/
   boundaries : NameSet
@@ -765,9 +749,10 @@ structure Session where
   literal. -/
   symbolicBounds : NameSet := {}
   /-- The terms and conditions `Session.simplify`, `Session.zeroBudget` and `Session.tidy` already
-  tidied with the identities of zero and one. An estimate repeats the tidied references and
-  budgets of its parts, so one cache serves every estimate of the call. -/
-  tidied : IO.Ref Simp.Cache
+  tidied with the identities of zero and one, by the variables and local instances of the local
+  context (`Session.tidyTerm`). An estimate repeats the tidied references and budgets of its parts,
+  so one cache serves every estimate analyzed in a context. -/
+  tidied : IO.Ref (Std.HashMap (Array FVarId × Array FVarId) Simp.State)
   /-- The local variables of the goal the analysis began in. Branches, loops and premises about
   every value introduce the others. -/
   base : Std.HashSet FVarId := {}
@@ -775,9 +760,13 @@ structure Session where
   identities of zero and one, the budget identities of the registered loops and the decoding of
   checked results. -/
   dischargeSimp : Option (Simp.Context × Simp.SimprocsArray) := none
-  /-- The simplification caches of program normalization, by normalizer and local context. A
-  normalizer sees the local rewrites of its context, which the variables of the context fix. -/
-  normalized : IO.Ref (Std.HashMap (Name × Array FVarId) Simp.Cache)
+  /-- The simplification caches of program normalization, by normalizer, local context and local
+  instances. A normalizer sees the local rewrites of its context, which the variables of the context
+  fix. -/
+  normalized : IO.Ref (Std.HashMap (Name × Array FVarId × Array FVarId) Simp.State)
+  /-- Whether `programStep`'s steps are kept for reuse (`memoizeStep`): set by `Session.normalize`
+  while it shares its caches, in a local context without metavariables. -/
+  memoized : IO.Ref Bool
   /-- The bounds the hypotheses state, by local variable and whether the analysis is mixed
   (`Session.given`). -/
   givens : IO.Ref (Std.HashMap (FVarId × Bool) Given)

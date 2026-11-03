@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 import Mathlib.Algebra.Order.Algebra
-import Mathlib.Tactic.Attr.Register
 
 /-!
 # Floating-Point Error Bounds

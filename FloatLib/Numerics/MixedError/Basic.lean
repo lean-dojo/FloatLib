@@ -7,11 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Analysis.Real.Sqrt
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.GCongr
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Mixed relative and absolute error

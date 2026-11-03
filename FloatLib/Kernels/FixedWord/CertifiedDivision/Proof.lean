@@ -7,13 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.CertifiedDivision.Runtime
-import FloatLib.Kernels.FixedWord.Difference.Proof
 import FloatLib.Kernels.FixedWord.Quotient.Restoring128Proof
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.Ring
 import FloatLib.Kernels.FixedWord.Quotient.Compiler
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Verified fixed-word division candidates

@@ -6,9 +6,12 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 public import FloatLib.Kernels.FixedWord.Quotient.Proof
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Two-limb restoring quotient refinement

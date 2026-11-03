@@ -13,8 +13,6 @@ public import FloatLib.Floats.ExecFloat.Backends.SqrtNormalRounding
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Proof
 
 import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 
 /-!
 # Correctness of the one-word square root for small IEEE formats

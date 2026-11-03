@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
 public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
-import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 import FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 
 /-!

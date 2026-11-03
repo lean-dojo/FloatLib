@@ -20,6 +20,7 @@ public import FloatLibTests.Conformance.BinaryInterchange.RoundoffCallbacks
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffGuards
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffOptions
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffReads
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples

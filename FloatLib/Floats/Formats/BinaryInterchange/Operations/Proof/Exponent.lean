@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
-import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.NormNum
 
 /-!
 # Exponent-operation contracts

@@ -6,8 +6,9 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.Positivity
 public import Mathlib.Algebra.Group.Nat.Defs
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Right shift with sticky-bit jamming

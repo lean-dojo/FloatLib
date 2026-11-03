@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Direction
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
-import Mathlib.Algebra.Ring.Int.Parity
 
 /-!
 # Public integer-root semantics

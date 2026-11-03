@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Code.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Proof
 public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Proof
-import FloatLib.Kernels.FixedWord.Core.Proof.UInt128
 
 /-!
 # Packing equivalence for configured binary formats

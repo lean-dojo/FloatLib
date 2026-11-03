@@ -11,9 +11,6 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Fma.Runtime
 
-import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
-import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
 import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!

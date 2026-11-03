@@ -8,8 +8,11 @@ module
 
 public import FloatLib.Floats.Formats.P3109.Order
 public import FloatLib.Floats.Formats.P3109.Projection.Rounding
-import Mathlib.Tactic.NormNum
 public import FloatLib.Floats.Formats.P3109.Projection.Finite
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Range safety for P3109 encoding

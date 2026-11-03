@@ -11,12 +11,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Finite.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Fma.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Packing
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.SignedMagnitude.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.ModelBridge
 import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
-import FloatLib.Numerics.ShiftRightJam.Proof
-import FloatLib.Kernels.FixedWord.Core.Proof.Rounding
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 
 /-!

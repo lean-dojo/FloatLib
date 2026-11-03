@@ -405,20 +405,26 @@ registers its containers with `@[roundoff_extension]`.
 
 The theorem `roundoff` produces is an ordinary Lean proof, and the kernel checks it like any other.
 Our axiom audit loads the analysis and accepts only propositional extensionality, quotient
-soundness, and choice. What the analysis doesn't check is that its reference means what the program
-means, and that rests on four assumptions. The opaque constants and axioms of Lean's own library,
-other than `Classical.choice`, hold no number when their types hold none. FloatLib's order
-dictionaries on configured values and its comparison `ExecFloat.Binary.instComparisonFamily`
-compare the decoded values. A configured type's codec and storage plan define what its stored words
-mean. And the getters of lists, arrays and vectors, the reads that extensions register, and the
-classes such a read names as trusted store and fetch entries without computing with them. Inside
-index data, a function over numerical values is checked wherever it travels, in a list, a record or
-a generic helper, and applied only at plain index data. Some choices do stay in the reference as the program makes
-them. A stored container read at an index computed from rounded values keeps that choice, and a
-branch whose condition compares computed values takes the branch the program takes. The reference
-also reads the program as Lean states it: a variable a `have` introduces is an input, whatever
-computed it, and a value of a type variable counts as non-numerical, so a theorem generic in a type
-keeps the functions it applies when you specialize it to a numerical one. A call of a function the program takes is a different case. When the analysis has no rule for that
+soundness, and choice. What neither shows is that the reference in the statement is the exact
+computation the program means. Two parts of that the analysis checks. A read that another library
+registers counts as reading a stored entry only when it uses the dictionaries of Lean's own list,
+array and vector getters or has a checked selection equality to such a read, and a value of a type
+parameter of the statement counts as possibly numerical. The rest rests on assumptions. The opaque
+constants and axioms of Lean's own library, other than `Classical.choice`, hold no number when their
+types hold none. FloatLib's IEEE comparisons on configured values compare the decoded values, while
+their decidable equality compares stored words, so the two zeros differ and a NaN equals itself. A
+configured type's codec and storage plan define what its stored words mean, and the observers a
+read registers mean what they say about its storage. The classes a read names as trusted are exempt
+as a whole and are assumed to store and fetch entries without computing with them, which also
+exempts a type parameter whose type one of them supplies. Inside index data, a function over
+numerical values is checked wherever it travels, in a list, a record or a generic helper, and
+applied only at plain index data. Some choices stay in the reference as the program makes them. A
+stored container read at an index computed from rounded values keeps that choice, a branch whose
+condition compares computed values takes the branch the program takes, and an exact test of a loop
+component can inherit such a choice, while an agreement test that depends on it is rejected. The
+reference also reads the program as Lean states it: a variable a `have` introduces, with no visible
+definition or supplied error bound, is an input, whatever computed it, and so is an entry that an
+input option's own getter returns. A call of a function the program takes is a different case. When the analysis has no rule for that
 function's real model, the reference applies the model to the decoded computed argument, as in
 `g (toReal (x * y))`, so the statement shows that argument and the bound leaves out its rounding.
 

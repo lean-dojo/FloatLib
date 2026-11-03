@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Rounding.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
-import Mathlib.Tactic.NormNum
 
 /-!
 # Correctness of native binary32 product rounding

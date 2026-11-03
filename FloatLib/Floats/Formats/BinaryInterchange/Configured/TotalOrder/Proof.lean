@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Proof
 
 /-!
 # Configured total-order refinement

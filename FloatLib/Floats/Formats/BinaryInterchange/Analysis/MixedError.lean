@@ -12,7 +12,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classificatio
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Numerics.MixedError.Basic
 public import Mathlib.Algebra.BigOperators.Fin
-import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
 
 /-!
 # Mixed error of binary arithmetic

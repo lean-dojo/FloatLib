@@ -8,11 +8,11 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Fields
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Stream
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Exact semantics of finite guard-and-sticky streams

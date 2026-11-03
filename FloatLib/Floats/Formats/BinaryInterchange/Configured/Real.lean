@@ -11,8 +11,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
-import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 
 /-!
 # Real values of configured binary values

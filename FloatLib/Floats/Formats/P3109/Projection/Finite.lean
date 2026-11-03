@@ -6,10 +6,10 @@ Authors: FloatLib Team
 
 module
 
-import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
 public import FloatLib.Floats.Formats.P3109.Proof
 import FloatLib.Floats.Formats.P3109.Projection.Rounding
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Finite-value correctness for P3109 projection

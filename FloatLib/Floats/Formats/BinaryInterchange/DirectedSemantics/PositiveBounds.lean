@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Internal
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
-import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 
 /-!

@@ -8,7 +8,11 @@ module
 
 public import FloatLib.Floats.Formats.Block.SharedScale.Runtime
 public import FloatLib.Numerics.Capabilities.BlockScaled
-import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Correctness of shared-scale blocks

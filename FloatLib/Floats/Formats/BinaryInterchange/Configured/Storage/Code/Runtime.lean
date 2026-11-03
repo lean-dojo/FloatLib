@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
-import FloatLib.Kernels.FixedWord.Core.Proof.UInt128
 
 /-!
 # Runtime packing for configured binary formats

@@ -10,7 +10,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Run
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.RootProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.HypotProof
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 /-!
 # Algebraic rounding contracts for configured binary values

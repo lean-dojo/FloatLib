@@ -10,7 +10,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Ru
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 
 /-!

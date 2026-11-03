@@ -10,7 +10,7 @@ public import FloatLib.Numerics.Quantization.Affine
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Affine quantization over the reals

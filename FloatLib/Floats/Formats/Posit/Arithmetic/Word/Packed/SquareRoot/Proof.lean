@@ -11,7 +11,6 @@ public import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof
 
-import FloatLib.Numerics.Exact.Dyadic.Order
 import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 
 /-!

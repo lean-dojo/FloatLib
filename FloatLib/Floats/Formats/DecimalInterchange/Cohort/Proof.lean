@@ -6,8 +6,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Runtime
-import Mathlib.Algebra.GroupWithZero.Basic
-import Mathlib.Tactic.Ring
 
 /-!
 # Cohort preservation and preferred-exponent bounds

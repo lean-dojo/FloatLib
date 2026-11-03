@@ -10,10 +10,6 @@ public import FloatLib.Numerics.Quantization.Deterministic.Quotient
 public import Mathlib.Algebra.Order.Field.Rat
 public import Mathlib.Data.Rat.Lemmas
 import Mathlib.Data.Rat.Floor
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
 
 /-!
 # Deterministic nearest-even rational rounding

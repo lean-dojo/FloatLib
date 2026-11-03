@@ -8,7 +8,6 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Constants
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
@@ -17,8 +16,6 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 public import FloatLib.Floats.Formats.Flocq.Calculation.Round
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
-import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
-import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 
 /-!
 # Correctness of nearest-even real rounding

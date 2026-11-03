@@ -8,13 +8,11 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Dispatch.FmaWord.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Dyadic
-import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Finite.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Small.Fma.Proof
 import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Agreement
 import FloatLib.Floats.ExecFloat.Backends.Word.Full.Fma.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
-import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Fma.Proof
 /-!
 # Correctness of word-specialized fused multiply-add dispatch
 

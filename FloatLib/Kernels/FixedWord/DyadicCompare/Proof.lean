@@ -10,9 +10,12 @@ public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Order
 import Batteries.Data.UInt
-import Mathlib.Data.Nat.Bitwise
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Correctness of native-word dyadic comparison

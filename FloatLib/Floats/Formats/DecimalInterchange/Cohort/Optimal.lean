@@ -7,8 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.Ring
 
 /-!
 # Closest preferred exponent

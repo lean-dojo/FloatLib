@@ -71,7 +71,7 @@ exact operations take its finiteness from the hypothesis, and the zero and unit 
 them analyze it as they would without the hypothesis. -/
 def assumedFinite (value : Lean.Expr) : MetaM Bool := do
   if ← isInputValue value then return false
-  if let some position ← readPosition? value (getters := true) (strict := false) then
+  if let some position ← readPosition? value (getters := true) (certified := true) then
     if ← isInputValue value.getAppArgs[position]! then return false
   for declaration in ← getLCtx do
     if declaration.isImplementationDetail then continue
@@ -88,10 +88,11 @@ def assumedFinite (value : Lean.Expr) : MetaM Bool := do
   return false
 
 /-- Whether `value`, or the model it decodes to, is an input as stored: a local variable, a data
-field of one, or an entry of such a container. -/
+field of one, or an entry of such a container that a read selecting stored entries takes
+(`Read.isCertified`). -/
 def isStoredInput (value : Lean.Expr) : MetaM Bool := do
   let value := if value.isAppOf ``ExecFloat.Binary.toModel then value.appArg! else value
-  if let some position ← readPosition? value then
+  if let some position ← readPosition? value (certified := true) then
     return ← isInputValue value.getAppArgs[position]!
   isInputValue value
 
@@ -111,37 +112,6 @@ def expandLocal (expression : Lean.Expr) : MetaM Lean.Expr := do
   let expression ← instantiateMVars expression
   unless expression.hasFVar && (← getLCtx).any (·.isLet) do return expression
   zetaReduce expression
-
-/-- Whether `type` or one of its reducible unfoldings has one of the `carrierTypes` at its head,
-as `ExecFloat.Binary` unfolds to `ExecFloat`, also through local definitions (`expandLocal`). -/
-def carrierHead (type : Lean.Expr) : MetaM Bool := do
-  let mut current ← expandLocal type
-  for _ in [0:16] do
-    if current.getAppFn.constName?.any carrierTypes.contains then return true
-    let some next ← withReducible (unfoldDefinition? current) | return false
-    current := next.headBeta
-  return false
-
-/-- Whether the `.olean` of `module` lies in the library directory of the running Lean. -/
-def leanLibraryModule (module : Name) : IO Bool := do
-  try
-    let olean ← IO.FS.realPath (← findOLean module)
-    let library ← IO.FS.realPath (← getLibDir (← getBuildDir))
-    return library.components.isPrefixOf olean.components
-  catch _ => return false
-
-/-- Whether `name` is a constant of Lean's core library other than `Classical.choice`: of a module
-under `Init`, `Std` or `Lean` that Lean's own library holds (`leanLibraryModule`), not of another
-package that takes such a name. The module system exports many core definitions without their
-values, such as `Nat.land`, which every compiled sparse match uses. The only other core axiom that
-is data stands for a `sorry`, which the build already rejects. -/
-def coreConstant (name : Name) : CoreM Bool := do
-  if name == ``Classical.choice then return false
-  let environment ← getEnv
-  let some index := environment.getModuleIdxFor? name | return false
-  let some module := environment.header.moduleNames[index.toNat]? | return false
-  unless [`Init, `Std, `Lean].contains module.getRoot do return false
-  leanLibraryModule module
 
 /-- Whether the constant `name` can hold a numerical value. As a type it does when it is one of
 the `carrierTypes`, a definition of any reducibility whose value uses such a constant, or an
@@ -285,11 +255,71 @@ partial def holdsType (type : Lean.Expr) : MetaM Bool := do
       return false
   visit #[] 8 type
 
+/-- Whether the local variable `id` is a type parameter: it has no visible value, is no dictionary
+of a class that a read selecting stored entries trusts (`Read.trusts`), and its type can be or hold
+a type (`holdsType`), as `β : Type` or a record that packs a type does. A value of a type it gives
+can be a numerical value, or a function, once the statement is specialized, so such a type counts
+as numerical (`mentionsCarrier`, `carrierHead`, `holdsNumericalFunction`). A type that a trusted
+dictionary gives, such as the buffer of a tensor's storage, belongs to the storage it trusts. -/
+def isTypeParameter (id : FVarId) (cache? : Option CarrierCache := none) : MetaM Bool := do
+  let key := (id.name, 3)
+  if let some cache := cache? then
+    if let some known := (← cache.get)[key]? then return known
+  let some declaration := (← getLCtx).find? id | return false
+  let type ← instantiateMVars declaration.type
+  let trusted ← match ← isClass? type with
+    | some name => pure ((← extension).reads.any fun read =>
+        read.isCertified && read.trusts.contains name)
+    | none => pure false
+  let parameter ← if declaration.isLet || trusted then pure false else holdsType type
+  if let some cache := cache? then cache.modify (·.insert key parameter)
+  return parameter
+
+/-- Whether `type` mentions a type parameter (`isTypeParameter`). -/
+def mentionsTypeParameter (type : Lean.Expr) (cache? : Option CarrierCache := none) :
+    MetaM Bool := do
+  unless type.hasFVar do return false
+  (collectFVars {} type).fvarIds.anyM (isTypeParameter · cache?)
+
+/-- The head that `type` reaches first among its reducible unfoldings, also through local
+definitions (`expandLocal`): one of the `carrierTypes` (`false`), as `ExecFloat.Binary` unfolds to
+`ExecFloat`, or a type parameter (`isTypeParameter`) or a field of one (`true`), which can be
+specialized to a carrier or to a function type, also behind a definition of any reducibility. -/
+private def carrierHead? (type : Lean.Expr) (cache? : Option CarrierCache := none) :
+    MetaM (Option Bool) := do
+  let mut current ← expandLocal type
+  for _ in [0:16] do
+    if current.getAppFn.constName?.any carrierTypes.contains then return some false
+    match current.getAppFn with
+    | .fvar id => if ← isTypeParameter id cache? then return some true
+    | .proj _ _ record => if ← mentionsTypeParameter record cache? then return some true
+    | _ => pure ()
+    let some next ← withReducible (unfoldDefinition? current) | break
+    current := next.headBeta
+  -- A type parameter behind a definition of any reducibility, as `def Alias (α : Type) := α`, which
+  -- it is an argument of. The carriers stay folded, so that a definition that stands for one is
+  -- still read as before.
+  let some name := current.getAppFn.constName? | return none
+  unless (← getEnv).find? name matches some (.defnInfo _) do return none
+  unless ← mentionsTypeParameter current cache? do return none
+  let folded (config : Meta.Config) (info : ConstantInfo) : CoreM Bool :=
+    if carrierTypes.contains info.name then pure false else canUnfoldDefault config info
+  match (← withCanUnfoldPred folded (whnfD current)).getAppFn with
+  | .fvar id => if ← isTypeParameter id cache? then return some true
+  | .proj _ _ record => if ← mentionsTypeParameter record cache? then return some true
+  | _ => pure ()
+  return none
+
+/-- Whether `type` or one of its reducible unfoldings has one of the `carrierTypes` or a type
+parameter at its head (`carrierHead?`). -/
+def carrierHead (type : Lean.Expr) (cache? : Option CarrierCache := none) : MetaM Bool :=
+  return (← carrierHead? type cache?).isSome
+
 /-- Whether `type` mentions a constant that can hold a numerical value as a type (`carries`): one of
 the `carrierTypes`, an alias of one such as `Binary32` whatever its reducibility, or a record with a
 field of one, also through the local definitions it uses (`expandLocal`). A metavariable that is
-still to be assigned and can be or hold a type (`holdsType`) may turn out to give such a type, so
-it counts too. -/
+still to be assigned and can be or hold a type (`holdsType`) may turn out to give such a type, and
+so may a type parameter (`isTypeParameter`) once the statement is specialized, so they count too. -/
 def mentionsCarrier (type : Lean.Expr) (cache? : Option CarrierCache := none) : MetaM Bool := do
   let cache ← match cache? with
     | some cache => pure cache
@@ -297,6 +327,7 @@ def mentionsCarrier (type : Lean.Expr) (cache? : Option CarrierCache := none) : 
   let type ← expandLocal type
   if type.hasExprMVar then
     if ← (← getMVars type).anyM fun id => do holdsType (← id.getType) then return true
+  if ← mentionsTypeParameter type cache then return true
   type.getUsedConstants.anyM (carries cache false)
 
 /-- The classes of the comparisons through which index data may read stored values. -/
@@ -316,9 +347,11 @@ def orderDictionaries : Array Name := #[``FloatLib.Floats.execFloatBEq,
 def comparisonDictionaries : Array Name :=
   #[``FloatLib.Floats.ExecFloat.Binary.instComparisonFamily]
 
-/-- The classes that registered reads trust to store and fetch entries (`Read.trusts`). -/
+/-- The classes that registered reads selecting stored entries (`Read.isCertified`) trust to store and
+fetch entries (`Read.trusts`). -/
 def storageClasses : CoreM (Array Name) := do
-  return (← extension).reads.foldl (fun classes read => classes ++ read.trusts) #[]
+  return (← extension).reads.foldl (init := #[]) fun classes read =>
+    if read.isCertified then classes ++ read.trusts else classes
 
 /-- Whether `type`, at default transparency and with its local definitions expanded, is the type of
 a function that takes or returns a numerical value. -/
@@ -334,8 +367,9 @@ constructor's result against `type` specializes its fields, and a type that the 
 as when an index is not a constructor or the constructor cannot build `type`, may be a numerical one
 (`mentionsCarrier`), so a function on it counts, and so does a value of a type that a constructor
 leaves open, which can be a function. A function that takes a type, such as `(β : Type) → β → Nat`,
-counts too, since it can be applied at a numerical type. A numerical value holds none, and neither
-does a proof; a type nested too deeply to finish counts as holding one. -/
+counts too, since it can be applied at a numerical type, and so does a value of a type parameter
+(`isTypeParameter`), which can be specialized to a numerical function type. A numerical value holds
+none, and neither does a proof; a type nested too deeply to finish counts as holding one. -/
 partial def holdsNumericalFunction (type : Lean.Expr) (cache : CarrierCache) : MetaM Bool := do
   let rec visit (seen : Array Lean.Expr) (fuel : Nat) (type : Lean.Expr) : MetaM Bool := do
     let type ← expandLocal type
@@ -343,9 +377,12 @@ partial def holdsNumericalFunction (type : Lean.Expr) (cache : CarrierCache) : M
     -- Most types, such as `Nat` or a list of them, can hold no function at all.
     unless type.hasExprMVar || (type.find? fun term => term.isForall ||
           (term.isSort && !term.isProp)).isSome ||
-        (← type.getUsedConstants.anyM (mayHoldFunction cache)) do
+        (← type.getUsedConstants.anyM (mayHoldFunction cache)) ||
+        (← mentionsTypeParameter type cache) do
       return false
-    if ← carrierHead type then return false
+    -- A type parameter can be specialized to a numerical function type, also behind an alias; a
+    -- numerical value holds none.
+    if let some parameter ← carrierHead? type cache then return parameter
     let type ← whnfD type
     if type.isForall then
       if ← mentionsCarrier type cache then return true
@@ -426,8 +463,9 @@ either. No constant the argument uses may hold a numerical value as a term (`car
 definition it calls is read through its value and an opaque constant or an axiom outside Lean's core
 library is rejected, and each `let`-bound local definition it uses must have index data as its
 value, while a variable without a visible value, such as one that a `have` in a tactic proof
-introduces, is an input as Lean states it, and a value of a type variable is classified as not
-numerical. The length of a stored list or array, or of a map of one, is index data. A number
+introduces, is an input as Lean states it, and a value of a type parameter of the statement
+(`isTypeParameter`) counts as numerical, since the statement can be specialized to a numerical type.
+The length of a stored list or array, or of a map of one, is index data. A number
 computed from a decoded or rounded value, such as the numerator of `toRat? (x * x)` or the number of
 indices below `x * x`, is not index data, also when a helper `Nat → Nat` computes it, while
 literals, parameters, fields of inputs, arithmetic on them and the position of the largest of stored
@@ -456,7 +494,7 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
               some ``FloatLib.Floats.ExecFloat.Comparison do
             return true
           return argument.getAppFn.constName?.any comparisonDictionaries.contains
-      if reads.any (·.selectsThrough head) then return true
+      if reads.any fun read => read.isCertified && read.selectsThrough head then return true
       return storage.contains name
   -- Whether `term`, an argument, can hold a numerical function whose uses are not written out
   -- (`holdsNumericalFunction`), as a variable's are not, whether it is one or a container or a
@@ -564,7 +602,7 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
           pure (if field.fromClass || term.getAppNumArgs != field.numParams + 1 then none
             else some term.appArg!)
     if let some record := record? then
-      if ← carrierHead (← inferType record) then
+      if ← carrierHead (← inferType record) cache then
         closed.set false
         return .done term
     if !numerical && (← isInputValue term) then return .done term
@@ -581,7 +619,7 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
     -- A numerical value passes only to a parameter whose type is a type variable.
     if let .const _ _ := term.getAppFn then
       let arguments := term.getAppArgs
-      let opened ← arguments.mapM fun argument => do carrierHead (← inferType argument)
+      let opened ← arguments.mapM fun argument => do carrierHead (← inferType argument) cache
       if opened.any id then
         let parametric ← forallBoundedTelescope (← inferType term.getAppFn) arguments.size
           fun binders _ => do
@@ -626,11 +664,11 @@ partial def storedEntries (loop : Loop) (input : Lean.Expr) (cache? : Option Car
     if type.isConstOf ``Nat || type.isConstOf ``Int then indexClosed argument (cache? := cache?)
     else storedEntries loop argument cache?
 
-/-- Whether every container observation in `expression` is a coordinate read of a stored input, which
-the coordinate laws leave as it is. -/
+/-- Whether every container observation in `expression` is a coordinate read of a stored input by a
+read selecting stored entries (`Read.isCertified`), which the coordinate laws leave as it is. -/
 def hasOnlyInputReads (expression : Lean.Expr) : MetaM Bool := do
   let withoutInputs ← Meta.transform expression (pre := fun term => do
-    if let some position ← readPosition? term then
+    if let some position ← readPosition? term (certified := true) then
       if ← isInputValue term.getAppArgs[position]! then return .done (mkConst ``Unit.unit)
     return .continue)
   return !(← hasObservation withoutInputs)

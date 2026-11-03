@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.ExactValue
-import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 
 /-!
