@@ -33,8 +33,11 @@ namespace ExecFloat.Posit
 /-- Standard `16n`-bit quire associated with a configured `n`-bit posit. -/
 abbrev Quire
     (bits : Nat)
-    (bits_ge_two : 2 ≤ bits := by decide) :=
-  Formats.Posit.Quire.Model (Posit.format bits bits_ge_two)
+    (bits_ge_two : 2 ≤ bits := by
+      first
+      | decide
+      | fail "ExecFloat.Posit.Quire requires bits ≥ 2") :=
+  Formats.Posit.Quire.Model (Posit.descriptor bits bits_ge_two)
 
 end ExecFloat.Posit
 

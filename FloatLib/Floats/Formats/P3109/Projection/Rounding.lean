@@ -14,7 +14,9 @@ public import FloatLib.Floats.Formats.P3109.Projection.Runtime
 
 P3109 rounds to a descriptor-dependent binary grid before applying saturation. This module proves
 that the width-independent rounding kernel always produces either zero or a finite value that
-fits the descriptor precision and minimum quantum.
+fits the descriptor precision and minimum quantum, which is what the encoder needs. That the
+result keeps the selected quantum exponent, and how it relates to the input, is proved in
+`Projection.Direction` (`roundFiniteToPrecision_exponent`, `roundFiniteToPrecision_spec`).
 -/
 
 @[expose] public section
@@ -37,10 +39,10 @@ theorem quantumExponent_lower
   unfold minimumQuantumExponent minimumNormalExponent
   omega
 
-/-- A left shift that keeps the leading bit below the precision stays below `2^P`. -/
-private theorem shiftLeft_lt_precision
+/-- A left shift that keeps the leading bit below the precision stays below `2^P`. This includes a
+zero significand, which shifts to zero. -/
+theorem shiftLeft_lt_precision
     (format : Format) (significand shift : Nat)
-    (hzero : significand ≠ 0)
     (hbound :
       significand.log2 + 1 + shift ≤ format.precision) :
     Nat.shiftLeft significand shift <
@@ -49,15 +51,13 @@ private theorem shiftLeft_lt_precision
   calc
     significand * 2 ^ shift <
         2 ^ (significand.log2 + 1) * 2 ^ shift :=
-      Nat.mul_lt_mul_of_pos_right ((Nat.log2_lt hzero).1 (Nat.lt_succ_self _))
-        (Nat.two_pow_pos _)
+      Nat.mul_lt_mul_of_pos_right Nat.lt_log2_self (Nat.two_pow_pos _)
     _ = 2 ^ (significand.log2 + 1 + shift) := (Nat.pow_add 2 _ _).symm
     _ ≤ 2 ^ format.precision := Nat.pow_le_pow_right (by decide) hbound
 
 /-- Discarding enough low bits leaves a significand below `2^P`. -/
 private theorem shiftRight_lt_precision
     (format : Format) (significand discardedBits : Nat)
-    (hzero : significand ≠ 0)
     (hbound :
       significand.log2 + 1 ≤
         format.precision + discardedBits) :
@@ -65,15 +65,31 @@ private theorem shiftRight_lt_precision
       2 ^ format.precision := by
   rw [Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow,
     Nat.div_lt_iff_lt_mul (Nat.two_pow_pos discardedBits), ← Nat.pow_add]
-  exact lt_of_lt_of_le ((Nat.log2_lt hzero).1 (Nat.lt_succ_self _))
-    (Nat.pow_le_pow_right (by decide) hbound)
+  exact lt_of_lt_of_le Nat.lt_log2_self (Nat.pow_le_pow_right (by decide) hbound)
 
-/-- Precision and minimum-quantum bounds for a dyadic, before finite-range saturation. -/
+/--
+Precision and minimum-quantum bounds on a dyadic record, before finite-range saturation: a zero
+significand, or a significand of at most `2^P` at an exponent no finer than the least quantum.
+The bound `2^P` admits the carry of an all-ones significand, which the encoder writes in the next
+exponent row. Such a record's value lies on the descriptor's precision grid. The predicate fixes
+neither the exponent of the row nor any relation to a rounded input.
+-/
 def FitsPrecisionGrid
     (format : Format) (value : Numerics.Dyadic) : Prop :=
   value.significand = 0 ∨
     (value.significand ≤ 2 ^ format.precision ∧
       format.minimumQuantumExponent ≤ value.exponent)
+
+/-- A rounded significand of at most `2^P` at a quantum no finer than the least quantum lands on
+the grid, with a zero significand canonicalized to the zero dyadic. -/
+theorem fitsPrecisionGrid_of_rounded (format : Format) (negative : Bool) {rounded : Nat}
+    {quantum : Int} (hrounded : rounded ≤ 2 ^ format.precision)
+    (hquantum : format.minimumQuantumExponent ≤ quantum) :
+    format.FitsPrecisionGrid
+      (if rounded = 0 then .zero else ⟨negative, rounded, quantum⟩) := by
+  by_cases hzero : rounded = 0
+  · simp [hzero, FitsPrecisionGrid]
+  · simp [hzero, FitsPrecisionGrid, hrounded, hquantum]
 
 /--
 Precision rounding lands on the descriptor grid for every P3109 rounding mode.
@@ -101,10 +117,10 @@ theorem roundFiniteToPrecision_fitsPrecisionGrid
     next shift heq =>
       simp only [Int.ofNat_eq_natCast] at heq
       exact Or.inr
-        ⟨Nat.le_of_lt (format.shiftLeft_lt_precision _ _ hzero (by omega)), hquantum⟩
+        ⟨Nat.le_of_lt (format.shiftLeft_lt_precision _ _ (by omega)), hquantum⟩
     next shift heq =>
       have hlower : Nat.shiftRight value.significand (shift + 1) < 2 ^ format.precision :=
-        format.shiftRight_lt_precision _ _ hzero (by
+        format.shiftRight_lt_precision _ _ (by
           rw [Int.negSucc_eq] at heq
           omega)
       split <;> split

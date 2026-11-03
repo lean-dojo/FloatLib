@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
@@ -17,8 +18,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 
 Every decoding theorem states that decoding a configured result recovers the single
 descriptor-model operation used to compute it. Results with `status := true` keep all five
-indicators, and the projection theorems `value_remainder` through `value_nextDown` state that
-their value is the configured operation without status.
+indicators, and the projection theorems `value_remainder` through `value_maximumNumber` state
+that their value is the configured operation without status.
 
 The arithmetic properties are proved for the descriptor-model operations. These theorems
 transport their results through the storage codec, giving the same equations for values and
@@ -106,6 +107,13 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
     toModel (abs value) = Model.abs (toModel value) := by
   simp [abs, toModel, Configured.Family.toModel]
 
+/-- Absolute value keeps finiteness. -/
+theorem isFinite_abs_of_isFinite {value : Value} (hvalue : isFinite value = true) :
+    isFinite (abs value) = true := by
+  unfold isFinite
+  rw [toModel_abs, Model.isFinite_abs]
+  exact hvalue
+
 /-- Decoding the configured upward neighbor gives the descriptor-model upward neighbor. -/
 @[simp, grind =] theorem toModel_nextUp (value : Value) :
     toModel (nextUp value) = Model.nextUp (toModel value) := by
@@ -128,15 +136,59 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
       Model.nextDown (ExecFloat.Binary.toModel value) (status := true) := by
   simp [nextDown]
 
-/-- Decoding configured `minNum` gives descriptor-model `minNum`. -/
-@[simp, grind =] theorem toModel_minNum (left right : Value) :
-    toModel (minNum left right) = Model.minNum (toModel left) (toModel right) := by
-  simp [minNum, toModel, Configured.Family.toModel]
+/-- Decoding configured IEEE `minimum` gives descriptor-model IEEE `minimum`. -/
+@[simp, grind =] theorem toModel_minimum (left right : Value) :
+    toModel (minimum left right) = Model.minimum (toModel left) (toModel right) := by
+  simp [minimum, toModel, Configured.Family.toModel]
 
-/-- Decoding configured `maxNum` gives descriptor-model `maxNum`. -/
-@[simp, grind =] theorem toModel_maxNum (left right : Value) :
-    toModel (maxNum left right) = Model.maxNum (toModel left) (toModel right) := by
-  simp [maxNum, toModel, Configured.Family.toModel]
+/-- Configured `minimum` with `status := true` keeps the model value, status, and ternary value. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_minimum (left right : Value) :
+    IEEEOutcome.toModel (minimum left right (status := true)) =
+      Model.minimum (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+        (status := true) := by
+  simp [minimum]
+
+/-- Decoding configured IEEE `maximum` gives descriptor-model IEEE `maximum`. -/
+@[simp, grind =] theorem toModel_maximum (left right : Value) :
+    toModel (maximum left right) = Model.maximum (toModel left) (toModel right) := by
+  simp [maximum, toModel, Configured.Family.toModel]
+
+/-- Configured `maximum` with `status := true` keeps the model value, status, and ternary value. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_maximum (left right : Value) :
+    IEEEOutcome.toModel (maximum left right (status := true)) =
+      Model.maximum (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+        (status := true) := by
+  simp [maximum]
+
+/-- Decoding configured `minimumNumber` gives descriptor-model `minimumNumber`. -/
+@[simp, grind =] theorem toModel_minimumNumber (left right : Value) :
+    toModel (minimumNumber left right) = Model.minimumNumber (toModel left) (toModel right) := by
+  simp [minimumNumber, toModel, Configured.Family.toModel]
+
+/-- Configured `minimumNumber` with `status := true` keeps the model value, status, and ternary. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_minimumNumber (left right : Value) :
+    IEEEOutcome.toModel (minimumNumber left right (status := true)) =
+      Model.minimumNumber (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+        (status := true) := by
+  simp [minimumNumber]
+
+/-- Decoding configured `maximumNumber` gives descriptor-model `maximumNumber`. -/
+@[simp, grind =] theorem toModel_maximumNumber (left right : Value) :
+    toModel (maximumNumber left right) = Model.maximumNumber (toModel left) (toModel right) := by
+  simp [maximumNumber, toModel, Configured.Family.toModel]
+
+/-- Configured `maximumNumber` with `status := true` keeps the model value, status, and ternary. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_maximumNumber (left right : Value) :
+    IEEEOutcome.toModel (maximumNumber left right (status := true)) =
+      Model.maximumNumber (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+        (status := true) := by
+  simp [maximumNumber]
+
+/-- `min` runs configured IEEE `minimum`. -/
+theorem min_eq_minimum (left right : Value) : min left right = minimum left right := rfl
+
+/-- `max` runs configured IEEE `maximum`. -/
+theorem max_eq_maximum (left right : Value) : max left right = maximum left right := rfl
 
 /-- Configured remainder with `status := true` delivers the value of configured remainder. -/
 @[simp] theorem value_remainder (dividend divisor : Value) :
@@ -183,11 +235,47 @@ Configured `binaryExponent` with `status := true` delivers the value of configur
   rw [← ofModel_toModel (nextDown value), toModel_nextDown, ← Model.value_nextDown]
   rfl
 
+/-- Configured `minimum` with `status := true` delivers the value of configured `minimum`. -/
+@[simp] theorem value_minimum (left right : Value) :
+    (minimum left right (status := true)).value = minimum left right := by
+  rw [← ofModel_toModel (minimum left right), toModel_minimum, ← Model.value_minimum]
+  rfl
+
+/-- Configured `maximum` with `status := true` delivers the value of configured `maximum`. -/
+@[simp] theorem value_maximum (left right : Value) :
+    (maximum left right (status := true)).value = maximum left right := by
+  rw [← ofModel_toModel (maximum left right), toModel_maximum, ← Model.value_maximum]
+  rfl
+
+/-- Configured `minimumNumber` with `status := true` delivers the value of `minimumNumber`. -/
+@[simp] theorem value_minimumNumber (left right : Value) :
+    (minimumNumber left right (status := true)).value = minimumNumber left right := by
+  rw [← ofModel_toModel (minimumNumber left right), toModel_minimumNumber,
+    ← Model.value_minimumNumber]
+  rfl
+
+/-- Configured `maximumNumber` with `status := true` delivers the value of `maximumNumber`. -/
+@[simp] theorem value_maximumNumber (left right : Value) :
+    (maximumNumber left right (status := true)).value = maximumNumber left right := by
+  rw [← ofModel_toModel (maximumNumber left right), toModel_maximumNumber,
+    ← Model.value_maximumNumber]
+  rfl
+
 /-- The integer value is absent exactly for the values that are not finite. -/
 @[simp] theorem toInt?_eq_none_iff (value : Value) (mode : Model.IEEERoundingMode) :
     toInt? value mode = none ↔ isFinite value = false := by
   have hdecode := Model.toDyadic?_isSome_eq_isFinite (toModel value)
   unfold toInt? isFinite
   cases hd : Model.toDyadic? (toModel value) <;> simp_all
+
+/-- Integral rounding of a finite value is finite when the exponent range reaches the precision,
+as it does for the IEEE interchange formats. -/
+theorem isFinite_roundToIntegral {value : Value} {mode : Model.IEEERoundingMode}
+    (hrange : (format.fracWidth : Int) ≤ format.maxNormalExponent) (hvalue : isFinite value = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (roundToIntegral value mode) = true := by
+  unfold isFinite
+  rw [toModel_roundToIntegral]
+  exact Model.isFinite_roundToIntegral hformat hrange _ mode hvalue
 
 end FloatLib.Floats.ExecFloat.Binary

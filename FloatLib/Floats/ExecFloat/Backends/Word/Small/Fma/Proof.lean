@@ -48,32 +48,6 @@ theorem productShiftLimit_toNat (fmt : FloatFormat) (hfracWidth : fmt.fracWidth 
     change 2 * fmt.fracWidth ≤ 61
     omega
 
-private theorem toNat_ne_zero_of_ne_zero {value : UInt64} (h : value ≠ 0) :
-    value.toNat ≠ 0 := by
-  simpa [← UInt64.toNat_inj] using h
-
-/-- A left shift that keeps a `width`-bit word below `2 ^ 63` is exact. -/
-private theorem shifted_toNat (value shift : UInt64) (width : Nat)
-    (hvalue : value.toNat < 2 ^ width) (hshift : shift.toNat + width ≤ 63) :
-    (value <<< shift).toNat = value.toNat <<< shift.toNat ∧
-      value.toNat <<< shift.toNat < 2 ^ 63 := by
-  have hfit : value.toNat <<< shift.toNat < 2 ^ 63 := by
-    have hshifted := Nat.shiftLeft_lt (m := shift.toNat) hvalue
-    exact hshifted.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
-  refine ⟨?_, hfit⟩
-  have hshiftNat :=
-    FloatLib.Numerics.FixedWord.shiftLeft_toNat value shift.toNat (by omega)
-      (hfit.trans (by norm_num))
-  rwa [UInt64.ofNat_toNat] at hshiftNat
-
-private theorem shifted_ne_zero (value shift : UInt64) (hvalue : value.toNat ≠ 0)
-    (hshifted : (value <<< shift).toNat = value.toNat <<< shift.toNat) :
-    value <<< shift ≠ 0 := by
-  intro h
-  have hnat := congrArg UInt64.toNat h
-  rw [hshifted, UInt64.toNat_zero, Nat.shiftLeft_eq] at hnat
-  exact absurd hnat (Nat.mul_ne_zero hvalue (Nat.pos_iff_ne_zero.mp (Nat.two_pow_pos _)))
-
 /--
 An accepted field FMA is the exact kernel's rounded sum of the product and the addend.
 
@@ -83,7 +57,6 @@ scales are below `2 ^ 33`. The machine-word transfer needs nothing else.
 theorem fmaFields_refines
     (fmt : FloatFormat)
     (hwidth : fmt.bitWidth ≤ 64)
-    (hexpWidth : fmt.expWidth ≤ 30)
     (hfracWidth : fmt.fracWidth ≤ 29)
     (productSign : Bool) (product productScale : UInt64)
     (addendSign : Bool) (addend addendScale : UInt64)
@@ -107,17 +80,17 @@ theorem fmaFields_refines
   unfold FiniteScaleAdd.roundSum
   by_cases hp : product = 0
   · simp [hp] at hresult
-  have hpNat := toNat_ne_zero_of_ne_zero hp
+  have hpNat := (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero _).not.mpr hp
   rw [ite_eq_right (by simpa using hp)] at hresult
   rw [ite_eq_right (by simpa using hpNat)]
   by_cases ha : addend = 0
   · subst ha
     simp only [beq_self_eq_true, ite_true] at hresult
     simp only [UInt64.toNat_zero, beq_self_eq_true, ite_true]
-    have h := roundMagnitude_refines fmt hwidth hexpWidth hfrac61 0 productSign product
+    have h := roundMagnitude_refines fmt hwidth 0 productSign product
       productScale hp (by simp only [UInt64.toNat_zero]; omega) result hresult
     rwa [UInt64.toNat_zero] at h
-  have haNat := toNat_ne_zero_of_ne_zero ha
+  have haNat := (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero _).not.mpr ha
   rw [ite_eq_right (by simpa using ha)] at hresult
   rw [ite_eq_right (by simpa using haNat)]
   by_cases hle : productScale ≤ addendScale
@@ -133,15 +106,10 @@ theorem fmaFields_refines
         have hnat := UInt64.le_iff_toNat_le.mp hshift
         rw [hlimit] at hnat
         omega
-      obtain ⟨hshifted, hshiftedLt⟩ :=
-        shifted_toNat addend (addendScale - productScale) _ haddend hshiftBound
-      have hsum : product.toNat + (addend <<< (addendScale - productScale)).toNat < 2 ^ 64 := by
-        rw [hshifted]
-        norm_num at hproduct60 hshiftedLt ⊢
-        omega
-      have h := roundAligned_refines fmt hwidth hexpWidth hfrac61 0 productSign addendSign
-        product (addend <<< (addendScale - productScale)) productScale hp
-        (shifted_ne_zero _ _ haNat hshifted) hsum
+      obtain ⟨hshifted, hshiftedNe, hsum⟩ := shiftLeft_add_fits addend product
+        (addendScale - productScale) _ haddend haNat (hproduct60.trans (by norm_num)) hshiftBound
+      have h := roundAligned_refines fmt hwidth 0 productSign addendSign
+        product (addend <<< (addendScale - productScale)) productScale hp hshiftedNe (by omega)
         (by simp only [UInt64.toNat_zero]; omega) result hresult
       rw [UInt64.toNat_zero, hshifted, hshiftNat] at h
       rw [FiniteScaleAdd.roundMagnitudes_comm]
@@ -151,7 +119,7 @@ theorem fmaFields_refines
       rw [hlimit] at hgt
       have hlow : product.toNat ≤ 2 ^ (fmt.fracWidth + (addendScale - productScale).toNat - 1) :=
         hproduct.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
-      have h := roundJammed_refines fmt hwidth hexpWidth hfrac61 0 addendSign productSign
+      have h := roundJammed_refines fmt hwidth 0 addendSign productSign
         addend product (addendScale - productScale) productScale hlow hp
         (by rw [hshiftNat, UInt64.toNat_zero]; omega) result hresult
       rwa [UInt64.toNat_zero, hshiftNat] at h
@@ -172,17 +140,11 @@ theorem fmaFields_refines
         have hnat := UInt64.le_iff_toNat_le.mp hshift
         rw [hproductLimit] at hnat
         omega
-      obtain ⟨hshifted, hshiftedLt⟩ :=
-        shifted_toNat product (productScale - addendScale) _ hproduct hshiftBound
-      have haddend63 : addend.toNat < 2 ^ 63 :=
-        haddend.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
-      have hsum : (product <<< (productScale - addendScale)).toNat + addend.toNat < 2 ^ 64 := by
-        rw [hshifted]
-        norm_num at haddend63 hshiftedLt ⊢
-        omega
-      have h := roundAligned_refines fmt hwidth hexpWidth hfrac61 0 productSign addendSign
-        (product <<< (productScale - addendScale)) addend addendScale
-        (shifted_ne_zero _ _ hpNat hshifted) ha hsum
+      obtain ⟨hshifted, hshiftedNe, hsum⟩ := shiftLeft_add_fits product addend
+        (productScale - addendScale) _ hproduct hpNat
+        (haddend.trans_le (Nat.pow_le_pow_right (by decide) (by omega))) hshiftBound
+      have h := roundAligned_refines fmt hwidth 0 productSign addendSign
+        (product <<< (productScale - addendScale)) addend addendScale hshiftedNe ha hsum
         (by simp only [UInt64.toNat_zero]; omega) result hresult
       rwa [UInt64.toNat_zero, hshifted, hshiftNat] at h
     · rw [ite_eq_right hshift] at hresult
@@ -190,7 +152,7 @@ theorem fmaFields_refines
       rw [hproductLimit] at hgt
       have hlow : addend.toNat ≤ 2 ^ (fmt.fracWidth + (productScale - addendScale).toNat - 1) :=
         haddend.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
-      have h := roundJammed_refines fmt hwidth hexpWidth hfrac61 0 productSign addendSign
+      have h := roundJammed_refines fmt hwidth 0 productSign addendSign
         product addend (productScale - addendScale) addendScale hlow ha
         (by rw [hshiftNat, UInt64.toNat_zero]; omega) result hresult
       rwa [UInt64.toNat_zero, hshiftNat] at h
@@ -250,18 +212,19 @@ theorem fmaFinite_refines {fmt : FloatFormat}
           FloatLib.Numerics.FixedWord.finiteScale (exponentField fmt (toWord y))).toNat =
         FiniteKernel.scale (exponentField fmt (toWord x)).toNat +
           FiniteKernel.scale (exponentField fmt (toWord y)).toNat := by
-    rw [UInt64.toNat_add, finiteScale_toNat_eq_scale, finiteScale_toNat_eq_scale,
+    rw [UInt64.toNat_add, FiniteKernel.finiteScale_toNat_eq_scale,
+      FiniteKernel.finiteScale_toNat_eq_scale,
       Nat.mod_eq_of_lt (by norm_num at hxScale hyScale ⊢; omega)]
   have haddendScale :
       (FloatLib.Numerics.FixedWord.finiteScale (exponentField fmt (toWord z)) +
           alignOffset fmt).toNat =
         FiniteKernel.scale (exponentField fmt (toWord z)).toNat +
           FiniteKernel.finiteScaleOffset fmt := by
-    rw [UInt64.toNat_add, finiteScale_toNat_eq_scale, hoffset, Nat.mod_eq_of_lt]
+    rw [UInt64.toNat_add, FiniteKernel.finiteScale_toNat_eq_scale, hoffset, Nat.mod_eq_of_lt]
     · rfl
     · norm_num at hzScale hbias ⊢
       omega
-  have h := fmaFields_refines fmt hwidth hexpWidth hfracWidth _ _ _ _ _ _
+  have h := fmaFields_refines fmt hwidth hfracWidth _ _ _ _ _ _
     (by rw [hproduct]; exact hproductLt) hzMantissa
     (by rw [hproductScale]; norm_num at hxScale hyScale ⊢; omega)
     (by rw [haddendScale]; unfold FiniteKernel.finiteScaleOffset

@@ -24,6 +24,46 @@ live in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Runtime`.
 
 namespace FloatLib.Floats.Formats.Posit.Model.NativeWordArithmetic
 
+/--
+Eliminating two packed words and rounding a field-level operation once is the decoded
+exact-dyadic operation, when the field operation agrees with it on every pair of records.
+-/
+private theorem withTwoDyadicFields_roundCodeNat_eq
+    {format : Format}
+    (heligible : NativeWord.Eligible format)
+    (left right : UInt64)
+    (fields :
+      Bool → Nat → Int → Bool → Nat → Int → FloatLib.Numerics.Dyadic)
+    (operation :
+      FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic)
+    (hfields :
+      ∀ leftNegative leftSignificand leftExponent
+          rightNegative rightSignificand rightExponent,
+        fields leftNegative leftSignificand leftExponent
+            rightNegative rightSignificand rightExponent =
+          operation
+            ⟨leftNegative, leftSignificand, leftExponent⟩
+            ⟨rightNegative, rightSignificand, rightExponent⟩) :
+    NativeWord.withTwoDyadicFields format left right format.signMaskNat
+        (fun leftNegative leftSignificand leftExponent
+            rightNegative rightSignificand rightExponent =>
+          NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat format heligible
+            (fields leftNegative leftSignificand leftExponent
+              rightNegative rightSignificand rightExponent)) =
+      match NativeWord.toDyadic? format left, NativeWord.toDyadic? format right with
+      | some leftValue, some rightValue =>
+          DirectDyadicPacking.roundCode format (operation leftValue rightValue)
+      | _, _ => format.signMaskNat := by
+  rw [NativeWord.withTwoDyadicFields_eq]
+  cases NativeWord.toDyadic? format left with
+  | none => rfl
+  | some leftValue =>
+      cases NativeWord.toDyadic? format right with
+      | none => rfl
+      | some rightValue =>
+          simp only [
+            NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct, hfields]
+
 /-! ## Addition -/
 
 /-- Flattened scalar-field addition is the exact packed-word addition. -/
@@ -34,20 +74,8 @@ theorem addWordsCodeFlat_eq
     addWordsCodeFlat heligible left right =
       addWordsCode heligible left right := by
   unfold addWordsCodeFlat addWordsCode
-  rw [NativeWord.withTwoDyadicFields_eq]
-  cases hleft : NativeWord.toDyadic? format left with
-  | none =>
-      rfl
-  | some leftValue =>
-      cases hright : NativeWord.toDyadic? format right with
-      | none =>
-          rfl
-      | some rightValue =>
-          cases leftValue
-          cases rightValue
-          simp only [
-            NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
-            FloatLib.Numerics.Dyadic.addFields_eq]
+  exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
+    FloatLib.Numerics.Dyadic.addFields_eq
 
 /-- Valid-word addition is exactly flattened packed-word addition. -/
 theorem addWordsCodeFlatValid_eq
@@ -90,20 +118,8 @@ theorem subWordsCodeFlat_eq
     subWordsCodeFlat heligible left right =
       subWordsCode heligible left right := by
   unfold subWordsCodeFlat subWordsCode
-  rw [NativeWord.withTwoDyadicFields_eq]
-  cases hleft : NativeWord.toDyadic? format left with
-  | none =>
-      rfl
-  | some leftValue =>
-      cases hright : NativeWord.toDyadic? format right with
-      | none =>
-          rfl
-      | some rightValue =>
-          cases leftValue
-          cases rightValue
-          simp only [
-            NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
-            FloatLib.Numerics.Dyadic.subFields_eq]
+  exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
+    FloatLib.Numerics.Dyadic.subFields_eq
 
 /-- Valid-word subtraction is exactly flattened packed-word subtraction. -/
 theorem subWordsCodeFlatValid_eq
@@ -146,20 +162,8 @@ theorem mulWordsCodeFlat_eq
     mulWordsCodeFlat heligible left right =
       mulWordsCode heligible left right := by
   unfold mulWordsCodeFlat mulWordsCode
-  rw [NativeWord.withTwoDyadicFields_eq]
-  cases hleft : NativeWord.toDyadic? format left with
-  | none =>
-      rfl
-  | some leftValue =>
-      cases hright : NativeWord.toDyadic? format right with
-      | none =>
-          rfl
-      | some rightValue =>
-          cases leftValue
-          cases rightValue
-          simp only [
-            NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
-            FloatLib.Numerics.Dyadic.mulFields_eq]
+  exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
+    FloatLib.Numerics.Dyadic.mulFields_eq
 
 /-- Valid-word multiplication is exactly flattened packed-word multiplication. -/
 theorem mulWordsCodeFlatValid_eq

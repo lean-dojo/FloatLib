@@ -25,6 +25,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.AlgebraicRounding
 open Float.Model.UnpackedFloat
 open FloatLib.Floats.Formats.Flocq
 
+/-- The exact rational `powerOfTwo exponent` is the real power `2 ^ exponent`. -/
 @[simp] theorem cast_powerOfTwo (exponent : Int) :
     (powerOfTwo exponent : ℝ) = bpow Numerics.binaryRadix exponent := by
   simp [powerOfTwo, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
@@ -72,6 +73,7 @@ theorem bisect_bracket (accept : Nat → Bool) (valueAt : Nat → ℝ) (target :
     · have hupperEq : upper = lower + 1 := by omega
       simpa [hupperEq] using And.intro hlower hupper
 
+/-- The exponent search starts strictly below its exclusive upper bound. -/
 theorem lowerExponent_lt_upperExponent (fmt : FloatFormat) :
     lowerExponent fmt < upperExponent fmt := by
   have := fmt.maxFiniteExpField_pos
@@ -79,15 +81,33 @@ theorem lowerExponent_lt_upperExponent (fmt : FloatFormat) :
     FloatFormat.minNormalExponent, FloatFormat.maxNormalExponent, Int.ofNat_eq_natCast]
   omega
 
+/-- The exponent search always has at least one candidate binade. -/
 theorem exponentSpan_pos (fmt : FloatFormat) : 0 < exponentSpan fmt := by
   have := lowerExponent_lt_upperExponent fmt
   simp only [exponentSpan]
   omega
 
+/-- The located binade is never below the lowest searched exponent, whatever the comparator. -/
 theorem binade_ge_lowerExponent (fmt : FloatFormat) (compare : Rat → Ordering) :
     lowerExponent fmt ≤ binade fmt compare := by
   simp only [binade]
   omega
+
+/-- An exact comparator answering `.gt` at the lowest search power puts the target above it. -/
+theorem bpow_lowerExponent_lt_of_compare_eq_gt (fmt : FloatFormat)
+    {compare : Rat → Ordering} {target : ℝ}
+    (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
+    (hgt : compare (powerOfTwo (lowerExponent fmt)) = .gt) :
+    bpow Numerics.binaryRadix (lowerExponent fmt) < target :=
+  (cmp_eq_gt_iff _ _).mp (by simpa only [hcompare, cast_powerOfTwo] using hgt)
+
+/-- An exact comparator answering `.lt` at the highest search power puts the target below it. -/
+theorem lt_bpow_upperExponent_of_compare_eq_lt (fmt : FloatFormat)
+    {compare : Rat → Ordering} {target : ℝ}
+    (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
+    (hlt : compare (powerOfTwo (upperExponent fmt)) = .lt) :
+    target < bpow Numerics.binaryRadix (upperExponent fmt) :=
+  (cmp_eq_lt_iff _ _).mp (by simpa only [hcompare, cast_powerOfTwo] using hlt)
 
 /-- The first search locates consecutive powers of two around the exact target. -/
 theorem binade_bounds (fmt : FloatFormat) (compare : Rat → Ordering) (target : ℝ)
@@ -116,6 +136,10 @@ theorem binade_bounds (fmt : FloatFormat) (compare : Rat → Ordering) (target :
     (by simpa [hspanInt] using hupper)
   simpa only [binade, Nat.cast_add, Nat.cast_one, add_assoc] using h
 
+/--
+Comparing `candidate * 2 ^ exponent` with an exact comparator for `target` compares `candidate`
+with the scaled target `target / 2 ^ exponent`.
+-/
 theorem scaled_compare (compare : Rat → Ordering) (target : ℝ) (exponent : Int)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
     (candidate : Rat) :
@@ -197,12 +221,7 @@ theorem certificate_scaled_bounds (fmt : FloatFormat) (compare : Rat → Orderin
     have hpow :
         bpow Numerics.binaryRadix (e + (fmt.fracWidth + 3 : Nat)) =
           (2 : ℝ) ^ (fmt.fracWidth + 3) * bpow Numerics.binaryRadix e := by
-      rw [bpow.add_exp]
-      have hp : bpow Numerics.binaryRadix ((fmt.fracWidth + 3 : Nat) : Int) =
-          (2 : ℝ) ^ (fmt.fracWidth + 3) := by
-        change (2 : ℝ) ^ ((fmt.fracWidth + 3 : Nat) : Int) = _
-        exact zpow_natCast _ _
-      rw [hp, mul_comm]
+      rw [bpow.add_exp, bpow_binaryRadix ((fmt.fracWidth + 3 : Nat) : Int), zpow_natCast, mul_comm]
     exact hbhi.trans_le (hpow ▸ (bpow_le_bpow_iff _ _ _).mpr hguard)
 
 /--
@@ -238,7 +257,7 @@ theorem certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
   have htarget : 0 < target := (bpow.pos _ _).trans_le hlower
   obtain ⟨hblo, hbhi⟩ := binade_bounds fmt compare target hcompare hlower hupper
   have hmagnitude : magnitude Numerics.binaryRadix target = binade fmt compare + 1 := by
-    apply magnitude_eq_of_bpow_bounds _ _ _ htarget.ne'
+    apply magnitude_eq_of_bpow_bounds
     · simpa [abs_of_pos htarget] using hblo
     · simpa [abs_of_pos htarget] using hbhi
   have hv : v * bpow Numerics.binaryRadix c.exponent = target :=
@@ -248,5 +267,28 @@ theorem certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
   change certificateExponent fmt (binade fmt compare) ≤ _
   simp only [certificateExponent]
   omega
+
+/--
+Under a conventional IEEE descriptor, for an exact comparator of a target in
+`[2 ^ lowerExponent, 2 ^ upperExponent)`, `roundCertificate` rounds the certificate once through
+Lean's logical model: it packs `roundWithAccuracy` of the certificate, whose accuracy represents
+the scaled magnitude `target / 2 ^ c.exponent` and whose exponent satisfies the normalizer's
+no-left-shift precondition (`certificate_spec`).
+-/
+theorem roundCertificate_certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (sign : Bool) (compare : Rat → Ordering) (target : ℝ)
+    (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
+    (hlower : bpow Numerics.binaryRadix (lowerExponent fmt) ≤ target)
+    (hupper : target < bpow Numerics.binaryRadix (upperExponent fmt)) :
+    let c := certificate fmt compare
+    roundCertificate fmt sign c =
+        ofModel fmt (roundWithAccuracy (FloatFormat.toModel fmt) (modelSign sign)
+          c.mantissa c.exponent c.accuracy) ∧
+      accuracyRepresents c.mantissa c.accuracy
+        (target / bpow Numerics.binaryRadix c.exponent) ∧
+      c.exponent ≤ (FloatFormat.toModel fmt).targetExponent
+        (Float.Model.totalExponent c.mantissa c.exponent) := by
+  obtain ⟨-, ha, he⟩ := certificate_spec fmt hfmt compare target hcompare hlower hupper
+  exact ⟨by simp only [roundCertificate, hfmt, ite_true], ha, he⟩
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.AlgebraicRounding

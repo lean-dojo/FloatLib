@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Verify the retained Flocq comparison and optionally regenerate its website figure.
 
-The archive keeps the raw timings, complete numerical outputs, and captured sources
-together. Verification reads it directly; no extraction, build, or timing run is needed.
+The archive keeps the raw timings of all nine trials, complete numerical outputs, and
+the campaign records together. Verification reads it directly and rebuilds the
+nine-trial medians in matched-benchmark-summary.csv. No extraction, build, or timing
+run is needed.
 """
 
 from __future__ import annotations
@@ -13,11 +15,25 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import statistics
 import zipfile
 
 
 RESULTS = Path(__file__).resolve().parents[1] / "results" / "flocq-matched"
-ARCHIVE_SHA256 = "af847f1d988233577dbe11df6eeaebcc4a3c139e6c4133ef6c19016f1fcd874d"
+ARCHIVE_SHA256 = "177b818bc1026cb33bcb06b8881b895886052f6ca497c422cdb8d045e27d9b43"
+TRIALS = 9
+MAIN_SOURCE = "main/raw/trial-*.csv"
+BALANCED_SOURCE = "balanced-sqrt/results-9trials/raw.csv"
+SUMMARY_FIELDS = (
+    "series", "implementation", "family", "format", "totalBits", "operation",
+    "executionClass", "backend", "measurementMethod", "iterations", "blocks", "trials",
+    "medianNanosPerOp", "minimumNanosPerOp", "maximumNanosPerOp", "source",
+)
+SERIES_NAMES = {
+    "ExecFloat": "ExecFloat binary proved software",
+    "Flocq": "Flocq binary reference (precision model)",
+    "MPFR": "MPFR (binary) software reference",
+}
 EXPONENT_BITS = {
     6: 3, 8: 4, 16: 5, 32: 8, 64: 11, 128: 15,
     256: 19, 512: 19, 1024: 19, 2048: 19, 4096: 19,
@@ -114,6 +130,79 @@ def numerical_values(data: bytes, *, packed: bool) -> dict:
     return values
 
 
+def select(main: list[list[dict[str, str]]],
+           balanced: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Nine-trial medians per cell; complete-block square roots replace the main chain."""
+    expected = {
+        (impl, width, operation)
+        for impl, *_ in SERIES for width in EXPONENT_BITS for operation in OPERATIONS
+    }
+    replacements = {(impl, width, "sqrt") for impl, *_ in SERIES
+                    for width in (1024, 2048, 4096)}
+    require(len(main) == TRIALS, "Unexpected number of main trials")
+    for trial in main:
+        require(len(trial) == len(expected) and {key(r) for r in trial} == expected,
+                "Incomplete or duplicate main matrix")
+    require(len(balanced) == len(replacements) * TRIALS, "Incomplete balanced matrix")
+    groups: dict[tuple[str, int, str], list[dict[str, str]]] = {}
+    for cell in expected - replacements:
+        groups[cell] = [next(r for r in trial if key(r) == cell) for trial in main]
+    for row in balanced:
+        require(key(row) in replacements, "Unexpected balanced cell")
+        groups.setdefault(key(row), []).append(row)
+    selected = []
+    for cell in sorted(expected):
+        rows = groups[cell]
+        balanced_cell = cell in replacements
+        if balanced_cell:
+            require(sorted(int(r["trial"]) for r in rows) == list(range(1, TRIALS + 1)),
+                    f"Balanced trials incomplete: {cell}")
+        first = rows[0]
+        identity = ("family", "format", "executionClass", "backend", "measurementMethod",
+                    "iterations")
+        require(all(all(r[f] == first[f] for f in identity) for r in rows),
+                f"Cell identity or iteration count changed between trials: {cell}")
+        times = []
+        for r in rows:
+            n, elapsed = int(r["iterations"]), int(r["totalNanos"])
+            require(n > 0 and elapsed >= 50_000_000, f"Insufficient timed duration: {cell}")
+            times.append(elapsed / n)
+        if balanced_cell:
+            require(len({r["blocks"] for r in rows}) == 1
+                    and int(first["iterations"]) == 16 * int(first["blocks"]),
+                    f"Incomplete balanced fixture block: {cell}")
+            method, source = "result-dependent-complete-16-fixture-blocks", BALANCED_SOURCE
+        else:
+            method, source = "result-dependent-fixture-chain", MAIN_SOURCE
+        require(first["measurementMethod"] == method, f"Unexpected measurement method: {cell}")
+        selected.append({
+            "series": SERIES_NAMES[cell[0]], "implementation": cell[0],
+            "family": first["family"], "format": first["format"],
+            "totalBits": str(cell[1]), "operation": cell[2],
+            "executionClass": first["executionClass"], "backend": first["backend"],
+            "measurementMethod": method, "iterations": first["iterations"],
+            "blocks": first["blocks"] if balanced_cell else "", "trials": str(TRIALS),
+            "medianNanosPerOp": f"{statistics.median(times):.9f}",
+            "minimumNanosPerOp": f"{min(times):.9f}",
+            "maximumNanosPerOp": f"{max(times):.9f}",
+            "source": source,
+        })
+    return selected
+
+
+def write_summary(rows: list[dict[str, str]]) -> bytes:
+    stream = io.StringIO()
+    writer = csv.DictWriter(stream, fieldnames=SUMMARY_FIELDS, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+    return stream.getvalue().encode()
+
+
+def read_trials(archive: zipfile.ZipFile) -> tuple[list[list[dict[str, str]]], list[dict[str, str]]]:
+    main = [read_csv(archive.read(f"main/raw/trial-{t:02d}.csv")) for t in range(1, TRIALS + 1)]
+    return main, read_csv(archive.read(BALANCED_SOURCE))
+
+
 def verify(results: Path) -> list[dict[str, str]]:
     archive_bytes = (results / "matched-comparison-evidence.zip").read_bytes()
     require(hashlib.sha256(archive_bytes).hexdigest() == ARCHIVE_SHA256,
@@ -129,46 +218,14 @@ def verify(results: Path) -> list[dict[str, str]]:
                     f"Archive member hash differs: {name}")
         require(summary_bytes == archive.read("matched-benchmark-summary.csv"),
                 "Selected CSV differs from archived CSV")
-        main = read_csv(archive.read("main/trial-01.csv"))
-        balanced = read_csv(archive.read("balanced-sqrt/raw.csv"))
-        expected = {
-            (impl, width, operation)
-            for impl, *_ in SERIES for width in EXPONENT_BITS for operation in OPERATIONS
-        }
-        replacements = {(impl, width, "sqrt") for impl, *_ in SERIES
-                        for width in (1024, 2048, 4096)}
-        require(len(main) == len(expected) and {key(r) for r in main} == expected,
-                "Incomplete or duplicate main matrix")
-        require(len(balanced) == len(replacements)
-                and {key(r) for r in balanced} == replacements,
-                "Incomplete or duplicate balanced matrix")
-        check_prefixes(main, 256)
+        main, balanced = read_trials(archive)
+        for trial in main:
+            check_prefixes(trial, 256)
+        check_prefixes([row for trial in main for row in trial], 256)
         check_prefixes(balanced, 16)
-        raw_by_key = {key(r): r for r in main}
-        raw_by_key.update({key(r): r for r in balanced})
-        rows = read_csv(summary_bytes)
-        require(len(rows) == len(expected) and {key(r) for r in rows} == expected,
-                "Incomplete or duplicate summary matrix")
-        for row in rows:
-            cell = key(row)
-            raw = raw_by_key[cell]
-            require(all(row[column] == value for column, value in raw.items()
-                        if column != "trial"), f"Summary differs from raw cell: {cell}")
-            require(int(row["trials"]) == 1, "Unexpected number of trials")
-            n, elapsed = int(row["iterations"]), int(row["totalNanos"])
-            require(n > 0 and elapsed >= 50_000_000, "Insufficient timed duration")
-            require(row["nanosPerOp"] == f"{elapsed / n:.9f}", "Time per operation differs")
-            if cell in replacements:
-                require(int(raw["trial"]) == 1 and n == 16 * int(row["blocks"]),
-                        "Incomplete balanced fixture block")
-                method = "result-dependent-complete-16-fixture-blocks"
-                source = "balanced-sqrt/raw.csv"
-            else:
-                require(row["blocks"] == "", "Unexpected fixture-block count")
-                method = "result-dependent-fixture-chain"
-                source = "main/trial-01.csv"
-            require(row["measurementMethod"] == method and row["source"] == source,
-                    "Incorrect source selection or measurement method")
+        rows = select(main, balanced)
+        require(write_summary(rows) == summary_bytes,
+                "Summary differs from the nine-trial medians of the raw trials")
         values = [
             numerical_values(archive.read(f"numerical-audit/{lane}-values.txt"),
                              packed=lane == "floatlib")
@@ -204,7 +261,7 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
                            and r["operation"] == operation), key=lambda r: int(r["totalBits"]))
             line, = ax.plot(
                 [int(r["totalBits"]) for r in data],
-                [float(r["nanosPerOp"]) for r in data],
+                [float(r["medianNanosPerOp"]) for r in data],
                 color=color, marker=marker, linestyle=style,
                 linewidth=2.1 if impl == "ExecFloat" else 1.7, markersize=4.5,
             )
@@ -242,7 +299,7 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
         ax.set_xlabel("Encoded width (bits, log₂ scale)")
         ax.set_ylabel("Time per operation (log scale)")
         notes = (
-            "One trial; lower time is faster.",
+            f"Medians of {TRIALS} trials; lower time is faster.",
             "Precision and exponent bounds match.",
             ("At 1,024+ bits, square root uses complete 16-fixture blocks."
              if operation == "sqrt" else "Result-dependent fixture chain."),
@@ -257,7 +314,7 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
             f"{title}: absolute time per operation against encoded width, "
             "on logarithmic axes with time ticks from nanoseconds to seconds. "
             "FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. "
-            "One retained trial."
+            f"Medians of {TRIALS} trials."
             + (" Square root at 1,024 bits and above uses complete 16-fixture blocks."
                if operation == "sqrt" else " Result-dependent fixture chain.")
         )
@@ -265,7 +322,8 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
         output, descriptions,
         overview_alt="Six arithmetic operations: absolute time per operation against encoded "
         "width on logarithmic axes. FloatLib binary, extracted Flocq, and MPFR at eleven "
-        "matching binary formats, one trial. Square root at 1,024 bits and above uses "
+        f"matching binary formats, medians of {TRIALS} trials. Square root at 1,024 bits "
+        "and above uses "
         "complete 16-fixture blocks.",
     )
 

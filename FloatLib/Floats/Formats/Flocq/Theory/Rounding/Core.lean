@@ -78,6 +78,28 @@ class ValidRnd (rnd : ℝ → ℤ) : Prop where
   /-- Every integer is fixed by the rounding rule. -/
   id : ∀ n : ℤ, rnd n = n
 
+/-- A valid integer rounding fixes zero. -/
+theorem ValidRnd.map_zero (rnd : ℝ → ℤ) [ValidRnd rnd] : rnd 0 = 0 := by
+  simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
+
+/-- A valid integer rounding sends nonnegative inputs to nonnegative integers. -/
+theorem ValidRnd.nonneg (rnd : ℝ → ℤ) [ValidRnd rnd] {x : ℝ} (hx : 0 ≤ x) : 0 ≤ rnd x := by
+  simpa [ValidRnd.map_zero rnd] using ValidRnd.monotone (rnd := rnd) 0 x hx
+
+/-- A valid integer rounding sends nonpositive inputs to nonpositive integers. -/
+theorem ValidRnd.nonpos (rnd : ℝ → ℤ) [ValidRnd rnd] {x : ℝ} (hx : x ≤ 0) : rnd x ≤ 0 := by
+  simpa [ValidRnd.map_zero rnd] using ValidRnd.monotone (rnd := rnd) x 0 hx
+
+/-- A valid integer rounding never goes below an integer lower bound of its input. -/
+theorem ValidRnd.le_of_intCast_le (rnd : ℝ → ℤ) [ValidRnd rnd] {n : ℤ} {x : ℝ}
+    (h : (n : ℝ) ≤ x) : n ≤ rnd x := by
+  simpa [ValidRnd.id (rnd := rnd) n] using ValidRnd.monotone (rnd := rnd) (n : ℝ) x h
+
+/-- A valid integer rounding never goes above an integer upper bound of its input. -/
+theorem ValidRnd.le_of_le_intCast (rnd : ℝ → ℤ) [ValidRnd rnd] {n : ℤ} {x : ℝ}
+    (h : x ≤ (n : ℝ)) : rnd x ≤ n := by
+  simpa [ValidRnd.id (rnd := rnd) n] using ValidRnd.monotone (rnd := rnd) x (n : ℝ) h
+
 /--
 Valid integer roundings with the half-unit error bound `|rnd x - x| ≤ 1/2` for all `x`.
 
@@ -87,13 +109,17 @@ class ValidRndToNearest (rnd : ℝ → ℤ) : Prop extends ValidRnd rnd where
   /-- Rounding changes a real input by at most one half on the integer grid. -/
   abs_sub_le_half : ∀ x : ℝ, abs ((rnd x : ℝ) - x) ≤ (2⁻¹ : ℝ)
 
-/--
-Round `x` to the integer grid with spacing `step`.
+/-- Every nearest rounding rule is a valid rounding rule. -/
+add_decl_doc ValidRndToNearest.toValidRnd
 
-This fixed-scale operation is the common core of fixed-point arithmetic and affine quantization.
-The caller supplies the scale, where `round` chooses it from the magnitude of `x` through an
-exponent format. The positivity hypothesis keeps a zero scale from turning the operation into the
-constant-zero map through totalized real division.
+/--
+Round `x` to the integer grid with spacing `step`: the result is `rnd (x / step) * step`.
+
+`rnd` is the integer rounding rule applied to `x / step`. This fixed-scale operation is the common
+core of fixed-point arithmetic and affine quantization: the caller supplies the scale, where
+`round` chooses it from the magnitude of `x` through an exponent format. The proof argument
+`0 < step` is not used in the value; it only restricts callers to a positive spacing. Real division
+is total, so the same formula at a zero spacing would be the constant-zero map.
 -/
 noncomputable def roundAtScale (rnd : ℝ → ℤ) (step : ℝ) (_hstep : 0 < step) (x : ℝ) : ℝ :=
   (rnd (x / step) : ℝ) * step
@@ -239,6 +265,18 @@ instance : ValidRnd nearestEven where
     intro n
     simp [nearestEven]
 
+/-- Mathlib's ties-up rounding goes to the integer above once the fractional part reaches 1/2. -/
+private theorem round_eq_floor_add_one_of_half_le {x : ℝ} (h : 1 / 2 ≤ x - (⌊x⌋ : ℝ)) :
+    round x = ⌊x⌋ + 1 := by
+  have hcond : ¬2 * Int.fract x < 1 := by
+    simp only [Int.fract]
+    linarith
+  have hxnotint : x ∉ Set.range ((↑·) : ℤ → ℝ) := by
+    rintro ⟨n, rfl⟩
+    norm_num at h
+  rw [← (Int.ceil_eq_floor_add_one_iff_notMem x).2 hxnotint]
+  simp [round, hcond]
+
 /-- Nearest-even has the same distance from the input as Mathlib's ties-up nearest integer. -/
 theorem nearestEven_abs_eq_round (x : ℝ) :
     abs ((nearestEven x : ℝ) - x) = abs ((round x : ℝ) - x) := by
@@ -249,38 +287,20 @@ theorem nearestEven_abs_eq_round (x : ℝ) :
     rw [nearestEven_eq_floor_of_frac_lt_half x hlt]
     simp [round, hcond]
   · by_cases hgt : x - (⌊x⌋ : ℝ) > 1 / 2
-    · have hcond : ¬2 * Int.fract x < 1 := by
-        simp only [Int.fract]
-        linarith
-      have hxnotint : x ∉ Set.range ((↑·) : ℤ → ℝ) := by
-        rintro ⟨n, rfl⟩
-        norm_num at hgt
-      have hceil : ⌈x⌉ = ⌊x⌋ + 1 := (Int.ceil_eq_floor_add_one_iff_notMem x).2 hxnotint
-      rw [nearestEven_eq_ceil_of_frac_gt_half x hgt]
-      have hround : round x = ⌈x⌉ := by simp [round, hcond]
-      rw [hround, hceil]
+    · rw [nearestEven_eq_ceil_of_frac_gt_half x hgt, round_eq_floor_add_one_of_half_le hgt.le]
     · have heq : x - (⌊x⌋ : ℝ) = 1 / 2 := by
         linarith
-      have hcond : ¬2 * Int.fract x < 1 := by
-        simp only [Int.fract]
-        linarith
-      have hxnotint : x ∉ Set.range ((↑·) : ℤ → ℝ) := by
-        rintro ⟨n, rfl⟩
-        norm_num at heq
-      have hceil : ⌈x⌉ = ⌊x⌋ + 1 := (Int.ceil_eq_floor_add_one_iff_notMem x).2 hxnotint
       by_cases heven : Even ⌊x⌋
-      · rw [nearestEven_eq_floor_of_frac_half_even x heq heven]
-        have hround : round x = ⌈x⌉ := by simp [round, hcond]
-        rw [hround, hceil]
+      · rw [nearestEven_eq_floor_of_frac_half_even x heq heven,
+          round_eq_floor_add_one_of_half_le heq.ge]
         have hleft : (⌊x⌋ : ℝ) - x = -(1 / 2 : ℝ) := by linarith
         have hright : ((⌊x⌋ + 1 : ℤ) : ℝ) - x = 1 / 2 := by
           push_cast
           linarith
         rw [hleft, hright]
         norm_num
-      · rw [nearestEven_eq_ceil_of_frac_half_odd x heq heven]
-        have hround : round x = ⌈x⌉ := by simp [round, hcond]
-        rw [hround, hceil]
+      · rw [nearestEven_eq_ceil_of_frac_half_odd x heq heven,
+          round_eq_floor_add_one_of_half_le heq.ge]
 
 /-- Nearest-even integer rounding changes a real number by at most one half. -/
 lemma nearestEven_abs_sub_le_half (x : ℝ) :
@@ -308,10 +328,38 @@ noncomputable def round (rnd : ℝ → ℤ) (x : ℝ) : ℝ :=
   toReal (β := β) { mantissa := rnd (scaledMantissa β fexp x),
                             exponent := cexp β fexp x }
 
+/-- Rounding at `x` depends on the integer rule only through its value at the scaled mantissa. -/
+theorem round_congr {rnd rnd' : ℝ → ℤ} {x : ℝ}
+    (h : rnd (scaledMantissa β fexp x) = rnd' (scaledMantissa β fexp x)) :
+    round (β := β) (fexp := fexp) rnd x = round (β := β) (fexp := fexp) rnd' x := by
+  unfold round
+  rw [h]
+
+/-- Rounding is monotone in the integer rule, compared at the scaled mantissa. -/
+theorem round_le_round_of_le {rnd rnd' : ℝ → ℤ} {x : ℝ}
+    (h : rnd (scaledMantissa β fexp x) ≤ rnd' (scaledMantissa β fexp x)) :
+    round (β := β) (fexp := fexp) rnd x ≤ round (β := β) (fexp := fexp) rnd' x := by
+  unfold round toReal
+  exact mul_le_mul_of_nonneg_right (by exact_mod_cast h) (bpow.nonneg β _)
+
+/-- Every valid rounding sends zero to zero. -/
+theorem round_zero (rnd : ℝ → ℤ) [ValidRnd rnd] : round (β := β) (fexp := fexp) rnd 0 = 0 := by
+  simp [round, scaledMantissa, toReal, ValidRnd.map_zero rnd]
+
 /-- The scaled mantissa is the input divided by its canonical radix power. -/
 theorem scaledMantissa_eq_div (x : ℝ) :
     scaledMantissa β fexp x = x / bpow β (cexp β fexp x) := by
   simp [scaledMantissa, bpow.neg_exp, div_eq_mul_inv]
+
+/-- The scaled mantissa of a nonnegative value is nonnegative. -/
+theorem scaledMantissa_nonneg {x : ℝ} (hx : 0 ≤ x) : 0 ≤ scaledMantissa β fexp x := by
+  rw [scaledMantissa_eq_div]
+  exact div_nonneg hx (bpow.nonneg β _)
+
+/-- The scaled mantissa of a nonpositive value is nonpositive. -/
+theorem scaledMantissa_nonpos {x : ℝ} (hx : x ≤ 0) : scaledMantissa β fexp x ≤ 0 := by
+  rw [scaledMantissa_eq_div]
+  exact div_nonpos_of_nonpos_of_nonneg hx (bpow.nonneg β _)
 
 /--
 A value in the generic format has an integral mantissa at its canonical exponent.
@@ -403,10 +451,7 @@ theorem error_bound_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
     abs (round (β := β) (fexp := fexp) rnd x - x) ≤ ulp β fexp x / 2 := by
   by_cases hx : x = 0
   · subst hx
-    have hr0 : rnd 0 = 0 := by simpa using (ValidRnd.id (rnd := rnd) (0 : ℤ))
-    have hround : round (β := β) (fexp := fexp) rnd 0 = 0 := by
-      simp [round, scaledMantissa, cexp, magnitude, toReal, hr0]
-    rw [hround, sub_self, abs_zero]
+    rw [round_zero, sub_self, abs_zero]
     exact div_nonneg (ulp.nonneg (β := β) (fexp := fexp) 0) (by norm_num)
   · simp [ulp, hx]
     simp [round, toReal]

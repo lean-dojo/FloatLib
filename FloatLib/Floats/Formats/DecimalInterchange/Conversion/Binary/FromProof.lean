@@ -8,6 +8,7 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Format.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
+import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
 /-!
 # Binary-to-decimal conversion guarantees
@@ -54,18 +55,8 @@ theorem fromBinary_nan {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
 theorem fromBinary_infinity {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
     (x : Model fmt) (hx : Model.isInf x = true) :
     fromBinary f mode x = { value := .infinity (Model.signBit x) } := by
-  have hd : Model.toDyadic? x = none := by
-    cases h : Model.toDyadic? x with
-    | none => rfl
-    | some d =>
-        have hn := Model.isInf_eq_false_of_toDyadic?_some h
-        simp [hx] at hn
-  have hn : Model.isNaN x = false := by
-    cases he : fmt.encoding <;> simp [Model.isInf, he] at hx
-    simp only [Model.isNaN, he, Model.IEEE.isNaN]
-    simp [Model.IEEE.isInf] at hx
-    simp [hx.2]
-  simp [fromBinary, Model.toRat?, hd, hn]
+  simp [fromBinary, Model.toRat?, Model.toDyadic?_eq_none_of_isInf_eq_true hx,
+    Model.isNaN_eq_false_of_isInf_eq_true x hx]
 
 /-- Both binary zeros retain their sign, with preferred quantum zero clamped to
 the destination quantum range. -/
@@ -88,7 +79,7 @@ theorem fromBinary_zero {fmt : FloatFormat} (f : Format) [f.HasQuantumZero]
 
 /-- Both nearest conversions bound the error of the returned decimal value by half a grid unit. -/
 theorem fromBinary_error_le_half {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a)
     (hfinite : (fromBinary f mode x).status.overflow = false) :
     ∃ value, (fromBinary f mode x).value.toRat? = some value ∧
@@ -106,37 +97,37 @@ theorem fromBinary_error_lt_one {fmt : FloatFormat} (f : Format) (mode : Roundin
   exact project_error_lt_one f mode a 0 _ hfinite
 
 /-- Upward conversion bounds the exact binary input from above. -/
-theorem le_fromBinary_towardPositive {fmt : FloatFormat} (f : Format)
+theorem le_fromBinary_up {fmt : FloatFormat} (f : Format)
     (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a)
-    (hfinite : (fromBinary f .towardPositive x).status.overflow = false) :
-    ∃ value, (fromBinary f .towardPositive x).value.toRat? = some value ∧ a ≤ value := by
-  rw [fromBinary_eq_project f .towardPositive x a hx] at hfinite ⊢
-  exact le_project_towardPositive f a 0 _ hfinite
+    (hfinite : (fromBinary f .up x).status.overflow = false) :
+    ∃ value, (fromBinary f .up x).value.toRat? = some value ∧ a ≤ value := by
+  rw [fromBinary_eq_project f .up x a hx] at hfinite ⊢
+  exact le_project_up f a 0 _ hfinite
 
 /-- Downward conversion bounds the exact binary input from below. -/
-theorem fromBinary_towardNegative_le {fmt : FloatFormat} (f : Format)
+theorem fromBinary_down_le {fmt : FloatFormat} (f : Format)
     (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a)
-    (hfinite : (fromBinary f .towardNegative x).status.overflow = false) :
-    ∃ value, (fromBinary f .towardNegative x).value.toRat? = some value ∧ value ≤ a := by
-  rw [fromBinary_eq_project f .towardNegative x a hx] at hfinite ⊢
-  exact project_towardNegative_le f a 0 _ hfinite
+    (hfinite : (fromBinary f .down x).status.overflow = false) :
+    ∃ value, (fromBinary f .down x).value.toRat? = some value ∧ value ≤ a := by
+  rw [fromBinary_eq_project f .down x a hx] at hfinite ⊢
+  exact project_down_le f a 0 _ hfinite
 
-/-- A cohort change is not inexact; inexactness detects precisely a numerical change. -/
+/-- A cohort change is not inexact; inexactness detects precisely a numerical change of a finite
+result, including an overflow to the greatest finite datum. -/
 theorem fromBinary_inexact_iff {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
     (x : Model fmt) (a value : ℚ) (hx : Model.toRat? x = some a)
-    (hfinite : (fromBinary f mode x).status.overflow = false)
     (hv : (fromBinary f mode x).value.toRat? = some value) :
     (fromBinary f mode x).status.inexact = true ↔ value ≠ a := by
-  rw [fromBinary_eq_project f mode x a hx] at hfinite hv ⊢
-  exact project_inexact_iff f mode a value 0 _ hfinite hv
+  rw [fromBinary_eq_project f mode x a hx] at hv ⊢
+  exact project_inexact_iff f mode a value 0 _ hv
 
-/-- Decimal conversion signals underflow precisely for an inexact tiny input. -/
+/-- Decimal conversion of a finite binary value signals underflow precisely for an inexact tiny
+input; an overflowing input is never tiny. -/
 theorem fromBinary_underflow_iff {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
-    (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a)
-    (hfinite : (fromBinary f mode x).status.overflow = false) :
+    (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a) :
     (fromBinary f mode x).status.underflow = true ↔
       |a| < f.minNormal ∧ (fromBinary f mode x).status.inexact = true := by
-  rw [fromBinary_eq_project f mode x a hx] at hfinite ⊢
-  exact project_underflow_iff f mode a 0 _ hfinite
+  rw [fromBinary_eq_project f mode x a hx]
+  exact project_underflow_iff f mode a 0 _
 
 end FloatLib.Floats.Formats.DecimalInterchange.Conversion

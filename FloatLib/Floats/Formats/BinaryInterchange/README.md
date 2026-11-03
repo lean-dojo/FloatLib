@@ -43,9 +43,12 @@ the exponent bias yourself.
 | Decimal interchange | proved BID/DPD codecs, arithmetic, comparisons, and explicit exception state in `DecimalInterchange` |
 | Text round trips | exact decimal and hexadecimal formatting/parsing theorems for finite conventional IEEE values; `nan` formatting drops sign/payload |
 | Elementary approximation kernels (`exp`, `log`, trig) | named import `Configured.Transcendentals` (or the model barrel); representation bridges, with no general real-error bound |
-| Certified `exp`, `log`, `pow`, `expMinus1`, `logPlus1` | the same import, with `certify := true` for the first three; each `.ok` result is finite and correctly rounded, and a failure names its reason |
+| Certified `exp`, `log`, `pow`, `expMinus1`, `logPlus1` | the same import, in the namespace `ExecFloat.Binary.Certified`. Each `.ok` result is finite and correctly rounded, and a failure names its reason |
+| Total correctly rounded `exp`, `log`, `expMinus1`, `logPlus1`, `expMul` | named import `Configured.CorrectlyRounded` (the `MathFunctions` dictionary and scoped instance for configured values come with `Configured.Transcendentals`, for `Model` with `Transcendentals`); IEEE, with no budget premise: on a finite input in the domain, correctly rounded when the exact result is below the overflow threshold in magnitude, and otherwise the infinity with its sign. Generic code gets these `exp` and `log` through `MathFunctions` only by opting in: `open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`, or the dictionary `CorrectlyRounded.mathFunctions` |
+| Mixed relative and absolute error | `Analysis.MixedError` and `Configured.MixedError`; IEEE, finite values: operations and left-to-right sums under the premises each theorem states. Exact results by decoded value sit with the arithmetic semantics |
+| Error bounds inferred from code | named import `Automation.Roundoff`: the `roundoff` tactic and `roundoff [mixed] theorem`, conditional bounds over scalars and over the supported traversals and operations of lists, arrays, vectors, functions on `Fin n`, matrices and registered containers; the generated conditions remain to be proved |
 
-For an IEEE descriptor, `Model.pow` is correctly rounded for a finite nonzero base and a finite
+For an IEEE descriptor, `Model.pow` is correctly rounded for a finite base and a finite
 integral exponent whenever its result is finite (`Model.Power.toReal_pow_of_eq_intCast`). A
 finite positive base with any other finite exponent goes to the certified enclosure search
 `Model.Transcendentals.Certified.pow`, and the result is correctly rounded whenever that search

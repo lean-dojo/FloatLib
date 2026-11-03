@@ -20,6 +20,7 @@ canonicalization preserves the decoded trailing coefficient.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.DPD
 
+/-- Packing any number into `groups` declets fits in `10 * groups` bits. -/
 theorem encodeTrailing_lt (groups n : Nat) : encodeTrailing groups n < 1024 ^ groups := by
   induction groups generalizing n with
   | zero => simp [encodeTrailing]
@@ -29,6 +30,8 @@ theorem encodeTrailing_lt (groups n : Nat) : encodeTrailing groups n < 1024 ^ gr
     simp only [encodeTrailing, Nat.pow_succ]
     omega
 
+/-- Unpacking any `groups` declets, redundant patterns included, gives a number below
+`1000 ^ groups`, so at most `3 * groups` decimal digits. -/
 theorem decodeTrailing_lt (groups n : Nat) : decodeTrailing groups n < 1000 ^ groups := by
   induction groups generalizing n with
   | zero => simp [decodeTrailing]

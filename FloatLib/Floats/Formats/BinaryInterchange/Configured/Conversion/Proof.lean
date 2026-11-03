@@ -34,6 +34,8 @@ open FloatLib.Floats.Formats.BinaryInterchange
 namespace ExecFloat.Binary
 namespace Conversion
 
+universe u v
+
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
@@ -81,8 +83,8 @@ theorem nearestFinite_of_spec (context : Context) (exact : SignedRat)
     (rounded : FloatLib.Floats.ExecFloat (Configured.Family format code plan))
     (indicators : FloatLib.Floats.ExecFloat.ConversionStatus)
     (hpolicy : context.quantization = QuantizationPolicy.nearest)
-    (hformat : format.isIEEE = true)
-    (h : spec context (.finite exact) (.success rounded indicators)) :
+    (h : spec context (.finite exact) (.success rounded indicators))
+    (hformat : format.isIEEE = true := by ieee_format) :
     NearestFinite exact.value (toModel rounded) := by
   obtain ⟨model, houtcome, hnearest⟩ := h.2 hpolicy hformat
   have hrounded : rounded = configuredPack model := (ConversionOutcome.success.inj houtcome).1
@@ -95,6 +97,33 @@ theorem nearestFinite_of_spec (context : Context) (exact : SignedRat)
     FloatLib.Floats.ExecFloat.ExactDecoder.run value =
       ExecFloat.Binary.decode value :=
   rfl
+
+/--
+Converting a binary model gives the outcome of casting the configured value that stores it, for
+every destination, mode, and context.
+
+Both decode through `SignedRat`, so a negative zero and a NaN's sign, payload, and signaling class
+reach the destination's policy from either source.
+-/
+theorem convert_model_eq_cast_ofModel {target : Type u} {TargetExact : Type v}
+    [FloatLib.Floats.ExecFloat.ExactMap SignedRat TargetExact]
+    [FloatLib.Floats.ExecFloat.Quantizer target TargetExact]
+    {Mode : Type} [modes : FloatLib.Floats.ExecFloat.RoundingModes target TargetExact Mode]
+    (value : Model format) (mode : Mode) (context : modes.Policy) :
+    FloatLib.Floats.ExecFloat.convert (target := target) value mode context =
+      FloatLib.Floats.ExecFloat.cast
+        (ofModel value : FloatLib.Floats.ExecFloat (Configured.Family format code plan))
+        mode context := by
+  have hdecode :
+      FloatLib.Floats.ExecFloat.ExactDecoder.run (ofModel value :
+          FloatLib.Floats.ExecFloat (Configured.Family format code plan)) =
+        FloatLib.Floats.ExecFloat.ExactDecoder.run value := by
+    change ((Model.exactNumericalSystem format).denote (toModel (ofModel value))).map
+        SignedRat.ofDyadic = _
+    rw [toModel, ofModel, Configured.Family.toModel_ofModel]
+    rfl
+  simp only [FloatLib.Floats.ExecFloat.cast, FloatLib.Floats.ExecFloat.convert,
+    FloatLib.Floats.ExecFloat.ExactDecoder.decodeTo, hdecode]
 
 /--
 A default-context finite conversion is the canonical nearest-even rational rounder applied to the

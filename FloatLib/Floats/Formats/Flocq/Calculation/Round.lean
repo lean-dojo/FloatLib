@@ -44,10 +44,9 @@ noncomputable def integerLocation (x : ℝ) : Location :=
 theorem integerLocation_spec (x : ℝ) :
     InbetweenInt ⌊x⌋ x (integerLocation x) := by
   apply inbetweenLocation_spec
-  · norm_num
-  · refine ⟨Int.floor_le x, ?_⟩
-    norm_num only [Int.cast_add, Int.cast_one]
-    exact Int.lt_floor_add_one x
+  refine ⟨Int.floor_le x, ?_⟩
+  norm_num only [Int.cast_add, Int.cast_one]
+  exact Int.lt_floor_add_one x
 
 /-- Increment an integer when the supplied decision is true. -/
 def conditionalIncrement (increment : Bool) (m : ℤ) : ℤ :=
@@ -190,36 +189,22 @@ theorem inbetweenInt_nearestChoice (chooseUp : ℤ → Bool)
       simp [nearestChoice, conditionalIncrement, roundNearestLocation]
   | inexact order hx hmid =>
       change ⌊x⌋ = m at hfloor
-      have hfract : Int.fract x = x - m := by
-        rw [Int.fract]
-        rw [hfloor]
+      -- The midpoint location compares the fractional part `x - m` with one half.
+      have hfract : cmp (Int.fract x) (2⁻¹ : ℝ) = order := by
+        rw [← hmid, Int.fract, hfloor, ← cmp_add_right (x - m) 2⁻¹ (m : ℝ)]
+        congr 1 <;> push_cast <;> ring
       cases order with
       | lt =>
-          have hlt : Int.fract x < (2⁻¹ : ℝ) := by
-            rw [cmp_eq_lt_iff] at hmid
-            rw [hfract]
-            norm_num only [Int.cast_add, Int.cast_one] at hmid
-            norm_num at hmid ⊢
-            linarith
+          have hlt : Int.fract x < (2⁻¹ : ℝ) := (cmp_eq_lt_iff _ _).1 hfract
           simp [nearestChoice, hfloor, hlt, conditionalIncrement,
             roundNearestLocation]
       | eq =>
-          have heq : Int.fract x = (2⁻¹ : ℝ) := by
-            rw [cmp_eq_eq_iff] at hmid
-            rw [hfract]
-            norm_num only [Int.cast_add, Int.cast_one] at hmid
-            norm_num at hmid ⊢
-            linarith
+          have heq : Int.fract x = (2⁻¹ : ℝ) := (cmp_eq_eq_iff _ _).1 hfract
           simp [nearestChoice, hfloor, heq, conditionalIncrement,
             roundNearestLocation]
           rfl
       | gt =>
-          have hgt : Int.fract x > (2⁻¹ : ℝ) := by
-            rw [cmp_eq_gt_iff] at hmid
-            rw [hfract]
-            norm_num only [Int.cast_add, Int.cast_one] at hmid
-            norm_num at hmid ⊢
-            linarith
+          have hgt : Int.fract x > (2⁻¹ : ℝ) := (cmp_eq_gt_iff _ _).1 hfract
           have hnlt : ¬Int.fract x < (2⁻¹ : ℝ) := not_lt.mpr hgt.le
           simp [nearestChoice, hfloor, hnlt, hgt, conditionalIncrement,
             roundNearestLocation]
@@ -240,6 +225,14 @@ theorem inbetweenInt_bounds {m : ℤ} {x : ℝ} {location : Location}
   push_cast at hbounds
   exact hbounds
 
+/-- The lower integer of a certified unit bracket is negative exactly on negative inputs. -/
+private theorem inbetweenInt_sign {m : ℤ} {x : ℝ} {location : Location}
+    (hl : InbetweenInt m x location) : (m < 0 → x < 0) ∧ (¬m < 0 → 0 ≤ x) := by
+  have hbounds := inbetweenInt_bounds hl
+  refine ⟨fun hm => ?_, fun hm => le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1⟩
+  have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
+  linarith [hbounds.2]
+
 /--
 A certified unit bracket computes toward-zero rounding: floor when the lower integer is
 nonnegative and ceiling when it is negative.
@@ -248,15 +241,11 @@ theorem inbetweenInt_trunc {m : ℤ} {x : ℝ} {location : Location}
     (hl : InbetweenInt m x location) :
     truncRound x =
       if m < 0 then conditionalIncrement (roundUpLocation location) m else m := by
-  have hbounds := inbetweenInt_bounds hl
+  obtain ⟨hneg, hnonneg⟩ := inbetweenInt_sign hl
   split_ifs with hm
-  · have hx : x < 0 := by
-      have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
-      linarith [hbounds.2]
-    rw [truncRound_eq_ceil hx.le]
+  · rw [truncRound_eq_ceil (hneg hm).le]
     exact inbetweenInt_ceil hl
-  · have hx : 0 ≤ x := le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1
-    rw [truncRound_eq_floor hx]
+  · rw [truncRound_eq_floor (hnonneg hm)]
     exact inbetweenInt_floor hl
 
 /--
@@ -267,15 +256,11 @@ theorem inbetweenInt_away {m : ℤ} {x : ℝ} {location : Location}
     (hl : InbetweenInt m x location) :
     awayRound x =
       if m < 0 then m else conditionalIncrement (roundUpLocation location) m := by
-  have hbounds := inbetweenInt_bounds hl
+  obtain ⟨hneg, hnonneg⟩ := inbetweenInt_sign hl
   split_ifs with hm
-  · have hx : x < 0 := by
-      have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
-      linarith [hbounds.2]
-    rw [awayRound_eq_floor hx]
+  · rw [awayRound_eq_floor (hneg hm)]
     exact inbetweenInt_floor hl
-  · have hx : 0 ≤ x := le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1
-    rw [awayRound_eq_ceil hx]
+  · rw [awayRound_eq_ceil (hnonneg hm)]
     exact inbetweenInt_ceil hl
 
 /-! ## Mantissa truncation -/
@@ -298,17 +283,21 @@ abbrev TruncationState.Brackets (β : Numerics.Radix)
     (toReal (β := β) { mantissa := state.mantissa + 1, exponent := state.exponent })
     x state.location
 
+/-- A truncation-state bracket places its input between the two represented endpoints. -/
+private theorem TruncationState.bounds_of_brackets (β : Numerics.Radix)
+    (state : TruncationState) {x : ℝ} (hl : state.Brackets β x) :
+    toReal (β := β) { mantissa := state.mantissa, exponent := state.exponent } ≤ x ∧
+      x < toReal (β := β) { mantissa := state.mantissa + 1, exponent := state.exponent } := by
+  refine inbetween_bounds ?_ hl
+  simp only [toReal]
+  exact mul_lt_mul_of_pos_right (by norm_num) (bpow.pos β state.exponent)
+
 /-- A positive value bracketed by a truncation state forces a nonnegative lower mantissa. -/
 theorem TruncationState.mantissa_nonneg_of_brackets
     (β : Numerics.Radix) (state : TruncationState) {x : ℝ}
     (hx : 0 < x) (hl : state.Brackets β x) : 0 ≤ state.mantissa := by
   have hstep : 0 < bpow β state.exponent := bpow.pos β state.exponent
-  have hordered :
-      toReal (β := β) { mantissa := state.mantissa, exponent := state.exponent } <
-        toReal (β := β) { mantissa := state.mantissa + 1, exponent := state.exponent } := by
-    simp only [toReal]
-    exact mul_lt_mul_of_pos_right (by norm_num) hstep
-  have hupper := (inbetween_bounds hordered hl).2
+  have hupper := (TruncationState.bounds_of_brackets β state hl).2
   have hsuccPos : (0 : ℝ) < state.mantissa + 1 := by
     have : 0 < ((state.mantissa + 1 : ℤ) : ℝ) * bpow β state.exponent := by
       simpa [toReal] using hx.trans hupper
@@ -330,12 +319,7 @@ theorem cexp_eq_fexp_digits_of_brackets
     cexp β fexp x =
       fexp ((digits β state.mantissa : ℕ) + state.exponent) := by
   have hstep : 0 < bpow β state.exponent := bpow.pos β state.exponent
-  have hordered :
-      toReal (β := β) { mantissa := state.mantissa, exponent := state.exponent } <
-        toReal (β := β) { mantissa := state.mantissa + 1, exponent := state.exponent } := by
-    simp only [toReal]
-    exact mul_lt_mul_of_pos_right (by norm_num) hstep
-  have hbounds := inbetween_bounds hordered hl
+  have hbounds := TruncationState.bounds_of_brackets β state hl
   have hmNonneg := state.mantissa_nonneg_of_brackets β hx hl
   rcases hmNonneg.eq_or_lt with hmZero | hmPos
   · have hmZero' : state.mantissa = 0 := hmZero.symm
@@ -365,7 +349,7 @@ theorem cexp_eq_fexp_digits_of_brackets
       change magnitude β
         ((state.mantissa : ℝ) * bpow β state.exponent) ≤ magnitude β x at hmono
       rw [magnitude_mul_bpow β (state.mantissa : ℝ) state.exponent
-        (by exact_mod_cast (ne_of_gt hmPos)), magnitude_intCast_of_pos β hmPos] at hmono
+        (by exact_mod_cast (ne_of_gt hmPos)), magnitude_intCast β state.mantissa] at hmono
       exact hmono
     have hupperPower :
         toReal (β := β)
@@ -373,7 +357,7 @@ theorem cexp_eq_fexp_digits_of_brackets
           bpow β ((digits β state.mantissa : ℤ) + state.exponent) := by
       simp only [toReal, bpow.add_exp]
       exact mul_le_mul_of_nonneg_right
-        (intCast_add_one_le_bpow_digits β hmPos) hstep.le
+        (intCast_add_one_le_bpow_digits β state.mantissa) hstep.le
     have hmagUpper : magnitude β x ≤
         (digits β state.mantissa : ℤ) + state.exponent := by
       apply magnitude_le_of_abs_lt_bpow β x _ hx.ne'
@@ -391,60 +375,10 @@ theorem TruncationState.scaledBrackets_of_exponent_eq
     InbetweenInt state.mantissa (scaledMantissa β fexp x) state.location := by
   rcases state with ⟨mantissa, exponent, location⟩
   have hp : 0 < bpow β exponent := bpow.pos β exponent
-  have hp0 : bpow β exponent ≠ 0 := ne_of_gt hp
   rw [scaledMantissa_eq_div, ← hexponent]
-  cases hl with
-  | exact hx =>
-      apply Inbetween.exact
-      rw [hx]
-      simp [toReal, hp0]
-  | inexact order hx hmid =>
-      apply Inbetween.inexact order
-      · constructor
-        · apply (lt_div_iff₀ hp).2
-          simpa [toReal] using hx.1
-        · apply (div_lt_iff₀ hp).2
-          simpa [toReal] using hx.2
-      · cases order with
-        | lt =>
-            rw [cmp_eq_lt_iff] at hmid ⊢
-            change x < ((mantissa : ℝ) * bpow β exponent +
-              ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2 at hmid
-            change x / bpow β exponent <
-              ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2
-            calc
-              x / bpow β exponent <
-                  (((mantissa : ℝ) * bpow β exponent +
-                    ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2) /
-                    bpow β exponent := div_lt_div_of_pos_right hmid hp
-              _ = ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2 := by
-                field_simp
-        | eq =>
-            rw [cmp_eq_eq_iff] at hmid ⊢
-            change x = ((mantissa : ℝ) * bpow β exponent +
-              ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2 at hmid
-            change x / bpow β exponent =
-              ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2
-            calc
-              x / bpow β exponent =
-                  (((mantissa : ℝ) * bpow β exponent +
-                    ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2) /
-                    bpow β exponent := congrArg (fun y => y / bpow β exponent) hmid
-              _ = ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2 := by
-                field_simp
-        | gt =>
-            rw [cmp_eq_gt_iff] at hmid ⊢
-            change ((mantissa : ℝ) * bpow β exponent +
-              ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2 < x at hmid
-            change ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2 <
-              x / bpow β exponent
-            calc
-              ((mantissa : ℝ) + ((mantissa + 1 : ℤ) : ℝ)) / 2 =
-                  (((mantissa : ℝ) * bpow β exponent +
-                    ((mantissa + 1 : ℤ) : ℝ) * bpow β exponent) / 2) /
-                    bpow β exponent := by
-                field_simp
-              _ < x / bpow β exponent := div_lt_div_of_pos_right hmid hp
+  have h := inbetween_div_of_pos hp hl
+  simp only [toReal, mul_div_cancel_right₀ _ (bpow.ne_zero β exponent)] at h
+  exact h
 
 /--
 Discard `shift` low radix digits and transfer their information into the refined location.
@@ -484,12 +418,10 @@ theorem truncateAux_remainder_bounds (β : Numerics.Radix)
 
 /-- Mantissa reconstruction after one truncation step. -/
 theorem truncateAux_mantissa_decomposition (β : Numerics.Radix)
-    (state : TruncationState) {shift : ℤ} (hshift : 0 < shift) :
+    (state : TruncationState) (shift : ℤ) :
     state.mantissa =
       state.mantissa % intPower β shift +
         intPower β shift * (truncateAux β state shift).mantissa := by
-  have hpower : intPower β shift ≠ 0 := ne_of_gt
-    (lt_trans Int.zero_lt_one (intPower_one_lt β hshift))
   simpa [truncateAux, add_comm] using
     (Int.emod_add_mul_ediv state.mantissa (intPower β shift)).symm
 
@@ -508,7 +440,7 @@ theorem truncateAux_brackets (β : Numerics.Radix) (state : TruncationState)
   have hpowerReal : (power : ℝ) = bpow β shift := by
     exact intPower_cast_eq_bpow β hshift.le
   have hrem := truncateAux_remainder_bounds β state hshift
-  have hdecomp := truncateAux_mantissa_decomposition β state hshift
+  have hdecomp := truncateAux_mantissa_decomposition β state shift
   have hdecomp' : state.mantissa = remainder + power * quotient := by
     simpa [power, quotient, remainder, truncateAux] using hdecomp
   have hstepPos : 0 < step := bpow.pos β state.exponent

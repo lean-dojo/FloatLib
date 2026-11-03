@@ -41,7 +41,7 @@ theorem UInt256.toNat_ofUInt128ShiftedLeft (value : UInt128) (shift : Nat)
   have hcomplementLt : 64 - (shift - 64) < 64 := by omega
   have hcomplement : 64 - (64 - (shift - 64)) = shift - 64 := by omega
   have hlow :=
-    shiftLeftLowBits_toNat value.lo (64 - (shift - 64)) hcomplementPos hcomplementLt
+    shiftLeftLowBits_toNat value.lo (64 - (shift - 64)) hcomplementPos
   have hmiddle :=
     shiftedPair_toNat value.lo value.hi (64 - (shift - 64)) hcomplementPos hcomplementLt
   have hhigh :=
@@ -75,22 +75,29 @@ theorem UInt256.toNat_ofUInt128ShiftedLeft (value : UInt128) (shift : Nat)
   simp only [UInt64.toNat_zero, zero_add]
   ring
 
+/-- A four-limb value below `2^192` has a zero top limb. -/
+theorem UInt256.limb3_eq_zero_of_toNat_lt (value : UInt256)
+    (hvalue : value.toNat < 2 ^ 192) :
+    value.limb3 = 0 := by
+  apply (uint64_toNat_eq_zero _).mp
+  unfold UInt256.toNat at hvalue
+  omega
+
+/-- A four-limb value below `2^128` has a zero third limb. -/
+theorem UInt256.limb2_eq_zero_of_toNat_lt (value : UInt256)
+    (hvalue : value.toNat < 2 ^ 128) :
+    value.limb2 = 0 := by
+  apply (uint64_toNat_eq_zero _).mp
+  unfold UInt256.toNat at hvalue
+  omega
+
 /-- A four-limb value below `2^128` keeps its whole value under `low128`. -/
 theorem UInt256.low128_toNat_of_lt (value : UInt256)
     (hvalue : value.toNat < 2 ^ 128) :
     value.low128.toNat = value.toNat := by
-  have hlimb2Nat : value.limb2.toNat = 0 := by
-    unfold UInt256.toNat at hvalue
-    omega
-  have hlimb3Nat : value.limb3.toNat = 0 := by
-    unfold UInt256.toNat at hvalue
-    omega
-  have hlimb2 : value.limb2 = 0 := by
-    apply UInt64.toNat_inj.mp
-    simpa using hlimb2Nat
-  have hlimb3 : value.limb3 = 0 := by
-    apply UInt64.toNat_inj.mp
-    simpa using hlimb3Nat
+  have hlimb2 := UInt256.limb2_eq_zero_of_toNat_lt value hvalue
+  have hlimb3 :=
+    UInt256.limb3_eq_zero_of_toNat_lt value (hvalue.trans (by norm_num))
   simp [UInt256.low128, UInt256.toNat, UInt128.toNat, hlimb2, hlimb3]
 
 /-- A four-limb value has mathematical value zero exactly when every limb is zero. -/
@@ -280,9 +287,8 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
         have hlow : low < 2 ^ 64 := by
           dsimp [low]
           exact value.limb0.toNat_lt
-        have hhigh : value.limb1.toNat ≠ 0 := by
-          intro hzero
-          exact h1 (UInt64.toNat_inj.mp (by simpa using hzero))
+        have hhigh : value.limb1.toNat ≠ 0 :=
+          (uint64_toNat_eq_zero _).not.mpr h1
         have hlog :=
           log2_low_add_high_mul_pow
             low value.limb1.toNat 64 hlow hhigh
@@ -298,9 +304,8 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
         have h0 := value.limb0.toNat_lt
         have h1 := value.limb1.toNat_lt
         omega
-      have hhigh : value.limb2.toNat ≠ 0 := by
-        intro hzero
-        exact h2 (UInt64.toNat_inj.mp (by simpa using hzero))
+      have hhigh : value.limb2.toNat ≠ 0 :=
+        (uint64_toNat_eq_zero _).not.mpr h2
       have hlog :=
         log2_low_add_high_mul_pow
           low value.limb2.toNat 128 hlow hhigh
@@ -319,9 +324,8 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
       have h1 := value.limb1.toNat_lt
       have h2 := value.limb2.toNat_lt
       omega
-    have hhigh : value.limb3.toNat ≠ 0 := by
-      intro hzero
-      exact h3 (UInt64.toNat_inj.mp (by simpa using hzero))
+    have hhigh : value.limb3.toNat ≠ 0 :=
+      (uint64_toNat_eq_zero _).not.mpr h3
     have hlog :=
       log2_low_add_high_mul_pow
         low value.limb3.toNat 192 hlow hhigh
@@ -335,6 +339,14 @@ theorem UInt256.toNat_lt (value : UInt256) :
   have h1 := value.limb1.toNat_lt
   have h2 := value.limb2.toNat_lt
   have h3 := value.limb3.toNat_lt
+  omega
+
+/-- The value limbs of `add256` hold the sum modulo `2^256`. -/
+theorem add256_value_toNat (x y : UInt256) :
+    (add256 x y).value.toNat = (x.toNat + y.toNat) % 2 ^ 256 := by
+  have hexact := add256_toNat x y
+  dsimp only at hexact
+  have hvalue := (add256 x y).value.toNat_lt
   omega
 
 /-- `mul128` computes the full mathematical product of its operands. -/

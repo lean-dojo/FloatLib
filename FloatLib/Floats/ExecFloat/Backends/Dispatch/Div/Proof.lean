@@ -31,7 +31,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace DivBackend
 
-/-- Compact generic division preserves the public exact-dyadic operation. -/
+/-- Compact generic division equals the exact-dyadic `Spec.div` on every input. -/
 theorem generic_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     generic x y = Spec.div x y := by
   unfold generic Spec.div
@@ -47,66 +47,59 @@ theorem generic_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
           by_cases hxZero : dx.significand = 0 <;>
             simp [hyZero, hxZero]
 
-/-- Structurally selected specialized dispatch preserves logical format-generic division. -/
-private theorem spec_div_eq_word :
-    @Spec.div = @word := by
-  funext fmt x y
-  by_cases h32 : FloatFormat.IsBinary32 fmt
-  · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+/-- A quotient that the finite kernel accepts is the specification quotient. -/
+private theorem eq_spec_of_finite {fmt : FloatFormat} {x y quotient : Model fmt}
+    (hfinite : FiniteKernel.div? x y = some quotient) : quotient = Spec.div x y := by
+  simpa [generic, FiniteKernel.divRuntime_eq, hfinite] using generic_eq_spec x y
+
+/--
+A kernel whose accepted quotients the finite kernel also returns, backed by a fallback equal to
+`Spec.div` for the inputs it declines, computes `Spec.div`.
+-/
+private theorem fallback_eq_spec {fmt : FloatFormat} {x y fallback : Model fmt}
+    {fast : Option (Model fmt)}
+    (hfast : ∀ quotient, fast = some quotient → FiniteKernel.div? x y = some quotient)
+    (hfallback : fallback = Spec.div x y) :
+    (match (generalizing := false) fast with
+      | some quotient => quotient
+      | none => fallback) = Spec.div x y := by
+  cases fast with
+  | none => exact hfallback
+  | some quotient => exact eq_spec_of_finite (hfast quotient rfl)
+
+/--
+Structurally selected specialized dispatch equals `Spec.div` for every descriptor and on every
+input, exceptional values included.
+-/
+theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
+    word x y = Spec.div x y := by
+  unfold word
+  split
+  · rename_i h32
+    have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
     subst fmt
-    simp [word, Spec.div, NativeBinary32.divFiniteWord_eq,
-      NativeBinary32.divFinite_eq, generic_eq_spec]
+    simp [Spec.div, NativeBinary32.divFiniteWord_eq, NativeBinary32.divFinite_eq,
+      generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? y <;>
       simp_all
-  · by_cases h64 : FloatFormat.IsBinary64 fmt
-    · have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
-      subst fmt
-      cases hfinite : FiniteKernel.div? x y with
-      | none =>
-          simp [word, h32, NativeBinary64.divFinite_eq_divFiniteComponents,
-            NativeBinary64.divFiniteComponents_eq, hfinite, generic_eq_spec]
-      | some quotient =>
-          have hquotient : quotient = Spec.div x y := by
-            simpa [generic, FiniteKernel.divRuntime_eq, hfinite] using
-              generic_eq_spec x y
-          simp [word, h32, NativeBinary64.divFinite_eq_divFiniteComponents,
-            NativeBinary64.divFiniteComponents_eq, hfinite, hquotient,
-            generic_eq_spec]
-    · by_cases hpair : NativePair.Eligible fmt
-      · cases hfast : NativePair.divNormal? x y with
-        | none =>
-            simp [word, h32, h64, hpair, hfast, generic_eq_spec]
-        | some quotient =>
-            have hrefines :=
-              NativePair.divNormal_refines hpair x y quotient hfast
-            have hquotient : quotient = Spec.div x y := by
-              calc
-                quotient = generic x y := by
-                  simp [generic, FiniteKernel.divRuntime_eq, hrefines]
-                _ = Spec.div x y := generic_eq_spec x y
-            simp [word, h32, h64, hpair, hfast, hquotient]
-      · by_cases heligible : NativeSmallWord.StorageEligible fmt
-        · cases hnative : NativeSmallWordDiv.divNormal? x y with
-          | none =>
-              simp [word, h32, h64, hpair, heligible, hnative,
-                generic_eq_spec]
-          | some quotient =>
-              have hrefines :=
-                NativeSmallWordDiv.divNormal_refines_of_storage
-                  heligible x y quotient hnative
-              have hquotient : quotient = Spec.div x y := by
-                calc
-                  quotient = generic x y := by
-                    simp [generic, FiniteKernel.divRuntime_eq, hrefines]
-                  _ = Spec.div x y := generic_eq_spec x y
-              simp [word, h32, h64, hpair, heligible, hnative, hquotient]
-        · simp [word, generic_eq_spec, h32, h64, hpair, heligible]
-
-/-- Structurally selected specialized dispatch preserves format-generic division. -/
-theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
-    word x y = Spec.div x y :=
-  (congrFun (congrFun (congrFun spec_div_eq_word fmt) x) y).symm
+  split
+  · rename_i h64
+    have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
+    subst fmt
+    dsimp only
+    split
+    · rename_i quotient hquotient
+      exact eq_spec_of_finite (by
+        simpa [NativeBinary64.divFinite_eq_divFiniteComponents,
+          NativeBinary64.divFiniteComponents_eq] using hquotient)
+    · exact generic_eq_spec x y
+  split
+  · exact fallback_eq_spec (NativePair.divNormal_refines ‹_› x y) (generic_eq_spec x y)
+  split
+  · exact fallback_eq_spec (NativeSmallWordDiv.divNormal_refines_of_storage ‹_› x y)
+      (generic_eq_spec x y)
+  · exact generic_eq_spec x y
 
 end DivBackend
 

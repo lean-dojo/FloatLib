@@ -92,9 +92,8 @@ elab_rules : command
             family := "P3109 binary floating-point format"
             standard :=
               "IEEE P3109 Interim Report v4.0.3, revision 34f5964 (working-group report)"
-            declarationPrefix := "FloatLib.Floats."
             representation :=
-              [ ⟨"storage", s!"exact-width BitVec {bitWidth}"⟩
+              [ ⟨"storage", s!"BitVec {bitWidth}"⟩
               , ⟨"total bits (K)", toString bitWidth⟩
               , ⟨"precision (P)", toString precision⟩
               , ⟨"signed", yesNo signed⟩
@@ -120,8 +119,7 @@ elab_rules : command
               , ⟨"default conversion", "nearest-even with no saturation request"⟩
               ]
             execution :=
-              [ ⟨"carrier", s!"ExecFloat over a descriptor-indexed BitVec {bitWidth}"⟩
-              , ⟨"projection",
+              [ ⟨"projection",
                   "direct exact-integer/rational round, saturate, encode path; no host float"⟩
               , ⟨"width policy",
                   "one parameterized implementation; no named-width dispatch branches"⟩
@@ -150,32 +148,14 @@ elab_rules : command
               ]
             theoremSurfaces :=
               [ {
-                  topic := "scaled block projection and reductions"
-                  declarations :=
-                    [ ``FloatLib.Floats.Formats.P3109.Block.decode_project_lane
-                    , ``FloatLib.Floats.Formats.P3109.Block.decode_convertFrom_lane
-                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_finite
-                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_zero
-                    , ``FloatLib.Floats.Formats.P3109.Block.sumExact_finite
-                    , ``FloatLib.Floats.Formats.P3109.Block.productExact_finite
-                    , ``FloatLib.Floats.Formats.P3109.Block.dotExact_finite
-                    , ``FloatLib.Floats.Formats.P3109.Block.decode_dotProduct
-                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.normalize_finite_real
-                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.rounded_eq_real
-                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.decode_project
-                    ]
-                  applicability := .verifiedForType
-                  scope :=
-                    "nonempty independently scaled blocks with exact source decoders; " ++
-                    "one destination projection after complete exact evaluation"
-                }
-              , {
                   topic := "exact representation and checked encoding"
                   declarations :=
                     [ ``FloatLib.Floats.ExecFloat.P3109.decode_eq_format_decode
                     , ``FloatLib.Floats.Formats.P3109.Format.encodeDatumNat_decode
                     , ``FloatLib.Floats.Formats.P3109.Format.encode?_decode
                     , ``FloatLib.Floats.Formats.P3109.Format.sameDatum_decode_of_encode?_eq_some
+                    , ``FloatLib.Floats.Formats.P3109.Format.encode?_eq_some_iff
+                    , ``FloatLib.Floats.ExecFloat.P3109.decode_of_ofFiniteFields?_eq_some
                     ]
                   applicability := .verifiedForType
                   scope := "every code and every successfully checked datum"
@@ -328,6 +308,26 @@ elab_rules : command
                   applicability := .verifiedForType
                   scope :=
                     "all exact-rational finite, infinity, and exceptional observations"
+                }
+              , {
+                  topic := "scaled block projection and reductions"
+                  declarations :=
+                    [ ``FloatLib.Floats.Formats.P3109.Block.decode_project_lane
+                    , ``FloatLib.Floats.Formats.P3109.Block.decode_convertFrom_lane
+                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.normalize_zero
+                    , ``FloatLib.Floats.Formats.P3109.Block.sumExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.productExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.dotExact_finite
+                    , ``FloatLib.Floats.Formats.P3109.Block.decode_dotProduct
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.normalize_finite_real
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.rounded_eq_real
+                    , ``FloatLib.Floats.Formats.P3109.BlockRoot.decode_project
+                    ]
+                  applicability := .verifiedForType
+                  scope :=
+                    "nonempty independently scaled blocks with exact source decoders; " ++
+                    "one destination projection after complete exact evaluation"
                 }
               ]
             nonclaims :=

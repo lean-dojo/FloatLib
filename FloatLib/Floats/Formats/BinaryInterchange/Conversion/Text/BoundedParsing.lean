@@ -57,7 +57,7 @@ def readTextInput (input : String) : Except ParseError TextValue :=
 /-- `TextParser.run` is this scan followed by its numerical conversion. -/
 theorem TextParser.run_eq_bind_readTextInput (fmt : FloatFormat) (mode : IEEERoundingMode)
     (input : String) :
-    run fmt mode input = (readTextInput input).bind (convertText fmt mode) := by
+    run fmt mode input = (readTextInput input).bind (convertText fmt mode input) := by
   unfold run readTextInput
   cases readText input with
   | some value => rfl
@@ -86,7 +86,7 @@ Implementation core with resource limits, keeping the complete IEEE status and t
 -/
 def TextParser.runBounded (fmt : FloatFormat) (mode : IEEERoundingMode)
     (limits : ParseLimits) (input : String) : Except ParseError (IEEEOutcome fmt) :=
-  (readTextWithLimits limits input).bind (convertText fmt mode)
+  (readTextWithLimits limits input).bind (convertText fmt mode input)
 
 /-- A successful bounded scan is exactly an original scan satisfying both resource limits. -/
 theorem readTextWithLimits_eq_ok_iff (limits : ParseLimits) (input : String) (value : TextValue) :
@@ -155,7 +155,7 @@ theorem TextParser.runBounded_eq_ok_iff (fmt : FloatFormat) (mode : IEEERounding
       input.utf8ByteSize ≤ limits.maxBytes ∧
       ∃ value, readTextInput input = .ok value ∧
         value.exponentMagnitude ≤ limits.maxExponent ∧
-        convertText fmt mode value = .ok outcome := by
+        convertText fmt mode input value = .ok outcome := by
   constructor
   · intro hparse
     cases hread : readTextWithLimits limits input with
@@ -210,17 +210,17 @@ def parse (fmt : FloatFormat) (input : String)
         match limits with
         | some bounds => readTextWithLimits bounds input
         | none => readTextInput input
-      scanned.bind (Internal.Value.convertText fmt mode)
+      scanned.bind (Internal.Value.convertText fmt mode input)
 
 /-- With limits and status disabled, parsing returns the exact core's value. -/
 @[simp] theorem parse_eq_run (fmt : FloatFormat) (input : String) (mode : IEEERoundingMode) :
     parse fmt input (mode := mode) =
       (TextParser.run fmt mode input).map (·.value) := by
   rw [TextParser.run_eq_bind_readTextInput]
-  change (readTextInput input).bind (Internal.Value.convertText fmt mode) = _
+  change (readTextInput input).bind (Internal.Value.convertText fmt mode input) = _
   cases readTextInput input with
   | error error => rfl
-  | ok value => exact Internal.Value.convertText_eq_map fmt mode value
+  | ok value => exact Internal.Value.convertText_eq_map fmt mode input value
 
 /-- Status-enabled parsing without limits returns the complete exact core outcome. -/
 @[simp] theorem parse_status_eq_run (fmt : FloatFormat) (input : String)
@@ -232,11 +232,11 @@ def parse (fmt : FloatFormat) (input : String)
     (mode : IEEERoundingMode) (limits : ParseLimits) :
     parse fmt input (mode := mode) (limits := some limits) =
       (TextParser.runBounded fmt mode limits input).map (·.value) := by
-  change (readTextWithLimits limits input).bind (Internal.Value.convertText fmt mode) =
-    ((readTextWithLimits limits input).bind (convertText fmt mode)).map (·.value)
+  change (readTextWithLimits limits input).bind (Internal.Value.convertText fmt mode input) =
+    ((readTextWithLimits limits input).bind (convertText fmt mode input)).map (·.value)
   cases readTextWithLimits limits input with
   | error error => rfl
-  | ok value => exact Internal.Value.convertText_eq_map fmt mode value
+  | ok value => exact Internal.Value.convertText_eq_map fmt mode input value
 
 /-- With limits and status enabled, parsing returns the complete bounded core outcome. -/
 @[simp] theorem parse_limits_status_eq_runBounded (fmt : FloatFormat) (input : String)

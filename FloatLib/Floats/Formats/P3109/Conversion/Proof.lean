@@ -14,7 +14,12 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 # P3109 conversion proofs
 
 These theorems expose the executable equations, connect conversion output to the proved
-round-then-saturate projection semantics, and discharge the declared quantizer contract.
+round-then-saturate projection semantics, and show that `run` meets the declared quantizer
+contract `spec`. That contract names `run`'s word and its `status` (`spec_iff_eq_run`), so the word
+and flag clauses hold by definition and only the decoded-datum clause is checked against the
+projection semantics. Of the flags, overflow has a separate statement in exact rational terms
+(`roundedExceedsFiniteRange_eq_decide`, `status_overflow_implies_outside`); the other flags are
+specified only by the tests that `status` documents.
 -/
 
 @[expose] public section
@@ -75,7 +80,8 @@ theorem sameDatum_decode_run_value
       (format.projectRatValue policy input) :=
   ExecFloat.P3109.decode_projectRat input policy.rounding policy.saturation
 
-/-- `run` meets the quantizer contract `spec`: word, status, and decoded datum. -/
+/-- `run` meets the quantizer contract `spec`. Its word and status clauses are `run`'s own, so they
+hold by `rfl`; the decoded datum is the round-then-saturate datum by `decode_projectRat`. -/
 theorem implements_run :
     Quantization.Spec.Implements
       (spec (format := format))
@@ -114,6 +120,12 @@ theorem sameDatum_of_spec
     FloatLib.Floats.ExecFloat.ExactDecoder.run value =
       decodeRat value :=
   rfl
+
+/-- The finite part of the conversion decoder is the value's rational reading `toRat?`. -/
+@[simp, grind =] theorem finite?_decodeRat (value : ExecFloat.P3109 format) :
+    (decodeRat value).finite? = ExecFloat.P3109.toRat? value := by
+  unfold decodeRat ExecFloat.P3109.toRat?
+  cases ExecFloat.P3109.decode value <;> rfl
 
 end Conversion
 end ExecFloat.P3109

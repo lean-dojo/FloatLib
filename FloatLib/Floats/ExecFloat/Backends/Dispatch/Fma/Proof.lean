@@ -25,7 +25,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace FmaBackend
 
-/-- Final structurally selected dispatch preserves fused multiply-add. -/
+/--
+Final structurally selected dispatch equals `Spec.fma` for every descriptor and on every input,
+exceptional values included.
+-/
 theorem dispatch_eq_spec {fmt : FloatFormat} (x y z : Model fmt) :
     dispatch x y z = Spec.fma x y z := by
   by_cases hfixed : FloatFormat.IsBinary32 fmt ∨ FloatFormat.IsBinary64 fmt
@@ -35,12 +38,7 @@ theorem dispatch_eq_spec {fmt : FloatFormat} (x y z : Model fmt) :
     | none =>
         simp [dispatch, hfixed, hpair, NativePair.fmaFinite_eq hpair, hfinite, word_eq_spec]
     | some result =>
-        have hresult : result = Spec.fma x y z := by
-          calc
-            result = generic x y z := by
-              simp [generic, FiniteKernel.fmaRuntimeFlat_eq,
-                FiniteKernel.fmaRuntime_eq, hfinite]
-            _ = Spec.fma x y z := generic_eq_spec x y z
+        have hresult := eq_spec_of_finite hfinite
         simp [dispatch, hfixed, hpair, NativePair.fmaFinite_eq hpair, hfinite, hresult]
   · simp [dispatch, hfixed, hpair, word_eq_spec]
 

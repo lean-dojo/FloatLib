@@ -22,20 +22,25 @@ squaring equality.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
+/-- On the grid `sqrtQuantum` selects, the rounded square-root coefficient is at most the
+coefficient bound, so only a carry can reach `10 ^ precision`. -/
 theorem sqrtRound_le_coefficientBound (f : Format) (mode : RoundingMode)
     {x : ℚ} (hx : 0 ≤ x) :
     mode.sqrtRound (x / (10 : ℚ) ^ (2 * sqrtQuantum f x)) ≤ f.coefficientBound := by
   have hu : 0 < (10 : ℚ) ^ (2 * sqrtQuantum f x) := zpow_pos (by norm_num) _
   have hf : ⌊x / (10 : ℚ) ^ (2 * sqrtQuantum f x)⌋₊ < f.coefficientBound ^ 2 :=
     (Nat.floor_lt (div_nonneg hx hu.le)).mpr (by
-      exact_mod_cast div_sqrtQuantum_lt f hx)
+      exact_mod_cast div_sqrtQuantum_lt f x)
   have hs := Nat.sqrt_lt'.mpr hf
   exact (mode.sqrtRound_le_floor_add_one _).trans (by unfold sqrtFloor; omega)
 
+/-- After the power-of-ten carry, the rounded square-root coefficient fits the format's precision.
+-/
 theorem sqrtPair_coefficient_lt (f : Format) (mode : RoundingMode)
     {x : ℚ} (hx : 0 ≤ x) : (sqrtPair f mode x).1 < f.coefficientBound := by
   exact f.carry_coefficient_lt (sqrtRound_le_coefficientBound f mode hx) _
 
+/-- The quantum of a rounded square root is never below the format's least quantum. -/
 theorem sqrtPair_quantum_ge_min (f : Format) (mode : RoundingMode) (x : ℚ) :
     f.minQuantum ≤ (sqrtPair f mode x).2 := by
   exact (sqrtQuantum_ge_min f x).trans (f.le_carry_quantum _ _)
@@ -47,6 +52,8 @@ theorem sqrtPair_value (f : Format) (mode : RoundingMode) (x : ℚ) :
         (10 : ℚ) ^ sqrtQuantum f x := by
   exact Numerics.RadixText.carry_value 10 (by decide) _ _ _
 
+/-- For a nonnegative radicand, the square-root rounder delivers a valid datum of the format,
+overflow results included. -/
 theorem sqrtMagnitude_valid (f : Format) (mode : RoundingMode)
     {x : ℚ} (hx : 0 ≤ x) (preferred : Int) :
     (sqrtMagnitude f mode x preferred).value.Valid f := by
@@ -64,6 +71,8 @@ theorem sqrtMagnitude_valid (f : Format) (mode : RoundingMode)
     · exact hv
     · exact preferredCohort_valid f false _ _ _ hv
 
+/-- Every square root, including NaN, invalid, signed-zero and infinite results, is a valid datum of
+the format. -/
 theorem Arithmetic.sqrt_valid (f : Format) (mode : RoundingMode) (x : Datum) :
     (sqrt f mode x).value.Valid f := by
   cases x with
@@ -80,12 +89,27 @@ theorem Arithmetic.sqrt_valid (f : Format) (mode : RoundingMode) (x : Datum) :
       · exact sqrtMagnitude_valid f mode
           (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le) _
 
+/-- The square-root rounder raises overflow exactly when the rounded quantum exceeds the format's
+largest quantum. -/
 theorem sqrtMagnitude_overflow_iff (f : Format) (mode : RoundingMode)
     (x : ℚ) (preferred : Int) :
     (sqrtMagnitude f mode x preferred).status.overflow = true ↔
       f.maxQuantum < (sqrtPair f mode x).2 := by
   by_cases h : f.maxQuantum < (sqrtPair f mode x).2 <;> simp [sqrtMagnitude, h]
 
+/-- Without overflow, the quantum of the rounded square root is at most the format's largest
+quantum. -/
+theorem sqrtMagnitude_quantum_le_of_no_overflow (f : Format) (mode : RoundingMode)
+    (x : ℚ) (preferred : Int)
+    (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
+    (sqrtPair f mode x).2 ≤ f.maxQuantum := by
+  apply le_of_not_gt
+  intro h
+  have ht := (sqrtMagnitude_overflow_iff f mode x preferred).mpr h
+  simp [hfinite] at ht
+
+/-- Without overflow, the delivered square root is finite and has the value of the grid-rounded
+root, whichever cohort member is selected. -/
 theorem sqrtMagnitude_value (f : Format) (mode : RoundingMode)
     (x : ℚ) (preferred : Int) (hq : (sqrtPair f mode x).2 ≤ f.maxQuantum) :
     (sqrtMagnitude f mode x preferred).value.toRat? =
@@ -109,31 +133,47 @@ theorem sqrt_scaled (x : ℚ) (q : Int) :
   rw [Rat.cast_div, Rat.cast_zpow, Rat.cast_ofNat, he,
     Real.sqrt_div' _ (sq_nonneg _), Real.sqrt_sq hu.le, div_mul_cancel₀ _ hu.ne']
 
+/-- An overflowing square root of a nonnegative rational has an exact root strictly above the
+greatest finite magnitude. -/
+theorem maxFinite_lt_sqrt_of_overflow (f : Format) (mode : RoundingMode) {x : ℚ} (hx : 0 ≤ x)
+    (h : f.maxQuantum < (sqrtPair f mode x).2) :
+    ((f.coefficientBound - 1 : Nat) : ℝ) * (10 : ℝ) ^ f.maxQuantum < Real.sqrt (x : ℝ) := by
+  have hu : (0 : ℚ) < (10 : ℚ) ^ (2 * sqrtQuantum f x) := zpow_pos (by norm_num) _
+  have hlt := f.maxFinite_lt_of_carry_overflow
+    (mode.sqrtRound (x / (10 : ℚ) ^ (2 * sqrtQuantum f x))) (sqrtQuantum f x)
+    (Real.sqrt ((x / (10 : ℚ) ^ (2 * sqrtQuantum f x) : ℚ) : ℝ))
+    (sqrtRound_error_lt_one mode (div_nonneg hx hu.le))
+    (fun hq => Real.le_sqrt_of_sq_le
+      (by exact_mod_cast payloadBound_sq_le_div_sqrtQuantum f hq)) h
+  rwa [sqrt_scaled] at hlt
+
+/-- Without overflow, the delivered square root is finite, and its error is the error of the integer
+square-root rounding at the scaled radicand, times the grid unit. -/
+theorem sqrtMagnitude_value_sub_sqrt (f : Format) (mode : RoundingMode) (x : ℚ)
+    (preferred : Int)
+    (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
+    ∃ value : ℚ, (sqrtMagnitude f mode x preferred).value.toRat? = some value ∧
+      (value : ℝ) - Real.sqrt (x : ℝ) =
+        ((mode.sqrtRound (x / (10 : ℚ) ^ (2 * sqrtQuantum f x)) : ℝ) -
+          Real.sqrt ((x / (10 : ℚ) ^ (2 * sqrtQuantum f x) : ℚ) : ℝ)) *
+            (10 : ℝ) ^ sqrtQuantum f x := by
+  have hq := sqrtMagnitude_quantum_le_of_no_overflow f mode x preferred hfinite
+  refine ⟨_, sqrtMagnitude_value f mode x preferred hq, ?_⟩
+  simp only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat]
+  rw [sub_mul, sqrt_scaled]
+
 /-- The actual returned datum is within half a grid unit of the mathematical root. -/
 theorem sqrtMagnitude_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     {x : ℚ} (hx : 0 ≤ x) (preferred : Int)
     (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
     ∃ value : ℚ, (sqrtMagnitude f mode x preferred).value.toRat? = some value ∧
       |(value : ℝ) - Real.sqrt (x : ℝ)| ≤ (10 : ℝ) ^ sqrtQuantum f x / 2 := by
-  have hq : (sqrtPair f mode x).2 ≤ f.maxQuantum := by
-    apply le_of_not_gt
-    intro h
-    have ht := (sqrtMagnitude_overflow_iff f mode x preferred).mpr h
-    simp [hfinite] at ht
-  refine ⟨_, sqrtMagnitude_value f mode x preferred hq, ?_⟩
-  let q := sqrtQuantum f x
-  have hu : 0 < (10 : ℝ) ^ q := zpow_pos (by norm_num) _
-  have hx' : 0 ≤ x / (10 : ℚ) ^ (2 * q) :=
-    div_nonneg hx (zpow_pos (by norm_num) _).le
-  have h := sqrtRound_error_le_half mode hm hx'
-  have he :
-      (((mode.sqrtRound (x / (10 : ℚ) ^ (2 * q)) : Nat) : ℝ) * (10 : ℝ) ^ q -
-          Real.sqrt (x : ℝ)) =
-        (((mode.sqrtRound (x / (10 : ℚ) ^ (2 * q)) : Nat) : ℝ) -
-          Real.sqrt ((x / (10 : ℚ) ^ (2 * q) : ℚ) : ℝ)) * (10 : ℝ) ^ q := by
-    rw [sub_mul, sqrt_scaled]
-  simp only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat]
+  obtain ⟨value, hv, he⟩ := sqrtMagnitude_value_sub_sqrt f mode x preferred hfinite
+  refine ⟨value, hv, ?_⟩
+  have hu : 0 < (10 : ℝ) ^ sqrtQuantum f x := zpow_pos (by norm_num) _
+  have h := sqrtRound_error_le_half mode hm
+    (div_nonneg hx (zpow_pos (by norm_num : (0 : ℚ) < 10) (2 * sqrtQuantum f x)).le)
   rw [he, abs_mul, abs_of_pos hu]
   exact (mul_le_mul_of_nonneg_right h hu.le).trans_eq (by ring)
 

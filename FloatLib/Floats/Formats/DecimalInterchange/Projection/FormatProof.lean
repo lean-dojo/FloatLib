@@ -26,16 +26,19 @@ theorem payloadBound_eq (f : Format) : f.payloadBound = 10 ^ (f.precision - 1) :
     ← f.coefficientBound_eq]
   simp [coefficientBound]
 
+/-- A NaN payload has one decimal digit fewer than a finite coefficient. -/
 theorem payloadBound_lt_coefficientBound (f : Format) :
     f.payloadBound < f.coefficientBound := by
   have h := f.payloadBound_pos
   dsimp [coefficientBound]
   omega
 
+/-- The largest coefficient has a full leading digit: it is at least the payload bound. -/
 theorem payloadBound_le_coefficientBound_sub_one (f : Format) :
     f.payloadBound ≤ f.coefficientBound - 1 := by
   exact Nat.le_sub_one_of_lt f.payloadBound_lt_coefficientBound
 
+/-- The coefficient bound exceeds one, so every layout represents the nonzero coefficient one. -/
 theorem one_lt_coefficientBound (f : Format) : 1 < f.coefficientBound := by
   have h := f.payloadBound_pos
   dsimp [coefficientBound]

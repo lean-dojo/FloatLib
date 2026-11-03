@@ -21,7 +21,15 @@ raw kernels remain monomorphic so their native calling conventions are unchanged
 
 namespace FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords
 
-/-- Arithmetic view of one primitive unsigned carrier. -/
+/--
+Arithmetic view of one primitive unsigned carrier.
+
+`capacity` is the width that narrowing and natural-number construction reduce modulo. The fields
+do not bound every value of `α` below `2 ^ capacity`; they only bound the results of `narrow` and
+`ofNat`, and `toNat_toUInt64` bounds every value below `2 ^ 64`. The four built-in carriers do
+store exactly `capacity` bits. The kernels never need that bound: each input carries its own
+posit range certificate `toNat value < format.modulus`.
+-/
 structure Carrier (α : Type) (capacity : Nat) where
   /-- Observe the encoded natural number. -/
   toNat : α → Nat

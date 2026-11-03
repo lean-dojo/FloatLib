@@ -89,15 +89,24 @@ def floatToIntSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt) : Fix
   | .infinity negative => if negative then FixedInt.minCode width else FixedInt.maxCode width
   | .nan _ _ _ => FixedInt.ofInt 0
 
-/-- The native policy is the saturating integer encoder applied to Lean's model result. -/
+/--
+The native policy is the saturating integer encoder applied to Lean's model result. At width zero
+both sides are the unique empty word.
+-/
 theorem floatToIntSaturating_eq_ofIntSaturating_toModel
-    {fmt : FloatFormat} {width : Nat} (hfmt : fmt.isIEEE = true) (hwidth : 0 < width)
+    {fmt : FloatFormat} {width : Nat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) :
     floatToIntSaturating width x =
       FixedInt.ofIntSaturating
         ((Model.toModel x).toInt (FixedInt.minValue width) (FixedInt.maxValue width)) := by
+  rcases Nat.eq_zero_or_pos width with rfl | hwidth
+  · cases floatToIntSaturating 0 x
+    cases FixedInt.ofIntSaturating (width := 0)
+      ((Model.toModel x).toInt (FixedInt.minValue 0) (FixedInt.maxValue 0))
+    congr 1
+    exact Subsingleton.elim _ _
   rw [Model.toInt_toModel_eq hfmt]
-  have hbounds := FixedInt.minValue_le_maxValue hwidth
+  have hbounds := FixedInt.minValue_le_maxValue (width := width)
   have hlower : FixedInt.InRange width (FixedInt.minValue width) := ⟨le_rfl, hbounds⟩
   have hupper : FixedInt.InRange width (FixedInt.maxValue width) := ⟨hbounds, le_rfl⟩
   have hzero : FixedInt.InRange width 0 := by
@@ -179,12 +188,12 @@ end FloatLib.Floats.Formats.BinaryInterchange.ExecDType
 
 namespace FloatLib.Numerics.Representations.FixedInt
 
-private theorem ofIntSaturating_eq_ite {width : Nat} (hwidth : 0 < width) (n : Int) :
+private theorem ofIntSaturating_eq_ite {width : Nat} (n : Int) :
     ofIntSaturating (width := width) n =
       if minValue width ≤ n then
         if n ≤ maxValue width then ofInt n else maxCode width
       else minCode width := by
-  have hbounds := minValue_le_maxValue hwidth
+  have hbounds := minValue_le_maxValue (width := width)
   split <;> rename_i hlower
   · split <;> rename_i hupper
     · simp [ofIntSaturating, clamp_eq_self (show InRange width n from ⟨hlower, hupper⟩)]
@@ -197,38 +206,51 @@ private theorem ofIntSaturating_eq_ite {width : Nat} (hwidth : 0 < width) (n : I
 
 private theorem int8_ofIntClamp (n : Int) :
     (⟨(Int8.ofIntClamp n).toBitVec⟩ : FixedInt 8) = ofIntSaturating n := by
-  rw [ofIntSaturating_eq_ite (by decide)]
+  rw [ofIntSaturating_eq_ite]
   unfold Int8.ofIntClamp
   split_ifs <;> first | rfl | contradiction
 
 private theorem int16_ofIntClamp (n : Int) :
     (⟨(Int16.ofIntClamp n).toBitVec⟩ : FixedInt 16) = ofIntSaturating n := by
-  rw [ofIntSaturating_eq_ite (by decide)]
+  rw [ofIntSaturating_eq_ite]
   unfold Int16.ofIntClamp
   split_ifs <;> first | rfl | contradiction
 
 private theorem int32_ofIntClamp (n : Int) :
     (⟨(Int32.ofIntClamp n).toBitVec⟩ : FixedInt 32) = ofIntSaturating n := by
-  rw [ofIntSaturating_eq_ite (by decide)]
+  rw [ofIntSaturating_eq_ite]
   unfold Int32.ofIntClamp
   split_ifs <;> first | rfl | contradiction
 
 private theorem int64_ofIntClamp (n : Int) :
     (⟨(Int64.ofIntClamp n).toBitVec⟩ : FixedInt 64) = ofIntSaturating n := by
-  rw [ofIntSaturating_eq_ite (by decide)]
+  rw [ofIntSaturating_eq_ite]
   unfold Int64.ofIntClamp
   split_ifs <;> first | rfl | contradiction
 
 private theorem iSize_ofIntClamp (n : Int) :
     (⟨(ISize.ofIntClamp n).toBitVec⟩ : FixedInt System.Platform.numBits) =
       ofIntSaturating n := by
-  rw [ofIntSaturating_eq_ite (by cases System.Platform.numBits_eq <;> omega)]
+  rw [ofIntSaturating_eq_ite]
   unfold ISize.ofIntClamp
   simp only [minValue_eq (width := System.Platform.numBits)
       (by cases System.Platform.numBits_eq <;> omega), maxValue_eq,
     ISize.toInt_minValue, ISize.toInt_maxValue]
   split_ifs <;> simp only [ISize.toBitVec_ofIntLE, ISize.toBitVec_minValue,
     ISize.toBitVec_maxValue] <;> rfl
+
+/--
+Lean's platform-size clamp at the `ISize` bounds is FloatLib saturation at the matching `FixedInt`
+bounds, for any conversion `f` that takes its bounds as arguments.
+-/
+private theorem iSize_ofIntClamp_bounds (f : Int → Int → Int) :
+    (⟨(ISize.ofIntClamp (f ISize.minValue.toInt ISize.maxValue.toInt)).toBitVec⟩ :
+        FixedInt System.Platform.numBits) =
+      ofIntSaturating
+        (f (minValue System.Platform.numBits) (maxValue System.Platform.numBits)) := by
+  rw [minValue_eq (by cases System.Platform.numBits_eq <;> omega),
+    maxValue_eq, ← ISize.toInt_minValue, ← ISize.toInt_maxValue]
+  exact iSize_ofIntClamp _
 
 end FloatLib.Numerics.Representations.FixedInt
 
@@ -241,71 +263,63 @@ open Numerics.Representations
 theorem floatToInt8_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
       ExecDType.floatToIntSaturating 8 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary64 to `Int16` uses the shared signed conversion policy. -/
 theorem floatToInt16_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
       ExecDType.floatToIntSaturating 16 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary64 to `Int32` uses the shared signed conversion policy. -/
 theorem floatToInt32_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
       ExecDType.floatToIntSaturating 32 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary64 to `Int64` uses the shared signed conversion policy. -/
 theorem floatToInt64_eq_floatToIntSaturating (x : Float) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
       ExecDType.floatToIntSaturating 64 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary64 to `ISize` saturates to the platform's signed interval. -/
 theorem floatToISize_eq_floatToIntSaturating (x : Float) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
       ExecDType.floatToIntSaturating System.Platform.numBits (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)
-    (by cases System.Platform.numBits_eq <;> omega)]
-  change (⟨(ISize.ofIntClamp
-      (x.toModel.unpack.toInt ISize.minValue.toInt ISize.maxValue.toInt)).toBitVec⟩ :
-        FixedInt System.Platform.numBits) =
-    FixedInt.ofIntSaturating
-      (x.toModel.unpack.toInt (FixedInt.minValue _) (FixedInt.maxValue _))
-  rw [FixedInt.minValue_eq (by cases System.Platform.numBits_eq <;> omega),
-    FixedInt.maxValue_eq, ← ISize.toInt_minValue, ← ISize.toInt_maxValue]
-  exact FixedInt.iSize_ofIntClamp _
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+  exact FixedInt.iSize_ofIntClamp_bounds x.toModel.unpack.toInt
 
 /-- Native binary32 to `Int8` uses the shared toward-zero, saturation, and NaN-to-zero policy. -/
 theorem float32ToInt8_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
       ExecDType.floatToIntSaturating 8 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary32 to `Int16` uses the shared signed conversion policy. -/
 theorem float32ToInt16_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
       ExecDType.floatToIntSaturating 16 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary32 to `Int32` uses the shared signed conversion policy. -/
 theorem float32ToInt32_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
       ExecDType.floatToIntSaturating 32 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary32 to `Int64` uses the shared signed conversion policy. -/
 theorem float32ToInt64_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
       ExecDType.floatToIntSaturating 64 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide) (by decide)]
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary32 to `ISize` saturates to the platform's signed interval. -/
@@ -313,15 +327,7 @@ theorem float32ToISize_eq_floatToIntSaturating (x : Float32) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
       ExecDType.floatToIntSaturating System.Platform.numBits
         (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)
-    (by cases System.Platform.numBits_eq <;> omega)]
-  change (⟨(ISize.ofIntClamp
-      (x.toModel.unpack.toInt ISize.minValue.toInt ISize.maxValue.toInt)).toBitVec⟩ :
-        FixedInt System.Platform.numBits) =
-    FixedInt.ofIntSaturating
-      (x.toModel.unpack.toInt (FixedInt.minValue _) (FixedInt.maxValue _))
-  rw [FixedInt.minValue_eq (by cases System.Platform.numBits_eq <;> omega),
-    FixedInt.maxValue_eq, ← ISize.toInt_minValue, ← ISize.toInt_maxValue]
-  exact FixedInt.iSize_ofIntClamp _
+  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+  exact FixedInt.iSize_ofIntClamp_bounds x.toModel.unpack.toInt
 
 end FloatLib.Floats.ExecFloat.Binary

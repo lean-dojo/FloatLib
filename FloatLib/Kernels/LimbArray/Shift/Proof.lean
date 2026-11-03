@@ -107,33 +107,16 @@ zero above it. -/
 theorem limb_shiftLeft (v : LimbArray) (k i : Nat) :
     (shiftLeft v k).limb i =
       if i < v.size + k / 32 + 1 then shiftLeftLimb v (k / 32) (k % 32) i else 0 := by
-  by_cases hi : i < v.size + k / 32 + 1
-  · have hi' : i < (shiftLeft v k).limbs.size := by
-      change i < (shiftLeft v k).size
-      rw [size_shiftLeft]
-      exact hi
-    rw [limb_eq_getElem _ hi', ite_eq_left hi]
-    simp [shiftLeft]
-  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), ite_eq_right hi]
+  simp only [shiftLeft, limb_ofFn, dite_eq_ite]
 
 /-- The left shift multiplies the value by `2^k`. -/
 @[simp, grind =] theorem toNat_shiftLeft (v : LimbArray) (k : Nat) : toNat (shiftLeft v k) = toNat v * 2 ^ k := by
-  apply Nat.eq_of_testBit_eq
-  intro n
-  rw [Nat.testBit_mul_two_pow]
-  have hn : n % 32 < 32 := Nat.mod_lt _ (by decide)
-  have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
+  refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
+  rw [Nat.testBit_mul_two_pow, limb_shiftLeft]
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
-  rw [← hdecomp, ← limb_testBit _ _ _ hn, limb_shiftLeft]
-  by_cases hi : n / 32 < v.size + k / 32 + 1
-  · rw [ite_eq_left hi, shiftLeftLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
-  · rw [ite_eq_right hi]
-    have hbig : 32 * v.size ≤ 32 * (n / 32) + n % 32 - k := by omega
-    have hfalse : (toNat v).testBit (32 * (n / 32) + n % 32 - k) = false := by
-      apply Nat.testBit_lt_two_pow
-      exact lt_of_lt_of_le (toNat_lt_two_pow_of_size_le (Nat.le_refl _))
-        (Nat.pow_le_pow_right (by decide) hbig)
-    rw [hfalse]
+  by_cases hi : i < v.size + k / 32 + 1
+  · rw [ite_eq_left hi, shiftLeftLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hj, hk]
+  · rw [ite_eq_right hi, testBit_toNat_eq_false_of_size_le v (by omega)]
     simp
 
 /-! ## Right shift -/
@@ -180,33 +163,16 @@ zero above it. -/
 theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
     (shiftRight v k).limb i =
       if i < v.size then shiftRightLimb v (k / 32) (k % 32) i else 0 := by
-  by_cases hi : i < v.size
-  · have hi' : i < (shiftRight v k).limbs.size := by
-      change i < (shiftRight v k).size
-      rw [size_shiftRight]
-      exact hi
-    rw [limb_eq_getElem _ hi', ite_eq_left hi]
-    simp [shiftRight]
-  · rw [limb_eq_zero_of_size_le _ (by simpa using hi), ite_eq_right hi]
+  simp only [shiftRight, limb_ofFn, dite_eq_ite]
 
 /-- The right shift divides the value by `2^k`. -/
 @[simp, grind =] theorem toNat_shiftRight (v : LimbArray) (k : Nat) : toNat (shiftRight v k) = toNat v / 2 ^ k := by
-  apply Nat.eq_of_testBit_eq
-  intro n
-  rw [Nat.testBit_div_two_pow]
-  have hn : n % 32 < 32 := Nat.mod_lt _ (by decide)
-  have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
+  refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
+  rw [Nat.testBit_div_two_pow, limb_shiftRight]
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
-  rw [← hdecomp, ← limb_testBit _ _ _ hn, limb_shiftRight]
-  by_cases hi : n / 32 < v.size
-  · rw [ite_eq_left hi, shiftRightLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hn, hk]
-  · rw [ite_eq_right hi]
-    have hbig : 32 * v.size ≤ 32 * (n / 32) + n % 32 + k := by omega
-    have hfalse : (toNat v).testBit (32 * (n / 32) + n % 32 + k) = false := by
-      apply Nat.testBit_lt_two_pow
-      exact lt_of_lt_of_le (toNat_lt_two_pow_of_size_le (Nat.le_refl _))
-        (Nat.pow_le_pow_right (by decide) hbig)
-    rw [hfalse]
+  by_cases hi : i < v.size
+  · rw [ite_eq_left hi, shiftRightLimb_testBit v _ _ _ _ (Nat.mod_lt _ (by decide)) hj, hk]
+  · rw [ite_eq_right hi, testBit_toNat_eq_false_of_size_le v (by omega)]
     simp
 
 /-! ## Nearest-even rounding -/
@@ -259,7 +225,7 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
           calc
             2 = 2 ^ 1 := (pow_one 2).symm
             _ ≤ 2 ^ shift := Nat.pow_le_pow_right (by decide) hpos) (by decide)
-      rw [toNat_addAt _ _ _ (by rw [size_shiftRight]; omega)]
+      rw [toNat_addAt]
       · rw [toNat_shiftRight]
         simp
       · rw [size_shiftRight, toNat_shiftRight]

@@ -104,19 +104,17 @@ theorem isQNaN_eq_nan_and_not_signaling (x : Model fmt) :
     cases hn : IEEE.isNaN x <;> simp [isNaN, he, hn]
   rfl
 
-/-- Every signaling NaN is a NaN. Non-IEEE policies have no signaling NaNs. -/
-theorem isNaN_of_isSNaN {x : Model fmt} (hx : isSNaN x = true) :
-    isNaN x = true := by
-  cases hn : isNaN x
-  · have := isSNaN_eq_false_of_isNaN_eq_false x hn
-    simp [hx] at this
-  · rfl
-
 /-- Every exact-width binary datum is canonical, including every NaN payload. -/
 @[simp] theorem isCanonical_eq_true (x : Model fmt) : isCanonical x = true := rfl
 
-/-- Canonical classification agrees with exact reconstruction of all stored fields.
-This reconstruction preserves signaling bits and payloads as well as finite data. -/
+/--
+Canonicality agrees with exact reconstruction of all stored fields, which preserves signaling bits
+and payloads as well as finite data.
+
+Both sides hold for every word (`isCanonical_eq_true` and `ofFields_signBit_expField_fracField`), so
+this is no characterization of a restrictive predicate: it records why the constant predicate is
+right, since no word is lost by repacking its fields.
+-/
 theorem isCanonical_iff_fields_roundtrip (x : Model fmt) :
     isCanonical x = true ↔ ofFields fmt (signBit x) (expField x) (fracField x) = x := by
   simp [ofFields_signBit_expField_fracField]

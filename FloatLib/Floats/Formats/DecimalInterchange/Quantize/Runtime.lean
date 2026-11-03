@@ -32,7 +32,7 @@ def quantizeMagnitude (f : Format) (mode : RoundingMode) (s : Bool)
 /-- Quantize the first operand to the second operand's quantum.
 The second operand's sign and coefficient do not affect a finite result. -/
 def quantize (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
+  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
   | _, .nan s t p => nanResult f s p t
   | .infinity s, .infinity _ => { value := .infinity s }
   | .infinity _, .finite _ _ _ | .finite _ _ _, .infinity _ => invalidResult

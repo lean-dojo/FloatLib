@@ -81,34 +81,29 @@ instance quantizer :
   addExact := FloatLib.Floats.ExecFloat.Binary.Conversion.addExact
   subExact := FloatLib.Floats.ExecFloat.Binary.Conversion.subExact
 
-/-- Context-free conversion uses the canonical binary conversion context. -/
+/--
+Conversions into a static-byte destination take a `Numerics.RoundingMode`, nearest-even by
+default, and the binary conversion `Policy`, as configured binary destinations do.
+-/
+instance roundingModes :
+    FloatLib.Floats.ExecFloat.RoundingModes (FloatLib.Floats.ExecFloat F) SignedRat
+      RoundingMode where
+  Policy := FloatLib.Floats.ExecFloat.Binary.Conversion.Policy
+  default := .nearest
+  withMode mode policy := policy.withRounding mode
+
+/-- Context-free conversion uses the canonical binary conversion policy. -/
 instance defaultQuantizer :
     FloatLib.Floats.ExecFloat.DefaultQuantizer (FloatLib.Floats.ExecFloat F) SignedRat where
-  defaultContext := FloatLib.Floats.ExecFloat.Binary.Conversion.Context.default
+  defaultContext := FloatLib.Floats.ExecFloat.Binary.Conversion.Policy.default
 
-/-- Conversions into a static-byte destination take an `IEEERoundingMode`, nearest by default. -/
-instance roundingModes :
-    FloatLib.Floats.ExecFloat.RoundingModes (FloatLib.Floats.ExecFloat F)
-      Model.IEEERoundingMode where
-  default := .nearest
-
-/--
-A conversion's `(mode := m)` selects the canonical binary context rounding in direction `m`, and
-`.nearest` the canonical context itself.
--/
-@[inline] instance modeContext (mode : Model.IEEERoundingMode) :
-    FloatLib.Floats.ExecFloat.ModeContext (FloatLib.Floats.ExecFloat F) SignedRat mode where
-  context :=
-    match mode with
-    | .nearest => FloatLib.Floats.ExecFloat.Binary.Conversion.Context.default
-    | mode => FloatLib.Floats.ExecFloat.Binary.Conversion.Context.withRounding mode
-
-/-- The context a static-byte conversion's `(mode := m)` selects is `Context.withRounding m`. -/
-@[simp] theorem context_modeContext (mode : Model.IEEERoundingMode) :
-    (FloatLib.Floats.ExecFloat.ModeContext.context :
-        FloatLib.Floats.ExecFloat.ContextFor (FloatLib.Floats.ExecFloat F) mode) =
-      FloatLib.Floats.ExecFloat.Binary.Conversion.Context.withRounding mode := by
-  cases mode <;> rfl
+/-- A static-byte conversion with `(mode := m) (context := p)` runs in `p.withRounding m`. -/
+@[simp] theorem withMode_eq_withRounding (mode : RoundingMode)
+    (policy : FloatLib.Floats.ExecFloat.Binary.Conversion.Policy) :
+    FloatLib.Floats.ExecFloat.RoundingModes.withMode
+        (Destination := FloatLib.Floats.ExecFloat F) mode policy =
+      policy.withRounding mode :=
+  rfl
 
 end Conversion
 end FloatLib.Floats.Formats.BinaryInterchange.StaticByte

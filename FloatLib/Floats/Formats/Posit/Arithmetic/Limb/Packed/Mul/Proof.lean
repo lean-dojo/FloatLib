@@ -41,47 +41,19 @@ private theorem mulCode_toNat_eq_decoded
         (NativeLimb.toDyadic? format left)
         (NativeLimb.toDyadic? format right) := by
   unfold mulCode
-  rw [NativeLimb.map_withTwoDyadicFields_eq_match_toDyadic?
-    FloatLib.Numerics.FixedWord.UInt128.toNat format left right
-    (NativeLimb.signMaskWord format)
-    (fun leftNegative leftSignificand leftExponent
-        rightNegative rightSignificand rightExponent =>
-      let product :=
-        FloatLib.Numerics.FixedWord.mul128
-          leftSignificand rightSignificand
-      NativeLimbRounding.GuardSticky.roundCodeWord format
-        (Bool.xor leftNegative rightNegative)
-        product.normalizeJam128
-        (leftExponent + rightExponent +
-          Int.ofNat product.normalizationShift128))
-    (fun leftNegative leftSignificand leftExponent
-        rightNegative rightSignificand rightExponent =>
-      NativeLimbRounding.roundCodeNat format heligible
-        (FloatLib.Numerics.Dyadic.mulFields
-          leftNegative leftSignificand leftExponent
-          rightNegative rightSignificand rightExponent))
-    (by
-      intro leftNegative leftSignificand leftExponent
-        rightNegative rightSignificand rightExponent
-      let product :=
-        FloatLib.Numerics.FixedWord.mul128
-          leftSignificand rightSignificand
-      rw [NativeLimbRounding.GuardSticky.roundCodeWord_normalizeJam128_toNat
-        format heligible
-        (Bool.xor leftNegative rightNegative) product
-        (leftExponent + rightExponent)]
-      simp only [product, FloatLib.Numerics.FixedWord.mul128_toNat,
-        FloatLib.Numerics.Dyadic.mulFields]),
-    NativeLimb.signMaskWord_toNat format heligible]
-  unfold Boundary.binaryCode Boundary.binaryResult
-  cases NativeLimb.toDyadic? format left with
-  | none => rfl
-  | some leftValue =>
-      cases NativeLimb.toDyadic? format right with
-      | none => rfl
-      | some rightValue =>
-          simp only
-          rw [FloatLib.Numerics.Dyadic.mulFields_eq]
+  refine Boundary.withTwoDyadicFields_toNat_eq_binaryCode heligible left right _ _ ?_
+  intro leftNegative leftSignificand leftExponent
+    rightNegative rightSignificand rightExponent
+  let product :=
+    FloatLib.Numerics.FixedWord.mul128
+      leftSignificand rightSignificand
+  rw [NativeLimbRounding.GuardSticky.roundCodeWord_normalizeJam128_toNat
+    format heligible
+    (Bool.xor leftNegative rightNegative) product
+    (leftExponent + rightExponent),
+    ← FloatLib.Numerics.Dyadic.mulFields_eq]
+  simp only [product, FloatLib.Numerics.FixedWord.mul128_toNat,
+    FloatLib.Numerics.Dyadic.mulFields]
 
 /-- Every direct packed-multiplication result is a valid complete posit encoding. -/
 theorem mulCode_lt_modulus
@@ -89,12 +61,8 @@ theorem mulCode_lt_modulus
     (left right : FloatLib.Numerics.FixedWord.UInt128) :
     (mulCode heligible left right).toNat < format.modulus := by
   rw [mulCode_toNat_eq_decoded]
-  apply Boundary.binaryCode_lt
-  · exact format.signMaskNat_lt_modulus
-  · intro leftValue rightValue
-    exact NativeLimbRounding.roundCodeNat_lt_modulus
-      format heligible
-      (FloatLib.Numerics.Dyadic.mul leftValue rightValue)
+  exact Boundary.binaryCode_roundCodeNat_lt_modulus heligible
+    FloatLib.Numerics.Dyadic.mul _ _
 
 /-- Direct packed multiplication re-encodes to the model-valued two-limb kernel. -/
 theorem ofNatBits_mulCode_eq_mul
@@ -108,15 +76,7 @@ theorem ofNatBits_mulCode_eq_mul
         (Model.ofNatBits (format := format) right.toNat) := by
   rw [mulCode_toNat_eq_decoded]
   unfold NativeLimbArithmetic.mul
-  apply Boundary.ofNatBits_binaryCode_of_eq
-  · exact NativeLimb.toDyadic?_eq_model format left
-      heligible hleft
-  · exact NativeLimb.toDyadic?_eq_model format right
-      heligible hright
-  · rfl
-  · intro leftValue rightValue
-    exact NativeLimbRounding.ofNatBits_roundCodeNat
-      format heligible
-      (FloatLib.Numerics.Dyadic.mul leftValue rightValue)
+  exact Boundary.ofNatBits_binaryCode_roundCodeNat heligible
+    FloatLib.Numerics.Dyadic.mul left right hleft hright
 
 end FloatLib.Floats.Formats.Posit.Model.NativeLimbPacked

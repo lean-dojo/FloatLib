@@ -109,6 +109,16 @@ equal, the incumbent wins, so a family can deliberately order otherwise identica
     (candidate.score policy == incumbent.score policy &&
       candidate.preferOnEqualScore policy incumbent)
 
+/-- A strictly cheaper warm call and no larger cold cost give a score that is no larger. -/
+private theorem Candidate.score_le_of_warmCost_lt_of_coldCost_le
+    (policy : Policy) {candidate incumbent : Candidate}
+    (hwarm : candidate.warmCost policy < incumbent.warmCost policy)
+    (hcold : candidate.coldCost policy ≤ incumbent.coldCost policy) :
+    candidate.score policy ≤ incumbent.score policy := by
+  unfold Candidate.score
+  have := Nat.mul_le_mul_left policy.expectedCalls (Nat.le_of_lt hwarm)
+  omega
+
 /--
 A candidate with a strictly cheaper warm call and no larger cold cost is `better` than the
 incumbent under every policy.
@@ -123,10 +133,7 @@ theorem Candidate.better_of_warmCost_lt_of_coldCost_le
     (hcold : candidate.coldCost policy ≤ incumbent.coldCost policy) :
     candidate.better policy incumbent = true := by
   unfold Candidate.better
-  have hle : candidate.score policy ≤ incumbent.score policy := by
-    unfold Candidate.score
-    have := Nat.mul_le_mul_left policy.expectedCalls (Nat.le_of_lt hwarm)
-    omega
+  have hle := Candidate.score_le_of_warmCost_lt_of_coldCost_le policy hwarm hcold
   rcases Nat.lt_or_eq_of_le hle with hlt | heq
   · simp [hlt]
   · have hne : candidate.warmCost policy ≠ incumbent.warmCost policy := Nat.ne_of_lt hwarm
@@ -142,10 +149,7 @@ theorem Candidate.not_better_of_warmCost_lt_of_coldCost_le
     (hcold : candidate.coldCost policy ≤ incumbent.coldCost policy) :
     incumbent.better policy candidate = false := by
   unfold Candidate.better
-  have hle : candidate.score policy ≤ incumbent.score policy := by
-    unfold Candidate.score
-    have := Nat.mul_le_mul_left policy.expectedCalls (Nat.le_of_lt hwarm)
-    omega
+  have hle := Candidate.score_le_of_warmCost_lt_of_coldCost_le policy hwarm hcold
   have hnlt : ¬ incumbent.score policy < candidate.score policy := Nat.not_lt.mpr hle
   rcases Nat.lt_or_eq_of_le hle with hlt | heq
   · simp [hnlt, Nat.ne_of_gt hlt]

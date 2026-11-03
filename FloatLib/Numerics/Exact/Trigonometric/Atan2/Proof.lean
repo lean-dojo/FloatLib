@@ -14,8 +14,9 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Proof
 
 Both prepared and uncached comparators agree with the principal complex argument for every
 rational pair and rational boundary. The argument at `(0, 0)` is zero, and the Posit invalid-input
-policy belongs to the format wrapper. In units of π, quadrant and diagonal points compare equal to
-their rational values.
+policy belongs to the format wrapper. In units of π the comparison is exact, equality included, so
+a point whose argument is a rational multiple of π, such as a point on an axis or a diagonal,
+compares `.eq` with that rational.
 -/
 
 public section
@@ -34,11 +35,8 @@ theorem prepareAtan2_eq_real (x y : ℚ) (levels : Nat) (boundary : ℚ) :
       change (0 : ℝ) ≤ (x : ℝ) ∧ (y : ℝ) = 0
       exact ⟨by exact_mod_cast hzero.1, by exact_mod_cast hzero.2⟩
     simp [Enclosure.Comparison.Prepared.compare, harg, cmp, cmpUsing]
-  · rw [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simp only [Enclosure.Comparison.cacheIntervals_apply]
-    exact contains_atan2Interval x y (2 ^ n)
+  · exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => contains_atan2Interval x y (2 ^ n)
 
 /-- Radian comparisons agree with the principal argument for every rational input. -/
 theorem compareAtan2_eq_real (x y boundary : ℚ) :
@@ -46,10 +44,7 @@ theorem compareAtan2_eq_real (x y boundary : ℚ) :
       cmp (Complex.arg ⟨(x : ℝ), (y : ℝ)⟩) (boundary : ℝ) :=
   prepareAtan2_eq_real x y 0 boundary
 
-/--
-At `(-1, 0)` the prepared comparator compares π, the argument of `-1`, and shares its enclosures
-across boundaries.
--/
+/-- At `(-1, 0)` the prepared comparator compares π, the argument of `-1`, at every cache depth. -/
 theorem prepareAtan2_neg_one_eq_real (levels : Nat) (boundary : ℚ) :
     (prepareAtan2 (-1) 0 levels).compare boundary = cmp Real.pi (boundary : ℝ) := by
   have harg : Complex.arg ⟨((-1 : ℚ) : ℝ), ((0 : ℚ) : ℝ)⟩ = Real.pi := by

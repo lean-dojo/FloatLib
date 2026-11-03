@@ -43,11 +43,26 @@ class HasErrorBound {Input : Type u} {Bound : Type v} [LE Bound]
 
 /--
 Absolute difference `|actual - exact|` in an additive commutative group with a linear order.
-The definition does not require the order to be compatible with addition.
+The definition does not require the order to be compatible with addition, and it is a measure of
+error only when it is, as in an ordered group such as `ℚ` or `ℝ`: there it is nonnegative
+(`absoluteError_nonneg`) and zero exactly at the exact value (`absoluteError_eq_zero_iff`). With an
+unrelated linear order `|x| = max x (-x)` need not be nonnegative, and a bound by `0` could hold
+for every pair. The scalar type lives in `Type`.
 -/
 @[inline] def absoluteError {α : Type} [AddCommGroup α] [LinearOrder α]
     (actual exact : α) : α :=
   |actual - exact|
+
+/-- In an ordered additive group the absolute error is nonnegative. -/
+theorem absoluteError_nonneg {α : Type} [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (actual exact : α) : 0 ≤ absoluteError actual exact :=
+  abs_nonneg _
+
+/-- In an ordered additive group the absolute error is zero exactly at the exact value. -/
+theorem absoluteError_eq_zero_iff {α : Type} [AddCommGroup α] [LinearOrder α]
+    [IsOrderedAddMonoid α] {actual exact : α} :
+    absoluteError actual exact = 0 ↔ actual = exact := by
+  rw [absoluteError, abs_eq_zero, sub_eq_zero]
 
 /-- Extract the represented finite result guaranteed by an error-bound capability. -/
 theorem HasErrorBound.exists_represents {Input : Type u} {Bound : Type v} [LE Bound]

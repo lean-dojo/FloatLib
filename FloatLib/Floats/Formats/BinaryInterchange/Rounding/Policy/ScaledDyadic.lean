@@ -177,7 +177,7 @@ private theorem roundQuotDirected_scaledDyadic_eq
     calc
       Int.ofNat (Numerics.roundQuotient .up scaled.1 scaled.2) =
           ⌈(scaled.1 : Real) / (scaled.2 : Real)⌉ :=
-        (ceil_div_eq_roundQuotient_up scaled.1 scaled.2 hdenominator).symm
+        (ceil_div_eq_roundQuotient_up scaled.1 scaled.2).symm
       _ = ⌈(mantissa : Real) * bpow (exponent - targetExponent)⌉ :=
         congrArg Int.ceil hvalue
       _ = Int.ofNat
@@ -258,8 +258,66 @@ private theorem roundMantissaAtExponentEven_eq_zero_of_far_below
       (Nat.lt_log2_self (n := mantissa)).trans_le hpow
   unfold roundMantissaAtExponentEven
   rw [ite_eq_left hexponent.le]
-  exact roundShiftRightEven_eq_zero_of_lt_half
-    mantissa shift hshiftPos hmantissa
+  exact roundShiftRightEven_eq_zero_of_lt_half mantissa shift hmantissa
+
+/--
+The policy engine rescales the quotient of an exact dyadic onto the subnormal grid and to its
+leading bit. When `roundQuot` computes a quotient primitive on nonzero denominators, and that
+primitive absorbs a composed exact scaling, both rescaled roundings are the primitive applied to a
+single scaling of the dyadic itself.
+-/
+private theorem roundQuot_rescaled_eq
+    (fmt : FloatFormat) (rounding : Numerics.RoundingMode) (sign : Bool) (entropy mantissa : Nat)
+    (exponent : Int) (hmantissa : mantissa ≠ 0) (quotient : Nat → Nat → Nat)
+    (hquot : ∀ numerator denominator, denominator ≠ 0 →
+      roundQuot rounding sign entropy numerator denominator = quotient numerator denominator)
+    (hadd : ∀ secondExponent : Int,
+      let first := Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1 exponent
+      let second := Numerics.RationalBinary.scaleByPowerOfTwo first.1 first.2 secondExponent
+      let combined :=
+        Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1 (exponent + secondExponent)
+      quotient second.1 second.2 = quotient combined.1 combined.2) :
+    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1 exponent
+    let subnormalScaled :=
+      Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+        (exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))
+    let normalScaled :=
+      Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+        (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)
+    let shift := Int.ofNat fmt.fracWidth - Numerics.RationalBinary.floorLog2 scaled.1 scaled.2
+    let shifted :=
+      match shift with
+      | .ofNat amount => (Nat.shiftLeft scaled.1 amount, scaled.2)
+      | .negSucc amount => (scaled.1, Nat.shiftLeft scaled.2 (amount + 1))
+    roundQuot rounding sign entropy
+          (Nat.shiftLeft scaled.1 (fmt.exponentBias + fmt.fracWidth - 1)) scaled.2 =
+        quotient subnormalScaled.1 subnormalScaled.2 ∧
+      roundQuot rounding sign entropy shifted.1 shifted.2 =
+        quotient normalScaled.1 normalScaled.2 := by
+  intro scaled subnormalScaled normalScaled shift shifted
+  have hscaledDenominator : scaled.2 ≠ 0 :=
+    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero mantissa 1 exponent (by decide)
+  have hlog :
+      Numerics.RationalBinary.floorLog2 scaled.1 scaled.2 = Int.ofNat mantissa.log2 + exponent := by
+    simpa [scaled] using floorLog2_scaleByPowerOfTwo_den_one mantissa exponent hmantissa
+  constructor
+  · rw [hquot _ _ hscaledDenominator]
+    exact hadd (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))
+  · have hshift :
+        exponent + (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent)) =
+          Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 := by
+      ring
+    simp only [shifted, shift, hlog]
+    change roundQuot rounding sign entropy
+        (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
+          (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent))).1
+        (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
+          (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent))).2 = _
+    rw [hquot _ _ (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero scaled.1 scaled.2
+      (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent)) hscaledDenominator)]
+    have hcombined := hadd (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent))
+    simp only [hshift] at hcombined
+    exact hcombined
 
 /--
 The independent rational policy core and descriptor-general dyadic rounder agree under
@@ -287,49 +345,26 @@ theorem roundRatGeneralOfDenNeZero_nearest_dyadic_eq
   · have hscaledNumerator : scaled.1 ≠ 0 :=
       Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero
         mantissa 1 exponent hmantissa
-    have hscaledDenominator : scaled.2 ≠ 0 :=
-      Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
-        mantissa 1 exponent (by decide)
     have hlog :
         Numerics.RationalBinary.floorLog2 scaled.1 scaled.2 =
           Int.ofNat mantissa.log2 + exponent := by
       simpa [scaled] using floorLog2_scaleByPowerOfTwo_den_one mantissa exponent hmantissa
+    have hrescaled := roundQuot_rescaled_eq fmt .nearest sign entropy mantissa exponent hmantissa
+      roundQuotientEven (fun numerator denominator hdenominator =>
+        roundQuot_nearest_eq_roundQuotientEven sign entropy numerator denominator hdenominator)
+      (fun secondExponent =>
+        roundQuotientEven_scaleByPowerOfTwo_add mantissa 1 exponent secondExponent (by decide))
     have hsubnormalQuot :
         roundQuot .nearest sign entropy
             (Nat.shiftLeft scaled.1 (fmt.exponentBias + fmt.fracWidth - 1))
             scaled.2 =
           roundMantissaAtExponentEven
             mantissa exponent fmt.minSubnormalExponent := by
-      calc
-        roundQuot .nearest sign entropy
-            (Nat.shiftLeft scaled.1 (fmt.exponentBias + fmt.fracWidth - 1))
-            scaled.2 =
-            roundQuotientEven
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 := by
-          rw [roundQuot_nearest_eq_roundQuotientEven
-            sign entropy _ _ hscaledDenominator]
-          rfl
-        _ = roundQuotientEven
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 := by
-          simpa [scaled] using
-            roundQuotientEven_scaleByPowerOfTwo_add
-              mantissa 1 exponent
-                (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))
-              (by decide)
-        _ = roundMantissaAtExponentEven
-              mantissa exponent fmt.minSubnormalExponent := by
-          rw [exponent_add_subnormalAlign]
-          simpa using
-            roundQuotientEven_scaledDyadic_eq
-              mantissa exponent fmt.minSubnormalExponent
+      refine hrescaled.1.trans ?_
+      rw [exponent_add_subnormalAlign]
+      simpa using
+        roundQuotientEven_scaledDyadic_eq
+          mantissa exponent fmt.minSubnormalExponent
     have hnormalQuot :
         let shift :=
           Int.ofNat fmt.fracWidth -
@@ -341,56 +376,14 @@ theorem roundRatGeneralOfDenNeZero_nearest_dyadic_eq
         roundQuot .nearest sign entropy shifted.1 shifted.2 =
           roundMantissaToLeadingBitEven mantissa fmt.fracWidth := by
       dsimp only
-      rw [hlog]
-      have hshift :
-          exponent +
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent)) =
-            Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 := by
-        ring
+      refine hrescaled.2.trans ?_
       calc
-        roundQuot .nearest sign entropy
-            (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))).1
-            (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))).2 =
-            roundQuotientEven
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat fmt.fracWidth -
-                  (Int.ofNat mantissa.log2 + exponent))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat fmt.fracWidth -
-                  (Int.ofNat mantissa.log2 + exponent))).2 := by
-          apply roundQuot_nearest_eq_roundQuotientEven
-          exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
-            scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))
-            hscaledDenominator
-        _ = roundQuotientEven
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  (Int.ofNat fmt.fracWidth -
-                    (Int.ofNat mantissa.log2 + exponent)))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  (Int.ofNat fmt.fracWidth -
-                    (Int.ofNat mantissa.log2 + exponent)))).2 := by
-          simpa [scaled] using
-            roundQuotientEven_scaleByPowerOfTwo_add
-              mantissa 1 exponent
-                (Int.ofNat fmt.fracWidth -
-                  (Int.ofNat mantissa.log2 + exponent))
-              (by decide)
-        _ = roundQuotientEven
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 := by
-          rw [hshift]
-        _ = roundMantissaAtExponentEven mantissa exponent
+        roundQuotientEven
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
+            roundMantissaAtExponentEven mantissa exponent
               (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) := by
           rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
               exponent -
@@ -499,13 +492,14 @@ theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
   · have hscaledNumerator : scaled.1 ≠ 0 :=
       Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero
         mantissa 1 exponent hmantissa
-    have hscaledDenominator : scaled.2 ≠ 0 :=
-      Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
-        mantissa 1 exponent (by decide)
     have hlog :
         Numerics.RationalBinary.floorLog2 scaled.1 scaled.2 =
           Int.ofNat mantissa.log2 + exponent := by
       simpa [scaled] using floorLog2_scaleByPowerOfTwo_den_one mantissa exponent hmantissa
+    have hrescaled := roundQuot_rescaled_eq fmt rounding sign entropy mantissa exponent hmantissa
+      (roundQuotDirected roundUp) hquot
+      (fun secondExponent =>
+        roundQuotDirected_scaleByPowerOfTwo_add roundUp mantissa 1 exponent secondExponent)
     have hsubnormalQuot :
         roundQuot rounding sign entropy
             (Nat.shiftLeft scaled.1 (fmt.exponentBias + fmt.fracWidth - 1))
@@ -516,28 +510,8 @@ theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
                 Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
               (exponent +
-                Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 := by
-      calc
-        roundQuot rounding sign entropy
-            (Nat.shiftLeft scaled.1 (fmt.exponentBias + fmt.fracWidth - 1))
-            scaled.2 =
-            roundQuotDirected roundUp
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 := by
-          rw [hquot _ _ hscaledDenominator]
-          rfl
-        _ = roundQuotDirected roundUp
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 := by
-          simpa [scaled] using
-            roundQuotDirected_scaleByPowerOfTwo_add roundUp mantissa 1 exponent
-              (Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1)) (by decide)
+                Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 :=
+      hrescaled.1
     have hnormalQuot :
         let shift :=
           Int.ofNat fmt.fracWidth -
@@ -551,55 +525,8 @@ theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
               (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 := by
-      dsimp only
-      rw [hlog]
-      have hshift :
-          exponent +
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent)) =
-            Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 := by
-        ring
-      calc
-        roundQuot rounding sign entropy
-            (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))).1
-            (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))).2 =
-            roundQuotDirected roundUp
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat fmt.fracWidth -
-                  (Int.ofNat mantissa.log2 + exponent))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
-                (Int.ofNat fmt.fracWidth -
-                  (Int.ofNat mantissa.log2 + exponent))).2 := by
-          apply hquot
-          exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
-            scaled.1 scaled.2
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent))
-            hscaledDenominator
-        _ = roundQuotDirected roundUp
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  (Int.ofNat fmt.fracWidth -
-                    (Int.ofNat mantissa.log2 + exponent)))).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (exponent +
-                  (Int.ofNat fmt.fracWidth -
-                    (Int.ofNat mantissa.log2 + exponent)))).2 := by
-          simpa [scaled] using
-            roundQuotDirected_scaleByPowerOfTwo_add roundUp mantissa 1 exponent
-              (Int.ofNat fmt.fracWidth -
-                (Int.ofNat mantissa.log2 + exponent)) (by decide)
-        _ = roundQuotDirected roundUp
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-                (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
-              (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 := by
-          rw [hshift]
+              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 :=
+      hrescaled.2
     simp only [scaled] at hscaledNumerator hlog hsubnormalQuot hnormalQuot
     unfold roundRatGeneralOfDenNeZero roundRatMagnitudeDirectedScaled
     simp only [applyUnderflow, Nat.one_ne_zero, beq_iff_eq, hmantissa,
@@ -649,7 +576,7 @@ theorem roundRatGeneralOfDenNeZero_directed_dyadic_eq
           cases roundUp
           · have hrounded :=
               roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
-                fmt mantissa exponent hmantissa hunderflow
+                fmt mantissa exponent hunderflow
             rw [ite_eq_left hsubnormal, ite_eq_right htinyExponent, hquotient]
             simp only [Bool.false_eq_true, ite_false, hrounded]
             rw [ite_eq_left hunderflow]
@@ -704,6 +631,41 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
         exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) =
           exponent - fmt.minSubnormalExponent :=
       exponent_add_subnormalAlign fmt exponent
+    -- Both quotient roundings agree with the dyadic shift primitives of their direction, on the
+    -- subnormal grid and at the leading bit.
+    have hsubnormal (roundUp : Bool) :
+        roundQuotDirected roundUp
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).1
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 =
+          if roundUp then
+            roundMantissaAtExponentUp mantissa exponent fmt.minSubnormalExponent
+          else
+            roundMantissaAtExponentDown mantissa exponent fmt.minSubnormalExponent := by
+      rw [halign]
+      simpa using
+        roundQuotDirected_scaledDyadic_eq
+          roundUp mantissa exponent fmt.minSubnormalExponent
+    have hnormal (roundUp : Bool) :
+        roundQuotDirected roundUp
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
+            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
+              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
+          if roundUp then
+            roundMantissaAtExponentUp mantissa exponent
+              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)
+          else
+            roundMantissaAtExponentDown mantissa exponent
+              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) := by
+      rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
+          exponent -
+            (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) by
+        ring]
+      simpa using
+        roundQuotDirected_scaledDyadic_eq roundUp mantissa exponent
+          (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)
     have hsubnormalDown :
         roundQuotDirected false
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
@@ -712,10 +674,7 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
               (exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 =
           roundMantissaAtExponentDown
             mantissa exponent fmt.minSubnormalExponent := by
-      rw [halign]
-      simpa using
-        roundQuotDirected_scaledDyadic_eq
-          false mantissa exponent fmt.minSubnormalExponent
+      simpa using hsubnormal false
     have hsubnormalUp :
         roundQuotDirected true
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
@@ -724,10 +683,7 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
               (exponent + Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1))).2 =
           roundMantissaAtExponentUp
             mantissa exponent fmt.minSubnormalExponent := by
-      rw [halign]
-      simpa using
-        roundQuotDirected_scaledDyadic_eq
-          true mantissa exponent fmt.minSubnormalExponent
+      simpa using hsubnormal true
     have hnormalDown :
         roundQuotDirected false
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
@@ -735,24 +691,7 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
               (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
           roundMantissaToLeadingBitDown mantissa fmt.fracWidth := by
-      calc
-        roundQuotDirected false
-            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
-            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
-            roundMantissaAtExponentDown mantissa exponent
-              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) := by
-          rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
-              exponent -
-                (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) by
-            ring]
-          simpa using
-            roundQuotDirected_scaledDyadic_eq false mantissa exponent
-              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)
-        _ = roundMantissaToLeadingBitDown mantissa fmt.fracWidth :=
-          roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown
-            mantissa fmt.fracWidth exponent
+      simpa [roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown] using hnormal false
     have hnormalUp :
         roundQuotDirected true
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
@@ -760,24 +699,7 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
             (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
               (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
           roundMantissaToLeadingBitUp mantissa fmt.fracWidth := by
-      calc
-        roundQuotDirected true
-            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).1
-            (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1
-              (Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2)).2 =
-            roundMantissaAtExponentUp mantissa exponent
-              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) := by
-          rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
-              exponent -
-                (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) by
-            ring]
-          simpa using
-            roundQuotDirected_scaledDyadic_eq true mantissa exponent
-              (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)
-        _ = roundMantissaToLeadingBitUp mantissa fmt.fracWidth :=
-          roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp
-            mantissa fmt.fracWidth exponent
+      simpa [roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp] using hnormal true
     cases roundUp
     · simp only [Bool.false_eq_true, ite_false]
       unfold roundRatMagnitudeDirectedScaled roundDyadicMagnitudeDown

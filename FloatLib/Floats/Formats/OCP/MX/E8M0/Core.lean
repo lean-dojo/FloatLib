@@ -122,27 +122,29 @@ def ofExponent? (exponent : Int) : Option E8M0 :=
 def ofExponentSaturating (exponent : Int) : E8M0 :=
   ofNatBits (Int.toNat (max (-127) (min 127 exponent) + bias))
 
+/-- An E8M0 code decodes exactly when it carries an exponent, and the decoded scale is the
+positive power of two `2 ^ exponent`, with significand one and a clear sign. -/
+theorem toDyadic?_eq_some_iff {x : E8M0} {value : FloatLib.Numerics.Dyadic} :
+    toDyadic? x = some value ↔
+      ∃ exponent, exponent? x = some exponent ∧ value = ⟨false, 1, exponent⟩ := by
+  unfold toDyadic?
+  cases exponent? x <;> simp [eq_comm]
+
+/-- An E8M0 code fails to decode exactly when it carries no exponent, which is the NaN code. -/
+theorem toDyadic?_eq_none_iff {x : E8M0} : toDyadic? x = none ↔ exponent? x = none := by
+  simp [toDyadic?]
+
 /-- Every successfully decoded E8M0 scale has significand one. -/
 theorem toDyadic?_significand_eq_one {x : E8M0} {value : FloatLib.Numerics.Dyadic}
     (hx : toDyadic? x = some value) : value.significand = 1 := by
-  unfold toDyadic? at hx
-  cases hexponent : exponent? x with
-  | none => simp [hexponent] at hx
-  | some exponent =>
-      simp [hexponent] at hx
-      subst value
-      rfl
+  obtain ⟨_, _, rfl⟩ := toDyadic?_eq_some_iff.mp hx
+  rfl
 
 /-- Every successfully decoded E8M0 scale has its sign bit clear. -/
 theorem toDyadic?_negative_eq_false {x : E8M0} {value : FloatLib.Numerics.Dyadic}
     (hx : toDyadic? x = some value) : value.negative = false := by
-  unfold toDyadic? at hx
-  cases hexponent : exponent? x with
-  | none => simp [hexponent] at hx
-  | some exponent =>
-      simp [hexponent] at hx
-      subst value
-      rfl
+  obtain ⟨_, _, rfl⟩ := toDyadic?_eq_some_iff.mp hx
+  rfl
 
 end E8M0
 

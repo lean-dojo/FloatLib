@@ -101,7 +101,8 @@ This tier covers formats of at most 128 bits. It converts each configured operan
 mathematical posit model once, and the retained result prefix stays in a pair of `UInt64` limbs
 while it is rounded. Division and square root use the width-generic quotient-prefix and
 root-prefix kernels and are offered separately by `GeneralCandidates`, without duplicate
-two-limb candidates.
+two-limb candidates. The only callers, `nativeLimbAdd?`, `nativeLimbSub?`, `nativeLimbMul?` and
+`nativeLimbFma?`, never request the `.div` and `.sqrt` rows, which describe no kernel.
 -/
 def nativeLimbEstimate {format : Format}
     (plan : StoragePlan format) (operation : Operation) : Candidate where
@@ -172,9 +173,11 @@ def storedNativeWordEstimate {format : Format}
 Engineering estimate for the direct built-in two-limb storage kernel.
 
 Formats from 65 through 128 bits use two `UInt64` limbs by default. These kernels decode the
-limbs directly, avoiding input `Model` construction. Division still constructs a result model
-before packing its code. Exact dyadic intermediates may also allocate, so the estimate accounts
-for reduced carrier overhead without assuming allocation-free arithmetic.
+limbs directly, avoiding input `Model` construction. Exact dyadic intermediates may also allocate,
+so the estimate accounts for reduced carrier overhead without assuming allocation-free arithmetic.
+The dispatcher prices addition, subtraction, multiplication, square root and FMA with it. The
+pair division kernel, which still constructs a result model before packing its code, is priced by
+`dyadicEstimate` instead, so the `.div` row is unused.
 -/
 def storedNativeLimbEstimate {format : Format}
     (operation : Operation) : Candidate where

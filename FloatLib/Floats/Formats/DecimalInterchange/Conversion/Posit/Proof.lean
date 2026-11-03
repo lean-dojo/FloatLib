@@ -62,7 +62,7 @@ theorem fromPosit_zero_clamped (fmt : Posit.Format) (f : Format) (mode : Roundin
 
 /-- A nonoverflowing nearest decimal conversion has at most half a grid unit of error. -/
 theorem fromPosit_error_le_half {fmt : Posit.Format} (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway) (x : Posit.Model fmt)
+    (hm : mode = .nearest ∨ mode = .nearestAway) (x : Posit.Model fmt)
     {a : ℚ} (hx : Posit.Model.toRat? x = some a)
     (hfinite : (fromPosit f mode x).status.overflow = false) :
     ∃ value, (fromPosit f mode x).value.toRat? = some value ∧
@@ -81,38 +81,37 @@ theorem fromPosit_error_lt_one {fmt : Posit.Format} (f : Format) (mode : Roundin
   exact project_error_lt_one f mode a 0 false hfinite
 
 /-- Upward posit-to-decimal conversion encloses the exact posit value. -/
-theorem le_fromPosit_towardPositive {fmt : Posit.Format} (f : Format)
+theorem le_fromPosit_up {fmt : Posit.Format} (f : Format)
     (x : Posit.Model fmt) {a : ℚ} (hx : Posit.Model.toRat? x = some a)
-    (hfinite : (fromPosit f .towardPositive x).status.overflow = false) :
-    ∃ value, (fromPosit f .towardPositive x).value.toRat? = some value ∧ a ≤ value := by
-  rw [fromPosit_eq_project f .towardPositive x hx] at hfinite ⊢
-  exact le_project_towardPositive f a 0 false hfinite
+    (hfinite : (fromPosit f .up x).status.overflow = false) :
+    ∃ value, (fromPosit f .up x).value.toRat? = some value ∧ a ≤ value := by
+  rw [fromPosit_eq_project f .up x hx] at hfinite ⊢
+  exact le_project_up f a 0 false hfinite
 
 /-- Downward posit-to-decimal conversion encloses the exact posit value. -/
-theorem fromPosit_towardNegative_le {fmt : Posit.Format} (f : Format)
+theorem fromPosit_down_le {fmt : Posit.Format} (f : Format)
     (x : Posit.Model fmt) {a : ℚ} (hx : Posit.Model.toRat? x = some a)
-    (hfinite : (fromPosit f .towardNegative x).status.overflow = false) :
-    ∃ value, (fromPosit f .towardNegative x).value.toRat? = some value ∧ value ≤ a := by
-  rw [fromPosit_eq_project f .towardNegative x hx] at hfinite ⊢
-  exact project_towardNegative_le f a 0 false hfinite
+    (hfinite : (fromPosit f .down x).status.overflow = false) :
+    ∃ value, (fromPosit f .down x).value.toRat? = some value ∧ value ≤ a := by
+  rw [fromPosit_eq_project f .down x hx] at hfinite ⊢
+  exact project_down_le f a 0 false hfinite
 
-/-- Without overflow, inexact is exactly a changed rational value. -/
+/-- For a finite decimal result, inexact is exactly a changed rational value, also when it
+overflows to the greatest finite datum. -/
 theorem fromPosit_inexact_iff {fmt : Posit.Format} (f : Format) (mode : RoundingMode)
     (x : Posit.Model fmt) {a value : ℚ} (hx : Posit.Model.toRat? x = some a)
-    (hfinite : (fromPosit f mode x).status.overflow = false)
     (hout : (fromPosit f mode x).value.toRat? = some value) :
     (fromPosit f mode x).status.inexact = true ↔ value ≠ a := by
-  rw [fromPosit_eq_project f mode x hx] at hfinite hout ⊢
-  exact project_inexact_iff f mode a value 0 false hfinite hout
+  rw [fromPosit_eq_project f mode x hx] at hout ⊢
+  exact project_inexact_iff f mode a value 0 false hout
 
-/-- Decimal underflow is precisely an inexact tiny input when overflow is absent. -/
+/-- Decimal underflow is precisely an inexact tiny input; an overflowing input is never tiny. -/
 theorem fromPosit_underflow_iff {fmt : Posit.Format} (f : Format) (mode : RoundingMode)
-    (x : Posit.Model fmt) {a : ℚ} (hx : Posit.Model.toRat? x = some a)
-    (hfinite : (fromPosit f mode x).status.overflow = false) :
+    (x : Posit.Model fmt) {a : ℚ} (hx : Posit.Model.toRat? x = some a) :
     (fromPosit f mode x).status.underflow = true ↔
       |a| < f.minNormal ∧ (fromPosit f mode x).status.inexact = true := by
-  rw [fromPosit_eq_project f mode x hx] at hfinite ⊢
-  exact project_underflow_iff f mode a 0 false hfinite
+  rw [fromPosit_eq_project f mode x hx]
+  exact project_underflow_iff f mode a 0 false
 
 /-- Decimal NaNs, whether signaling or quiet, convert to NaR. -/
 @[simp] theorem toPosit_nan (fmt : Posit.Format) (s signaling : Bool) (p : Nat) :

@@ -34,12 +34,8 @@ theorem subCode_lt_modulus
     (subCode heligible left right).toNat < format.modulus := by
   unfold subCode
   rw [SignedSum.subWordsCodeWord_toNat]
-  apply Boundary.binaryCode_lt
-  · exact format.signMaskNat_lt_modulus
-  · intro leftValue rightValue
-    exact NativeLimbRounding.roundCodeNat_lt_modulus
-      format heligible
-      (FloatLib.Numerics.Dyadic.sub leftValue rightValue)
+  exact Boundary.binaryCode_roundCodeNat_lt_modulus heligible
+    FloatLib.Numerics.Dyadic.sub _ _
 
 /-- Direct packed subtraction re-encodes to the model-valued two-limb kernel. -/
 theorem ofNatBits_subCode_eq_sub
@@ -53,15 +49,7 @@ theorem ofNatBits_subCode_eq_sub
         (Model.ofNatBits (format := format) right.toNat) := by
   unfold subCode NativeLimbArithmetic.sub
   rw [SignedSum.subWordsCodeWord_toNat]
-  apply Boundary.ofNatBits_binaryCode_of_eq
-  · exact NativeLimb.toDyadic?_eq_model format left
-      heligible hleft
-  · exact NativeLimb.toDyadic?_eq_model format right
-      heligible hright
-  · rfl
-  · intro leftValue rightValue
-    exact NativeLimbRounding.ofNatBits_roundCodeNat
-      format heligible
-      (FloatLib.Numerics.Dyadic.sub leftValue rightValue)
+  exact Boundary.ofNatBits_binaryCode_roundCodeNat heligible
+    FloatLib.Numerics.Dyadic.sub left right hleft hright
 
 end FloatLib.Floats.Formats.Posit.Model.NativeLimbPacked

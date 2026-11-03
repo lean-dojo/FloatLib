@@ -73,13 +73,7 @@ theorem exactValue_eq_nan_of_isNaN {fmt : FloatFormat} {x : Model fmt}
 /-- Infinity decoding retains exactly its sign. -/
 theorem exactValue_eq_infinity_of_isInf {fmt : FloatFormat} {x : Model fmt}
     (hx : isInf x = true) : exactValue x = .infinity (signBit x) := by
-  have hdecode : toDyadic? x = none := by
-    cases hd : toDyadic? x with
-    | none => rfl
-    | some d =>
-        have := isInf_eq_false_of_toDyadic?_some hd
-        simp [hx] at this
-  simp [exactValue, hdecode, hx]
+  simp [exactValue, toDyadic?_eq_none_of_isInf_eq_true hx, hx]
 
 /-- Complete exact interpretation is injective for every binary format descriptor. -/
 theorem exactValue_injective {fmt : FloatFormat} :

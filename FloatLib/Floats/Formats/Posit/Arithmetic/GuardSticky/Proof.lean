@@ -94,6 +94,12 @@ structure LawfulCandidateCarrier
   /-- The leading-bit index is the natural-number logarithm. -/
   log2_eq : ∀ value, carrier.log2 value = (toNat value).log2
 
+/--
+The tail laws of a lawful candidate carrier: its bit reads and suffix tests are the natural-number
+ones. `tailBit_eq_spec` and `tailHasNonzeroAfter_eq_spec` take this projection.
+-/
+add_decl_doc LawfulCandidateCarrier.toLawfulTailCarrier
+
 /-- A neutral fixed-word suffix test is the corresponding natural-number remainder test. -/
 private theorem lowBitsWord_ne_zero_eq
     (value : UInt64) (width : Nat) (hwidth : width ≤ 64) :
@@ -104,12 +110,9 @@ private theorem lowBitsWord_ne_zero_eq
     hwidth.trans_lt (by norm_num)
   have hwidthNat : (UInt64.ofNat width).toNat = width :=
     UInt64.toNat_ofNat_of_lt hwidthBound
-  have hwidthWord : UInt64.ofNat width ≤ (64 : UInt64) := by
-    apply UInt64.le_iff_toNat_le.mpr
-    simpa [hwidthNat] using hwidth
   have hbits :=
     FloatLib.Numerics.FixedWord.lowBitsWord_toNat
-      value (UInt64.ofNat width) hwidthWord
+      value (UInt64.ofNat width)
   rw [hwidthNat] at hbits
   apply Bool.eq_iff_iff.mpr
   simp only [bne_iff_ne]
@@ -218,7 +221,7 @@ theorem emod_four_toNat_lt (scale : Int) : (scale.emod 4).toNat < 4 := by
   omega
 
 /-- Storing the two-bit exponent field in a machine word is exact. -/
-theorem toNat_ofNat_emod_four_toNat (scale : Int) :
+private theorem toNat_ofNat_emod_four_toNat (scale : Int) :
     (UInt64.ofNat (scale.emod 4).toNat).toNat = (scale.emod 4).toNat :=
   UInt64.toNat_ofNat_of_lt ((emod_four_toNat_lt scale).trans (by decide))
 
@@ -254,14 +257,25 @@ include lawful
 
 /-! ## Packed field refinement -/
 
+/-- Adding a tail to a shifted prefix is exact when the mathematical sum fits the carrier. -/
+private theorem add_shiftLeft_toNat
+    (base tail : α) (shift : Nat) (hshift : shift < capacity)
+    (hfit : toNat base <<< shift + toNat tail < 2 ^ capacity) :
+    toNat (carrier.add (carrier.shiftLeft base shift) tail) =
+      toNat base <<< shift + toNat tail := by
+  have hbase : toNat base <<< shift < 2 ^ capacity := by omega
+  rw [lawful.add_toNat _ _ (by rw [lawful.shiftLeft_toNat _ _ hshift hbase]; exact hfit),
+    lawful.shiftLeft_toNat _ _ hshift hbase]
+
 /-- The shared fraction-prefix kernel implements the representation-independent normalized prefix. -/
 theorem fractionPrefix_toNat
-    (significand : α) (leading count : Nat)
-    (hleading : leading < capacity) (hcount : count < capacity)
+    (significand : α) (leading count : Nat) (hcount : count < capacity)
     (hlower : 2 ^ leading ≤ toNat significand)
     (hupper : toNat significand < 2 ^ (leading + 1)) :
     toNat (fractionPrefix carrier significand leading count) =
       DirectDyadicPacking.fractionPrefix (toNat significand) leading count := by
+  have hleading : leading < capacity :=
+    (Nat.pow_lt_pow_iff_right (by decide)).mp (hlower.trans_lt (lawful.toNat_lt significand))
   have hfraction :
       toNat (carrier.fractionBelow significand leading) = toNat significand - 2 ^ leading :=
     lawful.fractionBelow_toNat significand leading hleading hlower hupper
@@ -292,8 +306,7 @@ theorem fractionPrefix_toNat
 /-- The shared exponent/fraction prefix is the representation-independent tail prefix. -/
 theorem tailPrefix_toNat
     (exponentField : UInt64) (significand : α) (leading count : Nat)
-    (hleading : leading < capacity) (hcount : count < capacity)
-    (hexponent : exponentField.toNat < 4)
+    (hcount : count < capacity) (hexponent : exponentField.toNat < 4)
     (hlower : 2 ^ leading ≤ toNat significand)
     (hupper : toNat significand < 2 ^ (leading + 1)) :
     toNat (tailPrefix carrier exponentField significand leading count) =
@@ -317,23 +330,11 @@ theorem tailPrefix_toNat
       unfold DirectDyadicPacking.tailPrefix at htail
       rw [ite_eq_right hprefix] at htail
       exact htail
-    have hexponentFit :
-        toNat (carrier.ofWord exponentField) <<< (count - 2) < 2 ^ capacity := by
-      rw [lawful.toNat_ofWord]
-      omega
-    have hexponentShift :
-        toNat (carrier.shiftLeft (carrier.ofWord exponentField) (count - 2)) =
-          exponentField.toNat <<< (count - 2) := by
-      rw [lawful.shiftLeft_toNat _ _ hshift hexponentFit, lawful.toNat_ofWord]
     have hfraction :=
-      fractionPrefix_toNat lawful significand leading (count - 2) hleading (by omega) hlower hupper
-    have hsumFit :
-        toNat (carrier.shiftLeft (carrier.ofWord exponentField) (count - 2)) +
-            toNat (fractionPrefix carrier significand leading (count - 2)) <
-          2 ^ capacity := by
-      rw [hexponentShift, hfraction]
-      exact htailBound.trans hcountPower
-    rw [lawful.add_toNat _ _ hsumFit, hexponentShift, hfraction]
+      fractionPrefix_toNat lawful significand leading (count - 2) (by omega) hlower hupper
+    rw [add_shiftLeft_toNat lawful _ _ _ hshift
+        (by rw [lawful.toNat_ofWord, hfraction]; exact htailBound.trans hcountPower),
+      lawful.toNat_ofWord, hfraction]
 
 /--
 Shared field packing implements the representation-independent lower-candidate constructor
@@ -342,7 +343,6 @@ whenever the format's payload is shorter than the carrier.
 theorem lowerCandidateFromFields_toNat
     (format : Format) (regime : Int) (exponentField : UInt64) (significand : α) (leading : Nat)
     (hpayload : format.payloadBits < capacity)
-    (hleading : leading < capacity)
     (hexponent : exponentField.toNat < 4)
     (hlower : 2 ^ leading ≤ toNat significand)
     (hupper : toNat significand < 2 ^ (leading + 1)) :
@@ -362,40 +362,22 @@ theorem lowerCandidateFromFields_toNat
   · have hrunLt : regime.toNat + 1 < capacity := by omega
     have hshift : format.payloadBits - (regime.toNat + 1) < capacity := by omega
     have hones := lawful.lowOnes_toNat (regime.toNat + 1) hrunLt
-    have hprefixFit :
-        toNat (carrier.lowOnes (regime.toNat + 1)) <<<
-            (format.payloadBits - (regime.toNat + 1)) < 2 ^ capacity := by
-      rw [hones, Nat.shiftLeft_eq]
-      omega
-    have hprefix :
-        toNat (carrier.shiftLeft (carrier.lowOnes (regime.toNat + 1))
-            (format.payloadBits - (regime.toNat + 1))) =
-          (2 ^ (regime.toNat + 1) - 1) * 2 ^ (format.payloadBits - (regime.toNat + 1)) := by
-      rw [lawful.shiftLeft_toNat _ _ hshift hprefixFit, hones, Nat.shiftLeft_eq]
     have htail :=
       tailPrefix_toNat lawful exponentField significand leading
-        (format.payloadBits - (regime.toNat + 1) - 1) hleading (by omega)
-        hexponent hlower hupper
-    rw [lawful.add_toNat _ _ (by rw [hprefix, htail]; exact hfit), hprefix, htail]
+        (format.payloadBits - (regime.toNat + 1) - 1) (by omega) hexponent hlower hupper
+    rw [add_shiftLeft_toNat lawful _ _ _ hshift
+        (by rw [hones, Nat.shiftLeft_eq, htail]; exact hfit),
+      hones, Nat.shiftLeft_eq, htail]
   · rw [lawful.toNat_ofWord]
     rfl
   · have htrailing : format.payloadBits - (-regime).toNat - 1 < capacity := by omega
-    have hfitOne :
-        toNat (carrier.ofWord 1) <<< (format.payloadBits - (-regime).toNat - 1) <
-          2 ^ capacity := by
-      rw [lawful.toNat_ofWord, UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
-      exact Nat.pow_lt_pow_right (by decide) htrailing
-    have hone :
-        toNat (carrier.shiftLeft (carrier.ofWord 1)
-            (format.payloadBits - (-regime).toNat - 1)) =
-          2 ^ (format.payloadBits - (-regime).toNat - 1) := by
-      rw [lawful.shiftLeft_toNat _ _ htrailing hfitOne, lawful.toNat_ofWord, UInt64.toNat_one,
-        Nat.shiftLeft_eq, one_mul]
     have htail :=
       tailPrefix_toNat lawful exponentField significand leading
-        (format.payloadBits - (-regime).toNat - 1) hleading htrailing
-        hexponent hlower hupper
-    rw [lawful.add_toNat _ _ (by rw [hone, htail]; exact hfit), hone, htail]
+        (format.payloadBits - (-regime).toNat - 1) htrailing hexponent hlower hupper
+    rw [add_shiftLeft_toNat lawful _ _ _ htrailing
+        (by rw [lawful.toNat_ofWord, UInt64.toNat_one, Nat.shiftLeft_eq, one_mul, htail]
+            exact hfit),
+      lawful.toNat_ofWord, UInt64.toNat_one, Nat.shiftLeft_eq, one_mul, htail]
 
 /-! ## Rounding -/
 
@@ -409,7 +391,6 @@ theorem roundInterior_toNat
     (format : Format) (regime : Int) (exponentField : UInt64) (significand : α)
     (leading regimeFieldBits : Nat)
     (hpayload : format.payloadBits < capacity)
-    (hleading : leading < capacity)
     (hexponent : exponentField.toNat < 4)
     (hlower : 2 ^ leading ≤ toNat significand)
     (hupper : toNat significand < 2 ^ (leading + 1)) :
@@ -419,7 +400,7 @@ theorem roundInterior_toNat
         exponentField.toNat (toNat significand) leading regimeFieldBits := by
   have hlowerCode :=
     lowerCandidateFromFields_toNat lawful format regime exponentField significand leading
-      hpayload hleading hexponent hlower hupper
+      hpayload hexponent hlower hupper
   have hlowerRange :
       toNat (lowerCandidateFromFields carrier format regime exponentField significand leading) <
         format.signMaskNat := by
@@ -445,19 +426,13 @@ theorem roundInterior_toNat
 /--
 The shared normalized rounder is the arbitrary-width direct positive rounder.
 
-The hypotheses are the checks a caller performs before entering the carrier: the significand is
-nonzero and the value is not below `minPos`. The payload bound is what makes every intermediate
-fit the carrier.
+The significand must be nonzero; values below `minPos`, whose regime run fills the payload, round
+to code 1 on both sides. The payload bound is what makes every intermediate fit the carrier.
 -/
 theorem roundNormalizedPositive_toNat_eq_direct
     (format : Format) (significand : α) (exponent : Int)
     (hpayload : format.payloadBits < capacity)
-    (hnonzero : toNat significand ≠ 0)
-    (hnotUnderflow :
-      ({ negative := false
-         significand := toNat significand
-         exponent } : FloatLib.Numerics.Dyadic).isLess
-          (DyadicRounding.minPositive format) = false) :
+    (hnonzero : toNat significand ≠ 0) :
     toNat (roundNormalizedPositive carrier format significand exponent) =
       DirectDyadicPacking.roundPositiveCode format
         { negative := false
@@ -465,8 +440,6 @@ theorem roundNormalizedPositive_toNat_eq_direct
           exponent } := by
   have hzero : (toNat significand == 0) = false := by
     simpa only [beq_eq_false_iff_ne] using hnonzero
-  have hleading : (toNat significand).log2 < capacity :=
-    (Nat.log2_lt hnonzero).2 (lawful.toNat_lt significand)
   have hlower : 2 ^ (toNat significand).log2 ≤ toNat significand :=
     Nat.log2_self_le hnonzero
   have hupper : toNat significand < 2 ^ ((toNat significand).log2 + 1) :=
@@ -475,21 +448,40 @@ theorem roundNormalizedPositive_toNat_eq_direct
       (UInt64.ofNat (scale.emod 4).toNat).toNat < 4 := by
     rw [GuardStickyRounding.toNat_ofNat_emod_four_toNat]
     exact GuardStickyRounding.emod_four_toNat_lt scale
-  rw [← GuardStickyRounding.isLessPowerOfTwoAtLeading_leadingBit_eq_isLess_minPositive]
-    at hnotUnderflow
   unfold DirectDyadicPacking.roundPositiveCode roundNormalizedPositive
   simp only [GuardStickyRounding.shiftRight_two_eq_ediv,
     GuardStickyRounding.toUInt64_ofInt_and_three]
-  simp only [hzero, Bool.false_or, Bool.false_eq_true, ite_false, hnotUnderflow]
+  simp only [hzero, Bool.false_or, Bool.false_eq_true, ite_false]
   simp only [DirectDyadicPacking.leadingBit_eq_log2, lawful.log2_eq]
+  by_cases hunderflow :
+      Dyadic.isLessPowerOfTwoAtLeading (toNat significand) exponent (toNat significand).log2
+        (-(4 * Int.ofNat (format.payloadBits - 1))) = true
+  · -- Below `minPos` the regime is negative and its run fills the payload.
+    rw [ite_eq_left hunderflow]
+    unfold Dyadic.isLessPowerOfTwoAtLeading at hunderflow
+    simp only [hzero, Bool.false_eq_true, ite_false, decide_eq_true_eq,
+      Int.ofNat_eq_natCast] at hunderflow
+    have hpositive := format.payloadBits_pos
+    have hscale : (exponent + Int.ofNat (toNat significand).log2).ediv 4 =
+        (exponent + Int.ofNat (toNat significand).log2) / 4 := rfl
+    have hregime : ¬0 ≤ (exponent + Int.ofNat (toNat significand).log2).ediv 4 := by
+      rw [hscale, Int.ofNat_eq_natCast]
+      omega
+    have hrun : format.payloadBits ≤
+        (-(exponent + Int.ofNat (toNat significand).log2).ediv 4).toNat := by
+      rw [hscale, Int.ofNat_eq_natCast]
+      omega
+    rw [ite_eq_right hregime, ite_eq_left hrun, lawful.toNat_ofWord]
+    exact UInt64.toNat_one
+  rw [ite_eq_right hunderflow]
   split_ifs with hregime hsaturated hsaturated
   · rw [lawful.lowOnes_toNat _ hpayload]
     rfl
-  · rw [roundInterior_toNat lawful format _ _ _ _ _ hpayload hleading (hexponent _) hlower hupper,
+  · rw [roundInterior_toNat lawful format _ _ _ _ _ hpayload (hexponent _) hlower hupper,
       GuardStickyRounding.toNat_ofNat_emod_four_toNat]
   · rw [lawful.toNat_ofWord]
     exact UInt64.toNat_one
-  · rw [roundInterior_toNat lawful format _ _ _ _ _ hpayload hleading (hexponent _) hlower hupper,
+  · rw [roundInterior_toNat lawful format _ _ _ _ _ hpayload (hexponent _) hlower hupper,
       GuardStickyRounding.toNat_ofNat_emod_four_toNat]
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyCarrier

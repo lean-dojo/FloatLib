@@ -39,23 +39,17 @@ variable {format : FloatFormat} {plan : StoragePlan format} {code : Type}
 @[grind =]
 theorem genericAdd_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericAdd left right = Spec.add left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [genericAdd, Spec.add, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.AddBackend.generic_eq_spec (Family.toModel left) (Family.toModel right)
+    genericAdd left right = Spec.add left right :=
+  ModelCodec.liftBinary_congr Model.AddBackend.generic_eq_spec left right
 
 /-- The width-generic subtraction backend implements the configured subtraction specification. -/
 @[grind =]
 theorem genericSub_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericSub left right = Spec.sub left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simp only [genericSub, Spec.sub, ModelCodec.decode_liftBinary]
-  simpa [Model.Spec.sub, Family.toModel] using
-    Model.AddBackend.generic_eq_spec (Family.toModel left) (Model.neg (Family.toModel right))
+    genericSub left right = Spec.sub left right :=
+  ModelCodec.liftBinary_congr
+    (fun x y => by simpa [Model.Spec.sub] using Model.AddBackend.generic_eq_spec x (Model.neg y))
+    left right
 
 /--
 The width-generic multiplication backend implements the configured multiplication specification.
@@ -63,46 +57,29 @@ The width-generic multiplication backend implements the configured multiplicatio
 @[grind =]
 theorem genericMul_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericMul left right = Spec.mul left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [genericMul, Spec.mul, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.MulBackend.generic_eq_spec (Family.toModel left) (Family.toModel right)
+    genericMul left right = Spec.mul left right :=
+  ModelCodec.liftBinary_congr Model.MulBackend.generic_eq_spec left right
 
 /-- The width-generic division backend implements the configured division specification. -/
 @[grind =]
 theorem genericDiv_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericDiv left right = Spec.div left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [genericDiv, Spec.div, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.DivBackend.generic_eq_spec (Family.toModel left) (Family.toModel right)
+    genericDiv left right = Spec.div left right :=
+  ModelCodec.liftBinary_congr Model.DivBackend.generic_eq_spec left right
 
 /-- The width-generic square-root backend implements the configured square-root specification. -/
 @[grind =]
 theorem genericSqrt_eq_spec
     (value : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericSqrt value = Spec.sqrt value := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [genericSqrt, Spec.sqrt, Family.toModel,
-    ModelCodec.decode_liftUnary] using
-    Model.SqrtBackend.generic_eq_spec (Family.toModel value)
+    genericSqrt value = Spec.sqrt value :=
+  ModelCodec.liftUnary_congr Model.SqrtBackend.generic_eq_spec value
 
 /-- The width-generic fused multiply-add backend implements the configured FMA specification. -/
 @[grind =]
 theorem genericFma_eq_spec
     (left right addend : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    genericFma left right addend = Spec.fma left right addend := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [genericFma, Spec.fma, Family.toModel,
-    ModelCodec.decode_liftTernary] using
-    Model.FmaBackend.generic_eq_spec
-      (Family.toModel left) (Family.toModel right) (Family.toModel addend)
+    genericFma left right addend = Spec.fma left right addend :=
+  ModelCodec.liftTernary_congr Model.FmaBackend.generic_eq_spec left right addend
 
 /-! ## Word and fixed-limb arithmetic -/
 
@@ -110,91 +87,57 @@ theorem genericFma_eq_spec
 @[grind =]
 theorem wordAdd_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordAdd left right = Spec.add left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordAdd, Spec.add, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.AddBackend.word_eq_spec (Family.toModel left) (Family.toModel right)
+    wordAdd left right = Spec.add left right :=
+  ModelCodec.liftBinary_congr Model.AddBackend.word_eq_spec left right
 
 /-- The native-word subtraction backend implements the configured subtraction specification. -/
 @[grind =]
 theorem wordSub_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordSub left right = Spec.sub left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordSub, Spec.sub, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.AddBackend.subWord_eq_spec (Family.toModel left) (Family.toModel right)
+    wordSub left right = Spec.sub left right :=
+  ModelCodec.liftBinary_congr Model.AddBackend.subWord_eq_spec left right
 
 /-- The word or fixed-limb multiplication backend implements the configured specification. -/
 @[grind =]
 theorem wordMul_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordMul left right = Spec.mul left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordMul, Spec.mul, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.MulBackend.word_eq_spec (Family.toModel left) (Family.toModel right)
+    wordMul left right = Spec.mul left right :=
+  ModelCodec.liftBinary_congr Model.MulBackend.word_eq_spec left right
 
 /-- The word or fixed-limb division backend implements the configured specification. -/
 @[grind =]
 theorem wordDiv_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordDiv left right = Spec.div left right := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordDiv, Spec.div, Family.toModel,
-    ModelCodec.decode_liftBinary] using
-    Model.DivBackend.word_eq_spec (Family.toModel left) (Family.toModel right)
+    wordDiv left right = Spec.div left right :=
+  ModelCodec.liftBinary_congr Model.DivBackend.word_eq_spec left right
 
 /-- The native-word square-root backend implements the configured square-root specification. -/
 @[grind =]
 theorem wordSqrt_eq_spec
     (value : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordSqrt value = Spec.sqrt value := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordSqrt, Spec.sqrt, Family.toModel,
-    ModelCodec.decode_liftUnary] using
-    Model.SqrtBackend.word_eq_spec (Family.toModel value)
+    wordSqrt value = Spec.sqrt value :=
+  ModelCodec.liftUnary_congr Model.SqrtBackend.word_eq_spec value
 
 /-- The native-word fused multiply-add backend implements the configured FMA specification. -/
 @[grind =]
 theorem wordFma_eq_spec
     (left right addend : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    wordFma left right addend = Spec.fma left right addend := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [wordFma, Spec.fma, Family.toModel,
-    ModelCodec.decode_liftTernary] using
-    Model.FmaBackend.word_eq_spec
-      (Family.toModel left) (Family.toModel right) (Family.toModel addend)
+    wordFma left right addend = Spec.fma left right addend :=
+  ModelCodec.liftTernary_congr Model.FmaBackend.word_eq_spec left right addend
 
 /-- The fixed-limb square-root route implements the configured square-root specification. -/
 @[grind =]
 theorem fixedLimbSqrt_eq_spec
     (value : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    fixedLimbSqrt value = Spec.sqrt value := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [fixedLimbSqrt, Spec.sqrt, Family.toModel,
-    ModelCodec.decode_liftUnary] using
-    Model.SqrtBackend.dispatch_eq_spec (Family.toModel value)
+    fixedLimbSqrt value = Spec.sqrt value :=
+  ModelCodec.liftUnary_congr Model.SqrtBackend.dispatch_eq_spec value
 
 /-- The fixed-limb fused multiply-add route implements the configured FMA specification. -/
 @[grind =]
 theorem fixedLimbFma_eq_spec
     (left right addend : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    fixedLimbFma left right addend = Spec.fma left right addend := by
-  apply ModelCodec.decode_injective
-    (F := Family format code plan) (Model := Model format) (plan := plan)
-  simpa only [fixedLimbFma, Spec.fma, Family.toModel,
-    ModelCodec.decode_liftTernary] using
-    Model.FmaBackend.dispatch_eq_spec
-      (Family.toModel left) (Family.toModel right) (Family.toModel addend)
+    fixedLimbFma left right addend = Spec.fma left right addend :=
+  ModelCodec.liftTernary_congr Model.FmaBackend.dispatch_eq_spec left right addend
 
 end Backend
 

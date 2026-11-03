@@ -34,15 +34,20 @@ def narrowDown (source : Binary64) : ExecFloat.ConversionOutcome Binary32 :=
   source.cast (target := Binary32) (mode := .down)
 
 def addWide (left : Binary32) (right : Binary64) : ExecFloat.ConversionOutcome Binary64 :=
-  ExecFloat.addAs (target := Binary64) left right
+  ExecFloat.Mixed.add (target := Binary64) left right
 ```
 
-For a binary destination, `mode` picks the rounding direction. Any other destination policy goes
-in `context`, for example rejecting infinities for a posit or saturating a bounded fixed-point
-value.
+For a binary destination, `mode` picks the rounding direction: one of the six directions of
+arithmetic or `.stochastic`. Any other destination policy goes in `context`, for example
+rejecting infinities for a posit, saturating a bounded fixed-point value, or the entropy of
+stochastic binary rounding. A context has no direction field, so the mode always decides the
+direction: `(mode := .up)` with a saturating binary context rounds up and then saturates.
 
 We evaluate a finite mixed operation in the destination's exact domain and quantize once at the
 end, and what the result means comes from the family's decoder, arithmetic, and quantizer laws.
+The mixed operations `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma` are the finite part of
+IEEE 754's formatOf operations: a non-finite operand, or a divisor of zero, gives a failure rather
+than an infinity or a NaN.
 Binary destinations use `Numerics.SignedRat` (a rational with an IEEE sign bit), so a cast can
 keep a negative zero when the destination encoding has one. Posits and fixed point use `Rat`.
 The [`ExactMap` embeddings](ExactMap.lean) connect the source and destination domains.
@@ -58,8 +63,9 @@ binary32/64 specializations, two-limb binary128, wide-limb arithmetic, and the e
 planner picks among them by comparing estimated costs. `NativeFPU.Unchecked` never takes part in
 that choice, and you have to call it yourself.
 
-`#float_info YourType` shows the certified selection, and `#float_info!` adds costs and
-theorems. To list the registered bounds, use `#float_info [errors] YourType`. The
+`#float_info YourType` shows the planning policy and the certified selection, and `#float_info!`
+adds the costs and every theorem name. To list the registered bounds, use
+`#float_info [errors] YourType`. The
 [backend guide](Backends/README.md) explains eligibility, policies, and how to add an
 implementation.
 
@@ -71,15 +77,48 @@ and model binary `MathFunctions` instances, you need
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the model barrel
 `BinaryInterchange.Transcendentals` for model values). They're deterministic software kernels
 with representation-bridge theorems, and they never go through the host FPU. For an IEEE
-descriptor, `Model.pow` with a finite nonzero base and a finite integral exponent is correctly
+descriptor, `Model.pow` with a finite base and a finite integral exponent is correctly
 rounded whenever its result is finite (`Model.Power.toReal_pow_of_eq_intCast`), and with a
 finite positive base and any other finite exponent it's correctly rounded whenever its certified
 enclosure search settles (`Model.Power.pow_spec_of_certified`). Certified `sqrt` and `abs` stay
 on the default import.
 
-To get proved real rounding from `exp`, `log`, and `pow`, pass `certify := true`. (`expMinus1`
-and `logPlus1` always certify.) A certified call returns `.ok` only once it has certified a
-finite rounded result. Otherwise you get a `Certified.Failure` that says why it couldn't.
+The plain `exp`, `log`, and `pow` have no general error bound. The certified searches
+`ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1`, and `logPlus1` return `.ok` only once
+they have certified a finite rounded result. Otherwise you get a `Certified.Failure` that says why
+they couldn't, and a search can fail on a valid input.
+
+If you'd rather always get a value, the named import
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded` has total
+`ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1`, and `expMul`, which
+rounds `exp x * w` once. When the enclosure search doesn't settle, exact comparisons decide the
+rounding, so their correctness theorems need no premise on the budget. For an IEEE format and a
+finite input in the domain, the result is correctly rounded when the exact result is below the
+overflow threshold in magnitude, and otherwise it's the infinity with the sign of the exact result.
+
+The `MathFunctions` instances keep the approximation kernels, so generic code doesn't change
+unless you ask. The dictionary and the scope below come with
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, so import it too. To give
+generic code the correctly rounded `exp` and `log` on IEEE formats, open the scope
+
+```lean
+open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath
+```
+
+or, in a library with its own dictionary, use `ExecFloat.Binary.CorrectlyRounded.mathFunctions`
+as the `MathFunctions` instance (for example with `attribute [instance high]`). Then
+`ExecFloat.Binary.CorrectlyRounded.mathFunctions_exp_of_isIEEE` and `mathFunctions_log_of_isIEEE`
+rewrite `MathFunctions.exp` and `MathFunctions.log` to the correctly rounded functions. When exact
+comparisons decide a result, nothing bounds their running time, which is why this is opt-in.
+
+## Error bounds
+
+For a whole computation, `Configured.MixedError` carries a mixed relative and absolute error,
+`|x - x₀| ≤ r * |x₀| + a`, through the arithmetic operations, fused multiply-add, square root,
+casts, and left-to-right sums of configured binary values. The relative part follows rounding in
+the normal range, and the absolute part covers underflow and cancellation. Results that don't
+round, such as `x - x` of a finite `x` or a sum with a zero, are stated by their decoded value
+with `toRat?`. The [theorem index](../THEOREMS.md) lists the bounds and their premises.
 
 ## Intervals
 

@@ -15,8 +15,9 @@ public import FloatLib.Floats.Formats.Posit.Algebraic.Root.Proof
 
 The certificate bridge proves nearest-even rounding for every interior target. Monotonicity
 and the even tie at half the least subnormal cover the complete underflow interval. A finite
-IEEE result excludes the explicit overflow branch. Thus the real theorem needs no search-budget
-or distance-from-boundaries premise, and includes exact ties and subnormal results.
+IEEE result excludes the explicit overflow branch, and a result that is not finite is the
+infinity of the requested sign. Thus the real theorem needs no search-budget or
+distance-from-boundaries premise, and includes exact ties and subnormal results.
 
 The real-refinement theorem uses a conventional IEEE descriptor, matching the existing logical
 rounding bridge. Runtime handling of custom descriptors is separate from this theorem.
@@ -85,27 +86,38 @@ theorem toReal_round_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
         isFinite_posInf fmt hs, isFinite_negInf fmt hs] at hfinite
     · rename_i hbounded
       rw [ite_eq_right hbounded] at hfinite
-      have hlo : bpow Numerics.binaryRadix (lowerExponent fmt) ≤ target := by
-        have hgt : compare (powerOfTwo (lowerExponent fmt)) = .gt := by
-          simpa only [not_not] using hlarge
-        have := (cmp_eq_gt_iff _ _).mp
-          (show cmp target (bpow Numerics.binaryRadix (lowerExponent fmt)) = .gt by
-            simpa only [hcompare, cast_powerOfTwo] using hgt)
-        exact this.le
-      have hhi : target < bpow Numerics.binaryRadix (upperExponent fmt) := by
-        have hlt : compare (powerOfTwo (upperExponent fmt)) = .lt := by
-          simpa only [not_not] using hbounded
-        simpa only [hcompare, cast_powerOfTwo, cmp_eq_lt_iff] using hlt
-      obtain ⟨hm, ha, he⟩ := certificate_spec fmt hfmt compare target hcompare hlo hhi
-      let c := certificate fmt compare
-      have hc : target / bpow Numerics.binaryRadix c.exponent *
-          bpow Numerics.binaryRadix c.exponent = target :=
-        div_mul_cancel₀ _ (bpow.ne_zero _ _)
-      simp only [roundCertificate, hfmt, ite_true] at hfinite ⊢
-      rw [toReal_ofModel_roundWithAccuracy_eq_roundAt fmt hfmt (modelSign sign)
-        c.mantissa c.exponent c.accuracy (target / bpow Numerics.binaryRadix c.exponent)
-        hm ha he hfinite, hc]
+      have hlo := (bpow_lowerExponent_lt_of_compare_eq_gt fmt hcompare
+        (by simpa only [not_not] using hlarge)).le
+      have hhi := lt_bpow_upperExponent_of_compare_eq_lt fmt hcompare
+        (by simpa only [not_not] using hbounded)
+      obtain ⟨hround, ha, he⟩ :=
+        roundCertificate_certificate_spec fmt hfmt sign compare target hcompare hlo hhi
+      rw [hround] at hfinite ⊢
+      rw [toReal_ofModel_roundWithAccuracy_eq_roundAt fmt hfmt (modelSign sign) _ _ _ _ ha he
+        hfinite, div_mul_cancel₀ target (bpow.ne_zero _ _)]
       cases sign <;> simp [modelSign, modelSignBit]
+
+/--
+For an IEEE descriptor, a result of exact comparison rounding that is not finite is
+`nativeOverflow fmt sign`, the infinity of the requested sign.
+-/
+theorem round_eq_nativeOverflow_of_isFinite_eq_false (fmt : FloatFormat)
+    (hfmt : fmt.isIEEE = true) (sign : Bool) (compare : Rat → Ordering)
+    (hnonfinite : isFinite (round fmt sign compare) = false) :
+    round fmt sign compare = nativeOverflow fmt sign := by
+  unfold round at hnonfinite ⊢
+  split_ifs at hnonfinite ⊢
+  · simp [isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt sign)] at hnonfinite
+  · rfl
+  · simp only [roundCertificate, hfmt, ite_true, roundWithAccuracy_eq_finishRoundedMantissa,
+      finishRoundedMantissa] at hnonfinite ⊢
+    split at hnonfinite
+    · simp [isFinite_ofModel_zero fmt hfmt] at hnonfinite
+    · rename_i hzero
+      simp only [hzero, dite_false]
+      rw [ofModel_finite_eq_ofModel_infinity_of_isFinite_eq_false fmt hfmt _ _ _ _ hnonfinite,
+        nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
+      cases sign <;> simp [posInf_eq_ofModel_infinity, negInf_eq_ofModel_infinity]
 
 /-- Exact integer-power comparisons correctly round any characterized nonnegative root. -/
 theorem toReal_root_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)

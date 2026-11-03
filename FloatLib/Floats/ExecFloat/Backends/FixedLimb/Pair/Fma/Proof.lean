@@ -149,8 +149,7 @@ private theorem jam_split (H L g : Nat) (hL : L < H * 2 ^ g) (hg : 3 ≤ g) :
 /-- The sticky magnitude of a product above an addend is the jam of the exact aligned sum. -/
 private theorem jammedProductWords_toNat (sameSign : Bool) (high : UInt256) (low : UInt128)
     (gap : UInt64) (hhigh : high.toNat < 2 ^ 252)
-    (hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat)
-    (hlowNe : low.toNat ≠ 0) (hgap : 3 ≤ gap.toNat) :
+    (hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat) (hgap : 3 ≤ gap.toNat) :
     (jammedProductWords sameSign high low gap).toNat =
       Numerics.shiftRightJam
         (if sameSign then high.toNat * 2 ^ gap.toNat + low.toNat
@@ -167,7 +166,7 @@ private theorem jammedProductWords_toNat (sameSign : Bool) (high : UInt256) (low
       ((low.shiftRight (gap - 3).toNat).shiftLeft (gap - 3).toNat == low) =
         decide (low.toNat % 2 ^ d = 0) := by
     rw [hdiscard]
-    exact UInt128.shiftRight_shiftLeft_beq low d hlowNe
+    exact UInt128.shiftRight_shiftLeft_beq low d
   have hupper := double_three_toNat high hhigh
   unfold jammedProductWords
   simp only [hexact]
@@ -229,42 +228,14 @@ private theorem jammedAddendWords_toNat (sameSign : Bool) (high : UInt128) (low 
     rw [hdiscard, UInt256.hasNonzeroBelow_eq]
     by_cases hz : low.toNat % 2 ^ d = 0 <;> simp [hz]
   have hupper : (high.shiftLeft 3).toNat = high.toNat * 2 ^ 3 := by
-    rw [UInt128.shiftLeft_toNat _ _ (by decide) (by rw [Nat.shiftLeft_eq]; omega),
+    rw [UInt128.shiftLeft_toNat _ _ (by rw [Nat.shiftLeft_eq]; omega),
       Nat.shiftLeft_eq]
-  unfold jammedAddendWords UInt128.jamCombine
-  simp only [hexact]
-  rw [hgapSplit]
-  cases sameSign
-  · simp only [Bool.false_eq_true, ite_false]
-    rw [Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hlowSplit.le]
-    have hordered :
-        (low.shiftRight128 (gap - 3).toNat).toNat ≤ (high.shiftLeft 3).toNat := by
-      rw [hlowerNat, hupper]
-      omega
-    have hsub := UInt128.sub_toNat _ _ hordered
-    rw [hlowerNat, hupper] at hsub
-    by_cases hz : low.toNat % 2 ^ d = 0
-    · simp only [hz, decide_true, ite_true]
-      exact hsub
-    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
-      have hunit : (⟨0, 1⟩ : UInt128).toNat = 1 := by simp [UInt128.toNat]
-      have hone :
-          (⟨0, 1⟩ : UInt128).toNat ≤
-            ((high.shiftLeft 3).sub (low.shiftRight128 (gap - 3).toNat)).toNat := by
-        rw [hsub, hunit]
-        omega
-      rw [UInt128.setLowBit_toNat, UInt128.sub_toNat _ _ hone, hsub, hunit]
-  · simp only [ite_true]
-    rw [Numerics.shiftRightJam_add_mul_two_pow]
-    have hsum :
-        (add128 (high.shiftLeft 3) (low.shiftRight128 (gap - 3).toNat)).value.toNat =
-          high.toNat * 2 ^ 3 + low.toNat / 2 ^ d := by
-      rw [add128_value_toNat_of_lt _ _ (by rw [hupper, hlowerNat]; omega), hupper, hlowerNat]
-    by_cases hz : low.toNat % 2 ^ d = 0
-    · simp only [hz, decide_true, ite_true]
-      exact hsum
-    · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
-      rw [UInt128.setLowBit_toNat, hsum]
+  unfold jammedAddendWords
+  rw [hdiscard] at hlowerNat hexact ⊢
+  rw [UInt128.jamCombine_toNat sameSign _ (high.shiftLeft 3) _ low.toNat d hlowerNat hexact
+      (fun _ => by rw [hupper, hlowerNat]; omega)
+      (fun _ => by rw [hupper]; exact hlowSplit.le),
+    hupper, hgapSplit]
 
 /-! ## Field fused multiply-add -/
 
@@ -274,16 +245,9 @@ private theorem toNat_ne_zero_of_ne128 {value : UInt128} (h : value ≠ ⟨0, 0�
 
 private theorem implicit_le_toNat (h : Eligible fmt) (high : UInt128)
     (himplicit : implicitBit fmt ≤ high.hi) : 2 ^ fmt.fracWidth ≤ high.toNat := by
-  have hfrac := h.frac_gt
-  have hnat := UInt64.le_iff_toNat_le.mp himplicit
-  rw [implicitBit_toNat h] at hnat
-  have hsplit : 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 := by
-    rw [← Nat.pow_add]
-    congr 1
-    omega
+  have := two_pow_fracWidth_le_of_implicitBit_le h _ himplicit
   unfold UInt128.toNat
-  rw [hsplit]
-  exact (Nat.mul_le_mul_right _ hnat).trans (Nat.le_add_left _ _)
+  omega
 
 private theorem productAtLeastImplicit_le (h : Eligible fmt) (product : UInt256)
     (hproduct : productAtLeastImplicit fmt product = true) :
@@ -308,14 +272,7 @@ private theorem productAtLeastImplicit_le (h : Eligible fmt) (product : UInt256)
     calc 2 ^ fmt.fracWidth ≤ 2 ^ 128 := Nat.pow_le_pow_right (by decide) (by omega)
       _ ≤ product.limb2.toNat * 2 ^ 128 := Nat.le_mul_of_pos_left _ hpos
       _ ≤ _ := by omega
-  · have hnat := UInt64.le_iff_toNat_le.mp h1
-    rw [implicitBit_toNat h] at hnat
-    have hsplit : 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 := by
-      rw [← Nat.pow_add]
-      congr 1
-      omega
-    rw [hsplit]
-    have := Nat.mul_le_mul_right (2 ^ 64) hnat
+  · have := two_pow_fracWidth_le_of_implicitBit_le h _ h1
     omega
 
 /--
@@ -407,31 +364,21 @@ theorem fmaFieldsWords_refines (h : Eligible fmt) (hfracWidth : fmt.fracWidth �
         have haddendLower := implicit_le_toNat h addend himplicit
         have hlow : product.toNat ≤ 2 ^ (fmt.fracWidth + gap.toNat - 1) :=
           hproduct.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
-        have hlowLt : product.toNat < addend.toNat * 2 ^ gap.toNat := by
-          calc product.toNat < 2 ^ (2 * fmt.fracWidth + 2) := hproduct
-            _ ≤ 2 ^ (fmt.fracWidth + gap.toNat) := Nat.pow_le_pow_right (by decide) (by omega)
-            _ = 2 ^ fmt.fracWidth * 2 ^ gap.toNat := Nat.pow_add _ _ _
-            _ ≤ addend.toNat * 2 ^ gap.toNat := Nat.mul_le_mul_right _ haddendLower
+        have hlowLt := NativeSmallWordAdd.low_lt_alignedHigh fmt.fracWidth addend.toNat
+          product.toNat gap.toNat haddendLower hlow (by omega)
         have hmag := jammedAddendWords_toNat (addendSign == productSign) addend product gap
           (haddend121.trans (by norm_num)) hlowLt hgap3
-        have hdiscard : (gap - 3).toNat = gap.toNat - 3 :=
-          UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by simpa using hgap3))
-        have hscaleSum :
-            (productScale + (gap - 3)).toNat = productScale.toNat + (gap.toNat - 3) := by
-          rw [UInt64.toNat_add, hdiscard]
-          exact Nat.mod_eq_of_lt (by omega)
+        have hscaleSum := NativeSmallWordAdd.jammedScale_toNat productScale gap hgap3 (by omega)
         have hmagNe : (jammedAddendWords (addendSign == productSign) addend product gap).toNat ≠
             0 := by
           rw [hmag]
-          refine Numerics.shiftRightJam_ne_zero _ _ ?_
-          exact (Nat.pow_le_pow_right (by decide) (by omega)).trans
-            (NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth addend.toNat product.toNat
-              gap.toNat _ haddendLower hlow hgap3)
+          exact NativeSmallWordAdd.shiftRightJam_alignedMagnitude_ne_zero fmt.fracWidth
+            addend.toNat product.toNat gap.toNat _ haddendLower hlow (by omega)
         rw [roundMagnitudeWords_refines h 0 addendSign _ _ hmagNe
             (by rw [hscaleSum, UInt64.toNat_zero]; omega) words hresult,
           hmag, hscaleSum, UInt64.toNat_zero, ← hshiftNat]
         exact FiniteScaleAdd.roundMagnitude_shiftRightJam fmt 0 addendSign productSign addend.toNat
-          product.toNat gap.toNat productScale.toNat haddendLower hlow hgap3
+          product.toNat gap.toNat productScale.toNat haddendLower hlow
       · simp at hresult
   · have hleNat : ¬productScale.toNat ≤ addendScale.toNat :=
       fun hk => hle (UInt64.le_iff_toNat_le.mpr hk)
@@ -489,30 +436,20 @@ theorem fmaFieldsWords_refines (h : Eligible fmt) (hfracWidth : fmt.fracWidth �
         have hproductLower := productAtLeastImplicit_le h product hproductBig
         have hlow : addend.toNat ≤ 2 ^ (fmt.fracWidth + gap.toNat - 1) :=
           haddend.le.trans (Nat.pow_le_pow_right (by decide) (by omega))
-        have hlowLt : addend.toNat < product.toNat * 2 ^ gap.toNat := by
-          calc addend.toNat < 2 ^ (fmt.fracWidth + 1) := haddend
-            _ ≤ 2 ^ (fmt.fracWidth + gap.toNat) := Nat.pow_le_pow_right (by decide) (by omega)
-            _ = 2 ^ fmt.fracWidth * 2 ^ gap.toNat := Nat.pow_add _ _ _
-            _ ≤ product.toNat * 2 ^ gap.toNat := Nat.mul_le_mul_right _ hproductLower
+        have hlowLt := NativeSmallWordAdd.low_lt_alignedHigh fmt.fracWidth product.toNat
+          addend.toNat gap.toNat hproductLower hlow (by omega)
         have hmag := jammedProductWords_toNat (productSign == addendSign) product addend gap
-          (hproduct242.trans (by norm_num)) hlowLt haNat hgap3
-        have hdiscard : (gap - 3).toNat = gap.toNat - 3 :=
-          UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by simpa using hgap3))
-        have hscaleSum :
-            (addendScale + (gap - 3)).toNat = addendScale.toNat + (gap.toNat - 3) := by
-          rw [UInt64.toNat_add, hdiscard]
-          exact Nat.mod_eq_of_lt (by omega)
+          (hproduct242.trans (by norm_num)) hlowLt hgap3
+        have hscaleSum := NativeSmallWordAdd.jammedScale_toNat addendScale gap hgap3 (by omega)
         have hmagNe :
             (jammedProductWords (productSign == addendSign) product addend gap).toNat ≠ 0 := by
           rw [hmag]
-          refine Numerics.shiftRightJam_ne_zero _ _ ?_
-          exact (Nat.pow_le_pow_right (by decide) (by omega)).trans
-            (NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth product.toNat addend.toNat
-              gap.toNat _ hproductLower hlow hgap3)
+          exact NativeSmallWordAdd.shiftRightJam_alignedMagnitude_ne_zero fmt.fracWidth
+            product.toNat addend.toNat gap.toNat _ hproductLower hlow (by omega)
         rw [roundProductWords_refines h productSign _ _ hmagNe (by rw [hscaleSum]; omega) words
             hresult, hmag, hscaleSum, ← hshiftNat]
         exact FiniteScaleAdd.roundMagnitude_shiftRightJam fmt 0 productSign addendSign product.toNat
-          addend.toNat gap.toNat addendScale.toNat hproductLower hlow hgap3
+          addend.toNat gap.toNat addendScale.toNat hproductLower hlow
       · simp at hresult
 
 /-! ## Storage words and model entry points -/
@@ -568,8 +505,8 @@ theorem fmaFiniteWords_refines (h : Eligible fmt) (x y z : Model fmt) (words : U
   have hproductScale :
       (finiteScale xExponent + finiteScale yExponent).toNat =
         FiniteKernel.scale xExponent.toNat + FiniteKernel.scale yExponent.toNat := by
-    rw [UInt64.toNat_add, NativeSmallWordAdd.finiteScale_toNat_eq_scale,
-      NativeSmallWordAdd.finiteScale_toNat_eq_scale, Nat.mod_eq_of_lt (by omega)]
+    rw [UInt64.toNat_add, FiniteKernel.finiteScale_toNat_eq_scale,
+      FiniteKernel.finiteScale_toNat_eq_scale, Nat.mod_eq_of_lt (by omega)]
   have haddendScale :
       (finiteScale zExponent + alignOffset fmt).toNat =
         FiniteKernel.scale zExponent.toNat + FiniteKernel.finiteScaleOffset fmt := by
@@ -577,7 +514,7 @@ theorem fmaFiniteWords_refines (h : Eligible fmt) (x y z : Model fmt) (words : U
     have hoffsetLt : FiniteKernel.finiteScaleOffset fmt < 2 ^ 33 := by
       unfold FiniteKernel.finiteScaleOffset
       omega
-    rw [UInt64.toNat_add, NativeSmallWordAdd.finiteScale_toNat_eq_scale, hoffset,
+    rw [UInt64.toNat_add, FiniteKernel.finiteScale_toNat_eq_scale, hoffset,
       Nat.mod_eq_of_lt (by omega)]
   have hk := fmaFieldsWords_refines h hfracWidth _ _ _ _ _ _
     (by rw [hproduct]; exact hproductLt) hzMantissa

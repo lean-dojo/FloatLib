@@ -44,7 +44,7 @@ private theorem scaledRadicandWord_toNat
     rw [hone, Nat.shiftLeft_eq, one_mul]
     exact Nat.pow_lt_pow_right (by decide) hshift
   unfold scaledRadicandWord
-  rw [mul128_toNat, UInt128.shiftLeft_toNat _ shift hshift hfit]
+  rw [mul128_toNat, UInt128.shiftLeft_toNat _ shift hfit]
   simp [UInt128.toNat, Nat.shiftLeft_eq]
 
 /-- The native zero test and low-bit update implement representation-free sticky jamming. -/
@@ -103,13 +103,31 @@ private theorem roundFieldsWord_toNat_eq_direct_of_positive
         Nat.mul_lt_mul_of_pos_right significand.toNat_lt (Nat.two_pow_pos shift)
       _ = 2 ^ (64 + shift) := (Nat.pow_add 2 64 shift).symm
       _ ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by omega)
-  obtain ⟨hroot, hremainder⟩ := rootAndRemainder_spec _ 96 (by decide) (by decide) hfit
+  obtain ⟨hroot, hremainder⟩ := rootAndRemainder_spec _ 96 (by decide) hfit
   rw [hroot, hremainder, hscaled, directRoundCode_eq_roundPositiveCode]
   simp [DirectDyadicSquareRoot.roundCode, DirectDyadicSquareRoot.rootPrefix,
     DirectDyadicSquareRoot.prefixAtPrecision, DirectDyadicSquareRoot.prefixPrecision,
     DirectDyadicSquareRoot.truncatedRoot, DirectDyadicSquareRoot.squareRemainder,
     DirectDyadicSquareRoot.scaledRadicand, DirectDyadicSquareRoot.exponentParity,
     hsignificandNat, hshift]
+
+/-- A dyadic with a nonzero significand lies below zero exactly when its sign flag is set. -/
+private theorem isLess_zero_of_significand_ne_zero
+    (negative : Bool) {significand : Nat} (exponent : Int)
+    (hsignificand : significand ≠ 0) :
+    ({ negative, significand, exponent } : FloatLib.Numerics.Dyadic).isLess
+        FloatLib.Numerics.Dyadic.zero = negative := by
+  have hpositive :=
+    FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
+      ⟨false, significand, exponent⟩ hsignificand rfl
+  rw [FloatLib.Numerics.Dyadic.isLess_eq_decide, FloatLib.Numerics.Dyadic.zero_toRat]
+  cases negative
+  · exact decide_eq_false (not_lt_of_ge hpositive.le)
+  · apply decide_eq_true
+    rw [show (⟨true, significand, exponent⟩ : FloatLib.Numerics.Dyadic) =
+        FloatLib.Numerics.Dyadic.neg ⟨false, significand, exponent⟩ from rfl,
+      FloatLib.Numerics.Dyadic.neg_toRat]
+    exact neg_lt_zero.mpr hpositive
 
 /-- Native field rounding equals the common direct square-root domain rule. -/
 theorem roundFieldsWord_toNat_eq_direct
@@ -135,58 +153,18 @@ theorem roundFieldsWord_toNat_eq_direct
       FloatLib.Numerics.Dyadic.toRat,
       FloatLib.Numerics.Dyadic.signedSignificand,
       DirectDyadicSquareRoot.roundCode]
-  · cases negative with
-    | false =>
-        have hnonnegative :
-            (({
-                negative := false
-                significand := significand.toNat
-                exponent
-              } : FloatLib.Numerics.Dyadic).isLess
-                FloatLib.Numerics.Dyadic.zero) = false := by
-          rw [FloatLib.Numerics.Dyadic.isLess_eq_decide,
-            FloatLib.Numerics.Dyadic.zero_toRat]
-          apply decide_eq_false
-          unfold FloatLib.Numerics.Dyadic.toRat
-            FloatLib.Numerics.Dyadic.signedSignificand
-          apply not_lt_of_ge
-          apply mul_nonneg
-          · rw [Rat.ofInt_eq_cast]
-            exact Int.cast_nonneg (Int.natCast_nonneg _)
-          · exact (zpow_pos (by norm_num) _).le
-        rw [roundFieldsWord_toNat_eq_direct_of_positive
-          format heligible significand exponent hzero]
-        simp [hnonnegative]
-    | true =>
-        have hsignificandPositive : 0 < significand.toNat := by
-          exact Nat.pos_of_ne_zero (by
-            simpa [← UInt64.toNat_inj] using hzero)
-        have hnegativeValue :
-            (({
-                negative := true
-                significand := significand.toNat
-                exponent
-              } : FloatLib.Numerics.Dyadic).isLess
-                FloatLib.Numerics.Dyadic.zero) = true := by
-          rw [FloatLib.Numerics.Dyadic.isLess_eq_decide,
-            FloatLib.Numerics.Dyadic.zero_toRat]
-          apply decide_eq_true
-          unfold FloatLib.Numerics.Dyadic.toRat
-            FloatLib.Numerics.Dyadic.signedSignificand
-          simp only [ite_true]
-          apply mul_neg_of_neg_of_pos
-          · rw [Rat.ofInt_eq_cast]
-            have hintPositive :
-                (0 : Int) < Int.ofNat significand.toNat :=
-              Int.ofNat_lt.mpr hsignificandPositive
-            exact_mod_cast neg_neg_of_pos hintPositive
-          · exact zpow_pos (by norm_num) _
-        rw [show
+  · rw [isLess_zero_of_significand_ne_zero negative exponent
+      (by simpa [← UInt64.toNat_inj] using hzero)]
+    cases negative
+    · rw [roundFieldsWord_toNat_eq_direct_of_positive
+        format heligible significand exponent hzero]
+      simp
+    · rw [show
           roundFieldsWord format heligible true significand exponent =
             NativeWord.signMaskWord format by
-          simp [roundFieldsWord, hzero]]
-        rw [NativeWord.signMaskWord_toNat format heligible]
-        simp [hnegativeValue]
+          simp [roundFieldsWord, hzero],
+        NativeWord.signMaskWord_toNat format heligible]
+      simp
 
 /-- The packed scalar adapter equals the stored-word square-root kernel. -/
 theorem sqrtWordCodeValid_eq

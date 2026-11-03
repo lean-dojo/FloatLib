@@ -41,7 +41,7 @@ Where an enclosure sits matters as much as how wide it is. On an integer roundin
 
 Language and compiler specifications decide some things the arithmetic standard leaves open, such as how a program accesses flags and which evaluation transformations are permitted. [Chapter 04](#/chapter/why-verifying-floating-point-is-hard) has examples where those execution rules change the bits a program returns.
 
-<a id="what-imprecision-has-cost"></a>
+## What imprecision has cost
 
 A common arithmetic standard fixes the result of an operation, but the programs using it still need suitable conversions, error bounds, and models. In [Figure 3.2](#/chapter/a-short-history-of-floating-point/figure-ch03-incident-timeline), the marked causes tell accumulated rounding and conversion errors apart from an incorrect implementation or an inadequate physical model.
 
@@ -72,7 +72,7 @@ open FloatLib.Numerics.Representations
 def accumulate (steps : Nat) (step : Binary32)
     (rounding : Model.IEEERoundingMode) : Binary32 :=
   (List.range steps).foldl
-    (fun total _ => (ExecFloat.Binary.add total step (mode := rounding) (status := true)).1) 0
+    (fun total _ => ExecFloat.Binary.add total step (mode := rounding)) 0
 
 #eval accumulate 10000 0.1 .nearest
 -- 999.9029
@@ -80,15 +80,15 @@ def accumulate (steps : Nat) (step : Binary32)
 #eval accumulate 10000 0.1 .towardZero
 -- 999.8049
 
-#eval (ExecFloat.Binary.add (1000 : Binary32) 0.1 (mode := .towardZero) (status := true)).2
--- { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true }
+#eval (ExecFloat.Binary.add (1000 : Binary32) 0.1 (mode := .towardZero) (status := true)).status
+-- { inexact := true }
 ```
 
 We started with a stored step that's too large, and yet both accumulated totals come out too small. With the stored tenth at $13421773 / 2^{27}$, slightly above $0.1$, ten thousand exact copies sum to just over 1000. The second result, $8388608125 / 8388608$, is 1000 plus about $1.5 \times 10^{-5}$. Nearest-even accumulation ends about a tenth short, and truncation twice as far short. Most of that error comes from rounding the additions, and very little from converting the literal.
 
 A binade is the interval between consecutive powers of two, and within one the spacing of floats is constant. Away from the binade's boundary, the accumulated total sits on that grid, and the fixed step leaves the same remainder relative to the grid spacing. So as long as the exact sums aren't ties, every addition makes the same rounding error. For this step the direction repeats with period four as the binade doubles, with two binades rounding up and then two rounding down. About half the steps fall in the last binade, $[512, 1024)$, which rounds down, so it contributes a large part of the final error. Toward-zero rounding of these positive sums discards a nonnegative amount at every step. In [Figure 3.3](#/chapter/a-short-history-of-floating-point/figure-ch03-binary32-accumulation), look for the straight stretches of error within each binade and the changes at their boundaries.
 
-![Ten thousand binary32 additions of 0.1 under nearest-even and toward-zero rounding, as the running total minus k/10, with the points where the total reaches a new binade marked](assets/ch03-binary32-accumulation.png "Accumulated error after repeated binary32 additions of 0.1, measured against the exact decimal total. Rounding direction changes the drift; each binade changes the step size.")
+![Ten thousand binary32 additions of 0.1 under nearest-even and toward-zero rounding, as the running total minus k/10, with the points where the total reaches a new binade marked](assets/ch03-binary32-accumulation.png "Accumulated error after repeated binary32 additions of 0.1, measured against the exact decimal total. Rounding direction changes the drift, and each binade changes the step size.")
 
 Let's work out the slope of the final stretch by hand. In $[512,1024)$ a binary32 step is $h = 2^{-14}$, and in units of this spacing, the stored tenth is
 
@@ -137,7 +137,7 @@ $$
   = \Delta + \varepsilon T.
 $$
 
-Now the error contains the total uptime. This simplified calculation doesn't assume the replacement routine was perfectly exact, but it shows why a difference between the conversion rules can survive subtraction, even when the pulse interval is small. The 0.3433-second error after 100 hours measures this uptime term rather than a millionth of the time between pulses. Israeli users had reported the drift on 11 February 1991. A corrected version was released on 16 February and reached Dhahran on 26 February, the day after the barracks was hit.
+Now the error contains the total uptime. The replacement routine wasn't exact either, but this simplified calculation shows why a difference between the conversion rules can survive subtraction, even when the pulse interval is small. The 0.3433-second error after 100 hours measures this uptime term rather than a millionth of the time between pulses. Israeli users had reported the drift on 11 February 1991. A corrected version was released on 16 February and reached Dhahran on 26 February, the day after the barracks was hit.
 
 We can reproduce the truncated constant with exact integer arithmetic. `ClockGrid` uses the [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) with 23 fraction bits, and decoding divides its unbounded integer coefficient by $2^{23}$. That reproduces the rounding grid without modelling the clock register's finite storage. [[FloatLib.Floats.ExecFloat.FixedPoint.toRat]] reads the coefficient back as an exact rational:
 
@@ -189,7 +189,7 @@ Intel's 1994 annual report [@intelAnnualReport1994] records a 475 million dollar
 -- 1333820449136241002
 ```
 
-The second and third evaluations print the first nineteen digits of the rounded and exact quotient using integer arithmetic, so the display doesn't add another floating-point conversion. They agree through the seventeenth. [[FloatLib.Floats.ExecFloat.Proof.div_eq_spec]] covers every pair of stored operands, including exceptional cases. Under finite-input, nonzero-divisor, and finite-result hypotheses, the real-valued theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]] identifies the rounded quotient. [Chapter 06](#/chapter/the-numerical-models) explains that connection.
+The second and third evaluations print the first nineteen digits of the rounded and exact quotient using integer arithmetic, so the display doesn't add another floating-point conversion. They agree through the seventeenth. [[FloatLib.Floats.ExecFloat.Proof.div_eq_spec]] covers every pair of stored operands, including exceptional cases. Under finite-divisor and finite-result hypotheses, the real-valued theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]] identifies the rounded quotient. [Chapter 06](#/chapter/the-numerical-models) explains that connection.
 
 A proof about an implementation also has to account for the quotient bits the algorithm generates. FloatLib's [finite binary64 divider](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Word/Full/Division/Proof.lean) uses a restoring `UInt64` loop, a simpler recurrence than the Pentium's SRT digit selection. A restoring loop keeps an integer quotient and an exact remainder. For a small instance of the recurrence, divide 13 by 7, starting with quotient 1 and remainder 6. After $j$ binary digits have been generated, the relation is
 
@@ -240,20 +240,17 @@ open FloatLib.Floats.ExecFloat.BoundedFixedPoint (OverflowPolicy)
 
 def horizontalBias : Binary64 := 40000
 
-#eval (ExecFloat.cast (target := Int16Grid) horizontalBias).map
-  ExecFloat.BoundedFixedPoint.coefficient
--- FloatLib.Floats.ExecFloat.ConversionOutcome.failure (FloatLib.Floats.ExecFloat.ConversionFailure.outOfRange)
+#eval ExecFloat.cast (target := Int16Grid) horizontalBias
+-- .failure .outOfRange
 
-#eval (horizontalBias.cast (target := Int16Grid) (context := OverflowPolicy.wrap)).value?.map
-  ExecFloat.BoundedFixedPoint.coefficient
--- some (-25536)
+#eval horizontalBias.cast (target := Int16Grid) (context := OverflowPolicy.wrap)
+-- .success (-25536) { inexact := true, overflow := true, wrapped := true }
 
-#eval (horizontalBias.cast (target := Int16Grid) (context := OverflowPolicy.saturate)).value?.map
-  ExecFloat.BoundedFixedPoint.coefficient
--- some 32767
+#eval horizontalBias.cast (target := Int16Grid) (context := OverflowPolicy.saturate)
+-- .success 32767 { inexact := true, overflow := true, saturated := true }
 ```
 
-By default the cast returns `outOfRange` as an ordinary result, so the caller gets to handle the failed conversion. If you ask for them, the alternatives wrap to $-25536$ or saturate to $32767$. The full outcomes also mark `overflow` and `inexact`, with `wrapped` or `saturated` identifying the selected policy, and the last two evaluations show only their returned values. Neither alternative preserves the original value, so whether one is useful depends on the application.
+By default the cast returns `outOfRange` as an ordinary result, so the caller gets to handle the failed conversion. If you ask for them, the alternatives wrap to $-25536$ or saturate to $32767$. Both outcomes also raise `overflow` and `inexact`, and `wrapped` or `saturated` names the selected policy. Neither alternative preserves the original value, so whether one is useful depends on the application.
 
 Wrapping follows from the bit interpretation. Sixteen bits store a residue modulo $2^{16} = 65536$. The residue 40000 has its top bit set, so reading it as a signed two's-complement integer subtracts 65536 and gives $40000 - 65536 = -25536$. Saturation returns the upper endpoint instead and loses $40000 - 32767 = 7233$. Both are well-defined arithmetic operations, but each replaces a positive measurement with a different value. Because the status reports the selected policy, the caller can tell that replacement apart from a successful value-preserving conversion.
 
@@ -262,12 +259,12 @@ For a 16-bit store, the round-trip theorem `toInt_ofInt_eq_self` assumes that th
 ```lean
 example (value : Int) (h : FixedInt.InRange 16 value) :
     (FixedInt.ofInt value : FixedInt 16).toInt = value :=
-  FixedInt.toInt_ofInt_eq_self (by decide) h
+  FixedInt.toInt_ofInt_eq_self h
 ```
 
 In the [integer interpretation proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Representations/FixedInt/Semantics/Basic.lean), the `InRange 16 value` hypothesis is the condition under which storing and reading the integer gives it back unchanged.
 
-Proving this theorem once doesn't establish `InRange 16 BH` for a particular trajectory. That takes evidence about the values the guidance system can produce, and a move from Ariane 4 to Ariane 5 means revisiting that evidence. The division theorem above had the same split. Its arithmetic proof assumes finite inputs and a nonzero divisor, and the application has to show that its inputs meet those conditions.
+Proving this theorem once doesn't establish `InRange 16 BH` for a particular trajectory. That takes evidence about the values the guidance system can produce, and a move from Ariane 4 to Ariane 5 means revisiting that evidence. The division theorem above had the same split. Its arithmetic proof assumes a finite divisor and a finite quotient, and the application has to show that its inputs meet those conditions.
 
 The alignment output was unused after lift-off, but an exception in that unused calculation could still shut down the reference unit. So choosing a conversion policy also means tracing how the surrounding program handles the result. A returned failure, a wrapped value, and a saturated value each need the right response from the caller.
 

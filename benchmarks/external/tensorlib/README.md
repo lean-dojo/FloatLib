@@ -37,11 +37,13 @@ work directory.
   Lean library.
 
 Both implementations pass all **952,612** value checks, and non-NaN results have to match
-exactly. All **2,964** E4M3FN differences are NaN signs. For 2,963 negative finite overflows
-and one negative infinity input, FloatLib produces `0x7f` and TensorLib produces `0xff`, and
-both of those are NaNs. We also check that building the Float32 inputs changes only NaN
-encodings, which Lean's canonical native-float representation requires. Exception flags and
-NaN signaling behavior aren't part of this experiment.
+exactly. All **2,423** differing words come from NaN inputs, and both results are NaNs in each
+of them. FloatLib keeps the input NaN's sign and the part of its payload that fits, as its casts
+do in general, while TensorLib returns a canonical NaN. The FP16 word `0x7c01`, a NaN with
+payload 1, widens to `0x7fc00001` in FloatLib and `0x7fc00000` in TensorLib. Negative finite
+overflow to E4M3FN gives `0xff` in both. We also check that building the Float32 inputs
+changes only NaN encodings, which Lean's canonical native-float representation requires.
+Exception flags and NaN signaling behavior aren't part of this experiment.
 
 ## Timing workload
 
@@ -62,8 +64,9 @@ Each process warms up for 256 iterations, and the library that runs first altern
 pairs. The timed loop covers lookup, conversion, encoded output, index, and checksum work.
 Construction, process startup, and file output are outside it.
 
-On the Intel Xeon Platinum 8275CL, TensorLib's medians are 5.9 to 13.0 times faster than
-FloatLib's general descriptor cast on these fixtures. FloatLib uses Lean 4.33.1 and
-TensorLib uses Lean 4.33.0, both with Clang 22.1.4. What's being compared here is the scalar
+On the Intel Xeon Platinum 8275CL, TensorLib's medians are 4.0 to 12.5 times faster than
+FloatLib's general descriptor cast on these fixtures. The saved run measured FloatLib 2.0.0
+(commit `8c88715`) on 2026-10-31. FloatLib uses Lean 4.35.0 with Clang 23.1.0, and TensorLib
+uses Lean 4.33.0 with Clang 22.1.4. What's being compared here is the scalar
 cast interface. Tensor throughput and FloatLib's arithmetic backend kernels don't enter into
 it.

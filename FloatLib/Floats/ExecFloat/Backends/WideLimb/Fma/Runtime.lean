@@ -18,7 +18,7 @@ must be normal to enter this core. Exact cancellation returns positive zero; a n
 must pass `roundNormal?`'s lower check before rounding and upper check after rounding carry.
 Thus normal operands alone do not guarantee acceptance, even when rounding would produce the
 smallest normal value. The total operation computes declined cases with `Model.Spec.fma`;
-`Fma.Proof` proves agreement on all operands.
+for every `Eligible` format, `Fma.Proof` proves agreement on all operands.
 -/
 
 @[expose] public section
@@ -34,6 +34,7 @@ Exact cancellation is accepted as positive zero. Otherwise the aligned significa
 `roundNormal?`, which requires `fmt.bias + 2 * fmt.fracWidth - 1 ≤ leading + jam + scale` and
 `normalizedPosition ≤ 3 * fmt.bias + 2 * fmt.fracWidth - 2`, with the latter position including
 any rounding carry. Non-normal operands and failures of either range check return `none`.
+`fmaNormal?_refines` identifies accepted results with `FiniteKernel.fma?` for `Eligible` formats.
 -/
 def fmaNormal? (fmt : FloatFormat) (x y z : Value fmt) : Option (Value fmt) :=
   let xExponent := expWord x
@@ -50,7 +51,12 @@ def fmaNormal? (fmt : FloatFormat) (x y z : Value fmt) : Option (Value fmt) :=
       (signBit z) (normalMantissa z)
       ((zExponent.toNat - 1) + FiniteKernel.finiteScaleOffset fmt)
 
-/-- Wide-limb fused multiply-add with the reference operation for declined cases. -/
+/--
+Wide-limb fused multiply-add with the reference operation for declined cases.
+
+For an `Eligible` format its result decodes to `Model.Spec.fma` of the decoded operands
+(`toModel_fma`).
+-/
 def fma (fmt : FloatFormat) (x y z : Value fmt) : Value fmt :=
   match fmaNormal? fmt x y z with
   | some result => result

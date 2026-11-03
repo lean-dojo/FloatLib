@@ -120,15 +120,22 @@ theorem orderIndex_bounds (value : ExecFloat.P3109 format) (hnan : value.isNaN =
   change format.nanBits % format.modulus = format.nanBits
   exact Nat.mod_eq_of_lt format.nanBits_lt_modulus
 
-/-- Below the greatest datum, the upper neighbor exists and advances the order index by one. -/
+/-- Below the greatest datum, the upper neighbor exists and advances the order index by one. The NaN
+code has an order index at or above the greatest one, so the input is not NaN. -/
 theorem nextGreaterThan_orderIndex (value : ExecFloat.P3109 format)
-    (hnan : value.isNaN = false) (hindex : value.orderIndex < format.lastOrderIndex) :
+    (hindex : value.orderIndex < format.lastOrderIndex) :
     value.nextGreaterThan.isNaN = false ∧
       value.nextGreaterThan.orderIndex = value.orderIndex + 1 := by
   have hbits := value.toNatBits_lt_modulus
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hpow : 2 ^ format.bitWidth = format.modulus := rfl
   have hboundary := format.one_lt_signBoundary
+  have hnan : value.isNaN = false := by
+    apply Bool.eq_false_iff.mpr
+    intro h
+    have hb : value.toNatBits = format.nanBits := by simpa [isNaN] using h
+    simp only [orderIndex, Format.orderIndex, Format.lastOrderIndex, hb, Format.nanBits] at hindex
+    cases hs : format.signedness <;> simp [hs] at hindex <;> omega
   have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [isNaN] using hnan
   simp only [nextGreaterThan, hnan, Bool.false_eq_true, ite_false]
   cases hs : format.signedness <;>
@@ -196,7 +203,7 @@ theorem less_nextGreaterThan (value candidate : ExecFloat.P3109 format)
     (h : value.less candidate = true) : value.less value.nextGreaterThan = true := by
   obtain ⟨hv, hc, horder⟩ := (less_iff_orderIndex value candidate).mp h
   have hcBound := (orderIndex_bounds candidate hc).2
-  obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value hv (by omega)
+  obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
   exact (less_iff_orderIndex value value.nextGreaterThan).mpr ⟨hv, hn, by omega⟩
 
 /-- No value greater than the input is smaller than its upper neighbor. -/
@@ -204,7 +211,7 @@ theorem not_less_nextGreaterThan (value candidate : ExecFloat.P3109 format)
     (h : value.less candidate = true) : candidate.less value.nextGreaterThan = false := by
   obtain ⟨hv, hc, horder⟩ := (less_iff_orderIndex value candidate).mp h
   have hcBound := (orderIndex_bounds candidate hc).2
-  obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value hv (by omega)
+  obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
   apply Bool.eq_false_iff.mpr
   intro hless
   have := (less_iff_orderIndex candidate value.nextGreaterThan).mp hless
@@ -247,7 +254,7 @@ theorem nextGreaterThan_isNaN_iff (value : ExecFloat.P3109 format) :
       by_cases hend : value.orderIndex = format.lastOrderIndex
       · rw [nextGreaterThan_eq_nan_of_last value hend]
         simp [isNaN]
-      · obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value hfinite (by omega)
+      · obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
         exact False.elim (hnone ⟨value.nextGreaterThan,
           (less_iff_orderIndex value value.nextGreaterThan).mpr ⟨hfinite, hn, by omega⟩⟩)
 

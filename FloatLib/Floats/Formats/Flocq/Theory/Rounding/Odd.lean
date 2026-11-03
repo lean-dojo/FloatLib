@@ -80,39 +80,39 @@ instance oddRoundValid : ValidRnd oddRound where
     · exact (oddRound_bounds x).2.trans
         ((Int.add_one_le_iff.mpr hfloorLt).trans (oddRound_bounds y).1)
 
-/-- An input below an even integer rounds to an integer strictly below it. -/
-theorem oddRound_lt_even {x : ℝ} {n : ℤ} (hxn : x < (n : ℝ)) (hn : Even n) :
-    oddRound x < n := by
-  have hle : oddRound x ≤ n := by
-    have hmono := ValidRnd.monotone (rnd := oddRound) x (n : ℝ) hxn.le
-    simpa using hmono
-  apply lt_of_le_of_ne hle
+/-- Round-to-odd reaches an even integer only from that integer itself. -/
+private theorem oddRound_ne_of_even {x : ℝ} {n : ℤ} (hxn : x ≠ (n : ℝ)) (hn : Even n) :
+    oddRound x ≠ n := by
   intro heq
   by_cases hx : x = (⌊x⌋ : ℝ)
   · have hround : oddRound x = ⌊x⌋ := by
       unfold oddRound
       rw [ite_eq_left hx]
-    have : x = (n : ℝ) := by rw [hx, ← hround, heq]
-    exact hxn.ne this
+    exact hxn (by rw [hx, ← hround, heq])
   · have hodd : Odd n := by simpa [heq] using oddRound_odd_of_inexact hx
     exact (Int.not_even_iff_odd.mpr hodd) hn
 
+/-- An input below an even integer rounds to an integer strictly below it. -/
+theorem oddRound_lt_even {x : ℝ} {n : ℤ} (hxn : x < (n : ℝ)) (hn : Even n) :
+    oddRound x < n :=
+  lt_of_le_of_ne (ValidRnd.le_of_le_intCast oddRound hxn.le) (oddRound_ne_of_even hxn.ne hn)
+
 /-- An input above an even integer rounds to an integer strictly above it. -/
 theorem even_lt_oddRound {x : ℝ} {n : ℤ} (hnx : (n : ℝ) < x) (hn : Even n) :
-    n < oddRound x := by
-  have hle : n ≤ oddRound x := by
-    have hmono := ValidRnd.monotone (rnd := oddRound) (n : ℝ) x hnx.le
-    simpa using hmono
-  apply lt_of_le_of_ne hle
-  intro heq
-  by_cases hx : x = (⌊x⌋ : ℝ)
-  · have hround : oddRound x = ⌊x⌋ := by
-      unfold oddRound
-      rw [ite_eq_left hx]
-    have : (n : ℝ) = x := by rw [hx, ← hround, ← heq]
-    exact hnx.ne this
-  · have hodd : Odd n := by simpa [← heq] using oddRound_odd_of_inexact hx
-    exact (Int.not_even_iff_odd.mpr hodd) hn
+    n < oddRound x :=
+  lt_of_le_of_ne (ValidRnd.le_of_intCast_le oddRound hnx.le) (oddRound_ne_of_even hnx.ne' hn).symm
+
+/-- Round-to-odd stays strictly below an even integer exactly when its input does. -/
+theorem oddRound_lt_even_iff {x : ℝ} {n : ℤ} (hn : Even n) :
+    oddRound x < n ↔ x < (n : ℝ) :=
+  ⟨fun h => lt_of_not_ge fun hnx => (ValidRnd.le_of_intCast_le oddRound hnx).not_gt h,
+    fun h => oddRound_lt_even h hn⟩
+
+/-- Round-to-odd stays strictly above an even integer exactly when its input does. -/
+theorem even_lt_oddRound_iff {x : ℝ} {n : ℤ} (hn : Even n) :
+    n < oddRound x ↔ (n : ℝ) < x :=
+  ⟨fun h => lt_of_not_ge fun hxn => (ValidRnd.le_of_le_intCast oddRound hxn).not_gt h,
+    fun h => even_lt_oddRound h hn⟩
 
 /--
 Round-to-odd with at least two extra binary digits prevents nearest-even double rounding on the
@@ -144,10 +144,8 @@ theorem nearestEven_roundOdd_binary_extra (extra : ℕ) (x : ℝ) :
   set y : ℝ := (a : ℝ) / (K : ℝ) with hy
   set M : ℤ := n * K + H with hM
   have hMEven : Even M := ⟨n * H + (2 : ℤ) ^ extra, by rw [hM, hKtwo, hH, pow_succ]; ring⟩
-  have haLower : n * K ≤ a := by
-    have hmono := ValidRnd.monotone (rnd := oddRound) ((n * K : ℤ) : ℝ) z
-      (by push_cast; exact mul_le_mul_of_nonneg_right (Int.floor_le x) hKpos.le)
-    rwa [oddRound_intCast] at hmono
+  have haLower : n * K ≤ a := ValidRnd.le_of_intCast_le oddRound
+    (by push_cast; exact mul_le_mul_of_nonneg_right (Int.floor_le x) hKpos.le)
   have haUpper : a < (n + 1) * K :=
     oddRound_lt_even (by push_cast; nlinarith [Int.lt_floor_add_one x]) (hKEven.mul_left _)
   have hyFloor : ⌊y⌋ = n := by
@@ -168,21 +166,15 @@ theorem nearestEven_roundOdd_binary_extra (extra : ℕ) (x : ℝ) :
     rw [← sub_neg, hyM, div_lt_iff₀ hKpos, zero_mul, sub_neg, Int.cast_lt]
   have hyGt : 1 / 2 < y - n ↔ M < a := by
     rw [← sub_pos, hyM, lt_div_iff₀ hKpos, zero_mul, sub_pos, Int.cast_lt]
-  have hzLt : x - n < 1 / 2 → a < M := fun h =>
-    oddRound_lt_even (by nlinarith) hMEven
-  have hzGt : 1 / 2 < x - n → M < a := fun h =>
-    even_lt_oddRound (by nlinarith) hMEven
-  have hzGe : 1 / 2 ≤ x - n → M ≤ a := fun h => by
-    have hmono := ValidRnd.monotone (rnd := oddRound) (M : ℝ) z (by nlinarith)
-    rwa [oddRound_intCast] at hmono
-  have hzLe : x - n ≤ 1 / 2 → a ≤ M := fun h => by
-    have hmono := ValidRnd.monotone (rnd := oddRound) z (M : ℝ) (by nlinarith)
-    rwa [oddRound_intCast] at hmono
+  have hzLt : z < (M : ℝ) ↔ x - n < 1 / 2 := by
+    rw [← sub_neg, hzM]
+    constructor <;> intro h <;> nlinarith
+  have hzGt : (M : ℝ) < z ↔ 1 / 2 < x - n := by
+    rw [← sub_pos, hzM]
+    constructor <;> intro h <;> nlinarith
   refine nearestEven_congr (hyFloor.trans hn) ?_ ?_
-  · rw [hyFloor, ← hn, hyLt]
-    exact ⟨fun h => not_le.1 fun h' => absurd (hzGe h') (not_le.2 h), hzLt⟩
-  · rw [hyFloor, ← hn, gt_iff_lt, gt_iff_lt, hyGt]
-    exact ⟨fun h => not_le.1 fun h' => absurd (hzLe h') (not_le.2 h), hzGt⟩
+  · rw [hyFloor, ← hn, hyLt, ha, oddRound_lt_even_iff hMEven, hzLt]
+  · rw [hyFloor, ← hn, gt_iff_lt, gt_iff_lt, hyGt, ha, even_lt_oddRound_iff hMEven, hzGt]
 
 /--
 Round-to-odd on a finer binary grid prevents nearest-even double rounding on a coarser grid.

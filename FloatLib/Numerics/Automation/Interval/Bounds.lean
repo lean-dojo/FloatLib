@@ -55,51 +55,63 @@ Extract bounds from inequalities, equalities, conjunctions, and closed-interval 
 
 Strict hypotheses supply weak endpoint bounds. The resulting closed box is sound but may be
 too wide to prove a claim whose only margin comes from an open endpoint.
+
+Conjunctions are inspected through projection proofs, which can be larger than the original
+proof term. Recursion follows the proposition and its unfolding, rather than the proof's size.
 -/
 private partial def boundsOfProof (proof : Lean.Expr) : MetaM (Array Bound) := do
   let type : Q(Prop) ← inferType proof
   go type proof
 where
   /-- Inspect the proposition, unfolding interval membership and other reducible wrappers. -/
-  go (type : Q(Prop)) (proof : Q($type)) : MetaM (Array Bound) := do
+  go (type : Q(Prop)) (proof : Q($type)) : MetaM (Array Bound) :=
+    withIncRecDepth do
+      checkSystem "interval hypothesis bounds"
+      match type with
+      | ~q($p ∧ $q) =>
+        let h : Q($p ∧ $q) := proof
+        return (← boundsOfProof q(And.left $h)) ++ (← boundsOfProof q(And.right $h))
+      | ~q(($a : ℝ) ≤ $b) => boundsOfLE (a := a) (b := b) proof
+      | ~q(($a : ℝ) < $b) =>
+        let h : Q($a < $b) := proof
+        boundsOfLE q(le_of_lt $h)
+      | ~q(($a : ℝ) = $b) =>
+        let h : Q($a = $b) := proof
+        return (← boundsOfLE q(le_of_eq $h)) ++ (← boundsOfLE q(le_of_eq (Eq.symm $h)))
+      | ~q(($a : NNReal) ≤ $b) =>
+        let h : Q($a ≤ $b) := proof
+        boundsOfLE q(NNReal.coe_le_coe.mpr $h)
+      | ~q(($a : NNReal) < $b) =>
+        let h : Q($a < $b) := proof
+        boundsOfLE q(le_of_lt (NNReal.coe_lt_coe.mpr $h))
+      | ~q(($a : NNReal) = $b) =>
+        let h : Q($a = $b) := proof
+        let h : Q(($a : ℝ) = ($b : ℝ)) := q(congrArg NNReal.toReal $h)
+        return (← boundsOfLE q(le_of_eq $h)) ++ (← boundsOfLE q(le_of_eq (Eq.symm $h)))
+      | _ =>
+        let reduced ← withTransparency .default (whnf type)
+        if reduced == type then return #[]
+        go reduced proof
+
+/--
+Real terms that may be bounded by a proposition, before instantiating its indices.
+
+This pass finds candidate terms before their quantified indices and guards are known. Proof
+extraction above runs after instantiation, when it can construct the corresponding inequalities.
+-/
+private partial def boundTerms (type : Lean.Expr) : MetaM (Array Q(ℝ)) :=
+  withIncRecDepth do
+    checkSystem "interval hypothesis terms"
+    have type : Q(Prop) := type
     match type with
-    | ~q($p ∧ $q) =>
-      let h : Q($p ∧ $q) := proof
-      return (← boundsOfProof q(And.left $h)) ++ (← boundsOfProof q(And.right $h))
-    | ~q(($a : ℝ) ≤ $b) => boundsOfLE (a := a) (b := b) proof
-    | ~q(($a : ℝ) < $b) =>
-      let h : Q($a < $b) := proof
-      boundsOfLE q(le_of_lt $h)
-    | ~q(($a : ℝ) = $b) =>
-      let h : Q($a = $b) := proof
-      return (← boundsOfLE q(le_of_eq $h)) ++ (← boundsOfLE q(le_of_eq (Eq.symm $h)))
-    | ~q(($a : NNReal) ≤ $b) =>
-      let h : Q($a ≤ $b) := proof
-      boundsOfLE q(NNReal.coe_le_coe.mpr $h)
-    | ~q(($a : NNReal) < $b) =>
-      let h : Q($a < $b) := proof
-      boundsOfLE q(le_of_lt (NNReal.coe_lt_coe.mpr $h))
-    | ~q(($a : NNReal) = $b) =>
-      let h : Q($a = $b) := proof
-      let h : Q(($a : ℝ) = ($b : ℝ)) := q(congrArg NNReal.toReal $h)
-      return (← boundsOfLE q(le_of_eq $h)) ++ (← boundsOfLE q(le_of_eq (Eq.symm $h)))
+    | ~q($p ∧ $q) => return (← boundTerms p) ++ (← boundTerms q)
+    | ~q(($a : ℝ) ≤ $b) | ~q(($a : ℝ) < $b) | ~q(($a : ℝ) = $b) => return #[a, b]
+    | ~q(($a : NNReal) ≤ $b) | ~q(($a : NNReal) < $b) | ~q(($a : NNReal) = $b) =>
+      return #[q(($a : ℝ)), q(($b : ℝ))]
     | _ =>
       let reduced ← withTransparency .default (whnf type)
       if reduced == type then return #[]
-      go reduced proof
-
-/-- Real terms that may be bounded by a proposition, before instantiating its indices. -/
-private partial def boundTerms (type : Lean.Expr) : MetaM (Array Q(ℝ)) := do
-  have type : Q(Prop) := type
-  match type with
-  | ~q($p ∧ $q) => return (← boundTerms p) ++ (← boundTerms q)
-  | ~q(($a : ℝ) ≤ $b) | ~q(($a : ℝ) < $b) | ~q(($a : ℝ) = $b) => return #[a, b]
-  | ~q(($a : NNReal) ≤ $b) | ~q(($a : NNReal) < $b) | ~q(($a : NNReal) = $b) =>
-    return #[q(($a : ℝ)), q(($b : ℝ))]
-  | _ =>
-    let reduced ← withTransparency .default (whnf type)
-    if reduced == type then return #[]
-    boundTerms reduced
+      boundTerms reduced
 
 /-- Discharge a concrete membership or inequality guarding a pointwise bound. -/
 private def dischargeBoundGuard (argument : Lean.Expr) : MetaM Bool := do
@@ -145,20 +157,22 @@ For example, `∀ i, x i ∈ Set.Icc lo hi` supplies the bounds for each used `x
 are not enumerated. Concrete guards such as `i ∈ Finset.range n` are proved before applying a
 guarded hypothesis; an unresolved index or guard supplies no bounds.
 -/
-partial def boundsOfProofFor (atoms : Array Q(ℝ)) (proof : Lean.Expr) : MetaM (Array Bound) := do
-  let type : Q(Prop) ← inferType proof
-  match type with
-  | ~q($p ∧ $q) =>
-    have proof : Q($p ∧ $q) := proof
-    return (← boundsOfProofFor atoms q(And.left $proof)) ++
-      (← boundsOfProofFor atoms q(And.right $proof))
-  | _ =>
-    let direct ← boundsOfProof proof
-    unless direct.isEmpty do return direct
-    let mut result := #[]
-    for atom in atoms do
-      result := result ++ (← boundsAtAtom atom type proof)
-    return result
+partial def boundsOfProofFor (atoms : Array Q(ℝ)) (proof : Lean.Expr) : MetaM (Array Bound) :=
+  withIncRecDepth do
+    checkSystem "interval hypothesis bounds"
+    let type : Q(Prop) ← inferType proof
+    match type with
+    | ~q($p ∧ $q) =>
+      have proof : Q($p ∧ $q) := proof
+      return (← boundsOfProofFor atoms q(And.left $proof)) ++
+        (← boundsOfProofFor atoms q(And.right $proof))
+    | _ =>
+      let direct ← boundsOfProof proof
+      unless direct.isEmpty do return direct
+      let mut result := #[]
+      for atom in atoms do
+        result := result ++ (← boundsAtAtom atom type proof)
+      return result
 
 /-- A rational box and the proof that its ordered real coordinates belong to it. -/
 structure ReifiedBox where

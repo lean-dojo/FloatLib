@@ -23,8 +23,8 @@ cancelling sum. `IEEERoundingMode.magnitudeRounding` names the `Numerics.Magnitu
 that a direction applies to the magnitude of a result of known sign.
 
 The constructors are `nearest` (ties to even), `nearestAway`, `towardZero`, `up`, `down`, and
-`away`. Library code writes them with a leading dot, as in `.up`, and user code can
-`open FloatLib.Rounding` to write the bare names.
+`away`, written with a leading dot, as in `(mode := .up)`. `open FloatLib.Rounding` names the type
+`IEEERoundingMode` without its namespace.
 
 ## References
 
@@ -42,9 +42,9 @@ namespace Model
 Deterministic rounding direction: the five IEEE 754-2019 rounding-direction attributes and
 rounding away from zero.
 
-Operations take a direction as the option `(mode := .up)`, nearest-even by default. After
-`open FloatLib.Rounding`, user code can write the six constructors without the leading dot, as in
-`(mode := up)`.
+Operations take a direction as the option `(mode := .up)`, nearest-even by default. The leading
+dot finds the constructor in the mode type the call expects, so the same spelling names the
+direction of a P3109 or decimal operation, or of a conversion into a binary format.
 -/
 inductive IEEERoundingMode where
   /--
@@ -252,29 +252,25 @@ end FloatLib.Floats.Formats.BinaryInterchange
 namespace FloatLib.Rounding
 
 /-!
-## Bare rounding-mode names
+## The rounding-mode type
 
-`open FloatLib.Rounding` brings the type `IEEERoundingMode` and its six constructors into scope
-without a namespace or a leading dot, so a directed or status operation can name its mode directly
-and user code can take a mode as a parameter:
+`open FloatLib.Rounding` brings the type `IEEERoundingMode` into scope without its namespace, so
+user code can take a rounding direction as a parameter. The directions keep their leading dot:
 
 ```
 open FloatLib.Rounding
 
-Model.sqrt x (mode := up) (status := true)
-
 def third (mode : IEEERoundingMode) : Binary32 := ExecFloat.Binary.div 1 3 (mode := mode)
+
+#eval third .up
+#eval Model.sqrt x (mode := .up) (status := true)
 ```
 
-The names are opt-in because they are short words: in a scope that opens this namespace, a
-pattern variable spelled `up` or `down` is read as the constructor, so bind such values under
-other names, such as `upper` and `lower`. Library code never opens it and writes `.up`.
-`Numerics.RoundingMode`, which also has stochastic rounding, has no bare names here.
+Conversions into binary formats take `Numerics.RoundingMode`, which also has stochastic rounding.
+`(mode := .up)` names its upward direction too, and an `IEEERoundingMode` value goes through
+`toRoundingMode`.
 -/
 
 export FloatLib.Floats.Formats.BinaryInterchange.Model (IEEERoundingMode)
-
-export FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode
-  (nearest nearestAway towardZero up down away)
 
 end FloatLib.Rounding

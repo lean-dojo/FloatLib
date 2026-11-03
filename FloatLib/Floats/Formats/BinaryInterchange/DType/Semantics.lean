@@ -104,16 +104,23 @@ theorem floatToInt_of_exactValue_eq_nan
         (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling)) := by
   simp [floatToInt, hvalue]
 
-/-- Successful finite conversion stores the selected integer exactly at positive width. -/
+/--
+A successful conversion of a finite input stores its rounded integer exactly: the result's signed
+value is `Model.roundDyadicToInt mode exact`, at every width.
+-/
 theorem toInt_of_floatToInt_finite
-    {width : Nat} (mode : Model.IEEERoundingMode)
-    (exact : Numerics.Dyadic)
-    (hwidth : 0 < width)
-    (hrange : FixedInt.InRange width (Model.roundDyadicToInt mode exact)) :
-    (FixedInt.ofInt
-      (width := width) (Model.roundDyadicToInt mode exact)).toInt =
-        Model.roundDyadicToInt mode exact := by
-  exact FixedInt.toInt_ofInt_eq_self hwidth hrange
+    {fmt : FloatFormat} {width : Nat} {x : Model fmt}
+    {mode : Model.IEEERoundingMode} {exact : Numerics.Dyadic}
+    {result : FixedInt width} {status : FloatLib.Floats.ExecFloat.ConversionStatus}
+    (hvalue : Model.exactValue x = .finite exact)
+    (hsuccess : floatToInt (width := width) x mode = .success result status) :
+    result.toInt = Model.roundDyadicToInt mode exact := by
+  by_cases hrange : FixedInt.InRange width (Model.roundDyadicToInt mode exact)
+  · rw [floatToInt_of_exactValue_eq_finite_of_inRange x mode exact hvalue hrange] at hsuccess
+    cases hsuccess
+    exact FixedInt.toInt_ofInt_eq_self hrange
+  · rw [floatToInt_of_exactValue_eq_finite_of_not_inRange x mode exact hvalue hrange] at hsuccess
+    cases hsuccess
 
 /-- Toward-zero conversion uses floor for nonnegative inputs and ceiling for negative inputs. -/
 theorem floatToInt_towardZero_of_exactValue_eq_finite_of_inRange
@@ -139,13 +146,18 @@ theorem boolToFloat_true (fmt : FloatFormat) :
 /-- Boolean `false` converts to the real value zero in every format. -/
 theorem boolToFloat_false (fmt : FloatFormat) :
     toReal (boolToFloat fmt false) = 0 := by
-  simpa [boolToFloat, Model.zero] using Model.toReal_zero fmt false
+  simp [boolToFloat]
 
-/-- A Boolean mask selects either its operand or positive zero. -/
+/--
+On real values a Boolean mask keeps its operand's value or gives zero. The equation is about
+`toReal`, which sends NaN and infinities to `0` and identifies the two zeros, so for those operands
+it holds whatever word is selected; the words themselves are `x` or `posZero fmt` by the definition
+of `maskFloat`.
+-/
 theorem maskFloat_eq_if {fmt : FloatFormat} (m : Bool) (x : Model fmt) :
     toReal (maskFloat fmt m x) = if m then toReal x else 0 := by
   cases m
-  · simpa [maskFloat, Model.zero] using Model.toReal_zero fmt false
+  · simp [maskFloat]
   · simp [maskFloat]
 
 

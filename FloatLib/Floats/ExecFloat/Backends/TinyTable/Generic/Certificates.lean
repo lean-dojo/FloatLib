@@ -81,16 +81,15 @@ theorem lookupTernary
         (encoding.encode <|
           op (encoding.decodeCode left) (encoding.decodeCode right)
             (encoding.decodeCode addend)).val := by
-  obtain ⟨hleftMul, hpair, hpairMul, hword⟩ :=
-    ternaryIndex_noOverflow encoding (radixWord encoding)
-      (radixWord_toNat encoding) left right addend
+  have hword :=
+    (ternaryIndex_noOverflow encoding (radixWord encoding)
+      (radixWord_toNat encoding) left right addend).2.2.2
   have hidx :
       (ternaryByteIndex (radixWord encoding) left.1 right.1 addend.1).toNat =
         (left.1.toNat * encoding.radix + right.1.toNat) * encoding.radix +
           addend.1.toNat := by
     simpa only [radixWord_toNat] using
-      ternaryByteIndex_toNat (radixWord encoding) left.1 right.1 addend.1
-        hleftMul hpair hpairMul hword
+      ternaryByteIndex_toNat (radixWord encoding) left.1 right.1 addend.1 hword
   rw [uget_eq_get]
   simpa only [ternaryTotal, hidx, Encoding.decodeCode] using
     Tabulation.getElem_ternary encoding.radix

@@ -34,7 +34,6 @@ meta def profile (summary : BinarySummary) : FormatProfile where
   standard :=
     "Cartesian complex carrier over " ++
       FloatLib.Floats.Formats.BinaryInterchange.FloatInfo.standardName summary
-  declarationPrefix := "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex."
   representation :=
     [ ⟨"storage", "two binary `Model` components in Cartesian form"⟩
     , ⟨"component bits", toString summary.bitWidth⟩

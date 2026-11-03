@@ -25,12 +25,14 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 /--
 Round one exact signed-magnitude sum at a shared native scale.
 
-The hypotheses require nonzero operands, a sum magnitude below `2^64`, and a scale of at most 506.
+The hypotheses require nonzero operands and a scale of at most 506. Only same-sign operands need
+their magnitude sum below `2^64`, because only they are added in a machine word; opposite signs
+subtract the smaller magnitude from the larger, which cannot wrap.
 -/
 theorem roundAddMagnitudesAtScale_eq_roundDyadic
     (xSign ySign : Bool) (xMagnitude yMagnitude scale : UInt64)
     (hx : xMagnitude ≠ 0) (hy : yMagnitude ≠ 0)
-    (hsum : xMagnitude.toNat + yMagnitude.toNat < 2 ^ 64)
+    (hsum : xSign = ySign → xMagnitude.toNat + yMagnitude.toNat < 2 ^ 64)
     (hscale : scale.toNat ≤ 506) :
     roundProduct
         (FloatLib.Numerics.FixedWord.addSignedMagnitudes
@@ -71,14 +73,14 @@ theorem roundAddMagnitudesAtScale_eq_roundDyadic
       (FloatLib.Numerics.FixedWord.signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
           xSign ySign xMagnitude yMagnitude
           (Int.ofNat scale.toNat - 298)
-          hx hy (fun _ => hsum))
+          hx hy hsum)
   rw [← hexact]
   by_cases hzero :
       (FloatLib.Numerics.FixedWord.addSignedMagnitudes
         xSign ySign xMagnitude yMagnitude).2 = 0
   · have hsign :=
       FloatLib.Numerics.FixedWord.addSignedMagnitudes_sign_eq_false_of_magnitude_eq_zero
-          xSign ySign xMagnitude yMagnitude hx hy (fun _ => hsum) hzero
+          xSign ySign xMagnitude yMagnitude hx hsum hzero
     simp [FloatLib.Numerics.FixedWord.signedMagnitudeDyadic,
       hzero, hsign, roundDyadic]
   · simp [FloatLib.Numerics.FixedWord.signedMagnitudeDyadic, hzero]

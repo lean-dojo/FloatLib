@@ -11,45 +11,49 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Semantics
 # Directed square-root bounds and tininess
 
 In the absence of overflow, the returned values bound the real square root in
-the requested direction. Decimal underflow tests the exact root before rounding.
+the requested direction; the downward bound also covers overflow. Decimal underflow tests the exact
+root before rounding.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-theorem sqrtMagnitude_quantum_le_of_no_overflow (f : Format) (mode : RoundingMode)
-    (x : ℚ) (preferred : Int)
-    (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
-    (sqrtPair f mode x).2 ≤ f.maxQuantum := by
-  apply le_of_not_gt
-  intro h
-  have ht := (sqrtMagnitude_overflow_iff f mode x preferred).mpr h
-  simp [hfinite] at ht
-
-theorem le_sqrtMagnitude_towardPositive (f : Format) {x : ℚ} (hx : 0 ≤ x)
+/-- Rounding toward positive, a nonoverflowing square root of a nonnegative rational is finite and
+at least the real square root. -/
+theorem le_sqrtMagnitude_up (f : Format) {x : ℚ} (hx : 0 ≤ x)
     (preferred : Int)
-    (hfinite : (sqrtMagnitude f .towardPositive x preferred).status.overflow = false) :
-    ∃ value : ℚ, (sqrtMagnitude f .towardPositive x preferred).value.toRat? = some value ∧
+    (hfinite : (sqrtMagnitude f .up x preferred).status.overflow = false) :
+    ∃ value : ℚ, (sqrtMagnitude f .up x preferred).value.toRat? = some value ∧
       Real.sqrt (x : ℝ) ≤ (value : ℝ) := by
-  have hq := sqrtMagnitude_quantum_le_of_no_overflow f .towardPositive x preferred hfinite
-  refine ⟨_, sqrtMagnitude_value f .towardPositive x preferred hq, ?_⟩
+  obtain ⟨value, hv, he⟩ := sqrtMagnitude_value_sub_sqrt f .up x preferred hfinite
+  refine ⟨value, hv, ?_⟩
   have hu : 0 < (10 : ℝ) ^ sqrtQuantum f x := zpow_pos (by norm_num) _
-  have h := le_sqrtRound_towardPositive
-    (div_nonneg hx
-      (zpow_pos (by norm_num : (0 : ℚ) < 10) (2 * sqrtQuantum f x)).le)
-  have hs := mul_le_mul_of_nonneg_right h hu.le
-  rw [sqrt_scaled] at hs
-  simpa only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat] using hs
+  have h := le_sqrtRound_up
+    (div_nonneg hx (zpow_pos (by norm_num : (0 : ℚ) < 10) (2 * sqrtQuantum f x)).le)
+  have hs := mul_nonneg (sub_nonneg.mpr h) hu.le
+  rw [← he] at hs
+  linarith
 
+/-- Rounding toward zero or toward negative, a square root of a nonnegative rational is finite and
+at most the real square root; the two modes agree because the root is nonnegative. An overflow
+delivers the greatest finite datum, which lies below the root. -/
 theorem sqrtMagnitude_directed_le (f : Format) (mode : RoundingMode)
-    (hm : mode = .towardZero ∨ mode = .towardNegative) {x : ℚ} (hx : 0 ≤ x)
-    (preferred : Int)
-    (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
+    (hm : mode = .towardZero ∨ mode = .down) {x : ℚ} (hx : 0 ≤ x)
+    (preferred : Int) :
     ∃ value : ℚ, (sqrtMagnitude f mode x preferred).value.toRat? = some value ∧
       (value : ℝ) ≤ Real.sqrt (x : ℝ) := by
-  have hq := sqrtMagnitude_quantum_le_of_no_overflow f mode x preferred hfinite
-  refine ⟨_, sqrtMagnitude_value f mode x preferred hq, ?_⟩
+  cases hfinite : (sqrtMagnitude f mode x preferred).status.overflow
+  swap
+  · have hq := (sqrtMagnitude_overflow_iff f mode x preferred).mp hfinite
+    have hinf : mode.overflowToInfinity false = false := by
+      rcases hm with rfl | rfl <;> rfl
+    refine ⟨((f.coefficientBound - 1 : Nat) : ℚ) * (10 : ℚ) ^ f.maxQuantum, ?_, ?_⟩
+    · simp [sqrtMagnitude, hq, hinf, Format.maxFinite, Datum.toRat?_eq]
+    · rw [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat]
+      exact (maxFinite_lt_sqrt_of_overflow f mode hx hq).le
+  obtain ⟨value, hv, he⟩ := sqrtMagnitude_value_sub_sqrt f mode x preferred hfinite
+  refine ⟨value, hv, ?_⟩
   have hu : 0 < (10 : ℝ) ^ sqrtQuantum f x := zpow_pos (by norm_num) _
   have hx' : 0 ≤ x / (10 : ℚ) ^ (2 * sqrtQuantum f x) :=
     div_nonneg hx (zpow_pos (by norm_num) _).le
@@ -57,41 +61,43 @@ theorem sqrtMagnitude_directed_le (f : Format) (mode : RoundingMode)
       Real.sqrt ((x / (10 : ℚ) ^ (2 * sqrtQuantum f x) : ℚ) : ℝ) := by
     rcases hm with rfl | rfl
     · exact sqrtRound_towardZero_le hx'
-    · exact sqrtRound_towardNegative_le hx'
-  have hs := mul_le_mul_of_nonneg_right h hu.le
-  rw [sqrt_scaled] at hs
-  simpa only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat] using hs
+    · exact sqrtRound_down_le hx'
+  have hs := mul_nonpos_of_nonpos_of_nonneg (sub_nonpos.mpr h) hu.le
+  rw [← he] at hs
+  linarith
 
+/-- In every rounding direction, a nonoverflowing square root of a nonnegative rational is finite
+and less than one grid unit from the real square root. -/
 theorem sqrtMagnitude_error_lt_one (f : Format) (mode : RoundingMode)
     {x : ℚ} (hx : 0 ≤ x) (preferred : Int)
     (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
     ∃ value : ℚ, (sqrtMagnitude f mode x preferred).value.toRat? = some value ∧
       |(value : ℝ) - Real.sqrt (x : ℝ)| < (10 : ℝ) ^ sqrtQuantum f x := by
-  have hq := sqrtMagnitude_quantum_le_of_no_overflow f mode x preferred hfinite
-  refine ⟨_, sqrtMagnitude_value f mode x preferred hq, ?_⟩
-  let q := sqrtQuantum f x
-  have hu : 0 < (10 : ℝ) ^ q := zpow_pos (by norm_num) _
-  have hx' : 0 ≤ x / (10 : ℚ) ^ (2 * q) :=
-    div_nonneg hx (zpow_pos (by norm_num) _).le
-  have h := sqrtRound_error_lt_one mode hx'
-  have he :
-      (((mode.sqrtRound (x / (10 : ℚ) ^ (2 * q)) : Nat) : ℝ) * (10 : ℝ) ^ q -
-          Real.sqrt (x : ℝ)) =
-        (((mode.sqrtRound (x / (10 : ℚ) ^ (2 * q)) : Nat) : ℝ) -
-          Real.sqrt ((x / (10 : ℚ) ^ (2 * q) : ℚ) : ℝ)) * (10 : ℝ) ^ q := by
-    rw [sub_mul, sqrt_scaled]
-  simp only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat]
+  obtain ⟨value, hv, he⟩ := sqrtMagnitude_value_sub_sqrt f mode x preferred hfinite
+  refine ⟨value, hv, ?_⟩
+  have hu : 0 < (10 : ℝ) ^ sqrtQuantum f x := zpow_pos (by norm_num) _
+  have h := sqrtRound_error_lt_one mode
+    (div_nonneg hx (zpow_pos (by norm_num : (0 : ℚ) < 10) (2 * sqrtQuantum f x)).le)
   rw [he, abs_mul, abs_of_pos hu]
   exact (mul_lt_mul_of_pos_right h hu).trans_eq (one_mul _)
 
-/-- Underflow compares the exact mathematical root with the least normal magnitude. -/
+/-- Underflow compares the exact mathematical root with the least normal magnitude; an overflowing
+root is never tiny. -/
 theorem sqrtMagnitude_underflow_iff (f : Format) (mode : RoundingMode)
-    {x : ℚ} (hx : 0 ≤ x) (preferred : Int)
-    (hfinite : (sqrtMagnitude f mode x preferred).status.overflow = false) :
+    {x : ℚ} (hx : 0 ≤ x) (preferred : Int) :
     (sqrtMagnitude f mode x preferred).status.underflow = true ↔
       Real.sqrt (x : ℝ) < (f.minNormal : ℝ) ∧
         (sqrtMagnitude f mode x preferred).status.inexact = true := by
-  have hq := sqrtMagnitude_quantum_le_of_no_overflow f mode x preferred hfinite
+  by_cases hq : (sqrtPair f mode x).2 ≤ f.maxQuantum
+  swap
+  · have hq' := lt_of_not_ge hq
+    have hlt := maxFinite_lt_sqrt_of_overflow f mode hx hq'
+    have hmin : ((f.minNormal : ℚ) : ℝ) ≤
+        ((f.coefficientBound - 1 : Nat) : ℝ) * (10 : ℝ) ^ f.maxQuantum := by
+      simpa only [Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat] using
+        (Rat.cast_le (K := ℝ)).mpr f.minNormal_le_maxFinite
+    simp only [sqrtMagnitude, hq', ↓reduceIte, Bool.false_eq_true, false_iff, not_and]
+    exact fun h => absurd h (not_lt.mpr (hmin.trans hlt.le))
   have hn : (0 : ℚ) < f.minNormal :=
     mul_pos (pow_pos (by norm_num) _) (zpow_pos (by norm_num) _)
   have he : Real.sqrt (x : ℝ) < (f.minNormal : ℝ) ↔ x < f.minNormal ^ 2 := by

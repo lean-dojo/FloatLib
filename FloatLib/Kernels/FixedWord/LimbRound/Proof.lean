@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.ShiftRightJam
+public import FloatLib.Kernels.FixedWord.LimbRound.Proof.Arithmetic
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof.UInt128
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof.UInt256
 

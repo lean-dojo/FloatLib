@@ -60,53 +60,22 @@ private theorem rootStep_spec
   have hremainder : state.remainder.toNat < 2 ^ 54 := by
     norm_num at hroot ⊢
     omega
-  have hrootMulFour :
-      (state.root * 4).toNat = state.root.toNat * 4 := by
-    rw [UInt64.toNat_mul]
-    change (state.root.toNat * 4) % 2 ^ 64 =
-      state.root.toNat * 4
-    rw [Nat.mod_eq_of_lt]
-    norm_num at hroot ⊢
-    omega
-  have hrootMulTwo :
-      (state.root * 2).toNat = state.root.toNat * 2 := by
-    rw [UInt64.toNat_mul]
-    change (state.root.toNat * 2) % 2 ^ 64 =
-      state.root.toNat * 2
-    rw [Nat.mod_eq_of_lt]
-    norm_num at hroot ⊢
-    omega
-  have hremainderMulFour :
-      (state.remainder * 4).toNat = state.remainder.toNat * 4 := by
-    rw [UInt64.toNat_mul]
-    change (state.remainder.toNat * 4) % 2 ^ 64 =
-      state.remainder.toNat * 4
-    rw [Nat.mod_eq_of_lt]
-    norm_num at hremainder ⊢
-    omega
+  norm_num at hroot hremainder
+  have hrootMulFour : (state.root * 4).toNat = state.root.toNat * 4 :=
+    uint64_mul_toNat_of_lt _ _ (by simp only [UInt64.reduceToNat]; omega)
+  have hrootMulTwo : (state.root * 2).toNat = state.root.toNat * 2 :=
+    uint64_mul_toNat_of_lt _ _ (by simp only [UInt64.reduceToNat]; omega)
+  have hremainderMulFour : (state.remainder * 4).toNat = state.remainder.toNat * 4 :=
+    uint64_mul_toNat_of_lt _ _ (by simp only [UInt64.reduceToNat]; omega)
   have hexpanded :
-      (state.remainder * 4 + digit).toNat =
-        state.remainder.toNat * 4 + digit.toNat := by
-    rw [UInt64.toNat_add, hremainderMulFour]
-    apply Nat.mod_eq_of_lt
-    norm_num at hremainder ⊢
-    omega
-  have htrial :
-      (state.root * 4 + 1).toNat = state.root.toNat * 4 + 1 := by
-    rw [UInt64.toNat_add, hrootMulFour]
-    change (state.root.toNat * 4 + 1) % 2 ^ 64 =
-      state.root.toNat * 4 + 1
-    rw [Nat.mod_eq_of_lt]
-    norm_num at hroot ⊢
-    omega
-  have hrootOdd :
-      (state.root * 2 + 1).toNat = state.root.toNat * 2 + 1 := by
-    rw [UInt64.toNat_add, hrootMulTwo]
-    change (state.root.toNat * 2 + 1) % 2 ^ 64 =
-      state.root.toNat * 2 + 1
-    rw [Nat.mod_eq_of_lt]
-    norm_num at hroot ⊢
-    omega
+      (state.remainder * 4 + digit).toNat = state.remainder.toNat * 4 + digit.toNat := by
+    rw [uint64_add_toNat_of_lt _ _ (by rw [hremainderMulFour]; omega), hremainderMulFour]
+  have htrial : (state.root * 4 + 1).toNat = state.root.toNat * 4 + 1 := by
+    rw [uint64_add_toNat_of_lt _ _ (by rw [hrootMulFour, UInt64.toNat_one]; omega),
+      hrootMulFour, UInt64.toNat_one]
+  have hrootOdd : (state.root * 2 + 1).toNat = state.root.toNat * 2 + 1 := by
+    rw [uint64_add_toNat_of_lt _ _ (by rw [hrootMulTwo, UInt64.toNat_one]; omega),
+      hrootMulTwo, UInt64.toNat_one]
   by_cases hle : state.root * 4 + 1 ≤ state.remainder * 4 + digit
   · rw [ite_eq_left hle]
     have hleNat : state.root.toNat * 4 + 1 ≤
@@ -370,10 +339,10 @@ private theorem sqrt_target_exponent
   exact
     FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic.target_exponent
       leading scale 1074 972 1023 52
-      (by omega) (by decide) (by decide) (by decide) (by decide)
+      (by omega) (by decide) (by decide)
 
 private theorem sqrt_shift_amount
-    (leading scale : Nat) (hleading : leading < 53) :
+    (leading scale : Nat) :
     let inputExponent := Int.ofNat scale - 1074
     let position := leading + scale
     let rootExponent := Int.ofNat ((position + 972) / 2) - 1023
@@ -382,7 +351,7 @@ private theorem sqrt_shift_amount
   dsimp only
   simpa using
     FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic.shift_amount_of_even_offset
-      leading scale 1074 972 1023 52 (by omega) (by decide) (by decide)
+      leading scale 1074 972 1023 52 (by decide) (by decide)
 
 private def sqrtPositiveFiniteSpec (mantissa scale : Nat) : UInt64 :=
   let leading := mantissa.log2
@@ -507,23 +476,7 @@ private theorem sqrtPositiveFiniteCore_eq_spec
   have hposition : nativePosition.toNat = genericPosition := by
     dsimp only [nativePosition]
     rw [UInt64.toNat_add, hleading, Nat.mod_eq_of_lt hpositionBound]
-  have hpositionEven :
-      nativePosition % 2 = 0 ↔ genericPosition % 2 = 0 := by
-    constructor
-    · intro h
-      have hnat := congrArg UInt64.toNat h
-      rw [UInt64.toNat_mod, hposition] at hnat
-      norm_num at hnat ⊢
-      exact hnat
-    · intro h
-      apply UInt64.toNat_inj.mp
-      rw [UInt64.toNat_mod, hposition]
-      norm_num
-      exact h
-  have hparity :
-      (nativePosition % 2 == 0) = (genericPosition % 2 == 0) := by
-    apply Bool.eq_iff_iff.mpr
-    simpa only [beq_iff_eq] using hpositionEven
+  have hparity := mod_two_beq_zero_of_toNat_eq nativePosition genericPosition hposition
   have hshift : nativeShift = genericShift := by
     dsimp only [nativeShift, genericShift]
     rw [hparity, hleading]
@@ -533,15 +486,12 @@ private theorem sqrtPositiveFiniteCore_eq_spec
   have hshiftLt : genericShift < 128 := by
     dsimp only [genericShift]
     split <;> omega
-  have hscaledExponentUpper :
-      genericLeading + 1 + genericShift ≤ 106 := by
-    dsimp only [genericShift]
-    split <;> omega
-  have hscaledFit : genericScaled < 2 ^ 106 := by
-    dsimp only [genericScaled]
-    exact lt_of_lt_of_le
-      (Nat.shiftLeft_lt Nat.lt_log2_self)
-      (Nat.pow_le_pow_right (by decide) hscaledExponentUpper)
+  obtain ⟨hscaledLower, hscaledFit, hrootLower, hrootLt⟩ :
+      2 ^ 104 ≤ genericScaled ∧ genericScaled < 2 ^ 106 ∧
+        2 ^ 52 ≤ genericRoot ∧ genericRoot < 2 ^ 53 :=
+    sqrt_shiftLeft_bounds 52 mantissa.toNat genericShift hmantissaNat
+      (by dsimp only [genericShift]; split <;> omega)
+      (by dsimp only [genericShift]; split <;> omega)
   have hstate :
       nativeRoot.toNat = genericRoot ∧
         nativeRemainder.toNat = genericRemainder := by
@@ -553,32 +503,9 @@ private theorem sqrtPositiveFiniteCore_eq_spec
         (by simpa [hshift] using hscaledFit)
   have hroot := hstate.1
   have hremainder := hstate.2
-  have hremainderLe :
-      nativeRemainder ≤ nativeRoot ↔ genericRemainder ≤ genericRoot := by
-    rw [UInt64.le_iff_toNat_le, hremainder, hroot]
-  have hrootLt : genericRoot < 2 ^ 53 := by
-    dsimp only [genericRoot]
-    rw [Nat.sqrt_lt, ← Nat.pow_add]
-    norm_num
-    exact hscaledFit
-  have hrounded : nativeRounded.toNat = genericRounded := by
-    dsimp only [nativeRounded, genericRounded]
-    by_cases hle : nativeRemainder ≤ nativeRoot
-    · rw [ite_eq_left hle, ite_eq_left (hremainderLe.mp hle), hroot]
-    · rw [ite_eq_right hle, ite_eq_right ((not_congr hremainderLe).mp hle)]
-      have hrootSuccFit : genericRoot + 1 < 2 ^ 64 := by
-        have hpow : 2 ^ 53 < 2 ^ 64 :=
-          Nat.pow_lt_pow_right (by decide) (by omega)
-        omega
-      rw [UInt64.toNat_add, hroot]
-      change (genericRoot + 1) % 2 ^ 64 = genericRoot + 1
-      exact Nat.mod_eq_of_lt hrootSuccFit
-  have hcarry : nativeCarry = genericCarry := by
-    dsimp only [nativeCarry, genericCarry]
-    apply Bool.eq_iff_iff.mpr
-    simp only [beq_iff_eq]
-    rw [← UInt64.toNat_inj]
-    simp [hrounded, Model.pow2_eq_two_pow]
+  have hrounded : nativeRounded.toNat = genericRounded :=
+    roundedRoot_toNat nativeRoot nativeRemainder genericRoot genericRemainder hroot hremainder
+      (by omega)
   have hpositionAdd :
       (nativePosition + 972).toNat = genericPosition + 972 := by
     rw [UInt64.toNat_add, hposition]
@@ -590,96 +517,16 @@ private theorem sqrtPositiveFiniteCore_eq_spec
         (genericPosition + 972) / 2 := by
     rw [UInt64.toNat_div, hpositionAdd]
     rfl
-  have hencoded : nativeEncoded.toNat = genericEncoded := by
-    dsimp only [nativeEncoded, genericEncoded]
-    rw [hcarry]
-    by_cases hgenericCarry : genericCarry = true
-    · simp only [hgenericCarry, ite_true]
-      have hencodedFit :
-          (genericPosition + 972) / 2 + 1 < 2 ^ 64 := by
-        omega
-      rw [UInt64.toNat_add, hpositionHalf]
-      change
-        ((genericPosition + 972) / 2 + 1) % 2 ^ 64 =
-          (genericPosition + 972) / 2 + 1
-      exact Nat.mod_eq_of_lt hencodedFit
-    · simp [Bool.eq_false_of_not_eq_true hgenericCarry, hpositionHalf]
-  have hpowLeading : 2 ^ genericLeading ≤ mantissa.toNat := by
-    dsimp only [genericLeading]
-    exact (Nat.le_log2 hmantissaNat).mp le_rfl
-  have hscaledExponentLower :
-      104 ≤ genericLeading + genericShift := by
-    dsimp only [genericShift]
-    split <;> omega
-  have hscaledLower : 2 ^ 104 ≤ genericScaled := by
-    dsimp only [genericScaled]
-    rw [Nat.shiftLeft_eq]
-    calc
-      2 ^ 104 ≤ 2 ^ (genericLeading + genericShift) :=
-        Nat.pow_le_pow_right (by decide) hscaledExponentLower
-      _ = 2 ^ genericLeading * 2 ^ genericShift := Nat.pow_add ..
-      _ ≤ mantissa.toNat * 2 ^ genericShift :=
-        Nat.mul_le_mul_right (2 ^ genericShift) hpowLeading
-  have hrootLower : 2 ^ 52 ≤ genericRoot := by
-    dsimp only [genericRoot]
-    rw [Nat.le_sqrt, ← Nat.pow_add]
-    norm_num
-    exact hscaledLower
   have hroundedLower : 2 ^ 52 ≤ genericRounded := by
     dsimp only [genericRounded]
     split <;> omega
-  have hroundedMantissa :
-      nativeRoundedMantissa.toNat = genericRoundedMantissa := by
-    dsimp only [nativeRoundedMantissa, genericRoundedMantissa]
-    rw [hcarry]
-    by_cases hgenericCarry : genericCarry = true
-    · simp [hgenericCarry, Model.pow2_eq_two_pow]
-    · simp [Bool.eq_false_of_not_eq_true hgenericCarry, hrounded]
-  have hroundedMantissaLower :
-      2 ^ 52 ≤ genericRoundedMantissa := by
-    dsimp only [genericRoundedMantissa]
-    split
-    · norm_num [Model.pow2_eq_two_pow]
-    · exact hroundedLower
-  have hroundedMantissaWordLower :
-      (0x0010000000000000 : UInt64) ≤ nativeRoundedMantissa := by
-    apply UInt64.le_iff_toNat_le.mpr
-    rw [hroundedMantissa]
-    exact hroundedMantissaLower
-  have hfraction : nativeFraction.toNat = genericFraction := by
-    dsimp only [nativeFraction, genericFraction]
-    rw [UInt64.toNat_sub_of_le _ _ hroundedMantissaWordLower,
-      hroundedMantissa]
-    change
-      genericRoundedMantissa - 4503599627370496 =
-        genericRoundedMantissa - Model.pow2 52
-    norm_num [Model.pow2_eq_two_pow]
-  have hencodedWord :
-      nativeEncoded = UInt64.ofNat genericEncoded := by
-    have hgenericEncodedFit : genericEncoded < 2 ^ 64 := by
-      dsimp only [genericEncoded]
-      split <;> omega
-    apply UInt64.toNat_inj.mp
-    rw [hencoded]
-    exact (UInt64.toNat_ofNat_of_lt hgenericEncodedFit).symm
-  have hgenericRoundedUpper : genericRounded ≤ 2 ^ 53 := by
-    dsimp only [genericRounded]
-    split <;> omega
-  have hgenericRoundedMantissaUpper :
-      genericRoundedMantissa ≤ 2 ^ 53 := by
-    dsimp only [genericRoundedMantissa]
-    split
-    · norm_num [Model.pow2_eq_two_pow]
-    · exact hgenericRoundedUpper
-  have hfractionWord :
-      nativeFraction = UInt64.ofNat genericFraction := by
-    have hgenericFractionFit : genericFraction < 2 ^ 64 := by
-      exact (Nat.sub_le _ _).trans_lt
-        (hgenericRoundedMantissaUpper.trans_lt (by norm_num))
-    apply UInt64.toNat_inj.mp
-    rw [hfraction]
-    exact (UInt64.toNat_ofNat_of_lt hgenericFractionFit).symm
-  rw [hencodedWord, hfractionWord]
+  obtain ⟨hencoded, hfraction⟩ : nativeEncoded.toNat = _ ∧ nativeFraction.toNat = _ :=
+    sqrtCarry_toNat 52 nativeRounded ((nativePosition + 972) / 2) 0x0020000000000000
+      0x0010000000000000 genericRounded ((genericPosition + 972) / 2) hrounded hpositionHalf
+      (by decide) (by decide) hroundedLower (by omega)
+  rw [← UInt64.ofNat_toNat (x := nativeEncoded), ← UInt64.ofNat_toNat (x := nativeFraction),
+    hencoded, hfraction]
+  simp only [genericEncoded, genericFraction, genericRoundedMantissa, genericCarry, beq_iff_eq]
 
 /-! ## Unpacked binary64 semantic refinement -/
 
@@ -744,18 +591,8 @@ theorem sqrt_eq_generic_of_positive_finite
     apply UInt64.toNat_inj.mp
     simpa using h
   have hscale :
-      FiniteKernel.scale exponent.toNat = scale.toNat := by
-    rw [finiteScale_toNat]
-    unfold FiniteKernel.scale
-    simp only [beq_iff_eq]
-    by_cases h : exponent = 0
-    · simp [h]
-    · have hnat : exponent.toNat ≠ 0 := by
-        intro hz
-        apply h
-        apply UInt64.toNat_inj.mp
-        simpa using hz
-      simp [h, hnat]
+      FiniteKernel.scale exponent.toNat = scale.toNat :=
+    (FiniteKernel.finiteScale_toNat_eq_scale exponent).symm
   have hdecode :
       Model.toDyadic? x =
         some
@@ -782,23 +619,8 @@ theorem sqrt_eq_generic_of_positive_finite
     rw [show FiniteKernel.finiteScaleOffset FloatFormat.binary64 = 1074 by
       decide]
     norm_num
-  have htoModel :
-      Model.toModel x =
-        .finite .positive mantissa.toNat (Int.ofNat scale.toNat - 1074)
-          (Nat.pos_of_ne_zero hmantissaNat) := by
-    have hieeeDecode :
-        Model.ieeeToDyadic? x =
-          some
-            ({ negative := false
-               significand := mantissa.toNat
-               exponent := Int.ofNat scale.toNat - 1074 } : Numerics.Dyadic) := by
-      simpa [Model.toDyadic?, show FloatFormat.binary64.isIEEE = true by decide]
-        using hdecode
-    simpa [Model.modelSign] using
-      Model.toModel_eq_finite_of_ieeeToDyadic?_eq_some
-        x false mantissa.toNat (Int.ofNat scale.toNat - 1074)
-        hmantissaNat hieeeDecode
-  rw [htoModel]
+  rw [Model.toModel_eq_finite_positive_of_toDyadic?_eq_some (by decide) x _ _ hmantissaNat
+    hdecode]
   have hmantissaBound : mantissa.toNat < 2 ^ 53 :=
     finiteMantissa_lt exponent fraction hfraction
   have hexponentLt : exponent.toNat < 2 ^ 11 := by
@@ -823,7 +645,7 @@ theorem sqrt_eq_generic_of_positive_finite
       Int.ofNat_eq_natCast, Nat.cast_ofNat] using
         sqrt_target_exponent mantissa.toNat.log2 scale.toNat hleading)
     (by simpa only [hfracWidth, hbias, Int.ofNat_eq_natCast, Nat.cast_ofNat] using
-      sqrt_shift_amount mantissa.toNat.log2 scale.toNat hleading)]
+      sqrt_shift_amount mantissa.toNat.log2 scale.toNat)]
   change ofUInt64 (sqrtPositiveFiniteCore mantissa scale) = _
   rw [sqrtPositiveFiniteCore_eq_spec mantissa scale hmantissa hmantissaBound hscaleBound]
   simp only [sqrtPositiveFiniteSpec, beq_iff_eq, packFieldsWord_eq_ofNat, hfracWidth]

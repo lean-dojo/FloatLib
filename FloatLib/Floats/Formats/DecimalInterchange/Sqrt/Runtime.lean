@@ -40,12 +40,12 @@ def sqrtFloor (radicand : ℚ) : Nat := Nat.sqrt ⌊radicand⌋₊
 def RoundingMode.sqrtIncrement (mode : RoundingMode) (lower : Nat)
     (radicand : ℚ) : Bool :=
   match mode with
-  | .nearestEven =>
+  | .nearest =>
       decide ((2 * (lower : ℚ) + 1) ^ 2 < 4 * radicand ∨
         ((2 * (lower : ℚ) + 1) ^ 2 = 4 * radicand ∧ lower % 2 = 1))
   | .nearestAway => decide ((2 * (lower : ℚ) + 1) ^ 2 ≤ 4 * radicand)
-  | .towardPositive => decide ((lower : ℚ) ^ 2 < radicand)
-  | .towardZero | .towardNegative => false
+  | .up => decide ((lower : ℚ) ^ 2 < radicand)
+  | .towardZero | .down => false
 
 /-- Round a nonnegative square root on the integer grid. -/
 def RoundingMode.sqrtRound (mode : RoundingMode) (radicand : ℚ) : Nat :=

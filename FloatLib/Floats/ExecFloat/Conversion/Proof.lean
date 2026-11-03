@@ -13,8 +13,11 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 
 The preparation theorems compose the supplied decoder, exact-domain operations, and destination
 quantization relation. They establish one quantizer call on successful preparation and preserve
-preparation failures. Numerical preservation by `ExactMap`, the arithmetic instances and the
-context-dependent addition and subtraction hooks is left to family-specific laws.
+preparation failures: `ConversionProof.preparedSpec_roundOnce` for an exact expression, and
+`Mixed.preparedSpec_add`, `preparedSpec_sub`, `preparedSpec_mul`, `preparedSpec_div`, and
+`preparedSpec_fma` for the mixed operations. Numerical preservation by `ExactMap`, the arithmetic
+instances and the context-dependent addition and subtraction hooks is left to family-specific
+laws.
 
 Runtime-only clients may import `Conversion.Runtime`, and `FloatLib.Floats.ExecFloat` exports both
 execution and these contracts.
@@ -251,29 +254,52 @@ theorem spec_quantize [self : Quantizer Destination Exact]
 
 end Quantizer
 
+namespace RoundingModes
+
+/-- A destination without rounding directions converts in its context as given. -/
+@[simp, grind =] theorem withMode_noRoundingDirection {Destination : Type u}
+    {Exact : Type v} [quantizer : Quantizer Destination Exact] (mode : NoRoundingDirection)
+    (context : quantizer.Context) :
+    RoundingModes.withMode (Destination := Destination) mode context = context :=
+  rfl
+
+end RoundingModes
+
+/-- A call without `context` uses the destination's canonical policy, for every mode. -/
+@[simp, grind =] theorem ModeContext.context_eq_defaultContext {Destination : Type u}
+    {Exact : Type v} [Quantizer Destination Exact] {Mode : Type}
+    [RoundingModes Destination Exact Mode] [defaults : DefaultQuantizer Destination Exact]
+    (mode : Mode) :
+    (ModeContext.context : ContextFor Destination mode) = defaults.defaultContext :=
+  rfl
+
 /--
-Generic conversion satisfies the destination's declared quantization relation in the context it
-uses. For a call without `context`, that context is `ModeContext.context` for its `mode`.
+Generic conversion satisfies the destination's declared quantization relation in the context that
+rounds in direction `mode` under the policy `context`. For a call without `context`, `context` is
+`ModeContext.context`, the destination's canonical policy.
 -/
 theorem spec_convert {Source : Type u} {target : Type v}
     {SourceExact : Type w} {TargetExact : Type x}
     [ExactDecoder Source SourceExact] [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    {Mode : Type} [RoundingModes target Mode]
-    (value : Source) (mode : Mode) (context : quantizer.Context) :
-    quantizer.spec context (ExactDecoder.decodeTo value)
+    {Mode : Type} [modes : RoundingModes target TargetExact Mode]
+    (value : Source) (mode : Mode) (context : modes.Policy) :
+    quantizer.spec (modes.withMode mode context) (ExactDecoder.decodeTo value)
       (convert value (mode := mode) (context := context)) :=
-  quantizer.correct context (ExactDecoder.decodeTo value)
+  quantizer.correct (modes.withMode mode context) (ExactDecoder.decodeTo value)
 
-/-- `ExecFloat` conversion satisfies the destination's declared relation in the context it uses. -/
+/--
+`ExecFloat` conversion satisfies the destination's declared relation in the context that rounds in
+direction `mode` under the policy `context`.
+-/
 theorem spec_cast {F : Type u} [EncodedFormat F]
     {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
     [ExactDecoder (FloatLib.Floats.ExecFloat F) SourceExact]
     [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    {Mode : Type} [RoundingModes target Mode]
-    (value : FloatLib.Floats.ExecFloat F) (mode : Mode) (context : quantizer.Context) :
-    quantizer.spec context (ExactDecoder.decodeTo value)
+    {Mode : Type} [modes : RoundingModes target TargetExact Mode]
+    (value : FloatLib.Floats.ExecFloat F) (mode : Mode) (context : modes.Policy) :
+    quantizer.spec (modes.withMode mode context) (ExactDecoder.decodeTo value)
       (cast value (mode := mode) (context := context)) :=
   spec_convert value mode context
 
@@ -482,99 +508,112 @@ end ExactExpression
 
 namespace ConversionProof
 
-variable {Left : Type u} {Right : Type v} {target : Type w}
-  {LeftExact : Type x} {RightExact : Type y} {Exact : Type z}
-  {Mode : Type} [RoundingModes target Mode]
+variable {target : Type u} {Exact : Type v} {Mode : Type}
 
 /--
 An exact expression followed by one quantization satisfies the destination's declared relation in
-the context used, or returns the expression's failure unchanged.
+the context that rounds in direction `mode` under the policy `context`, or returns the
+expression's failure unchanged.
 -/
 theorem preparedSpec_roundOnce
-    [quantizer : Quantizer target Exact]
+    [Quantizer target Exact] [modes : RoundingModes target Exact Mode]
     (expression : ExactExpression Exact) (mode : Mode)
-    (context : quantizer.Context) :
-    Conversion.PreparedSpec context expression.toPrepared
+    (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context) expression.toPrepared
       (roundOnce (target := target) expression mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
 /-- A successful expression goes to the quantizer as one finite exact value. -/
 @[simp, grind =] theorem roundOnce_ok
-    [quantizer : Quantizer target Exact]
-    (value : Exact) (mode : Mode) (context : quantizer.Context) :
+    [quantizer : Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (value : Exact) (mode : Mode) (context : modes.Policy) :
     roundOnce (target := target) (.ok value) mode context =
-      quantizer.run context (.finite value) :=
+      quantizer.run (modes.withMode mode context) (.finite value) :=
   rfl
 
 /-- An exact-expression failure bypasses the destination quantizer unchanged. -/
 @[simp, grind =] theorem roundOnce_error
-    [quantizer : Quantizer target Exact]
-    (reason : ConversionFailure) (mode : Mode) (context : quantizer.Context) :
+    [Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (reason : ConversionFailure) (mode : Mode) (context : modes.Policy) :
     roundOnce (target := target) (.error reason) mode context = .failure reason :=
   rfl
+
+end ConversionProof
+
+namespace Mixed
+
+variable {Left : Type u} {Right : Type v} {target : Type w}
+  {LeftExact : Type x} {RightExact : Type y} {Exact : Type z} {Mode : Type}
 
 section Binary
 
 variable [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
   [ExactDecoder Right RightExact] [ExactMap RightExact Exact]
 
-/-- The context's addition hook followed by one quantization satisfies the composed relation. -/
-theorem preparedSpec_addAs
-    [Add Exact] [quantizer : Quantizer target Exact]
-    (left : Left) (right : Right) (mode : Mode) (context : quantizer.Context) :
-    Conversion.PreparedSpec context
-      (Conversion.prepareBinary (quantizer.addExact context)
+/--
+The addition hook of the context that rounds in direction `mode` under the policy `context`,
+followed by one quantization in that context, satisfies the composed relation.
+-/
+theorem preparedSpec_add
+    [Add Exact] [quantizer : Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (left : Left) (right : Right) (mode : Mode) (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context)
+      (Conversion.prepareBinary (quantizer.addExact (modes.withMode mode context))
         (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right))
-      (addAs left right mode context) :=
+      (add left right mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
-/-- The context's subtraction hook followed by one quantization satisfies the composed relation. -/
-theorem preparedSpec_subAs
-    [Sub Exact] [quantizer : Quantizer target Exact]
-    (left : Left) (right : Right) (mode : Mode) (context : quantizer.Context) :
-    Conversion.PreparedSpec context
-      (Conversion.prepareBinary (quantizer.subExact context)
+/--
+The subtraction hook of the context that rounds in direction `mode` under the policy `context`,
+followed by one quantization in that context, satisfies the composed relation.
+-/
+theorem preparedSpec_sub
+    [Sub Exact] [quantizer : Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (left : Left) (right : Right) (mode : Mode) (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context)
+      (Conversion.prepareBinary (quantizer.subExact (modes.withMode mode context))
         (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right))
-      (subAs left right mode context) :=
+      (sub left right mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
 /-- Exact multiplication followed by one quantization satisfies the composed relational contract. -/
-theorem preparedSpec_mulAs
-    [Mul Exact] [quantizer : Quantizer target Exact]
-    (left : Left) (right : Right) (mode : Mode) (context : quantizer.Context) :
-    Conversion.PreparedSpec context
+theorem preparedSpec_mul
+    [Mul Exact] [Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (left : Left) (right : Right) (mode : Mode) (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context)
       (Conversion.prepareBinary (· * ·)
         (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right))
-      (mulAs left right mode context) :=
+      (mul left right mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
 /-- Exact division followed by one quantization satisfies the composed relational contract. -/
-theorem preparedSpec_divAs
+theorem preparedSpec_div
     [Zero Exact] [ExactZero Exact] [Div Exact]
-    [quantizer : Quantizer target Exact]
-    (left : Left) (right : Right) (mode : Mode) (context : quantizer.Context) :
-    Conversion.PreparedSpec context
+    [Quantizer target Exact] [modes : RoundingModes target Exact Mode]
+    (left : Left) (right : Right) (mode : Mode) (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context)
       (Conversion.prepareDiv (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right))
-      (divAs left right mode context) :=
+      (div left right mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
 end Binary
 
 /-- Exact fused multiply-add followed by one quantization satisfies the composed contract. -/
-theorem preparedSpec_fmaAs {Addend : Type a} {AddendExact : Type b}
+theorem preparedSpec_fma {Addend : Type a} {AddendExact : Type b}
     [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
     [ExactDecoder Right RightExact] [ExactMap RightExact Exact]
     [ExactDecoder Addend AddendExact] [ExactMap AddendExact Exact]
     [Mul Exact] [Add Exact] [quantizer : Quantizer target Exact]
+    [modes : RoundingModes target Exact Mode]
     (left : Left) (right : Right) (addend : Addend) (mode : Mode)
-    (context : quantizer.Context) :
-    Conversion.PreparedSpec context
-      (Conversion.prepareFmaWith (quantizer.addExact context)
+    (context : modes.Policy) :
+    Conversion.PreparedSpec (modes.withMode mode context)
+      (Conversion.prepareFmaWith (quantizer.addExact (modes.withMode mode context))
         (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
         (ExactDecoder.decodeTo addend))
-      (fmaAs left right addend mode context) :=
+      (fma left right addend mode context) :=
   Conversion.preparedSpec_quantizePrepared _ _
 
-end ConversionProof
+end Mixed
 end ExecFloat
 end FloatLib.Floats

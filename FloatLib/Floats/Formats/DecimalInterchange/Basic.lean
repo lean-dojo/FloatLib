@@ -40,6 +40,8 @@ theorem lawful (encoding : Encoding) : encoding.codec.Lawful := by
   · exact BID.lawful
   · exact DPD.lawful
 
+/-- In both BID and DPD, every word of the format's width, noncanonical encodings included, decodes
+to a valid datum. -/
 theorem decode_valid (encoding : Encoding) (f : Format) (word : BitVec f.bitWidth) :
     (encoding.decode f word).Valid f :=
   encoding.codec.decode_valid encoding.lawful f word
@@ -59,15 +61,25 @@ theorem encode?_decode (encoding : Encoding) (f : Format) (word : BitVec f.bitWi
   rw [ite_eq_left (encoding.decode_valid f word)]
   rfl
 
+/-- In both encodings, canonicalizing a word does not change the datum it decodes to. -/
 theorem decode_canonicalize (encoding : Encoding) (f : Format) (word : BitVec f.bitWidth) :
     encoding.decode f (encoding.canonicalize f word) = encoding.decode f word :=
   encoding.codec.decode_canonicalize encoding.lawful f word
 
+/-- In both encodings, canonicalizing an already canonical word changes no bit. -/
 theorem canonicalize_idempotent (encoding : Encoding) (f : Format)
     (word : BitVec f.bitWidth) :
     encoding.canonicalize f (encoding.canonicalize f word) =
       encoding.canonicalize f word :=
   encoding.codec.canonicalize_idempotent encoding.lawful f word
+
+/-- In both encodings, two words have the same canonical word exactly when they decode to the same
+datum. -/
+theorem canonicalize_eq_canonicalize_iff (encoding : Encoding) (f : Format)
+    (left right : BitVec f.bitWidth) :
+    encoding.canonicalize f left = encoding.canonicalize f right ↔
+      encoding.decode f left = encoding.decode f right :=
+  encoding.codec.canonicalize_eq_canonicalize_iff encoding.lawful f left right
 
 end Encoding
 
@@ -87,8 +99,9 @@ theorem decode_transcode (source target : Encoding) (f : Format)
     rfl
   · exact target.codec.decode_encode target.lawful f _ (source.decode_valid f word)
 
-/-- Conversion to the other encoding and back recovers the canonical source word.
-An originally redundant encoding need not be recovered bit for bit. -/
+/-- Converting to a different encoding and back yields the canonical source word, so an originally
+redundant encoding need not be recovered bit for bit. When the two encodings are equal, both
+conversions copy the word and the original word is returned unchanged. -/
 theorem transcode_transcode (source target : Encoding) (f : Format)
     (word : BitVec f.bitWidth) :
     transcode target source f (transcode source target f word) =

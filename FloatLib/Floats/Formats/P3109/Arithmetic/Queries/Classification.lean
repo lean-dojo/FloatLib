@@ -31,35 +31,42 @@ theorem decode_eq_decodeNat (value : ExecFloat.P3109 format) :
   rw [decode_eq_format_decode]
   rfl
 
+/-- `isInf` is true iff exact decoding produces a signed infinity. -/
+theorem isInf_iff_decode (value : ExecFloat.P3109 format) :
+    value.isInf = true ↔ ∃ negative, value.decode = .infinity negative := by
+  rw [decode_eq_decodeNat]
+  have hmodulus := format.modulus_eq_two_mul_signBoundary
+  have hboundary := format.one_lt_signBoundary
+  cases hs : format.signedness <;> cases hd : format.domain <;>
+    (by_cases hn : value.toNatBits = format.nanBits) <;>
+    (by_cases hp : value.toNatBits = format.positiveInfinityBits) <;>
+    (by_cases hm : value.toNatBits = format.negativeInfinityBits) <;>
+    (by_cases hsign : format.signBoundary < value.toNatBits) <;>
+    simp_all [isInf, Format.decodeNat, Format.nanBits,
+      Format.positiveInfinityBits, Format.negativeInfinityBits] <;>
+    (try split_ifs) <;> (try simp_all) <;> omega
+
+/-- The NaN code is the only code that decodes to an exceptional value. -/
+private theorem isNaN_of_decode_eq_exceptional (value : ExecFloat.P3109 format)
+    (exception : ExceptionalValue) (hdecode : value.decode = .exceptional exception) :
+    value.isNaN = true := by
+  rw [decode_eq_decodeNat] at hdecode
+  simp only [isNaN, beq_iff_eq]
+  cases hs : format.signedness <;> cases hd : format.domain <;>
+    simp only [Format.decodeNat, Format.nanBits, hs, hd] at hdecode ⊢ <;>
+    split_ifs at hdecode <;> assumption
+
 /-- `isFinite` is true iff exact decoding produces a finite dyadic. -/
 theorem isFinite_iff_decode (value : ExecFloat.P3109 format) :
     value.isFinite = true ↔ ∃ exact, value.decode = .finite exact := by
-  rw [decode_eq_decodeNat]
-  have hmodulus := format.modulus_eq_two_mul_signBoundary
-  have hboundary := format.one_lt_signBoundary
-  cases hs : format.signedness <;> cases hd : format.domain <;>
-    (by_cases hn : value.toNatBits = format.nanBits) <;>
-    (by_cases hp : value.toNatBits = format.positiveInfinityBits) <;>
-    (by_cases hm : value.toNatBits = format.negativeInfinityBits) <;>
-    (by_cases hsign : format.signBoundary < value.toNatBits) <;>
-    simp_all [isFinite, isNaN, isInfinite, Format.decodeNat, Format.nanBits,
-      Format.positiveInfinityBits, Format.negativeInfinityBits] <;>
-    (try split_ifs) <;> (try simp_all)
-
-/-- `isInfinite` is true iff exact decoding produces a signed infinity. -/
-theorem isInfinite_iff_decode (value : ExecFloat.P3109 format) :
-    value.isInfinite = true ↔ ∃ negative, value.decode = .infinity negative := by
-  rw [decode_eq_decodeNat]
-  have hmodulus := format.modulus_eq_two_mul_signBoundary
-  have hboundary := format.one_lt_signBoundary
-  cases hs : format.signedness <;> cases hd : format.domain <;>
-    (by_cases hn : value.toNatBits = format.nanBits) <;>
-    (by_cases hp : value.toNatBits = format.positiveInfinityBits) <;>
-    (by_cases hm : value.toNatBits = format.negativeInfinityBits) <;>
-    (by_cases hsign : format.signBoundary < value.toNatBits) <;>
-    simp_all [isInfinite, Format.decodeNat, Format.nanBits,
-      Format.positiveInfinityBits, Format.negativeInfinityBits] <;>
-    (try split_ifs) <;> (try simp_all) <;> omega
+  have hnan := isNaN_iff_decode value
+  have hinfinite := isInf_iff_decode value
+  simp only [isFinite, Bool.not_eq_true', Bool.or_eq_false_iff]
+  cases hdecode : value.decode with
+  | finite exact => simp_all
+  | infinity negative => simp_all
+  | exceptional exception =>
+      simp [isNaN_of_decode_eq_exceptional value exception hdecode]
 
 /-- Testing for one agrees with equality of the exact rational observation to one. -/
 theorem isOne_iff_toClosedRat (value : ExecFloat.P3109 format) :
@@ -89,41 +96,41 @@ theorem abs_toRat_of_decode_finite (value : ExecFloat.P3109 format) (exact : Num
     simp [magnitudeBits, hs, Format.nanBits] at * <;>
     (try split_ifs) <;> first | rfl | omega
 
+/-- A finite datum whose magnitude code satisfies `P` is a datum decoding to a finite value whose
+absolute value satisfies `Q`, for any `P` and `Q` that agree through the decoding of magnitude
+codes. -/
+private theorem isFinite_and_iff_decode (value : ExecFloat.P3109 format) (P : Nat → Prop)
+    (Q : Rat → Prop) (h : ∀ bits, P bits ↔ Q (format.decodePositiveFinite bits).toRat) :
+    (value.isFinite = true ∧ P value.magnitudeBits) ↔
+      ∃ exact, value.decode = .finite exact ∧ Q |exact.toRat| := by
+  constructor
+  · rintro ⟨hfinite, hp⟩
+    obtain ⟨exact, hdecode⟩ := (isFinite_iff_decode value).mp hfinite
+    exact ⟨exact, hdecode, by rw [abs_toRat_of_decode_finite value exact hdecode]; exact (h _).mp hp⟩
+  · rintro ⟨exact, hdecode, hq⟩
+    rw [abs_toRat_of_decode_finite value exact hdecode] at hq
+    exact ⟨(isFinite_iff_decode value).mpr ⟨exact, hdecode⟩, (h _).mpr hq⟩
+
 /-- Normality is an exact absolute-value bound at the first normal magnitude code. -/
 theorem isNormal_iff_decode (value : ExecFloat.P3109 format) :
     value.isNormal = true ↔ ∃ exact, value.decode = .finite exact ∧
       (format.decodePositiveFinite (2 ^ format.trailingBits)).toRat ≤ |exact.toRat| := by
   simp only [isNormal, Bool.and_eq_true, decide_eq_true_eq]
-  constructor
-  · rintro ⟨hfinite, hnormal⟩
-    obtain ⟨exact, hdecode⟩ := (isFinite_iff_decode value).mp hfinite
-    refine ⟨exact, hdecode, ?_⟩
-    rw [abs_toRat_of_decode_finite value exact hdecode]
-    exact format.decodePositiveFinite_strictMono.monotone hnormal
-  · rintro ⟨exact, hdecode, hnormal⟩
-    refine ⟨(isFinite_iff_decode value).mpr ⟨exact, hdecode⟩, ?_⟩
-    rw [abs_toRat_of_decode_finite value exact hdecode] at hnormal
-    exact format.decodePositiveFinite_strictMono.le_iff_le.mp hnormal
+  exact isFinite_and_iff_decode value (2 ^ format.trailingBits ≤ ·)
+    ((format.decodePositiveFinite (2 ^ format.trailingBits)).toRat ≤ ·)
+    fun _ => format.decodePositiveFinite_strictMono.le_iff_le.symm
 
 /-- Subnormality is an exact nonzero absolute-value bound below the first normal value. -/
 theorem isSubnormal_iff_decode (value : ExecFloat.P3109 format) :
     value.isSubnormal = true ↔ ∃ exact, value.decode = .finite exact ∧
       0 < |exact.toRat| ∧
       |exact.toRat| < (format.decodePositiveFinite (2 ^ format.trailingBits)).toRat := by
-  simp only [isSubnormal, Bool.and_eq_true, decide_eq_true_eq]
-  constructor
-  · rintro ⟨⟨hfinite, hpositive⟩, hsubnormal⟩
-    obtain ⟨exact, hdecode⟩ := (isFinite_iff_decode value).mp hfinite
-    refine ⟨exact, hdecode, ?_, ?_⟩
-    · rw [abs_toRat_of_decode_finite value exact hdecode]
-      simpa using format.decodePositiveFinite_strictMono hpositive
-    · rw [abs_toRat_of_decode_finite value exact hdecode]
-      exact format.decodePositiveFinite_strictMono hsubnormal
-  · rintro ⟨exact, hdecode, hpositive, hsubnormal⟩
-    rw [abs_toRat_of_decode_finite value exact hdecode] at hpositive hsubnormal
-    refine ⟨⟨(isFinite_iff_decode value).mpr ⟨exact, hdecode⟩, ?_⟩,
-      format.decodePositiveFinite_strictMono.lt_iff_lt.mp hsubnormal⟩
-    exact format.decodePositiveFinite_strictMono.lt_iff_lt.mp (by simpa using hpositive)
+  simp only [isSubnormal, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+  exact isFinite_and_iff_decode value (fun bits => 0 < bits ∧ bits < 2 ^ format.trailingBits)
+    (fun x => 0 < x ∧ x < (format.decodePositiveFinite (2 ^ format.trailingBits)).toRat)
+    fun bits => and_congr
+      (by simpa using (format.decodePositiveFinite_strictMono.lt_iff_lt (a := 0) (b := bits)).symm)
+      format.decodePositiveFinite_strictMono.lt_iff_lt.symm
 
 /-- The zero code is the only datum whose exact rational observation is zero. -/
 theorem isZero_iff_toClosedRat (value : ExecFloat.P3109 format) :

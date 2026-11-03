@@ -151,23 +151,18 @@ theorem addNormalSameExponent_refines (x y result : Value)
     simpa [hsign, hxExponentZero, hxExponentExceptional, hyExponentEq,
       hoverflow, xMantissa, yMantissa, xFraction, yFraction, rounded] using
         hfast
-  have hxFractionFit : xFraction.toNat < 2 ^ 52 := by
-    simpa [xFraction, xBits, hxBits] using fracField_lt x
-  have hyFractionFit : yFraction.toNat < 2 ^ 52 := by
-    simpa [yFraction, yBits, hyBits] using fracField_lt y
-  have hxBounds :
-      2 ^ 52 ≤ xMantissa.toNat ∧ xMantissa.toNat < 2 ^ 53 := by
-    simpa [xMantissa] using
-      finiteMantissa_bounds xExponent xFraction
-        hxExponentZero hxFractionFit
   have hyExponentZero : yExponent ≠ 0 := by
     rw [hyExponentEq]
     exact hxExponentZero
-  have hyBounds :
-      2 ^ 52 ≤ yMantissa.toNat ∧ yMantissa.toNat < 2 ^ 53 := by
-    simpa [yMantissa] using
-      finiteMantissa_bounds yExponent yFraction
-        hyExponentZero hyFractionFit
+  have hyExponentExceptional : yExponent ≠ 0x7ff := by
+    rw [hyExponentEq]
+    exact hxExponentExceptional
+  obtain ⟨hxNormalBounds, hxBounds⟩ :
+      (0 < xExponent.toNat ∧ xExponent.toNat < 2047) ∧
+        (2 ^ 52 ≤ xMantissa.toNat ∧ xMantissa.toNat < 2 ^ 53) :=
+    normalOperand_bounds x hxExponentZero hxExponentExceptional
+  have hyBounds : 2 ^ 52 ≤ yMantissa.toNat ∧ yMantissa.toNat < 2 ^ 53 :=
+    (normalOperand_bounds y hyExponentZero hyExponentExceptional).2
   have hxExponentAdd :
       (xExponent + 1).toNat = xExponent.toNat + 1 := by
     apply uint64_add_toNat_of_lt
@@ -182,30 +177,12 @@ theorem addNormalSameExponent_refines (x y result : Value)
     apply UInt64.le_iff_toNat_le.mpr
     rw [hxExponentAdd]
     simpa using h
-  have hxFinite :
-      expField (toUInt64 x) ≠ 0x7ff := by
-    simpa [xBits, xExponent, hxBits] using hxExponentExceptional
-  have hxNonzero :
-      expField (toUInt64 x) ≠ 0 := by
-    simpa [xBits, xExponent, hxBits] using hxExponentZero
-  have hxNormalBounds :
-      0 < xExponent.toNat ∧ xExponent.toNat < 2047 := by
-    simpa [xBits, xExponent, hxBits] using
-      normalExponent_bounds x hxNonzero hxFinite
   have hxExponentBounds :
       0 < xExponent.toNat ∧ xExponent.toNat < 2046 := by
     exact ⟨hxNormalBounds.1, by omega⟩
-  have hyFinite :
-      expField (toUInt64 y) ≠ 0x7ff := by
-    simpa [yBits, yExponent, hyBits, hyExponentEq] using
-      hxExponentExceptional
   have hpack :=
     packRoundedSum_eq_round xSign xExponent xMantissa yMantissa
       hxExponentBounds hxBounds hyBounds
-  have hxMantissaNe : xMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt (lt_of_lt_of_le (by norm_num) hxBounds.1)
-  have hyMantissaNe : yMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt (lt_of_lt_of_le (by norm_num) hyBounds.1)
   have hroundScale :
       FiniteKernel.scale xExponent.toNat +
           FiniteKernel.finiteScaleOffset FloatFormat.binary64 =
@@ -227,8 +204,7 @@ theorem addNormalSameExponent_refines (x y result : Value)
         result := by
     rw [FiniteKernel.addComponents_sameSign_sameExponent
       FloatFormat.binary64 (by decide) xSign
-      xMantissa.toNat yMantissa.toNat xExponent.toNat
-      hxMantissaNe hyMantissaNe]
+      xMantissa.toNat yMantissa.toNat xExponent.toNat]
     rw [hroundScale]
     calc
       FiniteProductRound.round FloatFormat.binary64 xSign
@@ -240,8 +216,8 @@ theorem addNormalSameExponent_refines (x y result : Value)
         simpa [rounded] using hpack.symm
       _ = result := hresult
   unfold addFiniteComponents?
-  rw [decode_of_finiteExponent x hxFinite,
-    decode_of_finiteExponent y hyFinite]
+  rw [decode_of_finiteExponent x hxExponentExceptional,
+    decode_of_finiteExponent y hyExponentExceptional]
   simp only [Option.some.injEq]
   simpa [xBits, yBits, xExponent, yExponent, xSign, ySign,
     xFraction, yFraction, xMantissa, yMantissa, hxBits, hyBits,

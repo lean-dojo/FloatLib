@@ -123,6 +123,30 @@ theorem nativeLimbFma_eq_spec
 
 /-! ## Direct native-word storage -/
 
+/-- Decoding direct native-word storage reads its machine word as an exact-width posit code. -/
+private theorem decode_eq_ofNatBits_word
+    {format : Format} {plan : StoragePlan format}
+    [NativeCode format plan]
+    (value : FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
+    ModelCodec.decode
+        (F := Family format (Code plan) plan)
+        (Model := Model format) (plan := plan) value =
+      Model.ofNatBits (format := format) (NativeCode.word value.raw).toNat :=
+  (Family.decode_eq_codeToModel value).trans (NativeCode.toModel_eq_ofUInt64 value.raw)
+
+/-- Decoding a packed native-word result reads its range-checked code as an exact-width posit. -/
+private theorem decode_ofRaw_pack
+    {format : Format} {plan : StoragePlan format}
+    [NativeCode format plan]
+    (bits : Nat) (hbits : bits < format.modulus) :
+    ModelCodec.decode
+        (F := Family format (Code plan) plan)
+        (Model := Model format) (plan := plan)
+        (FloatLib.Floats.ExecFloat.ofRaw (NativeCode.pack bits hbits)) =
+      Model.ofNatBits (format := format) bits := by
+  rw [Family.decode_eq_codeToModel, FloatLib.Floats.ExecFloat.raw_ofRaw,
+    NativeCode.toModel_pack]
+
 /-- Direct packed-storage addition refines configured posit addition. -/
 theorem storedNativeWordAdd_eq_spec
     {format : Format} {plan : StoragePlan format}
@@ -135,9 +159,7 @@ theorem storedNativeWordAdd_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordAdd Spec.add
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.addWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.addWordsCodeFlat_eq]
   rw [Model.NativeWordArithmetic.ofNatBits_addWordsCode]
@@ -145,13 +167,8 @@ theorem storedNativeWordAdd_eq_spec
       (NativeCode.word left.raw) (NativeCode.word right.raw)
       (NativeCode.toUInt64_lt_modulus left.raw)
       (NativeCode.toUInt64_lt_modulus right.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel left,
-    Family.decode_eq_codeToModel right]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 left.raw,
-    ← NativeCode.toModel_eq_ofUInt64 right.raw,
-    Model.DirectDyadicArithmetic.add_eq_spec]
+  rw [decode_eq_ofNatBits_word left, decode_eq_ofNatBits_word right]
+  exact Model.DirectDyadicArithmetic.add_eq_spec _ _
 
 /-- Direct packed-storage subtraction refines configured posit subtraction. -/
 theorem storedNativeWordSub_eq_spec
@@ -165,9 +182,7 @@ theorem storedNativeWordSub_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordSub Spec.sub
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.subWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.subWordsCodeFlat_eq]
   rw [Model.NativeWordArithmetic.ofNatBits_subWordsCode]
@@ -175,13 +190,8 @@ theorem storedNativeWordSub_eq_spec
       (NativeCode.word left.raw) (NativeCode.word right.raw)
       (NativeCode.toUInt64_lt_modulus left.raw)
       (NativeCode.toUInt64_lt_modulus right.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel left,
-    Family.decode_eq_codeToModel right]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 left.raw,
-    ← NativeCode.toModel_eq_ofUInt64 right.raw,
-    Model.DirectDyadicArithmetic.sub_eq_spec]
+  rw [decode_eq_ofNatBits_word left, decode_eq_ofNatBits_word right]
+  exact Model.DirectDyadicArithmetic.sub_eq_spec _ _
 
 /-- Direct packed-storage multiplication refines configured posit multiplication. -/
 theorem storedNativeWordMul_eq_spec
@@ -195,9 +205,7 @@ theorem storedNativeWordMul_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordMul Spec.mul
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.PackedProduct.mulWordsCodeValid_eq,
     Model.NativeWordArithmetic.mulWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.mulWordsCodeFlat_eq]
@@ -206,13 +214,8 @@ theorem storedNativeWordMul_eq_spec
       (NativeCode.word left.raw) (NativeCode.word right.raw)
       (NativeCode.toUInt64_lt_modulus left.raw)
       (NativeCode.toUInt64_lt_modulus right.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel left,
-    Family.decode_eq_codeToModel right]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 left.raw,
-    ← NativeCode.toModel_eq_ofUInt64 right.raw,
-    Model.DirectDyadicArithmetic.mul_eq_spec]
+  rw [decode_eq_ofNatBits_word left, decode_eq_ofNatBits_word right]
+  exact Model.DirectDyadicArithmetic.mul_eq_spec _ _
 
 /-- Direct packed-storage division refines configured posit division. -/
 theorem storedNativeWordDiv_eq_spec
@@ -226,9 +229,7 @@ theorem storedNativeWordDiv_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordDiv Spec.div
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.PackedQuotient.divWordsCodeValid_eq]
   change
     Model.ofNatBits
@@ -246,13 +247,8 @@ theorem storedNativeWordDiv_eq_spec
       (NativeCode.word left.raw) (NativeCode.word right.raw)
       (NativeCode.toUInt64_lt_modulus left.raw)
       (NativeCode.toUInt64_lt_modulus right.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel left,
-    Family.decode_eq_codeToModel right]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 left.raw,
-    ← NativeCode.toModel_eq_ofUInt64 right.raw,
-    Model.DirectDyadicArithmetic.div_eq_spec]
+  rw [decode_eq_ofNatBits_word left, decode_eq_ofNatBits_word right]
+  exact Model.DirectDyadicArithmetic.div_eq_spec _ _
 
 /-- Direct packed-storage square root refines configured posit square root. -/
 theorem storedNativeWordSqrt_eq_spec
@@ -265,19 +261,14 @@ theorem storedNativeWordSqrt_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordSqrt Spec.sqrt
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftUnary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftUnary]
   rw [Model.NativeWordArithmetic.PackedSquareRoot.sqrtWordCodeValid_eq]
   rw [Model.NativeWordArithmetic.ofNatBits_sqrtWordCode]
   rw [Model.NativeWordArithmetic.sqrtWord_eq_sqrt heligible
       (NativeCode.word value.raw)
       (NativeCode.toUInt64_lt_modulus value.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel value]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 value.raw,
-    Model.DirectDyadicArithmetic.sqrt_eq_spec]
+  rw [decode_eq_ofNatBits_word value]
+  exact Model.DirectDyadicArithmetic.sqrt_eq_spec _
 
 /-- Direct packed-storage FMA refines configured posit FMA. -/
 theorem storedNativeWordFma_eq_spec
@@ -292,9 +283,7 @@ theorem storedNativeWordFma_eq_spec
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
   unfold storedNativeWordFma Spec.fma
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    NativeCode.toModel_pack, ModelCodec.decode_liftTernary]
+  rw [decode_ofRaw_pack, ModelCodec.decode_liftTernary]
   rw [Model.NativeWordArithmetic.fmaWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.fmaWordsCodeFlat_eq]
   rw [Model.NativeWordArithmetic.ofNatBits_fmaWordsCode]
@@ -304,17 +293,35 @@ theorem storedNativeWordFma_eq_spec
       (NativeCode.toUInt64_lt_modulus left.raw)
       (NativeCode.toUInt64_lt_modulus right.raw)
       (NativeCode.toUInt64_lt_modulus addend.raw)]
-  unfold NativeCode.word
-  rw [Family.decode_eq_codeToModel left,
-    Family.decode_eq_codeToModel right,
-    Family.decode_eq_codeToModel addend]
-  rw [
-    ← NativeCode.toModel_eq_ofUInt64 left.raw,
-    ← NativeCode.toModel_eq_ofUInt64 right.raw,
-    ← NativeCode.toModel_eq_ofUInt64 addend.raw,
-    Model.DirectDyadicArithmetic.fma_eq_spec]
+  rw [decode_eq_ofNatBits_word left, decode_eq_ofNatBits_word right,
+    decode_eq_ofNatBits_word addend]
+  exact Model.DirectDyadicArithmetic.fma_eq_spec _ _ _
 
 /-! ## Direct two-limb storage -/
+
+/-- Decoding a packed two-limb result word reads it as an exact-width posit code. -/
+private theorem decode_ofRaw_packWord
+    {format : Format} (width_le : format.bits ≤ 128)
+    (word : FloatLib.Numerics.FixedWord.UInt128) (hword : word.toNat < format.modulus) :
+    ModelCodec.decode
+        (F := Family format (Code (StoragePlan.pair width_le)) (StoragePlan.pair width_le))
+        (Model := Model format) (plan := StoragePlan.pair width_le)
+        (FloatLib.Floats.ExecFloat.ofRaw (PairCode.packWord word hword)) =
+      Model.ofNatBits (format := format) word.toNat := by
+  rw [Family.decode_eq_codeToModel, FloatLib.Floats.ExecFloat.raw_ofRaw,
+    PairCode.toModel_packWord]
+
+/-- Decoding a two-limb result packed from its natural code reads that code. -/
+private theorem decode_ofRaw_pairPack
+    {format : Format} (width_le : format.bits ≤ 128)
+    (bits : Nat) (hbits : bits < format.modulus) :
+    ModelCodec.decode
+        (F := Family format (Code (StoragePlan.pair width_le)) (StoragePlan.pair width_le))
+        (Model := Model format) (plan := StoragePlan.pair width_le)
+        (FloatLib.Floats.ExecFloat.ofRaw (PairCode.pack width_le bits hbits)) =
+      Model.ofNatBits (format := format) bits := by
+  rw [Family.decode_eq_codeToModel, FloatLib.Floats.ExecFloat.raw_ofRaw,
+    PairCode.toModel_pack]
 
 /-- Direct two-limb packed addition refines configured posit addition. -/
 theorem storedNativeLimbAdd_eq_spec
@@ -331,9 +338,7 @@ theorem storedNativeLimbAdd_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbAdd Spec.add
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_packWord, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_addCode_eq_add heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
     left.raw.2 right.raw.2]
@@ -355,9 +360,7 @@ theorem storedNativeLimbSub_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbSub Spec.sub
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_packWord, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_subCode_eq_sub heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
     left.raw.2 right.raw.2]
@@ -379,9 +382,7 @@ theorem storedNativeLimbMul_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbMul Spec.mul
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_packWord, ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_mulCode_eq_mul heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
     left.raw.2 right.raw.2]
@@ -404,10 +405,7 @@ theorem storedNativeLimbDiv_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbDiv Spec.div
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_pack, Model.ofNatBits_toNatBits,
-    ModelCodec.decode_liftBinary]
+  rw [decode_ofRaw_pairPack, Model.ofNatBits_toNatBits, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbArithmetic.divWords_eq_div format
     (PairCode.word left.raw) (PairCode.word right.raw)
     width_le left.raw.2 right.raw.2]
@@ -430,9 +428,7 @@ theorem storedNativeLimbSqrt_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbSqrt Spec.sqrt
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_pack, ModelCodec.decode_liftUnary]
+  rw [decode_ofRaw_pairPack, ModelCodec.decode_liftUnary]
   rw [Model.NativeLimbPacked.ofNatBits_sqrtCode_eq_sqrt heligible
     (PairCode.word value.raw) value.raw.2]
   rw [Model.DirectDyadicArithmetic.sqrt_eq_spec]
@@ -453,9 +449,7 @@ theorem storedNativeLimbFma_eq_spec
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
   unfold storedNativeLimbFma Spec.fma
-  rw [Family.decode_eq_codeToModel]
-  simp only [FloatLib.Floats.ExecFloat.raw_ofRaw,
-    PairCode.toModel_pack, ModelCodec.decode_liftTernary]
+  rw [decode_ofRaw_pairPack, ModelCodec.decode_liftTernary]
   rw [Model.NativeLimbPacked.ofNatBits_fmaCode_eq_fma heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
     (PairCode.word addend.raw)

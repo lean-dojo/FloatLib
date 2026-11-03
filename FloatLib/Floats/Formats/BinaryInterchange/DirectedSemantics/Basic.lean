@@ -147,12 +147,10 @@ theorem pow2_log2_le {n : Nat} (hn : n ≠ 0) :
   have h : 2 ^ Nat.log2 n ≤ n := (Nat.le_log2 hn).1 le_rfl
   simpa [pow2_eq_two_pow] using h
 
-/-- A nonzero natural number is below the next power after its leading bit. -/
-theorem lt_pow2_log2_add_one {n : Nat} (hn : n ≠ 0) :
+/-- A natural number is below the next power after its leading bit. -/
+theorem lt_pow2_log2_add_one (n : Nat) :
     n < pow2 (Nat.log2 n + 1) := by
-  have hlog : n.log2 < n.log2 + 1 := Nat.lt_succ_self _
-  have h : n < 2 ^ (n.log2 + 1) := (Nat.log2_lt hn).1 hlog
-  simpa [pow2_eq_two_pow] using h
+  simpa [pow2_eq_two_pow] using Nat.lt_log2_self (n := n)
 
 /-! ## Format constants -/
 
@@ -201,7 +199,7 @@ theorem posMinSubnormal_eq_ofFields (fmt : FloatFormat) :
   have hfit : 1 < 2 ^ fmt.fracWidth :=
     Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
   simpa [bpow] using
-    toReal_ofFields_subnormal fmt false 1 (by decide) hfit
+    toReal_ofFields_subnormal fmt false 1 one_ne_zero hfit
 
 /-- Closed form for the largest finite positive value of an arbitrary format. -/
 theorem toReal_posMaxFinite (fmt : FloatFormat) :
@@ -217,6 +215,23 @@ theorem toReal_posMaxFinite (fmt : FloatFormat) :
   simp only [Bool.false_eq_true, ite_false, one_mul]
   congr 1
 
+/-- A signed magnitude `±mantissa * 2^exponent` has the magnitude as its absolute value. -/
+private theorem abs_signed_mul_bpow (sign : Bool) (mantissa : Nat) (exponent : Int) :
+    |(if sign then (-1 : ℝ) else 1) * (mantissa : ℝ) * bpow exponent| =
+      (mantissa : ℝ) * bpow exponent := by
+  cases sign <;> simp [abs_mul, abs_of_nonneg (bpow_nonneg _)]
+
+/-- The largest finite value of every format is positive. -/
+theorem toReal_posMaxFinite_pos (fmt : FloatFormat) : 0 < toReal (posMaxFinite fmt) := by
+  rw [toReal_posMaxFinite]
+  refine mul_pos (Nat.cast_pos.mpr ?_) (bpow_pos _)
+  have := pow2_pos fmt.fracWidth
+  omega
+
+/-- The largest finite value of every format is nonnegative. -/
+theorem toReal_posMaxFinite_nonneg (fmt : FloatFormat) : 0 ≤ toReal (posMaxFinite fmt) :=
+  (toReal_posMaxFinite_pos fmt).le
+
 /--
 A signed magnitude whose mantissa and exponent do not exceed those of the largest finite value is
 bounded by that value.
@@ -227,59 +242,94 @@ theorem abs_signed_mul_bpow_le_toReal_posMaxFinite
     (hexponent : exponent ≤ fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) :
     |(if sign then (-1 : ℝ) else 1) * (mantissa : ℝ) * bpow exponent| ≤
       toReal (posMaxFinite fmt) := by
-  have hsign : |(if sign then (-1 : ℝ) else 1)| = 1 := by
-    cases sign <;> norm_num
-  rw [toReal_posMaxFinite, abs_mul, abs_mul, hsign, one_mul,
-    abs_of_nonneg (Nat.cast_nonneg _), abs_of_nonneg (bpow_nonneg _)]
+  rw [abs_signed_mul_bpow, toReal_posMaxFinite]
   exact mul_le_mul (by exact_mod_cast hmantissa) (bpow_le_bpow_of_le hexponent)
     (bpow_nonneg _) (Nat.cast_nonneg _)
 
 /--
-Every finite IEEE value lies between the two largest-finite endpoints.
+A finite word's exponent field is at most `maxFiniteExpField`. An IEEE encoding reserves the
+all-ones field for infinities and NaNs, and the other encodings use every field for finite values.
+-/
+theorem expField_le_maxFiniteExpField_of_isFinite {fmt : FloatFormat} (x : Model fmt)
+    (hfinite : isFinite x = true) :
+    expField x ≤ fmt.maxFiniteExpField := by
+  have hexponentLt := expField_lt_pow2 x
+  cases hencoding : fmt.encoding with
+  | ieee =>
+      have hexponentNe : expField x ≠ fmt.expAllOnesNat := by
+        have hfiniteIEEE : IEEE.isFinite x = true := by
+          simpa [isFinite, hencoding] using hfinite
+        exact (bne_iff_ne).mp hfiniteIEEE
+      simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
+        hencoding]
+      unfold FloatFormat.expAllOnesNat at hexponentNe
+      omega
+  | finiteMaxNaN | finiteUnsignedZero | finite =>
+      simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
+        hencoding]
+      omega
+
+/-- A natural number below `2^k`, scaled by `2^e`, lies below `2^E` whenever `k + e ≤ E`. -/
+theorem natCast_mul_bpow_lt_bpow {m k : Nat} {e E : Int} (hm : m < 2 ^ k)
+    (hE : (k : Int) + e ≤ E) :
+    (m : ℝ) * bpow e < bpow E := by
+  have hmReal : (m : ℝ) < bpow (k : Int) := by
+    rw [bpow_natCast]
+    exact_mod_cast hm
+  calc (m : ℝ) * bpow e
+      < bpow (k : Int) * bpow e := mul_lt_mul_of_pos_right hmReal (bpow_pos _)
+    _ = bpow ((k : Int) + e) := (bpow_add _ _).symm
+    _ ≤ bpow E := bpow_le_bpow_of_le hE
+
+/-- The largest finite value is at least the power of two at the largest normal exponent. -/
+private theorem bpow_maxNormalExponent_le_toReal_posMaxFinite (fmt : FloatFormat) :
+    bpow fmt.maxNormalExponent ≤ toReal (posMaxFinite fmt) := by
+  have h := abs_signed_mul_bpow_le_toReal_posMaxFinite fmt false (pow2 fmt.fracWidth)
+    (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) (Nat.le_add_right _ _) le_rfl
+  have hpower :
+      ((pow2 fmt.fracWidth : Nat) : ℝ) *
+          bpow (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) =
+        bpow fmt.maxNormalExponent := by
+    rw [← bpow_ofNat, ← bpow_add]
+    congr 1
+    ring
+  rw [← hpower]
+  simpa [abs_of_nonneg (bpow_nonneg _)] using h
+
+/--
+Every finite value lies between the two largest-finite endpoints, in every encoding.
 
 The finiteness hypothesis excludes infinities and NaNs, and the bound follows from the
-descriptor's exponent and fraction fields.
+descriptor's exponent and fraction fields. A finite-with-NaN encoding reserves only the largest
+fraction at the largest exponent, so a smaller exponent may carry any fraction and still stays
+below the next binade boundary.
 -/
-theorem abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite
-    {fmt : FloatFormat} (x : Model fmt)
-    (hfmt : fmt.isIEEE = true) (hfinite : isFinite x = true) :
+theorem abs_toReal_le_posMaxFinite_of_isFinite
+    {fmt : FloatFormat} (x : Model fmt) (hfinite : isFinite x = true) :
     |toReal x| ≤ toReal (posMaxFinite fmt) := by
-  have hencoding : fmt.encoding = .ieee :=
-    FloatFormat.encoding_eq_ieee_of_isIEEE fmt hfmt
-  have hexponentNe : expField x ≠ fmt.expAllOnesNat := by
-    have hfiniteIEEE : IEEE.isFinite x = true := by
-      simpa [isFinite, hencoding] using hfinite
-    exact (bne_iff_ne).mp hfiniteIEEE
   have hexponentLt := expField_lt_pow2 x
   have hfractionLt := fracField_lt_pow2 x
-  have hexponentLe : expField x ≤ fmt.maxFiniteExpField := by
-    simp only [FloatFormat.maxFiniteExpField,
-      FloatFormat.Encoding.maxFiniteExponent, hencoding]
-    unfold FloatFormat.expAllOnesNat at hexponentNe
-    omega
-  have hfractionLe : fracField x ≤ fmt.maxFiniteFracField := by
-    simp only [FloatFormat.maxFiniteFracField, hencoding,
-      FloatFormat.fracMaskNat]
-    omega
+  have hexponentLe := expField_le_maxFiniteExpField_of_isFinite x hfinite
   have hfieldsFinite :
       isFinite
           (ofFields fmt (signBit x) (expField x) (fracField x)) =
         true := by
     simpa only [ofFields_signBit_expField_fracField] using hfinite
+  have hmaximumNonneg : 0 ≤ toReal (posMaxFinite fmt) := by
+    rw [toReal_posMaxFinite]
+    exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
   rw [← ofFields_signBit_expField_fracField x]
   by_cases hexponentZero : expField x = 0
   · by_cases hfractionZero : fracField x = 0
-    · have hmaximumNonneg : 0 ≤ toReal (posMaxFinite fmt) := by
-        rw [toReal_posMaxFinite]
-        exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
-      cases hsign : signBit x <;>
-        simp [hexponentZero, hfractionZero, toReal_posZero fmt hfmt,
-          toReal_negZero fmt hfmt, hmaximumNonneg]
+    · rw [toReal_eq, toDyadic?_ofFields_of_isFinite fmt _ _ _ hexponentLt hfractionLt
+        hfieldsFinite]
+      simpa [hexponentZero, hfractionZero, Numerics.Dyadic.toReal,
+        Numerics.Dyadic.signedSignificand] using hmaximumNonneg
     · rw [hexponentZero,
-        toReal_ofFields_subnormal fmt (signBit x) (fracField x)
-          hfractionZero hfractionLt]
+        toReal_ofFields_subnormal fmt (signBit x) (fracField x) hfractionZero hfractionLt]
       apply abs_signed_mul_bpow_le_toReal_posMaxFinite
-      · omega
+      · rw [pow2_eq_two_pow]
+        omega
       · have := fmt.maxFiniteExpField_pos
         unfold FloatFormat.minSubnormalExponent FloatFormat.minNormalExponent
           FloatFormat.maxNormalExponent
@@ -287,48 +337,85 @@ theorem abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite
         omega
   · rw [toReal_ofFields_normal_of_isFinite fmt (signBit x)
         (expField x) (fracField x) hexponentZero hexponentLt hfractionLt hfieldsFinite]
-    apply abs_signed_mul_bpow_le_toReal_posMaxFinite
-    · omega
-    · unfold FloatFormat.maxNormalExponent
+    by_cases hexponentMax : expField x = fmt.maxFiniteExpField
+    · apply abs_signed_mul_bpow_le_toReal_posMaxFinite
+      · have hfractionLe : fracField x ≤ fmt.maxFiniteFracField := by
+          cases hencoding : fmt.encoding with
+          | finiteMaxNaN =>
+              have hallOnes : expField x = fmt.expAllOnesNat := by
+                simp only [hexponentMax, FloatFormat.maxFiniteExpField,
+                  FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat, hencoding]
+              have hnotMask : fracField x ≠ fmt.fracMaskNat := by
+                intro hmask
+                simp [isFinite, isNaN, hencoding, hallOnes, hmask] at hfinite
+              simp only [FloatFormat.maxFiniteFracField, hencoding,
+                FloatFormat.fracMaskNat] at hnotMask ⊢
+              omega
+          | ieee | finiteUnsignedZero | finite =>
+              simp only [FloatFormat.maxFiniteFracField, hencoding,
+                FloatFormat.fracMaskNat]
+              omega
+        omega
+      · unfold FloatFormat.maxNormalExponent
+        simp only [Int.ofNat_eq_natCast]
+        omega
+    · have hmantissa : pow2 fmt.fracWidth + fracField x < 2 ^ (fmt.fracWidth + 1) := by
+        rw [pow2_eq_two_pow, pow_succ]
+        omega
+      rw [abs_signed_mul_bpow]
+      refine le_trans (natCast_mul_bpow_lt_bpow hmantissa ?_).le
+        (bpow_maxNormalExponent_le_toReal_posMaxFinite fmt)
+      unfold FloatFormat.maxNormalExponent
       simp only [Int.ofNat_eq_natCast]
+      push_cast
       omega
+
+/--
+The decoded value of a word lies within the largest finite magnitude, in every encoding. This is
+`abs_toReal_le_posMaxFinite_of_isFinite` read through the decoder.
+-/
+theorem abs_toReal_le_posMaxFinite_of_toDyadic?_some
+    {fmt : FloatFormat} (x : Model fmt) {d : Numerics.Dyadic}
+    (hd : toDyadic? x = some d) :
+    |d.toReal| ≤ toReal (posMaxFinite fmt) := by
+  simpa [toReal_eq, hd] using
+    abs_toReal_le_posMaxFinite_of_isFinite x (isFinite_eq_true_of_toDyadic?_some hd)
+
+/--
+The leading bit of a nonzero decoded significand lies below the fraction width for a word with a
+zero exponent field, whose exponent is the least subnormal exponent, and exactly at the fraction
+width for a normal word, whose exponent is its unbiased field less the fraction width.
+-/
+theorem log2_significand_of_toDyadic?_some
+    {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
+    (hd : toDyadic? x = some d) (hm : d.significand ≠ 0) :
+    (expField x = 0 ∧ d.significand.log2 < fmt.fracWidth ∧
+        d.exponent = fmt.minSubnormalExponent) ∨
+      (expField x ≠ 0 ∧ d.significand.log2 = fmt.fracWidth ∧
+        d.exponent =
+          Int.ofNat (expField x) - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth) := by
+  have hfrac := fracField_lt_pow2 x
+  rcases toDyadic?_some_cases hd with ⟨hs, -⟩ | ⟨he, -, hs, hexp⟩ | ⟨he, hs, hexp⟩
+  · exact absurd hs hm
+  · exact Or.inl ⟨he, (Nat.log2_lt hm).2 (hs ▸ hfrac), hexp⟩
+  · refine Or.inr ⟨he, le_antisymm ?_ ?_, hexp⟩
+    · exact Nat.lt_succ_iff.mp <| (Nat.log2_lt hm).2 (by
+        rw [hs, pow2_eq_two_pow, pow_succ]
+        omega)
+    · exact (Nat.le_log2 hm).2 (by rw [hs, pow2_eq_two_pow]; omega)
 
 /-- The largest finite value is strictly below the next normal power of two. -/
 theorem toReal_posMaxFinite_lt_bpow (fmt : FloatFormat) :
     toReal (posMaxFinite fmt) <
       bpow (fmt.maxNormalExponent + 1) := by
   rw [toReal_posMaxFinite]
-  have hmantissa :
-      ((pow2 fmt.fracWidth + fmt.maxFiniteFracField : Nat) : ℝ) <
-        (pow2 (fmt.fracWidth + 1) : ℝ) := by
-    exact_mod_cast show
-      pow2 fmt.fracWidth + fmt.maxFiniteFracField <
-        pow2 (fmt.fracWidth + 1) by
-      have hfraction := fmt.maxFiniteFracField_lt_two_pow
-      simp only [pow2_eq_two_pow, pow_succ]
-      omega
-  have hscale :
-      0 < bpow (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) :=
-    bpow_pos _
-  refine (mul_lt_mul_of_pos_right hmantissa hscale).trans_eq ?_
-  calc
-    (pow2 (fmt.fracWidth + 1) : ℝ) *
-          bpow (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) =
-        bpow (Int.ofNat (fmt.fracWidth + 1)) *
-          bpow (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth) := by
-      rw [bpow_ofNat]
-    _ = bpow
-          (Int.ofNat (fmt.fracWidth + 1) +
-            (fmt.maxNormalExponent - Int.ofNat fmt.fracWidth)) := by
-      rw [← bpow_add]
-    _ = bpow (fmt.maxNormalExponent + 1) := by
-      congr 1
-      have hfrac :
-          Int.ofNat (fmt.fracWidth + 1) =
-            Int.ofNat fmt.fracWidth + 1 := by
-        simp
-      rw [hfrac]
-      ring
+  apply natCast_mul_bpow_lt_bpow (k := fmt.fracWidth + 1)
+  · have hfraction := fmt.maxFiniteFracField_lt_two_pow
+    simp only [pow2_eq_two_pow, pow_succ]
+    omega
+  · simp only [Int.ofNat_eq_natCast]
+    push_cast
+    omega
 
 end
 

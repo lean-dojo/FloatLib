@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public meta import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
+public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 public meta import Lean.Data.Options
 public import Lean.Exception
 public meta import Lean.Elab.Command
@@ -33,7 +34,8 @@ open FloatLib.Numerics
 /-- Whether `#float_info` should print the complete proof and backend audit. -/
 meta register_option floatlib.floatInfo.full : Bool := {
   defValue := false
-  descr := "show theorem declarations, hypotheses, planner costs, and complete proof boundaries"
+  descr := "show every theorem name with its scope, the planner's costs, and every claim the \
+    report does not make"
 }
 
 /-- Whether `#float_info` should focus on checked range, roundoff, and exactness guarantees. -/
@@ -96,8 +98,8 @@ meta inductive TheoremApplicability where
 A group of checked declarations that gives mathematical meaning to an executable specification.
 
 `applicability` records whether the configured type satisfies the group's descriptor-level
-premises. `scope` records remaining input or relation hypotheses. Declaration names are an index
-into the Lean API, not a replacement for checking the exact theorem statements.
+premises. `scope` summarizes the remaining input or relation hypotheses. Declaration names are an
+index into the Lean API, rendered so that hovering one shows its exact statement.
 -/
 meta structure TheoremSurface where
   /-- Mathematical topic covered by the declarations. -/
@@ -124,14 +126,26 @@ meta structure TheoremSurface where
   -/
   numericalGuarantee? : Option NumericalGuarantee := none
 
+/--
+Theorem groups about values of another type, which the inspected type's values reach through
+`embedding`. An executable carrier states few theorems directly: `Binary32` relates its values to
+the proof model `Model format` with `ExecFloat.Binary.toModel`, a configured fixed-point value to
+its code with `toCode`; the theorems about that type then apply through the embedding.
+-/
+meta structure RelatedTheorems where
+  /-- The type constructor the groups are about, such as `Formats.BinaryInterchange.Model`. -/
+  type : Lean.Name
+  /-- The function taking a value of the inspected type to a value of `type`. -/
+  embedding : Lean.Name
+  /-- The theorem groups, each stated about values of `type`. -/
+  surfaces : List TheoremSurface
+
 /-- Family-defined descriptive information for one encoded numerical format. -/
 meta structure FormatProfile where
   /-- Representation and semantics family, such as binary interchange or a codebook. -/
   family : String
   /-- Standards identity or an explicit statement that the format is nonstandard. -/
   standard : String
-  /-- Namespace prefix omitted from declaration names in this family's rendered report. -/
-  declarationPrefix : String
   /-- Representation parameters that determine the encoded type. -/
   representation : List InfoEntry
   /-- Finite and exceptional value classes represented by the encoding. -/
@@ -157,8 +171,20 @@ meta structure FormatProfile where
   either hiding useful family APIs or falsely advertising them as scalar `ExecFloat` capabilities.
   -/
   specializedOperations : List InfoEntry := []
-  /-- Principal semantic theorem surfaces available for this family. -/
+  /--
+  Principal theorem groups. When `relatedTheorems` is not empty, each of these groups is stated
+  about values of the inspected type, and the report's heading says so. Otherwise the heading is
+  just "Theorems", and each group's topic and scope say what its theorems are about.
+  -/
   theoremSurfaces : List TheoremSurface
+  /--
+  Theorem groups about the types that the inspected type's values reach, such as its proof model
+  or its code, each under a heading that names the type and the embedding. They apply to the
+  inspected type's values only through the embedding and the theorems relating the two, which
+  `theoremSurfaces` lists. A profile lists them only when every group in `theoremSurfaces` is
+  about the inspected type's own values.
+  -/
+  relatedTheorems : List RelatedTheorems := []
   /-- Claims deliberately outside the reported proof boundary. -/
   nonclaims : List String
 
@@ -175,6 +201,49 @@ meta abbrev CoreOperationCoverage :=
 /-- Empty universal-operation coverage for a family that does not use the `ExecFloat` API. -/
 meta def CoreOperationCoverage.none : CoreOperationCoverage :=
   Backend.Operation.all.map fun operation => (operation, false)
+
+/-- The names that `names` gives for each installed operation, in operation order. -/
+meta def CoreOperationCoverage.installed (coverage : CoreOperationCoverage)
+    (names : Backend.Operation → List Lean.Name) : List Lean.Name :=
+  coverage.foldr (fun (operation, available) rest =>
+    if available then names operation ++ rest else rest) []
+
+/--
+The `ExecFloat` refinement equations of the installed operations as one theorem group, or none
+when no operation is installed. The notation forms, which rewrite `x + y`, `x - y`, `x * y`, and
+`x / y`, come before the forms for the named operations.
+-/
+meta def refinementEquations (coverage : CoreOperationCoverage) : List TheoremSurface :=
+  let operators := coverage.installed fun
+    | .add => [``FloatLib.Floats.ExecFloat.Proof.add_notation_eq_spec]
+    | .sub => [``FloatLib.Floats.ExecFloat.Proof.sub_notation_eq_spec]
+    | .mul => [``FloatLib.Floats.ExecFloat.Proof.mul_notation_eq_spec]
+    | .div => [``FloatLib.Floats.ExecFloat.Proof.div_notation_eq_spec]
+    | .sqrt | .fma => []
+  let named := coverage.installed fun
+    | .add => [``FloatLib.Floats.ExecFloat.Proof.add_eq_spec]
+    | .sub => [``FloatLib.Floats.ExecFloat.Proof.sub_eq_spec]
+    | .mul => [``FloatLib.Floats.ExecFloat.Proof.mul_eq_spec]
+    | .div => [``FloatLib.Floats.ExecFloat.Proof.div_eq_spec]
+    | .sqrt => [``FloatLib.Floats.ExecFloat.Proof.sqrt_eq_spec]
+    | .fma => [``FloatLib.Floats.ExecFloat.Proof.fma_eq_spec]
+  if named.isEmpty then []
+  else
+    [ { topic := "arithmetic equals its reference operation"
+        declarations := operators ++ named
+        definitions := coverage.installed fun
+          | .add => [``FloatLib.Floats.ExecFloat.Spec.add]
+          | .sub => [``FloatLib.Floats.ExecFloat.Spec.sub]
+          | .mul => [``FloatLib.Floats.ExecFloat.Spec.mul]
+          | .div => [``FloatLib.Floats.ExecFloat.Spec.div]
+          | .sqrt => [``FloatLib.Floats.ExecFloat.Spec.sqrt]
+          | .fma => [``FloatLib.Floats.ExecFloat.Spec.fma]
+        applicability := .verifiedForType
+        scope :=
+          "every operand, exceptional values included; each is an equation of stored values, " ++
+          "so every result, exceptional or not, is the reference result. The " ++
+          "`*_notation_eq_spec` forms rewrite `x + y`, `x - y`, `x * y`, and `x / y`; the " ++
+          "others rewrite `ExecFloat.add` and its siblings" } ]
 
 /-- Fail unless every listed theorem surface name is an existing theorem. -/
 meta def TheoremSurface.validateTheorems (surface : TheoremSurface) : Lean.Meta.MetaM Unit := do
@@ -206,13 +275,21 @@ meta def TheoremSurface.validateDefinitions (surface : TheoremSurface) :
 Refuse to render a profile whose theorem surfaces are inconsistent with the environment.
 
 Every rendered name under `declarations` must be an existing theorem, and every rendered name
-under `definitions` must exist. Errors-only mode checks names only in groups with a numerical
-guarantee. In every mode, all numerical guarantees must name at least one kind and one theorem.
+under `definitions` must exist, as must each related type and its embedding. Errors-only mode
+checks names only in groups with a numerical guarantee. In every mode, all numerical guarantees
+must name at least one kind and one theorem.
 -/
 meta def FormatProfile.validateDeclarations
     (profile : FormatProfile) : Lean.Meta.MetaM Unit := do
   let errorsOnly := floatlib.floatInfo.errors.get (← Lean.getOptions)
-  for surface in profile.theoremSurfaces do
+  for related in profile.relatedTheorems do
+    for name in [related.type, related.embedding] do
+      unless (← Lean.getEnv).contains name do
+        throwError
+          "internal `#float_info` profile error: related-theorems name `{name}` does not exist"
+  let allSurfaces :=
+    profile.theoremSurfaces ++ profile.relatedTheorems.flatMap (·.surfaces)
+  for surface in allSurfaces do
     if let some guarantee := surface.numericalGuarantee? then
       if guarantee.kinds.isEmpty then
         throwError
@@ -222,9 +299,9 @@ meta def FormatProfile.validateDeclarations
           "internal `#float_info` profile error: numerical guarantee `{surface.topic}` has no declarations"
   let surfaces :=
     if errorsOnly then
-      profile.theoremSurfaces.filter fun surface => surface.numericalGuarantee?.isSome
+      allSurfaces.filter fun surface => surface.numericalGuarantee?.isSome
     else
-      profile.theoremSurfaces
+      allSurfaces
   for surface in surfaces do
     surface.validateTheorems
     surface.validateDefinitions

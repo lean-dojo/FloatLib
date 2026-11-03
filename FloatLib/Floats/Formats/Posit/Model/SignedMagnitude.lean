@@ -51,6 +51,17 @@ counterpart, exactly as specified by the posit encoding.
     Nat.two_mul, Nat.add_sub_cancel_left]
   rfl
 
+/-- Two's-complement negation is an involution on posit words. -/
+@[simp] protected theorem neg_neg (value : Model format) : neg (neg value) = value := by
+  by_cases hzero : value = zero format
+  · subst value
+    simp
+  · have hcode := toNatBits_lt_modulus value
+    have hnonzero := mt (toNatBits_eq_zero_iff value).1 hzero
+    unfold neg
+    rw [toNatBits_ofNatBits_of_lt _ (by omega), Nat.sub_sub_self (Nat.le_of_lt hcode),
+      ofNatBits_toNatBits]
+
 /-- Whether the encoded sign bit is set. -/
 @[inline] def signBit (value : Model format) : Bool :=
   value.bits.msb
@@ -99,6 +110,16 @@ theorem magnitudeBits_ofNatBits_of_lt_signMask
   exact toNatBits_ofNatBits_of_lt code
     (lt_trans hcode format.signMaskNat_lt_modulus)
 
+/--
+The unsigned magnitude as a comparison of the whole word with the sign mask: a word at or above
+the mask is replaced by its two's complement, any other word is its own magnitude.
+-/
+theorem magnitudeBits_eq_ite (value : Model format) :
+    value.magnitudeBits =
+      if format.signMaskNat ≤ value.toNatBits then format.modulus - value.toNatBits
+      else value.toNatBits := by
+  simp only [magnitudeBits, signBit_eq_decide, decide_eq_true_eq]
+
 /-- Every posit other than NaR has unsigned magnitude strictly below the sign mask. -/
 theorem magnitudeBits_lt_signMask_of_ne_nar
     (value : Model format)
@@ -106,18 +127,9 @@ theorem magnitudeBits_lt_signMask_of_ne_nar
     value.magnitudeBits < format.signMaskNat := by
   have hcode := toNatBits_lt_modulus value
   have htwice := Format.modulus_eq_two_mul_signMaskNat format
-  have hnotSignMask : value.toNatBits ≠ format.signMaskNat := by
-    intro equality
-    apply hnar
-    rw [← ofNatBits_toNatBits value, equality]
-    rfl
-  unfold magnitudeBits
-  rw [signBit_eq_decide]
-  by_cases hnegative : format.signMaskNat ≤ value.toNatBits
-  · simp only [decide_eq_true hnegative, ite_true]
-    omega
-  · simp only [decide_eq_false hnegative, Bool.false_eq_true, ite_false]
-    omega
+  have hnotSignMask := mt (toNatBits_eq_signMaskNat_iff value).1 hnar
+  rw [magnitudeBits_eq_ite]
+  split <;> omega
 
 /-- Every nonzero posit has nonzero unsigned magnitude. -/
 theorem magnitudeBits_ne_zero_of_ne_zero
@@ -125,18 +137,9 @@ theorem magnitudeBits_ne_zero_of_ne_zero
     (hzero : value ≠ zero format) :
     value.magnitudeBits ≠ 0 := by
   have hcode := toNatBits_lt_modulus value
-  have hcodeNonzero : value.toNatBits ≠ 0 := by
-    intro equality
-    apply hzero
-    rw [← ofNatBits_toNatBits value, equality]
-    rfl
-  unfold magnitudeBits
-  rw [signBit_eq_decide]
-  by_cases hnegative : format.signMaskNat ≤ value.toNatBits
-  · simp only [decide_eq_true hnegative, ite_true]
-    omega
-  · simp only [decide_eq_false hnegative, Bool.false_eq_true, ite_false]
-    exact hcodeNonzero
+  have hnonzero := mt (toNatBits_eq_zero_iff value).1 hzero
+  rw [magnitudeBits_eq_ite]
+  split <;> omega
 
 end Model
 end FloatLib.Floats.Formats.Posit

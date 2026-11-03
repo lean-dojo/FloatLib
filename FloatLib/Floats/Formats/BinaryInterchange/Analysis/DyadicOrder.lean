@@ -7,13 +7,16 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
+import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
 # Order theory for exact dyadics
 
 The executable `cmpDyadic` comparison agrees with real order. The proof reduces it to
-`cmpDyadicAligned`, aligns both integer significands at the smaller exponent, and then cancels
-their common positive power-of-two scale.
+`cmpDyadicAligned`, which is the exact-dyadic comparator `Numerics.Dyadic.compare`; that comparator
+orders the rational denotations (`Numerics.Dyadic.compare_eq_compare_toRat`), and the cast to the
+reals preserves the order. `Dyadic.toReal_eq_signedSignificand_shiftLeft` states the alignment of a
+significand at a smaller exponent in the reals.
 -/
 
 @[expose] public section
@@ -74,178 +77,30 @@ theorem toReal_eq_signedSignificand_shiftLeft (d : Numerics.Dyadic) (exponent : 
 
 end Dyadic
 
-private def alignedSignedMantissa (d : Numerics.Dyadic) (exponent : Int) : Int :=
-  (Numerics.Dyadic.mk d.negative (Nat.shiftLeft d.significand (Int.toNat (d.exponent - exponent))) 0).signedSignificand
-
-private theorem cmpDyadic_eq_compare_aligned (a b : Numerics.Dyadic)
-    (hzero : (a.significand == 0 && b.significand == 0) = false) :
-    let exponent := if a.exponent ≤ b.exponent then a.exponent else b.exponent
-    cmpDyadic a b =
-      compare (alignedSignedMantissa a exponent) (alignedSignedMantissa b exponent) := by
-  rw [cmpDyadic_eq_cmpDyadicAligned]
-  simp (config := { zeta := true })
-    [cmpDyadicAligned, hzero, alignedSignedMantissa, Numerics.Dyadic.signedSignificand]
-
-private theorem aligned_scale (d : Numerics.Dyadic) (exponent : Int) (hexponent : exponent ≤ d.exponent) :
-    d.toReal =
-      (alignedSignedMantissa d exponent : ℝ) *
-        bpow Numerics.binaryRadix exponent := by
-  simpa [alignedSignedMantissa] using
-    Dyadic.toReal_eq_signedSignificand_shiftLeft d exponent hexponent
+/-- Executable dyadic comparison is the comparison of the real values. -/
+theorem cmpDyadic_eq_compare (a b : Numerics.Dyadic) :
+    cmpDyadic a b = compare a.toReal b.toReal := by
+  rw [cmpDyadic_eq_cmpDyadicAligned,
+    show cmpDyadicAligned a b = Numerics.Dyadic.compare a b from rfl,
+    Numerics.Dyadic.compare_eq_compare_toRat, ← Numerics.Dyadic.cast_toRat,
+    ← Numerics.Dyadic.cast_toRat]
+  simpa only [cmp_eq_compare] using
+    ((Rat.cast_strictMono (K := ℝ)).cmp_map_eq a.toRat b.toRat).symm
 
 /-- Executable dyadic comparison returns `.lt` exactly when the real values are ordered. -/
 theorem cmpDyadic_lt_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .lt ↔ a.toReal < b.toReal := by
-  classical
-  cases hzero : (a.significand == 0 && b.significand == 0) with
-  | true =>
-      have hparts : (a.significand == 0) = true ∧ (b.significand == 0) = true := by
-        simpa [Bool.and_eq_true] using hzero
-      have ha : a.significand = 0 := beq_iff_eq.mp hparts.1
-      have hb : b.significand = 0 := beq_iff_eq.mp hparts.2
-      simp [cmpDyadic, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, ha, hb]
-  | false =>
-      let exponent := if a.exponent ≤ b.exponent then a.exponent else b.exponent
-      have haExponent : exponent ≤ a.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · have hba : b.exponent ≤ a.exponent := le_of_not_ge hab
-          simp [exponent, hab, hba]
-      have hbExponent : exponent ≤ b.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · simp [exponent, hab]
-      let aInt := alignedSignedMantissa a exponent
-      let bInt := alignedSignedMantissa b exponent
-      have hcmp : cmpDyadic a b = compare aInt bInt := by
-        simpa [exponent, aInt, bInt] using
-          cmpDyadic_eq_compare_aligned a b hzero
-      have ha :
-          a.toReal = (aInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [aInt] using aligned_scale a exponent haExponent
-      have hb :
-          b.toReal = (bInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [bInt] using aligned_scale b exponent hbExponent
-      have hscale : 0 < bpow Numerics.binaryRadix exponent :=
-        bpow.pos Numerics.binaryRadix exponent
-      have hlt : aInt < bInt ↔ a.toReal < b.toReal := by
-        constructor
-        · intro hab
-          have habReal : (aInt : ℝ) < (bInt : ℝ) := by exact_mod_cast hab
-          simpa [ha, hb] using mul_lt_mul_of_pos_right habReal hscale
-        · intro hab
-          have habScaled :
-              (aInt : ℝ) * bpow Numerics.binaryRadix exponent <
-                (bInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-            simpa [ha, hb] using hab
-          have habReal : (aInt : ℝ) < (bInt : ℝ) :=
-            lt_of_mul_lt_mul_right habScaled (le_of_lt hscale)
-          exact_mod_cast habReal
-      simp [hcmp, compare_lt_iff_lt, hlt]
+  rw [cmpDyadic_eq_compare, compare_lt_iff_lt]
 
 /-- Executable dyadic comparison returns `.eq` exactly when the real values are equal. -/
 theorem cmpDyadic_eq_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .eq ↔ a.toReal = b.toReal := by
-  classical
-  cases hzero : (a.significand == 0 && b.significand == 0) with
-  | true =>
-      have hparts : (a.significand == 0) = true ∧ (b.significand == 0) = true := by
-        simpa [Bool.and_eq_true] using hzero
-      have ha : a.significand = 0 := beq_iff_eq.mp hparts.1
-      have hb : b.significand = 0 := beq_iff_eq.mp hparts.2
-      simp [cmpDyadic, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, ha, hb]
-  | false =>
-      let exponent := if a.exponent ≤ b.exponent then a.exponent else b.exponent
-      have haExponent : exponent ≤ a.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · have hba : b.exponent ≤ a.exponent := le_of_not_ge hab
-          simp [exponent, hab, hba]
-      have hbExponent : exponent ≤ b.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · simp [exponent, hab]
-      let aInt := alignedSignedMantissa a exponent
-      let bInt := alignedSignedMantissa b exponent
-      have hcmp : cmpDyadic a b = compare aInt bInt := by
-        simpa [exponent, aInt, bInt] using
-          cmpDyadic_eq_compare_aligned a b hzero
-      have ha :
-          a.toReal = (aInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [aInt] using aligned_scale a exponent haExponent
-      have hb :
-          b.toReal = (bInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [bInt] using aligned_scale b exponent hbExponent
-      have hscale : bpow Numerics.binaryRadix exponent ≠ 0 :=
-        ne_of_gt (bpow.pos Numerics.binaryRadix exponent)
-      have heq : aInt = bInt ↔ a.toReal = b.toReal := by
-        rw [ha, hb]
-        constructor
-        · intro h
-          simp [h]
-        · intro h
-          have hcast : (aInt : ℝ) = (bInt : ℝ) :=
-            mul_right_cancel₀ hscale h
-          exact_mod_cast hcast
-      simp [hcmp, heq]
+  rw [cmpDyadic_eq_compare, compare_eq_iff_eq]
 
 /-- Executable dyadic comparison returns `.gt` exactly when the real values are reversed. -/
 theorem cmpDyadic_gt_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .gt ↔ b.toReal < a.toReal := by
-  classical
-  cases hzero : (a.significand == 0 && b.significand == 0) with
-  | true =>
-      have hparts : (a.significand == 0) = true ∧ (b.significand == 0) = true := by
-        simpa [Bool.and_eq_true] using hzero
-      have ha : a.significand = 0 := beq_iff_eq.mp hparts.1
-      have hb : b.significand = 0 := beq_iff_eq.mp hparts.2
-      simp [cmpDyadic, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, ha, hb]
-  | false =>
-      let exponent := if a.exponent ≤ b.exponent then a.exponent else b.exponent
-      have haExponent : exponent ≤ a.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · have hba : b.exponent ≤ a.exponent := le_of_not_ge hab
-          simp [exponent, hab, hba]
-      have hbExponent : exponent ≤ b.exponent := by
-        by_cases hab : a.exponent ≤ b.exponent
-        · simp [exponent, hab]
-        · simp [exponent, hab]
-      let aInt := alignedSignedMantissa a exponent
-      let bInt := alignedSignedMantissa b exponent
-      have hcmp : cmpDyadic a b = compare aInt bInt := by
-        simpa [exponent, aInt, bInt] using
-          cmpDyadic_eq_compare_aligned a b hzero
-      have ha :
-          a.toReal = (aInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [aInt] using aligned_scale a exponent haExponent
-      have hb :
-          b.toReal = (bInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-        simpa [bInt] using aligned_scale b exponent hbExponent
-      have hscale : 0 < bpow Numerics.binaryRadix exponent :=
-        bpow.pos Numerics.binaryRadix exponent
-      have hgt : bInt < aInt ↔ b.toReal < a.toReal := by
-        constructor
-        · intro hab
-          have habReal : (bInt : ℝ) < (aInt : ℝ) := by exact_mod_cast hab
-          simpa [ha, hb] using mul_lt_mul_of_pos_right habReal hscale
-        · intro hab
-          have habScaled :
-              (bInt : ℝ) * bpow Numerics.binaryRadix exponent <
-                (aInt : ℝ) * bpow Numerics.binaryRadix exponent := by
-            simpa [ha, hb] using hab
-          have habReal : (bInt : ℝ) < (aInt : ℝ) :=
-            lt_of_mul_lt_mul_right habScaled (le_of_lt hscale)
-          exact_mod_cast habReal
-      simp [hcmp, compare_gt_iff_gt, hgt]
-
-/-- Executable dyadic comparison is the comparison of the real values. -/
-theorem cmpDyadic_eq_compare (a b : Numerics.Dyadic) :
-    cmpDyadic a b = compare a.toReal b.toReal := by
-  cases h : cmpDyadic a b
-  · exact (compare_lt_iff_lt.mpr ((cmpDyadic_lt_iff a b).mp h)).symm
-  · exact (compare_eq_iff_eq.mpr ((cmpDyadic_eq_iff a b).mp h)).symm
-  · exact (compare_gt_iff_gt.mpr ((cmpDyadic_gt_iff a b).mp h)).symm
+  rw [cmpDyadic_eq_compare, compare_gt_iff_gt]
 
 end
 

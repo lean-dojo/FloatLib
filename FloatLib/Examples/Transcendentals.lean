@@ -21,9 +21,9 @@ The functions used here are deterministic approximations that preserve extra wor
 final rounding. They are not proved correctly rounded, and the API promises neither a general
 ULP bound nor a proved real-error bound for compositions, where each function boundary rounds
 again. These are proved correctly rounded: `pi` for IEEE formats, `pow` of a positive base
-whenever its enclosure search settles, and `exp` and `log` with `certify := true` when their
+whenever its enclosure search settles, and `ExecFloat.Binary.Certified.exp` and `log` when their
 rational enclosure refinement succeeds. The arithmetic operations have complete refinement
-proofs.
+proofs. The last section switches the generic formula to correctly rounded `exp` and `log`.
 -/
 
 @[expose] public section
@@ -92,6 +92,28 @@ The generic function gives the same value as `composed` at `Binary32`, because t
 `MathFunctions` instance for a binary format is the same named implementation. At `Float` it uses
 Lean's native elementary functions from the host C library, so the two results share a formula but
 not an implementation or a rounding history.
+-/
+
+/-! ## Switch to correctly rounded `exp` and `log` -/
+
+section CorrectlyRounded
+
+open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath
+
+private def correctlyRoundedResult : Binary32 :=
+  smoothPositivePart angle
+-- 0.7504904
+
+end CorrectlyRounded
+
+/-
+Inside the scope, `MathFunctions.exp` and `MathFunctions.log` on an IEEE format are
+`ExecFloat.Binary.CorrectlyRounded.exp` and `log`, so each of those two steps is the nearest-even
+rounding of the real function (`ExecFloat.Binary.CorrectlyRounded.toReal_exp_eq_roundAt` and
+`toReal_log_eq_roundAt`).
+The addition and `tanh` still round on their own, so the composition rounds four times and we make
+no correct-rounding claim for it either. At this input the result is the same binary32 value as
+`genericBinaryResult`, and the correctly rounded and approximate `exp 0.5` agree as well.
 -/
 
 end FloatLib.Examples.Transcendentals

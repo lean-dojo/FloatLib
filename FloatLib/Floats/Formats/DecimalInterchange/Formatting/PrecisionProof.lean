@@ -51,46 +51,30 @@ theorem significantDecimal_negative (mode : RoundingMode)
     (significantDecimal mode value digits).negative = value.negative := by
   exact FloatLib.Numerics.DecimalText.significantDecimal_negative mode.roundMagnitude value digits
 
-private theorem significantDecimal_scaled (mode : RoundingMode)
-    (value : Decimal) (digits : ℕ+) :
-    (significantDecimal mode value digits).toRat =
-      mode.roundSigned value.negative
-        ((value.significand : ℚ) * (10 : ℚ) ^ value.exponent /
-          (10 : ℚ) ^ significantQuantum value.significand value.exponent digits) *
-        (10 : ℚ) ^ significantQuantum value.significand value.exponent digits := by
-  rw [significantDecimal_value]
-  cases value.negative <;> simp [RoundingMode.roundSigned, RoundingMode.roundAt]
-
-private theorem decimal_scaled (value : Decimal) (quantum : Int) :
-    value.toRat =
-      (if value.negative then
-        -((value.significand : ℚ) * (10 : ℚ) ^ value.exponent / (10 : ℚ) ^ quantum)
-      else (value.significand : ℚ) * (10 : ℚ) ^ value.exponent / (10 : ℚ) ^ quantum) *
-        (10 : ℚ) ^ quantum := by
-  cases hs : value.negative <;>
-    simp [Decimal.toRat, hs, div_mul_cancel₀ _ (zpow_ne_zero quantum
-      (by norm_num : (10 : ℚ) ≠ 0))]
-
 private theorem decimal_scaled_nonneg (value : Decimal) (quantum : Int) :
     0 ≤ (value.significand : ℚ) * (10 : ℚ) ^ value.exponent / (10 : ℚ) ^ quantum :=
   div_nonneg (mul_nonneg (Nat.cast_nonneg _) (zpow_pos (by norm_num) _).le)
     (zpow_pos (by norm_num) _).le
 
 /-- Upward decimal output is an upper enclosure at every requested precision. -/
-theorem le_significantDecimal_towardPositive (value : Decimal) (digits : ℕ+) :
-    value.toRat ≤ (significantDecimal .towardPositive value digits).toRat := by
-  rw [significantDecimal_scaled, decimal_scaled value
-    (significantQuantum value.significand value.exponent digits)]
-  apply mul_le_mul_of_nonneg_right _ (zpow_pos (by norm_num) _).le
-  exact RoundingMode.le_roundSigned_towardPositive _ (decimal_scaled_nonneg value _)
+theorem le_significantDecimal_up (value : Decimal) (digits : ℕ+) :
+    value.toRat ≤ (significantDecimal .up value digits).toRat := by
+  have h := RoundingMode.le_roundAt_up value.negative
+    (mul_nonneg (Nat.cast_nonneg value.significand)
+      (zpow_pos (by norm_num : (0 : ℚ) < 10) value.exponent).le)
+    (significantQuantum value.significand value.exponent digits)
+  rw [significantDecimal_value]
+  cases hs : value.negative <;> simpa [Decimal.toRat, hs] using h
 
 /-- Downward decimal output is a lower enclosure at every requested precision. -/
-theorem significantDecimal_towardNegative_le (value : Decimal) (digits : ℕ+) :
-    (significantDecimal .towardNegative value digits).toRat ≤ value.toRat := by
-  rw [significantDecimal_scaled, decimal_scaled value
-    (significantQuantum value.significand value.exponent digits)]
-  apply mul_le_mul_of_nonneg_right _ (zpow_pos (by norm_num) _).le
-  exact RoundingMode.roundSigned_towardNegative_le _ (decimal_scaled_nonneg value _)
+theorem significantDecimal_down_le (value : Decimal) (digits : ℕ+) :
+    (significantDecimal .down value digits).toRat ≤ value.toRat := by
+  have h := RoundingMode.roundAt_down_le value.negative
+    (mul_nonneg (Nat.cast_nonneg value.significand)
+      (zpow_pos (by norm_num : (0 : ℚ) < 10) value.exponent).le)
+    (significantQuantum value.significand value.exponent digits)
+  rw [significantDecimal_value]
+  cases hs : value.negative <;> simpa [Decimal.toRat, hs] using h
 
 /-- Toward-zero decimal output does not increase magnitude. -/
 theorem abs_significantDecimal_towardZero_le (value : Decimal) (digits : ℕ+) :
@@ -108,16 +92,16 @@ theorem abs_significantDecimal_towardZero_le (value : Decimal) (digits : ℕ+) :
       abs_of_pos (zpow_pos (by norm_num : (0 : ℚ) < 10) _)] using h
 
 /-- At a midpoint, nearest-even output selects the even adjacent grid coefficient. -/
-theorem significantDecimal_nearestEven_midpoint (value : Decimal) (digits : ℕ+) (n : Nat)
+theorem significantDecimal_nearest_midpoint (value : Decimal) (digits : ℕ+) (n : Nat)
     (hmid : (value.significand : ℚ) * (10 : ℚ) ^ value.exponent /
       (10 : ℚ) ^ significantQuantum value.significand value.exponent digits =
         (n : ℚ) + 1 / 2) :
-    (significantDecimal .nearestEven value digits).toRat =
+    (significantDecimal .nearest value digits).toRat =
       (if value.negative then (-1 : ℚ) else 1) *
         ((if n % 2 = 1 then n + 1 else n : Nat) : ℚ) *
         (10 : ℚ) ^ significantQuantum value.significand value.exponent digits := by
   rw [significantDecimal_value, RoundingMode.roundAt, hmid,
-    RoundingMode.roundMagnitude_nearestEven_midpoint]
+    RoundingMode.roundMagnitude_nearest_midpoint]
 
 /-- At a midpoint, nearest-away output selects the larger magnitude. -/
 theorem significantDecimal_nearestAway_midpoint (value : Decimal) (digits : ℕ+) (n : Nat)
@@ -161,7 +145,7 @@ theorem significantDecimal_exact_of_valid (f : Format) (mode : RoundingMode)
 
 /-- Both nearest modes have at most half a requested grid unit of error. -/
 theorem significantDecimal_error_le_half (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway) (value : Decimal) (digits : ℕ+) :
+    (hm : mode = .nearest ∨ mode = .nearestAway) (value : Decimal) (digits : ℕ+) :
     |(significantDecimal mode value digits).toRat - value.toRat| ≤
       (10 : ℚ) ^ significantQuantum value.significand value.exponent digits / 2 := by
   have hx : 0 ≤ (value.significand : ℚ) * (10 : ℚ) ^ value.exponent :=
@@ -212,6 +196,19 @@ private theorem significantDecimal_magnitude_of_valid (f : Format) (mode : Round
   simp only [Decimal.toRat, significantDecimal_negative] at h
   cases hs : value.negative <;> simpa [hs] using h
 
+/-- Parsing sufficient-precision output projects the input's exact magnitude once, with its sign. -/
+private theorem parse_format_significant_eq (f : Format) (outputMode inputMode : RoundingMode)
+    (value : Decimal) (digits : ℕ+)
+    (hvalid : (Datum.finite value.negative value.significand value.exponent).Valid f)
+    (hp : f.precision ≤ (digits : Nat)) :
+    ∃ preferred, parse f inputMode (format outputMode (.significant digits)
+      (.finite value.negative value.significand value.exponent)).text =
+        projectMagnitude f inputMode value.negative
+          ((value.significand : ℚ) * (10 : ℚ) ^ value.exponent) preferred := by
+  simp only [parse, read_format_significant, convert, projectScaled_eq, significantDecimal_negative,
+    significantDecimal_magnitude_of_valid f outputMode value digits hvalid hp]
+  exact ⟨_, rfl⟩
+
 /-- At least the format precision preserves numerical value through actual output and input.
 The two conversions may use different rounding modes; the quantum need not be recovered. -/
 theorem parse_format_significant_value (f : Format) (outputMode inputMode : RoundingMode)
@@ -221,10 +218,11 @@ theorem parse_format_significant_value (f : Format) (outputMode inputMode : Roun
     (parse f inputMode (format outputMode (.significant digits)
       (.finite value.negative value.significand value.exponent)).text).value.toRat? =
         (Datum.finite value.negative value.significand value.exponent).toRat? := by
-  simp only [parse, read_format_significant, convert, projectScaled_eq, significantDecimal_negative,
-    significantDecimal_magnitude_of_valid f outputMode value digits hvalid hp]
+  obtain ⟨preferred, he⟩ :=
+    parse_format_significant_eq f outputMode inputMode value digits hvalid hp
+  rw [he]
   exact projectMagnitude_exact f inputMode value.negative value.significand value.exponent
-    _ hvalid
+    preferred hvalid
 
 /-- Sufficient-precision output raises none of the five IEEE flags. -/
 theorem format_significant_status_of_valid (f : Format) (mode : RoundingMode)
@@ -242,10 +240,11 @@ theorem parse_format_significant_status (f : Format) (outputMode inputMode : Rou
     (hp : f.precision ≤ (digits : Nat)) :
     (parse f inputMode (format outputMode (.significant digits)
       (.finite value.negative value.significand value.exponent)).text).status = {} := by
-  simp only [parse, read_format_significant, convert, projectScaled_eq, significantDecimal_negative,
-    significantDecimal_magnitude_of_valid f outputMode value digits hvalid hp]
+  obtain ⟨preferred, he⟩ :=
+    parse_format_significant_eq f outputMode inputMode value digits hvalid hp
+  rw [he]
   exact projectMagnitude_exact_status f inputMode value.negative value.significand value.exponent
-    _ hvalid
+    preferred hvalid
 
 /-- Exact precision returns the representation-preserving spelling without flags. -/
 @[simp] theorem format_exact (mode : RoundingMode) (value : Datum) :

@@ -40,16 +40,10 @@ theorem quotientStep128_spec
       state.quotient.toNat ≤ result.quotient.toNat ∧
       result.quotient.toNat + 1 ≤
         2 * (state.quotient.toNat + 1) := by
+  have hstep := natQuotientStep_quotient_le den.toNat state.toNat128
   have hnextFit :
-      (natQuotientStep den.toNat state.toNat128).quotient <
-        2 ^ 128 := by
-    simp only [natQuotientStep, QuotientState.toNat128]
-    by_cases hbelow :
-        2 * state.remainder.toNat < den.toNat
-    · simp [hbelow]
-      omega
-    · simp [hbelow]
-      exact hquotientFit
+      (natQuotientStep den.toNat state.toNat128).quotient < 2 ^ 128 :=
+    lt_of_le_of_lt hstep hquotientFit
   have hrefine :=
     quotientStep128_toNat den state hdenFit hremainder hnextFit
   have hquotient :
@@ -67,13 +61,48 @@ theorem quotientStep128_spec
   dsimp only
   rw [hquotient, hremainderNat]
   refine ⟨hmodel.1, hmodel.2.1, hmodel.2.2, ?_⟩
-  simp only [natQuotientStep, QuotientState.toNat128]
-  by_cases hbelow :
-      2 * state.remainder.toNat < den.toNat
-  · simp [hbelow]
-    omega
-  · simp [hbelow]
-    omega
+  change _ ≤ 2 * state.quotient.toNat + 1 at hstep
+  omega
+
+/--
+Within its quotient capacity, the two-limb restoring loop agrees with the natural-number loop
+step for step.
+-/
+private theorem quotientSteps128_toNat128
+    (den : FloatLib.Numerics.FixedWord.UInt128) (n : Nat)
+    (state : QuotientState FloatLib.Numerics.FixedWord.UInt128)
+    (hdenFit : den.toNat < 2 ^ 127)
+    (hremainder : state.remainder.toNat < den.toNat)
+    (hcapacity :
+      (state.quotient.toNat + 1) * 2 ^ n ≤ 2 ^ 128) :
+    (quotientSteps128 den n state).toNat128 =
+      natQuotientSteps den.toNat n state.toNat128 := by
+  induction n generalizing state with
+  | zero => rw [quotientSteps128.eq_1, natQuotientSteps.eq_1]
+  | succ n ih =>
+      have hstepFit :
+          2 * state.quotient.toNat + 1 < 2 ^ 128 := by
+        rw [pow_succ] at hcapacity
+        nlinarith [Nat.two_pow_pos n]
+      have hstep :=
+        quotientStep128_spec den state hdenFit hremainder hstepFit
+      have hnextCapacity :
+          ((quotientStep128 den state).quotient.toNat + 1) * 2 ^ n ≤
+            2 ^ 128 := by
+        calc
+          ((quotientStep128 den state).quotient.toNat + 1) * 2 ^ n ≤
+              (2 * (state.quotient.toNat + 1)) * 2 ^ n :=
+            Nat.mul_le_mul_right _ hstep.2.2.2
+          _ = (state.quotient.toNat + 1) * 2 ^ (n + 1) := by
+            rw [pow_succ]
+            ring
+          _ ≤ 2 ^ 128 := hcapacity
+      have hnextFit :
+          (natQuotientStep den.toNat state.toNat128).quotient < 2 ^ 128 :=
+        lt_of_le_of_lt (natQuotientStep_quotient_le _ _) hstepFit
+      rw [quotientSteps128.eq_2, natQuotientSteps.eq_2,
+        ← quotientStep128_toNat den state hdenFit hremainder hnextFit]
+      exact ih _ hstep.2.1 hnextCapacity
 
 /--
 The two-limb restoring loop preserves the exact scaled numerator without ever overflowing the
@@ -92,54 +121,10 @@ theorem quotientSteps128_spec
           state.remainder.toNat) * 2 ^ n ∧
       result.remainder.toNat < den.toNat ∧
       state.quotient.toNat ≤ result.quotient.toNat := by
-  induction n generalizing state with
-  | zero =>
-      simp [quotientSteps128, hremainder]
-  | succ n ih =>
-      let nextState := quotientStep128 den state
-      have hstepFit :
-          2 * state.quotient.toNat + 1 < 2 ^ 128 := by
-        rw [pow_succ] at hcapacity
-        nlinarith [Nat.two_pow_pos n]
-      have hstep :
-          nextState.quotient.toNat * den.toNat +
-                nextState.remainder.toNat =
-              2 * (state.quotient.toNat * den.toNat +
-                state.remainder.toNat) ∧
-            nextState.remainder.toNat < den.toNat ∧
-            state.quotient.toNat ≤ nextState.quotient.toNat ∧
-            nextState.quotient.toNat + 1 ≤
-              2 * (state.quotient.toNat + 1) := by
-        simpa only [nextState] using
-          quotientStep128_spec den state hdenFit hremainder hstepFit
-      have hnextCapacity :
-          (nextState.quotient.toNat + 1) * 2 ^ n ≤ 2 ^ 128 := by
-        calc
-          (nextState.quotient.toNat + 1) * 2 ^ n ≤
-              (2 * (state.quotient.toNat + 1)) * 2 ^ n :=
-            Nat.mul_le_mul_right _ hstep.2.2.2
-          _ = (state.quotient.toNat + 1) * 2 ^ (n + 1) := by
-            rw [pow_succ]
-            ring
-          _ ≤ 2 ^ 128 := hcapacity
-      have hrest :=
-        ih nextState hstep.2.1 hnextCapacity
-      let result := quotientSteps128 den n nextState
-      change
-        result.quotient.toNat * den.toNat + result.remainder.toNat =
-            (state.quotient.toNat * den.toNat +
-              state.remainder.toNat) * 2 ^ (n + 1) ∧
-          result.remainder.toNat < den.toNat ∧
-          state.quotient.toNat ≤ result.quotient.toNat
-      change
-        result.quotient.toNat * den.toNat + result.remainder.toNat =
-            (nextState.quotient.toNat * den.toNat +
-              nextState.remainder.toNat) * 2 ^ n ∧
-          result.remainder.toNat < den.toNat ∧
-          nextState.quotient.toNat ≤ result.quotient.toNat at hrest
-      refine ⟨?_, hrest.2.1, le_trans hstep.2.2.1 hrest.2.2⟩
-      rw [hrest.1, hstep.1, pow_succ]
-      ring
+  have hmodel :=
+    natQuotientSteps_spec den.toNat n state.toNat128 hremainder
+  rw [← quotientSteps128_toNat128 den n state hdenFit hremainder hcapacity] at hmodel
+  exact hmodel
 
 /--
 The final two-limb restoring state is the exact quotient and remainder of its scaled numerator.
@@ -157,22 +142,9 @@ theorem quotientSteps128_div_mod
     let result := quotientSteps128 den n state
     result.quotient.toNat = numerator / den.toNat ∧
       result.remainder.toNat = numerator % den.toNat := by
-  let numerator :=
-    (state.quotient.toNat * den.toNat +
-      state.remainder.toNat) * 2 ^ n
-  let result := quotientSteps128 den n state
-  change result.quotient.toNat = numerator / den.toNat ∧
-    result.remainder.toNat = numerator % den.toNat
-  have hspec :=
-    quotientSteps128_spec den n state hdenFit hremainder hcapacity
-  have hdenPositive : 0 < den.toNat := by omega
-  have hunique :
-      numerator / den.toNat = result.quotient.toNat ∧
-        numerator % den.toNat = result.remainder.toNat :=
-    (Nat.div_mod_unique hdenPositive).2 <| by
-      refine ⟨?_, hspec.2.1⟩
-      simpa only [result, numerator, Nat.add_comm, Nat.mul_comm] using
-        hspec.1
-  exact ⟨hunique.1.symm, hunique.2.symm⟩
+  have hmodel :=
+    natQuotientSteps_div_mod den.toNat n state.toNat128 hremainder
+  rw [← quotientSteps128_toNat128 den n state hdenFit hremainder hcapacity] at hmodel
+  exact hmodel
 
 end FloatLib.Numerics.FixedWord.RestoringQuotient

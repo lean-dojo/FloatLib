@@ -73,7 +73,17 @@ theorem contains_piQuarter (degree : Nat) :
     (contains_atanSmall (1 / 239) degree (by norm_num))
   simpa [piQuarter, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using h
 
-/-- The transformed argument has magnitude at most one third for `1/2 ≤ x ≤ 1`. -/
+/-- The transformed argument has magnitude below one for every positive `x`. -/
+theorem abs_atan_unit_argument_lt_one (x : ℚ) (hx : 0 < x) :
+    |(x - 1) / (x + 1)| < 1 := by
+  rw [abs_div, abs_of_pos (by linarith : (0 : ℚ) < x + 1), div_lt_one (by linarith), abs_lt]
+  constructor <;> linarith
+
+/--
+On the reduced interval `1/2 ≤ x ≤ 1` of `atanUnit`, the transformed argument `(x - 1) / (x + 1)`
+has magnitude at most one third, so the remainder radius `atanRadius` at that argument shrinks by a
+factor of at least nine per degree.
+-/
 theorem abs_atan_unit_argument_le (x : ℚ) (hx : 1 / 2 ≤ x) (hone : x ≤ 1) :
     |(x - 1) / (x + 1)| ≤ 1 / 3 := by
   rw [abs_of_nonpos (div_nonpos_of_nonpos_of_nonneg (by linarith) (by linarith)),
@@ -95,32 +105,35 @@ theorem atan_unit_identity (x : ℚ) (hx : 0 ≤ x) :
   field_simp
   ring
 
-/-- Unit reduction retains real containment, including the switch at one half. -/
-theorem contains_atanUnit (x : ℚ) (degree : Nat) (hx : 0 ≤ x) (hone : x ≤ 1) :
+/--
+Unit reduction retains real containment, including the switch at one half.
+
+Containment holds for every nonnegative input; the reduction is only fast on `[0, 1]`.
+-/
+theorem contains_atanUnit (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
     (atanUnit x degree).Contains (Real.arctan (x : ℝ)) := by
   unfold atanUnit
   split
   · apply contains_atanSmall
     rw [abs_of_nonneg hx]
     linarith
-  · have ht := abs_atan_unit_argument_le x (by linarith) hone
-    simpa only [atan_unit_identity x hx] using RationalInterval.contains_add
+  · simpa only [atan_unit_identity x hx] using RationalInterval.contains_add
       (contains_piQuarter degree)
-      (contains_atanSmall ((x - 1) / (x + 1)) degree (by linarith))
+      (contains_atanSmall ((x - 1) / (x + 1)) degree
+        (abs_atan_unit_argument_lt_one x (by linarith)))
 
 /-- Inversion restores the arctangent of every nonnegative rational input. -/
 theorem contains_atanNonnegative (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
     (atanNonnegative x degree).Contains (Real.arctan (x : ℝ)) := by
   unfold atanNonnegative
   split
-  · exact contains_atanUnit x degree hx ‹x ≤ 1›
+  · exact contains_atanUnit x degree hx
   · have hpos : 0 < x := by linarith
     have hreal : (0 : ℝ) < x := by exact_mod_cast hpos
-    have hi : x⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (by linarith)
     have h := RationalInterval.contains_sub
       (RationalInterval.contains_scaleNonnegative (contains_piQuarter degree)
         (factor := 2) (by norm_num))
-      (contains_atanUnit x⁻¹ degree (inv_nonneg.mpr hx) hi)
+      (contains_atanUnit x⁻¹ degree (inv_nonneg.mpr hx))
     convert h using 1
     push_cast
     rw [Real.arctan_inv_of_pos hreal]

@@ -53,8 +53,8 @@ error enclosure, for an addition capability whose reference operation is the con
 addition.
 -/
 theorem abs_toReal_eval_tree_sub_sum_le (t : ReductionTree Value)
-    (hformat : format.isIEEE = true)
-    (hfinite : Model.ReductionTree.FiniteEval (t.map toModel)) :
+    (hfinite : Model.ReductionTree.FiniteEval (t.map toModel))
+    (hformat : format.isIEEE = true := by ieee_format) :
     |Model.toReal (toModel (t.eval (fun x y => add x y) id)) -
         (t.leaves.map (Model.toReal ∘ toModel)).sum| ≤
       Model.ReductionTree.errorBudget (t.map toModel) := by

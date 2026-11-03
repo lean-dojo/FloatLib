@@ -122,6 +122,14 @@ theorem cappedPow?_eq (base exponent cap : Nat) (hbase : 1 ≤ base) :
           Nat.pow_le_pow_right hbase (Nat.div_le_self _ _)
         rw [ite_eq_right (by omega)]
 
+/-- An exponent of two below `exponent` times the bit length of `base` bounds `base ^ exponent`. -/
+private theorem two_pow_le_pow_of_le_mul_log2 {bits base exponent : Nat} (hbase : base ≠ 0)
+    (hbits : bits ≤ exponent * base.log2) :
+    2 ^ bits ≤ base ^ exponent :=
+  calc 2 ^ bits ≤ 2 ^ (exponent * base.log2) := Nat.pow_le_pow_right (by decide) hbits
+    _ = (2 ^ base.log2) ^ exponent := by rw [Nat.mul_comm, pow_mul]
+    _ ≤ base ^ exponent := Nat.pow_le_pow_left (Nat.log2_self_le hbase) exponent
+
 /-- The capped equality test decides `base ^ exponent = target`. -/
 theorem natPowEq_iff (base exponent target : Nat) :
     natPowEq base exponent target = true ↔ base ^ exponent = target := by
@@ -141,11 +149,7 @@ theorem natPowEq_iff (base exponent target : Nat) :
     · rename_i hbits
       simp only [Bool.false_eq_true, false_iff]
       intro hpower
-      have hlower : 2 ^ (exponent * base.log2) ≤ base ^ exponent := by
-        rw [Nat.mul_comm, pow_mul]
-        exact Nat.pow_le_pow_left (Nat.log2_self_le (by omega)) exponent
-      have hbound : 2 ^ (target.log2 + 1) ≤ 2 ^ (exponent * base.log2) :=
-        Nat.pow_le_pow_right (by decide) hbits
+      have hlower := two_pow_le_pow_of_le_mul_log2 (base := base) (by omega) hbits
       have htarget : target < 2 ^ (target.log2 + 1) := Nat.lt_log2_self
       omega
     · rw [cappedPow?_eq base exponent target (by omega), decide_eq_true_iff]
@@ -185,6 +189,12 @@ private theorem perfect_of_pow_eq_pow {base s : ℚ} {m d : Nat} (hcoprime : m.C
     obtain ⟨c, hc, -⟩ := Nat.exists_eq_pow_of_exponent_coprime_of_pow_eq_pow hcoprime hden
     exact ⟨c, hc⟩
 
+/-- A nonnegative rational is the absolute value of its numerator over its denominator. -/
+private theorem natAbs_num_div_den {q : ℚ} (hq : 0 ≤ q) :
+    ((q.num.natAbs : ℕ) : ℚ) / (q.den : ℚ) = q := by
+  rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hq)]
+  exact Rat.num_div_den q
+
 /-- A descriptor's root is a nonnegative `d`-th root of the base, and it keeps the numerator. -/
 private theorem root_of_exactRoot? {base exponent : ℚ} {exact : ExactRoot} (hbase : 0 ≤ base)
     (h : exactRoot? base exponent = some exact) :
@@ -197,10 +207,8 @@ private theorem root_of_exactRoot? {base exponent : ℚ} {exact : ExactRoot} (hb
     have hnum := (perfectRoot?_eq_some_iff exponent.den_pos).mp hnumerator
     have hden := (perfectRoot?_eq_some_iff exponent.den_pos).mp hdenominator
     refine ⟨?_, by positivity, rfl⟩
-    have hnumCast : ((base.num.natAbs : ℕ) : ℚ) = (base.num : ℚ) := by
-      rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hbase)]
-    rw [div_pow, ← Nat.cast_pow, ← Nat.cast_pow, hnum, hden, hnumCast]
-    exact Rat.num_div_den base
+    rw [div_pow, ← Nat.cast_pow, ← Nat.cast_pow, hnum, hden]
+    exact natAbs_num_div_den hbase
   · simp at h
 
 /-- A descriptor of a positive base has a positive root. -/
@@ -310,11 +318,7 @@ private theorem natCast_mul_zpow_ne_of_den {base : ℚ} {exponent : Nat} (hbase 
   intro hvalue
   have hscale : scale = (scale.toNat : Int) - ((-scale).toNat : Int) :=
     (Int.toNat_sub_toNat_neg scale).symm
-  have hnumCast : ((base.num.natAbs : ℕ) : ℚ) = (base.num : ℚ) := by
-    rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hbase.le)]
-  have hbaseValue : base = (base.num.natAbs : ℚ) / (base.den : ℚ) := by
-    rw [hnumCast]
-    exact (Rat.num_div_den base).symm
+  have hbaseValue := (natAbs_num_div_den hbase.le).symm
   have hcross : significand * 2 ^ scale.toNat * base.den ^ exponent =
       base.num.natAbs ^ exponent * 2 ^ (-scale).toNat := by
     rw [hscale, zpow_sub₀ two_ne_zero, zpow_natCast, zpow_natCast, hbaseValue, div_pow,
@@ -467,14 +471,7 @@ theorem ne_of_toDyadic?_eq_none (exact : ExactRoot) (precision : Nat) (hroot : 0
         intro hzero
         rw [hzero, Nat.zero_mul] at hbits
         omega
-      refine ⟨hnonzero, ?_⟩
-      calc 2 ^ (precision + 3)
-          ≤ 2 ^ (exact.numerator.natAbs *
-              (exact.powerBase.num >>> exact.powerBase.num.trailingZeros).natAbs.log2) :=
-            Nat.pow_le_pow_right (by decide) hbits
-        _ = (2 ^ (exact.powerBase.num >>> exact.powerBase.num.trailingZeros).natAbs.log2) ^
-              exact.numerator.natAbs := by rw [Nat.mul_comm, pow_mul]
-        _ ≤ _ := Nat.pow_le_pow_left (Nat.log2_self_le (by omega)) _
+      exact ⟨hnonzero, two_pow_le_pow_of_le_mul_log2 (by omega) hbits⟩
     · split at h
       · rename_i hcapped
         rw [cappedPow?_eq _ _ _ hoddPositive] at hcapped

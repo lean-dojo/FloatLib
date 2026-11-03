@@ -111,24 +111,9 @@ private theorem roundRat_signed_div (format : Format) {left right : Rat}
         Model.neg (Model.roundPositiveRat format (left / right))
       else
         Model.roundPositiveRat format (left / right) := by
-  have hquotient : 0 < left / right := div_pos hleft hright
-  have hpositive :
-      Model.roundRat format (left / right) = Model.roundPositiveRat format (left / right) := by
-    rw [Model.roundRat, ite_eq_right hquotient.ne', ite_eq_right (not_lt.mpr hquotient.le)]
-  have hnegative :
-      Model.roundRat format (-(left / right)) =
-        Model.neg (Model.roundPositiveRat format (left / right)) := by
-    rw [Model.roundRat, ite_eq_right (neg_ne_zero.mpr hquotient.ne'),
-      ite_eq_left (neg_lt_zero.mpr hquotient), neg_neg]
-  cases leftNegative <;> cases rightNegative <;> simp [div_neg, neg_div, hpositive, hnegative]
-
-/-- The exact rational value of a dyadic is its magnitude's value with the sign flag applied. -/
-private theorem toRat_eq_signed_magnitude (value : FloatLib.Numerics.Dyadic) :
-    value.toRat =
-      if value.negative then -(DyadicRounding.magnitude value).toRat
-      else (DyadicRounding.magnitude value).toRat := by
-  rw [DyadicRounding.magnitude_toRat]
-  cases value.negative <;> simp
+  have hquotient := Model.roundRat_of_nonneg (format := format) (div_pos hleft hright).le
+  cases leftNegative <;> cases rightNegative <;>
+    simp [div_neg, neg_div, Model.roundRat_neg, hquotient]
 
 /--
 Any positive-magnitude rounder that refines the rational specification yields, through the shared
@@ -170,7 +155,8 @@ theorem roundSignedWith_eq_reference
   simp only [beq_eq_false_iff_ne.mpr hdenominator, beq_eq_false_iff_ne.mpr hnumerator,
     Bool.false_eq_true, ite_false, hdenominatorRat]
   rw [hmagnitude _ _ hnumeratorMagnitude rfl hdenominatorMagnitude rfl,
-    toRat_eq_signed_magnitude numerator, toRat_eq_signed_magnitude denominator,
+    DyadicRounding.toRat_eq_signed_magnitude numerator,
+    DyadicRounding.toRat_eq_signed_magnitude denominator,
     roundRat_signed_div format
       (FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero _ hnumeratorMagnitude rfl)
       (FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero _ hdenominatorMagnitude rfl)]

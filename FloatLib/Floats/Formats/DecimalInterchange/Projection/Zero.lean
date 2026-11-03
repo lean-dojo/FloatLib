@@ -19,6 +19,7 @@ when clamping changes its representation.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
+/-- Stripping trailing zeros from a zero coefficient consumes all of the fuel. -/
 theorem stripTrailing_zero (fuel : Nat) : stripTrailing fuel 0 = (0, fuel) := by
   cases fuel <;> simp [stripTrailing]
 
@@ -30,6 +31,8 @@ theorem projectMagnitude_zero (f : Format) (mode : RoundingMode) (s : Bool)
   simp [projectMagnitude, preferredCohort, stripTrailing_zero]
   omega
 
+/-- An exact zero projects to a zero with the requested sign and no flags, at the preferred quantum
+clamped to the format's quantum range. -/
 theorem project_zero (f : Format) (mode : RoundingMode) (s : Bool) (preferred : Int) :
     project f mode 0 preferred s =
       { value := .finite s 0 (max f.minQuantum (min preferred f.maxQuantum)) } := by

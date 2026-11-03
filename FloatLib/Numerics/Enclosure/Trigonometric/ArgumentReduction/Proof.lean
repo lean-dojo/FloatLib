@@ -35,8 +35,9 @@ those of `x` (`QuarterTurns.Reduces.abs_sin_sub_rotate_le` and its cosine form).
 `reduce` returns the reduction of one of its attempts (`exists_reduce_eq_reduceWindow`),
 so it reduces its argument too (`reduce_spec`), with error `2 m` and a fraction of at most
 half a quarter turn. It returns an accepted reduction when some attempt within its fuel is accepted
-(`accepts_reduce`). `fuelWithin?` keeps every attempt within its level limit
-(`fuelWithin?_spec`) and gives no fuel exactly when the first window exceeds that limit
+(`accepts_reduce`). `fuelWithin?` returns the largest count within its fuel whose window stays
+within its level limit (`fuelWithin?_isGreatest`), keeps every earlier attempt within that limit
+too (`fuelWithin?_spec`), and gives no fuel exactly when the first window exceeds it
 (`fuelWithin?_eq_none_iff`).
 -/
 
@@ -299,6 +300,14 @@ theorem QuarterTurns.Reduces.exists_sin_cos_eq_rotate {q : QuarterTurns} {x : �
       _ = _ := by rw [hx]; ring
   rw [← hxeq]
 
+/--
+The second component of a quarter-turn rotation is the first component of the next quarter turn,
+as `cos θ = sin (θ + π/2)`.
+-/
+theorem snd_rotate {α : Type} [Neg α] (quadrant : Fin 4) (sine cosine : α) :
+    (rotate quadrant sine cosine).2 = (rotate (quadrant + 1) sine cosine).1 := by
+  fin_cases quadrant <;> rfl
+
 /-- A quarter-turn rotation keeps the Lipschitz bound of sine. -/
 theorem abs_rotate_fst_sub_le (quadrant : Fin 4) (a b : ℝ) :
     |(rotate quadrant (Real.sin a) (Real.cos a)).1 -
@@ -315,13 +324,8 @@ theorem abs_rotate_fst_sub_le (quadrant : Fin 4) (a b : ℝ) :
 theorem abs_rotate_snd_sub_le (quadrant : Fin 4) (a b : ℝ) :
     |(rotate quadrant (Real.sin a) (Real.cos a)).2 -
         (rotate quadrant (Real.sin b) (Real.cos b)).2| ≤ |a - b| := by
-  fin_cases quadrant <;> simp only [rotate]
-  · exact Real.abs_cos_sub_cos_le a b
-  · rw [neg_sub_neg, abs_sub_comm]
-    exact Real.abs_sin_sub_sin_le a b
-  · rw [neg_sub_neg, abs_sub_comm]
-    exact Real.abs_cos_sub_cos_le a b
-  · exact Real.abs_sin_sub_sin_le a b
+  rw [snd_rotate, snd_rotate]
+  exact abs_rotate_fst_sub_le (quadrant + 1) a b
 
 /-! ## Error of the computed argument -/
 
@@ -523,6 +527,29 @@ theorem fuelWithin?_spec {e : ℤ} {p bits limit fuel count : ℕ}
           (windowLevel_mono e (attemptWindow_mono p bits hattempt)).trans hlast⟩
       · obtain ⟨hle, hall⟩ := ih h
         exact ⟨by omega, hall⟩
+
+/--
+`fuelWithin?` returns the largest admissible count: no attempt after `count`, up to `fuel`, reads a
+level of at most `limit`.
+-/
+theorem fuelWithin?_isGreatest {e : ℤ} {p bits limit fuel count : ℕ}
+    (h : fuelWithin? e p bits limit fuel = some count) :
+    IsGreatest {attempt | attempt ≤ fuel ∧ windowLevel e (attemptWindow p bits attempt) ≤ limit}
+      count := by
+  refine ⟨⟨(fuelWithin?_spec h).1, (fuelWithin?_spec h).2 count le_rfl⟩, ?_⟩
+  rintro attempt ⟨hattempt, hlevel⟩
+  induction fuel generalizing count with
+  | zero => omega
+  | succ fuel ih =>
+      simp only [fuelWithin?] at h
+      split at h
+      · obtain rfl := Option.some.inj h
+        exact hattempt
+      · rename_i hlast
+        refine ih h ?_
+        by_contra hgt
+        obtain rfl : attempt = fuel + 1 := by omega
+        exact absurd hlevel hlast
 
 /-- `fuelWithin?` gives no fuel exactly when the first window reads a level above `limit`. -/
 theorem fuelWithin?_eq_none_iff {e : ℤ} {p bits limit fuel : ℕ} :

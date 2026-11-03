@@ -10,7 +10,7 @@ phases: [planner-and-configured, ieee-formats, binary-arithmetic]
 
 Interval addition needs rounders that keep the lower endpoint at or below the exact sum and the upper endpoint at or above it. The algorithm can then stay the same whether we store its bounds in decimal, binary, or posit numbers. FloatLib uses one type, [[FloatLib.Numerics.Interval]], for these endpoint pairs: `Interval α` leaves the representation `α` to the caller, without fixing a radix or assuming infinities exist.
 
-The function below encloses two rational inputs, adds their intervals, and decodes the answer. With decimal32 endpoints, $1/10+1/5$ gives the exact interval $[3/10,3/10]$; with posit8 endpoints, $1+2$ gives $[3,3]$. Each example includes its imports and definitions, as in the [getting-started chapter](#/chapter/using-the-library), so you can paste it into a fresh Lean file.
+The function below encloses two rational inputs, adds their intervals, and decodes the answer. With decimal32 endpoints, $1/10+1/5$ gives the exact interval $[3/10,3/10]$, and with posit8 endpoints $1+2$ gives $[3,3]$. Each example includes its imports and definitions, as in the [getting-started chapter](#/chapter/using-the-library), so you can paste it into a fresh Lean file.
 
 ```lean standalone
 import FloatLib
@@ -74,9 +74,7 @@ def values : List Binary32 := [16777216, 1, -16777216]
 #eval ExecFloat.Binary.sumList values
 -- 1
 #eval ExecFloat.Binary.sumList values (status := true)
--- { value := 1,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := 1, status := {}, ternary := Ordering.eq }
 #eval ExecFloat.Binary.dot #[(1.5 : Binary32), 2, 4] #[2, 3, 4]
 -- Except.ok 25
 #eval ExecFloat.Binary.dotList [(1.5 : Binary32), 2, 4] [2, 3]
@@ -99,7 +97,7 @@ A [refinement proof](#/chapter/using-the-library/proving-arithmetic-agrees-with-
 
 For binary interchange we state the real-valued semantics on [[FloatLib.Floats.Formats.BinaryInterchange.Model]], the descriptor-indexed model of [chapter 06](#/chapter/the-numerical-models), and [[FloatLib.Floats.ExecFloat.Binary.toModel]] converts a configured value to that model. A configured binary32 value is stored as a packed `UInt32`, but the model uses an exact-width record. `toModel` and its inverse `ofModel` connect the two, and `toReal` is the model's real value of the decoded word.
 
-[[FloatLib.Floats.ExecFloat.Binary.toReal_add]] carries the model's rounding theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] over to the notation. For finite operands whose sum doesn't overflow, the real value of `a + b` is the exact real sum rounded once by [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]]. `+` runs the implementation selected for the format, so the theorem takes the instance argument `HasSpec cap Configured.Spec.add`. That argument says the selected capability's reference operation is the model's. Instance search proves it for every capability the library declares. `toReal_sub`, `toReal_mul`, `toReal_div`, and `toReal_sqrt` do the same for `-`, `*`, `/`, and square root. [[FloatLib.Floats.ExecFloat.Binary.abs_toReal_add_sub_le]] and its siblings turn each one into an error bound of half an ulp:
+[[FloatLib.Floats.ExecFloat.Binary.toReal_add_eq_roundAt]] carries the model's rounding theorem [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] over to the notation. For finite operands whose sum doesn't overflow, the real value of `a + b` is the exact real sum rounded once by [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]]. `+` runs the implementation selected for the format, so the theorem takes the instance argument `HasSpec cap Configured.Spec.add`. That argument says the selected capability's reference operation is the model's. Instance search proves it for every capability the library declares. `toReal_sub_eq_roundAt`, `toReal_mul_eq_roundAt`, `toReal_div_eq_roundAt`, `toReal_fma_eq_roundAt`, and `toReal_sqrt_eq_roundAt` do the same for `-`, `*`, `/`, fused multiply-add, and square root. [[FloatLib.Floats.ExecFloat.Binary.abs_toReal_add_sub_le]] and its siblings turn each one into an error bound of half an ulp:
 
 ```lean standalone
 import FloatLib
@@ -108,29 +106,27 @@ open FloatLib.Floats
 
 open Formats.BinaryInterchange
 
-theorem toReal_add_binary32 (a b : Binary32)
-    (ha : a.isFinite = true) (hb : b.isFinite = true) (hout : (a + b).isFinite = true) :
+theorem toReal_add_binary32 (a b : Binary32) (hout : (a + b).isFinite = true) :
     (a + b).toReal = Model.roundAt FloatFormat.binary32 (a.toReal + b.toReal) :=
-  ExecFloat.Binary.toReal_add (by decide) ha hb hout
+  ExecFloat.Binary.toReal_add_eq_roundAt hout
 
-theorem add_error_binary32 (a b : Binary32)
-    (ha : a.isFinite = true) (hb : b.isFinite = true) (hout : (a + b).isFinite = true) :
+theorem add_error_binary32 (a b : Binary32) (hout : (a + b).isFinite = true) :
     |(a + b).toReal - (a.toReal + b.toReal)| ≤
-      Model.epsilonAt FloatFormat.binary32 (a.toReal + b.toReal) :=
-  ExecFloat.Binary.abs_toReal_add_sub_le (by decide) ha hb hout
+      Model.halfUlpAt FloatFormat.binary32 (a.toReal + b.toReal) :=
+  ExecFloat.Binary.abs_toReal_add_sub_le hout
 ```
 
-`ha` and `hb` say the operands are finite, because a NaN or an infinity has no real value to round. `toReal` itself is total and returns zero on those inputs, so it's the finiteness hypotheses that let us read it as the value of a word. `ExecFloat.Binary.toReal?` is the partial reading. It is `none` exactly when the value isn't finite, as `toReal?_eq_none_iff` states. `hout` says the sum didn't overflow, and you can decide it on the result.
+`hout` says the sum is finite, and you can decide it on the result. It rules out overflow, and it also keeps the operands finite, because a NaN or an infinity has no real value to round and makes the sum a NaN or an infinity too. `toReal` itself is total and returns zero on those inputs, so it's the finiteness hypothesis that lets us read it as the value of a word. `ExecFloat.Binary.toReal?` is the partial reading. It is `none` exactly when the value isn't finite, as `toReal?_eq_none_iff` states.
 
 If you'd rather not evaluate the sum first, [[FloatLib.Floats.ExecFloat.Binary.toModel_hAdd]] rewrites `a + b` to `Model.add`, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt_of_abs_add_le_posMaxFinite]] accepts the symbolic bound $|a| + |b| \le \Omega$ in its place. Here $\Omega$ is the largest finite value [[FloatLib.Floats.Formats.BinaryInterchange.Model.posMaxFinite]].
 
-The `by decide` proves `format.isIEEE = true`, which requires the IEEE encoding and the conventional bias. `Model.epsilonAt` is half an ulp at the exact result, so it follows the subnormal grid near zero. For rounding a nonzero value in the normal range, `#float_info [errors] Binary32` reports the relative bound $2^{-24}$.
+Both theorems also need `format.isIEEE = true`, which requires the IEEE encoding and the conventional bias. It is their last argument, `hformat`, and its default proves it by `decide` for a concrete IEEE format such as binary32. For a variable format, a hypothesis in context supplies it, or you pass `(hformat := h)`. The bound `Model.halfUlpAt` is taken at the exact result, so it follows the subnormal grid near zero. For rounding a nonzero value in the normal range, `#float_info [errors] Binary32` reports the relative bound $2^{-24}$.
 
 Square root is the one operation without a result-finiteness premise, because [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_sqrt_of_isFinite]] shows it can't overflow. It does ask for a nonnegative operand, where a signed zero counts. A negative input gives NaN, and NaN has no real value.
 
 For the named operations, [[FloatLib.Floats.ExecFloat.Binary.toModel_add]] and the matching lemmas for the other five operations are registered with `simp` too, in every rounding direction and with the same instance argument. Calls with `(status := true)` have similar lemmas, such as `IEEEOutcome.toModel_div`. So a goal about a configured operation reduces to the corresponding model theorem in one step.
 
-We can also go further and put the represented value in the type. `At` `fmt r` is an encoded value of format `fmt` together with a proof, erased at runtime, that it denotes the real $r$. Operations on it, such as `Model.At.add`, take the finiteness hypotheses as arguments and return a value indexed by the rounded result.
+We can also go further and put the represented value in the type. `Model.At fmt r` is an encoded value of format `fmt` together with a proof, erased at runtime, that it denotes the real $r$. Operations on it, such as `Model.At.add`, take the finiteness hypotheses as arguments and return a value indexed by the rounded result.
 
 ```lean standalone
 import FloatLib
@@ -161,53 +157,49 @@ All of these theorems are about FloatLib's software arithmetic, and relating it 
 
 ## Mixing formats
 
-Formats never promote implicitly. When you need a value of one type at another, you name the destination. [[FloatLib.Floats.ExecFloat.cast]], `addAs`, `subAs`, `mulAs`, `divAs`, and `fmaAs` all take a `target`. They also take an optional `mode`, the rounding direction of a binary destination, and an optional `context` for any other destination policy. Each returns a `ConversionOutcome` with the value and its conversion status, or a failure, and `value?` keeps just the value. Naming the destination shows where conversion and rounding can happen, including the conversions we can prove exact.
+Formats never promote implicitly. When you need a value of one type at another, you name the destination. [[FloatLib.Floats.ExecFloat.cast]] and the mixed operations `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma` all take a `target`. They also take an optional `mode`, the rounding direction, and an optional `context` for the destination's other policies, such as saturation or rejecting infinities. For a binary destination the mode is a [[FloatLib.Numerics.RoundingMode]], one of the six directions of arithmetic or `.stochastic`, and the context is an `ExecFloat.Binary.Conversion.Policy`, which holds the entropy for stochastic rounding. A context has no direction of its own, so the mode always decides it and the two options combine. Each returns a `ConversionOutcome` with the value and its conversion status, or a failure, and `value?` keeps just the value. Naming the destination shows where conversion and rounding can happen, including the conversions we can prove exact.
 
 ```lean standalone
 import FloatLib
 
 open FloatLib.Floats
 
-#eval ((1.5 : Binary32).cast (target := Binary64)).value?
--- some 1.5
-#eval ((-(0 : Binary32)).cast (target := Binary64)).value?
--- some (-0)
-
-def narrowed := (0.1 : Binary64).cast (target := Binary32)
-
-#eval narrowed.value?
--- some 0.1
-#eval narrowed.status?.map (·.inexact)
--- some true
-#eval ((0.1 : Binary64).cast (target := Binary32) (mode := .down)).value?
--- some 0.099999994
+#eval (1.5 : Binary32).cast (target := Binary64)
+-- .success 1.5
+#eval (-(0 : Binary32)).cast (target := Binary64)
+-- .success (-0)
+#eval (0.1 : Binary64).cast (target := Binary32)
+-- .success 0.1 { inexact := true }
+#eval (0.1 : Binary64).cast (target := Binary32) (mode := .down)
+-- .success 0.099999994 { inexact := true }
+#eval (0.1 : Binary64).cast (target := Binary32) (mode := .down)
+    (context := ({ infinity := .reject } : ExecFloat.Binary.Conversion.Policy))
+-- .success 0.099999994 { inexact := true }
 
 def tenth : Binary32 := 0.1
 
 #eval (1.5 : Binary32) * tenth
 -- 0.15
 
-def widenedProduct := ExecFloat.mulAs (target := Binary64) (1.5 : Binary32) tenth
+def widenedProduct := ExecFloat.Mixed.mul (target := Binary64) (1.5 : Binary32) tenth
 
-#eval widenedProduct.value?
--- some 0.15000000223517418
-#eval widenedProduct.status?.map (·.inexact)
--- some false
-#eval ((1.5 : Binary32).cast (target := Posit32)).value?
--- some 1.5
+#eval widenedProduct
+-- .success 0.15000000223517418
+#eval (1.5 : Binary32).cast (target := Posit32)
+-- .success 1.5
 #eval ExecFloat.Binary.toFloat32 ((1.5 : Binary32) + 2.25)
 -- 3.750000
 ```
 
-A mixed operation decodes its operands exactly, computes in the destination's exact domain, and rounds once. For binary destinations that domain is [[FloatLib.Numerics.SignedRat]], a rational carrying an IEEE sign bit. A plain rational has only one zero, so casting through one would turn $-0$ into $+0$, and that sign bit is why the second cast delivers $-0$. The narrowing cast reports `inexact := true` because binary64's $0.1$ doesn't fit in 24 bits, and rounding it downward gives the binary32 neighbour below. `status?.map (·.inexact)` picks that field out of the successful conversion's status.
+A mixed operation decodes its operands exactly, computes in the destination's exact domain, and rounds once. For binary destinations that domain is [[FloatLib.Numerics.SignedRat]], a rational carrying an IEEE sign bit. A plain rational has only one zero, so casting through one would turn $-0$ into $+0$, and that sign bit is why the second cast delivers $-0$. The narrowing cast reports `inexact := true` because binary64's $0.1$ doesn't fit in 24 bits, and rounding it downward gives the binary32 neighbour below. The next cast also rejects infinities and still rounds downward, because a context holds only the destination's other policies. A success prints only the flags that were raised, so the exact casts show none.
 
-Both products use the same operands and change only the destination precision. Multiplying $1.5$ by the stored $0.1$ needs 26 significand bits, so `*` at binary32 rounds it to $5033165 \cdot 2^{-25}$. `mulAs` into binary64 has room for all 26 and returns the exact $40265319 \cdot 2^{-28}$ with `inexact := false`. Posits have one zero, so a posit destination computes in plain `Rat`.
+Both products use the same operands and change only the destination precision. Multiplying $1.5$ by the stored $0.1$ needs 26 significand bits, so `*` at binary32 rounds it to $5033165 \cdot 2^{-25}$. `Mixed.mul` into binary64 has room for all 26 and returns the exact $40265319 \cdot 2^{-28}$ with no flag raised. Posits have one zero, so a posit destination computes in plain `Rat`.
 
-That `inexact := false` is about the product of the represented inputs, though. `tenth` was rounded when we defined it, and widening the result can't turn it back into the rational one tenth. The multiplication adds no further error. A comparison with the original decimal data must account for both the literal conversion and the arithmetic.
+That clear `inexact` flag is about the product of the represented inputs, though. `tenth` was rounded when we defined it, and widening the result can't turn it back into the rational one tenth. The multiplication adds no further error. A comparison with the original decimal data must account for both the literal conversion and the arithmetic.
 
-By default, a cast to a posit follows Posit Standard (2022) §6.5. Either IEEE infinity or any NaN becomes NaR with `mappedSpecial := true`, and either signed zero becomes posit zero. If you'd rather reject those non-finite source values, pass `{ infinity := .reject, exceptional := .reject }` to `cast` as its `context`. Mixed arithmetic such as `mulAs` requires finite operands either way. Give it a non-finite one and it reports a failure before destination conversion.
+By default, a cast to a posit follows Posit Standard (2022) §6.5. Either IEEE infinity or any NaN becomes NaR with `mappedSpecial := true`, and either signed zero becomes posit zero. If you'd rather reject those non-finite source values, pass `{ infinity := .reject, exceptional := .reject }` to `cast` as its `context`. The mixed operations require finite operands either way, and `Mixed.div` also refuses a zero divisor. Give them a non-finite operand or a zero divisor and they report a failure before destination conversion. So they're the finite part of IEEE 754's formatOf operations, which would return an infinity or a NaN there.
 
-[[FloatLib.Floats.ExecFloat.spec_cast]] and `preparedSpec_addAs` with its siblings spell those steps out: decode, embed, operate, round once. At the descriptor-model layer, [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]] characterizes nearest-even destination rounding for finite sources with finite results. [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_exact_of_gridExtension]] proves exact widening under its grid-inclusion and finiteness hypotheses. Configured conversion goes through its own bridge to rounding. Chapter 08 explains the difference and shows that both paths use the same NaN rule.
+[[FloatLib.Floats.ExecFloat.spec_cast]] and `Mixed.preparedSpec_add` with its siblings spell those steps out: decode, embed, operate, round once. At the descriptor-model layer, [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]] characterizes nearest-even destination rounding for finite sources with finite results. [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_exact_of_gridExtension]] proves exact widening under its grid-inclusion and finiteness hypotheses. Configured conversion goes through its own bridge to rounding. Chapter 08 explains the difference and shows that both paths use the same NaN rule.
 
 At the boundary with Lean's own runtime types, [[FloatLib.Floats.ExecFloat.Binary.ofFloat32]] and [[FloatLib.Floats.ExecFloat.Binary.toFloat32]] move values through the interchange word. The last line prints in Lean's native six-decimal style. NaN payloads don't survive a round trip through the native type, because `Float32.ofBits` canonicalizes them. Use `toBits32` when the payload matters.
 
@@ -240,8 +232,8 @@ def onceRounded : ExecFloat.ConversionOutcome Binary32 :=
     let three ← ExecFloat.ExactExpression.operand 2 (3 : Binary32)
     pure (three * a - b)
 
-#eval onceRounded.value?
--- some (-7.450581e-9)
+#eval onceRounded
+-- .success (-7.450581e-9)
 ```
 
 `ConversionOutcome Binary32`, the result type, fixes the destination. Inside the `do` block, `operand` decodes each input into `SignedRat`, so `a`, `b`, and `three` are exact values. Multiplying and subtracting them calls no binary32 operation. `0`, `1`, and `2` label the inputs for error reporting, and `pure` hands the exact expression's result to `roundOnce`, which does the destination rounding.
@@ -263,11 +255,11 @@ def cancelledDownward : ExecFloat.ConversionOutcome Binary32 :=
     let b ← ExecFloat.ExactExpression.operand 1 (-1 : Binary32)
     ExecFloat.ExactExpression.add (target := Binary32) a b (mode := .down)
 
-#eval cancelledDownward.value?.map ExecFloat.Binary.toBits32
--- some 2147483648
+#eval cancelledDownward.map ExecFloat.Binary.toBits32
+-- .success 2147483648
 ```
 
-That word is `0x80000000`, the sign bit and nothing else, so one plus negative one really is negative zero here :) `addAs`, `subAs`, and `fmaAs` take this cancellation rule from their own `mode` or `context`.
+That word is `0x80000000`, the sign bit and nothing else, so one plus negative one really is negative zero here :) `Mixed.add`, `Mixed.sub`, and `Mixed.fma` take this cancellation rule from their own `mode`.
 
 ## Complex arithmetic
 
@@ -323,21 +315,20 @@ The complex API covers basic arithmetic, conjugation, squared norm, and magnitud
 
 ## Rounding directions and status flags
 
-Ordinary arithmetic, `x.sqrt`, and `x.fma y z` round to nearest even. Each of the six operations, such as [[FloatLib.Floats.ExecFloat.Binary.add]] or [[FloatLib.Floats.ExecFloat.Binary.div]], also takes a direction from [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] as the option `(mode := ...)`. After `open FloatLib.Rounding` you can drop the leading dot and write `(mode := up)`. Let's divide one by three in four directions:
+Ordinary arithmetic, `x.sqrt`, and `x.fma y z` round to nearest even. Each of the six operations, such as [[FloatLib.Floats.ExecFloat.Binary.add]] or [[FloatLib.Floats.ExecFloat.Binary.div]], also takes a direction from [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]] as the option `(mode := ...)`, written with a leading dot as in `(mode := .up)`. A conversion such as `cast` takes a `Numerics.RoundingMode` instead, and `(mode := .down)` names its downward direction the same way, because the leading dot looks the name up in the mode type the call expects. An `IEEERoundingMode` value goes into a conversion through `toRoundingMode`. Let's divide one by three in four directions:
 
 ```lean standalone
 import FloatLib
 
 open FloatLib.Floats
-open FloatLib.Rounding
 
-#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := nearest)
+#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := .nearest)
 -- 0.33333334
-#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := up)
+#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := .up)
 -- 0.33333334
-#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := down)
+#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := .down)
 -- 0.3333333
-#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := towardZero)
+#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := .towardZero)
 -- 0.3333333
 ```
 
@@ -349,30 +340,21 @@ IEEE 754 asks each operation to report five conditions: invalid, divide by zero,
 import FloatLib
 
 open FloatLib.Floats
-open FloatLib.Rounding
 
-#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := down) (status := true)
--- { value := 0.3333333,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true },
---   ternary := Ordering.lt }
+#eval ExecFloat.Binary.div (1 : Binary32) 3 (mode := .down) (status := true)
+-- { value := 0.3333333, status := { inexact := true }, ternary := Ordering.lt }
 #eval ExecFloat.Binary.div (1 : Binary32) 0 (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := true, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := inf, status := { divideByZero := true }, ternary := Ordering.eq }
 #eval ExecFloat.Binary.mul (1e30 : Binary32) 1e30 (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := false, overflow := true, underflow := false, inexact := true },
---   ternary := Ordering.gt }
+-- { value := inf, status := { overflow := true, inexact := true }, ternary := Ordering.gt }
 #eval ExecFloat.Binary.mul (1e-30 : Binary32) 1e-30 (status := true)
--- { value := 0,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := true, inexact := true },
---   ternary := Ordering.lt }
+-- { value := 0, status := { underflow := true, inexact := true }, ternary := Ordering.lt }
 
-def thirdDown := ExecFloat.Binary.div (1 : Binary32) 3 (mode := down) (status := true)
+def thirdDown := ExecFloat.Binary.div (1 : Binary32) 3 (mode := .down) (status := true)
 def oneOverZero := ExecFloat.Binary.div (1 : Binary32) 0 (status := true)
 
 #eval FloatLib.Numerics.IEEEStatus.union thirdDown.status oneOverZero.status
--- { invalid := false, divideByZero := true, overflow := false, underflow := false, inexact := true }
+-- { divideByZero := true, inexact := true }
 ```
 
 The first line sets only `inexact`, because rounding changed the value. In the second, $1/0$ with a positive zero denominator returns $\infty$ and sets the divide-by-zero flag, as IEEE specifies. In the third, $10^{30} \cdot 10^{30}$ overflows, and overflow always comes with inexact. And in the fourth, $10^{-30} \cdot 10^{-30}$ lies far below the least binary32 subnormal, so the result is zero, flagged underflow and inexact. There's no global sticky register. To combine the flags from several operations, use [[FloatLib.Numerics.IEEEStatus.union]], as the last line does. Each flag is a Boolean field of the returned status, and [chapter 08](#/chapter/ieee-binary-formats) gives the theorems that characterize it.
@@ -381,7 +363,7 @@ In `thirdDown`, `value` selects the rounded number, `status` the flags, and `ter
 
 ## Choosing imports
 
-`import FloatLib` supplies the format families and their arithmetic. For binary `exp`, `log`, and `sin`, add `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, which also installs the configured and model `MathFunctions` instances. That import provides `Model.pow` and `^` on model values as well. On the default import, configured `ExecFloat.Binary` values have `powInt` for integer exponents but no power operation taking a floating-point exponent. You get the class itself and its host `Float` instance from the main import.
+`import FloatLib` supplies the format families and their arithmetic. For binary `exp`, `log`, and `sin`, add `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, which also installs the configured and model `MathFunctions` instances. That import provides `Model.pow` and `^` on model values as well. On the default import, configured `ExecFloat.Binary` values have `powInt` for integer exponents but no power operation taking a floating-point exponent. You get the class itself and its host `Float` instance from the main import. The transcendental import also adds the certified searches `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1` and `logPlus1`, which return a correctly rounded result or say why the search did not certify one. For correctly rounded `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and weighted `exp x * w` on IEEE formats, which always return a value, add `FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded`, which the transcendental import also brings in. With the transcendental import, opening the scope `FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath` makes generic `MathFunctions` code use them for `exp` and `log`. The `roundoff` tactic of [chapter 20](#/chapter/proving-numerical-bounds/error-bounds-from-floating-point-code) needs `FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`, which `import FloatLib` doesn't reach.
 
 If you want fewer dependencies, import only the layer you need. `FloatLib.Floats.ExecFloat` gives the carrier, arithmetic, conversion, and the `run = spec` equations. `FloatLib.Floats.Formats.BinaryInterchange.Configured` adds `ExecFloat.Binary`, literals, and the configured operations. `FloatLib.Floats.Formats.BinaryInterchange.Semantics` adds the real-valued theorems. `FloatLib.Floats.Formats.Posit` is the posit family and `FloatLib.Numerics` the representation-independent layer. A program that only computes can use `FloatLib.Floats.ExecFloat.Runtime`, which has the same certified arithmetic and conversion, without the proof automation and inspection commands.
 

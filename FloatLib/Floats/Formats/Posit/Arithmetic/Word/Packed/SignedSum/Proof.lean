@@ -30,6 +30,33 @@ namespace FloatLib.Floats.Formats.Posit.Model.NativeWordArithmetic.PackedSignedS
 
 open FloatLib.Numerics
 
+/--
+The low limb of the two-limb signed-sum engine is its complete code: the direct exact rounding
+of the field sum.
+-/
+private theorem limbRoundFieldsWord_lo_toNat
+    (format : Format) (heligible : NativeWord.Eligible format)
+    (leftNegative : Bool) (leftSignificand : FixedWord.UInt128) (leftExponent : Int)
+    (rightNegative : Bool) (rightSignificand : FixedWord.UInt128) (rightExponent : Int) :
+    (NativeLimbPacked.SignedSum.roundFieldsWord format
+        (NativeWordLimb.limbEligible format heligible)
+        leftNegative leftSignificand leftExponent
+        rightNegative rightSignificand rightExponent).lo.toNat =
+      DirectDyadicPacking.roundCode format
+        (Dyadic.addFields
+          leftNegative leftSignificand.toNat leftExponent
+          rightNegative rightSignificand.toNat rightExponent) := by
+  have hresult :
+      (NativeLimbPacked.SignedSum.roundFieldsWord format
+          (NativeWordLimb.limbEligible format heligible)
+          leftNegative leftSignificand leftExponent
+          rightNegative rightSignificand rightExponent).toNat < format.modulus := by
+    rw [NativeLimbPacked.SignedSum.roundFieldsWord_toNat]
+    exact NativeLimbRounding.roundCodeNat_lt_modulus format _ _
+  rw [NativeWordLimb.lo_toNat_eq_toNat_of_lt_modulus format heligible hresult,
+    NativeLimbPacked.SignedSum.roundFieldsWord_toNat,
+    NativeLimbRounding.roundCodeNat_eq_direct]
+
 /-- Continuing a one-word sum in the two-limb engine preserves the direct exact code. -/
 theorem roundWideFieldsWord_toNat
     (format : Format) (heligible : NativeWord.Eligible format)
@@ -42,58 +69,11 @@ theorem roundWideFieldsWord_toNat
         (Dyadic.addFields
           leftNegative leftSignificand.toNat leftExponent
           rightNegative rightSignificand.toNat rightExponent) := by
-  let hlimb : NativeLimb.Eligible format :=
-    NativeWordLimb.limbEligible format heligible
-  let result :=
-    NativeLimbPacked.SignedSum.roundFieldsWord format hlimb
-      leftNegative (NativeWordLimb.widen leftSignificand) leftExponent
-      rightNegative (NativeWordLimb.widen rightSignificand) rightExponent
-  have hresult :
-      result.toNat < format.modulus := by
-    rw [NativeLimbPacked.SignedSum.roundFieldsWord_toNat format hlimb]
-    exact NativeLimbRounding.roundCodeNat_lt_modulus format hlimb _
-  change result.lo.toNat =
-    NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat format heligible
-      (Dyadic.addFields
-        leftNegative leftSignificand.toNat leftExponent
-        rightNegative rightSignificand.toNat rightExponent)
-  calc
-    result.lo.toNat = result.toNat :=
-      FixedWord.UInt128.lo_toNat_eq_toNat_of_lt_two_pow result <| by
-        exact hresult.trans_le <|
-          NativeWord.modulus_le_two_pow_64 format heligible
-    _ = NativeLimbRounding.roundCodeNat format hlimb
-          (Dyadic.addFields
-            leftNegative
-              (NativeWordLimb.widen leftSignificand).toNat
-              leftExponent
-            rightNegative
-              (NativeWordLimb.widen rightSignificand).toNat
-              rightExponent) :=
-      NativeLimbPacked.SignedSum.roundFieldsWord_toNat
-        format hlimb
-        leftNegative (NativeWordLimb.widen leftSignificand) leftExponent
-        rightNegative (NativeWordLimb.widen rightSignificand) rightExponent
-    _ = DirectDyadicPacking.roundCode format
-          (Dyadic.addFields
-            leftNegative
-              (NativeWordLimb.widen leftSignificand).toNat
-              leftExponent
-            rightNegative
-              (NativeWordLimb.widen rightSignificand).toNat
-              rightExponent) :=
-      NativeLimbRounding.roundCodeNat_eq_direct format hlimb _
-    _ = DirectDyadicPacking.roundCode format
-          (Dyadic.addFields
-            leftNegative leftSignificand.toNat leftExponent
-            rightNegative rightSignificand.toNat rightExponent) := by
-      rw [NativeWordLimb.widen_toNat, NativeWordLimb.widen_toNat]
-    _ = NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat format heligible
-          (Dyadic.addFields
-            leftNegative leftSignificand.toNat leftExponent
-            rightNegative rightSignificand.toNat rightExponent) :=
-      (NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct
-        format heligible _).symm
+  unfold roundWideFieldsWord
+  dsimp only
+  rw [limbRoundFieldsWord_lo_toNat format heligible,
+    NativeWordLimb.widen_toNat, NativeWordLimb.widen_toNat,
+    NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct]
 
 /-- Scalar field rounding and exact-target rounding have the same direct semantics. -/
 private theorem roundCodeWord_toNat_eq_dyadicTarget
@@ -119,14 +99,63 @@ private theorem roundCode_eq_signedMagnitudeDyadic
     simp [FixedWord.signedMagnitudeDyadic, DirectDyadicPacking.roundCode]
   · simp [FixedWord.signedMagnitudeDyadic, hzero]
 
+/--
+Signed-magnitude accumulation rounds like the exact common-exponent field sum. A zero operand
+leaves the other one, and a zero sum rounds to zero whatever its sign.
+-/
+private theorem roundCode_addSignedMagnitudes
+    (format : Format) (leftNegative rightNegative : Bool)
+    (leftSignificand rightSignificand : UInt64) (exponent : Int)
+    (hsum :
+      leftNegative = rightNegative →
+        leftSignificand.toNat + rightSignificand.toNat < 2 ^ 64) :
+    DirectDyadicPacking.roundCode format
+        (FixedWord.signedMagnitudeDyadic
+          (FixedWord.addSignedMagnitudes
+            leftNegative rightNegative leftSignificand rightSignificand).1
+          (FixedWord.addSignedMagnitudes
+            leftNegative rightNegative leftSignificand rightSignificand).2
+          exponent) =
+      DirectDyadicPacking.roundCode format
+        (Dyadic.addFields
+          leftNegative leftSignificand.toNat exponent
+          rightNegative rightSignificand.toNat exponent) := by
+  by_cases hleft : leftSignificand = 0
+  · subst leftSignificand
+    by_cases hright : rightSignificand = 0
+    · subst rightSignificand
+      cases leftNegative <;> cases rightNegative <;>
+        simp [FixedWord.addSignedMagnitudes, FixedWord.signedMagnitudeDyadic, Dyadic.addFields,
+          DirectDyadicPacking.roundCode]
+    · have hrightNat : rightSignificand.toNat ≠ 0 := by
+        simpa [← UInt64.toNat_inj] using hright
+      have hpositive : (0 : UInt64) < rightSignificand := by
+        rw [UInt64.lt_iff_toNat_lt]
+        exact Nat.pos_of_ne_zero hrightNat
+      cases leftNegative <;> cases rightNegative <;>
+        simp [FixedWord.addSignedMagnitudes, FixedWord.signedMagnitudeDyadic, Dyadic.addFields,
+          hright, Ne.symm hright, hrightNat, hpositive]
+  · by_cases hright : rightSignificand = 0
+    · subst rightSignificand
+      have hleftNat : leftSignificand.toNat ≠ 0 := by
+        simpa [← UInt64.toNat_inj] using hleft
+      have hnotLess : ¬leftSignificand < 0 := by
+        rw [UInt64.lt_iff_toNat_lt]
+        simp
+      cases leftNegative <;> cases rightNegative <;>
+        simp [FixedWord.addSignedMagnitudes, FixedWord.signedMagnitudeDyadic, Dyadic.addFields,
+          hleft, hleftNat, hnotLess]
+    · exact congrArg (DirectDyadicPacking.roundCode format)
+        (FixedWord.signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
+          leftNegative rightNegative leftSignificand rightSignificand exponent
+          hleft hright hsum)
+
 /-- Scalar signed-magnitude accumulation rounds the exact aligned dyadic sum. -/
 theorem roundAlignedFieldsWord_toNat
     (format : Format) (heligible : NativeWord.Eligible format)
     (leftNegative : Bool) (leftSignificand : UInt64)
     (rightNegative : Bool) (rightSignificand : UInt64)
-    (exponent : Int)
-    (hleft : leftSignificand ≠ 0)
-    (hright : rightSignificand ≠ 0) :
+    (exponent : Int) :
     (roundAlignedFieldsWord format heligible
         leftNegative leftSignificand
         rightNegative rightSignificand exponent).toNat =
@@ -149,29 +178,24 @@ theorem roundAlignedFieldsWord_toNat
         rw [← hadd]
         exact (FixedWord.add64 leftSignificand rightSignificand).value.toNat_lt
       have hexact :=
-        FixedWord.signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
-          leftNegative leftNegative leftSignificand rightSignificand exponent
-          hleft hright (fun _ => hsum)
+        roundCode_addSignedMagnitudes format leftNegative leftNegative
+          leftSignificand rightSignificand exponent (fun _ => hsum)
       rw [roundCodeWord_toNat_eq_dyadicTarget,
         NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
         NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
         roundCode_eq_signedMagnitudeDyadic]
-      simpa [FixedWord.addSignedMagnitudes, FixedWord.add64] using
-        congrArg (DirectDyadicPacking.roundCode format) hexact
+      simpa [FixedWord.addSignedMagnitudes, FixedWord.add64] using hexact
     · simp only [beq_iff_eq, hcarry, ite_false]
       exact roundWideFieldsWord_toNat format heligible
         leftNegative leftSignificand exponent
         leftNegative rightSignificand exponent
   · simp only [beq_iff_eq, hsame, ite_false]
-    have hexact :=
-      FixedWord.signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
-        leftNegative rightNegative leftSignificand rightSignificand exponent
-        hleft hright (fun equality => (hsame equality).elim)
     rw [roundCodeWord_toNat_eq_dyadicTarget,
       NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
       NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
       roundCode_eq_signedMagnitudeDyadic]
-    exact congrArg (DirectDyadicPacking.roundCode format) hexact
+    exact roundCode_addSignedMagnitudes format leftNegative rightNegative
+      leftSignificand rightSignificand exponent (fun equality => (hsame equality).elim)
 
 /-- Scalar alignment and the two-limb continuation round the same exact dyadic sum. -/
 theorem roundFieldsWord_toNat
@@ -207,32 +231,20 @@ theorem roundFieldsWord_toNat
     simp [Dyadic.addFields, hleftNat]
   · have hleftNat : leftSignificand.toNat ≠ 0 := by
       simpa [← UInt64.toNat_inj] using hleft
-    have hrightNat : rightSignificand.toNat ≠ 0 := by
-      simpa [← UInt64.toNat_inj] using hright
-    have hshifted :=
-      FixedWord.DyadicCompare.shiftLeft_toNat rightSignificand _ hshift hfit
-    have hshiftedNatNe :
-        rightSignificand.toNat <<< (rightExponent - leftExponent).toNat ≠ 0 :=
-      Nat.shiftLeft_eq_zero_iff.not.mpr hrightNat
-    rw [roundAlignedFieldsWord_toNat format heligible _ _ _ _ _ hleft
-      (fun hzero => hshiftedNatNe (by simpa [hshifted] using congrArg UInt64.toNat hzero))]
-    congr 1
-    simp [Dyadic.addFields, hleftNat, hrightNat, hshiftedNatNe, hexponents, hshifted]
+    rw [roundAlignedFieldsWord_toNat format heligible,
+      FixedWord.DyadicCompare.shiftLeft_toNat rightSignificand _ hfit,
+      Dyadic.addFields_eq, Dyadic.addFields_eq,
+      Dyadic.add_align_right_to_left_exponent _ _ _ _ _ _ hleftNat hexponents]
+    rfl
   · exact roundWideFieldsWord_toNat format heligible _ _ _ _ _ _
   · exact roundWideFieldsWord_toNat format heligible _ _ _ _ _ _
-  · have hleftNat : leftSignificand.toNat ≠ 0 := by
-      simpa [← UInt64.toNat_inj] using hleft
-    have hrightNat : rightSignificand.toNat ≠ 0 := by
+  · have hrightNat : rightSignificand.toNat ≠ 0 := by
       simpa [← UInt64.toNat_inj] using hright
-    have hshifted :=
-      FixedWord.DyadicCompare.shiftLeft_toNat leftSignificand _ hshift hfit
-    have hshiftedNatNe :
-        leftSignificand.toNat <<< (leftExponent - rightExponent).toNat ≠ 0 :=
-      Nat.shiftLeft_eq_zero_iff.not.mpr hleftNat
-    rw [roundAlignedFieldsWord_toNat format heligible _ _ _ _ _
-      (fun hzero => hshiftedNatNe (by simpa [hshifted] using congrArg UInt64.toNat hzero)) hright]
-    congr 1
-    simp [Dyadic.addFields, hleftNat, hrightNat, hshiftedNatNe, hexponents, hshifted]
+    rw [roundAlignedFieldsWord_toNat format heligible,
+      FixedWord.DyadicCompare.shiftLeft_toNat leftSignificand _ hfit,
+      Dyadic.addFields_eq, Dyadic.addFields_eq,
+      Dyadic.add_align_left_to_right_exponent _ _ _ _ _ _ hrightNat (lt_of_not_ge hexponents)]
+    rfl
   · exact roundWideFieldsWord_toNat format heligible _ _ _ _ _ _
   · exact roundWideFieldsWord_toNat format heligible _ _ _ _ _ _
 
@@ -285,66 +297,12 @@ theorem roundWideFmaFieldsWord_toNat
           leftNegative leftSignificand.toNat leftExponent
           rightNegative rightSignificand.toNat rightExponent
           addendNegative addendSignificand.toNat addendExponent) := by
-  let hlimb : NativeLimb.Eligible format :=
-    NativeWordLimb.limbEligible format heligible
-  let product := FixedWord.mul64 leftSignificand rightSignificand
-  let result :=
-    NativeLimbPacked.SignedSum.roundFieldsWord format hlimb
-      (Bool.xor leftNegative rightNegative) product
-      (leftExponent + rightExponent)
-      addendNegative (NativeWordLimb.widen addendSignificand)
-      addendExponent
-  have hresult :
-      result.toNat < format.modulus := by
-    rw [NativeLimbPacked.SignedSum.roundFieldsWord_toNat format hlimb]
-    exact NativeLimbRounding.roundCodeNat_lt_modulus format hlimb _
-  change result.lo.toNat =
-    NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat format heligible
-      (Dyadic.fmaFields
-        leftNegative leftSignificand.toNat leftExponent
-        rightNegative rightSignificand.toNat rightExponent
-        addendNegative addendSignificand.toNat addendExponent)
-  calc
-    result.lo.toNat = result.toNat :=
-      FixedWord.UInt128.lo_toNat_eq_toNat_of_lt_two_pow result <| by
-        exact hresult.trans_le <|
-          NativeWord.modulus_le_two_pow_64 format heligible
-    _ = NativeLimbRounding.roundCodeNat format hlimb
-          (Dyadic.addFields
-            (Bool.xor leftNegative rightNegative) product.toNat
-            (leftExponent + rightExponent)
-            addendNegative
-              (NativeWordLimb.widen addendSignificand).toNat
-              addendExponent) :=
-      NativeLimbPacked.SignedSum.roundFieldsWord_toNat
-        format hlimb
-        (Bool.xor leftNegative rightNegative) product
-        (leftExponent + rightExponent)
-        addendNegative (NativeWordLimb.widen addendSignificand)
-        addendExponent
-    _ = DirectDyadicPacking.roundCode format
-          (Dyadic.addFields
-            (Bool.xor leftNegative rightNegative) product.toNat
-            (leftExponent + rightExponent)
-            addendNegative
-              (NativeWordLimb.widen addendSignificand).toNat
-              addendExponent) :=
-      NativeLimbRounding.roundCodeNat_eq_direct format hlimb _
-    _ = DirectDyadicPacking.roundCode format
-          (Dyadic.fmaFields
-            leftNegative leftSignificand.toNat leftExponent
-            rightNegative rightSignificand.toNat rightExponent
-            addendNegative addendSignificand.toNat addendExponent) := by
-      unfold Dyadic.fmaFields
-      rw [FixedWord.mul64_toNat,
-        NativeWordLimb.widen_toNat]
-    _ = NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat format heligible
-          (Dyadic.fmaFields
-            leftNegative leftSignificand.toNat leftExponent
-            rightNegative rightSignificand.toNat rightExponent
-            addendNegative addendSignificand.toNat addendExponent) :=
-      (NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct
-        format heligible _).symm
+  unfold roundWideFmaFieldsWord
+  dsimp only
+  rw [limbRoundFieldsWord_lo_toNat format heligible,
+    NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct]
+  unfold Dyadic.fmaFields
+  rw [FixedWord.mul64_toNat, NativeWordLimb.widen_toNat]
 
 /-- Capacity-directed fused accumulation implements exact FMA. -/
 theorem roundFmaFieldsWord_toNat

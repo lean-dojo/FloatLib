@@ -15,14 +15,18 @@ public import FloatLib.Floats.Interval.Rounders
 /-!
 # Quantized real intervals and unbounded division enclosures
 
-Intervals are propagated over `ℝ` or `EReal`, then their endpoints are snapped outward to a chosen
-representable grid, a Flocq-style $(\beta,\mathtt{fexp})$ format.
+Intervals are propagated over `ℝ` or `EReal`, then each endpoint is moved outward by a `Rounder`,
+a pair of maps below and above the identity. With `formatRounder` the new endpoints lie on a
+Flocq-style $(\beta,\mathtt{fexp})$ grid (`genericFormat_roundDown`, `genericFormat_roundUp`).
+The enclosure theorems use only the two inequalities of the `Rounder`, so they hold for every
+rounder, the identity maps included; they do not by themselves say that an endpoint is
+representable.
 
 The usual workflow is:
 
 - start from a real interval $x\in[\mathtt{lo},\mathtt{hi}]$;
 - propagate it through arithmetic or a monotone nonlinear function; and
-- round each new endpoint outward with a `Rounder`.
+- round each new endpoint outward with a `Rounder`, for a representable grid `formatRounder`.
 
 The layer is meant for real-valued enclosure proofs, not bit-level IEEE execution. It therefore
 has no NaN payloads, signed-zero rules, or status flags.
@@ -263,12 +267,10 @@ noncomputable def div (R : Rounder) (A B : RInterval) : EInterval :=
     EInterval.ofRInterval ⟨R.down lower, R.up upper⟩
 
 /--
-Soundness of `div` in the nonzero-denominator case (`0 ∉ B`).
-
-Under the hypothesis `¬ (B.lo ≤ 0 ∧ 0 ≤ B.hi)`, the constructed `EInterval` contains the true real
-quotient `x/y` (as an `EReal`).
+Soundness of `div` in the nonzero-denominator case (`0 ∉ B`): the four outward-rounded corner
+quotients enclose the true real quotient `x/y` (as an `EReal`).
 -/
-theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
+private theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
     (hx : x ∈ A) (hy : y ∈ B) (h0 : ¬ (B.lo ≤ 0 ∧ 0 ≤ B.hi)) :
     ((x / y : ℝ) : EReal) ∈ (div R A B) := by
   have hside : B.hi < 0 ∨ 0 < B.lo := by
@@ -287,9 +289,9 @@ theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
 /--
 Soundness of `div` without any hypothesis on the denominator interval.
 
-When `B` contains zero the result is `EInterval.top`, which contains everything; otherwise this is
-`mem_div_of_nozero`. Division by zero itself is Lean's totalized `x / 0 = 0`, which the top
-interval also contains.
+When `B` contains zero the result is `EInterval.top`, which contains everything; otherwise the four
+outward-rounded corner quotients enclose `x / y`. Division by zero itself is Lean's totalized
+`x / 0 = 0`, which the top interval also contains.
 -/
 theorem mem_div {R : Rounder} {A B : RInterval} {x y : ℝ}
     (hx : x ∈ A) (hy : y ∈ B) :

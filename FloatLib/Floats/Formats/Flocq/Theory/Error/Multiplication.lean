@@ -26,6 +26,23 @@ namespace FloatLib.Floats.Formats.Flocq
 
 variable {β : Numerics.Radix}
 
+/--
+Scaling a generic-format value by `β^e` keeps it representable when its canonical exponent grows
+by at most `e`.
+-/
+private theorem generic_format_mul_bpow_of_cexp_le {fexp : ℤ → ℤ} [ValidExp fexp] {x : ℝ}
+    (hx : genericFormat β fexp x) (e : ℤ)
+    (hcexp : x ≠ 0 → cexp β fexp (x * bpow β e) ≤ cexp β fexp x + e) :
+    genericFormat β fexp (x * bpow β e) := by
+  by_cases hx0 : x = 0
+  · subst x
+    simp
+  obtain ⟨n, hxn⟩ := exists_int_mul_bpow_cexp_of_generic hx
+  apply generic_format_of_toReal_of_cexp_le
+    ({ mantissa := n, exponent := cexp β fexp x + e } : FloatRep β) _ ?_ (hcexp hx0)
+  change x * bpow β e = (n : ℝ) * bpow β (cexp β fexp x + e)
+  rw [bpow.add_exp, ← mul_assoc, ← hxn]
+
 /-- Multiplication by a radix power preserves FLX representability. -/
 theorem generic_format_FLX_mul_bpow (prec : ℤ) (hprec : 0 < prec)
     {x : ℝ} (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x)
@@ -33,24 +50,8 @@ theorem generic_format_FLX_mul_bpow (prec : ℤ) (hprec : 0 < prec)
     @genericFormat β (flxExp prec) (flxValidExp prec hprec)
       (x * bpow β e) := by
   let : ValidExp (flxExp prec) := flxValidExp prec hprec
-  by_cases hx0 : x = 0
-  · subst x
-    simp
-  obtain ⟨f, hxf, hf⟩ := canonical_exists_of_generic hx
-  let shifted : FloatRep β := { mantissa := f.mantissa, exponent := f.exponent + e }
-  have hvalue : x * bpow β e = toReal shifted := by
-    rw [hxf]
-    simp [shifted, toReal, bpow.add_exp]
-    ring
-  apply generic_format_of_toReal_of_cexp_le shifted _ hvalue
-  have hmag : magnitude β (x * bpow β e) = magnitude β x + e := by
-    rw [magnitude_mul_bpow β x e hx0]
-  have hfexp : f.exponent = cexp β (flxExp prec) x := by
-    rw [hxf]
-    exact hf
-  change cexp β (flxExp prec) (x * bpow β e) ≤ f.exponent + e
-  rw [hfexp]
-  simp [cexp, flxExp, hmag]
+  refine generic_format_mul_bpow_of_cexp_le hx e fun hx0 => ?_
+  simp only [cexp, flxExp, magnitude_mul_bpow β x e hx0]
   linarith
 
 /--
@@ -90,20 +91,8 @@ theorem mul_round_error_FLX_exists_repr (prec : ℤ) (hprec : 0 < prec)
     exact hp0 (by simp [product, h])
   let ex := cexp β (flxExp prec) x
   let ey := cexp β (flxExp prec) y
-  obtain ⟨mx, hmx⟩ :=
-    (generic_format_iff_scaled_mantissa_int
-      (β := β) (fexp := flxExp prec) x).mp hx
-  obtain ⟨my, hmy⟩ :=
-    (generic_format_iff_scaled_mantissa_int
-      (β := β) (fexp := flxExp prec) y).mp hy
-  have hxrepr : x = (mx : ℝ) * bpow β ex := by
-    have h := scaled_mantissa_mul_bpow (β := β) (fexp := flxExp prec) x
-    rw [hmx] at h
-    exact h.symm
-  have hyrepr : y = (my : ℝ) * bpow β ey := by
-    have h := scaled_mantissa_mul_bpow (β := β) (fexp := flxExp prec) y
-    rw [hmy] at h
-    exact h.symm
+  obtain ⟨mx, hxrepr⟩ := exists_int_mul_bpow_cexp_of_generic hx
+  obtain ⟨my, hyrepr⟩ := exists_int_mul_bpow_cexp_of_generic hy
   let exactProduct : FloatRep β := { mantissa := mx * my, exponent := ex + ey }
   have hproduct : product = toReal exactProduct := by
     unfold product exactProduct toReal
@@ -202,7 +191,7 @@ theorem mul_round_error_FLT (emin prec : ℤ) (hprec : 0 < prec)
     exact hp0 (by simp [product, h])
   have hmagProduct : emin + 2 * prec ≤ magnitude β product := by
     have hlower := hproduct hp0
-    have hupper := abs_lt_bpow_magnitude β product hp0
+    have hupper := abs_lt_bpow_magnitude β product
     have hpowers : bpow β (emin + 2 * prec - 1) <
         bpow β (magnitude β product) := hlower.trans_lt hupper
     have hexp := (bpow_lt_bpow_iff β _ _).mp hpowers
@@ -254,23 +243,8 @@ theorem generic_format_FLT_mul_bpow (emin prec : ℤ) (hprec : 0 < prec)
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec)
       (x * bpow β e) := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
-  by_cases hx0 : x = 0
-  · subst x
-    simp
-  obtain ⟨f, hxf, hf⟩ := canonical_exists_of_generic hx
-  let shifted : FloatRep β := { mantissa := f.mantissa, exponent := f.exponent + e }
-  have hvalue : x * bpow β e = toReal shifted := by
-    rw [hxf]
-    simp [shifted, toReal, bpow.add_exp]
-    ring
-  apply generic_format_of_toReal_of_cexp_le shifted _ hvalue
-  have hmag := magnitude_mul_bpow β x e hx0
-  have hfexp : f.exponent = cexp β (fltExp emin prec) x := by
-    rw [hxf]
-    exact hf
-  change max (magnitude β (x * bpow β e) - prec) emin ≤ f.exponent + e
-  rw [hmag, hfexp]
-  simp only [cexp, fltExp]
+  refine generic_format_mul_bpow_of_cexp_le hx e fun hx0 => ?_
+  simp only [cexp, fltExp, magnitude_mul_bpow β x e hx0]
   apply max_le
   · have hleft := add_le_add_right
       (le_max_left (magnitude β x - prec) emin) e
@@ -286,23 +260,8 @@ theorem generic_format_FLT_mul_bpow_of_nonneg (emin prec : ℤ) (hprec : 0 < pre
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec)
       (x * bpow β e) := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
-  by_cases hx0 : x = 0
-  · subst x
-    simp
-  obtain ⟨f, hxf, hf⟩ := canonical_exists_of_generic hx
-  let shifted : FloatRep β := { mantissa := f.mantissa, exponent := f.exponent + e }
-  have hvalue : x * bpow β e = toReal shifted := by
-    rw [hxf]
-    simp [shifted, toReal, bpow.add_exp]
-    ring
-  apply generic_format_of_toReal_of_cexp_le shifted _ hvalue
-  have hmag := magnitude_mul_bpow β x e hx0
-  have hfexp : f.exponent = cexp β (fltExp emin prec) x := by
-    rw [hxf]
-    exact hf
-  change max (magnitude β (x * bpow β e) - prec) emin ≤ f.exponent + e
-  rw [hmag, hfexp]
-  simp only [cexp, fltExp]
+  refine generic_format_mul_bpow_of_cexp_le hx e fun hx0 => ?_
+  simp only [cexp, fltExp, magnitude_mul_bpow β x e hx0]
   apply max_le
   · have hleft := add_le_add_right
       (le_max_left (magnitude β x - prec) emin) e

@@ -18,26 +18,33 @@ Name the destination type when converting a value or combining different formats
 ```lean
 source.cast (target := Binary64)
 source.cast (target := Binary32) (mode := .up)
-ExecFloat.addAs (target := Binary64) left right
+ExecFloat.Mixed.add (target := Binary64) left right
 ```
 
 Each operation decodes its operands, maps them into the destination's exact domain through
-`ExactMap`, and quantizes the result once. Every entry point takes the same two options. `mode`
-selects the rounding direction of the destination's canonical context, through `ModeContext`.
-Binary and nominal static-byte destinations accept the six `IEEERoundingMode` directions. A family
-without directed conversion has the single mode `()`, so naming a direction for it is a type
-error. `context` replaces the canonical context with a family-specific policy, such as a rejected
-infinity, a saturating bounded fixed point, or a shared block exponent. A context carries its own
-rounding direction, so give one option or the other. Destinations without
-a canonical context, such as shared-scale blocks, require `context`.
+`ExactMap`, and quantizes the result once. Every entry point takes the same two options. `mode` is
+the rounding direction. Binary and nominal static-byte destinations take a `Numerics.RoundingMode`:
+the six directions of `IEEERoundingMode` and `.stochastic`. P3109 destinations take a P3109
+`RoundingMode`. A family without directed conversion has the single mode `()`, so naming a
+direction for it is a type error. `context` is the destination's `RoundingModes.Policy`, every
+policy except the direction, such as a rejected infinity, binary saturation or flush-to-zero,
+stochastic entropy, P3109 saturation, a saturating bounded fixed point, or a shared block
+exponent. A call without `context` uses the destination's canonical policy (`ModeContext`), and
+destinations without one, such as shared-scale blocks, require `context`.
 
-Casts pass infinities and exceptional observations to the destination's policy. Mixed arithmetic
-requires finite inputs and reports the first rejected operand. Division also rejects a denominator
-satisfying the exact domain's `ExactZero` predicate.
+The mode decides the direction: a policy has no direction field, so `(mode := .down)` and
+`(context := ...)` combine and neither can cancel the other. Every entry point quantizes in
+`RoundingModes.withMode mode context`, and `spec_convert` and the other contracts in
+`Conversion.Proof` are stated in that context.
+
+Casts pass infinities and exceptional observations to the destination's policy. The mixed
+operations `Mixed.add`, `sub`, `mul`, `div`, and `fma` require finite inputs and report the first
+rejected operand. Division also rejects a denominator satisfying the exact domain's `ExactZero`
+predicate.
 
 Binary destinations use `SignedRat` as their exact domain, so a signed zero survives a cast and
-mixed addition, subtraction, and FMA select a cancellation sign from the destination's rounding
-context. Posit destinations use `Rat`, with a single zero.
+mixed addition, subtraction, and FMA select a cancellation sign from the call's rounding mode.
+Posit destinations use `Rat`, with a single zero.
 
 For longer finite calculations, `ExactExpression.operand` and `roundOnce` use the same path with
 an ordinary `Except`-based `do` expression. Use `ExactExpression.add` and `sub` with a `mode` when a
@@ -92,20 +99,21 @@ end Quantizer
 /--
 Convert any exactly decodable source into the destination `target`, rounding once.
 
-`mode` selects the rounding direction of the destination's canonical context, nearest-even by
-default, and `context` replaces that context with a family-specific policy. This function form
-also accepts sources outside the `ExecFloat` carrier, such as `Rat`, `Int`, or a native
-float, when a module supplies their exact decoder. `ExecFloat` values may use `value.cast`.
+`mode` is the rounding direction, nearest-even by default, and `context` the destination's other
+policies, its canonical policy by default. The quantizer runs in
+`RoundingModes.withMode mode context`. This function form also accepts sources outside the
+`ExecFloat` carrier, such as `Rat`, `Int`, or a native float, when a module supplies their exact
+decoder. `ExecFloat` values may use `value.cast`.
 -/
 @[inline] def convert {Source : Type u} (value : Source)
     {target : Type v} {SourceExact : Type w} {TargetExact : Type x}
     [ExactDecoder Source SourceExact] [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target TargetExact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  quantizer.run context (ExactDecoder.decodeTo value)
+  quantizer.run (modes.withMode mode context) (ExactDecoder.decodeTo value)
 
 /--
 Convert an `ExecFloat` value with field notation, as in
@@ -119,7 +127,7 @@ The `mode` and `context` options are those of `convert`.
     [ExactDecoder (FloatLib.Floats.ExecFloat F) SourceExact]
     [ExactMap SourceExact TargetExact]
     [quantizer : Quantizer target TargetExact]
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target TargetExact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
@@ -199,10 +207,13 @@ end Conversion
 namespace ExactExpression
 
 /--
-Decode one numbered operand into the exact domain used by an enclosing expression.
+Decode `value`, the operand numbered `index`, into the exact domain used by an enclosing
+expression.
 
-Finite inputs are mapped without rounding through `ExactMap`. The chosen exact domain determines
-which representation metadata survives, so mapping a `SignedRat` into `Rat` forgets its zero sign.
+Finite inputs are mapped through `ExactMap`, whose instances must preserve value. The class does
+not check this; the instances FloatLib provides in `ExecFloat.ExactMap` have their value facts
+proved. The chosen exact domain determines which representation metadata survives, so mapping a
+`SignedRat` into `Rat` forgets its zero sign.
 Infinity and exceptional observations become position-indexed failures, so a longer expression
 still reports which operand was rejected.
 -/
@@ -221,11 +232,11 @@ zero. Name `target`: the exact domain alone does not determine it. The options a
 -/
 @[inline] def add {target : Type u} {Exact : Type v} [Add Exact]
     [quantizer : Quantizer target Exact] (left right : Exact)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ExactExpression Exact :=
-  .ok (quantizer.addExact context left right)
+  .ok (quantizer.addExact (modes.withMode mode context) left right)
 
 /--
 Subtract exact values with the cancellation-sign rule of the destination `target`, without
@@ -233,11 +244,11 @@ quantizing. The options are those of `add`.
 -/
 @[inline] def sub {target : Type u} {Exact : Type v} [Sub Exact]
     [quantizer : Quantizer target Exact] (left right : Exact)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ExactExpression Exact :=
-  .ok (quantizer.subExact context left right)
+  .ok (quantizer.subExact (modes.withMode mode context) left right)
 
 /--
 Divide two exact finite values, rejecting a denominator declared zero by `ExactZero`.
@@ -273,11 +284,29 @@ subtraction use their nearest-even cancellation convention. For directed cancell
 -/
 @[inline] def roundOnce {target : Type u} {Exact : Type v}
     [quantizer : Quantizer target Exact] (expression : ExactExpression Exact)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context expression.toPrepared
+  Conversion.quantizePrepared (modes.withMode mode context) expression.toPrepared
+
+/-!
+## Mixed-format arithmetic
+
+`Mixed.add`, `sub`, `mul`, `div`, and `fma` combine operands of different types and name the result
+type as `target`. Each decodes its operands exactly, embeds them in the destination's exact domain,
+computes the exact result there, and rounds it once into `target`, with the `mode` and `context`
+options of `convert`.
+
+They are the finite part of IEEE 754's formatOf operations, not the complete operations. A
+non-finite operand fails with `.infinity` or `.exceptional` and its position, checked left to
+right, and `div` fails with `.divisionByZero` when the exact domain declares the divisor zero,
+where IEEE arithmetic would return an infinity or a NaN and raise a flag. The P3109 report
+arithmetic `Formats.P3109.Arithmetic.Mixed` is a different interface: it takes a `Destination`
+value and is total, carrying infinities and NaN through the report's closed arithmetic.
+-/
+
+namespace Mixed
 
 section Binary
 
@@ -289,54 +318,60 @@ variable {Left : Type u} {Right : Type v} {target : Type w}
 /--
 Add finite values exactly and quantize once into `target`, with the options of `convert`.
 
-The exact sum uses the destination context's cancellation-sign rule, so `(mode := .down)` gives
-an exactly cancelling binary sum the negative zero of IEEE 754.
+The exact sum uses the destination's cancellation-sign rule for the call's `mode`, so
+`(mode := .down)` gives an exactly cancelling binary sum the negative zero of IEEE 754.
 -/
-@[inline] def addAs
+@[inline] def add
     [Add Exact] [quantizer : Quantizer target Exact]
     (left : Left) (right : Right)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context <|
-    Conversion.prepareBinary (quantizer.addExact context)
+  let directed := modes.withMode mode context
+  Conversion.quantizePrepared directed <|
+    Conversion.prepareBinary (quantizer.addExact directed)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
-/-- Subtract finite values exactly and quantize once into `target`, with `addAs`'s options. -/
-@[inline] def subAs
+/-- Subtract finite values exactly and quantize once into `target`, with `add`'s options. -/
+@[inline] def sub
     [Sub Exact] [quantizer : Quantizer target Exact]
     (left : Left) (right : Right)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context <|
-    Conversion.prepareBinary (quantizer.subExact context)
+  let directed := modes.withMode mode context
+  Conversion.quantizePrepared directed <|
+    Conversion.prepareBinary (quantizer.subExact directed)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
 /-- Multiply finite values exactly and quantize once into `target`, with `convert`'s options. -/
-@[inline] def mulAs
+@[inline] def mul
     [Mul Exact] [quantizer : Quantizer target Exact]
     (left : Left) (right : Right)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context <|
+  Conversion.quantizePrepared (modes.withMode mode context) <|
     Conversion.prepareBinary (· * ·)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
-/-- Divide finite values exactly and quantize once into `target`, with `convert`'s options. -/
-@[inline] def divAs
+/--
+Divide finite values exactly and quantize once into `target`, with `convert`'s options.
+
+A divisor that the exact domain declares zero fails with `.divisionByZero`.
+-/
+@[inline] def div
     [Zero Exact] [ExactZero Exact] [Div Exact]
     [quantizer : Quantizer target Exact]
     (left : Left) (right : Right)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context <|
+  Conversion.quantizePrepared (modes.withMode mode context) <|
     Conversion.prepareDiv (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
 
 end Binary
@@ -344,10 +379,10 @@ end Binary
 /--
 Compute finite `left * right + addend` exactly and quantize once into `target`.
 
-The exact product is added to `addend` under the context's cancellation-sign rule before the
-destination quantizer runs. The options are those of `addAs`.
+The exact product is added to `addend` under the destination's cancellation-sign rule for the
+call's `mode` before the destination quantizer runs. The options are those of `add`.
 -/
-@[inline] def fmaAs {Left : Type u} {Right : Type v} {Addend : Type w}
+@[inline] def fma {Left : Type u} {Right : Type v} {Addend : Type w}
     {target : Type x} {LeftExact : Type y} {RightExact : Type z}
     {AddendExact : Type a} {Exact : Type b}
     [ExactDecoder Left LeftExact] [ExactMap LeftExact Exact]
@@ -355,14 +390,16 @@ destination quantizer runs. The options are those of `addAs`.
     [ExactDecoder Addend AddendExact] [ExactMap AddendExact Exact]
     [Mul Exact] [Add Exact] [quantizer : Quantizer target Exact]
     (left : Left) (right : Right) (addend : Addend)
-    {Mode : Type} [modes : RoundingModes target Mode] (mode : Mode := modes.default)
+    {Mode : Type} [modes : RoundingModes target Exact Mode] (mode : Mode := modes.default)
     (context : ContextFor target mode :=
       by exact FloatLib.Floats.ExecFloat.ModeContext.context) :
     ConversionOutcome target :=
-  Conversion.quantizePrepared context <|
-    Conversion.prepareFmaWith (quantizer.addExact context)
+  let directed := modes.withMode mode context
+  Conversion.quantizePrepared directed <|
+    Conversion.prepareFmaWith (quantizer.addExact directed)
       (ExactDecoder.decodeTo left) (ExactDecoder.decodeTo right)
       (ExactDecoder.decodeTo addend)
 
+end Mixed
 end ExecFloat
 end FloatLib.Floats

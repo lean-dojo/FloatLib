@@ -57,7 +57,12 @@ always pass this check, so it only restricts direct callers of this kernel.
     ofCoefficient format
       (accumulator.coefficient + coefficientOfDyadic format increment)
 
-/-- Convert a posit into the exact quire associated with the same descriptor. -/
+/--
+Convert a posit into the quire associated with the same descriptor, without rounding.
+
+Every ordinary posit, zero included, is an ordinary quire coefficient at the quire scale
+(`coefficientOfDyadic_ordinary`); posit NaR becomes quire NaR.
+-/
 @[inline] def pToQ
     (value : FloatLib.Floats.Formats.Posit.Model format) : Model format :=
   match value.toDyadic? with
@@ -117,7 +122,9 @@ Subtract one posit exactly from a quire, producing NaR on exceptional input or q
 /--
 Accumulate one exact posit product with no intermediate rounding.
 
-Both posit operands must use the same `format` as the quire, enforced by the type.
+Both posit operands must use the same `format` as the quire, enforced by the type. NaR in either
+operand or in the accumulator gives quire NaR, as does a coefficient sum outside the ordinary
+quire range.
 -/
 @[inline] def qMulAdd
     (accumulator : Model format)
@@ -129,7 +136,12 @@ Both posit operands must use the same `format` as the quire, enforced by the typ
   | _, _ =>
       nar format
 
-/-- Subtract one exact posit product from a quire with no intermediate rounding. -/
+/--
+Subtract one exact posit product from a quire with no intermediate rounding.
+
+NaR in either operand or in the accumulator gives quire NaR, as does a coefficient difference
+outside the ordinary quire range.
+-/
 @[inline] def qMulSub
     (accumulator : Model format)
     (left right : FloatLib.Floats.Formats.Posit.Model format) : Model format :=
@@ -144,7 +156,8 @@ Both posit operands must use the same `format` as the quire, enforced by the typ
 Round a quire once to its associated posit.
 
 The ordinary path turns the fixed-point coefficient into a shared dyadic and applies the
-Posit Standard (2022) rounder, without constructing a `Rat`.
+Posit Standard (2022) rounder, without constructing a `Rat`: nearest posit, ties to an even code,
+saturating at `maxPos` and never underflowing a nonzero value to zero. Quire NaR becomes posit NaR.
 -/
 @[inline] def qToP (value : Model format) :
     FloatLib.Floats.Formats.Posit.Model format :=

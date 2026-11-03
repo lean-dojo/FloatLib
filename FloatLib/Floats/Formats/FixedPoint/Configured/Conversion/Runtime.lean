@@ -38,7 +38,7 @@ variable {radix : Radix} {fractionalDigits : Nat}
         (ExecFloat.FixedPoint radix fractionalDigits)
   | .finite exact =>
       let rounded : ExecFloat.FixedPoint radix fractionalDigits :=
-        ExecFloat.FixedPoint.roundRat exact
+        ExecFloat.FixedPoint.ofRat exact
       .success rounded
         { inexact := ExecFloat.FixedPoint.toRat rounded != exact }
   | .infinity negative =>

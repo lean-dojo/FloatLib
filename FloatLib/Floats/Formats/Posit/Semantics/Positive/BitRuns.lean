@@ -104,9 +104,7 @@ theorem countLeadingRun_false_eq_log2
           have hlower : value < 2 ^ width :=
             Nat.lt_of_not_ge hnotLower
           rw [inductionHypothesis value hpos hlower]
-          have hlogLt : Nat.log2 value < width := by
-            rw [Nat.log2_eq_log_two]
-            exact Nat.log_lt_of_lt_pow hpos.ne' hlower
+          have hlogLt : Nat.log2 value < width := (Nat.log2_lt hpos.ne').2 hlower
           omega
       | true =>
           rw [countLeadingRun]
@@ -460,9 +458,7 @@ private theorem countLeadingRun_false_eq_width_iff
       Nat.pos_of_ne_zero hzero
     rw [countLeadingRun_false_eq_log2
       value width hpos hvalue] at hrun
-    have hlogLt : Nat.log2 value < width := by
-      rw [Nat.log2_eq_log_two]
-      exact Nat.log_lt_of_lt_pow hpos.ne' hvalue
+    have hlogLt : Nat.log2 value < width := (Nat.log2_lt hpos.ne').2 hvalue
     omega
   · rintro rfl
     exact countLeadingRun_zero_false width
@@ -479,9 +475,7 @@ private theorem div_twoPow_after_false_run
       1 := by
   have hrun :=
     countLeadingRun_false_eq_log2 value width hpos hlt
-  have hlogLt : Nat.log2 value < width := by
-    rw [Nat.log2_eq_log_two]
-    exact Nat.log_lt_of_lt_pow hpos.ne' hlt
+  have hlogLt : Nat.log2 value < width := (Nat.log2_lt hpos.ne').2 hlt
   have htrailing :
       width - countLeadingRun value width false - 1 =
         Nat.log2 value := by
@@ -508,11 +502,8 @@ private theorem div_twoPow_after_true_run
     dsimp [complement]
     have hpower := Nat.two_pow_pos width
     omega
-  have htrailingLt : trailing < width := by
-    dsimp [trailing]
-    rw [Nat.log2_eq_log_two]
-    exact Nat.log_lt_of_lt_pow
-      hcomplement.ne' hcomplementBound
+  have htrailingLt : trailing < width :=
+    (Nat.log2_lt hcomplement.ne').2 hcomplementBound
   have hwidthSubPos : 0 < width - trailing :=
     Nat.sub_pos_of_lt htrailingLt
   have hprefixPower : 2 ≤ 2 ^ (width - trailing) := by
@@ -590,10 +581,7 @@ private theorem magnitudeBits_div_twoPow_trailingBits (value : Model format)
         have hne : value.regimeRunLength ≠ format.payloadBits := fun h =>
           hzero ((countLeadingRun_false_eq_width_iff hbound).mp (hrun.symm.trans h))
         omega
-      have htrailing : value.trailingBits =
-          format.payloadBits - value.regimeRunLength - 1 := by
-        simp [trailingBits, hasRegimeTerminator, hlt]
-      rw [ite_eq_right Bool.false_ne_true, ite_eq_left hlt, htrailing, hrun]
+      rw [ite_eq_right Bool.false_ne_true, ite_eq_left hlt, trailingBits_eq, hrun]
       exact div_twoPow_after_false_run (Nat.pos_of_ne_zero hzero) hbound
   | true =>
     have hpower := Nat.two_pow_pos format.payloadBits
@@ -608,21 +596,21 @@ private theorem magnitudeBits_div_twoPow_trailingBits (value : Model format)
         rw [hrun, hzero]
         exact countLeadingRun_zero_false _
       have htrailing : value.trailingBits = 0 := by
-        simp [trailingBits, hasRegimeTerminator, hfull]
+        rw [trailingBits_eq, hfull]
+        omega
       have hmagnitude : value.magnitudeBits = 2 ^ format.payloadBits - 1 := by
         omega
       simp [hfull, htrailing, hmagnitude]
     · have hpos := Nat.pos_of_ne_zero hzero
       have hlog := countLeadingRun_false_eq_log2 _ format.payloadBits hpos (by omega)
       have hlogLt : Nat.log2 (2 ^ format.payloadBits - 1 - value.magnitudeBits) <
-          format.payloadBits := by
-        rw [Nat.log2_eq_log_two]
-        exact Nat.log_lt_of_lt_pow hzero (by omega)
+          format.payloadBits :=
+        (Nat.log2_lt hzero).2 (by omega)
       have hlt : value.regimeRunLength < format.payloadBits := by
         omega
       have htrailing : value.trailingBits =
           Nat.log2 (2 ^ format.payloadBits - 1 - value.magnitudeBits) := by
-        simp [trailingBits, hasRegimeTerminator, hlt]
+        rw [trailingBits_eq]
         omega
       rw [ite_eq_left rfl, ite_eq_left hlt, htrailing, div_twoPow_after_true_run hbound hpos]
       congr 2
@@ -647,8 +635,7 @@ theorem trailingBits_eq_and_prefix_eq_of_regimeValue_eq
         right.magnitudeBits / 2 ^ right.trailingBits := by
   obtain ⟨hbit, hrun⟩ := (regimeValue_eq_iff left right).mp hregime
   refine ⟨?_, ?_⟩
-  · unfold trailingBits hasRegimeTerminator
-    rw [hrun]
+  · rw [trailingBits_eq, trailingBits_eq, hrun]
   · rw [magnitudeBits_div_twoPow_trailingBits left hleftBound,
       magnitudeBits_div_twoPow_trailingBits right hrightBound, hbit, hrun]
 

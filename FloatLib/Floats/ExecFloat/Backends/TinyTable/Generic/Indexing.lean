@@ -43,6 +43,15 @@ variable {Model : Type u}
     (radix : USize) (left right addend : UInt8) : USize :=
   (left.toUSize * radix + right.toUSize) * radix + addend.toUSize
 
+/-- A row-major step `index * radix + byte` that does not wrap agrees with its natural value. -/
+private theorem mulAdd_toNat (index radix : USize) (byte : UInt8)
+    (hstep : index.toNat * radix.toNat + byte.toNat < 2 ^ System.Platform.numBits) :
+    (index * radix + byte.toUSize).toNat = index.toNat * radix.toNat + byte.toNat := by
+  have hmul : index.toNat * radix.toNat < 2 ^ System.Platform.numBits :=
+    Nat.lt_of_le_of_lt (Nat.le_add_right _ _) hstep
+  rw [USize.toNat_add, USize.toNat_mul, UInt8.toNat_toUSize, Nat.mod_eq_of_lt hmul,
+    Nat.mod_eq_of_lt hstep]
+
 /-- A non-wrapping native binary index agrees with its natural-number expression. -/
 theorem binaryByteIndex_toNat (radix : USize) (left right : UInt8)
     (hindex :
@@ -50,53 +59,44 @@ theorem binaryByteIndex_toNat (radix : USize) (left right : UInt8)
         2 ^ System.Platform.numBits) :
     (binaryByteIndex radix left right).toNat =
       left.toNat * radix.toNat + right.toNat := by
-  rw [binaryByteIndex, USize.toNat_add, USize.toNat_mul,
-    UInt8.toNat_toUSize, UInt8.toNat_toUSize]
-  have hmul : left.toNat * radix.toNat < 2 ^ System.Platform.numBits := by
-    exact Nat.lt_of_le_of_lt (Nat.le_add_right _ _) hindex
-  rw [Nat.mod_eq_of_lt hmul, Nat.mod_eq_of_lt hindex]
+  have hstep := mulAdd_toNat left.toUSize radix right (by rwa [UInt8.toNat_toUSize])
+  rwa [UInt8.toNat_toUSize] at hstep
 
 /-- The native unary-table index preserves the byte's natural value. -/
 @[simp] theorem unaryByteIndex_toNat (value : UInt8) :
     (unaryByteIndex value).toNat = value.toNat := by
   exact UInt8.toNat_toUSize value
 
-/-- A non-wrapping native ternary index agrees with its natural-number expression. -/
+/--
+A non-wrapping native ternary index agrees with its natural-number expression.
+
+The final bound covers every intermediate: each partial index is at most the next one, and a zero
+radix leaves only a byte.
+-/
 theorem ternaryByteIndex_toNat
     (radix : USize) (left right addend : UInt8)
-    (hleftMul :
-      left.toNat * radix.toNat < 2 ^ System.Platform.numBits)
-    (hpair :
-      left.toNat * radix.toNat + right.toNat <
-        2 ^ System.Platform.numBits)
-    (hpairMul :
-      (left.toNat * radix.toNat + right.toNat) * radix.toNat <
-        2 ^ System.Platform.numBits)
     (hindex :
       (left.toNat * radix.toNat + right.toNat) * radix.toNat + addend.toNat <
         2 ^ System.Platform.numBits) :
     (ternaryByteIndex radix left right addend).toNat =
       (left.toNat * radix.toNat + right.toNat) * radix.toNat + addend.toNat := by
-  rw [ternaryByteIndex, USize.toNat_add, USize.toNat_mul, USize.toNat_add,
-    USize.toNat_mul, UInt8.toNat_toUSize, UInt8.toNat_toUSize,
-    UInt8.toNat_toUSize]
-  rw [Nat.mod_eq_of_lt hleftMul, Nat.mod_eq_of_lt hpair,
-    Nat.mod_eq_of_lt hpairMul, Nat.mod_eq_of_lt hindex]
-
-/-- Every two-input byte-table index fits both supported platform word widths. -/
-theorem binaryIndex_noOverflow
-    (encoding : Encoding Model) (radixWord : USize)
-    (hradixWord : radixWord.toNat = encoding.radix)
-    (left right : Code encoding) :
-    left.1.toNat * radixWord.toNat + right.1.toNat <
-      2 ^ System.Platform.numBits := by
-  have hleft : left.1.toNat ≤ 255 := Nat.le_pred_of_lt (UInt8.toNat_lt left.1)
-  have hright : right.1.toNat ≤ 255 := Nat.le_pred_of_lt (UInt8.toNat_lt right.1)
-  have hmul :
-      left.1.toNat * encoding.radix ≤ 255 * 256 :=
-    Nat.mul_le_mul hleft encoding.radix_le_byte
-  rcases System.Platform.numBits_eq with hbits | hbits <;>
-    simp only [hradixWord, hbits] <;> omega
+  have hpairMul :
+      (left.toNat * radix.toNat + right.toNat) * radix.toNat <
+        2 ^ System.Platform.numBits :=
+    Nat.lt_of_le_of_lt (Nat.le_add_right _ _) hindex
+  have hpair :
+      left.toNat * radix.toNat + right.toNat < 2 ^ System.Platform.numBits := by
+    rcases Nat.eq_zero_or_pos radix.toNat with hzero | hpos
+    · rw [hzero, Nat.mul_zero, Nat.zero_add]
+      calc
+        right.toNat < 2 ^ 8 := UInt8.toNat_lt right
+        _ ≤ 2 ^ System.Platform.numBits :=
+          Nat.pow_le_pow_right (by decide) (by rcases System.Platform.numBits_eq with h | h <;> omega)
+    · exact Nat.lt_of_le_of_lt (Nat.le_mul_of_pos_right _ hpos) hpairMul
+  have hbinary := binaryByteIndex_toNat radix left right hpair
+  have hstep := mulAdd_toNat (binaryByteIndex radix left right) radix addend
+    (by rwa [hbinary])
+  rwa [hbinary] at hstep
 
 /-- Every intermediate of a three-input byte-table index fits a platform word. -/
 theorem ternaryIndex_noOverflow
@@ -132,6 +132,15 @@ theorem ternaryIndex_noOverflow
     Nat.add_le_add hpairMul haddend
   rcases System.Platform.numBits_eq with hbits | hbits <;>
     simp only [hradixWord, hbits] <;> omega
+
+/-- Every two-input byte-table index fits both supported platform word widths. -/
+theorem binaryIndex_noOverflow
+    (encoding : Encoding Model) (radixWord : USize)
+    (hradixWord : radixWord.toNat = encoding.radix)
+    (left right : Code encoding) :
+    left.1.toNat * radixWord.toNat + right.1.toNat <
+      2 ^ System.Platform.numBits :=
+  (ternaryIndex_noOverflow encoding radixWord hradixWord left right left).2.1
 
 /-- Native-word representation of an at-most-256-code encoding's radix. -/
 @[always_inline, inline] def radixWord (encoding : Encoding Model) : USize :=
@@ -171,11 +180,9 @@ theorem ternaryIndex_lt
     (left right addend : Code encoding) :
     (ternaryByteIndex (radixWord encoding) left.1 right.1 addend.1).toNat <
       (ternaryTotal encoding op).size := by
-  obtain ⟨hleftMul, hpair, hpairMul, hindex⟩ :=
-    ternaryIndex_noOverflow encoding (radixWord encoding)
-      (radixWord_toNat encoding) left right addend
   rw [ternaryByteIndex_toNat (radixWord encoding) left.1 right.1 addend.1
-    hleftMul hpair hpairMul hindex]
+    (ternaryIndex_noOverflow encoding (radixWord encoding)
+      (radixWord_toNat encoding) left right addend).2.2.2]
   simpa only [ternaryTotal, ByteArray.size_ofFn, radixWord_toNat, Nat.mul_comm] using
     Nat.mul_add_lt_mul_of_lt_of_lt
       (Nat.mul_add_lt_mul_of_lt_of_lt left.2 right.2) addend.2

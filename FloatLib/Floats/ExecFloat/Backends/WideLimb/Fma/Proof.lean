@@ -65,10 +65,7 @@ theorem fmaNormal?_refines (h : Eligible fmt) (x y z r : Value fmt)
     rw [← FiniteKernel.Internal.fmaComponents_eq]
     unfold FiniteKernel.Internal.fmaComponents
     rw [ite_eq_left h.isIEEE, hsum, hproduct]
-    have hxe0' : (expField x == 0) = false := by simpa using hxe0
-    have hye0' : (expField y == 0) = false := by simpa using hye0
-    have hze0' : (expField z == 0) = false := by simpa using hze0
-    simp only [FiniteKernel.scale, hxe0', hye0', hze0', Bool.false_eq_true, ite_false]
+    simp only [FiniteKernel.scale, beq_iff_eq, hxe0, hye0, hze0, ite_false]
     rfl
 
 /-- Wide-limb fused multiply-add is the reference fused multiply-add of the operand models. -/

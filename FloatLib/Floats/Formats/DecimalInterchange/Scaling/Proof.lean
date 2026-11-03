@@ -30,6 +30,8 @@ theorem scale_finite (f : Format) (mode : RoundingMode) (s : Bool) (c : Nat) (q 
       projectMagnitude f mode s ((c : ℚ) * (10 : ℚ) ^ (q + n)) (q + n) :=
   projectScaled_eq f mode s c (q + n) (q + n)
 
+/-- Scaling by a power of ten always delivers a valid datum, including NaN, infinite and overflowed
+results. -/
 theorem scale_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
     (scale f mode x n).value.Valid f := by
   cases x with
@@ -55,6 +57,8 @@ theorem scale_exact_status (f : Format) (mode : RoundingMode)
   rw [scale_finite]
   exact projectMagnitude_exact_status f mode s c (q + n) (q + n) hvalid
 
+/-- When the shifted representation is valid in the format, scaling delivers exactly the input value
+times `10 ^ n`. -/
 theorem scale_exact_value (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int)
     (hvalid : (Datum.finite s c (q + n)).Valid f) :
@@ -64,18 +68,18 @@ theorem scale_exact_value (f : Format) (mode : RoundingMode)
   simpa [scale_finite, Datum.toRat?_eq, Datum.finiteValue,
     zpow_add₀ (by norm_num : (10 : ℚ) ≠ 0), mul_assoc] using h
 
-/-- The selected quantum is closest to `q + n` among valid representations of the exact result. -/
+/-- The selected quantum is closest to `q + n` among valid representations of the exact result. The
+shifted representation `(c, q + n)` need not be valid itself; any valid representation `(e, t)` of
+the exact result is at least as far from `q + n`. -/
 theorem scale_quantum_closest (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int)
-    (hvalid : (Datum.finite s c (q + n)).Valid f)
     (d : Nat) (r : Int)
     (hout : (scale f mode (.finite s c q) n).value = .finite s d r)
     (e : Nat) (t : Int) (he : (Datum.finite s e t).Valid f)
     (hvalue : (c : ℚ) * (10 : ℚ) ^ (q + n) = (e : ℚ) * (10 : ℚ) ^ t) :
     |q + n - r| ≤ |q + n - t| := by
   rw [scale_finite] at hout
-  exact projectMagnitude_quantum_closest f mode s c (q + n) (q + n) hvalid
-    d r hout e t he hvalue
+  exact projectMagnitude_quantum_closest f mode s c (q + n) (q + n) d r hout e t he hvalue
 
 /-- Scaling zero changes only its quantum, clamped at the format boundaries. -/
 theorem scale_zero (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int) :
@@ -83,28 +87,39 @@ theorem scale_zero (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int) :
       { value := .finite s 0 (max f.minQuantum (min (q + n) f.maxQuantum)) } := by
   simpa [scale_finite] using projectMagnitude_zero f mode s (q + n)
 
+/-- Scaling a finite datum raises inexact exactly when a finite delivered value differs from the
+exact scaled value, also when it overflows to the greatest finite datum. -/
 theorem scale_inexact_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int) (v : ℚ)
-    (hq : (roundedPair f mode s ((c : ℚ) * (10 : ℚ) ^ (q + n))).2 ≤ f.maxQuantum)
     (hv : (scale f mode (.finite s c q) n).value.toRat? = some v) :
     (scale f mode (.finite s c q) n).status.inexact = true ↔
       v ≠ Datum.finiteValue s c q * (10 : ℚ) ^ n := by
   rw [scale_finite] at hv ⊢
   have h := projectMagnitude_inexact_iff f mode s
-    ((c : ℚ) * (10 : ℚ) ^ (q + n)) v (q + n) hq hv
+    ((c : ℚ) * (10 : ℚ) ^ (q + n)) v (q + n) hv
   cases s <;>
     simpa [Datum.finiteValue, scale_exact_magnitude,
       mul_assoc] using h
 
-/-- Scaling uses the exact, unrounded magnitude in the decimal tininess test. -/
+/-- Scaling uses the exact, unrounded magnitude in the decimal tininess test; an overflowing
+magnitude is never tiny. -/
 theorem scale_underflow_iff (f : Format) (mode : RoundingMode)
-    (s : Bool) (c : Nat) (q n : Int)
-    (hq : (roundedPair f mode s ((c : ℚ) * (10 : ℚ) ^ (q + n))).2 ≤ f.maxQuantum) :
+    (s : Bool) (c : Nat) (q n : Int) :
     (scale f mode (.finite s c q) n).status.underflow = true ↔
       (c : ℚ) * (10 : ℚ) ^ (q + n) < f.minNormal ∧
         (scale f mode (.finite s c q) n).status.inexact = true := by
-  simp [scale_finite, projectMagnitude_eq, not_lt.mpr hq]
+  by_cases hq : (roundedPair f mode s ((c : ℚ) * (10 : ℚ) ^ (q + n))).2 ≤ f.maxQuantum
+  · simp [scale_finite, projectMagnitude_eq, not_lt.mpr hq]
+  · have hq' := lt_of_not_ge hq
+    have hlt := maxFinite_lt_of_roundedPair_overflow f mode s
+      (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num : (0 : ℚ) < 10) _).le) hq'
+    have hmin := f.minNormal_le_maxFinite
+    simp only [scale_finite, projectMagnitude_eq, hq', ↓reduceIte, Bool.false_eq_true, false_iff,
+      not_and]
+    exact fun h => absurd h (not_lt.mpr (hmin.trans hlt.le))
 
+/-- For a nonzero finite datum, `logB` is the exponent of its leading digit, the quantum plus the
+coefficient's digit count minus one, and raises no flags. -/
 theorem decimalExponent_finite (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
     decimalExponent f (.finite s c q) = { value := q + (Nat.log 10 c : Int) } := by
   cases c <;> simp_all [decimalExponent]
@@ -125,6 +140,8 @@ theorem decimalExponent_bounds (f : Format) (s : Bool) (c : Nat) (q : Int) (hc :
   · simpa [zpow_add₀ (by norm_num : (10 : ℚ) ≠ 0), pow_succ, mul_assoc, mul_comm,
       mul_left_comm] using mul_lt_mul_of_pos_right hu hp
 
+/-- For a valid nonzero finite datum, `logB` lies between the least quantum and `emax`, the exponent
+of the largest finite value's leading digit. -/
 theorem decimalExponent_valid_range (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hc : c ≠ 0) (hvalid : (Datum.finite s c q).Valid f) :
     f.minQuantum ≤ (decimalExponent f (.finite s c q)).value ∧
@@ -148,15 +165,29 @@ theorem decimalExponentSentinel_twice_bound (f : Format) :
   unfold decimalExponentSentinel
   omega
 
-/-- Both exceptional integers lie outside the range `±2 × (emax + p - 1)`, as IEEE 754-2019
-§5.3.3 requires for an integer `logBFormat`. -/
+/-- The exceptional sentinel exceeds twice the `logB` bound `emax + p - 1`. -/
 theorem decimalExponentSentinel_outside_logBBound (f : Format) :
-    2 * |logBBound f| < decimalExponentSentinel f ∧
-      -decimalExponentSentinel f < -(2 * |logBBound f|) := by
+    2 * |logBBound f| < decimalExponentSentinel f := by
   have hm := le_max_right (max |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|)
     |logBBound f|
   unfold decimalExponentSentinel
   omega
+
+/--
+Whenever `logB` raises invalid, for a zero, an infinity or a NaN, its integer lies outside
+`±2 × (emax + p - 1)`, as IEEE 754-2019 §5.3.3 requires for an integer `logBFormat`: the negative
+sentinel for a zero and the positive one otherwise.
+-/
+theorem decimalExponent_outside_logBBound (f : Format) (x : Datum)
+    (hinvalid : (decimalExponent f x).status.invalid = true) :
+    2 * |logBBound f| < |(decimalExponent f x).value| := by
+  have h := decimalExponentSentinel_outside_logBBound f
+  have hpos : 0 < decimalExponentSentinel f := lt_of_le_of_lt (by positivity) h
+  rcases x with ⟨s, _ | c, q⟩ | s | ⟨s, t, p⟩
+  · simp [decimalExponent, abs_neg, abs_of_pos hpos, h]
+  · simp [decimalExponent] at hinvalid
+  · simp [decimalExponent, abs_of_pos hpos, h]
+  · simp [decimalExponent, abs_of_pos hpos, h]
 
 /-- Every valid finite exponent has absolute value less than half the exceptional sentinel. -/
 theorem decimalExponent_sentinel_twice_abs (f : Format) (s : Bool) (c : Nat) (q : Int)

@@ -131,6 +131,53 @@ private theorem addFields_sameExponent_eq_canonicalScaledInt
       Dyadic.ofScaledInt, hleft, hright, ne_of_lt hnegative, hnegative]
 
 /--
+Opposite-sign two-limb addition subtracts the smaller magnitude from the larger and keeps the
+sign of the larger operand, so it needs no capacity premise.
+-/
+private theorem addSignedMagnitudes128_signedCoefficient_of_opposite
+    (negative : Bool) (leftMagnitude rightMagnitude : UInt128) :
+    signedCoefficient
+        (addSignedMagnitudes128
+          negative (!negative) leftMagnitude rightMagnitude).1
+        (addSignedMagnitudes128
+          negative (!negative) leftMagnitude rightMagnitude).2.toNat =
+      signedCoefficient negative leftMagnitude.toNat +
+        signedCoefficient (!negative) rightMagnitude.toNat := by
+  by_cases hequal : leftMagnitude = rightMagnitude
+  · subst rightMagnitude
+    cases negative <;>
+      simp [addSignedMagnitudes128, signedCoefficient, UInt128.toNat]
+  · by_cases hless :
+        UInt128.less leftMagnitude rightMagnitude = true
+    · have hnatLess : leftMagnitude.toNat < rightMagnitude.toNat :=
+        (UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mp hless
+      have hsub :
+          (UInt128.sub rightMagnitude leftMagnitude).toNat =
+            rightMagnitude.toNat - leftMagnitude.toNat :=
+        UInt128.sub_toNat rightMagnitude leftMagnitude hnatLess.le
+      cases negative <;>
+        simp [addSignedMagnitudes128, signedCoefficient,
+          hequal, hless, hsub] <;>
+        omega
+    · have hnotLess : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
+        intro h
+        exact hless
+          ((UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mpr h)
+      have hnatNe : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
+        intro h
+        exact hequal (UInt128.toNat_injective h)
+      have hnatLess : rightMagnitude.toNat < leftMagnitude.toNat := by
+        omega
+      have hsub :
+          (UInt128.sub leftMagnitude rightMagnitude).toNat =
+            leftMagnitude.toNat - rightMagnitude.toNat :=
+        UInt128.sub_toNat leftMagnitude rightMagnitude hnatLess.le
+      cases negative <;>
+        simp [addSignedMagnitudes128, signedCoefficient,
+          hequal, hless, hsub] <;>
+        omega
+
+/--
 The native two-limb operation returns the exact sum of its signed integer coefficients.
 
 Only same-sign addition needs a capacity premise. Opposite-sign subtraction is bounded by the
@@ -154,68 +201,10 @@ private theorem addSignedMagnitudes128_signedCoefficient
       add128_value_toNat_of_lt
         leftMagnitude rightMagnitude (hsum rfl)
     simp [addSignedMagnitudes128, signedCoefficient, hadd]
-  · by_cases hequal : leftMagnitude = rightMagnitude
-    · subst rightMagnitude
-      simp [addSignedMagnitudes128, signedCoefficient,
-        UInt128.toNat]
-    · by_cases hless :
-        UInt128.less leftMagnitude rightMagnitude = true
-      · have hnatLess : leftMagnitude.toNat < rightMagnitude.toNat :=
-          (UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mp hless
-        have hsub :
-            (UInt128.sub rightMagnitude leftMagnitude).toNat =
-              rightMagnitude.toNat - leftMagnitude.toNat :=
-          UInt128.sub_toNat rightMagnitude leftMagnitude hnatLess.le
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub]
-        omega
-      · have hnotLess : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
-          intro h
-          exact hless
-            ((UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mpr h)
-        have hnatNe : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
-          intro h
-          exact hequal (UInt128.toNat_injective h)
-        have hnatLess : rightMagnitude.toNat < leftMagnitude.toNat := by
-          omega
-        have hsub :
-            (UInt128.sub leftMagnitude rightMagnitude).toNat =
-              leftMagnitude.toNat - rightMagnitude.toNat :=
-          UInt128.sub_toNat leftMagnitude rightMagnitude hnatLess.le
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub]
-        omega
-  · by_cases hequal : leftMagnitude = rightMagnitude
-    · subst rightMagnitude
-      simp [addSignedMagnitudes128, signedCoefficient,
-        UInt128.toNat]
-    · by_cases hless :
-        UInt128.less leftMagnitude rightMagnitude = true
-      · have hnatLess : leftMagnitude.toNat < rightMagnitude.toNat :=
-          (UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mp hless
-        have hsub :
-            (UInt128.sub rightMagnitude leftMagnitude).toNat =
-              rightMagnitude.toNat - leftMagnitude.toNat :=
-          UInt128.sub_toNat rightMagnitude leftMagnitude hnatLess.le
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub]
-        omega
-      · have hnotLess : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
-          intro h
-          exact hless
-            ((UInt128.less_eq_true_iff leftMagnitude rightMagnitude).mpr h)
-        have hnatNe : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
-          intro h
-          exact hequal (UInt128.toNat_injective h)
-        have hnatLess : rightMagnitude.toNat < leftMagnitude.toNat := by
-          omega
-        have hsub :
-            (UInt128.sub leftMagnitude rightMagnitude).toNat =
-              leftMagnitude.toNat - rightMagnitude.toNat :=
-          UInt128.sub_toNat leftMagnitude rightMagnitude hnatLess.le
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub]
-        omega
+  · exact addSignedMagnitudes128_signedCoefficient_of_opposite
+      false leftMagnitude rightMagnitude
+  · exact addSignedMagnitudes128_signedCoefficient_of_opposite
+      true leftMagnitude rightMagnitude
   · have hadd :=
       add128_value_toNat_of_lt
         leftMagnitude rightMagnitude (hsum rfl)

@@ -111,6 +111,40 @@ theorem scaleByPowerOfTwo_normal_bounds
     bpow_ofNat (fmt.fracWidth + 1)] at hbounds
   simpa [scaled, shift, rationalExponent] using hbounds
 
+/--
+Below the normal range, the quotient scaled to the subnormal grid is below `2 ^ fracWidth`. Values
+below the subnormal range are included.
+-/
+theorem scaleByPowerOfTwo_subnormal_lt_pow2
+    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
+    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
+    (hhigh :
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
+        fmt.minNormalExponent) :
+    let scaled :=
+      Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
+        (exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt))
+    (scaled.1 : Real) / (scaled.2 : Real) < ((pow2 fmt.fracWidth : Nat) : Real) := by
+  let shift :=
+    exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt)
+  let scaledExponent := Numerics.RationalBinary.floorLog2 numerator denominator + shift
+  have hbounds :=
+    scaleByPowerOfTwo_floorLog2_bounds
+      numerator denominator shift hnumerator hdenominator
+  have halign := subnormalAlignExp_add_minSubnormalExponent fmt
+  have hnormal := minSubnormalExponent_add_fracWidth fmt
+  have hscaledSuccLe : scaledExponent + 1 ≤ Int.ofNat fmt.fracWidth := by
+    simp only [scaledExponent, shift]
+    omega
+  dsimp only
+  calc
+    _ < bpow (scaledExponent + 1) := by
+      simpa [scaledExponent, shift] using hbounds.2
+    _ ≤ bpow (Int.ofNat fmt.fracWidth) :=
+      bpow_le_bpow_of_le hscaledSuccLe
+    _ = ((pow2 fmt.fracWidth : Nat) : Real) :=
+      bpow_ofNat fmt.fracWidth
+
 /-- In the subnormal range, the quotient scaled to the subnormal grid lies in `[1, 2 ^ fracWidth)`. -/
 theorem scaleByPowerOfTwo_subnormal_bounds
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
@@ -145,9 +179,6 @@ theorem scaleByPowerOfTwo_subnormal_bounds
   have hscaledNonneg : 0 ≤ scaledExponent := by
     rw [hscaledExponent]
     omega
-  have hscaledSuccLe : scaledExponent + 1 ≤ Int.ofNat fmt.fracWidth := by
-    rw [hscaledExponent]
-    omega
   constructor
   · calc
       (1 : Real) = bpow 0 := by
@@ -155,14 +186,8 @@ theorem scaleByPowerOfTwo_subnormal_bounds
       _ ≤ bpow scaledExponent := bpow_le_bpow_of_le hscaledNonneg
       _ ≤ (scaled.1 : Real) / (scaled.2 : Real) := by
         simpa [scaledExponent] using hbounds.1
-  · calc
-      (scaled.1 : Real) / (scaled.2 : Real) <
-          bpow (scaledExponent + 1) := by
-        simpa [scaledExponent] using hbounds.2
-      _ ≤ bpow (Int.ofNat fmt.fracWidth) :=
-        bpow_le_bpow_of_le hscaledSuccLe
-      _ = ((pow2 fmt.fracWidth : Nat) : Real) :=
-        bpow_ofNat fmt.fracWidth
+  · exact scaleByPowerOfTwo_subnormal_lt_pow2 fmt numerator denominator exponent
+      hnumerator hdenominator hhigh
 
 /-- Directed rounding on the normal grid stays within the closed normalized mantissa interval. -/
 theorem roundQuotDirected_normal_bounds
@@ -186,10 +211,10 @@ theorem roundQuotDirected_normal_bounds
       fmt numerator denominator hnumerator hdenominator
   constructor
   · exact pow2_le_roundQuotDirected_of_le_div
-      roundUp scaled.1 scaled.2 fmt.fracWidth hscaledDenominator
+      roundUp scaled.1 scaled.2 fmt.fracWidth
       (by simpa [scaled, shift, rationalExponent] using hbounds.1)
   · exact roundQuotDirected_le_pow2_of_div_lt
-      roundUp scaled.1 scaled.2 (fmt.fracWidth + 1) hscaledDenominator
+      roundUp scaled.1 scaled.2 (fmt.fracWidth + 1)
       (by simpa [scaled, shift, rationalExponent] using hbounds.2)
 
 /-- In the subnormal range, directed rounding on the subnormal grid lies in `[1, 2 ^ fracWidth]`. -/
@@ -220,21 +245,21 @@ theorem roundQuotDirected_subnormal_bounds
   have hlower :
       pow2 0 ≤ roundQuotDirected roundUp scaled.1 scaled.2 :=
     pow2_le_roundQuotDirected_of_le_div
-      roundUp scaled.1 scaled.2 0 hscaledDenominator
+      roundUp scaled.1 scaled.2 0
       (by simpa [pow2_eq_two_pow, scaled, shift] using hbounds.1)
   constructor
   · simpa [pow2_eq_two_pow, scaled, shift] using hlower
   · exact roundQuotDirected_le_pow2_of_div_lt
-      roundUp scaled.1 scaled.2 fmt.fracWidth hscaledDenominator
+      roundUp scaled.1 scaled.2 fmt.fracWidth
       (by simpa [scaled, shift] using hbounds.2)
 
-/-- Downward rounding on the subnormal grid stays strictly below the smallest normal mantissa. -/
+/--
+Downward rounding on the subnormal grid stays strictly below the smallest normal mantissa, for
+every value below the normal range.
+-/
 theorem roundQuotDirected_false_subnormal_lt_pow2
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hlow :
-      fmt.minSubnormalExponent ≤
-        Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
     (hhigh :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minNormalExponent) :
@@ -242,22 +267,9 @@ theorem roundQuotDirected_false_subnormal_lt_pow2
       Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
         (exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt))
     roundQuotDirected false scaled.1 scaled.2 < pow2 fmt.fracWidth := by
-  let shift :=
-    exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt)
-  let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator shift hdenominator
-  have hbounds :=
-    scaleByPowerOfTwo_subnormal_bounds
-      fmt numerator denominator exponent hnumerator hdenominator hlow hhigh
-  have hround :=
-    natCast_roundQuotDirected_false_le
-      scaled.1 scaled.2 hscaledDenominator
-  have hreal :
-      (roundQuotDirected false scaled.1 scaled.2 : Real) <
-        (pow2 fmt.fracWidth : Nat) :=
-    hround.trans_lt (by simpa [scaled, shift] using hbounds.2)
-  exact_mod_cast hreal
+  exact roundQuotDirected_false_lt_pow2_of_div_lt _ _ fmt.fracWidth
+    (scaleByPowerOfTwo_subnormal_lt_pow2
+      fmt numerator denominator exponent hnumerator hdenominator hhigh)
 
 /-- Downward rounding on the normal grid never carries out of the normalized mantissa interval. -/
 theorem roundQuotDirected_false_normal_lt_pow2_succ
@@ -269,30 +281,14 @@ theorem roundQuotDirected_false_normal_lt_pow2_succ
         (Int.ofNat fmt.fracWidth - rationalExponent)
     roundQuotDirected false scaled.1 scaled.2 <
       pow2 (fmt.fracWidth + 1) := by
-  let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
-  let shift := Int.ofNat fmt.fracWidth - rationalExponent
-  let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator shift hdenominator
-  have hbounds :=
-    scaleByPowerOfTwo_normal_bounds
-      fmt numerator denominator hnumerator hdenominator
-  have hround :=
-    natCast_roundQuotDirected_false_le
-      scaled.1 scaled.2 hscaledDenominator
-  have hreal :
-      (roundQuotDirected false scaled.1 scaled.2 : Real) <
-        (pow2 (fmt.fracWidth + 1) : Nat) :=
-    hround.trans_lt
-      (by simpa [scaled, shift, rationalExponent] using hbounds.2)
-  exact_mod_cast hreal
+  exact roundQuotDirected_false_lt_pow2_of_div_lt _ _ (fmt.fracWidth + 1)
+    (scaleByPowerOfTwo_normal_bounds fmt numerator denominator hnumerator hdenominator).2
 
 /-! ## Exact real bounds on the packing grids -/
 
 /-- Downward quotient rounding on the subnormal grid lies below the exact scaled rational. -/
 theorem roundQuotDirected_false_subnormal_value_le
-    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hdenominator : denominator ≠ 0) :
+    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int) :
     let scaled :=
       Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
         (exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt))
@@ -302,14 +298,12 @@ theorem roundQuotDirected_false_subnormal_value_le
   rw [← scaledRatToReal_subnormal_grid fmt numerator denominator exponent,
     ← scaleByPowerOfTwo_real]
   exact mul_le_mul_of_nonneg_right
-    (natCast_roundQuotDirected_false_le _ _
-      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator _ hdenominator))
+    (natCast_roundQuotDirected_false_le _ _)
     (bpow_nonneg _)
 
 /-- The exact scaled rational lies below upward quotient rounding on the subnormal grid. -/
 theorem le_roundQuotDirected_true_subnormal_value
-    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hdenominator : denominator ≠ 0) :
+    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int) :
     let scaled :=
       Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
         (exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt))
@@ -319,14 +313,12 @@ theorem le_roundQuotDirected_true_subnormal_value
   rw [← scaledRatToReal_subnormal_grid fmt numerator denominator exponent,
     ← scaleByPowerOfTwo_real]
   exact mul_le_mul_of_nonneg_right
-    (le_natCast_roundQuotDirected_true _ _
-      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator _ hdenominator))
+    (le_natCast_roundQuotDirected_true _ _)
     (bpow_nonneg _)
 
 /-- Downward quotient rounding on the normal grid lies below the exact scaled rational. -/
 theorem roundQuotDirected_false_normal_value_le
-    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hdenominator : denominator ≠ 0) :
+    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int) :
     let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
     let scaled :=
       Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
@@ -338,14 +330,12 @@ theorem roundQuotDirected_false_normal_value_le
   rw [← scaledRatToReal_normal_grid fmt numerator denominator
     (Numerics.RationalBinary.floorLog2 numerator denominator) exponent, ← scaleByPowerOfTwo_real]
   exact mul_le_mul_of_nonneg_right
-    (natCast_roundQuotDirected_false_le _ _
-      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator _ hdenominator))
+    (natCast_roundQuotDirected_false_le _ _)
     (bpow_nonneg _)
 
 /-- The exact scaled rational lies below upward quotient rounding on the normal grid. -/
 theorem le_roundQuotDirected_true_normal_value
-    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hdenominator : denominator ≠ 0) :
+    (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int) :
     let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
     let scaled :=
       Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
@@ -357,8 +347,7 @@ theorem le_roundQuotDirected_true_normal_value
   rw [← scaledRatToReal_normal_grid fmt numerator denominator
     (Numerics.RationalBinary.floorLog2 numerator denominator) exponent, ← scaleByPowerOfTwo_real]
   exact mul_le_mul_of_nonneg_right
-    (le_natCast_roundQuotDirected_true _ _
-      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator _ hdenominator))
+    (le_natCast_roundQuotDirected_true _ _)
     (bpow_nonneg _)
 
 end

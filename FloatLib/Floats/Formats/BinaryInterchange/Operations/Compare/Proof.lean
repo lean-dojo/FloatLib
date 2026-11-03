@@ -16,7 +16,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
 The format-parameterized executable comparison agrees with exact dyadic, real, and extended-real
 order. The selection theorems also specify IEEE `minimum` and `maximum`, including infinities
-and signed-zero tie breaking.
+and signed-zero tie breaking: on two zeros, in either order, `minimum` returns the zero whose sign
+is the disjunction of the operands' signs and `maximum` the one whose sign is their conjunction
+(`minimum_of_isZero`, `maximum_of_isZero`, and `minimum_zero_zero` for the policy zeros).
 
 All results are uniform in the binary format.
 -/
@@ -77,28 +79,28 @@ theorem minNum_of_isSNaN_right {fmt : FloatFormat} (x y : Model fmt)
 After signaling NaNs are excluded, `minNum` skips one quiet NaN on the left.
 -/
 theorem minNum_of_isNaN_left {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = true) (hyNaN : isNaN y = false) :
+    (hxSNaN : isSNaN x = false) (hxNaN : isNaN x = true) (hyNaN : isNaN y = false) :
     minNum x y = y := by
+  have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
   simp [minNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /--
 After signaling NaNs are excluded, `minNum` skips one quiet NaN on the right.
 -/
 theorem minNum_of_isNaN_right {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = false) (hyNaN : isNaN y = true) :
+    (hySNaN : isSNaN y = false) (hxNaN : isNaN x = false) (hyNaN : isNaN y = true) :
     minNum x y = x := by
+  have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
   simp [minNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /--
-When both operands are quiet NaNs, `minNum` quiets and returns the left operand.
+When both operands are NaNs and the right one is quiet, `minNum` quiets and returns the left
+operand.
 -/
 theorem minNum_of_isNaN_both {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = true) (hyNaN : isNaN y = true) :
+    (hySNaN : isSNaN y = false) (hxNaN : isNaN x = true) (hyNaN : isNaN y = true) :
     minNum x y = quietNaN x := by
-  simp [minNum, hxSNaN, hySNaN, hxNaN, hyNaN]
+  cases hxSNaN : isSNaN x <;> simp [minNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /--
 A signaling left operand has first priority in `maxNum` and is returned after quieting.
@@ -120,28 +122,28 @@ theorem maxNum_of_isSNaN_right {fmt : FloatFormat} (x y : Model fmt)
 After signaling NaNs are excluded, `maxNum` skips one quiet NaN on the left.
 -/
 theorem maxNum_of_isNaN_left {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = true) (hyNaN : isNaN y = false) :
+    (hxSNaN : isSNaN x = false) (hxNaN : isNaN x = true) (hyNaN : isNaN y = false) :
     maxNum x y = y := by
+  have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
   simp [maxNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /--
 After signaling NaNs are excluded, `maxNum` skips one quiet NaN on the right.
 -/
 theorem maxNum_of_isNaN_right {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = false) (hyNaN : isNaN y = true) :
+    (hySNaN : isSNaN y = false) (hxNaN : isNaN x = false) (hyNaN : isNaN y = true) :
     maxNum x y = x := by
+  have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
   simp [maxNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /--
-When both operands are quiet NaNs, `maxNum` quiets and returns the left operand.
+When both operands are NaNs and the right one is quiet, `maxNum` quiets and returns the left
+operand.
 -/
 theorem maxNum_of_isNaN_both {fmt : FloatFormat} (x y : Model fmt)
-    (hxSNaN : isSNaN x = false) (hySNaN : isSNaN y = false)
-    (hxNaN : isNaN x = true) (hyNaN : isNaN y = true) :
+    (hySNaN : isSNaN y = false) (hxNaN : isNaN x = true) (hyNaN : isNaN y = true) :
     maxNum x y = quietNaN x := by
-  simp [maxNum, hxSNaN, hySNaN, hxNaN, hyNaN]
+  cases hxSNaN : isSNaN x <;> simp [maxNum, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /-! ### IEEE 754-2019 `minimumNumber` and `maximumNumber` -/
 
@@ -204,6 +206,13 @@ theorem bothNaNNumber_eq_or {fmt : FloatFormat} (x y : Model fmt) :
   · exact Or.inr rfl
   · exact Or.inl rfl
 
+/-- The NaN chosen for two NaN operands is a NaN. -/
+theorem isNaN_bothNaNNumber {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = true) (hy : isNaN y = true) :
+    isNaN (bothNaNNumber x y) = true := by
+  unfold bothNaNNumber
+  split <;> simp [hx, hy]
+
 /--
 When neither operand is a signaling NaN, `minimumNumber` agrees with `minNum`, including when
 one or both operands are quiet NaNs.
@@ -229,7 +238,7 @@ theorem isNaN_minimum_eq_false_of_isNaN_eq_false
     (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
     isNaN (minimum x y) = false := by
   have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  simp only [minimum, withNaNSelection_of_none _ _ hchoose]
+  simp only [minimum, Internal.Value.minimum, withNaNSelection_of_none _ _ hchoose]
   cases compareNonNaN x y hxNaN hyNaN <;>
     simp [apply_ite, hxNaN, hyNaN]
 
@@ -239,7 +248,7 @@ theorem isNaN_maximum_eq_false_of_isNaN_eq_false
     (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
     isNaN (maximum x y) = false := by
   have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  simp only [maximum, withNaNSelection_of_none _ _ hchoose]
+  simp only [maximum, Internal.Value.maximum, withNaNSelection_of_none _ _ hchoose]
   cases compareNonNaN x y hxNaN hyNaN <;>
     simp [apply_ite, hxNaN, hyNaN]
 
@@ -258,6 +267,28 @@ theorem isNaN_maximumNumber_eq_false_of_not_both
     isNaN (maximumNumber x y) = false := by
   cases hx : isNaN x <;> cases hy : isNaN y <;>
     simp_all [maximumNumber, Internal.Value.maximumNumber, isNaN_maximum_eq_false_of_isNaN_eq_false]
+
+/-- `minimumNumber` returns a NaN exactly when both operands are NaNs. -/
+theorem isNaN_minimumNumber {fmt : FloatFormat} (x y : Model fmt) :
+    isNaN (minimumNumber x y) = (isNaN x && isNaN y) := by
+  cases hx : isNaN x <;> cases hy : isNaN y <;> simp only [Bool.and_self, Bool.and_false,
+      Bool.false_and]
+  · exact isNaN_minimumNumber_eq_false_of_not_both x y (Or.inl hx)
+  · exact isNaN_minimumNumber_eq_false_of_not_both x y (Or.inl hx)
+  · exact isNaN_minimumNumber_eq_false_of_not_both x y (Or.inr hy)
+  · rw [minimumNumber_of_isNaN_both x y hx hy]
+    exact isNaN_bothNaNNumber hx hy
+
+/-- `maximumNumber` returns a NaN exactly when both operands are NaNs. -/
+theorem isNaN_maximumNumber {fmt : FloatFormat} (x y : Model fmt) :
+    isNaN (maximumNumber x y) = (isNaN x && isNaN y) := by
+  cases hx : isNaN x <;> cases hy : isNaN y <;> simp only [Bool.and_self, Bool.and_false,
+      Bool.false_and]
+  · exact isNaN_maximumNumber_eq_false_of_not_both x y (Or.inl hx)
+  · exact isNaN_maximumNumber_eq_false_of_not_both x y (Or.inl hx)
+  · exact isNaN_maximumNumber_eq_false_of_not_both x y (Or.inr hy)
+  · rw [maximumNumber_of_isNaN_both x y hx hy]
+    exact isNaN_bothNaNNumber hx hy
 
 /-! ## Finite comparison -/
 
@@ -302,39 +333,24 @@ theorem compare_eq_some_lt_iff_toReal_lt
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
     compare x y = some .lt ↔ toReal x < toReal y := by
-  have hcompare :=
-    compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy
-  have hxReal : toReal x = dx.toReal := by
-    simp [toReal_eq, hx]
-  have hyReal : toReal y = dy.toReal := by
-    simp [toReal_eq, hy]
-  simpa [hcompare, hxReal, hyReal] using cmpDyadic_lt_iff dx dy
+  simpa [compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy, toReal_eq, hx, hy] using
+    cmpDyadic_lt_iff dx dy
 
 /-- Finite executable comparison returns `.eq` exactly when the decoded reals are equal. -/
 theorem compare_eq_some_eq_iff_toReal_eq
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
     compare x y = some .eq ↔ toReal x = toReal y := by
-  have hcompare :=
-    compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy
-  have hxReal : toReal x = dx.toReal := by
-    simp [toReal_eq, hx]
-  have hyReal : toReal y = dy.toReal := by
-    simp [toReal_eq, hy]
-  simpa [hcompare, hxReal, hyReal] using cmpDyadic_eq_iff dx dy
+  simpa [compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy, toReal_eq, hx, hy] using
+    cmpDyadic_eq_iff dx dy
 
 /-- Finite executable comparison returns `.gt` exactly when the decoded reals are reversed. -/
 theorem compare_eq_some_gt_iff_toReal_gt
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
     compare x y = some .gt ↔ toReal y < toReal x := by
-  have hcompare :=
-    compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy
-  have hxReal : toReal x = dx.toReal := by
-    simp [toReal_eq, hx]
-  have hyReal : toReal y = dy.toReal := by
-    simp [toReal_eq, hy]
-  simpa [hcompare, hxReal, hyReal] using cmpDyadic_gt_iff dx dy
+  simpa [compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy, toReal_eq, hx, hy] using
+    cmpDyadic_gt_iff dx dy
 
 /-- On finite inputs, executable comparison agrees with strict real order. -/
 theorem compare_eq_some_lt_iff_toReal_lt_of_isFinite
@@ -378,13 +394,13 @@ theorem compare_eq_some_gt_iff_toReal_gt_of_isFinite
 
 In a format without signed zero, both inputs and the result are the single positive zero.
 -/
-@[simp] theorem minimum_zero_false_true (fmt : FloatFormat) :
+theorem minimum_zero_false_true (fmt : FloatFormat) :
     minimum (zero fmt false) (zero fmt true) = zero fmt true := by
   have hchoose :=
     chooseNaN2_none_of_not_isNaN
       (zero fmt false) (zero fmt true)
       (isNaN_zero fmt false) (isNaN_zero fmt true)
-  simp [minimum, hchoose, compare_zero_false_true, signBit_zero]
+  simp [minimum, Internal.Value.minimum, hchoose, compare_zero_false_true, signBit_zero]
   cases hfmt : fmt.supportsSignedZero <;> simp [zero, hfmt]
 
 /--
@@ -392,13 +408,107 @@ In a format without signed zero, both inputs and the result are the single posit
 
 In a format without signed zero, both inputs already denote the single positive zero.
 -/
-@[simp] theorem maximum_zero_false_true (fmt : FloatFormat) :
+theorem maximum_zero_false_true (fmt : FloatFormat) :
     maximum (zero fmt false) (zero fmt true) = zero fmt false := by
   have hchoose :=
     chooseNaN2_none_of_not_isNaN
       (zero fmt false) (zero fmt true)
       (isNaN_zero fmt false) (isNaN_zero fmt true)
-  simp [maximum, hchoose, compare_zero_false_true, signBit_zero]
+  simp [maximum, Internal.Value.maximum, hchoose, compare_zero_false_true, signBit_zero]
+
+/-- A zero is not a NaN, in every encoding. -/
+private theorem isNaN_eq_false_of_isZero {fmt : FloatFormat} {x : Model fmt}
+    (hx : isZero x = true) : isNaN x = false :=
+  isNaN_eq_false_of_isFinite_eq_true x (isFinite_eq_true_of_isZero_eq_true x hx)
+
+/-- Two zeros compare equal, whatever their signs and order. -/
+theorem compare_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    compare x y = some .eq := by
+  rw [compare_eq_some_cmpDyadic_of_toDyadic? x y (toDyadic?_eq_zero_of_isZero_eq_true x hx)
+    (toDyadic?_eq_zero_of_isZero_eq_true y hy)]
+  simp [cmpDyadic]
+
+/--
+On two zeros, `minimum` returns the zero whose sign is the disjunction of the operands' sign
+bits: either order of `+0` and `-0` gives `-0`, and two zeros of one sign give that zero. A format
+without signed zero has one zero, which both operands and the result are.
+-/
+theorem minimum_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    minimum x y = zero fmt (signBit x || signBit y) := by
+  have hxNaN := isNaN_eq_false_of_isZero hx
+  have hyNaN := isNaN_eq_false_of_isZero hy
+  simp [minimum, Internal.Value.minimum, chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN,
+    compareNonNaN_eq_of_compare_eq_some x y hxNaN hyNaN (compare_of_isZero hx hy), hx, hy]
+
+/--
+On two zeros, `maximum` returns the zero whose sign is the conjunction of the operands' sign
+bits: either order of `+0` and `-0` gives `+0`, and two zeros of one sign give that zero.
+-/
+theorem maximum_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    maximum x y = zero fmt (signBit x && signBit y) := by
+  have hxNaN := isNaN_eq_false_of_isZero hx
+  have hyNaN := isNaN_eq_false_of_isZero hy
+  simp [maximum, Internal.Value.maximum, chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN,
+    compareNonNaN_eq_of_compare_eq_some x y hxNaN hyNaN (compare_of_isZero hx hy), hx, hy]
+
+/--
+`minimum` of the policy zeros of signs `s` and `t` is the policy zero of sign `s || t`, for both
+argument orders and equal signs.
+-/
+@[simp] theorem minimum_zero_zero (fmt : FloatFormat) (s t : Bool) :
+    minimum (zero fmt s) (zero fmt t) = zero fmt (s || t) := by
+  rw [minimum_of_isZero (isZero_zero fmt s) (isZero_zero fmt t), signBit_zero, signBit_zero]
+  cases s <;> cases t <;> cases hsigned : fmt.supportsSignedZero <;> simp [zero, hsigned]
+
+/--
+`maximum` of the policy zeros of signs `s` and `t` is the policy zero of sign `s && t`, for both
+argument orders and equal signs.
+-/
+@[simp] theorem maximum_zero_zero (fmt : FloatFormat) (s t : Bool) :
+    maximum (zero fmt s) (zero fmt t) = zero fmt (s && t) := by
+  rw [maximum_of_isZero (isZero_zero fmt s) (isZero_zero fmt t), signBit_zero, signBit_zero]
+  cases s <;> cases t <;> cases hsigned : fmt.supportsSignedZero <;> simp [zero, hsigned]
+
+/-- On two zeros, `minNum` is `minimum`: the sign of the result is the disjunction of the signs. -/
+theorem minNum_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    minNum x y = zero fmt (signBit x || signBit y) := by
+  rw [minNum_eq_minimum_of_not_isNaN x y
+    (isNaN_eq_false_of_isZero hx) (isNaN_eq_false_of_isZero hy),
+    minimum_of_isZero hx hy]
+
+/-- On two zeros, `maxNum` is `maximum`: the sign of the result is the conjunction of the signs. -/
+theorem maxNum_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    maxNum x y = zero fmt (signBit x && signBit y) := by
+  rw [maxNum_eq_maximum_of_not_isNaN x y
+    (isNaN_eq_false_of_isZero hx) (isNaN_eq_false_of_isZero hy),
+    maximum_of_isZero hx hy]
+
+/--
+On two zeros, `minimumNumber` is `minimum`: the sign of the result is the disjunction of the
+signs.
+-/
+theorem minimumNumber_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    minimumNumber x y = zero fmt (signBit x || signBit y) := by
+  rw [minimumNumber_eq_minimum_of_not_isNaN x y
+    (isNaN_eq_false_of_isZero hx) (isNaN_eq_false_of_isZero hy),
+    minimum_of_isZero hx hy]
+
+/--
+On two zeros, `maximumNumber` is `maximum`: the sign of the result is the conjunction of the
+signs.
+-/
+theorem maximumNumber_of_isZero {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isZero x = true) (hy : isZero y = true) :
+    maximumNumber x y = zero fmt (signBit x && signBit y) := by
+  rw [maximumNumber_eq_maximum_of_not_isNaN x y
+    (isNaN_eq_false_of_isZero hx) (isNaN_eq_false_of_isZero hy),
+    maximum_of_isZero hx hy]
 
 /--
 For every encoding with signed zero, `minimum (+0, -0)` returns the negative zero encoding.
@@ -458,109 +568,101 @@ For every encoding with signed zero, `maximumNumber (+0, -0)` returns the positi
 
 /-! ## Finite minimum and maximum -/
 
-/-- On finite inputs, IEEE `minimum` agrees with real `min`. -/
+/--
+On non-NaN operands, a value map that respects the model comparison and gives every zero the same
+value carries IEEE `minimum` to `min`. The signed-zero tie break is invisible to such a map.
+-/
+private theorem map_minimum_eq_min {α : Type*} [LinearOrder α] {fmt : FloatFormat}
+    (f : Model fmt → α) {x y : Model fmt} (hx : isNaN x = false) (hy : isNaN y = false)
+    (hzero : isZero x = true → isZero y = true → ∀ sign, f (zero fmt sign) = f x)
+    (hlt : compare x y = some .lt → f x < f y)
+    (heq : compare x y = some .eq → f x = f y)
+    (hgt : compare x y = some .gt → f y < f x) :
+    f (minimum x y) = min (f x) (f y) := by
+  have hchoose := chooseNaN2_none_of_not_isNaN x y hx hy
+  cases hcompare : compare x y with
+  | none =>
+      rcases (compare_eq_none_iff x y).1 hcompare with hnan | hnan <;> simp_all
+  | some order =>
+      cases order with
+      | lt =>
+          simp [minimum, Internal.Value.minimum, hchoose, hcompare, min_eq_left (hlt hcompare).le]
+      | gt =>
+          simp [minimum, Internal.Value.minimum, hchoose, hcompare, min_eq_right (hgt hcompare).le]
+      | eq =>
+          cases hzeros : isZero x && isZero y with
+          | false =>
+              simp [minimum, Internal.Value.minimum, hchoose, hcompare, hzeros,
+                min_eq_left (heq hcompare).le]
+          | true =>
+              have hzeroParts : isZero x = true ∧ isZero y = true := by
+                simpa [Bool.and_eq_true] using hzeros
+              simp [minimum, Internal.Value.minimum, hchoose, hcompare, hzeros,
+                hzero hzeroParts.1 hzeroParts.2, min_eq_left (heq hcompare).le]
+
+/--
+On non-NaN operands, a value map that respects the model comparison and gives every zero the same
+value carries IEEE `maximum` to `max`.
+-/
+private theorem map_maximum_eq_max {α : Type*} [LinearOrder α] {fmt : FloatFormat}
+    (f : Model fmt → α) {x y : Model fmt} (hx : isNaN x = false) (hy : isNaN y = false)
+    (hzero : isZero x = true → isZero y = true → ∀ sign, f (zero fmt sign) = f x)
+    (hlt : compare x y = some .lt → f x < f y)
+    (heq : compare x y = some .eq → f x = f y)
+    (hgt : compare x y = some .gt → f y < f x) :
+    f (maximum x y) = max (f x) (f y) := by
+  have hchoose := chooseNaN2_none_of_not_isNaN x y hx hy
+  cases hcompare : compare x y with
+  | none =>
+      rcases (compare_eq_none_iff x y).1 hcompare with hnan | hnan <;> simp_all
+  | some order =>
+      cases order with
+      | lt =>
+          simp [maximum, Internal.Value.maximum, hchoose, hcompare, max_eq_right (hlt hcompare).le]
+      | gt =>
+          simp [maximum, Internal.Value.maximum, hchoose, hcompare, max_eq_left (hgt hcompare).le]
+      | eq =>
+          cases hzeros : isZero x && isZero y with
+          | false =>
+              simp [maximum, Internal.Value.maximum, hchoose, hcompare, hzeros,
+                max_eq_left (heq hcompare).ge]
+          | true =>
+              have hzeroParts : isZero x = true ∧ isZero y = true := by
+                simpa [Bool.and_eq_true] using hzeros
+              simp [maximum, Internal.Value.maximum, hchoose, hcompare, hzeros,
+                hzero hzeroParts.1 hzeroParts.2, max_eq_left (heq hcompare).ge]
+
+/--
+On finite inputs, IEEE `minimum` agrees with real `min`. Its signed-zero tie break,
+`minimum(+0, -0) = -0`, is invisible here because both zeros denote `0`.
+-/
 theorem toReal_minimum_eq_min
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
     toReal (minimum x y) = min (toReal x) (toReal y) := by
-  have hxNaN := isNaN_eq_false_of_toDyadic?_some hx
-  have hyNaN := isNaN_eq_false_of_toDyadic?_some hy
-  have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  have hcompare :=
-    compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy
-  cases horder : cmpDyadic dx dy with
-  | lt =>
-      have hcompare' : compare x y = some .lt := by
-        simpa [horder] using hcompare
-      have hlt : toReal x < toReal y :=
-        (compare_eq_some_lt_iff_toReal_lt x y hx hy).mp hcompare'
-      calc
-        toReal (minimum x y) = toReal x := by
-          simp [minimum, hchoose, hcompare']
-        _ = min (toReal x) (toReal y) := (min_eq_left hlt.le).symm
-  | eq =>
-      have hcompare' : compare x y = some .eq := by
-        simpa [horder] using hcompare
-      have heq : toReal x = toReal y :=
-        (compare_eq_some_eq_iff_toReal_eq x y hx hy).mp hcompare'
-      cases hzeros : isZero x && isZero y with
-      | false =>
-          calc
-            toReal (minimum x y) = toReal x := by
-              simp [minimum, hchoose, hcompare', hzeros]
-            _ = min (toReal x) (toReal y) := (min_eq_left heq.le).symm
-      | true =>
-          have hzeroParts : isZero x = true ∧ isZero y = true := by
-            simpa [Bool.and_eq_true] using hzeros
-          have hxZero := toReal_eq_zero_of_isZero x hzeroParts.1
-          have hyZero := toReal_eq_zero_of_isZero y hzeroParts.2
-          calc
-            toReal (minimum x y) = 0 := by
-              cases hsign : signBit x || signBit y <;>
-                simp [minimum, hchoose, hcompare', hzeros, hsign]
-            _ = min (toReal x) (toReal y) := by
-              simp [hxZero, hyZero]
-  | gt =>
-      have hcompare' : compare x y = some .gt := by
-        simpa [horder] using hcompare
-      have hlt : toReal y < toReal x :=
-        (compare_eq_some_gt_iff_toReal_gt x y hx hy).mp hcompare'
-      calc
-        toReal (minimum x y) = toReal y := by
-          simp [minimum, hchoose, hcompare']
-        _ = min (toReal x) (toReal y) := (min_eq_right hlt.le).symm
+  exact map_minimum_eq_min toReal (isNaN_eq_false_of_toDyadic?_some hx)
+    (isNaN_eq_false_of_toDyadic?_some hy)
+    (fun hxz _ _ => by
+      rw [toReal_eq_zero_of_isZero x hxz, toReal_eq_zero_of_isZero _ (isZero_zero _ _)])
+    (compare_eq_some_lt_iff_toReal_lt x y hx hy).mp
+    (compare_eq_some_eq_iff_toReal_eq x y hx hy).mp
+    (compare_eq_some_gt_iff_toReal_gt x y hx hy).mp
 
-/-- On finite inputs, IEEE `maximum` agrees with real `max`. -/
+/--
+On finite inputs, IEEE `maximum` agrees with real `max`. Its signed-zero tie break,
+`maximum(+0, -0) = +0`, is invisible here because both zeros denote `0`.
+-/
 theorem toReal_maximum_eq_max
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
     toReal (maximum x y) = max (toReal x) (toReal y) := by
-  have hxNaN := isNaN_eq_false_of_toDyadic?_some hx
-  have hyNaN := isNaN_eq_false_of_toDyadic?_some hy
-  have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  have hcompare :=
-    compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy
-  cases horder : cmpDyadic dx dy with
-  | lt =>
-      have hcompare' : compare x y = some .lt := by
-        simpa [horder] using hcompare
-      have hlt : toReal x < toReal y :=
-        (compare_eq_some_lt_iff_toReal_lt x y hx hy).mp hcompare'
-      calc
-        toReal (maximum x y) = toReal y := by
-          simp [maximum, hchoose, hcompare']
-        _ = max (toReal x) (toReal y) := (max_eq_right hlt.le).symm
-  | eq =>
-      have hcompare' : compare x y = some .eq := by
-        simpa [horder] using hcompare
-      have heq : toReal x = toReal y :=
-        (compare_eq_some_eq_iff_toReal_eq x y hx hy).mp hcompare'
-      cases hzeros : isZero x && isZero y with
-      | false =>
-          calc
-            toReal (maximum x y) = toReal x := by
-              simp [maximum, hchoose, hcompare', hzeros]
-            _ = max (toReal x) (toReal y) := (max_eq_left heq.ge).symm
-      | true =>
-          have hzeroParts : isZero x = true ∧ isZero y = true := by
-            simpa [Bool.and_eq_true] using hzeros
-          have hxZero := toReal_eq_zero_of_isZero x hzeroParts.1
-          have hyZero := toReal_eq_zero_of_isZero y hzeroParts.2
-          calc
-            toReal (maximum x y) = 0 := by
-              cases hsign : (!signBit x) || (!signBit y) <;>
-                simp [maximum, hchoose, hcompare', hzeros]
-            _ = max (toReal x) (toReal y) := by
-              simp [hxZero, hyZero]
-  | gt =>
-      have hcompare' : compare x y = some .gt := by
-        simpa [horder] using hcompare
-      have hlt : toReal y < toReal x :=
-        (compare_eq_some_gt_iff_toReal_gt x y hx hy).mp hcompare'
-      calc
-        toReal (maximum x y) = toReal x := by
-          simp [maximum, hchoose, hcompare']
-        _ = max (toReal x) (toReal y) := (max_eq_left hlt.le).symm
+  exact map_maximum_eq_max toReal (isNaN_eq_false_of_toDyadic?_some hx)
+    (isNaN_eq_false_of_toDyadic?_some hy)
+    (fun hxz _ _ => by
+      rw [toReal_eq_zero_of_isZero x hxz, toReal_eq_zero_of_isZero _ (isZero_zero _ _)])
+    (compare_eq_some_lt_iff_toReal_lt x y hx hy).mp
+    (compare_eq_some_eq_iff_toReal_eq x y hx hy).mp
+    (compare_eq_some_gt_iff_toReal_gt x y hx hy).mp
 
 /-- On finite inputs, IEEE `minimum` agrees with real `min`. -/
 theorem toReal_minimum_eq_min_of_isFinite
@@ -579,6 +681,33 @@ theorem toReal_maximum_eq_max_of_isFinite
   obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
   exact toReal_maximum_eq_max x y hdx hdy
+
+/--
+IEEE `maximum` of finite values is finite in every format. Two equal zeros give the policy-aware
+zero, which is positive zero when the format has a single zero.
+-/
+theorem isFinite_maximum {fmt : FloatFormat} (x y : Model fmt) (hx : isFinite x = true)
+    (hy : isFinite y = true) : isFinite (maximum x y) = true := by
+  have hxNaN := isNaN_eq_false_of_isFinite_eq_true x hx
+  have hyNaN := isNaN_eq_false_of_isFinite_eq_true y hy
+  have hzero (sign : Bool) : isFinite (zero fmt sign) = true :=
+    isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt sign)
+  have ordinary : maximum x y =
+      match compareNonNaN x y hxNaN hyNaN with
+      | .lt => y
+      | .gt => x
+      | .eq => if isZero x && isZero y then zero fmt (signBit x && signBit y) else x := by
+    simp only [maximum, Internal.Value.maximum, chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN,
+      withNaNSelection, dite_eq_left True.intro]
+    rfl
+  rw [ordinary]
+  cases comparison : compareNonNaN x y hxNaN hyNaN with
+  | lt => simpa only [comparison] using hy
+  | gt => simpa only [comparison] using hx
+  | eq =>
+      by_cases zeros : (isZero x && isZero y) = true
+      · simpa only [comparison, ite_eq_left zeros] using hzero (signBit x && signBit y)
+      · simpa only [comparison, ite_eq_right zeros] using hx
 
 /-! ## Extended-real comparison -/
 
@@ -692,77 +821,48 @@ theorem toEReal_eq_zero_of_isZero
     toReal_eq_zero_of_isZero x hx]
   simp
 
-/-- IEEE `minimum` agrees with `min` on every pair of non-NaN extended-real values. -/
+/-- On non-NaN operands, the total extended-real interpretation respects the model comparison. -/
+private theorem toEReal_respects_compare {fmt : FloatFormat} {x y : Model fmt}
+    (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
+    (compare x y = some .lt → toEReal x < toEReal y) ∧
+      (compare x y = some .eq → toEReal x = toEReal y) ∧
+      (compare x y = some .gt → toEReal y < toEReal x) := by
+  obtain ⟨ex, hx⟩ := exists_toEReal?_of_isNaN_eq_false x hxNaN
+  obtain ⟨ey, hy⟩ := exists_toEReal?_of_isNaN_eq_false y hyNaN
+  rw [toEReal_of_toEReal? hx, toEReal_of_toEReal? hy]
+  exact ⟨(compare_eq_some_lt_iff_toEReal_lt hx hy).mp,
+    (compare_eq_some_eq_iff_toEReal_eq hx hy).mp,
+    (compare_eq_some_gt_iff_toEReal_gt hx hy).mp⟩
+
+/-- Every zero has the extended-real value of any other zero, whatever the signs. -/
+private theorem toEReal_zero_eq_of_isZero {fmt : FloatFormat} {x : Model fmt}
+    (hx : isZero x = true) (sign : Bool) :
+    toEReal (zero fmt sign) = toEReal x := by
+  rw [toEReal_eq_zero_of_isZero x hx, toEReal_eq_zero_of_isZero _ (isZero_zero _ _)]
+
+/--
+IEEE `minimum` agrees with `min` on every pair of non-NaN values in `EReal`, infinities included.
+NaNs are excluded: `minimum` propagates them, while `toEReal` sends them to `0`.
+-/
 theorem toEReal_minimum_eq_min
     {fmt : FloatFormat} (x y : Model fmt)
     (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
     toEReal (minimum x y) = min (toEReal x) (toEReal y) := by
-  obtain ⟨ex, hx⟩ := exists_toEReal?_of_isNaN_eq_false x hxNaN
-  obtain ⟨ey, hy⟩ := exists_toEReal?_of_isNaN_eq_false y hyNaN
-  have hxTotal : toEReal x = ex := toEReal_of_toEReal? hx
-  have hyTotal : toEReal y = ey := toEReal_of_toEReal? hy
-  have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  rcases lt_trichotomy ex ey with hlt | heq | hgt
-  · have hcompare :=
-      (compare_eq_some_lt_iff_toEReal_lt hx hy).mpr hlt
-    simp [minimum, hchoose, hcompare, hxTotal, hyTotal, min_eq_left hlt.le]
-  · have hcompare :=
-      (compare_eq_some_eq_iff_toEReal_eq hx hy).mpr heq
-    cases hzeros : isZero x && isZero y with
-    | false =>
-        simp [minimum, hchoose, hcompare, hzeros, hxTotal, hyTotal,
-          min_eq_left heq.le]
-    | true =>
-        have hzeroParts : isZero x = true ∧ isZero y = true := by
-          simpa [Bool.and_eq_true] using hzeros
-        have hxZero := toEReal_eq_zero_of_isZero x hzeroParts.1
-        have hyZero := toEReal_eq_zero_of_isZero y hzeroParts.2
-        calc
-          toEReal (minimum x y) = 0 := by
-            by_cases hsign : signBit x = true ∨ signBit y = true
-            · simp [minimum, hchoose, hcompare, hzeros]
-            · simp [minimum, hchoose, hcompare, hzeros]
-          _ = min (toEReal x) (toEReal y) := by
-            simp [hxZero, hyZero]
-  · have hcompare :=
-      (compare_eq_some_gt_iff_toEReal_gt hx hy).mpr hgt
-    simp [minimum, hchoose, hcompare, hxTotal, hyTotal, min_eq_right hgt.le]
+  obtain ⟨hlt, heq, hgt⟩ := toEReal_respects_compare hxNaN hyNaN
+  exact map_minimum_eq_min toEReal hxNaN hyNaN
+    (fun hxz _ sign => toEReal_zero_eq_of_isZero hxz sign) hlt heq hgt
 
-/-- IEEE `maximum` agrees with `max` on every pair of non-NaN extended-real values. -/
+/--
+IEEE `maximum` agrees with `max` on every pair of non-NaN values in `EReal`, infinities included.
+NaNs are excluded: `maximum` propagates them, while `toEReal` sends them to `0`.
+-/
 theorem toEReal_maximum_eq_max
     {fmt : FloatFormat} (x y : Model fmt)
     (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
     toEReal (maximum x y) = max (toEReal x) (toEReal y) := by
-  obtain ⟨ex, hx⟩ := exists_toEReal?_of_isNaN_eq_false x hxNaN
-  obtain ⟨ey, hy⟩ := exists_toEReal?_of_isNaN_eq_false y hyNaN
-  have hxTotal : toEReal x = ex := toEReal_of_toEReal? hx
-  have hyTotal : toEReal y = ey := toEReal_of_toEReal? hy
-  have hchoose := chooseNaN2_none_of_not_isNaN x y hxNaN hyNaN
-  rcases lt_trichotomy ex ey with hlt | heq | hgt
-  · have hcompare :=
-      (compare_eq_some_lt_iff_toEReal_lt hx hy).mpr hlt
-    simp [maximum, hchoose, hcompare, hxTotal, hyTotal, max_eq_right hlt.le]
-  · have hcompare :=
-      (compare_eq_some_eq_iff_toEReal_eq hx hy).mpr heq
-    cases hzeros : isZero x && isZero y with
-    | false =>
-        simp [maximum, hchoose, hcompare, hzeros, hxTotal, hyTotal,
-          max_eq_left heq.ge]
-    | true =>
-        have hzeroParts : isZero x = true ∧ isZero y = true := by
-          simpa [Bool.and_eq_true] using hzeros
-        have hxZero := toEReal_eq_zero_of_isZero x hzeroParts.1
-        have hyZero := toEReal_eq_zero_of_isZero y hzeroParts.2
-        calc
-          toEReal (maximum x y) = 0 := by
-            by_cases hsign : signBit x = false ∨ signBit y = false
-            · simp [maximum, hchoose, hcompare, hzeros]
-            · simp [maximum, hchoose, hcompare, hzeros]
-          _ = max (toEReal x) (toEReal y) := by
-            simp [hxZero, hyZero]
-  · have hcompare :=
-      (compare_eq_some_gt_iff_toEReal_gt hx hy).mpr hgt
-    simp [maximum, hchoose, hcompare, hxTotal, hyTotal, max_eq_left hgt.le]
+  obtain ⟨hlt, heq, hgt⟩ := toEReal_respects_compare hxNaN hyNaN
+  exact map_maximum_eq_max toEReal hxNaN hyNaN
+    (fun hxz _ sign => toEReal_zero_eq_of_isZero hxz sign) hlt heq hgt
 
 /--
 On non-NaN values, `minNum` has the extended-real semantics of mathematical minimum. The encoded
@@ -805,23 +905,43 @@ theorem toEReal_maximumNumber_eq_max
   exact toEReal_maximum_eq_max x y hxNaN hyNaN
 
 /--
-`minimumNumber` is commutative up to extended-real value on non-NaN operands. This interpretation
-identifies the two signed zeros.
+`minimumNumber` is commutative up to extended-real value. The interpretation identifies the two
+signed zeros and sends every NaN to zero, so it does not see which word is delivered. On two zeros
+the delivered word does not depend on the order (`minimumNumber_of_isZero`), and a single NaN
+operand is skipped in either order. For two NaN operands both orders deliver a NaN
+(`isNaN_minimumNumber`), but not always the same one: `bothNaNNumber` quiets the left operand
+unless only the right one is signaling, so the sign and payload can depend on the order.
 -/
 theorem toEReal_minimumNumber_comm
-    {fmt : FloatFormat} (x y : Model fmt)
-    (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
+    {fmt : FloatFormat} (x y : Model fmt) :
     toEReal (minimumNumber x y) = toEReal (minimumNumber y x) := by
-  rw [toEReal_minimumNumber_eq_min x y hxNaN hyNaN,
-    toEReal_minimumNumber_eq_min y x hyNaN hxNaN, min_comm]
+  cases hxNaN : isNaN x <;> cases hyNaN : isNaN y
+  · rw [toEReal_minimumNumber_eq_min x y hxNaN hyNaN,
+      toEReal_minimumNumber_eq_min y x hyNaN hxNaN, min_comm]
+  · rw [minimumNumber_of_isNaN_right x y hxNaN hyNaN, minimumNumber_of_isNaN_left y x hyNaN hxNaN]
+  · rw [minimumNumber_of_isNaN_left x y hxNaN hyNaN, minimumNumber_of_isNaN_right y x hyNaN hxNaN]
+  · rw [minimumNumber_of_isNaN_both x y hxNaN hyNaN, minimumNumber_of_isNaN_both y x hyNaN hxNaN,
+      toEReal_eq_ite, toEReal_eq_ite, isNaN_bothNaNNumber hxNaN hyNaN,
+      isNaN_bothNaNNumber hyNaN hxNaN]
+    rfl
 
-/-- The `maximumNumber` counterpart of `toEReal_minimumNumber_comm`. -/
+/--
+The `maximumNumber` counterpart of `toEReal_minimumNumber_comm`, with the same scope: for two NaN
+operands both orders deliver a NaN (`isNaN_maximumNumber`) whose sign and payload can depend on the
+order.
+-/
 theorem toEReal_maximumNumber_comm
-    {fmt : FloatFormat} (x y : Model fmt)
-    (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) :
+    {fmt : FloatFormat} (x y : Model fmt) :
     toEReal (maximumNumber x y) = toEReal (maximumNumber y x) := by
-  rw [toEReal_maximumNumber_eq_max x y hxNaN hyNaN,
-    toEReal_maximumNumber_eq_max y x hyNaN hxNaN, max_comm]
+  cases hxNaN : isNaN x <;> cases hyNaN : isNaN y
+  · rw [toEReal_maximumNumber_eq_max x y hxNaN hyNaN,
+      toEReal_maximumNumber_eq_max y x hyNaN hxNaN, max_comm]
+  · rw [maximumNumber_of_isNaN_right x y hxNaN hyNaN, maximumNumber_of_isNaN_left y x hyNaN hxNaN]
+  · rw [maximumNumber_of_isNaN_left x y hxNaN hyNaN, maximumNumber_of_isNaN_right y x hyNaN hxNaN]
+  · rw [maximumNumber_of_isNaN_both x y hxNaN hyNaN, maximumNumber_of_isNaN_both y x hyNaN hxNaN,
+      toEReal_eq_ite, toEReal_eq_ite, isNaN_bothNaNNumber hxNaN hyNaN,
+      isNaN_bothNaNNumber hyNaN hxNaN]
+    rfl
 
 end
 

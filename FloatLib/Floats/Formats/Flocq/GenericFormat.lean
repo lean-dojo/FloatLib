@@ -139,13 +139,13 @@ theorem roundCode_refines :
   intro mode x
   exact roundCode_represents β fexp mode x
 
-/-- Rounding an already representable real denotes that same real. -/
-theorem roundCode_of_representable {x : ℝ}
+/-- Rounding an already representable real in any of the six directions denotes that same real. -/
+theorem roundCode_of_representable (mode : IEEERoundingMode) {x : ℝ}
     (hx : (formatSystem (GenericFormat β fexp)).Representable x) :
     FormatRepresents (GenericFormat β fexp)
-      (roundCode β fexp .nearest x) x := by
+      (roundCode β fexp mode x) x := by
   rw [representable_iff_genericFormat β fexp x] at hx
-  simpa [round_preserves_generic (roundingFunction .nearest) x hx] using
-    roundCode_represents β fexp .nearest x
+  simpa [round_preserves_generic (roundingFunction mode) x hx] using
+    roundCode_represents β fexp mode x
 
 end FloatLib.Floats.Formats.Flocq

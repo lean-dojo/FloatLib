@@ -61,6 +61,7 @@ meta def theoremSurfaces (identity : CatalogIdentity) : List TheoremSurface :=
     { topic := "nearest-codeword quantizer"
       declarations :=
         [ ``FloatLib.Floats.Formats.Codebook.nearestCode_spec
+        , ``FloatLib.Floats.Formats.Codebook.nearestCode_toNat_le
         , ``FloatLib.Floats.Formats.Codebook.nearestCode_isSome_of_denote_finite
         ]
       applicability := .verifiedForType
@@ -160,7 +161,6 @@ meta def profile (width : Nat) (identity : CatalogIdentity) : FormatProfile :=
         , ["any operation or algebraic law beyond complete lookup denotation is verified"] )
   { family := "exact-width lookup codebook"
     standard := standard
-    declarationPrefix := "FloatLib.Floats.Formats.Codebook."
     representation :=
       [ ⟨"storage", s!"BitVec {width}"⟩
       , ⟨"encoding", "a complete denotation table indexed by every stored word"⟩

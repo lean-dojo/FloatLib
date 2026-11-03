@@ -33,26 +33,36 @@ private theorem format_eq_of_bits_eq {a b : Format} (h : a.bits = b.bits) : a = 
   cases h
   rfl
 
+private theorem modulus_mul_width (source target : Format) (hw : source.bits ≤ target.bits) :
+    target.modulus = source.modulus * 2 ^ (target.bits - source.bits) := by
+  simp only [Format.modulus, ← pow_add, Nat.add_sub_of_le hw]
+
+private theorem signMask_mul_width (source target : Format) (hw : source.bits ≤ target.bits) :
+    target.signMaskNat = source.signMaskNat * 2 ^ (target.bits - source.bits) := by
+  simp only [Format.signMaskNat, Format.signIndex, ← pow_add]
+  congr 1
+  have := source.bits_ge_two
+  omega
+
+/-- The posit format with `extra` more bits than `source`. -/
+private def widened (source : Format) (extra : Nat) : Format where
+  bits := source.bits + extra
+  bits_ge_two := by have := source.bits_ge_two; omega
+
 private theorem nonnegativeRatAt_add_width (source : Format) (extra : Nat)
     {code : Nat} (hc : code < source.signMaskNat) :
-    nonnegativeRatAt
-        (Format.ofBits (source.bits + extra) (by have := source.bits_ge_two; omega))
-        (code * 2 ^ extra) = nonnegativeRatAt source code := by
+    nonnegativeRatAt (widened source extra) (code * 2 ^ extra) =
+      nonnegativeRatAt source code := by
   induction extra with
   | zero =>
-      have hf : Format.ofBits (source.bits + 0)
-          (by have := source.bits_ge_two; omega) = source :=
-        format_eq_of_bits_eq (by simp [Format.ofBits])
+      have hf : widened source 0 = source := format_eq_of_bits_eq rfl
       simp only [hf, pow_zero, Nat.mul_one]
   | succ extra ih =>
-      let f := Format.ofBits (source.bits + extra) (by have := source.bits_ge_two; omega)
-      have hf : Format.ofBits (source.bits + (extra + 1))
-          (by have := source.bits_ge_two; omega) = f.nextPrecision :=
-        format_eq_of_bits_eq (by simp [f, Format.ofBits, Format.nextPrecision, Nat.add_assoc])
+      let f := widened source extra
+      have hf : widened source (extra + 1) = f.nextPrecision :=
+        format_eq_of_bits_eq (by simp [f, widened, Format.nextPrecision, Nat.add_assoc])
       have hm : f.signMaskNat = source.signMaskNat * 2 ^ extra := by
-        simp only [f, Format.ofBits, Format.signMaskNat, Format.signIndex]
-        have hs := source.bits_ge_two
-        rw [show source.bits + extra - 1 = (source.bits - 1) + extra by omega, pow_add]
+        simpa [f, widened] using signMask_mul_width source f (by simp [f, widened])
       have hb : code * 2 ^ extra < f.signMaskNat := by
         rw [hm]
         exact Nat.mul_lt_mul_of_pos_right hc (Nat.two_pow_pos extra)
@@ -66,21 +76,9 @@ theorem nonnegativeRatAt_widen (source target : Format) (hwidth : source.bits �
     {code : Nat} (hcode : code < source.signMaskNat) :
     nonnegativeRatAt target (code * 2 ^ (target.bits - source.bits)) =
       nonnegativeRatAt source code := by
-  have hf : Format.ofBits (source.bits + (target.bits - source.bits))
-      (by have := source.bits_ge_two; omega) = target :=
-    format_eq_of_bits_eq (by simp only [Format.ofBits]; omega)
+  have hf : widened source (target.bits - source.bits) = target :=
+    format_eq_of_bits_eq (show source.bits + (target.bits - source.bits) = target.bits by omega)
   simpa only [hf] using nonnegativeRatAt_add_width source (target.bits - source.bits) hcode
-
-private theorem modulus_mul_width (source target : Format) (hw : source.bits ≤ target.bits) :
-    target.modulus = source.modulus * 2 ^ (target.bits - source.bits) := by
-  simp only [Format.modulus, ← pow_add, Nat.add_sub_of_le hw]
-
-private theorem signMask_mul_width (source target : Format) (hw : source.bits ≤ target.bits) :
-    target.signMaskNat = source.signMaskNat * 2 ^ (target.bits - source.bits) := by
-  simp only [Format.signMaskNat, Format.signIndex, ← pow_add]
-  congr 1
-  have := source.bits_ge_two
-  omega
 
 /-- Zero-bit extension preserves exact decoding for every word, including negative values and NaR. -/
 theorem toRat?_widen {source : Format} (target : Format) (hw : source.bits ≤ target.bits)
@@ -108,10 +106,7 @@ theorem toRat?_widen {source : Format} (target : Format) (hw : source.bits ≤ t
     intro h
     have he := congrArg toNatBits h
     rw [hc, nar_toNatBits, hs] at he
-    have heq : value.toNatBits = source.signMaskNat := Nat.eq_of_mul_eq_mul_right hp he
-    apply hn
-    rw [← ofNatBits_toNatBits value, heq]
-    rfl
+    exact hn ((toNatBits_eq_signMaskNat_iff value).1 (Nat.eq_of_mul_eq_mul_right hp he))
   have hsign : wide.signBit = value.signBit := by
     simp only [signBit_eq_decide, hc, hs, Nat.mul_le_mul_right_iff hp]
   have hmag : wide.magnitudeBits = value.magnitudeBits * factor := by

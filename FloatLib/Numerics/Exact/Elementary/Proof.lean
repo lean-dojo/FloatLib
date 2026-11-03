@@ -69,11 +69,9 @@ theorem prepareLog_eq_real (argument : ℚ) (levels : Nat) (hpositive : 0 < argu
   by_cases hone : argument = 1
   · subst argument
     simp [prepareLog, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
-  · rw [prepareLog, dite_eq_right hone, Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simp only [Enclosure.Comparison.cacheIntervals_apply]
-    exact Enclosure.contains_log argument (2 ^ n) hpositive
+  · rw [prepareLog, dite_eq_right hone]
+    exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_log argument (2 ^ n) hpositive
 
 /-- Both prepared exponential algorithms implement the same exact real comparison. -/
 theorem prepareExp_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -86,11 +84,8 @@ theorem prepareExp_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     simp [prepareExp, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing, hlt, hgt]
   · rw [prepareExp, dite_eq_right hzero]
     split
-    · rw [Enclosure.Comparison.Prepared.compare]
-      apply Enclosure.Comparison.compare_eq_real
-      intro n
-      simp only [Enclosure.Comparison.cacheIntervals_apply]
-      exact Enclosure.contains_exp argument (2 ^ n)
+    · exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+        fun n => Enclosure.contains_exp argument (2 ^ n)
     · exact compareExp_eq_real argument boundary
 
 end FloatLib.Numerics.ElementaryComparison

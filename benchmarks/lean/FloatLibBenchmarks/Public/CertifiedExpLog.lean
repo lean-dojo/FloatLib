@@ -15,8 +15,8 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 # Certified binary exponential and logarithm on encoded inputs
 
 Reads one encoded binary16, bfloat16, binary32, or binary64 word per line, calls
-`ExecFloat.Binary.exp` or `log` with `certify := true`, or `expMinus1` or `logPlus1`, with the
-default budget, and prints the encoded result (or `none` for a failure) and then the elapsed
+`ExecFloat.Binary.Certified.exp`, `log`, `expMinus1`, or `logPlus1` with the default budget, and
+prints the encoded result (or `none` for a failure) and then the elapsed
 nanoseconds. The `range` mode evaluates a block of consecutive binary32 encodings and writes the
 results as binary words.
 -/
@@ -36,10 +36,10 @@ structure Functions (T : Type) where
 
 /-- Fill `Functions` from the configured binary instance of one format. -/
 macro "functions%" : term =>
-  `({ exp := fun x => (ExecFloat.Binary.exp x (certify := true)).toOption,
-      log := fun x => (ExecFloat.Binary.log x (certify := true)).toOption,
-      expMinus1 := fun x => (ExecFloat.Binary.expMinus1 x).toOption,
-      logPlus1 := fun x => (ExecFloat.Binary.logPlus1 x).toOption,
+  `({ exp := fun x => (ExecFloat.Binary.Certified.exp x).toOption,
+      log := fun x => (ExecFloat.Binary.Certified.log x).toOption,
+      expMinus1 := fun x => (ExecFloat.Binary.Certified.expMinus1 x).toOption,
+      logPlus1 := fun x => (ExecFloat.Binary.Certified.logPlus1 x).toOption,
       ofBits := ExecFloat.Binary.ofNatBits, toBits := ExecFloat.Binary.toNatBits })
 
 def single : Functions Binary32 := functions%

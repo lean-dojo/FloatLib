@@ -211,6 +211,9 @@ structure StableEnclosure (fmt : FloatFormat) (f : ℝ → ℝ) (x : ℝ)
   /-- Both enclosure endpoints round to the same finite-grid real value. -/
   endpoints_round_same : roundAt fmt lower = roundAt fmt upper
 
+/-- Forget the stability condition, keeping the proved real enclosure. -/
+add_decl_doc StableEnclosure.toRealEnclosure
+
 namespace StableEnclosure
 
 /-- A stable enclosure determines the correctly rounded real value of the exact function. -/
@@ -243,6 +246,9 @@ structure CertifiedRoundedResult
   /-- The implementation selected the endpoint-certified rounded real value. -/
   value_eq_lower_round : toReal value = roundAt fmt lower
 
+/-- Forget the returned encoding, keeping the stable enclosure that certifies it. -/
+add_decl_doc CertifiedRoundedResult.toStableEnclosure
+
 namespace CertifiedRoundedResult
 
 /-- The certified encoded result has the correctly rounded real value of `f x`. -/
@@ -256,7 +262,10 @@ end CertifiedRoundedResult
 /--
 Whole-algorithm absolute-error contract for an executable unary approximation.
 
-The fields require output finiteness and an error bound for every finite input.
+The fields require output finiteness and an error bound for every finite input. That suits
+functions that are total and bounded on the finite inputs, such as sine, cosine and tanh. An
+exponential overflows on large finite inputs, and `Real.log` and `Real.sqrt` take Mathlib's junk
+values at zero or negative arguments, so those functions need `ApproximationCertificateOn`.
 -/
 structure ApproximationCertificate
     (fmt : FloatFormat)
@@ -276,7 +285,12 @@ structure ApproximationCertificate
 /--
 Whole-algorithm correctly-rounded finite-real contract.
 
-Both components are propositions, so the certificate adds no runtime data.
+Both components are propositions, so the certificate adds no runtime data. Every finite input is in
+scope, so the contract fits functions such as sine, cosine and tanh. `roundAt` has no upper
+exponent bound, so at a finite input whose exponential rounds above the largest finite value no
+finite result meets it; for `Real.log` at zero and `Real.sqrt` below zero it would demand a finite
+result where IEEE 754 returns an infinity or NaN. Those functions use
+`CorrectlyRoundedCertificateOn` with a domain.
 -/
 def CorrectlyRoundedCertificate
     (fmt : FloatFormat)

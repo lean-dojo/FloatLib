@@ -34,6 +34,7 @@ meta def executionDeclarations : List Lean.Name :=
   [ ``Model.pToQ_zero
   , ``Model.pToQ_nar
   , ``Model.toRat?_qNegate_of_ordinary
+  , ``Model.toRat?_qAbs
   , ``Model.toRat?_qAddQ_of_ordinary
   , ``Model.toRat?_qSubQ_of_ordinary
   , ``Model.toRat?_addDyadic_of_ordinary
@@ -63,7 +64,6 @@ meta def executionDeclarations : List Lean.Name :=
 meta def profile (bits : Nat) : FormatProfile where
   family := "posit quire exact accumulator"
   standard := "Standard for Posit Arithmetic (2022)"
-  declarationPrefix := "FloatLib.Floats.Formats.Posit.Quire."
   representation :=
     [ ⟨"storage", s!"FixedInt {16 * bits} backed by an exact-width BitVec"⟩
     , ⟨"associated posit width", toString bits⟩

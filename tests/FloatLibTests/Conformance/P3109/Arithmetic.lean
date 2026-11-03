@@ -11,8 +11,8 @@ public import FloatLib
 /-!
 # P3109 carrier arithmetic
 
-Checks for the `ExecFloat.P3109` surface: literals, `==` with NaN unequal to itself, the `mode`,
-`saturation`, and `target` options of the arithmetic, `ofRat` with its default policy,
+Checks for the `ExecFloat.P3109` surface: literals, `isInf`, `==` with NaN unequal to itself, the
+`mode`, `saturation`, and `target` options of the arithmetic, `ofRat` with its default policy,
 conversion with `(mode := ...)`, and `#eval` of a value. Closed cases use `binary8p4se`, whose
 code `8e + t` has exponent field `e` and three trailing bits `t`.
 -/
@@ -32,6 +32,12 @@ abbrev B8P4 := ExecFloat.P3109 .binary8p4se
 example :
     ((1.5 : B8P4).toNatBits, (-1.5 : B8P4).toNatBits, (300 : B8P4).toNatBits,
       (0 : B8P4).toNatBits) = (68, 196, 127, 0) := by
+  decide +kernel
+
+-- `isInf` tests either infinity, as on the binary formats.
+example :
+    (300 : B8P4).isInf = true ∧ (-300 : B8P4).isInf = true ∧ (224 : B8P4).isInf = false ∧
+      (ExecFloat.P3109.nan : B8P4).isInf = false := by
   decide +kernel
 
 -- `==` is numerical equality: NaN is unequal to itself, and `compare` leaves NaN unordered.
@@ -82,6 +88,26 @@ example :
       (ExecFloat.convert (1 / 3 : Rat) (target := B8P4) (mode := .towardZero)).value?.map
         (·.toNatBits)) =
       (51, 50, some 51, some 50) := by
+  decide +kernel
+
+-- With P3109 loaded, a binary model still decodes through the binary signed-rational decoder.
+example :
+    (inferInstance : ExecFloat.ExactDecoder (BinaryInterchange.Model .binary32)
+        FloatLib.Numerics.SignedRat) =
+      ExecFloat.Binary.Conversion.modelDecoder .binary32 :=
+  rfl
+
+/-- Binary32 negative zero and a quiet NaN with payload 5, as model operands. -/
+private def modelOperands : List (BinaryInterchange.Model .binary32) :=
+  [BinaryInterchange.Model.ofNatBits 0x80000000, BinaryInterchange.Model.ofNatBits 0x7fc00005]
+
+-- Mixed report arithmetic erases a model operand's zero sign and NaN payload (§4.8.1), so the
+-- negative zero acts as zero and the NaN as the report's one NaN, code 128.
+example :
+    modelOperands.map P3109.Arithmetic.Mixed.decode = [.finite 0, P3109.Arithmetic.nan] ∧
+      modelOperands.map (fun operand =>
+        (P3109.Arithmetic.Mixed.add (P3109.Arithmetic.Destination.p3109 .binary8p4se) operand
+          (1 : Rat)).toNatBits) = [64, 128] := by
   decide +kernel
 
 /-- A stand-in display, so that the check below does not depend on the family's printer. -/

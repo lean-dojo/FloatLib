@@ -136,10 +136,15 @@ variable [ExactDecoder LeftScale LeftScaleExact] [ExactMap LeftScaleExact Rat]
 variable [ExactDecoder RightScale RightScaleExact] [ExactMap RightScaleExact Rat]
 
 /--
-Scaled binary operation from §5.8, with an implicit exact result scale of one.
+Scaled binary operation from §5.8, with an implicit exact result scale of one: `operation` is
+applied to `leftScale * left` and `rightScale * right`, and the exact result is projected once into
+`destination` with rounding `mode` and overflow policy `saturation`.
 
 Input scaling is closed multiplication: a zero scale times infinity is NaN, and a NaN scale
-propagates even when its element is zero. The complete scaled expression is projected once.
+propagates even when its element is zero. Dividing by the result scale one would only replace
+exceptional results by the canonical NaN, so the division is omitted;
+`Mixed.scaledBinary_eq_project_div_one` proves that the two agree for every operation with
+canonical results, which includes addition, subtraction and multiplication.
 -/
 @[inline] def scaledBinary (destination : Destination Result)
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)

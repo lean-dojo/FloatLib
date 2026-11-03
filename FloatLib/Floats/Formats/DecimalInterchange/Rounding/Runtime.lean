@@ -20,13 +20,21 @@ Format precision, exponent range, and cohort selection are handled separately.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-/-- The five IEEE 754-2019 §4.3 decimal rounding-direction attributes. -/
+/--
+The five IEEE 754-2019 §4.3 decimal rounding-direction attributes, with the constructor names of
+the binary `IEEERoundingMode` and the P3109 `RoundingMode`.
+-/
 inductive RoundingMode where
-  | nearestEven
+  /-- roundTiesToEven: the nearer neighbour, ties to the even coefficient. -/
+  | nearest
+  /-- roundTiesToAway: the nearer neighbour, ties to the larger magnitude. -/
   | nearestAway
+  /-- roundTowardZero: the neighbour of smaller magnitude. -/
   | towardZero
-  | towardPositive
-  | towardNegative
+  /-- roundTowardPositive: the neighbour toward positive infinity. -/
+  | up
+  /-- roundTowardNegative: the neighbour toward negative infinity. -/
+  | down
   deriving DecidableEq, Repr, Inhabited
 
 namespace RoundingMode
@@ -36,12 +44,12 @@ namespace RoundingMode
 def increment (mode : RoundingMode) (negative : Bool) (lower : Nat)
     (remainder : ℚ) : Bool :=
   match mode with
-  | .nearestEven =>
+  | .nearest =>
       decide (1 < 2 * remainder ∨ (2 * remainder = 1 ∧ lower % 2 = 1))
   | .nearestAway => decide (1 ≤ 2 * remainder)
   | .towardZero => false
-  | .towardPositive => !negative && decide (0 < remainder)
-  | .towardNegative => negative && decide (0 < remainder)
+  | .up => !negative && decide (0 < remainder)
+  | .down => negative && decide (0 < remainder)
 
 /-- Round a nonnegative exact rational magnitude to an integer coefficient.
 The sign affects the directed modes, including rounding a negative value to zero.
@@ -50,14 +58,14 @@ def roundMagnitude (mode : RoundingMode) (negative : Bool) (x : ℚ) : Nat :=
   let numerator := x.num.toNat
   let lower := numerator / x.den
   let remainder := numerator % x.den
-  let up := match mode with
-    | .nearestEven =>
+  let increase := match mode with
+    | .nearest =>
         decide (x.den < 2 * remainder ∨ (2 * remainder = x.den ∧ lower % 2 = 1))
     | .nearestAway => decide (x.den ≤ 2 * remainder)
     | .towardZero => false
-    | .towardPositive => !negative && decide (0 < remainder)
-    | .towardNegative => negative && decide (0 < remainder)
-  if up then lower + 1 else lower
+    | .up => !negative && decide (0 < remainder)
+    | .down => negative && decide (0 < remainder)
+  if increase then lower + 1 else lower
 
 /-- Apply the sign after rounding; callers retain the separate sign for signed zero. -/
 def roundSigned (mode : RoundingMode) (negative : Bool) (x : ℚ) : ℚ :=

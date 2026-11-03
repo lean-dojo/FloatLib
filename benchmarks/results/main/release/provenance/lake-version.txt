@@ -1,1 +1,0 @@
-Lake version 5.0.0-src+819816b (Lean version 4.33.1)

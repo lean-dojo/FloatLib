@@ -174,12 +174,18 @@ private def transcendentals : IO UInt32 := do
   let tinyFailures ← runCheck "tinyDyadicSine" failTinyDyadicSine
   let certifiedFailures ← runCheck "certifiedStable" failCertifiedStable
   let rejectionFailures ← runCheck "certifiedStableRejection" failCertifiedStableRejection
+  let failureDisplayFailures ←
+    runCheck "certifiedFailureDisplays" failCertifiedFailureDisplays
   let powFailures ← runCheck "certifiedPow" failCertifiedPow
   let configuredFailures ← runCheck "configuredCertified" failConfiguredCertified
+  let agreementFailures ← runCheck "correctlyRoundedAgreement" failCorrectlyRoundedAgreement
+  let roundedSpecialFailures ← runCheck "correctlyRoundedSpecial" failCorrectlyRoundedSpecial
+  let weightedFailures ← runCheck "weightedExponential" failWeightedExponential
   let total := fixtureFailures + specialFailures + nanFailures + constantFailures + piFailures +
     generatedScaleFailures + explicitConfigurationFailures + progressFailures + largeFailures +
-    attemptFailures + tinyFailures + certifiedFailures + rejectionFailures + powFailures +
-    configuredFailures
+    attemptFailures + tinyFailures + certifiedFailures + rejectionFailures +
+    failureDisplayFailures + powFailures + configuredFailures + agreementFailures +
+    roundedSpecialFailures + weightedFailures
   IO.println s!"TOTAL: {total}"
   pure <| exitCode total
 

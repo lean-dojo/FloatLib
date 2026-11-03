@@ -68,6 +68,15 @@ theorem sourceExponent_eq
     exact Int.ediv_mul_add_emod radicand.exponent 2
   omega
 
+/-- The scaled integer radicand is the source significand shifted by parity and precision. -/
+private theorem scaledRadicand_eq_mul_two_pow
+    (precision : Nat) (radicand : FloatLib.Numerics.Dyadic) :
+    scaledRadicand precision radicand =
+      radicand.significand * 2 ^ (exponentParity radicand + 2 * precision) := by
+  unfold scaledRadicand
+  simpa using Nat.shiftLeft_eq radicand.significand
+    (exponentParity radicand + 2 * precision)
+
 /--
 The scaled integer radicand and two copies of the restored root scale denote the source dyadic.
 -/
@@ -83,14 +92,7 @@ theorem toRat_eq_scaledRadicand_mul_scale_sq
   unfold FloatLib.Numerics.Dyadic.toRat
   simp only [FloatLib.Numerics.Dyadic.signedSignificand, hnegative,
     Bool.false_eq_true, ite_false, Rat.ofInt_eq_cast]
-  unfold scaledRadicand
-  rw [show
-      radicand.significand.shiftLeft
-          (exponentParity radicand + 2 * precision) =
-        radicand.significand *
-          2 ^ (exponentParity radicand + 2 * precision) by
-    simpa using Nat.shiftLeft_eq radicand.significand
-      (exponentParity radicand + 2 * precision)]
+  rw [scaledRadicand_eq_mul_two_pow]
   rw [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ← zpow_natCast]
   rw [show
       ((Int.ofNat radicand.significand : Int) : Rat) =
@@ -107,14 +109,7 @@ theorem scaledRadicand_pos
     (precision : Nat) (radicand : FloatLib.Numerics.Dyadic)
     (hsignificand : radicand.significand ≠ 0) :
     0 < scaledRadicand precision radicand := by
-  unfold scaledRadicand
-  rw [show
-      radicand.significand.shiftLeft
-          (exponentParity radicand + 2 * precision) =
-        radicand.significand *
-          2 ^ (exponentParity radicand + 2 * precision) by
-    simpa using Nat.shiftLeft_eq radicand.significand
-      (exponentParity radicand + 2 * precision)]
+  rw [scaledRadicand_eq_mul_two_pow]
   exact Nat.mul_pos (Nat.pos_of_ne_zero hsignificand)
     (Nat.two_pow_pos _)
 
@@ -172,14 +167,7 @@ theorem precision_le_truncatedRoot_log2
       2 ^ precision ≤ truncatedRoot precision radicand := by
     unfold truncatedRoot
     rw [Nat.le_sqrt]
-    unfold scaledRadicand
-    rw [show
-        radicand.significand.shiftLeft
-            (exponentParity radicand + 2 * precision) =
-          radicand.significand *
-            2 ^ (exponentParity radicand + 2 * precision) by
-      simpa using Nat.shiftLeft_eq radicand.significand
-        (exponentParity radicand + 2 * precision)]
+    rw [scaledRadicand_eq_mul_two_pow]
     have hshift :
         2 * precision ≤ exponentParity radicand + 2 * precision := by
       omega
@@ -230,7 +218,6 @@ theorem roundCode_eq_fraction
     (remainder denominator : Nat)
     (hsignificand : radicand.significand ≠ 0)
     (hnegative : radicand.negative = false)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hzero :
       squareRemainder (prefixPrecision format) radicand = 0 ↔
@@ -266,7 +253,7 @@ theorem roundCode_eq_fraction
   have hkernel :=
     DirectDyadicQuotient.roundPositiveCode_prefix_eq_reference
       format targetExponent root remainder denominator leading
-      hleadingWidth hlower hupper hdenominator hremainder
+      hleadingWidth hlower hupper hremainder
   unfold roundCode
   simp only [beq_eq_false_iff_ne.mpr hsignificand,
     hnegative, Bool.false_or, Bool.false_eq_true, ite_false]

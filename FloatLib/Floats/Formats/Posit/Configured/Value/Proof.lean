@@ -53,6 +53,11 @@ instance or depend on its implementation name.
     ofModel (toModel value) = value :=
   Configured.Family.ofModel_toModel value
 
+/-- Rational construction decodes to the posit rounding of that rational in the model. -/
+@[simp, grind =] theorem toModel_ofRat (value : Rat) :
+    toModel (ofRat (plan := plan) (code := code) value) = Model.roundRat format value :=
+  Configured.Family.toModel_ofModel _
+
 /-- Reconstructing a configured posit from its complete word is lossless. -/
 @[simp, grind =] theorem ofNatBits_toNatBits
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :

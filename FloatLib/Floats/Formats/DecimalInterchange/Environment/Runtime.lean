@@ -28,7 +28,7 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 /-- Rounding direction and accumulated exception flags of a decimal computation. -/
 structure Environment where
   /-- The rounding direction used by computations in this environment. -/
-  rounding : RoundingMode := .nearestEven
+  rounding : RoundingMode := .nearest
   /-- Exceptions accumulated until a caller clears or restores them. -/
   flags : Numerics.IEEEStatus := {}
   deriving DecidableEq, Repr

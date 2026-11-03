@@ -196,11 +196,20 @@ theorem checkedRealPow_of_pos (a b : NF β fexp rnd) (ha : 0 < a.val) :
   simp [checkedRealPow, ha, positiveRealPow]
 
 omit [ValidRnd rnd] in
-/-- A positive noninteger exponent of zero uses the unambiguous real value zero. -/
-theorem checkedRealPow_zero_of_pos_not_int (a b : NF β fexp rnd) (ha : a.val = 0)
-    (hb : 0 < b.val) (hni : ¬ ∃ z : ℤ, b.val = z) :
+/--
+A zero base with a positive exponent gives the rounded value zero: through the natural-power
+branch when the exponent is an integer, and through the zero-base branch otherwise.
+-/
+theorem checkedRealPow_zero_of_pos (a b : NF β fexp rnd) (ha : a.val = 0)
+    (hb : 0 < b.val) :
     checkedRealPow a b = some (ofReal (β := β) (fexp := fexp) (rnd := rnd) 0) := by
-  simp [checkedRealPow, ha, hb, hni]
+  by_cases hi : ∃ z : ℤ, b.val = z
+  · have hz : 0 < Classical.choose hi := by
+      have hspec : b.val = ((Classical.choose hi : ℤ) : ℝ) := Classical.choose_spec hi
+      exact_mod_cast hspec ▸ hb
+    have htoNat : (Classical.choose hi).toNat ≠ 0 := by omega
+    simp [checkedRealPow, ha, hi, hz.le, zero_pow htoNat]
+  · simp [checkedRealPow, ha, hb, hi]
 
 /--
 Evaluate each mathematical function in `ℝ` and round once. These noncomputable specifications use

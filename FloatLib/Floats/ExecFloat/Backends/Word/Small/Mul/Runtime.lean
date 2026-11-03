@@ -32,8 +32,11 @@ open NativeSmallWord
 Capacity contract for exact `UInt64` normal multiplication.
 
 Two normalized significands of at most 32 bits have an exact product of at most 64 bits. This is one
-fraction bit wider
-than the conservative contract shared with native division.
+fraction bit wider than the conservative contract shared with native division.
+
+The storage bound `fmt.bitWidth ≤ 64` is the one of `NativeSmallWord.StorageEligible` and never
+binds here: the field bounds give `fmt.bitWidth = 1 + fmt.expWidth + fmt.fracWidth ≤ 62`. Those
+field bounds are also what keep bit 63 free for `declineWord`.
 -/
 def Eligible (fmt : FloatFormat) : Prop :=
   fmt.isIEEE = true ∧
@@ -51,7 +54,10 @@ can be simplified for a closed format (see `NativeSmallWord.StorageEligible`).
   else
     isFalse h
 
-/-- Decline sentinel at bit 63, above every storage word admitted by `Eligible`. -/
+/--
+Decline sentinel at bit 63. An `Eligible` format has at most 62 bits, so every storage word lies
+below it.
+-/
 @[inline] def declineWord : UInt64 :=
   (1 : UInt64) <<< 63
 

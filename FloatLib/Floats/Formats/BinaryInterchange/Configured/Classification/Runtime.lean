@@ -36,7 +36,10 @@ local notation "Value" =>
 /-- Return the shared IEEE class without changing the value or signaling an exception. -/
 @[inline] def classify (x : Value) : FloatLib.Numerics.IEEEClass := Model.classify (toModel x)
 
-/-- Test canonical interchange encoding, independently of the selected runtime carrier. -/
+/--
+Test canonical interchange encoding, independently of the selected runtime carrier. Every word of
+an implicit-leading-bit binary layout is canonical, so the result is always `true`.
+-/
 @[inline] def isCanonical (x : Value) : Bool := Model.isCanonical (toModel x)
 
 end FloatLib.Floats.ExecFloat.Binary

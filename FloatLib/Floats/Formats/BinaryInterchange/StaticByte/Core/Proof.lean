@@ -131,6 +131,14 @@ theorem toModel_injective {F : Type u} [Family F]
     left = right := by
   rw [← ofModel_toModel left, ← ofModel_toModel right, equality]
 
+/-- A byte code whose model value is `value` is the static-byte encoding of `value`. -/
+private theorem ofRaw_eq_ofModel {F : Type u} [Family F] {code : Code F}
+    {value : ModelValue (Family.format (F := F))} (h : byteCodeToModel code = value) :
+    FloatLib.Floats.ExecFloat.ofRaw code = ofModel value := by
+  apply toModel_injective (F := F)
+  rw [toModel_ofModel]
+  exact h
+
 /--
 Lift a direct binary byte-kernel refinement equation to the universal static-byte carrier.
 
@@ -148,10 +156,8 @@ theorem liftBinary_eq_spec {F : Type u} [Family F]
         modelSpec (byteCodeToModel left) (byteCodeToModel right))
     (left right : FloatLib.Floats.ExecFloat F) :
     FloatLib.Floats.ExecFloat.ofRaw (run left.raw right.raw) =
-      ofModel (modelSpec (toModel left) (toModel right)) := by
-  apply toModel_injective (F := F)
-  rw [toModel_ofModel]
-  exact run_eq_spec left.raw right.raw
+      ofModel (modelSpec (toModel left) (toModel right)) :=
+  ofRaw_eq_ofModel (run_eq_spec left.raw right.raw)
 
 /--
 Lift a direct unary byte-kernel refinement equation to the universal static-byte carrier.
@@ -168,10 +174,8 @@ theorem liftUnary_eq_spec {F : Type u} [Family F]
       byteCodeToModel (run value) = modelSpec (byteCodeToModel value))
     (value : FloatLib.Floats.ExecFloat F) :
     FloatLib.Floats.ExecFloat.ofRaw (run value.raw) =
-      ofModel (modelSpec (toModel value)) := by
-  apply toModel_injective (F := F)
-  rw [toModel_ofModel]
-  exact run_eq_spec value.raw
+      ofModel (modelSpec (toModel value)) :=
+  ofRaw_eq_ofModel (run_eq_spec value.raw)
 
 /--
 Lift a direct ternary byte-kernel refinement equation to the universal static-byte carrier.
@@ -191,10 +195,8 @@ theorem liftTernary_eq_spec {F : Type u} [Family F]
           (byteCodeToModel left) (byteCodeToModel right) (byteCodeToModel addend))
     (left right addend : FloatLib.Floats.ExecFloat F) :
     FloatLib.Floats.ExecFloat.ofRaw (run left.raw right.raw addend.raw) =
-      ofModel (modelSpec (toModel left) (toModel right) (toModel addend)) := by
-  apply toModel_injective (F := F)
-  rw [toModel_ofModel]
-  exact run_eq_spec left.raw right.raw addend.raw
+      ofModel (modelSpec (toModel left) (toModel right) (toModel addend)) :=
+  ofRaw_eq_ofModel (run_eq_spec left.raw right.raw addend.raw)
 
 /--
 Lift a certified binary byte table directly to the universal static-byte carrier.

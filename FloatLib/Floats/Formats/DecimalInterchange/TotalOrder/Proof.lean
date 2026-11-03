@@ -54,14 +54,20 @@ theorem orderKey_injective : Function.Injective orderKey := by
       | nan u v k =>
           cases s <;> cases u <;> cases t <;> cases v <;> simp_all [orderKey]
 
+/-- The decimal total order is reflexive on every datum, NaNs included. -/
 @[simp] theorem totalOrder_self (x : Datum) : x.totalOrder x = true := by
   simp [totalOrder]
 
+/-- The decimal total order is transitive on complete datums, where signed zeros, the members of a
+cohort, and NaN signs, signaling bits and payloads are all distinguished. -/
 theorem totalOrder_trans {x y z : Datum}
     (hxy : x.totalOrder y = true) (hyz : y.totalOrder z = true) :
     x.totalOrder z = true :=
   decide_eq_true (le_trans (of_decide_eq_true hxy) (of_decide_eq_true hyz))
 
+/-- Any two datums are comparable in the decimal total order, two NaNs or two members of one cohort
+included. With `totalOrder_antisymm_iff` this makes `totalOrder` a linear order on datums; redundant
+encodings of one datum compare equal after decoding. -/
 theorem totalOrder_total (x y : Datum) :
     x.totalOrder y = true ∨ y.totalOrder x = true := by
   simpa only [totalOrder, decide_eq_true_eq] using le_total x.orderKey y.orderKey
@@ -91,6 +97,8 @@ theorem totalOrder_negative_finite_iff (c d : Nat) (q r : Int) :
     (.finite true c q : Datum).totalOrder (.finite false d r) = true := by
   simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
 
+/-- No positive finite datum precedes a negative one; in particular `+0` does not precede `-0`,
+whatever their quanta. -/
 @[simp] theorem totalOrder_positive_negative (c d : Nat) (q r : Int) :
     (.finite false c q : Datum).totalOrder (.finite true d r) = false := by
   simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
@@ -124,6 +132,7 @@ theorem totalOrder_nan_payload_iff (s t : Bool) (p k : Nat) :
     (.nan true t p : Datum).totalOrder (.nan false u k) = true := by
   simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
 
+/-- A negative NaN, quiet or signaling, precedes every datum that is not a NaN. -/
 theorem totalOrder_negative_nan_numeric (t : Bool) (p : Nat) (x : Datum)
     (hx : x.isNaN = false) :
     (.nan true t p : Datum).totalOrder x = true := by
@@ -132,6 +141,7 @@ theorem totalOrder_negative_nan_numeric (t : Bool) (p : Nat) (x : Datum)
   | infinity s => cases s <;> simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
   | nan s u k => simp [isNaN] at hx
 
+/-- Every datum that is not a NaN precedes a positive NaN, quiet or signaling. -/
 theorem totalOrder_numeric_positive_nan (t : Bool) (p : Nat) (x : Datum)
     (hx : x.isNaN = false) :
     x.totalOrder (.nan false t p) = true := by
@@ -140,21 +150,27 @@ theorem totalOrder_numeric_positive_nan (t : Bool) (p : Nat) (x : Datum)
   | infinity s => cases s <;> simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
   | nan s u k => simp [isNaN] at hx
 
+/-- `-∞` precedes every finite datum, both zeros included. -/
 @[simp] theorem totalOrder_negative_infinity_finite (s : Bool) (c : Nat) (q : Int) :
     (.infinity true : Datum).totalOrder (.finite s c q) = true := by
   cases s <;> simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
 
+/-- Every finite datum, both zeros included, precedes `+∞`. -/
 @[simp] theorem totalOrder_finite_positive_infinity (s : Bool) (c : Nat) (q : Int) :
     (.finite s c q : Datum).totalOrder (.infinity false) = true := by
   cases s <;> simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
 
+/-- The magnitude total order is reflexive on every datum. -/
 @[simp] theorem totalOrderMag_self (x : Datum) : x.totalOrderMag x = true :=
   totalOrder_self x.abs
 
+/-- The magnitude total order, which clears every sign including those of NaNs before comparing, is
+transitive. -/
 theorem totalOrderMag_trans {x y z : Datum}
     (hxy : x.totalOrderMag y = true) (hyz : y.totalOrderMag z = true) :
     x.totalOrderMag z = true := totalOrder_trans hxy hyz
 
+/-- Any two datums are comparable in the magnitude total order. -/
 theorem totalOrderMag_total (x y : Datum) :
     x.totalOrderMag y = true ∨ y.totalOrderMag x = true :=
   totalOrder_total x.abs y.abs

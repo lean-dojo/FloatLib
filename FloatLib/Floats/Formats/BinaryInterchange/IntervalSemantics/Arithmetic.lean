@@ -72,6 +72,13 @@ theorem neg_sound
     ERealMem (neg A) ((-x : ℝ) : EReal) :=
   neg_sound_extended A hA.validExtended ((eRealMem_coe_iff_of_valid hA x).2 hx)
 
+/-- An outward-rounded interval encloses every extended real between its rounded bounds. -/
+private theorem eRealMem_ofBounds_of_le {fmt : FloatFormat} (lo hi : Model fmt)
+    (hfmt : fmt.isIEEE = true) {z : EReal}
+    (hlo : toEReal lo ≤ z) (hhi : z ≤ toEReal hi) :
+    ERealMem (ofBounds lo hi) z :=
+  ⟨(ofBounds_lower_le lo hi hfmt).trans hlo, hhi.trans (le_ofBounds_upper lo hi hfmt)⟩
+
 /-! ## Addition -/
 
 /-- Outward-rounded interval addition encloses every sum of represented real values. -/
@@ -79,24 +86,17 @@ theorem add_sound
     {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true)
     (hA : Valid A) (hB : Valid B)
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
-    ERealMem (add A B) ((x + y : ℝ) : EReal) := by
-  constructor
-  · apply (ofBounds_lower_le (Model.add A.lo B.lo (mode := .down))
-      (Model.add A.hi B.hi (mode := .up)) hfmt).trans
-    exact
-      (toEReal_add_down_le A.lo B.lo hfmt hA.lo_isFinite hB.lo_isFinite).trans
-        ((EReal.coe_le_coe_iff).2 (add_le_add hx.1 hy.1))
-  · apply le_trans ?_ (le_ofBounds_upper (Model.add A.lo B.lo (mode := .down))
-      (Model.add A.hi B.hi (mode := .up)) hfmt)
-    exact
-      ((EReal.coe_le_coe_iff).2 (add_le_add hx.2 hy.2)).trans
-        (le_toEReal_add_up A.hi B.hi hfmt hA.hi_isFinite hB.hi_isFinite)
+    ERealMem (add A B) ((x + y : ℝ) : EReal) :=
+  eRealMem_ofBounds_of_le _ _ hfmt
+    ((toEReal_add_down_le A.lo B.lo hfmt hA.lo_isFinite hB.lo_isFinite).trans
+      ((EReal.coe_le_coe_iff).2 (add_le_add hx.1 hy.1)))
+    (((EReal.coe_le_coe_iff).2 (add_le_add hx.2 hy.2)).trans
+      (le_toEReal_add_up A.hi B.hi hfmt hA.hi_isFinite hB.hi_isFinite))
 
-/-- Outward-rounded addition always returns ordered IEEE bounds without NaNs. -/
-theorem add_validExtended
-    {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true) :
+/-- Outward-rounded addition always returns ordered bounds without NaNs, in every format. -/
+theorem add_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
     ValidExtended (add A B) := by
-  exact validExtended_ofBounds _ _ hfmt
+  exact validExtended_ofBounds _ _
 
 /-! ## Subtraction -/
 
@@ -105,24 +105,17 @@ theorem sub_sound
     {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true)
     (hA : Valid A) (hB : Valid B)
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
-    ERealMem (sub A B) ((x - y : ℝ) : EReal) := by
-  constructor
-  · apply (ofBounds_lower_le (Model.sub A.lo B.hi (mode := .down))
-      (Model.sub A.hi B.lo (mode := .up)) hfmt).trans
-    exact
-      (toEReal_sub_down_le A.lo B.hi hfmt hA.lo_isFinite hB.hi_isFinite).trans
-        ((EReal.coe_le_coe_iff).2 (sub_le_sub hx.1 hy.2))
-  · apply le_trans ?_ (le_ofBounds_upper (Model.sub A.lo B.hi (mode := .down))
-      (Model.sub A.hi B.lo (mode := .up)) hfmt)
-    exact
-      ((EReal.coe_le_coe_iff).2 (sub_le_sub hx.2 hy.1)).trans
-        (le_toEReal_sub_up A.hi B.lo hfmt hA.hi_isFinite hB.lo_isFinite)
+    ERealMem (sub A B) ((x - y : ℝ) : EReal) :=
+  eRealMem_ofBounds_of_le _ _ hfmt
+    ((toEReal_sub_down_le A.lo B.hi hfmt hA.lo_isFinite hB.hi_isFinite).trans
+      ((EReal.coe_le_coe_iff).2 (sub_le_sub hx.1 hy.2)))
+    (((EReal.coe_le_coe_iff).2 (sub_le_sub hx.2 hy.1)).trans
+      (le_toEReal_sub_up A.hi B.lo hfmt hA.hi_isFinite hB.lo_isFinite))
 
-/-- Outward-rounded subtraction always returns ordered IEEE bounds without NaNs. -/
-theorem sub_validExtended
-    {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true) :
+/-- Outward-rounded subtraction always returns ordered bounds without NaNs, in every format. -/
+theorem sub_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
     ValidExtended (sub A B) := by
-  exact validExtended_ofBounds _ _ hfmt
+  exact validExtended_ofBounds _ _
 
 /-! ## Four-corner enclosures -/
 
@@ -133,10 +126,11 @@ The corner operations `down` and `up` are applied to the endpoints of `A` and `B
 corner must lie below, and each upward corner above, the exact value `f` of the corresponding
 decoded endpoints, and neither may be a NaN. The bound hypotheses receive finiteness of both
 arguments and the identity of the right endpoint, so operations with a side condition on the right
-operand, such as a nonzero divisor, can discharge it per endpoint.
+operand, such as a nonzero divisor, can discharge it per endpoint. The bracketed real orders the
+checked corners, so the bounds check keeps them in every format.
 -/
 theorem eRealMem_ofBounds_corners
-    {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true)
+    {fmt : FloatFormat} (A B : Interval fmt)
     (hA : Valid A) (hB : Valid B)
     (down up : Model fmt → Model fmt → Model fmt) (f : ℝ → ℝ → ℝ) {z : ℝ}
     (hdown : ∀ a b, isFinite a = true → isFinite b = true → (b = B.lo ∨ b = B.hi) →
@@ -165,17 +159,33 @@ theorem eRealMem_ofBounds_corners
   have hq01 := hup A.lo B.hi hA.lo_isFinite hB.hi_isFinite (Or.inr rfl)
   have hq10 := hup A.hi B.lo hA.hi_isFinite hB.lo_isFinite (Or.inl rfl)
   have hq11 := hup A.hi B.hi hA.hi_isFinite hB.hi_isFinite (Or.inr rfl)
-  constructor
-  · apply (ofBounds_lower_le _ _ hfmt).trans
+  have hlower : toEReal
+      (minOfFour (down A.lo B.lo) (down A.lo B.hi) (down A.hi B.lo) (down A.hi B.hi)) ≤
+        (z : EReal) := by
     apply (toEReal_minOfFour_le_of_le _ _ _ _ hp00.1 hp01.1 hp10.1 hp11.1
       hp00.2 hp01.2 hp10.2 hp11.2).trans
     simpa [FloatLib.Floats.Interval.minOfFour, FloatLib.Floats.Interval.coe_min] using
       EReal.coe_le_coe_iff.2 hz.1
-  · apply le_trans ?_ (le_ofBounds_upper _ _ hfmt)
+  have hupper : (z : EReal) ≤ toEReal
+      (maxOfFour (up A.lo B.lo) (up A.lo B.hi) (up A.hi B.lo) (up A.hi B.hi)) := by
     apply le_trans ?_ (le_toEReal_maxOfFour_of_le _ _ _ _ hq00.1 hq01.1 hq10.1 hq11.1
       hq00.2 hq01.2 hq10.2 hq11.2)
     simpa [FloatLib.Floats.Interval.maxOfFour, FloatLib.Floats.Interval.coe_max] using
       EReal.coe_le_coe_iff.2 hz.2
+  have hloNaN : isNaN
+      (minOfFour (down A.lo B.lo) (down A.lo B.hi) (down A.hi B.lo) (down A.hi B.hi)) = false :=
+    isNaN_minimum_eq_false_of_isNaN_eq_false _ _
+      (isNaN_minimum_eq_false_of_isNaN_eq_false _ _ hp00.1 hp01.1)
+      (isNaN_minimum_eq_false_of_isNaN_eq_false _ _ hp10.1 hp11.1)
+  have hhiNaN : isNaN
+      (maxOfFour (up A.lo B.lo) (up A.lo B.hi) (up A.hi B.lo) (up A.hi B.hi)) = false :=
+    isNaN_maximum_eq_false_of_isNaN_eq_false _ _
+      (isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hq00.1 hq01.1)
+      (isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hq10.1 hq11.1)
+  have hchecked := (leB_eq_true_iff_toEReal_le_of_isNaN_eq_false _ _ hloNaN hhiNaN).2
+    (hlower.trans hupper)
+  rw [ofBounds, ite_eq_left hchecked]
+  exact ⟨hlower, hupper⟩
 
 /-! ## Four-corner multiplication -/
 
@@ -185,7 +195,7 @@ theorem mul_sound
     (hA : Valid A) (hB : Valid B)
     {x y : ℝ} (hx : RealMem A x) (hy : RealMem B y) :
     ERealMem (mul A B) ((x * y : ℝ) : EReal) :=
-  eRealMem_ofBounds_corners A B hfmt hA hB (Model.mul · · (mode := .down))
+  eRealMem_ofBounds_corners A B hA hB (Model.mul · · (mode := .down))
     (Model.mul · · (mode := .up)) (· * ·)
     (fun a b ha hb _ =>
       ⟨isNaN_mul_down_eq_false_of_isFinite a b hfmt ha hb, toEReal_mul_down_le a b hfmt ha hb⟩)
@@ -193,11 +203,10 @@ theorem mul_sound
       ⟨isNaN_mul_up_eq_false_of_isFinite a b hfmt ha hb, le_toEReal_mul_up a b hfmt ha hb⟩)
     (FloatLib.Floats.Interval.mul_bounds_Icc _ _ _ _ x y hx hy)
 
-/-- Outward-rounded multiplication always returns ordered IEEE bounds without NaNs. -/
-theorem mul_validExtended
-    {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true) :
+/-- Outward-rounded multiplication always returns ordered bounds without NaNs, in every format. -/
+theorem mul_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
     ValidExtended (mul A B) := by
-  exact validExtended_ofBounds _ _ hfmt
+  exact validExtended_ofBounds _ _
 
 /-! ## Division and reciprocal -/
 
@@ -250,7 +259,7 @@ theorem div_sound
       · exact isZero_eq_false_of_sign_stable B hsign le_rfl hB.toReal_ordered
       · exact isZero_eq_false_of_sign_stable B hsign hB.toReal_ordered le_rfl
     rw [div, ite_eq_right hcontains]
-    exact eRealMem_ofBounds_corners A B hfmt hA hB (Model.div · · (mode := .down))
+    exact eRealMem_ofBounds_corners A B hA hB (Model.div · · (mode := .down))
       (Model.div · · (mode := .up)) (· / ·)
       (fun a b ha hb hb' =>
         ⟨isNaN_div_down_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
@@ -260,14 +269,13 @@ theorem div_sound
           le_toEReal_div_up a b hfmt ha hb (hzero b hb')⟩)
       (FloatLib.Floats.Interval.div_bounds_Icc _ _ _ _ x y hx hy hsign)
 
-/-- Outward-rounded division always returns ordered IEEE bounds without NaNs. -/
-theorem div_validExtended
-    {fmt : FloatFormat} (A B : Interval fmt) (hfmt : fmt.isIEEE = true) :
+/-- Outward-rounded division always returns ordered bounds without NaNs, in every format. -/
+theorem div_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
     ValidExtended (div A B) := by
   unfold div
   split
-  · exact validExtended_whole fmt hfmt
-  · exact validExtended_ofBounds _ _ hfmt
+  · exact validExtended_whole fmt
+  · exact validExtended_ofBounds _ _
 
 /-- Outward-rounded interval reciprocal encloses every represented real reciprocal. -/
 theorem inv_sound

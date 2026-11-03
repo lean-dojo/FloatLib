@@ -29,10 +29,18 @@ open FloatLib.Floats.Formats.Posit
 namespace ExecFloat
 namespace Posit
 
-/-- The validated descriptor selected by `ExecFloat.Posit`. -/
-abbrev format
+/--
+The validated descriptor selected by `ExecFloat.Posit`, the record `{ bits := bits }`.
+
+Quantities derived from the width, such as `payloadBits` and `regimeExponentStep`, are read from
+this record, independently of the storage carrier.
+-/
+abbrev descriptor
     (bits : Nat)
-    (bits_ge_two : 2 ≤ bits := by decide) : Format :=
+    (bits_ge_two : 2 ≤ bits := by
+      first
+      | decide
+      | fail "ExecFloat.Posit requires bits ≥ 2") : Format :=
   { bits
     bits_ge_two }
 
@@ -44,8 +52,11 @@ to refer to the same format, storage plan, and carrier as the public type.
 -/
 abbrev Family
     (bits : Nat)
-    (bits_ge_two : 2 ≤ bits := by decide) :=
-  let format := Posit.format bits bits_ge_two
+    (bits_ge_two : 2 ≤ bits := by
+      first
+      | decide
+      | fail "ExecFloat.Posit requires bits ≥ 2") :=
+  let format := Posit.descriptor bits bits_ge_two
   let plan := Configured.StoragePlan.forKnownWidth format bits rfl
   Configured.Family format (Configured.Code plan) plan
 
@@ -55,11 +66,15 @@ end Posit
 An executable Posit Standard (2022) value selected by its total encoded width.
 
 Storage and operation backends are selected statically from the descriptor and certified
-capability policy.
+capability policy. The standard requires at least two bits: a numeral width is checked by
+`decide`, and any other width needs the proof `bits_ge_two`.
 -/
 abbrev Posit
     (bits : Nat)
-    (bits_ge_two : 2 ≤ bits := by decide) :=
+    (bits_ge_two : 2 ≤ bits := by
+      first
+      | decide
+      | fail "ExecFloat.Posit requires bits ≥ 2") :=
   FloatLib.Floats.ExecFloat (Posit.Family bits bits_ge_two)
 
 end ExecFloat

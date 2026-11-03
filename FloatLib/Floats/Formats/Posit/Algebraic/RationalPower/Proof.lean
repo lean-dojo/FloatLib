@@ -33,11 +33,13 @@ variable {format : Format}
 
 private theorem roundRat_eq_roundPositive_of_nonneg (q : Rat) (hq : 0 ≤ q) :
     roundRat format q = RealRounding.roundPositive format (q : ℝ) := by
-  rw [RealRounding.roundPositive_ratCast]
-  by_cases hq0 : q = 0
-  · subst q
-    simp [roundPositiveRat, roundPositiveCode, zero]
-  · simp [roundRat, hq0, not_lt.mpr hq]
+  rw [roundRat_of_nonneg hq, RealRounding.roundPositive_ratCast]
+
+/-- A real power with an integral rational exponent is the cast of the rational integer power. -/
+private theorem rpow_ratCast_of_den_eq_one (base exponent : Rat) (hinteger : exponent.den = 1) :
+    (base : ℝ) ^ (exponent : ℝ) = ((base ^ exponent.num : Rat) : ℝ) := by
+  have he : (exponent : ℝ) = (exponent.num : ℝ) := by simp [Rat.cast_def, hinteger]
+  rw [he, Real.rpow_intCast, Rat.cast_zpow]
 
 /-- Exact boundary comparisons round a positive-base real power exactly once. -/
 theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 < base) :
@@ -46,9 +48,7 @@ theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 
   unfold roundPositiveRatPower
   split
   · rename_i hinteger
-    have he : (exponent : ℝ) = (exponent.num : ℝ) := by
-      simp [Rat.cast_def, hinteger.1]
-    rw [he, Real.rpow_intCast, ← Rat.cast_zpow]
+    rw [rpow_ratCast_of_den_eq_one base exponent hinteger.1]
     exact roundRat_eq_roundPositive_of_nonneg _ (zpow_nonneg hbase.le _)
   · apply ComparisonRounding.round_eq_real
     intro candidate
@@ -57,9 +57,9 @@ theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 
 private theorem roundPositiveRatPower_eq_roundRat (base exponent : Rat) (hbase : 0 < base)
     (hinteger : exponent.den = 1) :
     roundPositiveRatPower format base exponent = roundRat format (base ^ exponent.num) := by
-  have he : (exponent : ℝ) = (exponent.num : ℝ) := by simp [Rat.cast_def, hinteger]
-  rw [roundPositiveRatPower_eq_roundPositive base exponent hbase, he, Real.rpow_intCast,
-    ← Rat.cast_zpow, ← roundRat_eq_roundPositive_of_nonneg _ (zpow_nonneg hbase.le _)]
+  rw [roundPositiveRatPower_eq_roundPositive base exponent hbase,
+    rpow_ratCast_of_den_eq_one base exponent hinteger,
+    ← roundRat_eq_roundPositive_of_nonneg _ (zpow_nonneg hbase.le _)]
 
 /--
 In its nonnegative real domain, the executable power rounds the exact real power once.
@@ -94,12 +94,9 @@ theorem roundRatPower_eq_roundRat_of_neg (base exponent : Rat) (hbase : base < 0
     rw [(Int.even_iff.mpr heven).neg_zpow]
   · rename_i hodd
     have he : Odd exponent.num := Int.not_even_iff_odd.mp (by simpa [Int.even_iff] using hodd)
-    have hq : 0 < (-base) ^ exponent.num := zpow_pos (neg_pos.mpr hbase) _
     have hpower : base ^ exponent.num = -((-base) ^ exponent.num) := by
       simpa using he.neg_zpow (-base)
-    rw [hpower]
-    simp [roundRat, hq.ne', not_lt.mpr hq.le, neg_ne_zero.mpr hq.ne',
-      neg_lt_zero.mpr hq]
+    rw [hpower, roundRat_neg]
 
 /-- A negative base with a nonintegral exponent produces NaR. -/
 theorem roundRatPower_eq_nar_of_neg_nonintegral (base exponent : Rat) (hbase : base < 0)
@@ -198,9 +195,7 @@ theorem roundRatPowerMinusOne_eq_round (base exponent : Rat) (hbase : 0 < base) 
   unfold roundRatPowerMinusOne
   split
   · rename_i hinteger
-    have he : (exponent : ℝ) = (exponent.num : ℝ) := by
-      simp [Rat.cast_def, hinteger.1]
-    rw [he, Real.rpow_intCast, ← Rat.cast_zpow]
+    rw [rpow_ratCast_of_den_eq_one base exponent hinteger.1]
     simpa only [Rat.cast_sub, Rat.cast_one] using
       (RealRounding.round_ratCast format (base ^ exponent.num - 1)).symm
   · apply ComparisonRounding.roundSigned_eq_real

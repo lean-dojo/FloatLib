@@ -58,6 +58,12 @@ example {α : Type u} {β : Type v} [Field β] [LinearOrder β] [IsStrictOrdered
     (h : Interval.div? R I J = some K) : K.Contains R.decode (x / y) :=
   Interval.contains_div? R h hx hy
 
+example {α : Type u} {β : Type v} [Field β] [LinearOrder β] [IsStrictOrderedRing β]
+    (R : OutwardRounding α β) {I J K : Interval α} {y : β}
+    (hy : J.Contains R.decode y) (h : Interval.div? R I J = some K) : y ≠ 0 := by
+  rintro rfl
+  simp [Interval.div?_eq_none_of_contains_zero R hy] at h
+
 /-! Expression evaluation uses the same syntax with exact, grid, and custom endpoints. -/
 
 private def halfSquare : Interval.Expr :=

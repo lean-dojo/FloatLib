@@ -87,37 +87,21 @@ private theorem rootStep_spec
   have hremainder : state.remainder.toNat < 2 ^ 126 := by
     norm_num at hroot ⊢
     omega
-  have hrootShiftTwoFit : state.root.toNat <<< 2 < 2 ^ 128 := by
-    rw [Nat.shiftLeft_eq]
-    norm_num at hroot ⊢
-    omega
-  have hrootShiftOneFit : state.root.toNat <<< 1 < 2 ^ 128 := by
-    rw [Nat.shiftLeft_eq]
-    norm_num at hroot ⊢
-    omega
-  have hremainderShiftTwoFit :
-      state.remainder.toNat <<< 2 < 2 ^ 128 := by
-    rw [Nat.shiftLeft_eq]
-    norm_num at hremainder ⊢
-    omega
   have htrialBase :
       trialBase.toNat = state.root.toNat * 4 := by
     dsimp only [trialBase]
-    rw [shiftLeftTwo_eq, UInt128.shiftLeft_toNat
-      _ 2 (by omega) hrootShiftTwoFit]
-    simp [Nat.shiftLeft_eq]
+    rw [shiftLeftTwo_eq, UInt128.shiftLeft_toNat_eq_mul _ 2 (by omega)]
+    norm_num
   have hdoubledRoot :
       doubledRoot.toNat = state.root.toNat * 2 := by
     dsimp only [doubledRoot]
-    rw [shiftLeftOne_eq, UInt128.shiftLeft_toNat
-      _ 1 (by omega) hrootShiftOneFit]
-    simp [Nat.shiftLeft_eq]
+    rw [shiftLeftOne_eq, UInt128.shiftLeft_toNat_eq_mul _ 1 (by omega)]
+    norm_num
   have hexpandedBase :
       expandedBase.toNat = state.remainder.toNat * 4 := by
     dsimp only [expandedBase]
-    rw [shiftLeftTwo_eq, UInt128.shiftLeft_toNat
-      _ 2 (by omega) hremainderShiftTwoFit]
-    simp [Nat.shiftLeft_eq]
+    rw [shiftLeftTwo_eq, UInt128.shiftLeft_toNat_eq_mul _ 2 (by omega)]
+    norm_num
   have hexpanded :
       expanded.toNat =
         state.remainder.toNat * 4 + digit.toNat := by
@@ -140,11 +124,7 @@ private theorem rootStep_spec
   have htrial :
       trial.toNat = state.root.toNat * 4 + 1 := by
     dsimp only [trial]
-    rw [UInt128.setLowBit_toNat, htrialBase]
-    have happend :=
-      Nat.shiftLeft_add_eq_or_of_lt
-        (a := state.root.toNat) (i := 2) (b := 1) (by norm_num)
-    simpa [Nat.shiftLeft_eq] using happend.symm
+    rw [UInt128.setLowBit_toNat_of_even _ (by rw [htrialBase]; omega), htrialBase]
   by_cases hbelow :
       state.remainder.toNat * 4 + digit.toNat <
         state.root.toNat * 4 + 1
@@ -184,11 +164,7 @@ private theorem rootStep_spec
     have hrootOdd :
         doubledRoot.setLowBit.toNat =
           state.root.toNat * 2 + 1 := by
-      rw [UInt128.setLowBit_toNat, hdoubledRoot]
-      have happend :=
-        Nat.shiftLeft_add_eq_or_of_lt
-          (a := state.root.toNat) (i := 1) (b := 1) (by norm_num)
-      simpa [Nat.shiftLeft_eq] using happend.symm
+      rw [UInt128.setLowBit_toNat_of_even _ (by rw [hdoubledRoot]; omega), hdoubledRoot]
     have hremainderSub :
         (UInt128.sub expanded trial).toNat =
           state.remainder.toNat * 4 + digit.toNat -
@@ -267,30 +243,39 @@ private theorem digitsValue_limb0
       rw [digitsValue, wordDigits,
         digitAt_limb0 radicand steps (by omega), ih (by omega)]
 
+/--
+Past a word boundary at digit `base`, the reconstruction adds the digits of the next word at that
+boundary's place value.
+-/
+private theorem digitsValue_add_word
+    (radicand : UInt256) (word : UInt64) (base steps : Nat)
+    (hdigit : ∀ index, base ≤ index → index < base + steps →
+      (digitAt radicand index).toNat = wordDigit word (index - base)) :
+    digitsValue digitAt radicand (base + steps) =
+      wordDigits word steps * place base +
+        digitsValue digitAt radicand base := by
+  induction steps with
+  | zero => simp [wordDigits]
+  | succ steps ih =>
+      change
+        (digitAt radicand (base + steps)).toNat *
+              place (base + steps) +
+            digitsValue digitAt radicand (base + steps) =
+          (wordDigit word steps * place steps +
+              wordDigits word steps) * place base +
+            digitsValue digitAt radicand base
+      rw [hdigit (base + steps) (by omega) (by omega), Nat.add_sub_cancel_left,
+        ih (fun index hlower hupper => hdigit index hlower (by omega)), place_add]
+      ring
+
 private theorem digitsValue_limb1
     (radicand : UInt256) (steps : Nat) (hsteps : steps ≤ 32) :
     digitsValue digitAt radicand (32 + steps) =
       wordDigits radicand.limb1 steps * place 32 +
         wordDigits radicand.limb0 32 := by
-  induction steps with
-  | zero =>
-      change
-        digitsValue digitAt radicand 32 =
-          0 * place 32 + wordDigits radicand.limb0 32
-      rw [zero_mul, zero_add]
-      exact digitsValue_limb0 radicand 32 (by omega)
-  | succ steps ih =>
-      change
-        (digitAt radicand (32 + steps)).toNat *
-              place (32 + steps) +
-            digitsValue digitAt radicand (32 + steps) =
-          (wordDigit radicand.limb1 steps * place steps +
-              wordDigits radicand.limb1 steps) * place 32 +
-            wordDigits radicand.limb0 32
-      rw [digitAt_limb1 radicand (32 + steps) (by omega) (by omega),
-        show 32 + steps - 32 = steps by omega, ih (by omega),
-        place_add]
-      ring
+  rw [digitsValue_add_word radicand radicand.limb1 32 steps
+      (fun index hlower hupper => digitAt_limb1 radicand index hlower (by omega)),
+    digitsValue_limb0 radicand 32 le_rfl]
 
 private theorem digitsValue_limb2
     (radicand : UInt256) (steps : Nat) (hsteps : steps ≤ 32) :
@@ -298,62 +283,22 @@ private theorem digitsValue_limb2
       wordDigits radicand.limb2 steps * place 64 +
         wordDigits radicand.limb1 32 * place 32 +
         wordDigits radicand.limb0 32 := by
-  induction steps with
-  | zero =>
-      change
-        digitsValue digitAt radicand 64 =
-          0 * place 64 +
-            wordDigits radicand.limb1 32 * place 32 +
-            wordDigits radicand.limb0 32
-      rw [zero_mul, zero_add]
-      simpa only [show 64 = 32 + 32 by omega] using
-        digitsValue_limb1 radicand 32 (by omega)
-  | succ steps ih =>
-      change
-        (digitAt radicand (64 + steps)).toNat *
-              place (64 + steps) +
-            digitsValue digitAt radicand (64 + steps) =
-          (wordDigit radicand.limb2 steps * place steps +
-              wordDigits radicand.limb2 steps) * place 64 +
-            wordDigits radicand.limb1 32 * place 32 +
-            wordDigits radicand.limb0 32
-      rw [digitAt_limb2 radicand (64 + steps) (by omega) (by omega),
-        show 64 + steps - 64 = steps by omega, ih (by omega),
-        place_add]
-      ring
+  rw [digitsValue_add_word radicand radicand.limb2 64 steps
+      (fun index hlower hupper => digitAt_limb2 radicand index hlower (by omega)),
+    digitsValue_limb1 radicand 32 le_rfl]
+  ring
 
 private theorem digitsValue_limb3
-    (radicand : UInt256) (steps : Nat) (hsteps : steps ≤ 32) :
+    (radicand : UInt256) (steps : Nat) :
     digitsValue digitAt radicand (96 + steps) =
       wordDigits radicand.limb3 steps * place 96 +
         wordDigits radicand.limb2 32 * place 64 +
         wordDigits radicand.limb1 32 * place 32 +
         wordDigits radicand.limb0 32 := by
-  induction steps with
-  | zero =>
-      change
-        digitsValue digitAt radicand 96 =
-          0 * place 96 +
-            wordDigits radicand.limb2 32 * place 64 +
-            wordDigits radicand.limb1 32 * place 32 +
-            wordDigits radicand.limb0 32
-      rw [zero_mul, zero_add]
-      simpa only [show 96 = 64 + 32 by omega] using
-        digitsValue_limb2 radicand 32 (by omega)
-  | succ steps ih =>
-      change
-        (digitAt radicand (96 + steps)).toNat *
-              place (96 + steps) +
-            digitsValue digitAt radicand (96 + steps) =
-          (wordDigit radicand.limb3 steps * place steps +
-              wordDigits radicand.limb3 steps) * place 96 +
-            wordDigits radicand.limb2 32 * place 64 +
-            wordDigits radicand.limb1 32 * place 32 +
-            wordDigits radicand.limb0 32
-      rw [digitAt_limb3 radicand (96 + steps) (by omega),
-        show 96 + steps - 96 = steps by omega, ih (by omega),
-        place_add]
-      ring
+  rw [digitsValue_add_word radicand radicand.limb3 96 steps
+      (fun index hlower _ => digitAt_limb3 radicand index hlower),
+    digitsValue_limb2 radicand 32 le_rfl]
+  ring
 
 /-! ## Restoring-loop refinement -/
 
@@ -385,15 +330,24 @@ private theorem rootAndRemainder_rep
   rw [zero_mul, zero_add, hdigits] at hloop
   exact hloop hfit
 
+/-- A limb weighted by `place base` inside a value below `place (base + digits)` has at most
+`digits` base-four digits. -/
+private theorem mod_place_eq_of_mul_place_le (limb value base digits : Nat)
+    (hlimb : limb * place base ≤ value) (hvalue : value < place (base + digits)) :
+    limb % place digits = limb := by
+  apply Nat.mod_eq_of_lt
+  rw [place_add, Nat.mul_comm] at hvalue
+  exact Nat.lt_of_mul_lt_mul_right (hlimb.trans_lt hvalue)
+
 /--
 The first `steps` base-four digits reconstruct every radicand below `2^(2 * steps)`, for any digit
-count between 64 and 128.
+count up to 128.
 
 This covers both the 96- and 113-digit kernels.
 -/
 private theorem digitsValue_eq_toNat
     (radicand : UInt256) (steps : Nat)
-    (hlower : 64 ≤ steps) (hupper : steps ≤ 128)
+    (hupper : steps ≤ 128)
     (hfit : radicand.toNat < 2 ^ (2 * steps)) :
     digitsValue digitAt radicand steps = radicand.toNat := by
   have h0 := radicand.limb0.toNat_lt
@@ -409,38 +363,45 @@ private theorem digitsValue_eq_toNat
       radicand.toNat =
         radicand.limb0.toNat + radicand.limb1.toNat * 2 ^ 64 +
           radicand.limb2.toNat * 2 ^ 128 + radicand.limb3.toNat * 2 ^ 192 := rfl
+  by_cases hfirst : steps ≤ 32
+  · -- Only the low limb is nonzero, and it has at most `2 * steps` significant bits.
+    have hfit64 : radicand.toNat < 2 ^ 64 :=
+      hfit.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+    have hlimb0Steps :=
+      mod_place_eq_of_mul_place_le radicand.limb0.toNat radicand.toNat 0 steps
+        (by unfold place; rw [hvalue]; omega)
+        (by rw [Nat.zero_add]; exact hfit)
+    rw [digitsValue_limb0 radicand steps hfirst, wordDigits_eq_mod radicand.limb0 steps hfirst,
+      hlimb0Steps]
+    omega
+  by_cases hsecond : steps ≤ 64
+  · -- The top two limbs are zero and the second limb has at most `2 * steps - 64` bits.
+    have hsplit : steps = 32 + (steps - 32) := by omega
+    have hfit128 : radicand.toNat < 2 ^ 128 :=
+      hfit.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+    have hlimb1Steps :=
+      mod_place_eq_of_mul_place_le radicand.limb1.toNat radicand.toNat 32 (steps - 32)
+        (by unfold place; rw [hvalue]; omega)
+        (by rw [← hsplit]; exact hfit)
+    rw [hsplit, digitsValue_limb1 radicand (steps - 32) (by omega),
+      wordDigits_eq_mod radicand.limb1 (steps - 32) (by omega),
+      wordDigits_eq_mod radicand.limb0 32 (by omega), hlimb0, hlimb1Steps]
+    unfold place
+    omega
   by_cases hmiddle : steps ≤ 96
   · -- The top limb is zero and the third limb has at most `2 * steps - 128` significant bits.
     have hsplit : steps = 64 + (steps - 64) := by omega
-    have hpow : 2 ^ (2 * steps) = 2 ^ (2 * (steps - 64)) * 2 ^ 128 := by
-      rw [← pow_add]
-      congr 1
-      omega
     have hlimb3 : radicand.limb3.toNat = 0 := by
-      have hbound : radicand.limb3.toNat * 2 ^ 192 < 2 ^ 192 := by
-        calc
-          radicand.limb3.toNat * 2 ^ 192 ≤ radicand.toNat := by
-            rw [hvalue]
-            exact Nat.le_add_left _ _
-          _ < 2 ^ (2 * steps) := hfit
-          _ ≤ 2 ^ 192 := Nat.pow_le_pow_right (by decide) (by omega)
-      have hone : radicand.limb3.toNat * 2 ^ 192 < 1 * 2 ^ 192 := by
-        rw [one_mul]
-        exact hbound
-      have hlt : radicand.limb3.toNat < 1 := Nat.lt_of_mul_lt_mul_right hone
+      have hmod :=
+        mod_place_eq_of_mul_place_le radicand.limb3.toNat radicand.toNat 96 0
+          (by unfold place; rw [hvalue]; omega)
+          (by unfold place; exact hfit.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))
+      simp only [place, Nat.mul_zero, Nat.pow_zero, Nat.mod_one] at hmod
       omega
-    have hlimb2 : radicand.limb2.toNat % place (steps - 64) = radicand.limb2.toNat := by
-      apply Nat.mod_eq_of_lt
-      have hbound :
-          radicand.limb2.toNat * 2 ^ 128 < 2 ^ (2 * (steps - 64)) * 2 ^ 128 := by
-        calc
-          radicand.limb2.toNat * 2 ^ 128 ≤ radicand.toNat := by
-            rw [hvalue, hlimb3]
-            omega
-          _ < 2 ^ (2 * steps) := hfit
-          _ = 2 ^ (2 * (steps - 64)) * 2 ^ 128 := hpow
-      unfold place
-      exact Nat.lt_of_mul_lt_mul_right hbound
+    have hlimb2 :=
+      mod_place_eq_of_mul_place_le radicand.limb2.toNat radicand.toNat 64 (steps - 64)
+        (by unfold place; rw [hvalue, hlimb3]; omega)
+        (by rw [← hsplit]; exact hfit)
     rw [hsplit, digitsValue_limb2 radicand (steps - 64) (by omega),
       wordDigits_eq_mod radicand.limb2 (steps - 64) (by omega),
       wordDigits_eq_mod radicand.limb1 32 (by omega),
@@ -449,26 +410,14 @@ private theorem digitsValue_eq_toNat
     ring
   · -- The top limb has at most `2 * steps - 192` significant bits.
     have hsplit : steps = 96 + (steps - 96) := by omega
-    have hpow : 2 ^ (2 * steps) = 2 ^ (2 * (steps - 96)) * 2 ^ 192 := by
-      rw [← pow_add]
-      congr 1
-      omega
     have hlimb2 : radicand.limb2.toNat % place 32 = radicand.limb2.toNat := by
       apply Nat.mod_eq_of_lt
       simpa [place] using h2
-    have hlimb3 : radicand.limb3.toNat % place (steps - 96) = radicand.limb3.toNat := by
-      apply Nat.mod_eq_of_lt
-      have hbound :
-          radicand.limb3.toNat * 2 ^ 192 < 2 ^ (2 * (steps - 96)) * 2 ^ 192 := by
-        calc
-          radicand.limb3.toNat * 2 ^ 192 ≤ radicand.toNat := by
-            rw [hvalue]
-            exact Nat.le_add_left _ _
-          _ < 2 ^ (2 * steps) := hfit
-          _ = 2 ^ (2 * (steps - 96)) * 2 ^ 192 := hpow
-      unfold place
-      exact Nat.lt_of_mul_lt_mul_right hbound
-    rw [hsplit, digitsValue_limb3 radicand (steps - 96) (by omega),
+    have hlimb3 :=
+      mod_place_eq_of_mul_place_le radicand.limb3.toNat radicand.toNat 96 (steps - 96)
+        (by unfold place; rw [hvalue]; omega)
+        (by rw [← hsplit]; exact hfit)
+    rw [hsplit, digitsValue_limb3 radicand (steps - 96),
       wordDigits_eq_mod radicand.limb3 (steps - 96) (by omega),
       wordDigits_eq_mod radicand.limb2 32 (by omega),
       wordDigits_eq_mod radicand.limb1 32 (by omega),
@@ -478,14 +427,14 @@ private theorem digitsValue_eq_toNat
 
 /--
 The restoring kernel with `steps` digits returns the floor root and square remainder for every
-radicand below `2^(2 * steps)`, for any digit count between 64 and 125.
+radicand below `2^(2 * steps)`, for any digit count up to 125.
 
 The upper bound keeps the remainder doubled twice inside the two-word state. The two-word
 square-root kernels use `fracWidth + 1` digits.
 -/
 theorem rootAndRemainder_spec
     (radicand : UInt256) (steps : Nat)
-    (hlower : 64 ≤ steps) (hupper : steps ≤ 125)
+    (hupper : steps ≤ 125)
     (hfit : radicand.toNat < 2 ^ (2 * steps)) :
     let state := rootAndRemainder radicand steps
     state.root.toNat = Nat.sqrt radicand.toNat ∧
@@ -497,13 +446,13 @@ theorem rootAndRemainder_spec
     lt_of_lt_of_le hfit (Nat.pow_le_pow_right (by decide) (by omega))
   have hrep : RootRep128 state radicand.toNat :=
     rootAndRemainder_rep radicand steps
-      (digitsValue_eq_toNat radicand steps hlower (by omega) hfit) hfit250
+      (digitsValue_eq_toNat radicand steps (by omega) hfit) hfit250
   exact RestoringRootState.sqrt_spec UInt128.toNat hrep
 
 /-- Native nearest-root rounding agrees with the mathematical remainder boundary. -/
 theorem roundRoot_toNat
     (radicand : UInt256) (steps : Nat)
-    (hlower : 64 ≤ steps) (hupper : steps ≤ 125)
+    (hupper : steps ≤ 125)
     (hfit : radicand.toNat < 2 ^ (2 * steps)) :
     (roundRoot (rootAndRemainder radicand steps)).toNat =
       let root := Nat.sqrt radicand.toNat
@@ -518,7 +467,7 @@ theorem roundRoot_toNat
         Nat.sqrt radicand.toNat
       else
         Nat.sqrt radicand.toNat + 1
-  have hspec := rootAndRemainder_spec radicand steps hlower hupper hfit
+  have hspec := rootAndRemainder_spec radicand steps hupper hfit
   have hroot : state.root.toNat = Nat.sqrt radicand.toNat := hspec.1
   have hremainder :
       state.remainder.toNat =

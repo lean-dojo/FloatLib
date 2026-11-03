@@ -22,8 +22,11 @@ interprets finite values in `ℝ`, and the format parameter selects the correspo
 grid. This real-valued grid has no upper exponent bound, so the executable operation theorems
 apply when the result is finite.
 
-The operation theorems require finite inputs and outputs because infinities and NaNs have no
-real value. Signed zeros both have real value zero.
+Infinities and NaNs have no real value, so the operation theorems require a finite result. For
+addition, subtraction, multiplication, fused multiply-add and casts into an IEEE destination a
+finite result forces finite operands. Division keeps a finite divisor, because a finite dividend
+over an infinity gives a signed zero, and square root keeps its finite nonnegative domain. Signed
+zeros both have real value zero.
 -/
 
 @[expose] public section
@@ -39,7 +42,7 @@ noncomputable abbrev ulpAt (fmt : FloatFormat) (x : ℝ) : ℝ :=
   ulp Numerics.binaryRadix (fexpOf fmt) x
 
 /-- Half an ULP at `x` for the precision and gradual-underflow grid of `fmt`. -/
-noncomputable abbrev epsilonAt (fmt : FloatFormat) (x : ℝ) : ℝ :=
+noncomputable abbrev halfUlpAt (fmt : FloatFormat) (x : ℝ) : ℝ :=
   ulpAt fmt x / 2
 
 /-- The least positive normal magnitude of `fmt`. -/
@@ -56,22 +59,33 @@ instance (fmt : FloatFormat) : MonotoneExp (fexpOf fmt) := by
 /--
 Nearest-even rounding to `fmt` has at most half an ULP of absolute error.
 
-The format-specific `epsilonAt` follows the subnormal grid near zero, so this bound is useful even
+The format-specific `halfUlpAt` follows the subnormal grid near zero, so this bound is useful even
 where a uniform relative-error bound is impossible.
 -/
 theorem abs_roundAt_sub_le (fmt : FloatFormat) (x : ℝ) :
-    |roundAt fmt x - x| ≤ epsilonAt fmt x := by
-  simpa [roundAt, epsilonAt, ulpAt] using
+    |roundAt fmt x - x| ≤ halfUlpAt fmt x := by
+  simpa [roundAt, halfUlpAt, ulpAt] using
     (error_bound_ulp
       (β := Numerics.binaryRadix) (fexp := fexpOf fmt) nearestEven x)
 
 /-- The exact real input lies in the half-ULP enclosure around its rounded value. -/
 theorem roundAt_mem_Icc (fmt : FloatFormat) (x : ℝ) :
     x ∈ Set.Icc
-      (roundAt fmt x - epsilonAt fmt x)
-      (roundAt fmt x + epsilonAt fmt x) := by
+      (roundAt fmt x - halfUlpAt fmt x)
+      (roundAt fmt x + halfUlpAt fmt x) := by
   have h := (abs_le.mp (abs_roundAt_sub_le fmt x))
   constructor <;> linarith
+
+/--
+The FLT normal-range threshold `minSubnormalExponent + precision - 1` is the minimum normal
+exponent, so `minNormalAt fmt` is the FLT threshold of `fexpOf fmt`.
+-/
+theorem minSubnormalExponent_add_precision_sub_one (fmt : FloatFormat) :
+    FloatFormat.minSubnormalExponent fmt + Int.ofNat (fmt.fracWidth + 1) - 1 =
+      FloatFormat.minNormalExponent fmt := by
+  simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
+    Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
+  ring
 
 /--
 Normal-range nearest-even rounding has the standard relative error bound
@@ -84,17 +98,11 @@ theorem relativeError_roundAt_le_of_normal (fmt : FloatFormat) (x : ℝ)
         (1 - Int.ofNat (fmt.fracWidth + 1)) / 2 := by
   have hprec : (0 : Int) < Int.ofNat (fmt.fracWidth + 1) :=
     Int.natCast_pos.mpr (Nat.succ_pos fmt.fracWidth)
-  have hexponent :
-      FloatFormat.minSubnormalExponent fmt + Int.ofNat (fmt.fracWidth + 1) - 1 =
-        FloatFormat.minNormalExponent fmt := by
-    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-      Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
-    ring
   have hnormal' :
       FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
           (FloatFormat.minSubnormalExponent fmt + Int.ofNat (fmt.fracWidth + 1) - 1) ≤
         |x| := by
-    rw [hexponent]
+    rw [minSubnormalExponent_add_precision_sub_one]
     exact hnormal
   simpa [roundAt, fexpOf] using
     (relative_error_round_FLT_normal
@@ -103,44 +111,52 @@ theorem relativeError_roundAt_le_of_normal (fmt : FloatFormat) (x : ℝ)
       (Int.ofNat (fmt.fracWidth + 1))
       hprec nearestEven x hx hnormal')
 
-/-- Absolute error of one finite executable addition. -/
+/--
+One IEEE addition with a finite result, which forces finite operands, is within half an ULP of the
+exact sum; the bound follows the subnormal grid near zero.
+-/
 theorem abs_toReal_add_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     |toReal (add x y) - (toReal x + toReal y)| ≤
-      epsilonAt fmt (toReal x + toReal y) := by
-  rw [toReal_add_eq_roundAt x y hfmt hx hy hout]
+      halfUlpAt fmt (toReal x + toReal y) := by
+  rw [toReal_add_eq_roundAt x y hfmt hout]
   exact abs_roundAt_sub_le fmt (toReal x + toReal y)
 
-/-- Absolute error of one finite executable subtraction. -/
+/--
+One IEEE subtraction with a finite result, which forces finite operands, is within half an ULP of
+the exact difference; the bound follows the subnormal grid near zero.
+-/
 theorem abs_toReal_sub_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (sub x y) = true) :
     |toReal (sub x y) - (toReal x - toReal y)| ≤
-      epsilonAt fmt (toReal x - toReal y) := by
-  rw [toReal_sub_eq_roundAt x y hfmt hx hy hout]
+      halfUlpAt fmt (toReal x - toReal y) := by
+  rw [toReal_sub_eq_roundAt x y hfmt hout]
   exact abs_roundAt_sub_le fmt (toReal x - toReal y)
 
-/-- Absolute error of one finite executable multiplication. -/
+/--
+One IEEE multiplication with a finite result, which forces finite operands, is within half an ULP
+of the exact product; the bound follows the subnormal grid near zero.
+-/
 theorem abs_toReal_mul_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (mul x y) = true) :
     |toReal (mul x y) - toReal x * toReal y| ≤
-      epsilonAt fmt (toReal x * toReal y) := by
-  rw [toReal_mul_eq_roundAt x y hfmt hx hy hout]
+      halfUlpAt fmt (toReal x * toReal y) := by
+  rw [toReal_mul_eq_roundAt x y hfmt hout]
   exact abs_roundAt_sub_le fmt (toReal x * toReal y)
 
-/-- Absolute error of one finite executable division by a nonzero divisor. -/
+/--
+One IEEE division by a finite divisor is within half an ULP of the exact quotient when the result
+is finite, which forces a finite dividend and a nonzero divisor.
+-/
 theorem abs_toReal_div_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
-    (hy0 : isZero y = false) (hout : isFinite (div x y) = true) :
+    (hy : isFinite y = true) (hout : isFinite (div x y) = true) :
     |toReal (div x y) - toReal x / toReal y| ≤
-      epsilonAt fmt (toReal x / toReal y) := by
-  rw [toReal_div_eq_roundAt x y hfmt hx hy hy0 hout]
+      halfUlpAt fmt (toReal x / toReal y) := by
+  rw [toReal_div_eq_roundAt x y hfmt hy hout]
   exact abs_roundAt_sub_le fmt (toReal x / toReal y)
 
 /--
@@ -152,18 +168,20 @@ theorem abs_toReal_sqrt_sub_le {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true)
     (hdomain : isZero x = true ∨ signBit x = false) :
     |toReal (sqrt x) - Real.sqrt (toReal x)| ≤
-      epsilonAt fmt (Real.sqrt (toReal x)) := by
+      halfUlpAt fmt (Real.sqrt (toReal x)) := by
   rw [toReal_sqrt_eq_roundAt x hfmt hx hdomain]
   exact abs_roundAt_sub_le fmt (Real.sqrt (toReal x))
 
-/-- Absolute error of one finite executable fused multiply-add. -/
+/--
+One IEEE fused multiply-add, rounded once, is within half an ULP of `x * y + z` when the result is
+finite, which forces finite operands.
+-/
 theorem abs_toReal_fma_sub_le {fmt : FloatFormat} (x y z : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true) (hz : isFinite z = true)
     (hout : isFinite (fma x y z) = true) :
     |toReal (fma x y z) - (toReal x * toReal y + toReal z)| ≤
-      epsilonAt fmt (toReal x * toReal y + toReal z) := by
-  rw [toReal_fma_eq_roundAt x y z hfmt hx hy hz hout]
+      halfUlpAt fmt (toReal x * toReal y + toReal z) := by
+  rw [toReal_fma_eq_roundAt x y z hfmt hout]
   exact abs_roundAt_sub_le fmt (toReal x * toReal y + toReal z)
 
 /--
@@ -194,64 +212,58 @@ theorem isFinite_cast_of_abs_toReal_le_posMaxFinite {src dst : FloatFormat} (x :
       · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
     · simpa only [finiteDyadic_eq_of_toDyadic _ hd] using hround
 
-/-- Absolute error of one finite cross-format cast. -/
-theorem abs_toReal_cast_sub_le_of_isIEEE_destination {src dst : FloatFormat} (x : Model src)
-    (hdst : dst.isIEEE = true)
-    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
-    |toReal (cast src dst x) - toReal x| ≤ epsilonAt dst (toReal x) := by
-  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hout]
-  exact abs_roundAt_sub_le dst (toReal x)
-
-/-- IEEE-source specialization of `abs_toReal_cast_sub_le_of_isIEEE_destination`. -/
+/--
+A cast into an IEEE destination is within half a destination ULP of the source value when the
+delivered result is finite, which forces a finite source. The source may be any binary
+descriptor.
+-/
 theorem abs_toReal_cast_sub_le {src dst : FloatFormat} (x : Model src)
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
-    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
-    |toReal (cast src dst x) - toReal x| ≤ epsilonAt dst (toReal x) := by
-  rw [cast_eq_roundAt hsrc hdst x hx hout]
+    (hdst : dst.isIEEE = true) (hout : isFinite (cast src dst x) = true) :
+    |toReal (cast src dst x) - toReal x| ≤ halfUlpAt dst (toReal x) := by
+  rw [cast_eq_roundAt hdst x hout]
   exact abs_roundAt_sub_le dst (toReal x)
 
-/-- The exact sum lies in the half-ULP enclosure around executable addition. -/
+/-- The exact sum lies in the half-ULP enclosure around a finite executable addition. -/
 theorem add_exact_mem_Icc {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     toReal x + toReal y ∈ Set.Icc
-      (toReal (add x y) - epsilonAt fmt (toReal x + toReal y))
-      (toReal (add x y) + epsilonAt fmt (toReal x + toReal y)) := by
-  rw [toReal_add_eq_roundAt x y hfmt hx hy hout]
+      (toReal (add x y) - halfUlpAt fmt (toReal x + toReal y))
+      (toReal (add x y) + halfUlpAt fmt (toReal x + toReal y)) := by
+  rw [toReal_add_eq_roundAt x y hfmt hout]
   exact roundAt_mem_Icc fmt (toReal x + toReal y)
 
-/-- The exact difference lies in the half-ULP enclosure around executable subtraction. -/
+/-- The exact difference lies in the half-ULP enclosure around a finite executable subtraction. -/
 theorem sub_exact_mem_Icc {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (sub x y) = true) :
     toReal x - toReal y ∈ Set.Icc
-      (toReal (sub x y) - epsilonAt fmt (toReal x - toReal y))
-      (toReal (sub x y) + epsilonAt fmt (toReal x - toReal y)) := by
-  rw [toReal_sub_eq_roundAt x y hfmt hx hy hout]
+      (toReal (sub x y) - halfUlpAt fmt (toReal x - toReal y))
+      (toReal (sub x y) + halfUlpAt fmt (toReal x - toReal y)) := by
+  rw [toReal_sub_eq_roundAt x y hfmt hout]
   exact roundAt_mem_Icc fmt (toReal x - toReal y)
 
-/-- The exact product lies in the half-ULP enclosure around executable multiplication. -/
+/-- The exact product lies in the half-ULP enclosure around a finite executable multiplication. -/
 theorem mul_exact_mem_Icc {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (mul x y) = true) :
     toReal x * toReal y ∈ Set.Icc
-      (toReal (mul x y) - epsilonAt fmt (toReal x * toReal y))
-      (toReal (mul x y) + epsilonAt fmt (toReal x * toReal y)) := by
-  rw [toReal_mul_eq_roundAt x y hfmt hx hy hout]
+      (toReal (mul x y) - halfUlpAt fmt (toReal x * toReal y))
+      (toReal (mul x y) + halfUlpAt fmt (toReal x * toReal y)) := by
+  rw [toReal_mul_eq_roundAt x y hfmt hout]
   exact roundAt_mem_Icc fmt (toReal x * toReal y)
 
-/-- The exact quotient lies in the half-ULP enclosure around executable division. -/
+/--
+The exact quotient lies in the half-ULP enclosure around a finite executable division by a finite
+divisor.
+-/
 theorem div_exact_mem_Icc {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
-    (hy0 : isZero y = false) (hout : isFinite (div x y) = true) :
+    (hy : isFinite y = true) (hout : isFinite (div x y) = true) :
     toReal x / toReal y ∈ Set.Icc
-      (toReal (div x y) - epsilonAt fmt (toReal x / toReal y))
-      (toReal (div x y) + epsilonAt fmt (toReal x / toReal y)) := by
-  rw [toReal_div_eq_roundAt x y hfmt hx hy hy0 hout]
+      (toReal (div x y) - halfUlpAt fmt (toReal x / toReal y))
+      (toReal (div x y) + halfUlpAt fmt (toReal x / toReal y)) := by
+  rw [toReal_div_eq_roundAt x y hfmt hy hout]
   exact roundAt_mem_Icc fmt (toReal x / toReal y)
 
 /-- The exact square root lies in the half-ULP enclosure around executable square root. -/
@@ -260,50 +272,46 @@ theorem sqrt_exact_mem_Icc {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true)
     (hdomain : isZero x = true ∨ signBit x = false) :
     Real.sqrt (toReal x) ∈ Set.Icc
-      (toReal (sqrt x) - epsilonAt fmt (Real.sqrt (toReal x)))
-      (toReal (sqrt x) + epsilonAt fmt (Real.sqrt (toReal x))) := by
+      (toReal (sqrt x) - halfUlpAt fmt (Real.sqrt (toReal x)))
+      (toReal (sqrt x) + halfUlpAt fmt (Real.sqrt (toReal x))) := by
   rw [toReal_sqrt_eq_roundAt x hfmt hx hdomain]
   exact roundAt_mem_Icc fmt (Real.sqrt (toReal x))
 
-/-- The exact multiply-add lies in the half-ULP enclosure around executable FMA. -/
+/-- The exact multiply-add lies in the half-ULP enclosure around a finite executable FMA. -/
 theorem fma_exact_mem_Icc {fmt : FloatFormat} (x y z : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true) (hz : isFinite z = true)
     (hout : isFinite (fma x y z) = true) :
     toReal x * toReal y + toReal z ∈ Set.Icc
-      (toReal (fma x y z) - epsilonAt fmt (toReal x * toReal y + toReal z))
-      (toReal (fma x y z) + epsilonAt fmt (toReal x * toReal y + toReal z)) := by
-  rw [toReal_fma_eq_roundAt x y z hfmt hx hy hz hout]
+      (toReal (fma x y z) - halfUlpAt fmt (toReal x * toReal y + toReal z))
+      (toReal (fma x y z) + halfUlpAt fmt (toReal x * toReal y + toReal z)) := by
+  rw [toReal_fma_eq_roundAt x y z hfmt hout]
   exact roundAt_mem_Icc fmt (toReal x * toReal y + toReal z)
 
-/-- The source real value lies in the half-ULP enclosure around a finite cast. -/
-theorem cast_exact_mem_Icc_of_isIEEE_destination {src dst : FloatFormat} (x : Model src)
-    (hdst : dst.isIEEE = true)
-    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
-    toReal x ∈ Set.Icc
-      (toReal (cast src dst x) - epsilonAt dst (toReal x))
-      (toReal (cast src dst x) + epsilonAt dst (toReal x)) := by
-  rw [cast_eq_roundAt_of_isIEEE_destination hdst x hx hout]
-  exact roundAt_mem_Icc dst (toReal x)
-
-/-- IEEE-source specialization of `cast_exact_mem_Icc_of_isIEEE_destination`. -/
+/--
+The source real value lies in the half-ULP enclosure around a finite cast into an IEEE
+destination. The source may be any binary descriptor.
+-/
 theorem cast_exact_mem_Icc {src dst : FloatFormat} (x : Model src)
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
-    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
+    (hdst : dst.isIEEE = true) (hout : isFinite (cast src dst x) = true) :
     toReal x ∈ Set.Icc
-      (toReal (cast src dst x) - epsilonAt dst (toReal x))
-      (toReal (cast src dst x) + epsilonAt dst (toReal x)) := by
-  rw [cast_eq_roundAt hsrc hdst x hx hout]
+      (toReal (cast src dst x) - halfUlpAt dst (toReal x))
+      (toReal (cast src dst x) + halfUlpAt dst (toReal x)) := by
+  rw [cast_eq_roundAt hdst x hout]
   exact roundAt_mem_Icc dst (toReal x)
 
-/-- The residual of finite nearest-even addition is representable in the same format. -/
+/--
+The residual of finite nearest-even addition lies on the precision and gradual-underflow grid of
+`fmt`. This is representability on the real grid, which has no upper exponent bound; the theorem
+does not construct a finite `Model fmt` with that value. A finite sum forces finite operands, so
+`hout` is the only finiteness assumption.
+-/
 theorem genericFormat_toReal_add_sub {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     genericFormat Numerics.binaryRadix (fexpOf fmt)
       (toReal (add x y) - (toReal x + toReal y)) := by
-  rw [toReal_add_eq_roundAt x y hfmt hx hy hout]
+  obtain ⟨hx, hy⟩ := isFinite_of_isFinite_add hfmt hout
+  rw [toReal_add_eq_roundAt x y hfmt hout]
   exact add_round_error_generic
     (toReal_genericFormat_of_isFinite x hx)
     (toReal_genericFormat_of_isFinite y hy)

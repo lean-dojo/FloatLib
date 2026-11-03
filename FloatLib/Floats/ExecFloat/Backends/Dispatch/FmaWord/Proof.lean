@@ -32,7 +32,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace FmaBackend
 
-/-- Compact generic FMA preserves the public exact-dyadic operation. -/
+/-- Compact generic FMA equals the exact-dyadic `Spec.fma` on every input. -/
 theorem generic_eq_spec {fmt : FloatFormat}
     (x y z : Model fmt) :
     generic x y z = Spec.fma x y z := by
@@ -66,12 +66,11 @@ theorem generic_eq_spec {fmt : FloatFormat}
         simp [chooseNaN3, hxNaN, hyNaN, hzNaN, hxSNaN, hySNaN,
           hzSNaN, hxInf, hyInf, hzInf]
 
-private theorem generic_eq_of_finite_some {fmt : FloatFormat}
-    (x y z result : Model fmt)
-    (hfinite : FiniteKernel.fma? x y z = some result) :
-    generic x y z = result := by
-  simp [generic, FiniteKernel.fmaRuntimeFlat_eq,
-    FiniteKernel.fmaRuntime_eq, hfinite]
+/-- A result that the finite kernel accepts is the specification result. -/
+theorem eq_spec_of_finite {fmt : FloatFormat} {x y z result : Model fmt}
+    (hfinite : FiniteKernel.fma? x y z = some result) : result = Spec.fma x y z := by
+  rw [← generic_eq_spec]
+  simp [generic, FiniteKernel.fmaRuntimeFlat_eq, FiniteKernel.fmaRuntime_eq, hfinite]
 
 /--
 The binary32 finite kernel agrees with the generic finite kernel `FiniteKernel.fma?`.
@@ -85,91 +84,59 @@ private theorem binary32_fmaFiniteWord_eq_kernel
     FiniteKernel.fma_eq_spec]
   rfl
 
-/-- Native fixed-format and reusable one-word dispatch preserves fused multiply-add. -/
-private theorem spec_fma_eq_word :
-    @Spec.fma = @word := by
-  funext fmt x y z
-  by_cases h32 : FloatFormat.IsBinary32 fmt
-  · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
-    subst fmt
-    cases hnative : NativeBinary32.fmaFiniteWord? x y z with
-    | none =>
-        simp [word, hnative, generic_eq_spec]
-    | some result =>
-        have hfinite :
-            FiniteKernel.fma? x y z = some result := by
-          rw [← binary32_fmaFiniteWord_eq_kernel]
-          exact hnative
-        have hresult : result = Spec.fma x y z := by
-          calc
-            result = generic x y z :=
-              (generic_eq_of_finite_some
-                x y z result hfinite).symm
-            _ = Spec.fma x y z := generic_eq_spec x y z
-        simp [word, hnative, hresult]
-  · by_cases h64 : FloatFormat.IsBinary64 fmt
-    · have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
-      subst fmt
-      cases hnative : NativeBinary64.fmaFinite? x y z with
-      | none =>
-          simp [word, h32, hnative, generic_eq_spec]
-      | some result =>
-          have hfinite :
-              FiniteKernel.fma? x y z = some result := by
-            rw [← NativeBinary64.fmaFinite_eq]
-            exact hnative
-          have hresult : result = Spec.fma x y z := by
-            calc
-              result = generic x y z :=
-                (generic_eq_of_finite_some
-                  x y z result hfinite).symm
-              _ = Spec.fma x y z := generic_eq_spec x y z
-          simp [word, h32, hnative, hresult]
-    · by_cases hsmall : NativeSmallWordFma.Eligible fmt
-      · have hstorage : NativeSmallWord.StorageEligible fmt := ⟨hsmall.1, hsmall.2.1⟩
-        cases hkernel : NativeSmallWordFma.fmaFinite? x y z with
-        | some result =>
-            have hresult : result = Spec.fma x y z :=
-              (generic_eq_of_finite_some x y z result
-                (NativeSmallWordFma.fmaFinite_refines hsmall x y z result hkernel)).symm.trans
-                (generic_eq_spec x y z)
-            simp [word, h32, h64, hsmall, hkernel, hresult]
-        | none =>
-            cases hnative : NativeSmallWordFinite.fmaFinite? x y z with
-            | none =>
-                simp [word, h32, h64, hsmall, hkernel, hnative, generic_eq_spec]
-            | some result =>
-                have hfinite :
-                    FiniteKernel.fma? x y z = some result := by
-                  rw [← NativeSmallWordFinite.fmaFinite_eq hstorage]
-                  exact hnative
-                have hresult : result = Spec.fma x y z :=
-                  (generic_eq_of_finite_some x y z result hfinite).symm.trans
-                    (generic_eq_spec x y z)
-                simp [word, h32, h64, hsmall, hkernel, hnative, hresult]
-      by_cases heligible : NativeSmallWord.StorageEligible fmt
-      · cases hnative : NativeSmallWordFinite.fmaFinite? x y z with
-        | none =>
-            simp [word, h32, h64, hsmall, heligible, hnative,
-              generic_eq_spec]
-        | some result =>
-            have hfinite :
-                FiniteKernel.fma? x y z = some result := by
-              rw [← NativeSmallWordFinite.fmaFinite_eq heligible]
-              exact hnative
-            have hresult : result = Spec.fma x y z := by
-              calc
-                result = generic x y z :=
-                  (generic_eq_of_finite_some
-                    x y z result hfinite).symm
-                _ = Spec.fma x y z := generic_eq_spec x y z
-            simp [word, h32, h64, hsmall, heligible, hnative, hresult]
-      · simp [word, generic_eq_spec, h32, h64, hsmall, heligible]
+/--
+A kernel whose accepted results the finite kernel also returns, backed by a fallback equal to
+`Spec.fma` for the inputs it declines, computes `Spec.fma`.
+-/
+private theorem fallback_eq_spec {fmt : FloatFormat} {x y z fallback : Model fmt}
+    {fast : Option (Model fmt)}
+    (hfast : ∀ result, fast = some result → FiniteKernel.fma? x y z = some result)
+    (hfallback : fallback = Spec.fma x y z) :
+    (match (generalizing := false) fast with
+      | some result => result
+      | none => fallback) = Spec.fma x y z := by
+  cases fast with
+  | none => exact hfallback
+  | some result => exact eq_spec_of_finite (hfast result rfl)
 
-/-- Word-specialized fused multiply-add agrees with `Spec.fma`. -/
+/--
+Word-specialized fused multiply-add equals `Spec.fma` for every descriptor and on every input,
+exceptional values included.
+-/
 theorem word_eq_spec {fmt : FloatFormat} (x y z : Model fmt) :
-    word x y z = Spec.fma x y z :=
-  (congrFun (congrFun (congrFun (congrFun spec_fma_eq_word fmt) x) y) z).symm
+    word x y z = Spec.fma x y z := by
+  unfold word
+  split
+  · rename_i h32
+    have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+    subst fmt
+    dsimp only
+    split
+    · rename_i result hresult
+      exact eq_spec_of_finite (by
+        simpa [binary32_fmaFiniteWord_eq_kernel] using hresult)
+    · exact generic_eq_spec x y z
+  split
+  · rename_i h64
+    have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
+    subst fmt
+    dsimp only
+    split
+    · rename_i result hresult
+      exact eq_spec_of_finite (by simpa [NativeBinary64.fmaFinite_eq] using hresult)
+    · exact generic_eq_spec x y z
+  split
+  · rename_i hsmall
+    have hstorage : NativeSmallWord.StorageEligible fmt := ⟨hsmall.1, hsmall.2.1⟩
+    exact fallback_eq_spec (NativeSmallWordFma.fmaFinite_refines hsmall x y z)
+      (fallback_eq_spec
+        (fun result hresult => by rwa [NativeSmallWordFinite.fmaFinite_eq hstorage] at hresult)
+        (generic_eq_spec x y z))
+  split
+  · exact fallback_eq_spec
+      (fun result hresult => by rwa [NativeSmallWordFinite.fmaFinite_eq ‹_›] at hresult)
+      (generic_eq_spec x y z)
+  · exact generic_eq_spec x y z
 
 end FmaBackend
 

@@ -72,12 +72,11 @@ theorem maxFiniteBits_lt_signBoundary_of_signed
     omega
 
 /--
-Encoding a positive grid value no larger than `maxFinite` cannot overflow into a reserved code.
+Encoding a nonnegative grid value no larger than `maxFinite` cannot overflow into a reserved code.
 -/
 theorem encodePositiveFinite_le_maxFiniteBits
     (format : Format) (value : Numerics.Dyadic)
     (hnegative : value.negative = false)
-    (hzero : value.significand ≠ 0)
     (hprecision : value.significand ≤ 2 ^ format.precision)
     (hexponent : format.minimumQuantumExponent ≤ value.exponent)
     (hmax : value.toRat ≤ format.maxFinite.toRat) :
@@ -92,7 +91,7 @@ theorem encodePositiveFinite_le_maxFiniteBits
       (format.decodePositiveFinite
         (Internal.encodePositiveFinite format value)).toRat at hdecode
   rw [format.decodePositiveFinite_encodePositiveFinite_eq_of_le
-    value hnegative hzero hprecision hexponent] at hdecode
+    value hnegative hprecision hexponent] at hdecode
   change format.maxFinite.toRat < value.toRat at hdecode
   exact (not_lt_of_ge hmax) hdecode
 
@@ -121,7 +120,7 @@ theorem decodePositiveFinite_fitsPrecisionGrid
       omega
     · rfl
   · rw [format.decodePositiveFinite_of_biasedExponent_ne_zero
-      bits hzero (by simpa [unit] using hrow)]
+      bits (by simpa [unit] using hrow)]
     right
     constructor
     · dsimp only
@@ -182,6 +181,14 @@ theorem minFinite_fitsPrecisionGrid (format : Format) :
   | unsigned =>
       simp [minFinite, signedness, FitsPrecisionGrid]
 
+/-- In an extended descriptor, every code up to the largest finite code is below the
+positive-infinity code. -/
+private theorem lt_positiveInfinityBits_of_le_maxFiniteBits (format : Format)
+    (hdomain : format.domain = .extended) {bits : Nat} (hbits : bits ≤ format.maxFiniteBits) :
+    bits < format.positiveInfinityBits :=
+  Nat.lt_of_le_sub_one format.positiveInfinityBits_pos
+    (by simpa [maxFiniteBits, hdomain] using hbits)
+
 /-- Codes up to the largest finite code decode as nonnegative finite values. -/
 private theorem decodeNat_of_le_maxFiniteBits
     (format : Format) (bits : Nat)
@@ -201,12 +208,7 @@ private theorem decodeNat_of_le_maxFiniteBits
           simp [decodeNat, signedness, domain,
             ne_of_lt hlt, Nat.not_lt.mpr hlt.le]
       | extended =>
-          have hlt : bits < format.positiveInfinityBits := by
-            have hle :
-                bits ≤ format.positiveInfinityBits - 1 := by
-              simpa [maxFiniteBits, domain] using hbits
-            exact Nat.lt_of_le_sub_one
-              format.positiveInfinityBits_pos hle
+          have hlt := format.lt_positiveInfinityBits_of_le_maxFiniteBits domain hbits
           have hpositive :
               format.positiveInfinityBits < format.signBoundary := by
             simp [positiveInfinityBits, signedness]
@@ -236,12 +238,7 @@ private theorem decodeNat_of_le_maxFiniteBits
               (lt_of_le_of_lt hle hstep)
           simp [decodeNat, signedness, domain, ne_of_lt hlt]
       | extended =>
-          have hlt : bits < format.positiveInfinityBits := by
-            have hle :
-                bits ≤ format.positiveInfinityBits - 1 := by
-              simpa [maxFiniteBits, domain] using hbits
-            exact Nat.lt_of_le_sub_one
-              format.positiveInfinityBits_pos hle
+          have hlt := format.lt_positiveInfinityBits_of_le_maxFiniteBits domain hbits
           have hinfinityNan :
               format.positiveInfinityBits < format.nanBits := by
             simp [positiveInfinityBits, nanBits, signedness]
@@ -300,21 +297,18 @@ private theorem sameDatum_decode_encodePositiveFinite
   let code := Internal.encodePositiveFinite format value
   have hcodeMax : code ≤ format.maxFiniteBits :=
     format.encodePositiveFinite_le_maxFiniteBits
-      value hnegative hzero hprecision hexponent hmax
-  have hcodeWidth : code < 2 ^ format.bitWidth := by
-    apply lt_of_le_of_lt hcodeMax
-    simpa [modulus] using format.maxFiniteBits_lt_modulus
+      value hnegative hprecision hexponent hmax
   have hdecode :
       format.decode (BitVec.ofNat format.bitWidth code) =
         .finite (format.decodePositiveFinite code) := by
-    unfold decode
-    rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hcodeWidth]
+    rw [format.decode_ofNat_of_lt_modulus
+      (lt_of_le_of_lt hcodeMax format.maxFiniteBits_lt_modulus)]
     exact format.decodeNat_of_le_maxFiniteBits code hcodeMax
   have hpreserve :
       (format.decodePositiveFinite code).toRat =
         value.toRat :=
     format.decodePositiveFinite_encodePositiveFinite_eq_of_le
-      value hnegative hzero hprecision hexponent
+      value hnegative hprecision hexponent
   have hencoded :
       Internal.encodeDatumNat format (.finite value) = code := by
     simp [Internal.encodeDatumNat, hzero, hnegative, code]
@@ -358,9 +352,9 @@ private theorem sameDatum_decode_encodeNegativeFinite
         rw [hneg_toRat]
         exact neg_le.mp hmin
       have hcode := format.encodePositiveFinite_le_maxFiniteBits value.neg (by simp [hnegative])
-        hzero hprecision hexponent hmax
+        hprecision hexponent hmax
       have hpreserve := format.decodePositiveFinite_encodePositiveFinite_eq_of_le value.neg
-        (by simp [hnegative]) hzero hprecision hexponent
+        (by simp [hnegative]) hprecision hexponent
       have hcode_pos : 0 < Internal.encodePositiveFinite format value.neg := by
         apply Nat.pos_of_ne_zero
         intro h
@@ -368,15 +362,13 @@ private theorem sameDatum_decode_encodeNegativeFinite
         exact hpos.ne hpreserve
       have hwidth :
           format.signBoundary + Internal.encodePositiveFinite format value.neg <
-            2 ^ format.bitWidth := by
+            format.modulus := by
         have := format.maxFiniteBits_lt_signBoundary_of_signed signedness
         have := format.modulus_eq_two_mul_signBoundary
-        unfold modulus at this
         omega
       simp only [Internal.encodeDatumNat, beq_iff_eq, hzero, ite_false, hnegative, ite_true,
         hmagnitude]
-      unfold decode
-      rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hwidth,
+      rw [format.decode_ofNat_of_lt_modulus hwidth,
         format.decodeNat_signBoundary_add_of_signed signedness _ hcode_pos hcode]
       change (format.decodePositiveFinite _).neg.toRat = value.toRat
       rw [Numerics.Dyadic.neg_toRat, hpreserve, hneg_toRat, neg_neg]

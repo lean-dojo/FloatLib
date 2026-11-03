@@ -47,6 +47,34 @@ theorem roundUpPoint_double {fine coarse : ℝ → Prop} {x fineValue coarseValu
   intro z hz hFineZ
   exact hc.2.2 z hz (hf.2.1.trans hFineZ)
 
+/--
+Downward rounding through a finer generic format, one whose exponent function is pointwise no
+larger, equals direct downward rounding to the coarser format.
+-/
+theorem round_floor_double {fexpFine fexpCoarse : ℤ → ℤ}
+    [ValidExp fexpFine] [ValidExp fexpCoarse] (hexp : ∀ e, fexpFine e ≤ fexpCoarse e)
+    (x : ℝ) :
+    round (β := β) (fexp := fexpCoarse) floorRound
+        (round (β := β) (fexp := fexpFine) floorRound x) =
+      round (β := β) (fexp := fexpCoarse) floorRound x :=
+  roundDownPoint_unique (round_floor_point _)
+    (roundDownPoint_double (fun _ h => generic_inclusion hexp h)
+      (round_floor_point (fexp := fexpFine) x) (round_floor_point x))
+
+/--
+Upward rounding through a finer generic format, one whose exponent function is pointwise no
+larger, equals direct upward rounding to the coarser format.
+-/
+theorem round_ceil_double {fexpFine fexpCoarse : ℤ → ℤ}
+    [ValidExp fexpFine] [ValidExp fexpCoarse] (hexp : ∀ e, fexpFine e ≤ fexpCoarse e)
+    (x : ℝ) :
+    round (β := β) (fexp := fexpCoarse) ceilRound
+        (round (β := β) (fexp := fexpFine) ceilRound x) =
+      round (β := β) (fexp := fexpCoarse) ceilRound x :=
+  roundUpPoint_unique (round_ceil_point _)
+    (roundUpPoint_double (fun _ h => generic_inclusion hexp h)
+      (round_ceil_point (fexp := fexpFine) x) (round_ceil_point x))
+
 /-- Increasing FLX precision preserves every exactly representable value. -/
 theorem generic_format_FLX_mono {coarsePrec finePrec : ℤ}
     (hcoarse : 0 < coarsePrec) (hfine : 0 < finePrec) (hprec : coarsePrec ≤ finePrec)
@@ -74,20 +102,7 @@ theorem round_floor_double_FLX {coarsePrec finePrec : ℤ}
         floorRound x := by
   let : ValidExp (flxExp coarsePrec) := flxValidExp coarsePrec hcoarse
   let : ValidExp (flxExp finePrec) := flxValidExp finePrec hfine
-  let fineValue := @round β (flxExp finePrec) (flxValidExp finePrec hfine)
-    floorRound x
-  let coarseValue := @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
-    floorRound x
-  have hf : RoundDownPoint
-      (@genericFormat β (flxExp finePrec) (flxValidExp finePrec hfine)) x fineValue :=
-    round_floor_point x
-  have hc : RoundDownPoint
-      (@genericFormat β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)) x coarseValue :=
-    round_floor_point x
-  have hdouble := roundDownPoint_double
-    (fun _ h => generic_format_FLX_mono hcoarse hfine hprec h) hf hc
-  exact roundDownPoint_unique
-    (round_floor_point (β := β) (fexp := flxExp coarsePrec) fineValue) hdouble
+  exact round_floor_double (fun e => by simp [flxExp]; linarith) x
 
 /-- Upward FLX double rounding equals direct rounding to the coarser precision. -/
 theorem round_ceil_double_FLX {coarsePrec finePrec : ℤ}
@@ -101,19 +116,6 @@ theorem round_ceil_double_FLX {coarsePrec finePrec : ℤ}
         ceilRound x := by
   let : ValidExp (flxExp coarsePrec) := flxValidExp coarsePrec hcoarse
   let : ValidExp (flxExp finePrec) := flxValidExp finePrec hfine
-  let fineValue := @round β (flxExp finePrec) (flxValidExp finePrec hfine)
-    ceilRound x
-  let coarseValue := @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
-    ceilRound x
-  have hf : RoundUpPoint
-      (@genericFormat β (flxExp finePrec) (flxValidExp finePrec hfine)) x fineValue :=
-    round_ceil_point x
-  have hc : RoundUpPoint
-      (@genericFormat β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)) x coarseValue :=
-    round_ceil_point x
-  have hdouble := roundUpPoint_double
-    (fun _ h => generic_format_FLX_mono hcoarse hfine hprec h) hf hc
-  exact roundUpPoint_unique
-    (round_ceil_point (β := β) (fexp := flxExp coarsePrec) fineValue) hdouble
+  exact round_ceil_double (fun e => by simp [flxExp]; linarith) x
 
 end FloatLib.Floats.Formats.Flocq

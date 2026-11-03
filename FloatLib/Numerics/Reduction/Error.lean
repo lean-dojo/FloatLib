@@ -190,6 +190,19 @@ theorem abs_eval_sub_exact_le_geometric (t : ReductionTree α)
   (t.abs_eval_sub_exact_le_relativeBudget combine value interpret u hu h).trans
     (t.mixedBudget_zero_le (interpret ∘ value) u hu)
 
+/--
+Two schedules over the same multiset of inputs differ by at most the sum of their errors against
+the exact sum, whatever bounds those errors have.
+-/
+theorem abs_eval_sub_eval_le_of_perm {a b : ReductionTree α}
+    (combine : β → β → β) (value : α → β) (interpret : β → ℝ)
+    (hperm : a.leaves.Perm b.leaves) {errorA errorB : ℝ}
+    (ha : |interpret (a.eval combine value) - a.eval (· + ·) (interpret ∘ value)| ≤ errorA)
+    (hb : |interpret (b.eval combine value) - b.eval (· + ·) (interpret ∘ value)| ≤ errorB) :
+    |interpret (a.eval combine value) - interpret (b.eval combine value)| ≤ errorA + errorB := by
+  rw [← eval_add_eq_of_perm hperm (interpret ∘ value), abs_sub_comm] at hb
+  exact (abs_sub_le _ (a.eval (· + ·) (interpret ∘ value)) _).trans (add_le_add ha hb)
+
 /-- Two locally bounded schedules over the same multiset share the same geometric enclosure. -/
 theorem abs_eval_sub_eval_le_geometric {a b : ReductionTree α}
     (combine : β → β → β) (value : α → β) (interpret : β → ℝ)
@@ -202,15 +215,10 @@ theorem abs_eval_sub_eval_le_geometric {a b : ReductionTree α}
         u * (|interpret x| + |interpret y|))) :
     |interpret (a.eval combine value) - interpret (b.eval combine value)| ≤
       2 * (((1 + u) ^ a.nodeCount - 1) * a.sumAbs (interpret ∘ value)) := by
-  have ea := a.abs_eval_sub_exact_le_geometric combine value interpret u hu ha
   have eb := b.abs_eval_sub_exact_le_geometric combine value interpret u hu hb
   rw [← nodeCount_eq_of_perm hperm, ← sumAbs_eq_of_perm hperm] at eb
-  have hs := eval_add_eq_of_perm hperm (interpret ∘ value)
-  have triangle := abs_sub_le
-    (interpret (a.eval combine value)) (a.eval (· + ·) (interpret ∘ value))
-    (interpret (b.eval combine value))
-  rw [hs, abs_sub_comm (b.eval (· + ·) (interpret ∘ value))] at triangle
-  rw [hs] at ea
-  linarith
+  rw [two_mul]
+  exact abs_eval_sub_eval_le_of_perm combine value interpret hperm
+    (a.abs_eval_sub_exact_le_geometric combine value interpret u hu ha) eb
 
 end FloatLib.Numerics.ReductionTree

@@ -97,6 +97,10 @@ lemma sub_exp (e₁ e₂ : ℤ) :
 
 end bpow
 
+/-- Base powers of the binary radix are powers of two. -/
+theorem bpow_binaryRadix (e : ℤ) : bpow Numerics.binaryRadix e = (2 : ℝ) ^ e := by
+  simp [bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
+
 /--
 Interpret a `FloatRep` as the real number $m\beta^e$.
 -/
@@ -179,6 +183,15 @@ theorem negligibleExp_eq_none_iff (fexp : ℤ → ℤ) :
   classical
   unfold negligibleExp
   split <;> simp_all
+
+/-- Two negligible-exponent witnesses select the same format exponent. -/
+theorem negligibleExp_value_unique {fexp : ℤ → ℤ} [ValidExp fexp] {n m : ℤ}
+    (hn : IsNegligibleExp fexp n) (hm : IsNegligibleExp fexp m) :
+    fexp n = fexp m := by
+  rcases le_total m (fexp n) with hmn | hnm
+  · exact (((ValidExp.flocq_valid (fexp := fexp) n).2 hn).2 m hmn).symm
+  · have hnfm : n ≤ fexp m := hn.trans (hnm.trans hm)
+    exact ((ValidExp.flocq_valid (fexp := fexp) m).2 hm).2 n hnfm
 
 /--
 Canonical exponent (`cexp` in Flocq terminology).
@@ -265,6 +278,16 @@ lemma pos_of_ne_zero (x : ℝ) (hx : x ≠ 0) : 0 < ulp β fexp x := by
       | some n => bpow β (fexp n)
       | none => 0 := by
   simp [ulp]
+
+/-- The ULP at zero is the radix power at the exponent selected by any negligible exponent. -/
+theorem zero_of_isNegligibleExp {m : ℤ} (hm : IsNegligibleExp fexp m) :
+    ulp β fexp (0 : ℝ) = bpow β (fexp m) := by
+  rw [zero]
+  cases hopt : negligibleExp fexp with
+  | none => exact ((negligibleExp_eq_none_iff fexp).mp hopt ⟨m, hm⟩).elim
+  | some n =>
+      change bpow β (fexp n) = bpow β (fexp m)
+      rw [negligibleExp_value_unique (negligibleExp_spec hopt) hm]
 
 /--
 Away from zero, `ulp` is the base grid step $\beta^{\operatorname{cexp}(x)}$.

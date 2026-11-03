@@ -72,16 +72,7 @@ theorem toNumericalValue_eq_exactValue_toNumericalValue
           simp [toNumericalValue, exactValue, ExactValue.toNumericalValue,
             hdecode, hnan, hinf]
       | false =>
-          have hnan : isNaN x = true := by
-            cases h : isNaN x with
-            | true => rfl
-            | false =>
-                have hfinite :=
-                  isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x h hinf
-                obtain ⟨value, hvalue⟩ :=
-                  exists_toDyadic?_of_isFinite hfinite
-                rw [hdecode] at hvalue
-                contradiction
+          have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false hdecode hinf
           simp [toNumericalValue, exactValue, ExactValue.toNumericalValue, nanPayload,
             hdecode, hnan, hinf]
 

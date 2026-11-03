@@ -8,6 +8,7 @@ module
 
 import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
+import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
@@ -36,15 +37,6 @@ theorem chooseNaN2_none_of_isFinite
   chooseNaN2_none_of_not_isNaN x y
     (isNaN_eq_false_of_isFinite_eq_true x hx)
     (isNaN_eq_false_of_isFinite_eq_true y hy)
-
-/-- A finite nonzero value decodes to a dyadic with nonzero significand. -/
-theorem significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false
-    {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) (hzero : isZero x = false) :
-    d.significand ≠ 0 := by
-  intro hmant
-  have := isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hmant
-  simp [hzero] at this
 
 /-! ## Exact intermediates of finite operands -/
 
@@ -171,8 +163,9 @@ theorem div_eq_of_toDyadic?_some
 Square root fixes a finite zero of either sign in every rounding direction, for every descriptor.
 -/
 theorem sqrt_of_isZero {fmt : FloatFormat} {mode : IEEERoundingMode} {x : Model fmt}
-    (hfinite : isFinite x = true) (hzero : isZero x = true) :
+    (hzero : isZero x = true) :
     sqrt x (mode := mode) = x := by
+  have hfinite := isFinite_eq_true_of_isZero_eq_true x hzero
   have hchoose := chooseNaN1_none_of_isFinite x hfinite
   have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
   cases mode
@@ -182,23 +175,43 @@ theorem sqrt_of_isZero {fmt : FloatFormat} {mode : IEEERoundingMode} {x : Model 
     simp [Spec.sqrt, hchoose, hinf, hzero]
   all_goals simp [sqrt, Internal.Directed.sqrt, hchoose, hinf, hzero]
 
-/-- On a finite positive operand, downward square root rounds the lower bracket downward. -/
+/--
+On a finite operand with a clear sign bit, downward square root rounds the lower bracket downward.
+Positive zero gives positive zero on both sides.
+-/
 theorem sqrt_down_eq_roundDyadicDown_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) (hsign : signBit x = false) (hzero : isZero x = false) :
+    (hd : toDyadic? x = some d) (hsign : signBit x = false) :
     sqrt x (mode := .down) = roundDyadicDown fmt (sqrtDyadicBracket fmt d).lower := by
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
-  simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
-    isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+  cases hzero : isZero x
+  · simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
+      isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+  · have hdZero := toDyadic?_eq_zero_of_isZero_eq_true x hzero
+    rw [hd, hsign] at hdZero
+    obtain rfl := Option.some.inj hdZero
+    rw [sqrt_of_isZero hzero]
+    apply eq_of_toDyadic?_eq_some hd
+    simp [sqrtDyadicBracket, roundDyadicDown]
 
-/-- On a finite positive operand, upward square root rounds the upper bracket upward. -/
+/--
+On a finite operand with a clear sign bit, upward square root rounds the upper bracket upward.
+Positive zero gives positive zero on both sides.
+-/
 theorem sqrt_up_eq_roundDyadicUp_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) (hsign : signBit x = false) (hzero : isZero x = false) :
+    (hd : toDyadic? x = some d) (hsign : signBit x = false) :
     sqrt x (mode := .up) = roundDyadicUp fmt (sqrtDyadicBracket fmt d).upper := by
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
-  simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
-    isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+  cases hzero : isZero x
+  · simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
+      isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+  · have hdZero := toDyadic?_eq_zero_of_isZero_eq_true x hzero
+    rw [hd, hsign] at hdZero
+    obtain rfl := Option.some.inj hdZero
+    rw [sqrt_of_isZero hzero]
+    apply eq_of_toDyadic?_eq_some hd
+    simp [sqrtDyadicBracket, roundDyadicUp]
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

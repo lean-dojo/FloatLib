@@ -7,8 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Info
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Spec
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Runtime
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
@@ -17,6 +21,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 
@@ -24,11 +29,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 # Inspection profiles for binary-interchange formats
 
 Representation, exceptional values, rounding rules, and theorem groups used by `#float_info`.
-`Info.Command` resolves the carrier and supplies its storage and execution details. Complex and
-interval profiles also use `inspectSummary` to read their component descriptor.
+`Info.Command` resolves the carrier, its storage plan, and its installed operations. Complex and
+interval profiles also use `inspectSummary` and `standardName` to read their component descriptor.
 
-Each theorem group states its scope. Applicability distinguishes destination-only IEEE contracts
-from contracts requiring IEEE encodings on both sides of a cast.
+The theorems a report lists depend on the carrier. A configured, static-byte, or descriptor value
+gets the theorems stated about its own type first, chosen by its installed operations, and the
+theorems about the proof model `Model format` second, reached through the carrier's embedding.
+The proof model itself gets the model theorems directly. Each theorem group states its scope.
+Applicability distinguishes destination-only IEEE contracts from contracts requiring IEEE
+encodings on both sides of a cast.
 -/
 
 @[expose] public section
@@ -102,17 +111,67 @@ meta def encodingName : FloatFormat.Encoding → String
   | .finiteUnsignedZero => "finite values with unsigned zero (FNUZ)"
   | .finite => "finite-only"
 
-/-- Name the standard IEEE layouts. Other IEEE-style widths get a general label. -/
+/--
+The width `k` of an IEEE 754-2019 binary interchange format with this layout, if there is one.
+
+Table 3.5 of the standard defines binaryk for `k` of 16, 32, and 64, with 5, 8, and 11 exponent
+bits, and for every multiple of 32 from 128, with `round(4 log2 k) - 13` exponent bits. The
+descriptor must also use the IEEE encoding and bias. As `k ^ 8` is never an odd power of two,
+`4 log2 k` is never halfway between integers, and its rounding is `(log2 (k ^ 8) + 1) / 2`.
+-/
+meta def interchangeWidth? (summary : Summary) : Option Nat :=
+  let k := summary.bitWidth
+  let exponentBits? :=
+    match k with
+    | 16 => some 5
+    | 32 => some 8
+    | 64 => some 11
+    | _ => if 128 ≤ k && k % 32 == 0 then some ((Nat.log2 (k ^ 8) + 1) / 2 - 13) else none
+  if summary.isIEEE && exponentBits? == some summary.expWidth then some k else none
+
+/--
+Name the standards a binary layout follows. A layout is named only when its exponent and fraction
+widths, encoding, and bias all match, never from its total width alone.
+-/
 meta def standardName (summary : Summary) : String :=
-  if summary.isIEEE then
-    match summary.expWidth, summary.fracWidth with
-    | 5, 10 => "IEEE 754-2019 binary16"
-    | 8, 23 => "IEEE 754-2019 binary32"
-    | 11, 52 => "IEEE 754-2019 binary64"
-    | 15, 112 => "IEEE 754-2019 binary128"
-    | _, _ => "IEEE-style binary descriptor"
-  else
-    "binary descriptor with format-specific encoding or bias"
+  match interchangeWidth? summary with
+  | some k => s!"IEEE 754-2019 binary{k}"
+  | none =>
+      if summary.isIEEE then
+        if summary.expWidth == 8 && summary.fracWidth == 7 then
+          "bfloat16, the brain floating-point format; not an IEEE 754 interchange format"
+        else
+          "IEEE-style layout; not an IEEE 754 interchange format"
+      else
+        "binary layout with format-specific encoding or bias"
+
+/--
+The configured type with this descriptor, written with the arguments that differ from
+`ExecFloat.Binary`'s defaults.
+-/
+meta def configuredSpelling (summary : Summary) : String :=
+  let encoding :=
+    match summary.encoding with
+    | .ieee => ""
+    | .finiteMaxNaN => " (encoding := .finiteMaxNaN)"
+    | .finiteUnsignedZero => " (encoding := .finiteUnsignedZero)"
+    | .finite => " (encoding := .finite)"
+  let bias :=
+    if summary.exponentBias == summary.encoding.defaultBias summary.expWidth then ""
+    else s!" (bias := {summary.exponentBias})"
+  s!"ExecFloat.Binary (exponentBits := {summary.expWidth}) " ++
+    s!"(fractionBits := {summary.fracWidth}){encoding}{bias}"
+
+/-- The carriers that the binary-interchange report distinguishes. -/
+meta inductive Carrier where
+  /-- A configured value `ExecFloat (Configured.Family format code plan)`, such as `Binary32`. -/
+  | configured
+  /-- A nominal static-byte value, such as `E4M3FN`, stored in one byte. -/
+  | staticByte
+  /-- A value `ExecFloat (Descriptor format)`, which stores its proof model. -/
+  | descriptor
+  /-- The proof model `Model format` itself. -/
+  | model
 
 /-- Precise NaN population and metadata retained by an encoding policy. -/
 meta def nanDescription (encoding : FloatFormat.Encoding) : String :=
@@ -220,16 +279,636 @@ meta def largestFinite (summary : Summary) : String :=
   withApproximation s!"(2 - 2^-{gap}) * 2^{summary.maxNormalExponent}"
     (2 ^ (gap + 1) - 1) (summary.maxNormalExponent - gap)
 
-/-- Build the complete user-facing inspection profile for a binary descriptor. -/
+/-- The theorem groups about the proof model `Model format`, the binary descriptor's own values. -/
+meta def modelSurfaces (summary : Summary) : List TheoremSurface :=
+  [ { topic := "meaning of every bit pattern"
+      declarations := []
+      definitions := [``Model.exactValue, ``Model.AtExact, ``Model.AtValue]
+      applicability := .verifiedForType
+      scope :=
+        "all bit patterns; finite dyadics plus signed-zero, infinity, and NaN metadata when represented by the encoding" }
+  , { topic := "arithmetic equals its reference operation"
+      declarations :=
+        [ ``Model.Proof.add_eq_spec
+        , ``Model.Proof.sub_eq_spec
+        , ``Model.Proof.mul_eq_spec
+        , ``Model.Proof.div_eq_spec
+        , ``Model.Proof.sqrt_eq_spec
+        , ``Model.Proof.fma_eq_spec
+        ]
+      applicability := .verifiedForType
+      scope :=
+        "all encoded operands for every valid descriptor; each automatically dispatched proof-model operation equals its descriptor-aware specification" }
+  , { topic := "a finite result is one nearest-even rounding of the exact result"
+      declarations :=
+        [ ``Model.toReal_add_eq_roundAt
+        , ``Model.toReal_roundRatScaled_eq_roundAt
+        , ``Model.toReal_sub_eq_roundAt
+        , ``Model.toReal_mul_eq_roundAt
+        , ``Model.toReal_div_eq_roundAt
+        , ``Model.toReal_sqrt_eq_roundAt
+        , ``Model.isFinite_sqrt_of_isFinite
+        , ``Model.toReal_fma_eq_roundAt
+        ]
+      applicability := ieeeApplicability summary
+      scope :=
+        "the finiteness, sign, nonzero, domain, and result-range hypotheses in each theorem"
+      numericalGuarantee? := some {
+        kinds := [.rounding]
+        statement :=
+          "Each listed finite primitive equals one nearest-even rounding of its exact real operation." } }
+  , { topic := "exception flags and ternary values"
+      declarations :=
+        [ ``Model.value_add
+        , ``Model.value_sub
+        , ``Model.value_mul
+        , ``Model.value_div
+        , ``Model.value_sqrt
+        , ``Model.value_fma
+        , ``Model.add_status_of_toDyadic
+        , ``Model.mul_status_of_toDyadic
+        , ``Model.div_status_of_toDyadic_nonzero
+        , ``Model.fma_status_of_toDyadic
+        , ``Model.sqrt_status_of_toDyadic
+        , ``Model.add_invalid
+        , ``Model.mul_invalid
+        , ``Model.div_invalid
+        , ``Model.add_invalid_of_isIEEE
+        , ``Model.mul_invalid_of_isIEEE
+        , ``Model.fma_invalid_of_isIEEE
+        , ``Model.div_invalid_of_isIEEE
+        , ``Model.div_divideByZero
+        , ``Model.sqrt_invalid
+        , ``Model.sqrt_inexact_iff
+        , ``Model.sqrt_inexact_eq_ternary_bne_eq
+        , ``Model.sqrt_inexact_of_underflow
+        , ``Model.fma_invalid
+        , ``Model.dyadicRoundingStatus_inexact_of_underflow
+        , ``Model.dyadicRoundingStatus_inexact_of_overflow
+        , ``Model.rationalRoundingStatusScaled_inexact_of_underflow
+        , ``Model.rationalRoundingStatusScaled_inexact_of_overflow
+        ]
+      definitions :=
+        [ ``Numerics.IEEEStatus
+        , ``Model.OutcomeAt
+        , ``Model.add
+        , ``Model.sub
+        , ``Model.mul
+        , ``Model.div
+        , ``Model.sqrt
+        , ``Model.fma
+        ]
+      applicability := .verifiedForType
+      scope :=
+        "all binary descriptors; value preservation, finite rounding classification, invalid operations, divide-by-zero, and the overflow/underflow/inexact invariants stated by the listed theorems" }
+  , { topic := "classification, comparison, neighbors, and the other operations"
+      declarations :=
+        [ ``Model.compare_eq_some_lt_iff_toEReal_lt
+        , ``Model.compare_eq_some_eq_iff_toEReal_eq
+        , ``Model.compare_eq_some_gt_iff_toEReal_gt
+        , ``Model.toEReal_minimum_eq_min
+        , ``Model.toEReal_maximum_eq_max
+        , ``Model.toEReal_minNum_eq_min
+        , ``Model.toEReal_maxNum_eq_max
+        , ``Model.toEReal_minimumNumber_eq_min
+        , ``Model.toEReal_maximumNumber_eq_max
+        , ``Model.minimumNumber_of_isNaN_left
+        , ``Model.maximumNumber_of_isNaN_left
+        , ``Model.minimumNumber_invalid
+        , ``Model.maximumNumber_invalid
+        , ``Model.minimum_invalid
+        , ``Model.maximum_invalid
+        , ``Model.nextUp_invalid
+        , ``Model.nextDown_invalid
+        , ``Model.adjacencyRank_nextUp
+        , ``Model.adjacencyRank_nextDown
+        , ``Model.no_rank_between_nextUp
+        , ``Model.no_rank_between_nextDown
+        , ``Model.adjacencyRank_lt_adjacencyRank_iff
+        , ``Model.no_value_between_nextUp
+        , ``Model.no_value_between_nextDown
+        , ``Model.remainderDyadic_toRat
+        , ``Model.remainder_status_of_finite
+        , ``Model.remainder_status_of_zero_divisor
+        , ``Model.roundToIntegral_status_of_finite
+        , ``Model.roundToIntegral_inexact_iff
+        , ``Model.scale_status_of_finite
+        , ``Model.binaryExponent_status_of_finite_nonzero
+        , ``Model.binaryExponentInt_of_finite_nonzero
+        , ``Model.binaryExponentInt_bounds
+        , ``Model.binaryExponentInt_of_zero
+        , ``Model.binaryExponentInt_of_infinity
+        , ``Model.binaryExponentInt_of_nan
+        ]
+      definitions :=
+        [ ``Model.signBit
+        , ``Model.isZero
+        , ``Model.isFinite
+        , ``Model.isSubnormal
+        , ``Model.isInf
+        , ``Model.isNaN
+        , ``Model.isSNaN
+        , ``Model.isQNaN
+        , ``Model.neg
+        , ``Model.abs
+        , ``Model.copySign
+        , ``Model.compare
+        , ``Model.minimum
+        , ``Model.maximum
+        , ``Model.minNum
+        , ``Model.maxNum
+        , ``Model.minimumNumber
+        , ``Model.maximumNumber
+        , ``Model.nextUp
+        , ``Model.nextDown
+        , ``Model.remainder
+        , ``Model.roundToIntegral
+        , ``Model.scale
+        , ``Model.binaryExponent
+        , ``Model.binaryExponentInt
+        ]
+      applicability := .verifiedForType
+      scope :=
+        "all binary descriptors under the non-NaN, finite, nonzero, and endpoint hypotheses stated by each theorem; the declaration list is validated when the inspection profile is constructed" }
+  , { topic := "IEEE exact remainder and integral truncation"
+      declarations :=
+        [ ``Model.remainder_exact
+        , ``Model.isFinite_roundToIntegral_towardZero
+        , ``Model.toReal_roundToIntegral_towardZero
+        , ``Model.roundToIntegral_towardZero_overflow_eq_false
+        ]
+      applicability := ieeeApplicability summary
+      scope := "IEEE-style descriptor; finite inputs and a nonzero remainder divisor as stated by each theorem" }
+  , { topic := "IEEE rounding to representable integers"
+      declarations :=
+        [ ``Model.roundToIntegral_overflow_eq_false
+        , ``Model.isFinite_roundToIntegral
+        , ``Model.toReal_roundToIntegral_down
+        , ``Model.toReal_roundToIntegral_up
+        , ``Model.toReal_roundToIntegral_nearest
+        , ``Model.toReal_roundToIntegral_nearestAway
+        , ``Model.toReal_roundToIntegral_away
+        ]
+      applicability := integralApplicability summary
+      scope := "IEEE-style descriptor with fracWidth ≤ maxNormalExponent; finite inputs as stated by each theorem" }
+  , { topic := "IEEE directed rounding and interval enclosures"
+      declarations :=
+        [ ``Model.toEReal_add_down_le
+        , ``Model.le_toEReal_add_up
+        , ``Model.toEReal_sub_down_le
+        , ``Model.le_toEReal_sub_up
+        , ``Model.toEReal_mul_down_le
+        , ``Model.le_toEReal_mul_up
+        , ``Model.toEReal_div_down_le
+        , ``Model.le_toEReal_div_up
+        , ``Model.toEReal_sqrt_down_le
+        , ``Model.le_toEReal_sqrt_up
+        , ``Model.Interval.add_sound
+        , ``Model.Interval.sub_sound
+        , ``Model.Interval.mul_sound
+        , ``Model.Interval.div_sound
+        , ``Model.Interval.sqrt_sound
+        ]
+      applicability := ieeeApplicability summary
+      scope :=
+        "the finite-input, interval-validity, and operation-domain hypotheses stated by each theorem"
+      numericalGuarantee? := some {
+        kinds := [.range]
+        statement :=
+          "Directed endpoints and interval operations enclose the exact real result." } }
+  , { topic := "finite-only range-limited directed rounding and dyadic interval arithmetic"
+      declarations :=
+        [ ``Model.toReal_roundDyadicDown_le_of_encoding_finite
+        , ``Model.le_toReal_roundDyadicUp_of_encoding_finite
+        , ``Model.toReal_add_down_le_of_encoding_finite
+        , ``Model.le_toReal_add_up_of_encoding_finite
+        , ``Model.toReal_sub_down_le_of_encoding_finite
+        , ``Model.le_toReal_sub_up_of_encoding_finite
+        , ``Model.toReal_mul_down_le_of_encoding_finite
+        , ``Model.le_toReal_mul_up_of_encoding_finite
+        , ``Model.Interval.add_sound_of_encoding_finite
+        , ``Model.Interval.sub_sound_of_encoding_finite
+        , ``Model.Interval.mul_sound_of_encoding_finite
+        ]
+      applicability := finiteOnlyApplicability summary
+      scope :=
+        "all-words-finite encoding only; exact add/sub endpoint expressions and all four multiplication corners must lie within the largest-finite magnitude"
+      numericalGuarantee? := some {
+        kinds := [.range]
+        statement :=
+          "Range-limited directed endpoints enclose exact dyadic add, subtract, and multiply results." } }
+  , { topic := "generic rounding-grid error bounds"
+      declarations :=
+        [ ``Model.abs_roundAt_sub_le
+        , ``Model.roundAt_mem_Icc
+        , ``Model.relativeError_roundAt_le_of_normal
+        ]
+      applicability := .verifiedForType
+      scope :=
+        "roundAt uses this descriptor's precision and bias with no upper exponent bound. " ++
+        "Executable operations require a separate refinement theorem; relative error requires " ++
+        "nonzero normal-range input."
+      numericalGuarantee? := some {
+        kinds := [.range, .rounding, .absoluteError, .relativeError]
+        statement :=
+          "The real-valued roundAt grid has absolute error at most 1/2 ULP; " ++
+          "for nonzero normal-range inputs, relative error is at most " ++
+          s!"2^-{summary.fracWidth + 1}."
+      } }
+  , { topic := "exact compatible widening"
+      declarations := [``Model.cast_exact_of_compatibleWidening]
+      applicability := .verifiedForType
+      scope :=
+        "source and destination have equal exponent width, bias, and encoding, while destination precision is at least the source precision"
+      numericalGuarantee? := some {
+        kinds := [.exactness]
+        statement :=
+          "A compatible widening preserves the represented finite value with zero rounding error." } }
+  , { topic := "mixed-precision sequential reduction and matrix entry bounds"
+      declarations :=
+        [ ``Model.mulAccError_eq_site_residuals
+        , ``Model.mulAcc_abs_error_le_budget
+        , ``Model.sequentialAccumulator_error_eq_sum
+        , ``Model.dotSequential_abs_error_le_budget
+        , ``Model.matmul_refines
+        , ``Model.matmul_entry_abs_error_le_budget
+        ]
+      definitions := [``Model.SitePolicy, ``Model.MatmulRefines]
+      applicability := ieeeCrossFormatApplicability summary
+      scope :=
+        "arbitrary storage, product, accumulator, and output descriptors under the IEEE, finiteness, length, shape, and per-site premises stated by each theorem"
+      numericalGuarantee? := some {
+        kinds := [.absoluteError]
+        statement :=
+          "Sequential dot products and matrix entries are bounded by the sum of their checked per-site rounding residual budgets." } }
+  , { topic := "requested-precision decimal and hexadecimal output"
+      declarations :=
+        [ ``Model.significantDecimal_nearest_error
+        , ``Model.significantHex_nearest_error
+        , ``Model.le_significantDecimal_up
+        , ``Model.significantDecimal_down_le
+        , ``Model.significantDecimal_towardZero_abs_le
+        , ``Model.le_significantHex_up
+        , ``Model.significantHex_down_le
+        , ``Model.significantHex_towardZero_abs_le
+        ]
+      applicability := .verifiedForType
+      scope :=
+        "every exact finite input and positive requested significant-digit count; " ++
+        "directed bounds concern the emitted value, not a subsequent binary input rounding"
+      numericalGuarantee? := some {
+        kinds := [.absoluteError, .rounding]
+        statement :=
+          "Nearest-even output stays within half an external grid unit. Directed output " ++
+          "stays on its requested side, and toward-zero output cannot increase magnitude." } }
+  , { topic := "half-ulp error and exact operations, Sterbenz subtraction included"
+      declarations :=
+        [ ``Model.abs_toReal_add_sub_le
+        , ``Model.abs_toReal_sub_sub_le
+        , ``Model.abs_toReal_mul_sub_le
+        , ``Model.abs_toReal_div_sub_le
+        , ``Model.abs_toReal_sqrt_sub_le
+        , ``Model.abs_toReal_fma_sub_le
+        , ``Model.toReal_sub_eq_of_sterbenz
+        , ``Model.toReal_sub_eq_of_sterbenz_of_same_sign
+        , ``Model.toReal_add_of_isZero_left
+        , ``Model.toReal_add_of_isZero_right
+        , ``Model.toReal_sub_of_isZero_left
+        , ``Model.toReal_sub_of_isZero_right
+        , ``Model.toReal_sub_self
+        , ``Model.toReal_mul_of_isZero_left
+        , ``Model.toReal_mul_of_isZero_right
+        , ``Model.toReal_mul_of_abs_toReal_eq_one_left
+        , ``Model.toReal_mul_of_abs_toReal_eq_one_right
+        , ``Model.toReal_div_of_abs_toReal_eq_one_right
+        ]
+      applicability := ieeeApplicability summary
+      scope :=
+        "the finiteness, result-range, positivity, normality, and factor-of-two hypotheses stated by each theorem"
+      numericalGuarantee? := some {
+        kinds := [.absoluteError, .exactness]
+        statement :=
+          "Each finite primitive has at most 1/2 ULP absolute error; Sterbenz subtraction is " ++
+          "exact in its proved factor-of-two domain, and so are sums and differences with a " ++
+          "zero, x - x, products with a zero or with a value of magnitude one, and quotients " ++
+          "by a value of magnitude one." } }
+  , { topic := "mixed relative and absolute error"
+      declarations :=
+        [ ``Model.mixedError_roundAt
+        , ``Model.mixedError_toReal_add
+        , ``Model.mixedError_toReal_add_of_mul_nonneg
+        , ``Model.mixedError_toReal_sub
+        , ``Model.mixedError_toReal_sub_of_mul_nonpos
+        , ``Model.mixedError_toReal_mul
+        , ``Model.mixedError_toReal_div
+        , ``Model.mixedError_toReal_fma
+        , ``Model.mixedError_toReal_sqrt
+        , ``Model.mixedError_toReal_cast
+        , ``Model.mixedError_toReal_foldl_add
+        , ``Model.mixedError_toReal_foldl_add_weighted
+        , ``Model.mixedError_toReal_foldl_add_absolute
+        , ``Model.toRat?_foldl_add_eq_single
+        ]
+      definitions := [``Numerics.MixedError]
+      applicability := ieeeApplicability summary
+      scope :=
+        "finite results and the operand errors, signs, and partial-sum finiteness stated by " ++
+        "each theorem; a cast needs only an IEEE destination"
+      numericalGuarantee? := some {
+        kinds := [.relativeError, .absoluteError, .exactness]
+        statement :=
+          "|x - x0| <= r * |x0| + a is carried through each finite operation, which adds one " ++
+          s!"rounding with relative error u = 2^-{summary.fracWidth + 1} and, except for " ++
+          "addition and subtraction, absolute error half the least subnormal. A " ++
+          "left-to-right sum of n terms whose seed and terms have nonnegative exact values, " ++
+          "relative error r and absolute errors d and e_i has relative error " ++
+          "(1 + u)^n * (1 + r) - 1 and absolute error (1 + u)^n * (d + sum e_i), so exact " ++
+          "inputs give (1 + u)^n - 1. A one-hot sum over distinct indices is exact." } }
+  , { topic := "casts to IEEE destinations"
+      declarations :=
+        [ ``Model.cast_eq_roundAt
+        , ``Model.cast_exact_of_gridExtension
+        , ``Model.abs_toReal_cast_sub_le
+        ]
+      applicability := .conditional
+        "the destination must satisfy `isIEEE = true`; the source may use any descriptor"
+      scope :=
+        "finite result, which forces a finite source; grid exactness also requires destination grid inclusion"
+      numericalGuarantee? := some {
+        kinds := [.rounding, .absoluteError, .exactness]
+        statement :=
+          "Casting performs one destination rounding with at most 1/2 destination ULP error, " ++
+          "including finite-only and custom-bias sources; a finer destination grid preserves " ++
+          "the source real value." } }
+  , { topic := "IEEE rational conversion enclosures"
+      declarations :=
+        [ ``Model.toEReal_ofRat_down_le
+        , ``Model.le_toEReal_ofRat_up
+        ]
+      applicability := ieeeApplicability summary
+      scope := "all normalized rationals, including zero and overflow to infinity"
+      numericalGuarantee? := some {
+        kinds := [.rounding]
+        statement :=
+          "Directed conversion encloses the exact rational between extended-real bounds." } }
+  , { topic := "IEEE destination reduction semantics"
+      declarations :=
+        [ ``Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite
+        , ``Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite
+        ]
+      applicability := ieeeApplicability summary
+      scope := "finite operands and result; dot products additionally require equal input lengths"
+      numericalGuarantee? := some {
+        kinds := [.rounding]
+        statement :=
+          "Exact accumulation is followed by one nearest-even destination rounding, " ++
+          "including empty inputs and cancellation to zero." } }
+  , { topic := "transcendental enclosures and whole-algorithm proof contracts"
+      declarations :=
+        [ ``Model.Transcendentals.Contract.RealEnclosure.abs_sub_le_width
+        , ``Model.Transcendentals.Contract.StableEnclosure.roundAt_eq_roundAt_lower
+        , ``Model.Transcendentals.Contract.CertifiedRoundedResult.toReal_value_eq_roundAt
+        ]
+      definitions :=
+        [ ``Model.Transcendentals.Contract.RealEnclosure
+        , ``Model.Transcendentals.Contract.RealEnclosure.exp
+        , ``Model.Transcendentals.Contract.RealEnclosure.log
+        , ``Model.Transcendentals.Contract.RealEnclosure.sqrt
+        , ``Model.Transcendentals.Contract.RealEnclosure.sin
+        , ``Model.Transcendentals.Contract.RealEnclosure.cos
+        , ``Model.Transcendentals.Contract.RealEnclosure.sinh
+        , ``Model.Transcendentals.Contract.RealEnclosure.cosh
+        , ``Model.Transcendentals.Contract.RealEnclosure.tanh
+        , ``Model.Transcendentals.Contract.ApproximationCertificate
+        , ``Model.Transcendentals.Contract.CorrectlyRoundedCertificate
+        ]
+      applicability := .conditional
+        "a whole-algorithm certificate for the selected executable kernel; the built-in approximations supply none"
+      scope :=
+        "generic finite-real proof interfaces, not certificates for this type's executable kernels; numerical accuracy or correct rounding requires an inhabited certificate connecting the selected kernel to the real function" }
+  ]
+
+/-- The theorem groups about configured values, such as `Binary32` values. -/
+private meta def configuredSurfaces (summary : Summary) (operations : CoreOperationCoverage) :
+    List TheoremSurface :=
+  let premises :=
+    "a finite result, which forces finite operands and a nonzero divisor; a finite divisor for " ++
+    "division and a zero or positive operand for square root; and the capability's `HasSpec` " ++
+    "instance, which instance search proves for the capabilities the library declares"
+  let groups : List TheoremSurface :=
+    [ { topic := "a finite result is one nearest-even rounding of the exact result"
+        declarations := operations.installed fun
+          | .add => [``FloatLib.Floats.ExecFloat.Binary.toReal_add_eq_roundAt]
+          | .sub => [``FloatLib.Floats.ExecFloat.Binary.toReal_sub_eq_roundAt]
+          | .mul => [``FloatLib.Floats.ExecFloat.Binary.toReal_mul_eq_roundAt]
+          | .div => [``FloatLib.Floats.ExecFloat.Binary.toReal_div_eq_roundAt]
+          | .sqrt => [``FloatLib.Floats.ExecFloat.Binary.toReal_sqrt_eq_roundAt]
+          | .fma => [``FloatLib.Floats.ExecFloat.Binary.toReal_fma_eq_roundAt]
+        definitions := [``FloatLib.Floats.ExecFloat.Binary.toReal, ``Model.roundAt]
+        applicability := ieeeApplicability summary
+        scope := premises
+        numericalGuarantee? := some {
+          kinds := [.rounding]
+          statement :=
+            "Each listed finite operation equals one nearest-even rounding of its exact real " ++
+            "result." } }
+    , { topic := "half-ulp error"
+        declarations := operations.installed fun
+          | .add => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_add_sub_le]
+          | .sub => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_sub_sub_le]
+          | .mul => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_mul_sub_le]
+          | .div => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_div_sub_le]
+          | .sqrt => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_sqrt_sub_le]
+          | .fma => [``FloatLib.Floats.ExecFloat.Binary.abs_toReal_fma_sub_le]
+        applicability := ieeeApplicability summary
+        scope := premises
+        numericalGuarantee? := some {
+          kinds := [.absoluteError]
+          statement := "Each listed finite operation is within half an ulp of its exact real result." } }
+    , { topic := "operations that do not round"
+        declarations := operations.installed fun
+          | .add =>
+              [ ``FloatLib.Floats.ExecFloat.Binary.toReal_add_of_isZero_left
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_add_of_isZero_right ]
+          | .sub =>
+              [ ``FloatLib.Floats.ExecFloat.Binary.toReal_sub_of_isZero_left
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_sub_of_isZero_right
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_sub_self ]
+          | .mul =>
+              [ ``FloatLib.Floats.ExecFloat.Binary.toReal_mul_of_isZero_left
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_mul_of_isZero_right
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_mul_of_abs_toReal_eq_one_left
+              , ``FloatLib.Floats.ExecFloat.Binary.toReal_mul_of_abs_toReal_eq_one_right ]
+          | .div => [``FloatLib.Floats.ExecFloat.Binary.toReal_div_of_abs_toReal_eq_one_right]
+          | .sqrt => [``FloatLib.Floats.ExecFloat.Binary.toReal_sqrt_of_isZero]
+          | .fma => []
+        applicability := ieeeApplicability summary
+        scope :=
+          "finite operands, a zero operand or one of magnitude one as each theorem states, and " ++
+          "the capability's `HasSpec` instance"
+        numericalGuarantee? := some {
+          kinds := [.exactness]
+          statement :=
+            "Sums and differences with a zero, x - x, products with a zero or with a value of " ++
+            "magnitude one, quotients by a value of magnitude one, and the square root of a " ++
+            "zero are exact." } }
+    , { topic := "decoding to the proof model"
+        declarations :=
+          [ ``FloatLib.Floats.ExecFloat.Binary.toModel_ofModel
+          , ``FloatLib.Floats.ExecFloat.Binary.ofModel_toModel
+          , ``FloatLib.Floats.ExecFloat.Binary.toModel_neg ] ++
+          operations.installed fun
+            | .add =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_hAdd
+                , ``FloatLib.Floats.ExecFloat.Binary.toModel_add
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_add ]
+            | .sub =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_hSub
+                , ``FloatLib.Floats.ExecFloat.Binary.toModel_sub
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_sub ]
+            | .mul =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_hMul
+                , ``FloatLib.Floats.ExecFloat.Binary.toModel_mul
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_mul ]
+            | .div =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_hDiv
+                , ``FloatLib.Floats.ExecFloat.Binary.toModel_div
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_div ]
+            | .sqrt =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_execFloat_sqrt
+                , ``FloatLib.Floats.ExecFloat.Binary.toModel_sqrt
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_sqrt ]
+            | .fma =>
+                [ ``FloatLib.Floats.ExecFloat.Binary.toModel_fma
+                , ``FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.toModel_fma ]
+        definitions :=
+          [``FloatLib.Floats.ExecFloat.Binary.toModel, ``FloatLib.Floats.ExecFloat.Binary.ofModel]
+        applicability := .verifiedForType
+        scope :=
+          "every value and rounding direction; the `IEEEOutcome` forms cover " ++
+          "`(status := true)`, and the operation theorems take the capability's `HasSpec` " ++
+          "instance, so the theorems about `Model` values below apply through `toModel`" } ]
+  refinementEquations operations ++ groups.filter fun surface => !surface.declarations.isEmpty
+
+/-- The theorem groups about static-byte values, such as `E4M3FN` values. -/
+private meta def staticByteSurfaces (operations : CoreOperationCoverage) :
+    List TheoremSurface :=
+  refinementEquations operations ++
+  [ { topic := "decoding to the proof model"
+      declarations :=
+        [ ``StaticByte.toModel_ofModel
+        , ``StaticByte.ofModel_toModel
+        , ``StaticByte.toModel_injective ]
+      definitions :=
+        [ ``StaticByte.toModel, ``StaticByte.ofModel, ``StaticByte.Spec.add, ``StaticByte.Spec.sub
+        , ``StaticByte.Spec.mul, ``StaticByte.Spec.div, ``StaticByte.Spec.sqrt
+        , ``StaticByte.Spec.fma ]
+      applicability := .verifiedForType
+      scope :=
+        "every value; the reference operation of `x + y` is `StaticByte.Spec.add`, which " ++
+        "re-encodes the model sum of `toModel x` and `toModel y`, and likewise for the other " ++
+        "operations. No theorem states `x + y` on this type in terms of real rounding; the " ++
+        "theorems about `Model` values below state it for the decoded values" } ]
+
+/-- The theorem groups about descriptor-carrier values `ExecFloat (Descriptor format)`. -/
+private meta def descriptorSurfaces (operations : CoreOperationCoverage) :
+    List TheoremSurface :=
+  refinementEquations operations ++
+  [ { topic := "the stored proof model"
+      declarations := []
+      definitions :=
+        [ ``FloatLib.Floats.ExecFloat.raw, ``Descriptor.Spec.add, ``Descriptor.Spec.sub
+        , ``Descriptor.Spec.mul, ``Descriptor.Spec.div, ``Descriptor.Spec.sqrt
+        , ``Descriptor.Spec.fma ]
+      applicability := .verifiedForType
+      scope :=
+        "a value stores its `Model format` word, read with `raw`; the reference operation of " ++
+        "`x + y` is `Descriptor.Spec.add`, the model operation lifted through that identity " ++
+        "codec, and likewise for the other operations" } ]
+
+/-- Storage of a carrier; a configured carrier's word comes from its storage plan instead. -/
+meta def carrierStorage (summary : Summary) : Carrier → String
+  | .configured => "the word its storage plan selects"
+  | .staticByte => "UInt8"
+  | .descriptor => s!"BitVec {summary.bitWidth} (the proof model itself)"
+  | .model => s!"BitVec {summary.bitWidth}"
+
+/-- Rounding of literals and arithmetic, and the options that select other rules, by carrier. -/
+private meta def roundingEntries (summary : Summary) : Carrier → List InfoEntry
+  | .configured =>
+      [ ⟨"numeric literals", "exact integer/rational input rounded once to nearest, ties to even"⟩
+      , ⟨"arithmetic",
+          "nearest, ties to even, for `x + y`, `x - y`, `x * y`, `x / y`, " ++
+            "`ExecFloat.sqrt`, and `ExecFloat.fma`"⟩
+      , ⟨"directions and flags",
+          "`ExecFloat.Binary.add x y (mode := .up) (status := true)`, likewise sub, mul, " ++
+            "div, sqrt, and fma: six rounding directions, including away from zero, and the " ++
+            "invalid, divide-by-zero, overflow, underflow, and inexact flags with the " ++
+            "ternary value"⟩
+      ]
+  | .staticByte =>
+      [ ⟨"numeric literals", "exact integer/rational input rounded once to nearest, ties to even"⟩
+      , ⟨"arithmetic", "nearest, ties to even"⟩
+      , ⟨"directions and flags",
+          s!"none on this type; {configuredSpelling summary} has the same values, with " ++
+            "rounding-direction and status options"⟩
+      ]
+  | .descriptor =>
+      [ ⟨"arithmetic", "nearest, ties to even"⟩
+      , ⟨"directions and flags",
+          "none on this type; the stored model has them, as in " ++
+            "`Model.add x.raw y.raw (mode := .up) (status := true)`"⟩
+      ]
+  | .model =>
+      [ ⟨"numeric literals", "exact integer/rational input rounded once to nearest, ties to even"⟩
+      , ⟨"model arithmetic", "nearest, ties to even"⟩
+      , ⟨"directions",
+          "`(mode := m)` on each operation selects one of six rounding directions, including " ++
+            "away from zero"⟩
+      , ⟨"status flags",
+          "`(status := true)` adds the invalid, divide-by-zero, overflow, underflow, and " ++
+            "inexact flags and the ternary value"⟩
+      ]
+
+/-- The claims a report does not make, by carrier and layout. -/
+private meta def nonclaimsOf (summary : Summary) (carrier : Carrier) : List String :=
+  let hostFloat :=
+    match summary.expWidth, summary.fracWidth, summary.isIEEE with
+    | 8, 23, true => ["equivalence between compiled `Float32` arithmetic and this type; only the explicit conversion boundary is checked"]
+    | 11, 52, true => ["equivalence between compiled `Float` arithmetic and this type; only the explicit conversion boundary is checked"]
+    | _, _, _ => []
+  let realRounding :=
+    match carrier with
+    | .staticByte | .descriptor =>
+        ["a theorem stating this type's arithmetic in terms of real rounding; those theorems are about the decoded `Model` values"]
+    | .configured | .model => []
+  let display :=
+    match carrier with
+    | .configured | .model =>
+        [ "bitwise NaN round trips through the display `format`; use " ++
+            "`format (style := .exact)` or `(style := .hex)` output to retain NaN metadata"
+        , "the built-in deterministic transcendental kernels currently carry a whole-algorithm approximation or correctly-rounded certificate" ]
+    | .staticByte | .descriptor => []
+  hostFloat ++ realRounding ++
+    ["every clause of IEEE 754 follows from the six backend-refinement equations"] ++ display ++
+    ["external MPFR, Arb, compiler lowering, or FFI behavior is inside this certificate"]
+
+/--
+Build the user-facing inspection profile of a binary descriptor seen through `carrier`.
+
+`storage` describes the carrier's storage, and `operations` the universal operations whose
+capabilities are installed, which decide the refinement equations the report lists. The default
+carrier is the proof model itself, whose report lists the model theorems directly.
+-/
 meta def profile
     (summary : Summary)
     (standard : String)
     (storage : String)
-    (executionIdentity : List FloatLib.Floats.ExecFloat.InfoEntry) :
+    (carrier : Carrier := .model)
+    (operations : CoreOperationCoverage := .none) :
     FloatLib.Floats.ExecFloat.FormatProfile where
   family := "binary interchange"
   standard
-  declarationPrefix := "FloatLib.Floats.Formats.BinaryInterchange."
   representation :=
     [ ⟨"storage", storage⟩
     , ⟨"total bits", toString summary.bitWidth⟩
@@ -255,391 +934,30 @@ meta def profile
     , ⟨"NaN", nanDescription summary.encoding⟩
     , ⟨"signaling NaN", signalingNaNDescription summary.encoding summary.fracWidth⟩
     ]
-  rounding :=
-    [ ⟨"numeric literals",
-        "exact integer/rational input rounded once to nearest, ties to even"⟩
-    , ⟨"public ExecFloat arithmetic", "nearest, ties to even"⟩
-    , ⟨"family APIs",
-        "directed rounding and status-bearing operations are also available"⟩
-    , ⟨"status flags",
-        "invalid, divide-by-zero, overflow, underflow, and inexact are modeled explicitly"⟩
-    ]
-  execution := executionIdentity ++
-    [ ⟨"backend proof",
-        "each reported arithmetic path is proved equal to its reference definition"⟩ ]
+  rounding := roundingEntries summary carrier
+  execution :=
+    match carrier with
+    | .model =>
+        [ ⟨"kernels",
+            "each `Model` operation dispatches to tiny tables, machine words, or the generic " ++
+              "kernel by itself; no planning policy applies"⟩
+        , ⟨"purpose", "specifications, conformance vectors, and backend proofs"⟩ ]
+    | .configured | .staticByte | .descriptor => []
   theoremSurfaces :=
-    [ { topic := "exact encoded interpretation"
-        declarations := []
-        definitions := [``Model.exactValue, ``Model.AtExact, ``Model.AtValue]
-        applicability := .verifiedForType
-        scope :=
-          "all bit patterns; finite dyadics plus signed-zero, infinity, and NaN metadata when represented by the encoding" }
-    , { topic := "descriptor-indexed arithmetic refinement"
-        declarations :=
-          [ ``Model.Proof.add_eq_spec
-          , ``Model.Proof.sub_eq_spec
-          , ``Model.Proof.mul_eq_spec
-          , ``Model.Proof.div_eq_spec
-          , ``Model.Proof.sqrt_eq_spec
-          , ``Model.Proof.fma_eq_spec
-          ]
-        applicability := .verifiedForType
-        scope :=
-          "all encoded operands for every valid descriptor; each automatically dispatched proof-model operation equals its descriptor-aware specification" }
-    , { topic := "IEEE nearest-even operation semantics"
-        declarations :=
-          [ ``Model.toReal_add_eq_roundAt
-          , ``Model.toReal_roundRatScaled_eq_roundAt_of_isFinite
-          , ``Model.toReal_sub_eq_roundAt
-          , ``Model.toReal_mul_eq_roundAt
-          , ``Model.toReal_div_eq_roundAt
-          , ``Model.toReal_sqrt_eq_roundAt
-          , ``Model.isFinite_sqrt_of_isFinite
-          , ``Model.toReal_fma_eq_roundAt
-          ]
-        applicability := ieeeApplicability summary
-        scope :=
-          "the finiteness, sign, nonzero, domain, and result-range hypotheses in each theorem"
-        numericalGuarantee? := some {
-          kinds := [.rounding]
-          statement :=
-            "Each listed finite primitive equals one nearest-even rounding of its exact real operation." } }
-    , { topic := "status-bearing operations and flag classifiers"
-        declarations :=
-          [ ``Model.value_add
-          , ``Model.value_sub
-          , ``Model.value_mul
-          , ``Model.value_div
-          , ``Model.value_sqrt
-          , ``Model.value_fma
-          , ``Model.add_status_of_toDyadic
-          , ``Model.mul_status_of_toDyadic
-          , ``Model.div_status_of_toDyadic_nonzero
-          , ``Model.fma_status_of_toDyadic
-          , ``Model.sqrt_status_of_toDyadic
-          , ``Model.add_invalid
-          , ``Model.mul_invalid
-          , ``Model.div_invalid
-          , ``Model.div_divideByZero
-          , ``Model.sqrt_invalid
-          , ``Model.sqrt_inexact_iff
-          , ``Model.sqrt_inexact_eq_ternary_bne_eq
-          , ``Model.sqrt_inexact_of_underflow
-          , ``Model.fma_invalid
-          , ``Model.dyadicRoundingStatus_inexact_of_underflow
-          , ``Model.dyadicRoundingStatus_inexact_of_overflow
-          , ``Model.rationalRoundingStatusScaled_inexact_of_underflow
-          , ``Model.rationalRoundingStatusScaled_inexact_of_overflow
-          ]
-        definitions :=
-          [ ``Numerics.IEEEStatus
-          , ``Model.OutcomeAt
-          , ``Model.add
-          , ``Model.sub
-          , ``Model.mul
-          , ``Model.div
-          , ``Model.sqrt
-          , ``Model.fma
-          ]
-        applicability := .verifiedForType
-        scope :=
-          "all binary descriptors; value preservation, finite rounding classification, invalid operations, divide-by-zero, and the overflow/underflow/inexact invariants stated by the listed theorems" }
-    , { topic := "classification, comparison, adjacency, and descriptor-aware operation specifications"
-        declarations :=
-          [ ``Model.compare_eq_some_lt_iff_toEReal_lt
-          , ``Model.compare_eq_some_eq_iff_toEReal_eq
-          , ``Model.compare_eq_some_gt_iff_toEReal_gt
-          , ``Model.toEReal_minimum_eq_min
-          , ``Model.toEReal_maximum_eq_max
-          , ``Model.toEReal_minNum_eq_min
-          , ``Model.toEReal_maxNum_eq_max
-          , ``Model.toEReal_minimumNumber_eq_min
-          , ``Model.toEReal_maximumNumber_eq_max
-          , ``Model.minimumNumber_of_isNaN_left
-          , ``Model.maximumNumber_of_isNaN_left
-          , ``Model.minimumNumber_invalid
-          , ``Model.maximumNumber_invalid
-          , ``Model.nextUp_invalid
-          , ``Model.nextDown_invalid
-          , ``Model.adjacencyRank_nextUp
-          , ``Model.adjacencyRank_nextDown
-          , ``Model.no_rank_between_nextUp
-          , ``Model.no_rank_between_nextDown
-          , ``Model.remainderDyadic_toRat
-          , ``Model.remainder_status_of_finite
-          , ``Model.remainder_status_of_zero_divisor
-          , ``Model.roundToIntegral_status_of_finite
-          , ``Model.roundToIntegral_inexact_iff
-          , ``Model.scale_status_of_finite
-          , ``Model.binaryExponent_status_of_finite_nonzero
-          , ``Model.binaryExponentInt_of_finite_nonzero
-          , ``Model.binaryExponentInt_bounds
-          , ``Model.binaryExponentInt_of_zero
-          , ``Model.binaryExponentInt_of_infinity
-          , ``Model.binaryExponentInt_of_nan
-          ]
-        definitions :=
-          [ ``Model.signBit
-          , ``Model.isZero
-          , ``Model.isFinite
-          , ``Model.isSubnormal
-          , ``Model.isInf
-          , ``Model.isNaN
-          , ``Model.isSNaN
-          , ``Model.isQNaN
-          , ``Model.neg
-          , ``Model.abs
-          , ``Model.copySign
-          , ``Model.compare
-          , ``Model.minimum
-          , ``Model.maximum
-          , ``Model.minNum
-          , ``Model.maxNum
-          , ``Model.minimumNumber
-          , ``Model.maximumNumber
-          , ``Model.nextUp
-          , ``Model.nextDown
-          , ``Model.remainder
-          , ``Model.roundToIntegral
-          , ``Model.scale
-          , ``Model.binaryExponent
-          , ``Model.binaryExponentInt
-          ]
-        applicability := .verifiedForType
-        scope :=
-          "all binary descriptors under the non-NaN, finite, nonzero, and endpoint hypotheses stated by each theorem; the declaration list is validated when the inspection profile is constructed" }
-    , { topic := "IEEE exact remainder and integral truncation"
-        declarations :=
-          [ ``Model.remainder_exact
-          , ``Model.isFinite_roundToIntegral_towardZero
-          , ``Model.toReal_roundToIntegral_towardZero_of_isFinite
-          , ``Model.roundToIntegral_towardZero_overflow_eq_false
-          ]
-        applicability := ieeeApplicability summary
-        scope := "IEEE-style descriptor; finite inputs and a nonzero remainder divisor as stated by each theorem" }
-    , { topic := "IEEE rounding to representable integers"
-        declarations :=
-          [ ``Model.roundToIntegral_overflow_eq_false
-          , ``Model.isFinite_roundToIntegral
-          , ``Model.toReal_roundToIntegral_down
-          , ``Model.toReal_roundToIntegral_up
-          , ``Model.toReal_roundToIntegral_towardZero
-          , ``Model.toReal_roundToIntegral_nearest
-          , ``Model.toReal_roundToIntegral_nearestAway
-          , ``Model.toReal_roundToIntegral_away
-          ]
-        applicability := integralApplicability summary
-        scope := "IEEE-style descriptor with fracWidth ≤ maxNormalExponent; finite inputs as stated by each theorem" }
-    , { topic := "IEEE directed rounding and interval enclosures"
-        declarations :=
-          [ ``Model.toEReal_add_down_le
-          , ``Model.le_toEReal_add_up
-          , ``Model.toEReal_sub_down_le
-          , ``Model.le_toEReal_sub_up
-          , ``Model.toEReal_mul_down_le
-          , ``Model.le_toEReal_mul_up
-          , ``Model.toEReal_div_down_le
-          , ``Model.le_toEReal_div_up
-          , ``Model.toEReal_sqrt_down_le
-          , ``Model.le_toEReal_sqrt_up
-          , ``Model.Interval.add_sound
-          , ``Model.Interval.sub_sound
-          , ``Model.Interval.mul_sound
-          , ``Model.Interval.div_sound
-          , ``Model.Interval.sqrt_sound
-          ]
-        applicability := ieeeApplicability summary
-        scope :=
-          "the finite-input, interval-validity, and operation-domain hypotheses stated by each theorem"
-        numericalGuarantee? := some {
-          kinds := [.range]
-          statement :=
-            "Directed endpoints and interval operations enclose the exact real result." } }
-    , { topic := "finite-only range-limited directed rounding and dyadic interval arithmetic"
-        declarations :=
-          [ ``Model.toReal_roundDyadicDown_le_of_encoding_finite
-          , ``Model.le_toReal_roundDyadicUp_of_encoding_finite
-          , ``Model.toReal_add_down_le_of_encoding_finite
-          , ``Model.le_toReal_add_up_of_encoding_finite
-          , ``Model.toReal_sub_down_le_of_encoding_finite
-          , ``Model.le_toReal_sub_up_of_encoding_finite
-          , ``Model.toReal_mul_down_le_of_encoding_finite
-          , ``Model.le_toReal_mul_up_of_encoding_finite
-          , ``Model.Interval.add_sound_of_encoding_finite
-          , ``Model.Interval.sub_sound_of_encoding_finite
-          , ``Model.Interval.mul_sound_of_encoding_finite
-          ]
-        applicability := finiteOnlyApplicability summary
-        scope :=
-          "all-words-finite encoding only; exact add/sub endpoint expressions and all four multiplication corners must lie within the largest-finite magnitude"
-        numericalGuarantee? := some {
-          kinds := [.range]
-          statement :=
-            "Range-limited directed endpoints enclose exact dyadic add, subtract, and multiply results." } }
-    , { topic := "generic rounding-grid error bounds"
-        declarations :=
-          [ ``Model.abs_roundAt_sub_le
-          , ``Model.roundAt_mem_Icc
-          , ``Model.relativeError_roundAt_le_of_normal
-          ]
-        applicability := .verifiedForType
-        scope :=
-          "roundAt uses this descriptor's precision and bias with no upper exponent bound. " ++
-          "Executable operations require a separate refinement theorem; relative error requires " ++
-          "nonzero normal-range input."
-        numericalGuarantee? := some {
-          kinds := [.range, .rounding, .absoluteError, .relativeError]
-          statement :=
-            "The real-valued roundAt grid has absolute error at most 1/2 ULP; " ++
-            "for nonzero normal-range inputs, relative error is at most " ++
-            s!"2^-{summary.fracWidth + 1}."
-        } }
-    , { topic := "exact compatible widening"
-        declarations := [``Model.cast_exact_of_compatibleWidening]
-        applicability := .verifiedForType
-        scope :=
-          "source and destination have equal exponent width, bias, and encoding, while destination precision is at least the source precision"
-        numericalGuarantee? := some {
-          kinds := [.exactness]
-          statement :=
-            "A compatible widening preserves the represented finite value with zero rounding error." } }
-    , { topic := "mixed-precision sequential reduction and matrix entry bounds"
-        declarations :=
-          [ ``Model.mulAccError_eq_site_residuals
-          , ``Model.mulAcc_abs_error_le_budget
-          , ``Model.sequentialAccumulator_error_eq_sum
-          , ``Model.dotSequential_abs_error_le_budget
-          , ``Model.matmul_refines
-          , ``Model.matmul_entry_abs_error_le_budget
-          ]
-        definitions := [``Model.SitePolicy, ``Model.MatmulRefines]
-        applicability := ieeeCrossFormatApplicability summary
-        scope :=
-          "arbitrary storage, product, accumulator, and output descriptors under the IEEE, finiteness, length, shape, and per-site premises stated by each theorem"
-        numericalGuarantee? := some {
-          kinds := [.absoluteError]
-          statement :=
-            "Sequential dot products and matrix entries are bounded by the sum of their checked per-site rounding residual budgets." } }
-    , { topic := "requested-precision decimal and hexadecimal output"
-        declarations :=
-          [ ``Model.significantDecimal_nearest_error
-          , ``Model.significantHex_nearest_error
-          , ``Model.le_significantDecimal_up
-          , ``Model.significantDecimal_down_le
-          , ``Model.significantDecimal_towardZero_abs_le
-          , ``Model.le_significantHex_up
-          , ``Model.significantHex_down_le
-          , ``Model.significantHex_towardZero_abs_le
-          ]
-        applicability := .verifiedForType
-        scope :=
-          "every exact finite input and positive requested significant-digit count; " ++
-          "directed bounds concern the emitted value, not a subsequent binary input rounding"
-        numericalGuarantee? := some {
-          kinds := [.absoluteError, .rounding]
-          statement :=
-            "Nearest-even output stays within half an external grid unit. Directed output " ++
-            "stays on its requested side, and toward-zero output cannot increase magnitude." } }
-    , { topic := "IEEE operation error bounds and Sterbenz exactness"
-        declarations :=
-          [ ``Model.abs_toReal_add_sub_le
-          , ``Model.abs_toReal_sub_sub_le
-          , ``Model.abs_toReal_mul_sub_le
-          , ``Model.abs_toReal_div_sub_le
-          , ``Model.abs_toReal_sqrt_sub_le
-          , ``Model.abs_toReal_fma_sub_le
-          , ``Model.toReal_sub_eq_of_sterbenz
-          , ``Model.toReal_sub_eq_of_sterbenz_of_same_sign
-          ]
-        applicability := ieeeApplicability summary
-        scope :=
-          "the finiteness, result-range, positivity, normality, and factor-of-two hypotheses stated by each theorem"
-        numericalGuarantee? := some {
-          kinds := [.absoluteError, .exactness]
-          statement :=
-            "Each finite primitive has at most 1/2 ULP absolute error; Sterbenz subtraction is exact in its proved factor-of-two domain." } }
-    , { topic := "IEEE cross-format cast semantics"
-        declarations :=
-          [ ``Model.cast_eq_roundAt
-          , ``Model.cast_exact_of_gridExtension
-          , ``Model.abs_toReal_cast_sub_le
-          ]
-        applicability := ieeeCrossFormatApplicability summary
-        scope :=
-          "the source/destination finiteness, result-range, precision, and minimum-subnormal-exponent hypotheses stated by each theorem"
-        numericalGuarantee? := some {
-          kinds := [.rounding, .absoluteError, .exactness]
-          statement :=
-            "A finite cast is one destination rounding with at most 1/2 destination ULP error, and grid extensions are exact." } }
-    , { topic := "finite source casts to IEEE destinations"
-        declarations :=
-          [ ``Model.cast_eq_roundAt_of_isIEEE_destination
-          , ``Model.cast_exact_of_gridExtension_of_isIEEE_destination
-          ]
-        applicability := .conditional
-          "the destination must satisfy `isIEEE = true`; the source may use any descriptor"
-        scope :=
-          "finite source and result; grid exactness also requires destination grid inclusion"
-        numericalGuarantee? := some {
-          kinds := [.rounding, .exactness]
-          statement :=
-            "Casting performs one destination rounding, including finite-only and custom-bias " ++
-            "sources; a finer destination grid preserves the source real value." } }
-    , { topic := "IEEE rational conversion enclosures"
-        declarations :=
-          [ ``Model.toEReal_ofRat_down_le
-          , ``Model.le_toEReal_ofRat_up
-          ]
-        applicability := ieeeApplicability summary
-        scope := "all normalized rationals, including zero and overflow to infinity"
-        numericalGuarantee? := some {
-          kinds := [.rounding]
-          statement :=
-            "Directed conversion encloses the exact rational between extended-real bounds." } }
-    , { topic := "IEEE destination reduction semantics"
-        declarations :=
-          [ ``Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite
-          , ``Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite
-          ]
-        applicability := ieeeApplicability summary
-        scope := "finite operands and result; dot products additionally require equal input lengths"
-        numericalGuarantee? := some {
-          kinds := [.rounding]
-          statement :=
-            "Exact accumulation is followed by one nearest-even destination rounding, " ++
-            "including empty inputs and cancellation to zero." } }
-    , { topic := "transcendental enclosures and whole-algorithm proof contracts"
-        declarations :=
-          [ ``Model.Transcendentals.Contract.RealEnclosure.abs_sub_le_width
-          , ``Model.Transcendentals.Contract.StableEnclosure.roundAt_eq_roundAt_lower
-          , ``Model.Transcendentals.Contract.CertifiedRoundedResult.toReal_value_eq_roundAt
-          ]
-        definitions :=
-          [ ``Model.Transcendentals.Contract.RealEnclosure
-          , ``Model.Transcendentals.Contract.RealEnclosure.exp
-          , ``Model.Transcendentals.Contract.RealEnclosure.log
-          , ``Model.Transcendentals.Contract.RealEnclosure.sqrt
-          , ``Model.Transcendentals.Contract.RealEnclosure.sin
-          , ``Model.Transcendentals.Contract.RealEnclosure.cos
-          , ``Model.Transcendentals.Contract.RealEnclosure.sinh
-          , ``Model.Transcendentals.Contract.RealEnclosure.cosh
-          , ``Model.Transcendentals.Contract.RealEnclosure.tanh
-          , ``Model.Transcendentals.Contract.ApproximationCertificate
-          , ``Model.Transcendentals.Contract.CorrectlyRoundedCertificate
-          ]
-        applicability := .conditional
-          "a whole-algorithm certificate for the selected executable kernel; the built-in approximations supply none"
-        scope :=
-          "generic finite-real proof interfaces, not certificates for this type's executable kernels; numerical accuracy or correct rounding requires an inhabited certificate connecting the selected kernel to the real function" }
-    ]
-  nonclaims :=
-    [ "equivalence between compiled Float32/Float arithmetic and this type; only the explicit conversion boundary is checked"
-    , "every clause of IEEE 754 follows from the six backend-refinement equations"
-    , "bitwise NaN round trips through the display `format`; use " ++
-        "`format (style := .exact)` or `(style := .hex)` output to retain NaN metadata"
-    , "the built-in deterministic transcendental kernels currently carry a whole-algorithm approximation or correctly-rounded certificate"
-    , "external MPFR, Arb, compiler lowering, or FFI behavior is inside this certificate"
-    ]
+    match carrier with
+    | .configured => configuredSurfaces summary operations
+    | .staticByte => staticByteSurfaces operations
+    | .descriptor => descriptorSurfaces operations
+    | .model => modelSurfaces summary
+  relatedTheorems :=
+    let model (embedding : Name) : List RelatedTheorems :=
+      [{ type := ``Model, embedding, surfaces := modelSurfaces summary }]
+    match carrier with
+    | .configured => model ``FloatLib.Floats.ExecFloat.Binary.toModel
+    | .staticByte => model ``StaticByte.toModel
+    | .descriptor => model ``FloatLib.Floats.ExecFloat.raw
+    | .model => []
+  nonclaims := nonclaimsOf summary carrier
 
 end FloatInfo
 

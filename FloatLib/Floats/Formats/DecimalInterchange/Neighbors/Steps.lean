@@ -20,6 +20,8 @@ theorem establishes adjacency in both directions.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
+/-- For a quantum within the format range, the upward grid step always delivers a valid datum, `+∞`
+past the largest finite value. -/
 theorem neighborAbove_valid (f : Format) (c : Nat) (q : Int)
     (hqmin : f.minQuantum ≤ q) (hqmax : q ≤ f.maxQuantum) :
     (neighborAbove f c q).Valid f := by
@@ -32,6 +34,8 @@ theorem neighborAbove_valid (f : Format) (c : Nat) (q : Int)
       exact ⟨hb, by omega, by omega⟩
     · trivial
 
+/-- A finite upward grid step is positive and has exactly the value of the next coefficient on the
+input grid, after any carry. -/
 theorem neighborAbove_finite (f : Format) (c d : Nat) (q r : Int) (s : Bool)
     (hc : c < f.coefficientBound)
     (hout : neighborAbove f c q = .finite s d r) :
@@ -51,6 +55,8 @@ theorem neighborAbove_finite (f : Format) (c d : Nat) (q r : Int) (s : Bool)
         ring
     · contradiction
 
+/-- The upward grid step keeps the input's normal form: a successor of a least-quantum or
+full-coefficient pair is again at the least quantum or full. -/
 theorem neighborAbove_full (f : Format) (c d : Nat) (q r : Int) (s : Bool)
     (hfull : q = f.minQuantum ∨ f.payloadBound ≤ c)
     (hout : neighborAbove f c q = .finite s d r) :

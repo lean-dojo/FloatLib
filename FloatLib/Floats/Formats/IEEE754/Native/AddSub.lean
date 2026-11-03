@@ -8,10 +8,12 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.AddSub
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
 public import FloatLib.Floats.ExecFloat.Instances
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 
 /-!
 # Native addition and subtraction
@@ -22,8 +24,13 @@ cancellation, subnormal rounding and overflow to infinity are covered, and the e
 the complete packed word through the native adapters.
 
 The finite-input hypotheses exclude NaNs and infinities, because FloatLib preserves NaN details
-that Lean canonicalizes and its subtraction also negates the right operand's NaN sign. These model
-equalities do not verify the machine instructions used by compiled native code.
+that Lean canonicalizes and its subtraction also negates the right operand's NaN sign. Negation
+alone agrees with Lean's model on every word. These model equalities do not verify the machine
+instructions used by compiled native code.
+
+The configured operations are the first-order binary32 and binary64 instances of
+`Configured.NativeDispatch`, the ones a client that imports `Configured` elaborates, so `rw` and
+`simp` apply the bridges to client terms in either direction.
 -/
 
 @[expose] public section
@@ -46,6 +53,12 @@ private theorem round_decoded_eq_ofModel {fmt : FloatFormat} (hfmt : fmt.isIEEE 
   rw [Internal.Directed.roundDyadic_toDyadic? hfmt .nearest hd,
     canonicalizeModel_eq_self x hcanonical]
 
+/-- A value whose Lean unpacked model is `u` decodes to the dyadic of `u`. -/
+private theorem toDyadic?_eq_of_toModel_eq {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    {x : Model fmt} {u : Float.Model.UnpackedFloat} (hu : toModel x = u) :
+    toDyadic? x = unpackedToDyadic? u := by
+  rw [toDyadic?_ieee_eq_model fmt hfmt x, hu]
+
 /--
 For finite operands, including signed zeros, dispatched addition gives the word that Lean's
 unpacked model gets by adding and packing. The result may overflow to infinity.
@@ -67,9 +80,8 @@ theorem add_eq_ofModel_add_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = 
         roundDyadic, hfmt, ieeeRoundDyadic, Float.Model.UnpackedFloat.add,
         modelSignBit, modelSign]
   case zero.finite sign₁ sign₂ mantissa₂ exponent₂ hmantissa₂ =>
-    have hd : toDyadic? y = some ⟨modelSignBit sign₂, mantissa₂, exponent₂⟩ := by
-      rw [toDyadic?_ieee_eq_model fmt hfmt y, hymodel]
-      rfl
+    have hd : toDyadic? y = some ⟨modelSignBit sign₂, mantissa₂, exponent₂⟩ :=
+      toDyadic?_eq_of_toModel_eq hfmt hymodel
     have hr := round_decoded_eq_ofModel hfmt y hd
     rw [hymodel] at hr
     rw [Proof.add_eq_spec, Spec.add, toDyadic?_ieee_eq_model fmt hfmt x, hxmodel, hd]
@@ -77,9 +89,8 @@ theorem add_eq_ofModel_add_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = 
     rw [Numerics.Dyadic.add_of_left_significand_eq_zero _ _ rfl]
     simpa only [hmantissa₂.ne', ite_false] using hr
   case finite.zero sign₁ mantissa₁ exponent₁ hmantissa₁ sign₂ =>
-    have hd : toDyadic? x = some ⟨modelSignBit sign₁, mantissa₁, exponent₁⟩ := by
-      rw [toDyadic?_ieee_eq_model fmt hfmt x, hxmodel]
-      rfl
+    have hd : toDyadic? x = some ⟨modelSignBit sign₁, mantissa₁, exponent₁⟩ :=
+      toDyadic?_eq_of_toModel_eq hfmt hxmodel
     have hr := round_decoded_eq_ofModel hfmt x hd
     rw [hxmodel] at hr
     rw [Proof.add_eq_spec, Spec.add, hd, toDyadic?_ieee_eq_model fmt hfmt y, hymodel]
@@ -92,34 +103,33 @@ theorem add_eq_ofModel_add_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = 
       sign₁ sign₂ mantissa₁ mantissa₂ exponent₁ exponent₂ hmantissa₁ hmantissa₂
       hxmodel hymodel
 
-/-- Negation preserves the complete finite unpacked value, including the sign of zero. -/
-theorem toModel_neg_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (x : Model fmt) (hx : (toModel x).isFinite = true) :
+/--
+Negation commutes with Lean's unpacked model on every word: finite values and zeros change sign,
+infinities change sign, and NaNs stay NaNs. Toggling the stored sign keeps the exponent and
+fraction fields that classify the word.
+-/
+theorem toModel_neg {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt) :
     toModel (neg x) = Float.Model.UnpackedFloat.neg (toModel x) := by
-  have hdecode {d : Numerics.Dyadic} (hd : toDyadic? x = some d) :
-      ieeeToDyadic? (neg x) = some d.neg := by
-    have hneg := toDyadic?_neg_of_toDyadic?_some x hd
-    simpa [toDyadic?, hfmt, negDyadic,
-      FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt] using hneg
-  have hsign (sign : Sign) : modelSign (!(modelSignBit sign)) = -sign := by
-    cases sign <;> rfl
-  cases hmodel : toModel x with
-  | notANumber => simp [hmodel, Float.Model.UnpackedFloat.isFinite] at hx
-  | infinity sign => simp [hmodel, Float.Model.UnpackedFloat.isFinite] at hx
-  | zero sign =>
-    have hd : toDyadic? x = some ⟨modelSignBit sign, 0, 0⟩ := by
-      rw [toDyadic?_ieee_eq_model fmt hfmt x, hmodel]
-      rfl
-    simpa only [hsign, Float.Model.UnpackedFloat.neg] using
-      toModel_eq_zero_of_ieeeToDyadic?_eq_some (neg x) (!(modelSignBit sign)) 0
-        (hdecode hd)
-  | finite sign mantissa exponent hmantissa =>
-    have hd : toDyadic? x = some ⟨modelSignBit sign, mantissa, exponent⟩ := by
-      rw [toDyadic?_ieee_eq_model fmt hfmt x, hmodel]
-      rfl
-    simpa only [hsign, Float.Model.UnpackedFloat.neg] using
-      toModel_eq_finite_of_ieeeToDyadic?_eq_some (neg x) (!(modelSignBit sign))
-        mantissa exponent hmantissa.ne' (hdecode hd)
+  rw [neg_eq_toggleSign_of_supportsSignedZero x
+    (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt)]
+  have hexponent :
+      unpackExponent (toModelBits (toggleSign x)) = unpackExponent (toModelBits x) := by
+    apply BitVec.eq_of_toNat_eq
+    rw [unpackExponent_toNat, unpackExponent_toNat, expField_toggleSign]
+  have hmantissa :
+      unpackMantissa (toModelBits (toggleSign x)) = unpackMantissa (toModelBits x) := by
+    apply BitVec.eq_of_toNat_eq
+    rw [unpackMantissa_toNat, unpackMantissa_toNat, fracField_toggleSign]
+  have hsign : Sign.ofBitVec (unpackSign (toModelBits (toggleSign x))) =
+      -Sign.ofBitVec (unpackSign (toModelBits x)) := by
+    have htoggled := modelSignBit_ofBitVec_unpackSign (toggleSign x)
+    rw [signBit_toggleSign, ← modelSignBit_ofBitVec_unpackSign x] at htoggled
+    revert htoggled
+    cases Sign.ofBitVec (unpackSign (toModelBits (toggleSign x))) <;>
+      cases Sign.ofBitVec (unpackSign (toModelBits x)) <;> simp [modelSignBit] <;> rfl
+  unfold toModel unpack
+  simp only [hexponent, hmantissa, hsign]
+  split_ifs <;> rfl
 
 /--
 For finite operands, including signed zeros, dispatched subtraction agrees with Lean's
@@ -131,7 +141,7 @@ theorem sub_eq_ofModel_sub_of_isFinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = 
     sub x y =
       ofModel fmt
         (Float.Model.UnpackedFloat.sub (FloatFormat.toModel fmt) (toModel x) (toModel y)) := by
-  have hneg := toModel_neg_of_isFinite hfmt y hy
+  have hneg := toModel_neg hfmt y
   have hfinite : (toModel (neg y)).isFinite = true := by
     rw [hneg]
     cases hmodel : toModel y <;>
@@ -146,6 +156,16 @@ namespace FloatLib.Floats.ExecFloat.Binary
 
 open Formats.BinaryInterchange
 
+/-- A finite native binary32 value imports to a finite unpacked model. -/
+private theorem isFinite_toModel_ofFloat32Model {x : Float32} (hx : x.isFinite = true) :
+    (Model.toModel (Model.ofFloat32Model x.toModel)).isFinite = true := by
+  simpa only [Model.toModel_ofFloat32Model, Float32.isFinite, Float32.Model.isFinite] using hx
+
+/-- A finite native binary64 value imports to a finite unpacked model. -/
+private theorem isFinite_toModel_ofFloatModel {x : Float} (hx : x.isFinite = true) :
+    (Model.toModel (Model.ofFloatModel x.toModel)).isFinite = true := by
+  simpa only [Model.toModel_ofFloatModel, Float.isFinite, Float.Model.isFinite] using hx
+
 /-- Native binary32 addition commutes with the import adapter on finite inputs. -/
 theorem toModel_ofFloat32_add_of_isFinite (x y : Float32)
     (hx : x.isFinite = true) (hy : y.isFinite = true) :
@@ -156,10 +176,7 @@ theorem toModel_ofFloat32_add_of_isFinite (x y : Float32)
   rw [Float32.Model.add, Model.ofFloat32Model_pack]
   have h := Model.add_eq_ofModel_add_of_isFinite (fmt := FloatFormat.binary32)
     (by decide) (Model.ofFloat32Model x.toModel) (Model.ofFloat32Model y.toModel)
-    (by simpa only [Model.toModel_ofFloat32Model, Float32.isFinite,
-      Float32.Model.isFinite] using hx)
-    (by simpa only [Model.toModel_ofFloat32Model, Float32.isFinite,
-      Float32.Model.isFinite] using hy)
+    (isFinite_toModel_ofFloat32Model hx) (isFinite_toModel_ofFloat32Model hy)
   rw [Model.toModel_ofFloat32Model, Model.toModel_ofFloat32Model] at h
   exact h.symm
 
@@ -173,10 +190,7 @@ theorem toModel_ofFloat32_sub_of_isFinite (x y : Float32)
   rw [Float32.Model.sub, Model.ofFloat32Model_pack]
   have h := Model.sub_eq_ofModel_sub_of_isFinite (fmt := FloatFormat.binary32)
     (by decide) (Model.ofFloat32Model x.toModel) (Model.ofFloat32Model y.toModel)
-    (by simpa only [Model.toModel_ofFloat32Model, Float32.isFinite,
-      Float32.Model.isFinite] using hx)
-    (by simpa only [Model.toModel_ofFloat32Model, Float32.isFinite,
-      Float32.Model.isFinite] using hy)
+    (isFinite_toModel_ofFloat32Model hx) (isFinite_toModel_ofFloat32Model hy)
   rw [Model.toModel_ofFloat32Model, Model.toModel_ofFloat32Model] at h
   exact h.symm
 
@@ -190,10 +204,7 @@ theorem toModel_ofFloat_add_of_isFinite (x y : Float)
   rw [Float.Model.add, Model.ofFloatModel_pack]
   have h := Model.add_eq_ofModel_add_of_isFinite (fmt := FloatFormat.binary64)
     (by decide) (Model.ofFloatModel x.toModel) (Model.ofFloatModel y.toModel)
-    (by simpa only [Model.toModel_ofFloatModel, Float.isFinite,
-      Float.Model.isFinite] using hx)
-    (by simpa only [Model.toModel_ofFloatModel, Float.isFinite,
-      Float.Model.isFinite] using hy)
+    (isFinite_toModel_ofFloatModel hx) (isFinite_toModel_ofFloatModel hy)
   rw [Model.toModel_ofFloatModel, Model.toModel_ofFloatModel] at h
   exact h.symm
 
@@ -207,32 +218,9 @@ theorem toModel_ofFloat_sub_of_isFinite (x y : Float)
   rw [Float.Model.sub, Model.ofFloatModel_pack]
   have h := Model.sub_eq_ofModel_sub_of_isFinite (fmt := FloatFormat.binary64)
     (by decide) (Model.ofFloatModel x.toModel) (Model.ofFloatModel y.toModel)
-    (by simpa only [Model.toModel_ofFloatModel, Float.isFinite,
-      Float.Model.isFinite] using hx)
-    (by simpa only [Model.toModel_ofFloatModel, Float.isFinite,
-      Float.Model.isFinite] using hy)
+    (isFinite_toModel_ofFloatModel hx) (isFinite_toModel_ofFloatModel hy)
   rw [Model.toModel_ofFloatModel, Model.toModel_ofFloatModel] at h
   exact h.symm
-
-private theorem toModel_execAdd {format : FloatFormat} {plan : Configured.StoragePlan format}
-    [ExecFloat.Backend.PolicyFor (Configured.Family format (Configured.Code plan) plan)]
-    (x y : ExecFloat (Configured.Family format (Configured.Code plan) plan)) :
-    toModel (x + y) = Model.Spec.add (toModel x) (toModel y) := by
-  change toModel (ExecFloat.add x y) = _
-  rw [ExecFloat.Proof.add_eq_spec]
-  change Configured.Family.toModel
-    (ExecFloat.ModelCodec.liftBinary Model.Spec.add x y) = _
-  simp [Configured.Family.toModel, toModel]
-
-private theorem toModel_execSub {format : FloatFormat} {plan : Configured.StoragePlan format}
-    [ExecFloat.Backend.PolicyFor (Configured.Family format (Configured.Code plan) plan)]
-    (x y : ExecFloat (Configured.Family format (Configured.Code plan) plan)) :
-    toModel (x - y) = Model.Spec.sub (toModel x) (toModel y) := by
-  change toModel (ExecFloat.sub x y) = _
-  rw [ExecFloat.Proof.sub_eq_spec]
-  change Configured.Family.toModel
-    (ExecFloat.ModelCodec.liftBinary Model.Spec.sub x y) = _
-  simp [Configured.Family.toModel, toModel]
 
 /--
 Importing the native sum equals adding the imported binary32 operands with the installed
@@ -243,8 +231,8 @@ theorem ofFloat32_add_of_isFinite (x y : Float32)
     (ofFloat32 (x + y) : Binary32) = ofFloat32 x + ofFloat32 y := by
   apply Configured.Family.toModel_injective
   change toModel (ofFloat32 (x + y) : Binary32) = toModel (ofFloat32 x + ofFloat32 y : Binary32)
-  rw [toModel_execAdd, ← Model.Proof.add_eq_spec]
-  exact toModel_ofFloat32_add_of_isFinite x y hx hy
+  rw [toModel_ofFloat32_add_of_isFinite x y hx hy]
+  simp only [toModel_hAdd]
 
 /-- Importing a native binary32 difference equals certified software subtraction of the imports. -/
 theorem ofFloat32_sub_of_isFinite (x y : Float32)
@@ -252,8 +240,8 @@ theorem ofFloat32_sub_of_isFinite (x y : Float32)
     (ofFloat32 (x - y) : Binary32) = ofFloat32 x - ofFloat32 y := by
   apply Configured.Family.toModel_injective
   change toModel (ofFloat32 (x - y) : Binary32) = toModel (ofFloat32 x - ofFloat32 y : Binary32)
-  rw [toModel_execSub, ← Model.Proof.sub_eq_spec]
-  exact toModel_ofFloat32_sub_of_isFinite x y hx hy
+  rw [toModel_ofFloat32_sub_of_isFinite x y hx hy]
+  simp only [toModel_hSub]
 
 /--
 Importing the native sum equals adding the imported binary64 operands with the installed
@@ -264,8 +252,8 @@ theorem ofFloat_add_of_isFinite (x y : Float)
     (ofFloat (x + y) : Binary64) = ofFloat x + ofFloat y := by
   apply Configured.Family.toModel_injective
   change toModel (ofFloat (x + y) : Binary64) = toModel (ofFloat x + ofFloat y : Binary64)
-  rw [toModel_execAdd, ← Model.Proof.add_eq_spec]
-  exact toModel_ofFloat_add_of_isFinite x y hx hy
+  rw [toModel_ofFloat_add_of_isFinite x y hx hy]
+  simp only [toModel_hAdd]
 
 /-- Importing a native binary64 difference equals certified software subtraction of the imports. -/
 theorem ofFloat_sub_of_isFinite (x y : Float)
@@ -273,7 +261,7 @@ theorem ofFloat_sub_of_isFinite (x y : Float)
     (ofFloat (x - y) : Binary64) = ofFloat x - ofFloat y := by
   apply Configured.Family.toModel_injective
   change toModel (ofFloat (x - y) : Binary64) = toModel (ofFloat x - ofFloat y : Binary64)
-  rw [toModel_execSub, ← Model.Proof.sub_eq_spec]
-  exact toModel_ofFloat_sub_of_isFinite x y hx hy
+  rw [toModel_ofFloat_sub_of_isFinite x y hx hy]
+  simp only [toModel_hSub]
 
 end FloatLib.Floats.ExecFloat.Binary

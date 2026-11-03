@@ -23,9 +23,14 @@ The map from `SignedRat` to `Rat` preserves the rational value and forgets the s
 conversion through `Rat` therefore cannot carry a source zero sign to its destination.
 
 Instances must preserve value without rounding, overflow, or a context-dependent choice.
-The class cannot express that law for arbitrary source and target types, so every non-identity
-instance needs a separate theorem relating their mathematical interpretations. An arbitrary
-coercion is insufficient to define an instance.
+The class states no such law, since it has no interpretation of arbitrary source and target types,
+so nothing checks it when an instance is declared, and an arbitrary coercion would typecheck. The
+generic conversion theorems use whatever map is installed. Each instance below is unfolded by its
+`run_*` lemma, and the value facts are proved about the function it unfolds to: the rational
+value and sign of `SignedRat.ofRat` (`SignedRat.value_ofRat`, `SignedRat.negative_ofRat`) and of
+`SignedRat.ofDyadic` (`SignedRat.value_ofDyadic`, `SignedRat.negative_ofDyadic`); the integer
+and natural maps are the standard casts, and `Dyadic.toRat` and `SignedRat.value` are the values
+by definition. A new instance needs the same kind of theorem.
 -/
 
 @[expose] public section
@@ -42,15 +47,17 @@ Canonical embedding between executable exact domains.
 
 This class is an interoperability capability, not an implicit numerical-promotion rule. User
 values remain statically typed, and destination rounding still occurs only in an explicit
-conversion or destination-driven operation. Installing an instance is a semantic commitment;
-preservation must be justified in the source or target domain's own mathematical model.
+conversion or destination-driven operation. Installing an instance is a semantic commitment that
+the class does not check: preservation must be proved in the source or target domain's own
+mathematical model.
 -/
 class ExactMap (Source : Type u) (Target : Type v) where
   /--
-  Preserve the source's numerical value without rounding.
+  The embedding function, meant to preserve the source's numerical value without rounding.
 
-  Representation metadata can be forgotten: `signedRatToRat` discards the sign of zero.
-  Preservation of numerical value is justified by separate domain-specific theorems.
+  The class attaches no law to it: preservation is a separate obligation for each instance, which
+  FloatLib's own instances meet (see the module doc). Representation metadata can be forgotten:
+  `signedRatToRat` discards the sign of zero.
   -/
   map : Source → Target
 
@@ -102,7 +109,10 @@ instance dyadicToRat : ExactMap FloatLib.Numerics.Dyadic Rat where
 instance ratToSignedRat : ExactMap Rat FloatLib.Numerics.SignedRat where
   map := FloatLib.Numerics.SignedRat.ofRat
 
-/-- The rational embedding keeps the value and derives the sign from it. -/
+/--
+The rational embedding is `SignedRat.ofRat`, which keeps the value (`SignedRat.value_ofRat`) and
+derives the sign from it (`SignedRat.negative_ofRat`).
+-/
 @[simp, grind =] theorem run_ratToSignedRat (value : Rat) :
     run (Source := Rat) (Target := FloatLib.Numerics.SignedRat) value =
       FloatLib.Numerics.SignedRat.ofRat value :=
@@ -132,7 +142,10 @@ instance natToSignedRat : ExactMap Nat FloatLib.Numerics.SignedRat where
 instance dyadicToSignedRat : ExactMap FloatLib.Numerics.Dyadic FloatLib.Numerics.SignedRat where
   map := FloatLib.Numerics.SignedRat.ofDyadic
 
-/-- The dyadic embedding is the sign-preserving signed-rational denotation. -/
+/--
+The dyadic embedding is `SignedRat.ofDyadic`, which keeps the rational value
+(`SignedRat.value_ofDyadic`) and the sign, zero included (`SignedRat.negative_ofDyadic`).
+-/
 @[simp, grind =] theorem run_dyadicToSignedRat (value : FloatLib.Numerics.Dyadic) :
     run (Source := FloatLib.Numerics.Dyadic) (Target := FloatLib.Numerics.SignedRat) value =
       FloatLib.Numerics.SignedRat.ofDyadic value :=
@@ -147,7 +160,9 @@ signs. A destination that needs the source zero sign must use a sign-preserving 
 instance signedRatToRat : ExactMap FloatLib.Numerics.SignedRat Rat where
   map := FloatLib.Numerics.SignedRat.value
 
-/-- The signed-rational embedding into `Rat` is the value projection. -/
+/--
+The signed-rational embedding into `Rat` is the value projection, so both zeros map to `0`.
+-/
 @[simp, grind =] theorem run_signedRatToRat (value : FloatLib.Numerics.SignedRat) :
     run (Source := FloatLib.Numerics.SignedRat) (Target := Rat) value = value.value :=
   rfl

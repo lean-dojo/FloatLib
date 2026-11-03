@@ -202,6 +202,28 @@ private theorem shiftRightCeil_eq_div_add_one
   rw [Numerics.shiftRightCeil_eq, pow2_eq_two_pow]
   split_ifs <;> simp
 
+/-- Scaling by a nonpositive power of two divides by `2` to the right-shift distance. -/
+private theorem mul_bpow_sub_eq_div_pow2 (mantissa : Nat) {exponent targetExponent : Int}
+    (hle : exponent ≤ targetExponent) :
+    (mantissa : ℝ) *
+        FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (exponent - targetExponent) =
+      (mantissa : ℝ) / (pow2 (targetExponent - exponent).toNat : ℝ) := by
+  generalize hshift : (targetExponent - exponent).toNat = shift
+  rw [show exponent - targetExponent = -(shift : Int) by omega]
+  simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal,
+    pow2_eq_two_pow, div_eq_mul_inv]
+
+/-- Scaling by a positive power of two is the left shift by that distance. -/
+private theorem mul_bpow_sub_eq_shiftLeft (mantissa : Nat) {exponent targetExponent : Int}
+    (hlt : ¬exponent ≤ targetExponent) :
+    (mantissa : ℝ) *
+        FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (exponent - targetExponent) =
+      (Nat.shiftLeft mantissa (exponent - targetExponent).toNat : Nat) := by
+  generalize hshift : (exponent - targetExponent).toNat = shift
+  rw [show exponent - targetExponent = (shift : Int) by omega]
+  simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal,
+    Nat.shiftLeft_eq]
+
 /-- Downward shifting computes the integer floor of a scaled positive dyadic. -/
 theorem floor_scaledMagnitude
     (mantissa : Nat) (exponent targetExponent : Int) :
@@ -213,35 +235,12 @@ theorem floor_scaledMagnitude
         (roundMantissaAtExponentDown mantissa exponent targetExponent) := by
   by_cases hle : exponent ≤ targetExponent
   · let shift := (targetExponent - exponent).toNat
-    have hshiftInt : (shift : Int) = targetExponent - exponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hle)
-    have hvalue :
-        (mantissa : ℝ) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
-              (exponent - targetExponent) =
-          (mantissa : ℝ) / (pow2 shift : ℝ) := by
-      rw [show exponent - targetExponent = -(shift : Int) by omega]
-      simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
-        Numerics.Radix.toReal,
-        pow2_eq_two_pow, div_eq_mul_inv]
-    rw [hvalue]
+    rw [mul_bpow_sub_eq_div_pow2 mantissa hle]
     simpa [floorRound, roundMantissaAtExponentDown, hle, shift,
       Nat.shiftRight_eq_div_pow, pow2_eq_two_pow] using
       floor_real_nat_div mantissa (pow2 shift)
-  · let shift := (exponent - targetExponent).toNat
-    have hshiftInt : (shift : Int) = exponent - targetExponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr (le_of_not_ge hle))
-    have hvalue :
-        (mantissa : ℝ) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
-              (exponent - targetExponent) =
-          (Nat.shiftLeft mantissa shift : Nat) := by
-      rw [← hshiftInt]
-      simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
-        Numerics.Radix.toReal,
-        Nat.shiftLeft_eq]
-    rw [hvalue]
-    simp [floorRound, roundMantissaAtExponentDown, hle, shift]
+  · rw [mul_bpow_sub_eq_shiftLeft mantissa hle]
+    simp [floorRound, roundMantissaAtExponentDown, hle]
 
 /-- Upward shifting computes the integer ceiling of a scaled positive dyadic. -/
 theorem ceil_scaledMagnitude
@@ -254,37 +253,14 @@ theorem ceil_scaledMagnitude
         (roundMantissaAtExponentUp mantissa exponent targetExponent) := by
   by_cases hle : exponent ≤ targetExponent
   · let shift := (targetExponent - exponent).toNat
-    have hshiftInt : (shift : Int) = targetExponent - exponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hle)
-    have hvalue :
-        (mantissa : ℝ) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
-              (exponent - targetExponent) =
-          (mantissa : ℝ) / (pow2 shift : ℝ) := by
-      rw [show exponent - targetExponent = -(shift : Int) by omega]
-      simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
-        Numerics.Radix.toReal,
-        pow2_eq_two_pow, div_eq_mul_inv]
-    rw [hvalue]
+    rw [mul_bpow_sub_eq_div_pow2 mantissa hle]
     simp only [roundMantissaAtExponentUp, ite_eq_left hle]
     rw [shiftRightCeil_eq_div_add_one]
     have hpow2 : pow2 shift ≠ 0 := Nat.ne_of_gt (pow2_pos shift)
     simpa [ceilRound, shift, Numerics.roundQuotient_up_eq, hpow2] using
-      ceil_div_eq_roundQuotient_up mantissa (pow2 shift) hpow2
-  · let shift := (exponent - targetExponent).toNat
-    have hshiftInt : (shift : Int) = exponent - targetExponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr (le_of_not_ge hle))
-    have hvalue :
-        (mantissa : ℝ) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
-              (exponent - targetExponent) =
-          (Nat.shiftLeft mantissa shift : Nat) := by
-      rw [← hshiftInt]
-      simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
-        Numerics.Radix.toReal,
-        Nat.shiftLeft_eq]
-    rw [hvalue]
-    simp [ceilRound, roundMantissaAtExponentUp, hle, shift]
+      ceil_div_eq_roundQuotient_up mantissa (pow2 shift)
+  · rw [mul_bpow_sub_eq_shiftLeft mantissa hle]
+    simp [ceilRound, roundMantissaAtExponentUp, hle]
 
 /-- Floor alignment at any target exponent is a lower bound for the exact dyadic magnitude. -/
 theorem roundMantissaAtExponentDown_mul_bpow_le

@@ -106,6 +106,36 @@ retained payload except its terminator.
   else
     lower
 
+/-- A prefix no longer than the stream drops its last `width - count` bits. -/
+theorem streamPrefix_eq_div_of_le
+    {raw width count : Nat}
+    (hcount : count ≤ width) :
+    streamPrefix raw width count = raw / 2 ^ (width - count) := by
+  unfold streamPrefix
+  rw [ite_eq_left hcount]
+
+/--
+A retained prefix of a bounded stream fits in its requested width. A prefix longer than the
+stream is padded with zeros.
+-/
+theorem streamPrefix_lt_two_pow_of_lt
+    {raw width retained : Nat}
+    (hraw : raw < 2 ^ width) :
+    streamPrefix raw width retained < 2 ^ retained := by
+  by_cases hretained : retained ≤ width
+  · rw [streamPrefix_eq_div_of_le hretained, Nat.div_lt_iff_lt_mul
+      (Nat.two_pow_pos (width - retained))]
+    rw [← Nat.pow_add, Nat.add_comm,
+      Nat.sub_add_cancel hretained]
+    exact hraw
+  · unfold streamPrefix
+    rw [ite_eq_right hretained]
+    calc
+      raw * 2 ^ (retained - width) < 2 ^ width * 2 ^ (retained - width) :=
+        Nat.mul_lt_mul_of_pos_right hraw (Nat.two_pow_pos _)
+      _ = 2 ^ retained := by
+        rw [← Nat.pow_add, Nat.add_sub_cancel' (by omega)]
+
 /--
 The generic guard/sticky rule is the ordinary nearest-even power-of-two shift rounder.
 

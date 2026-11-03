@@ -2,7 +2,7 @@
 number: "20"
 slug: proving-numerical-bounds
 title: Proving numerical bounds
-summary: Certified interval evaluation turns rational input bounds into Lean proofs of real inequalities.
+summary: Certified interval evaluation turns rational input bounds into Lean proofs of real inequalities, and `roundoff` turns floating-point code into rounding-error theorems.
 phases: [status-and-directed]
 ---
 
@@ -26,10 +26,13 @@ example (x y : ℝ) (hx : x ∈ Set.Icc (-1) 1) (hy : y ∈ Set.Icc 2 3) :
   interval
 ```
 
-These are proofs about the real expressions as written. Bounding the error of a floating-point
-program also takes a theorem connecting that program to its real expression, such as the [rounding
-and reduction bounds](#/chapter/the-mathematics-of-rounding). Interval evaluation can then discharge
-the numerical inequalities in those arguments.
+These are proofs about the real expressions as written. A floating-point program rounds at every
+operation, so bounding its error also takes a theorem connecting the program to its real
+expression. The [`roundoff`
+tactic](#/chapter/proving-numerical-bounds/error-bounds-from-floating-point-code) builds that theorem
+from the program's own code, using the [rounding and reduction
+bounds](#/chapter/the-mathematics-of-rounding) of each operation it meets, and interval evaluation
+can discharge the numerical inequalities that are left.
 
 ## Why subdivide?
 
@@ -128,20 +131,24 @@ example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x ≤ 1 / 3 := by
   interval
 ```
 
-Before kernel reduction, an advisory executable check rejects failing arithmetic leaves. Registered
-calls use bounded kernel reduction, and every successful goal still needs a kernel-checked
+For goals without registered calls, the tactic first evaluates the same binary-grid check as an
+ordinary program and stops before kernel reduction when that run already returns false. Registered
+calls go straight to bounded kernel reduction, and every successful goal needs a kernel-checked
 certificate.
 
 Each verification attempt has its own budget of 20,000 heartbeats, and so do the
 failure diagnostics. That limit stays active even when the surrounding declaration sets
 `maxHeartbeats` to zero, and you can ask for a larger finite budget with
-`interval (maxHeartbeats := 40000)`. If the budget runs out, the tactic reports an inconclusive
-check and restores the original goal.
+`interval (maxHeartbeats := 40000)`. When the kernel check of an attempt runs out of that budget,
+the failure message names the attempt, exact-rational or binary-grid, and suggests a larger
+`maxHeartbeats`. Other failures don't come with that advice, and every failure restores the original
+goal.
 
 When arithmetic fails, the diagnostics tell you why. They
 report the obstructing range or the upper bound that wasn't small enough, and for registered calls
-they inspect the actual enclosure on the original box and report rejected domains separately. A
-zero-containing denominator range, for example, explains why division failed without claiming that
+they inspect the actual enclosure on the original box and report rejected domains separately,
+naming the operation, its argument enclosures, and what it accepts, such as argument enclosures with
+a positive lower endpoint for `Real.log`. A zero-containing denominator range, for example, explains why division failed without claiming that
 the denominator equals zero. Closed rational expressions are simplified with Lean's real arithmetic
 before enclosure.
 
@@ -245,6 +252,185 @@ to concrete numbers, so with symbolic dimensions you need a general sum or norm 
 over a finite range or an explicit set can use guarded hypotheses such as
 `∀ i ∈ Finset.range 4, x i ∈ Set.Icc 0 1`.
 
+## Error bounds from floating-point code
+
+`interval` proves facts about real expressions. A program on `Binary32` values rounds after every
+operation, so its result differs from the real expression it was written from, and the `roundoff`
+tactic proves by how much. It reads the configured computation as written and takes the rounding
+theorem of the capability behind each operation, such as `ExecFloat.Binary.add_rounding` for `+`.
+Then it composes those local errors into a bound against a reference, the same computation in exact
+real arithmetic on the decoded inputs, apart from the cases listed at the end of this section. The bound is either absolute, $|x-x_0|\le\beta$, or mixed,
+where `MixedError x x₀ r a` means $|x-x_0|\le r|x_0|+a$, and the tactic proves finiteness, exact
+decoded values, and signs the same way. It lives in
+`FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`, which `import FloatLib` doesn't
+reach, so this example imports it itself. It comes from the library's `roundoff` tests:
+
+```lean standalone
+import FloatLib
+import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+  [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+local notation "Value" => ExecFloat (Configured.Family format code plan)
+
+/-- A finite fused multiply-add of the descriptor model rounds once. -/
+theorem fma_error (x y z : Model format) (hformat : format.isIEEE = true)
+    (hresult : Model.isFinite (Model.fma x y z) = true) :
+    |Model.toReal (Model.fma x y z) - (Model.toReal x * Model.toReal y + Model.toReal z)| ≤
+      Model.halfUlpAt format (Model.toReal x * Model.toReal y + Model.toReal z) := by
+  roundoff
+
+/-- The dot product of two functions on `Fin n`, from zero. -/
+def dot {n : Nat} (x y : Fin n → Value) : Value :=
+  Fin.foldl n (fun s j => s + x j * y j) 0
+
+roundoff mixed theorem dot_mixedError :=
+  fun {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) =>
+    ExecFloat.Binary.toReal (dot x y)
+
+#check @dot_mixedError
+-- @dot_mixedError : ∀ {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+--   [inst : ExecFloat.ModelCodec plan (Model format) code]
+--   [inst_1 : ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] {n : ℕ} (x y : Fin n → Value),
+--   format.isIEEE = true →
+--     have step := fun s j => s + x j * y j;
+--     have referenceStep := fun reference value =>
+--       reference + ExecFloat.Binary.toReal (x value) * ExecFloat.Binary.toReal (y value);
+--     have relativeStep := fun accumulator reference relative absolute value => Model.unitRoundoffAt format;
+--     have absoluteStep := fun accumulator reference relative absolute value =>
+--       (1 + Model.unitRoundoffAt format) *
+--         (relative * |reference| + absolute +
+--           (Model.unitRoundoffAt format * |ExecFloat.Binary.toReal (x value) * ExecFloat.Binary.toReal (y value)| +
+--             Model.underflowErrorAt format));
+--     have relativeError := List.foldRelative step referenceStep relativeStep absoluteStep 0 0 0 0 (List.finRange n);
+--     have absoluteError := List.foldAbsolute step referenceStep relativeStep absoluteStep 0 0 0 0 (List.finRange n);
+--     have output := dot x y;
+--     have reference := List.foldl referenceStep 0 (List.finRange n);
+--     List.AllSteps (List.mixedFoldStep step referenceStep relativeStep absoluteStep)
+--         (fun state value =>
+--           ExecFloat.Binary.isFinite (x value) = true ∧
+--             ExecFloat.Binary.isFinite (y value) = true ∧
+--               |ExecFloat.Binary.toReal (x value) * ExecFloat.Binary.toReal (y value)| ≤
+--                   (Model.posMaxFinite format).toReal ∧
+--                 |state.2.1 + ExecFloat.Binary.toReal (x value) * ExecFloat.Binary.toReal (y value)| +
+--                     (state.2.2.1 * |state.2.1| + state.2.2.2 +
+--                       (Model.unitRoundoffAt format *
+--                           |ExecFloat.Binary.toReal (x value) * ExecFloat.Binary.toReal (y value)| +
+--                         Model.underflowErrorAt format)) ≤
+--                   (Model.posMaxFinite format).toReal)
+--         (0, 0, 0, 0) (List.finRange n) →
+--       ExecFloat.Binary.isFinite output = true ∧
+--         MixedError (ExecFloat.Binary.toReal output) reference relativeError absoluteError
+
+/-- The generated bound in closed form. -/
+example := fun {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) hvalid =>
+  List.abs_sub_le_of_sumFold (Model.unitRoundoffAt format) (Model.unitRoundoffAt_pos _).le _ _
+    (fun j : Fin n => Model.unitRoundoffAt format *
+      |ExecFloat.Binary.toReal (x j) * ExecFloat.Binary.toReal (y j)| +
+        Model.underflowErrorAt format)
+    (fun _ => add_nonneg (mul_nonneg (Model.unitRoundoffAt_pos _).le (abs_nonneg _))
+      (Model.underflowErrorAt_pos _).le) _ _ (dot_mixedError x y hformat hvalid).2
+
+/-- The range conditions follow from bounds on the terms. -/
+example {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) (b : ℝ)
+    (hx : ∀ j, ExecFloat.Binary.isFinite (x j) = true)
+    (hy : ∀ j, ExecFloat.Binary.isFinite (y j) = true)
+    (hb : ∀ j, |ExecFloat.Binary.toReal (x j) * ExecFloat.Binary.toReal (y j)| ≤ b)
+    (hgrowth : (1 + Model.unitRoundoffAt format) ^ (n + 1) ≤ 2)
+    (hrange : 2 * (n + 1) * (b + Model.underflowErrorAt format) ≤
+      Model.toReal (Model.posMaxFinite format)) :
+    ExecFloat.Binary.isFinite (dot x y) = true :=
+  (dot_mixedError x y hformat ((List.AllSteps.of_forall _ _ _ _ fun _ j => hx j).and
+    ((List.AllSteps.of_forall _ _ _ _ fun _ j => hy j).and
+      (List.allSteps_sumFold_of_abs_le _ _ b _ (Model.unitRoundoffAt_pos _).le
+        (Model.underflowErrorAt_pos _).le _ _ _
+        (fun _ => add_nonneg (mul_nonneg (Model.unitRoundoffAt_pos _).le (abs_nonneg _))
+          (Model.underflowErrorAt_pos _).le) _ _
+        (fun j _ => hb j) (fun _ _ => le_rfl) (by simpa using hgrowth)
+        (by simpa using hrange))))).1
+```
+
+The first theorem states its own goal, a model fused multiply-add within
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.halfUlpAt]] of $xy+z$, and plain `roundoff`
+closes it from `hresult` with the one rounding the operation performs. For the dot product we write
+only the value we want bounded. `roundoff mixed theorem` takes `ExecFloat.Binary.toReal (dot x y)`,
+analyzes the loop over `Fin n` once for a symbolic accumulator, and lifts that step through the
+traversal with `List.fold_mixedError`, so the statement holds at every length, for every IEEE
+descriptor, storage plan, and codec, without unrolling anything. Reading what `#check` prints, the
+reference is `List.foldl referenceStep 0 (List.finRange n)`, the exact dot product of the decoded
+entries. Each addition gets relative error $u$, the unit roundoff `Model.unitRoundoffAt format`,
+and after each step the absolute part becomes $(1+u)(r\,|\mathit{ref}|+a+u\,|x_jy_j|+\eta)$ in
+terms of the previous relative part $r$, absolute part $a$ and reference, where $\eta$ is the
+underflow allowance `Model.underflowErrorAt format`, half the spacing of the subnormals. The
+premise is a `List.AllSteps` condition on the states the loop actually visits: both entries finite,
+the product at most the largest finite value $\Omega$, and the next partial sum together with its
+budget at most $\Omega$. In return we get a finite output and its mixed bound.
+
+The two examples after the `#check` use the statement. `List.abs_sub_le_of_sumFold` turns the
+recurrence into the closed form
+$$
+\Bigl|x-\sum_j p_j\Bigr|\le\bigl((1+u)^n-1\bigr)\sum_j|p_j|+(1+u)^n\sum_j\bigl(u\,|p_j|+\eta\bigr),
+\qquad p_j=x_jy_j.
+$$
+In binary32, $u=2^{-24}$ and $\eta=2^{-150}$. For four products of magnitude at most one, the first
+term is about $4u\cdot4=16u$ and the second about $4u+4\eta$, so the computed dot product lies
+within about $20u\approx1.19\times10^{-6}$ of the exact one. That's a little above the textbook
+$\gamma_4\sum_j|p_j|\approx16u$ [@higham2002], because the loop charges every addition the same
+relative error, including the first one from zero, which is exact. The second example discharges
+the premise from four plain conditions: finite entries, $|p_j|\le b$, $(1+u)^{n+1}\le2$, and
+$2(n+1)(b+\eta)\le\Omega$. In binary32 the growth condition holds while $n+1\le\ln2/\ln(1+u)$, that
+is for up to 11,629,079 terms, and with $b=1$ and $n=4$ the last condition asks for
+$10(1+2^{-150})\le\Omega\approx3.40\times10^{38}$.
+
+The same analysis reads literals, exact when the format represents them, conversions of integers,
+rounding to integral values, and the C maximum loop `if m < x then x else m`. FloatLib's correctly
+rounded exponential, logarithm, `expMinus1`, `logPlus1` and `expMul` each contribute one rounding at
+their real result on an IEEE descriptor, while sine, cosine and the hyperbolic functions use
+FloatLib's rational enclosures. Loops can also run over lists, arrays, vectors and matrices, and a
+loop whose state is a pair or a nondependent record carries one relation for all its components.
+When such a loop tests a rounded component, as a sum that stops once an addition leaves it
+unchanged does, the step's condition can ask that the rounded test agree with the same test on the
+exact references, and the theorem covers the runs where they agree. For that stopping sum these are
+the runs that never stall, because an exact sum doesn't stall on a nonzero entry, so the bound says
+nothing about a stop that rounding caused.
+`roundoff theorem` states an absolute bound instead, and for the dot product its premise asks every
+visited partial sum and product to be finite. Inside a proof,
+`have bound := by roundoff (ExecFloat.Binary.toReal (program x))` infers a bound once its range
+premises are provable. `[roundoff_rule]` registers a bound of your own, and another library
+registers its containers with `@[roundoff_extension]`.
+
+The theorem `roundoff` produces is an ordinary Lean proof, and the kernel checks it like any other.
+Our axiom audit loads the analysis and accepts only propositional extensionality, quotient
+soundness, and choice. What the analysis doesn't check is that its reference means what the program
+means, and that rests on four assumptions. The opaque constants and axioms of Lean's own library,
+other than `Classical.choice`, hold no number when their types hold none. FloatLib's order
+dictionaries on configured values and its comparison `ExecFloat.Binary.instComparisonFamily`
+compare the decoded values. A configured type's codec and storage plan define what its stored words
+mean. And the getters of lists, arrays and vectors, the reads that extensions register, and the
+classes such a read names as trusted store and fetch entries without computing with them. Inside
+index data, a function over numerical values is checked wherever it travels, in a list, a record or
+a generic helper, and applied only at plain index data. Some choices do stay in the reference as the program makes
+them. A stored container read at an index computed from rounded values keeps that choice, and a
+branch whose condition compares computed values takes the branch the program takes. The reference
+also reads the program as Lean states it: a variable a `have` introduces is an input, whatever
+computed it, and a value of a type variable counts as non-numerical, so a theorem generic in a type
+keeps the functions it applies when you specialize it to a numerical one. A call of a function the program takes is a different case. When the analysis has no rule for that
+function's real model, the reference applies the model to the decoded computed argument, as in
+`g (toReal (x * y))`, so the statement shows that argument and the bound leaves out its rounding.
+
+The rounding rules hold for IEEE descriptors, and the tactic proves that condition from the context
+when it can and otherwise leaves it as a goal. The operator rules are the nearest-even rounding
+theorems of the ordinary operators, so a named call with a directed mode, such as
+`ExecFloat.Binary.add x y (mode := .up)`, has no rule, and `roundoff` asks for an explicit bound on
+it. Those rules need finite results, division a finite divisor, and square root a finite operand in
+its domain, and whatever the tactic can't prove comes back as a premise or a goal. For a loop the
+budget is a symbolic recurrence, so comparing it with a numerical tolerance of your own is a
+separate step, like the closed form above.
+
 ## The computation behind the proof
 
 [[FloatLib.Numerics.Interval.Expr]] records constants, numbered variables, and operations, and its
@@ -319,8 +505,9 @@ fractions over and over. Addition and subtraction stay exactly on the grid, mult
 directed shifts, and division uses integer floor and ceiling bounds. A term `a * b + c` uses
 multiply-add, combining the exact endpoint products and the addend before the final outward
 rounding. With a finite endpoint format this also allows cancellation when an intermediate product
-wouldn't fit but the final bounds do. What it encloses is the real expression. To bound a sequence
-of rounded floating-point operations you still need their rounding-error contracts. Elementary
+wouldn't fit but the final bounds do. What it encloses is the real expression. A sequence of rounded
+floating-point operations needs their rounding-error contracts as well, and that's the job of
+[`roundoff`](#/chapter/proving-numerical-bounds/error-bounds-from-floating-point-code). Elementary
 functions use rational analytic enclosures internally, so the cost depends on how much of an
 expression is algebraic, how big its endpoints are, and the requested approximation degree.
 

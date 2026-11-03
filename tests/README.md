@@ -154,14 +154,16 @@ use Lean's unchecked execution.
 `checks/trust-surface.sh` inventories native proof evaluation, compiler replacements, unchecked
 imports, and `unsafe` uses across library, test, benchmark, and site Lean sources.
 [Axioms.lean](FloatLibTests/Conformance/Trust/Axioms.lean) checks every loaded production
-declaration from the public root and the optional configured transcendental imports, including
-available private declarations and `@[csimp]` lemmas. We add an import for the quotient compiler
-certificate because its clients use a private import, and other modules that aren't imported fall
-outside the audit. Axioms.lean also checks the posit decoder's actual replacement against the two
-endpoints of its general equality theorem, since collecting axioms alone can't establish that
-relationship. [RootImports.lean](FloatLibTests/Conformance/Trust/RootImports.lean) checks the
-root's complete imported module set and rejects the unchecked host-FPU module and both
-elementary-function barrels. It compiles apart from the tests that opt into those modules, and it
+declaration from the public root, the optional binary transcendental and correctly rounded
+imports, the decimal certified proofs, and the `roundoff` analysis, including available private
+declarations and `@[csimp]` lemmas. We add imports for the quotient, integer square root, and
+checked square root compiler certificates because their clients use a private import, and other
+modules that aren't imported fall outside the audit. Axioms.lean also checks the posit decoder's
+actual replacement against the two endpoints of its general equality theorem, since collecting
+axioms alone can't establish that relationship.
+[RootImports.lean](FloatLibTests/Conformance/Trust/RootImports.lean) checks the root's complete
+imported module set and rejects the unchecked host-FPU module and both elementary-function
+barrels. It compiles apart from the tests that opt into those modules, and it
 runs as part of the normal conformance build.
 
 For source-only checks during a coordinated module rename:

@@ -41,7 +41,7 @@ local notation "Value" =>
 @[inline] def prior (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.prior value
 
-/-- Standard posit absolute value. -/
+/-- Standard posit absolute value; NaR stays NaR. -/
 @[inline] def abs (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.abs value
 
@@ -49,15 +49,15 @@ local notation "Value" =>
 @[inline] def sign (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sign value
 
-/-- Standard nearest integer-valued posit, with ties to an even integer. -/
+/-- Standard nearest integer-valued posit, with ties to an even integer and NaR propagation. -/
 @[inline] def nearestInt (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.nearestInt value
 
-/-- Standard ceiling to an integer-valued posit. -/
+/-- Standard ceiling to an integer-valued posit, with NaR propagation. -/
 @[inline] def ceil (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.ceil value
 
-/-- Standard floor to an integer-valued posit. -/
+/-- Standard floor to an integer-valued posit, with NaR propagation. -/
 @[inline] def floor (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.floor value
 

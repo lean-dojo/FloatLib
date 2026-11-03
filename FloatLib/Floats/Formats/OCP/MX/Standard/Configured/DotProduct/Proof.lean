@@ -50,7 +50,7 @@ theorem abs_toReal_dotGeneral_sub_le {leftProfile rightProfile : Profile} {n : N
     (hb : ∀ (j : Fin n) (i : Fin 32), right[j.val].toCode.decodeLane i = .finite (b j i))
     (hfinite : ExecFloat.Binary.isFinite (dotGeneral left right) = true) :
     |Model.toReal (ExecFloat.Binary.toModel (dotGeneral left right)) - realDot a b| ≤
-      Model.epsilonAt .binary32 (realDot a b) := by
+      Model.halfUlpAt .binary32 (realDot a b) := by
   rw [toModel_dotGeneral]
   apply Formats.OCP.MX.Standard.abs_toReal_dotGeneral_sub_le
       (left.map toCode) (right.map toCode) a b

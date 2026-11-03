@@ -218,6 +218,74 @@ private theorem roundInteriorCode_eq_chooseNearest_of_semantics
     rfl
 
 /--
+Interior guard/sticky rounding selects the exact nearest-even code once the lower candidate and
+its one-bit-wider threshold are known to denote the retained tail at the regime scale.
+
+Both regime signs supply these two values from their own layout lemmas.
+-/
+private theorem roundInteriorCode_eq_chooseNearest_of_layout
+    (format : Format) (targetExponent regime : Int)
+    (exponentField significand leading regimeFieldBits retained : Nat)
+    (hretained :
+      format.payloadBits - regimeFieldBits = retained)
+    (hexponent : exponentField < 4)
+    (hlower : 2 ^ leading ≤ significand)
+    (hupper : significand < 2 ^ (leading + 1))
+    (hscale :
+      targetExponent + Int.ofNat leading =
+        regime * 4 + Int.ofNat exponentField)
+    (hvalue :
+      Model.nonnegativeRatAt format
+          (DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading) =
+        Model.trailingRat retained
+            (DirectDyadicPacking.tailPrefix exponentField significand leading retained) *
+          (2 : Rat) ^ (regime * 4))
+    (hthreshold :
+      Model.nonnegativeRatAt format.nextPrecision
+          (2 * DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading + 1) =
+        Model.trailingRat (retained + 1)
+            (2 * DirectDyadicPacking.tailPrefix exponentField significand leading retained + 1) *
+          (2 : Rat) ^ (regime * 4)) :
+    roundInteriorCode format regime exponentField significand leading
+        regimeFieldBits =
+      DyadicRounding.chooseNearestCode
+        { negative := false
+          significand
+          exponent := targetExponent }
+        (DyadicRounding.roundingThreshold format
+          (DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading))
+        (DirectDyadicPacking.lowerCandidateFromFields
+          format regime exponentField significand leading)
+        (DirectDyadicPacking.lowerCandidateFromFields
+          format regime exponentField significand leading + 1) := by
+  have hnormalized :=
+    normalizedValue_eq_trailingRat_mul_regime
+      targetExponent regime exponentField significand leading
+      hexponent hlower hupper hscale
+  have htail :=
+    tailPrefix_eq_streamPrefix exponentField significand leading retained hlower hupper
+  apply roundInteriorCode_eq_chooseNearest_of_semantics
+      format regime exponentField significand leading regimeFieldBits retained
+      { negative := false
+        significand
+        exponent := targetExponent }
+      hretained
+      (exactTailRaw_lt_two_pow exponentField significand leading hexponent hlower hupper)
+      hnormalized
+  · rw [DyadicRounding.roundingThreshold_toRat]
+    unfold Model.roundingThreshold
+    rw [hthreshold, htail]
+  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
+      format regime exponentField significand leading
+      hexponent hlower hupper
+  · intro hcomplete
+    rw [hvalue, htail, trailingRat_streamPrefix_eq_of_width_le _ _ retained hcomplete]
+    exact hnormalized.symm
+
+/--
 Direct guard/sticky rounding in an interior positive regime selects the exact nearest-even code.
 
 The assumptions describe a normalized significand, a two-bit exponent field, and a regime that
@@ -246,77 +314,15 @@ theorem roundInteriorCode_eq_chooseNearest_positive
         (DirectDyadicPacking.lowerCandidateFromFields
           format regime exponentField significand leading)
         (DirectDyadicPacking.lowerCandidateFromFields
-          format regime exponentField significand leading + 1) := by
-  let run := regime.toNat + 1
-  let retained := format.payloadBits - run - 1
-  let width := leading + 2
-  let raw :=
-    exactTailRaw exponentField significand leading
-  let tail :=
-    DirectDyadicPacking.tailPrefix
-      exponentField significand leading retained
-  let target : FloatLib.Numerics.Dyadic :=
-    { negative := false
-      significand
-      exponent := targetExponent }
-  apply roundInteriorCode_eq_chooseNearest_of_semantics
-      format regime exponentField significand leading
-      (regime.toNat + 2) retained target
-  · dsimp [run, retained]
-    omega
-  · exact exactTailRaw_lt_two_pow
-      exponentField significand leading
-      hexponent hlower hupper
-  · change
-      (significand : Rat) * (2 : Rat) ^ targetExponent =
-        Model.trailingRat width raw *
-          (2 : Rat) ^ (regime * 4)
-    dsimp [width, raw]
-    exact normalizedValue_eq_trailingRat_mul_regime
-      targetExponent regime exponentField significand leading
-      hexponent hlower hupper hscale
-  · rw [DyadicRounding.roundingThreshold_toRat]
-    unfold Model.roundingThreshold
-    rw [lowerCandidateThreshold_positive format regime
-      exponentField significand leading
-      hregime hrun hexponent hlower hupper]
-    change
-      Model.trailingRat (retained + 1) (2 * tail + 1) *
-          (2 : Rat) ^ (regime * 4) =
-        Model.trailingRat (retained + 1)
-            (2 * streamPrefix raw width retained + 1) *
-          (2 : Rat) ^ (regime * 4)
-    rw [show tail = streamPrefix raw width retained by
-      dsimp [tail, raw, width]
-      exact tailPrefix_eq_streamPrefix
-        exponentField significand leading retained
-        hlower hupper]
-  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
-      format regime exponentField significand leading
-      hexponent hlower hupper
-  · intro hcomplete
-    rw [lowerCandidateValue_positive format regime
-      exponentField significand leading
-      hregime hrun hexponent hlower hupper]
-    change
-      Model.trailingRat retained tail *
-          (2 : Rat) ^ (regime * 4) =
-        target.toRat
-    rw [show tail = streamPrefix raw width retained by
-      dsimp [tail, raw, width]
-      exact tailPrefix_eq_streamPrefix
-        exponentField significand leading retained
-        hlower hupper]
-    rw [trailingRat_streamPrefix_eq_of_width_le
-      raw width retained hcomplete]
-    change
-      Model.trailingRat width raw *
-          (2 : Rat) ^ (regime * 4) =
-        (significand : Rat) * (2 : Rat) ^ targetExponent
-    dsimp [width, raw]
-    exact (normalizedValue_eq_trailingRat_mul_regime
-      targetExponent regime exponentField significand leading
-      hexponent hlower hupper hscale).symm
+          format regime exponentField significand leading + 1) :=
+  roundInteriorCode_eq_chooseNearest_of_layout
+    format targetExponent regime exponentField significand leading
+    (regime.toNat + 2) (format.payloadBits - (regime.toNat + 1) - 1) (by omega)
+    hexponent hlower hupper hscale
+    (lowerCandidateValue_positive format regime exponentField significand leading
+      hregime hrun hexponent hlower hupper)
+    (lowerCandidateThreshold_positive format regime exponentField significand leading
+      hregime hrun hexponent hlower hupper)
 
 /--
 Direct guard/sticky rounding in an interior negative regime selects the exact nearest-even code.
@@ -347,83 +353,51 @@ theorem roundInteriorCode_eq_chooseNearest_negative
         (DirectDyadicPacking.lowerCandidateFromFields
           format regime exponentField significand leading)
         (DirectDyadicPacking.lowerCandidateFromFields
-          format regime exponentField significand leading + 1) := by
-  let run := (-regime).toNat
-  let retained := format.payloadBits - run - 1
-  let width := leading + 2
-  let raw :=
-    exactTailRaw exponentField significand leading
-  let tail :=
-    DirectDyadicPacking.tailPrefix
-      exponentField significand leading retained
-  let target : FloatLib.Numerics.Dyadic :=
-    { negative := false
-      significand
-      exponent := targetExponent }
-  apply roundInteriorCode_eq_chooseNearest_of_semantics
-      format regime exponentField significand leading
-      ((-regime).toNat + 1) retained target
-  · dsimp [run, retained]
-    omega
-  · exact exactTailRaw_lt_two_pow
-      exponentField significand leading
-      hexponent hlower hupper
-  · change
-      (significand : Rat) * (2 : Rat) ^ targetExponent =
-        Model.trailingRat width raw *
-          (2 : Rat) ^ (regime * 4)
-    dsimp [width, raw]
-    exact normalizedValue_eq_trailingRat_mul_regime
-      targetExponent regime exponentField significand leading
-      hexponent hlower hupper hscale
-  · rw [DyadicRounding.roundingThreshold_toRat]
-    unfold Model.roundingThreshold
-    rw [lowerCandidateThreshold_negative format regime
-      exponentField significand leading
-      hregime hrun hexponent hlower hupper]
-    change
-      Model.trailingRat (retained + 1) (2 * tail + 1) *
-          (2 : Rat) ^ (regime * 4) =
-        Model.trailingRat (retained + 1)
-            (2 * streamPrefix raw width retained + 1) *
-          (2 : Rat) ^ (regime * 4)
-    rw [show tail = streamPrefix raw width retained by
-      dsimp [tail, raw, width]
-      exact tailPrefix_eq_streamPrefix
-        exponentField significand leading retained
-        hlower hupper]
-  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
-      format regime exponentField significand leading
-      hexponent hlower hupper
-  · intro hcomplete
-    rw [lowerCandidateValue_negative format regime
-      exponentField significand leading
-      hregime hrun hexponent hlower hupper]
-    change
-      Model.trailingRat retained tail *
-          (2 : Rat) ^ (regime * 4) =
-        target.toRat
-    rw [show tail = streamPrefix raw width retained by
-      dsimp [tail, raw, width]
-      exact tailPrefix_eq_streamPrefix
-        exponentField significand leading retained
-        hlower hupper]
-    rw [trailingRat_streamPrefix_eq_of_width_le
-      raw width retained hcomplete]
-    change
-      Model.trailingRat width raw *
-          (2 : Rat) ^ (regime * 4) =
-        (significand : Rat) * (2 : Rat) ^ targetExponent
-    dsimp [width, raw]
-    exact (normalizedValue_eq_trailingRat_mul_regime
-      targetExponent regime exponentField significand leading
-      hexponent hlower hupper hscale).symm
+          format regime exponentField significand leading + 1) :=
+  roundInteriorCode_eq_chooseNearest_of_layout
+    format targetExponent regime exponentField significand leading
+    ((-regime).toNat + 1) (format.payloadBits - (-regime).toNat - 1) (by omega)
+    hexponent hlower hupper hscale
+    (lowerCandidateValue_negative format regime exponentField significand leading
+      hregime hrun hexponent hlower hupper)
+    (lowerCandidateThreshold_negative format regime exponentField significand leading
+      hregime hrun hexponent hlower hupper)
+
+/--
+A normalized target whose regime is not below the smallest regime of the format is at least
+`minPos`.
+-/
+private theorem not_isLess_minPositive_of_regime
+    (format : Format) (targetExponent regime : Int)
+    (exponentField significand leading : Nat)
+    (hregime : -Int.ofNat (format.payloadBits - 1) ≤ regime)
+    (hlower : 2 ^ leading ≤ significand)
+    (hscale :
+      targetExponent + Int.ofNat leading =
+        regime * 4 + Int.ofNat exponentField) :
+    ({ negative := false
+       significand
+       exponent := targetExponent } :
+      FloatLib.Numerics.Dyadic).isLess
+        (DyadicRounding.minPositive format) = false := by
+  rw [Dyadic.isLess_eq_decide, decide_eq_false_iff_not, not_lt]
+  unfold DyadicRounding.minPositive
+  rw [Dyadic.toRat_mk_false, Dyadic.toRat_mk_false, Nat.cast_one, one_mul]
+  calc
+    (2 : Rat) ^ (-(4 * Int.ofNat (format.payloadBits - 1))) ≤
+        (2 : Rat) ^ (regime * 4 + Int.ofNat exponentField) :=
+      zpow_le_zpow_right₀ (by norm_num) (by simp only [Int.ofNat_eq_natCast] at *; omega)
+    _ = (2 : Rat) ^ (targetExponent + Int.ofNat leading) := by rw [hscale]
+    _ ≤ (significand : Rat) * (2 : Rat) ^ targetExponent :=
+      zpow_add_le_mul_zpow targetExponent leading (by
+        rw [Int.ofNat_eq_natCast, zpow_natCast]
+        exact_mod_cast hlower)
 
 /--
 Interior positive-regime guard/sticky rounding is the complete exact-dyadic positive rounder.
 
-The underflow hypothesis requires the target to be at least `minPos`. The interior layout
-ensures that the lower candidate and its successor are both finite positive codes.
+A nonnegative regime puts the target at or above `minPos`. The interior layout ensures that the
+lower candidate and its successor are both finite positive codes.
 -/
 theorem roundInteriorCode_eq_roundPositiveCode_positive
     (format : Format) (targetExponent regime : Int)
@@ -435,35 +409,30 @@ theorem roundInteriorCode_eq_roundPositiveCode_positive
     (hupper : significand < 2 ^ (leading + 1))
     (hscale :
       targetExponent + Int.ofNat leading =
-        regime * 4 + Int.ofNat exponentField)
-    (hnotUnderflow :
-      ({ negative := false
-         significand
-         exponent := targetExponent } :
-        FloatLib.Numerics.Dyadic).isLess
-          (DyadicRounding.minPositive format) = false) :
+        regime * 4 + Int.ofNat exponentField) :
     roundInteriorCode format regime exponentField significand leading
         (regime.toNat + 2) =
       DyadicRounding.roundPositiveCode format
         { negative := false
           significand
           exponent := targetExponent } := by
-  rw [roundInteriorCode_eq_chooseNearest_positive
-    format targetExponent regime exponentField significand leading
-    hregime hrun hexponent hlower hupper hscale]
-  unfold DyadicRounding.roundPositiveCode
   have hsignificand : significand ≠ 0 := by
     have hpower := Nat.two_pow_pos leading
     omega
-  simp only [beq_eq_false_iff_ne.mpr hsignificand, Bool.false_or,
-    Bool.false_eq_true, ite_false]
-  rw [ite_eq_right (by simpa using hnotUnderflow)]
-  rw [lowerCodeForPositive_eq_lowerCandidateFromFields_positive
-    format targetExponent regime exponentField significand leading
-    hregime hrun hexponent hlower hupper hscale]
-  rw [ite_eq_left (lowerCandidateFromFields_succ_lt_signMask_positive
-    format regime exponentField significand leading
-    hregime hrun hexponent hlower hupper)]
+  have hnotUnderflow :=
+    not_isLess_minPositive_of_regime format targetExponent regime exponentField significand
+      leading (by simp only [Int.ofNat_eq_natCast]; omega) hlower hscale
+  rw [roundInteriorCode_eq_chooseNearest_positive
+      format targetExponent regime exponentField significand leading
+      hregime hrun hexponent hlower hupper hscale,
+    DyadicRounding.roundPositiveCode_eq_chooseNearestCode_of_lowerCode
+      format _ _ hsignificand rfl hnotUnderflow
+      (lowerCodeForPositive_eq_lowerCandidateFromFields_positive
+        format targetExponent regime exponentField significand leading
+        hregime hrun hexponent hlower hupper hscale)
+      (lowerCandidateFromFields_succ_lt_signMask_positive
+        format regime exponentField significand leading
+        hregime hrun hexponent hlower hupper)]
 
 /--
 Interior negative-regime guard/sticky rounding is the complete exact-dyadic positive rounder.
@@ -482,35 +451,30 @@ theorem roundInteriorCode_eq_roundPositiveCode_negative
     (hupper : significand < 2 ^ (leading + 1))
     (hscale :
       targetExponent + Int.ofNat leading =
-        regime * 4 + Int.ofNat exponentField)
-    (hnotUnderflow :
-      ({ negative := false
-         significand
-         exponent := targetExponent } :
-        FloatLib.Numerics.Dyadic).isLess
-          (DyadicRounding.minPositive format) = false) :
+        regime * 4 + Int.ofNat exponentField) :
     roundInteriorCode format regime exponentField significand leading
         ((-regime).toNat + 1) =
       DyadicRounding.roundPositiveCode format
         { negative := false
           significand
           exponent := targetExponent } := by
-  rw [roundInteriorCode_eq_chooseNearest_negative
-    format targetExponent regime exponentField significand leading
-    hregime hrun hexponent hlower hupper hscale]
-  unfold DyadicRounding.roundPositiveCode
   have hsignificand : significand ≠ 0 := by
     have hpower := Nat.two_pow_pos leading
     omega
-  simp only [beq_eq_false_iff_ne.mpr hsignificand, Bool.false_or,
-    Bool.false_eq_true, ite_false]
-  rw [ite_eq_right (by simpa using hnotUnderflow)]
-  rw [lowerCodeForPositive_eq_lowerCandidateFromFields_negative
-    format targetExponent regime exponentField significand leading
-    hregime hrun hexponent hlower hupper hscale]
-  rw [ite_eq_left (lowerCandidateFromFields_succ_lt_signMask_negative
-    format regime exponentField significand leading
-    hregime hrun hexponent hlower hupper)]
+  have hnotUnderflow :=
+    not_isLess_minPositive_of_regime format targetExponent regime exponentField significand
+      leading (by simp only [Int.ofNat_eq_natCast]; omega) hlower hscale
+  rw [roundInteriorCode_eq_chooseNearest_negative
+      format targetExponent regime exponentField significand leading
+      hregime hrun hexponent hlower hupper hscale,
+    DyadicRounding.roundPositiveCode_eq_chooseNearestCode_of_lowerCode
+      format _ _ hsignificand rfl hnotUnderflow
+      (lowerCodeForPositive_eq_lowerCandidateFromFields_negative
+        format targetExponent regime exponentField significand leading
+        hregime hrun hexponent hlower hupper hscale)
+      (lowerCandidateFromFields_succ_lt_signMask_negative
+        format regime exponentField significand leading
+        hregime hrun hexponent hlower hupper)]
 
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding

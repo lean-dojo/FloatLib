@@ -212,9 +212,9 @@ def run : IO Unit := do
     "format,totalBits,operation,candidate,kernelClass,selected," ++
       "estimatedWarmCost,estimatedColdCost,estimatedScore," ++
       "firstNanos,warmIterations,warmTotalNanos,nanosPerOperation,sink"
-  calibrateFormat (ExecFloat.Posit.format 4) (by decide) iterations
-  calibrateFormat (ExecFloat.Posit.format 6) (by decide) iterations
-  calibrateFormat (ExecFloat.Posit.format 8) (by decide) iterations
+  calibrateFormat (ExecFloat.Posit.descriptor 4) (by decide) iterations
+  calibrateFormat (ExecFloat.Posit.descriptor 6) (by decide) iterations
+  calibrateFormat (ExecFloat.Posit.descriptor 8) (by decide) iterations
 
 end FloatLibBenchmarks.Kernels.PositBackendCalibration
 

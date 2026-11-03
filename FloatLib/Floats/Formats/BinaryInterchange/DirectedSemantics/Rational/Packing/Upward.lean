@@ -37,9 +37,6 @@ section
 private theorem roundRatMagnitudeDirectedScaled_pos_up_underflow_finite_ge
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hunderflow :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minSubnormalExponent) :
@@ -57,7 +54,7 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_underflow_finite_ge
     simpa using
       roundRatMagnitudeDirectedScaled_pos_eq_underflow
         fmt true numerator denominator exponent
-        hnumerator hdenominator hmax hunderflow
+        hnumerator hdenominator hunderflow
   have hbounds :=
     scaledRatToReal_floorLog2_bounds
       numerator denominator exponent hnumerator hdenominator
@@ -85,9 +82,6 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_subnormal_finite_ge
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hlow :
       fmt.minSubnormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
@@ -125,7 +119,7 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_subnormal_finite_ge
     simpa [rounded, scaled, shift] using
       roundRatMagnitudeDirectedScaled_pos_eq_subnormal_up
         fmt numerator denominator exponent
-        hnumerator hdenominator hmax hlow hhigh
+        hnumerator hdenominator hlow hhigh
   have hvalue :
       toReal
           (if pow2 fmt.fracWidth ≤ rounded then
@@ -140,15 +134,13 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_subnormal_finite_ge
   · rw [hround]
     by_cases hnormal : pow2 fmt.fracWidth ≤ rounded
     · rw [ite_eq_left hnormal]
-      exact isFinite_ofFields_minNormal fmt hfmt
+      exact isFinite_ofFields_minNormal fmt
     · rw [ite_eq_right hnormal]
       exact isFinite_ofFields_subnormal fmt hfmt rounded
-        (by
-          simpa [pow2_eq_two_pow] using lt_of_not_ge hnormal)
   · rw [hround, hvalue]
     simpa [rounded, scaled, shift] using
       le_roundQuotDirected_true_subnormal_value
-        fmt numerator denominator exponent hdenominator
+        fmt numerator denominator exponent
 
 private theorem roundRatMagnitudeDirectedScaled_pos_up_normal_no_carry_finite_ge
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
@@ -183,10 +175,10 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_normal_no_carry_finite_ge
       fmt numerator denominator exponent hfmt hnumerator hdenominator hnormal hmax hcarry
   dsimp only at hround
   rw [hround]
-  refine ⟨Directed.Internal.isFinite_ofFields_normalized fmt hfmt _ _ hnormal hmax, ?_⟩
+  refine ⟨Directed.Internal.isFinite_ofFields_normalized fmt hfmt _ _ hmax, ?_⟩
   rw [toReal_ofFields_normalized fmt _ _ hbounds.1 (lt_of_le_of_ne hbounds.2 hcarry) hnormal hmax
-    (Directed.Internal.isFinite_ofFields_normalized fmt hfmt _ _ hnormal hmax)]
-  exact le_roundQuotDirected_true_normal_value fmt numerator denominator exponent hdenominator
+    (Directed.Internal.isFinite_ofFields_normalized fmt hfmt _ _ hmax)]
+  exact le_roundQuotDirected_true_normal_value fmt numerator denominator exponent
 
 private theorem roundRatMagnitudeDirectedScaled_pos_up_normal_carry_finite_ge
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
@@ -195,9 +187,6 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_normal_carry_finite_ge
     (hnormal :
       fmt.minNormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hcarry :
       let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
       let scaled :=
@@ -221,26 +210,24 @@ private theorem roundRatMagnitudeDirectedScaled_pos_up_normal_carry_finite_ge
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1 := by
     omega
   have hfinite :=
-    Directed.Internal.isFinite_ofFields_normalized fmt hfmt (pow2 fmt.fracWidth) _ hnormalCarry
-      hcarryMax
+    Directed.Internal.isFinite_ofFields_normalized fmt hfmt (pow2 fmt.fracWidth) _ hcarryMax
   have hvalue :=
     toReal_ofFields_normalized fmt (pow2 fmt.fracWidth) _ le_rfl (pow2_lt_pow2_succ fmt.fracWidth)
       hnormalCarry hcarryMax hfinite
   rw [Nat.sub_self] at hfinite hvalue
   rw [roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
-    fmt numerator denominator exponent hnumerator hdenominator hnormal hmax hcarry hcarryMax]
+    fmt numerator denominator exponent hnumerator hdenominator hnormal hcarry hcarryMax]
   refine ⟨hfinite, ?_⟩
   rw [hvalue, Directed.Internal.normalizationCarry_value fmt, ← hcarry]
-  exact le_roundQuotDirected_true_normal_value fmt numerator denominator exponent hdenominator
+  exact le_roundQuotDirected_true_normal_value fmt numerator denominator exponent
 
 /--
-Positive upward rational rounding is either positive infinity or a finite value no smaller than
-the exact scaled rational.
+Upward rational rounding of a nonnegative magnitude is either positive infinity or a finite value
+no smaller than the exact scaled rational. A zero numerator rounds to positive zero.
 -/
 theorem roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hfmt : fmt.isIEEE = true)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
+    (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
     roundRatMagnitudeDirectedScaled
         fmt true false numerator denominator exponent = posInf fmt ∨
       (isFinite
@@ -250,6 +237,15 @@ theorem roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
           toReal
             (roundRatMagnitudeDirectedScaled
               fmt true false numerator denominator exponent)) := by
+  by_cases hnumerator : numerator = 0
+  · subst numerator
+    have hround :
+        roundRatMagnitudeDirectedScaled fmt true false 0 denominator exponent =
+          zero fmt false := by
+      simp [roundRatMagnitudeDirectedScaled, hdenominator]
+    rw [hround]
+    exact Or.inr ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false),
+      by simp [scaledRatToReal]⟩
   by_cases hoverflow :
       fmt.maxNormalExponent <
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent
@@ -272,7 +268,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
     · exact Or.inr
         (roundRatMagnitudeDirectedScaled_pos_up_underflow_finite_ge
           fmt numerator denominator exponent
-          hnumerator hdenominator hmax hunderflow)
+          hnumerator hdenominator hunderflow)
     · have hlow :
           fmt.minSubnormalExponent ≤
             Numerics.RationalBinary.floorLog2 numerator denominator + exponent :=
@@ -283,7 +279,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
       · exact Or.inr
           (roundRatMagnitudeDirectedScaled_pos_up_subnormal_finite_ge
             fmt numerator denominator exponent hfmt
-            hnumerator hdenominator hmax hlow hsubnormal)
+            hnumerator hdenominator hlow hsubnormal)
       · have hnormal :
             fmt.minNormalExponent ≤
               Numerics.RationalBinary.floorLog2 numerator denominator + exponent :=
@@ -315,40 +311,37 @@ theorem roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
             exact Or.inr
               (roundRatMagnitudeDirectedScaled_pos_up_normal_carry_finite_ge
                 fmt numerator denominator exponent hfmt
-                hnumerator hdenominator hnormal hmax hcarry hcarryMax)
+                hnumerator hdenominator hnormal hcarry hcarryMax)
         · exact Or.inr
             (roundRatMagnitudeDirectedScaled_pos_up_normal_no_carry_finite_ge
               fmt numerator denominator exponent hfmt
               hnumerator hdenominator hnormal hmax hcarry)
 
-/-- Positive upward rational rounding is never classified as NaN. -/
+/-- Upward rational rounding of a nonnegative magnitude is never classified as NaN. -/
 theorem isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hfmt : fmt.isIEEE = true)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
+    (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
     isNaN
         (roundRatMagnitudeDirectedScaled
           fmt true false numerator denominator exponent) = false := by
   rcases roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
       fmt numerator denominator exponent
-      hfmt hnumerator hdenominator with hinf | ⟨hfinite, _⟩
+      hfmt hdenominator with hinf | ⟨hfinite, _⟩
   · rw [hinf]
-    exact isNaN_posInf fmt <|
-      FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
+    exact isNaN_posInf fmt
   · exact isNaN_eq_false_of_isFinite_eq_true _ hfinite
 
-/-- Positive upward rational rounding is an upper bound in the extended reals. -/
+/-- Upward rational rounding of a nonnegative magnitude is an upper bound in the extended reals. -/
 theorem le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hfmt : fmt.isIEEE = true)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
+    (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
     (scaledRatToReal numerator denominator exponent : EReal) ≤
       toEReal
         (roundRatMagnitudeDirectedScaled
           fmt true false numerator denominator exponent) := by
   rcases roundRatMagnitudeDirectedScaled_pos_up_eq_posInf_or_finite_ge
       fmt numerator denominator exponent
-      hfmt hnumerator hdenominator with hinf | ⟨hfinite, hbound⟩
+      hfmt hdenominator with hinf | ⟨hfinite, hbound⟩
   · rw [hinf, toEReal_posInf fmt hfmt]
     exact le_top
   · rw [toEReal_eq_coe_toReal_of_isFinite _ hfinite]

@@ -20,16 +20,6 @@ cover infinite results separately.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
-private theorem finite_witness (x : Datum) (v : ℚ) (hv : x.toRat? = some v) :
-    ∃ s c q, x = .finite s c q ∧ v = Datum.finiteValue s c q := by
-  cases x with
-  | finite s c q =>
-      refine ⟨s, c, q, rfl, ?_⟩
-      simp only [Datum.toRat?_eq] at hv
-      exact (Option.some.inj hv).symm
-  | infinity s => contradiction
-  | nan s t p => contradiction
-
 /-- The finite successor is strictly greater, and no valid finite value lies between them. -/
 theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hx : (Datum.finite s c q).Valid f) (v : ℚ)
@@ -61,7 +51,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
     simp only [nextUp, ite_eq_right hc, hp] at hout
     cases s
     · simp only [Bool.false_eq_true, ↓reduceIte] at hout
-      obtain ⟨t, d, r, hv, hvalue⟩ := finite_witness (neighborAbove f a b) v hout
+      obtain ⟨t, d, r, hv, hvalue⟩ := Datum.toRat?_eq_some_iff.mp hout
       obtain ⟨rfl, hdvalue⟩ := neighborAbove_finite f a d b r t ha hv
       have hv' : v = ((a + 1 : Nat) : ℚ) * (10 : ℚ) ^ b := by
         simpa [Datum.finiteValue] using hvalue.trans (by simpa [Datum.finiteValue] using hdvalue)
@@ -111,30 +101,24 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
 theorem nextUp_adjacent (f : Format) (x : Datum) (hx : x.Valid f)
     (a b : ℚ) (ha : x.toRat? = some a) (hb : (nextUp f x).value.toRat? = some b) :
     a < b ∧ ∀ (y : Datum) (v : ℚ), y.Valid f → y.toRat? = some v → a < v → b ≤ v := by
-  obtain ⟨s, c, q, rfl, rfl⟩ := finite_witness x a ha
+  obtain ⟨s, c, q, rfl, rfl⟩ := Datum.toRat?_eq_some_iff.mp ha
   have h := nextUp_finite_adjacent f s c q hx b hb
   refine ⟨h.1, ?_⟩
   intro y v hy hv hlt
-  obtain ⟨t, d, r, rfl, rfl⟩ := finite_witness y v hv
+  obtain ⟨t, d, r, rfl, rfl⟩ := Datum.toRat?_eq_some_iff.mp hv
   exact h.2 t d r hy hlt
 
 /-- Negation transfers successor adjacency to the public predecessor operation. -/
 theorem nextDown_adjacent (f : Format) (x : Datum) (hx : x.Valid f)
     (a b : ℚ) (ha : x.toRat? = some a) (hb : (nextDown f x).value.toRat? = some b) :
     b < a ∧ ∀ (y : Datum) (v : ℚ), y.Valid f → y.toRat? = some v → v < a → v ≤ b := by
-  have hn : x.negate.Valid f := by simpa [Datum.negate_eq_withSign] using hx
-  have hna : x.negate.toRat? = some (-a) := by rw [Datum.negate_toRat?, ha]; rfl
-  have hnb : (nextUp f x.negate).value.toRat? = some (-b) := by
-    have he := congrArg (fun z => z.map (- ·)) hb
-    change (nextUp f x.negate).value.negate.toRat?.map (- ·) = _ at he
-    rw [← Datum.negate_toRat?, Datum.negate_negate] at he
-    exact he
-  have h := nextUp_adjacent f x.negate hn (-a) (-b) hna hnb
-  refine ⟨by linarith [h.1], ?_⟩
-  intro y v hy hv hlt
-  have hyn : y.negate.Valid f := by simpa [Datum.negate_eq_withSign] using hy
-  have hyv : y.negate.toRat? = some (-v) := by rw [Datum.negate_toRat?, hv]; rfl
-  have hle := h.2 y.negate (-v) hyn hyv (by linarith)
+  have hnb := Datum.negate_toRat?_of_eq_some hb
+  rw [nextDown_value, Datum.negate_negate] at hnb
+  have h := nextUp_adjacent f x.negate (by simpa using hx) (-a) (-b)
+    (Datum.negate_toRat?_of_eq_some ha) hnb
+  refine ⟨by linarith [h.1], fun y v hy hv hlt => ?_⟩
+  have hle := h.2 y.negate (-v) (by simpa using hy) (Datum.negate_toRat?_of_eq_some hv)
+    (by linarith)
   linarith
 
 end Arithmetic

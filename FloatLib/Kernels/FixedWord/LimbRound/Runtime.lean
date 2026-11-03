@@ -70,9 +70,8 @@ For a one-bit shift, the quotient is incremented exactly when the two low input 
 /--
 Round a two-limb value right by `shift`, returning a single native word.
 
-The kernel is meaningful for `0 < shift < 64` with `value.hi < 2^shift`, so that the quotient
-fits one word, and callers also keep the incremented quotient below `2^64`.
-`roundShiftRightEven_toNat` states these hypotheses.
+The kernel is meaningful for `shift < 64` when the incremented quotient stays below `2^64`, which
+also keeps the quotient in one word. `roundShiftRightEven_toNat` states these hypotheses.
 -/
 @[inline] def roundShiftRightEven (value : UInt128) (shift : Nat) : UInt64 :=
   let quotient := shiftRightLow value shift
@@ -90,7 +89,7 @@ fits one word, and callers also keep the incremented quotient below `2^64`.
 /--
 Round a two-limb value right by `shift` using round-to-nearest, ties-to-even, keeping both limbs.
 
-The kernel is meaningful for `0 < shift < 64`, the contract of
+The kernel is meaningful for `shift < 64`, the contract of
 `UInt128.roundShiftRightEven128_toNat`.
 -/
 @[inline] def roundShiftRightEven128 (value : UInt128) (shift : Nat) : UInt128 :=
@@ -233,11 +232,10 @@ two more bits.
 Round a four-limb value right by `shift`, returning a two-limb result.
 
 The kernel is only valid for `64 < shift < 128`, because the discarded field is read from `limb1`
-and `limb0` and the halfway marker is built inside `limb1`. Callers also keep
-`value.limb3 < 2^(shift - 64)` and the incremented quotient below `2^128`, so that
-`shiftRight128` returns the complete quotient. `roundShiftRightEven128_toNat` states these
-hypotheses. Two-word products call this with shifts `fracWidth` or `fracWidth + 1`, which
-is 112 or 113 for binary128.
+and `limb0` and the halfway marker is built inside `limb1`. Callers also keep the incremented
+quotient below `2^128`, so that `shiftRight128` returns the complete quotient.
+`roundShiftRightEven128_toNat` states these hypotheses. Two-word products call this with shifts
+`fracWidth` or `fracWidth + 1`, which is 112 or 113 for binary128.
 -/
 @[inline] def roundShiftRightEven128 (value : UInt256) (shift : Nat) : UInt128 :=
   let inner := shift - 64

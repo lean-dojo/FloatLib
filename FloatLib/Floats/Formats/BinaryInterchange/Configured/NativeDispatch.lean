@@ -116,27 +116,27 @@ small.
 -/
 def Internal.binary64Add (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
     FloatLib.Floats.ExecFloat (Family 11 52) :=
-  Configured.Backend.binary64Add (by decide) left right
+  Configured.Backend.binary64Add (by decide) (by decide) left right
 
 /-- Binary64 subtraction on the stored words, compiled once as a specialized function. -/
 def Internal.binary64Sub (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
     FloatLib.Floats.ExecFloat (Family 11 52) :=
-  Configured.Backend.binary64Sub (by decide) left right
+  Configured.Backend.binary64Sub (by decide) (by decide) left right
 
 /-- Binary64 multiplication on the stored words, compiled once as a specialized function. -/
 def Internal.binary64Mul (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
     FloatLib.Floats.ExecFloat (Family 11 52) :=
-  Configured.Backend.binary64Mul (by decide) left right
+  Configured.Backend.binary64Mul (by decide) (by decide) left right
 
 /-- Binary64 division on the stored words, compiled once as a specialized function. -/
 def Internal.binary64Div (left right : FloatLib.Floats.ExecFloat (Family 11 52)) :
     FloatLib.Floats.ExecFloat (Family 11 52) :=
-  Configured.Backend.binary64Div (by decide) left right
+  Configured.Backend.binary64Div (by decide) (by decide) left right
 
 /-- Binary64 fused multiply-add on the stored words, compiled once as a specialized function. -/
 def Internal.binary64Fma (left right addend : FloatLib.Floats.ExecFloat (Family 11 52)) :
     FloatLib.Floats.ExecFloat (Family 11 52) :=
-  Configured.Backend.binary64Fma (by decide) left right addend
+  Configured.Backend.binary64Fma (by decide) (by decide) left right addend
 
 @[always_inline] instance (priority := 400) binary64AddCapability
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family 11 52)] :

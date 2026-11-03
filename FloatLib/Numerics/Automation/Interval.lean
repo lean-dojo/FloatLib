@@ -50,6 +50,49 @@ private def verifyClosedCheck (proposition : Q(Prop)) (heartbeats : Nat) : Tacti
     let name ← mkAuxLemma [] proposition proof
     return mkConst name
 
+/-- A resource limit that stopped a verification attempt. -/
+private inductive ResourceLimit where
+  /-- The heartbeat budget, which `(maxHeartbeats := ...)` sets. -/
+  | heartbeats
+  /-- The recursion depth, which `set_option maxRecDepth` sets. -/
+  | recursion
+
+/--
+The kernel limit that stopped a failed verification attempt, if one did.
+
+The kernel reports its limits as ordinary errors whose text `Kernel.Exception.toMessageData` fixes,
+so they are recognized by that text. Only these are classified. An elaboration limit is a runtime
+exception, which `try ... catch` in `TacticM` rethrows before any handler runs, so it ends the
+tactic with Lean's own heartbeat or recursion error instead. Any other failure, such as a checker
+that returns `false`, is not a resource failure, even when the executable preflight passed.
+-/
+private def resourceLimit? (error : Exception) : MetaM (Option ResourceLimit) := do
+  let text ← error.toMessageData.toString
+  if text.startsWith "(kernel) deterministic timeout" then return some .heartbeats
+  if text.startsWith "(kernel) deep recursion" then return some .recursion
+  return none
+
+/--
+The advice that follows a failure message when `limit` stopped the kernel verification of
+`attempt`, or nothing when no limit did.
+-/
+private def resourceAdvice (attempt : String) (maxHeartbeats : Nat) :
+    Option ResourceLimit → MessageData
+  | some .heartbeats =>
+      m!"\nKernel verification of {attempt} ran out of the interval budget of {maxHeartbeats} \
+        heartbeats; a larger `(maxHeartbeats := ...)` may be needed."
+  | some .recursion =>
+      m!"\nKernel verification of {attempt} exceeded the maximum recursion depth; a larger \
+        `set_option maxRecDepth` may be needed."
+  | none => m!""
+
+/-- Name the registered calls of an expression, in call-index order, for failure diagnostics. -/
+private def registeredCalls (registrations : Array Name) : MetaM (Array RegisteredCall) :=
+  registrations.mapM fun registration => do
+    let (_, function, _, _) ← extensionCertificate registration
+    pure { function := function.constName!
+           acceptedDomain? := Interval.acceptedDomain? registration }
+
 /-- Verify a real or nonnegative-real inequality with exact rational or binary-grid bounds. -/
 def close (precision degree depth : Nat)
     (maxHeartbeats : Nat := 20000) : TacticM Unit := withMainContext do
@@ -113,7 +156,9 @@ def close (precision degree depth : Nat)
   let equality : Q($difference = Interval.Expr.eval $expression $values $functions) :=
     q(Eq.trans $expanded $interpreted)
   -- Without registered calls, every reified operation is algebraic. Exact rational endpoints
-  -- retain equality at non-dyadic bounds, such as the upper bound 1/3.
+  -- retain equality at non-dyadic bounds, such as the upper bound 1/3. A kernel limit that stops
+  -- this attempt is reported if the binary-grid attempt fails too.
+  let mut exactLimit : Option ResourceLimit := none
   if cache.extensions.isEmpty then
     let exactBackend : Q(Backend ℚ) :=
       q(Backend.withExtensions (Backend.rational $config) $config $extensionTable)
@@ -121,14 +166,15 @@ def close (precision degree depth : Nat)
       q(Backend.withExtensions_sound (extensions := $extensionTable)
         (functions := $realFunctionTable)
         (Backend.rational_sound $config) $config $certifiedExtensions)
-    let exactProof? ← try
+    let (exactProof?, limit) ← try
       let checked ← verifyClosedCheck
         q(Interval.Expr.check $expression $exactBackend $relation $box 0 = true)
         maxHeartbeats
-      pure (some checked)
+      pure (some checked, (none : Option ResourceLimit))
     catch error =>
       if error.isInterrupt then throw error
-      pure none
+      pure (none, ← resourceLimit? error)
+    exactLimit := limit
     if let some checked := exactProof? then
       let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
         #[functions, q(ℚ), expression, exactBackend, exactBackendProof,
@@ -158,17 +204,20 @@ def close (precision degree depth : Nat)
         maxHeartbeats
     catch error =>
       if error.isInterrupt then throw error
+      let limit ← resourceLimit? error
       let diagnostic ← try
         withCheckBudget maxHeartbeats do
           if cache.extensions.isEmpty then
             diagnoseFailure expression box config relation depth atoms
           else
             diagnoseRegisteredFailure expression backend box config relation depth atoms
+              (← registeredCalls cache.extensions)
       catch diagnosticError =>
         if diagnosticError.isInterrupt then throw diagnosticError
         pure m!"interval could not certify: bounded diagnostics could not complete."
-      throwError "{diagnostic}\nKernel verification failed within the interval budget of \
-        {maxHeartbeats} heartbeats; a larger `(maxHeartbeats := ...)` may be needed."
+      let exactAdvice := resourceAdvice "the exact-rational attempt" maxHeartbeats exactLimit
+      let gridAdvice := resourceAdvice "the binary-grid attempt" maxHeartbeats limit
+      throwError "{diagnostic}{exactAdvice}{gridAdvice}"
   -- All arguments are known; assembling the application avoids re-elaborating the closed check.
   let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
     #[functions, q(Int), expression, backend, backendProof,
@@ -202,10 +251,14 @@ reduction directly; every successful proof requires kernel verification.
 Concrete finite sums and matrix expressions are expanded automatically, including pointwise
 bounds such as `∀ i, x i ∈ Set.Icc 0 1`. Norms use the instances selected in the goal.
 
-Division requires a denominator interval away from zero; logarithm requires positive inputs,
-and square root requires nonnegative inputs. Inverse sine and cosine require inputs in `[-1, 1]`;
-tangent requires a cosine enclosure excluding zero. Failure reports the obstructing range or
-insufficient bound and restores the original proof state.
+The enclosures have accepted domains, which are conditions on the computed enclosures rather than
+on the real functions. Division needs a denominator enclosure that excludes zero, the logarithm
+needs an argument enclosure with a positive lower endpoint, and the square root one with a
+nonnegative lower endpoint. Inverse sine and cosine need an argument enclosure inside `[-1, 1]`,
+and tangent a cosine enclosure that excludes zero. A failure names the operation whose enclosure
+was rejected or the bound that was not small enough, and restores the original proof state. It
+suggests a larger `maxHeartbeats` only when kernel verification of an attempt ran out of its
+heartbeat budget, and it names that attempt.
 -/
 syntax (name := interval) "interval" (ppSpace "(" ident " := " num ")")* : tactic
 

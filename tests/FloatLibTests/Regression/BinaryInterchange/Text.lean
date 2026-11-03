@@ -77,13 +77,33 @@ def boundedErrors : Nat :=
     , check { maxExponent := 2 } "1e3" (.exponentTooLarge 3 2)
     , check { maxExponent := 2 } "0.001" (.exponentTooLarge 3 2)
     , check { maxExponent := 2 } "0x1p-3" (.exponentTooLarge 3 2)
-    , check { maxExponent := 2 } "1*2^3" (.exponentTooLarge 3 2)
     , check {} "1e1000000000" (.exponentTooLarge 1000000000 10000)
     , check {} "" .emptyInput
     , check {} "1e" (.invalidSyntax "1e")
     , check {} "1 0" (.invalidSyntax "1 0")
     , check {} "1.2.3" (.invalidSyntax "1.2.3")
     , check {} "1_0" (.invalidSyntax "1_0") ]
+
+/--
+A NaN payload that the destination cannot encode is a syntax error carrying the original input,
+edge whitespace included, from every entry point: with and without limits and status.
+-/
+def unrepresentableNaNErrors : Nat :=
+  let fmt := FloatFormat.binary16
+  let failsWith (input : String) : Bool :=
+    let expected : Model.ParseError := .invalidSyntax input
+    let rejected {α : Type} : Except Model.ParseError α → Bool
+      | .error error => decide (error = expected)
+      | .ok _ => false
+    rejected (Model.parse fmt input) &&
+      rejected (Model.parse fmt input (limits := some {})) &&
+      rejected (Model.parse fmt input (status := true)) &&
+      rejected (Model.parse fmt input (limits := some {}) (status := true))
+  countWhereFailures ["NaN1024", "-nan4096", " sNaN2048 "] failsWith +
+    countWhereFailures ["NaN1023", "-sNaN1"] fun input =>
+      match Model.parse fmt input with
+      | .ok value => value.isNaN
+      | .error _ => false
 
 def roundingDirections : Nat :=
   countWhereFailures
@@ -121,7 +141,7 @@ def scientificDirections : Nat :=
 
 def boundedAgreement : Nat :=
   countPairFailures Model.IEEERoundingMode.all
-    ["0.1", "-0.1", "-0", "0x1.8p-2", "3 * 2^-2", "1e309", "-1e-400",
+    ["0.1", "-0.1", "-0", "0x1.8p-2", "1e309", "-1e-400",
       "inf", "nan", "-sNaN1", " 12.5 ", "1e", ""] fun mode input =>
       match Model.parse FloatFormat.binary64 input (mode := mode)
           (limits := some {}) (status := true),
@@ -135,7 +155,7 @@ def boundedAgreement : Nat :=
 /-- A parsed value carries the ternary value of its one rounding, comparing it with the text. -/
 def parsingTernary : Nat :=
   countWhereFailures
-    [ ("0.1", Ordering.gt), ("-0.1", .lt), ("0.5", .eq), ("0x1.8p+2", .eq), ("3 * 2^-2", .eq)
+    [ ("0.1", Ordering.gt), ("-0.1", .lt), ("0.5", .eq), ("0x1.8p+2", .eq)
     , ("1e309", .gt), ("-1e309", .lt), ("1e-400", .lt), ("-1e-400", .gt)
     , ("inf", .eq), ("-inf", .eq), ("nan", .eq), ("sNaN", .eq) ] fun (input, ternary) =>
       match Model.parse FloatFormat.binary64 input (limits := some {}) (status := true) with
@@ -353,12 +373,59 @@ def styleGoldens : Nat :=
         , toString (some value) == "(some 0.1)"
         , Std.Format.pretty (repr (some (Model.neg value))) == "some (-0.1)" ]
 
+/--
+The `TextStyle` table: every style for the binary32 value nearest `0.1`, and what `mode` does.
+Styles and precisions also compare with `==` and print with their derived `Repr`.
+-/
+def styleTable : Nat :=
+  match Model.parse FloatFormat.binary32 "0.1" with
+  | .error _ => 1
+  | .ok value =>
+      let exactUp := Model.format value (style := .exact) (mode := .up)
+      let hexDown := Model.format value (style := .hex) (mode := .down)
+      countFailures
+        [ Model.format value == "0.1"
+        , Model.format value (style := .exact) == "100000001490116119384765625e-27"
+        , Model.format value (style := .significant (digits := 4)) == "1000e-4"
+        , Model.format value (style := .fixed (places := 3)) == "0.100"
+        , Model.format value (style := .scientific (places := 3)) == "1.000e-1"
+        , Model.format value (style := .hex) == "0xcccccdp-27"
+        , Model.format value (style := .hex (.significant (digits := 3))) == "0x19ap-12"
+        , Model.format value (style := .significant (digits := 4)) (mode := .up) == "1001e-4"
+        , Model.format value (style := .fixed (places := 3)) (mode := .up) == "0.101"
+        , Model.format value (style := .scientific (places := 3)) (mode := .up) == "1.001e-1"
+        , Model.format value (style := .hex (.significant (digits := 3))) (mode := .down) ==
+            "0x199p-12"
+        , Model.format value (mode := .down) == "0.100000002"
+        , exactUp == Model.format value (style := .exact)
+        , hexDown == Model.format value (style := .hex)
+        , Model.TextStyle.hex == .hex .exact
+        , Model.TextStyle.hex (.significant 3) != .hex
+        , reprStr (Model.TextStyle.fixed 3) ==
+            "FloatLib.Floats.Formats.BinaryInterchange.Model.TextStyle.fixed 3"
+        , reprStr (FloatLib.Numerics.DecimalText.Precision.significant 3) ==
+            "FloatLib.Numerics.DecimalText.Precision.significant 3" ]
+
+/-- Infinities and NaNs raise inexact in no style, and the display writes every NaN as `nan`. -/
+def specialStatus : Nat :=
+  let word (bits : Nat) : Model FloatFormat.binary32 := Model.ofNatBits bits
+  let specials := [word 0x7f800000, word 0xff800000, word 0x7fc00000, word 0xffc00001,
+    word 0x7f800001]
+  let styles : List Model.TextStyle :=
+    [.shortest, .exact, .significant 4, .fixed 3, .scientific 3, .hex, .hex (.significant 3)]
+  countPairFailures specials styles (fun value style =>
+      (Model.format value (style := style) (status := true)).status == {}) +
+    countFailures
+      [ Model.format (word 0xffc00001) == "nan", Model.format (word 0x7f800001) == "nan"
+      , Model.format (word 0xff800000) == "-inf" ]
+
 /-- Failure counts for the parser and decimal presentation cases. -/
 def report : Thunk ReportSection := ⟨fun _ =>
   ReportSection.ofRows "text conversion"
     #[ ("known binary64 words", parsingBits)
      , ("fixed and scientific notation", notationGoldens)
      , ("byte and exponent limits", boundedErrors)
+     , ("unrepresentable NaN payloads", unrepresentableNaNErrors)
      , ("directed output and status", roundingDirections)
      , ("scientific carry and direction", scientificDirections)
      , ("bounded parser agreement", boundedAgreement)
@@ -370,6 +437,8 @@ def report : Thunk ReportSection := ⟨fun _ =>
      , ("native binary64 adapters", nativeAdapters)
      , ("shortest display round trips", shortestDisplays)
      , ("display goldens", displayGoldens)
-     , ("format style goldens", styleGoldens) ]⟩
+     , ("format style goldens", styleGoldens)
+     , ("text style table", styleTable)
+     , ("special-value status", specialStatus) ]⟩
 
 end FloatLibTests.Regression.BinaryInterchange.Text

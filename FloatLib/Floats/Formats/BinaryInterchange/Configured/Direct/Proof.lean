@@ -51,14 +51,38 @@ theorem decode_word64 {format : FloatFormat} (hw : format.bitWidth ≤ 64)
   rw [Model.NativeSmallWord.toNatBits_ofWord, Nat.mod_eq_of_lt value.raw.2]
   rfl
 
+/--
+A packed one-word kernel result is the lifted binary word operation once the model operation gives
+the one-word view of the result bits on the two stored operands.
+-/
+private theorem ofRaw_word64Code_eq_liftBinary {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    {operation : Model format → Model format → Model format}
+    (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)))
+    {bits : UInt64}
+    (h : operation (Model.NativeSmallWord.ofWord left.raw.1)
+        (Model.NativeSmallWord.ofWord right.raw.1) = Model.NativeSmallWord.ofWord bits) :
+    FloatLib.Floats.ExecFloat.ofRaw (F := Family format (Code (.word64 hw)) (.word64 hw))
+        (word64Code hw bits) =
+      ModelCodec.liftBinary (Model := Model format) (plan := StoragePlan.word64 hw)
+        operation left right := by
+  apply ModelCodec.decode_injective
+    (F := Family format (Code (.word64 hw)) (.word64 hw)) (Model := Model format)
+    (plan := StoragePlan.word64 hw)
+  rw [ModelCodec.decode_liftBinary, decode_word64 hw left, decode_word64 hw right, h]
+  rfl
+
+private theorem not_binary32_of_binary64 {format : FloatFormat}
+    (h64 : FloatFormat.IsBinary64 format) : ¬FloatFormat.IsBinary32 format := by
+  rw [FloatFormat.eq_binary64_of_isBinary64 h64]
+  exact FloatFormat.not_isBinary32_binary64
+
 /-- Binary64 addition returns an accepted one-word sum unchanged. -/
 private theorem addWord_eq_of_addFinite? {format : FloatFormat}
     (h64 : FloatFormat.IsBinary64 format)
     {x y s : Model format}
     (h : Model.NativeSmallWordAdd.addFinite? x y false = some s) :
     Model.AddBackend.word x y = s := by
-  have h32 : ¬FloatFormat.IsBinary32 format := by
-    rw [FloatFormat.eq_binary64_of_isBinary64 h64]; decide
+  have h32 := not_binary32_of_binary64 h64
   unfold Model.AddBackend.word
   simp only [h32, dite_false, h]
   rw [dite_eq_left_of_eq_true (eq_true h64)]
@@ -69,8 +93,7 @@ private theorem subWord_eq_of_addFinite? {format : FloatFormat}
     {x y s : Model format}
     (h : Model.NativeSmallWordAdd.addFinite? x y true = some s) :
     Model.AddBackend.subWord x y = s := by
-  have h32 : ¬FloatFormat.IsBinary32 format := by
-    rw [FloatFormat.eq_binary64_of_isBinary64 h64]; decide
+  have h32 := not_binary32_of_binary64 h64
   unfold Model.AddBackend.subWord
   simp only [h32, dite_false, h]
   rw [dite_eq_left_of_eq_true (eq_true h64)]
@@ -79,36 +102,26 @@ private theorem subWord_eq_of_addFinite? {format : FloatFormat}
 theorem binary64Add_eq {format : FloatFormat} (hw : format.bitWidth ≤ 64)
     (h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
-    binary64Add hw left right = wordAdd left right := by
+    binary64Add hw h64 left right = wordAdd left right := by
   unfold binary64Add
   split
   · rename_i bits hbits
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.word64 hw)) (.word64 hw)) (Model := Model format)
-      (plan := StoragePlan.word64 hw)
     have hk := Model.NativeSmallWordAdd.addFinite?_ofWord hw left.raw.2 right.raw.2 false
     simp only [hbits, Option.map_some] at hk
-    rw [wordAdd, ModelCodec.decode_liftBinary, decode_word64 hw left, decode_word64 hw right,
-      addWord_eq_of_addFinite? h64 hk]
-    rfl
+    exact ofRaw_word64Code_eq_liftBinary hw left right (addWord_eq_of_addFinite? h64 hk)
   · rfl
 
 /-- Subtraction on stored binary64 words is word subtraction. -/
 theorem binary64Sub_eq {format : FloatFormat} (hw : format.bitWidth ≤ 64)
     (h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
-    binary64Sub hw left right = wordSub left right := by
+    binary64Sub hw h64 left right = wordSub left right := by
   unfold binary64Sub
   split
   · rename_i bits hbits
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.word64 hw)) (.word64 hw)) (Model := Model format)
-      (plan := StoragePlan.word64 hw)
     have hk := Model.NativeSmallWordAdd.addFinite?_ofWord hw left.raw.2 right.raw.2 true
     simp only [hbits, Option.map_some] at hk
-    rw [wordSub, ModelCodec.decode_liftBinary, decode_word64 hw left, decode_word64 hw right,
-      subWord_eq_of_addFinite? h64 hk]
-    rfl
+    exact ofRaw_word64Code_eq_liftBinary hw left right (subWord_eq_of_addFinite? h64 hk)
   · rfl
 
 /-- Binary64 multiplication returns an accepted two-word normal product unchanged. -/
@@ -117,8 +130,7 @@ private theorem mulWord_eq_of_mulNormal? {format : FloatFormat}
     {x y s : Model format}
     (h : Model.NativeTwoWordMul.mulNormal? x y = some s) :
     Model.MulBackend.word x y = s := by
-  have h32 : ¬FloatFormat.IsBinary32 format := by
-    rw [FloatFormat.eq_binary64_of_isBinary64 h64]; decide
+  have h32 := not_binary32_of_binary64 h64
   unfold Model.MulBackend.word
   simp only [h32, dite_false, h]
   rw [dite_eq_left_of_eq_true (eq_true h64)]
@@ -127,18 +139,13 @@ private theorem mulWord_eq_of_mulNormal? {format : FloatFormat}
 theorem binary64Mul_eq {format : FloatFormat} (hw : format.bitWidth ≤ 64)
     (h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
-    binary64Mul hw left right = wordMul left right := by
+    binary64Mul hw h64 left right = wordMul left right := by
   unfold binary64Mul
   split
   · rename_i bits hbits
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.word64 hw)) (.word64 hw)) (Model := Model format)
-      (plan := StoragePlan.word64 hw)
     have hk := Model.NativeTwoWordMul.mulNormal?_ofWord (fmt := format) left.raw.2 right.raw.2
     simp only [hbits, Option.map_some] at hk
-    rw [wordMul, ModelCodec.decode_liftBinary, decode_word64 hw left, decode_word64 hw right,
-      mulWord_eq_of_mulNormal? h64 hk]
-    rfl
+    exact ofRaw_word64Code_eq_liftBinary hw left right (mulWord_eq_of_mulNormal? h64 hk)
   · rfl
 
 /-- For binary64 the one-word view and the native binary64 view of a word agree. -/
@@ -165,23 +172,18 @@ private theorem divWord_eq_of_divNormal? {x y q : Model FloatFormat.binary64}
 theorem binary64Div_eq {format : FloatFormat} (hw : format.bitWidth ≤ 64)
     (h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
-    binary64Div hw left right = wordDiv left right := by
+    binary64Div hw h64 left right = wordDiv left right := by
   obtain rfl := FloatFormat.eq_binary64_of_isBinary64 h64
   unfold binary64Div
   split
   · rename_i bits hbits
-    apply ModelCodec.decode_injective
-      (F := Family FloatFormat.binary64 (Code (.word64 hw)) (.word64 hw))
-      (Model := Model FloatFormat.binary64) (plan := StoragePlan.word64 hw)
     have hk : Model.NativeBinary64.divNormal? (Model.NativeBinary64.ofUInt64 left.raw.1)
         (Model.NativeBinary64.ofUInt64 right.raw.1) =
           some (Model.NativeBinary64.ofUInt64 bits) := by
       simp only [Model.NativeBinary64.divNormal?, Model.NativeBinary64.toUInt64_ofUInt64, hbits,
         Option.map_some]
-    rw [wordDiv, ModelCodec.decode_liftBinary, decode_word64 hw left, decode_word64 hw right,
-      ofWord_eq_ofUInt64, ofWord_eq_ofUInt64, divWord_eq_of_divNormal? hk]
-    change Model.NativeSmallWord.ofWord bits = _
-    rw [ofWord_eq_ofUInt64]
+    exact ofRaw_word64Code_eq_liftBinary hw left right
+      (by simpa only [ofWord_eq_ofUInt64] using divWord_eq_of_divNormal? hk)
   · rfl
 
 /-- Binary64 fused multiply-add returns an accepted normal result unchanged. -/
@@ -200,7 +202,7 @@ theorem binary64Fma_eq {format : FloatFormat} (hw : format.bitWidth ≤ 64)
     (h64 : FloatFormat.IsBinary64 format)
     (left right addend :
       FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
-    binary64Fma hw left right addend = wordFma left right addend := by
+    binary64Fma hw h64 left right addend = wordFma left right addend := by
   obtain rfl := FloatFormat.eq_binary64_of_isBinary64 h64
   unfold binary64Fma
   split
@@ -231,14 +233,17 @@ theorem toNatBits_decode_pair {format : FloatFormat} (hgt : 64 < format.bitWidth
   BitVec.toNat_ofNatLT _ _
 
 /-- Splitting the model value of a `pair` code returns the code's two words. -/
-theorem toWords_decode_pair {format : FloatFormat} (hpair : Model.NativePair.Eligible format)
+theorem toWords_decode_pair {format : FloatFormat}
     (hgt : 64 < format.bitWidth) (hle : format.bitWidth ≤ 128)
     (value : FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     Model.NativePair.toWords
         (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) value) =
       value.raw.1 := by
   apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective
-  rw [Model.NativePair.toWords_toNat hpair, toNatBits_decode_pair]
+  unfold Model.NativePair.toWords
+  rw [FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat _
+      ((Model.toNatBits_lt_two_pow _).trans_le (Nat.pow_le_pow_right (by decide) hle)),
+    toNatBits_decode_pair]
 
 /-- A packed kernel result decodes to the model value the model kernel builds from its words. -/
 theorem decode_pairCode {format : FloatFormat} (hgt : 64 < format.bitWidth)
@@ -280,6 +285,28 @@ private theorem not_binary64_of_pair {format : FloatFormat}
   rw [FloatFormat.eq_binary64_of_isBinary64 h64] at hfrac
   exact absurd hfrac (by decide)
 
+/--
+A packed two-word kernel result is the lifted binary word operation once the model operation gives
+the model value of the result words on the two stored operands.
+-/
+private theorem ofRaw_pairCode_eq_liftBinary {format : FloatFormat} (hgt : 64 < format.bitWidth)
+    (hle : format.bitWidth ≤ 128) {operation : Model format → Model format → Model format}
+    (left right :
+      FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)))
+    {words : FloatLib.Numerics.FixedWord.UInt128}
+    (h : operation
+        (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
+        (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right) =
+      Model.NativePair.ofWords format words) :
+    FloatLib.Floats.ExecFloat.ofRaw (F := Family format (Code (.pair hgt hle)) (.pair hgt hle))
+        (pairCode hgt hle words) =
+      ModelCodec.liftBinary (Model := Model format) (plan := StoragePlan.pair hgt hle)
+        operation left right := by
+  apply ModelCodec.decode_injective
+    (F := Family format (Code (.pair hgt hle)) (.pair hgt hle)) (Model := Model format)
+    (plan := StoragePlan.pair hgt hle)
+  rw [ModelCodec.decode_liftBinary, h, decode_pairCode]
+
 /-- Two-word addition returns an accepted finite sum unchanged. -/
 private theorem addWord_eq_of_pairAddFinite? {format : FloatFormat}
     (hpair : Model.NativePair.Eligible format) {x y s : Model format}
@@ -301,23 +328,19 @@ theorem pairAdd_eq {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairAdd hgt hle left right = wordAdd left right := by
+    pairAdd hgt hle hpair left right = wordAdd left right := by
   unfold pairAdd
   split
   · rename_i words hwords
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.pair hgt hle)) (.pair hgt hle)) (Model := Model format)
-      (plan := StoragePlan.pair hgt hle)
     have hk :
         Model.NativePair.addFinite?
             (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
             (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right) =
           some (Model.NativePair.ofWords format words) := by
       apply Model.NativePair.addFinite?_of_words
-      rw [toWords_decode_pair hpair, toWords_decode_pair hpair]
+      rw [toWords_decode_pair, toWords_decode_pair]
       exact hwords
-    rw [wordAdd, ModelCodec.decode_liftBinary, addWord_eq_of_pairAddFinite? hpair hk,
-      decode_pairCode]
+    exact ofRaw_pairCode_eq_liftBinary hgt hle left right (addWord_eq_of_pairAddFinite? hpair hk)
   · rfl
 
 /-- Subtraction on stored two-word codes is word subtraction. -/
@@ -325,23 +348,19 @@ theorem pairSub_eq {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairSub hgt hle left right = wordSub left right := by
+    pairSub hgt hle hpair left right = wordSub left right := by
   unfold pairSub
   split
   · rename_i words hwords
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.pair hgt hle)) (.pair hgt hle)) (Model := Model format)
-      (plan := StoragePlan.pair hgt hle)
     have hk :
         Model.NativePair.subFinite?
             (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
             (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right) =
           some (Model.NativePair.ofWords format words) := by
       apply Model.NativePair.subFinite?_of_words
-      rw [toWords_decode_pair hpair, toWords_decode_pair hpair]
+      rw [toWords_decode_pair, toWords_decode_pair]
       exact hwords
-    rw [wordSub, ModelCodec.decode_liftBinary, subWord_eq_of_pairSubFinite? hpair hk,
-      decode_pairCode]
+    exact ofRaw_pairCode_eq_liftBinary hgt hle left right (subWord_eq_of_pairSubFinite? hpair hk)
   · rfl
 
 /-- Two-word multiplication returns an accepted normal product unchanged. -/
@@ -359,19 +378,15 @@ theorem pairMul_eq {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairMul hgt hle left right = wordMul left right := by
+    pairMul hgt hle hpair left right = wordMul left right := by
   unfold pairMul
   split
   · rename_i words hwords
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.pair hgt hle)) (.pair hgt hle)) (Model := Model format)
-      (plan := StoragePlan.pair hgt hle)
     have hk := Model.NativePair.mulNormalLimb?.eq_1
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right)
-    rw [toWords_decode_pair hpair, toWords_decode_pair hpair, hwords, Option.map_some] at hk
-    rw [wordMul, ModelCodec.decode_liftBinary, mulWord_eq_of_pairMulNormal? hpair hk,
-      decode_pairCode]
+    rw [toWords_decode_pair, toWords_decode_pair, hwords, Option.map_some] at hk
+    exact ofRaw_pairCode_eq_liftBinary hgt hle left right (mulWord_eq_of_pairMulNormal? hpair hk)
   · rfl
 
 /-- Two-word division returns an accepted normal quotient unchanged. -/
@@ -389,26 +404,22 @@ theorem pairDiv_eq {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairDiv hgt hle left right = wordDiv left right := by
+    pairDiv hgt hle hpair left right = wordDiv left right := by
   unfold pairDiv
   split
   · rename_i words hwords
-    apply ModelCodec.decode_injective
-      (F := Family format (Code (.pair hgt hle)) (.pair hgt hle)) (Model := Model format)
-      (plan := StoragePlan.pair hgt hle)
     have hk := Model.NativePair.divNormal?.eq_1
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right)
-    rw [toWords_decode_pair hpair, toWords_decode_pair hpair, hwords, Option.map_some] at hk
-    rw [wordDiv, ModelCodec.decode_liftBinary, divWord_eq_of_pairDivNormal? hpair hk,
-      decode_pairCode]
+    rw [toWords_decode_pair, toWords_decode_pair, hwords, Option.map_some] at hk
+    exact ofRaw_pairCode_eq_liftBinary hgt hle left right (divWord_eq_of_pairDivNormal? hpair hk)
   · rfl
 
 /-- Square root of a stored two-word code implements the configured square-root specification. -/
 theorem pairSqrt_eq_spec {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (value : FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairSqrt hgt hle value = Spec.sqrt value := by
+    pairSqrt hgt hle hpair value = Spec.sqrt value := by
   unfold pairSqrt
   split
   · rename_i words hwords
@@ -417,7 +428,7 @@ theorem pairSqrt_eq_spec {format : FloatFormat} (hgt : 64 < format.bitWidth)
       (plan := StoragePlan.pair hgt hle)
     have hk := Model.NativePair.sqrtNormal?_of_words hpair
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) value) words
-      (by rw [toWords_decode_pair hpair]; exact hwords)
+      (by rw [toWords_decode_pair]; exact hwords)
     rw [Spec.sqrt, ModelCodec.decode_liftUnary, decode_pairCode]
     exact Model.NativePair.sqrtNormal_refines hpair _ _ hk
   · exact fixedLimbSqrt_eq_spec value
@@ -427,7 +438,7 @@ theorem pairFma_eq_spec {format : FloatFormat} (hgt : 64 < format.bitWidth)
     (hle : format.bitWidth ≤ 128) (hpair : Model.NativePair.Eligible format)
     (left right addend :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
-    pairFma hgt hle left right addend = Spec.fma left right addend := by
+    pairFma hgt hle hpair left right addend = Spec.fma left right addend := by
   unfold pairFma
   split
   · rename_i words hwords
@@ -438,7 +449,7 @@ theorem pairFma_eq_spec {format : FloatFormat} (hgt : 64 < format.bitWidth)
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) left)
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) right)
       (ModelCodec.decode (Model := Model format) (plan := StoragePlan.pair hgt hle) addend) words
-      (by rw [toWords_decode_pair hpair, toWords_decode_pair hpair, toWords_decode_pair hpair]
+      (by rw [toWords_decode_pair, toWords_decode_pair, toWords_decode_pair]
           exact hwords)
     rw [Spec.fma, ModelCodec.decode_liftTernary, decode_pairCode,
       ← Model.FmaBackend.generic_eq_spec]

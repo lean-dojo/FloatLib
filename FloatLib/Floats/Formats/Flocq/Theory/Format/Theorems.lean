@@ -34,23 +34,55 @@ theorem fixFormat_of_generic (emin : ℤ) (x : ℝ)
 theorem generic_of_fixFormat (emin : ℤ) (x : ℝ) (hx : FIXFormat (β := β) emin x) :
     genericFormat β (fixExp emin) x := by
   obtain ⟨f, hxf, hfe⟩ := hx
-  apply generic_format_of_scaled_mantissa_int
-    (β := β) (fexp := fixExp emin) x f.mantissa
-  calc
-    scaledMantissa β (fixExp emin) x = x * bpow β (-emin) := by
-      simp [scaledMantissa, cexp, fixExp]
-    _ = ((f.mantissa : ℝ) * bpow β f.exponent) * bpow β (-emin) := by
-      rw [hxf, toReal]
-    _ = ((f.mantissa : ℝ) * bpow β emin) * bpow β (-emin) := by rw [hfe]
-    _ = (f.mantissa : ℝ) * (bpow β emin * bpow β (-emin)) := by ring
-    _ = (f.mantissa : ℝ) * bpow β (emin + -emin) := by
-      rw [bpow.add_exp]
-    _ = f.mantissa := by simp [bpow]
+  exact generic_format_of_toReal_of_cexp_le f x hxf (by simp [cexp, fixExp, hfe])
 
 /-- `FIXFormat` and the corresponding generic format describe the same real values. -/
 theorem generic_format_FIX_iff (emin : ℤ) (x : ℝ) :
     genericFormat β (fixExp emin) x ↔ FIXFormat (β := β) emin x :=
   ⟨fixFormat_of_generic emin x, generic_of_fixFormat emin x⟩
+
+/-- Values on a fixed grid are closed under negation. -/
+theorem fixFormat_neg {emin : ℤ} {x : ℝ} (hx : FIXFormat (β := β) emin x) :
+    FIXFormat (β := β) emin (-x) := by
+  obtain ⟨f, hxf, hfe⟩ := hx
+  refine ⟨{ mantissa := -f.mantissa, exponent := emin }, ?_, rfl⟩
+  rw [hxf, toReal, hfe]
+  simp [toReal]
+
+/-- Values on a fixed grid are closed under addition. -/
+theorem fixFormat_add {emin : ℤ} {x y : ℝ}
+    (hx : FIXFormat (β := β) emin x) (hy : FIXFormat (β := β) emin y) :
+    FIXFormat (β := β) emin (x + y) := by
+  obtain ⟨fx, hxf, hxe⟩ := hx
+  obtain ⟨fy, hyf, hye⟩ := hy
+  refine ⟨{ mantissa := fx.mantissa + fy.mantissa, exponent := emin }, ?_, rfl⟩
+  rw [hxf, hyf, toReal, toReal, hxe, hye]
+  simp only [toReal]
+  push_cast
+  ring
+
+/-- Values on a fixed grid are closed under subtraction. -/
+theorem fixFormat_sub {emin : ℤ} {x y : ℝ}
+    (hx : FIXFormat (β := β) emin x) (hy : FIXFormat (β := β) emin y) :
+    FIXFormat (β := β) emin (x - y) := by
+  rw [sub_eq_add_neg]
+  exact fixFormat_add hx (fixFormat_neg hy)
+
+/-- Generic FIX representability is closed under exact addition. -/
+theorem generic_format_FIX_add (emin : ℤ) {x y : ℝ}
+    (hx : genericFormat β (fixExp emin) x)
+    (hy : genericFormat β (fixExp emin) y) :
+    genericFormat β (fixExp emin) (x + y) := by
+  rw [generic_format_FIX_iff] at hx hy ⊢
+  exact fixFormat_add hx hy
+
+/-- Generic FIX representability is closed under exact subtraction. -/
+theorem generic_format_FIX_sub (emin : ℤ) {x y : ℝ}
+    (hx : genericFormat β (fixExp emin) x)
+    (hy : genericFormat β (fixExp emin) y) :
+    genericFormat β (fixExp emin) (x - y) := by
+  rw [generic_format_FIX_iff] at hx hy ⊢
+  exact fixFormat_sub hx hy
 
 /-- A radix power with nonnegative exponent agrees with the corresponding natural-number power. -/
 theorem bpow_eq_natPow (p : ℤ) (hp : 0 ≤ p) :
@@ -58,10 +90,17 @@ theorem bpow_eq_natPow (p : ℤ) (hp : 0 ≤ p) :
   obtain ⟨n, rfl⟩ := Int.eq_ofNat_of_zero_le hp
   simp [bpow, Numerics.Radix.toReal]
 
-/-- A mantissa with fewer than `prec` radix digits bounds the represented value's magnitude. -/
-theorem FloatRep.abs_toReal_lt_bpow (f : FloatRep β) (prec : ℤ) (hprec : 0 ≤ prec)
+/--
+A mantissa with fewer than `prec` radix digits bounds the represented value's magnitude. A negative
+`prec` allows only the zero mantissa.
+-/
+theorem FloatRep.abs_toReal_lt_bpow (f : FloatRep β) (prec : ℤ)
     (hmant : f.mantissa.natAbs < β.base ^ prec.toNat) :
     abs (toReal f) < bpow β (f.exponent + prec) := by
+  rcases lt_or_ge prec 0 with hneg | hprec
+  · rw [Int.toNat_of_nonpos hneg.le, pow_zero] at hmant
+    have hzero : f.mantissa = 0 := Int.natAbs_eq_zero.mp (Nat.lt_one_iff.mp hmant)
+    simpa [toReal, hzero] using bpow.pos β (f.exponent + prec)
   have hmantR : abs (f.mantissa : ℝ) < bpow β prec := by
     rw [bpow_eq_natPow prec hprec]
     simpa only [Nat.cast_natAbs, Int.cast_abs] using
@@ -73,61 +112,48 @@ theorem FloatRep.abs_toReal_lt_bpow (f : FloatRep β) (prec : ℤ) (hprec : 0 �
       mul_lt_mul_of_pos_right hmantR (bpow.pos β f.exponent)
     _ = bpow β (f.exponent + prec) := by rw [← bpow.add_exp, add_comm]
 
-/-- The generic `flxExp` format satisfies the explicit FLX mantissa bound. -/
-theorem flxFormat_of_generic (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
-    (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x) :
-    FLXFormat (β := β) prec x := by
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
-  let m : ℤ := ⌊scaledMantissa β (flxExp prec) x⌋
-  let e : ℤ := cexp β (flxExp prec) x
-  have hsint : scaledMantissa β (flxExp prec) x = m := by
-    obtain ⟨n, hn⟩ :=
-      (generic_format_iff_scaled_mantissa_int
-        (β := β) (fexp := flxExp prec) x).mp hx
-    dsimp [m]
-    rw [hn]
-    simp
-  refine ⟨hprec, { mantissa := m, exponent := e }, ?_, ?_⟩
-  · unfold genericFormat at hx
-    change x = (m : ℝ) * bpow β e
-    exact hx
-  · by_cases hx0 : x = 0
-    · subst x
-      have hm0 : m = 0 := by simp [m, scaledMantissa]
-      rw [hm0]
-      exact pow_pos (Nat.zero_lt_of_lt β.base_valid) _
-    · have hbpos : 0 < bpow β e := bpow.pos β e
-      have he : e = magnitude β x - prec := by simp [e, cexp, flxExp]
-      have hsdiv : scaledMantissa β (flxExp prec) x =
-          x / bpow β e :=
-        scaledMantissa_eq_div (β := β) (fexp := flxExp prec) x
-      have hslt : abs (scaledMantissa β (flxExp prec) x) < bpow β prec := by
-        rw [hsdiv, abs_div, abs_of_pos hbpos, he]
-        calc
-          abs x / bpow β (magnitude β x - prec) <
-              bpow β (magnitude β x) /
-                bpow β (magnitude β x - prec) :=
-            (div_lt_div_iff_of_pos_right (bpow.pos β _)).2
-              (abs_lt_bpow_magnitude β x hx0)
-          _ = bpow β prec := by
-            rw [← bpow.sub_exp]
-            congr 1
-            linarith
-      have hmcast : (m.natAbs : ℝ) < bpow β prec := by
-        rw [hsint] at hslt
-        have hmabs : (m.natAbs : ℝ) = abs (m : ℝ) := by
-          simp only [Nat.cast_natAbs, Int.cast_abs]
-        rwa [hmabs]
-      have hpnonneg : 0 ≤ prec := hprec.le
-      rw [bpow_eq_natPow (β := β) prec hpnonneg] at hmcast
-      exact_mod_cast hmcast
+/--
+The canonical mantissa of a generic-format value has fewer than `prec` radix digits when the
+value's magnitude exceeds its canonical exponent by at most `prec`.
+-/
+private theorem natAbs_floor_scaledMantissa_lt {fexp : ℤ → ℤ} [ValidExp fexp]
+    (prec : ℤ) (hprec : 0 < prec) {x : ℝ} (hx : genericFormat β fexp x)
+    (hdiff : magnitude β x - cexp β fexp x ≤ prec) :
+    (⌊scaledMantissa β fexp x⌋).natAbs < β.base ^ prec.toNat := by
+  let m : ℤ := ⌊scaledMantissa β fexp x⌋
+  change m.natAbs < _
+  by_cases hx0 : x = 0
+  · subst x
+    have hm0 : m = 0 := by simp [m, scaledMantissa]
+    rw [hm0]
+    exact pow_pos (Nat.zero_lt_of_lt β.base_valid) _
+  · have hsint : scaledMantissa β fexp x = m := by
+      obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic (β := β) (fexp := fexp) x hx
+      simp [m, hn]
+    have hbpos : 0 < bpow β (cexp β fexp x) := bpow.pos β _
+    have hslt : abs (scaledMantissa β fexp x) < bpow β prec := by
+      rw [scaledMantissa_eq_div, abs_div, abs_of_pos hbpos]
+      calc
+        abs x / bpow β (cexp β fexp x) <
+            bpow β (magnitude β x) / bpow β (cexp β fexp x) :=
+          (div_lt_div_iff_of_pos_right hbpos).2 (abs_lt_bpow_magnitude β x)
+        _ = bpow β (magnitude β x - cexp β fexp x) := (bpow.sub_exp β _ _).symm
+        _ ≤ bpow β prec := (bpow_le_bpow_iff β _ _).2 hdiff
+    have hmcast : (m.natAbs : ℝ) < bpow β prec := by
+      rw [hsint] at hslt
+      simpa only [Nat.cast_natAbs, Int.cast_abs] using hslt
+    rw [bpow_eq_natPow (β := β) prec hprec.le] at hmcast
+    exact_mod_cast hmcast
 
-/-- Every explicit bounded-mantissa FLX value belongs to the corresponding generic format. -/
-theorem generic_of_flxFormat (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
-    (hx : FLXFormat (β := β) prec x) :
-    @genericFormat β (flxExp prec) (flxValidExp prec hprec) x := by
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
-  obtain ⟨_, f, hxf, hmant⟩ := hx
+/--
+A value written with a mantissa of fewer than `prec` radix digits is in the generic format when
+the exponent function selects at most the stored exponent at every magnitude the value can have.
+-/
+private theorem generic_of_natAbs_mantissa_lt {fexp : ℤ → ℤ} [ValidExp fexp]
+    (prec : ℤ) (f : FloatRep β) {x : ℝ} (hxf : x = toReal f)
+    (hmant : f.mantissa.natAbs < β.base ^ prec.toNat)
+    (hfexp : ∀ k, k ≤ f.exponent + prec → fexp k ≤ f.exponent) :
+    genericFormat β fexp x := by
   by_cases hm0 : f.mantissa = 0
   · have hx0 : x = 0 := by simp [hxf, toReal, hm0]
     rw [hx0]
@@ -137,13 +163,29 @@ theorem generic_of_flxFormat (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
       exact mul_ne_zero (by exact_mod_cast hm0) (bpow.ne_zero β f.exponent)
     have habsx : abs x < bpow β (f.exponent + prec) := by
       rw [hxf]
-      exact f.abs_toReal_lt_bpow prec hprec.le hmant
-    have hmag : magnitude β x ≤ f.exponent + prec :=
-      magnitude_le_of_abs_lt_bpow β x (f.exponent + prec) hx0 habsx
-    have hcexp : cexp β (flxExp prec) x ≤ f.exponent := by
-      simp [cexp, flxExp]
-      linarith
-    exact generic_format_of_toReal_of_cexp_le f x hxf hcexp
+      exact f.abs_toReal_lt_bpow prec hmant
+    exact generic_format_of_toReal_of_cexp_le f x hxf
+      (hfexp _ (magnitude_le_of_abs_lt_bpow β x (f.exponent + prec) hx0 habsx))
+
+/-- The generic `flxExp` format satisfies the explicit FLX mantissa bound. -/
+theorem flxFormat_of_generic (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
+    (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x) :
+    FLXFormat (β := β) prec x := by
+  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+  refine ⟨hprec,
+    { mantissa := ⌊scaledMantissa β (flxExp prec) x⌋
+      exponent := cexp β (flxExp prec) x }, hx, ?_⟩
+  exact natAbs_floor_scaledMantissa_lt prec hprec hx (by simp [cexp, flxExp])
+
+/-- Every explicit bounded-mantissa FLX value belongs to the corresponding generic format. -/
+theorem generic_of_flxFormat (prec : ℤ) (hprec : 0 < prec) (x : ℝ)
+    (hx : FLXFormat (β := β) prec x) :
+    @genericFormat β (flxExp prec) (flxValidExp prec hprec) x := by
+  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+  obtain ⟨_, f, hxf, hmant⟩ := hx
+  exact generic_of_natAbs_mantissa_lt prec f hxf hmant fun k hk => by
+    simp only [flxExp]
+    linarith
 
 /-- `FLXFormat` is exactly the generic format generated by `flxExp`. -/
 theorem generic_format_FLX_iff (prec : ℤ) (hprec : 0 < prec) (x : ℝ) :
@@ -156,54 +198,14 @@ theorem fltFormat_of_generic (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ)
     (hx : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x) :
     FLTFormat (β := β) emin prec x := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
-  let m : ℤ := ⌊scaledMantissa β (fltExp emin prec) x⌋
-  let e : ℤ := cexp β (fltExp emin prec) x
-  have hsint : scaledMantissa β (fltExp emin prec) x = m := by
-    obtain ⟨n, hn⟩ :=
-      (generic_format_iff_scaled_mantissa_int
-        (β := β) (fexp := fltExp emin prec) x).mp hx
-    dsimp [m]
-    rw [hn]
-    simp
-  refine ⟨hprec, { mantissa := m, exponent := e }, ?_, ?_, ?_⟩
-  · unfold genericFormat at hx
-    change x = (m : ℝ) * bpow β e
-    exact hx
-  · by_cases hx0 : x = 0
-    · subst x
-      have hm0 : m = 0 := by simp [m, scaledMantissa]
-      rw [hm0]
-      exact pow_pos (Nat.zero_lt_of_lt β.base_valid) _
-    · have hbpos : 0 < bpow β e := bpow.pos β e
-      have he : e = max (magnitude β x - prec) emin := by
-        simp [e, cexp, fltExp]
-      have hsdiv : scaledMantissa β (fltExp emin prec) x =
-          x / bpow β e :=
-        scaledMantissa_eq_div (β := β) (fexp := fltExp emin prec) x
-      have hdiff : magnitude β x - e ≤ prec := by
-        rw [he]
-        have := le_max_left (magnitude β x - prec) emin
-        linarith
-      have hslt : abs (scaledMantissa β (fltExp emin prec) x) <
-          bpow β prec := by
-        rw [hsdiv, abs_div, abs_of_pos hbpos]
-        calc
-          abs x / bpow β e <
-              bpow β (magnitude β x) / bpow β e :=
-            (div_lt_div_iff_of_pos_right hbpos).2
-              (abs_lt_bpow_magnitude β x hx0)
-          _ = bpow β (magnitude β x - e) :=
-            (bpow.sub_exp β _ _).symm
-          _ ≤ bpow β prec :=
-            (bpow_le_bpow_iff β _ _).2 hdiff
-      have hmcast : (m.natAbs : ℝ) < bpow β prec := by
-        rw [hsint] at hslt
-        have hmabs : (m.natAbs : ℝ) = abs (m : ℝ) := by
-          simp only [Nat.cast_natAbs, Int.cast_abs]
-        rwa [hmabs]
-      rw [bpow_eq_natPow (β := β) prec hprec.le] at hmcast
-      exact_mod_cast hmcast
-  · simp [e, cexp, fltExp]
+  refine ⟨hprec,
+    { mantissa := ⌊scaledMantissa β (fltExp emin prec) x⌋
+      exponent := cexp β (fltExp emin prec) x }, hx, ?_, ?_⟩
+  · refine natAbs_floor_scaledMantissa_lt prec hprec hx ?_
+    simp only [cexp, fltExp]
+    have := le_max_left (magnitude β x - prec) emin
+    linarith
+  · simp [cexp, fltExp]
 
 /-- Every explicit bounded-mantissa FLT value belongs to the corresponding generic format. -/
 theorem generic_of_fltFormat (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ)
@@ -211,22 +213,9 @@ theorem generic_of_fltFormat (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ)
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
   obtain ⟨_, f, hxf, hmant, hexp⟩ := hx
-  by_cases hm0 : f.mantissa = 0
-  · have hx0 : x = 0 := by simp [hxf, toReal, hm0]
-    rw [hx0]
-    exact generic_format_zero
-  · have hx0 : x ≠ 0 := by
-      rw [hxf, toReal]
-      exact mul_ne_zero (by exact_mod_cast hm0) (bpow.ne_zero β f.exponent)
-    have habsx : abs x < bpow β (f.exponent + prec) := by
-      rw [hxf]
-      exact f.abs_toReal_lt_bpow prec hprec.le hmant
-    have hmag : magnitude β x ≤ f.exponent + prec :=
-      magnitude_le_of_abs_lt_bpow β x (f.exponent + prec) hx0 habsx
-    have hcexp : cexp β (fltExp emin prec) x ≤ f.exponent := by
-      simp [cexp, fltExp]
-      constructor <;> linarith
-    exact generic_format_of_toReal_of_cexp_le f x hxf hcexp
+  exact generic_of_natAbs_mantissa_lt prec f hxf hmant fun k hk => by
+    simp only [fltExp]
+    exact max_le (by linarith) hexp
 
 /-- `FLTFormat` is exactly the generic format generated by `fltExp`. -/
 theorem generic_format_FLT_iff (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ) :

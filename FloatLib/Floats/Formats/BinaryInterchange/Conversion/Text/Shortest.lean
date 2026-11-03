@@ -177,7 +177,8 @@ def verified {fmt : FloatFormat} (mode : IEEERoundingMode) (value : Model fmt)
     (fracField value == 0 && 1 < expField value)
   match search readBack (4 * exact.significand) exact.negative with
   | some candidate =>
-      match Internal.Value.convertText fmt mode (.decimal candidate) with
+      -- Decimal conversion has no error case, so it has no input text to report.
+      match Internal.Value.convertText fmt mode "" (.decimal candidate) with
       | .ok restored =>
           if restored = value then candidate else (DecimalText.ofDyadic exact).compact
       | .error _ => (DecimalText.ofDyadic exact).compact

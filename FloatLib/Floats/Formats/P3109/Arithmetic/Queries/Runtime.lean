@@ -84,14 +84,14 @@ variable {format : Format}
   value.toNatBits == format.nanBits
 
 /-- Test either infinity, respecting signedness and the finite/extended domain. -/
-@[inline] def isInfinite (value : ExecFloat.P3109 format) : Bool :=
+@[inline] def isInf (value : ExecFloat.P3109 format) : Bool :=
   format.domain == .extended &&
     (value.toNatBits == format.positiveInfinityBits ||
       (format.signedness == .signed && value.toNatBits == format.negativeInfinityBits))
 
 /-- Finite excludes NaN and either infinity. -/
 @[inline] def isFinite (value : ExecFloat.P3109 format) : Bool :=
-  !(value.isNaN || value.isInfinite)
+  !(value.isNaN || value.isInf)
 
 /-- Negative finite values and negative infinity have negative sign; NaN and zero do not. -/
 @[inline] def isSignMinus (value : ExecFloat.P3109 format) : Bool :=

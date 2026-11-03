@@ -12,6 +12,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Finite.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Packing
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.SignedMagnitude.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Proof
 
 /-!
@@ -58,7 +59,7 @@ private theorem roundAddMagnitudes_eq_roundDyadic
     omega
   have hround := roundAddMagnitudesAtScale_eq_roundDyadic
     xSign ySign xMagnitude yMagnitude (scale + 149)
-    hx hy hsum hscaleBound
+    hx hy (fun _ => hsum) hscaleBound
   rw [hscaleAdd] at hround
   have hexponent :
       Int.ofNat (scale.toNat + 149) - 298 =
@@ -69,7 +70,7 @@ private theorem roundAddMagnitudes_eq_roundDyadic
 
 private theorem addDyadic_alignRight
     (xSign ySign : Bool) (xMagnitude yMagnitude xScale yScale : Nat)
-    (hx : xMagnitude ≠ 0) (hy : yMagnitude ≠ 0)
+    (hx : xMagnitude ≠ 0)
     (hscale : xScale ≤ yScale) :
     Model.addDyadic
         { negative := xSign
@@ -86,13 +87,13 @@ private theorem addDyadic_alignRight
           significand := yMagnitude <<< (yScale - xScale)
           exponent := Int.ofNat xScale - 149 } := by
   have h := addDyadic_alignRightOffset 149 xSign ySign
-    xMagnitude yMagnitude xScale yScale hx hy hscale
+    xMagnitude yMagnitude xScale yScale hx hscale
   norm_num at h
   exact h
 
 private theorem addDyadic_alignLeft
     (xSign ySign : Bool) (xMagnitude yMagnitude xScale yScale : Nat)
-    (hx : xMagnitude ≠ 0) (hy : yMagnitude ≠ 0)
+    (hy : yMagnitude ≠ 0)
     (hscale : yScale < xScale) :
     Model.addDyadic
         { negative := xSign
@@ -109,7 +110,7 @@ private theorem addDyadic_alignLeft
           significand := yMagnitude
           exponent := Int.ofNat yScale - 149 } := by
   have h := addDyadic_alignLeftOffset 149 xSign ySign
-    xMagnitude yMagnitude xScale yScale hx hy hscale
+    xMagnitude yMagnitude xScale yScale hy hscale
   norm_num at h
   exact h
 
@@ -128,64 +129,12 @@ private theorem roundDyadic_shiftLeft_add_small
   have hsmallHalf : small < 2 ^ (gap - 1) :=
     hsmall.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
   rw [roundDyadic_shiftLeft_add_of_lt_half sign small large gap
-    (Int.ofNat smallScale - 149) hlargeLow hlargeHigh (by omega) hsmallHalf
+    (Int.ofNat smallScale - 149) hlargeLow hlargeHigh hsmallHalf
     (by simp only [Int.ofNat_eq_natCast]; omega)
     (by simp only [Int.ofNat_eq_natCast]; omega)]
   congr 1
   simp only [Int.ofNat_eq_natCast]
   omega
-
-private theorem roundDyadic_shiftLeft_add_value
-    (z : Value) (small smallScale gap : Nat)
-    (hsmall : small < 2 ^ 24)
-    (hexponent : expField (toUInt32 z) ≠ 0)
-    (hexponentNat :
-      (expField (toUInt32 z)).toNat = smallScale + gap + 1)
-    (hgap : 39 < gap)
-    (hscale : smallScale + gap ≤ 253) :
-    roundDyadic {
-      negative := signBit (toUInt32 z)
-      significand :=
-        ((finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <<< gap) +
-          small
-      exponent := Int.ofNat smallScale - 149 } =
-      toUInt32 z := by
-  have hfraction := fracField_lt z
-  have hlarge :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat =
-        Model.pow2 23 + (fracField (toUInt32 z)).toNat := by
-    simpa [hexponent] using
-      finiteMantissa_toNat
-        (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
-  have hlargeLow :
-      2 ^ 23 ≤
-        (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat := by
-    rw [hlarge, Model.pow2_eq_two_pow]
-    omega
-  have hlargeHigh :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <
-        2 ^ 24 :=
-    finiteMantissa_lt
-      (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
-  rw [roundDyadic_shiftLeft_add_small
-    (signBit (toUInt32 z)) small
-    (finiteMantissa
-      (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat
-    smallScale gap hsmall hlargeLow hlargeHigh hgap hscale]
-  rw [← hexponentNat]
-  have hfractionValue :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat -
-          2 ^ 23 =
-        (fracField (toUInt32 z)).toNat := by
-    rw [hlarge, Model.pow2_eq_two_pow]
-    omega
-  rw [hfractionValue]
-  exact mkBits_fields (toUInt32 z)
 
 private theorem roundDyadic_shiftLeft_sub_small
     (sign : Bool) (small large smallScale gap : Nat)
@@ -257,32 +206,13 @@ private theorem roundDyadic_shiftLeft_sub_small
           2 ^ 24 := by
       rw [hmantissa]
       exact Model.roundShiftRightEven_shiftLeft_sub_of_lt_half
-        (2 ^ 24) small (gap - 1) (Nat.pow_pos (by decide))
-        hshiftPos hsmallHalf'
-    have hnormal :
-        ¬Int.ofNat (22 + gap) + (Int.ofNat smallScale - 149) < -126 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    have hleadingWidth : 23 ≤ 22 + gap := by omega
-    have hshift : 22 + gap - 23 = gap - 1 := by omega
-    have hcarry : 2 ^ 24 = Model.pow2 24 := by
-      rw [Model.pow2_eq_two_pow]
-    have hoverflow :
-        ¬(Int.ofNat (22 + gap) + (Int.ofNat smallScale - 149) + 1) >
-          127 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    have hencoded :
-        Int.toNat
-            (Int.ofNat (22 + gap) +
-                (Int.ofNat smallScale - 149) + 1 + 127) =
-          smallScale + gap + 1 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    unfold roundDyadic
-    simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
-      hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
-    simp [Model.pow2_eq_two_pow]
+        (2 ^ 24) small (gap - 1) hsmallHalf'
+    rw [roundDyadic_normal_carry_of_log2 sign _ (22 + gap) _ hcombinedNe hleading (by omega)
+      (by simp only [Int.ofNat_eq_natCast]; omega) (by simp only [Int.ofNat_eq_natCast]; omega)
+      (by rw [show 22 + gap - 23 = gap - 1 by omega]; exact hround)]
+    congr 1
+    simp only [Int.ofNat_eq_natCast]
+    omega
   · have hlargeStrict : 2 ^ 23 < large := by omega
     have hcombinedPos : 0 < (large <<< gap) - small := by
       rw [Nat.shiftLeft_eq]
@@ -320,107 +250,13 @@ private theorem roundDyadic_shiftLeft_sub_small
     have hround :
         Numerics.roundShiftRightEven ((large <<< gap) - small) gap = large :=
       Model.roundShiftRightEven_shiftLeft_sub_of_lt_half
-        large small gap hlargePos hgapPos hsmallHalf
-    have hnormal :
-        ¬Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) < -126 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    have hleadingWidth : 23 ≤ 23 + gap := by omega
-    have hshift : 23 + gap - 23 = gap := by omega
-    have hcarry : large ≠ Model.pow2 24 := by
-      rw [Model.pow2_eq_two_pow]
-      omega
-    have hoverflow :
-        ¬Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) > 127 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    have hencoded :
-        Int.toNat
-            (Int.ofNat (23 + gap) + (Int.ofNat smallScale - 149) + 127) =
-          smallScale + gap + 1 := by
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    unfold roundDyadic
-    simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, hnormal,
-      hleadingWidth, ite_true, hshift, hround, hcarry, hoverflow, hencoded]
-    rw [Model.pow2_eq_two_pow]
-
-private theorem roundDyadic_shiftLeft_sub_value
-    (z : Value) (small smallScale gap : Nat)
-    (hsmallPos : 0 < small)
-    (hsmall : small < 2 ^ 24)
-    (hexponent : expField (toUInt32 z) ≠ 0)
-    (hexponentNat :
-      (expField (toUInt32 z)).toNat = smallScale + gap + 1)
-    (hgap : 39 < gap)
-    (hscale : smallScale + gap ≤ 253) :
-    roundDyadic {
-      negative := signBit (toUInt32 z)
-      significand :=
-        ((finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <<< gap) -
-          small
-      exponent := Int.ofNat smallScale - 149 } =
-      toUInt32 z := by
-  have hfraction := fracField_lt z
-  have hlarge :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat =
-        Model.pow2 23 + (fracField (toUInt32 z)).toNat := by
-    simpa [hexponent] using
-      finiteMantissa_toNat
-        (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
-  have hlargeLow :
-      2 ^ 23 ≤
-        (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat := by
-    rw [hlarge, Model.pow2_eq_two_pow]
+        large small gap hsmallHalf
+    rw [roundDyadic_normal_of_log2 sign _ (23 + gap) _ large hcombinedNe hleading (by omega)
+      (by simp only [Int.ofNat_eq_natCast]; omega) (by simp only [Int.ofNat_eq_natCast]; omega)
+      (by rw [Nat.add_sub_cancel_left]; exact hround) hlargeHigh.ne]
+    congr 1
+    simp only [Int.ofNat_eq_natCast]
     omega
-  have hlargeHigh :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <
-        2 ^ 24 :=
-    finiteMantissa_lt
-      (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
-  rw [roundDyadic_shiftLeft_sub_small
-    (signBit (toUInt32 z)) small
-    (finiteMantissa
-      (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat
-    smallScale gap hsmallPos hsmall hlargeLow hlargeHigh hgap hscale]
-  rw [← hexponentNat]
-  have hfractionValue :
-      (finiteMantissa
-          (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat -
-          2 ^ 23 =
-        (fracField (toUInt32 z)).toNat := by
-    rw [hlarge, Model.pow2_eq_two_pow]
-    omega
-  rw [hfractionValue]
-  exact mkBits_fields (toUInt32 z)
-
-/--
-Shifting a 24-bit significand left by at most 39 bits stays below `2 ^ 63`. So the word shift is
-exact, and the shifted word is nonzero whenever the significand is.
--/
-private theorem shiftLeft_facts
-    (mantissa shift : UInt64) (hmantissa : mantissa ≠ 0)
-    (hlt : mantissa.toNat < 2 ^ 24) (hshift : shift.toNat ≤ 39) :
-    (mantissa <<< shift).toNat = mantissa.toNat <<< shift.toNat ∧
-      mantissa <<< shift ≠ 0 ∧ mantissa.toNat <<< shift.toNat < 2 ^ 63 := by
-  have hbound : mantissa.toNat <<< shift.toNat < 2 ^ 63 := by
-    rw [Nat.shiftLeft_eq]
-    calc mantissa.toNat * 2 ^ shift.toNat ≤ mantissa.toNat * 2 ^ 39 :=
-          Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) hshift)
-      _ < 2 ^ 63 := by norm_num at hlt ⊢; omega
-  have htoNat : (mantissa <<< shift).toNat = mantissa.toNat <<< shift.toNat := by
-    rw [UInt64.toNat_shiftLeft, Nat.mod_eq_of_lt (by omega : shift.toNat < 64),
-      Nat.mod_eq_of_lt (hbound.trans (by norm_num))]
-  refine ⟨htoNat, fun h => ?_, hbound⟩
-  have hzero := congrArg UInt64.toNat h
-  rw [htoNat, Nat.shiftLeft_eq] at hzero
-  rcases Nat.mul_eq_zero.mp hzero with h0 | h0
-  · exact (FloatLib.Numerics.FixedWord.uint64_toNat_eq_zero mantissa).not.mpr hmantissa h0
-  · exact absurd h0 (Nat.two_pow_pos _).ne'
 
 /--
 The far case of finite addition. When the exponent gap exceeds 39 bits the smaller operand lies
@@ -455,32 +291,33 @@ private theorem roundDyadic_addDyadic_far
     have : (expField (toUInt32 z)).toNat ≠ 0 := fun h0 =>
       hexponentNonzero (UInt32.toNat_inj.mp (by simpa using h0))
     omega
+  obtain ⟨hlargeLow, hlargeHigh, hfractionValue⟩ :=
+    finiteMantissa_bounds _ _ hexponentNonzero (fracField_lt z)
   have hmantissaNonzero :
       (finiteMantissa (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat ≠ 0 := by
-    rw [finiteMantissa_toNat _ _ (fracField_lt z), ite_eq_right hexponentNonzero,
-      Model.pow2_eq_two_pow]
     omega
   set gap := (finiteScale (expField (toUInt32 z))).toNat - smallScale with hgapDef
   have hshiftedNonzero :
       (finiteMantissa (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <<< gap ≠ 0 := by
     simp [Nat.shiftLeft_eq, hmantissaNonzero]
-  rw [addDyadic_alignRight _ _ _ _ _ _ hsmall hmantissaNonzero (by omega)]
+  rw [addDyadic_alignRight _ _ _ _ _ _ hsmall (by omega)]
   by_cases hsign : smallSign = signBit (toUInt32 z)
   · subst hsign
-    rw [addDyadic_sameSign_sameExponent _ _ _ _ hsmall hshiftedNonzero,
-      Nat.add_comm small]
-    exact roundDyadic_shiftLeft_add_value z small smallScale gap hsmallLt hexponentNonzero
-      hexponentNat (by omega) (by omega)
+    rw [addDyadic_sameSign_sameExponent _ _ _ _ hsmall hshiftedNonzero, Nat.add_comm small,
+      roundDyadic_shiftLeft_add_small _ small _ smallScale gap hsmallLt hlargeLow hlargeHigh
+        (by omega) (by omega), ← hexponentNat, hfractionValue]
+    exact mkBits_fields (toUInt32 z)
   · have hlt :
         small < (finiteMantissa (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <<< gap := by
       rw [Nat.shiftLeft_eq]
       calc small < 2 ^ 24 := hsmallLt
         _ ≤ 2 ^ gap := Nat.pow_le_pow_right (by norm_num) (by omega)
         _ ≤ _ * 2 ^ gap := Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hmantissaNonzero)
-    rw [Model.addDyadic_oppositeSign_sameExponent_largeRight _ _ _ _ _ hsmall hshiftedNonzero
-      hsign hlt]
-    exact roundDyadic_shiftLeft_sub_value z small smallScale gap (Nat.pos_of_ne_zero hsmall)
-      hsmallLt hexponentNonzero hexponentNat (by omega) (by omega)
+    rw [Model.addDyadic_oppositeSign_sameExponent_largeRight _ _ _ _ _ hsign hlt,
+      roundDyadic_shiftLeft_sub_small _ small _ smallScale gap
+        (Nat.pos_of_ne_zero hsmall) hsmallLt hlargeLow hlargeHigh (by omega) (by omega),
+      ← hexponentNat, hfractionValue]
+    exact mkBits_fields (toUInt32 z)
 
 /--
 Word-level finite addition equals the exact-dyadic `addFinite?`.
@@ -524,11 +361,12 @@ theorem addFiniteWord_eq (x y : Value) :
     have hshiftNat := UInt64.toNat_sub_of_le yScale xScale hscale
     rw [ite_eq_left hscale]
     by_cases hshift : yScale - xScale ≤ 39
-    · obtain ⟨hshifted, hnonzero, hbound⟩ := shiftLeft_facts yMantissa (yScale - xScale) hyZero
-        hyMantissaLt (by simpa using UInt64.le_iff_toNat_le.mp hshift)
+    · obtain ⟨hshifted, hnonzero, hsum⟩ := NativeSmallWord.shiftLeft_add_fits yMantissa xMantissa
+        (yScale - xScale) 24 hyMantissaLt hyNatNonzero (hxMantissaLt.trans (by norm_num))
+        (by have := UInt64.le_iff_toNat_le.mp hshift; simp at this; omega)
       rw [ite_eq_left hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hxZero hnonzero
-        (by rw [hshifted]; norm_num at hxMantissaLt hbound ⊢; omega) hxScaleLe, hshifted, hshiftNat,
-        ← addDyadic_alignRight _ _ _ _ _ _ hxNatNonzero hyNatNonzero hscaleNat]
+        (by omega) hxScaleLe, hshifted, hshiftNat,
+        ← addDyadic_alignRight _ _ _ _ _ _ hxNatNonzero hscaleNat]
     · have hgap : xScale.toNat + 39 < yScale.toNat := by
         have h : ¬ (yScale - xScale).toNat ≤ 39 := fun hle =>
           hshift (UInt64.le_iff_toNat_le.mpr (by simpa using hle))
@@ -543,11 +381,11 @@ theorem addFiniteWord_eq (x y : Value) :
     have hshiftNat := UInt64.toNat_sub_of_le xScale yScale hscale'
     rw [ite_eq_right hscale]
     by_cases hshift : xScale - yScale ≤ 39
-    · obtain ⟨hshifted, hnonzero, hbound⟩ := shiftLeft_facts xMantissa (xScale - yScale) hxZero
-        hxMantissaLt (by simpa using UInt64.le_iff_toNat_le.mp hshift)
-      rw [ite_eq_left hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hnonzero hyZero
-        (by rw [hshifted]; norm_num at hyMantissaLt hbound ⊢; omega) hyScaleLe, hshifted, hshiftNat,
-        ← addDyadic_alignLeft _ _ _ _ _ _ hxNatNonzero hyNatNonzero hscaleNat]
+    · obtain ⟨hshifted, hnonzero, hsum⟩ := NativeSmallWord.shiftLeft_add_fits xMantissa yMantissa
+        (xScale - yScale) 24 hxMantissaLt hxNatNonzero (hyMantissaLt.trans (by norm_num))
+        (by have := UInt64.le_iff_toNat_le.mp hshift; simp at this; omega)
+      rw [ite_eq_left hshift, roundAddMagnitudes_eq_roundDyadic _ _ _ _ _ hnonzero hyZero hsum
+        hyScaleLe, hshifted, hshiftNat, ← addDyadic_alignLeft _ _ _ _ _ _ hyNatNonzero hscaleNat]
     · have hgap : yScale.toNat + 39 < xScale.toNat := by
         have h : ¬ (xScale - yScale).toNat ≤ 39 := fun hle =>
           hshift (UInt64.le_iff_toNat_le.mpr (by simpa using hle))

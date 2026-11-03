@@ -72,7 +72,7 @@ nonfinite input or a rounded result outside the destination range.
 -/
 abbrev convertToIntegerTiesToEven (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .nearestEven false
+  convertToInteger destination .nearest false
 
 /--
 Convert to the nearest integer, ties away from zero. Never raises inexact, and raises invalid only
@@ -96,7 +96,7 @@ input or a rounded result outside the destination range.
 -/
 abbrev convertToIntegerTowardPositive (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .towardPositive false
+  convertToInteger destination .up false
 
 /--
 Convert toward negative infinity. Never raises inexact, and raises invalid only for a nonfinite
@@ -104,12 +104,12 @@ input or a rounded result outside the destination range.
 -/
 abbrev convertToIntegerTowardNegative (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .towardNegative false
+  convertToInteger destination .down false
 
 /-- Convert to the nearest integer, ties to even, raising inexact when a valid result changes. -/
 abbrev convertToIntegerExactTiesToEven (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .nearestEven true
+  convertToInteger destination .nearest true
 
 /-- Convert to the nearest integer, ties away, raising inexact when a valid result changes. -/
 abbrev convertToIntegerExactTiesToAway (destination : IntegerFormat) :
@@ -124,12 +124,12 @@ abbrev convertToIntegerExactTowardZero (destination : IntegerFormat) :
 /-- Convert toward positive infinity, raising inexact when a valid result changes value. -/
 abbrev convertToIntegerExactTowardPositive (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .towardPositive true
+  convertToInteger destination .up true
 
 /-- Convert toward negative infinity, raising inexact when a valid result changes value. -/
 abbrev convertToIntegerExactTowardNegative (destination : IntegerFormat) :
     Datum → IntegerOutcome :=
-  convertToInteger destination .towardNegative true
+  convertToInteger destination .down true
 
 /-- Convert an arbitrary signed integer to a decimal destination, with preferred
 quantum zero and one destination rounding (§5.4.1). -/

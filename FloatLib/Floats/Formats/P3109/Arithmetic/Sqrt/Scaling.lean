@@ -14,8 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 
 If a positive radicand has leading binary exponent `L`, its square root has leading exponent
 `L / 2`, using integer floor division. Scaling the radicand by `2^(-2Q)` therefore scales its
-real square root by `2^(-Q)`. These facts connect the exact integer rounder to the report's
-normal and subnormal quantum formula.
+real square root by `2^(-Q)`. With the report's normal and subnormal quantum formula for `Q`, the
+scaled root lies in `[2^(P-1), 2^P)` for a normal result and below `2^(P-1)` for a subnormal one
+(`sqrt_scaled_bounds`), which connects the exact integer rounder to that formula.
 -/
 
 @[expose] public section
@@ -67,7 +68,11 @@ theorem nonnegative_rat_eq_ratio (radicand : Rat) (h : 0 ≤ radicand) :
     rw [Nat.cast_natAbs, abs_of_nonneg hnum]
   rw [hcast, Rat.cast_def]
 
-/-- The reference significand is the actual nonnegative root scaled by the chosen binary quantum. -/
+/--
+At the chosen quantum, the root of the scaled radicand is the actual nonnegative root times
+`2^(-Q)`. The identity holds for every quantum (`sqrt_scaled_ratio`); `sqrt_scaled_bounds` is
+where the choice of `Q` matters.
+-/
 theorem sqrt_scaled_radicand (format : Format) (radicand : Rat) (h : 0 ≤ radicand) :
     let quantum := sqrtQuantum format radicand.num.natAbs radicand.den
     let scaled :=
@@ -76,5 +81,44 @@ theorem sqrt_scaled_radicand (format : Format) (radicand : Rat) (h : 0 ≤ radic
       Real.sqrt (radicand : Real) * bpow (-quantum) := by
   dsimp only
   rw [sqrt_scaled_ratio, nonnegative_rat_eq_ratio radicand h]
+
+/--
+The report's quantum places the scaled root `√(n/d) · 2^(-Q)` in the significand range of its row:
+it is below `2^P`, at least `2^(P-1)` when the root's leading exponent reaches the minimum normal
+exponent, and below `2^(P-1)` otherwise, where `Q` is the subnormal quantum.
+-/
+theorem sqrt_scaled_bounds (format : Format) (numerator denominator : Nat)
+    (hn : numerator ≠ 0) (hd : denominator ≠ 0) :
+    let leading := RationalBinary.floorLog2 numerator denominator / 2
+    let root := Real.sqrt ((numerator : Real) / denominator) *
+      bpow (-sqrtQuantum format numerator denominator)
+    root < bpow format.precision ∧
+      (format.minimumNormalExponent ≤ leading → bpow (format.precision - 1) ≤ root) ∧
+      (leading < format.minimumNormalExponent → root < bpow (format.precision - 1)) := by
+  intro leading root
+  obtain ⟨hlow, hhigh⟩ := sqrt_floorLog2_bounds numerator denominator hn hd
+  have hquantum : sqrtQuantum format numerator denominator =
+      max leading format.minimumNormalExponent - Int.ofNat format.precision + 1 := rfl
+  have hscale := bpow_pos (-sqrtQuantum format numerator denominator)
+  have hupper : root < bpow (leading + 1 - sqrtQuantum format numerator denominator) := by
+    rw [sub_eq_add_neg, bpow_add]
+    exact mul_lt_mul_of_pos_right hhigh hscale
+  refine ⟨?_, fun hnormal => ?_, fun hsubnormal => ?_⟩
+  · refine hupper.trans_le (bpow_le_bpow_of_le ?_)
+    rw [hquantum]
+    have := le_max_left leading format.minimumNormalExponent
+    simp only [Int.ofNat_eq_natCast] at *
+    omega
+  · calc bpow (format.precision - 1)
+        = bpow leading * bpow (-sqrtQuantum format numerator denominator) := by
+          rw [← bpow_add, hquantum, max_eq_left hnormal]
+          congr 1
+          simp only [Int.ofNat_eq_natCast]
+          omega
+      _ ≤ root := mul_le_mul_of_nonneg_right hlow hscale.le
+  · refine hupper.trans_le (bpow_le_bpow_of_le ?_)
+    rw [hquantum, max_eq_right hsubnormal.le]
+    simp only [Int.ofNat_eq_natCast] at *
+    omega
 
 end FloatLib.Floats.Formats.P3109.Arithmetic

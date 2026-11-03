@@ -114,7 +114,7 @@ namespace AtValue
   ⟨Model.posInf fmt, by
     have hsupports :=
       FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
-    simp [toNumericalValue, isNaN_posInf fmt hsupports,
+    simp [toNumericalValue, isNaN_posInf,
       isInf_posInf fmt hsupports]⟩
 
 /-- Negative infinity with its total interpretation in a conventional IEEE format. -/
@@ -123,7 +123,7 @@ namespace AtValue
   ⟨Model.negInf fmt, by
     have hsupports :=
       FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
-    simp [toNumericalValue, isNaN_negInf fmt hsupports,
+    simp [toNumericalValue, isNaN_negInf,
       isInf_negInf fmt hsupports]⟩
 
 /-- The bundled executable value has its indexed total interpretation. -/

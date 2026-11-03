@@ -88,14 +88,14 @@ private theorem exists_code_two_pow (format : Format) (e : Nat)
 private theorem exists_code_one (format : Format) :
     ∃ code < format.signMaskNat, nonnegativeRatAt format code = 1 := by
   refine ⟨format.oneCodeNat, format.oneCodeNat_lt_signMaskNat, ?_⟩
-  have hw := nonnegativeRatAt_widen (Format.ofBits 2 (by decide)) format
+  have hw := nonnegativeRatAt_widen { bits := 2 } format
     format.bits_ge_two (code := 1) (by decide)
-  simp only [Format.ofBits] at hw
+  dsimp only at hw
   have he : format.oneCodeNat = 1 * 2 ^ (format.bits - 2) := by
     simp [Format.oneCodeNat, Format.payloadBits, Nat.sub_sub]
   rw [he, hw]
-  simpa [Format.ofBits, Format.signMaskNat, Format.signIndex, Format.payloadBits] using
-    nonnegativeRatAt_maxPositive (Format.ofBits 2 (by decide))
+  simpa [Format.signMaskNat, Format.signIndex, Format.payloadBits] using
+    nonnegativeRatAt_maxPositive { bits := 2 }
 
 /--
 A nonintegral positive binade has enough fraction positions for every integer up to its
@@ -176,11 +176,9 @@ private theorem exists_code_integer_neighbor (format : Format) {code : Nat}
     omega
   have hr := value.regimeRunLength_pos
   have hrle := value.regimeRunLength_le_payload
-  have hterm : value.regimeRunLength < format.payloadBits := by
-    simp only [trailingBits, hasRegimeTerminator] at ht
-    split_ifs at ht <;> omega
+  rw [trailingBits_eq] at ht
+  have hterm : value.regimeRunLength < format.payloadBits := by omega
   have hpayload : format.payloadBits = value.regimeRunLength + value.fractionBits + 3 := by
-    simp only [trailingBits, hasRegimeTerminator, hterm, decide_true, ite_true] at ht
     omega
   have hex := value.exponentField_lt_four
   have hregime : value.regimeBit = true := by
@@ -290,16 +288,23 @@ theorem exists_toRat?_integer_neighbor (value : Model format) {q : ℚ}
     simpa only [ite_true, hv, Int.cast_neg, neg_neg] using
       toRat?_signed_code format code hcode true
 
+/-- Rounding an integer between a finite value's floor and ceiling returns it exactly. -/
+private theorem toRat?_roundRat_intCast_of_between (value : Model format) {q : ℚ}
+    (hvalue : value.toRat? = some q) (n : ℤ)
+    (hlower : q.floor ≤ n) (hupper : n ≤ q.ceil) :
+    (roundRat format (n : ℚ)).toRat? = some (n : ℚ) := by
+  obtain ⟨result, hr⟩ := exists_toRat?_integer_neighbor value hvalue n hlower hupper
+  rw [roundRat_toRat? result _ hr]
+  exact hr
+
 /-- Posit floor returns the exact mathematical floor, without a further rounding error. -/
 theorem toRat?_floor_of_finite (value : Model format) {q : ℚ}
     (hvalue : value.toRat? = some q) :
     (floor value).toRat? = some (q.floor : ℚ) := by
   have hle : q.floor ≤ q.ceil := by
     exact_mod_cast (Rat.floor_le q).trans (Rat.le_ceil (x := q))
-  obtain ⟨result, hr⟩ := exists_toRat?_integer_neighbor value hvalue q.floor le_rfl hle
   simp only [floor, hvalue]
-  rw [roundRat_toRat? result _ hr]
-  exact hr
+  exact toRat?_roundRat_intCast_of_between value hvalue _ le_rfl hle
 
 /-- Posit ceiling returns the exact mathematical ceiling, without a further rounding error. -/
 theorem toRat?_ceil_of_finite (value : Model format) {q : ℚ}
@@ -307,10 +312,8 @@ theorem toRat?_ceil_of_finite (value : Model format) {q : ℚ}
     (ceil value).toRat? = some (q.ceil : ℚ) := by
   have hle : q.floor ≤ q.ceil := by
     exact_mod_cast (Rat.floor_le q).trans (Rat.le_ceil (x := q))
-  obtain ⟨result, hr⟩ := exists_toRat?_integer_neighbor value hvalue q.ceil hle le_rfl
   simp only [ceil, hvalue]
-  rw [roundRat_toRat? result _ hr]
-  exact hr
+  exact toRat?_roundRat_intCast_of_between value hvalue _ hle le_rfl
 
 /-- Nearest-integer posit rounding returns the shared exact nearest-even integer. -/
 theorem toRat?_nearestInt_of_finite (value : Model format) {q : ℚ}
@@ -323,13 +326,11 @@ theorem toRat?_nearestInt_of_finite (value : Model format) {q : ℚ}
     exact_mod_cast (Rat.floor_le q).trans (Rat.le_ceil (x := q))
   have hlo : q.floor ≤ roundRatEven q := by rcases hn with h | h <;> omega
   have hhi : roundRatEven q ≤ q.ceil := by rcases hn with h | h <;> omega
-  obtain ⟨result, hr⟩ := exists_toRat?_integer_neighbor value hvalue _ hlo hhi
   change (match value.toRat? with
     | none => nar format
     | some q => roundRat format (roundRatEven q : ℚ)).toRat? = _
   simp only [hvalue]
-  rw [roundRat_toRat? result _ hr]
-  exact hr
+  exact toRat?_roundRat_intCast_of_between value hvalue _ hlo hhi
 
 /-- Exact floor semantics also accounts for the NaR input. -/
 @[simp] theorem toRat?_floor (value : Model format) :

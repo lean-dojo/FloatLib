@@ -55,7 +55,7 @@ theorem signMaskWord_toNat (format : Format)
     omega
   unfold signMaskWord
   rw [FloatLib.Numerics.FixedWord.shiftLeft_toNat
-    (1 : UInt64) format.signIndex hindex]
+    (1 : UInt64) format.signIndex]
   · simp [Format.signMaskNat, Nat.shiftLeft_eq]
   · simp [Nat.shiftLeft_eq]
     exact Nat.pow_lt_pow_right (by decide) hindex
@@ -233,22 +233,19 @@ theorem lowMask_toNat (width : Nat) (hwidth : width < 64) :
     rw [Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) hwidth)]
     exact Nat.one_le_two_pow
 
-/-- Native low-bit extraction agrees with reduction modulo the corresponding power of two. -/
-theorem lowBits_toNat (value : UInt64) (width : Nat) (hwidth : width < 64) :
+/--
+Native low-bit extraction agrees with reduction modulo the corresponding power of two. From the
+machine width on, the mask keeps the whole word.
+-/
+theorem lowBits_toNat (value : UInt64) (width : Nat) :
     (lowBits value width).toNat = value.toNat % 2 ^ width := by
-  rw [lowBits, UInt64.toNat_and, lowMask_toNat width hwidth]
-  exact Nat.and_two_pow_sub_one_eq_mod _ _
-
-/-- Native low-bit extraction is exact through the complete machine width. -/
-theorem lowBits_toNat_of_le (value : UInt64) (width : Nat)
-    (hwidth : width ≤ 64) :
-    (lowBits value width).toNat = value.toNat % 2 ^ width := by
-  rcases hwidth.lt_or_eq with hwidth | rfl
-  · exact lowBits_toNat value width hwidth
-  · simp only [lowBits, lowMask, lt_self_iff_false, ite_false,
-      UInt64.toNat_and]
-    change value.toNat &&& 2 ^ 64 - 1 = value.toNat % 2 ^ 64
+  by_cases hwidth : width < 64
+  · rw [lowBits, UInt64.toNat_and, lowMask_toNat width hwidth]
     exact Nat.and_two_pow_sub_one_eq_mod _ _
+  · simp only [lowBits, lowMask, hwidth, ite_false, UInt64.toNat_and]
+    change value.toNat &&& 2 ^ 64 - 1 = value.toNat % 2 ^ width
+    rw [Nat.and_two_pow_sub_one_eq_mod, Nat.mod_eq_of_lt value.toNat_lt,
+      Nat.mod_eq_of_lt (value.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))]
 
 /-- Whole-word complementation flips every native bit that can be inspected. -/
 theorem bitAt_complement (value : UInt64) (index : Nat)

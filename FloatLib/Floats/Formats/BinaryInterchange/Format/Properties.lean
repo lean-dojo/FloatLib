@@ -56,6 +56,10 @@ theorem bias_lt_pow_expWidth (fmt : FloatFormat) :
   rw [two_pow_expWidth_eq_two_mul_bias_add_two]
   omega
 
+/-- An exponent field of width at least two has at least four bit patterns. -/
+theorem four_le_two_pow_expWidth (fmt : FloatFormat) : 4 ≤ 2 ^ fmt.expWidth := by
+  simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+
 /-- Whether this format contains signed infinities. -/
 @[inline] def supportsInfinity (fmt : FloatFormat) : Bool :=
   fmt.encoding == .ieee
@@ -195,6 +199,19 @@ Layout-derived counterpart of `normalMantissaExpOffset`, using the conventional 
 @[inline] def ieeeSubnormalAlignExp (fmt : FloatFormat) : Nat :=
   fmt.bias + fmt.fracWidth - 1
 
+/-- For an IEEE descriptor, the normal-significand exponent offset is the conventional one. -/
+theorem normalMantissaExpOffset_eq_ieee
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+    fmt.normalMantissaExpOffset = fmt.ieeeNormalMantissaExpOffset := by
+  simp [normalMantissaExpOffset, ieeeNormalMantissaExpOffset,
+    exponentBias_eq_bias_of_isIEEE fmt hfmt]
+
+/-- For an IEEE descriptor, the subnormal alignment shift is the conventional one. -/
+theorem subnormalAlignExp_eq_ieee
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+    fmt.subnormalAlignExp = fmt.ieeeSubnormalAlignExp := by
+  simp [subnormalAlignExp, ieeeSubnormalAlignExp, exponentBias_eq_bias_of_isIEEE fmt hfmt]
+
 /-!
 ## Layout formulas
 
@@ -219,11 +236,8 @@ theorem expAllOnesNat_eq_two_mul_bias_add_one (fmt : FloatFormat) :
 /-- Every supported descriptor has exponent fields zero, one, and the all-ones pattern. -/
 theorem one_lt_expAllOnesNat (fmt : FloatFormat) :
     1 < fmt.expAllOnesNat := by
-  have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using
-      Nat.pow_le_pow_right (by decide : 0 < (2 : Nat))
-        fmt.expWidth_ge_two
-  unfold expAllOnesNat
+  have hbias := fmt.bias_pos
+  rw [expAllOnesNat_eq_two_mul_bias_add_one]
   omega
 
 /-- A valid exponent field has a nonzero all-ones pattern. -/
@@ -256,9 +270,7 @@ theorem fracMaskNat_pos (fmt : FloatFormat) :
 /-- The largest finite exponent field is nonzero. -/
 theorem maxFiniteExpField_pos (fmt : FloatFormat) :
     0 < fmt.maxFiniteExpField := by
-  have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using
-      Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+  have hfour := fmt.four_le_two_pow_expWidth
   cases hencoding : fmt.encoding <;>
     simp [maxFiniteExpField, Encoding.maxFiniteExponent, hencoding] <;>
     omega
@@ -289,31 +301,10 @@ theorem maxNormalExponent_eq_ieee
     fmt.maxNormalExponent = Int.ofNat fmt.ieeeMaxNormalExponent := by
   obtain ⟨hencoding, hbias⟩ :=
     (isIEEE_eq_true_iff fmt).mp hfmt
-  have hge := fmt.expWidth_ge_two
-  have hwidth : fmt.expWidth = (fmt.expWidth - 1) + 1 := by
-    omega
-  have hpow :
-      2 ^ fmt.expWidth = 2 * 2 ^ (fmt.expWidth - 1) := by
-    rw [hwidth, Nat.pow_succ]
-    exact Nat.mul_comm _ _
-  have hhalf : 0 < 2 ^ (fmt.expWidth - 1) := Nat.two_pow_pos _
+  have hpow := two_pow_expWidth_eq_two_mul_bias_add_two fmt
   simp only [maxNormalExponent, maxFiniteExpField,
-    Encoding.maxFiniteExponent, ieeeMaxNormalExponent, bias, hencoding, hbias]
-  have hnat :
-      (2 ^ fmt.expWidth - 2) - (2 ^ (fmt.expWidth - 1) - 1) =
-        2 ^ (fmt.expWidth - 1) - 1 := by
-    omega
-  have hle :
-      2 ^ (fmt.expWidth - 1) - 1 ≤ 2 ^ fmt.expWidth - 2 := by
-    omega
-  calc
-    Int.ofNat (2 ^ fmt.expWidth - 2) -
-          Int.ofNat (2 ^ (fmt.expWidth - 1) - 1) =
-        Int.ofNat
-          ((2 ^ fmt.expWidth - 2) -
-            (2 ^ (fmt.expWidth - 1) - 1)) :=
-      (Int.ofNat_sub hle).symm
-    _ = Int.ofNat (2 ^ (fmt.expWidth - 1) - 1) := by rw [hnat]
+    Encoding.maxFiniteExponent, ieeeMaxNormalExponent, hencoding, hbias, Int.ofNat_eq_natCast]
+  omega
 
 /-- Exponent mask shifted into place (binary32: `0x7F800000`). -/
 @[inline] def expMaskNat (fmt : FloatFormat) : Nat :=
@@ -323,9 +314,44 @@ theorem maxNormalExponent_eq_ieee
 @[inline] def signMaskNat (fmt : FloatFormat) : Nat :=
   2 ^ (signBitIndex fmt)
 
+/-- The sign mask is the power of two just above the exponent and fraction fields. -/
+theorem signMaskNat_eq_two_pow (fmt : FloatFormat) :
+    fmt.signMaskNat = 2 ^ (fmt.expWidth + fmt.fracWidth) := by
+  unfold signMaskNat signBitIndex bitWidth
+  congr 1
+  omega
+
 /-- Quiet-NaN bit (binary32: `2^22`). -/
 @[inline] def quietBitNat (fmt : FloatFormat) : Nat :=
   2 ^ (fmt.fracWidth - 1)
 
 end FloatFormat
 end FloatLib.Floats.Formats.BinaryInterchange
+
+public meta section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange
+
+/--
+Prove `format.isIEEE = true`: from a hypothesis in context that states it, or by `decide` for a
+concrete IEEE-encoded format such as `FloatFormat.binary32`. The hypothesis is tried first and
+matched up to reducible unfolding only, so other Boolean facts in context, such as the finiteness of
+a result, are never evaluated, and a format that only later arguments fix never reaches `decide`
+when its proof is in context. The configured binary theorems take their format proof `hformat`
+last, with this tactic as its default, so a call on a concrete IEEE format passes no format proof,
+and a variable format passes `(hformat := h)` when no hypothesis is in context.
+-/
+syntax (name := ieeeFormat) "ieee_format" : tactic
+
+macro_rules
+  | `(tactic| ieee_format) =>
+    `(tactic| first
+      | with_reducible assumption
+      | decide
+      | fail "this theorem needs an IEEE-encoded format. `decide` proves `format.isIEEE = true` \
+          for a concrete IEEE format such as binary32. For a variable format, pass the proof as \
+          `(hformat := h)`.")
+
+end FloatLib.Floats.Formats.BinaryInterchange
+
+end

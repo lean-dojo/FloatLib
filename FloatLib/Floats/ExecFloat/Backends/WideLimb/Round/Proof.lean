@@ -76,47 +76,19 @@ theorem rounded_bounds (S : Nat) (hS : S ≠ 0) :
         S * 2 ^ (fmt.fracWidth - S.log2)
     2 ^ fmt.fracWidth ≤ rounded ∧ rounded ≤ 2 ^ (fmt.fracWidth + 1) := by
   intro rounded
-  have hlow := Nat.log2_self_le hS
-  have hhigh := Nat.lt_log2_self (n := S)
-  by_cases hle : fmt.fracWidth ≤ S.log2
-  · simp only [rounded, hle, ite_true]
-    have hpos : 0 < 2 ^ (S.log2 - fmt.fracWidth) := Nat.two_pow_pos _
-    have hdivLow : 2 ^ fmt.fracWidth ≤ S / 2 ^ (S.log2 - fmt.fracWidth) := by
-      rw [Nat.le_div_iff_mul_le hpos, ← pow_add, Nat.add_sub_cancel' hle]
-      exact hlow
-    have hdivHigh : S / 2 ^ (S.log2 - fmt.fracWidth) < 2 ^ (fmt.fracWidth + 1) := by
-      rw [Nat.div_lt_iff_lt_mul hpos, ← pow_add, show fmt.fracWidth + 1 + (S.log2 - fmt.fracWidth) =
-        S.log2 + 1 by omega]
-      exact hhigh
-    constructor
-    · exact le_trans hdivLow (div_two_pow_le_roundShiftRightEven _ _)
-    · have := roundShiftRightEven_le_succ S (S.log2 - fmt.fracWidth)
-      omega
-  · simp only [rounded, hle, ite_false]
-    have hlt : S.log2 < fmt.fracWidth := Nat.lt_of_not_le hle
-    constructor
-    · calc
-        2 ^ fmt.fracWidth = 2 ^ S.log2 * 2 ^ (fmt.fracWidth - S.log2) := by
-          rw [← pow_add, Nat.add_sub_cancel' (Nat.le_of_lt hlt)]
-        _ ≤ S * 2 ^ (fmt.fracWidth - S.log2) := Nat.mul_le_mul_right _ hlow
-    · calc
-        S * 2 ^ (fmt.fracWidth - S.log2) ≤ (2 ^ (S.log2 + 1) - 1) * 2 ^ (fmt.fracWidth - S.log2) :=
-          Nat.mul_le_mul_right _ (by omega)
-        _ ≤ 2 ^ (S.log2 + 1) * 2 ^ (fmt.fracWidth - S.log2) :=
-          Nat.mul_le_mul_right _ (Nat.sub_le _ _)
-        _ = 2 ^ (fmt.fracWidth + 1) := by
-          rw [← pow_add]
-          congr 1
-          omega
+  have hlow := pow2_le_roundMantissaToLeadingBitEven S fmt.fracWidth hS
+  have hhigh := roundMantissaToLeadingBitEven_le_pow2_succ S fmt.fracWidth
+  simp only [roundMantissaToLeadingBitEven, pow2_eq_two_pow, Nat.shiftLeft_eq] at hlow hhigh
+  exact ⟨hlow, hhigh⟩
 
-/-- A value in `[2^f, 2^(f + 1)]` equals `2^(f + 1)` exactly when its leading bit is at `f + 1`. -/
-theorem log2_eq_succ_iff (rounded f : Nat) (hlow : 2 ^ f ≤ rounded) (hhigh : rounded ≤ 2 ^ (f + 1)) :
+/-- A value at most `2^(f + 1)` equals `2^(f + 1)` exactly when its leading bit is at `f + 1`. -/
+theorem log2_eq_succ_iff (rounded f : Nat) (hhigh : rounded ≤ 2 ^ (f + 1)) :
     rounded.log2 = f + 1 ↔ rounded = 2 ^ (f + 1) := by
-  have hne : rounded ≠ 0 := by
-    have := Nat.two_pow_pos f
-    omega
   constructor
   · intro hlog
+    have hne : rounded ≠ 0 := by
+      rintro rfl
+      simp at hlog
     have := Nat.log2_self_le hne
     rw [hlog] at this
     omega
@@ -130,7 +102,7 @@ theorem roundNormal?_map_toModel (hexp : fmt.expWidth ≤ 32) (sign : Bool) (S :
     (jam scale : Nat) (hS : S.toNat ≠ 0) :
     (roundNormal? fmt sign S jam scale).map toModel = roundJammed fmt sign S.toNat jam scale := by
   unfold roundNormal? roundJammed
-  rw [LimbArray.log2_eq S hS]
+  rw [LimbArray.log2_eq S]
   dsimp only
   by_cases hsub : S.toNat.log2 + jam + scale < fmt.bias + 2 * fmt.fracWidth - 1
   · rw [ite_eq_left hsub, ite_eq_left hsub]
@@ -151,15 +123,12 @@ theorem roundNormal?_map_toModel (hexp : fmt.expWidth ≤ 32) (sign : Bool) (S :
       split
       · rw [LimbArray.toNat_roundShiftRightEven]
       · rw [LimbArray.toNat_shiftLeft]
-    obtain ⟨hlow, hhigh⟩ := rounded_bounds (fmt := fmt) S.toNat hS
-    have hroundedNe : rounded ≠ 0 := by
-      have := Nat.two_pow_pos fmt.fracWidth
-      omega
+    have hhigh := (rounded_bounds (fmt := fmt) S.toNat hS).2
     have hcarry : (roundedLimbs.log2 == fmt.fracWidth + 1) = decide (rounded = 2 ^ (fmt.fracWidth + 1)) := by
-      rw [LimbArray.log2_eq _ (by rw [hvalue]; exact hroundedNe), hvalue]
+      rw [LimbArray.log2_eq, hvalue]
       apply Bool.eq_iff_iff.mpr
       rw [beq_iff_eq, decide_eq_true_iff]
-      exact log2_eq_succ_iff rounded fmt.fracWidth hlow hhigh
+      exact log2_eq_succ_iff rounded fmt.fracWidth hhigh
     rw [hcarry]
     simp only [decide_eq_true_eq]
     by_cases hover : 3 * fmt.bias + 2 * fmt.fracWidth - 2 <
@@ -266,9 +235,8 @@ theorem round_eq_of_roundJammed (sign : Bool) (exact jam scale : Nat) (hexact : 
   · subst hjam0
     rw [shiftRightJam_zero] at hresult
     exact hnormalize exact hexact (Nat.add_zero _) (fun _ => rfl) (fun _ => ⟨rfl, rfl⟩) hresult
-  · have hlog : (shiftRightJam exact jam).log2 = exact.log2 - jam := by
-      apply log2_shiftRightJam
-      exact le_trans (Nat.pow_le_pow_right (by decide) (by omega)) hbig
+  · have hlog : (shiftRightJam exact jam).log2 = exact.log2 - jam :=
+      log2_shiftRightJam exact jam
     have hexactLog : fmt.fracWidth + jam + 2 ≤ exact.log2 := by
       rw [Nat.le_log2 hexact]
       exact hbig

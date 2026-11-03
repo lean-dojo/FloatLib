@@ -82,6 +82,12 @@ theorem compareNonnegativeFields_swap
         (Dyadic.compare_eq_lt_iff right left).mpr hgreater
       simp [hreverse, Ordering.swap]
 
+/-- A native word is zero exactly when its natural-number value is zero, as a Boolean test. -/
+private theorem toNat_beq_zero (value : UInt64) :
+    (value.toNat == 0) = (value == 0) := by
+  rw [Bool.eq_iff_iff]
+  simp only [beq_iff_eq, uint64_toNat_eq_zero]
+
 /--
 A recognized word shift preserves the corresponding exact natural-number alignment.
 
@@ -89,10 +95,10 @@ Arithmetic backends reuse this theorem after sharing `shiftFits` with the compar
 -/
 theorem shiftLeft_toNat
     (significand : UInt64) (shift : Nat)
-    (hshift : shift < 64) (hfit : shiftFits significand shift) :
+    (hfit : shiftFits significand shift) :
     (significand <<< UInt64.ofNat shift).toNat =
       significand.toNat <<< shift := by
-  apply FloatLib.Numerics.FixedWord.shiftLeft_toNat significand shift hshift
+  apply FloatLib.Numerics.FixedWord.shiftLeft_toNat significand shift
   simp only [shiftFits, log2Word_eq_log2] at hfit
   rcases hfit with hzero | hleading
   · subst significand
@@ -100,46 +106,24 @@ theorem shiftLeft_toNat
   · have hleadingNat :
         significand.log2.toNat = significand.toNat.log2 :=
       FloatLib.Numerics.FixedWord.log2_toNat significand
-    have hbound :
-        significand.toNat <<< shift <
-          2 ^ (significand.toNat.log2 + 1 + shift) :=
-      Nat.shiftLeft_lt (x := significand.toNat)
-        (n := significand.toNat.log2 + 1) (m := shift)
-        Nat.lt_log2_self
-    have hexponent :
-        significand.toNat.log2 + 1 + shift ≤ 64 := by
-      rw [← hleadingNat]
-      omega
-    exact lt_of_lt_of_le hbound
-      (Nat.pow_le_pow_right (by decide) hexponent)
+    exact shiftLeft_lt_two_pow_of_log2_add_le _ _ 64 (by rw [← hleadingNat]; omega)
 
 /--
 A recognized two-limb shift preserves the corresponding exact natural-number alignment.
 -/
 theorem shiftLeft128_toNat
     (significand : UInt128) (shift : Nat)
-    (hshift : shift < 128) (hfit : shiftFits128 significand shift) :
+    (hfit : shiftFits128 significand shift) :
     (UInt128.shiftLeft significand shift).toNat =
       significand.toNat <<< shift := by
-  apply UInt128.shiftLeft_toNat significand shift hshift
+  apply UInt128.shiftLeft_toNat significand shift
   rcases hfit with hzero | hleading
   · subst significand
     norm_num [UInt128.toNat]
   · have hleadingNat :
         UInt128.log2 significand = significand.toNat.log2 :=
       UInt128.log2_toNat significand
-    have hbound :
-        significand.toNat <<< shift <
-          2 ^ (significand.toNat.log2 + 1 + shift) :=
-      Nat.shiftLeft_lt (x := significand.toNat)
-        (n := significand.toNat.log2 + 1) (m := shift)
-        Nat.lt_log2_self
-    have hexponent :
-        significand.toNat.log2 + 1 + shift ≤ 128 := by
-      rw [← hleadingNat]
-      omega
-    exact lt_of_lt_of_le hbound
-      (Nat.pow_le_pow_right (by decide) hexponent)
+    exact shiftLeft_lt_two_pow_of_log2_add_le _ _ 128 (by rw [← hleadingNat]; omega)
 
 /--
 Native-word comparison returns exactly the same ordering as arbitrary-precision dyadic field
@@ -153,30 +137,8 @@ theorem compareNonnegative_eq
       Dyadic.compareNonnegativeFields
         leftSignificand.toNat leftExponent
         rightSignificand.toNat rightExponent := by
-  have hleftZero :
-      (leftSignificand.toNat == 0) = (leftSignificand == 0) := by
-    apply Bool.eq_iff_iff.mpr
-    simp only [beq_iff_eq]
-    constructor
-    · intro equality
-      apply UInt64.toNat_inj.mp
-      simpa using equality
-    · intro equality
-      subst leftSignificand
-      rfl
-  have hrightZero :
-      (rightSignificand.toNat == 0) = (rightSignificand == 0) := by
-    apply Bool.eq_iff_iff.mpr
-    simp only [beq_iff_eq]
-    constructor
-    · intro equality
-      apply UInt64.toNat_inj.mp
-      simpa using equality
-    · intro equality
-      subst rightSignificand
-      rfl
   unfold compareNonnegative Dyadic.compareNonnegativeFields
-  rw [hleftZero, hrightZero]
+  rw [toNat_beq_zero leftSignificand, toNat_beq_zero rightSignificand]
   split
   · rfl
   · split
@@ -200,13 +162,12 @@ theorem compareNonnegative_eq
             (rightSignificand.toNat <<<
               Int.toNat (rightExponent - leftExponent))
       split
-      · rename_i hshift
-        split
+      · split
         · rename_i hfit
           rw [UInt64.compare_eq_toNat_compare_toNat,
             shiftLeft_toNat rightSignificand
               (Int.toNat (rightExponent - leftExponent))
-              hshift hfit]
+              hfit]
         · rfl
       · rfl
     · change
@@ -233,13 +194,12 @@ theorem compareNonnegative_eq
               Int.toNat (leftExponent - rightExponent))
             rightSignificand.toNat
       split
-      · rename_i hshift
-        split
+      · split
         · rename_i hfit
           rw [UInt64.compare_eq_toNat_compare_toNat,
             shiftLeft_toNat leftSignificand
               (Int.toNat (leftExponent - rightExponent))
-              hshift hfit]
+              hfit]
         · rfl
       · rfl
 
@@ -256,20 +216,7 @@ private theorem word_shift_lt_twoPow128
   have hlog :
       value.log2.toNat = value.toNat.log2 :=
     FloatLib.Numerics.FixedWord.log2_toNat value
-  have hbound :
-      value.toNat <<< shift <
-        2 ^ (value.toNat.log2 + 1 + shift) :=
-    Nat.shiftLeft_lt
-      (x := value.toNat)
-      (n := value.toNat.log2 + 1)
-      (m := shift)
-      Nat.lt_log2_self
-  have hexponent :
-      value.toNat.log2 + 1 + shift ≤ 128 := by
-    rw [← hlog]
-    omega
-  exact lt_of_lt_of_le hbound
-    (Nat.pow_le_pow_right (by decide) hexponent)
+  exact shiftLeft_lt_two_pow_of_log2_add_le _ _ 128 (by rw [← hlog]; omega)
 
 /--
 Failing the 128-bit leading-bit test means a nonzero shifted word reaches at least `2^128`.
@@ -279,11 +226,8 @@ private theorem twoPow128_le_word_shift_of_not_fit
     (hvalue : value ≠ 0)
     (hfit : ¬value.log2.toNat + shift < 128) :
     2 ^ 128 ≤ value.toNat <<< shift := by
-  have hvalueNat : value.toNat ≠ 0 := by
-    intro hzero
-    apply hvalue
-    apply UInt64.toNat_inj.mp
-    simpa using hzero
+  have hvalueNat : value.toNat ≠ 0 :=
+    (uint64_toNat_eq_zero _).not.mpr hvalue
   have hlog :
       value.log2.toNat = value.toNat.log2 :=
     FloatLib.Numerics.FixedWord.log2_toNat value
@@ -291,15 +235,8 @@ private theorem twoPow128_le_word_shift_of_not_fit
       128 ≤ value.toNat.log2 + shift := by
     rw [← hlog]
     omega
-  calc
-    2 ^ 128 ≤ 2 ^ (value.toNat.log2 + shift) :=
-      Nat.pow_le_pow_right (by decide) hexponent
-    _ = 2 ^ value.toNat.log2 * 2 ^ shift := by
-      rw [pow_add]
-    _ ≤ value.toNat * 2 ^ shift :=
-      Nat.mul_le_mul_right _ (Nat.log2_self_le hvalueNat)
-    _ = value.toNat <<< shift := by
-      rw [Nat.shiftLeft_eq]
+  exact (Nat.pow_le_pow_right (by decide) hexponent).trans
+    (two_pow_log2_add_le_shiftLeft _ _ hvalueNat)
 
 /-- Shifting a nonzero word by at least 128 bits exceeds the two-limb carrier. -/
 private theorem twoPow128_le_word_shift_of_large_shift
@@ -307,21 +244,11 @@ private theorem twoPow128_le_word_shift_of_large_shift
     (hvalue : value ≠ 0)
     (hshift : 128 ≤ shift) :
     2 ^ 128 ≤ value.toNat <<< shift := by
-  have hvalueNat : value.toNat ≠ 0 := by
-    intro hzero
-    apply hvalue
-    apply UInt64.toNat_inj.mp
-    simpa using hzero
-  have hone : 1 ≤ value.toNat :=
-    Nat.one_le_iff_ne_zero.mpr hvalueNat
-  calc
-    2 ^ 128 ≤ 2 ^ shift :=
-      Nat.pow_le_pow_right (by decide) hshift
-    _ = 1 * 2 ^ shift := by simp
-    _ ≤ value.toNat * 2 ^ shift :=
-      Nat.mul_le_mul_right _ hone
-    _ = value.toNat <<< shift := by
-      rw [Nat.shiftLeft_eq]
+  have hvalueNat : value.toNat ≠ 0 :=
+    (uint64_toNat_eq_zero _).not.mpr hvalue
+  rw [Nat.shiftLeft_eq]
+  exact (Nat.pow_le_pow_right (by decide) hshift).trans
+    (Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hvalueNat))
 
 /--
 Two-limb-versus-word dyadic comparison is exactly the arbitrary-precision field comparison.
@@ -346,21 +273,12 @@ theorem compareNonnegative128ToWord_eq
     rw [compareNonnegative_eq]
     simp [UInt128.toNat, hhigh]
   · simp only [beq_iff_eq, hhigh, ite_false]
-    have hhighNat : leftSignificand.hi.toNat ≠ 0 := by
-      intro hzero
-      apply hhigh
-      apply UInt64.toNat_inj.mp
-      simpa using hzero
+    have hhighNat : leftSignificand.hi.toNat ≠ 0 :=
+      (uint64_toNat_eq_zero _).not.mpr hhigh
     have hleftLarge : 2 ^ 64 ≤ leftSignificand.toNat := by
+      have hscaled : 2 ^ 64 ≤ leftSignificand.hi.toNat * 2 ^ 64 :=
+        Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hhighNat)
       unfold UInt128.toNat
-      have hone : 1 ≤ leftSignificand.hi.toNat :=
-        Nat.one_le_iff_ne_zero.mpr hhighNat
-      have hscaled :
-          2 ^ 64 ≤ leftSignificand.hi.toNat * 2 ^ 64 := by
-        calc
-          2 ^ 64 = 1 * 2 ^ 64 := by simp
-          _ ≤ leftSignificand.hi.toNat * 2 ^ 64 :=
-            Nat.mul_le_mul_right (2 ^ 64) hone
       omega
     have hleftPositive : 0 < leftSignificand.toNat := by
       exact lt_of_lt_of_le (by positivity) hleftLarge
@@ -406,7 +324,6 @@ theorem compareNonnegative128ToWord_eq
             rw [UInt128.compare_eq_toNat_compare_toNat]
             rw [UInt128.shiftLeft_toNat]
             · simp [UInt128.toNat]
-            · exact hshift
             · simpa [UInt128.toNat] using
                 word_shift_lt_twoPow128
                   rightSignificand shift hfit
@@ -464,11 +381,8 @@ theorem isLessPowerOfTwo_eq
     simp only [beq_self_eq_true, ite_true, UInt64.toNat_zero,
       Bool.true_and, honeZero, Bool.false_eq_true, ite_false]
     split <;> simp [Nat.shiftLeft_eq, Nat.compare_eq_lt]
-  · have hzeroNat : significand.toNat ≠ 0 := by
-      intro hzeroNat
-      apply hzero
-      apply UInt64.toNat_inj.mp
-      simpa using hzeroNat
+  · have hzeroNat : significand.toNat ≠ 0 :=
+      (uint64_toNat_eq_zero _).not.mpr hzero
     simp only [beq_iff_eq, hzero, ite_false]
     have hboth :
         ¬((significand.toNat == 0 && (1 : Nat) == 0) = true) := by

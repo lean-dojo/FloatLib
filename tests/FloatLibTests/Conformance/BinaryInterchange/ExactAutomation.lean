@@ -40,7 +40,7 @@ example {fmt : FloatFormat} {leftValue rightValue : FloatLib.Numerics.Dyadic}
     (left : ExactAtFinite fmt leftValue) (right : ExactAtFinite fmt rightValue) :
     (exactNumericalSystem fmt).At
       (Model.quantizedValue fmt QuantizationPolicy.nearest 0
-        (FloatLib.Floats.Formats.BinaryInterchange.Model.addDyadic leftValue rightValue)) :=
+        (Model.Policy.addDyadic .nearest leftValue rightValue)) :=
   Operation.Checked2.applyAt
     (Model.addFinite_refines fmt QuantizationPolicy.nearest 0) left right
 

@@ -282,7 +282,7 @@ def failExactParsing : Thunk Nat := ⟨fun _ =>
         (Model.ofNatBits (fmt := f32) 0x3dcccccc)
     , parsedAs (Model.parse f32 "-0.1" (mode := .down))
         (Model.ofNatBits (fmt := f32) 0xbdcccccd)
-    , parsedAs (Model.parse f32 "3 * 2^-1")
+    , parsedAs (Model.parse f32 "0x3p-1")
         (Model.ofNatBits (fmt := f32) 0x3fc00000)
     , parsedAs (Model.parse f32 "inf") (Model.posInf f32)
     , parsedAs (Model.parse f32 "-inf") (Model.negInf f32)
@@ -493,6 +493,21 @@ def failStandardOperations : Thunk Nat := ⟨fun _ =>
         two true false false false false .eq
     , outcomeIs (Model.minimumNumber quietNaN two (status := true))
         two false false false false false .eq
+    , outcomeIs (Model.maximumNumber signalingNaN two (status := true))
+        two true false false false false .eq
+    , outcomeIs (Model.minimumNumber signalingNaN quietNaN (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
+    , sameBits (Model.minimum signalingNaN two) (Model.quietNaN signalingNaN)
+    , outcomeIs (Model.minimum signalingNaN two (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
+    , outcomeIs (Model.maximum two signalingNaN (status := true))
+        (Model.quietNaN signalingNaN) true false false false false .eq
+    , outcomeIs (Model.minimum quietNaN two (status := true))
+        (Model.quietNaN quietNaN) false false false false false .eq
+    , outcomeIs (Model.minimum zero negativeZero (status := true))
+        negativeZero false false false false false .eq
+    , outcomeIs (Model.maximum negativeZero zero (status := true))
+        zero false false false false false .eq
     , outcomeIs (Model.nextUp signalingNaN (status := true))
         (Model.quietNaN signalingNaN) true false false false false .eq
     ]

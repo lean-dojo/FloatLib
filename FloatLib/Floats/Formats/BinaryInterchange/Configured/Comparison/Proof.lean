@@ -28,41 +28,45 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /-- Quiet comparison preserves the model's answer and all five flags. -/
-theorem compareQuiet_eq_model (predicate : Model.Comparison.Predicate) (x y : Value) :
+theorem compareQuiet_eq_model (predicate : Numerics.IEEEComparison.Predicate)
+    (x y : Value) :
     compareQuiet predicate x y =
-      Model.Comparison.quiet predicate (toModel x) (toModel y) := rfl
+      Model.compareQuiet predicate (toModel x) (toModel y) := rfl
 
 /-- Signaling comparison preserves the model's answer and all five flags. -/
-theorem compareSignaling_eq_model (predicate : Model.Comparison.Predicate) (x y : Value) :
+theorem compareSignaling_eq_model (predicate : Numerics.IEEEComparison.Predicate)
+    (x y : Value) :
     compareSignaling predicate x y =
-      Model.Comparison.signaling predicate (toModel x) (toModel y) := rfl
+      Model.compareSignaling predicate (toModel x) (toModel y) := rfl
 
 /-- Configured quiet predicates use exact extended-real order on non-NaN operands. -/
-theorem compareQuiet_value_of_toEReal? (predicate : Model.Comparison.Predicate)
+theorem compareQuiet_value_of_toEReal? (predicate : Numerics.IEEEComparison.Predicate)
     {x y : Value} {a b : EReal}
     (hx : Model.toEReal? (toModel x) = some a)
     (hy : Model.toEReal? (toModel y) = some b) :
     (compareQuiet predicate x y).value = predicate.accepts (some (compare a b)) :=
-  Model.Comparison.quiet_value_of_toEReal? predicate hx hy
+  Model.compareQuiet_value_of_toEReal? predicate hx hy
 
 /-- Configured signaling predicates use the same exact numerical order. -/
-theorem compareSignaling_value_of_toEReal? (predicate : Model.Comparison.Predicate)
+theorem compareSignaling_value_of_toEReal? (predicate : Numerics.IEEEComparison.Predicate)
     {x y : Value} {a b : EReal}
     (hx : Model.toEReal? (toModel x) = some a)
     (hy : Model.toEReal? (toModel y) = some b) :
     (compareSignaling predicate x y).value = predicate.accepts (some (compare a b)) :=
-  Model.Comparison.signaling_value_of_toEReal? predicate hx hy
+  Model.compareSignaling_value_of_toEReal? predicate hx hy
 
 /-- Quiet configured comparison raises invalid precisely for signaling NaNs. -/
-theorem compareQuiet_invalid_iff (predicate : Model.Comparison.Predicate) (x y : Value) :
+theorem compareQuiet_invalid_iff (predicate : Numerics.IEEEComparison.Predicate)
+    (x y : Value) :
     (compareQuiet predicate x y).status.invalid = true ↔
       Model.isSNaN (toModel x) = true ∨ Model.isSNaN (toModel y) = true :=
-  Model.Comparison.quiet_invalid_iff predicate _ _
+  Model.compareQuiet_invalid_iff predicate _ _
 
 /-- Signaling configured comparison raises invalid precisely for NaNs. -/
-theorem compareSignaling_invalid_iff (predicate : Model.Comparison.Predicate) (x y : Value) :
+theorem compareSignaling_invalid_iff (predicate : Numerics.IEEEComparison.Predicate)
+    (x y : Value) :
     (compareSignaling predicate x y).status.invalid = true ↔
       Model.isNaN (toModel x) = true ∨ Model.isNaN (toModel y) = true :=
-  Model.Comparison.signaling_invalid_iff predicate _ _
+  Model.compareSignaling_invalid_iff predicate _ _
 
 end FloatLib.Floats.ExecFloat.Binary

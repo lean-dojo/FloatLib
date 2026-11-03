@@ -86,14 +86,34 @@ theorem uint64_high_toNat (x : UInt64) : (x >>> 32).toUInt32.toNat = x.toNat / r
 theorem uint32_toNat_lt (x : UInt32) : x.toNat < radix :=
   UInt32.toNat_lt_size x
 
-/-- The three-way split of a value around a written segment. -/
-theorem toNat_split (v : LimbArray) (i c : Nat) (h : i + c ≤ v.size) :
+/-- A native sum of words with known values is exact when the total fits in 64 bits. -/
+private theorem uint64_add_toNat_eq {x y : UInt64} {a b : Nat} (hx : x.toNat = a)
+    (hy : y.toNat = b) (hfit : a + b < 2 ^ 64) : (x + y).toNat = a + b := by
+  subst hx hy
+  exact uint64_add_toNat_of_lt x y hfit
+
+/-- A native product of words with known values is exact when it fits in 64 bits. -/
+private theorem uint64_mul_toNat_eq {x y : UInt64} {a b : Nat} (hx : x.toNat = a)
+    (hy : y.toNat = b) (hfit : a * b < 2 ^ 64) : (x * y).toNat = a * b := by
+  subst hx hy
+  exact uint64_mul_toNat_of_lt x y hfit
+
+/--
+The three-way split of a value around a written segment.
+
+Limbs past the stored size read as zero, so the split also holds when the segment runs past the
+end of the array; the top part is then empty.
+-/
+theorem toNat_split (v : LimbArray) (i c : Nat) :
     toNat v = segment v 0 i + radix ^ i * segment v i c +
       radix ^ (i + c) * segment v (i + c) (v.size - (i + c)) := by
-  unfold toNat
-  rw [show v.size = i + c + (v.size - (i + c)) by omega, segment_add, segment_add,
-    show i + c + (v.size - (i + c)) - (i + c) = v.size - (i + c) by omega]
-  rw [Nat.zero_add, Nat.zero_add, pow_add]
+  by_cases h : i + c ≤ v.size
+  · unfold toNat
+    rw [show v.size = i + c + (v.size - (i + c)) by omega, segment_add, segment_add,
+      show i + c + (v.size - (i + c)) - (i + c) = v.size - (i + c) by omega]
+    rw [Nat.zero_add, Nat.zero_add, pow_add]
+  · rw [show v.size - (i + c) = 0 by omega, segment_zero, Nat.mul_zero, Nat.add_zero,
+      toNat_eq_segment_of_size_le (show v.size ≤ i + c by omega), segment_add, Nat.zero_add]
 
 /-! ## Carry propagation -/
 
@@ -137,11 +157,9 @@ theorem carryLoop_spec (count index : Nat) (carry : UInt32) (out : Array UInt32)
         set out' := out.setIfInBounds index sum.toUInt32 with hout'
         have hlimb := uint32_toNat_lt (out.getD index 0)
         have hcarryLt := uint32_toNat_lt carry
-        have hsumNat : sum.toNat = (out.getD index 0).toNat + carry.toNat := by
-          rw [hsum, uint64_add_toNat_of_lt, UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-          rw [UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-          unfold radix at hlimb hcarryLt
-          omega
+        have hsumNat : sum.toNat = (out.getD index 0).toNat + carry.toNat :=
+          uint64_add_toNat_eq (UInt32.toNat_toUInt64 _) (UInt32.toNat_toUInt64 _)
+            (by unfold radix at hlimb hcarryLt; omega)
         have hindex : index < out.size := by omega
         have hlimbEq : (⟨out⟩ : LimbArray).limb index = out.getD index 0 := rfl
         have hseg := segment_succ (⟨out⟩ : LimbArray) index count
@@ -169,12 +187,27 @@ theorem carryLoop_spec (count index : Nat) (carry : UInt32) (out : Array UInt32)
         · intro i hi
           rw [ihlimb i (by omega), hout', limb_setIfInBounds, ite_eq_right (by omega)]
 
-/-- Adding a word at a limb position, when the sum fits the stored limbs. -/
+/-- Adding the zero word at any limb position leaves the array unchanged. -/
+private theorem addWordAt_zero (v : LimbArray) (index : Nat) : addWordAt v index 0 = v := by
+  unfold addWordAt
+  cases v.size - index <;> simp [carryLoop]
+
+/--
+Adding a word at a limb position, when the sum fits the stored limbs.
+
+A fitting sum already places a nonzero word inside the array.
+-/
 theorem toNat_addWordAt (v : LimbArray) (index : Nat) (w : UInt32)
-    (hindex : index ≤ v.size)
     (hfit : toNat v + w.toNat * radix ^ index < radix ^ v.size) :
     toNat (addWordAt v index w) = toNat v + w.toNat * radix ^ index := by
-  have hsplit := toNat_split v index (v.size - index) (by omega)
+  by_cases hindex : index ≤ v.size
+  swap
+  · have hw : w.toNat = 0 :=
+      FixedWord.eq_zero_of_mul_two_pow_lt (shift := 32 * index) (width := 32 * v.size)
+        (by rw [← radix_pow, ← radix_pow]; omega) (by omega)
+    rw [show w = 0 from UInt32.toNat_inj.mp (by simpa using hw), addWordAt_zero]
+    simp
+  have hsplit := toNat_split v index (v.size - index)
   rw [show index + (v.size - index) = v.size by omega, Nat.sub_self, segment_zero,
     Nat.mul_zero, Nat.add_zero] at hsplit
   have hsegFit : segment v index (v.size - index) + w.toNat < radix ^ (v.size - index) := by
@@ -193,7 +226,7 @@ theorem toNat_addWordAt (v : LimbArray) (index : Nat) (w : UInt32)
     change (carryLoop _ _ _ _).size = _
     rw [size_carryLoop]
     rfl
-  have hsplitRes := toNat_split (addWordAt v index w) index (v.size - index) (by omega)
+  have hsplitRes := toNat_split (addWordAt v index w) index (v.size - index)
   rw [hsizeRes, show index + (v.size - index) = v.size by omega, Nat.sub_self, segment_zero,
     Nat.mul_zero, Nat.add_zero] at hsplitRes
   rw [hsplitRes, hsplit]
@@ -217,7 +250,10 @@ theorem size_addWordAt (v : LimbArray) (index : Nat) (w : UInt32) :
   rw [size_carryLoop]
   rfl
 
-/-- The 64-bit shifted word splits into a low and a high limb. -/
+/--
+Shifting a 32-bit word left by fewer than 32 bits inside a `UInt64` does not overflow, so the
+shifted word has value `w * 2 ^ r` and can then be split into a low and a high limb.
+-/
 theorem shifted_word_toNat (w : UInt32) (r : Nat) (hr : r < 32) :
     (w.toUInt64 <<< UInt64.ofNat r).toNat = w.toNat * 2 ^ r := by
   rw [shiftLeft_toNat_mod _ _ (hr.trans (by decide)), UInt32.toNat_toUInt64]
@@ -230,11 +266,23 @@ theorem shifted_word_toNat (w : UInt32) (r : Nat) (hr : r < 32) :
     _ = 2 ^ 63 := by decide
     _ < 2 ^ 64 := by decide
 
-/-- Adding `w * 2^k`, when the sum fits the stored limbs and bit `k` lies within the array. -/
+/--
+Adding `w * 2^k`, when the sum fits the stored limbs.
+
+A fitting sum places bit `k` of a nonzero word within the array, and adding the zero word changes
+nothing.
+-/
 theorem toNat_addAt (v : LimbArray) (k : Nat) (w : UInt32)
-    (hk : k / 32 + 1 ≤ v.size)
     (hfit : toNat v + w.toNat * 2 ^ k < radix ^ v.size) :
     toNat (addAt v k w) = toNat v + w.toNat * 2 ^ k := by
+  by_cases hw : w.toNat = 0
+  · have hzero : w = 0 := UInt32.toNat_inj.mp (by simpa using hw)
+    subst hzero
+    simp [addAt, addWordAt_zero]
+  have hk : k / 32 + 1 ≤ v.size := by
+    by_contra hcontra
+    exact hw (FixedWord.eq_zero_of_mul_two_pow_lt (shift := k) (width := 32 * v.size)
+      (by rw [← radix_pow]; omega) (by omega))
   unfold addAt
   set shifted : UInt64 := w.toUInt64 <<< UInt64.ofNat (k % 32) with hshifted
   have hshiftedNat : shifted.toNat = w.toNat * 2 ^ (k % 32) :=
@@ -255,10 +303,10 @@ theorem toNat_addAt (v : LimbArray) (k : Nat) (w : UInt32)
   have hfit1 : toNat v + shifted.toUInt32.toNat * radix ^ (k / 32) < radix ^ v.size := by
     rw [hdecomp] at hfit
     omega
-  rw [toNat_addWordAt _ _ _ (by rw [size_addWordAt]; omega)]
-  · rw [toNat_addWordAt _ _ _ (by omega) hfit1, hdecomp]
+  rw [toNat_addWordAt]
+  · rw [toNat_addWordAt _ _ _ hfit1, hdecomp]
     ring
-  · rw [size_addWordAt, toNat_addWordAt _ _ _ (by omega) hfit1, Nat.add_assoc, ← hdecomp]
+  · rw [size_addWordAt, toNat_addWordAt _ _ _ hfit1, Nat.add_assoc, ← hdecomp]
     exact hfit
 
 /-- Adding a word at a bit offset keeps the limb count. -/
@@ -302,16 +350,11 @@ theorem addLoop_spec (a b : LimbArray) (count index : Nat) (carry : UInt32)
       have hb := uint32_toNat_lt (b.limb index)
       have hc := uint32_toNat_lt carry
       have hpair : ((a.limb index).toUInt64 + (b.limb index).toUInt64).toNat =
-          (a.limb index).toNat + (b.limb index).toNat := by
-        rw [uint64_add_toNat_of_lt, UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-        rw [UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-        unfold radix at ha hb
-        omega
-      have hsumNat : sum.toNat = (a.limb index).toNat + (b.limb index).toNat + carry.toNat := by
-        rw [hsum, uint64_add_toNat_of_lt, hpair, UInt32.toNat_toUInt64]
-        rw [hpair, UInt32.toNat_toUInt64]
-        unfold radix at ha hb hc
-        omega
+          (a.limb index).toNat + (b.limb index).toNat :=
+        uint64_add_toNat_eq (UInt32.toNat_toUInt64 _) (UInt32.toNat_toUInt64 _)
+          (by unfold radix at ha hb; omega)
+      have hsumNat : sum.toNat = (a.limb index).toNat + (b.limb index).toNat + carry.toNat :=
+        uint64_add_toNat_eq hpair (UInt32.toNat_toUInt64 _) (by unfold radix at ha hb hc; omega)
       have hsize' : index + 1 + count < out'.size := by
         rw [hout', Array.size_setIfInBounds]
         omega
@@ -483,10 +526,14 @@ theorem size_mulRow (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
       unfold mulRow
       rw [ih, Array.size_setIfInBounds]
 
-/-- A row of the schoolbook product adds `m` times a segment of `b` at its offset. -/
+/--
+A row of the schoolbook product adds `m` times a segment of `b` at its offset.
+
+The row overwrites the slot above the segment with its final carry, so that slot's old contents
+do not matter.
+-/
 theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry : UInt32)
-    (out : Array UInt32) (hsize : offset + j + count < out.size)
-    (hslot : (⟨out⟩ : LimbArray).limb (offset + j + count) = 0) :
+    (out : Array UInt32) (hsize : offset + j + count < out.size) :
     segment (⟨mulRow b m offset count j carry out⟩ : LimbArray) (offset + j) (count + 1) =
         segment (⟨out⟩ : LimbArray) (offset + j) count + m.toNat * segment b j count +
           carry.toNat ∧
@@ -513,32 +560,20 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
       have hc := uint32_toNat_lt carry
       have hprod : m.toNat * (b.limb j).toNat ≤ (radix - 1) * (radix - 1) :=
         Nat.mul_le_mul (by omega) (by omega)
-      have hmul : (m.toUInt64 * (b.limb j).toUInt64).toNat = m.toNat * (b.limb j).toNat := by
-        rw [uint64_mul_toNat_of_lt, UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-        rw [UInt32.toNat_toUInt64, UInt32.toNat_toUInt64]
-        unfold radix at hprod
-        omega
+      have hmul : (m.toUInt64 * (b.limb j).toUInt64).toNat = m.toNat * (b.limb j).toNat :=
+        uint64_mul_toNat_eq (UInt32.toNat_toUInt64 _) (UInt32.toNat_toUInt64 _)
+          (by unfold radix at hprod; omega)
       have hadd1 : (m.toUInt64 * (b.limb j).toUInt64 + (out.getD (offset + j) 0).toUInt64).toNat =
-          m.toNat * (b.limb j).toNat + (out.getD (offset + j) 0).toNat := by
-        rw [uint64_add_toNat_of_lt, hmul, UInt32.toNat_toUInt64]
-        rw [hmul, UInt32.toNat_toUInt64]
-        unfold radix at hprod ho
-        omega
+          m.toNat * (b.limb j).toNat + (out.getD (offset + j) 0).toNat :=
+        uint64_add_toNat_eq hmul (UInt32.toNat_toUInt64 _) (by unfold radix at hprod ho; omega)
       have htermNat : term.toNat =
-          m.toNat * (b.limb j).toNat + (out.getD (offset + j) 0).toNat + carry.toNat := by
-        rw [hterm, uint64_add_toNat_of_lt, hadd1, UInt32.toNat_toUInt64]
-        rw [hadd1, UInt32.toNat_toUInt64]
-        unfold radix at hprod ho hc
-        omega
+          m.toNat * (b.limb j).toNat + (out.getD (offset + j) 0).toNat + carry.toNat :=
+        uint64_add_toNat_eq hadd1 (UInt32.toNat_toUInt64 _) (by unfold radix at hprod ho hc; omega)
       have hlimbEq : (⟨out⟩ : LimbArray).limb (offset + j) = out.getD (offset + j) 0 := rfl
       have hsize' : offset + (j + 1) + count < out'.size := by
         rw [hout', Array.size_setIfInBounds]
         omega
-      have hslot' : (⟨out'⟩ : LimbArray).limb (offset + (j + 1) + count) = 0 := by
-        rw [hout', limb_setIfInBounds, ite_eq_right (by omega)]
-        rw [show offset + (j + 1) + count = offset + j + (count + 1) by omega]
-        exact hslot
-      obtain ⟨ihseg, ihlimb⟩ := ih (j + 1) (term >>> 32).toUInt32 out' hsize' hslot'
+      obtain ⟨ihseg, ihlimb⟩ := ih (j + 1) (term >>> 32).toUInt32 out' hsize'
       have hsegOut' : segment (⟨out'⟩ : LimbArray) (offset + (j + 1)) count =
           segment (⟨out⟩ : LimbArray) (offset + j + 1) count := by
         rw [show offset + (j + 1) = offset + j + 1 by omega]
@@ -569,11 +604,14 @@ theorem size_mulRows (a b : LimbArray) (count i : Nat) (out : Array UInt32) :
       unfold mulRows
       rw [ih, size_mulRow]
 
-/-- The row loop maintains the partial product and the zero limbs above it. -/
+/--
+The row loop maintains the partial product.
+
+The limbs above the partial product are zero: the partial product is below `radix ^ (i + b.size)`.
+-/
 theorem mulRows_spec (a b : LimbArray) (count i : Nat) (out : Array UInt32)
     (hsize : out.size = a.size + b.size) (hrows : i + count = a.size)
-    (hvalue : toNat (⟨out⟩ : LimbArray) = segment a 0 i * toNat b)
-    (hzero : ∀ k, i + b.size ≤ k → (⟨out⟩ : LimbArray).limb k = 0) :
+    (hvalue : toNat (⟨out⟩ : LimbArray) = segment a 0 i * toNat b) :
     toNat (⟨mulRows a b count i out⟩ : LimbArray) = segment a 0 (i + count) * toNat b := by
   induction count generalizing i out with
   | zero =>
@@ -583,8 +621,25 @@ theorem mulRows_spec (a b : LimbArray) (count i : Nat) (out : Array UInt32)
       set out' := mulRow b (a.limb i) i b.size 0 0 out with hout'
       have hi : i < a.size := by omega
       have hrowSize : i + 0 + b.size < out.size := by omega
-      have hslot : (⟨out⟩ : LimbArray).limb (i + 0 + b.size) = 0 := hzero _ (by omega)
-      obtain ⟨hseg, hlimb⟩ := mulRow_spec b (a.limb i) i b.size 0 0 out hrowSize hslot
+      have hsplitOut := toNat_split (⟨out⟩ : LimbArray) i b.size
+      have htopOut : segment (⟨out⟩ : LimbArray) (i + b.size)
+          ((⟨out⟩ : LimbArray).size - (i + b.size)) = 0 := by
+        have hproduct : segment a 0 i * toNat b < radix ^ (i + b.size) := by
+          rw [pow_add]
+          exact Nat.mul_lt_mul'' (segment_lt a 0 i) (toNat_lt b)
+        by_contra hne
+        have : radix ^ (i + b.size) ≤ radix ^ (i + b.size) *
+            segment (⟨out⟩ : LimbArray) (i + b.size) ((⟨out⟩ : LimbArray).size - (i + b.size)) :=
+          Nat.le_mul_of_pos_right _ (Nat.pos_of_ne_zero hne)
+        omega
+      have hzero : ∀ k, i + b.size ≤ k → (⟨out⟩ : LimbArray).limb k = 0 := by
+        intro k hk
+        by_cases hks : k < out.size
+        · have := segment_eq_zero_iff.mp htopOut (k - (i + b.size))
+            (by change k - (i + b.size) < out.size - (i + b.size); omega)
+          rwa [show i + b.size + (k - (i + b.size)) = k by omega] at this
+        · exact limb_eq_zero_of_size_le _ (by change out.size ≤ k; omega)
+      obtain ⟨hseg, hlimb⟩ := mulRow_spec b (a.limb i) i b.size 0 0 out hrowSize
       simp only [Nat.add_zero, UInt32.toNat_zero] at hseg hlimb
       have hsize' : out'.size = a.size + b.size := by
         rw [hout', size_mulRow, hsize]
@@ -593,22 +648,12 @@ theorem mulRows_spec (a b : LimbArray) (count i : Nat) (out : Array UInt32)
         rw [hout', hlimb k (Or.inr (by omega))]
         exact hzero k (by omega)
       have hvalue' : toNat (⟨out'⟩ : LimbArray) = segment a 0 (i + 1) * toNat b := by
-        have hsplit := toNat_split (⟨out'⟩ : LimbArray) i (b.size + 1) (by
-          change i + (b.size + 1) ≤ out'.size
-          omega)
-        have hsplitOut := toNat_split (⟨out⟩ : LimbArray) i b.size (by
-          change i + b.size ≤ out.size
-          omega)
+        have hsplit := toNat_split (⟨out'⟩ : LimbArray) i (b.size + 1)
         have htop : segment (⟨out'⟩ : LimbArray) (i + (b.size + 1))
             ((⟨out'⟩ : LimbArray).size - (i + (b.size + 1))) = 0 := by
           apply segment_eq_zero_of_limb_eq_zero
           intro k _
           exact hzero' _ (by omega)
-        have htopOut : segment (⟨out⟩ : LimbArray) (i + b.size)
-            ((⟨out⟩ : LimbArray).size - (i + b.size)) = 0 := by
-          apply segment_eq_zero_of_limb_eq_zero
-          intro k _
-          exact hzero _ (by omega)
         have hlow : segment (⟨out'⟩ : LimbArray) 0 i = segment (⟨out⟩ : LimbArray) 0 i := by
           apply segment_congr
           intro k hk
@@ -620,7 +665,7 @@ theorem mulRows_spec (a b : LimbArray) (count i : Nat) (out : Array UInt32)
           ← toNat_eq_segment_of_size_le (Nat.le_refl _)]
         ring
       exact (show i + 1 + count = i + (count + 1) by omega) ▸
-        ih (i + 1) out' hsize' (by omega) hvalue' hzero'
+        ih (i + 1) out' hsize' (by omega) hvalue'
 
 /-- A product has as many limbs as the two operands together. -/
 @[simp] theorem size_mul (a b : LimbArray) : (mul a b).size = a.size + b.size := by
@@ -635,7 +680,5 @@ theorem mulRows_spec (a b : LimbArray) (count i : Nat) (out : Array UInt32)
     rfl
   · change toNat (zero (a.size + b.size)) = _
     simp
-  · intro k _
-    exact limb_zero _ _
 
 end FloatLib.Numerics.LimbArray

@@ -21,25 +21,32 @@ combinations reserved for infinity and NaN.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.DPD
 
+/-- A leading digit and high exponent bits in range always form a finite combination field, below
+the patterns 30 and 31 reserved for infinity and NaN. -/
 theorem combination_lt (leading high : Nat) (hl : leading < 10) (hh : high < 3) :
     combination leading high < 30 := by
   unfold combination
   split_ifs <;> omega
 
+/-- The leading digit read from any combination field is a decimal digit. -/
 theorem leadingDigit_lt (field : Nat) : leadingDigit field < 10 := by
   unfold leadingDigit
   split_ifs <;> omega
 
+/-- The high exponent bits read from a finite combination field are below 3; the fourth pair is
+reserved. -/
 theorem highExponent_lt (field : Nat) (h : field < 30) : highExponent field < 3 := by
   unfold highExponent
   split_ifs <;> omega
 
+/-- Reading the leading digit back from a combination field recovers the stored digit. -/
 @[simp] theorem leadingDigit_combination (leading high : Nat)
     (hl : leading < 10) (hh : high < 3) :
     leadingDigit (combination leading high) = leading := by
   unfold leadingDigit combination
   split_ifs <;> omega
 
+/-- Reading the high exponent bits back from a combination field recovers the stored bits. -/
 @[simp] theorem highExponent_combination (leading high : Nat)
     (hl : leading < 10) (hh : high < 3) :
     highExponent (combination leading high) = high := by
@@ -69,13 +76,11 @@ theorem encodeFields_extract (f : Format) (leading e trailing : Nat)
     simp only [encodeFields, Nat.add_mul, Nat.mul_assoc]
   have hdiv : encodeFields f leading e trailing / f.trailingBase =
       combination leading (e / f.exponentBase) * f.exponentBase + e % f.exponentBase := by
-    rw [hn, Nat.add_comm, Nat.add_mul_div_right _ _ f.trailingBase_pos,
-      Nat.div_eq_of_lt ht, Nat.zero_add]
+    rw [hn, Bits.mul_add_div_of_lt ht]
   dsimp only
   refine ⟨?_, ?_, ?_⟩
   · rw [Nat.mul_comm f.exponentBase f.trailingBase, ← Nat.div_div_eq_div_mul, hdiv,
-      Nat.add_comm, Nat.add_mul_div_right _ _ f.exponentBase_pos,
-      Nat.div_eq_of_lt (Nat.mod_lt e f.exponentBase_pos), Nat.zero_add]
+      Bits.mul_add_div_of_lt (Nat.mod_lt e f.exponentBase_pos)]
   · rw [hdiv, Nat.mul_add_mod_self_right, Nat.mod_mod]
   · rw [hn, Nat.mul_add_mod_self_right, Nat.mod_eq_of_lt ht]
 

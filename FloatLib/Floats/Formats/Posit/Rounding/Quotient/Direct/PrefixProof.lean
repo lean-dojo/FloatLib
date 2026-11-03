@@ -238,20 +238,10 @@ theorem jamRemainder_bounds
     (hupper : quotient < 2 ^ (leading + 1)) :
     2 ^ leading ≤ jamRemainder quotient remainder ∧
       jamRemainder quotient remainder < 2 ^ (leading + 1) := by
+  have hpowerEven : 2 ^ (leading + 1) % 2 = 0 :=
+    Nat.two_pow_mod_two_eq_zero.2 (Nat.succ_pos leading)
   rw [jamRemainder_eq]
-  by_cases hremainder : remainder = 0
-  · simp [hremainder, hlower, hupper]
-  · rw [ite_eq_right hremainder]
-    by_cases heven : quotient % 2 = 0
-    · rw [ite_eq_left heven]
-      constructor
-      · omega
-      · have hpowerEven : 2 ^ (leading + 1) % 2 = 0 := by
-          rw [pow_succ]
-          omega
-        omega
-    · rw [ite_eq_right heven]
-      exact ⟨hlower, hupper⟩
+  split_ifs <;> omega
 
 /-! ## Bracketing the retained quotient prefix -/
 
@@ -266,7 +256,6 @@ theorem trailingRat_streamPrefix_jammed_le_quotientFraction
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hretained : retained < leading + 2) :
     Model.trailingRat retained
@@ -300,25 +289,10 @@ theorem trailingRat_streamPrefix_jammed_le_quotientFraction
     rw [hjammedRaw]
     exact paddedStreamPrefix_jamRemainder_le
       raw remainder (leading + 2) retained hretained
-  have hpaddedBound :
-      pfx * 2 ^ shift < 2 ^ width :=
-    lt_of_le_of_lt hpaddedLe hrawBound
-  have hprefixValue :
-      Model.trailingRat retained pfx =
-        Model.trailingRat width (pfx * 2 ^ shift) := by
-    have hwidth : retained + shift = width := by
-      dsimp [shift, width]
-      omega
-    rw [← hwidth]
-    exact (trailingRat_mul_two_pow retained pfx shift).symm
   have hprefixLeRaw :
       Model.trailingRat retained pfx ≤
-        Model.trailingRat width raw := by
-    rw [hprefixValue]
-    rcases hpaddedLe.eq_or_lt with hequal | hlt
-    · rw [hequal]
-    · exact
-        (Model.trailingRat_lt_of_lt hpaddedBound hrawBound hlt).le
+        Model.trailingRat width raw :=
+    trailingRat_le_of_padded_le hretained.le hrawBound hpaddedLe
   have hrawValue :
       Model.trailingRat width raw =
         (quotient : Rat) / (2 ^ leading : Nat) *
@@ -328,7 +302,7 @@ theorem trailingRat_streamPrefix_jammed_le_quotientFraction
       hexponent hlower hupper
   have hfractionLower :=
     (quotientFraction_bounds quotient remainder denominator
-      hdenominator hremainder).1
+      hremainder).1
   have hleadingPositive : (0 : Rat) < (2 ^ leading : Nat) := by
     exact_mod_cast Nat.two_pow_pos leading
   have hpowerNonnegative :
@@ -366,7 +340,6 @@ theorem quotientFraction_lt_trailingRat_streamPrefix_jammed_succ
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hretained : retained < leading + 2)
     (hsuccessor :
@@ -412,19 +385,17 @@ theorem quotientFraction_lt_trailingRat_streamPrefix_jammed_succ
     rw [hjammedRaw]
     exact quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
       raw remainder denominator (leading + 2) retained
-      hdenominator hremainder hretained
+      hremainder hretained
   have hnormalizedBoundary :=
     (quotientFraction_lt_trailingRat_iff
       exponentField quotient remainder denominator leading boundary
-      hexponent hlower hupper hdenominator hremainder
+      hexponent hlower hupper hremainder
       (by simpa [width] using hboundaryBound)).2
       (by simpa [raw] using hexactBoundary)
   have hboundaryValue :
       Model.trailingRat retained (pfx + 1) =
-        Model.trailingRat width boundary := by
-    dsimp [boundary]
-    rw [← hwidth]
-    exact (trailingRat_mul_two_pow retained (pfx + 1) shift).symm
+        Model.trailingRat width boundary :=
+    (trailingRat_widen (pfx + 1) hretained.le).symm
   change
     (((quotient : Rat) +
             (remainder : Rat) / (denominator : Rat)) /
@@ -439,7 +410,6 @@ theorem quotientFraction_normalized_lt_sixteen
     (exponentField quotient remainder denominator leading : Nat)
     (hexponent : exponentField < 4)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (((quotient : Rat) +
             (remainder : Rat) / (denominator : Rat)) /
@@ -448,7 +418,7 @@ theorem quotientFraction_normalized_lt_sixteen
       16 := by
   have hfractionUpper :=
     (quotientFraction_bounds quotient remainder denominator
-      hdenominator hremainder).2
+      hremainder).2
   have hquotientSuccessorLe :
       quotient + 1 ≤ 2 ^ (leading + 1) := by
     omega
@@ -665,32 +635,10 @@ theorem prefixAtLeading_significand_bounds
         (prefixAtLeading leading numerator denominator).significand ∧
       (prefixAtLeading leading numerator denominator).significand <
         2 ^ (leading + 1) := by
-  let normalized :=
-    normalizeSignificands numerator.significand denominator.significand
-  let commonLeading :=
-    max numerator.significand.log2 denominator.significand.log2
-  let steps :=
-    if normalized.numerator < normalized.denominator then leading + 1 else leading
-  have hnormalized :=
-    normalizeSignificands_spec numerator.significand denominator.significand
-      hnumerator hdenominator
-  have hquotient :=
-    normalizedQuotient_bounds leading commonLeading
-      normalized.numerator normalized.denominator
-      hnormalized.numerator_lower hnormalized.numerator_upper
-      hnormalized.denominator_lower hnormalized.denominator_upper
-  change
-    2 ^ leading ≤
-        (normalized.numerator * 2 ^ steps) / normalized.denominator ∧
-      (normalized.numerator * 2 ^ steps) / normalized.denominator <
-        2 ^ (leading + 1) at hquotient
-  have hjammed :=
-    jamRemainder_bounds leading
-      ((normalized.numerator * 2 ^ steps) / normalized.denominator)
-      ((normalized.numerator * 2 ^ steps) % normalized.denominator)
-      hquotient.1 hquotient.2
-  simpa [prefixAtLeading, normalized, steps, Nat.shiftLeft_eq] using
-    hjammed
+  obtain ⟨-, hlower, hupper, -⟩ :=
+    prefixAtLeading_quotient_spec leading numerator denominator hnumerator hdenominator
+  simpa [prefixAtLeading, Nat.shiftLeft_eq] using
+    jamRemainder_bounds leading _ _ hlower hupper
 
 /--
 Before jamming, the generated quotient and exact Euclidean remainder denote the input dyadic
@@ -738,11 +686,10 @@ theorem prefixAtLeading_exactFraction
       hnormalized.denominator_eq]
     exact shiftedRatio_eq numerator.significand denominator.significand
       commonLeading (Nat.le_max_left _ _) (Nat.le_max_right _ _)
-  have hnormalizedDenominator : normalized.denominator ≠ 0 := by
-    have hpositive :=
-      (Nat.two_pow_pos commonLeading).trans_le
-        hnormalized.denominator_lower
-    exact Nat.ne_of_gt hpositive
+  obtain ⟨hdenominatorPositive, -⟩ :=
+    prefixAtLeading_quotient_spec leading numerator denominator hnumerator hdenominator
+  have hnormalizedDenominator : normalized.denominator ≠ 0 :=
+    hdenominatorPositive.ne'
   have hquotient :=
     scaledRatio_eq_quotientFraction
       normalized.numerator normalized.denominator steps

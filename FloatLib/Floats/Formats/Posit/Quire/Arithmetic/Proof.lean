@@ -26,6 +26,12 @@ semantics. The refinement theorems cover these operations from Posit Standard (2
 * `qMulAdd` and `qMulSub`; and
 * `qToP`.
 
+For each accumulation and quire-quire operation there are three kinds of result: on ordinary
+inputs whose exact coefficient stays ordinary, the stored coefficient and the rational value are
+exact (`coefficient_*_of_ordinary`, `toRat?_*_of_ordinary`); an exact coefficient outside the
+ordinary range gives quire NaR (`*_eq_nar_of_not_ordinary`); and every NaR input gives quire NaR
+(the `*_nar_*` simp lemmas).
+
 The runtime definitions live in `Arithmetic.Runtime`. Keeping the refinement layer separate lets
 execution-only clients use the integer and dyadic kernels without importing the full proof graph.
 
@@ -48,18 +54,15 @@ variable {format : Format}
     pToQ (FloatLib.Floats.Formats.Posit.Model.nar format) = nar format := by
   simp [pToQ]
 
+/-- Zero is an ordinary quire coefficient. -/
+private theorem ordinaryCoefficient_zero : OrdinaryCoefficient format 0 :=
+  ordinaryCoefficient_of_natAbs_lt (by simp)
+
 /-- Converting posit zero to a quire produces quire zero. -/
 @[simp] theorem pToQ_zero (format : Format) :
     pToQ (FloatLib.Floats.Formats.Posit.Model.zero format) = zero format := by
-  have hzero : OrdinaryCoefficient format 0 := by
-    rw [OrdinaryCoefficient,
-      FloatLib.Numerics.Representations.FixedInt.minValue_eq (width_pos format),
-      FloatLib.Numerics.Representations.FixedInt.maxValue_eq]
-    have hpower : (0 : Int) < 2 ^ (width format - 1) :=
-      Int.pow_pos (by decide)
-    omega
   simp [pToQ, coefficientOfDyadic, FloatLib.Numerics.Dyadic.zero,
-    FloatLib.Numerics.Dyadic.signedSignificand, ofCoefficient, hzero, zero]
+    FloatLib.Numerics.Dyadic.signedSignificand, ofCoefficient, ordinaryCoefficient_zero, zero]
 
 /-- Quire negation fixes NaR. -/
 @[simp] theorem qNegate_nar (format : Format) :
@@ -69,17 +72,10 @@ variable {format : Format}
 /-- Quire negation fixes zero. -/
 @[simp] theorem qNegate_zero (format : Format) :
     qNegate (zero format) = zero format := by
-  have hzero : OrdinaryCoefficient format 0 := by
-    rw [OrdinaryCoefficient,
-      FloatLib.Numerics.Representations.FixedInt.minValue_eq (width_pos format),
-      FloatLib.Numerics.Representations.FixedInt.maxValue_eq]
-    have hpower : (0 : Int) < 2 ^ (width format - 1) :=
-      Int.pow_pos (by decide)
-    omega
   unfold qNegate
   rw [isNaR_zero]
   simp only [Bool.false_eq_true, ite_false, coefficient_zero, neg_zero]
-  simp [ofCoefficient, hzero, zero]
+  simp [ofCoefficient, ordinaryCoefficient_zero, zero]
 
 /-- Quire absolute value fixes NaR. -/
 @[simp] theorem qAbs_nar (format : Format) :
@@ -166,6 +162,35 @@ theorem scaleExponent_le_scale_of_not_special
       simp [scaleExponent, hbits]
 
 /--
+A successful exact decoding is either the zero dyadic or the decoded fields of a word that is
+neither zero nor NaR.
+-/
+private theorem toDyadic?_eq_some_cases
+    {value : FloatLib.Floats.Formats.Posit.Model format}
+    {dyadic : FloatLib.Numerics.Dyadic}
+    (hvalue : value.toDyadic? = some dyadic) :
+    dyadic = FloatLib.Numerics.Dyadic.zero ∨
+      (value.isNaR = false ∧ value.isZero = false ∧
+        dyadic = value.decodeFields.toDyadic) := by
+  unfold FloatLib.Floats.Formats.Posit.Model.toDyadic? at hvalue
+  cases hdecode : value.decodeExact with
+  | zero =>
+      simp only [hdecode] at hvalue
+      injection hvalue with hdyadic
+      exact Or.inl hdyadic.symm
+  | finite fields =>
+      simp only [hdecode] at hvalue
+      injection hvalue with hdyadic
+      obtain ⟨hnar, hzero, hfields⟩ :=
+        (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
+          value fields).mp hdecode
+      subst fields
+      exact Or.inr ⟨hnar, hzero, hdyadic.symm⟩
+  | nar =>
+      simp only [hdecode] at hvalue
+      contradiction
+
+/--
 Every ordinary posit dyadic aligns exactly with the least-significant bit of its associated quire.
 
 This supplies the conversion kernel's scale condition at every width, including the two-bit
@@ -176,30 +201,14 @@ theorem scaleExponent_le_exponent_of_toDyadic?_eq_some
     (dyadic : FloatLib.Numerics.Dyadic)
     (hvalue : value.toDyadic? = some dyadic) :
     scaleExponent format ≤ dyadic.exponent := by
-  unfold FloatLib.Floats.Formats.Posit.Model.toDyadic? at hvalue
-  cases hdecode : value.decodeExact with
-  | zero =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      have hbits : (2 : Int) ≤ format.bits := by
-        exact_mod_cast format.bits_ge_two
-      simp only [FloatLib.Numerics.Dyadic.zero]
-      unfold scaleExponent
-      simp only [Int.ofNat_eq_natCast]
-      omega
-  | finite fields =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      obtain ⟨hnar, hzero, hfields⟩ :=
-        (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
-          value fields).mp hdecode
-      subst fields
-      exact scaleExponent_le_scale_of_not_special value hzero hnar
-  | nar =>
-      simp only [hdecode] at hvalue
-      contradiction
+  rcases toDyadic?_eq_some_cases hvalue with rfl | ⟨hnar, hzero, rfl⟩
+  · have hbits : (2 : Int) ≤ format.bits := by
+      exact_mod_cast format.bits_ge_two
+    simp only [FloatLib.Numerics.Dyadic.zero]
+    unfold scaleExponent
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  · exact scaleExponent_le_scale_of_not_special value hzero hnar
 
 /-- Every ordinary decoded posit significand fits below its complete encoded modulus. -/
 theorem significand_lt_modulus_of_toDyadic?_eq_some
@@ -207,27 +216,9 @@ theorem significand_lt_modulus_of_toDyadic?_eq_some
     (dyadic : FloatLib.Numerics.Dyadic)
     (hvalue : value.toDyadic? = some dyadic) :
     dyadic.significand < format.modulus := by
-  unfold FloatLib.Floats.Formats.Posit.Model.toDyadic? at hvalue
-  cases hdecode : value.decodeExact with
-  | zero =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      simp [FloatLib.Numerics.Dyadic.zero, Format.modulus]
-  | finite fields =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      obtain ⟨_, _, hfields⟩ :=
-        (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
-          value fields).mp hdecode
-      subst fields
-      exact
-        FloatLib.Floats.Formats.Posit.Model.decodeFields_significand_lt_modulus
-          value
-  | nar =>
-      simp only [hdecode] at hvalue
-      contradiction
+  rcases toDyadic?_eq_some_cases hvalue with rfl | ⟨_, _, rfl⟩
+  · simp [FloatLib.Numerics.Dyadic.zero, Format.modulus]
+  · exact FloatLib.Floats.Formats.Posit.Model.decodeFields_significand_lt_modulus value
 
 /-- The dyadic scale of every ordinary posit is below four times its encoded width. -/
 theorem exponent_lt_four_bits_of_toDyadic?_eq_some
@@ -235,30 +226,14 @@ theorem exponent_lt_four_bits_of_toDyadic?_eq_some
     (dyadic : FloatLib.Numerics.Dyadic)
     (hvalue : value.toDyadic? = some dyadic) :
     dyadic.exponent < 4 * Int.ofNat format.bits := by
-  unfold FloatLib.Floats.Formats.Posit.Model.toDyadic? at hvalue
-  cases hdecode : value.decodeExact with
-  | zero =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      simp only [FloatLib.Numerics.Dyadic.zero]
-      have hbits : (0 : Int) < format.bits := by
-        exact_mod_cast
-          (lt_of_lt_of_le (by decide : 0 < 2) format.bits_ge_two)
-      simp only [Int.ofNat_eq_natCast]
-      omega
-  | finite fields =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      obtain ⟨_, _, hfields⟩ :=
-        (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
-          value fields).mp hdecode
-      subst fields
-      exact FloatLib.Floats.Formats.Posit.Model.scale_lt_four_bits value
-  | nar =>
-      simp only [hdecode] at hvalue
-      contradiction
+  rcases toDyadic?_eq_some_cases hvalue with rfl | ⟨_, _, rfl⟩
+  · simp only [FloatLib.Numerics.Dyadic.zero]
+    have hbits : (0 : Int) < format.bits := by
+      exact_mod_cast
+        (lt_of_lt_of_le (by decide : 0 < 2) format.bits_ge_two)
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  · exact FloatLib.Floats.Formats.Posit.Model.scale_lt_four_bits value
 
 /--
 Aligning an ordinary posit to the quire scale requires at most twelve shift bits per posit bit.
@@ -340,16 +315,49 @@ theorem coefficientOfDyadic_ordinary
   ordinaryCoefficient_of_natAbs_lt
     (natAbs_coefficientOfDyadic_lt_halfRange value dyadic hvalue)
 
-/-- Ordinary quire negation stores the exact negated coefficient. -/
-theorem coefficient_qNegate_of_ordinary
+/-- On an ordinary quire, negation is `ofCoefficient` of the negated coefficient. -/
+private theorem qNegate_eq_ofCoefficient
     (value : Model format)
     (hvalue : OrdinaryCoefficient format value.coefficient) :
-    (qNegate value).coefficient = -value.coefficient := by
+    qNegate value = ofCoefficient format (-value.coefficient) := by
   have hnar : value.isNaR = false :=
     (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
   unfold qNegate
   rw [hnar]
   simp only [Bool.false_eq_true, ite_false]
+
+/-- On ordinary quires, addition is `ofCoefficient` of the coefficient sum. -/
+private theorem qAddQ_eq_ofCoefficient
+    (left right : Model format)
+    (hleft : OrdinaryCoefficient format left.coefficient)
+    (hright : OrdinaryCoefficient format right.coefficient) :
+    qAddQ left right = ofCoefficient format (left.coefficient + right.coefficient) := by
+  have hleftNaR : left.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
+  have hrightNaR : right.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
+  unfold qAddQ
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
+
+/-- On ordinary quires, subtraction is `ofCoefficient` of the coefficient difference. -/
+private theorem qSubQ_eq_ofCoefficient
+    (left right : Model format)
+    (hleft : OrdinaryCoefficient format left.coefficient)
+    (hright : OrdinaryCoefficient format right.coefficient) :
+    qSubQ left right = ofCoefficient format (left.coefficient - right.coefficient) := by
+  have hleftNaR : left.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
+  have hrightNaR : right.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
+  unfold qSubQ
+  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
+
+/-- Ordinary quire negation stores the exact negated coefficient. -/
+theorem coefficient_qNegate_of_ordinary
+    (value : Model format)
+    (hvalue : OrdinaryCoefficient format value.coefficient) :
+    (qNegate value).coefficient = -value.coefficient := by
+  rw [qNegate_eq_ofCoefficient value hvalue]
   exact coefficient_ofCoefficient_of_ordinary
     (ordinaryCoefficient_neg hvalue)
 
@@ -361,14 +369,79 @@ theorem toRat?_qNegate_of_ordinary
       some
         (-(Rat.ofInt value.coefficient *
           (2 : Rat) ^ scaleExponent format)) := by
-  have hnar : value.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
-  unfold qNegate
-  rw [hnar]
-  simp only [Bool.false_eq_true, ite_false]
-  rw [toRat?_ofCoefficient_of_ordinary
+  rw [qNegate_eq_ofCoefficient value hvalue, toRat?_ofCoefficient_of_ordinary
     (ordinaryCoefficient_neg hvalue)]
   simp
+
+/-- Ordinary quire absolute value stores the absolute value of the coefficient. -/
+theorem coefficient_qAbs_of_ordinary
+    (value : Model format)
+    (hvalue : OrdinaryCoefficient format value.coefficient) :
+    (qAbs value).coefficient = |value.coefficient| := by
+  have hnar : value.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
+  unfold qAbs
+  rw [hnar]
+  simp only [Bool.false_eq_true, ite_false]
+  split
+  next hnegative =>
+    rw [coefficient_qNegate_of_ordinary value hvalue, abs_of_neg hnegative]
+  next hnonnegative =>
+    rw [abs_of_nonneg (not_lt.mp hnonnegative)]
+
+/-- Ordinary quire absolute value refines the exact rational absolute value. -/
+theorem toRat?_qAbs_of_ordinary
+    (value : Model format)
+    (hvalue : OrdinaryCoefficient format value.coefficient) :
+    (qAbs value).toRat? =
+      some
+        |Rat.ofInt value.coefficient *
+          (2 : Rat) ^ scaleExponent format| := by
+  have hnar : value.isNaR = false :=
+    (ordinaryCoefficient_iff_isNaR_eq_false value).mp hvalue
+  have hscale : 0 < (2 : Rat) ^ scaleExponent format := zpow_pos (by norm_num) _
+  unfold qAbs
+  rw [hnar]
+  simp only [Bool.false_eq_true, ite_false]
+  split
+  next hnegative =>
+    have hcoefficient : Rat.ofInt value.coefficient < 0 := by
+      simpa using hnegative
+    rw [toRat?_qNegate_of_ordinary value hvalue,
+      abs_of_neg (mul_neg_of_neg_of_pos hcoefficient hscale)]
+  next hnonnegative =>
+    have hcoefficient : 0 ≤ Rat.ofInt value.coefficient := by
+      simpa using hnonnegative
+    rw [abs_of_nonneg (mul_nonneg hcoefficient hscale.le)]
+    simp [toRat?, hnar]
+
+/--
+Quire absolute value is exact on the rational semantics: a quire with rational value `q` has
+absolute value `|q|`. Negating an ordinary coefficient stays in the ordinary range, so the result is
+never NaR; NaR itself stays NaR (`qAbs_nar`).
+-/
+theorem toRat?_qAbs (value : Model format) {q : Rat} (hvalue : value.toRat? = some q) :
+    (qAbs value).toRat? = some |q| := by
+  have hnar : value.isNaR = false := by
+    cases h : value.isNaR
+    · rfl
+    · simp [toRat?, h] at hvalue
+  have hq : Rat.ofInt value.coefficient * (2 : Rat) ^ scaleExponent format = q := by
+    simpa [toRat?, hnar] using hvalue
+  rw [toRat?_qAbs_of_ordinary value
+    ((ordinaryCoefficient_iff_isNaR_eq_false value).mpr hnar), hq]
+
+/-- Quire absolute value is NaR exactly when its argument is. -/
+@[simp] theorem isNaR_qAbs (value : Model format) :
+    (qAbs value).isNaR = value.isNaR := by
+  cases hnar : value.isNaR
+  · have hsome := toRat?_qAbs_of_ordinary value
+      ((ordinaryCoefficient_iff_isNaR_eq_false value).mpr hnar)
+    cases h : (qAbs value).isNaR
+    · rfl
+    · rw [(toRat?_eq_none_iff (qAbs value)).mpr h] at hsome
+      cases hsome
+  · simp [qAbs, hnar]
 
 /-- Successful exact quire addition stores the mathematical coefficient sum. -/
 theorem coefficient_qAddQ_of_ordinary
@@ -379,12 +452,7 @@ theorem coefficient_qAddQ_of_ordinary
       OrdinaryCoefficient format (left.coefficient + right.coefficient)) :
     (qAddQ left right).coefficient =
       left.coefficient + right.coefficient := by
-  have hleftNaR : left.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
-  have hrightNaR : right.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
-  unfold qAddQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
+  rw [qAddQ_eq_ofCoefficient left right hleft hright]
   exact coefficient_ofCoefficient_of_ordinary hresult
 
 /-- Successful exact quire addition refines rational addition at the shared fixed scale. -/
@@ -400,13 +468,8 @@ theorem toRat?_qAddQ_of_ordinary
             (2 : Rat) ^ scaleExponent format +
           Rat.ofInt right.coefficient *
             (2 : Rat) ^ scaleExponent format) := by
-  have hleftNaR : left.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
-  have hrightNaR : right.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
-  unfold qAddQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
-  rw [toRat?_ofCoefficient_of_ordinary hresult]
+  rw [qAddQ_eq_ofCoefficient left right hleft hright,
+    toRat?_ofCoefficient_of_ordinary hresult]
   simp only [Rat.ofInt_eq_cast, Int.cast_add]
   rw [add_mul]
 
@@ -419,12 +482,7 @@ theorem coefficient_qSubQ_of_ordinary
       OrdinaryCoefficient format (left.coefficient - right.coefficient)) :
     (qSubQ left right).coefficient =
       left.coefficient - right.coefficient := by
-  have hleftNaR : left.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
-  have hrightNaR : right.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
-  unfold qSubQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
+  rw [qSubQ_eq_ofCoefficient left right hleft hright]
   exact coefficient_ofCoefficient_of_ordinary hresult
 
 /-- Successful exact quire subtraction refines rational subtraction at the shared fixed scale. -/
@@ -440,20 +498,109 @@ theorem toRat?_qSubQ_of_ordinary
             (2 : Rat) ^ scaleExponent format -
           Rat.ofInt right.coefficient *
             (2 : Rat) ^ scaleExponent format) := by
-  have hleftNaR : left.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false left).mp hleft
-  have hrightNaR : right.isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false right).mp hright
-  unfold qSubQ
-  simp only [hleftNaR, hrightNaR, Bool.false_or, Bool.false_eq_true, ite_false]
-  rw [toRat?_ofCoefficient_of_ordinary hresult]
+  rw [qSubQ_eq_ofCoefficient left right hleft hright,
+    toRat?_ofCoefficient_of_ordinary hresult]
   simp only [Rat.ofInt_eq_cast, Int.cast_sub]
   rw [sub_mul]
+
+/--
+Quire addition whose exact coefficient sum is not ordinary returns quire NaR. Nothing is assumed
+about the operands: a NaR operand gives NaR anyway (`qAddQ_nar_left`, `qAddQ_nar_right`).
+-/
+theorem qAddQ_eq_nar_of_not_ordinary
+    (left right : Model format)
+    (hresult : ¬OrdinaryCoefficient format (left.coefficient + right.coefficient)) :
+    qAddQ left right = nar format := by
+  unfold qAddQ
+  split
+  · rfl
+  · exact ofCoefficient_eq_nar_of_not_ordinary hresult
+
+/--
+Quire subtraction whose exact coefficient difference is not ordinary returns quire NaR. A NaR
+operand gives NaR anyway (`qSubQ_nar_left`, `qSubQ_nar_right`).
+-/
+theorem qSubQ_eq_nar_of_not_ordinary
+    (left right : Model format)
+    (hresult : ¬OrdinaryCoefficient format (left.coefficient - right.coefficient)) :
+    qSubQ left right = nar format := by
+  unfold qSubQ
+  split
+  · rfl
+  · exact ofCoefficient_eq_nar_of_not_ordinary hresult
 
 /-- The dyadic accumulation kernel propagates quire NaR. -/
 @[simp] theorem addDyadic_nar (format : Format) (increment : FloatLib.Numerics.Dyadic) :
     addDyadic (nar format) increment = nar format := by
   simp [addDyadic]
+
+/-- A NaR accumulator absorbs posit addition. -/
+@[simp] theorem qAddP_nar_accumulator (format : Format)
+    (addend : FloatLib.Floats.Formats.Posit.Model format) :
+    qAddP (nar format) addend = nar format := by
+  unfold qAddP
+  split <;> simp
+
+/-- Adding posit NaR to a quire gives quire NaR. -/
+@[simp] theorem qAddP_nar_addend (format : Format) (accumulator : Model format) :
+    qAddP accumulator (FloatLib.Floats.Formats.Posit.Model.nar format) = nar format := by
+  simp [qAddP]
+
+/-- A NaR accumulator absorbs posit subtraction. -/
+@[simp] theorem qSubP_nar_accumulator (format : Format)
+    (subtrahend : FloatLib.Floats.Formats.Posit.Model format) :
+    qSubP (nar format) subtrahend = nar format := by
+  unfold qSubP
+  split <;> simp
+
+/-- Subtracting posit NaR from a quire gives quire NaR. -/
+@[simp] theorem qSubP_nar_subtrahend (format : Format) (accumulator : Model format) :
+    qSubP accumulator (FloatLib.Floats.Formats.Posit.Model.nar format) = nar format := by
+  simp [qSubP]
+
+/-- A NaR accumulator absorbs fused product accumulation. -/
+@[simp] theorem qMulAdd_nar_accumulator (format : Format)
+    (left right : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulAdd (nar format) left right = nar format := by
+  unfold qMulAdd
+  split <;> simp
+
+/-- A NaR left factor makes fused product accumulation return quire NaR. -/
+@[simp] theorem qMulAdd_nar_left (format : Format) (accumulator : Model format)
+    (right : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulAdd accumulator (FloatLib.Floats.Formats.Posit.Model.nar format) right =
+      nar format := by
+  simp [qMulAdd]
+
+/-- A NaR right factor makes fused product accumulation return quire NaR. -/
+@[simp] theorem qMulAdd_nar_right (format : Format) (accumulator : Model format)
+    (left : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulAdd accumulator left (FloatLib.Floats.Formats.Posit.Model.nar format) =
+      nar format := by
+  unfold qMulAdd
+  split <;> simp_all
+
+/-- A NaR accumulator absorbs fused product subtraction. -/
+@[simp] theorem qMulSub_nar_accumulator (format : Format)
+    (left right : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulSub (nar format) left right = nar format := by
+  unfold qMulSub
+  split <;> simp
+
+/-- A NaR left factor makes fused product subtraction return quire NaR. -/
+@[simp] theorem qMulSub_nar_left (format : Format) (accumulator : Model format)
+    (right : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulSub accumulator (FloatLib.Floats.Formats.Posit.Model.nar format) right =
+      nar format := by
+  simp [qMulSub]
+
+/-- A NaR right factor makes fused product subtraction return quire NaR. -/
+@[simp] theorem qMulSub_nar_right (format : Format) (accumulator : Model format)
+    (left : FloatLib.Floats.Formats.Posit.Model format) :
+    qMulSub accumulator left (FloatLib.Floats.Formats.Posit.Model.nar format) =
+      nar format := by
+  unfold qMulSub
+  split <;> simp_all
 
 /--
 An increment whose stored exponent is below the quire scale produces quire NaR.
@@ -490,20 +637,25 @@ theorem addDyadic_eq_ofCoefficient
   rw [hnar, ite_eq_right (not_lt.mpr hscale)]
   simp
 
-/-- An aligned increment whose exact coefficient sum overflows produces quire NaR. -/
+/--
+If the exact coefficient sum is not ordinary, the kernel returns quire NaR. The theorem assumes
+nothing about the accumulator or the alignment of the increment, because those cases return NaR
+before the sum is formed. NaR accumulators and misaligned increments give NaR unconditionally:
+see `addDyadic_nar` and `addDyadic_eq_nar_of_exponent_lt`.
+-/
 theorem addDyadic_eq_nar_of_not_ordinary
     (accumulator : Model format)
     (increment : FloatLib.Numerics.Dyadic)
-    (haccumulator :
-      OrdinaryCoefficient format accumulator.coefficient)
-    (hscale : scaleExponent format ≤ increment.exponent)
     (hresult :
       ¬OrdinaryCoefficient format
         (accumulator.coefficient +
           coefficientOfDyadic format increment)) :
     addDyadic accumulator increment = nar format := by
-  rw [addDyadic_eq_ofCoefficient accumulator increment haccumulator hscale]
-  exact ofCoefficient_eq_nar_of_not_ordinary hresult
+  unfold addDyadic
+  split_ifs
+  · rfl
+  · rfl
+  · exact ofCoefficient_eq_nar_of_not_ordinary hresult
 
 /-- Successful dyadic accumulation stores the exact coefficient sum. -/
 theorem coefficient_addDyadic_of_ordinary
@@ -545,6 +697,29 @@ theorem toRat?_addDyadic_of_ordinary
     ← coefficientOfDyadic_denotes format increment hscale]
   simp only [Rat.ofInt_eq_cast, Int.cast_add]
   rw [add_mul]
+
+/--
+Accumulating the negation of an aligned increment refines exact rational subtraction whenever
+the resulting coefficient is ordinary. Negation keeps the exponent, so the increment's own
+alignment suffices.
+-/
+theorem toRat?_addDyadic_neg_of_ordinary
+    (accumulator : Model format)
+    (increment : FloatLib.Numerics.Dyadic)
+    (haccumulator :
+      OrdinaryCoefficient format accumulator.coefficient)
+    (hscale : scaleExponent format ≤ increment.exponent)
+    (hresult :
+      OrdinaryCoefficient format
+        (accumulator.coefficient +
+          coefficientOfDyadic format increment.neg)) :
+    (addDyadic accumulator increment.neg).toRat? =
+      some
+        (Rat.ofInt accumulator.coefficient *
+            (2 : Rat) ^ scaleExponent format -
+          increment.toRat) := by
+  rw [toRat?_addDyadic_of_ordinary accumulator increment.neg haccumulator hscale hresult,
+    FloatLib.Numerics.Dyadic.neg_toRat, sub_eq_add_neg]
 
 /--
 Adding an ordinary posit to an ordinary quire refines exact rational addition whenever the
@@ -598,14 +773,16 @@ theorem coefficient_qAddP_of_ordinary
       (scaleExponent_le_exponent_of_toDyadic?_eq_some addend dyadic haddend)
       hresult
 
-/-- Adding an ordinary posit whose exact coefficient sum overflows the quire produces NaR. -/
+/--
+Adding a finite posit whose exact coefficient sum is not ordinary produces quire NaR. The
+accumulator is not assumed ordinary; a NaR accumulator gives NaR unconditionally
+(`qAddP_nar_accumulator`).
+-/
 theorem qAddP_eq_nar_of_not_ordinary
     (accumulator : Model format)
     (addend : FloatLib.Floats.Formats.Posit.Model format)
     (dyadic : FloatLib.Numerics.Dyadic)
     (haddend : addend.toDyadic? = some dyadic)
-    (haccumulator :
-      OrdinaryCoefficient format accumulator.coefficient)
     (hresult :
       ¬OrdinaryCoefficient format
         (accumulator.coefficient +
@@ -613,10 +790,7 @@ theorem qAddP_eq_nar_of_not_ordinary
     qAddP accumulator addend = nar format := by
   unfold qAddP
   rw [haddend]
-  exact
-    addDyadic_eq_nar_of_not_ordinary accumulator dyadic haccumulator
-      (scaleExponent_le_exponent_of_toDyadic?_eq_some addend dyadic haddend)
-      hresult
+  exact addDyadic_eq_nar_of_not_ordinary accumulator dyadic hresult
 
 /--
 Subtracting an ordinary posit from an ordinary quire refines exact rational subtraction whenever
@@ -641,17 +815,49 @@ theorem toRat?_qSubP_of_ordinary
         (Rat.ofInt accumulator.coefficient *
             (2 : Rat) ^ scaleExponent format -
           dyadic.toRat) := by
-  have hscale :
-      scaleExponent format ≤ dyadic.neg.exponent := by
-    simpa [FloatLib.Numerics.Dyadic.neg] using
-      (scaleExponent_le_exponent_of_toDyadic?_eq_some
-        subtrahend dyadic hsubtrahend)
   unfold qSubP
-  rw [hsubtrahend,
-    toRat?_addDyadic_of_ordinary accumulator dyadic.neg
-      haccumulator hscale hresult,
-    FloatLib.Numerics.Dyadic.neg_toRat]
-  simp only [sub_eq_add_neg]
+  rw [hsubtrahend]
+  exact toRat?_addDyadic_neg_of_ordinary accumulator dyadic haccumulator
+    (scaleExponent_le_exponent_of_toDyadic?_eq_some subtrahend dyadic hsubtrahend) hresult
+
+/-- Successful posit subtraction stores the exact coefficient difference. -/
+theorem coefficient_qSubP_of_ordinary
+    (accumulator : Model format)
+    (subtrahend : FloatLib.Floats.Formats.Posit.Model format)
+    (dyadic : FloatLib.Numerics.Dyadic)
+    (hsubtrahend : subtrahend.toDyadic? = some dyadic)
+    (haccumulator :
+      OrdinaryCoefficient format accumulator.coefficient)
+    (hresult :
+      OrdinaryCoefficient format
+        (accumulator.coefficient +
+          coefficientOfDyadic format dyadic.neg)) :
+    (qSubP accumulator subtrahend).coefficient =
+      accumulator.coefficient + coefficientOfDyadic format dyadic.neg := by
+  unfold qSubP
+  rw [hsubtrahend]
+  exact
+    coefficient_addDyadic_of_ordinary accumulator dyadic.neg haccumulator
+      (scaleExponent_le_exponent_of_toDyadic?_eq_some subtrahend dyadic hsubtrahend)
+      hresult
+
+/--
+Subtracting a finite posit whose exact coefficient difference is not ordinary produces quire NaR.
+A NaR accumulator gives NaR unconditionally (`qSubP_nar_accumulator`).
+-/
+theorem qSubP_eq_nar_of_not_ordinary
+    (accumulator : Model format)
+    (subtrahend : FloatLib.Floats.Formats.Posit.Model format)
+    (dyadic : FloatLib.Numerics.Dyadic)
+    (hsubtrahend : subtrahend.toDyadic? = some dyadic)
+    (hresult :
+      ¬OrdinaryCoefficient format
+        (accumulator.coefficient +
+          coefficientOfDyadic format dyadic.neg)) :
+    qSubP accumulator subtrahend = nar format := by
+  unfold qSubP
+  rw [hsubtrahend]
+  exact addDyadic_eq_nar_of_not_ordinary accumulator dyadic.neg hresult
 
 /--
 Every ordinary posit dyadic lies at or above the smallest positive posit exponent.
@@ -665,32 +871,16 @@ theorem minPositive_exponent_le_exponent_of_toDyadic?_eq_some
     (hvalue : value.toDyadic? = some dyadic) :
     (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤
       dyadic.exponent := by
-  unfold FloatLib.Floats.Formats.Posit.Model.toDyadic? at hvalue
-  cases hdecode : value.decodeExact with
-  | zero =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      rw [FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_eq_fields]
-      simp only [FloatLib.Numerics.Dyadic.zero]
-      apply neg_nonpos.mpr
-      exact
-        mul_nonneg (by norm_num)
-          (Int.natCast_nonneg (format.payloadBits - 1))
-  | finite fields =>
-      simp only [hdecode] at hvalue
-      injection hvalue with hdyadic
-      subst dyadic
-      obtain ⟨hnar, hzero, hfields⟩ :=
-        (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
-          value fields).mp hdecode
-      subst fields
-      exact
-        FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
-          value hzero hnar
-  | nar =>
-      simp only [hdecode] at hvalue
-      contradiction
+  rcases toDyadic?_eq_some_cases hvalue with rfl | ⟨hnar, hzero, rfl⟩
+  · rw [FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_eq_fields]
+    simp only [FloatLib.Numerics.Dyadic.zero]
+    apply neg_nonpos.mpr
+    exact
+      mul_nonneg (by norm_num)
+        (Int.natCast_nonneg (format.payloadBits - 1))
+  · exact
+      FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
+        value hzero hnar
 
 /-- The associated quire scale is twice the smallest positive posit exponent. -/
 theorem scaleExponent_eq_two_mul_minPositive_exponent (format : Format) :
@@ -781,10 +971,13 @@ theorem coefficient_qMulAdd_of_ordinary
       hresult
 
 /--
-Accumulating an exact product whose coefficient sum overflows the quire produces NaR.
+Accumulating the exact product of two finite posits whose coefficient sum is not ordinary
+produces quire NaR.
 
-Together with `toRat?_qMulAdd_of_ordinary` this characterizes `qMulAdd` on ordinary inputs: the
-result is exact while the coefficient stays ordinary and NaR as soon as it does not.
+For an ordinary accumulator and two finite posits, this theorem and `toRat?_qMulAdd_of_ordinary`
+together determine `qMulAdd`: the result is exact while the coefficient stays ordinary and NaR as
+soon as it does not. NaR inputs give NaR unconditionally (`qMulAdd_nar_accumulator`,
+`qMulAdd_nar_left`, `qMulAdd_nar_right`).
 -/
 theorem qMulAdd_eq_nar_of_not_ordinary
     (accumulator : Model format)
@@ -792,7 +985,6 @@ theorem qMulAdd_eq_nar_of_not_ordinary
     (leftDyadic rightDyadic : FloatLib.Numerics.Dyadic)
     (hleft : left.toDyadic? = some leftDyadic)
     (hright : right.toDyadic? = some rightDyadic)
-    (haccumulator : OrdinaryCoefficient format accumulator.coefficient)
     (hresult :
       ¬OrdinaryCoefficient format
         (accumulator.coefficient +
@@ -803,11 +995,7 @@ theorem qMulAdd_eq_nar_of_not_ordinary
   rw [hleft, hright]
   exact
     addDyadic_eq_nar_of_not_ordinary accumulator
-      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic)
-      haccumulator
-      (scaleExponent_le_mul_exponent_of_toDyadic?_eq_some
-        left right leftDyadic rightDyadic hleft hright)
-      hresult
+      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic) hresult
 
 /--
 Exact fused product subtraction refines rational subtraction whenever the resulting coefficient
@@ -830,43 +1018,64 @@ theorem toRat?_qMulSub_of_ordinary
         (Rat.ofInt accumulator.coefficient *
             (2 : Rat) ^ scaleExponent format -
           leftDyadic.toRat * rightDyadic.toRat) := by
-  have hscale :
-      scaleExponent format ≤
-        (FloatLib.Numerics.Dyadic.mul
-          leftDyadic rightDyadic).neg.exponent := by
-    simpa using
-      (scaleExponent_le_mul_exponent_of_toDyadic?_eq_some
-        left right leftDyadic rightDyadic hleft hright)
   unfold qMulSub
   rw [hleft, hright,
-    toRat?_addDyadic_of_ordinary accumulator
-      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg
-      haccumulator hscale hresult,
-    FloatLib.Numerics.Dyadic.neg_toRat,
+    toRat?_addDyadic_neg_of_ordinary accumulator
+      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic) haccumulator
+      (scaleExponent_le_mul_exponent_of_toDyadic?_eq_some
+        left right leftDyadic rightDyadic hleft hright)
+      hresult,
     FloatLib.Numerics.Dyadic.mul_toRat]
-  simp only [sub_eq_add_neg]
+
+/-- Successful fused product subtraction stores the exact coefficient difference. -/
+theorem coefficient_qMulSub_of_ordinary
+    (accumulator : Model format)
+    (left right : FloatLib.Floats.Formats.Posit.Model format)
+    (leftDyadic rightDyadic : FloatLib.Numerics.Dyadic)
+    (hleft : left.toDyadic? = some leftDyadic)
+    (hright : right.toDyadic? = some rightDyadic)
+    (haccumulator : OrdinaryCoefficient format accumulator.coefficient)
+    (hresult :
+      OrdinaryCoefficient format
+        (accumulator.coefficient +
+          coefficientOfDyadic format
+            (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg)) :
+    (qMulSub accumulator left right).coefficient =
+      accumulator.coefficient +
+        coefficientOfDyadic format
+          (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg := by
+  unfold qMulSub
+  rw [hleft, hright]
+  exact
+    coefficient_addDyadic_of_ordinary accumulator
+      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg
+      haccumulator
+      (scaleExponent_le_mul_exponent_of_toDyadic?_eq_some
+        left right leftDyadic rightDyadic hleft hright)
+      hresult
 
 /--
-Posit-to-quire conversion preserves exact rational meaning when the standard scale and quire-range
-invariants are supplied.
-
-`toRat?_pToQ` supplies both invariants for every ordinary posit. This local form also allows
-specialized decoders to supply their own alignment and range proofs.
+Subtracting the exact product of two finite posits whose coefficient difference is not ordinary
+produces quire NaR. NaR inputs give NaR unconditionally (`qMulSub_nar_accumulator`,
+`qMulSub_nar_left`, `qMulSub_nar_right`).
 -/
-theorem toRat?_pToQ_of_invariants
-    (value : FloatLib.Floats.Formats.Posit.Model format)
-    (dyadic : FloatLib.Numerics.Dyadic)
-    (hvalue : value.toDyadic? = some dyadic)
-    (hscale : scaleExponent format ≤ dyadic.exponent)
-    (hcoefficient :
-      OrdinaryCoefficient format (coefficientOfDyadic format dyadic)) :
-    (pToQ value).toRat? = value.toRat? := by
-  unfold pToQ
-  rw [hvalue, toRat?_ofCoefficient_of_ordinary hcoefficient,
-    coefficientOfDyadic_denotes format dyadic hscale,
-    FloatLib.Floats.Formats.Posit.Model.toRat?_eq_toDyadic?_map,
-    hvalue]
-  rfl
+theorem qMulSub_eq_nar_of_not_ordinary
+    (accumulator : Model format)
+    (left right : FloatLib.Floats.Formats.Posit.Model format)
+    (leftDyadic rightDyadic : FloatLib.Numerics.Dyadic)
+    (hleft : left.toDyadic? = some leftDyadic)
+    (hright : right.toDyadic? = some rightDyadic)
+    (hresult :
+      ¬OrdinaryCoefficient format
+        (accumulator.coefficient +
+          coefficientOfDyadic format
+            (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg)) :
+    qMulSub accumulator left right = nar format := by
+  unfold qMulSub
+  rw [hleft, hright]
+  exact
+    addDyadic_eq_nar_of_not_ordinary accumulator
+      (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).neg hresult
 
 /--
 Posit-to-quire conversion preserves exact rational meaning for every Posit Standard (2022) value.
@@ -884,10 +1093,13 @@ theorem toRat?_pToQ
         hvalue]
       simp [pToQ, hvalue]
   | some dyadic =>
-      exact toRat?_pToQ_of_invariants value dyadic hvalue
-        (scaleExponent_le_exponent_of_toDyadic?_eq_some
-          value dyadic hvalue)
-        (coefficientOfDyadic_ordinary value dyadic hvalue)
+      unfold pToQ
+      rw [hvalue,
+        toRat?_ofCoefficient_of_ordinary (coefficientOfDyadic_ordinary value dyadic hvalue),
+        coefficientOfDyadic_denotes format dyadic
+          (scaleExponent_le_exponent_of_toDyadic?_eq_some value dyadic hvalue),
+        FloatLib.Floats.Formats.Posit.Model.toRat?_eq_toDyadic?_map, hvalue]
+      rfl
 
 /--
 Quire-to-posit conversion agrees with Posit Standard (2022) rational rounding.

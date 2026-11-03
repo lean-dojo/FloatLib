@@ -72,7 +72,7 @@ was imported.
       simp [UInt128.toNat]
     have hscaled :
         (UInt128.shiftLeft { hi := 0, lo := num } shift).toNat = num.toNat <<< shift := by
-      rw [UInt128.shiftLeft_toNat _ _ (by omega) (by
+      rw [UInt128.shiftLeft_toNat _ _ (by
         rw [hnum, Nat.shiftLeft_eq]
         calc num.toNat * 2 ^ shift < 2 ^ 64 * 2 ^ 64 :=
               Nat.mul_lt_mul'' num.toNat_lt (Nat.pow_lt_pow_right (by decide) hshift)

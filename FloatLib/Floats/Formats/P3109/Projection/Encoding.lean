@@ -15,7 +15,9 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 
 The direct encoder and decoder satisfy the inverse laws needed by P3109 projection. Further
 contracts relate executable datum comparison to the mathematical `SameDatum` relation and
-specify the checked encoder. Precision rounding and saturation correctness live in later
+specify the checked encoder: it returns a code exactly when that code decodes to the same datum
+as its input. The direct encoder depends only on the datum, so differently normalized dyadics with
+one rational value encode alike. Precision rounding and saturation correctness live in later
 modules.
 -/
 
@@ -82,7 +84,7 @@ private theorem encodePositiveFinite_decodePositiveFinite
     have hlog : (2 ^ format.trailingBits + bits % 2 ^ format.trailingBits).log2 =
         format.trailingBits :=
       (Nat.log2_eq_iff (by omega)).2 ⟨Nat.le_add_right _ _, by rw [Nat.pow_succ]; omega⟩
-    rw [format.decodePositiveFinite_of_biasedExponent_ne_zero bits hzero hrow,
+    rw [format.decodePositiveFinite_of_biasedExponent_ne_zero bits hrow,
       encodePositiveFinite_mk_of_max_eq _ _ _ (by omega), ite_eq_right (by omega),
       Nat.add_mod_left, Nat.mod_eq_of_lt hmod,
       show Int.ofNat (bits / 2 ^ format.trailingBits) - Int.ofNat format.exponentBias + 1 -
@@ -141,10 +143,10 @@ private theorem encodeDatumNat_decodeNat
           (.finite (format.decodePositiveFinite (bits - format.signBoundary)).neg) =
         format.signBoundary + (bits - format.signBoundary) :=
     fun h => format.encodeDatumNat_finite_neg_decodePositiveFinite _ (Nat.sub_ne_zero_of_lt h)
-  have hsigned := format.positiveInfinityBits_ne_signBoundary_of_signed
-  have hsigned' := format.negativeInfinityBits_ne_signBoundary_of_signed
-  have hsigned'' := format.negativeInfinityBits_ne_positiveInfinityBits_of_signed
-  have hunsigned := format.positiveInfinityBits_ne_nanBits_of_unsigned
+  have hsigned := format.positiveInfinityBits_ne_signBoundary
+  have hsigned' := format.negativeInfinityBits_ne_signBoundary
+  have hsigned'' := format.negativeInfinityBits_ne_positiveInfinityBits
+  have hunsigned := format.positiveInfinityBits_ne_nanBits
   have hnan : ∀ e, Internal.encodeDatumNat format (.exceptional e) = format.nanBits :=
     fun _ => rfl
   have hpinf : Internal.encodeDatumNat format (.infinity false) = format.positiveInfinityBits :=
@@ -217,7 +219,8 @@ theorem datumEqual_eq_true_iff
 /--
 A successful checked encoding decodes to the same P3109 datum as its input.
 
-No rounding occurs in `encode?`; success is exactly the representability certificate.
+No rounding occurs in `encode?`. The converse, that `encode?` accepts every value some code denotes,
+is `encode?_eq_some_iff`.
 -/
 theorem sameDatum_decode_of_encode?_eq_some
     (format : Format)
@@ -234,6 +237,177 @@ theorem sameDatum_decode_of_encode?_eq_some
     exact (datumEqual_eq_true_iff _ _).1 hsame
   next _ =>
     contradiction
+
+/-- Doubling the significand and lowering the exponent by one does not change the encoding. -/
+private theorem encodePositiveFinite_double (format : Format) (value : Numerics.Dyadic)
+    (hzero : value.significand ≠ 0) :
+    Internal.encodePositiveFinite format ⟨value.negative, 2 * value.significand, value.exponent - 1⟩ =
+      Internal.encodePositiveFinite format value := by
+  have hlog := Nat.log2_two_mul hzero
+  have htwo : 2 * value.significand ≠ 0 := by omega
+  unfold Internal.encodePositiveFinite
+  simp only [beq_iff_eq, htwo, hzero, ite_false, hlog]
+  have hE : Int.ofNat (value.significand.log2 + 1) + (value.exponent - 1) =
+      Int.ofNat value.significand.log2 + value.exponent := by
+    simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
+    omega
+  rw [hE]
+  generalize max (Int.ofNat value.significand.log2 + value.exponent)
+    format.minimumNormalExponent = E
+  generalize hz : value.exponent - E + Int.ofNat format.trailingBits = z
+  have hw : value.exponent - 1 - E + Int.ofNat format.trailingBits = z - 1 := by omega
+  rw [hw]
+  generalize hw' : z - 1 = w
+  have hdouble (shift : Nat) :
+      Nat.shiftLeft (2 * value.significand) shift = Nat.shiftLeft value.significand (shift + 1) := by
+    simp only [Nat.shiftLeft_eq', Nat.shiftLeft_eq]
+    rw [Nat.pow_succ, Nat.mul_comm 2 value.significand, Nat.mul_assoc, Nat.mul_comm 2]
+  have hhalve (shift : Nat) :
+      Nat.shiftRight (2 * value.significand) (shift + 1 + 1) =
+        Nat.shiftRight value.significand (shift + 1) := by
+    simp only [Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow]
+    rw [Nat.pow_succ, Nat.mul_comm _ 2, Nat.mul_div_mul_left _ _ (by decide)]
+  rcases w with a | a <;> rcases z with b | b <;>
+    simp only [Int.ofNat_eq_natCast, Int.negSucc_eq] at hw' <;> dsimp only
+  · obtain rfl : b = a + 1 := by omega
+    simp only [hdouble]
+  · omega
+  · obtain rfl : b = 0 := by omega
+    obtain rfl : a = 0 := by omega
+    have hone : Nat.shiftRight (2 * value.significand) (0 + 1) = Nat.shiftLeft value.significand 0 := by
+      simp only [Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq', Nat.shiftLeft_eq]
+      simp
+    simp only [hone]
+  · obtain rfl : a = b + 1 := by omega
+    simp only [hhalve]
+
+/-- Scaling the significand by `2 ^ k` and lowering the exponent by `k` does not change the
+encoding. -/
+private theorem encodePositiveFinite_scale (format : Format) (value : Numerics.Dyadic)
+    (hzero : value.significand ≠ 0) (k : Nat) :
+    Internal.encodePositiveFinite format
+        ⟨value.negative, value.significand * 2 ^ k, value.exponent - k⟩ =
+      Internal.encodePositiveFinite format value := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      have hk : value.significand * 2 ^ k ≠ 0 :=
+        Nat.mul_ne_zero hzero (Nat.pos_iff_ne_zero.mp (Nat.two_pow_pos k))
+      have h := encodePositiveFinite_double format
+        ⟨value.negative, value.significand * 2 ^ k, value.exponent - k⟩ hk
+      rw [← ih, ← h]
+      congr 2
+      · rw [Nat.pow_succ, Nat.mul_comm 2, Nat.mul_assoc]
+      · push_cast
+        omega
+
+/-- Dyadics with equal rational values are zero together. -/
+private theorem significand_eq_zero_iff_of_toRat_eq {left right : Numerics.Dyadic}
+    (h : left.toRat = right.toRat) : left.significand = 0 ↔ right.significand = 0 := by
+  rw [← Numerics.Dyadic.toRat_eq_zero_iff, ← Numerics.Dyadic.toRat_eq_zero_iff, h]
+
+/-- The encoder of a nonnegative dyadic depends only on its rational value. -/
+private theorem encodePositiveFinite_eq_of_toRat_eq (format : Format)
+    {left right : Numerics.Dyadic}
+    (hleft : left.negative = false) (hright : right.negative = false)
+    (h : left.toRat = right.toRat) :
+    Internal.encodePositiveFinite format left = Internal.encodePositiveFinite format right := by
+  have hz := significand_eq_zero_iff_of_toRat_eq h
+  by_cases hl0 : left.significand = 0
+  · simp [Internal.encodePositiveFinite, hl0, hz.1 hl0]
+  have hr0 : right.significand ≠ 0 := mt hz.2 hl0
+  wlog hle : left.exponent ≤ right.exponent generalizing left right
+  · exact (this hright hleft h.symm hz.symm hr0 hl0 (le_of_not_ge hle)).symm
+  obtain ⟨k, hk⟩ : ∃ k : Nat, right.exponent = left.exponent + k :=
+    ⟨(right.exponent - left.exponent).toNat, by omega⟩
+  have hsig : left.significand = right.significand * 2 ^ k := by
+    have hvalue := h
+    simp only [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand, hleft, hright,
+      Bool.false_eq_true, ite_false, hk, zpow_add₀ (two_ne_zero (α := ℚ)), zpow_natCast,
+      Rat.ofInt_eq_cast, Int.ofNat_eq_natCast, Int.cast_natCast] at hvalue
+    have hpow : (2 : ℚ) ^ left.exponent ≠ 0 := zpow_ne_zero _ two_ne_zero
+    have : (left.significand : ℚ) = right.significand * 2 ^ k := by
+      apply mul_right_cancel₀ hpow
+      rw [hvalue, mul_assoc, mul_comm (2 ^ left.exponent)]
+    exact_mod_cast this
+  rw [← encodePositiveFinite_scale format right hr0 k]
+  congr 1
+  apply Numerics.Dyadic.ext
+  · simp [hleft, hright]
+  · exact hsig
+  · simp only
+    omega
+
+/-- The direct encoder respects `SameDatum`: equal finite values, equal infinities and any two NaNs
+encode to the same code. -/
+private theorem encodeDatumNat_eq_of_sameDatum (format : Format)
+    {left right : NumericalValue Numerics.Dyadic} (h : SameDatum left right) :
+    Internal.encodeDatumNat format left = Internal.encodeDatumNat format right := by
+  cases left with
+  | finite a =>
+      cases right with
+      | finite b =>
+          have hab : a.toRat = b.toRat := h
+          have hz := significand_eq_zero_iff_of_toRat_eq hab
+          by_cases ha : a.significand = 0
+          · simp [Internal.encodeDatumNat, ha, hz.1 ha]
+          have hb : b.significand ≠ 0 := mt hz.2 ha
+          have hpos (d : Numerics.Dyadic) (hd : d.significand ≠ 0) :
+              (d.negative = false → 0 < d.toRat) ∧ (d.negative = true → d.toRat < 0) := by
+            refine ⟨Numerics.Dyadic.toRat_pos_of_significand_ne_zero d hd, fun hneg => ?_⟩
+            have := Numerics.Dyadic.toRat_pos_of_significand_ne_zero d.neg hd (by simp [hneg])
+            rw [Numerics.Dyadic.neg_toRat] at this
+            exact neg_pos.mp this
+          have hsign : a.negative = b.negative := by
+            cases hna : a.negative <;> cases hnb : b.negative
+            · rfl
+            · exact absurd (hab ▸ (hpos a ha).1 hna) (not_lt.2 ((hpos b hb).2 hnb).le)
+            · exact absurd (hab ▸ (hpos a ha).2 hna) (not_lt.2 ((hpos b hb).1 hnb).le)
+            · rfl
+          have hmagnitude (d : Numerics.Dyadic) :
+              ({ d with negative := false } : Numerics.Dyadic).toRat =
+                if d.negative then -d.toRat else d.toRat := by
+            cases hd : d.negative
+            · simp only [Bool.false_eq_true, ite_false]
+              congr 1
+              exact Numerics.Dyadic.ext (by simp [hd]) rfl rfl
+            · simp only [ite_true]
+              rw [← Numerics.Dyadic.neg_toRat]
+              congr 1
+              exact Numerics.Dyadic.ext (by simp [hd]) rfl rfl
+          have hmag := encodePositiveFinite_eq_of_toRat_eq format
+            (left := { a with negative := false }) (right := { b with negative := false })
+            rfl rfl (by rw [hmagnitude, hmagnitude, hsign, hab])
+          simp only [Internal.encodeDatumNat, beq_iff_eq, ha, hb, ite_false, hsign, hmag]
+      | infinity _ => exact absurd h (by simp [SameDatum])
+      | exceptional _ => exact absurd h (by simp [SameDatum])
+  | infinity s =>
+      cases right with
+      | infinity t =>
+          have hst : s = t := h
+          subst hst
+          rfl
+      | finite _ => exact absurd h (by simp [SameDatum])
+      | exceptional _ => exact absurd h (by simp [SameDatum])
+  | exceptional e =>
+      cases right with
+      | exceptional _ => rfl
+      | finite _ => exact absurd h (by cases e <;> simp [SameDatum])
+      | infinity _ => exact absurd h (by cases e <;> simp [SameDatum])
+
+/-- Checked encoding succeeds exactly on the P3109 datums: it returns `code` precisely when `code`
+decodes to the same datum as the input. -/
+theorem encode?_eq_some_iff (format : Format) (value : NumericalValue Numerics.Dyadic)
+    (code : BitVec format.bitWidth) :
+    format.encode? value = some code ↔ SameDatum (format.decode code) value := by
+  constructor
+  · exact format.sameDatum_decode_of_encode?_eq_some value code
+  · intro hsame
+    have hencode : Internal.encodeDatumNat format value = code.toNat := by
+      rw [← format.encodeDatumNat_eq_of_sameDatum hsame, format.encodeDatumNat_decode]
+    unfold encode?
+    rw [hencode, BitVec.ofNat_toNat, BitVec.setWidth_eq]
+    simp [(datumEqual_eq_true_iff _ _).2 hsame]
 
 end Format
 end FloatLib.Floats.Formats.P3109

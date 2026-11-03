@@ -73,9 +73,23 @@ structure View {fmt : FloatFormat} (x y : Model fmt) where
     2 ^ fmt.fracWidth ≤ yMantissa.toNat ∧
       yMantissa.toNat < 2 ^ (fmt.fracWidth + 1)
 
-/-- A native normal field decode agrees with the generic finite decoder. -/
+/-- The left significand of a view is nonzero. -/
+theorem View.xMantissa_toNat_ne_zero {fmt : FloatFormat} {x y : Model fmt} (view : View x y) :
+    view.xMantissa.toNat ≠ 0 :=
+  Nat.ne_of_gt ((Nat.two_pow_pos fmt.fracWidth).trans_le view.xMantissaBounds.1)
+
+/-- The right significand of a view is nonzero. -/
+theorem View.yMantissa_toNat_ne_zero {fmt : FloatFormat} {x y : Model fmt} (view : View x y) :
+    view.yMantissa.toNat ≠ 0 :=
+  Nat.ne_of_gt ((Nat.two_pow_pos fmt.fracWidth).trans_le view.yMantissaBounds.1)
+
+/--
+A native normal field decode agrees with the generic finite decoder.
+
+This holds in every encoding: a nonzero exponent field below all ones is never a NaN, since the
+unsigned-zero NaN has a zero exponent field.
+-/
 theorem decode_normal {fmt : FloatFormat}
-    (hieee : fmt.isIEEE = true)
     (hwidth : fmt.bitWidth ≤ 64)
     (x : Model fmt)
     (hnonzero :
@@ -98,36 +112,56 @@ theorem decode_normal {fmt : FloatFormat}
           (NativeSmallWord.toWord x)).toNat =
         Model.expField x :=
     NativeSmallWord.exponentField_toNat hwidth x
-  have hallOnes :
-      (NativeSmallWord.exponentMask fmt).toNat =
-        fmt.expAllOnesNat :=
-    NativeSmallWord.exponentMask_toNat hwidth
   have hgenericNonzero : Model.expField x ≠ 0 := by
     intro h
     apply hnonzero
     apply UInt64.toNat_inj.mp
     rw [hexponent, h]
     rfl
-  have hgenericFinite :
-      Model.expField x ≠ fmt.expAllOnesNat := by
-    intro h
-    apply hnonexceptional
-    apply UInt64.toNat_inj.mp
-    rw [hexponent, hallOnes]
-    exact h
-  have hencoding : fmt.encoding = .ieee :=
-    ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
-  have hnonfinite :
-      (!Model.isFinite x) =
-        (Model.expField x == fmt.expAllOnesNat) := by
-    simp [Model.isFinite, hencoding, Model.IEEE.isFinite, bne]
+  have hgenericFinite : Model.expField x ≠ fmt.expAllOnesNat :=
+    fun h => hnonexceptional ((NativeSmallWord.exponentField_eq_exponentMask_iff hwidth x).mpr h)
+  have hfinite : Model.isFinite x = true := by
+    unfold Model.isFinite
+    cases hencoding : fmt.encoding with
+    | ieee => simpa [Model.IEEE.isFinite] using hgenericFinite
+    | finite => rfl
+    | finiteMaxNaN => simp [Model.isNaN, hencoding, hgenericFinite]
+    | finiteUnsignedZero =>
+        simp only [Model.isNaN, hencoding, Bool.not_eq_eq_eq_not, Bool.not_true,
+          beq_eq_false_iff_ne, ne_eq]
+        intro hbits
+        apply hgenericNonzero
+        have hbitsNat : x.toNatBits = 2 ^ (fmt.expWidth + fmt.fracWidth) := by
+          rw [Model.toNatBits, hbits, FloatFormat.signMask_toNat]
+          congr 1
+          unfold FloatFormat.bitWidth
+          omega
+        rw [Model.expField_eq_internal_apply, Model.Internal.expField, hbitsNat,
+          Nat.shiftRight_eq_div_pow, pow_add,
+          Nat.mul_div_cancel _ (Nat.two_pow_pos _), FloatFormat.expAllOnesNat,
+          Nat.and_two_pow_sub_one_eq_mod, Nat.mod_self]
   unfold FiniteKernel.decode?
-  rw [hnonfinite]
-  simp only [beq_iff_eq, hgenericFinite, ite_false,
-    FiniteKernel.decodeMantissa, hgenericNonzero]
+  simp only [hfinite, Bool.not_true, Bool.false_eq_true, ite_false,
+    FiniteKernel.decodeMantissa, beq_iff_eq, hgenericNonzero]
   rw [← hexponent]
   simp only [Model.pow2_eq_two_pow]
-  rw [← NativeSmallWord.normalMantissa_toNat_of_width hwidth x]
+  rw [← NativeSmallWord.normalMantissa_toNat hwidth x]
+
+/-- The facts a `View` records about one normal operand. -/
+private theorem normalOperand {fmt : FloatFormat} (hwidth : fmt.bitWidth ≤ 64) (x : Model fmt)
+    (hzero : exponentField fmt (toWord x) ≠ 0)
+    (hexceptional : exponentField fmt (toWord x) ≠ exponentMask fmt) :
+    FiniteKernel.decode? x =
+        some {
+          sign := Model.signBit x
+          exponent := (exponentField fmt (toWord x)).toNat
+          mantissa := (fractionField fmt (toWord x) ||| hiddenBit fmt).toNat } ∧
+      (0 < (exponentField fmt (toWord x)).toNat ∧
+        (exponentField fmt (toWord x)).toNat < 2 ^ fmt.expWidth) ∧
+      (2 ^ fmt.fracWidth ≤ (fractionField fmt (toWord x) ||| hiddenBit fmt).toNat ∧
+        (fractionField fmt (toWord x) ||| hiddenBit fmt).toNat < 2 ^ (fmt.fracWidth + 1)) :=
+  ⟨decode_normal hwidth x hzero hexceptional, exponentField_bounds_of_ne_zero hwidth x hzero,
+    normalMantissa_bounds_of_width hwidth x⟩
 
 /--
 A successful `withNormalPair?` call yields a `View` whose fields are the ones passed to the kernel.
@@ -136,7 +170,6 @@ Since the kernel stays generic, the view serves any binary operation.
 -/
 theorem view_of_success
     {fmt : FloatFormat} {α : Type}
-    (hieee : fmt.isIEEE = true)
     (hwidth : fmt.bitWidth ≤ 64)
     (x y : Model fmt)
     (kernel :
@@ -185,46 +218,10 @@ theorem view_of_success
     dsimp only [sign, xBits, yBits]
     rw [NativeSmallWord.signField_eq hwidth x,
       NativeSmallWord.signField_eq hwidth y]
-  have hxDecode :
-      FiniteKernel.decode? x =
-        some {
-          sign := Model.signBit x
-          exponent := xExponent.toNat
-          mantissa := xMantissa.toNat } := by
-    simpa [xExponent, xMantissa, xBits, allOnes] using
-      decode_normal hieee hwidth x
-        (by simpa [xExponent, xBits] using hxZero)
-        (by simpa [xExponent, xBits, allOnes] using hxExceptional)
-  have hyDecode :
-      FiniteKernel.decode? y =
-        some {
-          sign := Model.signBit y
-          exponent := yExponent.toNat
-          mantissa := yMantissa.toNat } := by
-    simpa [yExponent, yMantissa, yBits, allOnes] using
-      decode_normal hieee hwidth y
-        (by simpa [yExponent, yBits] using hyZero)
-        (by simpa [yExponent, yBits, allOnes] using hyExceptional)
-  have hxExponentBounds :
-      0 < xExponent.toNat ∧ xExponent.toNat < 2 ^ fmt.expWidth := by
-    simpa [xExponent, xBits] using
-      NativeSmallWord.exponentField_bounds_of_ne_zero hwidth x (by
-        simpa [xExponent, xBits] using hxZero)
-  have hyExponentBounds :
-      0 < yExponent.toNat ∧ yExponent.toNat < 2 ^ fmt.expWidth := by
-    simpa [yExponent, yBits] using
-      NativeSmallWord.exponentField_bounds_of_ne_zero hwidth y (by
-        simpa [yExponent, yBits] using hyZero)
-  have hxMantissaBounds :
-      2 ^ fmt.fracWidth ≤ xMantissa.toNat ∧
-        xMantissa.toNat < 2 ^ (fmt.fracWidth + 1) := by
-    simpa [xMantissa, xBits] using
-      NativeSmallWord.normalMantissa_bounds_of_width hwidth x
-  have hyMantissaBounds :
-      2 ^ fmt.fracWidth ≤ yMantissa.toNat ∧
-        yMantissa.toNat < 2 ^ (fmt.fracWidth + 1) := by
-    simpa [yMantissa, yBits] using
-      NativeSmallWord.normalMantissa_bounds_of_width hwidth y
+  obtain ⟨hxDecode, hxExponentBounds, hxMantissaBounds⟩ :=
+    normalOperand hwidth x hxZero hxExceptional
+  obtain ⟨hyDecode, hyExponentBounds, hyMantissaBounds⟩ :=
+    normalOperand hwidth y hyZero hyExceptional
   exact ⟨{
     sign
     xExponent
@@ -273,25 +270,17 @@ theorem mul_refines
     (x y result : Model fmt)
     (hresult : NativeSmallWord.withNormalPair? x y kernel = some result) :
     FiniteKernel.mul? x y = some result := by
-  rcases view_of_success hieee hwidth x y kernel result hresult with
+  rcases view_of_success hwidth x y kernel result hresult with
     ⟨view, hkernel⟩
   have hrefines :=
     kernel_refines view.sign view.xExponent view.yExponent
       view.xMantissa view.yMantissa result
       view.xExponentBounds view.yExponentBounds
       view.xMantissaBounds view.yMantissaBounds hkernel
-  have hxMantissaNe : view.xMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt <|
-      (Nat.two_pow_pos fmt.fracWidth).trans_le
-        view.xMantissaBounds.1
-  have hyMantissaNe : view.yMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt <|
-      (Nat.two_pow_pos fmt.fracWidth).trans_le
-        view.yMantissaBounds.1
   unfold FiniteKernel.mul?
   rw [view.xDecode, view.yDecode]
   simp only
-  rw [ite_eq_right (by simp [hxMantissaNe, hyMantissaNe])]
+  rw [ite_eq_right (by simp [view.xMantissa_toNat_ne_zero, view.yMantissa_toNat_ne_zero])]
   rw [ite_eq_left hieee]
   apply congrArg some
   simp only [FiniteKernel.scale, beq_iff_eq,

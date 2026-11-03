@@ -53,17 +53,20 @@ namespace Tabulation
       ⟨pair % radix, Nat.mod_lt _ hradix⟩
       ⟨index.val % radix, Nat.mod_lt _ hradix⟩
 
+/-- Row-major coordinates: dividing `row * radix + column` by `radix` recovers both coordinates. -/
+private theorem rowMajor_div_mod {radix row column : Nat} (hcolumn : column < radix) :
+    (row * radix + column) / radix = row ∧ (row * radix + column) % radix = column := by
+  have hradix : 0 < radix := Nat.zero_lt_of_lt hcolumn
+  constructor
+  · rw [Nat.mul_comm row radix, Nat.mul_add_div hradix, Nat.div_eq_of_lt hcolumn, Nat.add_zero]
+  · rw [Nat.mul_comm row radix, Nat.mul_add_mod_self_left, Nat.mod_eq_of_lt hcolumn]
+
 /-- Reading a binary table at a row-major index recovers the generating entry. -/
 theorem getElem_binary (radix : Nat) (entry : Fin radix → Fin radix → UInt8)
     (left right : Fin radix) (hindex : left.val * radix + right.val < (binary radix entry).size) :
     (binary radix entry)[left.val * radix + right.val]'hindex = entry left right := by
-  have hradix : 0 < radix := Nat.zero_lt_of_lt right.isLt
   rw [ByteArray.getElem_ofFn]
-  have hdiv : (left.val * radix + right.val) / radix = left.val := by
-    rw [Nat.mul_comm left.val radix, Nat.mul_add_div hradix,
-      Nat.div_eq_of_lt right.isLt, Nat.add_zero]
-  have hmod : (left.val * radix + right.val) % radix = right.val := by
-    rw [Nat.mul_comm left.val radix, Nat.mul_add_mod_self_left, Nat.mod_eq_of_lt right.isLt]
+  obtain ⟨hdiv, hmod⟩ := rowMajor_div_mod (row := left.val) right.isLt
   simp only [hdiv, hmod]
 
 /-- Reading a ternary table at a row-major index recovers all three generating coordinates. -/
@@ -73,22 +76,10 @@ theorem getElem_ternary (radix : Nat) (entry : Fin radix → Fin radix → Fin r
       (ternary radix entry).size) :
     (ternary radix entry)[(left.val * radix + right.val) * radix + addend.val]'hindex =
       entry left right addend := by
-  have hradix : 0 < radix := Nat.zero_lt_of_lt addend.isLt
   rw [ByteArray.getElem_ofFn]
-  have houterDiv :
-      ((left.val * radix + right.val) * radix + addend.val) / radix =
-        left.val * radix + right.val := by
-    rw [Nat.mul_comm (left.val * radix + right.val) radix, Nat.mul_add_div hradix,
-      Nat.div_eq_of_lt addend.isLt, Nat.add_zero]
-  have houterMod :
-      ((left.val * radix + right.val) * radix + addend.val) % radix = addend.val := by
-    rw [Nat.mul_comm (left.val * radix + right.val) radix,
-      Nat.mul_add_mod_self_left, Nat.mod_eq_of_lt addend.isLt]
-  have hinnerDiv : (left.val * radix + right.val) / radix = left.val := by
-    rw [Nat.mul_comm left.val radix, Nat.mul_add_div hradix,
-      Nat.div_eq_of_lt right.isLt, Nat.add_zero]
-  have hinnerMod : (left.val * radix + right.val) % radix = right.val := by
-    rw [Nat.mul_comm left.val radix, Nat.mul_add_mod_self_left, Nat.mod_eq_of_lt right.isLt]
+  obtain ⟨houterDiv, houterMod⟩ :=
+    rowMajor_div_mod (row := left.val * radix + right.val) addend.isLt
+  obtain ⟨hinnerDiv, hinnerMod⟩ := rowMajor_div_mod (row := left.val) right.isLt
   simp only [houterDiv, houterMod, hinnerDiv, hinnerMod]
 
 end Tabulation

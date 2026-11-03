@@ -40,16 +40,14 @@ definition only as their specification.
   else
     quotient ||| 1
 
-private theorem mod_two_pow_ne_zero_of_mod_two_ne_zero
-    (value extra : Nat) (hextra : 0 < extra)
-    (hodd : value % 2 ≠ 0) :
-    value % 2 ^ extra ≠ 0 := by
+/-- A nonzero remainder modulo `2 ^ small` stays nonzero modulo every larger power of two. -/
+private theorem mod_two_pow_ne_zero_of_le (value : Nat) {small large : Nat}
+    (hle : small ≤ large) (hsmall : value % 2 ^ small ≠ 0) :
+    value % 2 ^ large ≠ 0 := by
   intro hzero
-  have htwoDvd : 2 ∣ 2 ^ extra :=
-    Nat.pow_dvd_pow 2 hextra
-  have hmod := Nat.mod_mod_of_dvd value htwoDvd
+  have hmod := Nat.mod_mod_of_dvd value (Nat.pow_dvd_pow 2 hle)
   rw [hzero, Nat.zero_mod] at hmod
-  exact hodd hmod.symm
+  exact hsmall hmod.symm
 
 /-- Exact right shifts are unchanged by jamming. -/
 theorem shiftRightJam_eq_of_mod_eq_zero
@@ -129,15 +127,10 @@ theorem shiftRightJam_mod_pow_ne_zero_iff
       rw [shiftRightJam_mod_two_eq_one value shift hexact]
       decide
     have hleft :=
-      mod_two_pow_ne_zero_of_mod_two_ne_zero
-        (shiftRightJam value shift) extra hextra hjammedOdd
-    have hpowerDvd : 2 ^ shift ∣ 2 ^ (shift + extra) :=
-      Nat.pow_dvd_pow 2 (by omega)
-    have hright : value % 2 ^ (shift + extra) ≠ 0 := by
-      intro hzero
-      have hmod := Nat.mod_mod_of_dvd value hpowerDvd
-      rw [hzero, Nat.zero_mod] at hmod
-      exact hexact hmod.symm
+      mod_two_pow_ne_zero_of_le (shiftRightJam value shift) hextra
+        (by rwa [pow_one])
+    have hright :=
+      mod_two_pow_ne_zero_of_le value (Nat.le_add_right shift extra) hexact
     exact ⟨fun _ => hright, fun _ => hleft⟩
 
 end FloatLib.Numerics

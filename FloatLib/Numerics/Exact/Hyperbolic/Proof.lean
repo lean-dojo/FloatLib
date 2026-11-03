@@ -62,6 +62,29 @@ theorem compareTanh_eq_real (argument boundary : ℚ) :
         (Real.neg_one_lt_tanh _)
     simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
 
+/--
+The two-threshold exponential window of the hyperbolic comparisons is exact: when `U ≤ exp x`
+forces `boundary < f` and `exp x ≤ L` forces `f < boundary`, the window returns `cmp f boundary`
+whenever its inner comparison does.
+-/
+private theorem exp_window_eq_cmp (x U L boundary : ℚ) {f : ℝ} {inner : Ordering}
+    (hinner : inner = cmp f (boundary : ℝ))
+    (hupper : (U : ℝ) ≤ Real.exp (x : ℝ) → (boundary : ℝ) < f)
+    (hlower : Real.exp (x : ℝ) ≤ (L : ℝ) → f < boundary) :
+    (if ElementaryComparison.compareExp x U = .lt then
+        if ElementaryComparison.compareExp x L = .gt then inner else .lt
+      else .gt) = cmp f (boundary : ℝ) := by
+  split
+  · split
+    · exact hinner
+    · rename_i hfast
+      rw [ElementaryComparison.compareExp_eq_real, cmp_eq_gt_iff] at hfast
+      simp [cmp, cmpUsing, hlower (le_of_not_gt hfast)]
+  · rename_i hfast
+    rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff] at hfast
+    have hgt := hupper (le_of_not_gt hfast)
+    simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
+
 /-- The logarithmic preliminary bound and the adaptive hyperbolic sine comparison are both exact. -/
 theorem compareSinhPositive_eq_real (argument boundary : ℚ) (hpositive : 0 < argument) :
     compareSinhPositive argument boundary hpositive =
@@ -73,26 +96,15 @@ theorem compareSinhPositive_eq_real (argument boundary : ℚ) (hpositive : 0 < a
       (show (boundary : ℝ) ≤ 0 by exact_mod_cast ‹_›).trans_lt
         (Real.sinh_pos_iff.mpr hx)
     simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
-  · split
-    · split
-      · exact Enclosure.Comparison.compare_eq_real _ _ _ _
-          (fun n => Enclosure.contains_sinh argument (2 ^ n))
-      · rename_i hfast
-        rw [ElementaryComparison.compareExp_eq_real, cmp_eq_gt_iff] at hfast
-        push_cast at hfast
-        have hlt : Real.sinh (argument : ℝ) < boundary := by
-          rw [Real.sinh_eq]
-          linarith [le_of_not_gt hfast, Real.exp_pos (-(argument : ℝ))]
-        simp [cmp, cmpUsing, hlt]
-    · rename_i hfast
-      rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff] at hfast
-      push_cast at hfast
-      have hsmall : Real.exp (-(argument : ℝ)) < 1 :=
-        Real.exp_lt_one_iff.mpr (neg_neg_of_pos hx)
-      have hgt : (boundary : ℝ) < Real.sinh (argument : ℝ) := by
-        rw [Real.sinh_eq]
-        linarith [le_of_not_gt hfast]
-      simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
+  · have hsmall : Real.exp (-(argument : ℝ)) < 1 := Real.exp_lt_one_iff.mpr (neg_neg_of_pos hx)
+    refine exp_window_eq_cmp _ _ _ _ (Enclosure.Comparison.compare_eq_real _ _ _ _
+      (fun n => Enclosure.contains_sinh argument (2 ^ n))) (fun h => ?_) (fun h => ?_)
+    · push_cast at h
+      rw [Real.sinh_eq]
+      linarith
+    · push_cast at h
+      rw [Real.sinh_eq]
+      linarith [Real.exp_pos (-(argument : ℝ))]
 
 /-- Odd reflection and the exact zero case preserve the full hyperbolic sine ordering. -/
 theorem compareSinh_eq_real (argument boundary : ℚ) :
@@ -118,26 +130,15 @@ theorem compareCoshPositive_eq_real (argument boundary : ℚ) (hpositive : 0 < a
       (show (boundary : ℝ) ≤ 1 by exact_mod_cast ‹_›).trans_lt
         (Real.one_lt_cosh.mpr (ne_of_gt hx))
     simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
-  · split
-    · split
-      · exact Enclosure.Comparison.compare_eq_real _ _ _ _
-          (fun n => Enclosure.contains_cosh argument (2 ^ n))
-      · rename_i hfast
-        rw [ElementaryComparison.compareExp_eq_real, cmp_eq_gt_iff] at hfast
-        push_cast at hfast
-        have hsmall : Real.exp (-(argument : ℝ)) < 1 :=
-          Real.exp_lt_one_iff.mpr (neg_neg_of_pos hx)
-        have hlt : Real.cosh (argument : ℝ) < boundary := by
-          rw [Real.cosh_eq]
-          linarith [le_of_not_gt hfast]
-        simp [cmp, cmpUsing, hlt]
-    · rename_i hfast
-      rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff] at hfast
-      push_cast at hfast
-      have hgt : (boundary : ℝ) < Real.cosh (argument : ℝ) := by
-        rw [Real.cosh_eq]
-        linarith [le_of_not_gt hfast, Real.exp_pos (-(argument : ℝ))]
-      simp [cmp, cmpUsing, hgt, not_lt_of_ge hgt.le]
+  · have hsmall : Real.exp (-(argument : ℝ)) < 1 := Real.exp_lt_one_iff.mpr (neg_neg_of_pos hx)
+    refine exp_window_eq_cmp _ _ _ _ (Enclosure.Comparison.compare_eq_real _ _ _ _
+      (fun n => Enclosure.contains_cosh argument (2 ^ n))) (fun h => ?_) (fun h => ?_)
+    · push_cast at h
+      rw [Real.cosh_eq]
+      linarith [Real.exp_pos (-(argument : ℝ))]
+    · push_cast at h
+      rw [Real.cosh_eq]
+      linarith
 
 /-- Even reflection and the exact zero case preserve the full hyperbolic cosine ordering. -/
 theorem compareCosh_eq_real (argument boundary : ℚ) :

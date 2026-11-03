@@ -9,19 +9,21 @@ module
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 
 /-!
-# Certificate for all six core arithmetic operations
+# The six execution equations as one proposition
 
 The operation typeclasses already require every executable kernel to carry its refinement proof.
 `FullArithmeticCertificate` collects those six refinement statements, indexed by the shared
-operation enum.
+operation enum, and `fullArithmeticCertificate` proves it from the six capability instances.
 
-Users can request this bundle when they want one machine-checked answer to “which core operations
-are certified for this format?” Formats supporting only a subset of operations continue to expose
-their individual `ExecFloat.Proof.*_eq_spec` theorems.
+The bundle is a packaging of `ExecFloat.Proof.add_eq_spec` and its five siblings, nothing more. It
+holds for every format that has all six capabilities, because each capability carries its
+equation, so it cannot tell a correct format from one whose stored specification is wrong, and a
+format missing a capability cannot even state it. Formats supporting only a subset of operations
+use the individual `*_eq_spec` theorems.
 
-The certificate covers the universal execution boundary: each public operation equals the
-specification stored by its format capability. Standards conformance and denotational properties
-of that specification require separate format-family theorems.
+Each equation says that a public operation equals the specification stored by its format
+capability. What that specification computes, and whether it conforms to a standard, is stated by
+separate format-family theorems.
 -/
 
 @[expose] public section
@@ -70,11 +72,11 @@ def OperationRefines
         FloatLib.Floats.ExecFloat.Spec.fma left right addend
 
 /--
-Kernel-checked refinement evidence for every universal arithmetic operation on one format.
+The six execution equations of one format, indexed by `Backend.Operation`.
 
-Indexing by `Backend.Operation` avoids a second six-field record parallel to the executable
-capability hierarchy. This proposition certifies execution against the installed specifications;
-it does not replace format-specific theorems about what those specifications mean.
+Indexing by the operation avoids a second six-field record parallel to the executable capability
+hierarchy. The proposition relates execution to the specifications the capabilities store; it says
+nothing about what those specifications compute.
 -/
 abbrev FullArithmeticCertificate
     (F : Type u)
@@ -89,7 +91,8 @@ abbrev FullArithmeticCertificate
   ∀ operation, OperationRefines F operation
 
 /--
-Collect the refinement proofs supplied by the six operation capabilities.
+Every format with all six operation capabilities satisfies `FullArithmeticCertificate`: the
+proof collects the refinement equation each capability carries.
 -/
 theorem fullArithmeticCertificate
     (F : Type u)

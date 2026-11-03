@@ -42,31 +42,16 @@ theorem coefficient_ofRat_wrap (exact : Rat) :
 theorem coefficient_ofCoefficient_of_inRange (stored : Int)
     (h : FixedInt.InRange width stored) :
     coefficient (ofCoefficient stored :
-      ExecFloat.BoundedFixedPoint radix fractionalDigits width) = stored := by
-  cases width with
-  | zero =>
-      have hzero : stored = 0 := by
-        change 0 ≤ stored ∧ stored ≤ 0 at h
-        exact le_antisymm h.2 h.1
-      subst stored
-      rfl
-  | succ width =>
-      exact FixedInt.toInt_ofInt_eq_self (Nat.succ_pos width) h
+      ExecFloat.BoundedFixedPoint radix fractionalDigits width) = stored :=
+  FixedInt.toInt_ofInt_eq_self h
 
 /-- Saturating conversion delivers the clamped nearest-even coefficient at every width. -/
 theorem coefficient_ofRat_saturate (exact : Rat) :
     coefficient (ofRat exact .saturate :
       ExecFloat.BoundedFixedPoint radix fractionalDigits width) =
         FixedInt.clamp width
-          (roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)) := by
-  cases width with
-  | zero =>
-      simp [coefficient, ofRat, toCode, ofCode,
-        Formats.FixedPoint.Bounded.coefficient, FixedInt.toInt, FixedInt.ofIntSaturating,
-        FixedInt.ofInt, FixedInt.clamp, FixedInt.minValue, FixedInt.maxValue,
-        Quantization.Saturating.clamp, show (BitVec.intMin 0).toInt = 0 from rfl]
-  | succ width =>
-      exact FixedInt.toInt_ofIntSaturating (Nat.succ_pos width) _
+          (roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)) :=
+  FixedInt.toInt_ofIntSaturating _
 
 /-- Finite observations are handled by the selected bounded-overflow policy. -/
 @[simp, grind =] theorem run_finite (policy : OverflowPolicy) (exact : Rat) :
@@ -110,6 +95,24 @@ theorem implements_run :
       | saturate => exact ⟨coefficient_ofRat_saturate exact, rfl⟩
   | infinity negative => rfl
   | exceptional exceptional => rfl
+
+/--
+The status of a delivered conversion in terms of the nearest-even coefficient that `spec` uses for
+the value: inexact when the delivered value differs from the input, overflow exactly when that
+coefficient leaves the signed range, and saturation or wrapping when the policy names it.
+-/
+theorem finiteStatus_eq (policy : OverflowPolicy) (exact : Rat)
+    (rounded : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
+    finiteStatus policy exact rounded =
+      let nearest := roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)
+      { inexact := ExecFloat.BoundedFixedPoint.toRat rounded != exact
+        overflow := decide (¬FixedInt.InRange width nearest)
+        saturated := decide (¬FixedInt.InRange width nearest ∧ policy = .saturate)
+        wrapped := decide (¬FixedInt.InRange width nearest ∧ policy = .wrap) } := by
+  cases policy <;>
+    simp [finiteStatus, coefficientInRange, Formats.FixedPoint.Bounded.coefficientOf,
+      Formats.FixedPoint.Bounded.scale] <;>
+    exact Bool.decide_congr Iff.rfl
 
 private theorem coefficient_injective :
     Function.Injective (coefficient (radix := radix)
@@ -174,7 +177,11 @@ theorem spec_iff_eq_run (policy : OverflowPolicy) (input : NumericalValue Rat)
       .finite (ExecFloat.BoundedFixedPoint.toRat value) :=
   rfl
 
-/-- Rejecting conversion reports `outOfRange` exactly when the rejecting constructor fails. -/
+/--
+Unfolding of `run` at `.reject` on a finite input: success with the value built by `ofRat` and its
+status, or `outOfRange` when `ofRat` returns `none`. When that happens is the failure clause of
+`spec`, through `spec_iff_eq_run`: exactly when the nearest-even coefficient is out of range.
+-/
 @[grind =] theorem run_reject_eq (exact : Rat) :
     run (radix := radix) (fractionalDigits := fractionalDigits) (width := width)
         .reject (.finite exact) =

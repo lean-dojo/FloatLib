@@ -12,6 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Classification.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.MixedError
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Comparison.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
@@ -52,7 +53,11 @@ is separated further:
 * `Configured.Value.CoreProof` proves lossless model and bit-pattern round trips;
 * `Configured.Classification` connects the ten value classes to their exact numerical meaning;
 * `Configured.Real` reads a value as a real number with `toReal` and `toReal?`, and states the
-  rounding contract and half-ulp error of `+`, `-`, `*`, `/`, and square root on the type;
+  rounding contract and the half-ulp error of `+`, `-`, `*`, `/`, and square root on the type,
+  and the exact cases of `+`, `-`, `*`, `/`, and square root;
+* `Configured.MixedError` carries mixed relative and absolute error bounds through the same
+  operations, fused multiply-add, negation, `max`, `min`, casts, and left-to-right sums, and
+  states their exact cases by decoded value with `toRat?`;
 * `Configured.Instances` installs comparison, display, literals, and negation;
 * `Configured.Rounding.Runtime` exposes all six primitive operations and `ofRat`, rounding an
   exact rational, with an IEEE direction argument and `IEEEOutcome.bind` to chain their statuses,
@@ -62,7 +67,8 @@ is separated further:
   flags;
 * `Configured.TotalOrder` orders complete representations, including zero signs and NaN metadata;
 * `Configured.Operations.Runtime` exposes integral rounding, `toInt?`, scaling, exponent,
-  adjacency, and sign tools, while `Configured.Operations.Proof` supplies their contracts;
+  adjacency, sign tools, and the IEEE 754-2019 `minimum`, `maximum`, `minimumNumber`, and
+  `maximumNumber`, while `Configured.Operations.Proof` supplies their contracts;
 * `Configured.Square` reuses the certified multiplication kernels for a single operand;
 * `Configured.Algebraic` provides reciprocal square root, hypotenuse, integer powers, and
   integer-degree roots, with one final nearest-even rounding;
@@ -75,9 +81,14 @@ is separated further:
   the model interval arithmetic and enclosure proofs.
 
 `Configured.Transcendentals` is a named import, not part of this module: it lifts the
-deterministic elementary-function kernels and the power to this type, with `certify := true` for
-correctly rounded results. `import FloatLib` does not install `ExecFloat.Binary.exp`,
+deterministic elementary-function kernels and the power to this type, and adds the certified
+searches of `ExecFloat.Binary.Certified`, which return a correctly rounded result or say why the
+search did not certify one. `import FloatLib` does not install `ExecFloat.Binary.exp`,
 `ExecFloat.Binary.pow`, `Model.exp`, `Model.pow`, or the binary `MathFunctions` instances.
+`Configured.CorrectlyRounded` is another named import, with total `exp`, `log`, `expMinus1`,
+`logPlus1`, and `expMul`. For an IEEE format their finite results on finite inputs are correctly
+rounded, whatever the search budget, and an overflowing result is the infinity with the sign of
+the exact result.
 
 Natural and scientific literals are rounded once from exact rationals into the destination
 format. They never pass through Lean's host `Float`, C `double`, or an IEEE bit-pattern parser.

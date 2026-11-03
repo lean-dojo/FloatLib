@@ -47,7 +47,7 @@ Every decimal zero cohort converts to the binary zero of the same sign, with cle
     (mode : RoundingMode) (s : Bool) (q : Int) :
     toBinary fmt hfmt mode (.finite s 0 q) =
       { value := Model.zero fmt s, status := {}, ternary := .eq } := by
-  simp [toBinary, roundBinaryMagnitude_zero fmt hfmt, binaryStatus, binaryTernary, Model.toRat?]
+  simp [toBinary, roundBinaryMagnitude_zero fmt, binaryStatus, binaryTernary, Model.toRat?]
 
 /-- NaN conversion preserves the sign bit for every destination width. -/
 @[simp] theorem binaryNaN_signBit (fmt : FloatFormat) (s : Bool) (payload : Nat) :

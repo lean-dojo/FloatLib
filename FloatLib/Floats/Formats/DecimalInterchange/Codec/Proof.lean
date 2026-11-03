@@ -11,7 +11,8 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.BitsProof
 # Decimal codec correctness
 
 The coefficient laws imply a round trip for every representable datum and
-semantic preservation and idempotence of word canonicalization. Equality here
+semantic preservation and idempotence of word canonicalization. Two words have
+the same canonical word exactly when they decode to the same datum. Equality here
 preserves each datum's quantum exponent, signed zero, and NaN metadata, not only
 the rational value of ordinary numbers.
 -/
@@ -23,20 +24,28 @@ namespace FloatLib.Floats.Formats.DecimalInterchange.Codec
 /-- The obligations for an actual coefficient encoding. BID and DPD each prove
 these laws for their executable field manipulations. -/
 structure Lawful (codec : Codec) : Prop where
+  /-- A representable coefficient and biased exponent encode below the combination-field patterns
+  reserved for infinities and NaNs. -/
   encodeFinite_lt : ∀ (f : Format) (c e : Nat),
     c < f.coefficientBound → e < f.exponentBound →
     codec.encodeFinite f c e < 30 * (f.exponentBase * f.trailingBase)
+  /-- Every finite field pattern, canonical or not, decodes to a coefficient and biased exponent
+  within the format bounds. -/
   decodeFinite_valid : ∀ (f : Format) (n : Nat),
     n < 30 * (f.exponentBase * f.trailingBase) →
     (codec.decodeFinite f n).1 < f.coefficientBound ∧
       (codec.decodeFinite f n).2 < f.exponentBound
+  /-- Decoding inverts finite encoding on representable coefficients and biased exponents. -/
   decodeFinite_encodeFinite : ∀ (f : Format) (c e : Nat),
     c < f.coefficientBound → e < f.exponentBound →
     codec.decodeFinite f (codec.encodeFinite f c e) = (c, e)
+  /-- A representable NaN payload encodes within the trailing field. -/
   encodePayload_lt : ∀ (f : Format) (p : Nat),
     p < f.payloadBound → codec.encodePayload f p < f.trailingBase
+  /-- Every trailing field, canonical or not, decodes to a representable NaN payload. -/
   decodePayload_lt : ∀ (f : Format) (n : Nat),
     n < f.trailingBase → codec.decodePayload f n < f.payloadBound
+  /-- Decoding inverts payload encoding on representable payloads. -/
   decodePayload_encodePayload : ∀ (f : Format) (p : Nat),
     p < f.payloadBound → codec.decodePayload f (codec.encodePayload f p) = p
 
@@ -57,7 +66,6 @@ private theorem nan_fields (f : Format) (signaling : Bool) (p : Nat)
   have ht : f.trailingBase ≤ half :=
     Nat.le_mul_of_pos_left _ (Nat.pow_pos (by decide))
   have hp : p < half := h.trans_le ht
-  have hh : 0 < half := f.trailingBase_pos.trans_le ht
   have hg : f.exponentBase * f.trailingBase = 2 * half := by
     rw [f.exponentBase_eq_two_mul, Nat.mul_assoc]
   have hb : bit < 2 := by cases signaling <;> decide
@@ -69,12 +77,11 @@ private theorem nan_fields (f : Format) (signaling : Bool) (p : Nat)
     Nat.mul_div_cancel_left half (by decide : 0 < 2), hs]
   refine ⟨?_, ?_, ?_, ?_⟩
   · omega
-  · rw [Nat.add_assoc, Nat.add_comm (31 * (2 * half)),
-      Nat.add_mul_div_right _ _ (by omega), Nat.div_eq_of_lt hr]
+  · rw [Nat.add_assoc, Bits.mul_add_div_of_lt hr]
   · have hn : 31 * (2 * half) + bit * half + p = (62 + bit) * half + p := by
       rw [Nat.add_mul]
       omega
-    rw [hn, Nat.add_comm, Nat.add_mul_div_right _ _ hh, Nat.div_eq_of_lt hp]
+    rw [hn, Bits.mul_add_div_of_lt hp]
     cases signaling <;> simp [bit]
   · simp [half, Nat.add_mod, Nat.mul_mod, Nat.mod_eq_of_lt h]
 
@@ -136,6 +143,18 @@ theorem canonicalize_idempotent (codec : Codec) (laws : codec.Lawful)
     (f : Format) (word : BitVec f.bitWidth) :
     codec.canonicalize f (codec.canonicalize f word) = codec.canonicalize f word := by
   simp only [canonicalize, codec.decode_encode laws f _ (codec.decode_valid laws f word)]
+
+/-- Two words have the same canonical word exactly when they decode to the same datum, so
+canonicalization selects one word for each datum. -/
+theorem canonicalize_eq_canonicalize_iff (codec : Codec) (laws : codec.Lawful)
+    (f : Format) (left right : BitVec f.bitWidth) :
+    codec.canonicalize f left = codec.canonicalize f right ↔
+      codec.decode f left = codec.decode f right := by
+  constructor
+  · intro h
+    rw [← codec.decode_canonicalize laws f left, h, codec.decode_canonicalize laws f right]
+  · intro h
+    simp only [canonicalize, h]
 
 /-- An accepted checked encoding always decodes to the original datum. -/
 theorem decode_of_encode?_eq_some (codec : Codec) (laws : codec.Lawful)

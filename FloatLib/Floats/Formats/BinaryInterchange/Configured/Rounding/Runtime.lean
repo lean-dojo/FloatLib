@@ -18,17 +18,12 @@ The six IEEE arithmetic operations lift from the descriptor model to configured 
 the model's options, a rounding direction `mode` and `status`:
 
 ```lean
-open FloatLib.Rounding
-
-ExecFloat.Binary.add x y (mode := up)
-ExecFloat.Binary.div x y (mode := down) (status := true)
+ExecFloat.Binary.add x y (mode := .up)
+ExecFloat.Binary.div x y (mode := .down) (status := true)
 ```
 
 Operands come first, and `mode` defaults to nearest-even. The direction and status are ordinary
 arguments and results, and no rounding-mode instance is changed.
-
-The constructor names `.up` and `.down` are always available, and `open FloatLib.Rounding` lets
-callers write them bare.
 
 The default call, nearest-even without status, runs the certified implementation selected for the
 format, the same `ExecFloat.add` through `ExecFloat.fma` that the operators `+`, `-`, `*`, `/`
@@ -44,8 +39,10 @@ for every capability whose reference operation is the configured model operation
 every capability instance this library declares.
 
 These functions round one primitive operation. To evaluate an algebraic expression exactly and
-round only its final result, use `ExecFloat.ExactExpression` with `ExecFloat.roundOnce`, which
-takes the same `(mode := ...)` option.
+round only its final result, use `ExecFloat.ExactExpression` with `ExecFloat.roundOnce`. Its
+`(mode := ...)` option is spelled the same way, `(mode := .up)`, but for a binary destination it
+has the conversion mode type `Numerics.RoundingMode`, so an `IEEERoundingMode` value goes through
+`toRoundingMode`.
 
 With `status := true` an operation returns the configured value together with the five IEEE
 exception indicators and the ternary value computed by the descriptor model. There is no hidden
@@ -79,8 +76,7 @@ local notation "Value" =>
 A configured binary result with the IEEE exception indicators and the ternary value of one
 operation.
 
-The fields mirror `Model.IEEEOutcome`, with the value in configured storage. The numeric
-projections `.1`, `.2`, and `.3` select the value, the status, and the ternary value.
+The fields mirror `Model.IEEEOutcome`, with the value in configured storage.
 -/
 structure IEEEOutcome where
   /-- Delivered configured result. -/
@@ -126,16 +122,14 @@ not with the exact value of the whole computation.
   let result := next outcome.value
   { result with status := outcome.status.union result.status }
 
-/-- `#eval` shows the three fields, displaying the value as its format does. -/
+/-- `#eval` shows the three fields, displaying the value as its format does and listing only the
+raised flags, as `{ value := 0.3333333, status := { inexact := true }, ternary := Ordering.lt }`. -/
 instance [Repr (FloatLib.Floats.ExecFloat (Configured.Family format code plan))] :
     Repr (IEEEOutcome (format := format) (plan := plan) (code := code)) where
   reprPrec outcome _ :=
-    Std.Format.bracket "{ "
-      (Std.Format.joinSep
-        [f!"value := {repr outcome.value}", f!"status := {repr outcome.status}",
-          f!"ternary := {repr outcome.ternary}"]
-        ("," ++ Std.Format.line))
-      " }"
+    Numerics.reprRecord
+      [("value", repr outcome.value), ("status", repr outcome.status),
+        ("ternary", repr outcome.ternary)]
 
 /--
 The default outcome has the supplied default value, a clear status, and the ternary value `.eq`.
@@ -175,7 +169,7 @@ end IEEEOutcome
 Round an exact rational once into the configured format, in `mode` (nearest-even by default). With
 `status := true` the result also carries the IEEE exception indicators and the ternary value.
 
-The expected type selects the format, as in `(ExecFloat.Binary.ofRat (1 / 3) (mode := up) :
+The expected type selects the format, as in `(ExecFloat.Binary.ofRat (1 / 3) (mode := .up) :
 Binary32)`. Numeric and scientific literals round the same way, to nearest-even.
 -/
 @[macro_inline] def ofRat (q : Rat) (mode : Model.IEEERoundingMode := .nearest)

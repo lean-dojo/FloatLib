@@ -39,7 +39,6 @@ represented range and overflow policies are defined here once.
 meta def profile (base fractionalDigits width : Nat) : FormatProfile where
   family := "bounded radix-parametric fixed point"
   standard := "mathematical fixed-point format; no external encoding standard claimed"
-  declarationPrefix := "FloatLib.Floats.Formats.FixedPoint.Bounded."
   representation :=
     [ ⟨"storage", s!"signed {width}-bit two's-complement coefficient"⟩
     , ⟨"radix", toString base⟩
@@ -101,13 +100,15 @@ meta def profile (base fractionalDigits width : Nat) : FormatProfile where
           [ ``FloatLib.Floats.Formats.FixedPoint.Bounded.checkedAdd_refines
           , ``FloatLib.Floats.Formats.FixedPoint.Bounded.checkedSub_refines
           , ``FloatLib.Floats.Formats.FixedPoint.Bounded.checkedMul_refines
+          , ``FloatLib.Numerics.Representations.FixedInt.checkedAdd_eq_none_iff
+          , ``FloatLib.Numerics.Representations.FixedInt.checkedSub_eq_none_iff
+          , ``FloatLib.Floats.Formats.FixedPoint.Bounded.checkedMul_eq_none_iff
           , ``FloatLib.Floats.Formats.FixedPoint.Bounded.saturatingAdd_refines
           , ``FloatLib.Floats.Formats.FixedPoint.Bounded.saturatingSub_refines
           , ``FloatLib.Floats.Formats.FixedPoint.Bounded.saturatingMul_refines
           ]
-        applicability :=
-          if width > 0 then .verifiedForType else .unavailable "signed width must be positive"
-        scope := "positive destination widths; checked exactness also assumes the result fits"
+        applicability := .verifiedForType
+        scope := "all widths, including width zero; checked exactness assumes the result fits"
         numericalGuarantee? := some {
           kinds := [.range, .exactness]
           statement :=

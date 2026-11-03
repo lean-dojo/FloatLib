@@ -47,16 +47,20 @@ private theorem roundMantissaAtExponentEven_shift (n k : Nat) (e t : Int) :
       simp only [roundMantissaAtExponentEven, h, h', ite_false, Nat.shiftLeft_eq]
       rw [mul_assoc, ← pow_add, hs]
 
-/-- Moving exact trailing binary zeros into the exponent does not change model rounding. -/
-theorem round_shiftLeft (spec : Format) (sign : Sign) (n k : Nat) (e : Int) (hn : n ≠ 0) :
+/--
+Moving exact trailing binary zeros into the exponent does not change model rounding. A zero
+mantissa rounds to the signed zero at every exponent.
+-/
+theorem round_shiftLeft (spec : Format) (sign : Sign) (n k : Nat) (e : Int) :
     Float.Model.UnpackedFloat.round spec sign (n <<< k) (e - k) =
       Float.Model.UnpackedFloat.round spec sign n e := by
-  have hshift : n <<< k ≠ 0 := by simp [Nat.shiftLeft_eq, hn]
+  by_cases hn : n = 0
+  · subst n
+    simp [Model.round_exact_zero]
   have htotal : totalExponent (n <<< k) (e - k) = totalExponent n e := by
     simp only [totalExponent, Nat.log2_shiftLeft_of_ne_zero _ _ hn, Nat.cast_add]
     omega
-  rw [round_exact_eq_finishRoundedMantissa _ _ _ _ hshift,
-    round_exact_eq_finishRoundedMantissa _ _ _ _ hn, htotal,
+  rw [round_exact_eq_finishRoundedMantissa, round_exact_eq_finishRoundedMantissa, htotal,
     roundMantissaAtExponentEven_shift]
 
 private theorem ofNat_eq_round (spec : Format) (n : Nat) (hn : n ≠ 0) :
@@ -67,6 +71,30 @@ private theorem ofNat_eq_round (spec : Format) (n : Nat) (hn : n ≠ 0) :
     Float.Model.UnpackedFloat.normalize,
     Int.compare_eq_gt.mpr hp]
 
+/--
+Shifting a nonzero `n` left by `j` at exponent `-j` keeps that exponent at or below the target
+exponent once the shifted mantissa has at least the format's precision.
+-/
+private theorem neg_le_targetExponent_shiftLeft (spec : Format) {n : Nat} (hn : n ≠ 0) (j : Nat)
+    (hj : spec.mantissaBits ≤ j + n.log2 + 1) :
+    -(j : Int) ≤ spec.targetExponent (totalExponent (n <<< j) (-(j : Int))) := by
+  unfold Format.targetExponent totalExponent
+  rw [Nat.log2_shiftLeft_of_ne_zero _ _ hn]
+  exact le_max_of_le_left (by push_cast; omega)
+
+/--
+The exact mantissa `n <<< j` at exponent `-j` rounds to the natural-number constructor once it has
+at least the format's precision.
+-/
+private theorem roundWithAccuracy_shiftLeft_eq_ofNat (spec : Format) {n : Nat} (hn : n ≠ 0)
+    (j : Nat) (hj : spec.mantissaBits ≤ j + n.log2 + 1) :
+    roundWithAccuracy spec .positive (n <<< j) (-(j : Int)) .exact =
+      Float.Model.UnpackedFloat.ofNat spec n := by
+  rw [roundWithAccuracy_exact_eq_round_of_le_targetExponent _ _ _ _
+    (neg_le_targetExponent_shiftLeft spec hn j hj)]
+  simpa only [zero_sub] using
+    (round_shiftLeft spec .positive n j 0).trans (ofNat_eq_round spec n hn).symm
+
 /-- A scientific literal with decimal exponent zero is the shared natural-number constructor. -/
 theorem ofScientific_zero_eq_ofNat (spec : Format) (n : Nat) :
     Float.Model.UnpackedFloat.ofScientific spec n 0 =
@@ -76,16 +104,6 @@ theorem ofScientific_zero_eq_ofNat (spec : Format) (n : Nat) :
     simp [Float.Model.UnpackedFloat.ofScientific, Float.Model.UnpackedFloat.ofNat,
       Float.Model.UnpackedFloat.ofInt, Float.Model.UnpackedFloat.normalize]
   have hp : (0 : Int) < 2 ^ spec.exponentBits := Int.pow_pos (by decide)
-  have htarget :
-      -(spec.mantissaBits : Int) ≤
-        spec.targetExponent (totalExponent (n <<< spec.mantissaBits) (-spec.mantissaBits)) := by
-    unfold Format.targetExponent totalExponent
-    rw [Nat.log2_shiftLeft_of_ne_zero _ _ hn]
-    have := le_max_left
-      (((n.log2 + spec.mantissaBits : Nat) : Int) + 1 - spec.mantissaBits -
-        spec.mantissaBits) spec.minExponent
-    push_cast at this ⊢
-    omega
   simp only [Float.Model.UnpackedFloat.ofScientific, hn, ↓reduceDIte,
     show ¬(0 : Int) > 2 ^ spec.exponentBits by omega,
     show ¬(0 : Int) < -(2 ^ spec.exponentBits + n.log2) by omega,
@@ -93,10 +111,7 @@ theorem ofScientific_zero_eq_ofNat (spec : Format) (n : Nat) :
     Nat.mul_one, Int.add_zero]
   change roundWithAccuracy spec .positive (n <<< spec.mantissaBits)
     (-spec.mantissaBits) .exact = _
-  rw [roundWithAccuracy_exact_eq_round_of_le_targetExponent _ _ _ _ htarget]
-  simpa only [zero_sub] using
-    (round_shiftLeft spec .positive n spec.mantissaBits 0 hn).trans
-      (ofNat_eq_round spec n hn).symm
+  exact roundWithAccuracy_shiftLeft_eq_ofNat spec hn spec.mantissaBits (by omega)
 
 private theorem round_eq_finite_of_targetExponent
     (spec : Format) (sign : Sign) (n : Nat) (e : Int) (hn : n ≠ 0)
@@ -140,7 +155,7 @@ private theorem mul_one_ofNat_small (spec : Format) (n : Nat)
   have hnat :
       Float.Model.UnpackedFloat.ofNat spec n =
         .finite .positive (n <<< k) (-(k : Int)) (Nat.pos_of_ne_zero hm) := by
-    rw [ofNat_eq_round spec n hn, ← round_shiftLeft spec .positive n k 0 hn]
+    rw [ofNat_eq_round spec n hn, ← round_shiftLeft spec .positive n k 0]
     simpa only [zero_sub] using
       round_eq_finite_of_targetExponent spec .positive (n <<< k) (-k) hm htarget
   have hbiasedPos : 0 < -(k : Int) + spec.exponentBias +
@@ -155,7 +170,7 @@ private theorem mul_one_ofNat_small (spec : Format) (n : Nat)
       simp [Format.mantissaBits, Nat.add_comm]
     omega
   rw [hnat, unpack_pack_finite_normal spec .positive (n <<< k) (-k) hm hbits
-    hbiasedPos.le hbiasedPos hnoOverflow]
+    hbiasedPos hnoOverflow]
   change roundWithAccuracy spec .positive
     ((n <<< k) * 2 ^ spec.mantissaBitsWithoutImplicit)
     (-k + -(spec.mantissaBitsWithoutImplicit : Int)) .exact = _
@@ -163,19 +178,8 @@ private theorem mul_one_ofNat_small (spec : Format) (n : Nat)
       n <<< (k + spec.mantissaBitsWithoutImplicit) := by
     simp [Nat.shiftLeft_eq, pow_add, Nat.mul_assoc]
   have hexp : -(k : Int) + -(spec.mantissaBitsWithoutImplicit : Int) =
-      0 - (k + spec.mantissaBitsWithoutImplicit : Nat) := by push_cast; omega
-  rw [hmul, hexp]
-  rw [roundWithAccuracy_exact_eq_round_of_le_targetExponent]
-  · rw [round_shiftLeft spec .positive n _ 0 hn, ← ofNat_eq_round spec n hn, hnat]
-  · unfold Format.targetExponent totalExponent
-    rw [Nat.log2_shiftLeft_of_ne_zero _ _ hn]
-    have := le_max_left
-      ((((n.log2 + (k + spec.mantissaBitsWithoutImplicit) : Nat) : Int) + 1 +
-        (0 - ((k + spec.mantissaBitsWithoutImplicit : Nat) : Int))) -
-        spec.mantissaBits) spec.minExponent
-    simp only [Format.mantissaBits] at hk ⊢
-    push_cast at this ⊢
-    omega
+      -((k + spec.mantissaBitsWithoutImplicit : Nat) : Int) := by push_cast; omega
+  rw [hmul, hexp, roundWithAccuracy_shiftLeft_eq_ofNat spec hn _ (by omega), hnat]
 
 private theorem unpack_packComponents_neg (spec : Format) (sign : Sign)
     (exponent : BitVec spec.exponentBits)
@@ -207,11 +211,10 @@ private theorem pack_neg_unpack_pack (spec : Format) (value : UnpackedFloat) :
       pack spec (Float.Model.UnpackedFloat.neg value) := by
   rw [← unpack_pack_neg, pack_unpack_of_valid _ _ valid_pack]
 
-private theorem neg_round (spec : Format) (sign : Sign) (n : Nat) (e : Int) (hn : n ≠ 0) :
+private theorem neg_round (spec : Format) (sign : Sign) (n : Nat) (e : Int) :
     Float.Model.UnpackedFloat.neg (Float.Model.UnpackedFloat.round spec sign n e) =
       Float.Model.UnpackedFloat.round spec (-sign) n e := by
-  rw [round_exact_eq_finishRoundedMantissa _ _ _ _ hn,
-    round_exact_eq_finishRoundedMantissa _ _ _ _ hn]
+  rw [round_exact_eq_finishRoundedMantissa, round_exact_eq_finishRoundedMantissa]
   unfold finishRoundedMantissa
   dsimp only
   split <;> rfl
@@ -219,7 +222,7 @@ private theorem neg_round (spec : Format) (sign : Sign) (n : Nat) (e : Int) (hn 
 private theorem neg_ofNat_succ (spec : Format) (n : Nat) :
     Float.Model.UnpackedFloat.neg (Float.Model.UnpackedFloat.ofNat spec (n + 1)) =
       Float.Model.UnpackedFloat.ofInt spec (.negSucc n) := by
-  rw [ofNat_eq_round spec (n + 1) (by omega), neg_round _ _ _ _ (by omega)]
+  rw [ofNat_eq_round spec (n + 1) (by omega), neg_round]
   simp [Float.Model.UnpackedFloat.ofInt, Float.Model.UnpackedFloat.normalize,
     Int.compare_eq_lt.mpr]
   rfl

@@ -142,9 +142,41 @@ theorem scaledMul_eq_project_finite (destination : Destination Result)
       destination.project { rounding := mode, saturation } (.finite ((s * x) * (t * y))) := by
   simp [scaledMul, scaledBinary, Arithmetic.mul, hs, hx, ht, hy]
 
-/-- Dividing by the implicit exact result scale one leaves a canonical closed datum unchanged. -/
+/-- Dividing a closed datum by exact one returns its canonical form: finite values and infinities
+are unchanged, and every exceptional value becomes the canonical NaN. -/
 theorem div_one (value : NumericalValue Rat) :
     Arithmetic.div value (.finite 1) = canonical value := by
   cases value <;> (repeat' cases_type Bool) <;> norm_num [Arithmetic.div, canonical]
+
+/-- Closed addition returns canonical data: its only exceptional result is the canonical NaN. -/
+theorem canonical_add (left right : NumericalValue Rat) :
+    canonical (Arithmetic.add left right) = Arithmetic.add left right := by
+  cases left <;> cases right <;> simp only [Arithmetic.add] <;> (try split_ifs) <;> rfl
+
+/-- Closed subtraction returns canonical data: its only exceptional result is the canonical NaN. -/
+theorem canonical_sub (left right : NumericalValue Rat) :
+    canonical (Arithmetic.sub left right) = Arithmetic.sub left right :=
+  canonical_add left _
+
+/-- Closed multiplication returns canonical data: its only exceptional result is the canonical
+NaN. -/
+theorem canonical_mul (left right : NumericalValue Rat) :
+    canonical (Arithmetic.mul left right) = Arithmetic.mul left right := by
+  cases left <;> cases right <;> simp only [Arithmetic.mul] <;> (try split_ifs) <;> rfl
+
+/-- A scaled operation whose closed `operation` returns canonical data, as addition, subtraction
+and multiplication do, is the §5.8 operation with an explicit exact result scale of one: dividing
+the scaled result by one before the projection changes nothing. -/
+theorem scaledBinary_eq_project_div_one (destination : Destination Result)
+    (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)
+    (hcanonical : ∀ left right, canonical (operation left right) = operation left right)
+    (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
+    (mode : RoundingMode) (saturation : SaturationMode) :
+    scaledBinary destination operation leftScale left rightScale right mode saturation =
+      destination.project { rounding := mode, saturation }
+        (Arithmetic.div (operation (Arithmetic.mul (decode leftScale) (decode left))
+          (Arithmetic.mul (decode rightScale) (decode right))) (.finite 1)) := by
+  rw [div_one, hcanonical]
+  rfl
 
 end FloatLib.Floats.Formats.P3109.Arithmetic.Mixed

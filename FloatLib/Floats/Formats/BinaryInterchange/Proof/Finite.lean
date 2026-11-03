@@ -43,12 +43,12 @@ namespace At
   ⟨x, numericalSystem_represents_of_isFinite x hfinite⟩
 
 /-- The format's policy-aware zero with its exact real interpretation. -/
-@[inline] def zero (fmt : FloatFormat) (sign : Bool) : At fmt 0 :=
-  ⟨Model.zero fmt sign, by
+@[inline] def zero (fmt : FloatFormat) (negative : Bool) : At fmt 0 :=
+  ⟨Model.zero fmt negative, by
     apply (represents_iff _ _).2
     exact
-      ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt sign),
-        toReal_zero fmt sign⟩⟩
+      ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt negative),
+        toReal_zero fmt negative⟩⟩
 
 /-- Positive one with its exact real interpretation. -/
 @[inline] def one (fmt : FloatFormat) : At fmt 1 :=
@@ -193,21 +193,16 @@ theorem le_toEReal_sqrt_up {fmt : FloatFormat} {r : ℝ}
   ⟨Model.fma x.1 y.1 z.1,
     Operation.Finite3If.denote (fma_refines fmt hfmt) x.2 y.2 z.2 hfinite⟩
 
-/-- Cast any finite source descriptor into an IEEE destination through one real rounding. -/
-@[inline] def castOfIEEEDestination {src dst : FloatFormat} {r : ℝ} (x : At src r)
+/--
+A cast from any finite source descriptor into an IEEE destination transports its real index
+through one destination rounding.
+-/
+@[inline] def cast {src dst : FloatFormat} {r : ℝ} (x : At src r)
     (hdst : dst.isIEEE = true)
     (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
     At dst (roundAt dst r) :=
   ⟨Model.cast src dst x.1,
-    Operation.Finite1If.denote (cast_refines_of_isIEEE_destination src dst hdst) x.2 hfinite⟩
-
-/-- A cross-format cast transports its real index through destination rounding. -/
-@[inline] def cast {src dst : FloatFormat} {r : ℝ} (x : At src r)
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
-    (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
-    At dst (roundAt dst r) :=
-  ⟨Model.cast src dst x.1,
-    Operation.Finite1If.denote (cast_refines src dst hsrc hdst) x.2 hfinite⟩
+    Operation.Finite1If.denote (cast_refines src dst hdst) x.2 hfinite⟩
 
 /-- Lifting a finite model value records that value as the carrier. -/
 @[simp] theorem value_ofFinite {fmt : FloatFormat} (x : Model fmt)
@@ -249,17 +244,11 @@ theorem le_toEReal_sqrt_up {fmt : FloatFormat} {r : ℝ}
     (fma x y z hfmt hfinite).1 = Model.fma x.1 y.1 z.1 :=
   rfl
 
-/-- The general finite cast witness retains the executable cast as its carrier. -/
-@[simp] theorem value_castOfIEEEDestination {src dst : FloatFormat} {r : ℝ} (x : At src r)
-    (hdst : dst.isIEEE = true)
-    (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
-    (castOfIEEEDestination x hdst hfinite).1 = Model.cast src dst x.1 := rfl
-
 /-- The carrier of a finite cast witness is the model cast. -/
 @[simp] theorem value_cast {src dst : FloatFormat} {r : ℝ} (x : At src r)
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true)
+    (hdst : dst.isIEEE = true)
     (hfinite : Model.isFinite (Model.cast src dst x.1) = true) :
-    (cast x hsrc hdst hfinite).1 = Model.cast src dst x.1 :=
+    (cast x hdst hfinite).1 = Model.cast src dst x.1 :=
   rfl
 
 end At

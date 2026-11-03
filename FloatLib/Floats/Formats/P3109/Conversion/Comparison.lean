@@ -29,12 +29,11 @@ private theorem compare_rat_cast (left right : Rat) :
   simp [LinearOrder.compare_eq_compareOfLessAndEq, compareOfLessAndEq]
 
 private theorem compareDyadic_positive (numerator denominator : Nat)
-    (value : Numerics.Dyadic) (hd : denominator ≠ 0)
-    (hs : value.negative = false) (hv : value.significand ≠ 0) :
+    (value : Numerics.Dyadic) (hd : denominator ≠ 0) :
     RationalBinary.compareDyadic? false numerator denominator value =
       some (compare ((numerator : Rat) / denominator) value.toRat) := by
   have h := BinaryInterchange.Model.compareDyadicScaled?_false_eq_compare
-    numerator denominator 0 value hd hs hv
+    numerator denominator 0 value hd
   have hc : BinaryInterchange.Model.scaledRatToReal numerator denominator 0 =
       (((numerator : Rat) / denominator : Rat) : Real) := by
     simp [BinaryInterchange.Model.scaledRatToReal]
@@ -71,7 +70,7 @@ theorem compareDyadic_eq_compare (negative : Bool) (numerator denominator : Nat)
   let positive : Numerics.Dyadic := ⟨false, value.significand, value.exponent⟩
   have hpositive : (0 : Rat) < (value.significand : Rat) * (2 : Rat) ^ value.exponent :=
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hv) hp
-  have hc := compareDyadic_positive numerator denominator positive hd rfl hv
+  have hc := compareDyadic_positive numerator denominator positive hd
   simp only [RationalBinary.compareDyadic?, RationalBinary.compareDyadicScaled?, hd, hn,
     hv, positive, beq_iff_eq, Bool.false_eq_true, ite_false, bne_self_eq_false] at hc
   have hncompare (a b : Rat) :

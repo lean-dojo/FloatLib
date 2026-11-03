@@ -74,11 +74,11 @@ private theorem abs_signRat_mul (negative : Bool) (a u : Rat) (hu : 0 < u) :
 Structural description of one precision-rounding step.
 
 The input equals `sign * (lower + rem / 2^d) * 2^Q` with `rem < 2^d`, and the result significand
-is `lower` or `lower + 1`, as `roundAway` decides.
+is `lower` or `lower + 1`, as `roundAway` decides. A zero significand rounds to zero with
+`lower = rem = d = 0`.
 -/
 theorem roundFiniteToPrecision_spec
-    (format : Format) (mode : RoundingMode) (value : Numerics.Dyadic)
-    (hzero : value.significand ≠ 0) :
+    (format : Format) (mode : RoundingMode) (value : Numerics.Dyadic) :
     ∃ lower rem d : Nat,
       rem < 2 ^ d ∧
       value.toRat =
@@ -91,6 +91,13 @@ theorem roundFiniteToPrecision_spec
         signRat value.negative *
           ((format.roundFiniteToPrecision mode value).significand : Rat) *
           (2 : Rat) ^ format.quantumExponent value := by
+  by_cases hzero : value.significand = 0
+  · refine ⟨0, 0, 0, by norm_num, ?_, ?_, ?_⟩
+    · rw [toRat_eq_signRat, hzero]
+      simp
+    · simp [roundFiniteToPrecision, hzero, roundAway, Numerics.Dyadic.zero]
+    · simp [roundFiniteToPrecision, hzero, Numerics.Dyadic.zero, Numerics.Dyadic.toRat,
+        Numerics.Dyadic.signedSignificand]
   have hq :
       max (Int.ofNat value.significand.log2 + value.exponent)
           format.minimumNormalExponent - Int.ofNat format.precision + 1 =
@@ -207,6 +214,49 @@ private theorem abs_mul_lt_of_lt_one (a u : Rat) (hu : 0 < u) (h : |a| < 1) :
   have := mul_lt_mul_of_pos_right h hu
   linarith
 
+/-- A nonzero discarded fraction, scaled by a positive quantum, lies strictly inside one quantum. -/
+private theorem scaled_fraction_bounds (rem d : Nat) (hrem : rem < 2 ^ d) (hne : rem ≠ 0)
+    {u : Rat} (hu : 0 < u) :
+    0 < (rem : Rat) / 2 ^ d * u ∧ (rem : Rat) / 2 ^ d * u < u :=
+  ⟨mul_pos (fraction_pos rem d hne) hu,
+    by simpa using mul_lt_mul_of_pos_right (fraction_lt_one rem d hrem) hu⟩
+
+/--
+Either precision rounding is exact, or the input lies strictly inside a quantum cell.
+
+In the second case the input is `sign * (lower + rem / 2^d) * 2^Q` with `0 < rem < 2^d`, and the
+result significand is `lower` or `lower + 1`, as `roundAway` decides.
+-/
+private theorem roundFiniteToPrecision_exact_or_inexact
+    (format : Format) (mode : RoundingMode) (value : Numerics.Dyadic) :
+    (format.roundFiniteToPrecision mode value).toRat = value.toRat ∨
+    ∃ lower rem d : Nat,
+      rem < 2 ^ d ∧ rem ≠ 0 ∧
+      value.toRat =
+        signRat value.negative * ((lower : Rat) + (rem : Rat) / 2 ^ d) *
+          (2 : Rat) ^ format.quantumExponent value ∧
+      (format.roundFiniteToPrecision mode value).significand =
+        (if roundAway format mode value.negative (format.quantumExponent value)
+            lower rem d then lower + 1 else lower) ∧
+      (format.roundFiniteToPrecision mode value).toRat =
+        signRat value.negative *
+          ((format.roundFiniteToPrecision mode value).significand : Rat) *
+          (2 : Rat) ^ format.quantumExponent value := by
+  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
+  · left
+    rw [roundFiniteToPrecision_of_significand_eq_zero format mode value hzero,
+      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
+    simp
+  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
+      roundFiniteToPrecision_spec format mode value
+    by_cases hremZero : rem = 0
+    · left
+      subst hremZero
+      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
+      rw [hY, hX, hsig]
+      simp
+    · exact Or.inr ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+
 /--
 Structural description of an exact tie under any rounding mode.
 
@@ -237,7 +287,7 @@ private theorem roundFiniteToPrecision_tie_spec
     simp at htie
     linarith
   obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-    roundFiniteToPrecision_spec format mode value hpos.ne'
+    roundFiniteToPrecision_spec format mode value
   have hf : (rem : Rat) / 2 ^ d = 1 / 2 := by
     rw [hY, hX, abs_signRat_sub _ _ _ _ hu] at htie
     have habs : |((if roundAway format mode value.negative (format.quantumExponent value)
@@ -320,7 +370,7 @@ theorem roundFiniteToPrecision_towardZero
       (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
     simp [hu]
   · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .towardZero value hpos.ne'
+      roundFiniteToPrecision_spec format .towardZero value
     simp only [roundAway, Bool.false_eq_true, ite_false, ite_self] at hsig
     rw [hY, hX, hsig, abs_signRat_mul _ _ _ hu, abs_signRat_mul _ _ _ hu]
     have hf0 := fraction_nonneg rem d
@@ -329,6 +379,12 @@ theorem roundFiniteToPrecision_towardZero
     constructor
     · nlinarith
     · nlinarith
+
+/-- On a positive grid `u`, the integer points satisfy `a * u < (b + 1) * u → a * u ≤ b * u`. -/
+private theorem int_mul_le_of_lt_add_one_mul {a b : Int} {u : Rat} (hu : 0 < u)
+    (h : (a : Rat) * u < ((b : Rat) + 1) * u) : (a : Rat) * u ≤ (b : Rat) * u := by
+  have hint : a < b + 1 := by exact_mod_cast lt_of_mul_lt_mul_right h hu.le
+  exact mul_le_mul_of_nonneg_right (by exact_mod_cast Int.lt_add_one_iff.mp hint) hu.le
 
 open Internal in
 /-- Every grid point no larger in magnitude than the input is no larger than the truncation. -/
@@ -341,19 +397,9 @@ theorem roundFiniteToPrecision_towardZero_maximal
   obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .towardZero value
   have hbracket := (format.roundFiniteToPrecision_towardZero value).2
   rw [hm, abs_mul, abs_of_pos hu] at hbracket ⊢
-  have hlt : |(n : Rat)| < |(m : Rat)| + 1 := by
-    have : |(n : Rat)| * 2 ^ format.quantumExponent value <
-        (|(m : Rat)| + 1) * 2 ^ format.quantumExponent value := by
-      linarith
-    exact lt_of_mul_lt_mul_right this hu.le
-  have hle : |(n : Rat)| ≤ |(m : Rat)| := by
-    have hcast : ((|n| : Int) : Rat) < ((|m| : Int) : Rat) + 1 := by
-      simpa [Int.cast_abs] using hlt
-    have hint : |n| < |m| + 1 := by exact_mod_cast hcast
-    have hcast' : ((|n| : Int) : Rat) ≤ ((|m| : Int) : Rat) := by
-      exact_mod_cast Int.lt_add_one_iff.mp hint
-    simpa [Int.cast_abs] using hcast'
-  exact mul_le_mul_of_nonneg_right hle hu.le
+  have h := int_mul_le_of_lt_add_one_mul (a := |n|) (b := |m|) hu
+    (by rw [Int.cast_abs, Int.cast_abs]; linarith)
+  rwa [Int.cast_abs, Int.cast_abs] at h
 
 open Internal in
 /-- `up` never rounds down and stays within one quantum above the input. -/
@@ -363,78 +409,62 @@ theorem roundFiniteToPrecision_up
       (format.roundFiniteToPrecision .up value).toRat <
         value.toRat + (2 : Rat) ^ format.quantumExponent value := by
   have hu := format.quantum_pos value
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
-    simp [hu]
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .up value hpos.ne'
-    have hf0 := fraction_nonneg rem d
-    have hf1 := fraction_lt_one rem d hrem
-    have hfu : (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value <
-        2 ^ format.quantumExponent value := by
-      simpa using mul_lt_mul_of_pos_right hf1 hu
-    have hfu0 : 0 ≤ (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value :=
-      mul_nonneg hf0 hu.le
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
-      rw [hY, hX, hsig]
-      simp [hu]
-    · have hf := fraction_pos rem d hremZero
-      have hfu' : 0 < (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value :=
-        mul_pos hf hu
-      cases hneg : value.negative
-      · simp [roundAway, hremZero, hneg] at hsig
-        rw [hY, hX, hsig, hneg]
-        simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
-        push_cast
-        constructor <;> nlinarith
-      · simp [roundAway, hremZero, hneg] at hsig
-        rw [hY, hX, hsig, hneg]
-        simp only [signRat, ite_true]
-        constructor <;> nlinarith
+  rcases roundFiniteToPrecision_exact_or_inexact format .up value with hexact |
+      ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+  · rw [hexact]
+    exact ⟨le_rfl, lt_add_of_pos_right _ hu⟩
+  · obtain ⟨hfu', hfu⟩ := scaled_fraction_bounds rem d hrem hremZero hu
+    cases hneg : value.negative
+    · simp [roundAway, hremZero, hneg] at hsig
+      rw [hY, hX, hsig, hneg]
+      simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
+      push_cast
+      constructor <;> nlinarith
+    · simp [roundAway, hremZero, hneg] at hsig
+      rw [hY, hX, hsig, hneg]
+      simp only [signRat, ite_true]
+      constructor <;> nlinarith
 
-open Internal in
-/-- `down` never rounds up and stays within one quantum below the input. -/
+/-- Negation does not change the quantum of a dyadic. -/
+private theorem quantumExponent_neg (format : Format) (value : Numerics.Dyadic) :
+    format.quantumExponent value.neg = format.quantumExponent value := rfl
+
+/-- Rounding toward negative infinity is rounding toward positive infinity of the negated input,
+negated, at the level of rational values and before saturation. Zero results agree as values; the
+stored sign of a zero is not compared. -/
+theorem roundFiniteToPrecision_down_toRat (format : Format) (value : Numerics.Dyadic) :
+    (format.roundFiniteToPrecision .down value).toRat =
+      -(format.roundFiniteToPrecision .up value.neg).toRat := by
+  have hr : ∀ q lower rem d, Internal.roundAway format .up (!value.negative) q lower rem d =
+      Internal.roundAway format .down value.negative q lower rem d := by
+    intro q lower rem d
+    simp [Internal.roundAway]
+  have hsign : ∀ (s : Bool) (n : Nat) (e : Int),
+      (⟨s, n, e⟩ : Numerics.Dyadic).toRat = -(⟨!s, n, e⟩ : Numerics.Dyadic).toRat := by
+    intro s n e
+    rw [show (⟨!s, n, e⟩ : Numerics.Dyadic) = (⟨s, n, e⟩ : Numerics.Dyadic).neg from rfl,
+      Numerics.Dyadic.neg_toRat, neg_neg]
+  by_cases hz : value.significand = 0
+  · simp [roundFiniteToPrecision, hz, Numerics.Dyadic.zero, Numerics.Dyadic.toRat,
+      Numerics.Dyadic.signedSignificand]
+  simp only [roundFiniteToPrecision, Numerics.Dyadic.neg_significand,
+    Numerics.Dyadic.neg_exponent, Numerics.Dyadic.neg_negative, hr, hz, beq_iff_eq, ↓reduceIte]
+  split
+  · exact hsign ..
+  · split_ifs <;> exact hsign ..
+
+/-- `down` never rounds up and stays within one quantum below the input. It is the `up` bracket of
+the negated input, reflected. -/
 theorem roundFiniteToPrecision_down
     (format : Format) (value : Numerics.Dyadic) :
     (format.roundFiniteToPrecision .down value).toRat ≤ value.toRat ∧
       value.toRat <
         (format.roundFiniteToPrecision .down value).toRat +
           (2 : Rat) ^ format.quantumExponent value := by
-  have hu := format.quantum_pos value
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
-    simp [hu]
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .down value hpos.ne'
-    have hf0 := fraction_nonneg rem d
-    have hf1 := fraction_lt_one rem d hrem
-    have hfu : (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value <
-        2 ^ format.quantumExponent value := by
-      simpa using mul_lt_mul_of_pos_right hf1 hu
-    have hfu0 : 0 ≤ (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value :=
-      mul_nonneg hf0 hu.le
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
-      rw [hY, hX, hsig]
-      simp [hu]
-    · have hf := fraction_pos rem d hremZero
-      have hfu' : 0 < (rem : Rat) / 2 ^ d * 2 ^ format.quantumExponent value :=
-        mul_pos hf hu
-      cases hneg : value.negative
-      · simp [roundAway, hremZero, hneg] at hsig
-        rw [hY, hX, hsig, hneg]
-        simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
-        constructor <;> nlinarith
-      · simp [roundAway, hremZero, hneg] at hsig
-        rw [hY, hX, hsig, hneg]
-        simp only [signRat, ite_true]
-        push_cast
-        constructor <;> nlinarith
+  have h := format.roundFiniteToPrecision_up value.neg
+  rw [Numerics.Dyadic.neg_toRat, quantumExponent_neg] at h
+  rw [roundFiniteToPrecision_down_toRat]
+  constructor <;> linarith [h.1, h.2]
 
 /-- Every grid point at or above the input is at or above the `up` result. -/
 theorem roundFiniteToPrecision_up_minimal
@@ -446,33 +476,21 @@ theorem roundFiniteToPrecision_up_minimal
   obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .up value
   have hbracket := (format.roundFiniteToPrecision_up value).2
   rw [hm] at hbracket ⊢
-  have hlt : (m : Rat) < (n : Rat) + 1 := by
-    have : (m : Rat) * 2 ^ format.quantumExponent value <
-        ((n : Rat) + 1) * 2 ^ format.quantumExponent value := by
-      linarith
-    exact lt_of_mul_lt_mul_right this hu.le
-  have hint : m < n + 1 := by exact_mod_cast hlt
-  have hle : (m : Rat) ≤ (n : Rat) := by exact_mod_cast (Int.lt_add_one_iff.mp hint)
-  exact mul_le_mul_of_nonneg_right hle hu.le
+  exact int_mul_le_of_lt_add_one_mul hu (by linarith)
 
-/-- Every grid point at or below the input is at or below the `down` result. -/
+/-- Every grid point at or below the input is at or below the `down` result: the grid point `-n`
+is at or above the negated input, so it bounds the `up` result there. -/
 theorem roundFiniteToPrecision_down_maximal
     (format : Format) (value : Numerics.Dyadic) (n : Int)
     (hn : (n : Rat) * (2 : Rat) ^ format.quantumExponent value ≤ value.toRat) :
     (n : Rat) * (2 : Rat) ^ format.quantumExponent value ≤
       (format.roundFiniteToPrecision .down value).toRat := by
-  have hu := format.quantum_pos value
-  obtain ⟨m, hm⟩ := format.roundFiniteToPrecision_toRat_eq_int_mul .down value
-  have hbracket := (format.roundFiniteToPrecision_down value).2
-  rw [hm] at hbracket ⊢
-  have hlt : (n : Rat) < (m : Rat) + 1 := by
-    have : (n : Rat) * 2 ^ format.quantumExponent value <
-        ((m : Rat) + 1) * 2 ^ format.quantumExponent value := by
-      linarith
-    exact lt_of_mul_lt_mul_right this hu.le
-  have hint : n < m + 1 := by exact_mod_cast hlt
-  have hle : (n : Rat) ≤ (m : Rat) := by exact_mod_cast (Int.lt_add_one_iff.mp hint)
-  exact mul_le_mul_of_nonneg_right hle hu.le
+  have h := format.roundFiniteToPrecision_up_minimal value.neg (-n)
+    (by rw [Numerics.Dyadic.neg_toRat, quantumExponent_neg]; push_cast; linarith)
+  rw [quantumExponent_neg] at h
+  rw [roundFiniteToPrecision_down_toRat]
+  push_cast at h
+  linarith
 
 /-! ## Nearest modes -/
 
@@ -483,37 +501,28 @@ theorem roundFiniteToPrecision_nearestAway_abs_sub_le
     |(format.roundFiniteToPrecision .nearestAway value).toRat - value.toRat| ≤
       (2 : Rat) ^ format.quantumExponent value / 2 := by
   have hu := format.quantum_pos value
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
-    simp
+  rcases roundFiniteToPrecision_exact_or_inexact format .nearestAway value with hexact |
+      ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+  · rw [hexact, sub_self, abs_zero]
     positivity
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .nearestAway value hpos.ne'
-    have hf0 := fraction_nonneg rem d
+  · have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
-      rw [hY, hX, hsig]
-      simp
-      positivity
-    · have hd := pos_of_rem_ne_zero rem d hrem hremZero
-      simp only [roundAway, hremZero, beq_iff_eq, ite_false, decide_eq_true_eq] at hsig
-      rw [hY, hX, hsig]
-      by_cases hhalf : Nat.shiftLeft 1 (d - 1) ≤ rem
-      · have hf := (half_le_iff rem d hd).1 hhalf
-        rw [ite_eq_left hhalf]
-        push_cast
-        rw [abs_signRat_sub _ _ _ _ hu]
-        apply abs_mul_le_half _ _ hu
-        rw [abs_le]
-        constructor <;> linarith
-      · have hf := (half_le_iff rem d hd).not.1 hhalf
-        rw [ite_eq_right hhalf, abs_signRat_sub _ _ _ _ hu]
-        apply abs_mul_le_half _ _ hu
-        rw [abs_le]
-        constructor <;> linarith
+    have hd := pos_of_rem_ne_zero rem d hrem hremZero
+    simp only [roundAway, hremZero, beq_iff_eq, ite_false, decide_eq_true_eq] at hsig
+    rw [hY, hX, hsig]
+    by_cases hhalf : Nat.shiftLeft 1 (d - 1) ≤ rem
+    · have hf := (half_le_iff rem d hd).1 hhalf
+      rw [ite_eq_left hhalf]
+      push_cast
+      rw [abs_signRat_sub _ _ _ _ hu]
+      apply abs_mul_le_half _ _ hu
+      rw [abs_le]
+      constructor <;> linarith
+    · have hf := (half_le_iff rem d hd).not.1 hhalf
+      rw [ite_eq_right hhalf, abs_signRat_sub _ _ _ _ hu]
+      apply abs_mul_le_half _ _ hu
+      rw [abs_le]
+      constructor <;> linarith
 
 open Internal in
 /-- On an exact tie, `nearestAway` selects the candidate of larger magnitude. -/
@@ -539,57 +548,48 @@ theorem roundFiniteToPrecision_nearest_abs_sub_le
     |(format.roundFiniteToPrecision .nearest value).toRat - value.toRat| ≤
       (2 : Rat) ^ format.quantumExponent value / 2 := by
   have hu := format.quantum_pos value
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
-    simp
+  rcases roundFiniteToPrecision_exact_or_inexact format .nearest value with hexact |
+      ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+  · rw [hexact, sub_self, abs_zero]
     positivity
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .nearest value hpos.ne'
-    have hf0 := fraction_nonneg rem d
+  · have hf0 := fraction_nonneg rem d
     have hf1 := fraction_lt_one rem d hrem
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
-      rw [hY, hX, hsig]
-      simp
-      positivity
-    · have hd := pos_of_rem_ne_zero rem d hrem hremZero
-      simp only [roundAway, hremZero, beq_iff_eq, ite_false] at hsig
-      obtain ⟨half, hhalf⟩ : ∃ half, Nat.shiftLeft 1 (d - 1) = half := ⟨_, rfl⟩
-      rw [hhalf] at hsig
-      rw [hY, hX, abs_signRat_sub _ _ _ _ hu]
-      apply abs_mul_le_half _ _ hu
-      by_cases hlt : half < rem
-      · have hf : (1 / 2 : Rat) < (rem : Rat) / 2 ^ d := by
-          rw [← half_lt_iff rem d hd, hhalf]
-          exact hlt
-        simp only [hlt, decide_true, Bool.true_or, ite_true] at hsig
-        rw [hsig]
-        push_cast
-        rw [abs_le]
-        constructor <;> linarith
-      · by_cases heq : rem = half
-        · have hf : (rem : Rat) / 2 ^ d = 1 / 2 := by
-            rw [← eq_half_iff rem d hd, hhalf]
-            exact heq
-          have hc : (format.roundFiniteToPrecision .nearest value).significand =
-              lower + 1 ∨
-              (format.roundFiniteToPrecision .nearest value).significand = lower := by
-            rw [hsig]
-            split <;> simp
-          rcases hc with hc | hc <;> rw [hc] <;> push_cast <;> rw [abs_le] <;>
-            constructor <;> linarith
-        · have hle : ¬ half ≤ rem := fun h =>
-            (lt_or_eq_of_le h).elim hlt (fun h' => heq h'.symm)
-          have hf : ¬ (1 / 2 : Rat) ≤ (rem : Rat) / 2 ^ d := by
-            rw [← half_le_iff rem d hd, hhalf]
-            exact hle
-          have hbeq : (rem == half) = false := beq_eq_false_iff_ne.mpr heq
-          simp only [hlt, hbeq, decide_false, Bool.false_or, Bool.false_and,
-            Bool.false_eq_true, ite_false] at hsig
-          rw [hsig, abs_le]
+    have hd := pos_of_rem_ne_zero rem d hrem hremZero
+    simp only [roundAway, hremZero, beq_iff_eq, ite_false] at hsig
+    obtain ⟨half, hhalf⟩ : ∃ half, Nat.shiftLeft 1 (d - 1) = half := ⟨_, rfl⟩
+    rw [hhalf] at hsig
+    rw [hY, hX, abs_signRat_sub _ _ _ _ hu]
+    apply abs_mul_le_half _ _ hu
+    by_cases hlt : half < rem
+    · have hf : (1 / 2 : Rat) < (rem : Rat) / 2 ^ d := by
+        rw [← half_lt_iff rem d hd, hhalf]
+        exact hlt
+      simp only [hlt, decide_true, Bool.true_or, ite_true] at hsig
+      rw [hsig]
+      push_cast
+      rw [abs_le]
+      constructor <;> linarith
+    · by_cases heq : rem = half
+      · have hf : (rem : Rat) / 2 ^ d = 1 / 2 := by
+          rw [← eq_half_iff rem d hd, hhalf]
+          exact heq
+        have hc : (format.roundFiniteToPrecision .nearest value).significand =
+            lower + 1 ∨
+            (format.roundFiniteToPrecision .nearest value).significand = lower := by
+          rw [hsig]
+          split <;> simp
+        rcases hc with hc | hc <;> rw [hc] <;> push_cast <;> rw [abs_le] <;>
           constructor <;> linarith
+      · have hle : ¬ half ≤ rem := fun h =>
+          (lt_or_eq_of_le h).elim hlt (fun h' => heq h'.symm)
+        have hf : ¬ (1 / 2 : Rat) ≤ (rem : Rat) / 2 ^ d := by
+          rw [← half_le_iff rem d hd, hhalf]
+          exact hle
+        have hbeq : (rem == half) = false := beq_eq_false_iff_ne.mpr heq
+        simp only [hlt, hbeq, decide_false, Bool.false_or, Bool.false_and,
+          Bool.false_eq_true, ite_false] at hsig
+        rw [hsig, abs_le]
+        constructor <;> linarith
 
 open Internal in
 /--
@@ -655,28 +655,20 @@ theorem roundFiniteToPrecision_toOdd_abs_sub_lt
     |(format.roundFiniteToPrecision .toOdd value).toRat - value.toRat| <
       (2 : Rat) ^ format.quantumExponent value := by
   have hu := format.quantum_pos value
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero]
-    simp [hu]
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .toOdd value hpos.ne'
-    have hf0 := fraction_nonneg rem d
+  rcases roundFiniteToPrecision_exact_or_inexact format .toOdd value with hexact |
+      ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+  · rw [hexact, sub_self, abs_zero]
+    exact hu
+  · have hf := fraction_pos rem d hremZero
     have hf1 := fraction_lt_one rem d hrem
     rw [hY, hX, abs_signRat_sub _ _ _ _ hu]
     apply abs_mul_lt_of_lt_one _ _ hu
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
+    have hc : (format.roundFiniteToPrecision .toOdd value).significand = lower + 1 ∨
+        (format.roundFiniteToPrecision .toOdd value).significand = lower := by
       rw [hsig]
-      simp
-    · have hf := fraction_pos rem d hremZero
-      have hc : (format.roundFiniteToPrecision .toOdd value).significand = lower + 1 ∨
-          (format.roundFiniteToPrecision .toOdd value).significand = lower := by
-        rw [hsig]
-        split <;> simp
-      rcases hc with hc | hc <;> rw [hc] <;> push_cast <;> rw [abs_lt] <;>
-        constructor <;> linarith
+      split <;> simp
+    rcases hc with hc | hc <;> rw [hc] <;> push_cast <;> rw [abs_lt] <;>
+      constructor <;> linarith
 
 open Internal in
 /--
@@ -687,21 +679,13 @@ theorem roundFiniteToPrecision_toOdd_odd
     (format : Format) (value : Numerics.Dyadic) (hprecision : 1 < format.precision)
     (hinexact : (format.roundFiniteToPrecision .toOdd value).toRat ≠ value.toRat) :
     (format.roundFiniteToPrecision .toOdd value).significand % 2 = 1 := by
-  rcases Nat.eq_zero_or_pos value.significand with hzero | hpos
-  · rw [roundFiniteToPrecision_of_significand_eq_zero format _ value hzero,
-      (Numerics.Dyadic.toRat_eq_zero_iff value).2 hzero] at hinexact
-    simp at hinexact
-  · obtain ⟨lower, rem, d, hrem, hX, hsig, hY⟩ :=
-      roundFiniteToPrecision_spec format .toOdd value hpos.ne'
-    by_cases hremZero : rem = 0
-    · subst hremZero
-      simp only [roundAway, beq_self_eq_true, ite_true, Bool.false_eq_true] at hsig
-      rw [hY, hX, hsig] at hinexact
-      simp at hinexact
-    · simp only [roundAway, hremZero, beq_iff_eq, ite_false, lowerCodeIsEven, hprecision,
-        ite_true] at hsig
-      rw [hsig]
-      rcases Nat.mod_two_eq_zero_or_one lower with hl | hl <;> simp [hl, Nat.add_mod]
+  rcases roundFiniteToPrecision_exact_or_inexact format .toOdd value with hexact |
+      ⟨lower, rem, d, hrem, hremZero, hX, hsig, hY⟩
+  · exact absurd hexact hinexact
+  · simp only [roundAway, hremZero, beq_iff_eq, ite_false, lowerCodeIsEven, hprecision,
+      ite_true] at hsig
+    rw [hsig]
+    rcases Nat.mod_two_eq_zero_or_one lower with hl | hl <;> simp [hl, Nat.add_mod]
 
 end Format
 end FloatLib.Floats.Formats.P3109

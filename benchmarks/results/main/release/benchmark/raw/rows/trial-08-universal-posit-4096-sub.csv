@@ -1,2 +1,2 @@
 implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
-Stillwater Universal,posit-external,posit4096-es2,4096,sub,external-software,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,result-dependent-fixture-chain,4816,199944536,8558417078017286690,10832158272869711056,0,0,0
+Stillwater Universal,posit-external,posit4096-es2,4096,sub,external-software,Universal 26e69f5487b2e592b82002751d900a2437641fad generic posit<4096; es=2>,result-dependent-fixture-chain,4857,198154523,14547859699614134390,13462542097122327742,0,0,0

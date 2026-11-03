@@ -10,6 +10,7 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rounding
 public import Mathlib.Analysis.Real.Sqrt
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
+import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Positivity
 
@@ -30,10 +31,13 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.Arithmetic
 
-/-- The square of the lower integer candidate does not exceed the rational radicand. -/
-theorem sqrtFloor_sq_le (numerator denominator : Nat) (hd : 0 < denominator) :
-    sqrtFloor numerator denominator ^ 2 * denominator ≤ numerator :=
-  (Nat.le_div_iff_mul_le hd).mp (Nat.sqrt_le' _)
+/-- The square of the lower integer candidate does not exceed the rational radicand; a zero
+denominator makes the left side zero. -/
+theorem sqrtFloor_sq_le (numerator denominator : Nat) :
+    sqrtFloor numerator denominator ^ 2 * denominator ≤ numerator := by
+  rcases Nat.eq_zero_or_pos denominator with hd | hd
+  · simp [hd]
+  exact (Nat.le_div_iff_mul_le hd).mp (Nat.sqrt_le' _)
 
 /-- The next candidate's square is strictly above the exact radicand. -/
 theorem lt_succ_sqrtFloor_sq (numerator denominator : Nat) (hd : 0 < denominator) :
@@ -49,7 +53,7 @@ theorem sqrtFloor_real_bounds (numerator denominator : Nat) (hd : 0 < denominato
   constructor
   · apply Real.le_sqrt_of_sq_le
     apply (le_div_iff₀ hdReal).mpr
-    exact_mod_cast sqrtFloor_sq_le numerator denominator hd
+    exact_mod_cast sqrtFloor_sq_le numerator denominator
   · apply (Real.sqrt_lt hn (by positivity)).mpr
     apply (div_lt_iff₀ hdReal).mpr
     exact_mod_cast lt_succ_sqrtFloor_sq numerator denominator hd
@@ -94,41 +98,24 @@ theorem compareSqrt_eq_real (numerator denominator scale threshold : Nat)
     sqrt_lt_threshold_iff numerator denominator scale threshold hd hs,
     sqrt_eq_threshold_iff numerator denominator scale threshold hd hs]
 
-/-- The lower root candidate is strictly below the descriptor's significand limit. -/
+/-- The lower root candidate is strictly below the descriptor's significand limit; a zero radicand
+gives the candidate zero. -/
 theorem sqrtFloor_lt_precision (format : Format) (numerator denominator : Nat)
-    (hn : numerator ≠ 0) (hd : denominator ≠ 0) :
+    (hd : denominator ≠ 0) :
     let quantum := sqrtQuantum format numerator denominator
     let scaled := RationalBinary.scaleByPowerOfTwo numerator denominator (-2 * quantum)
     sqrtFloor scaled.1 scaled.2 < 2 ^ format.precision := by
+  intro quantum scaled
   let leading := RationalBinary.floorLog2 numerator denominator
-  let quantum := sqrtQuantum format numerator denominator
-  let scaled := RationalBinary.scaleByPowerOfTwo numerator denominator (-2 * quantum)
   have hscaledDenominator : scaled.2 ≠ 0 :=
     RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator (-2 * quantum) hd
-  have hbounds :=
-    BinaryInterchange.Model.scaleByPowerOfTwo_floorLog2_bounds
-      numerator denominator (-2 * quantum) hn hd
-  have hexponent : leading + (-2 * quantum) + 1 ≤ Int.ofNat (2 * format.precision) := by
-    have hleading := le_max_left (leading / 2) format.minimumNormalExponent
-    dsimp [quantum, sqrtQuantum, leading] at *
-    omega
-  have hratio : (scaled.1 : Real) / scaled.2 < ((2 ^ format.precision : Nat) : Real) ^ 2 := by
-    have hupper : (scaled.1 : Real) / scaled.2 <
-        BinaryInterchange.Model.bpow (leading + (-2 * quantum) + 1) := hbounds.2
-    have hpower := (Flocq.bpow_le_bpow_iff Numerics.binaryRadix _ _).2 hexponent
-    have hnat := BinaryInterchange.Model.bpow_ofNat (2 * format.precision)
-    calc
-      (scaled.1 : Real) / scaled.2 <
-          BinaryInterchange.Model.bpow (Int.ofNat (2 * format.precision)) :=
-        hupper.trans_le hpower
-      _ = ((2 ^ format.precision : Nat) : Real) ^ 2 := by
-        rw [hnat, BinaryInterchange.Model.pow2_eq_two_pow]
-        norm_cast
-        rw [Nat.mul_comm 2, pow_mul]
-  have hdReal : (0 : Real) < scaled.2 := by
-    exact_mod_cast Nat.pos_of_ne_zero hscaledDenominator
   have hmul : scaled.1 < (2 ^ format.precision) ^ 2 * scaled.2 := by
-    exact_mod_cast (div_lt_iff₀ hdReal).mp hratio
+    have h := RationalRounding.scaleByPowerOfTwo_fst_lt_pow_mul_snd numerator denominator
+      (-2 * quantum) (2 * format.precision) hd fun _ => by
+        have hleading := le_max_left (leading / 2) format.minimumNormalExponent
+        dsimp [quantum, sqrtQuantum, leading] at *
+        omega
+    rwa [Nat.mul_comm 2, pow_mul] at h
   exact Nat.sqrt_lt'.mpr ((Nat.div_lt_iff_lt_mul
     (Nat.pos_of_ne_zero hscaledDenominator)).mpr hmul)
 
@@ -148,16 +135,12 @@ theorem roundSqrtRatToPrecision_fitsPrecisionGrid
     let rounded :=
       if sqrtRoundAway format mode quantum scaled.1 scaled.2 lower then lower + 1 else lower
     have hlower : lower < 2 ^ format.precision :=
-      sqrtFloor_lt_precision format _ _ hnonzero radicand.den_nz
+      sqrtFloor_lt_precision format _ _ radicand.den_nz
     have hrounded : rounded ≤ 2 ^ format.precision := by
       unfold rounded
       split <;> omega
     have hquantum : format.minimumQuantumExponent ≤ quantum :=
       format.quantumExponent_lower _
-    change format.FitsPrecisionGrid
-      (if rounded = 0 then .zero else ⟨false, rounded, quantum⟩)
-    by_cases hzero : rounded = 0
-    · simp [hzero, Format.FitsPrecisionGrid]
-    · simp [hzero, Format.FitsPrecisionGrid, hrounded, hquantum]
+    exact format.fitsPrecisionGrid_of_rounded false hrounded hquantum
 
 end FloatLib.Floats.Formats.P3109.Arithmetic

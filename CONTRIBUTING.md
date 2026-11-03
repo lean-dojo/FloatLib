@@ -31,7 +31,10 @@ We build on mathlib and follow its
 Before adding a definition or lemma, look for an existing one. Keep related results
 together, explain the mathematical idea, and state the hypotheses a caller needs. Each
 public operation has one name. Its variants are options of that name, such as
-`Model.sqrt x (mode := .up) (status := true)`, so there are no suffixed copies. When you
+`Model.sqrt x (mode := .up) (status := true)`, so there are no suffixed copies. A choice that
+decides whether a result can be missing, or which algorithm runs and what it guarantees, gets its
+own name instead: a `?` name for a partial variant, or the same short name in a namespace that
+states the contract, such as `ExecFloat.Mixed.mul` or `ExecFloat.Binary.Certified.exp`. When you
 rename a declaration, update every use along with it, because we don't keep aliases or
 deprecated names. Finished proofs should have no `sorry`, `admit`, or new project-local
 axioms.

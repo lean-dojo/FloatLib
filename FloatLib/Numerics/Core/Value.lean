@@ -6,6 +6,8 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Numerics.Repr
+
 /-!
 # Values of encoded numerical systems
 
@@ -40,12 +42,31 @@ inductive ExceptionalValue where
   | reserved (payload : Option Nat := none)
   /-- An operation whose result is intentionally outside the scalar semantics. -/
   | undefined
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 /-- Whether an exceptional observation is a signaling NaN. -/
-@[inline] def ExceptionalValue.isSignalingNaN : ExceptionalValue → Bool
+@[inline] def ExceptionalValue.isSNaN : ExceptionalValue → Bool
   | .nan _ _ signaling => signaling
   | .notAReal | .reserved _ | .undefined => false
+
+/--
+`#eval` writes the constructor with a leading dot and names only the arguments that differ from
+their defaults, as `.nan`, `.nan (negative := true) (signaling := true)` or
+`.reserved (payload := some 3)`.
+-/
+instance : Repr ExceptionalValue where
+  reprPrec value prec :=
+    let payloadArg (payload : Option Nat) :=
+      if payload.isSome then [reprNamedArg "payload" (repr payload)] else []
+    match value with
+    | .nan payload negative signaling =>
+        reprConstructor "nan"
+          (payloadArg payload ++ (if negative then [reprNamedArg "negative" "true"] else []) ++
+            (if signaling then [reprNamedArg "signaling" "true"] else []))
+          prec
+    | .notAReal => reprConstructor "notAReal" [] prec
+    | .reserved payload => reprConstructor "reserved" (payloadArg payload) prec
+    | .undefined => reprConstructor "undefined" [] prec
 
 /--
 The mathematical meaning of one encoded value.

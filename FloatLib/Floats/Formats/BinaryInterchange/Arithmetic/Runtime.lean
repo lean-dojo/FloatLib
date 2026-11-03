@@ -21,8 +21,6 @@ Model.sqrt x (mode := .up)
 Model.sqrt x (mode := .up) (status := true)
 ```
 
-With `open FloatLib.Rounding`, the mode can be written `(mode := up)`.
-
 Each operation is a small `@[macro_inline]` selector. It tests `status` first, so a value call
 never computes flags, and then `mode`: nearest-even goes straight to the dispatched kernel in
 `Model.Internal.Nearest`, the other directions to `Model.Internal.Directed`, and status calls to

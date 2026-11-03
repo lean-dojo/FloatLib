@@ -299,16 +299,27 @@ private theorem natCast_toNat_of_div {numerator : Int} {denominator : Nat} {valu
   rw [hcast]
   exact_mod_cast hnum
 
+/-- At degree `piDegree bits`, Machin's quarter-pi enclosure is at most `2 ^ -(bits + 1)` wide. -/
+private theorem piQuarter_scaled_width_le (bits : Nat) :
+    (2 : ℝ) ^ (bits + 1) *
+        (((piQuarter (piDegree bits)).hi : ℝ) - (piQuarter (piDegree bits)).lo) ≤ 1 := by
+  obtain ⟨-, -, hwidth⟩ := piQuarter_bounds (piDegree bits)
+  calc
+    (2 : ℝ) ^ (bits + 1) *
+          (((piQuarter (piDegree bits)).hi : ℝ) - (piQuarter (piDegree bits)).lo) ≤
+        2 ^ (bits + 1) * (1 / (12 * 25 ^ piDegree bits)) :=
+      mul_le_mul_of_nonneg_left hwidth (by positivity)
+    _ ≤ 1 := by
+      rw [mul_one_div, div_le_one (by positivity)]
+      exact_mod_cast two_pow_succ_le_mul_pow_piDegree bits
+
 /-- `piLevel bits` holds `π / 2 * 2 ^ bits` to within two units below. -/
 theorem piLevel_halfPi_spec (bits : Nat) :
     LowerApprox (Real.pi / 2) bits (piLevel bits).halfPi := by
-  obtain ⟨hlo, hhi, hwidth⟩ := piQuarter_bounds (piDegree bits)
+  obtain ⟨hlo, hhi, -⟩ := piQuarter_bounds (piDegree bits)
   obtain ⟨hlower, -⟩ := piQuarterBounds_eq (piDegree bits)
   have hden := (piQuarterBounds (piDegree bits)).denominator_pos
   have hcast := natCast_toNat_of_div hden hlower (piQuarter_lo_pos _)
-  have hprec : (2 : ℝ) ^ (bits + 1) * (1 / (12 * 25 ^ piDegree bits)) ≤ 1 := by
-    rw [mul_one_div, div_le_one (by positivity)]
-    exact_mod_cast two_pow_succ_le_mul_pow_piDegree bits
   have hval : (piLevel bits).halfPi =
       ((piQuarterBounds (piDegree bits)).lower.toNat <<< (bits + 1)) /
         (piQuarterBounds (piDegree bits)).denominator := rfl
@@ -327,19 +338,16 @@ theorem piLevel_halfPi_spec (bits : Nat) :
   · calc (2 * ((piQuarter (piDegree bits)).hi : ℝ) - 2 * (piQuarter (piDegree bits)).lo) *
           2 ^ bits = 2 ^ (bits + 1) * ((piQuarter (piDegree bits)).hi -
             (piQuarter (piDegree bits)).lo) := by ring
-      _ ≤ 2 ^ (bits + 1) * (1 / (12 * 25 ^ piDegree bits)) :=
-        mul_le_mul_of_nonneg_left hwidth (by positivity)
-      _ ≤ 1 := hprec
+      _ ≤ 1 := piQuarter_scaled_width_le bits
 
 /-- `piLevel bits` holds `2 / π * 2 ^ bits` to within two units below. -/
 theorem piLevel_twoOverPi_spec (bits : Nat) :
     LowerApprox (2 / Real.pi) bits (piLevel bits).twoOverPi := by
-  obtain ⟨hlo, hhi, hwidth⟩ := piQuarter_bounds (piDegree bits)
+  obtain ⟨hlo, hhi, -⟩ := piQuarter_bounds (piDegree bits)
   obtain ⟨-, hupper⟩ := piQuarterBounds_eq (piDegree bits)
   have hthird := two_thirds_lt_piQuarter_lo (piDegree bits)
   have hden := (piQuarterBounds (piDegree bits)).denominator_pos
-  have hprec : (2 : ℝ) ^ (bits + 1) ≤ 12 * 25 ^ piDegree bits := by
-    exact_mod_cast two_pow_succ_le_mul_pow_piDegree bits
+  have hscaledWidth := piQuarter_scaled_width_le bits
   have hpi := Real.pi_gt_three
   set bounds := piQuarterBounds (piDegree bits)
   set lo := (piQuarter (piDegree bits)).lo
@@ -354,14 +362,8 @@ theorem piLevel_twoOverPi_spec (bits : Nat) :
     have : (0 : ℚ) < bounds.upper := (div_pos_iff_of_pos_right hdenQ).mp (hupper ▸ hhiPos)
     exact_mod_cast this
   have hcast : ((2 * bounds.upper.toNat : ℕ) : ℝ) = 2 * (hi : ℝ) * bounds.denominator := by
-    have hq : (bounds.upper : ℚ) = hi * bounds.denominator := by
-      rw [← hupper]; field_simp
-    have : ((bounds.upper.toNat : ℕ) : ℤ) = bounds.upper := Int.toNat_of_nonneg hupperPos.le
-    have hz : ((bounds.upper.toNat : ℕ) : ℝ) = ((bounds.upper : ℤ) : ℝ) := by exact_mod_cast this
     push_cast
-    rw [hz]
-    have : ((bounds.upper : ℤ) : ℝ) = (hi : ℝ) * bounds.denominator := by exact_mod_cast hq
-    rw [this]
+    rw [natCast_toNat_of_div hden hupper hhiPos]
     ring
   have hupperNat : 0 < 2 * bounds.upper.toNat := by omega
   obtain ⟨hfloor, hceil⟩ := natCast_div_bounds (bounds.denominator <<< bits)
@@ -378,12 +380,7 @@ theorem piLevel_twoOverPi_spec (bits : Nat) :
       (bounds.denominator <<< bits) / (2 * bounds.upper.toNat) := rfl
   rw [hval, LowerApprox]
   have hsmall : (2 : ℝ) ^ bits * (hi - lo) ≤ 1 / 2 := by
-    have h1 : (2 : ℝ) ^ (bits + 1) * (hi - lo) ≤ 2 ^ (bits + 1) * (1 / (12 * 25 ^ piDegree bits)) :=
-      mul_le_mul_of_nonneg_left hwidth (by positivity)
-    have h2 : (2 : ℝ) ^ (bits + 1) * (1 / (12 * 25 ^ piDegree bits)) ≤ 1 := by
-      rw [mul_one_div, div_le_one (by positivity)]
-      exact hprec
-    rw [pow_succ] at h1 h2
+    rw [pow_succ] at hscaledWidth
     linarith
   have hquarter : (3 / 4 : ℝ) < Real.pi / 4 := by linarith
   have htwo : 2 / Real.pi * 2 ^ bits = 2 ^ bits / (2 * (Real.pi / 4)) := by
@@ -541,7 +538,9 @@ theorem abs_ln2Faithful_sub_lt_one (bits : Nat) :
 theorem containsReal_ln2Grid (precision : Nat) :
     (ln2Grid precision).ContainsReal (Interval.BinaryGrid.decode precision) (Real.log 2) := by
   rw [Interval.BinaryGrid.containsReal_iff]
-  obtain ⟨hlo, hhi⟩ := ln2Lower_spec (precision + 64)
+  have hshift := ((ln2Lower_spec (precision + 64)).shiftRight (Nat.le_add_right precision 64)).1
+  rw [Nat.add_sub_cancel_left, Nat.shiftRight_eq_div_pow] at hshift
+  obtain ⟨-, hhi⟩ := ln2Lower_spec (precision + 64)
   set lower := ln2Lower (precision + 64)
   have hscale : ((Interval.BinaryGrid.scale precision : ℤ) : ℝ) = 2 ^ precision := by
     rw [Interval.BinaryGrid.scale_eq_pow]
@@ -551,16 +550,11 @@ theorem containsReal_ln2Grid (precision : Nat) :
   have hpow64 : (0 : ℝ) < 2 ^ 64 := by positivity
   have hsplit : Real.log 2 * 2 ^ (precision + 64) = Real.log 2 * 2 ^ precision * 2 ^ 64 := by
     ring
-  rw [hsplit] at hlo hhi
+  rw [hsplit] at hhi
   simp only [ln2Grid, Interval.BinaryGrid.value, hscale, Int.ofNat_eq_natCast, Int.cast_natCast,
     Nat.shiftRight_eq_div_pow]
   constructor
-  · rw [div_le_iff₀ hpow]
-    have hfloor : ((lower / 2 ^ 64 : ℕ) : ℝ) * 2 ^ 64 ≤ lower := by
-      exact_mod_cast Nat.div_mul_le_self lower (2 ^ 64)
-    have : ((lower / 2 ^ 64 : ℕ) : ℝ) * 2 ^ 64 ≤ Real.log 2 * 2 ^ precision * 2 ^ 64 :=
-      hfloor.trans hlo
-    exact le_of_mul_le_mul_right this hpow64
+  · rwa [div_le_iff₀ hpow]
   · rw [le_div_iff₀ hpow]
     have hceil : lower + 2 ≤ (lower + 2 + (2 ^ 64 - 1)) / 2 ^ 64 * 2 ^ 64 := by
       have := Nat.div_add_mod (lower + 2 + (2 ^ 64 - 1)) (2 ^ 64)

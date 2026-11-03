@@ -11,8 +11,10 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Soundness of partial, representation-independent interval arithmetic
 
-Every theorem retains the successful-result hypothesis. Failed decoding, unavailable outward
-rounding, and zero-crossing division are not interpreted as valid finite enclosures.
+Every enclosure theorem retains the successful-result hypothesis. Failed decoding, unavailable
+outward rounding, and zero-crossing division are not interpreted as valid finite enclosures, and
+`div?_eq_none_of_contains_zero` shows that division rejects every denominator range containing
+zero.
 -/
 
 @[expose] public section
@@ -39,10 +41,13 @@ theorem contains_iff_of_decode? {decode : α → Option β} {I : Interval α} {a
   rcases (decode?_eq_some_iff decode I a).1 ha with ⟨hlo, hhi⟩
   simp [Contains, hlo, hhi]
 
-/-- Outward rounding of the endpoint pair encloses every member of the exact interval. -/
-theorem contains_encloseInterval? (R : OutwardRounding α β) {a : Interval β} {I : Interval α}
-    (h : encloseInterval? R a = some I) {x : β} (hx : a.lo ≤ x ∧ x ≤ a.hi) :
-    I.Contains R.decode x := by
+/--
+A successful outward rounding of an exact endpoint pair decodes to a lower endpoint at most the
+exact lower bound and an upper endpoint at least the exact upper bound.
+-/
+theorem decode_bounds_of_encloseInterval? (R : OutwardRounding α β) {a : Interval β}
+    {I : Interval α} (h : encloseInterval? R a = some I) :
+    ∃ lo hi, R.decode I.lo = some lo ∧ R.decode I.hi = some hi ∧ lo ≤ a.lo ∧ a.hi ≤ hi := by
   cases hlo : R.enclose? a.lo with
   | none => simp [encloseInterval?, hlo] at h
   | some lo =>
@@ -53,7 +58,31 @@ theorem contains_encloseInterval? (R : OutwardRounding α β) {a : Interval β} 
       subst I
       obtain ⟨a₁, a₂, ha₁, _, ha, _⟩ := R.sound hlo
       obtain ⟨b₁, b₂, _, hb₂, _, hb⟩ := R.sound hhi
-      exact ⟨a₁, b₂, ha₁, hb₂, ha.trans hx.1, hx.2.trans hb⟩
+      exact ⟨a₁, b₂, ha₁, hb₂, ha, hb⟩
+
+/-- Outward rounding of the endpoint pair encloses every member of the exact interval. -/
+theorem contains_encloseInterval? (R : OutwardRounding α β) {a : Interval β} {I : Interval α}
+    (h : encloseInterval? R a = some I) {x : β} (hx : a.lo ≤ x ∧ x ≤ a.hi) :
+    I.Contains R.decode x := by
+  obtain ⟨lo, hi, hlo, hhi, hlower, hupper⟩ := decode_bounds_of_encloseInterval? R h
+  exact ⟨lo, hi, hlo, hhi, hlower.trans hx.1, hx.2.trans hupper⟩
+
+/-- A unary lift succeeds exactly when its input decodes and the exact image rounds outward. -/
+theorem liftUnary?_eq_some_iff (R : OutwardRounding α β) (f : Interval β → Interval β)
+    {I K : Interval α} :
+    liftUnary? R f I = some K ↔
+      ∃ a, I.decode? R.decode = some a ∧ encloseInterval? R (f a) = some K := by
+  unfold liftUnary?
+  cases I.decode? R.decode <;> simp
+
+/-- A binary lift succeeds exactly when both inputs decode and the exact image rounds outward. -/
+theorem liftBinary?_eq_some_iff (R : OutwardRounding α β)
+    (f : Interval β → Interval β → Interval β) {I J K : Interval α} :
+    liftBinary? R f I J = some K ↔
+      ∃ a b, I.decode? R.decode = some a ∧ J.decode? R.decode = some b ∧
+        encloseInterval? R (f a b) = some K := by
+  unfold liftBinary?
+  cases I.decode? R.decode <;> cases J.decode? R.decode <;> simp
 
 /-- Any sound exact unary endpoint enclosure lifts through partial outward rounding. -/
 theorem contains_liftUnary? (R : OutwardRounding α β) (f : Interval β → Interval β)
@@ -62,11 +91,8 @@ theorem contains_liftUnary? (R : OutwardRounding α β) (f : Interval β → Int
       (f a).lo ≤ g x ∧ g x ≤ (f a).hi)
     {I K : Interval α} (h : liftUnary? R f I = some K)
     {x : β} (hx : I.Contains R.decode x) : K.Contains R.decode (g x) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [liftUnary?, ha] at h
-  | some a =>
-    exact contains_encloseInterval? R (by simpa [liftUnary?, ha] using h)
-      (hf a x ((contains_iff_of_decode? ha x).1 hx))
+  obtain ⟨a, ha, hK⟩ := (liftUnary?_eq_some_iff R f).1 h
+  exact contains_encloseInterval? R hK (hf a x ((contains_iff_of_decode? ha x).1 hx))
 
 /-- Any sound exact binary endpoint enclosure lifts through partial outward rounding. -/
 theorem contains_liftBinary? (R : OutwardRounding α β)
@@ -77,17 +103,26 @@ theorem contains_liftBinary? (R : OutwardRounding α β)
     {I J K : Interval α} (h : liftBinary? R f I J = some K)
     {x y : β} (hx : I.Contains R.decode x) (hy : J.Contains R.decode y) :
     K.Contains R.decode (g x y) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [liftBinary?, ha] at h
-  | some a =>
-    cases hb : J.decode? R.decode with
-    | none => simp [liftBinary?, ha, hb] at h
-    | some b =>
-      exact contains_encloseInterval? R (by simpa [liftBinary?, ha, hb] using h)
-        (hf a b x y ((contains_iff_of_decode? ha x).1 hx)
-          ((contains_iff_of_decode? hb y).1 hy))
+  obtain ⟨a, b, ha, hb, hK⟩ := (liftBinary?_eq_some_iff R f).1 h
+  exact contains_encloseInterval? R hK
+    (hf a b x y ((contains_iff_of_decode? ha x).1 hx) ((contains_iff_of_decode? hb y).1 hy))
 
 variable [Field β] [IsStrictOrderedRing β]
+
+omit [IsStrictOrderedRing β] in
+/--
+Division succeeds exactly when both inputs decode, the denominator range lies strictly on one
+side of zero, and the four-corner quotient bounds round outward.
+-/
+theorem div?_eq_some_iff (R : OutwardRounding α β) {I J K : Interval α} :
+    div? R I J = some K ↔
+      ∃ a b, I.decode? R.decode = some a ∧ J.decode? R.decode = some b ∧
+        (b.hi < 0 ∨ 0 < b.lo) ∧
+        encloseInterval? R
+          ⟨minOfFour (a.lo / b.lo) (a.lo / b.hi) (a.hi / b.lo) (a.hi / b.hi),
+            maxOfFour (a.lo / b.lo) (a.lo / b.hi) (a.hi / b.lo) (a.hi / b.hi)⟩ = some K := by
+  unfold div?
+  cases I.decode? R.decode <;> cases J.decode? R.decode <;> simp
 
 /-- Every successful negation encloses the exact negative value. -/
 theorem contains_neg? (R : OutwardRounding α β) {I K : Interval α}
@@ -120,22 +155,30 @@ theorem contains_mul? (R : OutwardRounding α β) {I J K : Interval α}
   intro a b x y hx hy
   exact mul_bounds_Icc a.lo a.hi b.lo b.hi x y hx hy
 
-/-- Successful division certifies a nonzero denominator range and encloses the exact quotient. -/
+omit [IsStrictOrderedRing β] in
+/-- A denominator range containing zero is rejected by division, including a zero endpoint. -/
+theorem div?_eq_none_of_contains_zero (R : OutwardRounding α β) {I J : Interval α}
+    (hzero : J.Contains R.decode 0) : div? R I J = none := by
+  cases ha : I.decode? R.decode with
+  | none => simp [div?, ha]
+  | some a =>
+    cases hb : J.decode? R.decode with
+    | none => simp [div?, ha, hb]
+    | some b =>
+      obtain ⟨hlo, hhi⟩ := (contains_iff_of_decode? hb 0).mp hzero
+      simp [div?, ha, hb, not_lt_of_ge hlo, not_lt_of_ge hhi]
+
+/--
+Every successful division encloses the exact quotient. The denominator is then nonzero:
+`div?_eq_none_of_contains_zero` rejects every denominator range containing zero.
+-/
 theorem contains_div? (R : OutwardRounding α β) {I J K : Interval α}
     (h : div? R I J = some K) {x y : β}
     (hx : I.Contains R.decode x) (hy : J.Contains R.decode y) :
     K.Contains R.decode (x / y) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [div?, ha] at h
-  | some a =>
-    cases hb : J.decode? R.decode with
-    | none => simp [div?, ha, hb] at h
-    | some b =>
-      by_cases hzero : b.hi < 0 ∨ 0 < b.lo
-      · simp only [div?, ha, hb, ite_eq_left hzero] at h
-        exact contains_encloseInterval? R h
-          (div_bounds_Icc a.lo a.hi b.lo b.hi x y
-            ((contains_iff_of_decode? ha x).1 hx) ((contains_iff_of_decode? hb y).1 hy) hzero)
-      · simp [div?, ha, hb, hzero] at h
+  obtain ⟨a, b, ha, hb, hzero, hK⟩ := (div?_eq_some_iff R).1 h
+  exact contains_encloseInterval? R hK
+    (div_bounds_Icc a.lo a.hi b.lo b.hi x y
+      ((contains_iff_of_decode? ha x).1 hx) ((contains_iff_of_decode? hb y).1 hy) hzero)
 
 end FloatLib.Numerics.Interval

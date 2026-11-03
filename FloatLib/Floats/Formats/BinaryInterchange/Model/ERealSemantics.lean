@@ -44,51 +44,33 @@ theorem toEReal?_eq_none_iff_isNaN_eq_true {fmt : FloatFormat} (x : Model fmt) :
     toEReal? x = none ↔ isNaN x = true := by
   cases hnan : isNaN x <;> cases hinf : isInf x <;> simp [toEReal?, hnan, hinf]
 
-/-- A value classified as infinity is not classified as NaN. -/
-theorem isNaN_eq_false_of_isInf_eq_true {fmt : FloatFormat} (x : Model fmt)
+/-- Only an IEEE encoding has infinities, which carry the all-ones exponent and zero fraction. -/
+private theorem encoding_eq_ieee_and_fields_of_isInf_eq_true {fmt : FloatFormat} {x : Model fmt}
     (hx : isInf x = true) :
-    isNaN x = false := by
+    fmt.encoding = .ieee ∧ expField x = FloatFormat.expAllOnesNat fmt ∧ fracField x = 0 := by
   cases hencoding : fmt.encoding with
   | ieee =>
       have hxIEEE : IEEE.isInf x = true := by
         simpa [isInf, hencoding] using hx
-      have hparts :
-          expField x = FloatFormat.expAllOnesNat fmt ∧ fracField x = 0 := by
-        simpa [IEEE.isInf, Bool.and_eq_true] using hxIEEE
-      simp [isNaN, hencoding, IEEE.isNaN, hparts.2]
+      exact ⟨rfl, by simpa [IEEE.isInf, Bool.and_eq_true] using hxIEEE⟩
   | finiteMaxNaN | finiteUnsignedZero | finite =>
       simp [isInf, hencoding] at hx
+
+/-- A value classified as infinity is not classified as NaN. -/
+theorem isNaN_eq_false_of_isInf_eq_true {fmt : FloatFormat} (x : Model fmt)
+    (hx : isInf x = true) :
+    isNaN x = false := by
+  obtain ⟨hencoding, -, hfraction⟩ := encoding_eq_ieee_and_fields_of_isInf_eq_true hx
+  simp [isNaN, hencoding, IEEE.isNaN, hfraction]
 
 /-- A value classified as infinity is not classified as zero. -/
 theorem isZero_eq_false_of_isInf_eq_true {fmt : FloatFormat} (x : Model fmt)
     (hx : isInf x = true) :
     isZero x = false := by
-  cases hencoding : fmt.encoding with
-  | ieee =>
-      have hxIEEE : IEEE.isInf x = true := by
-        simpa [isInf, hencoding] using hx
-      have hparts :
-          expField x = FloatFormat.expAllOnesNat fmt ∧ fracField x = 0 := by
-        simpa [IEEE.isInf, Bool.and_eq_true] using hxIEEE
-      have hexponentNe : FloatFormat.expAllOnesNat fmt ≠ 0 :=
-        (FloatFormat.expAllOnesNat_pos fmt).ne'
-      simp [isZero, hencoding, IEEE.isZero, hparts.1, hexponentNe]
-  | finiteMaxNaN | finiteUnsignedZero | finite =>
-      simp [isInf, hencoding] at hx
-
-/-- Finite values are not infinities. -/
-theorem isInf_eq_false_of_isFinite_eq_true {fmt : FloatFormat} (x : Model fmt)
-    (hx : isFinite x = true) :
-    isInf x = false := by
-  cases hencoding : fmt.encoding with
-  | ieee =>
-      have hxIEEE : IEEE.isFinite x = true := by
-        simpa [isFinite, hencoding] using hx
-      have hexp : expField x ≠ FloatFormat.expAllOnesNat fmt :=
-        (bne_iff_ne).1 hxIEEE
-      simp [isInf, hencoding, IEEE.isInf, hexp]
-  | finiteMaxNaN | finiteUnsignedZero | finite =>
-      simp [isInf, hencoding]
+  obtain ⟨hencoding, hexponent, -⟩ := encoding_eq_ieee_and_fields_of_isInf_eq_true hx
+  have hexponentNe : FloatFormat.expAllOnesNat fmt ≠ 0 :=
+    (FloatFormat.expAllOnesNat_pos fmt).ne'
+  simp [isZero, hencoding, IEEE.isZero, hexponent, hexponentNe]
 
 /-- Finite values enter `EReal` through their exact real interpretation. -/
 theorem toEReal?_eq_some_toReal_of_isFinite_eq_true
@@ -144,12 +126,25 @@ theorem toEReal_eq_coe_toReal_of_isFinite
     toEReal? (ofModel fmt (.zero sign)) = some 0 := by
   simp [toEReal?, hfmt]
 
-/-- The total interpretation maps an IEEE model-packed signed zero to zero. -/
+/--
+The total interpretation maps a model-packed signed zero to zero in every format with a signed
+zero.
+
+Without one (the finite-unsigned-zero encoding) packing the negative zero gives the NaN word,
+which `toEReal` also sends to `0`, but as a totalized NaN rather than as a zero. `toEReal_zero`
+covers the zero `zero fmt sign` chosen for the format, in every encoding.
+-/
 theorem toEReal_ofModel_zero
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (fmt : FloatFormat) (hfmt : fmt.supportsSignedZero = true)
     (sign : Float.Model.UnpackedFloat.Sign) :
     toEReal (ofModel fmt (.zero sign)) = 0 := by
-  exact toEReal_of_toEReal? (toEReal?_ofModel_zero fmt hfmt sign)
+  cases sign
+  · rw [← negZero_eq_ofModel_zero,
+      toEReal_eq_coe_toReal_of_isFinite _ (isFinite_negZero fmt hfmt), toReal_negZero fmt hfmt,
+      EReal.coe_zero]
+  · rw [← posZero_eq_ofModel_zero,
+      toEReal_eq_coe_toReal_of_isFinite _ (isFinite_posZero fmt), toReal_posZero,
+      EReal.coe_zero]
 
 /-- The partial interpretation maps a model-packed infinity to the endpoint selected by its sign. -/
 @[simp] theorem toEReal?_ofModel_infinity
@@ -169,12 +164,15 @@ theorem toEReal_ofModel_infinity
       if modelSignBit sign then (⊥ : EReal) else (⊤ : EReal) := by
   exact toEReal_of_toEReal? (toEReal?_ofModel_infinity fmt hfmt sign)
 
-/-- Either IEEE signed zero denotes zero in the extended reals. -/
+/--
+Either signed-zero word denotes zero in the extended reals, in every format with a signed zero.
+Without one, the negative-zero word is the NaN, as for `toEReal_ofModel_zero`.
+-/
 @[simp] theorem toEReal_signedZero
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (negative : Bool) :
+    (fmt : FloatFormat) (hfmt : fmt.supportsSignedZero = true) (negative : Bool) :
     toEReal (if negative then negZero fmt else posZero fmt) = 0 := by
   cases negative <;>
-    simp [posZero_eq_ofModel_zero, negZero_eq_ofModel_zero, hfmt]
+    simp [posZero_eq_ofModel_zero, negZero_eq_ofModel_zero, toEReal_ofModel_zero fmt hfmt]
 
 /-- Positive executable infinity denotes `⊤` in a conventional IEEE format. -/
 @[simp] theorem toEReal_posInf (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :

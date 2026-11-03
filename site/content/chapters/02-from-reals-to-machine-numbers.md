@@ -6,9 +6,7 @@ summary: Binary encodings and rounding explain which numbers a format can store 
 phases: [numerical-models, binary-format]
 ---
 
-When we write `0.1` in a binary32 program, we store a number slightly larger than one tenth. The discrepancy begins with the representation: one tenth has a repeating binary expansion, and binary32 retains only 24 significant bits. Decoding the stored word gives an exact fraction; rounding is needed when choosing that word, not when reading its value back.
-
-To understand that discrepancy, we'll follow two operations separately: interpreting the bits as a number, then choosing a representable number when an exact result falls between grid points. The handbook of Muller and his coauthors [@mullerHandbook] develops the mathematics behind both.
+When we write `0.1` in a binary32 program, we store a number slightly larger than one tenth. The discrepancy begins with the representation: one tenth has a repeating binary expansion, and binary32 retains only 24 significant bits. Decoding the stored word gives an exact fraction, so rounding happens when that word is chosen, not when its value is read back. Those are two different operations, reading a word's bits as a number and choosing a representable number when an exact result falls between grid points, and the handbook of Muller and his coauthors [@mullerHandbook] develops the mathematics of both.
 
 ## What a real number is
 
@@ -155,7 +153,7 @@ Without the reserved zero field, the smallest positive normal value $2^{1-b}$ wo
 
 The first line gives $2^{-149}$, the smallest step of the grid, and the second confirms that it's a subnormal word. The literal prints back as `1e-39`, the shortest decimal that reads back as its stored value $713624 \cdot 2^{-149}$. That's a whole number of those steps, so the literal was rounded onto the subnormal grid and wasn't flushed to zero. Binary32 has far too many values to draw, so [Figure 2.2](#/chapter/from-reals-to-machine-numbers/figure-ch01-toy-grid) uses a toy format with three exponent bits and two fraction bits. It's small enough that we can see every positive finite value. Spacing doubles at each power of two, and the words with the all-zeros exponent field carry the spacing of the first normal binade down to zero.
 
-![Nonnegative values of a toy IEEE format with three exponent bits and two fraction bits. Squares mark zero and subnormals; circles mark normal values. Normal spacing doubles at each power of two, while subnormals keep the first normal spacing of 1/16.](assets/ch01-toy-grid.png "A toy format with three exponent bits and two fraction bits. Normal spacing doubles at each binade; subnormal spacing stays at 1/16 down to zero.")
+![Nonnegative values of a toy IEEE format with three exponent bits and two fraction bits. Squares mark zero and subnormals; circles mark normal values. Normal spacing doubles at each power of two, while subnormals keep the first normal spacing of 1/16.](assets/ch01-toy-grid.png "A toy format with three exponent bits and two fraction bits. Normal spacing doubles at each binade, while subnormal spacing stays at 1/16 down to zero.")
 
 There are three positive subnormals, $1/16$, $2/16$, and $3/16$. Then comes the first normal, $4/16$, followed by $5/16$, $6/16$, and $7/16$. Nothing happens to the spacing where open squares change to filled circles. The significand coefficient goes from 3 to 4. Encoding 4 supplies its leading one implicitly and resets the fraction field to zero. At $1/2$, though, the exponent goes up. The next value is $5/8$, so the gap has doubled to $1/8$. That's the point of keeping the exponent fixed for subnormals. They extend the finest normal grid towards zero, even though fewer of their stored fraction bits stay significant.
 
@@ -188,7 +186,7 @@ The largest finite binary32 value is $(2 - 2^{-23}) \cdot 2^{127}$, about $3.402
 -- inf
 ```
 
-The first literal is less than half a unit in the last place above the largest finite value, so it rounds down to it, while `3.5e38` is far past the threshold and becomes `inf`.
+The literal `3.4028235e38` is less than half a unit in the last place above the largest finite value, so it rounds down to it, while `3.5e38` is far past the threshold and becomes `inf`. The first line shows the other way to reach infinity, dividing a finite nonzero value by zero.
 
 With a nonzero fraction, the all-ones exponent field denotes Not a Number. A NaN stands for invalid real arithmetic such as $0/0$, $\infty - \infty$, $0 \cdot \infty$, $\sqrt{-1}$. Basic arithmetic propagates NaNs according to its exceptional-value rules, and the fraction field can carry a payload. Binary32 has $2^{24} - 2$ NaN words, two signs times $2^{23} - 1$ nonzero fractions, which is a lot of ways to say "not a number" :) The printer shows them all with the same label:
 
@@ -224,7 +222,7 @@ For decimal formats, the 2008 revision [@ieee754_2008] also requires ties away f
 -- -3
 ```
 
-Both $2.5$ and $3.5$ are midpoints, and ties to even sends the first down and the second up. The theorems [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_nearest]], `toReal_roundToIntegral_towardZero`, `toReal_roundToIntegral_up` and `toReal_roundToIntegral_down` cover finite inputs in a conventional IEEE format that satisfies the range condition below. They state that the decoded result is the nearest-even integer, the truncation, $\lceil x \rceil$ or $\lfloor x \rfloor$ of the decoded input. That range condition is `(fmt.fracWidth : Int) ≤ fmt.maxNormalExponent`, and it keeps the rounded integer representable. The standard IEEE interchange formats satisfy it, but a custom descriptor needs its own proof. To compare the four rules, follow the arrows in [Figure 2.3](#/chapter/from-reals-to-machine-numbers/figure-ch01-rounding-directions), where each rule maps the same three inputs to integers.
+Both $2.5$ and $3.5$ are midpoints, and ties to even sends the first down and the second up. The theorems [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_nearest]], `toReal_roundToIntegral_towardZero`, `toReal_roundToIntegral_up` and `toReal_roundToIntegral_down` cover finite inputs in a conventional IEEE format, and all but truncation also need the range condition below. They state that the decoded result is the nearest-even integer, the truncation, $\lceil x \rceil$ or $\lfloor x \rfloor$ of the decoded input. That range condition is `(fmt.fracWidth : Int) ≤ fmt.maxNormalExponent`, and it keeps the rounded integer representable. The standard IEEE interchange formats satisfy it, but a custom descriptor needs its own proof. To compare the four rules, follow the arrows in [Figure 2.3](#/chapter/from-reals-to-machine-numbers/figure-ch01-rounding-directions), where each rule maps the same three inputs to integers.
 
 ![The four required directions of IEEERoundingMode on the midpoints -2.5, 2.5 and 3.5, with arrows to the chosen integers](assets/ch01-rounding-directions.png "Four rounding directions on an integer grid. At a midpoint, nearest-even chooses by the parity of the destination integer.")
 
@@ -275,11 +273,11 @@ $$
   = \operatorname{roundAt}_{f}(\operatorname{toReal}(x) + \operatorname{toReal}(y)).
 $$
 
-Its hypotheses are that the format uses the IEEE encoding and conventional bias, and that $x$, $y$ and the computed sum are finite. That last one excludes overflow, and it's there because a sum of two finite words can be infinite, while a sum of two reals can't. Once you've established those finiteness conditions, the equation lets you apply the error bounds over $\mathbb{R}$ to the decoded executable result. [Chapter 06](#/chapter/the-numerical-models) proves an instance of it on concrete words and shows how the finiteness hypotheses are discharged, and it also gives the relational form the rest of the library shares.
+Its hypotheses are that the format uses the IEEE encoding and conventional bias, and that the computed sum is finite. A finite sum forces finite operands, because adding a NaN gives a NaN and adding an infinity gives an infinity or a NaN. The same hypothesis excludes overflow, and it's stated about the result because a sum of two finite words can be infinite, while a sum of two reals can't. Once you've established those finiteness conditions, the equation lets you apply the error bounds over $\mathbb{R}$ to the decoded executable result. [Chapter 06](#/chapter/the-numerical-models) proves an instance of it on concrete words and shows how the finiteness hypotheses are discharged, and it also gives the relational form the rest of the library shares.
 
 ## The unit in the last place
 
-Two quantities measure the grid, one absolute and one relative. The unit in the last place at $x$, written $\operatorname{ulp}(x)$, is the spacing of representable values in the binade of $x$. For $2^e \le |x| < 2^{e+1}$ and precision $p$ it's $2^{e-p+1}$. At one, binary32 has $\operatorname{ulp}(1) = 2^{-23}$, the gap between $1$ and the value `nextUp` returned above. In the library, [[FloatLib.Floats.Formats.BinaryInterchange.Model.ulpAt]] is this function for a format's grid, including the flat spacing in the subnormal range, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.epsilonAt]] is half of it. Correct rounding to nearest guarantees
+Two quantities measure the grid, one absolute and one relative. The unit in the last place at $x$, written $\operatorname{ulp}(x)$, is the spacing of representable values in the binade of $x$. For $2^e \le |x| < 2^{e+1}$ and precision $p$ it's $2^{e-p+1}$. At one, binary32 has $\operatorname{ulp}(1) = 2^{-23}$, the gap between $1$ and the value `nextUp` returned above. In the library, [[FloatLib.Floats.Formats.BinaryInterchange.Model.ulpAt]] is this function for a format's grid, including the flat spacing in the subnormal range, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.halfUlpAt]] is half of it. Correct rounding to nearest guarantees
 
 $$
   |\operatorname{round}(x) - x| \le \tfrac{1}{2}\operatorname{ulp}(x),
@@ -290,7 +288,7 @@ and [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]] prove
 ```lean
 example (x : ℝ) :
     |Model.roundAt FloatFormat.binary32 x - x| ≤
-      Model.epsilonAt FloatFormat.binary32 x :=
+      Model.halfUlpAt FloatFormat.binary32 x :=
   Model.abs_roundAt_sub_le FloatFormat.binary32 x
 ```
 

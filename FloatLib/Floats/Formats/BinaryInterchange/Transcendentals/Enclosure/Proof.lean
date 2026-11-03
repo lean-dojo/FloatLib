@@ -30,9 +30,7 @@ private theorem signedScaledRatToReal_eq_cast (value : ℚ) (scale : ℤ) :
       (value : ℝ) * 2 ^ scale := by
   have hmagnitude : (value.num.natAbs : ℝ) / value.den = |(value : ℝ)| := by
     simp [Rat.cast_def, abs_div]
-  have hpow : bpow scale = (2 : ℝ) ^ scale := by
-    simp [bpow, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-  simp only [signedScaledRatToReal, scaledRatToReal, hpow, hmagnitude]
+  simp only [signedScaledRatToReal, scaledRatToReal, Flocq.bpow_binaryRadix, hmagnitude]
   by_cases hnegative : value < 0
   · have hreal : (value : ℝ) < 0 := by exact_mod_cast hnegative
     simp [hnegative, abs_of_neg hreal]
@@ -43,8 +41,8 @@ private theorem signedScaledRatToReal_eq_cast (value : ℚ) (scale : ℤ) :
 theorem toReal_roundEndpoint (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (value : ℚ)
     (scale : ℤ) (hfinite : isFinite (roundEndpoint fmt value scale) = true) :
     toReal (roundEndpoint fmt value scale) = roundAt fmt ((value : ℝ) * 2 ^ scale) := by
-  rw [roundEndpoint, toReal_roundRatScaled_eq_roundAt_of_isFinite
-    fmt (decide (value < 0)) value.num.natAbs value.den scale hfmt value.den_nz hfinite,
+  rw [roundEndpoint, toReal_roundRatScaled_eq_roundAt
+    fmt (decide (value < 0)) value.num.natAbs value.den scale hfmt hfinite,
     signedScaledRatToReal_eq_cast]
 
 /-- Acceptance proves both the descriptor restriction and endpoint finiteness and agreement. -/

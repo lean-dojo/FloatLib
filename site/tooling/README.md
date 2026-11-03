@@ -34,8 +34,10 @@ site/tooling/export.sh --skip-lean  # reuse last raw export while editing the re
 ```
 
 First the exporter runs `lake -KbuildDir="$FLOATLIB_BUILD_DIR" build` on the modules in
-`site/content/phases.json`: `FloatLib`, the opt-in `NativeFPU.Unchecked`, and
-`Configured.Transcendentals`. (A default `lake build` skips those optional modules.) Next,
+`site/content/phases.json`: `FloatLib`, the opt-in `NativeFPU.Unchecked`,
+`Configured.Transcendentals`, `Configured.CorrectlyRounded`, `Automation.Roundoff`, and
+`DecimalInterchange.Transcendentals.Certified.Proof`. (A default `lake build` skips those optional
+modules.) Next,
 `ExportNodes.lean` imports them, resolves every listed constant, and writes out each declaration's
 kind, signature, docstring, module, source range, axioms, and dependencies. An unresolved or
 duplicate name stops the export. Last, Python reduces the graph, attaches GitHub URLs, validates

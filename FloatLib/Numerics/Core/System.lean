@@ -65,6 +65,11 @@ Reducibility lets Lean reuse structures such as orders and rings on `α` through
 def Represents (S : NumericalSystem) (code : S.Code) (x : S.Scalar) : Prop :=
   S.denote code = .finite x
 
+/-- A code represents at most one ordinary scalar. -/
+theorem Represents.unique {S : NumericalSystem} {code : S.Code} {x y : S.Scalar}
+    (hx : S.Represents code x) (hy : S.Represents code y) : x = y :=
+  NumericalValue.finite.inj (hx.symm.trans hy)
+
 /-- In an `ofFinite` system, representation is equality after decoding. -/
 -- grind: no rule; reducing `ofFinite` erases `decode`, so matching cannot recover every parameter.
 @[simp] theorem ofFinite_represents_iff {Code : Type u} {Scalar : Type v}

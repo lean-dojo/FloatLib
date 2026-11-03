@@ -26,6 +26,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 
 universe u
 
+/--
+Default addition for a static-byte family: the family's certified byte kernel, refining
+`Spec.add`. A `TablePlan` instance outranks it.
+-/
 instance (priority := 100) addCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -34,6 +38,10 @@ instance (priority := 100) addCapability
     (FloatLib.Floats.ExecFloat.Backend.Certified.binary
       (Backend.familyEstimate "addition") Spec.add Backend.add Backend.add_eq_spec)
 
+/--
+Default subtraction for a static-byte family: the family's certified byte kernel, refining
+`Spec.sub`. A `TablePlan` instance outranks it.
+-/
 instance (priority := 100) subCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -42,6 +50,10 @@ instance (priority := 100) subCapability
     (FloatLib.Floats.ExecFloat.Backend.Certified.binary
       (Backend.familyEstimate "subtraction") Spec.sub Backend.sub Backend.sub_eq_spec)
 
+/--
+Default multiplication for a static-byte family: the family's certified byte kernel, refining
+`Spec.mul`. A `TablePlan` instance outranks it.
+-/
 instance (priority := 100) mulCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -50,6 +62,10 @@ instance (priority := 100) mulCapability
     (FloatLib.Floats.ExecFloat.Backend.Certified.binary
       (Backend.familyEstimate "multiplication") Spec.mul Backend.mul Backend.mul_eq_spec)
 
+/--
+Default division for a static-byte family: the family's certified byte kernel, refining
+`Spec.div`. A `TablePlan` instance outranks it.
+-/
 instance (priority := 100) divCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -58,6 +74,10 @@ instance (priority := 100) divCapability
     (FloatLib.Floats.ExecFloat.Backend.Certified.binary
       (Backend.familyEstimate "division") Spec.div Backend.div Backend.div_eq_spec)
 
+/--
+Default square root for a static-byte family: the family's certified byte kernel, refining
+`Spec.sqrt`. A `TablePlan` instance outranks it.
+-/
 instance (priority := 100) sqrtCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -66,6 +86,12 @@ instance (priority := 100) sqrtCapability
     (FloatLib.Floats.ExecFloat.Backend.Certified.unary
       (Backend.familyEstimate "square root") Spec.sqrt Backend.sqrt Backend.sqrt_eq_spec)
 
+/--
+Default fused multiply-add for a static-byte family: the family's certified byte kernel, refining
+`Spec.fma`. `TablePlan` has no FMA table, so a plan does not replace it; a package that wants a
+table or model FMA declares its own `Fma` instance, such as `Plans.fmaTableCapability` or
+`Plans.modelFmaCapability`, which outranks this one.
+-/
 instance (priority := 100) fmaCapability
     (F : Type u) [Family F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :

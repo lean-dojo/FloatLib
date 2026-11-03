@@ -19,10 +19,9 @@ benchmarks/scripts/performance-regression.sh record /path/to/results/baseline
 ```
 
 The full gate checks generated code, compilation, generated C body size, and median runtime.
-The five existing addition compilation probes remain binary32, binary64, binary128, Posit32,
-and binary256. Compilation means a fresh format instantiation with imports already built.
-The separate generated-code checks still cover the configured-binary, posit, and automatic
-selection paths.
+Five addition compilation probes cover binary32, binary64, binary128, Posit32, and binary256.
+Compilation means a fresh format instantiation with imports already built. Separate
+generated-code checks cover the configured-binary, posit, and automatic selection paths.
 
 Runtime coverage has 159 rows over `add`, `sub`, `mul`, `div`, `sqrt`, and `fma`. Ordinary
 finite inputs cover all six operations on these eleven formats:
@@ -46,8 +45,8 @@ A smaller set exercises boundaries so the default campaign stays bounded:
 | `gap` | Same five as `zero` | Add, subtract, FMA; unequal exponents with both signs of the small term |
 | `tie` | Same three as `subnormal` | Half-ulp add/subtract/FMA, odd significands multiplied by 3/2, odd subnormals divided by two |
 
-Posits have no subnormal class. The tie rows target exact binary halfway results; square root
-has no tie row. These are performance fixtures, not a replacement for arithmetic conformance
+Posits have no subnormal class. The tie rows target exact binary halfway results, and square
+root has no tie row. These are performance fixtures, not a replacement for arithmetic conformance
 checks. Binary boundary operands are built from encoding bits before timing. Each monomorphic
 loop cycles through sixteen prepared inputs and mixes every result into a sink. Warmup runs
 outside timing and its observed result seeds the timed sink. Even trials reverse the order of
@@ -55,18 +54,17 @@ formats, operations, and classes. Backend selection is recorded separately for e
 
 Open `baseline.csv` and `environment.env` in the output directory. Schema 2 uses
 `schema,metric,subject,baseline,maxRatio,iterations,warmupIterations,sink,backend`. Runtime subjects
-are `format/operation/inputClass`, with metric `runtime-nanos-per-operation`; compile subjects
-retain their format names and use `-` in the four runtime fields. The existing default budgets
-remain 30% for compilation, 15% for generated code size, and 35% for runtime. Edit `maxRatio`
+are `format/operation/inputClass`, with metric `runtime-nanos-per-operation`. Compile subjects
+use their format names and `-` in the four runtime fields. The default budgets are 30% for
+compilation, 15% for generated code size, and 35% for runtime. Edit `maxRatio`
 after reviewing measurements on your machine. These budgets are not measurement uncertainty
 estimates, and the harness does not assign special thresholds to custom formats.
 
-The addition-only schema is incompatible and must be re-recorded. Every baseline must contain
-all 169 metrics: 159 runtime rows and ten compile/code-size rows. Missing, extra, duplicate,
-malformed, or wrong-schema rows fail before compilation. Runtime iteration and warmup counts
-must match; result sinks must agree across trials and with the baseline. A backend name may
-change between baseline and candidate, since evaluating a different implementation is the
-purpose of the comparison. Each candidate must use one consistent backend per row across trials.
+Every baseline must contain all 169 metrics: 159 runtime rows and ten compile/code-size rows.
+Missing, extra, duplicate, malformed, or wrong-schema rows fail before compilation. Runtime
+iteration and warmup counts must match, and result sinks must agree across trials and with the
+baseline. A backend name may change between baseline and candidate, since evaluating a different
+implementation is the purpose of the comparison. Each candidate must use one consistent backend per row across trials.
 The comparison table includes `baselineBackend` and `currentBackend`, so a route change such as
 an exact baseline becoming a native-word kernel is visible beside its timing ratio.
 Raw `runtime-N.csv` trials and generated compilation probes are saved alongside the baseline.
@@ -78,14 +76,13 @@ PERF_FULL=1 PERF_BASELINE_DIR=/path/to/results/baseline \
   benchmarks/scripts/performance-regression.sh check /path/to/results/check
 ```
 
-Both `record` and `check` need a fresh output directory. Recording requires all runtime rows;
-it leaves baseline selection to `PERF_BASELINE_DIR`. Checking never modifies the baseline.
+Both `record` and `check` need a fresh output directory. Recording requires all runtime rows
+and leaves baseline selection to `PERF_BASELINE_DIR`. Checking never modifies the baseline.
 We do not ship a machine-specific baseline. The environment must match, including Lean and C
 compiler versions, compiler path and bundled/custom selection, architecture, CPU model and
 count, and affinity. Compiler selection follows Lake: `LEAN_CC`, otherwise Lean's bundled
 Clang when available, otherwise `CC` or `cc` if unset. Record a new baseline when changing
-machines or toolchains. Baselines recorded before the compiler-selection correction require
-re-recording for new comparisons.
+machines or toolchains.
 
 Use exact filters to investigate a subset against a complete baseline:
 
@@ -95,17 +92,17 @@ PERF_BASELINE_DIR=/path/to/results/baseline \
   benchmarks/scripts/performance-regression.sh check /path/to/results/fma-tie
 ```
 
-`PERF_FORMAT`, `PERF_OPERATION`, and `PERF_INPUT_CLASS` filter runtime rows only; the five
-compilation probes remain. Invalid filters and combinations with no rows are errors.
+`PERF_FORMAT`, `PERF_OPERATION`, and `PERF_INPUT_CLASS` filter runtime rows only, and the five
+compilation probes always run. Invalid filters and combinations with no rows are errors.
 Filtered checks print `PARTIAL gate` and record coverage in `coverage.txt`. `PERF_FULL=1`
 rejects filters that omit rows and rejects `PERF_SKIP_CODEGEN=1`. Skipping those codegen
-scripts is useful for harness development and also marks the run partial; the five compilation
-probes still undergo their own hot-body checks.
+scripts is useful for harness development and also marks the run partial. The five compilation
+probes keep their own hot-body checks.
 
 `PERF_RUNS` and `PERF_COMPILE_RUNS` default to five and three. `PERF_ITERATIONS` overrides the
 per-row defaults: 100,000 for binary16/32/64, 20,000 for posit16/32, 10,000 for binary128,
 and 5,000 for the remaining formats. `PERF_WARMUP_ITERATIONS` defaults to 256. All counts must
-be positive. Keep the settings and CPU selection the same for baseline and candidate; choose
+be positive. Keep the settings and CPU selection the same for baseline and candidate, and choose
 iteration counts large enough to obtain stable timings on your machine.
 
 The parser can validate a baseline without building or measuring:
@@ -153,7 +150,7 @@ For each format and operation, compare `firstNanos + warmTotalNanos` across cand
 We require the proposed choice to win in all three trials before changing a cost estimate.
 Update the [crossover checks](../../tests/FloatLibTests/Conformance/Execution/AutomaticDispatch.lean)
 with the change, then run the complete verification suite and generated-code checks.
-Selection remains deterministic and happens at compile time; the timings help us choose its
+Selection is deterministic and happens at compile time. The timings help us choose its
 estimates.
 
 For configured binary FMA, we can inspect the small-table crossover directly:
@@ -251,7 +248,7 @@ so neither pairing gives equal precision everywhere.
 
 Above the lookup-table range, all six posit operations use certified integer kernels.
 Addition, subtraction, multiplication, and FMA construct results from exact dyadics.
-Division uses a scaled integer quotient checked by exact cross-products; square root uses
+Division uses a scaled integer quotient checked by exact cross-products, and square root uses
 an integer root checked by exact squared comparisons. Exact-rational implementations provide
 independent reference definitions. Read a run together with its source hash and backend
 selection table, since optimizations can change which kernel produced the numbers.
@@ -283,6 +280,6 @@ at this scale, so we control it in the comparison.
 
 Both sides use the same proved word kernels for addition, subtraction, multiplication,
 division, square root, and FMA. Their ratio measures public API overhead. The workload
-uses ordinary finite inputs in warmed loops; exceptional inputs and rounding boundaries
+uses ordinary finite inputs in warmed loops. Exceptional inputs and rounding boundaries
 are covered by the [arithmetic comparisons](../../tests/EXTERNAL.md).
 Hardware C and MPFR comparisons belong to the separate [format benchmark](Comparison.md).

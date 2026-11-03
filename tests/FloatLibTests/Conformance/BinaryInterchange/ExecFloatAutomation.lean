@@ -40,19 +40,16 @@ example (x y z w : Model customFormat) :
   binary_interchange_spec
 
 example (x y : Model customFormat)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     toReal (add x y) = roundAt customFormat (toReal x + toReal y) := by
   numerics
 
 example (x y : Model FloatFormat.binary64)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (sub x y) = true) :
     toReal (sub x y) = roundAt FloatFormat.binary64 (toReal x - toReal y) := by
   numerics
 
 example (x : Model FloatFormat.binary16)
-    (hx : isFinite x = true)
     (hout : isFinite (cast FloatFormat.binary16 customFormat x) = true) :
     toReal (cast FloatFormat.binary16 customFormat x) =
       roundAt customFormat (toReal x) := by
@@ -63,32 +60,28 @@ example (x : Model customFormat) (hx : isFinite x = true) :
   numerics
 
 example (x y : Model FloatFormat.binary32)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     |toReal (add x y) - (toReal x + toReal y)| ≤
-      epsilonAt FloatFormat.binary32 (toReal x + toReal y) := by
+      halfUlpAt FloatFormat.binary32 (toReal x + toReal y) := by
   numerics
 
 example (x y : Model FloatFormat.binary64)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (mul x y) = true) :
     |toReal (mul x y) - toReal x * toReal y| ≤
-      epsilonAt FloatFormat.binary64 (toReal x * toReal y) := by
+      halfUlpAt FloatFormat.binary64 (toReal x * toReal y) := by
   numerics
 
 example (x y z : Model customFormat)
-    (hx : isFinite x = true) (hy : isFinite y = true) (hz : isFinite z = true)
     (hout : isFinite (fma x y z) = true) :
     toReal (fma x y z) =
       roundAt customFormat (toReal x * toReal y + toReal z) := by
   numerics
 
 example (x y : Model customFormat)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (sub x y) = true) :
     toReal x - toReal y ∈ Set.Icc
-      (toReal (sub x y) - epsilonAt customFormat (toReal x - toReal y))
-      (toReal (sub x y) + epsilonAt customFormat (toReal x - toReal y)) := by
+      (toReal (sub x y) - halfUlpAt customFormat (toReal x - toReal y))
+      (toReal (sub x y) + halfUlpAt customFormat (toReal x - toReal y)) := by
   numerics
 
 example (x : Model customFormat) (hx : isFinite x = true) :
@@ -107,7 +100,6 @@ example :
   numerics
 
 example (x y : Model customFormat)
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hout : isFinite (add x y) = true) :
     Represents (add x y) (roundAt customFormat (toReal x + toReal y)) := by
   numerics

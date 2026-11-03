@@ -343,13 +343,40 @@ instance : Digest Formats.Posit.Model.ParseError where
   | .outOfRange => 0xF4
   | .unsupportedPolicy => 0xF5
 
+def feedPosition (h : UInt64) : ExecFloat.InputPosition → UInt64
+  | .source => mixFull h 0xB1
+  | .left => mixFull h 0xB2
+  | .right => mixFull h 0xB3
+  | .addend => mixFull h 0xB4
+  | .operand index => feedNatAll (mixFull h 0xB5) index
+
+def feedPayload (h : UInt64) : Option Nat → UInt64
+  | none => mixFull h 0xC0
+  | some payload => feedNatAll (mixFull h 0xC1) payload
+
+def feedExceptional (h : UInt64) : FloatLib.Numerics.ExceptionalValue → UInt64
+  | .nan payload negative signaling =>
+      mixFull (feedPayload (mixFull h 0xD0) payload)
+        ((if negative then 1 else 0) ||| (if signaling then 2 else 0))
+  | .notAReal => mixFull h 0xD1
+  | .reserved payload => feedPayload (mixFull h 0xD2) payload
+  | .undefined => mixFull h 0xD3
+
+/-- Every field of a failure, read from its constructors rather than from how it prints. -/
+def feedFailure (h : UInt64) (f : ExecFloat.ConversionFailure) : UInt64 :=
+  let h := mixFull h (failureCode f)
+  match f with
+  | .infinity position _ => feedPosition h position
+  | .exceptional position value => feedExceptional (feedPosition h position) value
+  | .divisionByZero | .outOfRange | .unsupportedPolicy => h
+
 instance {α : Type} [Digest α] : Digest (ExecFloat.ConversionOutcome α) where
   quick o := match o with
     | .success v s => Digest.quick v ^^^ (conversionStatusBits s <<< 57)
     | .failure f => failureCode f
   full o h := match o with
     | .success v s => mixFull (Digest.full v (mixFull h 0xA00)) (conversionStatusBits s)
-    | .failure f => mixFull (mixFull h 0xA01) (hash (reprStr f))
+    | .failure f => feedFailure (mixFull h 0xA01) f
 
 instance : Digest Model.IntegerExponentOutcome where
   quick o := intBits o.value ^^^ (statusBits o.status <<< 59)
@@ -1093,7 +1120,7 @@ def run48 (count trials reps : Nat) : IO Unit := do
   runB "binary16/compare" xs ys (mixFull dx dy) timed48 full48 trials reps
 
 /-! ### `binary16/compareQuietLess` -/
-@[inline] def op49 (x y : Half) := ExecFloat.Binary.compareQuietLess x y
+@[inline] def op49 (x y : Half) := ExecFloat.Binary.compareQuiet .less x y
 def timed49 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed49 xs ys k (mixQuick acc (Digest.quick (op49 xs[k]! ys[k]!)))
@@ -1106,7 +1133,7 @@ def run49 (count trials reps : Nat) : IO Unit := do
   runB "binary16/compareQuietLess" xs ys (mixFull dx dy) timed49 full49 trials reps
 
 /-! ### `binary16/compareQuietEqual` -/
-@[inline] def op50 (x y : Half) := ExecFloat.Binary.compareQuietEqual x y
+@[inline] def op50 (x y : Half) := ExecFloat.Binary.compareQuiet .equal x y
 def timed50 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed50 xs ys k (mixQuick acc (Digest.quick (op50 xs[k]! ys[k]!)))
@@ -1119,7 +1146,7 @@ def run50 (count trials reps : Nat) : IO Unit := do
   runB "binary16/compareQuietEqual" xs ys (mixFull dx dy) timed50 full50 trials reps
 
 /-! ### `binary16/compareSignalingLessEqual` -/
-@[inline] def op51 (x y : Half) := ExecFloat.Binary.compareSignalingLessEqual x y
+@[inline] def op51 (x y : Half) := ExecFloat.Binary.compareSignaling .lessEqual x y
 def timed51 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed51 xs ys k (mixQuick acc (Digest.quick (op51 xs[k]! ys[k]!)))
@@ -1184,7 +1211,7 @@ def run55 (count trials reps : Nat) : IO Unit := do
   runB "binary16/minimum" xs ys (mixFull dx dy) timed55 full55 trials reps
 
 /-! ### `binary16/maxNum` -/
-@[inline] def op56 (x y : Half) := ExecFloat.Binary.maxNum x y
+@[inline] def op56 (x y : Half) := (ExecFloat.Binary.ofModel (Model.maxNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Half)
 def timed56 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed56 xs ys k (mixQuick acc (Digest.quick (op56 xs[k]! ys[k]!)))
@@ -1197,7 +1224,7 @@ def run56 (count trials reps : Nat) : IO Unit := do
   runB "binary16/maxNum" xs ys (mixFull dx dy) timed56 full56 trials reps
 
 /-! ### `binary16/minNum` -/
-@[inline] def op57 (x y : Half) := ExecFloat.Binary.minNum x y
+@[inline] def op57 (x y : Half) := (ExecFloat.Binary.ofModel (Model.minNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Half)
 def timed57 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed57 xs ys k (mixQuick acc (Digest.quick (op57 xs[k]! ys[k]!)))
@@ -1210,7 +1237,7 @@ def run57 (count trials reps : Nat) : IO Unit := do
   runB "binary16/minNum" xs ys (mixFull dx dy) timed57 full57 trials reps
 
 /-! ### `binary16/maximumNumber` -/
-@[inline] def op58 (x y : Half) := (ExecFloat.Binary.ofModel (Model.maximumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Half)
+@[inline] def op58 (x y : Half) := ExecFloat.Binary.maximumNumber x y
 def timed58 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed58 xs ys k (mixQuick acc (Digest.quick (op58 xs[k]! ys[k]!)))
@@ -1223,7 +1250,7 @@ def run58 (count trials reps : Nat) : IO Unit := do
   runB "binary16/maximumNumber" xs ys (mixFull dx dy) timed58 full58 trials reps
 
 /-! ### `binary16/minimumNumber` -/
-@[inline] def op59 (x y : Half) := (ExecFloat.Binary.ofModel (Model.minimumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Half)
+@[inline] def op59 (x y : Half) := ExecFloat.Binary.minimumNumber x y
 def timed59 (xs ys : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed59 xs ys k (mixQuick acc (Digest.quick (op59 xs[k]! ys[k]!)))
@@ -1394,7 +1421,7 @@ def run72 (count trials reps : Nat) : IO Unit := do
   runU "binary16/isFinite" xs d timed72 full72 trials reps
 
 /-! ### `binary16/isInfinite` -/
-@[inline] def op73 (x : Half) := ExecFloat.Binary.isInfinite x
+@[inline] def op73 (x : Half) := ExecFloat.Binary.isInf x
 def timed73 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed73 xs k (mixQuick acc (Digest.quick (op73 xs[k]!)))
@@ -1406,7 +1433,7 @@ def run73 (count trials reps : Nat) : IO Unit := do
   runU "binary16/isInfinite" xs d timed73 full73 trials reps
 
 /-! ### `binary16/isSignalingNaN` -/
-@[inline] def op74 (x : Half) := ExecFloat.Binary.isSignalingNaN x
+@[inline] def op74 (x : Half) := ExecFloat.Binary.isSNaN x
 def timed74 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed74 xs k (mixQuick acc (Digest.quick (op74 xs[k]!)))
@@ -1913,7 +1940,7 @@ def run113 (count trials reps : Nat) : IO Unit := do
   runU "binary16/rootN3" xs d timed113 full113 trials reps
 
 /-! ### `binary16/exp[certify]` -/
-@[inline] def op114 (x : Half) := (ExecFloat.Binary.exp x (certify := true)).toOption
+@[inline] def op114 (x : Half) := (ExecFloat.Binary.Certified.exp x).toOption
 def timed114 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed114 xs k (mixQuick acc (Digest.quick (op114 xs[k]!)))
@@ -1925,7 +1952,7 @@ def run114 (count trials reps : Nat) : IO Unit := do
   runU "binary16/exp[certify]" xs d timed114 full114 trials reps
 
 /-! ### `binary16/log[certify]` -/
-@[inline] def op115 (x : Half) := (ExecFloat.Binary.log x (certify := true)).toOption
+@[inline] def op115 (x : Half) := (ExecFloat.Binary.Certified.log x).toOption
 def timed115 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed115 xs k (mixQuick acc (Digest.quick (op115 xs[k]!)))
@@ -1961,7 +1988,7 @@ def run117 (count trials reps : Nat) : IO Unit := do
   runU "binary16/tanh" xs d timed117 full117 trials reps
 
 /-! ### `binary16/expMinus1` -/
-@[inline] def op118 (x : Half) := (ExecFloat.Binary.expMinus1 x).toOption
+@[inline] def op118 (x : Half) := (ExecFloat.Binary.Certified.expMinus1 x).toOption
 def timed118 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed118 xs k (mixQuick acc (Digest.quick (op118 xs[k]!)))
@@ -1973,7 +2000,7 @@ def run118 (count trials reps : Nat) : IO Unit := do
   runU "binary16/expMinus1" xs d timed118 full118 trials reps
 
 /-! ### `binary16/logPlus1` -/
-@[inline] def op119 (x : Half) := (ExecFloat.Binary.logPlus1 x).toOption
+@[inline] def op119 (x : Half) := (ExecFloat.Binary.Certified.logPlus1 x).toOption
 def timed119 (xs : Array Half) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed119 xs k (mixQuick acc (Digest.quick (op119 xs[k]!)))
@@ -2183,7 +2210,7 @@ def run135 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/compare" xs ys (mixFull dx dy) timed135 full135 trials reps
 
 /-! ### `bfloat16/compareQuietLess` -/
-@[inline] def op136 (x y : Brain) := ExecFloat.Binary.compareQuietLess x y
+@[inline] def op136 (x y : Brain) := ExecFloat.Binary.compareQuiet .less x y
 def timed136 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed136 xs ys k (mixQuick acc (Digest.quick (op136 xs[k]! ys[k]!)))
@@ -2196,7 +2223,7 @@ def run136 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/compareQuietLess" xs ys (mixFull dx dy) timed136 full136 trials reps
 
 /-! ### `bfloat16/compareQuietEqual` -/
-@[inline] def op137 (x y : Brain) := ExecFloat.Binary.compareQuietEqual x y
+@[inline] def op137 (x y : Brain) := ExecFloat.Binary.compareQuiet .equal x y
 def timed137 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed137 xs ys k (mixQuick acc (Digest.quick (op137 xs[k]! ys[k]!)))
@@ -2209,7 +2236,7 @@ def run137 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/compareQuietEqual" xs ys (mixFull dx dy) timed137 full137 trials reps
 
 /-! ### `bfloat16/compareSignalingLessEqual` -/
-@[inline] def op138 (x y : Brain) := ExecFloat.Binary.compareSignalingLessEqual x y
+@[inline] def op138 (x y : Brain) := ExecFloat.Binary.compareSignaling .lessEqual x y
 def timed138 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed138 xs ys k (mixQuick acc (Digest.quick (op138 xs[k]! ys[k]!)))
@@ -2274,7 +2301,7 @@ def run142 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/minimum" xs ys (mixFull dx dy) timed142 full142 trials reps
 
 /-! ### `bfloat16/maxNum` -/
-@[inline] def op143 (x y : Brain) := ExecFloat.Binary.maxNum x y
+@[inline] def op143 (x y : Brain) := (ExecFloat.Binary.ofModel (Model.maxNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Brain)
 def timed143 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed143 xs ys k (mixQuick acc (Digest.quick (op143 xs[k]! ys[k]!)))
@@ -2287,7 +2314,7 @@ def run143 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/maxNum" xs ys (mixFull dx dy) timed143 full143 trials reps
 
 /-! ### `bfloat16/minNum` -/
-@[inline] def op144 (x y : Brain) := ExecFloat.Binary.minNum x y
+@[inline] def op144 (x y : Brain) := (ExecFloat.Binary.ofModel (Model.minNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Brain)
 def timed144 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed144 xs ys k (mixQuick acc (Digest.quick (op144 xs[k]! ys[k]!)))
@@ -2300,7 +2327,7 @@ def run144 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/minNum" xs ys (mixFull dx dy) timed144 full144 trials reps
 
 /-! ### `bfloat16/maximumNumber` -/
-@[inline] def op145 (x y : Brain) := (ExecFloat.Binary.ofModel (Model.maximumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Brain)
+@[inline] def op145 (x y : Brain) := ExecFloat.Binary.maximumNumber x y
 def timed145 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed145 xs ys k (mixQuick acc (Digest.quick (op145 xs[k]! ys[k]!)))
@@ -2313,7 +2340,7 @@ def run145 (count trials reps : Nat) : IO Unit := do
   runB "bfloat16/maximumNumber" xs ys (mixFull dx dy) timed145 full145 trials reps
 
 /-! ### `bfloat16/minimumNumber` -/
-@[inline] def op146 (x y : Brain) := (ExecFloat.Binary.ofModel (Model.minimumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Brain)
+@[inline] def op146 (x y : Brain) := ExecFloat.Binary.minimumNumber x y
 def timed146 (xs ys : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed146 xs ys k (mixQuick acc (Digest.quick (op146 xs[k]! ys[k]!)))
@@ -2484,7 +2511,7 @@ def run159 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/isFinite" xs d timed159 full159 trials reps
 
 /-! ### `bfloat16/isInfinite` -/
-@[inline] def op160 (x : Brain) := ExecFloat.Binary.isInfinite x
+@[inline] def op160 (x : Brain) := ExecFloat.Binary.isInf x
 def timed160 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed160 xs k (mixQuick acc (Digest.quick (op160 xs[k]!)))
@@ -2496,7 +2523,7 @@ def run160 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/isInfinite" xs d timed160 full160 trials reps
 
 /-! ### `bfloat16/isSignalingNaN` -/
-@[inline] def op161 (x : Brain) := ExecFloat.Binary.isSignalingNaN x
+@[inline] def op161 (x : Brain) := ExecFloat.Binary.isSNaN x
 def timed161 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed161 xs k (mixQuick acc (Digest.quick (op161 xs[k]!)))
@@ -3003,7 +3030,7 @@ def run200 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/rootN3" xs d timed200 full200 trials reps
 
 /-! ### `bfloat16/exp[certify]` -/
-@[inline] def op201 (x : Brain) := (ExecFloat.Binary.exp x (certify := true)).toOption
+@[inline] def op201 (x : Brain) := (ExecFloat.Binary.Certified.exp x).toOption
 def timed201 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed201 xs k (mixQuick acc (Digest.quick (op201 xs[k]!)))
@@ -3015,7 +3042,7 @@ def run201 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/exp[certify]" xs d timed201 full201 trials reps
 
 /-! ### `bfloat16/log[certify]` -/
-@[inline] def op202 (x : Brain) := (ExecFloat.Binary.log x (certify := true)).toOption
+@[inline] def op202 (x : Brain) := (ExecFloat.Binary.Certified.log x).toOption
 def timed202 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed202 xs k (mixQuick acc (Digest.quick (op202 xs[k]!)))
@@ -3051,7 +3078,7 @@ def run204 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/tanh" xs d timed204 full204 trials reps
 
 /-! ### `bfloat16/expMinus1` -/
-@[inline] def op205 (x : Brain) := (ExecFloat.Binary.expMinus1 x).toOption
+@[inline] def op205 (x : Brain) := (ExecFloat.Binary.Certified.expMinus1 x).toOption
 def timed205 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed205 xs k (mixQuick acc (Digest.quick (op205 xs[k]!)))
@@ -3063,7 +3090,7 @@ def run205 (count trials reps : Nat) : IO Unit := do
   runU "bfloat16/expMinus1" xs d timed205 full205 trials reps
 
 /-! ### `bfloat16/logPlus1` -/
-@[inline] def op206 (x : Brain) := (ExecFloat.Binary.logPlus1 x).toOption
+@[inline] def op206 (x : Brain) := (ExecFloat.Binary.Certified.logPlus1 x).toOption
 def timed206 (xs : Array Brain) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed206 xs k (mixQuick acc (Digest.quick (op206 xs[k]!)))
@@ -3273,7 +3300,7 @@ def run222 (count trials reps : Nat) : IO Unit := do
   runB "binary32/compare" xs ys (mixFull dx dy) timed222 full222 trials reps
 
 /-! ### `binary32/compareQuietLess` -/
-@[inline] def op223 (x y : Single) := ExecFloat.Binary.compareQuietLess x y
+@[inline] def op223 (x y : Single) := ExecFloat.Binary.compareQuiet .less x y
 def timed223 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed223 xs ys k (mixQuick acc (Digest.quick (op223 xs[k]! ys[k]!)))
@@ -3286,7 +3313,7 @@ def run223 (count trials reps : Nat) : IO Unit := do
   runB "binary32/compareQuietLess" xs ys (mixFull dx dy) timed223 full223 trials reps
 
 /-! ### `binary32/compareQuietEqual` -/
-@[inline] def op224 (x y : Single) := ExecFloat.Binary.compareQuietEqual x y
+@[inline] def op224 (x y : Single) := ExecFloat.Binary.compareQuiet .equal x y
 def timed224 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed224 xs ys k (mixQuick acc (Digest.quick (op224 xs[k]! ys[k]!)))
@@ -3299,7 +3326,7 @@ def run224 (count trials reps : Nat) : IO Unit := do
   runB "binary32/compareQuietEqual" xs ys (mixFull dx dy) timed224 full224 trials reps
 
 /-! ### `binary32/compareSignalingLessEqual` -/
-@[inline] def op225 (x y : Single) := ExecFloat.Binary.compareSignalingLessEqual x y
+@[inline] def op225 (x y : Single) := ExecFloat.Binary.compareSignaling .lessEqual x y
 def timed225 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed225 xs ys k (mixQuick acc (Digest.quick (op225 xs[k]! ys[k]!)))
@@ -3364,7 +3391,7 @@ def run229 (count trials reps : Nat) : IO Unit := do
   runB "binary32/minimum" xs ys (mixFull dx dy) timed229 full229 trials reps
 
 /-! ### `binary32/maxNum` -/
-@[inline] def op230 (x y : Single) := ExecFloat.Binary.maxNum x y
+@[inline] def op230 (x y : Single) := (ExecFloat.Binary.ofModel (Model.maxNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Single)
 def timed230 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed230 xs ys k (mixQuick acc (Digest.quick (op230 xs[k]! ys[k]!)))
@@ -3377,7 +3404,7 @@ def run230 (count trials reps : Nat) : IO Unit := do
   runB "binary32/maxNum" xs ys (mixFull dx dy) timed230 full230 trials reps
 
 /-! ### `binary32/minNum` -/
-@[inline] def op231 (x y : Single) := ExecFloat.Binary.minNum x y
+@[inline] def op231 (x y : Single) := (ExecFloat.Binary.ofModel (Model.minNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Single)
 def timed231 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed231 xs ys k (mixQuick acc (Digest.quick (op231 xs[k]! ys[k]!)))
@@ -3390,7 +3417,7 @@ def run231 (count trials reps : Nat) : IO Unit := do
   runB "binary32/minNum" xs ys (mixFull dx dy) timed231 full231 trials reps
 
 /-! ### `binary32/maximumNumber` -/
-@[inline] def op232 (x y : Single) := (ExecFloat.Binary.ofModel (Model.maximumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Single)
+@[inline] def op232 (x y : Single) := ExecFloat.Binary.maximumNumber x y
 def timed232 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed232 xs ys k (mixQuick acc (Digest.quick (op232 xs[k]! ys[k]!)))
@@ -3403,7 +3430,7 @@ def run232 (count trials reps : Nat) : IO Unit := do
   runB "binary32/maximumNumber" xs ys (mixFull dx dy) timed232 full232 trials reps
 
 /-! ### `binary32/minimumNumber` -/
-@[inline] def op233 (x y : Single) := (ExecFloat.Binary.ofModel (Model.minimumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Single)
+@[inline] def op233 (x y : Single) := ExecFloat.Binary.minimumNumber x y
 def timed233 (xs ys : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed233 xs ys k (mixQuick acc (Digest.quick (op233 xs[k]! ys[k]!)))
@@ -3574,7 +3601,7 @@ def run246 (count trials reps : Nat) : IO Unit := do
   runU "binary32/isFinite" xs d timed246 full246 trials reps
 
 /-! ### `binary32/isInfinite` -/
-@[inline] def op247 (x : Single) := ExecFloat.Binary.isInfinite x
+@[inline] def op247 (x : Single) := ExecFloat.Binary.isInf x
 def timed247 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed247 xs k (mixQuick acc (Digest.quick (op247 xs[k]!)))
@@ -3586,7 +3613,7 @@ def run247 (count trials reps : Nat) : IO Unit := do
   runU "binary32/isInfinite" xs d timed247 full247 trials reps
 
 /-! ### `binary32/isSignalingNaN` -/
-@[inline] def op248 (x : Single) := ExecFloat.Binary.isSignalingNaN x
+@[inline] def op248 (x : Single) := ExecFloat.Binary.isSNaN x
 def timed248 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed248 xs k (mixQuick acc (Digest.quick (op248 xs[k]!)))
@@ -4093,7 +4120,7 @@ def run287 (count trials reps : Nat) : IO Unit := do
   runU "binary32/rootN3" xs d timed287 full287 trials reps
 
 /-! ### `binary32/exp[certify]` -/
-@[inline] def op288 (x : Single) := (ExecFloat.Binary.exp x (certify := true)).toOption
+@[inline] def op288 (x : Single) := (ExecFloat.Binary.Certified.exp x).toOption
 def timed288 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed288 xs k (mixQuick acc (Digest.quick (op288 xs[k]!)))
@@ -4105,7 +4132,7 @@ def run288 (count trials reps : Nat) : IO Unit := do
   runU "binary32/exp[certify]" xs d timed288 full288 trials reps
 
 /-! ### `binary32/log[certify]` -/
-@[inline] def op289 (x : Single) := (ExecFloat.Binary.log x (certify := true)).toOption
+@[inline] def op289 (x : Single) := (ExecFloat.Binary.Certified.log x).toOption
 def timed289 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed289 xs k (mixQuick acc (Digest.quick (op289 xs[k]!)))
@@ -4141,7 +4168,7 @@ def run291 (count trials reps : Nat) : IO Unit := do
   runU "binary32/tanh" xs d timed291 full291 trials reps
 
 /-! ### `binary32/expMinus1` -/
-@[inline] def op292 (x : Single) := (ExecFloat.Binary.expMinus1 x).toOption
+@[inline] def op292 (x : Single) := (ExecFloat.Binary.Certified.expMinus1 x).toOption
 def timed292 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed292 xs k (mixQuick acc (Digest.quick (op292 xs[k]!)))
@@ -4153,7 +4180,7 @@ def run292 (count trials reps : Nat) : IO Unit := do
   runU "binary32/expMinus1" xs d timed292 full292 trials reps
 
 /-! ### `binary32/logPlus1` -/
-@[inline] def op293 (x : Single) := (ExecFloat.Binary.logPlus1 x).toOption
+@[inline] def op293 (x : Single) := (ExecFloat.Binary.Certified.logPlus1 x).toOption
 def timed293 (xs : Array Single) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed293 xs k (mixQuick acc (Digest.quick (op293 xs[k]!)))
@@ -4363,7 +4390,7 @@ def run309 (count trials reps : Nat) : IO Unit := do
   runB "binary64/compare" xs ys (mixFull dx dy) timed309 full309 trials reps
 
 /-! ### `binary64/compareQuietLess` -/
-@[inline] def op310 (x y : Double) := ExecFloat.Binary.compareQuietLess x y
+@[inline] def op310 (x y : Double) := ExecFloat.Binary.compareQuiet .less x y
 def timed310 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed310 xs ys k (mixQuick acc (Digest.quick (op310 xs[k]! ys[k]!)))
@@ -4376,7 +4403,7 @@ def run310 (count trials reps : Nat) : IO Unit := do
   runB "binary64/compareQuietLess" xs ys (mixFull dx dy) timed310 full310 trials reps
 
 /-! ### `binary64/compareQuietEqual` -/
-@[inline] def op311 (x y : Double) := ExecFloat.Binary.compareQuietEqual x y
+@[inline] def op311 (x y : Double) := ExecFloat.Binary.compareQuiet .equal x y
 def timed311 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed311 xs ys k (mixQuick acc (Digest.quick (op311 xs[k]! ys[k]!)))
@@ -4389,7 +4416,7 @@ def run311 (count trials reps : Nat) : IO Unit := do
   runB "binary64/compareQuietEqual" xs ys (mixFull dx dy) timed311 full311 trials reps
 
 /-! ### `binary64/compareSignalingLessEqual` -/
-@[inline] def op312 (x y : Double) := ExecFloat.Binary.compareSignalingLessEqual x y
+@[inline] def op312 (x y : Double) := ExecFloat.Binary.compareSignaling .lessEqual x y
 def timed312 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed312 xs ys k (mixQuick acc (Digest.quick (op312 xs[k]! ys[k]!)))
@@ -4454,7 +4481,7 @@ def run316 (count trials reps : Nat) : IO Unit := do
   runB "binary64/minimum" xs ys (mixFull dx dy) timed316 full316 trials reps
 
 /-! ### `binary64/maxNum` -/
-@[inline] def op317 (x y : Double) := ExecFloat.Binary.maxNum x y
+@[inline] def op317 (x y : Double) := (ExecFloat.Binary.ofModel (Model.maxNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Double)
 def timed317 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed317 xs ys k (mixQuick acc (Digest.quick (op317 xs[k]! ys[k]!)))
@@ -4467,7 +4494,7 @@ def run317 (count trials reps : Nat) : IO Unit := do
   runB "binary64/maxNum" xs ys (mixFull dx dy) timed317 full317 trials reps
 
 /-! ### `binary64/minNum` -/
-@[inline] def op318 (x y : Double) := ExecFloat.Binary.minNum x y
+@[inline] def op318 (x y : Double) := (ExecFloat.Binary.ofModel (Model.minNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Double)
 def timed318 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed318 xs ys k (mixQuick acc (Digest.quick (op318 xs[k]! ys[k]!)))
@@ -4480,7 +4507,7 @@ def run318 (count trials reps : Nat) : IO Unit := do
   runB "binary64/minNum" xs ys (mixFull dx dy) timed318 full318 trials reps
 
 /-! ### `binary64/maximumNumber` -/
-@[inline] def op319 (x y : Double) := (ExecFloat.Binary.ofModel (Model.maximumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Double)
+@[inline] def op319 (x y : Double) := ExecFloat.Binary.maximumNumber x y
 def timed319 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed319 xs ys k (mixQuick acc (Digest.quick (op319 xs[k]! ys[k]!)))
@@ -4493,7 +4520,7 @@ def run319 (count trials reps : Nat) : IO Unit := do
   runB "binary64/maximumNumber" xs ys (mixFull dx dy) timed319 full319 trials reps
 
 /-! ### `binary64/minimumNumber` -/
-@[inline] def op320 (x y : Double) := (ExecFloat.Binary.ofModel (Model.minimumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Double)
+@[inline] def op320 (x y : Double) := ExecFloat.Binary.minimumNumber x y
 def timed320 (xs ys : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed320 xs ys k (mixQuick acc (Digest.quick (op320 xs[k]! ys[k]!)))
@@ -4664,7 +4691,7 @@ def run333 (count trials reps : Nat) : IO Unit := do
   runU "binary64/isFinite" xs d timed333 full333 trials reps
 
 /-! ### `binary64/isInfinite` -/
-@[inline] def op334 (x : Double) := ExecFloat.Binary.isInfinite x
+@[inline] def op334 (x : Double) := ExecFloat.Binary.isInf x
 def timed334 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed334 xs k (mixQuick acc (Digest.quick (op334 xs[k]!)))
@@ -4676,7 +4703,7 @@ def run334 (count trials reps : Nat) : IO Unit := do
   runU "binary64/isInfinite" xs d timed334 full334 trials reps
 
 /-! ### `binary64/isSignalingNaN` -/
-@[inline] def op335 (x : Double) := ExecFloat.Binary.isSignalingNaN x
+@[inline] def op335 (x : Double) := ExecFloat.Binary.isSNaN x
 def timed335 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed335 xs k (mixQuick acc (Digest.quick (op335 xs[k]!)))
@@ -5183,7 +5210,7 @@ def run374 (count trials reps : Nat) : IO Unit := do
   runU "binary64/rootN3" xs d timed374 full374 trials reps
 
 /-! ### `binary64/exp[certify]` -/
-@[inline] def op375 (x : Double) := (ExecFloat.Binary.exp x (certify := true)).toOption
+@[inline] def op375 (x : Double) := (ExecFloat.Binary.Certified.exp x).toOption
 def timed375 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed375 xs k (mixQuick acc (Digest.quick (op375 xs[k]!)))
@@ -5195,7 +5222,7 @@ def run375 (count trials reps : Nat) : IO Unit := do
   runU "binary64/exp[certify]" xs d timed375 full375 trials reps
 
 /-! ### `binary64/log[certify]` -/
-@[inline] def op376 (x : Double) := (ExecFloat.Binary.log x (certify := true)).toOption
+@[inline] def op376 (x : Double) := (ExecFloat.Binary.Certified.log x).toOption
 def timed376 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed376 xs k (mixQuick acc (Digest.quick (op376 xs[k]!)))
@@ -5231,7 +5258,7 @@ def run378 (count trials reps : Nat) : IO Unit := do
   runU "binary64/tanh" xs d timed378 full378 trials reps
 
 /-! ### `binary64/expMinus1` -/
-@[inline] def op379 (x : Double) := (ExecFloat.Binary.expMinus1 x).toOption
+@[inline] def op379 (x : Double) := (ExecFloat.Binary.Certified.expMinus1 x).toOption
 def timed379 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed379 xs k (mixQuick acc (Digest.quick (op379 xs[k]!)))
@@ -5243,7 +5270,7 @@ def run379 (count trials reps : Nat) : IO Unit := do
   runU "binary64/expMinus1" xs d timed379 full379 trials reps
 
 /-! ### `binary64/logPlus1` -/
-@[inline] def op380 (x : Double) := (ExecFloat.Binary.logPlus1 x).toOption
+@[inline] def op380 (x : Double) := (ExecFloat.Binary.Certified.logPlus1 x).toOption
 def timed380 (xs : Array Double) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed380 xs k (mixQuick acc (Digest.quick (op380 xs[k]!)))
@@ -5453,7 +5480,7 @@ def run396 (count trials reps : Nat) : IO Unit := do
   runB "binary128/compare" xs ys (mixFull dx dy) timed396 full396 trials reps
 
 /-! ### `binary128/compareQuietLess` -/
-@[inline] def op397 (x y : Quad) := ExecFloat.Binary.compareQuietLess x y
+@[inline] def op397 (x y : Quad) := ExecFloat.Binary.compareQuiet .less x y
 def timed397 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed397 xs ys k (mixQuick acc (Digest.quick (op397 xs[k]! ys[k]!)))
@@ -5466,7 +5493,7 @@ def run397 (count trials reps : Nat) : IO Unit := do
   runB "binary128/compareQuietLess" xs ys (mixFull dx dy) timed397 full397 trials reps
 
 /-! ### `binary128/compareQuietEqual` -/
-@[inline] def op398 (x y : Quad) := ExecFloat.Binary.compareQuietEqual x y
+@[inline] def op398 (x y : Quad) := ExecFloat.Binary.compareQuiet .equal x y
 def timed398 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed398 xs ys k (mixQuick acc (Digest.quick (op398 xs[k]! ys[k]!)))
@@ -5479,7 +5506,7 @@ def run398 (count trials reps : Nat) : IO Unit := do
   runB "binary128/compareQuietEqual" xs ys (mixFull dx dy) timed398 full398 trials reps
 
 /-! ### `binary128/compareSignalingLessEqual` -/
-@[inline] def op399 (x y : Quad) := ExecFloat.Binary.compareSignalingLessEqual x y
+@[inline] def op399 (x y : Quad) := ExecFloat.Binary.compareSignaling .lessEqual x y
 def timed399 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed399 xs ys k (mixQuick acc (Digest.quick (op399 xs[k]! ys[k]!)))
@@ -5544,7 +5571,7 @@ def run403 (count trials reps : Nat) : IO Unit := do
   runB "binary128/minimum" xs ys (mixFull dx dy) timed403 full403 trials reps
 
 /-! ### `binary128/maxNum` -/
-@[inline] def op404 (x y : Quad) := ExecFloat.Binary.maxNum x y
+@[inline] def op404 (x y : Quad) := (ExecFloat.Binary.ofModel (Model.maxNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Quad)
 def timed404 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed404 xs ys k (mixQuick acc (Digest.quick (op404 xs[k]! ys[k]!)))
@@ -5557,7 +5584,7 @@ def run404 (count trials reps : Nat) : IO Unit := do
   runB "binary128/maxNum" xs ys (mixFull dx dy) timed404 full404 trials reps
 
 /-! ### `binary128/minNum` -/
-@[inline] def op405 (x y : Quad) := ExecFloat.Binary.minNum x y
+@[inline] def op405 (x y : Quad) := (ExecFloat.Binary.ofModel (Model.minNum (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Quad)
 def timed405 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed405 xs ys k (mixQuick acc (Digest.quick (op405 xs[k]! ys[k]!)))
@@ -5570,7 +5597,7 @@ def run405 (count trials reps : Nat) : IO Unit := do
   runB "binary128/minNum" xs ys (mixFull dx dy) timed405 full405 trials reps
 
 /-! ### `binary128/maximumNumber` -/
-@[inline] def op406 (x y : Quad) := (ExecFloat.Binary.ofModel (Model.maximumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Quad)
+@[inline] def op406 (x y : Quad) := ExecFloat.Binary.maximumNumber x y
 def timed406 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed406 xs ys k (mixQuick acc (Digest.quick (op406 xs[k]! ys[k]!)))
@@ -5583,7 +5610,7 @@ def run406 (count trials reps : Nat) : IO Unit := do
   runB "binary128/maximumNumber" xs ys (mixFull dx dy) timed406 full406 trials reps
 
 /-! ### `binary128/minimumNumber` -/
-@[inline] def op407 (x y : Quad) := (ExecFloat.Binary.ofModel (Model.minimumNumber (ExecFloat.Binary.toModel x) (ExecFloat.Binary.toModel y)) : Quad)
+@[inline] def op407 (x y : Quad) := ExecFloat.Binary.minimumNumber x y
 def timed407 (xs ys : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed407 xs ys k (mixQuick acc (Digest.quick (op407 xs[k]! ys[k]!)))
@@ -5754,7 +5781,7 @@ def run420 (count trials reps : Nat) : IO Unit := do
   runU "binary128/isFinite" xs d timed420 full420 trials reps
 
 /-! ### `binary128/isInfinite` -/
-@[inline] def op421 (x : Quad) := ExecFloat.Binary.isInfinite x
+@[inline] def op421 (x : Quad) := ExecFloat.Binary.isInf x
 def timed421 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed421 xs k (mixQuick acc (Digest.quick (op421 xs[k]!)))
@@ -5766,7 +5793,7 @@ def run421 (count trials reps : Nat) : IO Unit := do
   runU "binary128/isInfinite" xs d timed421 full421 trials reps
 
 /-! ### `binary128/isSignalingNaN` -/
-@[inline] def op422 (x : Quad) := ExecFloat.Binary.isSignalingNaN x
+@[inline] def op422 (x : Quad) := ExecFloat.Binary.isSNaN x
 def timed422 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed422 xs k (mixQuick acc (Digest.quick (op422 xs[k]!)))
@@ -6273,7 +6300,7 @@ def run461 (count trials reps : Nat) : IO Unit := do
   runU "binary128/rootN3" xs d timed461 full461 trials reps
 
 /-! ### `binary128/exp[certify]` -/
-@[inline] def op462 (x : Quad) := (ExecFloat.Binary.exp x (certify := true)).toOption
+@[inline] def op462 (x : Quad) := (ExecFloat.Binary.Certified.exp x).toOption
 def timed462 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed462 xs k (mixQuick acc (Digest.quick (op462 xs[k]!)))
@@ -6285,7 +6312,7 @@ def run462 (count trials reps : Nat) : IO Unit := do
   runU "binary128/exp[certify]" xs d timed462 full462 trials reps
 
 /-! ### `binary128/log[certify]` -/
-@[inline] def op463 (x : Quad) := (ExecFloat.Binary.log x (certify := true)).toOption
+@[inline] def op463 (x : Quad) := (ExecFloat.Binary.Certified.log x).toOption
 def timed463 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed463 xs k (mixQuick acc (Digest.quick (op463 xs[k]!)))
@@ -6321,7 +6348,7 @@ def run465 (count trials reps : Nat) : IO Unit := do
   runU "binary128/tanh" xs d timed465 full465 trials reps
 
 /-! ### `binary128/expMinus1` -/
-@[inline] def op466 (x : Quad) := (ExecFloat.Binary.expMinus1 x).toOption
+@[inline] def op466 (x : Quad) := (ExecFloat.Binary.Certified.expMinus1 x).toOption
 def timed466 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed466 xs k (mixQuick acc (Digest.quick (op466 xs[k]!)))
@@ -6333,7 +6360,7 @@ def run466 (count trials reps : Nat) : IO Unit := do
   runU "binary128/expMinus1" xs d timed466 full466 trials reps
 
 /-! ### `binary128/logPlus1` -/
-@[inline] def op467 (x : Quad) := (ExecFloat.Binary.logPlus1 x).toOption
+@[inline] def op467 (x : Quad) := (ExecFloat.Binary.Certified.logPlus1 x).toOption
 def timed467 (xs : Array Quad) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | k + 1, acc => timed467 xs k (mixQuick acc (Digest.quick (op467 xs[k]!)))

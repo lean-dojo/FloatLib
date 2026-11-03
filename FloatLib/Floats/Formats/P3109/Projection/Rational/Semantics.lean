@@ -27,39 +27,54 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.RationalRounding
 
-/-- At the precision quantum, the exact quotient is below `2^precision`.
-Clamping the leading exponent to the minimum normal exponent can only decrease the quotient.
-The bound depends on these two parameters, not on an encoding or saturation policy. -/
+/-- A rational `numerator / denominator` scaled by `2 ^ exponent` is below `2 ^ k` when its leading
+binary exponent after scaling stays below `k`: the scaled numerator is less than `2 ^ k` times the
+scaled denominator. A zero numerator scales to zero and needs no exponent condition. -/
+theorem scaleByPowerOfTwo_fst_lt_pow_mul_snd (numerator denominator : Nat) (exponent : Int)
+    (k : Nat) (hdenominator : denominator ≠ 0)
+    (hk : numerator ≠ 0 →
+      RationalBinary.floorLog2 numerator denominator + exponent + 1 ≤ Int.ofNat k) :
+    (RationalBinary.scaleByPowerOfTwo numerator denominator exponent).1 <
+      2 ^ k * (RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 := by
+  have hden := RationalBinary.scaleByPowerOfTwo_snd_ne_zero
+    numerator denominator exponent hdenominator
+  by_cases hnumerator : numerator = 0
+  · subst hnumerator
+    have hz : (RationalBinary.scaleByPowerOfTwo 0 denominator exponent).1 = 0 := by
+      cases exponent <;> simp
+    rw [hz]
+    exact Nat.mul_pos (Nat.two_pow_pos k) (Nat.pos_of_ne_zero hden)
+  have hbounds := BinaryInterchange.Model.scaleByPowerOfTwo_floorLog2_bounds
+    numerator denominator exponent hnumerator hdenominator
+  have hratio : ((RationalBinary.scaleByPowerOfTwo numerator denominator exponent).1 : Real) /
+      (RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 < (2 ^ k : Nat) := by
+    calc
+      _ < BinaryInterchange.Model.bpow
+          (RationalBinary.floorLog2 numerator denominator + exponent + 1) := hbounds.2
+      _ ≤ BinaryInterchange.Model.bpow (Int.ofNat k) :=
+        (Flocq.bpow_le_bpow_iff binaryRadix _ _).2 (hk hnumerator)
+      _ = (2 ^ k : Nat) := by
+        simpa [BinaryInterchange.Model.pow2_eq_two_pow] using BinaryInterchange.Model.bpow_ofNat k
+  have hdenReal : (0 : Real) <
+      (RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 := by
+    exact_mod_cast Nat.pos_of_ne_zero hden
+  exact_mod_cast (div_lt_iff₀ hdenReal).mp hratio
+
+/-- At the precision quantum, the exact quotient is below `2^precision`; a zero numerator gives the
+quotient zero. Clamping the leading exponent to the minimum normal exponent can only decrease the
+quotient. The bound depends on these two parameters, not on an encoding or saturation policy. -/
 theorem quotientFloor_lt_precision (precision : Nat) (minimumNormalExponent : Int)
-    (numerator denominator : Nat) (hnumerator : numerator ≠ 0)
-    (hdenominator : denominator ≠ 0) :
+    (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
     let leading := RationalBinary.floorLog2 numerator denominator
     let quantum := max leading minimumNormalExponent - Int.ofNat precision + 1
     let scaled := RationalBinary.scaleByPowerOfTwo numerator denominator (-quantum)
     scaled.1 / scaled.2 < 2 ^ precision := by
-  let leading := RationalBinary.floorLog2 numerator denominator
-  let quantum := max leading minimumNormalExponent - Int.ofNat precision + 1
-  let scaled := RationalBinary.scaleByPowerOfTwo numerator denominator (-quantum)
+  intro leading quantum scaled
   have hden := RationalBinary.scaleByPowerOfTwo_snd_ne_zero
     numerator denominator (-quantum) hdenominator
-  have hbounds := BinaryInterchange.Model.scaleByPowerOfTwo_floorLog2_bounds
-    numerator denominator (-quantum) hnumerator hdenominator
-  have hpower : leading + -quantum + 1 ≤ Int.ofNat precision := by
-    dsimp only [quantum]
-    omega
-  have hratio : (scaled.1 : Real) / scaled.2 < (2 ^ precision : Nat) := by
-    calc
-      (scaled.1 : Real) / scaled.2 <
-          BinaryInterchange.Model.bpow (leading + -quantum + 1) := hbounds.2
-      _ ≤ BinaryInterchange.Model.bpow (Int.ofNat precision) :=
-        (Flocq.bpow_le_bpow_iff binaryRadix _ _).2 hpower
-      _ = (2 ^ precision : Nat) := by
-        simpa [BinaryInterchange.Model.pow2_eq_two_pow] using
-          BinaryInterchange.Model.bpow_ofNat precision
-  have hdenReal : (0 : Real) < scaled.2 := by exact_mod_cast Nat.pos_of_ne_zero hden
-  have hmul : scaled.1 < 2 ^ precision * scaled.2 := by
-    exact_mod_cast (div_lt_iff₀ hdenReal).mp hratio
-  exact (Nat.div_lt_iff_lt_mul (Nat.pos_of_ne_zero hden)).2 hmul
+  exact (Nat.div_lt_iff_lt_mul (Nat.pos_of_ne_zero hden)).2
+    (scaleByPowerOfTwo_fst_lt_pow_mul_snd numerator denominator (-quantum) precision hdenominator
+      fun _ => by dsimp only [quantum, leading]; omega)
 
 /-- Apply the sign of the input to a nonnegative candidate. -/
 def signed (negative : Bool) (magnitude : Rat) : Rat :=

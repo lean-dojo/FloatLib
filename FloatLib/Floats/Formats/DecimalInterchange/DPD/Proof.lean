@@ -13,14 +13,17 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Proof
 # DPD coefficient correctness and complete datum round trips
 
 DPD coefficient and exponent packing recovers every valid datum after encoding. Decoding always
-produces a valid datum, and canonicalization preserves that datum while removing redundant
-encodings idempotently.
+produces a valid datum. Canonicalization preserves that datum and is idempotent, and two words
+have the same canonical word exactly when they decode to the same datum, so redundant encodings
+are removed.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.DPD
 
+/-- A representable coefficient and biased exponent encode in DPD below the combination patterns
+reserved for infinities and NaNs. -/
 theorem encodeFinite_lt (f : Format) (c e : Nat)
     (hc : c < f.coefficientBound) (he : e < f.exponentBound) :
     encodeFinite f c e < 30 * (f.exponentBase * f.trailingBase) := by
@@ -29,6 +32,8 @@ theorem encodeFinite_lt (f : Format) (c e : Nat)
   · exact he
   · exact encodeTrailing_lt _ _
 
+/-- Every finite DPD field pattern, redundant declets included, decodes to a coefficient and biased
+exponent within the format bounds. -/
 theorem decodeFinite_valid (f : Format) (n : Nat)
     (hn : n < 30 * (f.exponentBase * f.trailingBase)) :
     (decodeFinite f n).1 < f.coefficientBound ∧
@@ -75,6 +80,8 @@ theorem decode_encode (f : Format) (d : Datum) (h : d.Valid f) :
     decode f (codec.encode f d) = d :=
   codec.decode_encode lawful f d h
 
+/-- Every DPD word of the format's width, noncanonical encodings included, decodes to a valid datum.
+-/
 theorem decode_valid (f : Format) (word : BitVec f.bitWidth) : (decode f word).Valid f :=
   codec.decode_valid lawful f word
 
@@ -83,8 +90,15 @@ theorem decode_canonicalize (f : Format) (word : BitVec f.bitWidth) :
     decode f (canonicalize f word) = decode f word :=
   codec.decode_canonicalize lawful f word
 
+/-- Canonicalizing an already canonical DPD word changes no bit. -/
 theorem canonicalize_idempotent (f : Format) (word : BitVec f.bitWidth) :
     canonicalize f (canonicalize f word) = canonicalize f word :=
   codec.canonicalize_idempotent lawful f word
+
+/-- Two DPD words have the same canonical word exactly when they decode to the same datum, so
+redundant declets and unused special-value bits are collapsed onto one word. -/
+theorem canonicalize_eq_canonicalize_iff (f : Format) (left right : BitVec f.bitWidth) :
+    canonicalize f left = canonicalize f right ↔ decode f left = decode f right :=
+  codec.canonicalize_eq_canonicalize_iff lawful f left right
 
 end FloatLib.Floats.Formats.DecimalInterchange.DPD

@@ -48,6 +48,12 @@ private theorem pred_mul_mod
   rw [hproductDecompose, Nat.add_comm, Nat.add_mul_mod_self_left]
   exact Nat.mod_eq_of_lt (Nat.sub_lt hmodulus (by decide))
 
+/-- The two-limb zero test is the Boolean comparison of the natural value with zero. -/
+private theorem isZero_eq_beq (value : FixedWord.UInt128) :
+    NativeLimb.isZero value = (value.toNat == 0) := by
+  apply Bool.eq_iff_iff.mpr
+  rw [NativeLimb.isZero_eq_true_iff, beq_iff_eq]
+
 /--
 Natural-number laws of the two-limb candidate carrier at capacity 128.
 
@@ -60,27 +66,8 @@ theorem candidateCarrierLawful :
   bitAt_eq_testBit := NativeLimb.bitAt_eq_testBit
   hasLowBits_eq value width := by
     dsimp only [candidateCarrier, hasLowBits]
-    by_cases hremainder : value.toNat % 2 ^ width = 0
-    · have hzeroNat :
-          (NativeLimb.lowBits value width).toNat = 0 := by
-        rw [NativeLimb.lowBits_toNat]
-        exact hremainder
-      have hzero :
-          NativeLimb.isZero (NativeLimb.lowBits value width) = true :=
-        (NativeLimb.isZero_eq_true_iff _).2 hzeroNat
-      simp [hzero, hremainder]
-    · have hnonzeroNat :
-          (NativeLimb.lowBits value width).toNat ≠ 0 := by
-        rw [NativeLimb.lowBits_toNat]
-        exact hremainder
-      have hnotZero :
-          NativeLimb.isZero (NativeLimb.lowBits value width) ≠ true := by
-        intro hzero
-        exact hnonzeroNat ((NativeLimb.isZero_eq_true_iff _).1 hzero)
-      have hzeroFalse :
-          NativeLimb.isZero (NativeLimb.lowBits value width) = false :=
-        Bool.eq_false_of_not_eq_true hnotZero
-      simp [hzeroFalse, hremainder]
+    rw [isZero_eq_beq, NativeLimb.lowBits_toNat]
+    rfl
   toNat_lt := FixedWord.UInt128.toNat_lt
   toNat_ofWord word := by
     show (FixedWord.UInt128.mk 0 word).toNat = word.toNat
@@ -89,7 +76,7 @@ theorem candidateCarrierLawful :
     show (shiftLeft value shift).toNat = value.toNat <<< shift
     unfold shiftLeft
     rw [ite_eq_left hshift]
-    exact FixedWord.UInt128.shiftLeft_toNat value shift hshift hfit
+    exact FixedWord.UInt128.shiftLeft_toNat value shift hfit
   shiftRight_toNat value shift _ := by
     show (FixedWord.UInt128.shiftRight value shift).toNat = value.toNat >>> shift
     rw [FixedWord.UInt128.shiftRight_toNat, Nat.shiftRight_eq_div_pow]
@@ -138,10 +125,7 @@ theorem isLessMinPositive_eq
       Dyadic.isLessPowerOfTwoAtLeading significand.toNat exponent
         (FixedWord.UInt128.log2 significand) (-(4 * Int.ofNat (format.payloadBits - 1))) := by
     unfold isLessMinPositive Dyadic.isLessPowerOfTwoAtLeading
-    have hzero : NativeLimb.isZero significand = (significand.toNat == 0) := by
-      apply Bool.eq_iff_iff.mpr
-      rw [NativeLimb.isZero_eq_true_iff, beq_iff_eq]
-    rw [hzero]
+    rw [isZero_eq_beq]
   rw [hpower, Dyadic.isLessPowerOfTwoAtLeading_eq _ _ _ _
       (FixedWord.UInt128.log2_toNat significand),
     Dyadic.isLessNonnegativeFields_eq, Dyadic.isLessFields_eq]
@@ -171,9 +155,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
     simp [DirectDyadicPacking.roundPositiveCode, hzeroNat]
     unfold FixedWord.UInt128.toNat
     rfl
-  · have hnonzero : significand.toNat ≠ 0 := by
-      intro equality
-      exact hzero ((NativeLimb.isZero_eq_true_iff significand).2 equality)
+  · have hnonzero : significand.toNat ≠ 0 :=
+      mt (NativeLimb.isZero_eq_true_iff significand).2 hzero
     unfold roundPositiveCodeWord
     rw [ite_eq_right hzero]
     by_cases hunderflow :
@@ -189,10 +172,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
       simp only [FloatLib.Numerics.FixedWord.UInt128.toNat,
         UInt64.toNat_zero, UInt64.toNat_one, zero_mul, add_zero]
     · rw [ite_eq_right hunderflow]
-      apply GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
+      exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
         format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
-      rw [← isLessMinPositive_eq]
-      exact Bool.eq_false_of_not_eq_true hunderflow
 
 private theorem roundPositiveCodeWord_lt_signMask_direct
     (format : Format) (heligible : NativeLimb.Eligible format)
@@ -227,9 +208,8 @@ theorem restoreSignWord_toNat
         simp [hzero, hzeroNat, DyadicRounding.restoreSignCode]
         unfold FixedWord.UInt128.toNat
         rfl
-      · have hnonzero : positiveCode.toNat ≠ 0 := by
-          intro equality
-          exact hzero ((NativeLimb.isZero_eq_true_iff positiveCode).2 equality)
+      · have hnonzero : positiveCode.toNat ≠ 0 :=
+          mt (NativeLimb.isZero_eq_true_iff positiveCode).2 hzero
         rw [ite_eq_right hzero]
         rw [NativeLimb.lowBits_complement_increment_toNat
           format positiveCode heligible

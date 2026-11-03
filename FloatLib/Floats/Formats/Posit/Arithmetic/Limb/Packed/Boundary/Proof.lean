@@ -6,15 +6,21 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Boundary.Runtime
 public import FloatLib.Floats.Formats.Posit.Model.Basic
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
+import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
 
 /-!
 # Range and refinement laws for packed two-limb boundaries
 
 The abstract theorems in this module let operation proofs reason about decoded options without
 unfolding the packed decoder. Re-encoding agrees with a model-valued operation whenever the
-NaR code and finite kernel agree separately.
+NaR code and finite kernel agree separately, and a native two-operand kernel that returns the NaR
+word on NaR inputs is a binary boundary over the decoded operands. The last section specializes
+the binary laws to two-limb rounding of an exact dyadic operation, the shape shared by packed
+addition, subtraction and multiplication.
 -/
 
 @[expose] public section
@@ -116,14 +122,52 @@ theorem ofNatBits_unaryCode_of_eq
     Model.ofNatBits (format := format)
         (unaryCode narCode operation encodedValue) =
       unaryResult (Model.nar format) semantic semanticValue := by
-  calc
-    Model.ofNatBits (format := format)
-        (unaryCode narCode operation encodedValue) =
-        unaryResult (Model.nar format) semantic encodedValue :=
-      ofNatBits_unaryCode
-        narCode operation semantic encodedValue hnarCode hoperation
-    _ = unaryResult (Model.nar format) semantic semanticValue :=
-      congrArg (unaryResult (Model.nar format) semantic) hvalue
+  subst hvalue
+  exact ofNatBits_unaryCode narCode operation semantic encodedValue hnarCode hoperation
+
+/--
+A native two-operand kernel whose continuation refines `operation` on decoded fields, and which
+returns the NaR word when either input is NaR, computes the binary boundary over the decoded
+inputs.
+-/
+theorem withTwoDyadicFields_toNat_eq_binaryCode
+    (heligible : NativeLimb.Eligible format)
+    (left right : FloatLib.Numerics.FixedWord.UInt128)
+    (continuation :
+      Bool → FloatLib.Numerics.FixedWord.UInt128 → Int →
+      Bool → FloatLib.Numerics.FixedWord.UInt128 → Int →
+        FloatLib.Numerics.FixedWord.UInt128)
+    (operation :
+      FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic → Nat)
+    (hrefine :
+      ∀ leftNegative leftSignificand leftExponent
+          rightNegative rightSignificand rightExponent,
+        (continuation
+            leftNegative leftSignificand leftExponent
+            rightNegative rightSignificand rightExponent).toNat =
+          operation
+            ⟨leftNegative, leftSignificand.toNat, leftExponent⟩
+            ⟨rightNegative, rightSignificand.toNat, rightExponent⟩) :
+    (NativeLimb.withTwoDyadicFields format left right
+        (NativeLimb.signMaskWord format) continuation).toNat =
+      binaryCode format.signMaskNat operation
+        (NativeLimb.toDyadic? format left)
+        (NativeLimb.toDyadic? format right) := by
+  rw [NativeLimb.map_withTwoDyadicFields_eq_match_toDyadic?
+      FloatLib.Numerics.FixedWord.UInt128.toNat format left right
+      (NativeLimb.signMaskWord format) continuation
+      (fun leftNegative leftSignificand leftExponent
+          rightNegative rightSignificand rightExponent =>
+        operation
+          ⟨leftNegative, leftSignificand, leftExponent⟩
+          ⟨rightNegative, rightSignificand, rightExponent⟩)
+      hrefine,
+    NativeLimb.signMaskWord_toNat format heligible]
+  unfold binaryCode binaryResult
+  cases NativeLimb.toDyadic? format left with
+  | none => rfl
+  | some leftValue =>
+      cases NativeLimb.toDyadic? format right <;> rfl
 
 /--
 Re-encoding a binary boundary agrees with its model-valued operation when the NaR code and finite
@@ -180,30 +224,9 @@ theorem ofNatBits_binaryCode_of_eq
         (binaryCode narCode operation encodedLeft encodedRight) =
       binaryResult (Model.nar format)
         semantic semanticLeft semanticRight := by
-  calc
-    Model.ofNatBits (format := format)
-        (binaryCode narCode operation encodedLeft encodedRight) =
-        binaryResult (Model.nar format)
-          semantic encodedLeft encodedRight :=
-      ofNatBits_binaryCode
-        narCode operation semantic encodedLeft encodedRight
-        hnarCode hoperation
-    _ =
-        binaryResult (Model.nar format)
-          semantic semanticLeft encodedRight :=
-      congrArg
-        (fun left =>
-          binaryResult (Model.nar format)
-            semantic left encodedRight)
-        hleft
-    _ =
-        binaryResult (Model.nar format)
-          semantic semanticLeft semanticRight :=
-      congrArg
-        (fun right =>
-          binaryResult (Model.nar format)
-            semantic semanticLeft right)
-        hright
+  subst hleft hright
+  exact ofNatBits_binaryCode narCode operation semantic encodedLeft encodedRight
+    hnarCode hoperation
 
 /--
 Re-encoding a ternary boundary agrees with its model-valued operation when the NaR code and finite
@@ -265,39 +288,53 @@ theorem ofNatBits_ternaryCode_of_eq
           encodedLeft encodedRight encodedThird) =
       ternaryResult (Model.nar format)
         semantic semanticLeft semanticRight semanticThird := by
-  calc
+  subst hleft hright hthird
+  exact ofNatBits_ternaryCode narCode operation semantic
+    encodedLeft encodedRight encodedThird hnarCode hoperation
+
+/-! ## Boundaries around two-limb rounding -/
+
+/--
+A binary boundary around two-limb rounding of an exact dyadic operation is always a complete posit
+code: NaR inputs give the NaR word and every finite result is a rounded code.
+-/
+theorem binaryCode_roundCodeNat_lt_modulus
+    (heligible : NativeLimb.Eligible format)
+    (operation :
+      FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic)
+    (left right : Option FloatLib.Numerics.Dyadic) :
+    binaryCode format.signMaskNat
+        (fun leftValue rightValue =>
+          NativeLimbRounding.roundCodeNat format heligible (operation leftValue rightValue))
+        left right < format.modulus :=
+  binaryCode_lt _ left right format.signMaskNat_lt_modulus fun leftValue rightValue =>
+    NativeLimbRounding.roundCodeNat_lt_modulus format heligible (operation leftValue rightValue)
+
+/--
+Over two decoded in-range words, re-encoding a binary boundary around two-limb rounding gives the
+model-valued boundary around the model-valued two-limb rounder.
+-/
+theorem ofNatBits_binaryCode_roundCodeNat
+    (heligible : NativeLimb.Eligible format)
+    (operation :
+      FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic → FloatLib.Numerics.Dyadic)
+    (left right : FloatLib.Numerics.FixedWord.UInt128)
+    (hleft : left.toNat < format.modulus)
+    (hright : right.toNat < format.modulus) :
     Model.ofNatBits (format := format)
-        (ternaryCode narCode operation
-          encodedLeft encodedRight encodedThird) =
-        ternaryResult (Model.nar format)
-          semantic encodedLeft encodedRight encodedThird :=
-      ofNatBits_ternaryCode
-        narCode operation semantic
-        encodedLeft encodedRight encodedThird
-        hnarCode hoperation
-    _ =
-        ternaryResult (Model.nar format)
-          semantic semanticLeft encodedRight encodedThird :=
-      congrArg
-        (fun left =>
-          ternaryResult (Model.nar format)
-            semantic left encodedRight encodedThird)
-        hleft
-    _ =
-        ternaryResult (Model.nar format)
-          semantic semanticLeft semanticRight encodedThird :=
-      congrArg
-        (fun right =>
-          ternaryResult (Model.nar format)
-            semantic semanticLeft right encodedThird)
-        hright
-    _ =
-        ternaryResult (Model.nar format)
-          semantic semanticLeft semanticRight semanticThird :=
-      congrArg
-        (fun third =>
-          ternaryResult (Model.nar format)
-            semantic semanticLeft semanticRight third)
-        hthird
+        (binaryCode format.signMaskNat
+          (fun leftValue rightValue =>
+            NativeLimbRounding.roundCodeNat format heligible (operation leftValue rightValue))
+          (NativeLimb.toDyadic? format left) (NativeLimb.toDyadic? format right)) =
+      binaryResult (Model.nar format)
+        (fun leftValue rightValue =>
+          NativeLimbRounding.round format heligible (operation leftValue rightValue))
+        (Model.ofNatBits (format := format) left.toNat).toDyadic?
+        (Model.ofNatBits (format := format) right.toNat).toDyadic? :=
+  ofNatBits_binaryCode_of_eq _ _ _ _ _ _ _
+    (NativeLimb.toDyadic?_eq_model format left heligible hleft)
+    (NativeLimb.toDyadic?_eq_model format right heligible hright) rfl
+    fun leftValue rightValue =>
+      NativeLimbRounding.ofNatBits_roundCodeNat format heligible (operation leftValue rightValue)
 
 end FloatLib.Floats.Formats.Posit.Model.NativeLimbPacked.Boundary

@@ -62,11 +62,6 @@ theorem nonnegativeDyadicAt_eq_decodeFields
     have hfraction :=
       Model.regimeRunLength_add_fractionBits_le_payload value
     omega
-  have husedExponentBits : value.usedExponentBits < 64 := by
-    have hused : value.usedExponentBits ≤ format.exponentBits :=
-      Model.usedExponentBits_le_exponentBits value
-    simp only [Format.exponentBits] at hused
-    omega
   have hcodeBool : (code == 0) = false :=
     beq_eq_false_iff_ne.mpr hnonzero
   unfold nonnegativeDyadicAt
@@ -96,8 +91,7 @@ theorem nonnegativeDyadicAt_eq_decodeFields
         (2 ^ value.fractionBits + value.fractionField)
         value.scale
   rw [hsign, significand_toNat code value.fractionBits hfractionBits,
-    shiftedLowBits_toNat code value.fractionBits value.usedExponentBits
-      hfractionBits husedExponentBits]
+    shiftedLowBits_toNat code value.fractionBits value.usedExponentBits]
   simp only [Model.fractionField, Model.storedExponentField,
     Model.exponentField, Model.scale, Format.exponentBits,
     Format.regimeExponentStep]
@@ -120,19 +114,11 @@ theorem nonnegativeDyadicAt_eq_model
       | .nar => FloatLib.Numerics.Dyadic.zero
     rw [Model.decodeExact_zero]
   · let value := Model.ofNatBits (format := format) code.toNat
-    have hvalueBits : value.toNatBits = code.toNat :=
-      Model.toNatBits_ofNatBits_of_lt code.toNat
-        (hcode.trans format.signMaskNat_lt_modulus)
-    have hvalueZero : value ≠ Model.zero format := by
-      intro equality
-      have bitsEquality := congrArg Model.toNatBits equality
-      rw [hvalueBits, Model.zero_toNatBits] at bitsEquality
-      exact hzero (UInt64.toNat_inj.mp (by simpa using bitsEquality))
-    have hvalueNaR : value ≠ Model.nar format := by
-      intro equality
-      have bitsEquality := congrArg Model.toNatBits equality
-      rw [hvalueBits, Model.nar_toNatBits] at bitsEquality
-      omega
+    have hvalueZero : value ≠ Model.zero format :=
+      Model.ofNatBits_ne_zero (hcode.trans format.signMaskNat_lt_modulus)
+        (fun h => hzero (UInt64.toNat_inj.mp (by simpa using h)))
+    have hvalueNaR : value ≠ Model.nar format :=
+      Model.ofNatBits_ne_nar (hcode.trans format.signMaskNat_lt_modulus) hcode.ne
     rw [nonnegativeDyadicAt_eq_decodeFields format code heligible hcode hzero]
     unfold Model.DyadicRounding.nonnegativeDyadicAt
     have hnar : value.isNaR = false := by
@@ -144,10 +130,7 @@ theorem nonnegativeDyadicAt_eq_model
       | .zero => FloatLib.Numerics.Dyadic.zero
       | .finite fields => fields.toDyadic
       | .nar => FloatLib.Numerics.Dyadic.zero
-    have hdecode :
-        value.decodeExact = .finite value.decodeFields := by
-      simp [Model.decodeExact, hnar, hzeroValue]
-    rw [hdecode]
+    rw [(Model.decodeExact_eq_finite_iff value value.decodeFields).2 ⟨hnar, hzeroValue, rfl⟩]
 
 /-- Direct native finite decoding agrees with the exact model. -/
 theorem decodeFinite_eq_decodeFields
@@ -241,18 +224,11 @@ theorem toDyadic?_eq_model
         beq_eq_false_iff_ne.mpr (Ne.symm hsignMaskNonzero)
       simp only [UInt64.toNat_zero, hmaskBool, Bool.false_eq_true,
         ite_false, beq_self_eq_true, ite_true]
-    · have hvalueBits : value.toNatBits = code.toNat :=
-        Model.toNatBits_ofNatBits_of_lt code.toNat hcode
-      have hvalueNaR : value ≠ Model.nar format := by
-        intro equality
-        have bitsEquality := congrArg Model.toNatBits equality
-        rw [hvalueBits, Model.nar_toNatBits] at bitsEquality
-        exact hnarCode bitsEquality
-      have hvalueZero : value ≠ Model.zero format := by
-        intro equality
-        have bitsEquality := congrArg Model.toNatBits equality
-        rw [hvalueBits, Model.zero_toNatBits] at bitsEquality
-        exact hzeroCode (UInt64.toNat_inj.mp (by simpa using bitsEquality))
+    · have hvalueNaR : value ≠ Model.nar format :=
+        Model.ofNatBits_ne_nar hcode hnarCode
+      have hvalueZero : value ≠ Model.zero format :=
+        Model.ofNatBits_ne_zero hcode
+          (fun h => hzeroCode (UInt64.toNat_inj.mp (by simpa using h)))
       have hnarBool : (code.toNat == format.signMaskNat) = false :=
         beq_eq_false_iff_ne.mpr hnarCode
       have hzeroBool : (code == 0) = false :=
@@ -266,9 +242,7 @@ theorem toDyadic?_eq_model
       change some (decodeFinite format code) = value.toDyadic?
       rw [decodeFinite_eq_decodeFields format code heligible hcode
         hvalueNaR hvalueZero]
-      change some value.decodeFields.toDyadic = value.toDyadic?
-      unfold Model.toDyadic? Model.decodeExact
-      simp [hvalueNaRBool, hvalueZeroBool]
+      exact (Model.toDyadic?_eq_some_decodeFields value hvalueNaRBool hvalueZeroBool).symm
 
 
 end FloatLib.Floats.Formats.Posit.Model.NativeWord

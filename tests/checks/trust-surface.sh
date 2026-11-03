@@ -44,10 +44,12 @@ allowed_native = {
 # Replacements are invisible to collectAxioms. The sole approved implementation replaces
 # toDyadic?; its equality theorem follows it in the same file.
 allowed_replacements = {"FloatLib/Floats/Formats/Posit/Model/Decode.lean": 1}
-# The inspection command evaluates a closed String in MetaM. The site exporter loads a Lean
-# environment with initializers enabled. Neither is a numerical implementation or a proof.
+# The inspection command evaluates a closed String in MetaM. The roundoff registry evaluates a
+# registered `Extension` declaration, as Lean's attribute registries do. The site exporter loads a
+# Lean environment with initializers enabled. None is a numerical implementation or a proof.
 allowed_unsafe = {
     "FloatLib/Floats/ExecFloat/Info/Inspection.lean": 1,
+    "FloatLib/Floats/Formats/BinaryInterchange/Automation/Roundoff/Extension.lean": 1,
     "site/tooling/ExportNodes.lean": 1,
 }
 # The explicit host boundary is used by native conformance, code generation, and site export.

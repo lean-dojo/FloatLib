@@ -23,7 +23,11 @@ infinite. The destination encoder writes positive zero and canonical quiet NaN, 
 Finite encoding uses the proved binary dyadic encoder on an already rounded, in-range datum, and
 `External.Proof` shows that this encoding adds no second rounding error.
 The adapters accept IEEE-style encoding descriptors, including binary16, binary32, binary64,
-and BFloat16. They do not change the ordinary IEEE arithmetic or signed-zero conversion APIs.
+and BFloat16. They install no instances, so the ordinary IEEE arithmetic and signed-zero conversion
+APIs are unchanged. A binary `Model` operand of mixed report arithmetic decodes through the binary
+`ExecFloat.Binary.Conversion.modelDecoder`. `Mixed.decode` then drops its zero sign through
+`ExactMap.signedRatToRat` and turns a NaN into the report's one NaN, which is the observation
+`decode` gives (`mixed_decode_eq_decode`).
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7–4.10 and 4.14.
 -/
@@ -59,7 +63,13 @@ def roundValue (format : FloatFormat) (mode : P3109.RoundingMode) :
   | .infinity sign => .infinity sign
   | .exceptional _ => .exceptional (.nan)
 
-/-- Exact largest finite external binary value, with a supplied sign. -/
+/--
+Exact largest finite value of an IEEE-encoded external binary format, an all-ones significand at
+the largest normal exponent, with a supplied sign. Under a `finiteMaxNaN` encoding the largest
+finite value is lower (`Model.maxFinite`), so this helper, and `finiteOverflow`, `saturate` and
+`projectValue` built on it, describe the external format only when `format.isIEEE`, which
+`project` requires.
+-/
 def endpoint (format : FloatFormat) (negative : Bool) : Numerics.Dyadic :=
   { negative
     significand := 2 ^ (format.fracWidth + 1) - 1
@@ -110,13 +120,14 @@ def project (format : FloatFormat) (_ieee : format.isIEEE = true)
     (policy : ProjectionPolicy) (value : NumericalValue Rat) : Model format :=
   encode format (projectValue format policy value)
 
-/-- Complete exact external decoding with zero signs and NaN payloads erased. -/
+/--
+Complete exact external decoding with zero signs and NaN payloads erased.
+
+Mixed report arithmetic reaches the same observation through the binary `SignedRat` decoder
+(`mixed_decode_eq_decode`).
+-/
 def decode {format : FloatFormat} (value : Model format) : NumericalValue Rat :=
   Arithmetic.toRat ((Model.exactNumericalSystem format).denote value)
-
-/-- A binary model can be an external source of mixed report arithmetic. -/
-instance modelDecoder (format : FloatFormat) : ExecFloat.ExactDecoder (Model format) Rat where
-  decode := decode
 
 /-- Report projection into an external model, with no storage-plan requirements. -/
 def destination (format : FloatFormat) (ieee : format.isIEEE = true := by decide) :
@@ -137,10 +148,15 @@ def configuredDestination (format : FloatFormat)
 /-- External precision includes the implicit leading bit. -/
 @[inline] def precisionOf (format : FloatFormat) : Nat := format.fracWidth + 1
 
-/-- External IEEE formats are signed. -/
+/-- The P3109 signedness of an external IEEE descriptor, `.signed`. The descriptor argument is
+ignored, so the answer describes the IEEE descriptors that `project` and `destination` accept; it is
+not read from `format`. -/
 @[inline] def signednessOf (_format : FloatFormat) : Signedness := .signed
 
-/-- External IEEE formats have the extended domain. -/
+/-- The P3109 domain of an external IEEE descriptor, `.extended`, since IEEE formats have
+infinities. The descriptor argument is ignored: for a finite-only encoding such as `finiteMaxNaN`,
+which has no infinity, the answer is wrong. Use it only for the IEEE descriptors that `project` and
+`destination` accept. -/
 @[inline] def domainOf (_format : FloatFormat) : Domain := .extended
 
 /-- External exponent-field width. -/

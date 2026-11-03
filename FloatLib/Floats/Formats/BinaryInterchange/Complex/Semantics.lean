@@ -26,7 +26,9 @@ records two rounded squares and their rounded sum; magnitude applies this to sca
 Neither an exact field operation nor a whole-operation error bound is asserted.
 
 The finiteness assumptions rule out overflow to infinity and NaN. They are explicit because the
-real-number semantics does not assign real values to infinities or NaNs.
+real-number semantics does not assign real values to infinities or NaNs. The scalar rounding
+theorems ask only for finite results (and finite divisors), so the sum, difference and
+division-branch theorems assume no finite inputs.
 
 ## Reference
 
@@ -85,31 +87,29 @@ theorem toComplex_conj {fmt : FloatFormat} (z : ExecComplex fmt)
   · rfl
   · exact Model.toReal_neg z.im hzim
 
-/-- Executable complex addition refines componentwise rounded mathematical addition. -/
+/--
+Executable complex addition refines componentwise rounded mathematical addition. A finite sum
+forces finite inputs.
+-/
 theorem toComplex_add_eq_roundedAdd {fmt : FloatFormat} (x y : ExecComplex fmt)
-    (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
-    (hout : isFinite (x + y) = true) :
+    (hfmt : fmt.isIEEE = true) (hout : isFinite (x + y) = true) :
     toComplex (x + y) = roundedAdd fmt (toComplex x) (toComplex y) := by
-  obtain ⟨hxre, hxim⟩ := (isFinite_eq_true_iff x).1 hx
-  obtain ⟨hyre, hyim⟩ := (isFinite_eq_true_iff y).1 hy
   obtain ⟨hore, hoim⟩ := (isFinite_eq_true_iff (x + y)).1 hout
   apply Complex.ext
-  · exact Model.toReal_add_eq_roundAt x.re y.re hfmt hxre hyre hore
-  · exact Model.toReal_add_eq_roundAt x.im y.im hfmt hxim hyim hoim
+  · exact Model.toReal_add_eq_roundAt x.re y.re hfmt hore
+  · exact Model.toReal_add_eq_roundAt x.im y.im hfmt hoim
 
-/-- Executable complex subtraction refines componentwise rounded mathematical subtraction. -/
+/--
+Executable complex subtraction refines componentwise rounded mathematical subtraction. A finite
+difference forces finite inputs.
+-/
 theorem toComplex_sub_eq_roundedSub {fmt : FloatFormat} (x y : ExecComplex fmt)
-    (hfmt : fmt.isIEEE = true)
-    (hx : isFinite x = true) (hy : isFinite y = true)
-    (hout : isFinite (x - y) = true) :
+    (hfmt : fmt.isIEEE = true) (hout : isFinite (x - y) = true) :
     toComplex (x - y) = roundedSub fmt (toComplex x) (toComplex y) := by
-  obtain ⟨hxre, hxim⟩ := (isFinite_eq_true_iff x).1 hx
-  obtain ⟨hyre, hyim⟩ := (isFinite_eq_true_iff y).1 hy
   obtain ⟨hore, hoim⟩ := (isFinite_eq_true_iff (x - y)).1 hout
   apply Complex.ext
-  · exact Model.toReal_sub_eq_roundAt x.re y.re hfmt hxre hyre hore
-  · exact Model.toReal_sub_eq_roundAt x.im y.im hfmt hxim hyim hoim
+  · exact Model.toReal_sub_eq_roundAt x.re y.re hfmt hore
+  · exact Model.toReal_sub_eq_roundAt x.im y.im hfmt hoim
 
 /--
 All scalar intermediates required to interpret one executable complex multiplication over `ℝ`.
@@ -146,9 +146,9 @@ theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
               (Model.toReal x.re * Model.toReal y.re) -
             Model.roundAt fmt
               (Model.toReal x.im * Model.toReal y.im))
-    rw [Model.toReal_sub_eq_roundAt _ _ hfmt hac hbd hore]
-    rw [Model.toReal_mul_eq_roundAt x.re y.re hfmt hxre hyre hac]
-    rw [Model.toReal_mul_eq_roundAt x.im y.im hfmt hxim hyim hbd]
+    rw [Model.toReal_sub_eq_roundAt _ _ hfmt hore]
+    rw [Model.toReal_mul_eq_roundAt x.re y.re hfmt hac]
+    rw [Model.toReal_mul_eq_roundAt x.im y.im hfmt hbd]
   · change
       Model.toReal (Model.add (Model.mul x.re y.im) (Model.mul x.im y.re)) =
         Model.roundAt fmt
@@ -156,9 +156,9 @@ theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
               (Model.toReal x.re * Model.toReal y.im) +
             Model.roundAt fmt
               (Model.toReal x.im * Model.toReal y.re))
-    rw [Model.toReal_add_eq_roundAt _ _ hfmt had hbc hoim]
-    rw [Model.toReal_mul_eq_roundAt x.re y.im hfmt hxre hyim had]
-    rw [Model.toReal_mul_eq_roundAt x.im y.re hfmt hxim hyre hbc]
+    rw [Model.toReal_add_eq_roundAt _ _ hfmt hoim]
+    rw [Model.toReal_mul_eq_roundAt x.re y.im hfmt had]
+    rw [Model.toReal_mul_eq_roundAt x.im y.re hfmt hbc]
 
 /-- Two separately rounded squares followed by a rounded sum. -/
 noncomputable def roundedNormSq (fmt : FloatFormat) (z : ℂ) : ℝ :=
@@ -181,19 +181,25 @@ theorem toReal_normSq_eq_roundedNormSq {fmt : FloatFormat} (z : ExecComplex fmt)
     Model.toReal (normSq z) = roundedNormSq fmt (toComplex z) := by
   obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 h.input
   unfold normSq roundedNormSq toComplex
-  rw [Model.toReal_add_eq_roundAt _ _ hfmt h.re_square h.im_square h.result,
-    Model.toReal_mul_eq_roundAt _ _ hfmt hre hre h.re_square,
-    Model.toReal_mul_eq_roundAt _ _ hfmt him him h.im_square]
+  rw [Model.toReal_add_eq_roundAt _ _ hfmt h.result,
+    Model.toReal_mul_eq_roundAt _ _ hfmt h.re_square,
+    Model.toReal_mul_eq_roundAt _ _ hfmt h.im_square]
 
 namespace Internal
 
-private theorem toReal_abs {fmt : FloatFormat} (x : Model fmt) (hfmt : fmt.isIEEE = true)
+private theorem toReal_abs {fmt : FloatFormat} (x : Model fmt)
     (hx : Model.isFinite x = true) : Model.toReal (Model.abs x) = |Model.toReal x| := by
-  have hsigned := FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt
   obtain ⟨d, hd⟩ := Model.exists_toDyadic?_of_isFinite hx
   have hsign := Model.sign_eq_signBit_of_toDyadic?_some hd
   have hreal : Model.toReal x = d.toReal := by simp [Model.toReal_eq, hd]
   have hp := FloatLib.Floats.Formats.Flocq.bpow.pos Numerics.binaryRadix d.exponent
+  have hnan := Model.isNaN_eq_false_of_isFinite_eq_true x hx
+  -- An unsigned-zero format keeps its single zero.
+  by_cases hkeep : (!fmt.supportsSignedZero && (Model.isNaN x || Model.isZero x)) = true
+  · have hzero : Model.isZero x = true := by simp_all
+    have habs : Model.abs x = x := by simp [Model.abs, Model.copySign, hkeep]
+    rw [habs, Model.toReal_eq_zero_of_isZero x hzero, abs_zero]
+  rw [Bool.not_eq_true] at hkeep
   cases hs : Model.signBit x with
   | false =>
     have hn : 0 ≤ Model.toReal x := by
@@ -201,7 +207,7 @@ private theorem toReal_abs {fmt : FloatFormat} (x : Model fmt) (hfmt : fmt.isIEE
       simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
         hsign.trans hs, Bool.false_eq_true, ↓reduceIte]
       exact mul_nonneg (Nat.cast_nonneg _) hp.le
-    simpa [Model.abs, Model.copySign, hsigned, hs] using (abs_of_nonneg hn).symm
+    simpa [Model.abs, Model.copySign, hkeep, hs] using (abs_of_nonneg hn).symm
   | true =>
     have hn : Model.toReal x ≤ 0 := by
       rw [hreal]
@@ -209,18 +215,19 @@ private theorem toReal_abs {fmt : FloatFormat} (x : Model fmt) (hfmt : fmt.isIEE
         hsign.trans hs, ↓reduceIte, Int.cast_neg]
       exact mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.mpr (Nat.cast_nonneg _)) hp.le
     have habs : Model.abs x = Model.neg x := by
-      simp [Model.abs, Model.copySign, Model.neg, hsigned, hs]
+      cases hsigned : fmt.supportsSignedZero <;>
+        simp_all [Model.abs, Model.copySign, Model.neg]
     rw [habs, Model.toReal_neg x hx, abs_of_nonpos hn]
 
 /-- The executable pivot comparison agrees with the exact component magnitudes. -/
 theorem imagDominant_eq_true_iff {fmt : FloatFormat} (z : ExecComplex fmt)
-    (hfmt : fmt.isIEEE = true) (hz : isFinite z = true) :
+    (hz : isFinite z = true) :
     imagDominant z = true ↔ |(toComplex z).re| < |(toComplex z).im| := by
   obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 hz
   simp only [imagDominant, decide_eq_true_eq]
   rw [Model.compare_eq_some_lt_iff_toReal_lt_of_isFinite _ _
       (by simpa using hre) (by simpa using him),
-    toReal_abs z.re hfmt hre, toReal_abs z.im hfmt him]
+    toReal_abs z.re hre, toReal_abs z.im him]
   rfl
 
 /-- Selecting a component and clearing its sign preserves finiteness. -/
@@ -230,19 +237,19 @@ theorem isFinite_magnitudeScale {fmt : FloatFormat} (z : ExecComplex fmt)
   unfold magnitudeScale
   split <;> simp_all
 
-/-- For a finite IEEE complex value, the common scale is the larger absolute component. -/
+/-- For a finite complex value, the common scale is the larger absolute component. -/
 theorem toReal_magnitudeScale {fmt : FloatFormat} (z : ExecComplex fmt)
-    (hfmt : fmt.isIEEE = true) (hz : isFinite z = true) :
+    (hz : isFinite z = true) :
     Model.toReal (magnitudeScale z) = max |(toComplex z).re| |(toComplex z).im| := by
   obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 hz
   unfold magnitudeScale
   split
   next h =>
-    rw [toReal_abs z.im hfmt him, max_eq_right ((imagDominant_eq_true_iff z hfmt hz).1 h).le]
+    rw [toReal_abs z.im him, max_eq_right ((imagDominant_eq_true_iff z hz).1 h).le]
     rfl
   next h =>
-    have hle := le_of_not_gt (mt (imagDominant_eq_true_iff z hfmt hz).2 h)
-    rw [toReal_abs z.re hfmt hre, max_eq_left hle]
+    have hle := le_of_not_gt (mt (imagDominant_eq_true_iff z hz).2 h)
+    rw [toReal_abs z.re hre, max_eq_left hle]
     rfl
 
 /-- The nine scalar rounding sites of ratio division with a real-component pivot. -/
@@ -279,32 +286,30 @@ structure DivBranchFinite {fmt : FloatFormat} (x y : ExecComplex fmt) : Prop whe
   result : isFinite (divRealDominant x y) = true
 
 /--
-The real-pivot division branch evaluates its stated rounded expression when the IEEE inputs and
-all scalar intermediates are finite, and both the pivot and rounded denominator are nonzero.
+The real-pivot division branch evaluates its stated rounded expression when all scalar
+intermediates are finite and both the pivot and rounded denominator are nonzero. The inputs need
+not be finite: the scalar rounding theorems ask only for finite divisors, and the finite rounded
+denominator forces a finite pivot.
 -/
 theorem toComplex_divRealDominant {fmt : FloatFormat} (x y : ExecComplex fmt)
-    (hfmt : fmt.isIEEE = true) (hx : isFinite x = true) (hy : isFinite y = true)
-    (h : DivBranchFinite x y) :
+    (hfmt : fmt.isIEEE = true) (h : DivBranchFinite x y) :
     toComplex (divRealDominant x y) =
       roundedDivRealDominant fmt (toComplex x) (toComplex y) := by
-  obtain ⟨hxre, hxim⟩ := (isFinite_eq_true_iff x).1 hx
-  obtain ⟨hyre, hyim⟩ := (isFinite_eq_true_iff y).1 hy
+  have hyre := (Model.isFinite_of_isFinite_add hfmt h.denominator).1
   obtain ⟨hore, hoim⟩ := (isFinite_eq_true_iff _).1 h.result
-  have hr := Model.toReal_div_eq_roundAt y.im y.re hfmt hyim hyre h.pivot_nonzero h.ratio
-  have hd := Model.toReal_add_eq_roundAt _ _ hfmt hyre h.denominator_product h.denominator
-  rw [Model.toReal_mul_eq_roundAt _ _ hfmt hyim h.ratio h.denominator_product, hr] at hd
+  have hr := Model.toReal_div_eq_roundAt y.im y.re hfmt hyre h.ratio
+  have hd := Model.toReal_add_eq_roundAt _ _ hfmt h.denominator
+  rw [Model.toReal_mul_eq_roundAt _ _ hfmt h.denominator_product, hr] at hd
   apply Complex.ext
   · change Model.toReal (Model.div _ _) = _
-    rw [Model.toReal_div_eq_roundAt _ _ hfmt h.re_numerator h.denominator
-        h.denominator_nonzero hore,
-      Model.toReal_add_eq_roundAt _ _ hfmt hxre h.re_product h.re_numerator,
-      Model.toReal_mul_eq_roundAt _ _ hfmt hxim h.ratio h.re_product, hr, hd]
+    rw [Model.toReal_div_eq_roundAt _ _ hfmt h.denominator hore,
+      Model.toReal_add_eq_roundAt _ _ hfmt h.re_numerator,
+      Model.toReal_mul_eq_roundAt _ _ hfmt h.re_product, hr, hd]
     rfl
   · change Model.toReal (Model.div _ _) = _
-    rw [Model.toReal_div_eq_roundAt _ _ hfmt h.im_numerator h.denominator
-        h.denominator_nonzero hoim,
-      Model.toReal_sub_eq_roundAt _ _ hfmt hxim h.im_product h.im_numerator,
-      Model.toReal_mul_eq_roundAt _ _ hfmt hxre h.ratio h.im_product, hr, hd]
+    rw [Model.toReal_div_eq_roundAt _ _ hfmt h.denominator hoim,
+      Model.toReal_sub_eq_roundAt _ _ hfmt h.im_numerator,
+      Model.toReal_mul_eq_roundAt _ _ hfmt h.im_product, hr, hd]
     rfl
 
 end Internal
@@ -360,17 +365,15 @@ theorem toComplex_div_eq_roundedDiv {fmt : FloatFormat} (x y : ExecComplex fmt)
   have hbranch := h.branch
   split
   next hb =>
-    rw [ite_eq_left ((Internal.imagDominant_eq_true_iff y hfmt h.right).1 hb)]
+    rw [ite_eq_left ((Internal.imagDominant_eq_true_iff y h.right).1 hb)]
     rw [ite_eq_left hb] at hbranch
     rw [toComplex_conj _ hbranch.result,
-      Internal.toComplex_divRealDominant _ _ hfmt
-        (by simpa [isFinite, Internal.swap, Bool.and_comm] using h.left)
-        (by simpa [isFinite, Internal.swap, Bool.and_comm] using h.right) hbranch]
+      Internal.toComplex_divRealDominant _ _ hfmt hbranch]
     rfl
   next hb =>
-    rw [ite_eq_right (mt (Internal.imagDominant_eq_true_iff y hfmt h.right).2 hb)]
+    rw [ite_eq_right (mt (Internal.imagDominant_eq_true_iff y h.right).2 hb)]
     rw [ite_eq_right hb] at hbranch
-    exact Internal.toComplex_divRealDominant x y hfmt h.left h.right hbranch
+    exact Internal.toComplex_divRealDominant x y hfmt hbranch
 
 /-- Infinity determines magnitude when neither component is a signaling NaN. -/
 theorem magnitude_eq_posInf_of_isInf {fmt : FloatFormat} (z : ExecComplex fmt)
@@ -430,7 +433,7 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
     (hfmt : fmt.isIEEE = true) (h : MagnitudeFinite z) :
     Model.toReal (magnitude z) = roundedMagnitude fmt (toComplex z) := by
   have hsfinite := Internal.isFinite_magnitudeScale z h.input
-  have hsreal := Internal.toReal_magnitudeScale z hfmt h.input
+  have hsreal := Internal.toReal_magnitudeScale z h.input
   have hszero := Model.isZero_eq_true_iff_toReal_eq_zero
     (Internal.magnitudeScale z) hsfinite
   rw [hsreal] at hszero
@@ -448,7 +451,7 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
         (Model.mul (Internal.magnitudeScale z)
           (Model.sqrt (normSq (Internal.magnitudeRatios z)))) = true := by
       simpa [magnitude, h.input, hz] using h.result
-    rw [Model.toReal_mul_eq_roundAt _ _ hfmt hsfinite hsqrt hout,
+    rw [Model.toReal_mul_eq_roundAt _ _ hfmt hout,
       Model.toReal_sqrt_eq_roundAt _ hfmt hnorm.result hdomain,
       toReal_normSq_eq_roundedNormSq _ hfmt hnorm, hsreal]
     obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 h.input
@@ -460,12 +463,10 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
             max |(toComplex z).re| |(toComplex z).im|)⟩ : ℂ) := by
       apply Complex.ext
       · change Model.toReal (Model.div z.re _) = _
-        rw [Model.toReal_div_eq_roundAt _ _ hfmt hre hsfinite
-          (Bool.eq_false_of_not_eq_true hz) hrre, hsreal]
+        rw [Model.toReal_div_eq_roundAt _ _ hfmt hsfinite hrre, hsreal]
         rfl
       · change Model.toReal (Model.div z.im _) = _
-        rw [Model.toReal_div_eq_roundAt _ _ hfmt him hsfinite
-          (Bool.eq_false_of_not_eq_true hz) hrim, hsreal]
+        rw [Model.toReal_div_eq_roundAt _ _ hfmt hsfinite hrim, hsreal]
         rfl
     rw [hratios]
 

@@ -21,58 +21,61 @@ public section
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
-namespace Comparison
-
 /-- Every quiet predicate agrees with its truth table on exact extended-real order. -/
-theorem quiet_value_of_toEReal? {fmt : FloatFormat} (predicate : Predicate)
-    {x y : Model fmt} {a b : EReal}
+theorem compareQuiet_value_of_toEReal? {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) {x y : Model fmt} {a b : EReal}
     (hx : toEReal? x = some a) (hy : toEReal? y = some b) :
-    (quiet predicate x y).value = predicate.accepts (some (Ord.compare a b)) := by
-  simp [quiet, compare_eq_of_toEReal? hx hy]
+    (compareQuiet predicate x y).value = predicate.accepts (some (Ord.compare a b)) := by
+  simp [compareQuiet, compare_eq_of_toEReal? hx hy]
 
 /-- Every signaling predicate has the same exact numerical truth table. -/
-theorem signaling_value_of_toEReal? {fmt : FloatFormat} (predicate : Predicate)
-    {x y : Model fmt} {a b : EReal}
+theorem compareSignaling_value_of_toEReal? {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) {x y : Model fmt} {a b : EReal}
     (hx : toEReal? x = some a) (hy : toEReal? y = some b) :
-    (signaling predicate x y).value = predicate.accepts (some (Ord.compare a b)) := by
-  simp [signaling, compare_eq_of_toEReal? hx hy]
+    (compareSignaling predicate x y).value = predicate.accepts (some (Ord.compare a b)) := by
+  simp [compareSignaling, compare_eq_of_toEReal? hx hy]
 
 /-- NaN operands select the predicate's unordered truth value. -/
-theorem quiet_value_of_nan {fmt : FloatFormat} (predicate : Predicate)
-    (x y : Model fmt) (h : isNaN x = true ∨ isNaN y = true) :
-    (quiet predicate x y).value = predicate.accepts none := by
-  simp [quiet, (compare_eq_none_iff x y).2 h]
+theorem compareQuiet_value_of_nan {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt)
+    (h : isNaN x = true ∨ isNaN y = true) :
+    (compareQuiet predicate x y).value = predicate.accepts none := by
+  simp [compareQuiet, (compare_eq_none_iff x y).2 h]
 
 /-- Signaling comparison uses the same unordered truth value as quiet comparison. -/
-theorem signaling_value_of_nan {fmt : FloatFormat} (predicate : Predicate)
-    (x y : Model fmt) (h : isNaN x = true ∨ isNaN y = true) :
-    (signaling predicate x y).value = predicate.accepts none := by
-  simp [signaling, (compare_eq_none_iff x y).2 h]
+theorem compareSignaling_value_of_nan {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt)
+    (h : isNaN x = true ∨ isNaN y = true) :
+    (compareSignaling predicate x y).value = predicate.accepts none := by
+  simp [compareSignaling, (compare_eq_none_iff x y).2 h]
 
 /-- Quiet and signaling comparisons differ only in their exception behavior. -/
-theorem quiet_value_eq_signaling {fmt : FloatFormat} (predicate : Predicate)
-    (x y : Model fmt) :
-    (quiet predicate x y).value = (signaling predicate x y).value := rfl
+theorem compareQuiet_value_eq_compareSignaling {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
+    (compareQuiet predicate x y).value = (compareSignaling predicate x y).value := rfl
 
 /-- Quiet comparisons raise invalid exactly for signaling NaN operands. -/
-theorem quiet_invalid_iff {fmt : FloatFormat} (predicate : Predicate) (x y : Model fmt) :
-    (quiet predicate x y).status.invalid = true ↔
+theorem compareQuiet_invalid_iff {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
+    (compareQuiet predicate x y).status.invalid = true ↔
       isSNaN x = true ∨ isSNaN y = true := by
-  simp [quiet]
+  simp [compareQuiet]
 
 /-- Signaling comparisons raise invalid exactly for NaN operands. -/
-theorem signaling_invalid_iff {fmt : FloatFormat} (predicate : Predicate) (x y : Model fmt) :
-    (signaling predicate x y).status.invalid = true ↔
+theorem compareSignaling_invalid_iff {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
+    (compareSignaling predicate x y).status.invalid = true ↔
       isNaN x = true ∨ isNaN y = true := by
-  simp [signaling]
+  simp [compareSignaling]
 
 /-- Quiet comparison raises no range, division, or inexact exception. -/
-theorem quiet_status {fmt : FloatFormat} (predicate : Predicate) (x y : Model fmt) :
-    (quiet predicate x y).status = { invalid := isSNaN x || isSNaN y } := rfl
+theorem compareQuiet_status {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
+    (compareQuiet predicate x y).status = { invalid := isSNaN x || isSNaN y } := rfl
 
 /-- Signaling comparison raises no range, division, or inexact exception. -/
-theorem signaling_status {fmt : FloatFormat} (predicate : Predicate) (x y : Model fmt) :
-    (signaling predicate x y).status = { invalid := isNaN x || isNaN y } := rfl
+theorem compareSignaling_status {fmt : FloatFormat}
+    (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
+    (compareSignaling predicate x y).status = { invalid := isNaN x || isNaN y } := rfl
 
-end Comparison
 end FloatLib.Floats.Formats.BinaryInterchange.Model

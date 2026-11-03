@@ -28,9 +28,18 @@ lake build
 ```
 
 Use the Lean version in [lean-toolchain](lean-toolchain).
-[lake-manifest.json](lake-manifest.json) already pins the dependency versions we use. If
-you're adding FloatLib to an existing Lean project, follow the
-[project setup instructions](site/content/chapters/01-using-the-library.md#setting-up-a-project).
+[lake-manifest.json](lake-manifest.json) already pins the dependency versions we use.
+
+In your own Lake project, add FloatLib with `require`:
+
+```lean
+require floatlib from git
+  "https://github.com/lean-dojo/FloatLib.git" @ "main"
+```
+
+Then run `lake update`, `lake exe cache get` and `lake build`. The
+[project setup instructions](site/content/chapters/01-using-the-library.md#setting-up-a-project)
+cover the toolchain and the first file.
 
 ## A calculation and a proof
 
@@ -82,6 +91,12 @@ exception flags, intervals, and accumulation. Or take one of the
   exact-subtraction lemma tie the real-valued theory to the arithmetic that runs.
   Mixed-precision bounds cover casts, products, and accumulator updates, under their stated
   finiteness assumptions.
+- **The `roundoff` tactic.** `MixedError` carries a relative and an absolute error
+  through binary operations, casts, and sums. With the `Automation.Roundoff` import, the
+  tactic proves error bounds for configured computations, including loops over lists, arrays,
+  vectors, and matrices. The `roundoff theorem` and `roundoff mixed theorem` commands generate
+  checked theorems and state the range conditions they need. See the
+  [roundoff guide](site/content/chapters/20-proving-numerical-bounds.md#error-bounds-from-floating-point-code).
 - **Intervals and affine quantization.** One interval API takes binary, decimal, posit, and
   custom endpoints, each with a stated outward-rounding contract. The
   [`interval` tactic](site/content/chapters/20-proving-numerical-bounds.md) proves real
@@ -93,8 +108,11 @@ exception flags, intervals, and accumulation. Or take one of the
   For a sum that rounds only once, use the exact accumulators.
 - **Elementary functions and complex numbers.** Posit elementary functions are proved to
   return the correctly rounded real result. For IEEE binary formats,
-  `exp x (certify := true)`, `log`, and `pow` return a correctly rounded finite result when
-  rational enclosure refinement succeeds, and tell you why when it doesn't. Importing
+  `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1`, and `logPlus1` return a
+  correctly rounded finite result when rational enclosure refinement succeeds, and tell you why
+  when it doesn't. The named import `Configured.CorrectlyRounded` adds total
+  `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1`, and `expMul` that are
+  correctly rounded on IEEE formats, with no premise on the search budget. Importing
   `Configured.Transcendentals` adds deterministic approximations for a wider set of binary
   functions. We haven't proved general error bounds for those approximation kernels. Sine
   and cosine can return an invalid result if they run out of argument-reduction budget. On
@@ -118,11 +136,13 @@ word kernels, and wider limb algorithms, and every certified choice has to prove
 agrees with the same specification. You can also set the backend policy yourself. There's a
 host-FPU path too, but it's unchecked and you have to call it by name.
 
-We'd like verified arithmetic to get closer to MPFR's speed. Our
+On ordinary binary64 calls, FloatLib's proved addition, subtraction, and multiplication are
+faster than MPFR at the same precision, multiplication by about 2.4 times. Our
 [benchmarks](site/content/chapters/17-performance.md) compare scalar operations from 2 to
-4,096 bits, so you can see where the kernels do well and where we still have work to do.
-Lean checks the proofs before execution and erases them during compilation. We also ran
-`leanchecker` to replay the compiled FloatLib declarations through Lean's kernel.
+4,096 bits, so you can see where the kernels do well and where MPFR is faster.
+Lean checks the proofs before execution and erases them during compilation. The opt-in
+command `FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh` also replays the compiled
+FloatLib declarations through Lean's kernel with `leanchecker`.
 
 Our saved runs matched Berkeley TestFloat on **more than 102 million cases** for the IEEE
 formats and operations we checked, and we also compare against MPFR, decimal arithmetic,

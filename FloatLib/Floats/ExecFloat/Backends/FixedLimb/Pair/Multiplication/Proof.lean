@@ -10,6 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Multiplication.R
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 
 /-!
 # Correctness of two-word normal multiplication
@@ -44,46 +45,39 @@ variable {fmt : FloatFormat}
 
 /-! ## Threshold words -/
 
-/-- The first normal leading-bit position fits a native word. -/
-theorem normalThreshold_toNat (h : Eligible fmt) :
-    (UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 1)).toNat =
-      fmt.bias + 2 * fmt.fracWidth - 1 := by
+/-- A threshold built from the bias and fraction width fits a native word. -/
+private theorem threshold_toNat (h : Eligible fmt) (value : Nat)
+    (hvalue : value ≤ 3 * fmt.bias + 2 * fmt.fracWidth) :
+    (UInt64.ofNat value).toNat = value := by
   rw [UInt64.toNat_ofNat']
   apply Nat.mod_eq_of_lt
   have hbias := h.bias_lt
   have hfrac := h.frac_le
   norm_num at hbias ⊢
   omega
+
+/-- The first normal leading-bit position fits a native word. -/
+theorem normalThreshold_toNat (h : Eligible fmt) :
+    (UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 1)).toNat =
+      fmt.bias + 2 * fmt.fracWidth - 1 :=
+  threshold_toNat h _ (by omega)
 
 /-- The largest finite normal leading-bit position fits a native word. -/
 theorem overflowThreshold_toNat (h : Eligible fmt) :
     (UInt64.ofNat (3 * fmt.bias + 2 * fmt.fracWidth - 2)).toNat =
-      3 * fmt.bias + 2 * fmt.fracWidth - 2 := by
-  rw [UInt64.toNat_ofNat']
-  apply Nat.mod_eq_of_lt
-  have hbias := h.bias_lt
-  have hfrac := h.frac_le
-  norm_num at hbias ⊢
-  omega
+      3 * fmt.bias + 2 * fmt.fracWidth - 2 :=
+  threshold_toNat h _ (by omega)
 
 /-- The product exponent offset fits a native word. -/
 theorem exponentOffset_toNat (h : Eligible fmt) :
     (UInt64.ofNat (fmt.bias + 2 * fmt.fracWidth - 2)).toNat =
-      fmt.bias + 2 * fmt.fracWidth - 2 := by
-  rw [UInt64.toNat_ofNat']
-  apply Nat.mod_eq_of_lt
-  have hbias := h.bias_lt
-  have hfrac := h.frac_le
-  norm_num at hbias ⊢
-  omega
+      fmt.bias + 2 * fmt.fracWidth - 2 :=
+  threshold_toNat h _ (by omega)
 
 /-- The fraction width fits a native word. -/
 theorem fracWidth_toNat (h : Eligible fmt) :
-    (UInt64.ofNat fmt.fracWidth).toNat = fmt.fracWidth := by
-  rw [UInt64.toNat_ofNat']
-  apply Nat.mod_eq_of_lt
-  have hfrac := h.frac_le
-  omega
+    (UInt64.ofNat fmt.fracWidth).toNat = fmt.fracWidth :=
+  threshold_toNat h _ (by omega)
 
 /-! ## Rounding a four-limb magnitude -/
 
@@ -96,7 +90,6 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
     (hleading : leading.toNat = product.toNat.log2)
     (hleadingRange :
       2 * fmt.fracWidth ≤ leading.toNat ∧ leading.toNat ≤ 2 * fmt.fracWidth + 2)
-    (hproductLower : 2 ^ (2 * fmt.fracWidth) ≤ product.toNat)
     (result : Model fmt)
     (hresult :
       roundNormalProduct? sign xExponent yExponent product leading = some result) :
@@ -117,24 +110,10 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
   unfold roundNormalProductWords? at hresult
   let scale := (xExponent - 1) + (yExponent - 1)
   let position := leading + scale
-  have hxOne : (1 : UInt64) ≤ xExponent := by
-    apply UInt64.le_iff_toNat_le.mpr
-    change 1 ≤ xExponent.toNat
-    omega
-  have hyOne : (1 : UInt64) ≤ yExponent := by
-    apply UInt64.le_iff_toNat_le.mpr
-    change 1 ≤ yExponent.toNat
-    omega
-  have hxScale : (xExponent - 1).toNat = xExponent.toNat - 1 :=
-    UInt64.toNat_sub_of_le xExponent 1 hxOne
-  have hyScale : (yExponent - 1).toNat = yExponent.toNat - 1 :=
-    UInt64.toNat_sub_of_le yExponent 1 hyOne
-  have hscale : scale.toNat = (xExponent.toNat - 1) + (yExponent.toNat - 1) := by
-    unfold scale
-    rw [UInt64.toNat_add, hxScale, hyScale]
-    apply Nat.mod_eq_of_lt
-    norm_num at hbias ⊢
-    omega
+  have hscale : scale.toNat = (xExponent.toNat - 1) + (yExponent.toNat - 1) :=
+    NativeSmallWord.productScale_toNat xExponent yExponent hxExponent.1 hyExponent.1 (by
+      norm_num at hbias ⊢
+      omega)
   have hposition :
       position.toNat =
         product.toNat.log2 + ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
@@ -169,8 +148,10 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
     rw [packNormal, ← hwords]
     congr 1
     simpa [position, scale, rounded, carry, normalizedPosition] using hprocessed.2
-  have hproductNe : product.toNat ≠ 0 :=
-    Nat.ne_of_gt (lt_of_lt_of_le (Nat.two_pow_pos _) hproductLower)
+  have hproductNe : product.toNat ≠ 0 := by
+    intro hzero
+    rw [hzero, Nat.log2_zero] at hlog2Ge
+    omega
   have hnormal :
       ¬product.toNat.log2 + ((xExponent.toNat - 1) + (yExponent.toNat - 1)) <
         fmt.bias + 2 * fmt.fracWidth - 1 := by
@@ -188,24 +169,7 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
       (leading - UInt64.ofNat fmt.fracWidth).toNat =
         product.toNat.log2 - fmt.fracWidth := by
     rw [UInt64.toNat_sub_of_le _ _ hleadingWord, hleading, hfracWord]
-  have hlimb3 : product.limb3.toNat * 2 ^ 192 ≤ product.toNat := by
-    unfold UInt256.toNat
-    exact Nat.le_add_left _ _
   have hproductUpper : product.toNat < 2 ^ (product.toNat.log2 + 1) := Nat.lt_log2_self
-  have htop :
-      product.limb3.toNat <
-        2 ^ ((leading - UInt64.ofNat fmt.fracWidth).toNat - 64) := by
-    have hbound :
-        product.limb3.toNat * 2 ^ 192 <
-          2 ^ ((leading - UInt64.ofNat fmt.fracWidth).toNat - 64) * 2 ^ 192 := by
-      calc
-        product.limb3.toNat * 2 ^ 192 ≤ product.toNat := hlimb3
-        _ < 2 ^ (product.toNat.log2 + 1) := hproductUpper
-        _ ≤ 2 ^ ((leading - UInt64.ofNat fmt.fracWidth).toNat - 64 + 192) :=
-          Nat.pow_le_pow_right (by decide) (by rw [hshift]; omega)
-        _ = 2 ^ ((leading - UInt64.ofNat fmt.fracWidth).toNat - 64) * 2 ^ 192 :=
-          pow_add 2 _ 192
-    exact Nat.lt_of_mul_lt_mul_right hbound
   have hquotient :
       (product.toNat >>> (leading - UInt64.ofNat fmt.fracWidth).toNat) + 1 < 2 ^ 128 := by
     rw [Nat.shiftRight_eq_div_pow, hshift]
@@ -224,7 +188,7 @@ theorem roundNormalProduct_refines (h : Eligible fmt)
         Numerics.roundShiftRightEven product.toNat (product.toNat.log2 - fmt.fracWidth) := by
     unfold rounded
     rw [UInt256.roundShiftRightEven128_toNat product _
-      (by rw [hshift]; omega) (by rw [hshift]; omega) htop hquotient, hshift]
+      (by rw [hshift]; omega) (by rw [hshift]; omega) hquotient, hshift]
   have hcarry : carry = true ↔ rounded.toNat = pow2 (fmt.fracWidth + 1) :=
     isCarry_iff h rounded
   have hroundedLower : 2 ^ fmt.fracWidth ≤ rounded.toNat := by
@@ -378,7 +342,7 @@ private theorem roundNormalLimb_refines (h : Eligible fmt)
   rw [← hproduct]
   apply roundNormalProduct_refines h sign xExponent yExponent product
     (UInt64.ofNat product.log2) hxExponent hyExponent hleading
-    (by rw [hleading]; omega) hproductLower result
+    (by rw [hleading]; omega) result
   simpa [roundNormalLimb?, product] using hresult
 
 /-- Every result the pair multiplication kernel accepts is also returned by `FiniteKernel.mul?`. -/

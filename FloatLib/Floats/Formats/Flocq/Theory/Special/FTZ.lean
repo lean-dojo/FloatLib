@@ -129,17 +129,8 @@ theorem ulp_zero_FTZ (emin prec : ℤ) (hprec : 0 < prec) :
     @ulp β (ftzExp emin prec) (ftzValidExp emin prec hprec) 0 =
       bpow β (ftzThreshold emin prec) := by
   let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
-  rw [ulp.zero]
-  cases hopt : negligibleExp (ftzExp emin prec) with
-  | none =>
-      have hnone := (negligibleExp_eq_none_iff (ftzExp emin prec)).mp hopt
-      exact (hnone ⟨ftzThreshold emin prec, ftzThreshold_negligible emin prec⟩).elim
-  | some n =>
-      have hn := negligibleExp_spec hopt
-      have heq := negligibleExp_value_unique hn
-        (ftzThreshold_negligible emin prec)
-      change bpow β (ftzExp emin prec n) = bpow β (ftzThreshold emin prec)
-      rw [heq, ftzExp_eq_threshold le_rfl]
+  rw [ulp.zero_of_isNegligibleExp β (ftzExp emin prec) (ftzThreshold_negligible emin prec),
+    ftzExp_eq_threshold le_rfl]
 
 /-- Flush an inexact scaled mantissa to zero when its magnitude is below one. -/
 noncomputable def fTZRound (rnd : ℝ → ℤ) (x : ℝ) : ℤ :=
@@ -169,11 +160,7 @@ instance fTZRoundValid (rnd : ℝ → ℤ) [ValidRnd rnd] :
           rw [abs_of_pos hxpos] at hx
           rw [abs_of_pos hypos] at hyAbs
           linarith
-        have hrx : rnd x ≤ 0 := by
-          have hmono := ValidRnd.monotone (rnd := rnd) x 0 hx0
-          have hr0 : rnd 0 = 0 := by
-            simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
-          rwa [hr0] at hmono
+        have hrx : rnd x ≤ 0 := ValidRnd.nonpos rnd hx0
         simp [fTZRound, hx, hy, hrx]
     · by_cases hy : 1 ≤ abs y
       · have hxAbs : abs x < 1 := lt_of_not_ge hx
@@ -184,11 +171,7 @@ instance fTZRoundValid (rnd : ℝ → ℤ) [ValidRnd rnd] :
           rw [abs_of_neg hxneg] at hxAbs
           rw [abs_of_neg hyneg] at hy
           linarith
-        have hry : 0 ≤ rnd y := by
-          have hmono := ValidRnd.monotone (rnd := rnd) 0 y hy0
-          have hr0 : rnd 0 = 0 := by
-            simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
-          rwa [hr0] at hmono
+        have hry : 0 ≤ rnd y := ValidRnd.nonneg rnd hy0
         simp [fTZRound, hx, hy, hry]
       · simp [fTZRound, hx, hy]
 
@@ -224,13 +207,9 @@ theorem round_FTZ_eq_FLX_of_normal (emin prec : ℤ) (hprec : 0 < prec)
       @round β (flxExp prec) (flxValidExp prec hprec) rnd x := by
   let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
   let : ValidExp (flxExp prec) := flxValidExp prec hprec
-  have hx : x ≠ 0 := by
-    intro hx0
-    rw [hx0, abs_zero] at hnormal
-    exact (not_le_of_gt (bpow.pos β _)) hnormal
-  have hupper := abs_lt_bpow_magnitude β x hx
+  have hx : x ≠ 0 := abs_pos.mp ((bpow.pos β _).trans_le hnormal)
   have hmag : ftzThreshold emin prec < magnitude β x :=
-    (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt hupper)
+    (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt (abs_lt_bpow_magnitude β x))
   have hcexp : cexp β (ftzExp emin prec) x =
       cexp β (flxExp prec) x := by
     simp [cexp, ftzExp_eq_sub hmag, flxExp]
@@ -296,30 +275,10 @@ theorem ftzFormat_of_generic (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
     · exact Or.inl hx0
     · right
       by_cases hmag : magnitude β x ≤ ftzThreshold emin prec
-      · obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic
-          (β := β) (fexp := ftzExp emin prec) x hx
-        have hn0 : n ≠ 0 := by
-          intro hnzero
-          have hrepr := scaled_mantissa_mul_bpow
-            (β := β) (fexp := ftzExp emin prec) x
-          rw [hn, hnzero, Int.cast_zero, zero_mul] at hrepr
-          exact hx0 hrepr.symm
-        have habsn : (1 : ℝ) ≤ abs (n : ℝ) := by
-          exact_mod_cast (Int.one_le_abs hn0)
-        have hcexp : cexp β (ftzExp emin prec) x = ftzThreshold emin prec := by
+      · have hcexp : cexp β (ftzExp emin prec) x = ftzThreshold emin prec := by
           simp [cexp, ftzExp_eq_threshold hmag]
-        have hrepr := scaled_mantissa_mul_bpow
-          (β := β) (fexp := ftzExp emin prec) x
-        rw [hn, hcexp] at hrepr
-        have hb := bpow.nonneg β (ftzThreshold emin prec)
-        calc
-          bpow β (ftzThreshold emin prec) =
-              1 * bpow β (ftzThreshold emin prec) := by ring
-          _ ≤ abs (n : ℝ) * bpow β (ftzThreshold emin prec) :=
-            mul_le_mul_of_nonneg_right habsn hb
-          _ = abs ((n : ℝ) * bpow β (ftzThreshold emin prec)) := by
-            rw [abs_mul, abs_of_nonneg hb]
-          _ = abs x := by rw [hrepr]
+        rw [← hcexp]
+        exact bpow_cexp_le_abs_of_generic hx0 hx
       · have hmagLt : ftzThreshold emin prec < magnitude β x := lt_of_not_ge hmag
         have hlower := bpow_magnitude_sub_one_le β x hx0
         exact ((bpow_le_bpow_iff β _ _).2 (by linarith)).trans hlower
@@ -333,13 +292,9 @@ theorem generic_of_ftzFormat (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
   rcases hx with ⟨hxFLX, hxRange⟩
   rcases hxRange with rfl | hnormal
   · exact generic_format_zero
-  · have hx0 : x ≠ 0 := by
-      intro hxzero
-      rw [hxzero, abs_zero] at hnormal
-      exact (not_le_of_gt (bpow.pos β _)) hnormal
-    have hupper := abs_lt_bpow_magnitude β x hx0
+  · have hx0 : x ≠ 0 := abs_pos.mp ((bpow.pos β _).trans_le hnormal)
     have hmag : ftzThreshold emin prec < magnitude β x :=
-      (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt hupper)
+      (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt (abs_lt_bpow_magnitude β x))
     apply generic_inclusion_mag (fexp₁ := flxExp prec) (fexp₂ := ftzExp emin prec)
     · intro _
       rw [ftzExp_eq_sub hmag]

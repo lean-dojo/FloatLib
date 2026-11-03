@@ -51,7 +51,7 @@ def nextUp (f : Format) : Datum → Outcome
   | .finite s c q =>
       if c = 0 then { value := .finite false 1 f.minQuantum }
       else
-        let pair := roundedPair f .nearestEven false ((c : ℚ) * (10 : ℚ) ^ q)
+        let pair := roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q)
         { value := if s then (neighborBelow f pair.1 pair.2).negate
             else neighborAbove f pair.1 pair.2 }
 

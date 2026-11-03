@@ -73,7 +73,7 @@ The half-integer branch returns the ordering of zero, matching the totalized rea
 Format wrappers with an invalid-result policy at poles must perform the same exact pole test.
 -/
 def prepareTanPi (argument : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared :=
-  if hpole : Int.fract argument = 1 / 2 then .direct (fun boundary => cmp 0 boundary)
+  if Int.fract argument = 1 / 2 then .direct (fun boundary => cmp 0 boundary)
   else match hvalue : tanPiExact argument with
   | some value => .direct (fun boundary => cmp value boundary)
   | none =>
@@ -87,7 +87,7 @@ def prepareTanPi (argument : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared
         (fun n => (sines.get n).sub ((cosines.get n).scale boundary)) 0 (by
           simpa only [sines, cosines, Enclosure.Comparison.cacheIntervals_apply,
             Enclosure.sinPiSubCos] using
-              Enclosure.exists_sinPiSubCos_separating argument boundary hpole hvalue)
+              Enclosure.exists_sinPiSubCos_separating argument boundary hvalue)
       if cosineSign = .gt then residual else residual.swap)
 
 /-- Compare the totalized real tangent at `argument * π` with a rational boundary. -/

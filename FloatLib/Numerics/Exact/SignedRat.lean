@@ -170,13 +170,8 @@ def ofDyadic (d : Dyadic) : SignedRat :=
     have hsignificand : d.significand ≠ 0 := by
       rwa [Ne, Dyadic.toRat_eq_zero_iff] at hvalue
     cases hnegative : d.negative
-    · have hpos := Dyadic.toRat_pos_of_significand_ne_zero d hsignificand hnegative
-      simp [not_lt.mpr hpos.le]
-    · have hpos :=
-        Dyadic.toRat_pos_of_significand_ne_zero d.neg
-          (by simpa using hsignificand) (by simp [hnegative])
-      rw [Dyadic.neg_toRat] at hpos
-      simp [neg_pos.mp hpos]⟩
+    · simp [not_lt.mpr (Dyadic.toRat_pos_of_significand_ne_zero d hsignificand hnegative).le]
+    · simp [Dyadic.toRat_neg_of_significand_ne_zero d hsignificand hnegative]⟩
 
 /-- `ofDyadic` keeps the exact rational value of the dyadic. -/
 @[simp, grind =] theorem value_ofDyadic (d : Dyadic) : (ofDyadic d).value = d.toRat :=

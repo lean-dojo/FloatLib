@@ -50,7 +50,7 @@ theorem roundFinite_fitsGrid (format : FloatFormat) (mode : P3109.RoundingMode) 
   · exact ⟨by simp [Numerics.Dyadic.zero], minSubnormalExponent_nonpos format⟩
   next hzero =>
     have hlower := RationalRounding.quotientFloor_lt_precision (format.fracWidth + 1)
-      format.minNormalExponent exact.num.natAbs exact.den hzero exact.den_nz
+      format.minNormalExponent exact.num.natAbs exact.den exact.den_nz
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one,
       sub_add_eq_sub_sub, sub_add_cancel] at hlower
     have hquantum :
@@ -79,21 +79,21 @@ theorem endpoint_eq_maxFiniteDyadic (format : FloatFormat) (hformat : format.isI
     FloatFormat.fracMaskNat, Model.pow2_eq_two_pow, pow_succ]
   omega
 
+/-- Clearing the sign of a dyadic gives the absolute value of its real denotation. -/
+private theorem toReal_clearSign (value : Numerics.Dyadic) :
+    ({ value with negative := false } : Numerics.Dyadic).toReal = |value.toReal| := by
+  cases value with
+  | mk negative significand exponent =>
+    cases negative <;>
+      simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, abs_mul]
+
 /-- The absolute endpoint value is the positive maximum, for either sign. -/
 theorem abs_endpoint_toReal (format : FloatFormat) (hformat : format.isIEEE = true)
     (negative : Bool) :
     |(endpoint format negative).toReal| = Model.toReal (Model.posMaxFinite format) := by
-  rw [← Model.Dyadic.toReal_maxFiniteDyadic, ← endpoint_eq_maxFiniteDyadic format hformat]
-  have hp : 0 ≤ (endpoint format false).toReal := by
-    unfold endpoint Numerics.Dyadic.toReal Numerics.Dyadic.signedSignificand
-    simp only [Bool.false_eq_true, ite_false]
-    exact mul_nonneg (Nat.cast_nonneg _) (le_of_lt (Model.bpow_pos _))
-  cases negative
-  · exact abs_of_nonneg hp
-  · have hneg : (endpoint format true).toReal = -(endpoint format false).toReal := by
-      simp [endpoint, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
-      ring
-    rw [hneg, abs_neg, abs_of_nonneg hp]
+  rw [← toReal_clearSign, ← Model.Dyadic.toReal_maxFiniteDyadic,
+    ← endpoint_eq_maxFiniteDyadic format hformat]
+  rfl
 
 /-- Scalable comparison tests exactly the real-valued magnitude bound used by encoding. -/
 theorem magnitude_bound_of_not_overflow (format : FloatFormat)
@@ -114,14 +114,8 @@ theorem magnitude_bound_of_not_overflow (format : FloatFormat)
     have hcast : (({ value with negative := false } : Numerics.Dyadic).toRat : Real) ≤
         ((endpoint format false).toRat : Real) := by exact_mod_cast hrat
     simpa only [Numerics.Dyadic.cast_toRat] using hcast
-  have habs : ({ value with negative := false } : Numerics.Dyadic).toReal = |value.toReal| := by
-    cases value with
-    | mk negative significand exponent =>
-      cases negative <;>
-        simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, abs_mul]
-  rw [habs, endpoint_eq_maxFiniteDyadic format hformat,
+  rwa [toReal_clearSign, endpoint_eq_maxFiniteDyadic format hformat,
     Model.Dyadic.toReal_maxFiniteDyadic] at hreal
-  exact hreal
 
 /--
 For an IEEE descriptor with grid-aligned finite inputs, every finite saturation result stays

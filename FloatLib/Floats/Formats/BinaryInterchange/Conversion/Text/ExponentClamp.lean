@@ -26,14 +26,12 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
 open FloatLib.Numerics
 
-private theorem bpow_eq_two_zpow (e : Int) : bpow e = (2 : ℝ) ^ e := by
-  simp [bpow, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-
 private theorem toReal_lt_bpow_lead (v : Numerics.Dyadic) (hv : v.negative = false) :
     v.toReal < bpow (dyadicLeadingExponent v + 1) := by
   have hs : (v.significand : ℝ) < (2 : ℝ) ^ (v.significand.log2 + 1) := by
     exact_mod_cast Nat.lt_log2_self
-  rw [bpow_eq_two_zpow, dyadicLeadingExponent, add_right_comm, zpow_add₀ (by norm_num)]
+  rw [bpow, Flocq.bpow_binaryRadix, dyadicLeadingExponent, add_right_comm,
+    zpow_add₀ (by norm_num)]
   simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hv]
   have hp : (0 : ℝ) < (2 : ℝ) ^ v.exponent := zpow_pos (by norm_num) _
   have : ((v.significand.log2 : Int) + 1) = ((v.significand.log2 + 1 : Nat) : Int) := by
@@ -46,7 +44,7 @@ private theorem bpow_lead_le_toReal (v : Numerics.Dyadic) (hv : v.negative = fal
     bpow (dyadicLeadingExponent v) ≤ v.toReal := by
   have hle : (2 : ℝ) ^ v.significand.log2 ≤ (v.significand : ℝ) := by
     exact_mod_cast Nat.log2_self_le hs
-  rw [bpow_eq_two_zpow, dyadicLeadingExponent, zpow_add₀ (by norm_num), zpow_natCast]
+  rw [bpow, Flocq.bpow_binaryRadix, dyadicLeadingExponent, zpow_add₀ (by norm_num), zpow_natCast]
   simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hv]
   have hp : (0 : ℝ) < (2 : ℝ) ^ v.exponent := zpow_pos (by norm_num) _
   simpa using mul_le_mul_of_nonneg_right hle hp.le
@@ -106,10 +104,10 @@ theorem Internal.Directed.roundRatScaled_eq_of_low (fmt : FloatFormat) (mode : I
 /-! ## Saturated status classification -/
 
 private theorem compare_gt_of_lead {n d : Nat} {e : Int} (v : Numerics.Dyadic)
-    (hn : n ≠ 0) (hd : d ≠ 0) (hv : v.negative = false) (hs : v.significand ≠ 0)
+    (hn : n ≠ 0) (hd : d ≠ 0) (hv : v.negative = false)
     (h : dyadicLeadingExponent v + 1 ≤ RationalBinary.floorLog2 n d + e) :
     RationalBinary.compareDyadicScaled? false n d e v = some .gt := by
-  rw [compareDyadicScaled?_false_eq_compare _ _ _ _ hd hv hs]
+  rw [compareDyadicScaled?_false_eq_compare _ _ _ _ hd]
   congr 1
   apply compare_gt_iff_gt.mpr
   calc v.toReal < bpow (dyadicLeadingExponent v + 1) := toReal_lt_bpow_lead v hv
@@ -117,10 +115,13 @@ private theorem compare_gt_of_lead {n d : Nat} {e : Int} (v : Numerics.Dyadic)
     _ ≤ scaledRatToReal n d e := (scaledRatToReal_floorLog2_bounds n d e hn hd).1
 
 private theorem compare_lt_of_lead {n d : Nat} {e : Int} (v : Numerics.Dyadic)
-    (hn : n ≠ 0) (hd : d ≠ 0) (hv : v.negative = false) (hs : v.significand ≠ 0)
+    (hd : d ≠ 0) (hv : v.negative = false) (hs : v.significand ≠ 0)
     (h : RationalBinary.floorLog2 n d + e + 1 ≤ dyadicLeadingExponent v) :
     RationalBinary.compareDyadicScaled? false n d e v = some .lt := by
-  rw [compareDyadicScaled?_false_eq_compare _ _ _ _ hd hv hs]
+  by_cases hn : n = 0
+  · subst n
+    simp [RationalBinary.compareDyadicScaled?, hd, hv, hs]
+  rw [compareDyadicScaled?_false_eq_compare _ _ _ _ hd]
   congr 1
   apply compare_lt_iff_lt.mpr
   calc scaledRatToReal n d e < bpow (RationalBinary.floorLog2 n d + e + 1) :=
@@ -162,9 +163,9 @@ theorem rationalRoundingOverflowsScaled_of_high (fmt : FloatFormat) (mode : IEEE
     rationalRoundingOverflowsScaled fmt mode sign n d e = true := by
   simp only [decimalSaturationHigh, max_le_iff] at h
   have hm := compare_gt_of_lead (e := e) (overflowMidpoint fmt) hn hd (by simp [overflowMidpoint])
-    (overflowMidpoint_significand_ne_zero fmt) (by omega)
+    (by omega)
   have hl := compare_gt_of_lead (e := e) (overflowLimit fmt) hn hd (by simp [overflowLimit])
-    (overflowLimit_significand_ne_zero fmt) (by omega)
+    (by omega)
   have a : fmt.maxNormalExponent < RationalBinary.floorLog2 n d + e := by omega
   have hmag : rationalMagnitudeOverflowsScaled fmt n d e = true := by
     simp [rationalMagnitudeOverflowsScaled, hn, hd, a, not_lt_of_gt a]
@@ -172,34 +173,34 @@ theorem rationalRoundingOverflowsScaled_of_high (fmt : FloatFormat) (mode : IEEE
     simp [rationalRoundingOverflowsScaled, rationalNearestEvenOverflowsScaled,
       rationalNearestAwayOverflowsScaled, rationalTruncationOverflowsScaled, hm, hl, hmag]
 
-/-- Below `decimalSaturationLow`, no rounding direction reports overflow. -/
+/-- Below `decimalSaturationLow` and at a zero numerator, no rounding direction reports overflow. -/
 theorem rationalRoundingOverflowsScaled_of_low (fmt : FloatFormat) (mode : IEEERoundingMode)
-    (sign : Bool) {n d : Nat} {e : Int} (hn : n ≠ 0) (hd : d ≠ 0)
+    (sign : Bool) {n d : Nat} {e : Int} (hd : d ≠ 0)
     (h : RationalBinary.floorLog2 n d + e ≤ decimalSaturationLow fmt) :
     rationalRoundingOverflowsScaled fmt mode sign n d e = false := by
   simp only [decimalSaturationLow, le_min_iff] at h
-  have hm := compare_lt_of_lead (e := e) (overflowMidpoint fmt) hn hd (by simp [overflowMidpoint])
-    (overflowMidpoint_significand_ne_zero fmt) (by omega)
-  have hl := compare_lt_of_lead (e := e) (overflowLimit fmt) hn hd (by simp [overflowLimit])
-    (overflowLimit_significand_ne_zero fmt) (by omega)
+  have hm := compare_lt_of_lead (n := n) (e := e) (overflowMidpoint fmt) hd
+    (by simp [overflowMidpoint]) (overflowMidpoint_significand_ne_zero fmt) (by omega)
+  have hl := compare_lt_of_lead (n := n) (e := e) (overflowLimit fmt) hd
+    (by simp [overflowLimit]) (overflowLimit_significand_ne_zero fmt) (by omega)
   have a : RationalBinary.floorLog2 n d + e < fmt.maxNormalExponent := by omega
   have hmag : rationalMagnitudeOverflowsScaled fmt n d e = false := by
-    simp [rationalMagnitudeOverflowsScaled, hn, hd, a]
+    by_cases hn : n = 0 <;> simp [rationalMagnitudeOverflowsScaled, hn, hd, a]
   cases mode <;> cases sign <;>
     simp [rationalRoundingOverflowsScaled, rationalNearestEvenOverflowsScaled,
       rationalNearestAwayOverflowsScaled, rationalTruncationOverflowsScaled, hm, hl, hmag]
 
-/-- Below `decimalSaturationLow`, every result is tiny after rounding. -/
+/-- Below `decimalSaturationLow`, and at a zero numerator, every result is tiny after rounding. -/
 theorem rationalIsTinyAfterRoundingScaled_of_low (fmt : FloatFormat)
-    (mode : IEEERoundingMode) (sign : Bool) {n d : Nat} {e : Int} (hn : n ≠ 0) (hd : d ≠ 0)
+    (mode : IEEERoundingMode) (sign : Bool) {n d : Nat} {e : Int} (hd : d ≠ 0)
     (h : RationalBinary.floorLog2 n d + e ≤ decimalSaturationLow fmt) (rounded : Model fmt) :
     rationalIsTinyAfterRoundingScaled fmt mode sign n d e rounded = true := by
   simp only [decimalSaturationLow, le_min_iff] at h
-  have hm := compare_lt_of_lead (e := e) (underflowMidpoint fmt) hn hd (by simp [underflowMidpoint])
-    (underflowMidpoint_significand_ne_zero fmt) (by omega)
-  have hl := compare_lt_of_lead (e := e) (minNormalDyadic fmt) hn hd (by simp [minNormalDyadic])
-    (minNormalDyadic_significand_ne_zero fmt) (by omega)
-  have hp := compare_lt_of_lead (e := e) (underflowPredecessor fmt) hn hd
+  have hm := compare_lt_of_lead (n := n) (e := e) (underflowMidpoint fmt) hd
+    (by simp [underflowMidpoint]) (underflowMidpoint_significand_ne_zero fmt) (by omega)
+  have hl := compare_lt_of_lead (n := n) (e := e) (minNormalDyadic fmt) hd
+    (by simp [minNormalDyadic]) (minNormalDyadic_significand_ne_zero fmt) (by omega)
+  have hp := compare_lt_of_lead (n := n) (e := e) (underflowPredecessor fmt) hd
     (by simp [underflowPredecessor]) (underflowPredecessor_significand_ne_zero fmt) (by omega)
   cases mode <;> cases sign <;>
     simp [rationalIsTinyAfterRoundingScaled, IEEERoundingMode.roundsAwayFromZero, hm, hl, hp]
@@ -218,7 +219,7 @@ theorem rationalEqualsDyadicScaled_finite_of_low (fmt : FloatFormat) (sign : Boo
   by_cases hs : a.significand = 0
   · simp only [rationalEqualsDyadicScaled, RationalBinary.compareDyadicScaled?, hs]
     split_ifs <;> simp_all
-  · have hlt := compare_lt_of_lead (e := e) { a with negative := false } hn hd rfl hs
+  · have hlt := compare_lt_of_lead (n := n) (e := e) { a with negative := false } hd rfl hs
       (by simp only [dyadicLeadingExponent]; omega)
     simp only [rationalEqualsDyadicScaled]
     simp only [RationalBinary.compareDyadicScaled?] at hlt ⊢
@@ -247,15 +248,15 @@ theorem rationalRoundingStatusScaled_eq_of_low (fmt : FloatFormat) (mode : IEEER
     rationalRoundingStatusScaled fmt mode sign n₁ d₁ e₁ rounded =
       rationalRoundingStatusScaled fmt mode sign n₂ d₂ e₂ rounded := by
   unfold rationalRoundingStatusScaled
-  rw [rationalRoundingOverflowsScaled_of_low fmt mode sign hn₁ hd₁ h₁,
-    rationalRoundingOverflowsScaled_of_low fmt mode sign hn₂ hd₂ h₂]
+  rw [rationalRoundingOverflowsScaled_of_low fmt mode sign hd₁ h₁,
+    rationalRoundingOverflowsScaled_of_low fmt mode sign hd₂ h₂]
   simp only [Bool.false_eq_true, ↓reduceIte]
   split
   · next hfinite =>
       simp only [rationalEqualsDyadicScaled_finite_of_low fmt sign hn₁ hd₁ h₁ rounded hfinite,
         rationalEqualsDyadicScaled_finite_of_low fmt sign hn₂ hd₂ h₂ rounded hfinite,
-        rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hn₁ hd₁ h₁,
-        rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hn₂ hd₂ h₂]
+        rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hd₁ h₁,
+        rationalIsTinyAfterRoundingScaled_of_low fmt mode sign hd₂ h₂]
   · rfl
 
 /-! ## Saturated ternary values -/
@@ -376,26 +377,6 @@ theorem rationalTernaryScaled_eq_of_low (fmt : FloatFormat) (sign : Bool)
     have hminimum : decimalSaturationLow fmt + 1 ≤ fmt.minSubnormalExponent := by
       simp only [decimalSaturationLow]
       omega
-    have hnonzero : toReal rounded ≠ 0 →
-        bpow fmt.minSubnormalExponent ≤ |toReal rounded| := by
-      intro hvalue
-      have hdecode : toDyadic? rounded = some (finiteDyadic rounded hfinite) := by
-        simp [finiteDyadic]
-      rw [toReal_eq_toReal_finiteDyadic hfinite] at hvalue ⊢
-      have hsignificand : (finiteDyadic rounded hfinite).significand ≠ 0 := by
-        intro hzero
-        apply hvalue
-        simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-      have hexponent := minSubnormalExponent_le_toDyadic? rounded hdecode
-      have hone : (1 : ℝ) ≤ (finiteDyadic rounded hfinite).significand := by
-        exact_mod_cast Nat.one_le_iff_ne_zero.mpr hsignificand
-      rw [Dyadic.abs_toReal]
-      calc bpow fmt.minSubnormalExponent
-          ≤ bpow (finiteDyadic rounded hfinite).exponent := bpow_le_bpow_of_le hexponent
-        _ = 1 * bpow (finiteDyadic rounded hfinite).exponent := (one_mul _).symm
-        _ ≤ ((finiteDyadic rounded hfinite).significand : ℝ) *
-              bpow (finiteDyadic rounded hfinite).exponent :=
-          mul_le_mul_of_nonneg_right hone (bpow_nonneg _)
     have hsmall : ∀ {n d : Nat} {e : Int}, n ≠ 0 → d ≠ 0 →
         RationalBinary.floorLog2 n d + e ≤ decimalSaturationLow fmt →
         toReal rounded ≠ 0 → scaledRatToReal n d e < |toReal rounded| := by
@@ -403,7 +384,7 @@ theorem rationalTernaryScaled_eq_of_low (fmt : FloatFormat) (sign : Bool)
       exact lt_of_lt_of_le
         ((scaledRatToReal_floorLog2_bounds n d e hn hd).2.trans_le
           (bpow_le_bpow_of_le (by omega)))
-        (hnonzero hvalue)
+        (bpow_minSubnormalExponent_le_abs_toReal hfinite hvalue)
     exact compare_signed_eq_of_lt_abs sign
       (scaledRatToReal_pos n₁ d₁ e₁ hn₁ hd₁) (scaledRatToReal_pos n₂ d₂ e₂ hn₂ hd₂)
       (hsmall hn₁ hd₁ h₁) (hsmall hn₂ hd₂ h₂)

@@ -5,7 +5,7 @@ title: Proving floating-point arithmetic correct
 summary: Correctness proofs must account for rounding, exceptional values, and the way an implementation evaluates an expression.
 ---
 
-Correct rounding specifies one operation: compute its exact result, then select a representable value. In a program, the selected value becomes the input to the next operation. Moving a pair of parentheses can change where rounding happens; changing an intermediate format can change which side of a midpoint the next operation sees. The bit patterns and rounding rule developed in [chapter 02](#/chapter/from-reals-to-machine-numbers) let us follow these effects precisely. To verify an implementation, we also need to show that its shifts, table lookups, and exceptional branches implement that rule for every input.
+Correct rounding specifies one operation: compute its exact result, then select a representable value. In a program, the selected value becomes the input to the next operation. Moving a pair of parentheses can change where rounding happens, and changing an intermediate format can change which side of a midpoint the next operation sees. The bit patterns and rounding rule developed in [chapter 02](#/chapter/from-reals-to-machine-numbers) let us follow these effects precisely. To verify an implementation, we also need to show that its shifts, table lookups, and exceptional branches implement that rule for every input.
 
 ## Limits of exhaustive testing
 
@@ -15,13 +15,13 @@ A binary64 addition has $2^{64} \cdot 2^{64} = 2^{128}$ possible input pairs. At
 
 For formats of eight bits or fewer, the table backends evaluate the reference operation once at every pair of inputs and store the results. A `CertifiedBinary` kernel carries that table with two certificates. `table_eq` says every entry equals the operation the table was generated from, and `model_eq_spec` says the generating operation equals the reference. [[FloatLib.Floats.Formats.BinaryInterchange.Configured.ByteTable.runBinary_eq_lift]] then states that calling the table gives the same result as the configured model operation, and corresponding theorems cover operations with one and three arguments.
 
-Binary16 sits in between. You can compare the library's addition and multiplication with MPFR [@fousseMpfr2007] in batches of the $2^{32}$ ordered input pairs. Batching makes an exhaustive comparison manageable, but it's only complete once every batch has run. The completed binary16 and bfloat16 comparisons in [chapter 19](#/chapter/external-validation) cover all $2^{32}$ pairs of each operation in each of the four tested rounding directions.
+Binary16 sits in between. Its $2^{32}$ ordered pairs are few enough to run every one, and we did, for binary16 and bfloat16 addition, subtraction, multiplication, and division in each of the four rounding directions IEEE 754 requires, against SoftFloat [@hauserSoftFloat] for binary16 and MPFR [@fousseMpfr2007] for bfloat16. [Chapter 19](#/chapter/external-validation) reports the results, and every value and flag agreed.
 
 For binary32 and binary64, tests can exercise known hard cases and search for disagreements, but they can't practically enumerate the whole input space. A proof gets around this because its variables range over arbitrary input words. An argument about how many low bits a shift discards, for example, can cover every significand and exponent at once, without evaluating $2^{128}$ individual cases.
 
 ## Rounding changes algebraic identities
 
-Real addition is associative, and real multiplication distributes over addition. Correct rounding breaks both laws, because grouping an expression differently changes which intermediate results get rounded. Our $2^{-24}$ example isolates this effect: all three inputs are exactly representable, and the small term is half the grid spacing at one. We build it from its bit pattern below, so no decimal conversion is involved:
+Real addition is associative, and real multiplication distributes over addition. Correct rounding breaks both laws, because grouping an expression differently changes which intermediate results get rounded. Adding half a grid step twice isolates this effect. All three inputs are exactly representable, and the small term $2^{-24}$ is half the grid spacing at one. We build it from its bit pattern below, so no decimal conversion is involved:
 
 ```lean
 open FloatLib.Floats
@@ -77,14 +77,14 @@ The first rounds to one. The second sits halfway between seven and the word belo
 
 The two words are `0x3fd3333333333334` and `0x3fd3333333333333`. We got the first by adding two inputs that were already rounded and then rounding their sum, while the second is the exact decimal three-tenths, rounded once.
 
-Another familiar rule breaks too, since $x + y = x$ doesn't imply $y = 0$. In binary32 the integers above $2^{24}$ are spaced two apart, so adding one to $2^{24}$ is a tie, and the tie goes to even, which is the original value. A status-bearing operation can at least report that information was discarded. [[FloatLib.Floats.ExecFloat.Binary.add]] with `(status := true)` returns an outcome containing the value, five IEEE flags, and the direction of rounding relative to the exact answer. In the example, `.2` selects the status field:
+Another familiar rule breaks too, since $x + y = x$ doesn't imply $y = 0$. In binary32 the integers above $2^{24}$ are spaced two apart, so adding one to $2^{24}$ is a tie, and the tie goes to even, which is the original value. A status-bearing operation can at least report that information was discarded. [[FloatLib.Floats.ExecFloat.Binary.add]] with `(status := true)` returns an outcome containing the value, five IEEE flags, and the direction of rounding relative to the exact answer. In the example, `.status` selects the flags, and `#eval` lists the ones that were raised:
 
 ```lean
 #eval (16777216 : Binary32) + 1
 -- 16777216
 
-#eval (ExecFloat.Binary.add (16777216 : Binary32) 1 (status := true)).2
--- { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true }
+#eval (ExecFloat.Binary.add (16777216 : Binary32) 1 (status := true)).status
+-- { inexact := true }
 ```
 
 The `inexact` flag records that this addition didn't return its exact real sum, but it says nothing about how big the discarded increment was. So a loop that counts by adding one to a binary32 accumulator stops counting at $2^{24}$, which is not what you want from a counter :) Every addition after that returns the same word and sets the same flag.
@@ -203,14 +203,14 @@ def inf32 : Binary32 := (1 : Binary32) / 0
 #eval inf32 + (-1000000) == inf32
 -- true
 
-#eval (ExecFloat.Binary.sub inf32 inf32 (status := true)).2
--- { invalid := true, divideByZero := false, overflow := false, underflow := false, inexact := false }
+#eval (ExecFloat.Binary.sub inf32 inf32 (status := true)).status
+-- { invalid := true }
 
 #eval (2 : Binary32) * (nan32 + 1)
 -- nan
 
-#eval (ExecFloat.Binary.add nan32 1 (status := true)).2
--- { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := false }
+#eval (ExecFloat.Binary.add nan32 1 (status := true)).status
+-- {}
 ```
 
 A propagated quiet NaN still shows that the value is a NaN, but its status flags need not show which earlier operation created it. And once the program replaces it with a finite value, as the clamp does, even that is gone, unless the program kept the earlier status or checked the input.
@@ -220,11 +220,11 @@ The two zeros are equal under `==` and different under `=`, the other way round 
 Status flags are one more piece of state that real arithmetic doesn't have. Every status-bearing operation returns five of them, the fields of [[FloatLib.Numerics.IEEEStatus]], and they record conditions such as overflow and inexactness. Dividing by zero and dividing zero by zero return different nonfinite values and set different flags:
 
 ```lean
-#eval (ExecFloat.Binary.div (1 : Binary32) 0 (status := true)).2
--- { invalid := false, divideByZero := true, overflow := false, underflow := false, inexact := false }
+#eval (ExecFloat.Binary.div (1 : Binary32) 0 (status := true)).status
+-- { divideByZero := true }
 
-#eval (ExecFloat.Binary.div (0 : Binary32) 0 (status := true)).2
--- { invalid := true, divideByZero := false, overflow := false, underflow := false, inexact := false }
+#eval (ExecFloat.Binary.div (0 : Binary32) 0 (status := true)).status
+-- { invalid := true }
 ```
 
 Hardware usually accumulates these flags in a status register. We return them with each result instead, so ordinary program logic can use them. [[FloatLib.Floats.Formats.BinaryInterchange.Model.div_divideByZero]] says the divide-by-zero flag is set exactly when a finite nonzero operand is divided by a zero, and `div_invalid` gives the exact invalid predicate, including a signaling NaN operand and infinity divided by infinity. None of this survives decoding the result to a real number.
@@ -275,11 +275,11 @@ A cast between formats also has to keep whatever later operations need, and that
 -- some 0
 ```
 
-For the default nearest-even addition, `negative_add_of_eq_zero` states the rule, which is that an exact zero sum is negative exactly when both operands are. [[FloatLib.Floats.ExecFloat.Binary.Conversion.run_default_negZero_value?]] then says that converting an exact $-0$ into any binary destination gives that destination's negative zero, or its single zero when the encoding has only one, as the FNUZ formats do. A cast that lost the sign would still pass tests that compared the two zeros with `==`.
+For `SignedRat` addition, which follows the nearest-even sign rule, `negative_add_of_eq_zero` states it: an exact zero sum is negative exactly when both operands are. [[FloatLib.Floats.ExecFloat.Binary.Conversion.run_default_negZero_value?]] then says that converting an exact $-0$ into any binary destination gives that destination's negative zero, or its single zero when the encoding has only one, as the FNUZ formats do. A cast that lost the sign would still pass tests that compared the two zeros with `==`.
 
 ## Connecting an implementation to its specification
 
-An implementation and its specification are both Lean functions on the same input words. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] identifies their complete outputs for every input, ties and exceptional values included, and whichever implementation is selected has to supply the proof behind this equation. [Chapter 05](#/chapter/why-execution-and-proofs-are-separate) follows that certificate from the arithmetic kernel to the public operation. A real-valued theorem answers a different question. For a conventional IEEE descriptor, finite operands, and a finite result, the decoded sum equals one nearest-even rounding of the exact real sum on a Flocq-style grid [@boldoMelquiond2011]. Finite inputs alone don't rule out overflow, and [Chapter 06](#/chapter/the-numerical-models/proving-inputs-and-results-are-finite) shows how to prove the result is finite, including cases where cancellation makes a simple magnitude bound too conservative.
+An implementation and its specification are both Lean functions on the same input words. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] identifies their complete outputs for every input, ties and exceptional values included, and whichever implementation is selected has to supply the proof behind this equation. [Chapter 05](#/chapter/why-execution-and-proofs-are-separate) follows that certificate from the arithmetic kernel to the public operation. A real-valued theorem answers a different question. For a conventional IEEE descriptor and a finite result, which forces finite operands, the decoded sum equals one nearest-even rounding of the exact real sum on a Flocq-style grid [@boldoMelquiond2011]. Finite inputs alone don't rule out overflow, and [Chapter 06](#/chapter/the-numerical-models/proving-inputs-and-results-are-finite) shows how to prove the result is finite, including cases where cancellation makes a simple magnitude bound too conservative.
 
 ## What a proof does not cover
 

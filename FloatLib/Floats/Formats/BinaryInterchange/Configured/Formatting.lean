@@ -31,8 +31,11 @@ local notation "Value" =>
 
 /--
 Write a configured value as text, as `Model.format`: by default the shortest decimal that reads
-back as `value` (what `toString` and `#eval` show), otherwise in `style` with rounding in `mode`
-and, with `status := true`, the inexact indicator.
+back as `value` (what `toString` and `#eval` show), otherwise in `style`, as in
+`x.format (style := .fixed (places := 3))`. For the display, `mode` is the direction the text is
+read back in. The styles that round, `.significant`, `.fixed`, `.scientific` and
+`.hex (.significant n)`, round the printed digits in `mode`, and `.exact` and the exact `.hex`
+ignore it. With `status := true` the result also carries the inexact indicator.
 -/
 @[inline] def format (value : Value) (style : Model.TextStyle := .shortest)
     (mode : Model.IEEERoundingMode := .nearest) (status : Bool := false) :

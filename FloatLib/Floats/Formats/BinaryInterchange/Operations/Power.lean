@@ -309,13 +309,13 @@ def integerPower? {fmt : FloatFormat} (base exponent : Model fmt) : Option (Mode
   | _, _ => none
 
 /--
-Refinement budget of the certified search in `pow`: eight refinement attempts after the overflow
-and underflow screens. When the argument grid limits the width, the schedule doubles the working
+Search budget of the certified search in `pow`: eight enclosure attempts after the overflow and
+underflow screens. When the argument grid limits the width, the schedule doubles the working
 precision every second attempt and ends near eight times the first precision. An exact result on
-a rounding boundary generally does not settle, and the budget bounds the time spent before the
+a rounding boundary generally does not settle, and the budget bounds the attempts made before the
 fallback.
 -/
-def certifiedOptions : Transcendentals.Certified.Options := { maxSteps := 8 }
+def certifiedBudget : Certified.Budget := { maxAttempts := 8 }
 
 end Power
 
@@ -384,7 +384,7 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
                 | none =>
                     if signBit base then invalidResult fmt
                     else
-                      match Transcendentals.Certified.pow base exponent Power.certifiedOptions with
+                      match Transcendentals.Certified.pow base exponent Power.certifiedBudget with
                       | .ok result => result
                       | .error .range => nativeOverflow fmt false
                       | .error _ => exp (mul exponent (log base))

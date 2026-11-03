@@ -7,11 +7,22 @@ Authors: FloatLib Team
 module
 
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
+public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
 public import FloatLibTests.Conformance.BinaryInterchange.Info
+public import FloatLibTests.Conformance.BinaryInterchange.InfoImports
 public import FloatLibTests.Conformance.BinaryInterchange.ExactAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecComplexAutomation
 public import FloatLibTests.Conformance.BinaryInterchange.ExecFloatAutomation
+public import FloatLibTests.Conformance.BinaryInterchange.MixedError
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
+public import FloatLibTests.Conformance.BinaryInterchange.Roundoff
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffCallbacks
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffGuards
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffOptions
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples
 public import FloatLibTests.Conformance.Execution.AutomaticDispatch
 public import FloatLibTests.Conformance.Execution.Capabilities
 public import FloatLibTests.Conformance.Execution.Certificates
@@ -19,8 +30,10 @@ public import FloatLibTests.Conformance.Formats.BinaryConveniences
 public import FloatLibTests.Conformance.Formats.Configured
 public import FloatLibTests.Conformance.Formats.ConfiguredIntervals
 public import FloatLibTests.Conformance.Formats.Conversion
+public import FloatLibTests.Conformance.Formats.Info
 public import FloatLibTests.Conformance.Formats.LowBit
 public import FloatLibTests.Conformance.Formats.MXStandard
+public import FloatLibTests.Conformance.Formats.ModelSource
 public import FloatLibTests.Conformance.Formats.NonBinaryIntervals
 public import FloatLibTests.Conformance.Numerics.Boolean
 public import FloatLibTests.Conformance.Numerics.Declaration

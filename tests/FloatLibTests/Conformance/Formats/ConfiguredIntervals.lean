@@ -31,7 +31,7 @@ def enclose (lo hi : ExecFloat.Binary 8 23) := Interval.ofBounds lo hi
 
 /-- A downstream theorem can use the constructor without naming a storage plan or codec. -/
 example (lo hi : ExecFloat.Binary 8 23) : (enclose lo hi).ValidExtended :=
-  Interval.validExtended_ofBounds lo hi (by decide)
+  Interval.validExtended_ofBounds lo hi
 
 section Generic
 
@@ -51,14 +51,14 @@ example (I J : Bounds) :
 example (I J : Bounds) (hformat : format.isIEEE = true)
     (hI : I.Valid) (hJ : J.Valid) {x y : ℝ} (hx : I.RealMem x) (hy : J.RealMem y) :
     (I.add J).ERealMem ((x + y : ℝ) : EReal) :=
-  Interval.add_sound I J hformat hI hJ hx hy
+  Interval.add_sound I J hI hJ hx hy
 
 /-- An activation can consume the product enclosure even when multiplication overflows. -/
 example (I J : Bounds) (hformat : format.isIEEE = true)
     (hI : I.Valid) (hJ : J.Valid) {x y : ℝ} (hx : I.RealMem x) (hy : J.RealMem y) :
     (I.mul J).relu.ERealMem ((max (x * y) 0 : ℝ) : EReal) :=
-  Interval.relu_sound_extended (I.mul J) (Interval.mul_validExtended I J hformat)
-    (Interval.mul_sound I J hformat hI hJ hx hy)
+  Interval.relu_sound_extended (I.mul J) (Interval.mul_validExtended I J)
+    (Interval.mul_sound I J hI hJ hx hy)
 
 /-- Finite-only addition exposes the range assumptions needed to avoid saturation. -/
 example (I J : Bounds) (hformat : format.encoding = .finite)
@@ -118,8 +118,8 @@ example :
     let I := Interval.point (1 : ExecFloat.Binary 8 23)
     let J := Interval.ofBounds (-1 : ExecFloat.Binary 8 23) 1
     let result := I.div J
-    (ExecFloat.Binary.isInfinite result.lo, ExecFloat.Binary.signBit result.lo,
-      ExecFloat.Binary.isInfinite result.hi, ExecFloat.Binary.signBit result.hi) =
+    (ExecFloat.Binary.isInf result.lo, ExecFloat.Binary.signBit result.lo,
+      ExecFloat.Binary.isInf result.hi, ExecFloat.Binary.signBit result.hi) =
       (true, true, true, false) := by
   decide +kernel
 

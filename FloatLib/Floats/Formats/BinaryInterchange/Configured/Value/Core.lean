@@ -106,17 +106,17 @@ Use `toRat?` when only the rational value of a finite number matters.
   Model.isNaN (toModel value)
 
 /-- Whether the value is a quiet NaN under its configured encoding policy. -/
-@[inline] def isQuietNaN
+@[inline] def isQNaN
     (value : Value) : Bool :=
   Model.isQNaN (toModel value)
 
 /-- Whether the value is a signaling NaN under its configured encoding policy. -/
-@[inline] def isSignalingNaN
+@[inline] def isSNaN
     (value : Value) : Bool :=
   Model.isSNaN (toModel value)
 
 /-- Whether the value is an infinity. Finite encodings always return `false`. -/
-@[inline] def isInfinite
+@[inline] def isInf
     (value : Value) : Bool :=
   Model.isInf (toModel value)
 
@@ -136,22 +136,22 @@ Use `toRat?` when only the rational value of a finite number matters.
   Model.isSubnormal (toModel value)
 
 /--
-Construct zero, positive by default. `(sign := true)` requests negative zero.
+Construct zero, positive by default. `(negative := true)` requests negative zero.
 
 Encodings with one unsigned zero canonicalize a requested negative zero to positive zero.
 -/
-@[inline] def zero (sign : Bool := false) :
+@[inline] def zero (negative : Bool := false) :
     Value :=
-  ofModel (Model.zero format sign)
+  ofModel (Model.zero format negative)
 
 /--
 Construct infinity, positive by default, when the configured encoding represents it.
 
 IEEE encodings return `some`, while finite-only, maximum-NaN, and FNUZ encodings return `none`.
 -/
-@[inline] def infinity? (sign : Bool := false) :
+@[inline] def infinity? (negative : Bool := false) :
     Option (Value) :=
-  (Model.infinity? format sign).map ofModel
+  (Model.infinity? format negative).map ofModel
 
 /--
 Construct infinity, positive by default, when the configured encoding is statically known to
@@ -159,10 +159,10 @@ support it.
 
 Calling this constructor for a finite encoding fails during elaboration.
 -/
-@[inline] def infinity (sign : Bool := false)
+@[inline] def infinity (negative : Bool := false)
     (_supportsInfinity : format.supportsInfinity = true := by decide) :
     Value :=
-  ofModel (if sign then Model.negInf format else Model.posInf format)
+  ofModel (if negative then Model.negInf format else Model.posInf format)
 
 /--
 Construct the encoding's canonical quiet NaN when it has a NaN representation.
@@ -184,23 +184,23 @@ Fully finite encodings reject this constructor during elaboration.
   ofModel (Model.invalidResult format)
 
 /-- The finite value of greatest magnitude, positive by default. -/
-@[inline] def maxFinite (sign : Bool := false) :
+@[inline] def maxFinite (negative : Bool := false) :
     Value :=
-  ofModel (Model.maxFinite format sign)
+  ofModel (Model.maxFinite format negative)
 
 /-- The normal value of least magnitude, `2 ^ minNormalExponent`, positive by default. -/
-@[inline] def minNormal (sign : Bool := false) :
+@[inline] def minNormal (negative : Bool := false) :
     Value :=
-  ofModel (Model.ofFields format sign 1 0)
+  ofModel (Model.ofFields format negative 1 0)
 
 /--
 The subnormal value of least magnitude, `2 ^ minSubnormalExponent`, positive by default.
 
 Every binary encoding has gradual underflow, so this is the least nonzero magnitude.
 -/
-@[inline] def minSubnormal (sign : Bool := false) :
+@[inline] def minSubnormal (negative : Bool := false) :
     Value :=
-  ofModel (Model.ofFields format sign 0 1)
+  ofModel (Model.ofFields format negative 0 1)
 
 /--
 Unit in the last place: the spacing of the representable values in the binade of `value`, as
@@ -221,7 +221,7 @@ infinity and a NaN the format's invalid result.
 
 /--
 Machine epsilon `2 ^ -fractionBits`, the gap between one and the next larger value: `ulp 1`, as
-C's `DBL_EPSILON` and PyTorch's `finfo.eps`. It is twice `Model.epsilonAt format 1`, the half-ulp
+C's `DBL_EPSILON` and PyTorch's `finfo.eps`. It is twice `Model.halfUlpAt format 1`, the half-ulp
 rounding bound of the error theorems.
 -/
 @[inline] def epsilon :

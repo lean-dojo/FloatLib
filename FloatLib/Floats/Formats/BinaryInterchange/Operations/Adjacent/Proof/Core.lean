@@ -17,9 +17,12 @@ device is `adjacencyRank`: it reverses the raw encoding order for negative value
 for positive values, and assigns both signed-zero words one rank. The unsigned-zero policy has
 one reserved NaN word at the sign boundary, which `nextUp` skips.
 
-The public contracts show that each ordinary step changes the rank by exactly one, so no
-representable numerical rank lies between the input and output. Exceptional values, saturating
-endpoints, and non-strict rank inequalities are in `Adjacent.Proof.Boundaries`.
+The public contracts show that each ordinary step changes the rank by exactly one, that the rank
+orders non-NaN values as their extended reals (`adjacencyRank_lt_adjacencyRank_iff`, with equal
+ranks exactly for equal values, so the two zeros share one), and that a step from a number never
+lands on a NaN (`isNaN_nextUp`, `isNaN_nextDown`). Exceptional values, saturating endpoints,
+non-strict rank inequalities, and the absence of a represented value between the input and output
+are in `Adjacent.Proof.Boundaries`.
 
 No theorem depends on a named format or fixed field width.
 -/
@@ -32,8 +35,9 @@ namespace Model
 /--
 Discrete rank used to state adjacency of representable numerical values.
 
-The two signed-zero encodings have the same rank. NaN words are not given numerical meaning, so
-the stepping theorems state their NaN preconditions.
+The two signed-zero encodings have the same rank. On non-NaN words the rank orders the
+extended-real values (`adjacencyRank_lt_adjacencyRank_iff`). NaN words are not given numerical
+meaning, so the stepping theorems state their NaN preconditions.
 -/
 def adjacencyRank {fmt : FloatFormat} (x : Model fmt) : Nat :=
   if signBit x then
@@ -158,40 +162,40 @@ private theorem signMaskNat_lt_two_pow_bitWidth (fmt : FloatFormat) :
     positivity
   omega
 
+/-- A zero word has zero exponent and fraction fields, in every encoding. -/
+private theorem fields_eq_zero_of_isZero {fmt : FloatFormat} {x : Model fmt}
+    (hx : isZero x = true) : expField x = 0 ∧ fracField x = 0 := by
+  cases hencoding : fmt.encoding with
+  | finiteUnsignedZero =>
+      have hbits : x.bits = 0 := by simpa [isZero, hencoding] using hx
+      have hvalue : x = posZero fmt := by
+        cases x
+        simp_all [posZero, ofNatBits, ofBits, FloatFormat.ofWordNat]
+      subst hvalue
+      simp
+  | ieee | finiteMaxNaN | finite =>
+      have hbool : (expField x == 0) = true ∧ (fracField x == 0) = true := by
+        simpa [isZero, hencoding, IEEE.isZero, Bool.and_eq_true] using hx
+      exact ⟨beq_iff_eq.mp hbool.1, beq_iff_eq.mp hbool.2⟩
+
 private theorem adjacencyRank_eq_signMaskNat_of_isZero
     {fmt : FloatFormat} (x : Model fmt)
     (hzero : isZero x = true) :
     adjacencyRank x = fmt.signMaskNat := by
-  cases hencoding : fmt.encoding with
-  | finiteUnsignedZero =>
-      have hbits : x.bits = 0 := by
-        simpa [isZero, hencoding] using hzero
-      have hvalue : x = posZero fmt := by
-        cases x
-        simp_all [posZero, ofNatBits, ofBits,
-          FloatFormat.ofWordNat]
-      subst x
-      exact adjacencyRank_posZero fmt
-  | ieee | finiteMaxNaN | finite =>
-      have hparts :
-          expField x = 0 ∧ fracField x = 0 := by
-        have hbool :
-            (expField x == 0) = true ∧ (fracField x == 0) = true := by
-          simpa [isZero, hencoding, IEEE.isZero,
-            Bool.and_eq_true] using hzero
-        exact ⟨beq_iff_eq.mp hbool.1, beq_iff_eq.mp hbool.2⟩
-      have hreconstruct := ofFields_signBit_expField_fracField x
-      cases hsign : signBit x
-      · have hvalue : x = posZero fmt := by
-          rw [hparts.1, hparts.2, hsign] at hreconstruct
-          simpa using hreconstruct.symm
-        subst x
-        exact adjacencyRank_posZero fmt
-      · have hvalue : x = negZero fmt := by
-          rw [hparts.1, hparts.2, hsign] at hreconstruct
-          simpa using hreconstruct.symm
-        subst x
-        exact adjacencyRank_negZero fmt
+  obtain ⟨hexponent, hfraction⟩ := fields_eq_zero_of_isZero hzero
+  have hreconstruct := ofFields_signBit_expField_fracField x
+  rw [hexponent, hfraction] at hreconstruct
+  cases hsign : signBit x
+  · have hvalue : x = posZero fmt := by
+      rw [hsign] at hreconstruct
+      simpa using hreconstruct.symm
+    subst x
+    exact adjacencyRank_posZero fmt
+  · have hvalue : x = negZero fmt := by
+      rw [hsign] at hreconstruct
+      simpa using hreconstruct.symm
+    subst x
+    exact adjacencyRank_negZero fmt
 
 private theorem shiftLeft_or_lowMask (a k : Nat) :
     a.shiftLeft k ||| (2 ^ k - 1) =
@@ -332,16 +336,14 @@ private theorem topCode_eq_ofFields_allOnes
     · omega
   · omega
 
-private theorem upperPositiveCode_isNaN_or_posMaxFinite
-    {fmt : FloatFormat} (x : Model fmt)
-    (hraw : x.toNatBits + 1 = fmt.signMaskNat) :
-    isNaN x = true ∨
-      (fmt.supportsInfinity = false ∧ x = posMaxFinite fmt) := by
-  have hvalue : x = ofNatBits (fmt.signMaskNat - 1) := by
-    rw [← ofNatBits_toNatBits x]
-    congr 1
-    omega
-  rw [hvalue, upperPositiveCode_eq_ofFields_allOnes]
+/--
+The all-ones exponent and fraction fields, with either sign, are a NaN when the encoding has NaN
+fields there and otherwise the largest finite value of that sign in a format without infinities.
+-/
+private theorem ofFields_allOnes_isNaN_or_maxFinite (fmt : FloatFormat) (sign : Bool) :
+    isNaN (ofFields fmt sign fmt.expAllOnesNat fmt.fracMaskNat) = true ∨
+      (fmt.supportsInfinity = false ∧
+        ofFields fmt sign fmt.expAllOnesNat fmt.fracMaskNat = maxFinite fmt sign) := by
   have hexponentFit :
       fmt.expAllOnesNat < 2 ^ fmt.expWidth := by
     unfold FloatFormat.expAllOnesNat
@@ -364,20 +366,25 @@ private theorem upperPositiveCode_isNaN_or_posMaxFinite
       simp [isNaN, hencoding,
         Nat.mod_eq_of_lt hexponentFit,
         Nat.mod_eq_of_lt hfractionFit]
-  | finiteUnsignedZero =>
+  | finiteUnsignedZero | finite =>
       right
       constructor
       · simp [FloatFormat.supportsInfinity, hencoding]
-      · simp [posMaxFinite, maxFinite, FloatFormat.maxFiniteExpField,
-        FloatFormat.maxFiniteFracField, FloatFormat.Encoding.maxFiniteExponent,
-        FloatFormat.expAllOnesNat, hencoding]
-  | finite =>
-      right
-      constructor
-      · simp [FloatFormat.supportsInfinity, hencoding]
-      · simp [posMaxFinite, maxFinite, FloatFormat.maxFiniteExpField,
-        FloatFormat.maxFiniteFracField, FloatFormat.Encoding.maxFiniteExponent,
-        FloatFormat.expAllOnesNat, hencoding]
+      · simp [maxFinite, FloatFormat.maxFiniteExpField,
+          FloatFormat.maxFiniteFracField, FloatFormat.Encoding.maxFiniteExponent,
+          FloatFormat.expAllOnesNat, hencoding]
+
+private theorem upperPositiveCode_isNaN_or_posMaxFinite
+    {fmt : FloatFormat} (x : Model fmt)
+    (hraw : x.toNatBits + 1 = fmt.signMaskNat) :
+    isNaN x = true ∨
+      (fmt.supportsInfinity = false ∧ x = posMaxFinite fmt) := by
+  have hvalue : x = ofNatBits (fmt.signMaskNat - 1) := by
+    rw [← ofNatBits_toNatBits x]
+    congr 1
+    omega
+  rw [hvalue, upperPositiveCode_eq_ofFields_allOnes]
+  exact ofFields_allOnes_isNaN_or_maxFinite fmt false
 
 private theorem topCode_isNaN_or_negMaxFinite
     {fmt : FloatFormat} (x : Model fmt)
@@ -389,46 +396,7 @@ private theorem topCode_isNaN_or_negMaxFinite
     congr 1
     omega
   rw [hvalue, topCode_eq_ofFields_allOnes]
-  have hexponentFit :
-      fmt.expAllOnesNat < 2 ^ fmt.expWidth := by
-    unfold FloatFormat.expAllOnesNat
-    have hpow : 0 < 2 ^ fmt.expWidth := Nat.two_pow_pos _
-    omega
-  have hfractionFit :
-      fmt.fracMaskNat < 2 ^ fmt.fracWidth := by
-    unfold FloatFormat.fracMaskNat
-    have hpow : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos _
-    omega
-  cases hencoding : fmt.encoding with
-  | ieee =>
-      left
-      simp [isNaN, IEEE.isNaN, hencoding,
-        Nat.mod_eq_of_lt hexponentFit,
-        Nat.mod_eq_of_lt hfractionFit,
-        (FloatFormat.fracMaskNat_pos fmt).ne']
-  | finiteMaxNaN =>
-      left
-      simp [isNaN, hencoding,
-        Nat.mod_eq_of_lt hexponentFit,
-        Nat.mod_eq_of_lt hfractionFit]
-  | finiteUnsignedZero =>
-      right
-      constructor
-      · simp [FloatFormat.supportsInfinity, hencoding]
-      · simp [negMaxFinite, maxFinite,
-          FloatFormat.maxFiniteExpField,
-          FloatFormat.maxFiniteFracField,
-          FloatFormat.Encoding.maxFiniteExponent,
-          FloatFormat.expAllOnesNat, hencoding]
-  | finite =>
-      right
-      constructor
-      · simp [FloatFormat.supportsInfinity, hencoding]
-      · simp [negMaxFinite, maxFinite,
-          FloatFormat.maxFiniteExpField,
-          FloatFormat.maxFiniteFracField,
-          FloatFormat.Encoding.maxFiniteExponent,
-          FloatFormat.expAllOnesNat, hencoding]
+  exact ofFields_allOnes_isNaN_or_maxFinite fmt true
 
 private theorem signMaskCode_isZero_or_isNaN
     {fmt : FloatFormat} (x : Model fmt)
@@ -602,6 +570,16 @@ private theorem eq_of_bits_eq
 
 /-! ## Exact rank steps -/
 
+/-- A value other than an endpoint `y` fails the saturating-endpoint test against `y`. -/
+private theorem endpointTest_eq_false {fmt : FloatFormat} {x y : Model fmt}
+    (h : fmt.supportsInfinity = false → x ≠ y) :
+    (!fmt.supportsInfinity && (x.bits == y.bits)) = false := by
+  apply Bool.eq_false_of_not_eq_true
+  intro hendpoint
+  have hparts : !fmt.supportsInfinity = true ∧ (x.bits == y.bits) = true := by
+    simpa [Bool.and_eq_true] using hendpoint
+  exact h (by simpa using hparts.1) (eq_of_bits_eq (beq_iff_eq.mp hparts.2))
+
 /--
 Away from NaNs and a saturating positive endpoint, `nextUp` advances exactly one adjacency rank.
 
@@ -622,20 +600,7 @@ theorem adjacencyRank_nextUp
     · simp
     · have hsign := hinfinity hinf
       simp [hsign]
-  have hupperEndpoint :
-      (!fmt.supportsInfinity &&
-          (x.bits == (posMaxFinite fmt).bits)) = false := by
-    apply Bool.eq_false_of_not_eq_true
-    intro hendpoint
-    have hparts :
-        !fmt.supportsInfinity = true ∧
-          (x.bits == (posMaxFinite fmt).bits) = true := by
-      simpa [Bool.and_eq_true] using hendpoint
-    have hnoInfinity : fmt.supportsInfinity = false := by
-      simpa using hparts.1
-    have hvalue : x = posMaxFinite fmt :=
-      eq_of_bits_eq (beq_iff_eq.mp hparts.2)
-    exact hmax hnoInfinity hvalue
+  have hupperEndpoint := endpointTest_eq_false hmax
   cases hzero : isZero x
   · cases hfnuz :
         (!fmt.supportsSignedZero &&
@@ -696,20 +661,7 @@ theorem adjacencyRank_nextDown
     · simp
     · have hsign := hinfinity hinf
       simp [hsign]
-  have hlowerEndpoint :
-      (!fmt.supportsInfinity &&
-          (x.bits == (negMaxFinite fmt).bits)) = false := by
-    apply Bool.eq_false_of_not_eq_true
-    intro hendpoint
-    have hparts :
-        !fmt.supportsInfinity = true ∧
-          (x.bits == (negMaxFinite fmt).bits) = true := by
-      simpa [Bool.and_eq_true] using hendpoint
-    have hnoInfinity : fmt.supportsInfinity = false := by
-      simpa using hparts.1
-    have hvalue : x = negMaxFinite fmt :=
-      eq_of_bits_eq (beq_iff_eq.mp hparts.2)
-    exact hmin hnoInfinity hvalue
+  have hlowerEndpoint := endpointTest_eq_false hmin
   cases hzero : isZero x
   · cases hsign : signBit x
     · have hpositive := toNatBits_pos_of_isZero_eq_false x hzero
@@ -740,33 +692,638 @@ theorem adjacencyRank_nextDown
       positivity
     omega
 
-/-- No representable numerical rank lies strictly between `x` and its `nextUp` result. -/
-theorem no_rank_between_nextUp
-    {fmt : FloatFormat} (x : Model fmt)
-    (hnan : isNaN x = false)
-    (hinfinity :
-      isInf x = true → signBit x = true)
-    (hmax :
-      fmt.supportsInfinity = false → x ≠ posMaxFinite fmt) :
-    ¬ ∃ y : Model fmt,
-        adjacencyRank x < adjacencyRank y ∧
-          adjacencyRank y < adjacencyRank (nextUp x) := by
-  rw [adjacencyRank_nextUp x hnan hinfinity hmax]
+/-! ## Rank and numerical order
+
+A storage word is its sign-bit place value, when the sign is set, plus its magnitude: the exponent
+and fraction fields read as one number. The rank adds the magnitude to the sign-bit place value
+for a clear sign and subtracts it for a set sign. A finite word denotes its grid index, negated for
+a set sign, times the least subnormal spacing, and the grid index increases strictly with the
+magnitude, so the rank orders finite values numerically. An infinity has the largest magnitude
+among the numbers of its sign, and both zero words have magnitude zero, so they share one rank.
+-/
+
+/-- The storage word without its sign bit: the biased exponent and fraction fields together. -/
+private def magnitudeBits {fmt : FloatFormat} (x : Model fmt) : Nat :=
+  expField x * 2 ^ fmt.fracWidth + fracField x
+
+private theorem signMaskNat_eq_mul (fmt : FloatFormat) :
+    fmt.signMaskNat = 2 ^ fmt.fracWidth * 2 ^ fmt.expWidth := by
+  unfold FloatFormat.signMaskNat FloatFormat.signBitIndex FloatFormat.bitWidth
+  rw [← pow_add]
+  congr 1
   omega
 
-/-- No representable numerical rank lies strictly between a `nextDown` result and its input. -/
-theorem no_rank_between_nextDown
-    {fmt : FloatFormat} (x : Model fmt)
-    (hnan : isNaN x = false)
-    (hinfinity :
-      isInf x = true → signBit x = false)
-    (hmin :
-      fmt.supportsInfinity = false → x ≠ negMaxFinite fmt) :
-    ¬ ∃ y : Model fmt,
-        adjacencyRank (nextDown x) < adjacencyRank y ∧
-          adjacencyRank y < adjacencyRank x := by
-  rw [← adjacencyRank_nextDown x hnan hinfinity hmin]
+private theorem magnitude_eq_mod {fmt : FloatFormat} (x : Model fmt) :
+    magnitudeBits x = x.toNatBits % fmt.signMaskNat := by
+  unfold magnitudeBits
+  rw [expField_eq_internal_apply, fracField_eq_internal_apply]
+  unfold Internal.expField Internal.fracField FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
+  rw [Nat.and_two_pow_sub_one_eq_mod, Nat.and_two_pow_sub_one_eq_mod, Nat.shiftRight_eq_div_pow,
+    signMaskNat_eq_mul, Nat.mod_mul]
+  ring
+
+private theorem magnitude_lt {fmt : FloatFormat} (x : Model fmt) :
+    magnitudeBits x < fmt.signMaskNat := by
+  rw [magnitude_eq_mod]
+  apply Nat.mod_lt
+  unfold FloatFormat.signMaskNat
+  positivity
+
+/-- A storage word is its sign-bit place value, when the sign is set, plus its magnitude. -/
+private theorem toNatBits_eq_magnitude {fmt : FloatFormat} (x : Model fmt) :
+    x.toNatBits = (if signBit x then fmt.signMaskNat else 0) + magnitudeBits x := by
+  rw [magnitude_eq_mod]
+  have hlt := toNatBits_lt_two_pow x
+  rw [← two_mul_signMaskNat_eq_two_pow_bitWidth] at hlt
+  cases hs : signBit x
+  · have := (signBit_eq_false_iff_toNatBits_lt_signMaskNat x).1 hs
+    simp [Nat.mod_eq_of_lt this]
+  · have := (signBit_eq_true_iff_signMaskNat_le x).1 hs
+    simp only [ite_true]
+    rw [Nat.mod_eq_sub_mod this, Nat.mod_eq_of_lt (by omega)]
+    omega
+
+/-- A word below the sign-bit place value has a clear sign and is its own magnitude. -/
+private theorem signBit_magnitude_of_toNatBits_lt {fmt : FloatFormat} (x : Model fmt)
+    (hx : x.toNatBits < fmt.signMaskNat) :
+    signBit x = false ∧ magnitudeBits x = x.toNatBits := by
+  have hs := (signBit_eq_false_iff_toNatBits_lt_signMaskNat x).2 hx
+  have h := toNatBits_eq_magnitude x
+  simp only [hs, Bool.false_eq_true, ite_false, Nat.zero_add] at h
+  exact ⟨hs, h.symm⟩
+
+/-- A word at or above the sign-bit place value has a set sign and the rest as its magnitude. -/
+private theorem signBit_magnitude_of_signMaskNat_le {fmt : FloatFormat} (x : Model fmt)
+    (hx : fmt.signMaskNat ≤ x.toNatBits) :
+    signBit x = true ∧ magnitudeBits x = x.toNatBits - fmt.signMaskNat := by
+  have hs := (signBit_eq_true_iff_signMaskNat_le x).2 hx
+  have h := toNatBits_eq_magnitude x
+  simp only [hs, ite_true] at h
+  exact ⟨hs, by omega⟩
+
+/-- Two words with the same sign bit and magnitude are equal. -/
+private theorem eq_of_signBit_eq_of_magnitude_eq {fmt : FloatFormat} {x y : Model fmt}
+    (hs : signBit x = signBit y) (hm : magnitudeBits x = magnitudeBits y) : x = y := by
+  have hn : x.toNatBits = y.toNatBits := by
+    rw [toNatBits_eq_magnitude x, toNatBits_eq_magnitude y, hs, hm]
+  rw [← ofNatBits_toNatBits x, hn, ofNatBits_toNatBits]
+
+/-- A biased exponent field below `c` is a magnitude below `c` fraction-field periods. -/
+private theorem expField_lt_iff {fmt : FloatFormat} (x : Model fmt) (c : Nat) :
+    expField x < c ↔ magnitudeBits x < c * 2 ^ fmt.fracWidth := by
+  have hf := fracField_lt_pow2 x
+  unfold magnitudeBits
+  constructor
+  · intro h
+    have : (expField x + 1) * 2 ^ fmt.fracWidth ≤ c * 2 ^ fmt.fracWidth :=
+      Nat.mul_le_mul_right _ h
+    rw [Nat.add_mul, Nat.one_mul] at this
+    omega
+  · intro h
+    by_contra hc
+    have : c * 2 ^ fmt.fracWidth ≤ expField x * 2 ^ fmt.fracWidth :=
+      Nat.mul_le_mul_right _ (by omega)
+    omega
+
+private theorem fields_eq_zero_of_magnitude_eq_zero {fmt : FloatFormat} {x : Model fmt}
+    (hm : magnitudeBits x = 0) : expField x = 0 ∧ fracField x = 0 := by
+  have he := (expField_lt_iff x 1).2 (by rw [hm]; simp)
+  refine ⟨by omega, ?_⟩
+  unfold magnitudeBits at hm
   omega
+
+private theorem magnitude_eq_zero_of_isZero {fmt : FloatFormat} {x : Model fmt}
+    (hx : isZero x = true) : magnitudeBits x = 0 := by
+  obtain ⟨hexponent, hfraction⟩ := fields_eq_zero_of_isZero hx
+  simp [magnitudeBits, hexponent, hfraction]
+
+/-- A number whose magnitude is zero is a zero; the sign-mask word of FNUZ is its NaN. -/
+private theorem isZero_of_magnitude_eq_zero {fmt : FloatFormat} {x : Model fmt}
+    (hnan : isNaN x = false) (hm : magnitudeBits x = 0) : isZero x = true := by
+  obtain ⟨he, hf⟩ := fields_eq_zero_of_magnitude_eq_zero hm
+  cases hencoding : fmt.encoding with
+  | finiteUnsignedZero =>
+      have hn := toNatBits_eq_magnitude x
+      rw [hm] at hn
+      cases hs : signBit x
+      · have hbits : x.bits = 0 := by
+          apply BitVec.eq_of_toNat_eq
+          simpa [toNatBits, hs] using hn
+        simp [isZero, hencoding, hbits]
+      · have hbits : x.bits = FloatFormat.signMask fmt := by
+          apply BitVec.eq_of_toNat_eq
+          rw [FloatFormat.signMask_toNat]
+          simpa [toNatBits, hs, FloatFormat.signMaskNat, FloatFormat.signBitIndex] using hn
+        simp [isNaN, hencoding, hbits] at hnan
+  | ieee | finiteMaxNaN | finite =>
+      simp [isZero, hencoding, IEEE.isZero, he, hf]
+
+/-- Signed magnitude of a word: its magnitude, negated when the sign bit is set. -/
+private def signedMagnitude {fmt : FloatFormat} (x : Model fmt) : Int :=
+  if signBit x then -(magnitudeBits x : Int) else magnitudeBits x
+
+/-- The adjacency rank is the sign-bit place value shifted by the signed magnitude. -/
+private theorem adjacencyRank_eq_signedMagnitude {fmt : FloatFormat} (x : Model fmt) :
+    (adjacencyRank x : Int) = fmt.signMaskNat + signedMagnitude x := by
+  have h := toNatBits_eq_magnitude x
+  have hm := magnitude_lt x
+  have hw := two_mul_signMaskNat_eq_two_pow_bitWidth fmt
+  unfold adjacencyRank signedMagnitude
+  cases hs : signBit x <;> simp only [hs, ite_true, ite_false, Bool.false_eq_true] at h ⊢ <;>
+    omega
+
+/--
+Multiple of the least subnormal spacing denoted by a positive word with biased exponent `e` and
+fraction `f`.
+-/
+private def gridIndex (fmt : FloatFormat) (e f : Nat) : Nat :=
+  if e = 0 then f else (2 ^ fmt.fracWidth + f) * 2 ^ (e - 1)
+
+/-- The grid index index increases strictly with the field pair read as one number. -/
+private theorem gridIndex_lt_gridIndex (fmt : FloatFormat) {e f e' f' : Nat}
+    (hf : f < 2 ^ fmt.fracWidth) (hf' : f' < 2 ^ fmt.fracWidth)
+    (h : e * 2 ^ fmt.fracWidth + f < e' * 2 ^ fmt.fracWidth + f') :
+    gridIndex fmt e f < gridIndex fmt e' f' := by
+  have hP : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos _
+  have hle : e ≤ e' := by
+    by_contra hlt
+    have : (e' + 1) * 2 ^ fmt.fracWidth ≤ e * 2 ^ fmt.fracWidth :=
+      Nat.mul_le_mul_right _ (by omega)
+    rw [Nat.add_mul, Nat.one_mul] at this
+    omega
+  rcases hle.lt_or_eq with hlt | heq
+  · have hbelow : gridIndex fmt e f < 2 ^ fmt.fracWidth * 2 ^ e := by
+      unfold gridIndex
+      split_ifs with he
+      · subst he
+        simpa using hf
+      · calc (2 ^ fmt.fracWidth + f) * 2 ^ (e - 1)
+            < (2 * 2 ^ fmt.fracWidth) * 2 ^ (e - 1) :=
+              Nat.mul_lt_mul_of_pos_right (by omega) (Nat.two_pow_pos _)
+          _ = 2 ^ fmt.fracWidth * 2 ^ e := by
+            rw [show e = (e - 1) + 1 by omega, pow_succ]
+            simp only [Nat.add_sub_cancel]
+            ring
+    have habove : 2 ^ fmt.fracWidth * 2 ^ e ≤ gridIndex fmt e' f' := by
+      have he' : e' ≠ 0 := by omega
+      simp only [gridIndex, he', ite_false]
+      calc 2 ^ fmt.fracWidth * 2 ^ e ≤ 2 ^ fmt.fracWidth * 2 ^ (e' - 1) :=
+            Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by decide) (by omega))
+        _ ≤ (2 ^ fmt.fracWidth + f') * 2 ^ (e' - 1) :=
+            Nat.mul_le_mul_right _ (by omega)
+    omega
+  · subst heq
+    unfold gridIndex
+    split_ifs
+    · omega
+    · exact Nat.mul_lt_mul_of_pos_right (by omega) (Nat.two_pow_pos _)
+
+/-- Grid index of a word, read from its stored fields. -/
+private def wordGridIndex {fmt : FloatFormat} (x : Model fmt) : Nat :=
+  gridIndex fmt (expField x) (fracField x)
+
+private theorem wordGridIndex_lt_wordGridIndex {fmt : FloatFormat} {x y : Model fmt}
+    (h : magnitudeBits x < magnitudeBits y) : wordGridIndex x < wordGridIndex y :=
+  gridIndex_lt_gridIndex fmt (fracField_lt_pow2 x) (fracField_lt_pow2 y) h
+
+private theorem wordGridIndex_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
+    wordGridIndex x = 0 ↔ magnitudeBits x = 0 := by
+  constructor
+  · intro h
+    by_contra hm
+    have hzero : magnitudeBits (posZero fmt) = 0 := by simp [magnitudeBits]
+    have hlt := wordGridIndex_lt_wordGridIndex (x := posZero fmt) (y := x) (by omega)
+    have h0 : wordGridIndex (posZero fmt) = 0 := by simp [wordGridIndex, gridIndex]
+    omega
+  · intro h
+    obtain ⟨he, hf⟩ := fields_eq_zero_of_magnitude_eq_zero h
+    simp [wordGridIndex, gridIndex, he, hf]
+
+/-- Signed grid index index: the grid index index, negated when the sign bit is set. -/
+private def signedGridIndex {fmt : FloatFormat} (x : Model fmt) : Int :=
+  if signBit x then -(wordGridIndex x : Int) else wordGridIndex x
+
+/-- Signed grid index indices are ordered as signed keys. -/
+private theorem signedGridIndex_lt_signedGridIndex {fmt : FloatFormat} {x y : Model fmt}
+    (h : signedMagnitude x < signedMagnitude y) : signedGridIndex x < signedGridIndex y := by
+  have hzx := wordGridIndex_eq_zero_iff x
+  have hzy := wordGridIndex_eq_zero_iff y
+  unfold signedMagnitude at h
+  unfold signedGridIndex
+  cases hsx : signBit x <;> cases hsy : signBit y <;>
+    simp only [hsx, hsy, ite_true, ite_false, Bool.false_eq_true] at h ⊢
+  · have := wordGridIndex_lt_wordGridIndex (x := x) (y := y) (by omega)
+    omega
+  · omega
+  · omega
+  · have := wordGridIndex_lt_wordGridIndex (x := y) (y := x) (by omega)
+    omega
+
+/-- A finite word denotes its signed grid index index times the least subnormal spacing. -/
+private theorem toReal_eq_signedGridIndex {fmt : FloatFormat} {x : Model fmt}
+    (hx : isFinite x = true) :
+    toReal x = (signedGridIndex x : ℝ) * (2 : ℝ) ^ fmt.minSubnormalExponent := by
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
+  have hsign := sign_eq_signBit_of_toDyadic?_some hd
+  rw [toReal_eq, hd]
+  simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand, hsign, signedGridIndex,
+    wordGridIndex]
+  rcases toDyadic?_some_cases hd with ⟨hs, -⟩ | ⟨he, _, hs, hexp⟩ | ⟨he, hs, hexp⟩
+  · have hz := fields_eq_zero_of_magnitude_eq_zero <| magnitude_eq_zero_of_isZero
+      (isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hs)
+    cases signBit x <;> simp [hs, hz.1, hz.2, gridIndex]
+  · cases signBit x <;> simp [hs, hexp, he, gridIndex]
+  · rw [hs, hexp]
+    simp only [gridIndex, he, ite_false, pow2_eq_two_pow]
+    have hexpEq : (Int.ofNat (expField x) - Int.ofNat fmt.exponentBias -
+        Int.ofNat fmt.fracWidth) = ((expField x - 1 : Nat) : Int) + fmt.minSubnormalExponent := by
+      unfold FloatFormat.minSubnormalExponent FloatFormat.minNormalExponent
+      simp only [Int.ofNat_eq_natCast]
+      omega
+    rw [hexpEq, zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]
+    cases signBit x <;> simp only [ite_true, ite_false, Bool.false_eq_true] <;> push_cast <;> ring
+
+/-- Only an IEEE encoding has infinities, which have the all-ones exponent and zero fraction. -/
+private theorem encoding_eq_ieee_and_magnitude_of_isInf {fmt : FloatFormat} {x : Model fmt}
+    (hx : isInf x = true) :
+    fmt.encoding = .ieee ∧ magnitudeBits x = fmt.expAllOnesNat * 2 ^ fmt.fracWidth := by
+  cases hencoding : fmt.encoding with
+  | ieee =>
+      have hfields : expField x = fmt.expAllOnesNat ∧ fracField x = 0 := by
+        simpa [isInf, hencoding, IEEE.isInf, Bool.and_eq_true] using hx
+      exact ⟨rfl, by simp [magnitudeBits, hfields.1, hfields.2]⟩
+  | finiteMaxNaN | finiteUnsignedZero | finite =>
+      simp [isInf, hencoding] at hx
+
+/-- A finite IEEE word has a magnitude below that of the infinities. -/
+private theorem magnitude_lt_of_isFinite {fmt : FloatFormat} {x : Model fmt}
+    (hencoding : fmt.encoding = .ieee) (hx : isFinite x = true) :
+    magnitudeBits x < fmt.expAllOnesNat * 2 ^ fmt.fracWidth := by
+  have hne : expField x ≠ fmt.expAllOnesNat := by
+    simpa [isFinite, hencoding, IEEE.isFinite] using hx
+  have hlt := expField_lt_pow2 x
+  exact (expField_lt_iff x _).1 (by unfold FloatFormat.expAllOnesNat at hne ⊢; omega)
+
+/-- A number in an IEEE encoding has magnitude at most that of the infinities. -/
+private theorem magnitude_le_of_isNaN_eq_false {fmt : FloatFormat} {x : Model fmt}
+    (hencoding : fmt.encoding = .ieee) (hnan : isNaN x = false) :
+    magnitudeBits x ≤ fmt.expAllOnesNat * 2 ^ fmt.fracWidth := by
+  cases hinf : isInf x
+  · exact (magnitude_lt_of_isFinite hencoding
+      (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf)).le
+  · exact (encoding_eq_ieee_and_magnitude_of_isInf hinf).2.le
+
+/-- A finite word denotes a real number in the extended reals; an infinity denotes its endpoint. -/
+private theorem toEReal_of_isInf {fmt : FloatFormat} {x : Model fmt} (hx : isInf x = true) :
+    toEReal x = if signBit x then ⊥ else ⊤ := by
+  rw [toEReal_eq_ite, isNaN_eq_false_of_isInf_eq_true x hx]
+  simp [hx]
+
+/-- Numbers are ordered in the extended reals as their signed keys. -/
+private theorem toEReal_lt_toEReal_of_signedMagnitude_lt {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = false) (hy : isNaN y = false) (h : signedMagnitude x < signedMagnitude y) :
+    toEReal x < toEReal y := by
+  cases hxinf : isInf x <;> cases hyinf : isInf y
+  · have hxf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hxinf
+    have hyf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hy hyinf
+    rw [toEReal_eq_coe_toReal_of_isFinite x hxf, toEReal_eq_coe_toReal_of_isFinite y hyf,
+      EReal.coe_lt_coe_iff, toReal_eq_signedGridIndex hxf, toReal_eq_signedGridIndex hyf]
+    have hu : (0 : ℝ) < (2 : ℝ) ^ fmt.minSubnormalExponent := by positivity
+    exact mul_lt_mul_of_pos_right (by exact_mod_cast signedGridIndex_lt_signedGridIndex h) hu
+  · obtain ⟨henc, hmy⟩ := encoding_eq_ieee_and_magnitude_of_isInf hyinf
+    have hxf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hxinf
+    have hmx := magnitude_lt_of_isFinite henc hxf
+    rw [toEReal_eq_coe_toReal_of_isFinite x hxf, toEReal_of_isInf hyinf]
+    cases hsy : signBit y
+    · simp
+    · unfold signedMagnitude at h
+      cases hsx : signBit x <;>
+        simp only [hsx, hsy, ite_true, ite_false, Bool.false_eq_true] at h <;> omega
+  · obtain ⟨henc, hmx⟩ := encoding_eq_ieee_and_magnitude_of_isInf hxinf
+    have hyf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hy hyinf
+    have hmy := magnitude_lt_of_isFinite henc hyf
+    rw [toEReal_eq_coe_toReal_of_isFinite y hyf, toEReal_of_isInf hxinf]
+    cases hsx : signBit x
+    · unfold signedMagnitude at h
+      cases hsy : signBit y <;>
+        simp only [hsx, hsy, ite_true, ite_false, Bool.false_eq_true] at h <;> omega
+    · simp
+  · obtain ⟨-, hmx⟩ := encoding_eq_ieee_and_magnitude_of_isInf hxinf
+    obtain ⟨-, hmy⟩ := encoding_eq_ieee_and_magnitude_of_isInf hyinf
+    rw [toEReal_of_isInf hxinf, toEReal_of_isInf hyinf]
+    unfold signedMagnitude at h
+    cases hsx : signBit x <;> cases hsy : signBit y <;>
+      simp only [hsx, hsy, ite_true, ite_false, Bool.false_eq_true] at h ⊢ <;>
+      first | omega | exact bot_lt_top
+
+/-- Numbers with equal signed keys denote the same extended real. -/
+private theorem toEReal_eq_toEReal_of_signedMagnitude_eq {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = false) (hy : isNaN y = false) (h : signedMagnitude x = signedMagnitude y) :
+    toEReal x = toEReal y := by
+  unfold signedMagnitude at h
+  by_cases hs : signBit x = signBit y
+  · have hm : magnitudeBits x = magnitudeBits y := by
+      rw [hs] at h
+      cases hsy : signBit y <;> simp only [hsy, ite_true, ite_false, Bool.false_eq_true] at h <;>
+        omega
+    rw [eq_of_signBit_eq_of_magnitude_eq hs hm]
+  · have hm : magnitudeBits x = 0 ∧ magnitudeBits y = 0 := by
+      cases hsx : signBit x <;> cases hsy : signBit y <;>
+        simp only [hsx, hsy, ite_true, ite_false, Bool.false_eq_true, not_true_eq_false,
+          not_false_eq_true] at h hs <;> omega
+    have hxz := isZero_of_magnitude_eq_zero hx hm.1
+    have hyz := isZero_of_magnitude_eq_zero hy hm.2
+    rw [toEReal_eq_coe_toReal_of_isFinite x (isFinite_eq_true_of_isZero_eq_true x hxz),
+      toEReal_eq_coe_toReal_of_isFinite y (isFinite_eq_true_of_isZero_eq_true y hyz),
+      toReal_eq_zero_of_isZero x hxz, toReal_eq_zero_of_isZero y hyz]
+
+/--
+On non-NaN values the adjacency rank is a strict order embedding of the extended-real values:
+a smaller rank is a smaller number, including at both infinities and across the two zeros.
+-/
+theorem adjacencyRank_lt_adjacencyRank_iff {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = false) (hy : isNaN y = false) :
+    adjacencyRank x < adjacencyRank y ↔ toEReal x < toEReal y := by
+  have hkey : adjacencyRank x < adjacencyRank y ↔ signedMagnitude x < signedMagnitude y := by
+    have := adjacencyRank_eq_signedMagnitude x
+    have := adjacencyRank_eq_signedMagnitude y
+    omega
+  rw [hkey]
+  refine ⟨toEReal_lt_toEReal_of_signedMagnitude_lt hx hy, fun hlt => ?_⟩
+  rcases lt_trichotomy (signedMagnitude x) (signedMagnitude y) with hk | hk | hk
+  · exact hk
+  · exact absurd (toEReal_eq_toEReal_of_signedMagnitude_eq hx hy hk) hlt.ne
+  · exact absurd (toEReal_lt_toEReal_of_signedMagnitude_lt hy hx hk) (not_lt.mpr hlt.le)
+
+/--
+Two non-NaN values have the same adjacency rank exactly when they denote the same extended real.
+The two signed-zero words therefore share a rank, and every other number has a rank of its own.
+-/
+theorem adjacencyRank_eq_adjacencyRank_iff {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = false) (hy : isNaN y = false) :
+    adjacencyRank x = adjacencyRank y ↔ toEReal x = toEReal y := by
+  constructor
+  · intro h
+    apply toEReal_eq_toEReal_of_signedMagnitude_eq hx hy
+    have := adjacencyRank_eq_signedMagnitude x
+    have := adjacencyRank_eq_signedMagnitude y
+    omega
+  · intro h
+    rcases lt_trichotomy (adjacencyRank x) (adjacencyRank y) with hr | hr | hr
+    · exact absurd h ((adjacencyRank_lt_adjacencyRank_iff hx hy).1 hr).ne
+    · exact hr
+    · exact absurd h.symm ((adjacencyRank_lt_adjacencyRank_iff hy hx).1 hr).ne
+
+/-- On non-NaN values a weakly smaller adjacency rank is a weakly smaller extended real. -/
+theorem adjacencyRank_le_adjacencyRank_iff {fmt : FloatFormat} {x y : Model fmt}
+    (hx : isNaN x = false) (hy : isNaN y = false) :
+    adjacencyRank x ≤ adjacencyRank y ↔ toEReal x ≤ toEReal y := by
+  rw [← not_lt, ← not_lt, adjacencyRank_lt_adjacencyRank_iff hy hx]
+
+/-! ## Steps between numbers -/
+
+/-- A word whose magnitude reaches the all-ones exponent field has that exponent field. -/
+private theorem expField_eq_expAllOnesNat_of_le {fmt : FloatFormat} (x : Model fmt)
+    (h : fmt.expAllOnesNat * 2 ^ fmt.fracWidth ≤ magnitudeBits x) :
+    expField x = fmt.expAllOnesNat := by
+  have he := expField_lt_pow2 x
+  have hge : ¬expField x < fmt.expAllOnesNat := fun h' => by
+    have := (expField_lt_iff x fmt.expAllOnesNat).1 h'
+    omega
+  unfold FloatFormat.expAllOnesNat at hge ⊢
+  omega
+
+/-- In the IEEE encoding a word is a NaN exactly when its magnitude exceeds the infinities'. -/
+private theorem isNaN_iff_of_ieee {fmt : FloatFormat} (x : Model fmt)
+    (hencoding : fmt.encoding = .ieee) :
+    isNaN x = true ↔ fmt.expAllOnesNat * 2 ^ fmt.fracWidth < magnitudeBits x := by
+  simp only [isNaN, hencoding, IEEE.isNaN, Bool.and_eq_true, beq_iff_eq, bne_iff_ne, ne_eq]
+  constructor
+  · rintro ⟨hexp, hfrac⟩
+    unfold magnitudeBits
+    rw [hexp]
+    omega
+  · intro h
+    have hexp := expField_eq_expAllOnesNat_of_le x h.le
+    refine ⟨hexp, ?_⟩
+    unfold magnitudeBits at h
+    rw [hexp] at h
+    omega
+
+/-- The all-ones exponent field and a full fraction period fill the magnitude range. -/
+private theorem expAllOnesNat_mul_add (fmt : FloatFormat) :
+    fmt.expAllOnesNat * 2 ^ fmt.fracWidth + 2 ^ fmt.fracWidth = fmt.signMaskNat := by
+  have hexp : 0 < 2 ^ fmt.expWidth := Nat.two_pow_pos _
+  rw [signMaskNat_eq_mul, Nat.mul_comm (2 ^ fmt.fracWidth) (2 ^ fmt.expWidth)]
+  unfold FloatFormat.expAllOnesNat
+  conv_rhs => rw [show 2 ^ fmt.expWidth = (2 ^ fmt.expWidth - 1) + 1 by omega]
+  rw [Nat.add_mul, Nat.one_mul]
+
+/-- In the maximum-NaN encoding a word is a NaN exactly when it has the largest magnitude. -/
+private theorem isNaN_iff_of_finiteMaxNaN {fmt : FloatFormat} (x : Model fmt)
+    (hencoding : fmt.encoding = .finiteMaxNaN) :
+    isNaN x = true ↔ magnitudeBits x + 1 = fmt.signMaskNat := by
+  have hf := fracField_lt_pow2 x
+  have hfill := expAllOnesNat_mul_add fmt
+  have hP : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos _
+  simp only [isNaN, hencoding, Bool.and_eq_true, beq_iff_eq]
+  unfold FloatFormat.fracMaskNat
+  constructor
+  · rintro ⟨hexp, hfrac⟩
+    unfold magnitudeBits
+    rw [hexp, hfrac]
+    omega
+  · intro h
+    have hexp := expField_eq_expAllOnesNat_of_le x (by omega)
+    refine ⟨hexp, ?_⟩
+    unfold magnitudeBits at h
+    rw [hexp] at h
+    omega
+
+/-- In the FNUZ encoding the NaN is the negative word of magnitude zero. -/
+private theorem isNaN_iff_of_finiteUnsignedZero {fmt : FloatFormat} (x : Model fmt)
+    (hencoding : fmt.encoding = .finiteUnsignedZero) :
+    isNaN x = true ↔ signBit x = true ∧ magnitudeBits x = 0 := by
+  have hn := toNatBits_eq_magnitude x
+  have hm := magnitude_lt x
+  simp only [isNaN, hencoding, beq_iff_eq]
+  constructor
+  · intro hbits
+    have hraw : x.toNatBits = fmt.signMaskNat := by
+      rw [toNatBits, hbits, FloatFormat.signMask_toNat]
+      rfl
+    have hs : signBit x = true := (signBit_eq_true_iff_signMaskNat_le x).2 hraw.ge
+    simp only [hs, ite_true] at hn
+    exact ⟨hs, by omega⟩
+  · rintro ⟨hs, hzero⟩
+    apply BitVec.eq_of_toNat_eq
+    rw [FloatFormat.signMask_toNat]
+    change x.toNatBits = _
+    simpa [hs, hzero, FloatFormat.signMaskNat, FloatFormat.signBitIndex] using hn
+
+/-- The largest finite value of the maximum-NaN encoding sits just below the NaN magnitude. -/
+private theorem magnitude_maxFinite_of_finiteMaxNaN {fmt : FloatFormat}
+    (hencoding : fmt.encoding = .finiteMaxNaN) (sign : Bool) :
+    magnitudeBits (maxFinite fmt sign) + 2 = fmt.signMaskNat := by
+  have hfill := expAllOnesNat_mul_add fmt
+  have hP : 2 ≤ 2 ^ fmt.fracWidth := by
+    simpa using Nat.pow_le_pow_right (by decide : 0 < 2) fmt.fracWidth_pos
+  unfold magnitudeBits maxFinite
+  rw [expField_ofFields_of_lt _ _ _ _ fmt.maxFiniteExpField_lt_two_pow,
+    fracField_ofFields_of_lt _ _ _ _ fmt.maxFiniteFracField_lt_two_pow]
+  simp only [FloatFormat.maxFiniteExpField, FloatFormat.maxFiniteFracField, hencoding,
+    FloatFormat.Encoding.maxFiniteExponent, FloatFormat.fracMaskNat]
+  unfold FloatFormat.expAllOnesNat at hfill
+  omega
+
+/-- The negative subnormal of least magnitude has magnitude one. -/
+private theorem magnitude_negMinSubnormal (fmt : FloatFormat) :
+    magnitudeBits (negMinSubnormal fmt) = 1 := by
+  have hP : 2 ≤ 2 ^ fmt.fracWidth := by
+    simpa using Nat.pow_le_pow_right (by decide : 0 < 2) fmt.fracWidth_pos
+  rw [negMinSubnormal_eq_ofFields]
+  unfold magnitudeBits
+  rw [expField_ofFields_of_lt _ _ _ _ (Nat.two_pow_pos _),
+    fracField_ofFields_of_lt _ _ _ _ (by omega)]
+  simp
+
+/--
+A word one magnitude step below a number is not a NaN, in every encoding except for the
+unsigned-zero NaN: the negative word of zero magnitude.
+-/
+private theorem isNaN_eq_false_of_magnitude_add_one_eq {fmt : FloatFormat} {x z : Model fmt}
+    (hx : isNaN x = false) (hm : magnitudeBits z + 1 = magnitudeBits x)
+    (hfnuz : fmt.encoding = .finiteUnsignedZero → ¬(signBit z = true ∧ magnitudeBits z = 0)) :
+    isNaN z = false := by
+  have hxS := magnitude_lt x
+  cases hencoding : fmt.encoding with
+  | ieee =>
+      have hle := magnitude_le_of_isNaN_eq_false hencoding hx
+      cases hzn : isNaN z
+      · rfl
+      · have := (isNaN_iff_of_ieee _ hencoding).1 hzn
+        omega
+  | finiteMaxNaN =>
+      cases hzn : isNaN z
+      · rfl
+      · have := (isNaN_iff_of_finiteMaxNaN _ hencoding).1 hzn
+        omega
+  | finiteUnsignedZero =>
+      cases hzn : isNaN z
+      · rfl
+      · exact absurd ((isNaN_iff_of_finiteUnsignedZero _ hencoding).1 hzn) (hfnuz hencoding)
+  | finite => simp [isNaN, hencoding]
+
+/--
+A word one magnitude step above a non-infinite number is not a NaN, in every encoding except
+above the largest finite value of the maximum-NaN encoding.
+-/
+private theorem isNaN_eq_false_of_magnitude_eq_add_one {fmt : FloatFormat} {x z : Model fmt}
+    (hx : isNaN x = false) (hinf : isInf x = false)
+    (hm : magnitudeBits z = magnitudeBits x + 1)
+    (hmax : fmt.encoding = .finiteMaxNaN → x ≠ maxFinite fmt (signBit x)) :
+    isNaN z = false := by
+  cases hencoding : fmt.encoding with
+  | ieee =>
+      have hlt := magnitude_lt_of_isFinite hencoding
+        (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hinf)
+      cases hzn : isNaN z
+      · rfl
+      · have := (isNaN_iff_of_ieee _ hencoding).1 hzn
+        omega
+  | finiteMaxNaN =>
+      cases hzn : isNaN z
+      · rfl
+      · have hfull := (isNaN_iff_of_finiteMaxNaN _ hencoding).1 hzn
+        have hmaxm := magnitude_maxFinite_of_finiteMaxNaN hencoding (signBit x)
+        exact absurd (eq_of_signBit_eq_of_magnitude_eq (by simp) (by omega)) (hmax hencoding)
+  | finiteUnsignedZero =>
+      cases hzn : isNaN z
+      · rfl
+      · have := ((isNaN_iff_of_finiteUnsignedZero _ hencoding).1 hzn).2
+        omega
+  | finite => simp [isNaN, hencoding]
+
+/-- `nextUp` returns a NaN exactly for a NaN input: from a number it always steps to a number. -/
+@[simp] theorem isNaN_nextUp {fmt : FloatFormat} (x : Model fmt) :
+    isNaN (nextUp x) = isNaN x := by
+  cases hnan : isNaN x
+  · show isNaN (Internal.Value.nextUp x) = false
+    unfold Internal.Value.nextUp
+    simp only [hnan, Bool.false_eq_true, ite_false]
+    split_ifs with hinf hzero hfnuz hmax hsign
+    · exact hnan
+    · exact isNaN_posMinSubnormal fmt
+    · exact isNaN_posZero fmt
+    · exact hnan
+    · have hzeroFalse : isZero x = false := by simpa using hzero
+      have hraw := signMaskNat_lt_toNatBits_of_nonzero_nonNaN x hsign hzeroFalse hnan
+      have hz := toNatBits_ofBits_sub_one x (by omega)
+      obtain ⟨-, hzm⟩ := signBit_magnitude_of_signMaskNat_le (ofBits (x.bits - 1))
+        (by rw [hz]; omega)
+      obtain ⟨-, hxm⟩ := signBit_magnitude_of_signMaskNat_le x hraw.le
+      rw [hz] at hzm
+      apply isNaN_eq_false_of_magnitude_add_one_eq hnan (by omega)
+      rintro hencoding ⟨-, hzeroMagnitude⟩
+      have hvalue : x = negMinSubnormal fmt :=
+        eq_of_signBit_eq_of_magnitude_eq (by simp [hsign])
+          (by rw [magnitude_negMinSubnormal]; omega)
+      exact absurd (by simp [FloatFormat.supportsSignedZero, hencoding, hvalue]) hfnuz
+    · have hsignFalse : signBit x = false := by simpa using hsign
+      have hinfFalse : isInf x = false := by simpa [hsignFalse] using hinf
+      have hmaxNe : fmt.supportsInfinity = false → x ≠ posMaxFinite fmt := by
+        intro hsupports hvalue
+        exact hmax (by simp [hsupports, hvalue])
+      have hraw := toNatBits_add_one_lt_signMaskNat x hsignFalse hnan hmaxNe
+      have hz := toNatBits_ofBits_add_one x (hraw.trans (signMaskNat_lt_two_pow_bitWidth fmt))
+      obtain ⟨-, hzm⟩ := signBit_magnitude_of_toNatBits_lt (ofBits (x.bits + 1))
+        (by rw [hz]; exact hraw)
+      obtain ⟨-, hxm⟩ := signBit_magnitude_of_toNatBits_lt x (by omega)
+      rw [hz] at hzm
+      exact isNaN_eq_false_of_magnitude_eq_add_one hnan hinfFalse (by omega) fun hencoding => by
+        rw [hsignFalse]
+        exact hmaxNe (by simp [FloatFormat.supportsInfinity, hencoding])
+  · simp [nextUp, Internal.Value.nextUp, hnan]
+
+/-- `nextDown` returns a NaN exactly for a NaN input: from a number it always steps to a number. -/
+@[simp] theorem isNaN_nextDown {fmt : FloatFormat} (x : Model fmt) :
+    isNaN (nextDown x) = isNaN x := by
+  cases hnan : isNaN x
+  · show isNaN (Internal.Value.nextDown x) = false
+    unfold Internal.Value.nextDown
+    simp only [hnan, Bool.false_eq_true, ite_false]
+    split_ifs with hinf hzero hmin hsign
+    · exact hnan
+    · exact isNaN_negMinSubnormal fmt
+    · exact hnan
+    · have hinfFalse : isInf x = false := by simpa [hsign] using hinf
+      have hminNe : fmt.supportsInfinity = false → x ≠ negMaxFinite fmt := by
+        intro hsupports hvalue
+        exact hmin (by simp [hsupports, hvalue])
+      have hfit := toNatBits_add_one_lt_two_pow_of_negative x hnan hminNe
+      have hz := toNatBits_ofBits_add_one x hfit
+      have hneg := (signBit_eq_true_iff_signMaskNat_le x).1 hsign
+      obtain ⟨-, hzm⟩ := signBit_magnitude_of_signMaskNat_le (ofBits (x.bits + 1))
+        (by rw [hz]; omega)
+      obtain ⟨-, hxm⟩ := signBit_magnitude_of_signMaskNat_le x hneg
+      rw [hz] at hzm
+      exact isNaN_eq_false_of_magnitude_eq_add_one hnan hinfFalse (by omega) fun hencoding => by
+        rw [hsign]
+        exact hminNe (by simp [FloatFormat.supportsInfinity, hencoding])
+    · have hsignFalse : signBit x = false := by simpa using hsign
+      have hzeroFalse : isZero x = false := by simpa using hzero
+      have hpos := toNatBits_pos_of_isZero_eq_false x hzeroFalse
+      have hlt := (signBit_eq_false_iff_toNatBits_lt_signMaskNat x).1 hsignFalse
+      have hz := toNatBits_ofBits_sub_one x hpos
+      obtain ⟨hzs, hzm⟩ := signBit_magnitude_of_toNatBits_lt (ofBits (x.bits - 1))
+        (by rw [hz]; omega)
+      obtain ⟨-, hxm⟩ := signBit_magnitude_of_toNatBits_lt x hlt
+      rw [hz] at hzm
+      apply isNaN_eq_false_of_magnitude_add_one_eq hnan (by omega)
+      rintro - ⟨hzsign, -⟩
+      rw [hzs] at hzsign
+      exact absurd hzsign Bool.false_ne_true
+  · simp [nextDown, Internal.Value.nextDown, hnan]
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

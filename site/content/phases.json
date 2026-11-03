@@ -3,6 +3,8 @@
     "FloatLib",
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked",
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals",
+    "FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded",
+    "FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff",
     "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof"
   ],
   "phases": [
@@ -417,7 +419,7 @@
           "title": "The ulp of the format at x"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.epsilonAt",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.halfUlpAt",
           "title": "Half an ulp"
         },
         {
@@ -485,16 +487,8 @@
           "title": "Matrix product shape and entries"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundRatScaled_eq_roundAt_of_isFinite",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundRatScaled_eq_roundAt",
           "title": "Scaled rational rounding includes zero"
-        },
-        {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt_of_isIEEE_destination",
-          "title": "Casts from every finite binary descriptor"
-        },
-        {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.cast_exact_of_gridExtension_of_isIEEE_destination",
-          "title": "Finer IEEE grids preserve finite sources"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite",
@@ -611,7 +605,7 @@
           "title": "Integral rounding to nearest even"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_towardZero_of_isFinite",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundToIntegral_towardZero",
           "title": "Truncation needs no upper range assumption"
         },
         {
@@ -749,7 +743,7 @@
           "title": "pi in a binary format"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_pi",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_pi_eq_roundAt",
           "title": "pi is correctly rounded"
         },
         {
@@ -1145,8 +1139,8 @@
           "title": "Storage plan for a descriptor"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Configured.StoragePlan.automatic",
-          "title": "Choose storage from the descriptor"
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Configured.StoragePlan.forKnownWidth",
+          "title": "The default storage plan, chosen from the encoded width"
         },
         {
           "name": "FloatLib.Floats.ExecFloat.Binary",
@@ -1251,7 +1245,7 @@
           "title": "The sum a + b decodes to model addition"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_add",
+          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_add_eq_roundAt",
           "title": "A finite sum a + b is the rounded real sum"
         },
         {
@@ -1315,11 +1309,11 @@
           "title": "Squaring preserves the multiplication result"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_of_expMinus1_eq_ok",
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_expMinus1_eq_ok",
           "title": "Certified binary exp-minus-one"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.toReal_of_logPlus1_eq_ok",
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_logPlus1_eq_ok",
           "title": "Certified binary log-plus-one"
         },
         {

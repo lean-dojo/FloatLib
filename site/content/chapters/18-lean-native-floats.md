@@ -8,7 +8,7 @@ phases: [trust]
 
 ## Lean's model and its compiled operations
 
-We're glad to see Lean exposing more of its floating-point model for proofs. Lean 4.33 introduced the logical models; Lean 4.34 connects the signed integer conversions to them and exposes integer constructors and named `nan` and `inf` constants [@lean434Release]. We use those definitions to connect ordinary signed casts to FloatLib's rounding and conversion specifications.
+We're glad to see Lean exposing more of its floating-point model for proofs. Lean 4.33 introduced the logical models, and Lean 4.34 connects the signed integer conversions to them and exposes integer constructors and named `nan` and `inf` constants [@lean434Release]. We use those definitions to connect ordinary signed casts to FloatLib's rounding and conversion specifications.
 
 In the logical model, a `Float32` contains a `Float32.Model`: a `UInt32` word with a validity proof. NaNs are canonical, so importing different NaN payloads produces the same model value. `Float` has the corresponding structure over `UInt64`.
 
@@ -287,7 +287,10 @@ example (x y : Float32) (hx : x.isFinite = true) (hy : y.isFinite = true) :
 [[FloatLib.Floats.ExecFloat.Binary.ofFloat32_add_of_isFinite]] connects the native expression on the
 left to the configured software addition on the right. Because it's an equality of words, it tells
 positive and negative zero apart, which an equality of decoded real values can't do. The subtraction
-and binary64 theorems have the same finite-input conditions. A real-valued addition theorem,
+and binary64 theorems have the same finite-input conditions, and so do the word-level product and
+quotient bridges `ExecFloat.Binary.ofFloat32_mul_of_isFinite` and
+`ExecFloat.Binary.ofFloat32_div_of_isFinite`. The quotient bridge also covers division by zero and
+`0 / 0`. A real-valued addition theorem,
 [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_ofModel_add_finite_eq_roundAt]], gives the
 complementary conclusion. Under its nonzero finite-input and finite-result hypotheses, Lean's
 rounded sum has value
@@ -369,7 +372,7 @@ precision difference visible:
 The host's six-decimal display of one third hides which binary value it stored. FloatLib prints
 the shortest decimal that reads back as the stored quotient, which is four digits for binary16,
 eight for binary32, and sixteen for binary64. The exact binary16 quotient is $0.333251953125$, and
-to see every digit you can use `ExecFloat.Binary.format` with `(style := .exact)`. In the last
+`((1 : Binary16) / 3).format (style := .exact)` shows every digit. In the last
 evaluation, the host and FloatLib binary64 quotients turn out to be the same word, and binary16
 shows what a smaller precision does.
 
@@ -424,21 +427,13 @@ underflow, and inexact, and here are a few calls with the values and flags they 
 #eval (0 : Float32) / 0
 -- NaN
 #eval ExecFloat.Binary.div (1 : Binary32) 0 (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := true, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := inf, status := { divideByZero := true }, ternary := Ordering.eq }
 #eval ExecFloat.Binary.div (0 : Binary32) 0 (status := true)
--- { value := nan,
---   status := { invalid := true, divideByZero := false, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := nan, status := { invalid := true }, ternary := Ordering.eq }
 #eval ExecFloat.Binary.mul (ExecFloat.Binary.ofBits32 0x7f7fffff) (2 : Binary32) (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := false, overflow := true, underflow := false, inexact := true },
---   ternary := Ordering.gt }
+-- { value := inf, status := { overflow := true, inexact := true }, ternary := Ordering.gt }
 #eval ExecFloat.Binary.div (ExecFloat.Binary.ofBits32 0x00000001) (2 : Binary32) (status := true)
--- { value := 0,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := true, inexact := true },
---   ternary := Ordering.lt }
+-- { value := 0, status := { underflow := true, inexact := true }, ternary := Ordering.lt }
 ```
 
 Lean's native evaluations show infinity for $1/0$ and NaN for $0/0$, and the status-bearing calls
@@ -467,7 +462,8 @@ example (x y : Binary32) :
   Configured.Backend.wordAdd_eq_spec x y
 
 #float_info Float32
--- Float information: Lean native Float32
+-- Float information: Float32
+--   family: Lean native Float32
 --   standard: IEEE 754 binary32 runtime format through Lean's native float API
 ```
 

@@ -121,10 +121,14 @@ theorem roundNormalNative_eq_bounds
   rw [NativeSmallWord.biasInt_eq hwidth]
   rfl
 
-private theorem roundNormalNative_eq_spec
+/--
+For nonzero significands of at most `fracWidth + 1` bits, the native normal-range quotient rounder
+of a one-word format returns the generic normal-range specification `normalSpec?`, declines
+included. The binary64 division kernel is this rounder at binary64.
+-/
+theorem roundNormalNative_eq_spec
     (fmt : FloatFormat)
     (hwidth : fmt.bitWidth ≤ 64)
-    (hfracWidth : fmt.fracWidth ≤ 61)
     (sign : Bool) (num den : UInt64) (exponent : Int)
     (hnum : num ≠ 0) (hden : den ≠ 0)
     (hnumFit : num.toNat < 2 ^ (fmt.fracWidth + 1))
@@ -132,6 +136,10 @@ private theorem roundNormalNative_eq_spec
     roundNormalNative? fmt sign num den exponent =
       FiniteQuotientRound.normalSpec? fmt sign
         num.toNat den.toNat exponent := by
+  have hfracWidth : fmt.fracWidth ≤ 61 := by
+    have hexp := fmt.expWidth_ge_two
+    have hbits : fmt.bitWidth = 1 + fmt.expWidth + fmt.fracWidth := rfl
+    omega
   have hnumNat : num.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hnum
   have hdenNat : den.toNat ≠ 0 := by
@@ -141,10 +149,10 @@ private theorem roundNormalNative_eq_spec
   have hdenZero : (den.toNat == 0) = false := by
     simp [hdenNat]
   have hfloor :=
-    floorLog2RatWord_eq num den hnum hden
+    floorLog2RatWord_eq num den hden
   have hshift :=
     NativeWordQuotient.normalShift_eq
-      fmt num den hnum hnumFit
+      fmt num den hnumFit
   have hdenFit63 : den.toNat < 2 ^ 63 := by
     have hpow :
         2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 63 :=
@@ -157,7 +165,7 @@ private theorem roundNormalNative_eq_spec
           floorLog2RatWord num den))
       hden hdenFit63
       (NativeWordQuotient.quotient_lt_two_pow_63
-        fmt num den hnum hden hnumFit (by omega))
+        fmt num den hnumFit (by omega))
   rw [roundNormalNative_eq_bounds fmt hwidth]
   unfold roundNormalNativeBounds? FiniteQuotientRound.normalSpec?
   rw [← hfloor]
@@ -201,7 +209,7 @@ private theorem roundNormalNative_eq_spec
       nativeMantissa = NativeSmallWord.carryBit fmt ↔
         genericMantissa = Model.pow2 (fmt.fracWidth + 1) := by
     rw [← UInt64.toNat_inj, hmantissa,
-      NativeSmallWord.carryBit_toNat_of_width fmt hwidth (by omega)]
+      NativeSmallWord.carryBit_toNat_of_width fmt hwidth]
     simp only [Model.pow2_eq_two_pow]
   have hbounds :
       2 ^ fmt.fracWidth ≤ genericMantissa ∧
@@ -348,11 +356,7 @@ theorem divNormal_refines_of_storage {fmt : FloatFormat}
     (hresult : divNormal? x y = some result) :
     FiniteKernel.div? x y = some result := by
   rcases heligible with ⟨hieee, hwidth⟩
-  have hfracWidth : fmt.fracWidth ≤ 61 := by
-    have hexp := fmt.expWidth_ge_two
-    unfold FloatFormat.bitWidth at hwidth
-    omega
-  rcases NativeNormalPair.view_of_success hieee hwidth x y
+  rcases NativeNormalPair.view_of_success hwidth x y
       (fun sign xExponent yExponent xMantissa yMantissa =>
         roundNormalNative? fmt sign xMantissa yMantissa
           (Int.ofNat (xExponent - 1).toNat -
@@ -367,70 +371,32 @@ theorem divNormal_refines_of_storage {fmt : FloatFormat}
           view.yMantissa exponent =
         some result := by
     simpa [exponent] using hround
-  have hxMantissaNatNe : view.xMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt <|
-      (Nat.two_pow_pos fmt.fracWidth).trans_le
-        view.xMantissaBounds.1
-  have hyMantissaNatNe : view.yMantissa.toNat ≠ 0 := by
-    exact Nat.ne_of_gt <|
-      (Nat.two_pow_pos fmt.fracWidth).trans_le
-        view.yMantissaBounds.1
-  have hxMantissaNe : view.xMantissa ≠ 0 := by
-    intro h
-    apply hxMantissaNatNe
-    simp [h]
-  have hyMantissaNe : view.yMantissa ≠ 0 := by
-    intro h
-    apply hyMantissaNatNe
-    simp [h]
+  have hxMantissaNatNe := view.xMantissa_toNat_ne_zero
+  have hyMantissaNatNe := view.yMantissa_toNat_ne_zero
+  have hxMantissaNe : view.xMantissa ≠ 0 := fun h => hxMantissaNatNe (by simp [h])
+  have hyMantissaNe : view.yMantissa ≠ 0 := fun h => hyMantissaNatNe (by simp [h])
   have hspec :
       FiniteQuotientRound.normalSpec? fmt view.sign
           view.xMantissa.toNat view.yMantissa.toNat exponent =
         some result := by
-    rw [← roundNormalNative_eq_spec fmt hwidth hfracWidth
+    rw [← roundNormalNative_eq_spec fmt hwidth
       view.sign view.xMantissa view.yMantissa exponent
       hxMantissaNe hyMantissaNe
       view.xMantissaBounds.2 view.yMantissaBounds.2]
     exact hround'
-  have hfloor :=
-    floorLog2RatWord_eq
-      view.xMantissa view.yMantissa hxMantissaNe hyMantissaNe
-  have hshift :=
-    NativeWordQuotient.normalShift_eq
-      fmt view.xMantissa view.yMantissa
-      hxMantissaNe view.xMantissaBounds.2
-  have hshiftNonnegative :
-      0 ≤ Int.ofNat fmt.fracWidth -
-        Numerics.RationalBinary.floorLog2
-          view.xMantissa.toNat view.yMantissa.toNat := by
-    rw [← hfloor, ← hshift]
-    exact Int.natCast_nonneg _
   have hrounded :=
-    FiniteQuotientRound.normalSpec_eq_roundRatScaled_of_some
-      fmt hieee view.sign view.xMantissa.toNat
-      view.yMantissa.toNat exponent result
-      hshiftNonnegative hspec
+    NativeWordQuotient.roundRatScaled_eq_of_normalSpec fmt hieee view.sign view.xMantissa
+      view.yMantissa exponent hyMantissaNe view.xMantissaBounds.2 result hspec
   unfold FiniteKernel.div?
   rw [view.xDecode, view.yDecode]
   unfold FiniteKernel.divComponents
   simp only [beq_iff_eq, hxMantissaNatNe, hyMantissaNatNe, ite_false]
-  have hxOne : (1 : UInt64) ≤ view.xExponent :=
-    UInt64.le_iff_toNat_le.mpr view.xExponentBounds.1
-  have hyOne : (1 : UInt64) ≤ view.yExponent :=
-    UInt64.le_iff_toNat_le.mpr view.yExponentBounds.1
-  have hxScale :
-      FiniteKernel.scale view.xExponent.toNat =
-        (view.xExponent - 1).toNat := by
+  have hscale (field : UInt64) (hfield : 0 < field.toNat) :
+      FiniteKernel.scale field.toNat = (field - 1).toNat := by
     unfold FiniteKernel.scale
-    simp only [beq_iff_eq, view.xExponentBounds.1.ne', ite_false]
-    exact (UInt64.toNat_sub_of_le view.xExponent 1 hxOne).symm
-  have hyScale :
-      FiniteKernel.scale view.yExponent.toNat =
-        (view.yExponent - 1).toNat := by
-    unfold FiniteKernel.scale
-    simp only [beq_iff_eq, view.yExponentBounds.1.ne', ite_false]
-    exact (UInt64.toNat_sub_of_le view.yExponent 1 hyOne).symm
-  rw [hxScale, hyScale]
+    simp only [beq_iff_eq, hfield.ne', ite_false]
+    exact (UInt64.toNat_sub_of_le field 1 (UInt64.le_iff_toNat_le.mpr hfield)).symm
+  rw [hscale _ view.xExponentBounds.1, hscale _ view.yExponentBounds.1]
   rw [← view.sign_eq]
   change some (Model.roundRatScaled fmt view.sign
     view.xMantissa.toNat view.yMantissa.toNat exponent) = some result

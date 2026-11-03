@@ -59,4 +59,3 @@ __pycache__/
 
 # Repository-history backups can contain unpublished manuscripts.
 *.bundle
-# The original benchmark source archive also embeds a history bundle.

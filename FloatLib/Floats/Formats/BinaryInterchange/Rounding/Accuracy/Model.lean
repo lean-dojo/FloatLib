@@ -65,6 +65,16 @@ theorem accuracyRepresents_bounds
           norm_num
       · constructor <;> nlinarith [h.1, h.2]
 
+/-- A value represented over a nonzero truncated mantissa is positive. -/
+theorem pos_of_accuracyRepresents
+    {mantissa : Nat} {accuracy : Accuracy} {value : Real}
+    (hmantissa : mantissa ≠ 0)
+    (h : accuracyRepresents mantissa accuracy value) :
+    0 < value := by
+  have hmantissaPos : (0 : Real) < mantissa := by
+    exact_mod_cast Nat.pos_of_ne_zero hmantissa
+  exact hmantissaPos.trans_le (accuracyRepresents_bounds h).1
+
 /--
 A nonzero truncated mantissa determines the binary magnitude of every real value represented by
 its accuracy certificate.
@@ -75,11 +85,9 @@ theorem magnitude_of_accuracyRepresents
     (h : accuracyRepresents mantissa accuracy value) :
     magnitude Numerics.binaryRadix value = Int.ofNat mantissa.log2 + 1 := by
   have hbounds := accuracyRepresents_bounds h
-  have hmantissaPos : (0 : Real) < mantissa := by
-    exact_mod_cast Nat.pos_of_ne_zero hmantissa
-  have hvaluePos : 0 < value := hmantissaPos.trans_le hbounds.1
+  have hvaluePos : 0 < value := pos_of_accuracyRepresents hmantissa h
   apply magnitude_eq_of_bpow_bounds
-    Numerics.binaryRadix value (Int.ofNat mantissa.log2 + 1) hvaluePos.ne'
+    Numerics.binaryRadix value (Int.ofNat mantissa.log2 + 1)
   · rw [abs_of_pos hvaluePos]
     have hlower : 2 ^ mantissa.log2 ≤ mantissa := Nat.log2_self_le hmantissa
     have hlowerReal : (2 ^ mantissa.log2 : Nat) ≤ (mantissa : Real) := by

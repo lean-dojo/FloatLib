@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
+public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 /-!
 # Executable binary comparisons
@@ -18,7 +19,9 @@ particular storage width or relying on host floating-point comparison.
 NaNs are unordered. The minimum and maximum operations apply their NaN-selection and
 signed-zero rules around the same comparator. Both the deprecated IEEE 754-2008 `minNum`/`maxNum`
 and the IEEE 754-2019 `minimumNumber`/`maximumNumber` operations are provided, and they differ
-only in how a signaling NaN operand is treated.
+only in how a signaling NaN operand is treated. With `status := true`, `minimum` and `maximum`
+also report the `invalid` signal that a signaling NaN operand owes. `minimumNumber` and
+`maximumNumber` take the same option in `Operations.Runtime`.
 -/
 
 @[expose] public section
@@ -83,8 +86,9 @@ instance {fmt : FloatFormat} (x y : Model fmt) : Decidable (le x y) :=
   | some .gt => isFalse (by simp [le, h])
   | none => isFalse (by simp [le, h])
 
-/-- IEEE `minimum`, with NaNs selected by `chooseNaN2` and `minimum(-0,+0) = -0`. -/
-def minimum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
+/-- The value of IEEE `minimum`, the kernel of `Model.minimum x y`, with NaNs selected by
+`chooseNaN2` and `minimum(-0,+0) = -0`. -/
+def Internal.Value.minimum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   withNaNSelection (chooseNaN2 x y) fun hnan =>
     let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
     match compareNonNaN x y hnotNaN.1 hnotNaN.2 with
@@ -92,12 +96,13 @@ def minimum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
     | .gt => y
     | .eq =>
         if isZero x && isZero y then
-          zero fmt (signBit x || signBit y)
+          zero fmt (Model.signBit x || Model.signBit y)
         else
           x
 
-/-- IEEE `maximum`, with NaNs selected by `chooseNaN2` and `maximum(-0,+0) = +0`. -/
-def maximum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
+/-- The value of IEEE `maximum`, the kernel of `Model.maximum x y`, with NaNs selected by
+`chooseNaN2` and `maximum(-0,+0) = +0`. -/
+def Internal.Value.maximum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   withNaNSelection (chooseNaN2 x y) fun hnan =>
     let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
     match compareNonNaN x y hnotNaN.1 hnotNaN.2 with
@@ -105,9 +110,37 @@ def maximum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
     | .gt => x
     | .eq =>
         if isZero x && isZero y then
-          zero fmt (signBit x && signBit y)
+          zero fmt (Model.signBit x && Model.signBit y)
         else
           x
+
+/--
+IEEE 754-2019 §9.6 `minimum`, the operation behind `min x y`: the lesser operand, with
+`minimum(-0,+0) = -0`, or a quiet NaN chosen by `chooseNaN2` when an operand is a NaN. With
+`status := true` the result is the `IEEEOutcome`, which raises `invalid` exactly for a signaling
+NaN operand (§6.2).
+-/
+@[macro_inline] def minimum {fmt : FloatFormat} (x y : Model fmt) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => outcomeWithInvalid (Internal.Value.minimum x y) (isSNaN x || isSNaN y)
+  | false => Internal.Value.minimum x y
+
+/--
+IEEE 754-2019 §9.6 `maximum`, the operation behind `max x y`: the greater operand, with
+`maximum(-0,+0) = +0`, or a quiet NaN chosen by `chooseNaN2` when an operand is a NaN. With
+`status := true` the result is the `IEEEOutcome`, which raises `invalid` exactly for a signaling
+NaN operand (§6.2).
+-/
+@[macro_inline] def maximum {fmt : FloatFormat} (x y : Model fmt) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome fmt
+    | false => Model fmt :=
+  match status with
+  | true => outcomeWithInvalid (Internal.Value.maximum x y) (isSNaN x || isSNaN y)
+  | false => Internal.Value.maximum x y
 
 /--
 IEEE 754-2008 `minNum`, deprecated by IEEE 754-2019 in favor of `minimumNumber`.
@@ -168,7 +201,7 @@ def minimumNumber {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   else if isNaN y then
     x
   else
-    minimum x y
+    Model.minimum x y
 
 /--
 IEEE 754-2019 §9.6 `maximumNumber`, the kernel of `Model.maximumNumber x y`.
@@ -185,7 +218,7 @@ def maximumNumber {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   else if isNaN y then
     x
   else
-    maximum x y
+    Model.maximum x y
 
 end Internal.Value
 

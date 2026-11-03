@@ -34,26 +34,42 @@ elab_rules : command
         let coreProfile :=
           FloatLib.Floats.Formats.Block.FloatInfo.Command.profile lanes
         let configuredQuantization : TheoremSurface :=
-          { topic := "configured contextual quantization"
+          { topic := "contextual quantization"
             declarations :=
               [ ``FloatLib.Floats.ExecFloat.SharedScale.quantizesAt_quantizeAt
               , ``FloatLib.Floats.ExecFloat.SharedScale.decode_quantizeAt_get
+              , ``FloatLib.Floats.ExecFloat.SharedScale.exponent_quantizeAt
               ]
             applicability := .verifiedForType
             scope := "all lanes at the caller-supplied exponent"
             numericalGuarantee? := some {
               kinds := [.rounding]
               statement :=
-                "Each configured lane is nearest-even rounded to the grid selected by the explicit shared exponent." } }
+                "Each lane is nearest-even rounded to the grid selected by the explicit shared exponent." } }
+        let configuredCode : TheoremSurface :=
+          { topic := "decoding to the code"
+            declarations :=
+              [ ``FloatLib.Floats.ExecFloat.SharedScale.toCode_ofCode
+              , ``FloatLib.Floats.ExecFloat.SharedScale.ofCode_toCode
+              ]
+            definitions :=
+              [ ``FloatLib.Floats.ExecFloat.SharedScale.toCode
+              , ``FloatLib.Floats.ExecFloat.SharedScale.ofCode ]
+            applicability := .verifiedForType
+            scope :=
+              "every block; `toCode` and `ofCode` are inverse, so the theorems about the code " ++
+              "below apply through `toCode`" }
         let baseProfile : FormatProfile :=
           { coreProfile with
-            declarationPrefix := "FloatLib.Floats.ExecFloat.SharedScale."
             execution :=
               [ ⟨"carrier", "ExecFloat over one whole SharedScaleCode"⟩
               , ⟨"dispatch", "direct vector quantization kernel"⟩
               ]
-            theoremSurfaces :=
-              configuredQuantization :: coreProfile.theoremSurfaces
+            theoremSurfaces := [configuredQuantization, configuredCode]
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.Block.SharedScaleCode
+                  embedding := ``FloatLib.Floats.ExecFloat.SharedScale.toCode
+                  surfaces := coreProfile.theoremSurfaces } ]
             nonclaims :=
               [ "a scale-selection policy is hidden in construction"
               , "the scalar six-operation interface applies to this vector-valued block"

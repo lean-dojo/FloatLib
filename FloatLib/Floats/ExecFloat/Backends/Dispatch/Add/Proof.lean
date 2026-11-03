@@ -36,7 +36,7 @@ namespace Model
 
 namespace AddBackend
 
-/-- Compact generic addition preserves the exact-dyadic specification. -/
+/-- Compact generic addition equals the exact-dyadic `Spec.add` on every input. -/
 theorem generic_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     generic x y = Spec.add x y := by
   unfold generic Spec.add
@@ -46,180 +46,113 @@ theorem generic_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
     simp <;>
     rfl
 
-private theorem spec_add_eq_word :
-    @Spec.add = @word := by
-  funext fmt x y
-  by_cases h32 : FloatFormat.IsBinary32 fmt
-  · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+/-- A sum that the finite kernel accepts is the specification sum. -/
+private theorem eq_spec_of_finite {fmt : FloatFormat} {x y sum : Model fmt}
+    (hfinite : FiniteKernel.add? x y = some sum) : sum = Spec.add x y := by
+  simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using generic_eq_spec x y
+
+/--
+A kernel whose accepted sums the finite kernel also returns, backed by a fallback equal to
+`Spec.add` for the inputs it declines, computes `Spec.add`.
+
+Subtraction uses it with the negated right operand, since `Spec.sub x y = Spec.add x (neg y)`.
+-/
+private theorem fallback_eq_spec {fmt : FloatFormat} {x y fallback : Model fmt}
+    {fast : Option (Model fmt)}
+    (hfast : ∀ sum, fast = some sum → FiniteKernel.add? x y = some sum)
+    (hfallback : fallback = Spec.add x y) :
+    (match (generalizing := false) fast with
+      | some sum => sum
+      | none => fallback) = Spec.add x y := by
+  cases fast with
+  | none => exact hfallback
+  | some sum => exact eq_spec_of_finite (hfast sum rfl)
+
+/--
+Native fixed-format and reusable one-word dispatch equals `Spec.add` for every descriptor and on
+every input, exceptional values included.
+-/
+theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
+    word x y = Spec.add x y := by
+  unfold word
+  split
+  · rename_i h32
+    have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
     subst fmt
-    simp [word, Spec.add, NativeBinary32.addFiniteWord_eq,
-      NativeBinary32.addFinite_eq, generic_eq_spec]
+    simp [Spec.add, NativeBinary32.addFiniteWord_eq, NativeBinary32.addFinite_eq,
+      generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? y <;>
       simp_all
-  · by_cases h64 : FloatFormat.IsBinary64 fmt
-    · have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
-      subst fmt
-      cases hnative : NativeSmallWordAdd.addFinite? x y false with
-      | some sum =>
-          have hfinite : FiniteKernel.add? x y = some sum := by
-            simpa using
-              NativeSmallWordAdd.addFinite_refines (by decide) x y sum false hnative
-          have hsum : sum = Spec.add x y := by
-            simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
-              generic_eq_spec x y
-          simp [word, h32, hnative, hsum]
-      | none =>
-          cases hfinite : FiniteKernel.add? x y with
-          | none =>
-              simp [word, h32, hnative, NativeBinary64.addFinite_eq_addFiniteComponents,
-                NativeBinary64.addFiniteComponents_eq, hfinite, generic_eq_spec]
-          | some sum =>
-              have hsum : sum = Spec.add x y := by
-                simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
-                  generic_eq_spec x y
-              simp [word, h32, hnative, NativeBinary64.addFinite_eq_addFiniteComponents,
-                NativeBinary64.addFiniteComponents_eq, hfinite, hsum, generic_eq_spec]
-    · by_cases hpair : NativePair.Eligible fmt
-      · cases hfinite : FiniteKernel.add? x y with
-        | none =>
-            simp [word, h32, h64, hpair, NativePair.addFinite_eq hpair, hfinite,
-              generic_eq_spec]
-        | some sum =>
-            have hsum : sum = Spec.add x y := by
-              simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
-                generic_eq_spec x y
-            simp [word, h32, h64, hpair, NativePair.addFinite_eq hpair, hfinite,
-              hsum]
-      · by_cases heligible : NativeSmallWordAdd.Eligible fmt
-        · cases hnative : NativeSmallWordAdd.addFinite? x y false with
-          | none =>
-              simp [word, h32, h64, hpair, heligible, hnative,
-                generic_eq_spec]
-          | some sum =>
-              have hfinite : FiniteKernel.add? x y = some sum := by
-                simpa using
-                  NativeSmallWordAdd.addFinite_refines heligible x y sum false hnative
-              have hsum : sum = Spec.add x y := by
-                calc
-                  sum = generic x y := by
-                    simp [generic, FiniteKernel.addRuntime_eq, hfinite]
-                  _ = Spec.add x y := generic_eq_spec x y
-              simp [word, h32, h64, hpair, heligible, hnative, hsum]
-        · by_cases hstorage : NativeSmallWord.StorageEligible fmt
-          · cases hnative : NativeSmallWordFinite.addFinite? x y with
-            | none =>
-                simp [word, h32, h64, hpair, heligible, hstorage, hnative,
-                  generic_eq_spec]
-            | some sum =>
-                have hfinite : FiniteKernel.add? x y = some sum := by
-                  rw [← NativeSmallWordFinite.addFinite_eq hstorage]
-                  exact hnative
-                have hsum : sum = Spec.add x y := by
-                  calc
-                    sum = generic x y := by
-                      simp [generic, FiniteKernel.addRuntime_eq, hfinite]
-                    _ = Spec.add x y := generic_eq_spec x y
-                simp [word, h32, h64, hpair, heligible, hstorage, hnative, hsum]
-          · simp [word, generic_eq_spec, h32, h64, hpair, heligible, hstorage]
-
-/-- Native fixed-format and reusable one-word dispatch preserves addition. -/
-theorem word_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
-    word x y = Spec.add x y :=
-  (congrFun (congrFun (congrFun spec_add_eq_word fmt) x) y).symm
-
-private theorem spec_sub_eq_subWord :
-    @Spec.sub = @subWord := by
-  funext fmt x y
-  by_cases h32 : FloatFormat.IsBinary32 fmt
-  · have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+  split
+  · rename_i h64
+    have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
     subst fmt
-    simp [subWord, Spec.sub, Spec.add, NativeBinary32.addFiniteWord_eq,
-      NativeBinary32.addFinite_eq, generic_eq_spec]
+    refine fallback_eq_spec (fun sum hsum => by
+      simpa using NativeSmallWordAdd.addFinite_refines (by decide) x y sum false hsum) ?_
+    dsimp only
+    split
+    · rename_i sum hsum
+      exact eq_spec_of_finite (by
+        simpa [NativeBinary64.addFinite_eq_addFiniteComponents,
+          NativeBinary64.addFiniteComponents_eq] using hsum)
+    · exact generic_eq_spec x y
+  split
+  · exact fallback_eq_spec (fun sum hsum => by rwa [NativePair.addFinite_eq ‹_›] at hsum)
+      (generic_eq_spec x y)
+  split
+  · exact fallback_eq_spec (fun sum hsum => by
+      simpa using NativeSmallWordAdd.addFinite_refines ‹_› x y sum false hsum)
+      (generic_eq_spec x y)
+  split
+  · exact fallback_eq_spec
+      (fun sum hsum => by rwa [NativeSmallWordFinite.addFinite_eq ‹_›] at hsum)
+      (generic_eq_spec x y)
+  · exact generic_eq_spec x y
+
+/--
+Native fixed-format and reusable one-word dispatch equals `Spec.sub` for every descriptor and on
+every input, exceptional values included.
+-/
+theorem subWord_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
+    subWord x y = Spec.sub x y := by
+  unfold subWord Spec.sub
+  split
+  · rename_i h32
+    have hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+    subst fmt
+    simp [Spec.add, NativeBinary32.addFiniteWord_eq, NativeBinary32.addFinite_eq,
+      generic_eq_spec]
     cases hx : toDyadic? x <;>
       cases hy : toDyadic? (neg y) <;>
       simp_all
-  · by_cases h64 : FloatFormat.IsBinary64 fmt
-    · have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
-      subst fmt
-      cases hnative : NativeSmallWordAdd.addFinite? x y true with
-      | some difference =>
-          have hfinite : FiniteKernel.add? x (neg y) = some difference := by
-            simpa using
-              NativeSmallWordAdd.addFinite_refines (by decide) x y difference true hnative
-          have hdifference : difference = Spec.sub x y := by
-            calc
-              difference = generic x (neg y) := by
-                simp [generic, FiniteKernel.addRuntime_eq, hfinite]
-              _ = Spec.add x (neg y) := generic_eq_spec x (neg y)
-              _ = Spec.sub x y := rfl
-          simp [subWord, h32, hnative, hdifference]
-      | none =>
-          cases hfinite : FiniteKernel.add? x (neg y) with
-          | none =>
-              simp [subWord, Spec.sub, h32, hnative,
-                NativeBinary64.subFinite_eq_addFiniteComponents_negate,
-                NativeBinary64.addFiniteComponents_eq, hfinite, generic_eq_spec]
-          | some difference =>
-              have hdifference : difference = Spec.add x (neg y) := by
-                simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
-                  generic_eq_spec x (neg y)
-              simp [subWord, Spec.sub, h32, hnative,
-                NativeBinary64.subFinite_eq_addFiniteComponents_negate,
-                NativeBinary64.addFiniteComponents_eq, hfinite, hdifference,
-                generic_eq_spec]
-    · by_cases hpair : NativePair.Eligible fmt
-      · cases hfinite : FiniteKernel.add? x (neg y) with
-        | none =>
-            simp [subWord, Spec.sub, h32, h64, hpair, NativePair.subFinite_eq hpair,
-              hfinite, generic_eq_spec]
-        | some difference =>
-            have hdifference : difference = Spec.add x (neg y) := by
-              simpa [generic, FiniteKernel.addRuntime_eq, hfinite] using
-                generic_eq_spec x (neg y)
-            simp [subWord, Spec.sub, h32, h64, hpair, NativePair.subFinite_eq hpair,
-              hfinite, hdifference]
-      · by_cases heligible : NativeSmallWordAdd.Eligible fmt
-        · cases hnative : NativeSmallWordAdd.addFinite? x y true with
-          | none =>
-              simp [subWord, Spec.sub, h32, h64, hpair, heligible, hnative,
-                generic_eq_spec]
-          | some difference =>
-              have hfinite :
-                  FiniteKernel.add? x (neg y) = some difference := by
-                simpa using
-                  NativeSmallWordAdd.addFinite_refines heligible x y difference true hnative
-              have hdifference : difference = Spec.sub x y := by
-                calc
-                  difference = generic x (neg y) := by
-                    simp [generic, FiniteKernel.addRuntime_eq, hfinite]
-                  _ = Spec.add x (neg y) := generic_eq_spec x (neg y)
-                  _ = Spec.sub x y := rfl
-              simp [subWord, h32, h64, hpair, heligible, hnative, hdifference]
-        · by_cases hstorage : NativeSmallWord.StorageEligible fmt
-          · cases hnative : NativeSmallWordFinite.addFinite? x (neg y) with
-            | none =>
-                simp [subWord, Spec.sub, h32, h64, hpair, heligible, hstorage, hnative,
-                  generic_eq_spec]
-            | some difference =>
-                have hfinite :
-                    FiniteKernel.add? x (neg y) = some difference := by
-                  rw [← NativeSmallWordFinite.addFinite_eq hstorage]
-                  exact hnative
-                have hdifference : difference = Spec.sub x y := by
-                  calc
-                    difference = generic x (neg y) := by
-                      simp [generic, FiniteKernel.addRuntime_eq, hfinite]
-                    _ = Spec.add x (neg y) := generic_eq_spec x (neg y)
-                    _ = Spec.sub x y := rfl
-                simp [subWord, h32, h64, hpair, heligible, hstorage, hnative, hdifference]
-          · simp [subWord, Spec.sub, generic_eq_spec, h32, h64, hpair,
-              heligible, hstorage]
-
-/-- Native fixed-format and reusable one-word dispatch preserves subtraction. -/
-theorem subWord_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
-    subWord x y = Spec.sub x y :=
-  (congrFun (congrFun (congrFun spec_sub_eq_subWord fmt) x) y).symm
+  split
+  · rename_i h64
+    have hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
+    subst fmt
+    refine fallback_eq_spec (fun difference hdifference => by
+      simpa using
+        NativeSmallWordAdd.addFinite_refines (by decide) x y difference true hdifference) ?_
+    dsimp only
+    split
+    · rename_i difference hdifference
+      exact eq_spec_of_finite (by
+        simpa [NativeBinary64.subFinite_eq_addFiniteComponents_negate,
+          NativeBinary64.addFiniteComponents_eq] using hdifference)
+    · exact generic_eq_spec x (neg y)
+  split
+  · exact fallback_eq_spec
+      (fun difference hdifference => by rwa [NativePair.subFinite_eq ‹_›] at hdifference)
+      (generic_eq_spec x (neg y))
+  split
+  · exact fallback_eq_spec (fun difference hdifference => by
+      simpa using NativeSmallWordAdd.addFinite_refines ‹_› x y difference true hdifference)
+      (generic_eq_spec x (neg y))
+  split
+  · exact fallback_eq_spec (fun difference hdifference => by
+      rwa [NativeSmallWordFinite.addFinite_eq ‹_›] at hdifference)
+      (generic_eq_spec x (neg y))
+  · exact generic_eq_spec x (neg y)
 
 end AddBackend
 end Model

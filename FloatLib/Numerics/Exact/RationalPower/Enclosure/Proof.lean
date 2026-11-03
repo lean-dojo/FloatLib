@@ -77,10 +77,8 @@ theorem exists_logDifference_separating (base exponent target : ℚ)
     rw [Rat.cast_zero, sub_ne_zero]
     intro hlog
     exact hne (Real.log_injOn_pos (Real.rpow_pos_of_pos hbaseReal _) htargetReal hlog)
-  exact Enclosure.Comparison.exists_separating 0 hdifference
-    ((tendsto_logDifference_lo base exponent target hbase htarget).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_logDifference_hi base exponent target hbase htarget).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+  exact Enclosure.Comparison.exists_separating_two_pow 0 hdifference
+    (tendsto_logDifference_lo base exponent target hbase htarget)
+    (tendsto_logDifference_hi base exponent target hbase htarget)
 
 end FloatLib.Numerics.RationalPower

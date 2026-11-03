@@ -34,7 +34,12 @@ theorem exactDecoder_eq_denote (value : Standard profile) :
 
 namespace Conversion
 
-/-- Configured conversion satisfies the numerical block contract in both overflow modes. -/
+/--
+Configured conversion satisfies `spec` in both overflow modes. The stored block is checked against
+the independent nearest-even, shared-scale relation `Quantizes`. The status flags enter `spec` as
+`status exact rounded`, the function `run` itself calls, so their part of this theorem holds by
+definition and does not check the flags against a separate statement.
+-/
 theorem implements_run :
     Quantization.Spec.Implements (spec (profile := profile)) (run (profile := profile)) := by
   intro overflow input
@@ -45,7 +50,8 @@ theorem implements_run :
   | infinity sign => rfl
   | exceptional value => rfl
 
-/-- Standard block destination quantizer, with the FP8 overflow mode as its context. -/
+/-- Standard block destination quantizer, with the FP8 overflow mode as its context. Its `correct`
+field is `implements_run`, which certifies the stored block but not the status flags. -/
 instance quantizer : ExecFloat.Quantizer (Standard profile) (Vector SignedRat 32) where
   Context := OverflowMode
   run := run

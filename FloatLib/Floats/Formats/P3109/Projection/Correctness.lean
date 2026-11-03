@@ -122,6 +122,15 @@ private theorem sameDatum_decode_encodeSaturateAbove
       format.sameDatum_decode_encodeNan,
       format.sameDatum_decode_encodePositiveInfinity]
 
+/-- A failed executable test `compareScalable x y == .lt` means `y ≤ x` exactly. -/
+private theorem toRat_le_of_compareScalable_ne_lt {x y : Numerics.Dyadic}
+    (h : ¬Numerics.Dyadic.Internal.compareScalable x y = .lt) : y.toRat ≤ x.toRat := by
+  apply not_lt.mp
+  intro hlt
+  apply h
+  rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
+  exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+
 /--
 Encoding then decoding preserves a saturated datum whose finite branch lies on the descriptor's
 precision grid.
@@ -178,11 +187,7 @@ theorem sameDatum_decode_encodeSaturate
                   rw [minFinite, hsigned, Numerics.Dyadic.neg_toRat]
                   exact neg_nonpos.mpr format.maxFinite_toRat_pos.le
               | unsigned => simp [minFinite, hsigned]
-            · apply not_lt.mp
-              intro hlt
-              apply hnotAbove
-              rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
-              exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+            · exact toRat_le_of_compareScalable_ne_lt hnotAbove
       | true =>
           simp only [saturate, hnegative, ite_true, beq_iff_eq]
           split
@@ -190,11 +195,7 @@ theorem sameDatum_decode_encodeSaturate
             exact format.sameDatum_decode_encodeSaturateBelow mode rounding
           next hnotBelow =>
             apply format.sameDatum_decode_encodeFinite finite hgrid
-            · apply not_lt.mp
-              intro hlt
-              apply hnotBelow
-              rw [Numerics.Dyadic.Internal.compareScalable_eq_compare]
-              exact (Numerics.Dyadic.compare_eq_lt_iff _ _).2 hlt
+            · exact toRat_le_of_compareScalable_ne_lt hnotBelow
             · have hnonpos : finite.toRat ≤ 0 := by
                 have hneg := nonnegative finite.neg (by simp [hnegative])
                 rw [Numerics.Dyadic.neg_toRat] at hneg

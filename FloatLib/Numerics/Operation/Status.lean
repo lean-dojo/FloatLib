@@ -15,6 +15,12 @@ Status-bearing operations differ in their concrete result structures: IEEE arith
 exception flags, checked integer operations may report overflow, and quantizers may report
 saturation. These contracts express correctness in terms of result and status projections,
 without imposing a common runtime wrapper.
+
+The complete variants `RefinesStatus1`-`RefinesStatus3` constrain every input and every outcome,
+exceptional ones included. The finite variants `RefinesStatusFinite1`-`RefinesStatusFinite3` take
+finite inputs and also assert that the result code represents a finite value, so an operation
+that overflows to infinity or returns NaN on some finite input, flag or not, cannot satisfy them;
+its exceptional outcomes need a complete variant.
 -/
 
 @[expose] public section
@@ -48,14 +54,16 @@ def RefinesStatus3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type
   Refines3 A B C run fun first second third outcome =>
     post first second third (D.denote (value outcome)) (status outcome)
 
-/-- Finite semantics of a unary status-bearing operation. -/
+/-- Finite semantics of a unary status-bearing operation: a finite input gives a result code
+representing a finite value, and `post` relates it and the status to the input. -/
 def RefinesStatusFinite1 (A B : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → Outcome) (value : Outcome → B.Code) (status : Outcome → Status)
     (post : A.Scalar → B.Scalar → Status → Prop) : Prop :=
   RefinesFinite1 A run fun input outcome =>
     ∃ output, B.Represents (value outcome) output ∧ post input output (status outcome)
 
-/-- Finite semantics of a two-input status-bearing operation. -/
+/-- Finite semantics of a two-input status-bearing operation: finite inputs give a result code
+representing a finite value, and `post` relates it and the status to the inputs. -/
 def RefinesStatusFinite2 (A B C : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → Outcome) (value : Outcome → C.Code)
     (status : Outcome → Status)
@@ -64,7 +72,8 @@ def RefinesStatusFinite2 (A B C : NumericalSystem) {Outcome : Type u} {Status : 
     ∃ output, C.Represents (value outcome) output ∧
       post left right output (status outcome)
 
-/-- Finite semantics of a three-input status-bearing operation. -/
+/-- Finite semantics of a three-input status-bearing operation: finite inputs give a result code
+representing a finite value, and `post` relates it and the status to the inputs. -/
 def RefinesStatusFinite3 (A B C D : NumericalSystem) {Outcome : Type u} {Status : Type v}
     (run : A.Code → B.Code → C.Code → Outcome) (value : Outcome → D.Code)
     (status : Outcome → Status)

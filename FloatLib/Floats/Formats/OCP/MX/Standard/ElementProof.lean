@@ -16,8 +16,12 @@ import Mathlib.Tactic.Linarith
 # Numerical contracts for OCP MX element rounding
 
 The bounded candidate search implements a mathematical nearest-even specification over all
-finite element encodings. The proofs do not assume uniform spacing, and therefore cover
-subnormals, binade boundaries, finite saturation, and the asymmetric two's-complement endpoint.
+finite element encodings (`quantizeFinite_quantizes`). The proofs do not assume uniform spacing,
+so the contract covers subnormals, binade boundaries and inputs beyond the finite range, for which
+it selects the nearest finite word with no separate saturation case. For INT8 the asymmetric
+two's-complement range and its two saturation endpoints are proved (`int8_bounds`,
+`toRat?_endpoint_int8`). That `endpoint`, the constant used by the saturating conversion path, is
+the extreme finite word of each float profile is not proved here.
 -/
 
 public section
@@ -62,7 +66,8 @@ theorem toRat?_int8 (word : Element .int8) :
     toRat? word = some ((word.toInt : Rat) / 64) := by
   simp [toRat?, decode]
 
-/-- The chosen INT8 profile uses the complete permitted asymmetric range. -/
+/-- Every INT8 element lies in the asymmetric range `[-2, 127/64]`; `toRat?_endpoint_int8` shows
+that both ends are attained. -/
 theorem int8_bounds (word : Element .int8) :
     (-2 : Rat) ≤ (word.toInt : Rat) / 64 ∧ (word.toInt : Rat) / 64 ≤ 127 / 64 := by
   have hlo : (-128 : Int) ≤ word.toInt := BitVec.le_toInt word
@@ -70,6 +75,14 @@ theorem int8_bounds (word : Element .int8) :
   have hlo' : (-128 : Rat) ≤ word.toInt := by exact_mod_cast hlo
   have hhi' : (word.toInt : Rat) ≤ 127 := by exact_mod_cast hhi
   constructor <;> linarith
+
+/-- The INT8 saturation endpoints are the two ends of the permitted asymmetric range: code `0x80`
+denotes `-2` and code `0x7f` denotes `127/64`. -/
+theorem toRat?_endpoint_int8 (negative : Bool) :
+    toRat? (endpoint .int8 negative) = some (if negative then -2 else 127 / 64) := by
+  have hlow : (BitVec.ofNat Profile.int8.width 128).toInt = -128 := by decide
+  have hhigh : (BitVec.ofNat Profile.int8.width 127).toInt = 127 := by decide
+  cases negative <;> rw [toRat?_int8] <;> simp only [endpoint] <;> norm_num [hlow, hhigh]
 
 /-- There is always a finite candidate, so the executable fallback is unreachable. -/
 theorem candidates_ne_nil (profile : Profile) : candidates profile ≠ [] := by

@@ -50,17 +50,28 @@ theorem sum_ofFn_finite {n : Nat} (values : Fin n → Rat) :
   simpa only [List.map_ofFn, Function.comp_def, Fin.sum_ofFn] using
     sum_finite (List.ofFn values)
 
-private theorem foldl_infinity (values : List (NumericalValue Rat)) (sign : Bool)
-    (h : ∀ value ∈ values, (∃ q, value = .finite q) ∨ value = .infinity sign) :
-    values.foldl add (.infinity sign) = .infinity sign := by
+/-- A left fold that starts at or meets an absorbing value `absorbing` ends there, when every term
+and the start lie in a class `P` that the step keeps and that `absorbing` absorbs from either side.
+-/
+private theorem foldl_eq_of_absorbing {α : Type} (step : α → α → α) (absorbing : α)
+    (P : α → Prop) (hleft : ∀ x, P x → step absorbing x = absorbing)
+    (hright : ∀ x, P x → step x absorbing = absorbing)
+    (hclosed : ∀ x y, P x → P y → P (step x y)) :
+    ∀ (values : List α) (initial : α), P initial → (∀ x ∈ values, P x) →
+      absorbing ∈ values ∨ initial = absorbing → values.foldl step initial = absorbing := by
+  intro values
   induction values with
-  | nil => rfl
+  | nil => rintro initial - - (h | rfl) <;> simp_all
   | cons value values ih =>
-    have htail : ∀ value ∈ values, (∃ q, value = .finite q) ∨ value = .infinity sign :=
-      fun value hv => h value (List.mem_cons_of_mem _ hv)
-    rcases h value (by simp) with ⟨q, rfl⟩ | rfl
-    · simpa [add] using ih htail
-    · simpa [add] using ih htail
+    intro initial hinitial hvalues hmem
+    have hvalue := hvalues value List.mem_cons_self
+    refine ih (step initial value) (hclosed _ _ hinitial hvalue)
+      (fun x hx => hvalues x (List.mem_cons_of_mem _ hx)) ?_
+    rcases hmem with hmem | rfl
+    · rcases List.mem_cons.mp hmem with rfl | hmem
+      · exact Or.inr (hright _ hinitial)
+      · exact Or.inl hmem
+    · exact Or.inr (hleft _ hvalue)
 
 /--
 An infinity survives a reduction whose other terms are finite or infinities of the same sign.
@@ -70,19 +81,12 @@ theorem sum_eq_infinity (values : List (NumericalValue Rat)) (sign : Bool)
     (h : ∀ value ∈ values, (∃ q, value = .finite q) ∨ value = .infinity sign)
     (hmem : .infinity sign ∈ values) :
     sum values = .infinity sign := by
-  have hfold (values : List (NumericalValue Rat)) (initial : Rat)
-      (h : ∀ value ∈ values, (∃ q, value = .finite q) ∨ value = .infinity sign)
-      (hmem : .infinity sign ∈ values) :
-      values.foldl add (.finite initial) = .infinity sign := by
-    induction values generalizing initial with
-    | nil => simp at hmem
-    | cons value values ih =>
-      have htail : ∀ value ∈ values, (∃ q, value = .finite q) ∨ value = .infinity sign :=
-        fun value hv => h value (List.mem_cons_of_mem _ hv)
-      rcases h value (by simp) with ⟨q, rfl⟩ | rfl
-      · exact ih (initial + q) htail (by simpa using hmem)
-      · simpa [add] using foldl_infinity values sign htail
-  exact hfold values 0 h hmem
+  refine foldl_eq_of_absorbing add (.infinity sign)
+    (fun value => (∃ q, value = .finite q) ∨ value = .infinity sign) ?_ ?_ ?_ values _
+    (Or.inl ⟨0, rfl⟩) h (Or.inl hmem)
+  · rintro x (⟨q, rfl⟩ | rfl) <;> simp [add]
+  · rintro x (⟨q, rfl⟩ | rfl) <;> simp [add]
+  · rintro x y (⟨a, rfl⟩ | rfl) (⟨b, rfl⟩ | rfl) <;> simp [add]
 
 private theorem signed_ratio_real (value : Rat) :
     Model.signedScaledRatToReal (value.num < 0) value.num.natAbs value.den 0 =
@@ -107,31 +111,17 @@ theorem toReal_roundFloat32_finite (value : Rat)
   · have hn : value.num.natAbs ≠ 0 := by
       simpa using Rat.num_ne_zero.mpr hzero
     rw [roundFloat32, Model.roundRat,
-      Model.toReal_roundRatScaled_eq_roundAt _ _ _ _ _ (by decide) hn value.den_nz hfinite,
+      Model.toReal_roundRatScaled_eq_roundAt _ _ _ _ _ (by decide) hfinite,
       signed_ratio_real]
 
 end DotProduct
 
 /-- One exceptional lane product poisons an exact reduction, regardless of its position. -/
 theorem DotProduct.sum_eq_nan_of_mem (values : List (NumericalValue Rat))
-    (h : .exceptional .nan ∈ values) : DotProduct.sum values = .exceptional .nan := by
-  have habsorb (rest : List (NumericalValue Rat)) :
-      rest.foldl DotProduct.add (.exceptional .nan) = .exceptional .nan := by
-    induction rest with
-    | nil => rfl
-    | cons value rest ih =>
-      simpa only [List.foldl_cons, DotProduct.add] using ih
-  have hfold (rest : List (NumericalValue Rat)) (initial : NumericalValue Rat)
-      (hmem : .exceptional .nan ∈ rest) :
-      rest.foldl DotProduct.add initial = .exceptional .nan := by
-    induction rest generalizing initial with
-    | nil => simp at hmem
-    | cons value rest ih =>
-      rcases List.mem_cons.mp hmem with hhead | htail
-      · subst value
-        cases initial <;> simpa [DotProduct.add] using habsorb rest
-      · exact ih _ htail
-  exact hfold values _ h
+    (h : .exceptional .nan ∈ values) : DotProduct.sum values = .exceptional .nan :=
+  DotProduct.foldl_eq_of_absorbing DotProduct.add (.exceptional .nan) (fun _ => True)
+    (fun _ _ => rfl) (fun x _ => by cases x <;> rfl) (fun _ _ _ _ => trivial) values _ trivial
+    (fun _ _ => trivial) (Or.inl h)
 
 /-- A lane-local NaN on the left propagates through multiplication and the full block sum. -/
 theorem dotExact_eq_nan_of_left_lane {leftProfile rightProfile : Profile}
@@ -226,7 +216,7 @@ theorem abs_toReal_dot_sub_le {leftProfile rightProfile : Profile}
     (hb : ∀ i, right.decodeLane i = .finite (b i))
     (hfinite : Model.isFinite (dot left right) = true) :
     |Model.toReal (dot left right) - ∑ i, ((a i).value : ℝ) * ((b i).value : ℝ)| ≤
-      Model.epsilonAt .binary32 (∑ i, ((a i).value : ℝ) * ((b i).value : ℝ)) := by
+      Model.halfUlpAt .binary32 (∑ i, ((a i).value : ℝ) * ((b i).value : ℝ)) := by
   rw [toReal_dot_eq_roundAt left right a b ha hb hfinite]
   exact Model.abs_roundAt_sub_le .binary32 _
 
@@ -291,7 +281,7 @@ theorem abs_toReal_dotGeneral_sub_le {leftProfile rightProfile : Profile} {n : N
     (hb : ∀ (j : Fin n) (i : Fin 32), right[j.val].decodeLane i = .finite (b j i))
     (hfinite : Model.isFinite (dotGeneral left right) = true) :
     |Model.toReal (dotGeneral left right) - realDot a b| ≤
-      Model.epsilonAt .binary32 (realDot a b) := by
+      Model.halfUlpAt .binary32 (realDot a b) := by
   rw [toReal_dotGeneral_eq_roundAt left right a b ha hb hfinite]
   exact Model.abs_roundAt_sub_le .binary32 _
 

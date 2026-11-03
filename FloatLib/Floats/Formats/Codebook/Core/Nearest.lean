@@ -15,8 +15,8 @@ public import Mathlib.Algebra.Group.Nat.Defs
 
 A codebook is a finite table, so the natural quantizer is exhaustive: scan every word, keep the
 finite entries, and select one whose denotation is closest to the target. This module provides
-that quantizer, `nearestCode`, together with the theorem that its result minimizes the distance
-`|x - c|` over all finite codewords `c`.
+that quantizer, `nearestCode`, together with the theorems that its result minimizes the distance
+`|x - c|` over all finite codewords `c` and that among the minimizers it is the lowest word.
 
 The tie policy is fixed and simple: the scan runs in ascending order of the unsigned word value,
 and a candidate replaces the current best only when it is strictly closer. A tie therefore
@@ -67,6 +67,21 @@ theorem mem_finiteEntries_iff (book : Codebook width α) (code : Code book) (val
       apply BitVec.eq_of_toNat_eq
       simp
     simp [hcode, hdenote]
+
+/-- `finiteEntries` lists its words in strictly ascending unsigned order. -/
+theorem finiteEntries_pairwise (book : Codebook width α) :
+    (finiteEntries book).Pairwise (fun left right => left.1.toNat < right.1.toNat) := by
+  unfold finiteEntries
+  have hrange : (List.range (2 ^ width)).Pairwise (fun a b => a < b ∧ b < 2 ^ width) :=
+    List.pairwise_lt_range.imp_of_mem fun _ hb hab => ⟨hab, List.mem_range.1 hb⟩
+  refine hrange.filterMap _ ?_
+  intro a b hab left hleft right hright
+  split at hleft <;> simp only [Option.some.injEq, reduceCtorEq] at hleft
+  split at hright <;> simp only [Option.some.injEq, reduceCtorEq] at hright
+  subst left right
+  simp only [BitVec.toNat_ofNat]
+  rw [Nat.mod_eq_of_lt (hab.1.trans hab.2), Nat.mod_eq_of_lt hab.2]
+  exact hab.1
 
 section Nearest
 
@@ -223,6 +238,94 @@ theorem foldl_closerEntry_spec {book : Codebook width α} (x : α)
       obtain ⟨hmem, hrest, hacc⟩ := ih (closerEntry x acc entry) hfold
       cases acc <;> simp only [closerEntry] at hmem hacc <;> grind
 
+/-- One scan step either takes the candidate, which is then strictly closer to `x` than any current
+best, or keeps the current best, which is then no farther from `x` than the candidate. -/
+private theorem closerEntry_cases {book : Codebook width α} (x : α)
+    (acc : Option (Code book × α)) (entry : Code book × α) :
+    (closerEntry x acc entry = some entry ∧
+        ∀ current, acc = some current → |x - entry.2| < |x - current.2|) ∨
+      ∃ current, acc = some current ∧ closerEntry x acc entry = some current ∧
+        |x - current.2| ≤ |x - entry.2| := by
+  cases acc with
+  | none => exact Or.inl ⟨rfl, fun _ h => absurd h (by simp)⟩
+  | some current =>
+      by_cases h : |x - entry.2| < |x - current.2|
+      · exact Or.inl ⟨by simp only [closerEntry, h, ↓reduceIte], fun _ hc => by cases hc; exact h⟩
+      · exact Or.inr ⟨current, rfl, by simp only [closerEntry, h, ↓reduceIte], not_lt.1 h⟩
+
+/-- A fold result other than the initial accumulator is strictly closer to `x` than it. -/
+private theorem foldl_closerEntry_strict {book : Codebook width α} (x : α)
+    (entries : List (Code book × α)) (acc : Option (Code book × α))
+    (selected : Code book × α)
+    (hfold : entries.foldl (closerEntry x) acc = some selected) :
+    acc = some selected ∨ ∀ current, acc = some current → |x - selected.2| < |x - current.2| := by
+  induction entries generalizing acc with
+  | nil => exact Or.inl hfold
+  | cons entry rest ih =>
+      have h := ih (closerEntry x acc entry) hfold
+      rcases closerEntry_cases x acc entry with ⟨hstep, hcloser⟩ | ⟨current, rfl, hstep, -⟩
+      · rw [hstep] at h
+        refine Or.inr fun current hcurrent => ?_
+        rcases h with h | h
+        · cases h
+          exact hcloser current hcurrent
+        · exact (h entry rfl).trans (hcloser current hcurrent)
+      · rwa [hstep] at h
+
+/--
+Over entries in ascending unsigned order, every scanned entry below the fold result is strictly
+farther from `x`, provided the initial accumulator lies below all entries.
+-/
+private theorem foldl_closerEntry_first {book : Codebook width α} (x : α)
+    (entries : List (Code book × α)) (acc : Option (Code book × α))
+    (selected : Code book × α)
+    (hsorted : entries.Pairwise (fun left right => left.1.toNat < right.1.toNat))
+    (hacc : ∀ current, acc = some current → ∀ entry ∈ entries,
+      current.1.toNat < entry.1.toNat)
+    (hfold : entries.foldl (closerEntry x) acc = some selected) :
+    ∀ entry ∈ entries, entry.1.toNat < selected.1.toNat → |x - selected.2| < |x - entry.2| := by
+  induction entries generalizing acc with
+  | nil => simp
+  | cons entry rest ih =>
+      rw [List.pairwise_cons] at hsorted
+      have hstrict := foldl_closerEntry_strict x rest (closerEntry x acc entry) selected hfold
+      rw [List.forall_mem_cons]
+      rcases closerEntry_cases x acc entry with ⟨hstep, -⟩ | ⟨previous, rfl, hstep, hle⟩
+      · -- The step takes `entry`, which lies below the rest of the scan.
+        rw [hstep] at hstrict
+        refine ⟨fun hlt => ?_, ih (closerEntry x acc entry) hsorted.2 ?_ hfold⟩
+        · rcases hstrict with h | h
+          · cases h
+            exact absurd hlt (lt_irrefl _)
+          · exact h entry rfl
+        · rw [hstep]
+          rintro _ ⟨⟩ other hother
+          exact hsorted.1 other hother
+      · -- The step keeps `previous`, which lies below `entry` and is no farther from `x`.
+        rw [hstep] at hstrict
+        refine ⟨fun hlt => ?_, ih (closerEntry x (some previous) entry) hsorted.2 ?_ hfold⟩
+        · rcases hstrict with h | h
+          · cases h
+            exact absurd (hacc _ rfl entry List.mem_cons_self) (not_lt.2 hlt.le)
+          · exact (h previous rfl).trans_le hle
+        · rw [hstep]
+          rintro _ ⟨⟩ other hother
+          exact hacc _ rfl other (List.mem_cons_of_mem _ hother)
+
+/-- The selected codeword denotes a finite value, it is the entry the full table scan reaches from
+no accumulator, and that value is at least as close to `x` as every finite entry. -/
+private theorem nearestCode_selected (book : Codebook width α) (x : α) {code : Code book}
+    (hnearest : nearestCode book x = some code) :
+    ∃ value, book.denote code = .finite value ∧
+      (finiteEntries book).foldl (closerEntry x) none = some (code, value) ∧
+      ∀ entry ∈ finiteEntries book, |x - value| ≤ |x - entry.2| := by
+  rw [nearestCode_eq_foldl] at hnearest
+  obtain ⟨selected, hfold, rfl⟩ := Option.map_eq_some_iff.1 hnearest
+  obtain ⟨hmem, hmin, -⟩ := foldl_closerEntry_spec x (finiteEntries book) none selected hfold
+  rcases hmem with hmem | hnone
+  · exact ⟨selected.2, (mem_finiteEntries_iff book selected.1 selected.2).1 hmem, hfold, hmin⟩
+  · exact absurd hnone (by simp)
+
 /--
 The selected codeword is finite and its denotation is at least as close to `x` as the denotation
 of every finite codeword in the table.
@@ -232,16 +335,25 @@ theorem nearestCode_spec (book : Codebook width α) (x : α) (code : Code book)
     ∃ value, book.denote code = .finite value ∧
       ∀ other otherValue, book.denote other = .finite otherValue →
         |x - value| ≤ |x - otherValue| := by
-  rw [nearestCode_eq_foldl] at hnearest
-  obtain ⟨selected, hfold, hfirst⟩ := Option.map_eq_some_iff.1 hnearest
-  obtain ⟨hmem, hmin, -⟩ := foldl_closerEntry_spec x (finiteEntries book) none selected hfold
-  rcases hmem with hmem | hnone
-  · refine ⟨selected.2, ?_, ?_⟩
-    · rw [← hfirst]
-      exact (mem_finiteEntries_iff book selected.1 selected.2).1 hmem
-    · intro other otherValue hother
-      exact hmin (other, otherValue) ((mem_finiteEntries_iff book other otherValue).2 hother)
-  · exact absurd hnone (by simp)
+  obtain ⟨value, hvalue, -, hmin⟩ := nearestCode_selected book x hnearest
+  exact ⟨value, hvalue, fun other otherValue hother =>
+    hmin (other, otherValue) ((mem_finiteEntries_iff book other otherValue).2 hother)⟩
+
+/--
+Ties resolve to the lower word: a finite codeword that is no farther from `x` than the selected
+one, and hence equally far by `nearestCode_spec`, has an unsigned value no smaller than the
+selected word.
+-/
+theorem nearestCode_toNat_le (book : Codebook width α) (x : α) {code other : Code book}
+    {value otherValue : α} (hnearest : nearestCode book x = some code)
+    (hvalue : book.denote code = .finite value) (hother : book.denote other = .finite otherValue)
+    (hdistance : |x - otherValue| ≤ |x - value|) : code.toNat ≤ other.toNat := by
+  obtain ⟨selected, hselected, hfold, -⟩ := nearestCode_selected book x hnearest
+  obtain rfl : value = selected := by rw [hvalue] at hselected; injection hselected
+  refine not_lt.1 fun hlt => (not_lt.2 hdistance) ?_
+  exact foldl_closerEntry_first x (finiteEntries book) none (code, value)
+    (finiteEntries_pairwise book) (by simp) hfold (other, otherValue)
+    ((mem_finiteEntries_iff book other otherValue).2 hother) hlt
 
 /-- A table with at least one finite word always has a nearest codeword. -/
 theorem nearestCode_isSome_of_denote_finite (book : Codebook width α) (x : α)

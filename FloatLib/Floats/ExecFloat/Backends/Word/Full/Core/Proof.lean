@@ -10,6 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 import Mathlib.Tactic.ByContra
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -142,25 +143,22 @@ theorem expField_lt (x : Value) :
   simpa only [show FloatFormat.binary64.expWidth = 11 by decide] using
     Model.expField_lt_pow2 x
 
+/-- A native exponent test against a constant word is the test on the generic exponent field. -/
+theorem expField_eq_iff (x : Value) (value : UInt64) :
+    expField (toUInt64 x) = value ↔ Model.expField x = value.toNat := by
+  rw [← expField_toNat x, UInt64.toNat_inj]
+
 /-- A nonzero, nonexceptional native exponent is in the binary64 normal range. -/
 theorem normalExponent_bounds (x : Value)
     (hnonzero : expField (toUInt64 x) ≠ 0)
     (hnotAllOnes : expField (toUInt64 x) ≠ 0x7ff) :
     0 < (expField (toUInt64 x)).toNat ∧
       (expField (toUInt64 x)).toNat < 2047 := by
-  have hnonzeroModel : Model.expField x ≠ 0 := by
-    rw [← expField_toNat x]
-    intro h
-    apply hnonzero
-    apply UInt64.toNat_inj.mp
-    simpa using h
+  have hnonzeroModel : Model.expField x ≠ 0 := fun h => hnonzero ((expField_eq_iff x 0).mpr h)
   have hnotAllOnesModel :
       Model.expField x ≠ FloatFormat.binary64.expAllOnesNat := by
-    rw [binary64_expAllOnesNat, ← expField_toNat x]
-    intro h
-    apply hnotAllOnes
-    apply UInt64.toNat_inj.mp
-    simpa using h
+    rw [binary64_expAllOnesNat]
+    exact fun h => hnotAllOnes ((expField_eq_iff x 0x7ff).mpr h)
   have hbounds :=
     Model.expField_interior_bounds x hnonzeroModel hnotAllOnesModel
   simpa only [← expField_toNat x, binary64_expAllOnesNat] using hbounds
@@ -216,6 +214,17 @@ theorem finiteMantissa_bounds
   simp only [ite_eq_right hexponent, Model.pow2_eq_two_pow]
   omega
 
+/--
+A binary64 value whose exponent field is neither zero nor all ones has a normal exponent field and
+a 53-bit significand.
+-/
+theorem normalOperand_bounds (x : Value)
+    (hzero : expField (toUInt64 x) ≠ 0) (hexceptional : expField (toUInt64 x) ≠ 0x7ff) :
+    (0 < (expField (toUInt64 x)).toNat ∧ (expField (toUInt64 x)).toNat < 2047) ∧
+      (2 ^ 52 ≤ (finiteMantissa (expField (toUInt64 x)) (fracField (toUInt64 x))).toNat ∧
+        (finiteMantissa (expField (toUInt64 x)) (fracField (toUInt64 x))).toNat < 2 ^ 53) :=
+  ⟨normalExponent_bounds x hzero hexceptional, finiteMantissa_bounds _ _ hzero (fracField_lt x)⟩
+
 /-- Every decoded binary64 significand, normal or subnormal, has at most 53 significant bits. -/
 theorem finiteMantissa_lt
     (exponent fraction : UInt64) (hfraction : fraction.toNat < 2 ^ 52) :
@@ -259,8 +268,8 @@ theorem decode_of_finiteExponent (x : Value)
 Every result of `roundScaled?` is the generic binary64 product rounding of the same magnitude at
 the same scale.
 
-The magnitude bound `product < 2 ^ 116` also admits the exact sums of fused multiply-add, whose
-leading bit can sit above that of a 106-bit significand product.
+The leading-bit range, which bounds the magnitude by `2 ^ 116`, also admits the exact sums of fused
+multiply-add, whose leading bit can sit above that of a 106-bit significand product.
 -/
 theorem roundScaled_refines
     (sign : Bool) (scale : UInt64)
@@ -268,14 +277,16 @@ theorem roundScaled_refines
     (hscaleBound : scale.toNat < 2 ^ 32)
     (hleading : leading.toNat = product.toNat.log2)
     (hleadingRange : 53 ≤ leading.toNat ∧ leading.toNat ≤ 115)
-    (hproductLower : 2 ^ 52 ≤ product.toNat)
-    (hproduct : product.toNat < 2 ^ 116)
     (result : Value)
     (hresult :
       roundScaled? sign scale product leading = some result) :
     result =
       FiniteProductRound.round FloatFormat.binary64 sign product.toNat
         scale.toNat := by
+  have hproductNe : product.toNat ≠ 0 := by
+    intro hzero
+    rw [hzero, Nat.log2_zero] at hleading
+    omega
   unfold roundScaled? roundScaledWord? at hresult
   simp only [apply_ite (Option.map ofUInt64), Option.map_none, Option.map_some,
     packFieldsWord_eq_ofNat] at hresult
@@ -320,7 +331,6 @@ theorem roundScaled_refines
             0x0010000000000000) := by
     exact hresultEq.symm
   rw [hresultValue]
-  have hproductNe : product.toNat ≠ 0 := by omega
   have hnormal :
       ¬product.toNat.log2 +
           scale.toNat < 1126 := by
@@ -342,41 +352,14 @@ theorem roundScaled_refines
       1 ≤ (leading - 52).toNat ∧ (leading - 52).toNat ≤ 63 := by
     rw [hshift, ← hleading]
     omega
-  have hhigh :
-      product.hi.toNat < 2 ^ (leading - 52).toNat := by
-    have hupper :
-        product.toNat < 2 ^ (leading.toNat + 1) := by
-      have hbounds := (Nat.log2_eq_iff hproductNe).1 hleading.symm
-      exact hbounds.2
-    by_contra hnot
-    have hhi :
-        2 ^ (leading - 52).toNat ≤ product.hi.toNat := by
-      omega
-    have hbase :
-        product.hi.toNat * 2 ^ 64 ≤ product.toNat := by
-      unfold FloatLib.Numerics.FixedWord.UInt128.toNat
-      omega
-    have hpow :
-        2 ^ (leading.toNat + 1) ≤
-          2 ^ (leading - 52).toNat * 2 ^ 64 := by
-      rw [hshift, ← pow_add]
-      apply Nat.pow_le_pow_right (by decide)
-      omega
-    have hmul :
-        2 ^ (leading - 52).toNat * 2 ^ 64 ≤
-          product.hi.toNat * 2 ^ 64 :=
-      Nat.mul_le_mul_right (2 ^ 64) hhi
-    omega
+  have hupper : product.toNat < 2 ^ (leading.toNat + 1) :=
+    ((Nat.log2_eq_iff hproductNe).1 hleading.symm).2
   have hquotient :
       (product.toNat >>> (leading - 52).toNat) + 1 < 2 ^ 64 := by
     rw [Nat.shiftRight_eq_div_pow]
     have hbase :
         product.toNat / 2 ^ (leading - 52).toNat < 2 ^ 53 := by
       rw [Nat.div_lt_iff_lt_mul (by positivity)]
-      have hupper :
-          product.toNat < 2 ^ (leading.toNat + 1) := by
-        have hbounds := (Nat.log2_eq_iff hproductNe).1 hleading.symm
-        exact hbounds.2
       calc
         product.toNat < 2 ^ (leading.toNat + 1) := hupper
         _ = 2 ^ 53 * 2 ^ (leading - 52).toNat := by
@@ -390,7 +373,7 @@ theorem roundScaled_refines
         Numerics.roundShiftRightEven product.toNat (product.toNat.log2 - 52) := by
     unfold rounded
     rw [FloatLib.Numerics.FixedWord.UInt128.roundShiftRightEven_toNat product
-      (leading - 52).toNat (by omega) (by omega) hhigh hquotient]
+      (leading - 52).toNat (by omega) hquotient]
     rw [hshift]
   have hfracLe : 52 ≤ product.toNat.log2 := by
     rw [← hleading]
@@ -479,8 +462,6 @@ theorem roundNormalProduct_refines
     (hyExponent : 0 < yExponent.toNat ∧ yExponent.toNat < 2047)
     (hleading : leading.toNat = product.toNat.log2)
     (hleadingRange : 53 ≤ leading.toNat ∧ leading.toNat ≤ 115)
-    (hproductLower : 2 ^ 52 ≤ product.toNat)
-    (hproduct : product.toNat < 2 ^ 116)
     (result : Value)
     (hresult :
       roundNormalProduct? sign xExponent yExponent product leading =
@@ -488,21 +469,11 @@ theorem roundNormalProduct_refines
     result =
       FiniteProductRound.round FloatFormat.binary64 sign product.toNat
         ((xExponent.toNat - 1) + (yExponent.toNat - 1)) := by
-  have hxOne : (1 : UInt64) ≤ xExponent :=
-    UInt64.le_iff_toNat_le.mpr (by simp only [UInt64.reduceToNat]; omega)
-  have hyOne : (1 : UInt64) ≤ yExponent :=
-    UInt64.le_iff_toNat_le.mpr (by simp only [UInt64.reduceToNat]; omega)
-  have hscale :
-      ((xExponent - 1) + (yExponent - 1)).toNat =
-        (xExponent.toNat - 1) + (yExponent.toNat - 1) := by
-    rw [UInt64.toNat_add, UInt64.toNat_sub_of_le xExponent 1 hxOne,
-      UInt64.toNat_sub_of_le yExponent 1 hyOne]
-    apply Nat.mod_eq_of_lt
-    simp only [UInt64.reduceToNat]
-    omega
+  have hscale := NativeSmallWord.productScale_toNat xExponent yExponent hxExponent.1 hyExponent.1
+    (by omega)
   rw [← hscale]
   exact roundScaled_refines sign _ product leading (by rw [hscale]; omega) hleading
-    hleadingRange hproductLower hproduct result hresult
+    hleadingRange result hresult
 
 private theorem roundNormalLimb_refines
     (sign : Bool) (xExponent yExponent : UInt64)
@@ -570,8 +541,7 @@ private theorem roundNormalLimb_refines
       simp [leading, hhigh, hlog]
   rw [← hproduct]
   apply roundNormalProduct_refines sign xExponent yExponent product leading
-    hxExponent hyExponent hleading (by omega) (by omega)
-    (lt_trans hproductUpper (by norm_num))
+    hxExponent hyExponent hleading (by omega)
     result
   simpa [roundNormalLimb?, product, leading] using hresult
 
@@ -708,33 +678,17 @@ theorem decode_eq (x : Value) :
               Model.pow2 52 +
                 Model.fracField x } :
             FiniteKernel.Components)
+  have hfield (value : UInt64) : exponent = value ↔ Model.expField x = value.toNat :=
+    expField_eq_iff x value
   by_cases hexceptional : exponent = 0x7ff
-  · have hgenericExceptional :
-        Model.expField x = 2047 := by
-      rw [← hexponent]
-      simp [hexceptional]
+  · have hgenericExceptional : Model.expField x = 2047 := (hfield _).mp hexceptional
     simp [hexceptional, hgenericExceptional]
-  · have hgenericFinite :
-        Model.expField x ≠ 2047 := by
-      intro h
-      apply hexceptional
-      apply UInt64.toNat_inj.mp
-      rw [hexponent]
-      simpa using h
+  · have hgenericFinite : Model.expField x ≠ 2047 := fun h => hexceptional ((hfield _).mpr h)
     by_cases hexponentZero : exponent = 0
-    · have hgenericZero :
-          Model.expField x = 0 := by
-        rw [← hexponent]
-        simp [hexponentZero]
+    · have hgenericZero : Model.expField x = 0 := (hfield _).mp hexponentZero
       simp [hexponentZero, hgenericZero, hfraction, hsign, finiteMantissa]
     · rw [finiteMantissa_toNat exponent fraction hfractionLt]
-      have hgenericNonzero :
-          Model.expField x ≠ 0 := by
-        intro h
-        apply hexponentZero
-        apply UInt64.toNat_inj.mp
-        rw [hexponent]
-        simpa using h
+      have hgenericNonzero : Model.expField x ≠ 0 := fun h => hexponentZero ((hfield _).mpr h)
       simp [hexceptional, hgenericFinite, hexponentZero, hgenericNonzero,
         hexponent, hfraction, hsign]
 

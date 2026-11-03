@@ -147,6 +147,7 @@ meta class FamilyInfo (F : Type u) where
 abbrev Code (F : Type u) [Family F] :=
   ByteCode (Family.format (F := F))
 
+/-- A static-byte family stores one byte code per value and uses real scalars. -/
 instance familyEncodedFormat (F : Type u) [Family F] : EncodedFormat F where
   Code := Code F
   Scalar := ℝ

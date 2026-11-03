@@ -49,18 +49,6 @@ private theorem toModel_pack_sqrt_fields (h : fmt.expWidth ≤ 32) (exponent fra
   simpa only [Model.signBit_ofFields, Model.expField_ofFields, Model.fracField_ofFields] using
     Model.ofFields_signBit_expField_fracField (Model.ofFields fmt false exponent fraction)
 
-private theorem sqrt_model_minExponent (fmt : FloatFormat) :
-    (FloatFormat.toModel fmt).minExponent = 1 - (fmt.bias : Int) - fmt.fracWidth := by
-  have hbias : (fmt.bias : Int) = 2 ^ (fmt.expWidth - 1) - 1 := by
-    unfold FloatFormat.bias
-    rw [Nat.cast_sub Nat.one_le_two_pow]
-    push_cast
-    rfl
-  unfold Float.Model.Format.minExponent Float.Model.Format.mantissaBits FloatFormat.toModel
-  rw [hbias]
-  push_cast
-  omega
-
 private theorem sqrt_normal_target (fmt : FloatFormat) (m e : Nat)
     (he : 0 < e) (hm : m.log2 = fmt.fracWidth) :
     min (((e : Int) - (fmt.bias + fmt.fracWidth : Nat)).ediv 2)
@@ -71,7 +59,7 @@ private theorem sqrt_normal_target (fmt : FloatFormat) (m e : Nat)
   have hbias := fmt.bias_pos
   have hfrac := fmt.fracWidth_pos
   unfold Float.Model.Format.targetExponent Float.Model.totalExponent
-  rw [hm, sqrt_model_minExponent]
+  rw [hm, toModel_minExponent, FloatFormat.ieeeMinSubnormalExponent]
   simp only [Float.Model.Format.mantissaBits, FloatFormat.toModel]
   push_cast
   change min (((e : Int) - (fmt.bias + fmt.fracWidth)) / 2)
@@ -146,16 +134,8 @@ private theorem sqrt_toModel_positive_normal (h : Eligible fmt) (x : Value fmt)
     simp [FiniteKernel.Components.toDyadic, FiniteKernel.dyadicExponent, hsign, hezero,
       hm.ne', FloatFormat.exponentBias_eq_bias_of_isIEEE fmt h.isIEEE]
     omega
-  have hieee :
-      Model.ieeeToDyadic? (toModel x) =
-        some ({ negative := false
-                significand := sqrtMantissa x
-                exponent := (expField x : Int) - (fmt.bias + fmt.fracWidth : Nat) } :
-          Numerics.Dyadic) := by
-    simpa [Model.toDyadic?, h.isIEEE] using hdyadic
-  simpa [Model.modelSign] using
-    Model.toModel_eq_finite_of_ieeeToDyadic?_eq_some (toModel x) false (sqrtMantissa x)
-      ((expField x : Int) - (fmt.bias + fmt.fracWidth : Nat)) hm.ne' hieee
+  exact Model.toModel_eq_finite_positive_of_toDyadic?_eq_some h.isIEEE (toModel x)
+    (sqrtMantissa x) _ hm.ne' hdyadic
 
 /-- Every accepted normal candidate has the reference square-root encoding. -/
 theorem sqrtNormal?_refines (h : Eligible fmt) (x result : Value fmt)
@@ -193,7 +173,7 @@ theorem sqrtNormal?_refines (h : Eligible fmt) (x result : Value fmt)
   have hmodelSign : Model.signBit (toModel x) = false := by
     rw [← signBit_eq]
     exact hsign
-  rw [hvalue, Spec.sqrt_eq_model h.isIEEE (toModel x) hfinite hnonzero hmodelSign,
+  rw [hvalue, Spec.sqrt_eq_model h.isIEEE (toModel x) hfinite hmodelSign,
     sqrt_toModel_positive_normal h x hsign hexp.1 hexp.2 hm]
   exact sqrtNormalValue_eq_model h (expField x) (sqrtMantissa x)
     (Nat.pos_of_ne_zero hexp.1) hexpLt hbounds.1 hbounds.2

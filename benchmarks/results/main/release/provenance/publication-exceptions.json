@@ -1,0 +1,20 @@
+{
+  "schema": "floatlib-release-matrix-exceptions-v1",
+  "omittedLanes": {
+    "flocq-reference": "Flocq has its own matched campaign (benchmarks/results/flocq-matched), which pairs exponent ranges and inputs with FloatLib. The format-comparison script marks a run without Flocq as development-only, so this run records developmentOnly=1 and publicationReadiness=development-only. Every other publication setting is the release profile's."
+  },
+  "timingFloorExceptions": [
+    {
+      "lane": "mpfr-reference",
+      "totalBits": 1024,
+      "operation": "add",
+      "trials": [
+        2,
+        3,
+        6,
+        8
+      ],
+      "reason": "The pilot overestimated this cell's cost (268 ns/op against about 66 ns/op in the trials), so four of its nine trials lasted 49.1 to 49.7 ms against the 50 ms floor. The other five trials of the cell, and every other row, last at least 50 ms."
+    }
+  ]
+}

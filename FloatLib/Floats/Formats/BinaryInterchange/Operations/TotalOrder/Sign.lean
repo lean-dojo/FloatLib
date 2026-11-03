@@ -13,10 +13,14 @@ import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 # Exact absolute values and encoded sign operations
 
 The sign and quiet-NaN bits occupy distinct positions for every binary descriptor. Consequently
-encoded absolute value preserves signaling status and payload. In a signed-zero format it also
-clears the sign of every value, giving the exact-value bridge used by magnitude ordering.
-Unsigned-zero formats preserve their reserved NaN word under encoded absolute value.
-The bridge therefore requires a format that supports signed zero.
+encoded absolute value preserves signaling status (`isSNaN_abs`) and the fraction field that carries
+a NaN's payload (`fracField_abs`). In a signed-zero format it also clears the sign of every value,
+giving the exact-value bridge used by magnitude ordering (`toDyadic?_abs_of_supportsSignedZero`,
+`exactValue_abs_of_supportsSignedZero`). Without signed zeros it leaves every NaN and zero unchanged
+(`abs_eq_self_of_not_supportsSignedZero_of_isNaN`,
+`abs_eq_self_of_not_supportsSignedZero_of_isZero`), so the unsigned-zero encoding keeps its reserved
+NaN word, whose set sign bit marks it, instead of turning it into the zero. The bridge therefore
+requires a format that supports signed zero.
 -/
 
 @[expose] public section
@@ -42,7 +46,8 @@ private theorem quietBits_toggleSign {fmt : FloatFormat} (x : Model fmt) :
     simp [hi, Nat.testBit_two_pow_of_ne hne]
   · simp [Nat.testBit_two_pow_of_ne (Ne.symm hquiet)]
 
-private theorem signaling_copySign {fmt : FloatFormat} (x y : Model fmt) :
+/-- Copying a sign preserves signaling status under every encoding policy. -/
+@[simp] theorem isSNaN_copySign {fmt : FloatFormat} (x y : Model fmt) :
     isSNaN (copySign x y) = isSNaN x := by
   cases he : fmt.encoding with
   | ieee =>
@@ -53,6 +58,31 @@ private theorem signaling_copySign {fmt : FloatFormat} (x y : Model fmt) :
       · simp [copySign, hs, hsign, isSNaN, he, IEEE.isSNaN, IEEE.isNaN,
           quietBits_toggleSign]
   | finiteMaxNaN | finiteUnsignedZero | finite => simp [isSNaN, he]
+
+/-- Absolute value preserves signaling status under every encoding policy. -/
+@[simp] theorem isSNaN_abs {fmt : FloatFormat} (x : Model fmt) :
+    isSNaN (abs x) = isSNaN x :=
+  isSNaN_copySign x (posZero fmt)
+
+/-- Absolute value preserves the fraction field, which carries a NaN's payload. -/
+@[simp] theorem fracField_abs {fmt : FloatFormat} (x : Model fmt) :
+    fracField (abs x) = fracField x :=
+  fracField_copySign x (posZero fmt)
+
+/--
+Without signed zeros, absolute value leaves a NaN unchanged. The unsigned-zero NaN is the word with
+only the sign bit set, so clearing that bit would turn it into the zero.
+-/
+theorem abs_eq_self_of_not_supportsSignedZero_of_isNaN {fmt : FloatFormat}
+    (x : Model fmt) (hfmt : fmt.supportsSignedZero = false) (hx : isNaN x = true) :
+    abs x = x := by
+  simp [abs, copySign, hfmt, hx]
+
+/-- Without signed zeros, absolute value leaves the single zero unchanged. -/
+theorem abs_eq_self_of_not_supportsSignedZero_of_isZero {fmt : FloatFormat}
+    (x : Model fmt) (hfmt : fmt.supportsSignedZero = false) (hx : isZero x = true) :
+    abs x = x := by
+  simp [abs, copySign, hfmt, hx]
 
 /-- In a signed-zero format, encoded absolute value clears exactly the decoded dyadic sign. -/
 theorem toDyadic?_abs_of_supportsSignedZero {fmt : FloatFormat} {x : Model fmt}
@@ -82,16 +112,11 @@ theorem exactValue_abs_of_supportsSignedZero {fmt : FloatFormat} (x : Model fmt)
       rfl
   | none =>
       cases hinf : isInf x
-      · have hnan : isNaN x = true := by
-          cases hn : isNaN x
-          · have hf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hn hinf
-            have := toDyadic?_isSome_eq_isFinite x
-            simp [hd, hf] at this
-          · rfl
+      · have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false hd hinf
         rw [exactValue_eq_nan_of_isNaN hnan,
           exactValue_eq_nan_of_isNaN (by simpa using hnan)]
         rw [signBit_abs_of_supportsSignedZero x hfmt]
-        simp [ExactValue.abs, abs, signaling_copySign]
+        simp [ExactValue.abs, abs, isSNaN_copySign]
       · rw [exactValue_eq_infinity_of_isInf hinf,
           exactValue_eq_infinity_of_isInf (by simpa using hinf)]
         simp [ExactValue.abs, signBit_abs_of_supportsSignedZero x hfmt]

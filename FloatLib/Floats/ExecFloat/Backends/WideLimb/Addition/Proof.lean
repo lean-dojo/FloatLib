@@ -76,6 +76,19 @@ theorem toModel_pack_zero (hexp : fmt.expWidth ≤ 32) :
 theorem zero_false (fmt : FloatFormat) : zero fmt false = posZero fmt := by
   simp [zero]
 
+/-- Setting the low bit of `v` from the bits of `b` below `k` is the sticky step of
+`shiftRightJam`. -/
+private theorem toNat_orLowBit_anyBelow (v b : LimbArray) (hsize : 0 < v.size) (k : Nat) :
+    (v.orLowBit (b.anyBelow k)).toNat =
+      if b.toNat % 2 ^ k = 0 then v.toNat else v.toNat ||| 1 := by
+  rw [LimbArray.toNat_orLowBit v hsize, LimbArray.anyBelow_eq]
+  by_cases hz : b.toNat % 2 ^ k = 0 <;> simp [hz]
+
+/-- Subtracting without an incoming borrow is exact when the subtrahend is no larger. -/
+private theorem toNat_sub_of_le (a b : LimbArray) (hle : b.toNat ≤ a.toNat) :
+    (a.sub b).toNat = a.toNat - b.toNat := by
+  rw [LimbArray.toNat_sub _ _ _ (by simp) (by simpa using hle), UInt32.toNat_zero, Nat.sub_zero]
+
 /--
 An accepted result of the ordered alignment core is the unsigned-scale exact sum of its operands.
 -/
@@ -103,7 +116,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       FiniteScaleAdd.roundMagnitudes_comm, Nat.shiftLeft_eq]
   rw [hspec]
   unfold alignOrdered? at hr
-  rw [LimbArray.log2_eq a haNe, LimbArray.log2_eq b hbNe] at hr
+  rw [LimbArray.log2_eq a, LimbArray.log2_eq b] at hr
   dsimp only at hr
   set d := sa - sb with hd
   set la := a.toNat.log2 with hlaDef
@@ -143,11 +156,8 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
         simp
       have hS : (((a.shiftLeft 3).add (b.shiftRight jam)).orLowBit (b.anyBelow jam)).toNat =
           shiftRightJam (a.toNat * 2 ^ d + b.toNat) jam := by
-        rw [hAd8, shiftRightJam_add_mul_two_pow, LimbArray.toNat_orLowBit _ hsizePos,
-          LimbArray.toNat_add, hA8, hBj, hsticky, UInt32.toNat_zero, Nat.add_zero]
-        by_cases hz : b.toNat % 2 ^ jam = 0
-        · simp [hz]
-        · simp [hz]
+        rw [hAd8, shiftRightJam_add_mul_two_pow, toNat_orLowBit_anyBelow _ _ hsizePos,
+          LimbArray.toNat_add, hA8, hBj, UInt32.toNat_zero, Nat.add_zero]
       have hTbig : 2 ^ (fmt.fracWidth + jam + 2) ≤ a.toNat * 2 ^ d + b.toNat := by omega
       have hround := roundNormal?_jammed h.exp_le aSign _ (a.toNat * 2 ^ d + b.toNat) jam
         (sb + roundOffset) hS hTbig r hr
@@ -168,9 +178,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
       set borrow : UInt32 := if b.anyBelow jam then 1 else 0 with hborrowDef
       have hborrow : borrow.toNat = if b.toNat % 2 ^ jam = 0 then 0 else 1 := by
         rw [hborrowDef, hsticky]
-        by_cases hz : b.toNat % 2 ^ jam = 0
-        · simp [hz]
-        · simp [hz]
+        by_cases hz : b.toNat % 2 ^ jam = 0 <;> simp [hz]
       have hborrowLe1 : borrow.toNat ≤ 1 := by
         rw [hborrow]
         split <;> omega
@@ -181,11 +189,9 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
         simp
       have hS : (((a.shiftLeft 3).sub (b.shiftRight jam) borrow).orLowBit (b.anyBelow jam)).toNat =
           shiftRightJam (a.toNat * 2 ^ d - b.toNat) jam := by
-        rw [hAd8, shiftRightJam_mul_two_pow_sub _ _ _ hBle, LimbArray.toNat_orLowBit _ hsizePos,
-          LimbArray.toNat_sub _ _ _ hborrowLe1 hsubLe, hA8, hBj, hborrow, hsticky]
-        by_cases hz : b.toNat % 2 ^ jam = 0
-        · simp [hz]
-        · simp [hz]
+        rw [hAd8, shiftRightJam_mul_two_pow_sub _ _ _ hBle, toNat_orLowBit_anyBelow _ _ hsizePos,
+          LimbArray.toNat_sub _ _ _ hborrowLe1 hsubLe, hA8, hBj, hborrow]
+        split <;> rfl
       have hTbig : 2 ^ (fmt.fracWidth + jam + 2) ≤ a.toNat * 2 ^ d - b.toNat := by omega
       have hround := roundNormal?_jammed h.exp_le aSign _ (a.toNat * 2 ^ d - b.toNat) jam
         (sb + roundOffset) hS hTbig r hr
@@ -222,8 +228,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
           have hgt : b.toNat < a.toNat * 2 ^ d := Nat.compare_eq_gt.mp hcmp.symm
           simp only [hord] at hr
           have hS : ((a.shiftLeft d).sub b).toNat = a.toNat * 2 ^ d - b.toNat := by
-            rw [LimbArray.toNat_sub _ _ _ (by simp) (by rw [hAd]; simp; omega), hAd,
-              UInt32.toNat_zero, Nat.sub_zero]
+            rw [toNat_sub_of_le _ _ (by rw [hAd]; omega), hAd]
           have hround := roundNormal?_exact h.exp_le aSign _ _ (sb + roundOffset) hS (by omega) r hr
           rw [hround, ite_eq_right (by simp; omega), ite_eq_left hgt]
       | lt =>
@@ -231,8 +236,7 @@ theorem alignOrdered?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : Bo
           have hlt : a.toNat * 2 ^ d < b.toNat := Nat.compare_eq_lt.mp hcmp.symm
           simp only [hord] at hr
           have hS : (b.sub (a.shiftLeft d)).toNat = b.toNat - a.toNat * 2 ^ d := by
-            rw [LimbArray.toNat_sub _ _ _ (by simp) (by rw [hAd]; simp; omega), hAd,
-              UInt32.toNat_zero, Nat.sub_zero]
+            rw [toNat_sub_of_le _ _ (by rw [hAd]; omega), hAd]
           have hround := roundNormal?_exact h.exp_le bSign _ _ (sb + roundOffset) hS (by omega) r hr
           rw [hround, ite_eq_right (by simp; omega), ite_eq_right (by omega)]
 
@@ -248,7 +252,7 @@ theorem alignAndRound?_refines (h : Eligible fmt) (roundOffset : Nat) (aSign : B
     exact alignOrdered?_refines h roundOffset bSign b sb aSign a sa (Nat.le_of_lt hlt) hb ha r hr
   · rw [ite_eq_right hlt] at hr
     rw [alignOrdered?_refines h roundOffset aSign a sa bSign b sb (Nat.le_of_not_lt hlt) ha hb r hr]
-    exact roundSum_comm h.isIEEE roundOffset bSign aSign b.toNat sb a.toNat sa
+    exact roundSum_comm roundOffset bSign aSign b.toNat sb a.toNat sa
 
 /-! ## Addition and subtraction of stored values -/
 
@@ -297,9 +301,7 @@ theorem addNormal?_refines (h : Eligible fmt) (negateY : Bool) (x y r : Value fm
     rw [← FiniteKernel.Internal.addComponents_eq]
     unfold FiniteKernel.Internal.addComponents
     rw [ite_eq_left h.isIEEE, hsum]
-    have hxe0' : (expField x == 0) = false := by simpa using hxe0
-    have hye0' : (expField y == 0) = false := by simpa using hye0
-    simp only [FiniteKernel.scale, hxe0', hye0', Bool.false_eq_true, ite_false]
+    simp only [FiniteKernel.scale, beq_iff_eq, hxe0, hye0, ite_false]
     rfl
 
 /-- Wide-limb addition is the reference addition of the operand models. -/

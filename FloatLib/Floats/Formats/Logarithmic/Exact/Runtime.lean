@@ -46,7 +46,10 @@ def toRat {radix : Radix} : Code radix → Rat
       let magnitude := (radix.base : Rat) ^ exponent
       if negative then -magnitude else magnitude
 
-/-- Exact logarithmic multiplication. -/
+/--
+Exact logarithmic multiplication: zero absorbs, and otherwise the signs combine and the exponents
+add, so no rounding occurs.
+-/
 def mul {radix : Radix} : Code radix → Code radix → Code radix
   | .zero, _ | _, .zero => .zero
   | .value leftSign leftExponent, .value rightSign rightExponent =>

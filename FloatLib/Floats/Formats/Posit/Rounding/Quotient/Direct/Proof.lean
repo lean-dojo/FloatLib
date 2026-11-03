@@ -35,7 +35,6 @@ private theorem quotientFraction_power_bounds
     (quotient remainder denominator leading : Nat)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (2 : Rat) ^ Int.ofNat leading ≤
         (quotient : Rat) + (remainder : Rat) / (denominator : Rat) ∧
@@ -43,7 +42,7 @@ private theorem quotientFraction_power_bounds
         (2 : Rat) ^ Int.ofNat (leading + 1) := by
   have hbounds :=
     quotientFraction_bounds quotient remainder denominator
-      hdenominator hremainder
+      hremainder
   constructor
   · calc
       (2 : Rat) ^ Int.ofNat leading =
@@ -64,22 +63,12 @@ private theorem quotientFraction_power_bounds
         simp only [Int.ofNat_eq_natCast, zpow_natCast, Nat.cast_pow,
           Nat.cast_ofNat]
 
-/-- The minimum positive value is the power of two at the bottom regime scale. -/
-private theorem minPositiveRat_eq_power (format : Format) :
-    Model.minPositiveRat format =
-      (2 : Rat) ^ (-(4 * Int.ofNat (format.payloadBits - 1))) := by
-  rw [← DyadicRounding.minPositive_toRat,
-    DyadicRounding.minPositive_eq_fields]
-  norm_num [FloatLib.Numerics.Dyadic.toRat,
-    FloatLib.Numerics.Dyadic.signedSignificand]
-
 /-- A normalized quotient is below minpos exactly when its leading scale is below minpos's. -/
 private theorem quotientTarget_lt_minPositive_iff
     (format : Format) (targetExponent : Int)
     (quotient remainder denominator leading : Nat)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (((quotient : Rat) +
           (remainder : Rat) / (denominator : Rat)) *
@@ -87,60 +76,18 @@ private theorem quotientTarget_lt_minPositive_iff
       Model.minPositiveRat format) ↔
       targetExponent + Int.ofNat leading <
         -(4 * Int.ofNat (format.payloadBits - 1)) := by
-  let fraction : Rat :=
-    (quotient : Rat) + (remainder : Rat) / (denominator : Rat)
-  let minScale : Int :=
-    -(4 * Int.ofNat (format.payloadBits - 1))
   have hfraction :=
     quotientFraction_power_bounds quotient remainder denominator leading
-      hlower hupper hdenominator hremainder
-  change
-    fraction * (2 : Rat) ^ targetExponent <
-        Model.minPositiveRat format ↔
-      targetExponent + Int.ofNat leading < minScale
-  rw [minPositiveRat_eq_power]
+      hlower hupper hremainder
+  rw [DyadicRounding.minPositiveRat_eq_zpow]
   constructor
   · intro htarget
     by_contra hscale
-    have hscaleLe :
-        minScale ≤ targetExponent + Int.ofNat leading := by
-      omega
-    have htargetLower :
-        (2 : Rat) ^ minScale ≤
-          fraction * (2 : Rat) ^ targetExponent := by
-      calc
-        (2 : Rat) ^ minScale ≤
-            (2 : Rat) ^
-              (targetExponent + Int.ofNat leading) :=
-          zpow_le_zpow_right₀ (by norm_num) hscaleLe
-        _ = (2 : Rat) ^ Int.ofNat leading *
-              (2 : Rat) ^ targetExponent := by
-          rw [show
-              targetExponent + Int.ofNat leading =
-                Int.ofNat leading + targetExponent by omega,
-            zpow_add₀ (by norm_num)]
-        _ ≤ fraction * (2 : Rat) ^ targetExponent :=
-          mul_le_mul_of_nonneg_right hfraction.1
-            (zpow_nonneg (by norm_num) _)
-    exact (not_lt_of_ge htargetLower) htarget
+    exact (not_lt_of_ge ((zpow_le_zpow_right₀ (by norm_num) (by omega)).trans
+      (zpow_add_le_mul_zpow targetExponent leading hfraction.1))) htarget
   · intro hscale
-    have hscaleLe :
-        targetExponent + Int.ofNat leading + 1 ≤ minScale := by
-      omega
-    calc
-      fraction * (2 : Rat) ^ targetExponent <
-          (2 : Rat) ^ Int.ofNat (leading + 1) *
-            (2 : Rat) ^ targetExponent :=
-        mul_lt_mul_of_pos_right hfraction.2
-          (zpow_pos (by norm_num) _)
-      _ = (2 : Rat) ^
-          (targetExponent + Int.ofNat leading + 1) := by
-        rw [← zpow_add₀ (by norm_num)]
-        congr 1
-        simp
-        omega
-      _ ≤ (2 : Rat) ^ minScale :=
-        zpow_le_zpow_right₀ (by norm_num) hscaleLe
+    exact (mul_zpow_lt_zpow_add_succ targetExponent leading
+      hfraction.2).trans_le (zpow_le_zpow_right₀ (by norm_num) (by omega))
 
 /-- A nonnegative regime that fills the payload rounds to maxpos. -/
 private theorem roundPositiveCode_eq_maxPositive_of_saturated
@@ -150,7 +97,6 @@ private theorem roundPositiveCode_eq_maxPositive_of_saturated
     (hsaturated : format.payloadBits ≤ regime.toNat + 1)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hscale :
       targetExponent + Int.ofNat leading =
@@ -167,9 +113,8 @@ private theorem roundPositiveCode_eq_maxPositive_of_saturated
       format.signMaskNat - 1 := by
   have hfraction :=
     quotientFraction_power_bounds quotient remainder denominator leading
-      hlower hupper hdenominator hremainder
+      hlower hupper hremainder
   exact Model.roundPositiveCode_eq_maxPositive_of_lowerCode format _
-    (mul_pos ((zpow_pos (by norm_num) _).trans_le hfraction.1) (zpow_pos (by norm_num) _))
     (le_of_not_gt hnotUnderflow)
     (GuardStickyRounding.lowerCodeForPositive_eq_maxPositive_of_saturatedScale
       format _ targetExponent regime exponentField leading hregime hsaturated hfraction.1 hscale)
@@ -178,12 +123,10 @@ private theorem roundPositiveCode_eq_maxPositive_of_saturated
 private theorem quotientTarget_lt_minPositive_of_saturatedNegative
     (format : Format) (targetExponent regime : Int)
     (exponentField quotient remainder denominator leading : Nat)
-    (hregime : regime < 0)
     (hsaturated : format.payloadBits ≤ (-regime).toNat)
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hscale :
       targetExponent + Int.ofNat leading =
@@ -196,11 +139,11 @@ private theorem quotientTarget_lt_minPositive_of_saturatedNegative
     (quotient : Rat) + (remainder : Rat) / (denominator : Rat)
   have hfraction :=
     quotientFraction_power_bounds quotient remainder denominator leading
-      hlower hupper hdenominator hremainder
+      hlower hupper hremainder
   exact
     GuardStickyRounding.normalizedTarget_lt_minPositive_of_saturatedScale
       format fraction targetExponent regime exponentField leading
-      hregime hsaturated hexponent hfraction.2 hscale
+      hsaturated hexponent hfraction.2 hscale
 
 /--
 Splitting the quotient scale into regime and exponent fields preserves the rational value.
@@ -237,7 +180,6 @@ theorem roundPositiveCode_prefix_eq_reference
     (hleadingWidth : format.payloadBits ≤ leading)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     DirectDyadicPacking.roundPositiveCode format
         { negative := false
@@ -256,27 +198,16 @@ theorem roundPositiveCode_prefix_eq_reference
     exact (Nat.log2_eq_iff hsignificand).2 hbounds
   have hfraction :=
     quotientFraction_power_bounds quotient remainder denominator leading
-      hlower hupper hdenominator hremainder
+      hlower hupper hremainder
   have hpositive :
       0 < ((quotient : Rat) + (remainder : Rat) / (denominator : Rat)) *
         (2 : Rat) ^ targetExponent :=
     mul_pos ((zpow_pos (by norm_num) _).trans_le hfraction.1) (zpow_pos (by norm_num) _)
   have hunderflowIff :=
     quotientTarget_lt_minPositive_iff format targetExponent quotient remainder
-      denominator leading hlower hupper hdenominator hremainder
-  have hmod : 0 ≤ (targetExponent + Int.ofNat leading).emod 4 :=
-    Int.emod_nonneg _ (by decide)
-  have hmodLt : (targetExponent + Int.ofNat leading).emod 4 < 4 :=
-    Int.emod_lt_of_pos _ (by decide)
-  have hexponent : ((targetExponent + Int.ofNat leading).emod 4).toNat < 4 := by
-    omega
-  have hscale :
-      targetExponent + Int.ofNat leading =
-        (targetExponent + Int.ofNat leading).ediv 4 * 4 +
-          Int.ofNat ((targetExponent + Int.ofNat leading).emod 4).toNat := by
-    simp only [Int.ofNat_eq_natCast] at hmod ⊢
-    rw [Int.toNat_of_nonneg hmod]
-    exact (Int.ediv_mul_add_emod _ 4).symm
+      denominator leading hlower hupper hremainder
+  obtain ⟨hexponent, hscale⟩ :=
+    DirectDyadicPacking.exponentField_lt_four_and_scale_eq (targetExponent + Int.ofNat leading)
   unfold DirectDyadicPacking.roundPositiveCode Dyadic.isLessPowerOfTwoAtLeading
   simp only [Bool.or_false, beq_iff_eq, hsignificand, ↓reduceIte, hleading,
     decide_eq_true_eq]
@@ -285,25 +216,25 @@ theorem roundPositiveCode_prefix_eq_reference
     rw [ite_eq_right (not_le_of_gt hpositive), ite_eq_left (hunderflowIff.2 hunderflow)]
   · exact (roundPositiveCode_eq_maxPositive_of_saturated format targetExponent _ _
       quotient remainder denominator leading hregime hsaturated hlower hupper
-      hdenominator hremainder hscale (fun h => hunderflow (hunderflowIff.1 h))).symm
+      hremainder hscale (fun h => hunderflow (hunderflowIff.1 h))).symm
   · rw [GuardStickyRounding.roundInteriorCodeFromFields_eq_roundInteriorCode
       _ _ _ _ _ _ hbounds.1 hbounds.2, quotientTarget_eq_fields _ _ _ _ _ _ _ hscale]
     exact roundInteriorCode_eq_roundPositiveCode_positive format _ _ quotient remainder
       denominator leading hregime (by omega) hleadingWidth hexponent hlower hupper
-      hdenominator hremainder
+      hremainder
       (by
         rw [← quotientTarget_eq_fields _ _ _ _ _ _ _ hscale]
         exact hunderflowIff.not.2 hunderflow)
   · exact absurd
       (hunderflowIff.1 (quotientTarget_lt_minPositive_of_saturatedNegative format
-        targetExponent _ _ quotient remainder denominator leading (by omega) hsaturated
-        hexponent hlower hupper hdenominator hremainder hscale))
+        targetExponent _ _ quotient remainder denominator leading hsaturated
+        hexponent hlower hupper hremainder hscale))
       hunderflow
   · rw [GuardStickyRounding.roundInteriorCodeFromFields_eq_roundInteriorCode
       _ _ _ _ _ _ hbounds.1 hbounds.2, quotientTarget_eq_fields _ _ _ _ _ _ _ hscale]
     exact roundInteriorCode_eq_roundPositiveCode_negative format _ _ quotient remainder
       denominator leading (by omega) (by omega) hleadingWidth hexponent hlower hupper
-      hdenominator hremainder
+      hremainder
       (by
         rw [← quotientTarget_eq_fields _ _ _ _ _ _ _ hscale]
         exact hunderflowIff.not.2 hunderflow)
@@ -365,7 +296,6 @@ theorem roundPositiveCode_eq_reference
       (by
         simpa [normalized, steps, scaledNumerator, quotient,
           Nat.shiftLeft_eq] using hspec.2.2.1)
-      (by simpa [normalized] using hspec.1)
       (by
         simpa [normalized, steps, scaledNumerator, remainder,
           Nat.shiftLeft_eq] using hspec.2.2.2)

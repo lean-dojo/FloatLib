@@ -139,11 +139,11 @@ instance {fmt : FloatFormat} :
 
 /-- IEEE `minimum`, including signed-zero and NaN propagation rules. -/
 instance {fmt : FloatFormat} : Min (Model fmt) where
-  min := minimum
+  min x y := minimum x y
 
 /-- IEEE `maximum`, including signed-zero and NaN propagation rules. -/
 instance {fmt : FloatFormat} : Max (Model fmt) where
-  max := maximum
+  max x y := maximum x y
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

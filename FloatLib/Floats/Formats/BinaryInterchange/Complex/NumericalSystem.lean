@@ -82,10 +82,9 @@ theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
       (fun _ _ result => isFinite result = true) := by
   unfold Operation.Finite2If
   intro x y left right hx hy hout
-  obtain ⟨hxFinite, rfl⟩ := (represents_iff x left).1 hx
-  obtain ⟨hyFinite, rfl⟩ := (represents_iff y right).1 hy
-  exact (represents_iff _ _).2
-    ⟨hout, toComplex_add_eq_roundedAdd x y hfmt hxFinite hyFinite hout⟩
+  obtain ⟨-, rfl⟩ := (represents_iff x left).1 hx
+  obtain ⟨-, rfl⟩ := (represents_iff y right).1 hy
+  exact (represents_iff _ _).2 ⟨hout, toComplex_add_eq_roundedAdd x y hfmt hout⟩
 
 /-- Complex subtraction refines its explicit componentwise rounded semantics. -/
 theorem sub_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
@@ -94,10 +93,9 @@ theorem sub_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
       (fun _ _ result => isFinite result = true) := by
   unfold Operation.Finite2If
   intro x y left right hx hy hout
-  obtain ⟨hxFinite, rfl⟩ := (represents_iff x left).1 hx
-  obtain ⟨hyFinite, rfl⟩ := (represents_iff y right).1 hy
-  exact (represents_iff _ _).2
-    ⟨hout, toComplex_sub_eq_roundedSub x y hfmt hxFinite hyFinite hout⟩
+  obtain ⟨-, rfl⟩ := (represents_iff x left).1 hx
+  obtain ⟨-, rfl⟩ := (represents_iff y right).1 hy
+  exact (represents_iff _ _).2 ⟨hout, toComplex_sub_eq_roundedSub x y hfmt hout⟩
 
 /-- Complex multiplication refines all six scalar rounding sites in `roundedMul`. -/
 theorem mul_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :

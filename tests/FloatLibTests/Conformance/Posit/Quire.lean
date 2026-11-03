@@ -58,43 +58,43 @@ Zero and NaR use the same executable path as ordinary values.
 -/
 theorem posit2_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 2) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 2) = 0 := by
   decide +kernel
 
 /-- Every three-bit posit word converts exactly into its standard quire and back. -/
 theorem posit3_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 3) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 3) = 0 := by
   decide +kernel
 
 /-- Every four-bit posit word converts exactly into its standard quire and back. -/
 theorem posit4_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 4) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 4) = 0 := by
   decide +kernel
 
 /-- Every five-bit posit word converts exactly into its standard quire and back. -/
 theorem posit5_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 5) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 5) = 0 := by
   decide +kernel
 
 /-- Every six-bit posit word converts exactly into its standard quire and back. -/
 theorem posit6_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 6) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 6) = 0 := by
   decide +kernel
 
 /-- Every seven-bit posit word converts exactly into its standard quire and back. -/
 theorem posit7_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 7) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 7) = 0 := by
   decide +kernel
 
 /-- Every eight-bit posit word converts exactly into its standard quire and back. -/
 theorem posit8_all_quire_conversion_round_trips :
     conversionRoundTripFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 8) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 8) = 0 := by
   decide +kernel
 
 /-! ## Exact product accumulation -/
@@ -119,39 +119,39 @@ one `qToP` rounding and the certified direct posit multiplication kernel.
 -/
 theorem posit2_all_quire_products_refine :
     productRefinementFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 2) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 2) = 0 := by
   decide +kernel
 
 /-- Every three-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit3_all_quire_products_refine :
     productRefinementFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 3) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 3) = 0 := by
   decide +kernel
 
 /-- Every four-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit4_all_quire_products_refine :
     productRefinementFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 4) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 4) = 0 := by
   decide +kernel
 
 /-- Every five-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit5_all_quire_products_refine :
     productRefinementFailures
-      (FloatLib.Floats.ExecFloat.Posit.format 5) = 0 := by
+      (FloatLib.Floats.ExecFloat.Posit.descriptor 5) = 0 := by
   decide +kernel
 
 /-! ## Standard posit8 boundaries -/
 
 /-- Posit8 uses the standard 128-bit quire with least-significant-bit scale `2^-48`. -/
 theorem posit8_quire_shape :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 8
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 8
     Quire.width format = 128 ∧
       Quire.scaleExponent format = -48 := by
   decide +kernel
 
 /-- Exact accumulation retains `1.5 × 2.25 = 27/8` before final posit rounding. -/
 theorem posit8_quire_exact_product :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 8
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 8
     let left := Model.roundRat format ((3 : Rat) / 2)
     let right := Model.roundRat format ((9 : Rat) / 4)
     (Quire.Model.qMulAdd (Quire.Model.zero format) left right).toRat? =
@@ -163,7 +163,7 @@ Adding one least-significant quire unit to the greatest ordinary coefficient ove
 reserved quire NaR word.
 -/
 theorem posit8_quire_positive_overflow_is_nar :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 8
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 8
     let maximum :=
       Quire.Model.ofCoefficient format
         (FloatLib.Numerics.Representations.FixedInt.maxValue
@@ -174,7 +174,7 @@ theorem posit8_quire_positive_overflow_is_nar :
 
 /-- NaR input propagates through exact fused accumulation and final rounding. -/
 theorem posit8_quire_nar_propagation :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 8
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 8
     let one := Model.roundRat format 1
     Quire.Model.qMulAdd
         (Quire.Model.zero format) (Model.nar format) one =
@@ -185,7 +185,7 @@ theorem posit8_quire_nar_propagation :
 
 /-- Count failures in the four posit8 boundary checks proved above. -/
 def boundaryFailures : Thunk Nat := ⟨fun _ =>
-  let format := FloatLib.Floats.ExecFloat.Posit.format 8
+  let format := FloatLib.Floats.ExecFloat.Posit.descriptor 8
   let one := Model.roundRat format 1
   let left := Model.roundRat format ((3 : Rat) / 2)
   let right := Model.roundRat format ((9 : Rat) / 4)
@@ -212,19 +212,19 @@ The individual properties remain kernel-checked above; this count is their execu
 -/
 def totalFailures : Thunk Nat := ⟨fun _ =>
   let conversionFormats : List Format :=
-    [ FloatLib.Floats.ExecFloat.Posit.format 2
-    , FloatLib.Floats.ExecFloat.Posit.format 3
-    , FloatLib.Floats.ExecFloat.Posit.format 4
-    , FloatLib.Floats.ExecFloat.Posit.format 5
-    , FloatLib.Floats.ExecFloat.Posit.format 6
-    , FloatLib.Floats.ExecFloat.Posit.format 7
-    , FloatLib.Floats.ExecFloat.Posit.format 8
+    [ FloatLib.Floats.ExecFloat.Posit.descriptor 2
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 3
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 4
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 5
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 6
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 7
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 8
     ]
   let productFormats : List Format :=
-    [ FloatLib.Floats.ExecFloat.Posit.format 2
-    , FloatLib.Floats.ExecFloat.Posit.format 3
-    , FloatLib.Floats.ExecFloat.Posit.format 4
-    , FloatLib.Floats.ExecFloat.Posit.format 5
+    [ FloatLib.Floats.ExecFloat.Posit.descriptor 2
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 3
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 4
+    , FloatLib.Floats.ExecFloat.Posit.descriptor 5
     ]
   let conversionFailures :=
     (conversionFormats.map conversionRoundTripFailures).sum

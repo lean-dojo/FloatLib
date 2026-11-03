@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import Init.Data.Float.Model.Unpacked.Operations.Sqrt
@@ -23,7 +24,10 @@ recipe agrees with `Float.Model.UnpackedFloat.sqrt` on the proof model.
 
 Each kernel proves that its word arithmetic computes this recipe, that the scaled radicand and
 encoded exponent satisfy the stated bounds, and that its scaling constants satisfy `htarget`
-and `hshift`. `Backends.SqrtArithmetic` supplies the shared affine exponent identities.
+and `hshift`. `Backends.SqrtArithmetic` supplies the shared affine exponent identities, and the
+word lemmas below (`sqrt_shiftLeft_bounds`, `sqrtRemainder_toNat`, `roundedRoot_toNat`,
+`mod_two_beq_zero_of_toNat_eq`, `sqrtCarry_toNat`) give the steps that every `UInt64` kernel
+repeats.
 -/
 
 @[expose] public section
@@ -31,6 +35,118 @@ and `hshift`. `Backends.SqrtArithmetic` supplies the shared affine exponent iden
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
 open FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic
+
+/--
+On an IEEE format, a value that decodes to a positive dyadic with nonzero significand `mantissa`
+has the positive finite proof model with that significand and exponent. The binary32, binary64,
+two-word and wide-limb square-root proofs start from this model.
+-/
+theorem toModel_eq_finite_positive_of_toDyadic?_eq_some {fmt : FloatFormat}
+    (hfmt : fmt.isIEEE = true) (x : Model fmt) (mantissa : Nat) (exponent : Int)
+    (hmantissa : mantissa ≠ 0)
+    (hdecode : toDyadic? x =
+      some ({ negative := false, significand := mantissa, exponent := exponent } :
+        Numerics.Dyadic)) :
+    toModel x = .finite .positive mantissa exponent (Nat.pos_of_ne_zero hmantissa) := by
+  simpa [modelSign] using
+    toModel_eq_finite_of_ieeeToDyadic?_eq_some x false mantissa exponent hmantissa
+      (by simpa [toDyadic?, hfmt] using hdecode)
+
+/--
+Scaling a nonzero significand `m` so that `2 * f ≤ log2 m + shift` and
+`log2 m + 1 + shift ≤ 2 * f + 2` gives a radicand with `2 * f + 1` or `2 * f + 2` bits, whose
+integer square root has exactly `f + 1` bits.
+-/
+theorem sqrt_shiftLeft_bounds (f m shift : Nat) (hm : m ≠ 0)
+    (hshiftLower : 2 * f ≤ m.log2 + shift) (hshiftUpper : m.log2 + 1 + shift ≤ 2 * f + 2) :
+    2 ^ (2 * f) ≤ m <<< shift ∧ m <<< shift < 2 ^ (2 * f + 2) ∧
+      2 ^ f ≤ Nat.sqrt (m <<< shift) ∧ Nat.sqrt (m <<< shift) < 2 ^ (f + 1) := by
+  have hleading : 2 ^ m.log2 ≤ m := (Nat.le_log2 hm).mp le_rfl
+  have hscaledLower : 2 ^ (2 * f) ≤ m <<< shift := by
+    rw [Nat.shiftLeft_eq]
+    calc 2 ^ (2 * f) ≤ 2 ^ (m.log2 + shift) := Nat.pow_le_pow_right (by decide) hshiftLower
+      _ = 2 ^ m.log2 * 2 ^ shift := Nat.pow_add ..
+      _ ≤ m * 2 ^ shift := Nat.mul_le_mul_right _ hleading
+  have hscaledUpper : m <<< shift < 2 ^ (2 * f + 2) :=
+    lt_of_lt_of_le (Nat.shiftLeft_lt Nat.lt_log2_self)
+      (Nat.pow_le_pow_right (by decide) hshiftUpper)
+  refine ⟨hscaledLower, hscaledUpper, ?_, ?_⟩
+  · rw [Nat.le_sqrt, ← Nat.pow_add, ← two_mul]
+    exact hscaledLower
+  · rw [Nat.sqrt_lt, ← Nat.pow_add]
+    exact lt_of_lt_of_le hscaledUpper (Nat.pow_le_pow_right (by decide) (by omega))
+
+/-- The remainder of a native integer square root is the remainder of the exact root. -/
+theorem sqrtRemainder_toNat (scaled root : UInt64) (scaledValue : Nat)
+    (hscaled : scaled.toNat = scaledValue) (hroot : root.toNat = Nat.sqrt scaledValue) :
+    (scaled - root * root).toNat =
+      scaledValue - Nat.sqrt scaledValue * Nat.sqrt scaledValue := by
+  have hproductFit : Nat.sqrt scaledValue * Nat.sqrt scaledValue < 2 ^ 64 :=
+    lt_of_le_of_lt (Nat.sqrt_le scaledValue) (hscaled ▸ scaled.toNat_lt)
+  have hproduct : (root * root).toNat = Nat.sqrt scaledValue * Nat.sqrt scaledValue := by
+    rw [UInt64.toNat_mul, hroot, Nat.mod_eq_of_lt hproductFit]
+  have hle : root * root ≤ scaled := by
+    apply UInt64.le_iff_toNat_le.mpr
+    rw [hproduct, hscaled]
+    exact Nat.sqrt_le scaledValue
+  rw [UInt64.toNat_sub_of_le _ _ hle, hscaled, hproduct]
+
+/--
+Rounding a native root to nearest by comparing its remainder with it agrees with the same rounding
+of the exact root, when the incremented root fits in a word.
+-/
+theorem roundedRoot_toNat (root remainder : UInt64) (rootValue remainderValue : Nat)
+    (hroot : root.toNat = rootValue) (hremainder : remainder.toNat = remainderValue)
+    (hfit : rootValue + 1 < 2 ^ 64) :
+    (if remainder ≤ root then root else root + 1).toNat =
+      if remainderValue ≤ rootValue then rootValue else rootValue + 1 := by
+  have hle : remainder ≤ root ↔ remainderValue ≤ rootValue := by
+    rw [UInt64.le_iff_toNat_le, hremainder, hroot]
+  by_cases h : remainderValue ≤ rootValue
+  · rw [ite_eq_left (hle.mpr h), ite_eq_left h, hroot]
+  · rw [ite_eq_right ((not_congr hle).mpr h), ite_eq_right h, UInt64.toNat_add, hroot]
+    exact Nat.mod_eq_of_lt hfit
+
+/-- The parity test of a native exponent position agrees with the test on its value. -/
+theorem mod_two_beq_zero_of_toNat_eq (position : UInt64) (value : Nat)
+    (hposition : position.toNat = value) :
+    (position % 2 == 0) = (value % 2 == 0) := by
+  apply Bool.eq_iff_iff.mpr
+  simp only [beq_iff_eq, ← UInt64.toNat_inj, UInt64.toNat_mod, hposition]
+  rfl
+
+/--
+The carry step of a native square-root kernel. When the rounded root word `rounded` equals the
+carry word `carryBit`, worth `2 ^ (f + 1)`, the kernel adds one to the biased exponent word
+`exponent` and takes the hidden-bit word `hiddenBit`, worth `2 ^ f`, as the significand; otherwise
+it keeps `exponent` and `rounded`. The fraction word is the significand minus `hiddenBit`. If
+`rounded` has the value `root ≥ 2 ^ f` and `exponent` has a value `q` whose successor fits in a
+word, the exponent and fraction words have the values that
+`ofModel_sqrt_finite_positive_eq_ofFields` packs.
+-/
+theorem sqrtCarry_toNat (f : Nat) (rounded exponent carryBit hiddenBit : UInt64) (root q : Nat)
+    (hrounded : rounded.toNat = root) (hexponent : exponent.toNat = q)
+    (hcarryBit : carryBit.toNat = 2 ^ (f + 1)) (hhiddenBit : hiddenBit.toNat = 2 ^ f)
+    (hlower : 2 ^ f ≤ root) (hfit : q + 1 < 2 ^ 64) :
+    (exponent + if rounded == carryBit then 1 else 0).toNat =
+        q + (if root = pow2 (f + 1) then 1 else 0) ∧
+      ((if rounded == carryBit then hiddenBit else rounded) - hiddenBit).toNat =
+        (if root = pow2 (f + 1) then pow2 f else root) - pow2 f := by
+  have hcarry : (rounded == carryBit) = decide (root = pow2 (f + 1)) := by
+    apply Bool.eq_iff_iff.mpr
+    rw [beq_iff_eq, decide_eq_true_eq, ← UInt64.toNat_inj, hrounded, hcarryBit, pow2_eq_two_pow]
+  rw [hcarry]
+  by_cases hc : root = pow2 (f + 1)
+  · rw [decide_eq_true hc, ite_eq_left rfl, ite_eq_left rfl, ite_eq_left hc, ite_eq_left hc,
+      UInt64.sub_self, UInt64.toNat_zero, Nat.sub_self, UInt64.toNat_add, hexponent,
+      UInt64.toNat_one, Nat.mod_eq_of_lt hfit]
+    exact ⟨rfl, rfl⟩
+  · rw [decide_eq_false hc, ite_eq_right Bool.false_ne_true, ite_eq_right Bool.false_ne_true,
+      ite_eq_right hc, ite_eq_right hc, UInt64.add_zero, hexponent, Nat.add_zero,
+      UInt64.toNat_sub_of_le _ _
+        (UInt64.le_iff_toNat_le.mpr (by rw [hhiddenBit, hrounded]; exact hlower)),
+      hrounded, hhiddenBit, pow2_eq_two_pow]
+    exact ⟨rfl, rfl⟩
 
 /--
 The model square root of a positive finite `m * 2 ^ inputExponent` is the packed, rounded integer
@@ -84,24 +200,9 @@ theorem ofModel_sqrt_finite_positive_eq_ofFields (fmt : FloatFormat)
         (Float.Model.UnpackedFloat.sqrtCore (FloatFormat.toModel fmt) m inputExponent).2.2) = _
   rw [hcore]
   dsimp only [Prod.fst, Prod.snd]
-  have hleading : 2 ^ m.log2 ≤ m := (Nat.le_log2 hm.ne').mp le_rfl
-  have hscaledLower : 2 ^ (2 * fmt.fracWidth) ≤ m <<< shift := by
-    rw [Nat.shiftLeft_eq]
-    calc 2 ^ (2 * fmt.fracWidth) ≤ 2 ^ (m.log2 + shift) :=
-          Nat.pow_le_pow_right (by decide) hshiftLower
-      _ = 2 ^ m.log2 * 2 ^ shift := Nat.pow_add ..
-      _ ≤ m * 2 ^ shift := Nat.mul_le_mul_right _ hleading
-  have hscaledUpper : m <<< shift < 2 ^ (2 * fmt.fracWidth + 2) :=
-    lt_of_lt_of_le (Nat.shiftLeft_lt Nat.lt_log2_self)
-      (Nat.pow_le_pow_right (by decide) hshiftUpper)
-  have hrootLower : pow2 fmt.fracWidth ≤ root := by
-    show pow2 fmt.fracWidth ≤ Nat.sqrt (m <<< shift)
-    rw [pow2_eq_two_pow, Nat.le_sqrt, ← Nat.pow_add, ← two_mul]
-    exact hscaledLower
-  have hrootUpper : root < pow2 (fmt.fracWidth + 1) := by
-    show Nat.sqrt (m <<< shift) < pow2 (fmt.fracWidth + 1)
-    rw [pow2_eq_two_pow, Nat.sqrt_lt, ← Nat.pow_add]
-    exact lt_of_lt_of_le hscaledUpper (Nat.pow_le_pow_right (by decide) (by omega))
+  obtain ⟨-, -, hrootLower, hrootUpper⟩ :=
+    sqrt_shiftLeft_bounds fmt.fracWidth m shift hm.ne' hshiftLower hshiftUpper
+  rw [← pow2_eq_two_pow] at hrootLower hrootUpper
   have hroundedLower : pow2 fmt.fracWidth ≤ rounded := by
     rw [hrounded]
     split <;> omega
@@ -123,7 +224,7 @@ theorem ofModel_sqrt_finite_positive_eq_ofFields (fmt : FloatFormat)
   have hminNormalCarry : FloatFormat.ieeeMinNormalExponent fmt ≤ rootExponent + 1 := by
     omega
   have hfirst := shiftToTargetExponent_normalized fmt root rootExponent accuracy
-    hrootLower hrootUpper hminNormal
+    hrootUpper hminNormal
   have hroundedMantissa :
       (Float.Model.UnpackedFloat.ExtendedMantissa.ofMantissaAndAccuracy
         root accuracy).roundedMantissa = rounded := by

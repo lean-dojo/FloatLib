@@ -95,24 +95,10 @@ theorem round_away_point {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fe
       (round (β := β) (fexp := fexp) awayRound x) := by
   constructor
   · intro hx
-    have hs : 0 ≤ scaledMantissa β fexp x := by
-      rw [scaledMantissa_eq_div]
-      exact div_nonneg hx (bpow.nonneg β _)
-    have hr : round (β := β) (fexp := fexp) awayRound x =
-        round (β := β) (fexp := fexp) ceilRound x := by
-      unfold round
-      rw [awayRound_eq_ceil hs]
-    rw [hr]
+    rw [round_congr (rnd' := ceilRound) (awayRound_eq_ceil (scaledMantissa_nonneg hx))]
     exact round_ceil_point x
   · intro hx
-    have hs : scaledMantissa β fexp x ≤ 0 := by
-      rw [scaledMantissa_eq_div]
-      exact div_nonpos_of_nonpos_of_nonneg hx (bpow.nonneg β _)
-    have hr : round (β := β) (fexp := fexp) awayRound x =
-        round (β := β) (fexp := fexp) floorRound x := by
-      unfold round
-      rw [awayRound_eq_floor_of_nonpos hs]
-    rw [hr]
+    rw [round_congr (rnd' := floorRound) (awayRound_eq_floor_of_nonpos (scaledMantissa_nonpos hx))]
     exact round_floor_point x
 
 end FloatLib.Floats.Formats.Flocq

@@ -11,6 +11,7 @@ public import FloatLib.Floats.Formats.Posit.Logarithm.Runtime
 public import FloatLib.Numerics.Exact.RationalPower.Runtime
 public import FloatLib.Numerics.Exact.Reciprocal.Runtime
 public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Runtime
+public import FloatLib.Numerics.Exact.Trigonometric.Pi.Proof
 public import FloatLib.Numerics.Exact.Trigonometric.Runtime
 public import FloatLibTests.Accounting
 
@@ -50,13 +51,13 @@ open FloatLib.Floats.Formats.Posit
 open FloatLibTests.Accounting
 
 /-- The posit8 descriptor. -/
-abbrev posit8 : Format := { bits := 8, bits_ge_two := by decide }
+abbrev posit8 : Format := { bits := 8 }
 
 /-- The posit16 descriptor. -/
-abbrev posit16 : Format := { bits := 16, bits_ge_two := by decide }
+abbrev posit16 : Format := { bits := 16 }
 
 /-- The posit32 descriptor. -/
-abbrev posit32 : Format := { bits := 32, bits_ge_two := by decide }
+abbrev posit32 : Format := { bits := 32 }
 
 /-- The described power `root ^ numerator` as a rational. Tests use it only for small exponents. -/
 def describedValue (exact : ExactRoot) : ℚ :=
@@ -281,6 +282,26 @@ def adapterFailures : Thunk Nat := ⟨fun _ =>
     , rootTwoMinusOne 0 == .gt
     ])⟩
 
+/--
+The tangent residual separates every rational boundary from zero whenever the tangent has no exact
+rational value, poles included: there the residual is the sine, which is `1` or `-1`.
+-/
+example (argument boundary : ℚ) (hnone : TrigonometricComparison.tanPiExact argument = none) :
+    ∃ n, Enclosure.Comparison.Separates (Enclosure.sinPiSubCos argument boundary (2 ^ n)) 0 :=
+  Enclosure.exists_sinPiSubCos_separating argument boundary hnone
+
+/--
+Pi-scaled tangent comparisons at poles, exact values and irrational values. A pole compares as the
+totalized tangent `0`; `tan (π / 3) = 1.7320508...` and `tan (-2π / 5) = -3.0776835...`.
+-/
+def tangentFailures : Thunk Nat := ⟨fun _ =>
+  let tangent (argument boundary : ℚ) := TrigonometricComparison.compareTanPi argument boundary
+  countFailures
+    [ tangent (1 / 2) 0 == .eq, tangent (-3 / 2) 1 == .lt, tangent (1 / 4) 1 == .eq
+    , tangent (1 / 3) (1732 / 1000) == .gt, tangent (1 / 3) (1733 / 1000) == .lt
+    , tangent (-2 / 5) (-3077 / 1000) == .lt, tangent (-2 / 5) (-3078 / 1000) == .gt
+    , tangent (7 / 5) 3 == .gt ]⟩
+
 /-- A polynomial digest of result codes. -/
 def digest (codes : List Nat) : Nat :=
   codes.foldl (fun acc code => (acc * 1000003 + code + 1) % 2 ^ 64) 0
@@ -475,6 +496,7 @@ def checks : List (String × Thunk Nat) :=
   , ("smallPowers", smallFailures)
   , ("integerKernels", kernelFailures)
   , ("comparatorAdapters", adapterFailures)
+  , ("tangentComparisons", tangentFailures)
   , ("positRegressions", positFailures)
   ]
 

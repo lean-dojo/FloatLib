@@ -45,29 +45,15 @@ private theorem add_round_error_generic_aux {rnd : ℝ → ℤ} [ValidRndToNeare
     genericFormat β fexp
       (round (β := β) (fexp := fexp) rnd (x + y) - (x + y)) := by
   let ex := cexp β fexp x
-  let ey := cexp β fexp y
-  obtain ⟨mx, hmx⟩ :=
-    (generic_format_iff_scaled_mantissa_int (β := β) (fexp := fexp) x).mp hx
-  obtain ⟨my, hmy⟩ :=
-    (generic_format_iff_scaled_mantissa_int (β := β) (fexp := fexp) y).mp hy
-  have hxrepr : x = (mx : ℝ) * bpow β ex := by
-    have h := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
-    rw [hmx] at h
-    exact h.symm
-  have hyrepr : y = (my : ℝ) * bpow β ey := by
-    have h := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) y
-    rw [hmy] at h
-    exact h.symm
-  obtain ⟨scale, hscale⟩ := bpow_eq_natCast_of_nonneg β (ey - ex)
-    (sub_nonneg.mpr hxy)
-  let commonMantissa : ℤ := mx + my * Int.ofNat scale
+  -- Both operands lie on the grid of the smaller canonical exponent `ex`.
+  obtain ⟨mx, hxrepr⟩ := exists_int_mul_bpow_cexp_of_generic hx
+  obtain ⟨my, hyrepr⟩ := exists_int_mul_bpow_of_le_cexp hy hxy
+  let commonMantissa : ℤ := mx + my
   let common : FloatRep β := { mantissa := commonMantissa, exponent := ex }
-  have hscaleCast : (((Int.ofNat scale : ℤ) : ℝ)) = (scale : ℝ) := by norm_num
   have hsum : x + y = toReal common := by
     rw [hxrepr, hyrepr]
     unfold common commonMantissa toReal
-    rw [show ey = (ey - ex) + ex by ring, bpow.add_exp, hscale]
-    simp only [Int.cast_add, Int.cast_mul, hscaleCast]
+    push_cast
     ring
   obtain ⟨mr, hrounded⟩ :=
     round_toReal_exists_same_exponent
@@ -131,26 +117,11 @@ theorem generic_format_FLT_to_FIX (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
     genericFormat β (fixExp emin) x := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
   let : ValidExp (fixExp emin) := fixValidExp emin
-  obtain ⟨m, hm⟩ :=
-    (generic_format_iff_scaled_mantissa_int
-      (β := β) (fexp := fltExp emin prec) x).mp hx
-  let e := cexp β (fltExp emin prec) x
-  have herepr : x = (m : ℝ) * bpow β e := by
-    have h := scaled_mantissa_mul_bpow (β := β) (fexp := fltExp emin prec) x
-    rw [hm] at h
-    exact h.symm
-  have hemin : emin ≤ e := by simp [e, cexp, fltExp]
-  obtain ⟨scale, hscale⟩ := bpow_eq_natCast_of_nonneg β (e - emin)
-    (sub_nonneg.mpr hemin)
-  let f : FloatRep β := { mantissa := m * Int.ofNat scale, exponent := emin }
-  have hxf : x = toReal f := by
-    rw [herepr, show e = (e - emin) + emin by ring, bpow.add_exp, hscale]
-    unfold f toReal
-    have hcast : (((Int.ofNat scale : ℤ) : ℝ)) = (scale : ℝ) := by norm_num
-    rw [Int.cast_mul, hcast]
-    ring
-  apply generic_format_of_toReal_of_cexp_le f x hxf
-  simp [f, cexp, fixExp]
+  obtain ⟨m, hxf⟩ := exists_int_mul_bpow_of_le_cexp hx (e := emin)
+    (by simp [cexp, fltExp])
+  apply generic_format_of_toReal_of_cexp_le
+    ({ mantissa := m, exponent := emin } : FloatRep β) x hxf
+  simp [cexp, fixExp]
 
 /-- A bounded FIX value is FLT-representable, including the radix-power boundary. -/
 theorem generic_format_FIX_to_FLT_of_abs_le (emin prec : ℤ) (hprec : 0 < prec)
@@ -186,23 +157,8 @@ theorem generic_format_FLT_add_small (emin prec : ℤ) (hprec : 0 < prec)
     (hy : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y)
     (hbound : abs (x + y) ≤ bpow β (prec + emin)) :
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x + y) := by
-  let : ValidExp (fixExp emin) := fixValidExp emin
-  have hxFix := generic_format_FLT_to_FIX (β := β) emin prec hprec hx
-  have hyFix := generic_format_FLT_to_FIX (β := β) emin prec hprec hy
-  obtain ⟨fx, hfx, ex⟩ := (generic_format_FIX_iff (β := β) emin x).mp hxFix
-  obtain ⟨fy, hfy, ey⟩ := (generic_format_FIX_iff (β := β) emin y).mp hyFix
-  let fsum : FloatRep β :=
-    { mantissa := fx.mantissa + fy.mantissa, exponent := emin }
-  have hsum : x + y = toReal fsum := by
-    rw [hfx, hfy]
-    unfold fsum toReal
-    rw [ex, ey]
-    push_cast
-    ring
-  have hsumFix : genericFormat β (fixExp emin) (x + y) := by
-    apply (generic_format_FIX_iff (β := β) emin (x + y)).2
-    exact ⟨fsum, hsum, rfl⟩
-  exact generic_format_FIX_to_FLT_of_abs_le
-    (β := β) emin prec hprec hsumFix hbound
+  exact generic_format_FIX_to_FLT_of_abs_le (β := β) emin prec hprec
+    (generic_format_FIX_add emin (generic_format_FLT_to_FIX emin prec hprec hx)
+      (generic_format_FLT_to_FIX emin prec hprec hy)) hbound
 
 end FloatLib.Floats.Formats.Flocq

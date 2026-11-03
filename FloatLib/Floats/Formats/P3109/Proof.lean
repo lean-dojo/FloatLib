@@ -54,11 +54,13 @@ theorem precision_lt_bitWidth_of_signed
     format.precision < format.bitWidth := by
   simpa [signed] using format.precision_bound
 
-/-- An unsigned descriptor carries the `P ≤ K` requirement from P3109. -/
-theorem precision_le_bitWidth_of_unsigned
-    (format : Format) (unsigned : format.signedness = .unsigned) :
+/-- Every descriptor satisfies `P ≤ K`: unsigned descriptors allow equality, and signed ones carry
+the strict bound. -/
+theorem precision_le_bitWidth (format : Format) :
     format.precision ≤ format.bitWidth := by
-  simpa [unsigned] using format.precision_bound
+  cases hs : format.signedness with
+  | signed => exact (format.precision_lt_bitWidth_of_signed hs).le
+  | unsigned => simpa [hs] using format.precision_bound
 
 /-- Every valid descriptor has a nonempty exponent field. -/
 theorem exponentBits_pos (format : Format) :
@@ -108,13 +110,23 @@ theorem signBoundary_pos (format : Format) :
     0 < format.signBoundary :=
   Nat.two_pow_pos _
 
-/-- At least two positive finite code points lie below the signed boundary. -/
+/-- The signed boundary exceeds one, so code `1` lies strictly below it. -/
 theorem one_lt_signBoundary (format : Format) :
     1 < format.signBoundary := by
   unfold signBoundary
   apply Nat.one_lt_two_pow
   have hwidth := format.bitWidth_gt_two
   omega
+
+/--
+At least three nonzero codes lie below the signed boundary, so at least two positive finite code
+points do even when the code just below the boundary is positive infinity.
+-/
+theorem four_le_signBoundary (format : Format) :
+    4 ≤ format.signBoundary := by
+  have hwidth := format.bitWidth_gt_two
+  calc 4 = 2 ^ 2 := by norm_num
+    _ ≤ format.signBoundary := Nat.pow_le_pow_right (by decide) (by omega)
 
 /-- Every valid P3109 format has more than two code points. -/
 theorem two_lt_modulus (format : Format) :
@@ -189,17 +201,18 @@ theorem negativeInfinityBits_lt_modulus (format : Format) :
   unfold negativeInfinityBits
   omega
 
-/-- In a signed descriptor, positive infinity is distinct from the midpoint NaN code. -/
-theorem positiveInfinityBits_ne_signBoundary_of_signed
-    (format : Format) (signed : format.signedness = .signed) :
+/-- Positive infinity's code is never the midpoint code, which is the NaN code of a signed
+descriptor. -/
+theorem positiveInfinityBits_ne_signBoundary (format : Format) :
     format.positiveInfinityBits ≠ format.signBoundary := by
-  have boundary_large := format.one_lt_signBoundary
-  simp [positiveInfinityBits, signed]
-  omega
+  have modulus_eq := format.modulus_eq_two_mul_signBoundary
+  have boundary_large := format.four_le_signBoundary
+  unfold positiveInfinityBits
+  cases format.signedness <;> simp only <;> omega
 
-/-- In a signed descriptor, negative infinity is distinct from the midpoint NaN code. -/
-theorem negativeInfinityBits_ne_signBoundary_of_signed
-    (format : Format) (_signed : format.signedness = .signed) :
+/-- Negative infinity's code is never the midpoint code, which is the NaN code of a signed
+descriptor. -/
+theorem negativeInfinityBits_ne_signBoundary (format : Format) :
     format.negativeInfinityBits ≠ format.signBoundary := by
   have modulus_eq := format.modulus_eq_two_mul_signBoundary
   have boundary_large := format.one_lt_signBoundary
@@ -207,24 +220,22 @@ theorem negativeInfinityBits_ne_signBoundary_of_signed
   rw [modulus_eq]
   omega
 
-/-- In every signed descriptor the two infinity codes differ. -/
-theorem negativeInfinityBits_ne_positiveInfinityBits_of_signed
-    (format : Format) (signed : format.signedness = .signed) :
+/-- The two infinity codes differ in every descriptor. -/
+theorem negativeInfinityBits_ne_positiveInfinityBits (format : Format) :
     format.negativeInfinityBits ≠ format.positiveInfinityBits := by
   have modulus_eq := format.modulus_eq_two_mul_signBoundary
   have boundary_pos := format.signBoundary_pos
   unfold negativeInfinityBits positiveInfinityBits
-  simp only [signed]
   rw [modulus_eq]
-  omega
+  cases format.signedness <;> simp only <;> omega
 
-/-- In an unsigned descriptor, positive infinity is distinct from the terminal NaN code. -/
-theorem positiveInfinityBits_ne_nanBits_of_unsigned
-    (format : Format) (unsigned : format.signedness = .unsigned) :
+/-- Positive infinity's code is distinct from the NaN code in every descriptor. -/
+theorem positiveInfinityBits_ne_nanBits (format : Format) :
     format.positiveInfinityBits ≠ format.nanBits := by
   have modulus_large := format.two_lt_modulus
-  simp [positiveInfinityBits, nanBits, unsigned]
-  omega
+  have boundary_pos := format.signBoundary_pos
+  unfold positiveInfinityBits nanBits
+  cases format.signedness <;> simp only <;> omega
 
 /-- The codebook of a descriptor denotes each code by the P3109 decoder. -/
 @[simp, grind =] theorem codebook_denote (format : Format) :
@@ -239,7 +250,8 @@ theorem positiveInfinityBits_ne_nanBits_of_unsigned
   unfold numericalSystem codebook
   rfl
 
-/-- The all-zero positive finite code decodes to the unique P3109 zero. -/
+/-- The all-zero positive finite code decodes to zero, the only one with a zero significand
+(`decodePositiveFinite_significand_eq_zero_iff`). -/
 @[simp] theorem decodePositiveFinite_zero (format : Format) :
     format.decodePositiveFinite 0 = .zero := by
   simp [decodePositiveFinite]
@@ -261,7 +273,6 @@ theorem decodePositiveFinite_of_biasedExponent_eq_zero
 /-- A positive code outside biased-exponent row zero follows the P3109 normal formula. -/
 theorem decodePositiveFinite_of_biasedExponent_ne_zero
     (format : Format) (bits : Nat)
-    (bits_ne_zero : bits ≠ 0)
     (biasedExponent_ne_zero :
       bits / 2 ^ format.trailingBits ≠ 0) :
     format.decodePositiveFinite bits =
@@ -273,6 +284,9 @@ theorem decodePositiveFinite_of_biasedExponent_ne_zero
           Int.ofNat (bits / 2 ^ format.trailingBits) -
             Int.ofNat format.exponentBias + 1 - Int.ofNat format.precision
       } := by
+  have bits_ne_zero : bits ≠ 0 := by
+    rintro rfl
+    simp at biasedExponent_ne_zero
   simp [decodePositiveFinite, bits_ne_zero, biasedExponent_ne_zero]
 
 /-- Positive finite decoding has zero significand exactly at the all-zero code. -/
@@ -298,7 +312,7 @@ theorem decodePositiveFinite_of_biasedExponent_ne_zero
       rw [Nat.mod_eq_of_lt bits_lt_trailingUnit]
       exact bits_eq_zero
     · rw [format.decodePositiveFinite_of_biasedExponent_ne_zero
-        bits bits_eq_zero biasedExponent_eq_zero]
+        bits biasedExponent_eq_zero]
       dsimp only
       exact ne_of_gt (Nat.add_pos_left (Nat.two_pow_pos _) _)
   simp [bits_eq_zero, significand_ne_zero]
@@ -353,11 +367,17 @@ theorem decodePositiveFinite_toRat_add_mul
   have hne : trailing + biasedExponent * 2 ^ format.trailingBits ≠ 0 := by
     have := Nat.mul_pos (Nat.pos_of_ne_zero hbiased) hunit
     omega
-  rw [format.decodePositiveFinite_of_biasedExponent_ne_zero _ hne
+  rw [format.decodePositiveFinite_of_biasedExponent_ne_zero _
     (by rw [hdiv]; exact hbiased), Dyadic.toRat_mk_false, hdiv, hmod]
   rfl
 
-/-- The all-zero code denotes P3109's unique zero. -/
+/-- A code below the modulus survives the `BitVec` round trip, so its word decodes as that code. -/
+theorem decode_ofNat_of_lt_modulus (format : Format) {bits : Nat} (h : bits < format.modulus) :
+    format.decode (BitVec.ofNat format.bitWidth bits) = format.decodeNat bits := by
+  rw [decode, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show bits < 2 ^ format.bitWidth from h)]
+
+/-- The all-zero code denotes zero; no other code does
+(`significand_eq_zero_iff_of_decode_eq_finite`). -/
 @[simp] theorem decode_zero (format : Format) :
     format.decode (BitVec.ofNat format.bitWidth 0) = .finite .zero := by
   cases hs : format.signedness <;>
@@ -371,33 +391,48 @@ theorem decodePositiveFinite_toRat_add_mul
 @[simp] theorem decode_nanBits (format : Format) :
     format.decode (BitVec.ofNat format.bitWidth format.nanBits) =
       .exceptional (.nan) := by
-  have hnan := format.nanBits_lt_modulus
-  have hnan' : format.nanBits < 2 ^ format.bitWidth := by
-    simpa [modulus] using hnan
-  simp only [decode, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hnan']
+  rw [format.decode_ofNat_of_lt_modulus format.nanBits_lt_modulus]
   cases hs : format.signedness <;>
     cases hd : format.domain <;>
     simp [decodeNat, hs, hd, nanBits]
+
+/-- The NaN code is the only code that decodes to an exceptional value, so P3109 has one NaN. -/
+theorem decode_eq_exceptional_iff (format : Format) (code : BitVec format.bitWidth)
+    (exceptional : ExceptionalValue) :
+    format.decode code = .exceptional exceptional ↔
+      code.toNat = format.nanBits ∧ exceptional = .nan := by
+  unfold decode decodeNat nanBits
+  cases format.signedness <;> cases format.domain <;> simp only <;>
+    split_ifs <;> simp_all [eq_comm]
+
+/--
+Only the all-zero code decodes to a finite value with a zero significand, so P3109 has one zero and
+no negative zero.
+-/
+theorem significand_eq_zero_iff_of_decode_eq_finite (format : Format)
+    (code : BitVec format.bitWidth) (value : Numerics.Dyadic)
+    (hdecode : format.decode code = .finite value) :
+    value.significand = 0 ↔ code.toNat = 0 := by
+  unfold decode decodeNat at hdecode
+  cases hs : format.signedness <;> cases hd : format.domain <;> simp only [hs, hd] at hdecode <;>
+    split_ifs at hdecode <;> cases hdecode <;> simp [Numerics.Dyadic.neg] <;> omega
 
 /-- Extended P3109 formats decode the P3109-specified positive-infinity code. -/
 theorem decode_positiveInfinityBits
     (format : Format) (extended : format.domain = .extended) :
     format.decode (BitVec.ofNat format.bitWidth format.positiveInfinityBits) =
       .infinity false := by
-  have hcode := format.positiveInfinityBits_lt_modulus
-  have hcode' : format.positiveInfinityBits < 2 ^ format.bitWidth := by
-    simpa [modulus] using hcode
   have hboundary := format.one_lt_signBoundary
   have hmodulus := format.two_lt_modulus
-  simp only [decode, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hcode']
+  rw [format.decode_ofNat_of_lt_modulus format.positiveInfinityBits_lt_modulus]
   cases hs : format.signedness with
   | signed =>
       have hnotNan :=
-        format.positiveInfinityBits_ne_signBoundary_of_signed hs
+        format.positiveInfinityBits_ne_signBoundary
       simp [decodeNat, hs, extended, hnotNan]
   | unsigned =>
       have hnotNan :=
-        format.positiveInfinityBits_ne_nanBits_of_unsigned hs
+        format.positiveInfinityBits_ne_nanBits
       simp [decodeNat, hs, extended, hnotNan]
 
 /-- Signed extended P3109 formats decode the P3109-specified negative-infinity code. -/
@@ -407,15 +442,20 @@ theorem decode_negativeInfinityBits
     (extended : format.domain = .extended) :
     format.decode (BitVec.ofNat format.bitWidth format.negativeInfinityBits) =
       .infinity true := by
-  have hcode := format.negativeInfinityBits_lt_modulus
-  have hcode' : format.negativeInfinityBits < 2 ^ format.bitWidth := by
-    simpa [modulus] using hcode
-  have hnotNan :=
-    format.negativeInfinityBits_ne_signBoundary_of_signed signed
-  have hnotPositiveInfinity :=
-    format.negativeInfinityBits_ne_positiveInfinityBits_of_signed signed
-  simp [decode, decodeNat, signed, extended, BitVec.toNat_ofNat,
-    Nat.mod_eq_of_lt hcode', hnotNan, hnotPositiveInfinity]
+  have hnotNan := format.negativeInfinityBits_ne_signBoundary
+  have hnotPositiveInfinity := format.negativeInfinityBits_ne_positiveInfinityBits
+  rw [format.decode_ofNat_of_lt_modulus format.negativeInfinityBits_lt_modulus]
+  simp [decodeNat, signed, extended, hnotNan, hnotPositiveInfinity]
+
+/-- A finite decoding is the positive-row formula, negated in the upper half of a signed format. -/
+private theorem eq_of_decodeNat_eq_finite (format : Format) {bits : Nat} {exact : Numerics.Dyadic}
+    (h : format.decodeNat bits = .finite exact) :
+    exact = if format.signedness = .signed ∧ format.signBoundary < bits then
+        (format.decodePositiveFinite (bits - format.signBoundary)).neg
+      else format.decodePositiveFinite bits := by
+  unfold decodeNat at h
+  split at h <;> rename_i hs hd <;> simp only [hs, true_and, reduceCtorEq, false_and,
+    ite_false] <;> split_ifs at h <;> simp_all
 
 end Format
 end FloatLib.Floats.Formats.P3109
@@ -430,13 +470,15 @@ variable {format : Formats.P3109.Format}
   change format.codebook.denote _ = _
   rw [Formats.P3109.Format.codebook_denote]
 
-/-- The `zero` constructor decodes to P3109's unique finite zero. -/
+/-- The `zero` constructor decodes to zero, P3109's only zero
+(`Format.significand_eq_zero_iff_of_decode_eq_finite`). -/
 @[grind =] theorem decode_zero :
     decode (zero (format := format)) = .finite .zero := by
   rw [decode_eq_format_decode]
   exact format.decode_zero
 
-/-- The `nan` constructor decodes to the format's single NaN. -/
+/-- The `nan` constructor decodes to NaN, the format's only exceptional value
+(`Format.decode_eq_exceptional_iff`). -/
 @[grind =] theorem decode_nan :
     decode (nan (format := format)) = .exceptional (.nan) := by
   rw [decode_eq_format_decode]
@@ -457,42 +499,163 @@ variable {format : Formats.P3109.Format}
   rw [decode_eq_format_decode]
   exact format.decode_negativeInfinityBits signed extended
 
+/-- A P3109 value reads as `q` exactly when it decodes to a finite dyadic with value `q`. -/
+theorem toRat?_eq_some_iff (value : ExecFloat.P3109 format) (q : Rat) :
+    toRat? value = some q ↔ ∃ exact, decode value = .finite exact ∧ exact.toRat = q := by
+  unfold toRat?
+  cases decode value <;> simp
+
+/-- A P3109 value has no rational reading exactly when it decodes to NaN or an infinity. -/
+theorem toRat?_eq_none_iff (value : ExecFloat.P3109 format) :
+    toRat? value = none ↔ (decode value).isFinite = false := by
+  unfold toRat?
+  cases decode value <;> simp
+
+/-- The `zero` constructor reads as the rational zero. -/
+@[simp, grind =] theorem toRat?_zero :
+    toRat? (zero (format := format)) = some 0 := by
+  rw [toRat?, decode_zero]
+  simp
+
+/-- The `nan` constructor has no rational reading. -/
+@[simp, grind =] theorem toRat?_nan :
+    toRat? (nan (format := format)) = none := by
+  rw [toRat?, decode_nan]
+  rfl
+
+/-- Positive infinity has no rational reading. -/
+@[simp, grind =] theorem toRat?_positiveInfinity
+    (extended : format.domain = .extended) :
+    toRat? (positiveInfinity (format := format) extended) = none := by
+  rw [toRat?, decode_positiveInfinity extended]
+  rfl
+
+/-- Negative infinity has no rational reading. -/
+@[simp, grind =] theorem toRat?_negativeInfinity
+    (signed : format.signedness = .signed)
+    (extended : format.domain = .extended) :
+    toRat? (negativeInfinity (format := format) signed extended) = none := by
+  rw [toRat?, decode_negativeInfinity signed extended]
+  rfl
+
 /-- Natural-number construction reduces modulo `2^K`, where `K` is the encoded width. -/
 @[simp, grind =] theorem toNatBits_ofNatBits (bits : Nat) :
     toNatBits (ofNatBits (format := format) bits) =
       bits % 2 ^ format.bitWidth :=
   ExecFloat.Codebook.toNatBits_ofNatBits bits
 
-private theorem exists_decode_finite_of_checked_candidate_eq_some
-    (candidate value : ExecFloat.P3109 format)
-    (success :
-      (match ExecFloat.Codebook.decode candidate with
-      | .finite _ => some candidate
-      | .infinity _ | .exceptional _ => none) = some value) :
-    ∃ exact, decode value = .finite exact := by
-  cases decoded : ExecFloat.Codebook.decode candidate with
+/--
+A successful structured-field construction denotes the value its fields name: both fields are
+within their widths, and the value is the positive finite code
+`biasedExponent * 2 ^ trailingBits + trailing`, negated when `negative` is set.
+-/
+theorem decode_of_ofFiniteFields?_eq_some
+    (negative : Bool) (biasedExponent trailing : Nat)
+    (value : ExecFloat.P3109 format)
+    (success : ofFiniteFields? (format := format) negative biasedExponent trailing = some value) :
+    biasedExponent < 2 ^ format.exponentBits ∧ trailing < 2 ^ format.trailingBits ∧
+      decode value = .finite
+        (if negative then
+          (format.decodePositiveFinite (biasedExponent * 2 ^ format.trailingBits + trailing)).neg
+        else format.decodePositiveFinite (biasedExponent * 2 ^ format.trailingBits + trailing)) := by
+  unfold ofFiniteFields? at success
+  split at success
+  · contradiction
+  rename_i hsign
+  have hsigned : negative = true → format.signedness = .signed := by
+    intro hnegative
+    cases h : format.signedness
+    · rfl
+    · exact absurd ⟨hnegative, h⟩ hsign
+  split at success
+  swap
+  · contradiction
+  rename_i hfields
+  refine ⟨hfields.1, hfields.2, ?_⟩
+  generalize hmagnitude : biasedExponent * 2 ^ format.trailingBits + trailing = magnitude at success ⊢
+  have hlt : magnitude < 2 ^ format.exponentBits * 2 ^ format.trailingBits :=
+    calc magnitude = biasedExponent * 2 ^ format.trailingBits + trailing := hmagnitude.symm
+      _ < biasedExponent * 2 ^ format.trailingBits + 2 ^ format.trailingBits :=
+          Nat.add_lt_add_left hfields.2 _
+      _ = (biasedExponent + 1) * 2 ^ format.trailingBits := (Nat.succ_mul _ _).symm
+      _ ≤ 2 ^ format.exponentBits * 2 ^ format.trailingBits :=
+          Nat.mul_le_mul_right _ hfields.1
+  have hT := format.trailingBits_add_one
+  have hP := format.precision_le_bitWidth
+  have hK := format.bitWidth_pos
+  have hbound : (format.signedness = .signed → magnitude < format.signBoundary) ∧
+      magnitude < format.modulus := by
+    rw [← pow_add] at hlt
+    cases hs : format.signedness with
+    | signed =>
+        have hPK := format.precision_lt_bitWidth_of_signed hs
+        have hexp : format.exponentBits + format.trailingBits = format.bitWidth - 1 := by
+          simp only [Formats.P3109.Format.exponentBits, hs]; omega
+        rw [hexp] at hlt
+        refine ⟨fun _ => hlt, hlt.trans format.signBoundary_lt_modulus⟩
+    | unsigned =>
+        have hexp : format.exponentBits + format.trailingBits = format.bitWidth := by
+          simp only [Formats.P3109.Format.exponentBits, hs]; omega
+        rw [hexp] at hlt
+        exact ⟨fun h => absurd h (by simp), hlt⟩
+  dsimp only at success
+  have hbitsLt : (if negative = true then format.signBoundary + magnitude else magnitude) <
+      format.modulus := by
+    have := format.modulus_eq_two_mul_signBoundary
+    cases negative with
+    | false => exact hbound.2
+    | true =>
+        have := hbound.1 (hsigned rfl)
+        simp only [ite_true]
+        omega
+  have hdecodeBits (bits : Nat) (h : bits < format.modulus) :
+      ExecFloat.Codebook.decode (ExecFloat.Codebook.ofNatBits bits : ExecFloat.P3109 format) =
+        format.decodeNat bits := by
+    change decode _ = _
+    rw [decode_eq_format_decode]
+    exact format.decode_ofNat_of_lt_modulus h
+  rw [hdecodeBits _ hbitsLt] at success
+  cases hdecoded : format.decodeNat
+      (if negative = true then format.signBoundary + magnitude else magnitude) with
+  | infinity _ => simp [hdecoded] at success
+  | exceptional _ => simp [hdecoded] at success
   | finite exact =>
-      simp [decoded] at success
-      subst value
-      exact ⟨exact, decoded⟩
-  | infinity negative => simp [decoded] at success
-  | exceptional exceptional => simp [decoded] at success
+      simp only [hdecoded, Option.some.injEq] at success
+      subst success
+      change ExecFloat.Codebook.decode _ = _
+      rw [hdecodeBits _ hbitsLt, hdecoded,
+        Formats.P3109.Format.eq_of_decodeNat_eq_finite format hdecoded]
+      cases negative with
+      | false =>
+          have : ¬(format.signedness = .signed ∧ format.signBoundary < magnitude) := by
+            rintro ⟨hs, h⟩
+            exact absurd (hbound.1 hs) (by omega)
+          simp [this]
+      | true =>
+          have hs := hsigned rfl
+          have hpos : 0 < magnitude := by
+            rcases Nat.eq_zero_or_pos magnitude with h0 | h0
+            · subst h0
+              have := hdecoded
+              simp only [ite_true, Nat.add_zero] at this
+              unfold Formats.P3109.Format.decodeNat at this
+              rw [hs] at this
+              cases hd : format.domain <;> simp [hd] at this
+            · exact h0
+          simp [hs, hpos]
 
 /--
 A successful structured-field construction denotes an ordinary finite value.
 
 This is the elimination rule for `ofFiniteFields?`, so callers need not reason about the
-descriptor's reserved code points after the constructor succeeds.
+descriptor's reserved code points after the constructor succeeds. The value itself is given by
+`decode_of_ofFiniteFields?_eq_some`.
 -/
 theorem exists_decode_finite_of_ofFiniteFields?_eq_some
     (negative : Bool) (biasedExponent trailing : Nat)
     (value : ExecFloat.P3109 format)
     (success : ofFiniteFields? (format := format) negative biasedExponent trailing = some value) :
-    ∃ exact, decode value = .finite exact := by
-  unfold ofFiniteFields? at success
-  split at success <;> try contradiction
-  split at success <;> try contradiction
-  split at success <;>
-    exact exists_decode_finite_of_checked_candidate_eq_some _ _ success
+    ∃ exact, decode value = .finite exact :=
+  ⟨_, (decode_of_ofFiniteFields?_eq_some negative biasedExponent trailing value success).2.2⟩
 
 end FloatLib.Floats.ExecFloat.P3109

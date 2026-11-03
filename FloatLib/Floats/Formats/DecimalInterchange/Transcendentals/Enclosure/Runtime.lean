@@ -26,7 +26,7 @@ open FloatLib.Numerics
 
 /-- Nearest-even projection of an exact endpoint, preferring its least representable quantum. -/
 def roundEndpoint (f : Format) (value : ℚ) : Datum :=
-  (project f .nearestEven value f.minQuantum).value
+  (project f .nearest value f.minQuantum).value
 
 /-- Accept exactly when both endpoints round to the same finite decimal datum. -/
 def round? (f : Format) (interval : RationalInterval) : Option Datum :=

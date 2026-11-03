@@ -37,10 +37,7 @@ theorem signBit_eq_true_iff_signMaskNat_le
     simpa [hwidth] using toNatBits_lt_two_pow x
   rw [signBit_eq_internal_apply]
   unfold Internal.signBit
-  rw [Nat.testBit_eq_true_iff_two_pow_le_of_lt hfit]
-  unfold FloatFormat.signMaskNat FloatFormat.signBitIndex
-  rw [hwidth]
-  simp
+  rw [Nat.testBit_eq_true_iff_two_pow_le_of_lt hfit, FloatFormat.signMaskNat_eq_two_pow]
 
 /--
 The sign bit is clear exactly for storage words in the lower half of the format's code space.
@@ -64,39 +61,48 @@ theorem signBit_eq_false_iff_toNatBits_lt_signMaskNat
       (signBit_eq_true_iff_signMaskNat_le x).1 htrue
     omega
 
+/-- In-range fields have the bit pattern of the zero of sign `zeroSign` exactly when they are its
+fields. -/
+private theorem ofFields_bits_eq_zeroFields_iff
+    (fmt : FloatFormat) (sign zeroSign : Bool) (exponent fraction : Nat)
+    (hexponent : exponent < 2 ^ fmt.expWidth)
+    (hfraction : fraction < 2 ^ fmt.fracWidth) :
+    (ofFields fmt sign exponent fraction).bits = (ofFields fmt zeroSign 0 0).bits ↔
+      sign = zeroSign ∧ exponent = 0 ∧ fraction = 0 := by
+  constructor
+  · intro hbits
+    have hvalue : ofFields fmt sign exponent fraction = ofFields fmt zeroSign 0 0 :=
+      calc
+        ofFields fmt sign exponent fraction =
+            ofBits (ofFields fmt sign exponent fraction).bits :=
+          (ofBits_toBits _).symm
+        _ = ofBits (ofFields fmt zeroSign 0 0).bits := by rw [hbits]
+        _ = ofFields fmt zeroSign 0 0 := ofBits_toBits _
+    have hsign : sign = zeroSign := by
+      simpa only [signBit_ofFields] using congrArg signBit hvalue
+    have hexp : exponent = 0 := by
+      simpa only [
+        expField_ofFields_of_lt fmt sign exponent fraction hexponent,
+        expField_ofFields_of_lt fmt zeroSign 0 0 (Nat.two_pow_pos fmt.expWidth)
+      ] using congrArg expField hvalue
+    have hfrac : fraction = 0 := by
+      simpa only [
+        fracField_ofFields_of_lt fmt sign exponent fraction hfraction,
+        fracField_ofFields_of_lt fmt zeroSign 0 0 (Nat.two_pow_pos fmt.fracWidth)
+      ] using congrArg fracField hvalue
+    exact ⟨hsign, hexp, hfrac⟩
+  · rintro ⟨rfl, rfl, rfl⟩
+    rfl
+
 private theorem ofFields_bits_eq_zero_iff
     (fmt : FloatFormat) (sign : Bool) (exponent fraction : Nat)
     (hexponent : exponent < 2 ^ fmt.expWidth)
     (hfraction : fraction < 2 ^ fmt.fracWidth) :
     (ofFields fmt sign exponent fraction).bits = 0 ↔
       sign = false ∧ exponent = 0 ∧ fraction = 0 := by
-  constructor
-  · intro hbits
-    have hvalue : ofFields fmt sign exponent fraction = posZero fmt := by
-      calc
-        ofFields fmt sign exponent fraction =
-            ofBits (ofFields fmt sign exponent fraction).bits :=
-          (ofBits_toBits _).symm
-        _ = ofBits (posZero fmt).bits := by
-          congr 1
-        _ = posZero fmt := ofBits_toBits _
-    rw [← ofFields_false_zero_zero] at hvalue
-    have hsign : sign = false := by
-      simpa only [signBit_ofFields] using congrArg signBit hvalue
-    have hexp : exponent = 0 := by
-      simpa only [
-        expField_ofFields_of_lt fmt sign exponent fraction hexponent,
-        expField_ofFields_of_lt fmt false 0 0 (Nat.two_pow_pos fmt.expWidth)
-      ] using congrArg expField hvalue
-    have hfrac : fraction = 0 := by
-      simpa only [
-        fracField_ofFields_of_lt fmt sign exponent fraction hfraction,
-        fracField_ofFields_of_lt fmt false 0 0 (Nat.two_pow_pos fmt.fracWidth)
-      ] using congrArg fracField hvalue
-    exact ⟨hsign, hexp, hfrac⟩
-  · rintro ⟨rfl, rfl, rfl⟩
-    simp [ofFields_false_zero_zero, posZero, ofNatBits, ofBits,
-      FloatFormat.ofWordNat]
+  have h := ofFields_bits_eq_zeroFields_iff fmt sign false exponent fraction hexponent hfraction
+  rwa [ofFields_false_zero_zero,
+    show (posZero fmt).bits = 0 by simp [posZero, ofNatBits, ofBits, FloatFormat.ofWordNat]] at h
 
 private theorem ofFields_bits_eq_signMask_iff
     (fmt : FloatFormat) (sign : Bool) (exponent fraction : Nat)
@@ -104,32 +110,9 @@ private theorem ofFields_bits_eq_signMask_iff
     (hfraction : fraction < 2 ^ fmt.fracWidth) :
     (ofFields fmt sign exponent fraction).bits = fmt.signMask ↔
       sign = true ∧ exponent = 0 ∧ fraction = 0 := by
-  constructor
-  · intro hbits
-    have hvalue : ofFields fmt sign exponent fraction = negZero fmt := by
-      calc
-        ofFields fmt sign exponent fraction =
-            ofBits (ofFields fmt sign exponent fraction).bits :=
-          (ofBits_toBits _).symm
-        _ = ofBits (negZero fmt).bits := by
-          congr 1
-        _ = negZero fmt := ofBits_toBits _
-    rw [← ofFields_true_zero_zero] at hvalue
-    have hsign : sign = true := by
-      simpa only [signBit_ofFields] using congrArg signBit hvalue
-    have hexp : exponent = 0 := by
-      simpa only [
-        expField_ofFields_of_lt fmt sign exponent fraction hexponent,
-        expField_ofFields_of_lt fmt true 0 0 (Nat.two_pow_pos fmt.expWidth)
-      ] using congrArg expField hvalue
-    have hfrac : fraction = 0 := by
-      simpa only [
-        fracField_ofFields_of_lt fmt sign exponent fraction hfraction,
-        fracField_ofFields_of_lt fmt true 0 0 (Nat.two_pow_pos fmt.fracWidth)
-      ] using congrArg fracField hvalue
-    exact ⟨hsign, hexp, hfrac⟩
-  · rintro ⟨rfl, rfl, rfl⟩
-    simp [ofFields_true_zero_zero, negZero, ofBits]
+  have h := ofFields_bits_eq_zeroFields_iff fmt sign true exponent fraction hexponent hfraction
+  rwa [ofFields_true_zero_zero, show (negZero fmt).bits = fmt.signMask by simp [negZero, ofBits]]
+    at h
 
 /-! ## Field classification -/
 
@@ -210,9 +193,7 @@ theorem isFinite_ofFields_ieee
   have hfracMaskPos := fmt.fracMaskNat_pos
   have hfracPred : fmt.fracMaskNat - 1 ≠ fmt.fracMaskNat := by
     omega
-  have hexponentFour : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using
-      Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+  have hexponentFour := fmt.four_le_two_pow_expWidth
   cases hencoding : fmt.encoding
   · simp [FloatFormat.maxFiniteExpField,
       FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat,
@@ -231,23 +212,30 @@ theorem isFinite_ofFields_ieee
     isFinite (posMaxFinite fmt) = true :=
   isFinite_maxFinite fmt false
 
+/-- Under a conventional IEEE descriptor the overflow result is an infinity, so it is not finite. -/
+theorem isFinite_nativeOverflow {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (sign : Bool) :
+    isFinite (nativeOverflow fmt sign) = false := by
+  have hs := FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
+  cases sign <;> simp [nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt,
+    isFinite_posInf fmt hs, isFinite_negInf fmt hs]
+
 /--
 A normal field pair at or below the descriptor's greatest finite field pair is finite.
 -/
 theorem isFinite_ofFields_normal_of_le_maxFinite
     (fmt : FloatFormat) (sign : Bool) (exponent fraction : Nat)
     (hexponentPos : exponent ≠ 0)
-    (hexponent : exponent < 2 ^ fmt.expWidth)
     (hfraction : fraction < 2 ^ fmt.fracWidth)
     (hmax :
       exponent < fmt.maxFiniteExpField ∨
         exponent = fmt.maxFiniteExpField ∧
           fraction ≤ fmt.maxFiniteFracField) :
     isFinite (ofFields fmt sign exponent fraction) = true := by
+  have hexponent : exponent < 2 ^ fmt.expWidth := by
+    have := fmt.maxFiniteExpField_lt_two_pow
+    omega
   rw [isFinite_ofFields fmt sign exponent fraction hexponent hfraction]
-  have hexpPow : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using
-      Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+  have hexpPow := fmt.four_le_two_pow_expWidth
   have hfracPow : 2 ≤ 2 ^ fmt.fracWidth := by
     simpa using
       Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.fracWidth_pos
@@ -328,6 +316,57 @@ theorem toDyadic?_ofFields_of_isFinite
     · cases hencoding : fmt.encoding <;> cases sign <;>
         simp_all
 
+/--
+The three shapes of a decoded finite word: a zero, a subnormal whose significand is the nonzero
+fraction field at the minimum subnormal exponent, or a normal number whose significand carries the
+implicit bit and whose exponent is the unbiased field.
+-/
+theorem toDyadic?_some_cases {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
+    (hd : toDyadic? x = some d) :
+    (d.significand = 0 ∧ d.exponent = 0) ∨
+      (expField x = 0 ∧ fracField x ≠ 0 ∧ d.significand = fracField x ∧
+        d.exponent = fmt.minSubnormalExponent) ∨
+      (expField x ≠ 0 ∧ d.significand = pow2 fmt.fracWidth + fracField x ∧
+        d.exponent =
+          Int.ofNat (expField x) - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth) := by
+  have hfin : isFinite x = true := isFinite_eq_true_of_toDyadic?_some hd
+  have hdecode := toDyadic?_ofFields_of_isFinite fmt (signBit x) (expField x) (fracField x)
+    (expField_lt_pow2 x) (fracField_lt_pow2 x)
+    (by simpa only [ofFields_signBit_expField_fracField] using hfin)
+  rw [ofFields_signBit_expField_fracField, hd] at hdecode
+  by_cases he : expField x = 0
+  · by_cases hf : fracField x = 0
+    · simp only [he, hf, ite_true, Option.some.injEq] at hdecode
+      exact Or.inl ⟨by rw [hdecode], by rw [hdecode]⟩
+    · simp only [he, hf, ite_true, ite_false, Option.some.injEq] at hdecode
+      exact Or.inr (Or.inl ⟨he, hf, by rw [hdecode], by rw [hdecode]⟩)
+  · simp only [he, ite_false, Option.some.injEq] at hdecode
+    exact Or.inr (Or.inr ⟨he, by rw [hdecode], by rw [hdecode]⟩)
+
+/--
+The decoded dyadic of a word has a significand below `2^(fracWidth + 1)` and an exponent no smaller
+than the minimum subnormal exponent. These bounds describe the format's precision and exponent grid.
+-/
+theorem toDyadic?_significand_lt_and_minSubnormalExponent_le
+    {fmt : FloatFormat} (x : Model fmt) {d : Numerics.Dyadic}
+    (hd : toDyadic? x = some d) :
+    d.significand < 2 ^ (fmt.fracWidth + 1) ∧
+      fmt.minSubnormalExponent ≤ d.exponent := by
+  have hfrac := fracField_lt_pow2 x
+  rcases toDyadic?_some_cases hd with ⟨hs, he⟩ | ⟨_, _, hs, he⟩ | ⟨_, hs, he⟩ <;> rw [hs, he]
+  · refine ⟨Nat.two_pow_pos _, ?_⟩
+    have := fmt.exponentBias_pos
+    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
+      Int.ofNat_eq_natCast]
+    omega
+  · exact ⟨hfrac.trans (Nat.pow_lt_pow_right (by decide) (by omega)), le_rfl⟩
+  · refine ⟨?_, ?_⟩
+    · simp only [pow2_eq_two_pow, pow_succ] at hfrac ⊢
+      omega
+    · simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
+        Int.ofNat_eq_natCast]
+      omega
+
 /-- An in-range nonzero fraction at biased exponent zero decodes as a subnormal. -/
 theorem toDyadic?_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
     (fraction : Nat) (hfractionPos : fraction ≠ 0)
@@ -371,7 +410,12 @@ theorem toDyadic?_ofFields_normal (fmt : FloatFormat) (sign : Bool)
 
 /-! ## Closed-form real semantics -/
 
-/-- Closed-form real value of a packed subnormal. -/
+/--
+Closed-form real value of a packed subnormal: a zero exponent field and a nonzero fraction, in
+every encoding. A zero fraction gives `posZero` or `negZero` (`ofFields_false_zero_zero`,
+`ofFields_true_zero_zero`), and in a format without a signed zero `negZero` is the NaN; for formats
+with one, `toReal_signedZero` gives value zero.
+-/
 theorem toReal_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
     (fraction : Nat) (hfractionPos : fraction ≠ 0)
     (hfraction : fraction < 2 ^ fmt.fracWidth) :
@@ -381,9 +425,7 @@ theorem toReal_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
           fmt.minSubnormalExponent := by
   rw [toReal_eq,
     toDyadic?_ofFields_subnormal fmt sign fraction hfractionPos hfraction]
-  cases sign <;>
-    simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-      Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
+  exact Dyadic.toReal_mk _ _ _
 
 /-- Closed-form real value of packed normal fields. -/
 theorem toReal_ofFields_normal (fmt : FloatFormat) (sign : Bool)
@@ -399,9 +441,7 @@ theorem toReal_ofFields_normal (fmt : FloatFormat) (sign : Bool)
   rw [toReal_eq,
     toDyadic?_ofFields_normal fmt sign exponent fraction hexponentPos
       hexponent hfraction]
-  cases sign <;>
-    simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-      Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
+  exact Dyadic.toReal_mk _ _ _
 
 /--
 Closed-form real value of finite normal fields, including all-ones exponent fields when the
@@ -422,9 +462,8 @@ theorem toReal_ofFields_normal_of_isFinite
   rw [toReal_eq,
     toDyadic?_ofFields_of_isFinite fmt sign exponent fraction hexponent
       hfraction hfinite]
-  cases sign <;>
-    simp [hexponentPos, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-      Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
+  simpa [hexponentPos] using Dyadic.toReal_mk sign (pow2 fmt.fracWidth + fraction)
+    (Int.ofNat exponent - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth)
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

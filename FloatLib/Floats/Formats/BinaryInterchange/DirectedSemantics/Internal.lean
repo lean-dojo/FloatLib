@@ -32,16 +32,19 @@ namespace Directed.Internal
 open FloatLib.Floats
 
 /--
-Encoding an in-range IEEE normal exponent produces a field strictly below the all-ones pattern.
+Encoding an IEEE exponent no larger than the largest normal exponent produces a field strictly
+below the all-ones pattern.
 -/
 theorem encodedExponent_lt_expAllOnes_ieee
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (exponent : Int)
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent) :
     Int.toNat (exponent + Int.ofNat fmt.exponentBias) <
       fmt.expAllOnesNat := by
-  have hexponent :=
-    encodedExponent_le_maxFiniteExpField fmt exponent hmin hmax
+  have hexponent :
+      Int.toNat (exponent + Int.ofNat fmt.exponentBias) ≤ fmt.maxFiniteExpField := by
+    unfold FloatFormat.maxNormalExponent at hmax
+    simp only [Int.ofNat_eq_natCast] at hmax ⊢
+    omega
   have hlt : fmt.maxFiniteExpField < fmt.expAllOnesNat := by
     have hfour : 4 ≤ 2 ^ fmt.expWidth := by
       simpa using
@@ -53,30 +56,34 @@ theorem encodedExponent_lt_expAllOnes_ieee
     omega
   exact hexponent.trans_lt hlt
 
-/-- Any fraction field packed with an in-range IEEE normal exponent denotes a finite value. -/
+/--
+Any fraction field packed with an IEEE exponent no larger than the largest normal exponent denotes
+a finite value.
+-/
 theorem isFinite_ofFields_of_normal_exponent
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (fraction : Nat) (exponent : Int)
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent) :
     isFinite
         (ofFields fmt false
           (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
           fraction) = true :=
   isFinite_ofFields_ieee fmt hfmt false _ _
-    (encodedExponent_lt_expAllOnes_ieee fmt hfmt exponent hmin hmax)
+    (encodedExponent_lt_expAllOnes_ieee fmt hfmt exponent hmax)
 
-/-- Packing an in-range normalized IEEE mantissa and exponent produces a finite encoding. -/
+/--
+Packing a normalized IEEE mantissa with an exponent no larger than the largest normal exponent
+produces a finite encoding.
+-/
 theorem isFinite_ofFields_normalized
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (mantissa : Nat) (exponent : Int)
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent) :
     isFinite
         (ofFields fmt false
           (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
           (mantissa - pow2 fmt.fracWidth)) = true :=
-  isFinite_ofFields_of_normal_exponent fmt hfmt _ exponent hmin hmax
+  isFinite_ofFields_of_normal_exponent fmt hfmt _ exponent hmax
 
 /--
 A normalization carry preserves the represented real value while moving one bit from the

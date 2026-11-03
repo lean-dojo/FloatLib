@@ -39,7 +39,6 @@ meta def profile (lanes : Nat) : FormatProfile where
   family := "contextual shared-scale block"
   standard :=
     "policy-neutral mathematical core inspired by OCP MX; no concrete MX element encoding claimed"
-  declarationPrefix := "FloatLib.Floats.Formats.Block."
   representation :=
     [ ⟨"storage", "one Int exponent and a fixed-length vector of Int significands"⟩
     , ⟨"lanes", toString lanes⟩

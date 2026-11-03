@@ -99,7 +99,7 @@ theorem magnitude_signedScaledRatToReal
       numerator denominator exponent hnumerator hdenominator
   apply magnitude_eq_of_bpow_bounds
     Numerics.binaryRadix value
-      (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1) hvalue
+      (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
   · rw [abs_signedScaledRatToReal]
     have hexponent :
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1 - 1 =
@@ -124,12 +124,12 @@ theorem cexp_signedScaledRatToReal
 
 /--
 The canonical scaled mantissa of a rational is the same quotient after moving the selected
-binary exponent into its natural numerator or denominator.
+binary exponent into its natural numerator or denominator. A zero numerator or denominator gives
+zero on both sides.
 -/
 theorem scaledMantissa_signedScaledRatToReal
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
-    (exponent : Int) (hnumerator : numerator ≠ 0)
-    (hdenominator : denominator ≠ 0) :
+    (exponent : Int) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
     let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
@@ -143,6 +143,12 @@ theorem scaledMantissa_signedScaledRatToReal
   let target := fexpOf fmt
     (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
+  by_cases hdegenerate : numerator = 0 ∨ denominator = 0
+  · have hzero (shift : Int) : scaledRatToReal numerator denominator shift = 0 := by
+      rcases hdegenerate with rfl | rfl <;> simp [scaledRatToReal]
+    rw [scaleByPowerOfTwo_real, hzero]
+    cases sign <;> simp [scaledMantissa, signedScaledRatToReal, hzero]
+  obtain ⟨hnumerator, hdenominator⟩ := not_or.mp hdegenerate
   rw [scaledMantissa_eq_div, cexp_signedScaledRatToReal
     fmt sign numerator denominator exponent hnumerator hdenominator]
   have hscale :
@@ -173,8 +179,7 @@ theorem scaledMantissa_signedScaledRatToReal
 /-- Nearest-even selection of the scaled rational is `roundQuotientEven`, with its sign restored. -/
 theorem nearestEven_scaledRat
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
-    (exponent : Int) (hnumerator : numerator ≠ 0)
-    (hdenominator : denominator ≠ 0) :
+    (exponent : Int) (hdenominator : denominator ≠ 0) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
     let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
@@ -190,7 +195,7 @@ theorem nearestEven_scaledRat
     (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
   rw [scaledMantissa_signedScaledRatToReal
-    fmt sign numerator denominator exponent hnumerator hdenominator]
+    fmt sign numerator denominator exponent]
   have hscaledDenominator : scaled.2 ≠ 0 :=
     Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator
       (exponent - target) hdenominator
@@ -209,11 +214,13 @@ theorem nearestEven_scaledRat
           -Int.ofNat (roundQuotientEven scaled.1 scaled.2)
       rw [nearestEven_neg, hround]
 
-/-- Rounded-real nearest-even semantics of a nonzero signed scaled rational. -/
+/--
+Rounded-real nearest-even semantics of a signed scaled rational. A zero numerator rounds to zero
+on both sides.
+-/
 theorem roundAt_scaledRat_eq
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
-    (exponent : Int) (hnumerator : numerator ≠ 0)
-    (hdenominator : denominator ≠ 0) :
+    (exponent : Int) (hdenominator : denominator ≠ 0) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
     let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
@@ -226,9 +233,18 @@ theorem roundAt_scaledRat_eq
     (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
   let rounded := roundQuotientEven scaled.1 scaled.2
+  by_cases hnumerator : numerator = 0
+  · subst numerator
+    have hscaled (shift : Int) :
+        (Numerics.RationalBinary.scaleByPowerOfTwo 0 denominator shift).1 = 0 := by
+      cases shift <;> simp
+    have hzero : signedScaledRatToReal sign 0 denominator exponent = 0 := by
+      cases sign <;> simp [signedScaledRatToReal, scaledRatToReal]
+    rw [hzero, roundAt_zero]
+    simp [hscaled, roundQuotientEven_eq_zero_of_two_mul_le 0 _ (Nat.zero_le _)]
   have hround :=
     nearestEven_scaledRat
-      fmt sign numerator denominator exponent hnumerator hdenominator
+      fmt sign numerator denominator exponent hdenominator
   change
     round (β := Numerics.binaryRadix) (fexp := fexpOf fmt)
         nearestEven
@@ -267,7 +283,7 @@ private theorem scaledRatLeadingExponent_le_maxNormal
 
 private theorem roundQuotientEven_ne_top_of_bound_at_max
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
+    (hdenominator : denominator ≠ 0)
     (hmax :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent =
         fmt.maxNormalExponent)
@@ -282,7 +298,7 @@ private theorem roundQuotientEven_ne_top_of_bound_at_max
   intro hcarry
   have hround :=
     roundAt_scaledRat_eq
-      fmt false numerator denominator exponent hnumerator hdenominator
+      fmt false numerator denominator exponent hdenominator
   have hnormal :
       fmt.minNormalExponent ≤
         fmt.maxNormalExponent :=
@@ -346,7 +362,7 @@ private theorem isFinite_roundRatScaled_false_of_le_posMaxFinite
   rcases lt_or_ge (Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
       (fmt.minSubnormalExponent - 1) with hunderflow | hlow
   · rw [roundRatScaled_false_eq_posZero_of_lt_minSubnormal_sub_one
-      fmt numerator denominator exponent hfmt hnumerator hdenominator hmax hunderflow]
+      fmt numerator denominator exponent hfmt hnumerator hdenominator hunderflow]
     exact isFinite_posZero fmt
   rcases lt_or_ge (Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
       fmt.minNormalExponent with hsubnormal | hnormal
@@ -370,15 +386,15 @@ private theorem isFinite_roundRatScaled_false_of_le_posMaxFinite
       · omega
       · exact absurd hcarry
           (roundQuotientEven_ne_top_of_bound_at_max
-            fmt numerator denominator exponent hnumerator hdenominator heq hbound)
+            fmt numerator denominator exponent hdenominator heq hbound)
     rw [roundRatScaled_false_eq_normal_of_carry
-      fmt numerator denominator exponent hfmt hnumerator hdenominator hnormal hcarry hcarryMax]
+      fmt numerator denominator exponent hfmt hnormal hcarry hcarryMax]
     exact isFinite_ofFields_ieee fmt hfmt false _ 0
-      (encodedExponent_lt_expAllOnes_ieee fmt hfmt _ (by omega) hcarryMax)
+      (encodedExponent_lt_expAllOnes_ieee fmt hfmt _ hcarryMax)
   · rw [roundRatScaled_false_eq_normal_of_ne_carry
       fmt numerator denominator exponent hfmt hnumerator hdenominator hnormal hmax hcarry]
     exact isFinite_ofFields_ieee fmt hfmt false _ _
-      (encodedExponent_lt_expAllOnes_ieee fmt hfmt _ hnormal hmax)
+      (encodedExponent_lt_expAllOnes_ieee fmt hfmt _ hmax)
 
 /--
 Nearest-even scaled-rational rounding cannot overflow when the exact magnitude is at most the

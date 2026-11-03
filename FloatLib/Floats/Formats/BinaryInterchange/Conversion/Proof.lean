@@ -10,6 +10,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Proof
+public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
@@ -34,8 +35,8 @@ nearest-away rounding, `roundedSignificandStatus_nearestAway` shows that it matc
 nearest-away overflow classifier
 and the comparison with `underflowMidpoint`. The tininess classifier also counts a tiny delivered
 value, so `finiteStatus_eq_roundedSignificandStatus_of_nearestAway` adds the engine's result: for
-the value that `Policy.roundRat` delivers, the two calculations give the same status under every
-overflow and underflow policy.
+the value that `Model.Policy.roundRat` delivers, the two calculations give the same status under
+every overflow and underflow policy.
 -/
 
 @[expose] public section
@@ -49,6 +50,15 @@ namespace ExecFloat.Binary
 namespace Conversion
 
 universe u
+
+/--
+A binary model decodes to its exact denotation in `SignedRat`, the decoding the configured and
+static-byte carriers apply to their stored model.
+-/
+@[simp, grind =] theorem modelDecoder_run {format : FloatFormat} (value : Model format) :
+    FloatLib.Floats.ExecFloat.ExactDecoder.run value =
+      ((Model.exactNumericalSystem format).denote value).map SignedRat.ofDyadic :=
+  rfl
 
 /-- The context changes only a possible zero sign, never the exact rational sum. -/
 @[simp, grind =] theorem value_addExact (context : Context) (left right : SignedRat) :
@@ -70,15 +80,49 @@ universe u
     subExact Context.default left right = left - right :=
   rfl
 
-/-- Rounding to nearest gives the canonical context, so `(mode := .nearest)` changes nothing. -/
-@[simp, grind =] theorem Context.withRounding_nearest :
-    Context.withRounding .nearest = Context.default :=
+/-- The context of a policy and a direction rounds in that direction. -/
+@[simp, grind =] theorem Policy.rounding_withRounding (policy : Policy) (mode : RoundingMode) :
+    (policy.withRounding mode).quantization.rounding = mode :=
   rfl
 
-/-- Downward exact cancellation uses the disjunction of the operand signs. -/
-theorem negative_addExact_downward_of_eq_zero {left right : SignedRat}
+/-- The context of a policy and a direction has the policy's overflow rule. -/
+@[simp, grind =] theorem Policy.overflow_withRounding (policy : Policy) (mode : RoundingMode) :
+    (policy.withRounding mode).quantization.overflow = policy.overflow :=
+  rfl
+
+/-- The context of a policy and a direction has the policy's underflow rule. -/
+@[simp, grind =] theorem Policy.underflow_withRounding (policy : Policy) (mode : RoundingMode) :
+    (policy.withRounding mode).quantization.underflow = policy.underflow :=
+  rfl
+
+/-- The context of a policy and a direction has the policy's stochastic entropy. -/
+@[simp, grind =] theorem Policy.entropy_withRounding (policy : Policy) (mode : RoundingMode) :
+    (policy.withRounding mode).entropy = policy.entropy :=
+  rfl
+
+/-- The context of a policy and a direction has the policy's infinity policy. -/
+@[simp, grind =] theorem Policy.infinity_withRounding (policy : Policy) (mode : RoundingMode) :
+    (policy.withRounding mode).infinity = policy.infinity :=
+  rfl
+
+/-- The context of a policy and a direction has the policy's exceptional-value policy. -/
+@[simp, grind =] theorem Policy.exceptional_withRounding (policy : Policy)
+    (mode : RoundingMode) :
+    (policy.withRounding mode).exceptional = policy.exceptional :=
+  rfl
+
+/--
+The canonical policy rounding to nearest is the canonical context, so a conversion that names
+neither `mode` nor `context` runs in `Context.default`.
+-/
+@[simp, grind =] theorem Policy.default_withRounding_nearest :
+    Policy.default.withRounding .nearest = Context.default :=
+  rfl
+
+/-- Downward exact cancellation uses the disjunction of the operand signs, under every policy. -/
+theorem negative_addExact_downward_of_eq_zero (policy : Policy) {left right : SignedRat}
     (hsum : left.value + right.value = 0) :
-    (addExact (Context.withRounding .down) left right).negative =
+    (addExact (policy.withRounding .down) left right).negative =
       (left.negative || right.negative) :=
   SignedRat.negative_addWithCancellationSign_of_eq_zero true hsum
 
@@ -115,14 +159,15 @@ private theorem finite_denotation {format : FloatFormat} (rounded : Model format
       refine ⟨Model.isFinite_eq_true_of_toDyadic?_some hd, ?_⟩
       rw [Model.toReal_eq, hd, ← hvalue, Numerics.Dyadic.cast_toRat]
 
+private theorem natAbs_div_den_eq_abs (value : Rat) :
+    (value.num.natAbs : ℝ) / value.den = |(value : ℝ)| := by
+  simp [Rat.cast_def, abs_div]
+
 private theorem signedRat_toReal (exact : SignedRat) (hvalue : exact.value ≠ 0) :
     Model.signedScaledRatToReal exact.negative exact.value.num.natAbs exact.value.den 0 =
       (exact.value : ℝ) := by
-  have hmagnitude :
-      (exact.value.num.natAbs : ℝ) / exact.value.den = |(exact.value : ℝ)| := by
-    simp [Rat.cast_def, abs_div]
   simp only [Model.signedScaledRatToReal, Model.scaledRatToReal, Model.bpow_zero, mul_one,
-    hmagnitude, exact.negative_eq_of_ne_zero hvalue]
+    natAbs_div_den_eq_abs, exact.negative_eq_of_ne_zero hvalue]
   by_cases hnegative : exact.value < 0
   · have hnegativeReal : (exact.value : ℝ) < 0 := by exact_mod_cast hnegative
     simp [hnegative, abs_of_neg hnegativeReal]
@@ -136,8 +181,8 @@ The canonical IEEE rational rounder selects a nearest finite value whenever its 
 This includes signed zero. The independent real grid has no infinity, so nonfinite results are
 covered by the complete outcome clause of `specWith`.
 -/
-theorem nearestFinite_roundRat (format : FloatFormat) (hformat : format.isIEEE = true)
-    (exact : SignedRat) :
+theorem nearestFinite_roundRat (format : FloatFormat) (exact : SignedRat)
+    (hformat : format.isIEEE = true := by ieee_format) :
     NearestFinite exact.value
       (Model.roundRat format exact.negative exact.value.num.natAbs exact.value.den) := by
   intro value hvalue candidate candidateValue hcandidate
@@ -149,11 +194,9 @@ theorem nearestFinite_roundRat (format : FloatFormat) (hformat : format.isIEEE =
         Model.roundAt format (exact.value : ℝ) := by
     by_cases hzero : exact.value = 0
     · simp [hzero]
-    · have hnumerator : exact.value.num.natAbs ≠ 0 := by
-        simpa using hzero
-      rw [Model.roundRat, Model.toReal_roundRatScaled_eq_roundAt
+    · rw [Model.roundRat, Model.toReal_roundRatScaled_eq_roundAt
         format exact.negative exact.value.num.natAbs exact.value.den 0
-        hformat hnumerator exact.value.den_nz hfinite, signedRat_toReal exact hzero]
+        hformat hfinite, signedRat_toReal exact hzero]
   have hnearest :=
     (Formats.Flocq.round_nearestEven_point (β := binaryRadix) (fexp := Model.fexpOf format)
       (exact.value : ℝ)).2 (Model.toReal candidate)
@@ -173,11 +216,36 @@ theorem implements_runWith {format : FloatFormat} {Destination : Type u}
   | finite exact =>
       intro hpolicy hformat
       refine ⟨Model.roundRat format exact.negative exact.value.num.natAbs exact.value.den,
-        ?_, nearestFinite_roundRat format hformat exact⟩
+        ?_, nearestFinite_roundRat format exact⟩
       simp only [runWith, quantizeFiniteWith, hpolicy,
         Model.Policy.roundRat_nearest_eq_execFloat _ _ _ _ _ exact.value.den_nz]
   | infinity negative => trivial
   | exceptional exceptional => trivial
+
+/--
+Default IEEE conversion of an exact value whose magnitude is at most the largest finite value
+delivers a finite nearest value, so the nearest clause of `specWith` is not vacuous there.
+
+Above that magnitude the result may be the largest finite value or an infinity; this theorem does
+not say where the boundary lies.
+-/
+theorem runWith_nearest_of_abs_le_posMaxFinite {format : FloatFormat} {Destination : Type u}
+    (pack : Model format → Destination) (context : Context) (exact : SignedRat)
+    (hpolicy : context.quantization = QuantizationPolicy.nearest)
+    (hbound : |(exact.value : ℝ)| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    ∃ rounded : Model format, Model.isFinite rounded = true ∧
+      NearestFinite exact.value rounded ∧
+        runWith pack context (.finite exact) =
+          .success (pack rounded) (finiteStatus context exact.value rounded) := by
+  refine ⟨Model.roundRat format exact.negative exact.value.num.natAbs exact.value.den,
+    ?_, nearestFinite_roundRat format exact, ?_⟩
+  · apply Model.isFinite_roundRatScaled_of_abs_le_posMaxFinite format _ _ _ 0 hformat
+      exact.value.den_nz
+    simpa only [Model.abs_signedScaledRatToReal, Model.scaledRatToReal, Model.bpow_zero, mul_one,
+      natAbs_div_den_eq_abs] using hbound
+  · simp only [runWith, quantizeFiniteWith, hpolicy,
+      Model.Policy.roundRat_nearest_eq_execFloat _ _ _ _ _ exact.value.den_nz]
 
 /-- An outcome satisfies `specWith` exactly when it is the outcome of `runWith`. -/
 theorem specWith_iff_eq_runWith {format : FloatFormat} {Destination : Type u}
@@ -297,6 +365,22 @@ private theorem floorLog2_zpow_bounds (numerator denominator : Nat) (hnumerator 
   simpa [Model.bpow, Formats.Flocq.bpow, binaryRadix, Radix.toReal] using hbounds
 
 /--
+Scaling by `2 ^ (f - E)` inverts twice the unit `2 ^ (E - f - 1)`, so a bound on twice the scaled
+quotient is a bound on the quotient measured in that unit.
+-/
+private theorem le_two_mul_mul_zpow_iff (q bound : ℝ) (f : ℕ) (E : ℤ) :
+    bound ≤ 2 * (q * (2 : ℝ) ^ ((f : ℤ) - E)) ↔ bound * (2 : ℝ) ^ (E - f - 1) ≤ q := by
+  have hinverse : (2 : ℝ) ^ ((f : ℤ) - E) * (2 * (2 : ℝ) ^ (E - f - 1)) = 1 := by
+    rw [← zpow_one_add₀ (by norm_num), ← zpow_add₀ (by norm_num),
+      show (f : ℤ) - E + (1 + (E - f - 1)) = 0 by ring]
+    exact zpow_zero 2
+  have hscaled : 2 * (q * (2 : ℝ) ^ ((f : ℤ) - E)) * (2 : ℝ) ^ (E - f - 1) = q := by
+    calc
+      _ = q * ((2 : ℝ) ^ ((f : ℤ) - E) * (2 * (2 : ℝ) ^ (E - f - 1))) := by ring
+      _ = q := by rw [hinverse, mul_one]
+  rw [← mul_le_mul_iff_left₀ (zpow_pos (by norm_num : (0 : ℝ) < 2) (E - f - 1)), hscaled]
+
+/--
 The general branch's nearest-away overflow test, on the significand rounded with an unbounded
 exponent range, is reaching the top finite midpoint.
 -/
@@ -355,45 +439,8 @@ private theorem nearestAway_significandOverflow_iff (format : FloatFormat)
     linarith [hbounds.2]
   · simp only [heq, lt_self_iff_false, false_or, true_and]
     rw [lt_roundQuotient_nearestAway_scaled_iff _ _ _ _ hdenominator]
-    have hinverse : (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent) *
-        (2 * unit) = 1 := by
-      rw [hunit, ← zpow_one_add₀ (by norm_num), ← zpow_add₀ (by norm_num)]
-      rw [show Int.ofNat format.fracWidth - format.maxNormalExponent +
-          (1 + (format.maxNormalExponent - format.fracWidth - 1)) = 0 by
-        simp only [Int.ofNat_eq_natCast]
-        ring]
-      exact zpow_zero 2
-    have hscaledPos : (0 : ℝ) < (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent) :=
-      zpow_pos (by norm_num) _
     push_cast
-    constructor
-    · intro h
-      have hmul := mul_le_mul_of_nonneg_right h (le_of_lt hunitPos)
-      calc (2 * ((Model.maxFiniteDyadic format).significand : ℝ) + 1) * unit ≤
-            2 * ((numerator : ℝ) / denominator *
-              (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent)) * unit := hmul
-        _ = (numerator : ℝ) / denominator *
-              ((2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent) *
-                (2 * unit)) := by
-            ring
-        _ = (numerator : ℝ) / denominator := by
-            rw [hinverse, mul_one]
-    · intro h
-      have hmul := mul_le_mul_of_nonneg_right h
-        (le_of_lt (mul_pos (by norm_num : (0 : ℝ) < 2) hscaledPos))
-      calc 2 * ((Model.maxFiniteDyadic format).significand : ℝ) + 1 =
-            (2 * ((Model.maxFiniteDyadic format).significand : ℝ) + 1) *
-              ((2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent) *
-                (2 * unit)) := by
-            rw [hinverse, mul_one]
-        _ = (2 * ((Model.maxFiniteDyadic format).significand : ℝ) + 1) * unit *
-              (2 * (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent)) := by
-            ring
-        _ ≤ (numerator : ℝ) / denominator *
-              (2 * (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent)) := hmul
-        _ = 2 * ((numerator : ℝ) / denominator *
-              (2 : ℝ) ^ (Int.ofNat format.fracWidth - format.maxNormalExponent)) := by
-            ring
+    exact le_two_mul_mul_zpow_iff _ _ format.fracWidth format.maxNormalExponent
   · simp only [hgt, true_or, true_iff]
     have hpow : (2 : ℝ) ^ (format.maxNormalExponent + 1) ≤
         (2 : ℝ) ^ RationalBinary.floorLog2 numerator denominator :=
@@ -487,46 +534,11 @@ private theorem nearestAway_significandTiny_iff (format : FloatFormat)
       push_cast
       ring
     rw [hbound, hexponentEq]
-    have hinverse : (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1)) *
-        (2 * unit) = 1 := by
-      rw [hunit, ← zpow_one_add₀ (by norm_num), ← zpow_add₀ (by norm_num)]
-      rw [show Int.ofNat format.fracWidth - (format.minNormalExponent - 1) +
-          (1 + (format.minNormalExponent - format.fracWidth - 2)) = 0 by
-        simp only [Int.ofNat_eq_natCast]
-        ring]
-      exact zpow_zero 2
-    have hscaledPos :
-        (0 : ℝ) < (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1)) :=
-      zpow_pos (by norm_num) _
-    constructor
-    · intro h
-      have hmul := mul_lt_mul_of_pos_right h hunitPos
-      calc (numerator : ℝ) / denominator =
-            (numerator : ℝ) / denominator *
-              ((2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1)) *
-                (2 * unit)) := by
-            rw [hinverse, mul_one]
-        _ = 2 * ((numerator : ℝ) / denominator *
-              (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1))) * unit := by
-            ring
-        _ < (4 * (2 : ℝ) ^ format.fracWidth - 1) * unit := hmul
-    · intro h
-      have hmul := mul_lt_mul_of_pos_right h
-        (mul_pos (by norm_num : (0 : ℝ) < 2) hscaledPos)
-      calc 2 * ((numerator : ℝ) / denominator *
-              (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1))) =
-            (numerator : ℝ) / denominator *
-              (2 * (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1))) := by
-            ring
-        _ < (4 * (2 : ℝ) ^ format.fracWidth - 1) * unit *
-              (2 * (2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1))) :=
-            hmul
-        _ = (4 * (2 : ℝ) ^ format.fracWidth - 1) *
-              ((2 : ℝ) ^ (Int.ofNat format.fracWidth - (format.minNormalExponent - 1)) *
-                (2 * unit)) := by
-            ring
-        _ = 4 * (2 : ℝ) ^ format.fracWidth - 1 := by
-            rw [hinverse, mul_one]
+    have h := (le_two_mul_mul_zpow_iff ((numerator : ℝ) / denominator)
+      (4 * (2 : ℝ) ^ format.fracWidth - 1) format.fracWidth (format.minNormalExponent - 1)).not
+    rw [not_le, not_le, show format.minNormalExponent - 1 - (format.fracWidth : ℤ) - 1 =
+      format.minNormalExponent - format.fracWidth - 2 by ring] at h
+    exact h
 
 /--
 With nearest-away rounding, the significand-based status calculation matches the nearest-away
@@ -537,7 +549,7 @@ it is tiny exactly below `underflowMidpoint`.
 `finiteStatus` sends nearest-away rounding to the classifiers, as `finiteStatus_of_nearestAway`
 states. The tininess classifier also counts a tiny delivered value, and
 `finiteStatus_eq_roundedSignificandStatus_of_nearestAway` uses this theorem to show that both
-give the same status for the value that `Policy.roundRat` delivers.
+give the same status for the value that `Model.Policy.roundRat` delivers.
 -/
 theorem roundedSignificandStatus_nearestAway (format : FloatFormat) (entropy : Nat)
     (sign : Bool) (numerator denominator : Nat) (hnumerator : numerator ≠ 0)
@@ -612,7 +624,7 @@ theorem finiteStatus_of_nearestAway {format : FloatFormat} (context : Context)
   rfl
 
 /--
-For the value that `Policy.roundRat` delivers, nearest-away conversion status is the status
+For the value that `Model.Policy.roundRat` delivers, nearest-away conversion status is the status
 assembled from `roundedSignificandStatus`, the significand rounded with an unbounded exponent range,
 with the same inexactness, flush-to-zero underflow, and saturation as `finiteStatus`.
 

@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Core
+import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 
 /-!
 # Order of interval endpoints
@@ -110,21 +112,38 @@ theorem validExtended_point_of_isNaN_eq_false
   refine ⟨hx, hx, ?_⟩
   exact (le_iff_toEReal_le_of_isNaN_eq_false x x hx hx).2 le_rfl
 
-/-- The full IEEE range, including infinities, is extended-valid. -/
-theorem validExtended_whole (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
-    ValidExtended (whole fmt) := by
-  have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
-  have hsupports : fmt.supportsInfinity = true := by
-    simp [FloatFormat.supportsInfinity, hencoding]
-  have hwhole : whole fmt = ⟨negInf fmt, posInf fmt⟩ := by
-    simp [whole, Model.infinityOrMaxFinite, hencoding]
-  rw [hwhole]
-  refine ⟨isNaN_negInf fmt hsupports, isNaN_posInf fmt hsupports, ?_⟩
-  apply (le_iff_toEReal_le_of_isNaN_eq_false
-    (negInf fmt) (posInf fmt)
-    (isNaN_negInf fmt hsupports) (isNaN_posInf fmt hsupports)).2
-  rw [toEReal_negInf fmt hfmt, toEReal_posInf fmt hfmt]
-  exact bot_le
+/--
+The full range of every format is extended-valid: the two infinities in an IEEE encoding, whatever
+its bias, and the two largest finite values otherwise.
+-/
+theorem validExtended_whole (fmt : FloatFormat) : ValidExtended (whole fmt) := by
+  cases hencoding : fmt.encoding
+  case ieee =>
+    have hsupports : fmt.supportsInfinity = true := by
+      simp [FloatFormat.supportsInfinity, hencoding]
+    have hwhole : whole fmt = ⟨negInf fmt, posInf fmt⟩ := by
+      simp [whole, Model.infinityOrMaxFinite, hencoding]
+    rw [hwhole]
+    refine ⟨isNaN_negInf fmt, isNaN_posInf fmt, ?_⟩
+    apply (le_iff_toEReal_le_of_isNaN_eq_false
+      (negInf fmt) (posInf fmt)
+      (isNaN_negInf fmt) (isNaN_posInf fmt)).2
+    simp [toEReal_eq_ite, isNaN_negInf fmt, isInf_negInf fmt hsupports]
+  all_goals
+    have hwhole : whole fmt = ⟨maxFinite fmt true, maxFinite fmt false⟩ := by
+      simp [whole, Model.infinityOrMaxFinite, hencoding]
+    rw [hwhole]
+    refine ⟨isNaN_maxFinite fmt true, isNaN_maxFinite fmt false, ?_⟩
+    apply (le_iff_toReal_le_of_isFinite _ _ (isFinite_maxFinite fmt true)
+      (isFinite_maxFinite fmt false)).2
+    have hneg : maxFinite fmt true = neg (maxFinite fmt false) := by simp
+    have hnonneg : 0 ≤ toReal (maxFinite fmt false) := by
+      have hvalue := toReal_posMaxFinite fmt
+      simp only [posMaxFinite] at hvalue
+      rw [hvalue]
+      exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
+    rw [hneg, toReal_neg _ (isFinite_maxFinite fmt false)]
+    linarith
 
 /-- Every extended-real value belongs to the full IEEE range. -/
 theorem eRealMem_whole (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (x : EReal) :
@@ -162,9 +181,9 @@ theorem realMem_ofBounds {fmt : FloatFormat} {lo hi : Model fmt} {x : ℝ}
   rw [ofBounds_eq_of_isFinite lo hi hlo hhi (hx.1.trans hx.2)]
   exact hx
 
-/-- Checked IEEE bounds always define an ordered interval without NaN endpoints. -/
-theorem validExtended_ofBounds {fmt : FloatFormat} (lo hi : Model fmt)
-    (hfmt : fmt.isIEEE = true) : ValidExtended (ofBounds lo hi) := by
+/-- Checked bounds always define an ordered interval without NaN endpoints, in every format. -/
+theorem validExtended_ofBounds {fmt : FloatFormat} (lo hi : Model fmt) :
+    ValidExtended (ofBounds lo hi) := by
   unfold ofBounds
   split
   next hle =>
@@ -174,7 +193,7 @@ theorem validExtended_ofBounds {fmt : FloatFormat} (lo hi : Model fmt)
       simp [leB, compare, htrue] at hle
     exact ⟨(Bool.or_eq_false_iff.mp hnan).1, (Bool.or_eq_false_iff.mp hnan).2,
       (le_iff_leB_eq_true lo hi).2 hle⟩
-  next => exact validExtended_whole fmt hfmt
+  next => exact validExtended_whole fmt
 
 end
 

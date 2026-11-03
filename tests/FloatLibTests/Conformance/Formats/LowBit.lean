@@ -124,7 +124,7 @@ example {scaleValue value : Numerics.Dyadic}
     (x : (NumericalSystem.exact Numerics.Dyadic).AtFinite value) :
     Option.map (NumericalSystem.exact Numerics.Dyadic).denote
         (scaleDyadic? scale.1 x.1) =
-      some (.finite (scaledValue scaleValue value)) := by
+      some (.finite (Numerics.Dyadic.mul scaleValue value)) := by
   exact Operation.Checked2.map_denote scaleDyadic_refines scale x
 
 example : exponent? (ofNatBits 128) = some 1 := by

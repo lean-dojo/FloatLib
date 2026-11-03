@@ -376,5 +376,12 @@ Prefer the named semantic constructors or `ofFiniteFields?` in ordinary code.
     NumericalValue Numerics.Dyadic :=
   ExecFloat.Codebook.decode value
 
+/--
+Exact rational value of a finite P3109 value, or `none` for NaN and either infinity, as in
+`(.ofRat (3 / 16) : ExecFloat.P3109 .binary8p4se).toRat?`.
+-/
+@[inline] def toRat? (value : ExecFloat.P3109 format) : Option Rat :=
+  (decode value).finite?.map Numerics.Dyadic.toRat
+
 end P3109
 end FloatLib.Floats.ExecFloat

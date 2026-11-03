@@ -77,24 +77,24 @@ configured binary,binary64,64,53,mul,2,binary-interchange multiplication fixed-f
 configured binary,binary64,64,53,div,2,binary-interchange division fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,6,0,30000000
 configured binary,binary64,64,53,sqrt,2,binary-interchange square root fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,57,0,285000000
 configured binary,binary64,64,53,fma,2,binary-interchange fused multiply-add fixed-format kernel,fixed-format word kernel,0,throughput,5000000,16777216,32,0,160000000
-configured binary,binary96-e15m80,96,81,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary96-e15m80,96,81,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary96-e15m80,96,81,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
-configured binary,binary96-e15m80,96,81,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
-configured binary,binary96-e15m80,96,81,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
-configured binary,binary96-e15m80,96,81,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
-configured binary,binary112-e15m96,112,97,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary112-e15m96,112,97,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary112-e15m96,112,97,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
-configured binary,binary112-e15m96,112,97,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
-configured binary,binary112-e15m96,112,97,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
-configured binary,binary112-e15m96,112,97,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
-configured binary,binary128,128,113,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary128,128,113,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,48,0,240000000
-configured binary,binary128,128,113,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,80,0,400000000
-configured binary,binary128,128,113,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,190,0,950000000
-configured binary,binary128,128,113,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,230,0,1150000000
-configured binary,binary128,128,113,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,150,0,750000000
+configured binary,binary96-e15m80,96,81,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary96-e15m80,96,81,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary96-e15m80,96,81,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,86,0,430000000
+configured binary,binary96-e15m80,96,81,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,196,0,980000000
+configured binary,binary96-e15m80,96,81,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,234,0,1170000000
+configured binary,binary96-e15m80,96,81,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,158,0,790000000
+configured binary,binary112-e15m96,112,97,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary112-e15m96,112,97,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary112-e15m96,112,97,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,86,0,430000000
+configured binary,binary112-e15m96,112,97,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,196,0,980000000
+configured binary,binary112-e15m96,112,97,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,234,0,1170000000
+configured binary,binary112-e15m96,112,97,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,158,0,790000000
+configured binary,binary128,128,113,add,2,binary-interchange addition fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary128,128,113,sub,2,binary-interchange subtraction fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,54,0,270000000
+configured binary,binary128,128,113,mul,2,binary-interchange multiplication fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,86,0,430000000
+configured binary,binary128,128,113,div,2,binary-interchange division fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,196,0,980000000
+configured binary,binary128,128,113,sqrt,2,binary-interchange square root fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,234,0,1170000000
+configured binary,binary128,128,113,fma,2,binary-interchange fused multiply-add fixed-limb kernel,fixed-limb kernel,0,throughput,5000000,16777216,158,0,790000000
 configured binary,p161,180,161,add,1,binary-interchange addition exact baseline,exact baseline,0,throughput,5000000,16777216,137,0,685000000
 configured binary,p161,180,161,sub,1,binary-interchange subtraction exact baseline,exact baseline,0,throughput,5000000,16777216,143,0,715000000
 configured binary,p161,180,161,mul,1,binary-interchange multiplication exact baseline,exact baseline,0,throughput,5000000,16777216,136,0,680000000

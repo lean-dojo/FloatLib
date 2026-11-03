@@ -38,7 +38,6 @@ wrapper-level theorem entries differ.
 meta def profile (base : Nat) : FormatProfile where
   family := "radix-parametric logarithmic number system"
   standard := "mathematical logarithmic format; no external encoding standard claimed"
-  declarationPrefix := "FloatLib.Floats.Formats.Logarithmic."
   representation :=
     [ ⟨"storage", "zero, or a sign bit and an unbounded Int exponent"⟩
     , ⟨"radix", toString base⟩

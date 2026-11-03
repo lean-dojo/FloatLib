@@ -40,6 +40,14 @@ theorem compareFields_eq
         } :=
   rfl
 
+/-- Casting two naturals to integers preserves their ordering. -/
+private theorem compare_ofNat_ofNat (left right : Nat) :
+    Ord.compare (Int.ofNat left) (Int.ofNat right) = Ord.compare left right := by
+  cases hcomparison : Ord.compare left right with
+  | lt => exact Int.compare_eq_lt.mpr (Int.ofNat_lt.mpr (Nat.compare_eq_lt.mp hcomparison))
+  | eq => exact Int.compare_eq_eq.mpr (congrArg Int.ofNat (Nat.compare_eq_eq.mp hcomparison))
+  | gt => exact Int.compare_eq_gt.mpr (Int.ofNat_lt.mpr (Nat.compare_eq_gt.mp hcomparison))
+
 /-- The nonnegative comparator is the ordinary exact comparator with both signs cleared. -/
 theorem compareNonnegativeFields_eq_compareFields
     (leftSignificand : Nat) (leftExponent : Int)
@@ -61,24 +69,7 @@ theorem compareNonnegativeFields_eq_compareFields
         Ord.compare leftSignificand rightMagnitude =
           Ord.compare (Int.ofNat leftSignificand)
             (Int.ofNat rightMagnitude)
-      cases hcomparison :
-          Ord.compare leftSignificand rightMagnitude with
-      | lt =>
-          have hless : leftSignificand < rightMagnitude :=
-            Nat.compare_eq_lt.mp hcomparison
-          exact
-            (Int.compare_eq_lt.mpr (Int.ofNat_lt.mpr hless)).symm
-      | eq =>
-          have hequal : leftSignificand = rightMagnitude :=
-            Nat.compare_eq_eq.mp hcomparison
-          exact
-            (Int.compare_eq_eq.mpr
-              (congrArg Int.ofNat hequal)).symm
-      | gt =>
-          have hgreater : rightMagnitude < leftSignificand :=
-            Nat.compare_eq_gt.mp hcomparison
-          exact
-            (Int.compare_eq_gt.mpr (Int.ofNat_lt.mpr hgreater)).symm
+      exact (compare_ofNat_ofNat _ _).symm
     · simp only [sub_self, Int.toNat_zero]
       let leftMagnitude :=
         Nat.shiftLeft leftSignificand
@@ -87,24 +78,7 @@ theorem compareNonnegativeFields_eq_compareFields
         Ord.compare leftMagnitude rightSignificand =
           Ord.compare (Int.ofNat leftMagnitude)
             (Int.ofNat rightSignificand)
-      cases hcomparison :
-          Ord.compare leftMagnitude rightSignificand with
-      | lt =>
-          have hless : leftMagnitude < rightSignificand :=
-            Nat.compare_eq_lt.mp hcomparison
-          exact
-            (Int.compare_eq_lt.mpr (Int.ofNat_lt.mpr hless)).symm
-      | eq =>
-          have hequal : leftMagnitude = rightSignificand :=
-            Nat.compare_eq_eq.mp hcomparison
-          exact
-            (Int.compare_eq_eq.mpr
-              (congrArg Int.ofNat hequal)).symm
-      | gt =>
-          have hgreater : rightSignificand < leftMagnitude :=
-            Nat.compare_eq_gt.mp hcomparison
-          exact
-            (Int.compare_eq_gt.mpr (Int.ofNat_lt.mpr hgreater)).symm
+      exact (compare_ofNat_ofNat _ _).symm
 
 /-- Flattened strict comparison is exactly record-based strict comparison. -/
 theorem isLessFields_eq

@@ -113,7 +113,11 @@ interior interval uses the appended-bit boundary with ties to an even retained l
     else
       lower
 
-/-- Round a positive rational to a nonnegative posit model. -/
+/--
+Round a positive rational to a nonnegative posit model with the standard rule of
+`roundPositiveCode`: nearest code, ties to an even code, saturation at `maxPos`, and `minPos` for
+every positive value below it. A nonpositive input gives zero.
+-/
 @[inline] def roundPositiveRat (format : Format) (target : Rat) : Model format :=
   ofNatBits (roundPositiveCode format target)
 
@@ -171,6 +175,11 @@ roots without introducing an approximate square-root oracle.
 
 /--
 Round an exact rational to the configured posit using the Posit Standard rule.
+
+The magnitude is rounded to the nearest posit with ties to an even code, then the sign is restored
+by posit negation. There is no overflow or underflow: magnitudes above `maxPos` saturate to
+`maxPos`, and nonzero magnitudes below `minPos` round to `minPos`. The result is therefore never
+NaR, and it is zero only for a zero input.
 
 This conversion does not pass through `Float`, `Float32`, MPFR, or another destination format.
 -/

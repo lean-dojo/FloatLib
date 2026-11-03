@@ -43,7 +43,9 @@ theorem leadingBit_eq_log2 (value : Nat) :
 /--
 The normalized fraction prefix fits in exactly the number of requested positions.
 
-The hypotheses characterize `leading` as the index of the leading one. This formulation is
+The hypotheses characterize `leading` as the index of the leading one, the case in which
+`fractionPrefix` reads the normalized fraction. The bound itself follows from `hupper` alone:
+below `2 ^ leading` the truncated subtraction makes the fraction zero. This formulation is
 independent of `Nat.log2`, so packed backends may reuse it after proving their own normalization
 invariant.
 -/
@@ -158,7 +160,9 @@ private theorem two_pow_add_lt_two_pow
 A normalized field prefix always encodes a nonnegative finite posit.
 
 This range theorem removes a runtime candidate-bound check from specialized rounders. Its
-hypotheses are exactly the exponent-width and leading-bit invariants established by normalization.
+hypotheses are the exponent-width and leading-bit invariants that normalization establishes. The
+bound itself uses only `exponentField < 4` and the upper significand bound; `hleading` states the
+normalized domain, as in `fractionPrefix_lt_two_pow`.
 -/
 theorem lowerCandidateFromFields_lt_signMask
     (format : Format) (regime : Int)
@@ -178,6 +182,18 @@ theorem lowerCandidateFromFields_lt_signMask
   · exact format.signMaskNat_pos
   · exact two_pow_add_lt_two_pow _ _ _ (by omega) (by omega)
       (htail _ hexponentField hleading hsignificandUpper)
+
+/--
+Splitting a scale into the regime `scale.ediv 4` and the exponent field `(scale.emod 4).toNat`,
+as the direct packers do, gives a two-bit field and loses nothing.
+-/
+theorem exponentField_lt_four_and_scale_eq (scale : Int) :
+    (scale.emod 4).toNat < 4 ∧
+      scale = scale.ediv 4 * 4 + Int.ofNat (scale.emod 4).toNat := by
+  have hnonnegative : 0 ≤ scale.emod 4 := Int.emod_nonneg scale (by decide)
+  refine ⟨(Int.toNat_lt hnonnegative).2 (Int.emod_lt_of_pos scale (by decide)), ?_⟩
+  rw [Int.ofNat_eq_natCast, Int.toNat_of_nonneg hnonnegative]
+  exact (Int.ediv_mul_add_emod scale 4).symm
 
 /-- The direct dyadic candidate is always a nonnegative finite posit code. -/
 theorem lowerCandidate_lt_signMask
@@ -201,11 +217,7 @@ theorem lowerCandidate_lt_signMask
           target.significand leading <
         format.signMaskNat
     apply lowerCandidateFromFields_lt_signMask
-    · dsimp [exponentField]
-      have hnonnegative : 0 ≤ scale.emod 4 :=
-        Int.emod_nonneg scale (by norm_num)
-      rw [Int.toNat_lt hnonnegative]
-      exact Int.emod_lt_of_pos scale (by norm_num)
+    · exact (exponentField_lt_four_and_scale_eq scale).1
     · rw [show leading = target.significand.log2 by
         exact leadingBit_eq_log2 target.significand]
       exact Nat.log2_self_le hsignificand

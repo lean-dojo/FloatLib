@@ -69,16 +69,20 @@ theorem totalOrder_iff_of_toDyadic? {fmt : FloatFormat} {x y : Model fmt}
   rw [totalOrder, exactValue_eq_finite_of_toDyadic?_eq_some hx,
     exactValue_eq_finite_of_toDyadic?_eq_some hy, ExactValue.totalOrder_finite_iff]
 
+/-- A strict real order of decoded finite values is the strict order of their rationals. -/
+private theorem toRat_lt_of_toReal_lt {fmt : FloatFormat} {x y : Model fmt}
+    {a b : Numerics.Dyadic} (ha : toDyadic? x = some a) (hb : toDyadic? y = some b)
+    (h : toReal x < toReal y) : a.toRat < b.toRat := by
+  have hab : a.toReal < b.toReal := by simpa [toReal_eq, ha, hb] using h
+  exact_mod_cast (show (a.toRat : ℝ) < (b.toRat : ℝ) by simpa using hab)
+
 /-- Strict numerical increase of finite binary values implies total ordering. -/
 theorem totalOrder_of_toReal_lt {fmt : FloatFormat} {x y : Model fmt}
     (hx : isFinite x = true) (hy : isFinite y = true) (h : toReal x < toReal y) :
     totalOrder x y = true := by
   obtain ⟨a, ha⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hy
-  have hab : a.toReal < b.toReal := by simpa [toReal_eq, ha, hb] using h
-  have hrat : a.toRat < b.toRat := by
-    exact_mod_cast (show (a.toRat : ℝ) < (b.toRat : ℝ) by simpa using hab)
-  exact (totalOrder_iff_of_toDyadic? ha hb).2 (Or.inl hrat)
+  exact (totalOrder_iff_of_toDyadic? ha hb).2 (Or.inl (toRat_lt_of_toReal_lt ha hb h))
 
 /-- Strict numerical decrease of finite binary values fails total ordering. -/
 theorem totalOrder_eq_false_of_toReal_gt {fmt : FloatFormat} {x y : Model fmt}
@@ -86,9 +90,7 @@ theorem totalOrder_eq_false_of_toReal_gt {fmt : FloatFormat} {x y : Model fmt}
     totalOrder x y = false := by
   obtain ⟨a, ha⟩ := exists_toDyadic?_of_isFinite hx
   obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hy
-  have hab : b.toReal < a.toReal := by simpa [toReal_eq, ha, hb] using h
-  have hrat : b.toRat < a.toRat := by
-    exact_mod_cast (show (b.toRat : ℝ) < (a.toRat : ℝ) by simpa using hab)
+  have hrat := toRat_lt_of_toReal_lt hb ha h
   simpa [totalOrder, exactValue_eq_finite_of_toDyadic?_eq_some ha,
     exactValue_eq_finite_of_toDyadic?_eq_some hb] using
     ExactValue.totalOrder_finite_eq_false_of_gt hrat
@@ -165,12 +167,14 @@ theorem totalOrder_zero_iff {fmt : FloatFormat} {x y : Model fmt}
     apply Bool.eq_iff_iff.mpr <;>
     rw [ExactValue.totalOrder_finite_iff] <;> simp
 
-/-- In a signed-zero format, negative zero precedes positive zero. -/
-@[simp] theorem totalOrder_negZero_posZero {fmt : FloatFormat}
-    (hfmt : fmt.supportsSignedZero = true) :
+/--
+The negative-sign zero precedes the positive zero. In a format without signed zero both are
+positive zero, which precedes itself.
+-/
+@[simp] theorem totalOrder_negZero_posZero (fmt : FloatFormat) :
     totalOrder (zero fmt true) (zero fmt false) = true := by
   rw [totalOrder_zero_iff (isZero_zero _ _) (isZero_zero _ _)]
-  simp [zero, hfmt]
+  simp
 
 /-- In a signed-zero format, positive zero does not precede negative zero. -/
 @[simp] theorem totalOrder_posZero_negZero {fmt : FloatFormat}
@@ -179,17 +183,25 @@ theorem totalOrder_zero_iff {fmt : FloatFormat} {x y : Model fmt}
   rw [totalOrder_zero_iff (isZero_zero _ _) (isZero_zero _ _)]
   simp [zero, hfmt]
 
+/-- A value that is not a NaN interprets as a finite number or as an infinity of its sign. -/
+theorem exactValue_finite_or_infinity_of_isNaN_eq_false {fmt : FloatFormat}
+    {x : Model fmt} (hx : isNaN x = false) :
+    (∃ d, exactValue x = .finite d) ∨ exactValue x = .infinity (signBit x) := by
+  cases hinf : isInf x
+  · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite
+      (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hinf)
+    exact Or.inl ⟨d, exactValue_eq_finite_of_toDyadic?_eq_some hd⟩
+  · exact Or.inr (exactValue_eq_infinity_of_isInf hinf)
+
 /-- A NaN precedes a number exactly when its sign bit is negative. -/
 theorem totalOrder_nan_number {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = false) :
     totalOrder x y = signBit x := by
   rw [totalOrder, exactValue_eq_nan_of_isNaN hx]
-  cases hinf : isInf y
-  · have hf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hy hinf
-    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hf
-    rw [exactValue_eq_finite_of_toDyadic?_eq_some hd]
+  rcases exactValue_finite_or_infinity_of_isNaN_eq_false hy with ⟨d, hd⟩ | hinf
+  · rw [hd]
     exact ExactValue.totalOrder_nan_finite _ _ _ _
-  · rw [exactValue_eq_infinity_of_isInf hinf]
+  · rw [hinf]
     exact ExactValue.totalOrder_nan_infinity _ _ _ _
 
 /-- A number precedes a NaN exactly when that NaN has positive sign. -/
@@ -197,12 +209,10 @@ theorem totalOrder_number_nan {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = false) (hy : isNaN y = true) :
     totalOrder x y = !signBit y := by
   rw [totalOrder, exactValue_eq_nan_of_isNaN hy]
-  cases hinf : isInf x
-  · have hf := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hinf
-    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hf
-    rw [exactValue_eq_finite_of_toDyadic?_eq_some hd]
+  rcases exactValue_finite_or_infinity_of_isNaN_eq_false hx with ⟨d, hd⟩ | hinf
+  · rw [hd]
     exact ExactValue.totalOrder_finite_nan _ _ _ _
-  · rw [exactValue_eq_infinity_of_isInf hinf]
+  · rw [hinf]
     exact ExactValue.totalOrder_infinity_nan _ _ _ _
 
 /-- Complete sign, signaling-class, and payload rule for two binary NaNs. -/

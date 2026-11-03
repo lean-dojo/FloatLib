@@ -24,7 +24,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 namespace SqrtBackend
 
-/-- Final structurally selected dispatch preserves square root. -/
+/--
+Final structurally selected dispatch equals `Spec.sqrt` for every descriptor and on every input,
+exceptional values included.
+-/
 theorem dispatch_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     dispatch x = Spec.sqrt x := by
   by_cases hfixed : FloatFormat.IsBinary32 fmt ∨ FloatFormat.IsBinary64 fmt

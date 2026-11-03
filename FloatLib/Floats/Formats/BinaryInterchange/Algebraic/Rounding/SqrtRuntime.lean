@@ -16,7 +16,13 @@ public import FloatLib.Numerics.Exact.RationalBinary
 The binary logarithm of the exact radicand locates the root's binade without searching the
 descriptor's exponent range. After target scaling, the proved integer-root kernel supplies the
 significand. Scaling is shared with the exact fractional classification, and the binade is reused
-when constructing the final certificate. Degree zero retains the total comparison specification.
+when constructing the final certificate.
+
+The scaling helpers read the radicand's magnitude `|radicand|`, so they describe a root only for a
+positive radicand; `rootRat` sends nonpositive radicands and degree zero to the reference `root`
+before using them. At degree zero `rootMantissa` and `rootCertificateAt` take the mantissa from the
+comparison oracle, but the certificate's accuracy still comes from the integer formula and need
+not match it; no theorem covers that branch, and the correctness theorems assume `degree ≠ 0`.
 -/
 
 @[expose] public section
@@ -25,21 +31,27 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.AlgebraicRounding
 
 open Float.Model.UnpackedFloat
 
-/-- Exact ratio after scaling a degree-`degree` root by `2 ^ (-exponent)`. -/
+/-- Exact ratio after scaling a degree-`degree` root by `2 ^ (-exponent)`. It reads
+`|radicand|`, so it is meaningful for a positive radicand. -/
 @[inline] def rootScale (radicand : Rat) (degree : Nat) (exponent : Int) : Nat × Nat :=
   Numerics.RationalBinary.scaleByPowerOfTwo radicand.num.natAbs radicand.den
     (-(exponent * (degree : Int)))
 
-/-- Integer part of the square root after exact target scaling. -/
+/-- Integer part of `√radicand / 2 ^ exponent`, from the integer square root of `radicand` scaled
+exactly by `2 ^ (-2 * exponent)`, for `0 ≤ radicand` (`sqrtMantissa_bounds`); a negative radicand
+gives the value for `|radicand|`. It is the degree-two `rootMantissa`
+(`rootMantissa_two_eq_sqrtMantissa`). Only proofs use it. -/
 def sqrtMantissa (radicand : Rat) (exponent : Int) : Nat :=
   let scaled := rootScale radicand 2 exponent
   Numerics.FixedWord.IntegerSquareRoot.sqrtNat (scaled.1 / scaled.2)
 
-/-- Floor binary logarithm of a positive root, using Euclidean division for negative exponents. -/
+/-- Floor binary logarithm of the root of a positive radicand, using Euclidean division for
+negative exponents. It reads `|radicand|`. -/
 @[inline] def rootBinade (radicand : Rat) (degree : Nat) : Int :=
   Numerics.RationalBinary.floorLog2 radicand.num.natAbs radicand.den / (degree : Int)
 
-/-- Exact integer part of a scaled root; degree zero retains the comparison specification. -/
+/-- Exact integer part of a scaled root; at degree zero the mantissa follows the comparison
+oracle. -/
 @[specialize fmt] def rootMantissa
     (fmt : FloatFormat) (radicand : Rat) (degree : Nat) (exponent : Int) :
     Nat :=
@@ -59,7 +71,11 @@ def rootAccuracy (radicand : Rat) (degree : Nat) (exponent : Int) (mantissa : Na
   let scaled := rootScale radicand degree exponent
   scaledRootAccuracy scaled.1 scaled.2 degree mantissa
 
-/-- Build an integer-root certificate at a known exponent, sharing the exact scaled ratio. -/
+/-- Build the certificate of the `degree`-th root of `radicand` at the known target exponent
+`exponent`, sharing the exact scaled ratio between the mantissa and its accuracy. `fmt` supplies the
+comparison search used at degree zero, where the mantissa follows that oracle but the accuracy field
+is the integer formula's and need not describe it; `rootRat` sends degree zero to `root` before
+reaching this, and the correctness theorems assume `degree ≠ 0`. -/
 @[specialize fmt] def rootCertificateAt
     (fmt : FloatFormat) (radicand : Rat) (degree : Nat) (exponent : Int) : Certificate :=
   let scaled := rootScale radicand degree exponent
@@ -103,7 +119,12 @@ zero and nonpositive radicands retain the reference oracle's total behavior.
 @[inline] def sqrtRat (fmt : FloatFormat) (sign : Bool) (radicand : Rat) : Model fmt :=
   rootRat fmt sign radicand 2
 
-/-- Use integer square root at degree two and proved integer Newton iteration otherwise. -/
+/--
+The `degree`-th root of `radicand` rounded into `fmt` with result sign `sign`: this is `rootRat`
+itself at every degree, with no dispatch of its own (`rootWithSqrt_eq_root` gives every result bit
+of the reference `root`). The integer-root kernel `Numerics.IntegerRoot.root` beneath it takes the
+integer square root at degree two and Newton iteration from degree three.
+-/
 @[inline] def rootWithSqrt (fmt : FloatFormat) (sign : Bool) (radicand : Rat) (degree : Nat) :
     Model fmt :=
   rootRat fmt sign radicand degree

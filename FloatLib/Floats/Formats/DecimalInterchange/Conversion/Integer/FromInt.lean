@@ -15,7 +15,8 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 Integer sources are converted from their exact value, with preferred quantum
 zero. Every integer representable in the destination remains exact, including
 integers whose decimal representation requires a positive exponent. Other
-nonoverflowing results satisfy the decimal grid's error and direction bounds.
+nonoverflowing results satisfy the decimal grid's error and direction bounds; the inexact and
+underflow laws and the toward-zero bound also cover overflow.
 
 Custom descriptors may exclude quantum zero. Zero then takes the nearest
 allowed quantum, and a coarse minimum quantum can make a nonzero integer
@@ -26,6 +27,8 @@ underflow. The standard presets satisfy the optional `HasQuantumZero` assumption
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.Conversion.Integer
 
+/-- Converting any integer, however large, delivers a valid datum of the destination, overflow
+results included. -/
 theorem convertFromInt_valid (destination : Format) (mode : RoundingMode) (source : Int) :
     (convertFromInt destination mode source).value.Valid destination :=
   project_valid destination mode (source : ℚ) 0 false
@@ -81,12 +84,14 @@ theorem convertFromInt_exact (destination : Format) (mode : RoundingMode) (sourc
 
 /-- A nearest conversion incurs at most half a unit on the selected decimal grid. -/
 theorem convertFromInt_error_le_half (destination : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway) (source : Int)
+    (hm : mode = .nearest ∨ mode = .nearestAway) (source : Int)
     (hfinite : (convertFromInt destination mode source).status.overflow = false) :
     ∃ value, (convertFromInt destination mode source).value.toRat? = some value ∧
       |value - (source : ℚ)| ≤ (10 : ℚ) ^ roundingQuantum destination |(source : ℚ)| / 2 :=
   project_error_le_half destination mode hm (source : ℚ) 0 false hfinite
 
+/-- In every rounding direction, a nonoverflowing conversion from an integer is finite and less than
+one unit of the selected decimal grid from the integer. -/
 theorem convertFromInt_error_lt_one (destination : Format) (mode : RoundingMode)
     (source : Int)
     (hfinite : (convertFromInt destination mode source).status.overflow = false) :
@@ -94,45 +99,49 @@ theorem convertFromInt_error_lt_one (destination : Format) (mode : RoundingMode)
       |value - (source : ℚ)| < (10 : ℚ) ^ roundingQuantum destination |(source : ℚ)| :=
   project_error_lt_one destination mode (source : ℚ) 0 false hfinite
 
-theorem le_convertFromInt_towardPositive (destination : Format) (source : Int)
-    (hfinite : (convertFromInt destination .towardPositive source).status.overflow = false) :
-    ∃ value, (convertFromInt destination .towardPositive source).value.toRat? = some value ∧
+/-- Rounding toward positive, a nonoverflowing conversion from an integer is finite and at least the
+integer. -/
+theorem le_convertFromInt_up (destination : Format) (source : Int)
+    (hfinite : (convertFromInt destination .up source).status.overflow = false) :
+    ∃ value, (convertFromInt destination .up source).value.toRat? = some value ∧
       (source : ℚ) ≤ value :=
-  le_project_towardPositive destination (source : ℚ) 0 false hfinite
+  le_project_up destination (source : ℚ) 0 false hfinite
 
-theorem convertFromInt_towardNegative_le (destination : Format) (source : Int)
-    (hfinite : (convertFromInt destination .towardNegative source).status.overflow = false) :
-    ∃ value, (convertFromInt destination .towardNegative source).value.toRat? = some value ∧
+/-- Rounding toward negative, a nonoverflowing conversion from an integer is finite and at most the
+integer. -/
+theorem convertFromInt_down_le (destination : Format) (source : Int)
+    (hfinite : (convertFromInt destination .down source).status.overflow = false) :
+    ∃ value, (convertFromInt destination .down source).value.toRat? = some value ∧
       value ≤ (source : ℚ) :=
-  project_towardNegative_le destination (source : ℚ) 0 false hfinite
+  project_down_le destination (source : ℚ) 0 false hfinite
 
-theorem abs_convertFromInt_towardZero_le (destination : Format) (source : Int)
-    (hfinite : (convertFromInt destination .towardZero source).status.overflow = false) :
+/-- Rounding toward zero, a conversion from an integer is finite and no larger in magnitude than
+the integer, also when it overflows to the greatest finite datum. -/
+theorem abs_convertFromInt_towardZero_le (destination : Format) (source : Int) :
     ∃ value, (convertFromInt destination .towardZero source).value.toRat? = some value ∧
       |value| ≤ |(source : ℚ)| :=
-  abs_project_towardZero_le destination (source : ℚ) 0 false hfinite
+  abs_project_towardZero_le destination (source : ℚ) 0 false
 
-/-- Inexact reports a numerical change, never a change of exponent alone. -/
+/-- Inexact reports a numerical change of a finite result, never a change of exponent alone; an
+overflow to the greatest finite datum is inexact. -/
 theorem convertFromInt_inexact_iff (destination : Format) (mode : RoundingMode)
     (source : Int) (value : ℚ)
-    (hfinite : (convertFromInt destination mode source).status.overflow = false)
     (hv : (convertFromInt destination mode source).value.toRat? = some value) :
     (convertFromInt destination mode source).status.inexact = true ↔ value ≠ (source : ℚ) :=
-  project_inexact_iff destination mode (source : ℚ) value 0 false hfinite hv
+  project_inexact_iff destination mode (source : ℚ) value 0 false hv
 
-/-- For an arbitrary descriptor, underflow means a tiny exact integer input together
-with a numerical change. Coarse custom formats can therefore underflow on integers. -/
+/-- For an arbitrary descriptor and a finite result, underflow means a tiny exact integer input
+together with a numerical change. Coarse custom formats can therefore underflow on integers. -/
 theorem convertFromInt_underflow_iff (destination : Format) (mode : RoundingMode)
     (source : Int) (value : ℚ)
-    (hfinite : (convertFromInt destination mode source).status.overflow = false)
     (hv : (convertFromInt destination mode source).value.toRat? = some value) :
     (convertFromInt destination mode source).status.underflow = true ↔
       |(source : ℚ)| < destination.minNormal ∧ value ≠ (source : ℚ) := by
   rw [show (convertFromInt destination mode source).status.underflow = true ↔
       |(source : ℚ)| < destination.minNormal ∧
         (convertFromInt destination mode source).status.inexact = true from
-    project_underflow_iff destination mode (source : ℚ) 0 false hfinite,
-    convertFromInt_inexact_iff destination mode source value hfinite hv]
+    project_underflow_iff destination mode (source : ℚ) 0 false,
+    convertFromInt_inexact_iff destination mode source value hv]
 
 private theorem minNormal_le_coefficientBound (destination : Format)
     [destination.HasQuantumZero] :

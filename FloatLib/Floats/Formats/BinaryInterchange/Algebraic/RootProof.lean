@@ -55,14 +55,25 @@ theorem rootN_of_isZero {fmt : FloatFormat} (value : Model fmt) (degree : Int)
   simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hfinite, hzero]
 
 /--
-Reciprocal square root of a finite positive operand is one nearest-even rounding of `1 / sqrt x`.
-The reciprocal radicand is exact, so an intermediate rounded square root cannot affect the result.
+Reciprocal square root of a finite operand is one nearest-even rounding of `1 / sqrt x`. A zero
+operand overflows and a negative nonzero operand is invalid, so the finite-result premise leaves
+only positive operands. The reciprocal radicand is exact, so an intermediate rounded square root
+cannot affect the result.
 -/
 theorem toReal_rsqrt_eq_roundAt {fmt : FloatFormat} (value : Model fmt)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)
-    (hzero : isZero value = false) (hsign : signBit value = false)
     (hfinite : isFinite (rsqrt value) = true) :
     toReal (rsqrt value) = roundAt fmt (Real.sqrt (toReal value))⁻¹ := by
+  have hzero : isZero value = false := by
+    cases h : isZero value
+    · rfl
+    · simp [rsqrt_of_isZero value h,
+        isFinite_nativeOverflow hfmt] at hfinite
+  have hsign : signBit value = false := by
+    cases h : signBit value
+    · rfl
+    · simp [rsqrt, chooseNaN1_none_of_isFinite value hvalue, hzero, h,
+        isFinite_invalidResult hfmt] at hfinite
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hvalue
   have hdsign : d.negative = false := (sign_eq_signBit_of_toDyadic?_some hd).trans hsign
   have hq : toRat? value = some d.toRat := by simp [toRat?, hd]
@@ -99,20 +110,40 @@ theorem root_radicand_rpow (q : Rat) (degree : Int) :
 end Algebraic
 
 /--
-A finite nonzero integer root rounds the chosen real branch once.
+A finite integer root of a finite operand rounds the chosen real branch once.
 
-Even degrees require a clear sign bit, while odd degrees allow either sign. Negative degrees are
-reciprocal roots. The absolute value and the sign select the negative odd real branch, so the
-statement does not rely on the convention for real exponentiation of negative bases.
+Negative degrees are reciprocal roots. The finite-result premise excludes the invalid and pole
+cases: degree zero, even roots of negative nonzero values, and negative-degree roots of zero. Zero
+to a positive degree gives a zero, whose real value matches the zero real root. The absolute value
+and the sign select the negative odd real branch, so the statement does not rely on the convention
+for real exponentiation of negative bases.
 -/
 theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)
-    (hzero : isZero value = false) (hdegree : degree ≠ 0)
-    (hdomain : signBit value = false ∨ degree % 2 ≠ 0)
     (hfinite : isFinite (rootN value degree) = true) :
     toReal (rootN value degree) =
       roundAt fmt (if signBit value then -(|toReal value| ^ (degree : ℝ)⁻¹)
         else |toReal value| ^ (degree : ℝ)⁻¹) := by
+  have hdegree : degree ≠ 0 := by
+    rintro rfl
+    simp [rootN_zero value (isNaN_eq_false_of_isFinite_eq_true value hvalue),
+      isFinite_invalidResult hfmt] at hfinite
+  by_cases hzero : isZero value = true
+  · rw [rootN_of_isZero value degree hzero hdegree] at hfinite ⊢
+    rcases lt_or_gt_of_ne hdegree with hnegative | hpositive
+    · simp [hnegative, isFinite_nativeOverflow hfmt] at hfinite
+    · have hexponent : (degree : ℝ)⁻¹ ≠ 0 := inv_ne_zero (by exact_mod_cast hdegree)
+      simp [not_lt.mpr hpositive.le, toReal_eq_zero_of_isZero value hzero,
+        Real.zero_rpow hexponent]
+  rw [Bool.not_eq_true] at hzero
+  have hdomain : signBit value = false ∨ degree % 2 ≠ 0 := by
+    by_cases hsign : signBit value = false
+    · exact Or.inl hsign
+    by_cases hparity : degree % 2 = 0
+    · rw [Bool.not_eq_false] at hsign
+      simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hsign, hparity,
+        isFinite_invalidResult hfmt] at hfinite
+    · exact Or.inr hparity
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hvalue
   have hq : toRat? value = some d.toRat := by simp [toRat?, hd]
   have hsign : (signBit value && degree % 2 != 0) = signBit value := by
@@ -133,7 +164,7 @@ theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree 
       _ = AlgebraicRounding.rootWithSqrt fmt (signBit value) radicand degree.natAbs := by
         simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hbad,
           isInf_eq_false_of_toDyadic?_some hd, hq, hsign, radicand]
-      _ = _ := AlgebraicRounding.rootWithSqrt_eq_root fmt _ _ _ hrad
+      _ = _ := AlgebraicRounding.rootWithSqrt_eq_root fmt _ _ _
   rw [heq] at hfinite ⊢
   rw [AlgebraicRounding.toReal_root_eq_roundAt_rpow fmt hfmt _ _ _
     hrad (Int.natAbs_ne_zero.mpr hdegree) hfinite]

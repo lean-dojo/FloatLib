@@ -59,15 +59,6 @@ private theorem sqrt_ratCast_eq_of_eq_mul_self
   push_cast
   rw [← pow_two, Real.sqrt_sq (by exact_mod_cast hvalue)]
 
-private theorem nonnegativeRatAt_nonneg_of_lt_signMask
-    (format : Format) {code : Nat} (hcode : code < format.signMaskNat) :
-    0 ≤ nonnegativeRatAt format code := by
-  by_cases hzero : code = 0
-  · subst code
-    simp [nonnegativeRatAt_zero]
-  · exact le_of_lt
-      (nonnegativeRatAt_pos format (Nat.pos_of_ne_zero hzero) hcode)
-
 private theorem lowerSqrtCode_lt_signMask
     (format : Format) (radicand : Rat) :
     lowerSqrtCode format radicand < format.signMaskNat := by
@@ -93,7 +84,7 @@ theorem lowerSqrtCode_eq_realRounding_lowerCode
   intro code _ hcode
   simp only [RealRounding.nonnegativeRealAt,
     rat_mul_self_le_iff_le_sqrt
-      (nonnegativeRatAt_nonneg_of_lt_signMask format hcode) hradicand]
+      (nonnegativeRatAt_nonneg format hcode) hradicand]
   rfl
 
 /--
@@ -114,7 +105,7 @@ theorem roundSqrtCode_eq_roundPositiveCode
     Real.sqrt_pos.2 (by exact_mod_cast hpos)
   have hlowerLt := lowerSqrtCode_lt_signMask format radicand
   have hlowerValueNonneg :=
-    nonnegativeRatAt_nonneg_of_lt_signMask format hlowerLt
+    nonnegativeRatAt_nonneg format hlowerLt
   have hthresholdPos :
       0 < roundingThreshold format (lowerSqrtCode format radicand) := by
     apply nonnegativeRatAt_pos format.nextPrecision (by omega)

@@ -41,19 +41,10 @@ theorem nonnegativeDyadicAt_eq_decodeFields_of_nonzero
     nonnegativeDyadicAt format code =
       (Model.ofNatBits (format := format) code).decodeFields.toDyadic := by
   let value := Model.ofNatBits (format := format) code
-  have hvalueBits : value.toNatBits = code :=
-    Model.toNatBits_ofNatBits_of_lt code
-      (hcode.trans format.signMaskNat_lt_modulus)
-  have hvalueZero : value ≠ Model.zero format := by
-    intro equality
-    have bitsEquality := congrArg Model.toNatBits equality
-    rw [hvalueBits, Model.zero_toNatBits] at bitsEquality
-    exact hnonzero bitsEquality
-  have hvalueNaR : value ≠ Model.nar format := by
-    intro equality
-    have bitsEquality := congrArg Model.toNatBits equality
-    rw [hvalueBits, Model.nar_toNatBits] at bitsEquality
-    omega
+  have hvalueZero : value ≠ Model.zero format :=
+    Model.ofNatBits_ne_zero (hcode.trans format.signMaskNat_lt_modulus) hnonzero
+  have hvalueNaR : value ≠ Model.nar format :=
+    Model.ofNatBits_ne_nar (hcode.trans format.signMaskNat_lt_modulus) hcode.ne
   have hnar : value.isNaR = false :=
     beq_eq_false_iff_ne.mpr hvalueNaR
   have hzero : value.isZero = false :=
@@ -139,8 +130,7 @@ theorem nonnegativeDyadicAt_one_eq_fields (format : Format) :
       have hrun : value.regimeRunLength = 1 := by
         simp [Model.regimeRunLength, hmagnitude, hregimeBit, hpayload,
           Model.countLeadingRun]
-      simp [Model.trailingBits, Model.hasRegimeTerminator, Model.regimeValue,
-        hregimeBit, hrun, hpayload]
+      simp [Model.trailingBits_eq, Model.regimeValue, hregimeBit, hrun, hpayload]
     · have hregimeBit : value.regimeBit = false := by
         simp only [Model.regimeBit, hmagnitude, Nat.testBit_eq_decide_div_mod_eq]
         rw [Nat.div_eq_of_lt (Nat.one_lt_two_pow (by omega))]
@@ -150,11 +140,8 @@ theorem nonnegativeDyadicAt_one_eq_fields (format : Format) :
         rw [hmagnitude, hregimeBit,
           Model.countLeadingRun_false_eq_log2 1 _ one_pos (Nat.one_lt_two_pow (by omega))]
         rfl
-      have hterminator : value.hasRegimeTerminator = true := by
-        simp only [Model.hasRegimeTerminator, hrun, decide_eq_true_eq]
-        omega
       refine ⟨?_, by simp [Model.regimeValue, hregimeBit, hrun]⟩
-      simp only [Model.trailingBits, hrun, hterminator, ite_true]
+      rw [Model.trailingBits_eq, hrun]
       omega
   obtain ⟨htrailing, hregimeValue⟩ := hfields
   have hused : value.usedExponentBits = 0 := by
@@ -240,16 +227,10 @@ theorem minPositive_exponent_le_scale_of_not_special
         unfold Model.regimeRunLength
         rw [hbit, hrunEq]
         omega
-      have hterminator : value.hasRegimeTerminator = true := by
-        simp [Model.hasRegimeTerminator, hrun]
-      have htrailing :
-          value.trailingBits =
-            format.payloadBits - value.regimeRunLength - 1 := by
-        simp [Model.trailingBits, hterminator]
       have hfields :
           value.regimeRunLength + 1 + value.fractionBits ≤
             format.payloadBits := by
-        rw [htrailing] at hfraction
+        rw [Model.trailingBits_eq] at hfraction
         omega
       have hfieldsInt :
           (value.regimeRunLength : Int) + 1 + value.fractionBits ≤
@@ -279,6 +260,14 @@ theorem minPositive_exponent_le_scale_of_not_special
     (minPositive format).toRat = Model.minPositiveRat format := by
   rw [minPositive_eq_nonnegativeDyadicAt, nonnegativeDyadicAt_toRat]
   rfl
+
+/-- The minimum positive posit is the power of two at the bottom regime scale. -/
+theorem minPositiveRat_eq_zpow (format : Format) :
+    Model.minPositiveRat format =
+      (2 : Rat) ^ (-(4 * Int.ofNat (format.payloadBits - 1))) := by
+  rw [← minPositive_toRat, minPositive_eq_fields]
+  norm_num [FloatLib.Numerics.Dyadic.toRat,
+    FloatLib.Numerics.Dyadic.signedSignificand]
 
 /-- The dyadic threshold has exactly the reference threshold's rational denotation. -/
 @[simp] theorem roundingThreshold_toRat (format : Format) (lowerCode : Nat) :
@@ -353,15 +342,19 @@ theorem chooseNearestCode_eq_lower_or_upper
 /--
 Positive dyadic rounding selects exactly the code chosen by the rational specification.
 
-The hypotheses are the invariant established by `round`: zero has already been handled and the
-temporary magnitude has its sign cleared.
+The hypothesis is the invariant established by `round`: the temporary magnitude has its sign
+cleared. A zero significand rounds to code zero on both sides.
 -/
 theorem roundPositiveCode_eq_reference_of_positive
     (format : Format) (target : FloatLib.Numerics.Dyadic)
-    (hsignificand : target.significand ≠ 0)
     (hnegative : target.negative = false) :
     roundPositiveCode format target =
       Model.roundPositiveCode format target.toRat := by
+  by_cases hsignificand : target.significand = 0
+  · have hzero : target.toRat = 0 :=
+      (FloatLib.Numerics.Dyadic.toRat_eq_zero_iff target).2 hsignificand
+    unfold roundPositiveCode Model.roundPositiveCode
+    simp [hsignificand, hzero]
   have hpositive :=
     FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
       target hsignificand hnegative
@@ -373,6 +366,26 @@ theorem roundPositiveCode_eq_reference_of_positive
     FloatLib.Numerics.Dyadic.isLess_eq_decide, decide_eq_true_eq,
     minPositive_toRat, chooseNearestCode_eq, roundingThreshold_toRat,
     lowerCodeForPositive_eq_reference]
+
+/--
+Below `maxPos`, positive dyadic rounding is the nearest-even choice at the lower code.
+
+Direct packers establish the lower code and the positivity of its successor from their own field
+layout; this theorem then discharges the zero, underflow, and `maxPos` branches.
+-/
+theorem roundPositiveCode_eq_chooseNearestCode_of_lowerCode
+    (format : Format) (target : FloatLib.Numerics.Dyadic) (lower : Nat)
+    (hsignificand : target.significand ≠ 0)
+    (hnegative : target.negative = false)
+    (hnotUnderflow : target.isLess (minPositive format) = false)
+    (hlower : lowerCodeForPositive format target = lower)
+    (hsuccessor : lower + 1 < format.signMaskNat) :
+    roundPositiveCode format target =
+      chooseNearestCode target (roundingThreshold format lower) lower (lower + 1) := by
+  unfold roundPositiveCode
+  simp only [beq_eq_false_iff_ne.mpr hsignificand, hnegative, Bool.false_or,
+    Bool.false_eq_true, ite_false]
+  rw [ite_eq_right (by simpa using hnotUnderflow), hlower, ite_eq_left hsuccessor]
 
 /--
 Positive exact-dyadic rounding re-encodes every nonnegative finite posit code.
@@ -403,33 +416,24 @@ theorem roundPositiveCode_nonnegativeDyadicAt
   · have hdecoded :=
       nonnegativeDyadicAt_eq_decodeFields_of_nonzero
         format code hcode hzero
-    have hsignificand :
-        (nonnegativeDyadicAt format code).significand ≠ 0 := by
-      rw [hdecoded]
-      simp only [Model.DecodedFields.toDyadic, Model.decodeFields]
-      have hpositive := Nat.two_pow_pos
-        (Model.ofNatBits (format := format) code).fractionBits
-      omega
     have hnegative :
         (nonnegativeDyadicAt format code).negative = false := by
       rw [hdecoded]
       simp only [Model.DecodedFields.toDyadic, Model.decodeFields]
       exact Model.signBit_ofNatBits_eq_false format code hcode
     rw [roundPositiveCode_eq_reference_of_positive
-      format (nonnegativeDyadicAt format code) hsignificand hnegative]
+      format (nonnegativeDyadicAt format code) hnegative]
     rw [nonnegativeDyadicAt_toRat]
     exact Model.roundPositiveCode_nonnegativeRatAt format hcode
 
 /-- Positive dyadic model rounding refines the reference rational model rounding. -/
 theorem roundPositive_eq_reference_of_positive
     (format : Format) (target : FloatLib.Numerics.Dyadic)
-    (hsignificand : target.significand ≠ 0)
     (hnegative : target.negative = false) :
     roundPositive format target =
       Model.roundPositiveRat format target.toRat := by
   unfold roundPositive Model.roundPositiveRat
-  rw [roundPositiveCode_eq_reference_of_positive
-    format target hsignificand hnegative]
+  rw [roundPositiveCode_eq_reference_of_positive format target hnegative]
 
 /-- Clearing the sign leaves the integer significand unchanged. -/
 @[simp] theorem magnitude_significand (value : FloatLib.Numerics.Dyadic) :
@@ -448,6 +452,14 @@ theorem magnitude_toRat (value : FloatLib.Numerics.Dyadic) :
   cases hnegative : value.negative <;>
     simp [magnitude, FloatLib.Numerics.Dyadic.toRat,
       FloatLib.Numerics.Dyadic.signedSignificand, hnegative]
+
+/-- The exact rational value of a dyadic is its magnitude's value with the sign flag applied. -/
+theorem toRat_eq_signed_magnitude (value : FloatLib.Numerics.Dyadic) :
+    value.toRat =
+      if value.negative then -(magnitude value).toRat
+      else (magnitude value).toRat := by
+  rw [magnitude_toRat]
+  cases value.negative <;> simp
 
 /-- Direct sign restoration preserves the configured posit word width. -/
 theorem restoreSignCode_lt_modulus
@@ -493,39 +505,15 @@ theorem ofNatBits_restoreSignCode
 theorem round_eq_roundRat (format : Format) (value : FloatLib.Numerics.Dyadic) :
     round format value = Model.roundRat format value.toRat := by
   by_cases hsignificand : value.significand = 0
-  · have hzero : value.toRat = 0 := by
-      simp [FloatLib.Numerics.Dyadic.toRat,
-        FloatLib.Numerics.Dyadic.signedSignificand, hsignificand]
-    simp [round, hsignificand, hzero]
-  · have hsignificandBool : (value.significand == 0) = false :=
-      beq_eq_false_iff_ne.mpr hsignificand
-    cases hnegative : value.negative
-    · have hpositive :
-          0 < value.toRat :=
-        FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
-          value hsignificand hnegative
-      rw [round]
-      simp only [hsignificandBool, Bool.false_eq_true, ite_false,
-        hnegative]
-      rw [roundPositive_eq_reference_of_positive format (magnitude value)]
-      · rw [magnitude_toRat, hnegative]
-        simp [Model.roundRat, hpositive.ne', not_lt.mpr hpositive.le]
-      · simpa using hsignificand
-      · rfl
-    · have hmagnitudePositive :
-          0 < (magnitude value).toRat :=
-        FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
-          (magnitude value) (by simpa using hsignificand) rfl
-      have hvalueNegative : value.toRat < 0 := by
-        rw [magnitude_toRat, hnegative] at hmagnitudePositive
-        simpa using hmagnitudePositive
-      rw [round]
-      simp only [hsignificandBool, Bool.false_eq_true, ite_false,
-        hnegative, ite_true]
-      rw [roundPositive_eq_reference_of_positive format (magnitude value)]
-      · rw [magnitude_toRat, hnegative]
-        simp [Model.roundRat, hvalueNegative, hvalueNegative.ne]
-      · simpa using hsignificand
-      · rfl
+  · simp [round, hsignificand,
+      (FloatLib.Numerics.Dyadic.toRat_eq_zero_iff value).2 hsignificand]
+  have hmagnitude : 0 ≤ (magnitude value).toRat :=
+    (FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
+      (magnitude value) hsignificand rfl).le
+  rw [round, ite_eq_right (by simpa using hsignificand)]
+  dsimp only
+  rw [toRat_eq_signed_magnitude value,
+    roundPositive_eq_reference_of_positive format (magnitude value) rfl]
+  cases value.negative <;> simp [Model.roundRat_neg, Model.roundRat_of_nonneg hmagnitude]
 
 end FloatLib.Floats.Formats.Posit.Model.DyadicRounding

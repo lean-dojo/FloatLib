@@ -104,11 +104,9 @@ theorem nonnegativeRatAt_nextPrecision_two_mul
   congr 1
   set run := (ofNatBits (format := format) code).regimeRunLength with hrunDef
   have hrunLe : run ≤ format.payloadBits := regimeRunLength_le_payload _
-  unfold trailingBits hasRegimeTerminator
-  rw [← hrunDef, hrun, Format.nextPrecision_payloadBits]
+  rw [trailingBits_eq, trailingBits_eq, hrun, ← hrunDef, Format.nextPrecision_payloadBits]
   rcases hrunLe.lt_or_eq with hrunLt | hrunEq
-  · simp only [hrunLt, Nat.lt_succ_of_lt hrunLt, decide_true, ↓reduceIte]
-    rw [show format.payloadBits + 1 - run - 1 = format.payloadBits - run - 1 + 1 by omega]
+  · rw [show format.payloadBits + 1 - run - 1 = format.payloadBits - run - 1 + 1 by omega]
     exact trailingRat_succ_two_mul _ _
   · simp [hrunEq, trailingRat, natToRat_eq_cast, Nat.mod_one]
 
@@ -143,7 +141,7 @@ theorem nonnegativeRatAt_lt_of_regimeValue_eq
   refine mul_lt_mul_of_pos_right ?_ (zpow_pos two_pos _)
   rw [← trailingRat_mod_twoPow _ left, ← trailingRat_mod_twoPow _ right]
   exact trailingRat_lt_of_lt (Nat.mod_lt _ (Nat.two_pow_pos _))
-    (Nat.mod_lt _ (Nat.two_pow_pos _)) (mod_lt_of_lt_of_div_eq hlt hprefix)
+    (mod_lt_of_lt_of_div_eq hlt hprefix)
 
 /--
 Two adjacent regime blocks are strictly separated because every tail lies in `[1, 16)` and the
@@ -174,6 +172,14 @@ theorem nonnegativeRatAt_pos
     0 < nonnegativeRatAt format code := by
   rw [nonnegativeRatAt_eq_trailingRat_mul_regime format hpos hcode]
   exact mul_pos (lt_of_lt_of_le one_pos (trailingRat_bounds _ _).1) (zpow_pos two_pos _)
+
+/-- Every unsigned code below the sign mask, zero included, denotes a nonnegative rational. -/
+theorem nonnegativeRatAt_nonneg
+    (format : Format) {code : Nat} (hcode : code < format.signMaskNat) :
+    0 ≤ nonnegativeRatAt format code := by
+  rcases Nat.eq_zero_or_pos code with rfl | hpos
+  · simp
+  · exact (nonnegativeRatAt_pos format hpos hcode).le
 
 /-- Strictly increasing regime values strictly separate the corresponding positive codes. -/
 theorem nonnegativeRatAt_lt_of_regimeValue_lt

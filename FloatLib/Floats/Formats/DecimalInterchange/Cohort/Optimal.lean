@@ -6,6 +6,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 
@@ -26,14 +27,8 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 theorem coefficient_eq_mul_of_quantum_le (c d : Nat) {q r : Int} (hqr : q ≤ r)
     (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) :
     c = d * 10 ^ (r - q).toNat := by
-  have he : q + ((r - q).toNat : Int) = r := by omega
-  have hv : ((d * 10 ^ (r - q).toNat : Nat) : ℚ) * (10 : ℚ) ^ q =
-      (d : ℚ) * (10 : ℚ) ^ r := by
-    conv_rhs => rw [← he, zpow_add₀ (by norm_num), zpow_natCast]
-    push_cast
-    ring
   have hc := mul_right_cancel₀ (zpow_ne_zero q (by norm_num : (10 : ℚ) ≠ 0))
-    (hvalue.trans hv.symm)
+    (hvalue.trans (Arithmetic.finer_grid_value d r q hqr).symm)
   exact_mod_cast hc
 
 /-- A higher exponent requires a trailing zero in the original coefficient. -/
@@ -49,7 +44,6 @@ theorem coefficient_mod_ten_eq_zero_of_quantum_lt (c d : Nat) {q r : Int}
 /-- Among coarser representable members, the chosen exponent is closest to the preferred one.
 The minimal-quantum premise is discharged for projection by its coefficient range theorem. -/
 theorem preferredCohort_quantum_closest (f : Format) (c : Nat) (q preferred : Int)
-    (hq : q ≤ f.maxQuantum)
     (hminimal : ∀ (d : Nat) (r : Int), d < f.coefficientBound →
       f.minQuantum ≤ r → r ≤ f.maxQuantum →
       (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r → q ≤ r)
@@ -62,6 +56,7 @@ theorem preferredCohort_quantum_closest (f : Format) (c : Nat) (q preferred : In
   let result := stripTrailing fuel c
   have hcount : result.2 ≤ fuel := stripTrailing_count_le fuel c
   have hstart := hminimal d r hd hrmin hrmax hvalue
+  have hq : q ≤ f.maxQuantum := hstart.trans hrmax
   by_cases hp : preferred < q
   · have hf : fuel = 0 := by dsimp [fuel]; omega
     have hk : result.2 = 0 := by omega
@@ -93,6 +88,24 @@ theorem preferredCohort_quantum_closest (f : Format) (c : Nat) (q preferred : In
         exact False.elim (hstop
           (coefficient_mod_ten_eq_zero_of_quantum_lt result.1 d (by omega) hv))
 
+/-- Starting from a pair `(c, q)` whose quantum is at most that of every in-range representation of
+its value (`hminimal`), the datum `preferredCohort` delivers has an exponent at least as close to
+the preferred one as that of every valid representation `(e, t)` of that value. The premise is
+needed because `preferredCohort` only strips trailing zeros, so it never reaches a finer quantum
+than `q`. -/
+theorem preferredCohort_quantum_closest_of_eq (f : Format) (s : Bool) (c : Nat)
+    (q preferred : Int)
+    (hminimal : ∀ (d : Nat) (r : Int), d < f.coefficientBound →
+      f.minQuantum ≤ r → r ≤ f.maxQuantum →
+      (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r → q ≤ r)
+    (d : Nat) (r : Int) (hout : preferredCohort f s c q preferred = .finite s d r)
+    (e : Nat) (t : Int) (he : (Datum.finite s e t).Valid f)
+    (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (e : ℚ) * (10 : ℚ) ^ t) :
+    |preferred - r| ≤ |preferred - t| := by
+  have he' := (Datum.valid_quantum_iff ..).mp he
+  rw [← (Datum.finite.inj hout).2.2]
+  exact preferredCohort_quantum_closest f c q preferred hminimal e t he'.1 he'.2.1 he'.2.2 hvalue
+
 /-- A coefficient with a full leading digit cannot be represented at a finer quantum.
 This statement compares equal numerical values; trailing zeros do not affect it. -/
 theorem quantum_le_of_full_coefficient (f : Format) (c d : Nat) (q r : Int)
@@ -111,5 +124,21 @@ theorem quantum_le_of_full_coefficient (f : Format) (c d : Nat) (q r : Int)
       _ = c * 10 := Nat.mul_comm ..
       _ ≤ c * 10 ^ (q - r).toNat := Nat.mul_le_mul_left c hp
   omega
+
+namespace Arithmetic
+
+/-- A pair `(c, q)` on the least grid or with a full leading digit has the least quantum among the
+representations of its value: every `(d, r)` with `d` below the coefficient bound, `r` at least the
+least quantum and `d * 10 ^ r = c * 10 ^ q` has `q ≤ r`. This covers the whole valid cohort; neither
+pair needs to be valid otherwise. -/
+theorem quantum_le_of_minimum_or_full (f : Format) (c d : Nat) (q r : Int)
+    (hfull : q = f.minQuantum ∨ f.payloadBound ≤ c)
+    (hd : d < f.coefficientBound) (hr : f.minQuantum ≤ r)
+    (he : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
+  rcases hfull with hq | hc
+  · omega
+  · exact quantum_le_of_full_coefficient f c d q r hc hd he
+
+end Arithmetic
 
 end FloatLib.Floats.Formats.DecimalInterchange

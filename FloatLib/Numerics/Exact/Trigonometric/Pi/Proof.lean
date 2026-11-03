@@ -37,11 +37,8 @@ theorem prepareSinPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     rw [Enclosure.Comparison.Prepared.compare,
       sinPiExact_eq_real (Enclosure.piReduced argument) value hvalue]
     exact cmp_ratCast value boundary
-  · dsimp only [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simpa only [Enclosure.Comparison.cacheIntervals_apply] using
-      Enclosure.contains_sinPi (Enclosure.piReduced argument) (2 ^ n)
+  · exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_sinPi (Enclosure.piReduced argument) (2 ^ n)
 
 /-- Prepared pi-scaled cosine comparisons include all classified rational special values. -/
 theorem prepareCosPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -55,11 +52,8 @@ theorem prepareCosPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     rw [Enclosure.Comparison.Prepared.compare,
       cosPiExact_eq_real (Enclosure.piReduced argument) value hvalue]
     exact cmp_ratCast value boundary
-  · dsimp only [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simpa only [Enclosure.Comparison.cacheIntervals_apply] using
-      Enclosure.contains_cosPi (Enclosure.piReduced argument) (2 ^ n)
+  · exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_cosPi (Enclosure.piReduced argument) (2 ^ n)
 
 /-- The tangent helper agrees with the totalized real tangent, including its pole convention. -/
 theorem prepareTanPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -84,7 +78,7 @@ theorem prepareTanPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
             (((Enclosure.Comparison.cacheIntervals
               (fun i => Enclosure.cosPi argument (2 ^ i)) levels).get n).scale boundary)) 0
         (by simpa only [Enclosure.Comparison.cacheIntervals_apply, Enclosure.sinPiSubCos] using
-          Enclosure.exists_sinPiSubCos_separating argument boundary hpole hvalue)
+          Enclosure.exists_sinPiSubCos_separating argument boundary hvalue)
         (Real.sin ((argument : ℝ) * Real.pi) -
           (boundary : ℝ) * Real.cos ((argument : ℝ) * Real.pi))
         (fun n => by simpa only [Enclosure.Comparison.cacheIntervals_apply,
@@ -100,6 +94,41 @@ theorem prepareTanPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
 private theorem cmp_div_pi (a b : ℝ) : cmp (a / Real.pi) b = cmp a (b * Real.pi) := by
   simp only [cmp, cmpUsing, div_lt_iff₀ Real.pi_pos, lt_div_iff₀ Real.pi_pos]
 
+private theorem half_ratCast : ((1 / 2 : ℚ) : ℝ) = 1 / 2 := by norm_num
+
+/-- Inverse sine divided by pi lies in `[-1/2, 1/2]`. -/
+private theorem arcsin_div_pi_mem (x : ℝ) :
+    Real.arcsin x / Real.pi ∈ Set.Icc (-1 / 2 : ℝ) (1 / 2) := by
+  constructor
+  · rw [le_div_iff₀ Real.pi_pos]
+    linarith [Real.neg_pi_div_two_le_arcsin x]
+  · rw [div_le_iff₀ Real.pi_pos]
+    linarith [Real.arcsin_le_pi_div_two x]
+
+/-- Inverse cosine divided by pi lies in `[0, 1]`. -/
+private theorem arccos_div_pi_mem (x : ℝ) : Real.arccos x / Real.pi ∈ Set.Icc (0 : ℝ) 1 :=
+  ⟨div_nonneg (Real.arccos_nonneg x) Real.pi_pos.le,
+    (div_le_one Real.pi_pos).2 (Real.arccos_le_pi x)⟩
+
+/-- Inverse tangent divided by pi lies in `(-1/2, 1/2)`. -/
+private theorem arctan_div_pi_mem (x : ℝ) :
+    Real.arctan x / Real.pi ∈ Set.Ioo (-1 / 2 : ℝ) (1 / 2) := by
+  constructor
+  · rw [lt_div_iff₀ Real.pi_pos]
+    linarith [Real.neg_pi_div_two_lt_arctan x]
+  · rw [div_lt_iff₀ Real.pi_pos]
+    linarith [Real.arctan_lt_pi_div_two x]
+
+/-- Scaling by pi maps `[-1/2, 1/2]` into the principal branch `[-π/2, π/2]` of sine. -/
+private theorem mul_pi_mem_Icc {b : ℝ} (hb : b ∈ Set.Icc (-1 / 2 : ℝ) (1 / 2)) :
+    b * Real.pi ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) :=
+  ⟨by nlinarith [Real.pi_pos, hb.1], by nlinarith [Real.pi_pos, hb.2]⟩
+
+/-- Scaling by pi maps `(-1/2, 1/2)` into the principal branch `(-π/2, π/2)` of tangent. -/
+private theorem mul_pi_mem_Ioo {b : ℝ} (hb : b ∈ Set.Ioo (-1 / 2 : ℝ) (1 / 2)) :
+    b * Real.pi ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) :=
+  ⟨by nlinarith [Real.pi_pos, hb.1], by nlinarith [Real.pi_pos, hb.2]⟩
+
 /-- Inverse sine divided by pi has the exact principal-branch ordering throughout `[-1, 1]`. -/
 theorem prepareArcsinPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)
     (hlower : -1 ≤ argument) (hupper : argument ≤ 1) :
@@ -111,37 +140,24 @@ theorem prepareArcsinPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)
       arcsinPiExact_eq_real argument value hvalue]
     exact cmp_ratCast value boundary
   | none =>
-    rw [prepareArcsinPi, hvalue, Enclosure.Comparison.Prepared.compare, cmp_div_pi]
-    have ha : (argument : ℝ) ∈ Set.Icc (-1 : ℝ) 1 :=
-      ⟨by exact_mod_cast hlower, by exact_mod_cast hupper⟩
+    rw [prepareArcsinPi, hvalue, Enclosure.Comparison.Prepared.compare]
+    have hrange := arcsin_div_pi_mem (argument : ℝ)
     split
     · rename_i hb
       have hb' : (boundary : ℝ) < -1 / 2 := by exact_mod_cast hb
-      have hgt : (boundary : ℝ) * Real.pi < Real.arcsin (argument : ℝ) := by
-        have hmul := mul_lt_mul_of_pos_right hb' Real.pi_pos
-        linarith [Real.neg_pi_div_two_le_arcsin (argument : ℝ)]
-      exact hgt.cmp_eq_gt.symm
+      exact (hb'.trans_le hrange.1).cmp_eq_gt.symm
     · rename_i hbzero
       split
       · rename_i hb
         have hb' : (1 / 2 : ℝ) < boundary := by
-          simpa only [Rat.cast_div, Rat.cast_one, Rat.cast_ofNat] using
-            (show ((1 / 2 : ℚ) : ℝ) < (boundary : ℝ) from Rat.cast_lt.mpr hb)
-        have hlt : Real.arcsin (argument : ℝ) < (boundary : ℝ) * Real.pi := by
-          have hmul := mul_lt_mul_of_pos_right hb' Real.pi_pos
-          linarith [Real.arcsin_le_pi_div_two (argument : ℝ)]
-        exact hlt.cmp_eq_lt.symm
+          simpa only [half_ratCast] using (Rat.cast_lt (K := ℝ)).2 hb
+        exact (hrange.2.trans_lt hb').cmp_eq_lt.symm
       · rename_i hbhalf
-        have hb : (boundary : ℝ) * Real.pi ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := by
-          have hlo : (-1 / 2 : ℝ) ≤ boundary := by exact_mod_cast le_of_not_gt hbzero
-          have hhi : (boundary : ℝ) ≤ 1 / 2 := by
-            simpa only [Rat.cast_div, Rat.cast_one, Rat.cast_ofNat] using
-              (show (boundary : ℝ) ≤ ((1 / 2 : ℚ) : ℝ) from
-                Rat.cast_le.mpr (le_of_not_gt hbhalf))
-          constructor
-          · linarith [mul_le_mul_of_nonneg_right hlo Real.pi_pos.le]
-          · linarith [mul_le_mul_of_nonneg_right hhi Real.pi_pos.le]
-        rw [prepareSinPi_eq_real, cmp_swap]
+        have ha : (argument : ℝ) ∈ Set.Icc (-1 : ℝ) 1 :=
+          ⟨by exact_mod_cast hlower, by exact_mod_cast hupper⟩
+        have hb := mul_pi_mem_Icc (b := (boundary : ℝ)) ⟨by exact_mod_cast le_of_not_gt hbzero,
+          by simpa only [half_ratCast] using (Rat.cast_le (K := ℝ)).2 (le_of_not_gt hbhalf)⟩
+        rw [cmp_div_pi, prepareSinPi_eq_real, cmp_swap]
         simp only [cmp, cmpUsing, Real.arcsin_lt_iff_lt_sin ha hb,
           Real.lt_arcsin_iff_sin_lt hb ha]
 
@@ -156,25 +172,20 @@ theorem prepareArccosPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)
       arccosPiExact_eq_real argument value hvalue]
     exact cmp_ratCast value boundary
   | none =>
-    rw [prepareArccosPi, hvalue, Enclosure.Comparison.Prepared.compare, cmp_div_pi]
-    have hlo : (-1 : ℝ) ≤ argument := by exact_mod_cast hlower
-    have hhi : (argument : ℝ) ≤ 1 := by exact_mod_cast hupper
+    rw [prepareArccosPi, hvalue, Enclosure.Comparison.Prepared.compare]
+    have hrange := arccos_div_pi_mem (argument : ℝ)
     split
     · rename_i hb
       have hb' : (boundary : ℝ) < 0 := by exact_mod_cast hb
-      have hgt : (boundary : ℝ) * Real.pi < Real.arccos (argument : ℝ) := by
-        have hmul := mul_neg_of_neg_of_pos hb' Real.pi_pos
-        linarith [Real.arccos_nonneg (argument : ℝ)]
-      exact hgt.cmp_eq_gt.symm
+      exact (hb'.trans_le hrange.1).cmp_eq_gt.symm
     · rename_i hbzero
       split
       · rename_i hb
         have hb' : (1 : ℝ) < boundary := by exact_mod_cast hb
-        have hlt : Real.arccos (argument : ℝ) < (boundary : ℝ) * Real.pi := by
-          have hmul := mul_lt_mul_of_pos_right hb' Real.pi_pos
-          linarith [Real.arccos_le_pi (argument : ℝ)]
-        exact hlt.cmp_eq_lt.symm
+        exact (hrange.2.trans_lt hb').cmp_eq_lt.symm
       · rename_i hbone
+        have hlo : (-1 : ℝ) ≤ argument := by exact_mod_cast hlower
+        have hhi : (argument : ℝ) ≤ 1 := by exact_mod_cast hupper
         have hb : (boundary : ℝ) * Real.pi ∈ Set.Icc 0 Real.pi := by
           have hlo : (0 : ℝ) ≤ boundary := by exact_mod_cast le_of_not_gt hbzero
           have hhi : (boundary : ℝ) ≤ 1 := by exact_mod_cast le_of_not_gt hbone
@@ -183,14 +194,8 @@ theorem prepareArccosPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)
           · simpa using mul_le_mul_of_nonneg_right hhi Real.pi_pos.le
         have ha : Real.arccos (argument : ℝ) ∈ Set.Icc 0 Real.pi :=
           ⟨Real.arccos_nonneg _, Real.arccos_le_pi _⟩
-        have hlt : Real.cos ((boundary : ℝ) * Real.pi) < argument ↔
-            Real.arccos (argument : ℝ) < (boundary : ℝ) * Real.pi := by
-          simpa only [Real.cos_arccos hlo hhi] using Real.strictAntiOn_cos.lt_iff_gt hb ha
-        have hgt : (argument : ℝ) < Real.cos ((boundary : ℝ) * Real.pi) ↔
-            (boundary : ℝ) * Real.pi < Real.arccos (argument : ℝ) := by
-          simpa only [Real.cos_arccos hlo hhi] using Real.strictAntiOn_cos.lt_iff_gt ha hb
-        rw [prepareCosPi_eq_real]
-        simp only [cmp, cmpUsing, hlt, hgt]
+        rw [cmp_div_pi, prepareCosPi_eq_real, ← Real.strictAntiOn_cos.cmp_map_eq hb ha,
+          Real.cos_arccos hlo hhi]
 
 /-- Inverse tangent divided by pi uses the increasing open principal branch. -/
 theorem prepareArctanPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -202,43 +207,24 @@ theorem prepareArctanPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)
       arctanPiExact_eq_real argument value hvalue]
     exact cmp_ratCast value boundary
   | none =>
-    rw [prepareArctanPi, hvalue, Enclosure.Comparison.Prepared.compare, cmp_div_pi]
+    rw [prepareArctanPi, hvalue, Enclosure.Comparison.Prepared.compare]
+    have hrange := arctan_div_pi_mem (argument : ℝ)
     split
     · rename_i hb
       have hb' : (boundary : ℝ) ≤ -1 / 2 := by exact_mod_cast hb
-      have hgt : (boundary : ℝ) * Real.pi < Real.arctan (argument : ℝ) := by
-        have hmul := mul_le_mul_of_nonneg_right hb' Real.pi_pos.le
-        linarith [Real.neg_pi_div_two_lt_arctan (argument : ℝ)]
-      exact hgt.cmp_eq_gt.symm
+      exact (hb'.trans_lt hrange.1).cmp_eq_gt.symm
     · rename_i hbzero
       split
       · rename_i hb
         have hb' : (1 / 2 : ℝ) ≤ boundary := by
-          simpa only [Rat.cast_div, Rat.cast_one, Rat.cast_ofNat] using
-            (show ((1 / 2 : ℚ) : ℝ) ≤ (boundary : ℝ) from Rat.cast_le.mpr hb)
-        have hlt : Real.arctan (argument : ℝ) < (boundary : ℝ) * Real.pi := by
-          have hmul := mul_le_mul_of_nonneg_right hb' Real.pi_pos.le
-          linarith [Real.arctan_lt_pi_div_two (argument : ℝ)]
-        exact hlt.cmp_eq_lt.symm
+          simpa only [half_ratCast] using (Rat.cast_le (K := ℝ)).2 hb
+        exact (hrange.2.trans_le hb').cmp_eq_lt.symm
       · rename_i hbhalf
-        have hb : (boundary : ℝ) * Real.pi ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
-          have hlo : (-1 / 2 : ℝ) < boundary := by exact_mod_cast lt_of_not_ge hbzero
-          have hhi : (boundary : ℝ) < 1 / 2 := by
-            simpa only [Rat.cast_div, Rat.cast_one, Rat.cast_ofNat] using
-              (show (boundary : ℝ) < ((1 / 2 : ℚ) : ℝ) from
-                Rat.cast_lt.mpr (lt_of_not_ge hbhalf))
-          constructor
-          · linarith [mul_lt_mul_of_pos_right hlo Real.pi_pos]
-          · linarith [mul_lt_mul_of_pos_right hhi Real.pi_pos]
-        have ha := Real.arctan_mem_Ioo (argument : ℝ)
-        have hlt : (argument : ℝ) < Real.tan ((boundary : ℝ) * Real.pi) ↔
-            Real.arctan (argument : ℝ) < (boundary : ℝ) * Real.pi := by
-          simpa only [Real.tan_arctan] using Real.strictMonoOn_tan.lt_iff_lt ha hb
-        have hgt : Real.tan ((boundary : ℝ) * Real.pi) < (argument : ℝ) ↔
-            (boundary : ℝ) * Real.pi < Real.arctan (argument : ℝ) := by
-          simpa only [Real.tan_arctan] using Real.strictMonoOn_tan.lt_iff_lt hb ha
-        rw [prepareTanPi_eq_real, cmp_swap]
-        simp only [cmp, cmpUsing, hlt, hgt]
+        have hb := mul_pi_mem_Ioo (b := (boundary : ℝ)) ⟨by exact_mod_cast lt_of_not_ge hbzero,
+          by simpa only [half_ratCast] using (Rat.cast_lt (K := ℝ)).2 (lt_of_not_ge hbhalf)⟩
+        rw [cmp_div_pi, prepareTanPi_eq_real, cmp_swap,
+          ← Real.strictMonoOn_tan.cmp_map_eq (Real.arctan_mem_Ioo (argument : ℝ)) hb,
+          Real.tan_arctan]
 
 /-- Exact real semantics of pi-scaled sine comparison. -/
 theorem compareSinPi_eq_real (argument boundary : ℚ) :

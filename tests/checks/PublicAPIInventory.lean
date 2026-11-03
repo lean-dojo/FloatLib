@@ -87,7 +87,8 @@ private def classifyModule (moduleName : String) : Except String Classification 
     classified "specialized-formats" "stable"
   else if hasModulePrefix moduleName "FloatLib.Floats.Formats" then
     classified "specialized-formats" "experimental"
-  else if moduleName == "FloatLib" || moduleName == "FloatLib.Floats" then
+  else if moduleName == "FloatLib" || moduleName == "FloatLib.Floats" ||
+      moduleName == "FloatLib.Floats.Certified" then
     classified "exec-float" "stable"
   else
     .error s!"unclassified FloatLib module: {moduleName}"

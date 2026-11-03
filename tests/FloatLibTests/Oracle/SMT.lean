@@ -201,27 +201,27 @@ private def evaluateCast (source destination : Format)
   | .f16, .f32 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary16).cast
-          (target := Binary32) (mode := rounding)
+          (target := Binary32) (mode := rounding.toRoundingMode)
   | .f16, .f64 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary16).cast
-          (target := Binary64) (mode := rounding)
+          (target := Binary64) (mode := rounding.toRoundingMode)
   | .f32, .f16 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary32).cast
-          (target := Binary16) (mode := rounding)
+          (target := Binary16) (mode := rounding.toRoundingMode)
   | .f32, .f64 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary32).cast
-          (target := Binary64) (mode := rounding)
+          (target := Binary64) (mode := rounding.toRoundingMode)
   | .f64, .f16 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary64).cast
-          (target := Binary16) (mode := rounding)
+          (target := Binary16) (mode := rounding.toRoundingMode)
   | .f64, .f32 =>
       castOutcomeBits ExecFloat.Binary.toNatBits <|
         (ExecFloat.Binary.ofNatBits bits : Binary64).cast
-          (target := Binary32) (mode := rounding)
+          (target := Binary32) (mode := rounding.toRoundingMode)
   | _, _ =>
       throw "cast source and destination formats must differ"
 

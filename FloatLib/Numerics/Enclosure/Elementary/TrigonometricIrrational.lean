@@ -36,32 +36,33 @@ private theorem algebraic_exp_mul_I_of_sin_cos {x : ℝ}
   rw [Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
   exact hcos.algebraMap.add (hsin.algebraMap.mul hI)
 
+/--
+If `a ^ 2 + b ^ 2 = 1` and `a` is algebraic, so is `b`: the identity `sin² x + cos² x = 1`
+passes algebraicity between sine and cosine.
+-/
+private theorem isAlgebraic_of_sq_add_sq_eq_one {a b : ℝ} (ha : IsAlgebraic ℚ a)
+    (h : a ^ 2 + b ^ 2 = 1) : IsAlgebraic ℚ b := by
+  apply IsAlgebraic.of_pow (n := 2) (by decide)
+  rw [show b ^ 2 = 1 - a ^ 2 by linarith]
+  exact isAlgebraic_one.sub (ha.pow 2)
+
 /-- Cosine at a nonzero rational argument is transcendental. -/
 theorem transcendental_cos_ratCast (q : ℚ) (hq : q ≠ 0) :
     Transcendental ℚ (Real.cos (q : ℝ)) := by
   intro hcos
-  have hsin : IsAlgebraic ℚ (Real.sin (q : ℝ)) := by
-    apply IsAlgebraic.of_pow (n := 2) (by decide)
-    have hsq : Real.sin (q : ℝ) ^ 2 = 1 - Real.cos (q : ℝ) ^ 2 := by
-      linarith [Real.sin_sq_add_cos_sq (q : ℝ)]
-    rw [hsq]
-    exact isAlgebraic_one.sub (hcos.pow 2)
   apply transcendental_exp_ratCast_mul_I q hq
-  simpa using algebraic_exp_mul_I_of_sin_cos hsin hcos
+  simpa using algebraic_exp_mul_I_of_sin_cos
+    (isAlgebraic_of_sq_add_sq_eq_one hcos (Real.cos_sq_add_sin_sq _)) hcos
 
 /-- Sine at a nonzero rational argument is transcendental. -/
 theorem transcendental_sin_ratCast (q : ℚ) (hq : q ≠ 0) :
-    Transcendental ℚ (Real.sin (q : ℝ)) := by
-  intro hsin
-  apply transcendental_cos_ratCast q hq
-  apply IsAlgebraic.of_pow (n := 2) (by decide)
-  have hsq : Real.cos (q : ℝ) ^ 2 = 1 - Real.sin (q : ℝ) ^ 2 := by
-    linarith [Real.sin_sq_add_cos_sq (q : ℝ)]
-  rw [hsq]
-  exact isAlgebraic_one.sub (hsin.pow 2)
+    Transcendental ℚ (Real.sin (q : ℝ)) := fun hsin =>
+  transcendental_cos_ratCast q hq (isAlgebraic_of_sq_add_sq_eq_one hsin (Real.sin_sq_add_cos_sq _))
 
-/-- A nonzero rational argument cannot be a pole of tangent. -/
-theorem cos_ratCast_ne_zero (q : ℚ) (hq : q ≠ 0) : Real.cos (q : ℝ) ≠ 0 := by
+/-- A rational argument cannot be a pole of tangent. -/
+theorem cos_ratCast_ne_zero (q : ℚ) : Real.cos (q : ℝ) ≠ 0 := by
+  rcases eq_or_ne q 0 with rfl | hq
+  · simp
   intro hzero
   apply transcendental_cos_ratCast q hq
   rw [hzero]
@@ -73,7 +74,7 @@ theorem transcendental_tan_ratCast (q : ℚ) (hq : q ≠ 0) :
   intro htan
   apply transcendental_cos_ratCast q hq
   apply IsAlgebraic.of_pow (n := 2) (by decide)
-  rw [← Real.inv_one_add_tan_sq (cos_ratCast_ne_zero q hq)]
+  rw [← Real.inv_one_add_tan_sq (cos_ratCast_ne_zero q)]
   exact (isAlgebraic_one.add (htan.pow 2)).inv
 
 /-- Sine at a nonzero rational input cannot equal a rational rounding boundary. -/
@@ -91,41 +92,39 @@ theorem irrational_tan_ratCast (q : ℚ) (hq : q ≠ 0) :
     Irrational (Real.tan (q : ℝ)) :=
   (transcendental_tan_ratCast q hq).irrational
 
+/--
+A value mapped to a rational `q` by a function that is irrational at every nonzero rational, and
+that does not take the value `q` at zero, is itself irrational.
+-/
+private theorem irrational_of_map_eq_ratCast {f : ℝ → ℝ} {y : ℝ} {q : ℚ} (hfy : f y = q)
+    (hzero : f 0 ≠ q) (hirrational : ∀ r : ℚ, r ≠ 0 → Irrational (f r)) :
+    Irrational y := by
+  rintro ⟨r, rfl⟩
+  have hr : r ≠ 0 := by
+    rintro rfl
+    exact hzero (by simpa using hfy)
+  exact (hirrational r hr).ne_rat q hfy
+
 /-- Inverse tangent at a nonzero rational input is irrational. -/
 theorem irrational_arctan_ratCast (q : ℚ) (hq : q ≠ 0) :
-    Irrational (Real.arctan (q : ℝ)) := by
-  rintro ⟨r, hr⟩
-  have htangent : Real.tan (r : ℝ) = q := by rw [hr, Real.tan_arctan]
-  have hrzero : r ≠ 0 := by
-    intro hzero
-    simp only [hzero, Rat.cast_zero, Real.tan_zero] at htangent
-    exact hq (by exact_mod_cast htangent.symm)
-  exact (irrational_tan_ratCast r hrzero).ne_rat q htangent
+    Irrational (Real.arctan (q : ℝ)) :=
+  irrational_of_map_eq_ratCast (Real.tan_arctan _)
+    (by rw [Real.tan_zero]; exact_mod_cast hq.symm) irrational_tan_ratCast
 
 /-- Inverse sine at a nonzero rational in its real domain is irrational. -/
 theorem irrational_arcsin_ratCast (q : ℚ) (hq : q ≠ 0)
     (hlower : -1 ≤ q) (hupper : q ≤ 1) :
-    Irrational (Real.arcsin (q : ℝ)) := by
-  rintro ⟨r, hr⟩
-  have hsine : Real.sin (r : ℝ) = q := by
-    rw [hr, Real.sin_arcsin (by exact_mod_cast hlower) (by exact_mod_cast hupper)]
-  have hrzero : r ≠ 0 := by
-    intro hzero
-    simp only [hzero, Rat.cast_zero, Real.sin_zero] at hsine
-    exact hq (by exact_mod_cast hsine.symm)
-  exact (irrational_sin_ratCast r hrzero).ne_rat q hsine
+    Irrational (Real.arcsin (q : ℝ)) :=
+  irrational_of_map_eq_ratCast
+    (Real.sin_arcsin (by exact_mod_cast hlower) (by exact_mod_cast hupper))
+    (by rw [Real.sin_zero]; exact_mod_cast hq.symm) irrational_sin_ratCast
 
 /-- Inverse cosine is irrational throughout its rational real domain except at `1`. -/
 theorem irrational_arccos_ratCast (q : ℚ) (hq : q ≠ 1)
     (hlower : -1 ≤ q) (hupper : q ≤ 1) :
-    Irrational (Real.arccos (q : ℝ)) := by
-  rintro ⟨r, hr⟩
-  have hcosine : Real.cos (r : ℝ) = q := by
-    rw [hr, Real.cos_arccos (by exact_mod_cast hlower) (by exact_mod_cast hupper)]
-  have hrzero : r ≠ 0 := by
-    intro hzero
-    simp only [hzero, Rat.cast_zero, Real.cos_zero] at hcosine
-    exact hq (by exact_mod_cast hcosine.symm)
-  exact (irrational_cos_ratCast r hrzero).ne_rat q hcosine
+    Irrational (Real.arccos (q : ℝ)) :=
+  irrational_of_map_eq_ratCast
+    (Real.cos_arccos (by exact_mod_cast hlower) (by exact_mod_cast hupper))
+    (by rw [Real.cos_zero]; exact_mod_cast hq.symm) irrational_cos_ratCast
 
 end FloatLib.Numerics.Enclosure

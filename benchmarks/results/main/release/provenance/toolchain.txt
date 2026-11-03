@@ -1,0 +1,9 @@
+cc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+4.1.0
+6.2.1
+Python 3.12.13
+matplotlib 3.11.0
+Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)
+clang: warning: future releases of the clang compiler will prefer GCC installations containing libstdc++ include directories; '/usr/lib/gcc/x86_64-amazon-linux/11' would be chosen over '/usr/lib/gcc/x86_64-amazon-linux/14' [-Wgcc-install-dir-libstdcxx]
+clang version 23.1.0 (https://github.com/llvm/llvm-project ea7d852a70e8bdfaf601d6626a760f9771b2c4b4)

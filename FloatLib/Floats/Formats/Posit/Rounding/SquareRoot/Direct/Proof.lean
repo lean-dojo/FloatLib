@@ -286,7 +286,7 @@ theorem roundCode_eq_dyadic
   by_cases hremainder :
       squareRemainder (prefixPrecision format) radicand = 0
   · rw [roundCode_eq_fraction format radicand 0 1 hsignificand hnegative
-        one_pos one_pos (by simp [hremainder]),
+        one_pos (by simp [hremainder]),
       ← Model.RealRounding.roundPositiveCode_ratCast,
       exactRootCellPoint_eq_sqrt format radicand hsignificand hnegative
         hremainder]
@@ -297,7 +297,7 @@ theorem roundCode_eq_dyadic
     apply Nat.le_antisymm
     · rw [roundCode_eq_fraction format radicand 1
           (rootCellDenominator format radicand) hsignificand hnegative
-          hdenominator (by unfold rootCellDenominator; omega)
+          (by unfold rootCellDenominator; omega)
           (by simp [hremainder]),
         ← Model.RealRounding.roundPositiveCode_ratCast]
       exact Model.RealRounding.roundPositiveCode_mono format
@@ -305,7 +305,7 @@ theorem roundCode_eq_dyadic
     · rw [roundCode_eq_fraction format radicand
           (rootCellDenominator format radicand - 1)
           (rootCellDenominator format radicand) hsignificand hnegative
-          hdenominator (by omega)
+          (by omega)
           (by unfold rootCellDenominator; simp [hremainder]; omega),
         ← Model.RealRounding.roundPositiveCode_ratCast]
       exact Model.RealRounding.roundPositiveCode_mono format

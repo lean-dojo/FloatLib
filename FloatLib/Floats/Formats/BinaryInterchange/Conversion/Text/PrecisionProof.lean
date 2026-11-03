@@ -75,21 +75,13 @@ theorem floor_le_roundTextMagnitude (mode : IEEERoundingMode)
   | nearest =>
       by_cases hx : 0 ≤ x
       · have he := (abs_le.mp (roundTextMagnitude_nearest_error negative x hx)).1
-        by_contra hn
-        have hn' : (roundTextMagnitude .nearest negative x : Rat) + 1 ≤ (⌊x⌋₊ : Rat) := by
-          exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge hn)
-        have hf := Nat.floor_le hx
-        linarith
+        exact Nat.lt_succ_iff.mp ((Nat.floor_lt hx).mpr (by push_cast; linarith))
       · simp [Nat.floor_eq_zero.mpr (by linarith : x < 1)]
   | nearestAway =>
       by_cases hx : 0 ≤ x
       · have hbelow := (lt_roundTextMagnitude_nearestAway_iff negative x hx
           (roundTextMagnitude .nearestAway negative x)).not.mp (lt_irrefl _)
-        by_contra hn
-        have hn' : (roundTextMagnitude .nearestAway negative x : Rat) + 1 ≤ (⌊x⌋₊ : Rat) := by
-          exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge hn)
-        have hf := Nat.floor_le hx
-        linarith
+        exact Nat.lt_succ_iff.mp ((Nat.floor_lt hx).mpr (by push_cast; linarith))
       · simp [Nat.floor_eq_zero.mpr (by linarith : x < 1)]
   | towardZero => exact le_rfl
   | up => cases negative <;> simp [roundTextMagnitude, Nat.floor_le_ceil]
@@ -105,10 +97,8 @@ theorem roundTextMagnitude_le_nat (mode : IEEERoundingMode)
   cases mode with
   | nearest =>
       have he := (abs_le.mp (roundTextMagnitude_nearest_error negative x hx)).2
-      by_contra h
-      have h' : (n : Rat) + 1 ≤ (roundTextMagnitude .nearest negative x : Rat) := by
-        exact_mod_cast Nat.succ_le_of_lt (Nat.lt_of_not_ge h)
-      linarith
+      exact Nat.lt_succ_iff.mp (by exact_mod_cast (show
+        (roundTextMagnitude .nearest negative x : Rat) < n + 1 by linarith))
   | nearestAway =>
       by_contra h
       have habove := (lt_roundTextMagnitude_nearestAway_iff negative x hx n).mp
@@ -134,7 +124,7 @@ theorem significantDecimal_coefficient_bounds (mode : IEEERoundingMode)
 theorem significantDecimal_exact (mode : IEEERoundingMode) (value : DecimalText.Decimal)
     (digits : ℕ+) (hc : value.significand < 10 ^ (digits : Nat)) :
     (DecimalText.significantDecimal (roundTextMagnitude mode) value digits).toRat = value.toRat := by
-  have h := RadixText.significant_exact 10 (by decide) (roundTextMagnitude mode)
+  have h := RadixText.significant_exact 10 (roundTextMagnitude mode)
     (roundTextMagnitude_natCast mode) value.negative value.significand value.exponent digits hc
   have hs := DecimalText.significantDecimal_negative (roundTextMagnitude mode) value digits
   cases hv : value.negative

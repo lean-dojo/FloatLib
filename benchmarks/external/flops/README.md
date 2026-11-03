@@ -15,8 +15,8 @@ model and the numerical results.
 
 You need a Linux machine with Git, Python 3, `taskset`, and Lean's Elan toolchain manager.
 The script downloads FLoPS and its Mathlib dependencies and builds each library with its own
-pinned Lean version (our reported measurements used Lean 4.33.1 for FloatLib and 4.28.0 for
-FLoPS). Choose local directories for source dependencies, builds, and the new result:
+pinned Lean version (our reported measurements used Lean 4.35.0 for FloatLib 2.0.0 and 4.28.0
+for FLoPS). Choose local directories for source dependencies, builds, and the new result:
 
 ```bash
 python3 benchmarks/scripts/compare-p3109-flops.py \
@@ -58,7 +58,7 @@ count that targets at least 100 ms for the faster implementation. Nine pairs of 
 follow on the same logical CPU, alternating which library runs first, and every checksum also
 has to match an independent Python simulation of the fixture chain.
 
-We report the median and the 5th–95th percentiles of those nine measurements. Those
+We report the median and the 5th to 95th percentiles of those nine measurements. Those
 percentiles describe how much the trials varied, and they aren't a confidence interval.
 Because the two libraries pin different Lean and C compiler versions, this compares the
 compiled libraries and their adapters. It can't separate the cost of an algorithm from its
@@ -66,4 +66,4 @@ compiler.
 
 Both the [results](../../results/p3109-flops/results.json) and the
 [guide table](../../../site/content/chapters/17-performance.md#p3109-arithmetic-with-flops)
-report this workload on its own, apart from the IEEE and posit benchmark machine.
+report this workload on its own, apart from the IEEE and posit benchmark workloads.

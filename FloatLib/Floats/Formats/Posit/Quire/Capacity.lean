@@ -58,20 +58,6 @@ private theorem minPositive_exponent_eq (format : Format) :
   simp only [Format.payloadBits, Int.ofNat_eq_natCast]
   omega
 
-private theorem decodeFields_significand_lt_two_pow_succ_fractionBits
-    (value : FloatLib.Floats.Formats.Posit.Model format) :
-    value.decodeFields.significand <
-      2 ^ (value.fractionBits + 1) := by
-  have hfraction :
-      value.fractionField < 2 ^ value.fractionBits := by
-    unfold FloatLib.Floats.Formats.Posit.Model.fractionField
-    exact Nat.mod_lt _ (Nat.two_pow_pos _)
-  change
-    2 ^ value.fractionBits + value.fractionField <
-      2 ^ (value.fractionBits + 1)
-  rw [Nat.pow_succ]
-  omega
-
 /-- A word whose regime fills the payload has no exponent or fraction bits, so its scale is a
 multiple of four bounded by the `maxpos` scale. -/
 private theorem scale_le_and_fractionBits_eq_zero_of_regimeRunLength_eq_payloadBits
@@ -79,9 +65,8 @@ private theorem scale_le_and_fractionBits_eq_zero_of_regimeRunLength_eq_payloadB
     (hfull : value.regimeRunLength = format.payloadBits) :
     value.scale ≤ 4 * ((format.bits : Int) - 2) ∧ value.fractionBits = 0 := by
   have htrailing : value.trailingBits = 0 := by
-    unfold FloatLib.Floats.Formats.Posit.Model.trailingBits
-    rw [hfull]
-    simp
+    rw [FloatLib.Floats.Formats.Posit.Model.trailingBits_eq, hfull]
+    omega
   have hfractionBits : value.fractionBits = 0 := by
     unfold FloatLib.Floats.Formats.Posit.Model.fractionBits
     rw [htrailing]
@@ -139,7 +124,8 @@ private theorem minPosUnitCoefficient_le
       have hmin := minPositive_exponent_eq format
       have hbits := format.bits_ge_two
       have hsignificand :=
-        decodeFields_significand_lt_two_pow_succ_fractionBits value
+        FloatLib.Floats.Formats.Posit.Model.decodeFields_significand_lt_two_pow_succ_fractionBits
+          value
       unfold minPosUnitCoefficient
       change
         value.decodeFields.significand *
@@ -169,10 +155,7 @@ private theorem minPosUnitCoefficient_le
       · obtain ⟨hscale, hfractionBits⟩ :=
           scale_le_and_fractionBits_eq_zero_of_regimeRunLength_eq_payloadBits value hfull
         have hsignificandEq : value.decodeFields.significand = 1 := by
-          have hfraction :
-              value.fractionField < 2 ^ value.fractionBits := by
-            unfold FloatLib.Floats.Formats.Posit.Model.fractionField
-            exact Nat.mod_lt _ (Nat.two_pow_pos _)
+          have hfraction := FloatLib.Floats.Formats.Posit.Model.fractionField_lt_two_pow value
           change 2 ^ value.fractionBits + value.fractionField = 1
           rw [hfractionBits] at hfraction ⊢
           omega
@@ -204,6 +187,36 @@ def positCoefficientBound (format : Format) : Nat :=
 def productCoefficientBound (format : Format) : Nat :=
   2 ^ (16 * (format.bits - 2))
 
+/-- A dyadic's quire coefficient is its significand shifted up to the quire scale. -/
+private theorem natAbs_coefficientOfDyadic (dyadic : FloatLib.Numerics.Dyadic) :
+    (coefficientOfDyadic format dyadic).natAbs =
+      dyadic.significand * 2 ^ Int.toNat (dyadic.exponent - scaleExponent format) := by
+  rw [coefficientOfDyadic, Int.natAbs_mul,
+    FloatLib.Numerics.Dyadic.natAbs_signedSignificand]
+  simp only [Int.natAbs_pow]
+  norm_num only [Int.natAbs_of_nonneg]
+
+/--
+An exponent that splits into two parts at or above the `minPos` exponent lies above the quire
+scale, twice that exponent, by the sum of the two offsets.
+-/
+private theorem toNat_sub_scaleExponent_eq_add {exponent first second : Int}
+    (hsum : exponent = first + second)
+    (hfirst :
+      (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤ first)
+    (hsecond :
+      (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤
+        second) :
+    Int.toNat (exponent - scaleExponent format) =
+      Int.toNat
+          (first -
+            (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent) +
+        Int.toNat
+          (second -
+            (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent) := by
+  rw [scaleExponent_eq_two_mul_minPositive_exponent, hsum]
+  omega
+
 /-- One ordinary posit contributes at most `2^(12(n-2))` quire coefficient units. -/
 theorem natAbs_coefficientOfDyadic_le_positCoefficientBound
     (value : FloatLib.Floats.Formats.Posit.Model format)
@@ -214,10 +227,8 @@ theorem natAbs_coefficientOfDyadic_le_positCoefficientBound
   have hminExponent :=
     minPositive_exponent_le_exponent_of_toDyadic?_eq_some
       value dyadic hvalue
-  have hscale :=
-    scaleExponent_le_exponent_of_toDyadic?_eq_some
-      value dyadic hvalue
   have hmin := minPositive_exponent_eq format
+  have hbits := format.bits_ge_two
   have hshift :
       Int.toNat (dyadic.exponent - scaleExponent format) =
         Int.toNat
@@ -225,26 +236,10 @@ theorem natAbs_coefficientOfDyadic_le_positCoefficientBound
               (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
                 format).exponent) +
           4 * (format.bits - 2) := by
-    have hshiftInt :
-        (Int.toNat (dyadic.exponent - scaleExponent format) : Int) =
-          Int.toNat
-              (dyadic.exponent -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
-                  format).exponent) +
-            4 * Int.ofNat (format.bits - 2) := by
-      rw [Int.toNat_of_nonneg (sub_nonneg.mpr hscale),
-        Int.toNat_of_nonneg (sub_nonneg.mpr hminExponent),
-        scaleExponent_eq_two_mul_minPositive_exponent, hmin]
-      have hbits := format.bits_ge_two
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    apply Int.ofNat_inj.mp
-    push_cast
-    exact hshiftInt
-  rw [coefficientOfDyadic, Int.natAbs_mul,
-    FloatLib.Numerics.Dyadic.natAbs_signedSignificand, hshift]
-  simp only [Int.natAbs_pow]
-  norm_num only [Int.natAbs_of_nonneg]
+    rw [toNat_sub_scaleExponent_eq_add (add_zero dyadic.exponent).symm hminExponent
+      (by omega)]
+    omega
+  rw [natAbs_coefficientOfDyadic, hshift]
   unfold positCoefficientBound
   rw [Nat.pow_add, ← Nat.mul_assoc]
   rw [show 12 * (format.bits - 2) =
@@ -270,9 +265,6 @@ theorem natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
   have hrightExponent :=
     minPositive_exponent_le_exponent_of_toDyadic?_eq_some
       right rightDyadic hright
-  have hscale :=
-    scaleExponent_le_mul_exponent_of_toDyadic?_eq_some
-      left right leftDyadic rightDyadic hleft hright
   have hshift :
       Int.toNat
           ((FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).exponent -
@@ -284,33 +276,11 @@ theorem natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
           Int.toNat
             (rightDyadic.exponent -
               (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
-                format).exponent) := by
-    have hshiftInt :
-        (Int.toNat
-            ((FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic).exponent -
-              scaleExponent format) : Int) =
-          Int.toNat
-              (leftDyadic.exponent -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
-                  format).exponent) +
-            Int.toNat
-              (rightDyadic.exponent -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
-                  format).exponent) := by
-      rw [Int.toNat_of_nonneg (sub_nonneg.mpr hscale),
-        Int.toNat_of_nonneg (sub_nonneg.mpr hleftExponent),
-        Int.toNat_of_nonneg (sub_nonneg.mpr hrightExponent),
-        scaleExponent_eq_two_mul_minPositive_exponent]
-      simp only [FloatLib.Numerics.Dyadic.mul,
-        FloatLib.Numerics.Dyadic.mulFields]
-      ring
-    apply Int.ofNat_inj.mp
-    push_cast
-    exact hshiftInt
-  rw [coefficientOfDyadic, Int.natAbs_mul,
-    FloatLib.Numerics.Dyadic.natAbs_signedSignificand, hshift]
-  simp only [Int.natAbs_pow]
-  norm_num only [Int.natAbs_of_nonneg]
+                format).exponent) :=
+    toNat_sub_scaleExponent_eq_add
+      (by simp [FloatLib.Numerics.Dyadic.mul, FloatLib.Numerics.Dyadic.mulFields])
+      hleftExponent hrightExponent
+  rw [natAbs_coefficientOfDyadic, hshift]
   simp only [FloatLib.Numerics.Dyadic.mul,
     FloatLib.Numerics.Dyadic.mulFields, Nat.pow_add]
   unfold productCoefficientBound
@@ -338,6 +308,40 @@ theorem natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
       rw [← Nat.pow_add]
       congr 1
       omega
+
+/-- The product-sum limit times the product coefficient bound is the quire's ordinary range. -/
+theorem productSumTermLimit_mul_productCoefficientBound (format : Format) :
+    productSumTermLimit * productCoefficientBound format = 2 ^ (width format - 1) := by
+  unfold productSumTermLimit productCoefficientBound width
+  rw [← Nat.pow_add]
+  congr 1
+  have hbits := format.bits_ge_two
+  omega
+
+/-- The posit-sum limit times the posit coefficient bound is the quire's ordinary range. -/
+theorem positSumTermLimit_mul_positCoefficientBound (format : Format) :
+    positSumTermLimit format * positCoefficientBound format = 2 ^ (width format - 1) := by
+  unfold positSumTermLimit positCoefficientBound width
+  rw [← Nat.pow_add]
+  congr 1
+  have hbits := format.bits_ge_two
+  omega
+
+/--
+A coefficient bounded by `consumed` uniform term bounds is ordinary when `consumed` is below a
+term limit whose product with the bound is the quire's ordinary range.
+-/
+theorem ordinaryCoefficient_of_natAbs_le_mul
+    {value : Int} {consumed limit bound : Nat}
+    (hvalue : value.natAbs ≤ consumed * bound)
+    (hconsumed : consumed < limit)
+    (hbound : 0 < bound)
+    (hlimit : limit * bound = 2 ^ (width format - 1)) :
+    OrdinaryCoefficient format value := by
+  apply ordinaryCoefficient_of_natAbs_lt
+  refine lt_of_le_of_lt hvalue ?_
+  rw [← hlimit]
+  exact Nat.mul_lt_mul_of_pos_right hconsumed hbound
 
 private theorem natAbs_list_sum_le_length_mul
     (values : List Int) (bound : Nat)
@@ -372,23 +376,10 @@ theorem ordinaryCoefficient_sum_of_length_lt_positSumTermLimit
       ∀ coefficient ∈ coefficients,
         coefficient.natAbs ≤ positCoefficientBound format)
     (hlength : coefficients.length < positSumTermLimit format) :
-    OrdinaryCoefficient format coefficients.sum := by
-  apply ordinaryCoefficient_of_natAbs_lt
-  have hsum :=
-    natAbs_list_sum_le_length_mul
-      coefficients (positCoefficientBound format) hcoefficient
-  refine lt_of_le_of_lt hsum ?_
-  have hstrict :
-      coefficients.length * positCoefficientBound format <
-        positSumTermLimit format * positCoefficientBound format :=
-    Nat.mul_lt_mul_of_pos_right hlength
-      (by exact Nat.two_pow_pos _)
-  refine lt_of_lt_of_eq hstrict ?_
-  unfold positSumTermLimit positCoefficientBound width
-  rw [← Nat.pow_add]
-  congr 1
-  have hbits := format.bits_ge_two
-  omega
+    OrdinaryCoefficient format coefficients.sum :=
+  ordinaryCoefficient_of_natAbs_le_mul
+    (natAbs_list_sum_le_length_mul coefficients _ hcoefficient) hlength
+    (Nat.two_pow_pos _) (positSumTermLimit_mul_positCoefficientBound format)
 
 /--
 Any coefficient list shorter than the exact-product limit has an ordinary sum,
@@ -400,22 +391,9 @@ theorem ordinaryCoefficient_sum_of_length_lt_productSumTermLimit
       ∀ coefficient ∈ coefficients,
         coefficient.natAbs ≤ productCoefficientBound format)
     (hlength : coefficients.length < productSumTermLimit) :
-    OrdinaryCoefficient format coefficients.sum := by
-  apply ordinaryCoefficient_of_natAbs_lt
-  have hsum :=
-    natAbs_list_sum_le_length_mul
-      coefficients (productCoefficientBound format) hcoefficient
-  refine lt_of_le_of_lt hsum ?_
-  have hstrict :
-      coefficients.length * productCoefficientBound format <
-        productSumTermLimit * productCoefficientBound format :=
-    Nat.mul_lt_mul_of_pos_right hlength
-      (by exact Nat.two_pow_pos _)
-  refine lt_of_lt_of_eq hstrict ?_
-  unfold productSumTermLimit productCoefficientBound width
-  rw [← Nat.pow_add]
-  congr 1
-  have hbits := format.bits_ge_two
-  omega
+    OrdinaryCoefficient format coefficients.sum :=
+  ordinaryCoefficient_of_natAbs_le_mul
+    (natAbs_list_sum_le_length_mul coefficients _ hcoefficient) hlength
+    (Nat.two_pow_pos _) (productSumTermLimit_mul_productCoefficientBound format)
 
 end FloatLib.Floats.Formats.Posit.Quire.Model

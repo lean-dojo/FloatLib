@@ -58,17 +58,16 @@ theorem digit_of_neg_index (β : Numerics.Radix) (n : ℤ) {k : ℤ} (hk : k < 0
     digit β n k = 0 := by
   simp [digit, intPower_of_neg β hk]
 
+/-- A truncated remainder modulo a positive integer has absolute value below the modulus. -/
+private theorem abs_tmod_lt_of_pos (a : ℤ) {b : ℤ} (hb : 0 < b) : |Int.tmod a b| < b :=
+  abs_lt.mpr ⟨Int.lt_tmod_of_pos a hb, Int.tmod_lt_of_pos a hb⟩
+
 /-- Every signed digit has absolute value strictly smaller than the radix. -/
 theorem digit_abs_lt_base (β : Numerics.Radix) (n k : ℤ) :
     |digit β n k| < Int.ofNat β.base := by
   have hb : (0 : ℤ) < Int.ofNat β.base := by
     exact Int.natCast_pos.mpr (Nat.zero_lt_of_lt β.base_valid)
-  have hlower := Int.lt_tmod_of_pos
-    (Int.tdiv n (intPower β k)) hb
-  have hupper := Int.tmod_lt_of_pos
-    (Int.tdiv n (intPower β k)) hb
-  rw [abs_lt]
-  exact ⟨by simpa [digit] using hlower, by simpa [digit] using hupper⟩
+  simpa [digit] using abs_tmod_lt_of_pos (Int.tdiv n (intPower β k)) hb
 
 /-- Shift an integer left for nonnegative `k`, and right with truncation for negative `k`. -/
 def scale (β : Numerics.Radix) (n k : ℤ) : ℤ :=
@@ -123,11 +122,7 @@ theorem slice_abs_lt_power (β : Numerics.Radix) (n start : ℤ) {width : ℤ}
   have hpow : (0 : ℤ) < intPower β width := by
     rw [intPower_of_nonneg β hwidth]
     exact Int.natCast_pos.mpr (pow_pos (Nat.zero_lt_of_lt β.base_valid) width.toNat)
-  have hlower := Int.lt_tmod_of_pos (scale β n (-start)) hpow
-  have hupper := Int.tmod_lt_of_pos (scale β n (-start)) hpow
-  rw [abs_lt]
-  exact ⟨by simpa [slice, hwidth] using hlower,
-    by simpa [slice, hwidth] using hupper⟩
+  simpa [slice, hwidth] using abs_tmod_lt_of_pos (scale β n (-start)) hpow
 
 /-- Radix slicing commutes with integer negation. -/
 @[simp] theorem slice_neg (β : Numerics.Radix) (n start width : ℤ) :
@@ -167,26 +162,34 @@ theorem digits_bounds (β : Numerics.Radix) {n : ℤ} (hn : n ≠ 0) :
   · simpa using Nat.pow_log_le_self β.base habs
   · simpa [Nat.pow_succ] using Nat.lt_pow_succ_log_self hbase n.natAbs
 
-/-- The radix digit count of a positive integer is the magnitude of its real embedding. -/
-theorem magnitude_intCast_of_pos (β : Numerics.Radix) {n : ℤ} (hn : 0 < n) :
+/-- The radix digit count of an integer is the magnitude of its real embedding. -/
+theorem magnitude_intCast (β : Numerics.Radix) (n : ℤ) :
     magnitude β (n : ℝ) = (digits β n : ℤ) := by
-  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  rw [magnitude_eq_int_log_add_one β _ hnR.ne', abs_of_pos hnR]
-  have hnabs : (n.natAbs : ℝ) = n := by
-    rw [Nat.cast_natAbs, abs_of_pos hn]
-  rw [← hnabs, Int.log_natCast]
-  simp [digits, ne_of_gt hn]
+  by_cases hn : n = 0
+  · subst n
+    simp [magnitude]
+  have hnR : (n : ℝ) ≠ 0 := by exact_mod_cast hn
+  have hnabs : |(n : ℝ)| = ((n.natAbs : ℕ) : ℝ) := by
+    rw [Nat.cast_natAbs, Int.cast_abs]
+  rw [magnitude_eq_int_log_add_one β _ hnR, hnabs, Int.log_natCast]
+  simp [digits, hn]
 
-/-- A positive integer is strictly below the radix power selected by its digit count. -/
-theorem intCast_lt_bpow_digits (β : Numerics.Radix) {n : ℤ} (hn : 0 < n) :
+/-- An integer is strictly below the radix power selected by its digit count. -/
+theorem intCast_lt_bpow_digits (β : Numerics.Radix) (n : ℤ) :
     (n : ℝ) < bpow β (digits β n : ℤ) := by
-  have h := abs_lt_bpow_magnitude β (n : ℝ) (by exact_mod_cast (ne_of_gt hn))
+  rcases le_or_gt n 0 with hn | hn
+  · exact lt_of_le_of_lt (by exact_mod_cast hn) (bpow.pos β _)
+  have h := abs_lt_bpow_magnitude β (n : ℝ)
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  simpa [abs_of_pos hnR, magnitude_intCast_of_pos β hn] using h
+  simpa [abs_of_pos hnR, magnitude_intCast β n] using h
 
-/-- The successor of a positive integer does not exceed its next radix-power boundary. -/
-theorem intCast_add_one_le_bpow_digits (β : Numerics.Radix) {n : ℤ} (hn : 0 < n) :
+/-- The successor of an integer does not exceed its next radix-power boundary. -/
+theorem intCast_add_one_le_bpow_digits (β : Numerics.Radix) (n : ℤ) :
     ((n + 1 : ℤ) : ℝ) ≤ bpow β (digits β n : ℤ) := by
+  rcases lt_trichotomy n 0 with hn | hn | hn
+  · exact (lt_of_le_of_lt (by exact_mod_cast (show n + 1 ≤ 0 by omega)) (bpow.pos β _)).le
+  · subst n
+    simp [bpow]
   have hb := (digits_bounds β (ne_of_gt hn)).2
   have hnabs : (n.natAbs : ℤ) = n := Int.natAbs_of_nonneg hn.le
   have hz : n + 1 ≤ (β.base ^ digits β n : ℕ) := by
@@ -199,17 +202,27 @@ theorem intCast_add_one_le_bpow_digits (β : Numerics.Radix) {n : ℤ} (hn : 0 <
   simpa [Numerics.Radix.toReal] using (show ((n + 1 : ℤ) : ℝ) ≤ β.base ^ digits β n by
     exact_mod_cast hz)
 
-/-- The power bounds uniquely determine the digit count of a nonzero integer. -/
-theorem digits_unique (β : Numerics.Radix) {n : ℤ} (hn : n ≠ 0) {d : ℕ} (hd : 0 < d)
+/-- The power bounds uniquely determine the digit count of an integer; they force it nonzero. -/
+theorem digits_unique (β : Numerics.Radix) {n : ℤ} {d : ℕ}
     (hlower : β.base ^ (d - 1) ≤ n.natAbs)
     (hupper : n.natAbs < β.base ^ d) : digits β n = d := by
+  have hn : n ≠ 0 := by
+    rintro rfl
+    exact absurd hlower (by simpa using (pow_pos (Nat.zero_lt_of_lt β.base_valid) _).ne')
+  have hd : 0 < d := by
+    rcases Nat.eq_zero_or_pos d with rfl | hd
+    · exact absurd (Int.natAbs_eq_zero.mp (Nat.lt_one_iff.mp (by simpa using hupper))) hn
+    · exact hd
   have hlog : Nat.log β.base n.natAbs = d - 1 :=
     Nat.log_eq_of_pow_le_of_lt_pow hlower (by simpa [Nat.sub_add_cancel hd] using hupper)
   simp [digits, hn, hlog, Nat.sub_add_cancel hd]
 
-/-- Digit count is monotone with respect to integer absolute value away from zero. -/
-theorem digits_mono_abs (β : Numerics.Radix) {n m : ℤ} (hn : n ≠ 0)
+/-- Digit count is monotone with respect to integer absolute value. -/
+theorem digits_mono_abs (β : Numerics.Radix) {n m : ℤ}
     (hnm : n.natAbs ≤ m.natAbs) : digits β n ≤ digits β m := by
+  by_cases hn : n = 0
+  · subst n
+    simp
   have hm : m ≠ 0 := by
     intro hm
     subst m
@@ -219,9 +232,15 @@ theorem digits_mono_abs (β : Numerics.Radix) {n m : ℤ} (hn : n ≠ 0)
   simp only [digits, ite_eq_right hn, ite_eq_right hm]
   exact Nat.add_le_add_right (Nat.log_mono_right hnm) 1
 
-/-- A nonzero product uses at most the sum of the operand digit counts. -/
-theorem digits_mul_le (β : Numerics.Radix) {n m : ℤ} (hn : n ≠ 0) (hm : m ≠ 0) :
+/-- A product uses at most the sum of the operand digit counts. -/
+theorem digits_mul_le (β : Numerics.Radix) (n m : ℤ) :
     digits β (n * m) ≤ digits β n + digits β m := by
+  by_cases hn : n = 0
+  · subst n
+    simp
+  by_cases hm : m = 0
+  · subst m
+    simp
   have hnm : n * m ≠ 0 := mul_ne_zero hn hm
   have hnBounds := digits_bounds β hn
   have hmBounds := digits_bounds β hm

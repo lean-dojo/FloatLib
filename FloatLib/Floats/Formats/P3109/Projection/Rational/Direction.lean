@@ -192,14 +192,30 @@ theorem roundAt_nearest_error (quantum : Int) (parity : Nat → Bool) (value : R
     (le_of_lt (zpow_pos (by norm_num : (0 : Rat) < 2) quantum))
   linarith
 
+/-- Scaled back by the quantum, the floor and the upward integer candidate bracket the scaled
+magnitude from below and from above, each within one quantum. -/
+private theorem candidate_brackets (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    (⌊scaledMagnitude value quantum⌋₊ : Rat) * 2 ^ quantum ≤
+        scaledMagnitude value quantum * 2 ^ quantum ∧
+      scaledMagnitude value quantum * 2 ^ quantum <
+        ((⌊scaledMagnitude value quantum⌋₊ : Rat) + 1) * 2 ^ quantum ∧
+      scaledMagnitude value quantum * 2 ^ quantum ≤
+        (roundedInteger .up false parity (scaledMagnitude value quantum) : Rat) * 2 ^ quantum ∧
+      (roundedInteger .up false parity (scaledMagnitude value quantum) : Rat) * 2 ^ quantum <
+        (scaledMagnitude value quantum + 1) * 2 ^ quantum := by
+  have hs := scaledMagnitude_nonneg value quantum
+  have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
+  have hup := roundedInteger_up parity (scaledMagnitude value quantum) hs
+  exact ⟨mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le,
+    mul_lt_mul_of_pos_right (Nat.lt_floor_add_one _) hu,
+    mul_le_mul_of_nonneg_right hup.1 hu.le, mul_lt_mul_of_pos_right hup.2 hu⟩
+
 /-- Truncation reduces magnitude by less than one quantum. -/
 theorem roundAt_towardZero (quantum : Int) (parity : Nat → Bool) (value : Rat) :
     |roundAt .towardZero quantum parity value| ≤ |value| ∧
       |value| < |roundAt .towardZero quantum parity value| + (2 : Rat) ^ quantum := by
-  have hs := scaledMagnitude_nonneg value quantum
   have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
-  have hlo := mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le
-  have hhi := mul_lt_mul_of_pos_right (Nat.lt_floor_add_one (scaledMagnitude value quantum)) hu
+  obtain ⟨hlo, hhi, -, -⟩ := candidate_brackets quantum parity value
   rw [scaledMagnitude_mul_quantum] at hlo hhi
   simp only [roundAt, roundedInteger_towardZero, abs_signed,
     abs_of_nonneg (mul_nonneg (Nat.cast_nonneg _) hu.le)]
@@ -209,14 +225,8 @@ theorem roundAt_towardZero (quantum : Int) (parity : Nat → Bool) (value : Rat)
 theorem roundAt_up (quantum : Int) (parity : Nat → Bool) (value : Rat) :
     value ≤ roundAt .up quantum parity value ∧
       roundAt .up quantum parity value < value + (2 : Rat) ^ quantum := by
-  have hs := scaledMagnitude_nonneg value quantum
   have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
-  have hlo := mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le
-  have hhi := mul_lt_mul_of_pos_right
-    (Nat.lt_floor_add_one (scaledMagnitude value quantum)) hu
-  have hup := roundedInteger_up parity (scaledMagnitude value quantum) hs
-  have hupLo := mul_le_mul_of_nonneg_right hup.1 hu.le
-  have hupHi := mul_lt_mul_of_pos_right hup.2 hu
+  obtain ⟨hlo, hhi, hupLo, hupHi⟩ := candidate_brackets quantum parity value
   have hx := signed_abs value
   rw [← scaledMagnitude_mul_quantum value quantum] at hx
   cases hn : decide (value.num < 0)
@@ -231,34 +241,28 @@ theorem roundAt_up (quantum : Int) (parity : Nat → Bool) (value : Rat) :
     simp only [roundAt, hn, hdown, signed, ite_true]
     constructor <;> nlinarith
 
-/-- Directed rounding toward negative infinity brackets the input from below. -/
+/-- Rounding toward negative infinity is rounding toward positive infinity reflected through zero,
+at the same quantum and parity, for every rational including zero. This is the value before
+saturation; range handling is separate. -/
+theorem roundAt_down_eq_neg_roundAt_up_neg (quantum : Int) (parity : Nat → Bool) (value : Rat) :
+    roundAt .down quantum parity value = -roundAt .up quantum parity (-value) := by
+  have hs : scaledMagnitude (-value) quantum = scaledMagnitude value quantum := by
+    simp [scaledMagnitude]
+  have hn : decide ((-value).num < 0) = decide (0 < value) := by simp [Rat.num_pos]
+  simp only [roundAt, hs, hn, roundedInteger, roundAway]
+  rcases lt_trichotomy value 0 with h | rfl | h
+  · simp [signed, Rat.num_neg.mpr h, not_lt.mpr h.le]
+  · simp [signed, scaledMagnitude]
+  · simp [signed, h, not_lt.mpr h.le]
+
+/-- Directed rounding toward negative infinity brackets the input from below. It is the upward
+bracket of the negated input, reflected. -/
 theorem roundAt_down (quantum : Int) (parity : Nat → Bool) (value : Rat) :
     roundAt .down quantum parity value ≤ value ∧
       value < roundAt .down quantum parity value + (2 : Rat) ^ quantum := by
-  have hs := scaledMagnitude_nonneg value quantum
-  have hu : (0 : Rat) < 2 ^ quantum := zpow_pos (by norm_num) _
-  have hlo := mul_le_mul_of_nonneg_right (Nat.floor_le hs) hu.le
-  have hhi := mul_lt_mul_of_pos_right
-    (Nat.lt_floor_add_one (scaledMagnitude value quantum)) hu
-  have hup := roundedInteger_up parity (scaledMagnitude value quantum) hs
-  have hupLo := mul_le_mul_of_nonneg_right hup.1 hu.le
-  have hupHi := mul_lt_mul_of_pos_right hup.2 hu
-  have hx := signed_abs value
-  rw [← scaledMagnitude_mul_quantum value quantum] at hx
-  cases hn : decide (value.num < 0)
-  · have hdown :
-        roundedInteger .down false parity (scaledMagnitude value quantum) =
-          ⌊scaledMagnitude value quantum⌋₊ := by
-      simp [roundedInteger, roundAway]
-    simp only [hn, signed, Bool.false_eq_true, ite_false] at hx
-    simp only [roundAt, hn, hdown, signed, Bool.false_eq_true, ite_false]
-    constructor <;> nlinarith
-  · have hup' :
-        roundedInteger .down true parity (scaledMagnitude value quantum) =
-          roundedInteger .up false parity (scaledMagnitude value quantum) := rfl
-    simp only [hn, signed, ite_true] at hx
-    simp only [roundAt, hn, hup', signed, ite_true]
-    constructor <;> nlinarith
+  have h := roundAt_up quantum parity (-value)
+  rw [roundAt_down_eq_neg_roundAt_up_neg]
+  constructor <;> linarith [h.1, h.2]
 
 /-- The halfway value is resolved by code parity, with the original sign restored. -/
 theorem roundAt_nearest_tie (quantum : Int) (parity : Nat → Bool) (value : Rat)

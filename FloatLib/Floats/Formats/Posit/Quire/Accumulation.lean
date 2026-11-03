@@ -96,33 +96,25 @@ private theorem toRat?_eq_some_iff (accumulator : Model format) (value : Rat) :
   · simp [hnar]
   · simp [hnar]
 
-private theorem productSumTermLimit_mul_productCoefficientBound (format : Format) :
-    productSumTermLimit * productCoefficientBound format = 2 ^ (width format - 1) := by
-  unfold productSumTermLimit productCoefficientBound width
-  rw [← Nat.pow_add]
-  congr 1
-  have hbits := format.bits_ge_two
-  omega
-
-private theorem positSumTermLimit_mul_positCoefficientBound (format : Format) :
-    positSumTermLimit format * positCoefficientBound format = 2 ^ (width format - 1) := by
-  unfold positSumTermLimit positCoefficientBound width
-  rw [← Nat.pow_add]
-  congr 1
-  have hbits := format.bits_ge_two
-  omega
-
-private theorem ordinaryCoefficient_of_natAbs_le_mul
-    {value : Int} {consumed limit bound : Nat}
-    (hvalue : value.natAbs ≤ consumed * bound)
-    (hconsumed : consumed < limit)
+/--
+One more increment within the term bound keeps the coefficient within `consumed + 1` bounds, and
+the sum stays ordinary while `consumed + 1` is below the term limit.
+-/
+private theorem natAbs_add_le_and_ordinary
+    {accumulator increment : Int} {consumed limit bound : Nat}
+    (haccumulator : accumulator.natAbs ≤ consumed * bound)
+    (hincrement : increment.natAbs ≤ bound)
+    (hconsumed : consumed + 1 < limit)
     (hbound : 0 < bound)
     (hlimit : limit * bound = 2 ^ (width format - 1)) :
-    OrdinaryCoefficient format value := by
-  apply ordinaryCoefficient_of_natAbs_lt
-  refine lt_of_le_of_lt hvalue ?_
-  rw [← hlimit]
-  exact Nat.mul_lt_mul_of_pos_right hconsumed hbound
+    (accumulator + increment).natAbs ≤ (consumed + 1) * bound ∧
+      OrdinaryCoefficient format (accumulator + increment) := by
+  have hsum : (accumulator + increment).natAbs ≤ (consumed + 1) * bound :=
+    calc
+      _ ≤ accumulator.natAbs + increment.natAbs := Int.natAbs_add_le _ _
+      _ ≤ consumed * bound + bound := Nat.add_le_add haccumulator hincrement
+      _ = (consumed + 1) * bound := by ring
+  exact ⟨hsum, ordinaryCoefficient_of_natAbs_le_mul hsum hconsumed hbound hlimit⟩
 
 /-! ## Fused product accumulation -/
 
@@ -163,24 +155,10 @@ theorem toRat?_foldMulAdd
       have hincrement :=
         natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
           pair.1 pair.2 leftDyadic rightDyadic hleftDyadic hrightDyadic
-      have hsum :
-          (accumulator.coefficient +
-              coefficientOfDyadic format
-                (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic)).natAbs ≤
-            (consumed + 1) * productCoefficientBound format := by
-        calc
-          _ ≤ accumulator.coefficient.natAbs +
-                (coefficientOfDyadic format
-                  (FloatLib.Numerics.Dyadic.mul leftDyadic rightDyadic)).natAbs :=
-            Int.natAbs_add_le _ _
-          _ ≤ consumed * productCoefficientBound format +
-                productCoefficientBound format :=
-            Nat.add_le_add hcoefficient hincrement
-          _ = (consumed + 1) * productCoefficientBound format := by ring
       have hlengthRest : consumed + 1 + rest.length < productSumTermLimit := by
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hlength
-      have hresult :=
-        ordinaryCoefficient_of_natAbs_le_mul (format := format) hsum
+      obtain ⟨hsum, hresult⟩ :=
+        natAbs_add_le_and_ordinary (format := format) hcoefficient hincrement
           (by omega) (Nat.two_pow_pos _)
           (productSumTermLimit_mul_productCoefficientBound format)
       have hstep :=
@@ -261,20 +239,10 @@ theorem toRat?_foldAddP
         (ordinaryCoefficient_iff_isNaR_eq_false accumulator).mpr hnar
       have hincrement :=
         natAbs_coefficientOfDyadic_le_positCoefficientBound addend dyadic hdyadic
-      have hsum :
-          (accumulator.coefficient + coefficientOfDyadic format dyadic).natAbs ≤
-            (consumed + 1) * positCoefficientBound format := by
-        calc
-          _ ≤ accumulator.coefficient.natAbs +
-                (coefficientOfDyadic format dyadic).natAbs :=
-            Int.natAbs_add_le _ _
-          _ ≤ consumed * positCoefficientBound format + positCoefficientBound format :=
-            Nat.add_le_add hcoefficient hincrement
-          _ = (consumed + 1) * positCoefficientBound format := by ring
       have hlengthRest : consumed + 1 + rest.length < positSumTermLimit format := by
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hlength
-      have hresult :=
-        ordinaryCoefficient_of_natAbs_le_mul (format := format) hsum
+      obtain ⟨hsum, hresult⟩ :=
+        natAbs_add_le_and_ordinary (format := format) hcoefficient hincrement
           (by omega) (Nat.two_pow_pos _)
           (positSumTermLimit_mul_positCoefficientBound format)
       have hstep :=

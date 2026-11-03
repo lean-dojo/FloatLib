@@ -25,6 +25,19 @@ open FloatLib.Numerics
 
 variable {format : Format}
 
+/-- The `UInt8` storage plan reads a packed code through the `UInt8` carrier. -/
+private theorem nativeWord_eq (width_le : format.bits ≤ 8) (code : Code (.byte width_le)) :
+    NativeCode.word code = FixedWords.uint8Carrier.toUInt64 code.1 :=
+  rfl
+
+/-- The `UInt8` storage plan packs a range-checked code through the `UInt8` carrier. -/
+private theorem nativePack_eq (width_le : format.bits ≤ 8) (bits : Nat)
+    (hbits : bits < format.modulus) :
+    NativeCode.pack (plan := .byte width_le) bits hbits =
+      ⟨FixedWords.uint8Carrier.ofNat bits,
+        FixedWords.observed_lt_modulus (FixedWords.uint8Carrier.toNat_ofNat bits) hbits⟩ :=
+  rfl
+
 /-! ## Addition and subtraction -/
 
 /-- Fixed `UInt8` addition refines configured posit addition. -/
@@ -37,10 +50,8 @@ theorem add_eq_spec
   refine Eq.trans ?_
     (storedNativeWordAdd_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [add, addRaw, storedNativeWordAdd, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [add, addRaw, storedNativeWordAdd, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.addCode_eq FixedWords.uint8Carrier
       width_le left.raw right.raw
 
@@ -54,10 +65,8 @@ theorem sub_eq_spec
   refine Eq.trans ?_
     (storedNativeWordSub_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [sub, subRaw, storedNativeWordSub, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [sub, subRaw, storedNativeWordSub, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.subCode_eq FixedWords.uint8Carrier
       width_le left.raw right.raw
 
@@ -73,10 +82,8 @@ theorem mul_eq_spec
   refine Eq.trans ?_
     (storedNativeWordMul_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [mul, mulRaw, storedNativeWordMul, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [mul, mulRaw, storedNativeWordMul, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.mulCode_eq FixedWords.uint8Carrier
       width_le left.raw right.raw
 
@@ -90,10 +97,8 @@ theorem div_eq_spec
   refine Eq.trans ?_
     (storedNativeWordDiv_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [div, divRaw, storedNativeWordDiv, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [div, divRaw, storedNativeWordDiv, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.divCode_eq FixedWords.uint8Carrier
       width_le left.raw right.raw
 
@@ -109,10 +114,8 @@ theorem sqrt_eq_spec
   refine Eq.trans ?_
     (storedNativeWordSqrt_eq_spec (le_trans width_le (by decide)) value)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [sqrt, sqrtRaw, storedNativeWordSqrt, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [sqrt, sqrtRaw, storedNativeWordSqrt, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.sqrtCode_eq FixedWords.uint8Carrier width_le value.raw
 
 /-- Fixed `UInt8` FMA refines configured posit FMA. -/
@@ -126,10 +129,8 @@ theorem fma_eq_spec
     (storedNativeWordFma_eq_spec
       (le_trans width_le (by decide)) left right addend)
   apply FloatLib.Floats.ExecFloat.ext
-  simpa only [fma, fmaRaw, storedNativeWordFma, NativeCode.word,
-    NativeCode.pack, NativeCode.toUInt64, byteNativeCode,
-    FloatLib.Floats.ExecFloat.raw_ofRaw, FixedWords.uint8Carrier,
-    StaticStorage.ByteCode.ofNat] using
+  simpa only [fma, fmaRaw, storedNativeWordFma, nativeWord_eq, nativePack_eq,
+    FloatLib.Floats.ExecFloat.raw_ofRaw] using
     FixedWords.fmaCode_eq FixedWords.uint8Carrier
       width_le left.raw right.raw addend.raw
 

@@ -33,7 +33,7 @@ namespace Dyadic
 @[simp, grind =] theorem zero_toRat : zero.toRat = 0 := by
   simp [toRat, zero, signedSignificand]
 
-/-- The scaled-integer constructor has exactly its expected rational denotation. -/
+/-- The scaled-integer constructor denotes `coefficient * 2 ^ exponent` exactly, for either sign. -/
 @[simp, grind =] theorem ofScaledInt_toRat (coefficient : Int) (exponent : Int) :
     (ofScaledInt coefficient exponent).toRat =
       Rat.ofInt coefficient * (2 : Rat) ^ exponent := by
@@ -76,6 +76,20 @@ theorem neg_toRat (value : Dyadic) :
     value.neg.toRat = -value.toRat := by
   cases hnegative : value.negative <;>
     simp [neg, toRat, signedSignificand, hnegative]
+
+/--
+A nonzero dyadic whose sign field is set has a strictly negative rational denotation: the sign
+reflection of `toRat_pos_of_significand_ne_zero`.
+-/
+theorem toRat_neg_of_significand_ne_zero
+    (value : Dyadic)
+    (hsignificand : value.significand ≠ 0)
+    (hnegative : value.negative = true) :
+    value.toRat < 0 := by
+  have hpositive :=
+    toRat_pos_of_significand_ne_zero value.neg hsignificand (by simp [hnegative])
+  rw [neg_toRat] at hpositive
+  exact neg_pos.mp hpositive
 
 /-- Exact dyadic multiplication commutes with rational denotation. -/
 theorem mul_toRat (left right : Dyadic) :
@@ -156,31 +170,8 @@ theorem compare_eq_compare_toRat (left right : Dyadic) :
     have hfactor : 0 < (2 : Rat) ^ commonExponent :=
       zpow_pos (by norm_num) _
     change Ord.compare leftInt rightInt = Ord.compare left.toRat right.toRat
-    cases hcomparison : Ord.compare leftInt rightInt with
-    | lt =>
-        have hintegers : leftInt < rightInt :=
-          Int.compare_eq_lt.mp hcomparison
-        have hrationals : left.toRat < right.toRat := by
-          rw [hleftRat, hrightRat]
-          apply mul_lt_mul_of_pos_right _ hfactor
-          rw [Rat.ofInt_eq_cast, Rat.ofInt_eq_cast]
-          exact_mod_cast hintegers
-        exact (compare_lt_iff_lt.mpr hrationals).symm
-    | eq =>
-        have hintegers : leftInt = rightInt :=
-          Int.compare_eq_eq.mp hcomparison
-        have hrationals : left.toRat = right.toRat := by
-          rw [hleftRat, hrightRat, hintegers]
-        exact (compare_eq_iff_eq.mpr hrationals).symm
-    | gt =>
-        have hintegers : rightInt < leftInt :=
-          Int.compare_eq_gt.mp hcomparison
-        have hrationals : right.toRat < left.toRat := by
-          rw [hleftRat, hrightRat]
-          apply mul_lt_mul_of_pos_right _ hfactor
-          rw [Rat.ofInt_eq_cast, Rat.ofInt_eq_cast]
-          exact_mod_cast hintegers
-        exact (compare_gt_iff_gt.mpr hrationals).symm
+    rw [hleftRat, hrightRat, ← cmp_eq_compare, ← cmp_eq_compare, cmp_mul_pos_right hfactor,
+      Rat.ofInt_eq_cast, Rat.ofInt_eq_cast, Int.cast_strictMono.cmp_map_eq]
 
 /--
 The integer comparator reports `lt` exactly when rational denotation is smaller.
@@ -347,15 +338,27 @@ private theorem compare_negative_eq_positive_swap
         simpa [← neg_toRat] using neg_lt_neg hgreater
       simpa [hcomparison] using (compare_eq_lt_iff _ _).2 hnegative
 
-private theorem negative_toRat_neg
-    (significand : Nat) (exponent : Int)
-    (hsignificand : significand ≠ 0) :
-    (Dyadic.mk true significand exponent).toRat < 0 := by
-  have hpositive : 0 < (Dyadic.mk false significand exponent).toRat :=
-    toRat_pos_of_significand_ne_zero _ hsignificand rfl
-  have hnegative : -(Dyadic.mk false significand exponent).toRat < 0 :=
-    neg_lt_zero.mpr hpositive
-  simpa [← neg_toRat] using hnegative
+/-- A nonzero record compares with a zero record by its own sign. -/
+private theorem compare_mk_zero
+    (negative : Bool) (significand : Nat) (exponent : Int)
+    (zeroNegative : Bool) (zeroExponent : Int) (hsignificand : significand ≠ 0) :
+    compare (Dyadic.mk negative significand exponent) (Dyadic.mk zeroNegative 0 zeroExponent) =
+      if negative then .lt else .gt := by
+  cases negative
+  · exact (compare_eq_gt_iff _ _).2
+      (by simpa using toRat_pos_of_significand_ne_zero _ hsignificand rfl)
+  · exact (compare_eq_lt_iff _ _).2
+      (by simpa using toRat_neg_of_significand_ne_zero _ hsignificand rfl)
+
+/-- A zero record compares with a nonzero record by the opposite of that record's sign. -/
+private theorem compare_zero_mk
+    (zeroNegative : Bool) (zeroExponent : Int)
+    (negative : Bool) (significand : Nat) (exponent : Int) (hsignificand : significand ≠ 0) :
+    compare (Dyadic.mk zeroNegative 0 zeroExponent) (Dyadic.mk negative significand exponent) =
+      if negative then .gt else .lt := by
+  rw [compare_eq_compare_toRat, Std.OrientedOrd.eq_swap, ← compare_eq_compare_toRat,
+    compare_mk_zero _ _ _ _ _ hsignificand]
+  cases negative <;> rfl
 
 /--
 Exponent-scalable field comparison has exactly the ordinary exact-dyadic result.
@@ -378,45 +381,12 @@ theorem Internal.compareScalableFields_eq_compareFields
     by_cases hright : rightSignificand = 0
     · subst rightSignificand
       simp [Internal.compareScalableFields, compare, compareFields]
-    · cases rightNegative
-      · simp [Internal.compareScalableFields, hright]
-        have hpositive :
-            0 <
-              (Dyadic.mk false rightSignificand rightExponent).toRat :=
-          toRat_pos_of_significand_ne_zero _ hright rfl
-        have horder :
-            (Dyadic.mk leftNegative 0 leftExponent).toRat <
-              (Dyadic.mk false rightSignificand rightExponent).toRat := by
-          simpa using hpositive
-        exact ((compare_eq_lt_iff _ _).2 horder).symm
-      · simp [Internal.compareScalableFields, hright]
-        have hnegative :=
-          negative_toRat_neg rightSignificand rightExponent hright
-        have horder :
-            (Dyadic.mk true rightSignificand rightExponent).toRat <
-              (Dyadic.mk leftNegative 0 leftExponent).toRat := by
-          simpa using hnegative
-        exact ((compare_eq_gt_iff _ _).2 horder).symm
+    · rw [compare_zero_mk _ _ _ _ _ hright]
+      cases rightNegative <;> simp [Internal.compareScalableFields, hright]
   · by_cases hright : rightSignificand = 0
     · subst rightSignificand
-      cases leftNegative
-      · simp [Internal.compareScalableFields, hleft]
-        have hpositive :
-            0 < (Dyadic.mk false leftSignificand leftExponent).toRat :=
-          toRat_pos_of_significand_ne_zero _ hleft rfl
-        have horder :
-            (Dyadic.mk rightNegative 0 rightExponent).toRat <
-              (Dyadic.mk false leftSignificand leftExponent).toRat := by
-          simpa using hpositive
-        exact ((compare_eq_gt_iff _ _).2 horder).symm
-      · simp [Internal.compareScalableFields, hleft]
-        have hnegative :=
-          negative_toRat_neg leftSignificand leftExponent hleft
-        have horder :
-            (Dyadic.mk true leftSignificand leftExponent).toRat <
-              (Dyadic.mk rightNegative 0 rightExponent).toRat := by
-          simpa using hnegative
-        exact ((compare_eq_lt_iff _ _).2 horder).symm
+      rw [compare_mk_zero _ _ _ _ _ hleft]
+      cases leftNegative <;> simp [Internal.compareScalableFields, hleft]
     · cases leftNegative <;> cases rightNegative
       · simp [Internal.compareScalableFields, hleft, hright]
         rw [Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
@@ -424,23 +394,13 @@ theorem Internal.compareScalableFields_eq_compareFields
           hleft hright]
         rw [compareNonnegativeFields_eq_compareFields, compareFields_eq]
       · simp [Internal.compareScalableFields, hleft, hright]
-        have hpositive :
-            0 < (Dyadic.mk false leftSignificand leftExponent).toRat :=
-          toRat_pos_of_significand_ne_zero _ hleft rfl
-        have hnegative :=
-          negative_toRat_neg rightSignificand rightExponent hright
-        exact
-          ((compare_eq_gt_iff _ _).2
-            (lt_trans hnegative hpositive)).symm
+        exact ((compare_eq_gt_iff _ _).2
+          ((toRat_neg_of_significand_ne_zero _ hright rfl).trans
+            (toRat_pos_of_significand_ne_zero _ hleft rfl))).symm
       · simp [Internal.compareScalableFields, hleft, hright]
-        have hnegative :=
-          negative_toRat_neg leftSignificand leftExponent hleft
-        have hpositive :
-            0 < (Dyadic.mk false rightSignificand rightExponent).toRat :=
-          toRat_pos_of_significand_ne_zero _ hright rfl
-        exact
-          ((compare_eq_lt_iff _ _).2
-            (lt_trans hnegative hpositive)).symm
+        exact ((compare_eq_lt_iff _ _).2
+          ((toRat_neg_of_significand_ne_zero _ hleft rfl).trans
+            (toRat_pos_of_significand_ne_zero _ hright rfl))).symm
       · simp [Internal.compareScalableFields, hleft, hright]
         rw [Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
           leftSignificand rightSignificand leftExponent rightExponent

@@ -44,15 +44,9 @@ theorem neighbor_finer_lt (f : Format) (d : Nat) (q r : Int)
 theorem neighbor_integer_gap (c d : Nat) (q r : Int) (hqr : q ≤ r)
     (hlt : (c : ℚ) * (10 : ℚ) ^ q < (d : ℚ) * (10 : ℚ) ^ r) :
     ((c + 1 : Nat) : ℚ) * (10 : ℚ) ^ q ≤ (d : ℚ) * (10 : ℚ) ^ r := by
-  let k := d * 10 ^ (r - q).toNat
-  have he : q + ((r - q).toNat : Int) = r := by omega
-  have hv : (k : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r := by
-    conv_rhs => rw [← he, zpow_add₀ (by norm_num), zpow_natCast]
-    simp only [k, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
-    ring
   have hp : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) _
-  rw [← hv] at hlt ⊢
-  have hc : c < k := by exact_mod_cast (mul_lt_mul_iff_left₀ hp).mp hlt
+  rw [← finer_grid_value d r q hqr] at hlt ⊢
+  have hc : c < d * 10 ^ (r - q).toNat := by exact_mod_cast (mul_lt_mul_iff_left₀ hp).mp hlt
   exact mul_le_mul_of_nonneg_right (by exact_mod_cast Nat.succ_le_of_lt hc) hp.le
 
 /-- No valid decimal value occurs between a normalized coefficient and its successor. -/
@@ -69,15 +63,6 @@ theorem neighbor_gap (f : Format) (c d : Nat) (q r : Int)
     · have hc' : (f.payloadBound : ℚ) ≤ (c : ℚ) := by exact_mod_cast hc
       have hh := mul_le_mul_of_nonneg_right hc' (zpow_pos (by norm_num : (0 : ℚ) < 10) q).le
       linarith
-
-/-- Any normalized pair is the least-quantum member of its entire valid cohort. -/
-theorem neighbor_quantum_minimal (f : Format) (c d : Nat) (q r : Int)
-    (hfull : q = f.minQuantum ∨ f.payloadBound ≤ c)
-    (hd : d < f.coefficientBound) (hr : f.minQuantum ≤ r)
-    (he : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
-  rcases hfull with hq | hc
-  · omega
-  · exact quantum_le_of_full_coefficient f c d q r hc hd he
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

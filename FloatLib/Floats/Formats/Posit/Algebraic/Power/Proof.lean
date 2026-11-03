@@ -23,14 +23,19 @@ namespace FloatLib.Floats.Formats.Posit.Model
 
 variable {format : Format}
 
-/-- In its real domain, rational integer exponentiation is followed by exactly one rounding. -/
+/--
+In its real domain, rational integer exponentiation is followed by exactly one rounding.
+
+The domain is everything except zero to a negative power, so it includes exponent zero at a zero
+base, where the result is rounded one.
+-/
 theorem roundIntPower_eq_roundRat (base : Rat) (exponent : Int)
-    (hdomain : base ≠ 0 ∨ 0 < exponent) :
+    (hdomain : base ≠ 0 ∨ 0 ≤ exponent) :
     roundIntPower format base exponent = roundRat format (base ^ exponent) := by
   have hvalid : ¬(base = 0 ∧ exponent < 0) := by
     rcases hdomain with hbase | hexponent
     · exact fun h => hbase h.1
-    · exact fun h => (not_lt.mpr hexponent.le) h.2
+    · exact fun h => (not_lt.mpr hexponent) h.2
   simp [roundIntPower, hvalid]
 
 /-- Zero to a negative integer power has no finite limit. -/
@@ -43,16 +48,22 @@ theorem roundIntPower_zero_of_neg (exponent : Int) (hexponent : exponent < 0) :
     roundIntPower format base 0 = roundRat format 1 := by
   simp [roundIntPower]
 
-/-- Finite integer powers round the exact rational power once, including negative exponents. -/
+/--
+Finite integer powers round the exact rational power once, including negative exponents and
+exponent zero; only zero to a negative power is excluded.
+-/
 theorem powInt_eq_roundRat (value : Model format) {q : Rat} (exponent : Int)
-    (hvalue : value.toRat? = some q) (hdomain : q ≠ 0 ∨ 0 < exponent) :
+    (hvalue : value.toRat? = some q) (hdomain : q ≠ 0 ∨ 0 ≤ exponent) :
     powInt value exponent = roundRat format (q ^ exponent) := by
   simp only [powInt, hvalue]
   exact roundIntPower_eq_roundRat q exponent hdomain
 
-/-- Compound rounds the exact rational expression `(1 + q) ^ exponent` once. -/
+/--
+Compound rounds the exact rational expression `(1 + q) ^ exponent` once, everywhere except at
+`q = -1` with a negative exponent.
+-/
 theorem compound_eq_roundRat (value : Model format) {q : Rat} (exponent : Int)
-    (hvalue : value.toRat? = some q) (hdomain : 1 + q ≠ 0 ∨ 0 < exponent) :
+    (hvalue : value.toRat? = some q) (hdomain : 1 + q ≠ 0 ∨ 0 ≤ exponent) :
     compound value exponent = roundRat format ((1 + q) ^ exponent) := by
   simp only [compound, hvalue]
   exact roundIntPower_eq_roundRat (1 + q) exponent hdomain

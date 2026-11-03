@@ -109,7 +109,8 @@ allows, otherwise the structural candidate.
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
   | .pair hgt hle =>
-      if Model.NativePair.Eligible format then Backend.pairSqrt hgt hle else structuralSqrt
+      if hpair : Model.NativePair.Eligible format then Backend.pairSqrt hgt hle hpair
+      else structuralSqrt
   | _ => structuralSqrt
 
 /-- The direct square root computes the structural candidate's result. -/
@@ -143,7 +144,8 @@ layout allows, otherwise the structural candidate.
           FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
   | .pair hgt hle =>
-      if Model.NativePair.Eligible format then Backend.pairFma hgt hle else structuralFma
+      if hpair : Model.NativePair.Eligible format then Backend.pairFma hgt hle hpair
+      else structuralFma
   | _ => structuralFma
 
 /-- The direct fused multiply-add computes the structural candidate's result. -/

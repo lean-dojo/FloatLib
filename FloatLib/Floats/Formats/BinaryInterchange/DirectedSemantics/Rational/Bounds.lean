@@ -29,19 +29,19 @@ namespace Model
 
 section
 
-@[simp] private theorem toEReal_posZero_eq_zero
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+@[simp] private theorem toEReal_posZero_eq_zero (fmt : FloatFormat) :
     toEReal (posZero fmt) = 0 := by
-  simpa only [Bool.false_eq_true, ite_false] using
-    toEReal_signedZero fmt hfmt false
+  rw [toEReal_eq_coe_toReal_of_isFinite _ (isFinite_posZero fmt), toReal_posZero, EReal.coe_zero]
 
 @[simp] private theorem toEReal_negZero_eq_zero
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+    (fmt : FloatFormat) (hfmt : fmt.supportsSignedZero = true) :
     toEReal (negZero fmt) = 0 := by
-  simpa only [ite_eq_left rfl, ite_true] using
-    toEReal_signedZero fmt hfmt true
+  simpa only [ite_eq_left rfl, ite_true] using toEReal_signedZero fmt hfmt true
 
-/-- Changing only the stored sign negates a directed rational magnitude result. -/
+/--
+In a conventional IEEE format with a nonzero denominator, changing only the stored sign negates a
+directed rational magnitude result.
+-/
 theorem roundRatMagnitudeDirectedScaled_neg
     (fmt : FloatFormat) (roundMagnitudeUp : Bool)
     (numerator denominator : Nat) (exponent : Int)
@@ -84,127 +84,131 @@ theorem roundRatMagnitudeDirectedScaled_neg
     Bool.false_eq_true, ite_false, ite_true, neg_ite]
   simp only [hzero, hoverflow, neg_posMinSubnormal, ← hsubnormal, ← hnormal]
 
-/-- Downward rounding of a signed scaled rational is an extended-real lower bound. -/
+/--
+In a conventional IEEE format, directed rational magnitude rounding with a nonzero denominator
+never produces NaN, in either magnitude direction and for either attached sign.
+-/
+theorem isNaN_roundRatMagnitudeDirectedScaled_eq_false
+    (fmt : FloatFormat) (roundMagnitudeUp sign : Bool)
+    (numerator denominator : Nat) (exponent : Int)
+    (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
+    isNaN (roundRatMagnitudeDirectedScaled
+      fmt roundMagnitudeUp sign numerator denominator exponent) = false := by
+  have hpositive :
+      isNaN (roundRatMagnitudeDirectedScaled
+        fmt roundMagnitudeUp false numerator denominator exponent) = false := by
+    cases roundMagnitudeUp
+    · exact isNaN_roundRatMagnitudeDirectedScaled_pos_down_eq_false
+        fmt numerator denominator exponent hfmt hdenominator
+    · exact isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
+        fmt numerator denominator exponent hfmt hdenominator
+  cases sign
+  · exact hpositive
+  · rw [roundRatMagnitudeDirectedScaled_neg
+      fmt roundMagnitudeUp numerator denominator exponent hfmt hdenominator, isNaN_neg]
+    exact hpositive
+
+/--
+In a conventional IEEE format with a nonzero denominator, attaching a negative sign negates a
+directed rational magnitude result in the extended reals. The magnitude direction stays fixed, so
+for a negative value it is the opposite numerical direction.
+-/
+theorem toEReal_roundRatMagnitudeDirectedScaled_neg
+    (fmt : FloatFormat) (roundMagnitudeUp : Bool)
+    (numerator denominator : Nat) (exponent : Int)
+    (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
+    toEReal (roundRatMagnitudeDirectedScaled
+        fmt roundMagnitudeUp true numerator denominator exponent) =
+      -toEReal (roundRatMagnitudeDirectedScaled
+        fmt roundMagnitudeUp false numerator denominator exponent) := by
+  rw [roundRatMagnitudeDirectedScaled_neg
+    fmt roundMagnitudeUp numerator denominator exponent hfmt hdenominator]
+  exact toEReal_neg_of_isNaN_eq_false _
+    (isNaN_roundRatMagnitudeDirectedScaled_eq_false
+      fmt roundMagnitudeUp false numerator denominator exponent hfmt hdenominator)
+
+/--
+In a conventional IEEE format with a nonzero denominator, downward rounding of a signed scaled
+rational is an extended-real lower bound.
+-/
 theorem toEReal_roundRatDownScaled_le
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (hfmt : fmt.isIEEE = true)
     (hdenominator : denominator ≠ 0) :
     toEReal (roundRatDownScaled fmt sign numerator denominator exponent) ≤
       (signedScaledRatToReal sign numerator denominator exponent : EReal) := by
-  by_cases hnumerator : numerator = 0
-  · cases sign <;>
-      simp [roundRatDownScaled, Internal.Directed.roundRatScaled,
-        roundRatMagnitudeDirectedScaled, signedScaledRatToReal,
-        scaledRatToReal, hnumerator, hdenominator, hfmt]
-  · cases sign with
-    | false =>
-      simpa [roundRatDownScaled, Internal.Directed.roundRatScaled,
-        signedScaledRatToReal] using
-        toEReal_roundRatMagnitudeDirectedScaled_pos_down_le
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-    | true =>
-      have hbound :=
-        le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-      have hnan :=
-        isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-      change toEReal
-          (roundRatMagnitudeDirectedScaled
-            fmt true true numerator denominator exponent) ≤
-        ((-scaledRatToReal numerator denominator exponent : ℝ) : EReal)
-      rw [roundRatMagnitudeDirectedScaled_neg
-        fmt true numerator denominator exponent hfmt hdenominator]
-      rw [toEReal_neg_of_isNaN_eq_false _ hnan]
-      simpa [EReal.coe_neg] using
-        EReal.neg_le_neg_iff.mpr hbound
+  cases sign with
+  | false =>
+    simpa [roundRatDownScaled, Internal.Directed.roundRatScaled,
+      signedScaledRatToReal] using
+      toEReal_roundRatMagnitudeDirectedScaled_pos_down_le
+        fmt numerator denominator exponent hfmt hdenominator
+  | true =>
+    change toEReal
+        (roundRatMagnitudeDirectedScaled
+          fmt true true numerator denominator exponent) ≤
+      ((-scaledRatToReal numerator denominator exponent : ℝ) : EReal)
+    rw [toEReal_roundRatMagnitudeDirectedScaled_neg
+      fmt true numerator denominator exponent hfmt hdenominator, EReal.coe_neg]
+    exact EReal.neg_le_neg_iff.mpr
+      (le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
+        fmt numerator denominator exponent hfmt hdenominator)
 
-/-- A signed scaled rational is bounded above by its upward-rounded result. -/
+/--
+In a conventional IEEE format with a nonzero denominator, a signed scaled rational is bounded
+above by its upward-rounded result in the extended reals.
+-/
 theorem le_toEReal_roundRatUpScaled
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (hfmt : fmt.isIEEE = true)
     (hdenominator : denominator ≠ 0) :
     (signedScaledRatToReal sign numerator denominator exponent : EReal) ≤
       toEReal (roundRatUpScaled fmt sign numerator denominator exponent) := by
-  by_cases hnumerator : numerator = 0
-  · cases sign <;>
-      simp [roundRatUpScaled, Internal.Directed.roundRatScaled,
-        roundRatMagnitudeDirectedScaled, signedScaledRatToReal,
-        scaledRatToReal, hnumerator, hdenominator, hfmt]
-  · cases sign with
-    | false =>
-      simpa [roundRatUpScaled, Internal.Directed.roundRatScaled,
-        signedScaledRatToReal] using
-        le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-    | true =>
-      have hbound :=
-        toEReal_roundRatMagnitudeDirectedScaled_pos_down_le
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-      have hnan :=
-        isNaN_roundRatMagnitudeDirectedScaled_pos_down_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-      change ((-scaledRatToReal numerator denominator exponent : ℝ) : EReal) ≤
-        toEReal
-          (roundRatMagnitudeDirectedScaled
-            fmt false true numerator denominator exponent)
-      rw [roundRatMagnitudeDirectedScaled_neg
-        fmt false numerator denominator exponent hfmt hdenominator]
-      rw [toEReal_neg_of_isNaN_eq_false _ hnan]
-      simpa [EReal.coe_neg] using
-        EReal.neg_le_neg_iff.mpr hbound
+  cases sign with
+  | false =>
+    simpa [roundRatUpScaled, Internal.Directed.roundRatScaled,
+      signedScaledRatToReal] using
+      le_toEReal_roundRatMagnitudeDirectedScaled_pos_up
+        fmt numerator denominator exponent hfmt hdenominator
+  | true =>
+    change ((-scaledRatToReal numerator denominator exponent : ℝ) : EReal) ≤
+      toEReal
+        (roundRatMagnitudeDirectedScaled
+          fmt false true numerator denominator exponent)
+    rw [toEReal_roundRatMagnitudeDirectedScaled_neg
+      fmt false numerator denominator exponent hfmt hdenominator, EReal.coe_neg]
+    exact EReal.neg_le_neg_iff.mpr
+      (toEReal_roundRatMagnitudeDirectedScaled_pos_down_le
+        fmt numerator denominator exponent hfmt hdenominator)
 
-/-- Downward rational rounding with a nonzero denominator never produces NaN. -/
+/--
+In a conventional IEEE format, downward rational rounding with a nonzero denominator never
+produces NaN.
+-/
 theorem isNaN_roundRatDownScaled_eq_false
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (hfmt : fmt.isIEEE = true)
     (hdenominator : denominator ≠ 0) :
-    isNaN (roundRatDownScaled fmt sign numerator denominator exponent) = false := by
-  by_cases hnumerator : numerator = 0
-  · cases sign <;>
-      simp [roundRatDownScaled, Internal.Directed.roundRatScaled,
-        roundRatMagnitudeDirectedScaled, hnumerator, hdenominator, hfmt]
-  · cases sign with
-    | false =>
-      simpa [roundRatDownScaled, Internal.Directed.roundRatScaled] using
-        isNaN_roundRatMagnitudeDirectedScaled_pos_down_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-    | true =>
-      change isNaN
-          (roundRatMagnitudeDirectedScaled
-            fmt true true numerator denominator exponent) = false
-      rw [roundRatMagnitudeDirectedScaled_neg
-        fmt true numerator denominator exponent hfmt hdenominator]
-      simpa using
-        isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
+    isNaN (roundRatDownScaled fmt sign numerator denominator exponent) = false :=
+  isNaN_roundRatMagnitudeDirectedScaled_eq_false
+    fmt sign sign numerator denominator exponent hfmt hdenominator
 
-/-- Upward rational rounding with a nonzero denominator never produces NaN. -/
+/--
+In a conventional IEEE format, upward rational rounding with a nonzero denominator never produces
+NaN.
+-/
 theorem isNaN_roundRatUpScaled_eq_false
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (hfmt : fmt.isIEEE = true)
     (hdenominator : denominator ≠ 0) :
-    isNaN (roundRatUpScaled fmt sign numerator denominator exponent) = false := by
-  by_cases hnumerator : numerator = 0
-  · cases sign <;>
-      simp [roundRatUpScaled, Internal.Directed.roundRatScaled,
-        roundRatMagnitudeDirectedScaled, hnumerator, hdenominator, hfmt]
-  · cases sign with
-    | false =>
-      simpa [roundRatUpScaled, Internal.Directed.roundRatScaled] using
-        isNaN_roundRatMagnitudeDirectedScaled_pos_up_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
-    | true =>
-      change isNaN
-          (roundRatMagnitudeDirectedScaled
-            fmt false true numerator denominator exponent) = false
-      rw [roundRatMagnitudeDirectedScaled_neg
-        fmt false numerator denominator exponent hfmt hdenominator]
-      simpa using
-        isNaN_roundRatMagnitudeDirectedScaled_pos_down_eq_false
-          fmt numerator denominator exponent hfmt hnumerator hdenominator
+    isNaN (roundRatUpScaled fmt sign numerator denominator exponent) = false :=
+  isNaN_roundRatMagnitudeDirectedScaled_eq_false
+    fmt (!sign) sign numerator denominator exponent hfmt hdenominator
 
-/-- Downward rounding of an unscaled signed rational is an extended-real lower bound. -/
+/--
+In a conventional IEEE format with a nonzero denominator, downward rounding of an unscaled signed
+rational is an extended-real lower bound.
+-/
 theorem toEReal_roundRatDown_le
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
@@ -213,7 +217,10 @@ theorem toEReal_roundRatDown_le
   exact toEReal_roundRatDownScaled_le
     fmt sign numerator denominator 0 hfmt hdenominator
 
-/-- An unscaled signed rational is bounded above by its upward-rounded result. -/
+/--
+In a conventional IEEE format with a nonzero denominator, an unscaled signed rational is bounded
+above by its upward-rounded result in the extended reals.
+-/
 theorem le_toEReal_roundRatUp
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
@@ -222,7 +229,10 @@ theorem le_toEReal_roundRatUp
   exact le_toEReal_roundRatUpScaled
     fmt sign numerator denominator 0 hfmt hdenominator
 
-/-- Unscaled downward rational rounding with a nonzero denominator never produces NaN. -/
+/--
+In a conventional IEEE format, unscaled downward rational rounding with a nonzero denominator
+never produces NaN.
+-/
 theorem isNaN_roundRatDown_eq_false
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :
@@ -230,7 +240,10 @@ theorem isNaN_roundRatDown_eq_false
   exact isNaN_roundRatDownScaled_eq_false
     fmt sign numerator denominator 0 hfmt hdenominator
 
-/-- Unscaled upward rational rounding with a nonzero denominator never produces NaN. -/
+/--
+In a conventional IEEE format, unscaled upward rational rounding with a nonzero denominator never
+produces NaN.
+-/
 theorem isNaN_roundRatUp_eq_false
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (hfmt : fmt.isIEEE = true) (hdenominator : denominator ≠ 0) :

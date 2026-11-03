@@ -25,8 +25,11 @@ tie (`dyadicIsGridTie_eq_false_of_eq_mul_pow2`).
 `Internal.Directed.roundDyadic_of_representable` is the statement used by IEEE `remainder`
 (whose exact result is always representable) and by `roundToIntegral` (whose rounded integer is
 always representable for every IEEE interchange format). The finite decoded value of any word
-satisfies the three hypotheses, by `toDyadic?_significand_lt` and
-`minSubnormalExponent_le_toDyadic?`.
+satisfies the three hypotheses: the precision and exponent bounds by `toDyadic?_significand_lt`
+and `minSubnormalExponent_le_toDyadic?`, and the magnitude bound by
+`abs_toReal_le_posMaxFinite_of_toDyadic?_some`, which holds in every encoding.
+`Internal.Directed.roundDyadic_toDyadic?` combines them: in an IEEE format, rounding a decoded
+word in any direction returns that word.
 -/
 
 @[expose] public section
@@ -40,46 +43,6 @@ open FloatLib.Floats.Formats.Flocq
 section
 
 /-! ## Bounds satisfied by every decoded finite value -/
-
-/--
-The decoded dyadic of a word has a significand below `2^(fracWidth + 1)` and an exponent no smaller
-than the minimum subnormal exponent. These bounds describe the format's precision and exponent grid.
--/
-theorem toDyadic?_significand_lt_and_minSubnormalExponent_le
-    {fmt : FloatFormat} (x : Model fmt) {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) :
-    d.significand < 2 ^ (fmt.fracWidth + 1) ∧
-      fmt.minSubnormalExponent ≤ d.exponent := by
-  have hfin : isFinite x = true := isFinite_eq_true_of_toDyadic?_some hd
-  have hdecode := toDyadic?_ofFields_of_isFinite fmt (signBit x) (expField x) (fracField x)
-    (by simpa [← pow2_eq_two_pow] using expField_lt_pow2 x)
-    (by simpa [← pow2_eq_two_pow] using fracField_lt_pow2 x)
-    (by simpa only [ofFields_signBit_expField_fracField] using hfin)
-  rw [ofFields_signBit_expField_fracField, hd] at hdecode
-  have hfrac := fracField_lt_pow2 x
-  have hmin : fmt.minSubnormalExponent ≤ 0 := by
-    have := fmt.exponentBias_pos
-    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-      Int.ofNat_eq_natCast]
-    omega
-  have hfracSucc : fracField x < 2 ^ (fmt.fracWidth + 1) :=
-    hfrac.trans (Nat.pow_lt_pow_right (by decide) (by omega))
-  by_cases he : expField x = 0
-  · by_cases hf : fracField x = 0
-    · simp only [he, hf, ite_true, Option.some.injEq] at hdecode
-      rw [hdecode]
-      exact ⟨Nat.two_pow_pos _, hmin⟩
-    · simp only [he, hf, ite_true, ite_false, Option.some.injEq] at hdecode
-      rw [hdecode]
-      exact ⟨hfracSucc, le_rfl⟩
-  · simp only [he, ite_false, Option.some.injEq] at hdecode
-    rw [hdecode]
-    refine ⟨?_, ?_⟩
-    · simp only [pow2_eq_two_pow, pow_succ]
-      omega
-    · simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-        Int.ofNat_eq_natCast]
-      omega
 
 /-- The decoded significand of a word fits in the format's precision. -/
 theorem toDyadic?_significand_lt
@@ -95,28 +58,22 @@ theorem minSubnormalExponent_le_toDyadic?
     fmt.minSubnormalExponent ≤ d.exponent :=
   (toDyadic?_significand_lt_and_minSubnormalExponent_le x hd).2
 
-/--
-A finite word's exponent field is at most `maxFiniteExpField`. An IEEE encoding reserves the
-all-ones field for infinities and NaNs, and the other encodings use every field for finite values.
--/
-theorem expField_le_maxFiniteExpField_of_isFinite {fmt : FloatFormat} (x : Model fmt)
-    (hfinite : isFinite x = true) :
-    expField x ≤ fmt.maxFiniteExpField := by
-  have hexponentLt := expField_lt_pow2 x
-  cases hencoding : fmt.encoding with
-  | ieee =>
-      have hexponentNe : expField x ≠ fmt.expAllOnesNat := by
-        have hfiniteIEEE : IEEE.isFinite x = true := by
-          simpa [isFinite, hencoding] using hfinite
-        exact (bne_iff_ne).mp hfiniteIEEE
-      simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
-        hencoding]
-      unfold FloatFormat.expAllOnesNat at hexponentNe
-      omega
-  | finiteMaxNaN | finiteUnsignedZero | finite =>
-      simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
-        hencoding]
-      omega
+/-- A finite nonzero value is at least the least subnormal `2 ^ minSubnormalExponent` in size. -/
+theorem bpow_minSubnormalExponent_le_abs_toReal {fmt : FloatFormat} {x : Model fmt}
+    (hfinite : isFinite x = true) (hzero : toReal x ≠ 0) :
+    bpow fmt.minSubnormalExponent ≤ |toReal x| := by
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
+  have hreal : toReal x = d.toReal := by rw [toReal_eq, hd]
+  rw [hreal] at hzero ⊢
+  have hsignificand : d.significand ≠ 0 := fun hsignificand => hzero (by
+    simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hsignificand])
+  have hone : (1 : ℝ) ≤ d.significand := by
+    exact_mod_cast Nat.one_le_iff_ne_zero.mpr hsignificand
+  rw [Dyadic.abs_toReal]
+  calc bpow fmt.minSubnormalExponent
+      ≤ bpow d.exponent := bpow_le_bpow_of_le (minSubnormalExponent_le_toDyadic? x hd)
+    _ = 1 * bpow d.exponent := (one_mul _).symm
+    _ ≤ d.significand * bpow d.exponent := mul_le_mul_of_nonneg_right hone (bpow_nonneg _)
 
 /--
 Every decoded finite value lies strictly below `2^(maxNormalExponent + 1)` in magnitude, whatever
@@ -127,11 +84,6 @@ theorem abs_toReal_lt_bpow_of_toDyadic?_some
     (hd : toDyadic? x = some d) :
     |d.toReal| < bpow (fmt.maxNormalExponent + 1) := by
   have hfin : isFinite x = true := isFinite_eq_true_of_toDyadic?_some hd
-  have hdecode := toDyadic?_ofFields_of_isFinite fmt (signBit x) (expField x) (fracField x)
-    (by simpa [← pow2_eq_two_pow] using expField_lt_pow2 x)
-    (by simpa [← pow2_eq_two_pow] using fracField_lt_pow2 x)
-    (by simpa only [ofFields_signBit_expField_fracField] using hfin)
-  rw [ofFields_signBit_expField_fracField, hd] at hdecode
   have hexponentLe := expField_le_maxFiniteExpField_of_isFinite x hfin
   have hfractionLt := fracField_lt_pow2 x
   have hmaxPositive := fmt.maxFiniteExpField_pos
@@ -141,34 +93,20 @@ theorem abs_toReal_lt_bpow_of_toDyadic?_some
       |d.toReal| < bpow (fmt.maxNormalExponent + 1) := by
     intro k hsignificand hexponent
     rw [Dyadic.abs_toReal]
-    have hsignificandReal : (d.significand : ℝ) < bpow (k : Int) := by
-      rw [bpow_natCast]
-      exact_mod_cast hsignificand
-    calc (d.significand : ℝ) * bpow d.exponent
-        < bpow (k : Int) * bpow d.exponent :=
-          mul_lt_mul_of_pos_right hsignificandReal (bpow_pos _)
-      _ = bpow ((k : Int) + d.exponent) := (bpow_add _ _).symm
-      _ ≤ bpow (fmt.maxNormalExponent + 1) := bpow_le_bpow_of_le hexponent
-  by_cases hexponentZero : expField x = 0
-  · by_cases hfractionZero : fracField x = 0
-    · simp only [hexponentZero, hfractionZero, ite_true, Option.some.injEq] at hdecode
-      rw [hdecode]
-      simpa [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand] using
-        bpow_pos (fmt.maxNormalExponent + 1)
-    · simp only [hexponentZero, hfractionZero, ite_true, ite_false, Option.some.injEq] at hdecode
-      apply hbound fmt.fracWidth
-      · rw [hdecode]
-        exact hfractionLt
-      · rw [hdecode]
-        simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-          FloatFormat.maxNormalExponent, Int.ofNat_eq_natCast]
-        omega
-  · simp only [hexponentZero, ite_false, Option.some.injEq] at hdecode
-    apply hbound (fmt.fracWidth + 1)
-    · rw [hdecode]
+    exact natCast_mul_bpow_lt_bpow hsignificand hexponent
+  rcases toDyadic?_some_cases hd with ⟨hs, _⟩ | ⟨_, _, hs, he⟩ | ⟨_, hs, he⟩
+  · rw [Dyadic.abs_toReal, hs]
+    simpa using bpow_pos (fmt.maxNormalExponent + 1)
+  · apply hbound fmt.fracWidth (hs ▸ hfractionLt)
+    rw [he]
+    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
+      FloatFormat.maxNormalExponent, Int.ofNat_eq_natCast]
+    omega
+  · apply hbound (fmt.fracWidth + 1)
+    · rw [hs]
       simp only [pow2_eq_two_pow, pow_succ]
       omega
-    · rw [hdecode]
+    · rw [he]
       simp only [FloatFormat.maxNormalExponent, Int.ofNat_eq_natCast]
       omega
 
@@ -216,28 +154,6 @@ theorem Dyadic.toReal_maxFiniteDyadic (fmt : FloatFormat) :
   simp [maxFiniteDyadic, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
     bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
-/--
-The leading binary exponent of a nonzero dyadic within the largest finite magnitude does not
-exceed the largest normal exponent.
--/
-theorem Dyadic.leadingExponent_le_maxNormalExponent
-    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
-    (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
-    (d.significand.log2 : Int) + d.exponent ≤ fmt.maxNormalExponent := by
-  have hleading : pow2 d.significand.log2 ≤ d.significand := pow2_log2_le hm
-  have hleadingReal : (pow2 d.significand.log2 : ℝ) ≤ d.significand := by
-    exact_mod_cast hleading
-  have hlower :
-      bpow ((d.significand.log2 : Int) + d.exponent) ≤ |d.toReal| := by
-    rw [Dyadic.abs_toReal, bpow_add, ← Int.ofNat_eq_natCast, bpow_ofNat]
-    exact mul_le_mul_of_nonneg_right hleadingReal (bpow_nonneg _)
-  have hpow :
-      bpow ((d.significand.log2 : Int) + d.exponent) <
-        bpow (fmt.maxNormalExponent + 1) :=
-    hlower.trans_lt (hbound.trans_lt (toReal_posMaxFinite_lt_bpow fmt))
-  have := (bpow_lt_bpow_iff Numerics.binaryRadix _ _).mp hpow
-  omega
-
 /-- Ceiling division of a multiple of `2^shift` by `2^shift` is exact. -/
 theorem shiftRightCeil_mul_pow2_of_le (m shift k : Nat) (hshift : shift ≤ k) :
     Numerics.shiftRightCeil (m * 2 ^ k) shift = m * 2 ^ (k - shift) := by
@@ -270,9 +186,13 @@ Normalizing a significand of the form `m * 2^k` with `m` in precision never carr
 binade: the shift discards only zero bits or the value already fits.
 -/
 theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2
-    (m k fracWidth : Nat) (hm : m ≠ 0)
+    (m k fracWidth : Nat)
     (hsig : m < 2 ^ (fracWidth + 1)) :
     roundMantissaToLeadingBitUp (m * 2 ^ k) fracWidth ≠ pow2 (fracWidth + 1) := by
+  by_cases hm : m = 0
+  · subst m
+    simp [roundMantissaToLeadingBitUp, Numerics.shiftRightCeil, pow2_eq_two_pow,
+      Nat.ne_of_lt (Nat.two_pow_pos (fracWidth + 1))]
   have hlogm : m.log2 ≤ fracWidth := by
     have := (Nat.log2_lt hm).2 hsig
     omega
@@ -311,10 +231,10 @@ theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2
 
 /-- Normalizing a significand that already fits in the precision never carries. -/
 theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_lt
-    (mantissa fracWidth : Nat) (hm : mantissa ≠ 0)
+    (mantissa fracWidth : Nat)
     (hsig : mantissa < 2 ^ (fracWidth + 1)) :
     roundMantissaToLeadingBitUp mantissa fracWidth ≠ pow2 (fracWidth + 1) := by
-  have := roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2 mantissa 0 fracWidth hm hsig
+  have := roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2 mantissa 0 fracWidth hsig
   simpa using this
 
 /-! ## Exact rounding, one direction at a time -/
@@ -382,7 +302,7 @@ theorem roundDyadicPosDown_of_representable
       toReal (roundDyadicPosDown fmt (m * 2 ^ k) exponent) =
         ((m * 2 ^ k : Nat) : ℝ) * bpow exponent := by
   have hne : m * 2 ^ k ≠ 0 := Nat.mul_ne_zero hm0 (Nat.two_pow_pos k).ne'
-  refine ⟨isFinite_roundDyadicPosDown fmt _ exponent hfmt, ?_⟩
+  refine ⟨isFinite_roundDyadicPosDown fmt _ exponent, ?_⟩
   rw [toReal_roundDyadicPosDown_eq_roundAt_of_le_max fmt _ exponent hfmt hne hmax]
   have hgeneric :=
     Dyadic.genericFormat_of_eq_mul_pow2 fmt ⟨false, m * 2 ^ k, exponent⟩ m k rfl hm hexp
@@ -403,7 +323,7 @@ theorem roundDyadicPosUp_of_representable
   have hne : m * 2 ^ k ≠ 0 := Nat.mul_ne_zero hm0 (Nat.two_pow_pos k).ne'
   obtain ⟨hfinite, hround⟩ :=
     roundDyadicPosUp_finite_roundAt_of_le_max_of_no_carry fmt _ exponent hfmt hne hmax
-      (roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2 m k fmt.fracWidth hm0 hm)
+      (roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2 m k fmt.fracWidth hm)
   refine ⟨hfinite, ?_⟩
   rw [hround]
   have hgeneric :=
@@ -422,6 +342,50 @@ private theorem Dyadic.toReal_eq_signed_magnitude (d : Numerics.Dyadic) :
       bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
 /--
+Downward magnitude rounding of a representable magnitude is exact and finite for either attached
+sign. The negative case is the negation of the positive one.
+-/
+private theorem roundDyadicMagnitudeDown_of_representable
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (sign : Bool) (m k : Nat) (exponent : Int)
+    (hm0 : m ≠ 0)
+    (hm : m < 2 ^ (fmt.fracWidth + 1))
+    (hexp : fmt.minSubnormalExponent ≤ exponent)
+    (hmax : ((m * 2 ^ k).log2 : Int) + exponent ≤ fmt.maxNormalExponent) :
+    isFinite (roundDyadicMagnitudeDown fmt sign (m * 2 ^ k) exponent) = true ∧
+      toReal (roundDyadicMagnitudeDown fmt sign (m * 2 ^ k) exponent) =
+        if sign then -(((m * 2 ^ k : Nat) : ℝ) * bpow exponent)
+        else ((m * 2 ^ k : Nat) : ℝ) * bpow exponent := by
+  have hpos := roundDyadicPosDown_of_representable fmt hfmt m k exponent hm0 hm hexp hmax
+  cases sign
+  · simpa [roundDyadicPosDown] using hpos
+  · rw [roundDyadicMagnitudeDown_true_eq_neg_false fmt _ _]
+    refine ⟨by simpa [roundDyadicPosDown] using hpos.1, ?_⟩
+    rw [toReal_neg _ (by simpa [roundDyadicPosDown] using hpos.1)]
+    simpa [roundDyadicPosDown] using congrArg Neg.neg hpos.2
+
+/--
+Upward magnitude rounding of a representable magnitude is exact and finite for either attached
+sign. The negative case is the negation of the positive one.
+-/
+private theorem roundDyadicMagnitudeUp_of_representable
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (sign : Bool) (m k : Nat) (exponent : Int)
+    (hm0 : m ≠ 0)
+    (hm : m < 2 ^ (fmt.fracWidth + 1))
+    (hexp : fmt.minSubnormalExponent ≤ exponent)
+    (hmax : ((m * 2 ^ k).log2 : Int) + exponent ≤ fmt.maxNormalExponent) :
+    isFinite (roundDyadicMagnitudeUp fmt sign (m * 2 ^ k) exponent) = true ∧
+      toReal (roundDyadicMagnitudeUp fmt sign (m * 2 ^ k) exponent) =
+        if sign then -(((m * 2 ^ k : Nat) : ℝ) * bpow exponent)
+        else ((m * 2 ^ k : Nat) : ℝ) * bpow exponent := by
+  have hpos := roundDyadicPosUp_of_representable fmt hfmt m k exponent hm0 hm hexp hmax
+  cases sign
+  · simpa [roundDyadicPosUp] using hpos
+  · rw [roundDyadicMagnitudeUp_true_eq_neg_false fmt _ _ (by simp [hfmt])]
+    refine ⟨by simpa [roundDyadicPosUp] using hpos.1, ?_⟩
+    rw [toReal_neg _ (by simpa [roundDyadicPosUp] using hpos.1)]
+    simpa [roundDyadicPosUp] using congrArg Neg.neg hpos.2
+
+/--
 Every rounding direction fixes an exactly representable dyadic: the result is finite and its real
 value is the dyadic's own value. The significand may carry trailing zero bits beyond the
 precision, as `m * 2^k`.
@@ -435,6 +399,17 @@ theorem Internal.Directed.roundDyadic_of_eq_mul_pow2
     (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
     isFinite (Internal.Directed.roundDyadic fmt mode d) = true ∧
       toReal (Internal.Directed.roundDyadic fmt mode d) = d.toReal := by
+  -- The directed modes deliver the zero of the dyadic's own sign for a zero significand.
+  have hzeroCase (hzero : d.significand = 0) :
+      isFinite (zero fmt d.negative) = true ∧ toReal (zero fmt d.negative) = d.toReal :=
+    ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative), by
+      rw [toReal_zero]
+      simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]⟩
+  -- A nonzero significand is a nonzero multiple `m * 2^k` within the overflow bound.
+  have hnonzero (hzero : d.significand ≠ 0) :
+      m ≠ 0 ∧ ((m * 2 ^ k).log2 : Int) + d.exponent ≤ fmt.maxNormalExponent :=
+    ⟨fun hm0 => hzero (by simp [hsig, hm0]),
+      hsig ▸ Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound⟩
   cases mode with
   | nearest =>
       exact roundDyadic_of_representable fmt hfmt d m k hsig hm hexp hbound
@@ -445,103 +420,37 @@ theorem Internal.Directed.roundDyadic_of_eq_mul_pow2
       exact roundDyadic_of_representable fmt hfmt d m k hsig hm hexp hbound
   | away =>
       by_cases hzero : d.significand = 0
-      · have hreal : d.toReal = 0 := by
-          simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [Internal.Directed.roundDyadic, roundDyadicAway, hzero, beq_self_eq_true,
-          ite_true]
-        exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
-          by rw [toReal_zero, hreal]⟩
-      · have hm0 : m ≠ 0 := by
-          intro hm0
-          exact hzero (by simp [hsig, hm0])
-        have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
-        rw [hsig] at hmax
-        have hpos := roundDyadicPosUp_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-        simp only [Internal.Directed.roundDyadic, roundDyadicAway, hzero, beq_iff_eq,
-          ite_false]
+      · simpa [Internal.Directed.roundDyadic, roundDyadicAway, hzero] using hzeroCase hzero
+      · obtain ⟨hm0, hmax⟩ := hnonzero hzero
+        simp only [Internal.Directed.roundDyadic, roundDyadicAway, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
-        cases hneg : d.negative
-        · simpa [roundDyadicPosUp] using hpos
-        · simp only [ite_true]
-          rw [roundDyadicMagnitudeUp_true_eq_neg_false fmt _ _ (by simp [hfmt])
-            (nativeOverflow_true_eq_neg_false_of_isIEEE fmt hfmt)]
-          refine ⟨by simpa [roundDyadicPosUp] using hpos.1, ?_⟩
-          rw [toReal_neg _ (by simpa [roundDyadicPosUp] using hpos.1)]
-          simpa [roundDyadicPosUp] using congrArg Neg.neg hpos.2
+        exact roundDyadicMagnitudeUp_of_representable fmt hfmt _ m k _ hm0 hm hexp hmax
   | towardZero =>
       by_cases hzero : d.significand = 0
-      · have hreal : d.toReal = 0 := by
-          simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [Internal.Directed.roundDyadic, roundDyadicTowardZero, hzero, beq_self_eq_true,
-          ite_true]
-        exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
-          by rw [toReal_zero, hreal]⟩
-      · have hm0 : m ≠ 0 := by
-          intro hm0
-          exact hzero (by simp [hsig, hm0])
-        have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
-        rw [hsig] at hmax
-        have hpos := roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
+      · simpa [Internal.Directed.roundDyadic, roundDyadicTowardZero, hzero] using hzeroCase hzero
+      · obtain ⟨hm0, hmax⟩ := hnonzero hzero
         simp only [Internal.Directed.roundDyadic, roundDyadicTowardZero, hzero, beq_iff_eq,
           ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
-        cases hneg : d.negative
-        · simpa [roundDyadicPosDown] using hpos
-        · simp only [ite_true]
-          rw [roundDyadicMagnitudeDown_true_eq_neg_false fmt _ _ (by simp [hfmt])]
-          refine ⟨by simpa [roundDyadicPosDown] using hpos.1, ?_⟩
-          rw [toReal_neg _ (by simpa [roundDyadicPosDown] using hpos.1)]
-          simpa [roundDyadicPosDown] using congrArg Neg.neg hpos.2
+        exact roundDyadicMagnitudeDown_of_representable fmt hfmt _ m k _ hm0 hm hexp hmax
   | up =>
       by_cases hzero : d.significand = 0
-      · have hreal : d.toReal = 0 := by
-          simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [Internal.Directed.roundDyadic, roundDyadicUp, hzero, beq_self_eq_true, ite_true]
-        exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
-          by rw [toReal_zero, hreal]⟩
-      · have hm0 : m ≠ 0 := by
-          intro hm0
-          exact hzero (by simp [hsig, hm0])
-        have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
-        rw [hsig] at hmax
+      · simpa [Internal.Directed.roundDyadic, roundDyadicUp, hzero] using hzeroCase hzero
+      · obtain ⟨hm0, hmax⟩ := hnonzero hzero
         simp only [Internal.Directed.roundDyadic, roundDyadicUp, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
-        cases hneg : d.negative
-        · have hpos := roundDyadicPosUp_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simpa [roundDyadicPosUp] using hpos
-        · have hpos :=
-            roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simp only [ite_true]
-          rw [roundDyadicMagnitudeDown_true_eq_neg_false fmt _ _ (by simp [hfmt])]
-          refine ⟨by simpa [roundDyadicPosDown] using hpos.1, ?_⟩
-          rw [toReal_neg _ (by simpa [roundDyadicPosDown] using hpos.1)]
-          simpa [roundDyadicPosDown] using congrArg Neg.neg hpos.2
+        cases d.negative
+        · exact roundDyadicMagnitudeUp_of_representable fmt hfmt false m k _ hm0 hm hexp hmax
+        · exact roundDyadicMagnitudeDown_of_representable fmt hfmt true m k _ hm0 hm hexp hmax
   | down =>
       by_cases hzero : d.significand = 0
-      · have hreal : d.toReal = 0 := by
-          simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hzero]
-        simp only [Internal.Directed.roundDyadic, roundDyadicDown, hzero, beq_self_eq_true,
-          ite_true]
-        exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt d.negative),
-          by rw [toReal_zero, hreal]⟩
-      · have hm0 : m ≠ 0 := by
-          intro hm0
-          exact hzero (by simp [hsig, hm0])
-        have hmax := Dyadic.leadingExponent_le_maxNormalExponent fmt d hzero hbound
-        rw [hsig] at hmax
+      · simpa [Internal.Directed.roundDyadic, roundDyadicDown, hzero] using hzeroCase hzero
+      · obtain ⟨hm0, hmax⟩ := hnonzero hzero
         simp only [Internal.Directed.roundDyadic, roundDyadicDown, hzero, beq_iff_eq, ite_false]
         rw [Dyadic.toReal_eq_signed_magnitude, hsig]
-        cases hneg : d.negative
-        · have hpos :=
-            roundDyadicPosDown_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simpa [roundDyadicPosDown] using hpos
-        · have hpos := roundDyadicPosUp_of_representable fmt hfmt m k d.exponent hm0 hm hexp hmax
-          simp only [ite_true]
-          rw [roundDyadicMagnitudeUp_true_eq_neg_false fmt _ _ (by simp [hfmt])
-            (nativeOverflow_true_eq_neg_false_of_isIEEE fmt hfmt)]
-          refine ⟨by simpa [roundDyadicPosUp] using hpos.1, ?_⟩
-          rw [toReal_neg _ (by simpa [roundDyadicPosUp] using hpos.1)]
-          simpa [roundDyadicPosUp] using congrArg Neg.neg hpos.2
+        cases d.negative
+        · exact roundDyadicMagnitudeDown_of_representable fmt hfmt false m k _ hm0 hm hexp hmax
+        · exact roundDyadicMagnitudeUp_of_representable fmt hfmt true m k _ hm0 hm hexp hmax
 
 /--
 Every rounding direction fixes an exactly representable dyadic whose significand fits in the
@@ -646,69 +555,52 @@ theorem cexp_toDyadic? {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hd : toDyadic? x = some d) (hm : d.significand ≠ 0) :
     cexp Numerics.binaryRadix (fexpOf fmt) d.toReal = d.exponent := by
   rw [cexp, Dyadic.magnitude_toReal d hm]
-  have hfin := isFinite_eq_true_of_toDyadic?_some hd
-  have hshape := toDyadic?_ofFields_of_isFinite fmt (signBit x) (expField x) (fracField x)
-    (expField_lt_pow2 x) (fracField_lt_pow2 x)
-    (by simpa only [ofFields_signBit_expField_fracField] using hfin)
-  rw [ofFields_signBit_expField_fracField, hd] at hshape
-  have hf := fracField_lt_pow2 x
-  by_cases he : expField x = 0
-  · by_cases hz : fracField x = 0
-    · simp only [he, hz, ite_true, Option.some.injEq] at hshape
-      simp [hshape] at hm
-    · simp only [he, hz, ite_true, ite_false, Option.some.injEq] at hshape
-      rw [hshape]
-      have hl : (fracField x).log2 < fmt.fracWidth := by
-        rw [Nat.log2_eq_log_two]
-        exact (Nat.log_lt_iff_lt_pow (by decide) hz).mpr hf
-      simp only [fexpOf, fltExp, Int.ofNat_eq_natCast]
-      exact max_eq_right (by omega)
-  · simp only [he, ite_false, Option.some.injEq] at hshape
-    rw [hshape]
-    have hm' : pow2 fmt.fracWidth + fracField x ≠ 0 := by
-      have hp : 0 < pow2 fmt.fracWidth := by simp [pow2_eq_two_pow]
-      omega
-    have hl : (pow2 fmt.fracWidth + fracField x).log2 = fmt.fracWidth := by
-      rw [Nat.log2_eq_log_two]
-      apply (Nat.log_eq_iff (Or.inr ⟨by decide, hm'⟩)).mpr
-      simp only [pow2_eq_two_pow, pow_succ]
-      omega
+  rcases log2_significand_of_toDyadic?_some hd hm with ⟨-, hl, he⟩ | ⟨hfield, hl, he⟩
+  · rw [he]
+    simp only [fexpOf, fltExp, Int.ofNat_eq_natCast]
+    exact max_eq_right (by omega)
+  · rw [he]
     simp only [hl, fexpOf, fltExp, FloatFormat.minSubnormalExponent,
       FloatFormat.minNormalExponent, Int.ofNat_eq_natCast]
     rw [max_eq_left (by omega)]
     omega
 
-/-- Equal nonzero numerical values have the same canonical decoded exponent. -/
+/--
+Equal nonzero numerical values have the same canonical decoded exponent. The second significand is
+nonzero because it denotes the same nonzero value.
+-/
 theorem toDyadic?_exponent_eq_of_toReal_eq {fmt : FloatFormat} {x y : Model fmt}
     {dx dy : Numerics.Dyadic} (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy)
-    (hx0 : dx.significand ≠ 0) (hy0 : dy.significand ≠ 0)
+    (hx0 : dx.significand ≠ 0)
     (hvalue : toReal x = toReal y) : dx.exponent = dy.exponent := by
+  have hy0 : dy.significand ≠ 0 := by
+    apply (Dyadic.toReal_eq_zero_iff dy).not.mp
+    have hv : dx.toReal = dy.toReal := by simpa [toReal_eq, hx, hy] using hvalue
+    rw [← hv]
+    exact (Dyadic.toReal_eq_zero_iff dx).not.mpr hx0
   rw [← cexp_toDyadic? hx hx0, ← cexp_toDyadic? hy hy0]
   congr 1
   simpa only [toReal_eq, hx, hy] using hvalue
 
-/-- A dyadic denotes zero exactly when its unsigned coefficient is zero. -/
-theorem Dyadic.toReal_eq_zero_iff (d : Numerics.Dyadic) :
-    d.toReal = 0 ↔ d.significand = 0 := by
-  have hp := zpow_ne_zero d.exponent (by norm_num : (2 : ℝ) ≠ 0)
-  cases hs : d.negative <;>
-    simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hs, hp]
-
-/-- Equal nonzero finite real values determine the complete binary word. -/
+/--
+Equal nonzero real values determine the complete binary word. Both words are finite, because NaN
+and the infinities denote zero.
+-/
 theorem eq_of_toReal_eq_of_nonzero {fmt : FloatFormat} {x y : Model fmt}
-    (hx : isFinite x = true) (hy : isFinite y = true)
     (hvalue : toReal x = toReal y) (hzero : toReal x ≠ 0) : x = y := by
-  obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
-  obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
+  obtain ⟨dx, hdx⟩ : ∃ d, toDyadic? x = some d := by
+    cases hdecode : toDyadic? x with
+    | none => exact absurd (by simp [toReal_eq, hdecode]) hzero
+    | some d => exact ⟨d, rfl⟩
+  obtain ⟨dy, hdy⟩ : ∃ d, toDyadic? y = some d := by
+    cases hdecode : toDyadic? y with
+    | none => exact absurd (hvalue.trans (by simp [toReal_eq, hdecode])) hzero
+    | some d => exact ⟨d, rfl⟩
   have hv : dx.toReal = dy.toReal := by simpa [toReal_eq, hdx, hdy] using hvalue
   have hx0 : dx.significand ≠ 0 := by
     apply (Dyadic.toReal_eq_zero_iff dx).not.mp
     simpa [toReal_eq, hdx] using hzero
-  have hy0 : dy.significand ≠ 0 := by
-    apply (Dyadic.toReal_eq_zero_iff dy).not.mp
-    rw [← hv]
-    exact (Dyadic.toReal_eq_zero_iff dx).not.mpr hx0
-  have he := toDyadic?_exponent_eq_of_toReal_eq hdx hdy hx0 hy0 hvalue
+  have he := toDyadic?_exponent_eq_of_toReal_eq hdx hdy hx0 hvalue
   have hm : dx.signedSignificand = dy.signedSignificand := by
     have hmReal : (dx.signedSignificand : ℝ) = (dy.signedSignificand : ℝ) := by
       apply mul_right_cancel₀ (zpow_ne_zero dy.exponent (by norm_num : (2 : ℝ) ≠ 0))
@@ -727,29 +619,14 @@ theorem eq_of_toReal_eq_of_nonzero {fmt : FloatFormat} {x y : Model fmt}
     simp_all
   exact eq_of_toDyadic?_eq_some hdx (hdy.trans (congrArg some hd.symm))
 
-/-- In a conventional IEEE format, rounding a decoded nonzero value restores its word. -/
-theorem Internal.Directed.roundDyadic_toDyadic?_of_nonzero {fmt : FloatFormat}
-    (hfmt : fmt.isIEEE = true) (mode : IEEERoundingMode) {x : Model fmt}
-    {d : Numerics.Dyadic} (hd : toDyadic? x = some d) (hm : d.significand ≠ 0) :
-    Internal.Directed.roundDyadic fmt mode d = x := by
-  have hfin := isFinite_eq_true_of_toDyadic?_some hd
-  have hv : toReal x = d.toReal := by simp [toReal_eq, hd]
-  have hb : |d.toReal| ≤ toReal (posMaxFinite fmt) := by
-    rw [← hv]
-    exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite x hfmt hfin
-  have hr := Internal.Directed.roundDyadic_of_representable fmt hfmt mode d
-    (toDyadic?_significand_lt x hd) (minSubnormalExponent_le_toDyadic? x hd) hb
-  exact eq_of_toReal_eq_of_nonzero hr.1 hfin (hr.2.trans hv.symm)
-    (by rw [hr.2]; exact (Dyadic.toReal_eq_zero_iff d).not.mpr hm)
-
-/-- In a conventional IEEE format, rounding an exact zero preserves its sign. -/
-theorem Internal.Directed.roundDyadic_zero (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+/-- Rounding an exact zero preserves its sign in every direction and every encoding. -/
+theorem Internal.Directed.roundDyadic_zero (fmt : FloatFormat)
     (mode : IEEERoundingMode) (negative : Bool) (exponent : Int) :
     Internal.Directed.roundDyadic fmt mode ⟨negative, 0, exponent⟩ = zero fmt negative := by
-  cases negative <;> cases mode <;>
+  cases hfmt : fmt.isIEEE <;> cases negative <;> cases mode <;>
     simp [Internal.Directed.roundDyadic, roundDyadicTowardZero, roundDyadicUp, roundDyadicDown,
-      roundDyadicNearestAway, roundDyadicAway, Model.roundDyadic, hfmt, Model.ieeeRoundDyadic, zero,
-      modelSign, posZero_eq_ofModel_zero, negZero_eq_ofModel_zero]
+      roundDyadicNearestAway, roundDyadicAway, Model.roundDyadic, hfmt, Model.ieeeRoundDyadic,
+      roundDyadicGeneral, zero, modelSign, posZero_eq_ofModel_zero, negZero_eq_ofModel_zero]
 
 /-- In a conventional IEEE format, rounding a decoded finite dyadic restores its complete word. -/
 theorem Internal.Directed.roundDyadic_toDyadic? {fmt : FloatFormat}
@@ -760,11 +637,16 @@ theorem Internal.Directed.roundDyadic_toDyadic? {fmt : FloatFormat}
   · have hz := isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hm
     have hdx := toDyadic?_eq_zero_of_isZero_eq_true x hz
     have hd' := Option.some.inj (hd.symm.trans hdx)
-    rw [hd', Internal.Directed.roundDyadic_zero fmt hfmt]
+    rw [hd', Internal.Directed.roundDyadic_zero fmt]
     apply eq_of_toDyadic?_eq_some (d := ⟨Model.signBit x, 0, 0⟩) _ hdx
     simp [toDyadic?_zero, signBit_zero,
       FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt]
-  · exact Internal.Directed.roundDyadic_toDyadic?_of_nonzero hfmt mode hd hm
+  · have hv : toReal x = d.toReal := by simp [toReal_eq, hd]
+    have hr := Internal.Directed.roundDyadic_of_representable fmt hfmt mode d
+      (toDyadic?_significand_lt x hd) (minSubnormalExponent_le_toDyadic? x hd)
+      (abs_toReal_le_posMaxFinite_of_toDyadic?_some x hd)
+    exact eq_of_toReal_eq_of_nonzero (hr.2.trans hv.symm)
+      (by rw [hr.2]; exact (Dyadic.toReal_eq_zero_iff d).not.mpr hm)
 
 
 end Model

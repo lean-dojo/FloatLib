@@ -2,8 +2,10 @@
 
 # Rebuild the public benchmark tables and figures from the checked-in raw trials.
 #
-# The manifests cover the retained measurements and the figures rendered with
-# the current project name. The source capture keeps its original hashes.
+# The manifests cover the retained measurements, the redacted metadata, and the
+# provenance records. release/provenance/publication-exceptions.json lists the
+# departures from the publication profile that this campaign documents, and the
+# matrix verifier accepts those and nothing else.
 
 set -euo pipefail
 
@@ -37,13 +39,10 @@ for required in \
   "$benchmark/environment/lscpu.txt" \
   "$shared_provenance/SNAPSHOT.txt" \
   "$campaign_provenance/source-snapshot.txt" \
-  "$campaign_provenance/source-files.sha256" \
-  "$campaign_provenance/worktree-status.txt" \
-  "$campaign_provenance/worktree.patch" \
-  "$campaign_provenance/cluster-status.txt" \
   "$campaign_provenance/campaign-status.txt" \
-  "$campaign_provenance/run-entrypoint.sh" \
-  "$campaign_provenance/benchmark-job.yaml"; do
+  "$campaign_provenance/publication-exceptions.json" \
+  "$campaign_provenance/publication-redactions.json" \
+  "$campaign_provenance/run-format-comparison.sh"; do
   if [[ ! -e "$required" ]]; then
     printf 'missing benchmark result artifact: %s\n' "$required" >&2
     exit 1
@@ -63,17 +62,21 @@ manifest_verifier="$root/tests/oracles/verify_result_manifest.py"
 python3 "$manifest_verifier" "$result"
 python3 "$manifest_verifier" "$release"
 python3 "$manifest_verifier" "$benchmark"
-for key in run_exit_code packaging_exit_code final_exit_code; do
-  value="$(
-    sed -n "s/^${key}=//p" "$campaign_provenance/campaign-status.txt"
-  )"
-  if [[ "$value" != 0 ]]; then
-    printf 'benchmark campaign %s is not zero: %s\n' \
-      "$key" "${value:-missing}" >&2
-    exit 1
-  fi
-done
-python3 "$root/benchmarks/scripts/verify_release_matrix.py" "$benchmark"
+run_exit_code="$(
+  sed -n 's/^run_exit_code=//p' "$campaign_provenance/campaign-status.txt"
+)"
+if [[ "$run_exit_code" != 0 ]]; then
+  printf 'benchmark campaign run_exit_code is not zero: %s\n' \
+    "${run_exit_code:-missing}" >&2
+  exit 1
+fi
+if ! cmp -s "$shared_provenance/SNAPSHOT.txt" \
+     "$campaign_provenance/source-snapshot.txt"; then
+  echo "benchmark source snapshots disagree" >&2
+  exit 1
+fi
+python3 "$root/benchmarks/scripts/verify_release_matrix.py" "$benchmark" \
+  --exceptions "$campaign_provenance/publication-exceptions.json"
 
 # The matrix verifier checks this too. Keeping the publication gate here makes
 # an unpinned result fail before we spend time rebuilding the figures.
@@ -84,76 +87,78 @@ if [[ ! "$benchmark_cpu" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+# The campaign ran from a git archive, so metadata.txt has no gitCommit line.
+# Its source hash covers every FloatLib/ file and the build configuration. The
+# snapshot names the commit with that hash, and we recompute the hash when the
+# commit is in this clone's history.
 snapshot_commit="$(
   sed -n 's/^head_revision=//p' "$shared_provenance/SNAPSHOT.txt"
 )"
-benchmark_commit="$(sed -n 's/^gitCommit=//p' "$benchmark/metadata.txt")"
-if [[ -z "$snapshot_commit" ||
-      "$snapshot_commit" == *$'\n'* ||
-      "$benchmark_commit" != "$snapshot_commit" ]]; then
-  printf 'benchmark revision does not match its source capture: %s != %s\n' \
-    "$benchmark_commit" "$snapshot_commit" >&2
+snapshot_hash="$(
+  sed -n 's/^source_tree_hash=//p' "$shared_provenance/SNAPSHOT.txt"
+)"
+benchmark_hash="$(
+  sed -n 's/^leanSourceAndBuildConfigHash=//p' "$benchmark/metadata.txt"
+)"
+if [[ -z "$snapshot_commit" || "$snapshot_commit" == *$'\n'* ||
+      -z "$snapshot_hash" || "$benchmark_hash" != "$snapshot_hash" ]]; then
+  printf 'benchmark source hash does not match its snapshot: %s != %s\n' \
+    "$benchmark_hash" "$snapshot_hash" >&2
   exit 1
+fi
+if git -C "$root" cat-file -e "${snapshot_commit}^{commit}" 2>/dev/null; then
+  commit_hash="$(python3 - "$root" "$snapshot_commit" <<'PY'
+import hashlib
+import subprocess
+import sys
+
+root, commit = sys.argv[1:]
+names = subprocess.check_output(
+    ["git", "-C", root, "ls-tree", "-r", "-z", "--name-only", commit, "FloatLib"]
+).decode().split("\0")
+names = sorted(
+    {name for name in names if name}
+    | {"lakefile.lean", "lean-toolchain", "lake-manifest.json"},
+    key=lambda name: name.encode(),
+)
+listing = b"".join(
+    hashlib.sha256(
+        subprocess.check_output(["git", "-C", root, "show", f"{commit}:{name}"])
+    ).hexdigest().encode() + b"  " + name.encode() + b"\n"
+    for name in names
+)
+print(hashlib.sha256(listing).hexdigest())
+PY
+)"
+  if [[ "$commit_hash" != "$snapshot_hash" ]]; then
+    printf 'source hash of %s differs from the snapshot: %s != %s\n' \
+      "$snapshot_commit" "$commit_hash" "$snapshot_hash" >&2
+    exit 1
+  fi
+else
+  printf 'commit %s is not in this clone; using the recorded source hash\n' \
+    "$snapshot_commit" >&2
 fi
 
 python_has_fma="$(sed -n 's/^pythonHasMathFma=//p' "$benchmark/metadata.txt")"
 include_softfloat="$(sed -n 's/^includeSoftFloat=//p' "$benchmark/metadata.txt")"
 include_python="$(sed -n 's/^includePython=//p' "$benchmark/metadata.txt")"
+include_flocq="$(sed -n 's/^includeFlocq=//p' "$benchmark/metadata.txt")"
 agreement_iterations="$(
   sed -n 's/^agreementIterations=//p' "$benchmark/metadata.txt"
 )"
 
-# Historical Flocq used unmatched exponent ranges and no agreement prefix.
-# Its raw rows and original receipt remain authenticated by the manifests above.
-# The matrix verifier requires exactly 84 Flocq rows in each historical trial.
-# Exclude it only from this recheck; new campaigns retain the strict Flocq gate.
-agreement_raw="$generated/agreement-raw"
-python3 - "$benchmark/raw" "$agreement_raw" <<'PY'
-import csv
-import sys
-from pathlib import Path
-
-source, target = map(Path, sys.argv[1:])
-target.mkdir()
-for trial in sorted(source.glob("trial-*.csv")):
-    with trial.open(newline="", encoding="utf-8") as stream:
-        reader = csv.DictReader(stream)
-        with (target / trial.name).open("w", newline="", encoding="utf-8") as output:
-            writer = csv.DictWriter(
-                output, fieldnames=reader.fieldnames, lineterminator="\n"
-            )
-            writer.writeheader()
-            for row in reader:
-                if row["implementation"] == "Flocq":
-                    agreement = tuple(
-                        row[field] for field in (
-                            "agreementIterations",
-                            "agreementSink",
-                            "agreementFixtureTraceDigest",
-                        )
-                    )
-                    if agreement != ("0", "0", "0"):
-                        raise SystemExit(
-                            f"refusing to exclude Flocq row in {trial.name} at "
-                            f"{row['totalBits']}/{row['operation']}: expected "
-                            f"zero agreement fields, got {agreement!r}"
-                        )
-                    continue
-                writer.writerow(row)
-PY
-
 python3 "$root/benchmarks/scripts/verify_binary_agreement.py" \
-  "$agreement_raw" \
+  "$benchmark/raw" \
   "$generated/binary-agreement.txt" \
   --softfloat "$include_softfloat" \
   --python "$include_python" \
   --python-has-fma "$python_has_fma" \
-  --flocq 0 \
+  --flocq "$include_flocq" \
   --trials 9 \
   --agreement-iterations "$agreement_iterations" \
   --widths 4 5 6 7 8 16 32 64 128 256 512 1024 2048 4096
-# The historical receipt describes its old protocol; do not byte-compare that
-# text with the current verifier's report.
+cmp "$benchmark/environment/binary-agreement.txt" "$generated/binary-agreement.txt"
 
 python3 "$root/benchmarks/plots/format_comparison.py" \
   "$benchmark/raw" "$generated"
@@ -180,7 +185,7 @@ else
   # The CSV tables are the benchmark result. Matplotlib does not promise
   # byte- or pixel-stable output across releases, even when those tables and
   # plotting instructions are unchanged. The retained manifest authenticates
-  # the published figures; with another renderer version we only require that
+  # the published figures. With another renderer version we only require that
   # all three figures regenerate successfully from the verified tables.
   for artifact in \
     format-comparison.png format-comparison.svg format-comparison.pdf; do

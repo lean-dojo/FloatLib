@@ -33,22 +33,14 @@ theorem bitAtWord_eq_bitAt
   rw [FixedWord.bitAtWord_eq_testBit, bitAt_eq_testBit]
 
 /-- Machine-width low-bit extraction reuses the existing Posit native-field semantics. -/
-theorem lowBitsWord_eq_lowBits
-    (value width : UInt64) (hwidth : width ≤ 64) :
+theorem lowBitsWord_eq_lowBits (value width : UInt64) :
     FixedWord.lowBitsWord value width = lowBits value width.toNat := by
-  apply UInt64.toNat_inj.mp
-  rw [FixedWord.lowBitsWord_toNat value width hwidth,
-    lowBits_toNat_of_le value width.toNat]
-  exact_mod_cast hwidth
+  simp [FixedWord.lowBitsWord, FixedWord.lowMaskWord, lowBits, lowMask, UInt64.lt_iff_toNat_lt]
 
 /-- Machine-width right shift agrees with the existing Posit native-field operation. -/
-theorem shiftRightWord_eq_shiftRight
-    (value shift : UInt64) (hshift : shift < 64) :
+theorem shiftRightWord_eq_shiftRight (value shift : UInt64) :
     FixedWord.shiftRightWord value shift = shiftRight value shift.toNat := by
-  apply UInt64.toNat_inj.mp
-  rw [FixedWord.shiftRightWord_toNat value shift hshift,
-    shiftRight_toNat value shift.toNat]
-  exact_mod_cast hshift
+  simp [FixedWord.shiftRightWord, shiftRight, UInt64.lt_iff_toNat_lt]
 
 /-- Native minimum commutes with observation as a natural number. -/
 private theorem min_toNat (left right : UInt64) :
@@ -71,13 +63,12 @@ theorem countLeadingRunWord_toNat_eq
       countLeadingRun value width.toNat bit := by
   have hwidthNat : width.toNat ≤ 64 := by
     exact_mod_cast hwidth
-  rw [FixedWord.countLeadingRunWord_toNat value width bit hwidth]
+  rw [FixedWord.countLeadingRunWord_toNat value width bit]
   unfold countLeadingRun
   simp only [ite_eq_left hwidthNat]
   unfold countLeadingZeros
   simp only [FixedWord.log2Word_eq_log2]
-  rw [← lowBitsWord_eq_lowBits
-    (if bit then ~~~value else value) width hwidth]
+  rw [← lowBitsWord_eq_lowBits (if bit then ~~~value else value) width]
 
 /-- A nonnegative word below the signed boundary has the same `Int64` and mathematical value. -/
 private theorem toInt_toInt64_of_lt
@@ -148,13 +139,10 @@ private theorem trailing_toNat (payload run : UInt64) (hrun : run ≤ payload) :
 
 /-- Significand assembly agrees with the reference once the fraction width is known. -/
 private theorem significand_eq (code fraction : UInt64) (fractionNat : Nat)
-    (hfraction : fraction.toNat = fractionNat) (hlt : fractionNat < 64) :
+    (hfraction : fraction.toNat = fractionNat) :
     FixedWord.lowBitsWord code fraction ||| ((1 : UInt64) <<< fraction) =
       lowBits code fractionNat ||| ((1 : UInt64) <<< UInt64.ofNat fractionNat) := by
-  rw [lowBitsWord_eq_lowBits code fraction (UInt64.le_iff_toNat_le.mpr (by
-      rw [hfraction]
-      exact hlt.le)),
-    hfraction, ← hfraction, UInt64.ofNat_toNat]
+  rw [lowBitsWord_eq_lowBits code fraction, hfraction, ← hfraction, UInt64.ofNat_toNat]
 
 /--
 The fully machine-scalar decoder refines the reference Posit field decoder.
@@ -233,17 +221,11 @@ theorem withNonnegativeMachineFieldsAtPayload_eq_reference {α : Type}
       omega
     have hstoredExponent : storedExponentWord = storedExponentNat := by
       unfold storedExponentWord storedExponentNat
-      rw [shiftRightWord_eq_shiftRight code fractionWord (UInt64.lt_iff_toNat_lt.mpr (by
-          rw [hfraction]
-          exact hfractionLt)),
-        hfraction,
-        lowBitsWord_eq_lowBits _ usedExponentWord (UInt64.le_iff_toNat_le.mpr (by
-          rw [husedExponent]
-          exact le_trans husedExponentNatLe (by decide))),
-        husedExponent]
+      rw [shiftRightWord_eq_shiftRight code fractionWord, hfraction,
+        lowBitsWord_eq_lowBits _ usedExponentWord, husedExponent]
     have hstoredLt : storedExponentNat.toNat < 2 ^ usedExponentNat := by
       unfold storedExponentNat
-      rw [lowBits_toNat_of_le _ _ (by omega)]
+      rw [lowBits_toNat]
       exact Nat.mod_lt _ (Nat.two_pow_pos _)
     obtain ⟨hexponentField, hexponentFieldLe⟩ :=
       exponentField_toNat storedExponentNat usedExponentWord
@@ -257,7 +239,7 @@ theorem withNonnegativeMachineFieldsAtPayload_eq_reference {α : Type}
         continuation (lowBits code fractionNat ||| ((1 : UInt64) <<< UInt64.ofNat fractionNat))
           ((if regimeBitNat then Int.ofNat regimeRunNat - 1 else -Int.ofNat regimeRunNat) * 4 +
             Int.ofNat (storedExponentNat.toNat <<< (2 - usedExponentNat)) - Int.ofNat fractionNat)
-    rw [significand_eq code fractionWord fractionNat hfraction hfractionLt,
+    rw [significand_eq code fractionWord fractionNat hfraction,
       toInt_regimeExponent regimeBitWord regimeRunWord _ fractionWord (by omega)
         (by rw [hstoredExponent, hexponentField]; exact hexponentFieldLe) (by omega),
       hregimeBit, hregimeRun, hstoredExponent, hexponentField, husedExponent, hfraction]

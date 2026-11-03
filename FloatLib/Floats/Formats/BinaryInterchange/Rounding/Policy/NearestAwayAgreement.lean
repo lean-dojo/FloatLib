@@ -170,6 +170,18 @@ theorem roundQuot_nearestAway_eq_roundQuotDirected_of_tie (sign : Bool)
     omega
   simp [roundQuot, roundQuotDirected, roundQuotient_up_eq, hdenominator, hremainder, hbelow]
 
+/--
+The directed policy that rounds a magnitude of sign `sign` away from zero, downward for a negative
+value and upward otherwise, is ceiling quotient rounding.
+-/
+private theorem roundQuot_awayFromZero_eq_roundQuotDirected (sign : Bool)
+    (entropy numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
+    roundQuot (if sign then .down else .up) sign entropy numerator denominator =
+      roundQuotDirected true numerator denominator := by
+  cases sign
+  · exact roundQuot_up_eq_roundQuotDirected false entropy _ _ hdenominator
+  · exact roundQuot_down_eq_roundQuotDirected true entropy _ _ hdenominator
+
 /-! ## Rounding-mode congruence of the general engine -/
 
 /--
@@ -381,11 +393,7 @@ theorem roundDyadicGeneral_nearestAway_eq_roundDyadicNearestAway (fmt : FloatFor
         rw [hlog] at hsub
         rw [roundQuot_nearestAway_eq_roundQuotDirected_of_tie _ _ _ _ hdenominator
           (hsubTie hsub)]
-        cases sign
-        · exact (roundQuot_up_eq_roundQuotDirected false entropy _ _
-            hdenominator).symm
-        · exact (roundQuot_down_eq_roundQuotDirected true entropy _ _
-            hdenominator).symm
+        exact (roundQuot_awayFromZero_eq_roundQuotDirected sign entropy _ _ hdenominator).symm
       · intro _ hnormal _
         rw [hlog] at hnormal
         have hshiftedDenominator :
@@ -400,20 +408,13 @@ theorem roundDyadicGeneral_nearestAway_eq_roundDyadicNearestAway (fmt : FloatFor
         dsimp only
         rw [roundQuot_nearestAway_eq_roundQuotDirected_of_tie _ _ _ _ hshiftedDenominator
           (hnormalTie hnormal)]
-        cases sign
-        · exact (roundQuot_up_eq_roundQuotDirected false entropy _ _
-            hshiftedDenominator).symm
-        · exact (roundQuot_down_eq_roundQuotDirected true entropy _ _
-            hshiftedDenominator).symm
+        exact (roundQuot_awayFromZero_eq_roundQuotDirected sign entropy _ _
+          hshiftedDenominator).symm
     rw [haway]
     have hdirected :=
       roundRatGeneralOfDenNeZero_directed_dyadic_eq fmt
         (if sign then .down else .up) true sign entropy mantissa exponent
-        (by
-          intro numerator denominator hden
-          cases sign
-          · exact roundQuot_up_eq_roundQuotDirected _ _ _ _ hden
-          · exact roundQuot_down_eq_roundQuotDirected _ _ _ _ hden)
+        (fun _ _ hden => roundQuot_awayFromZero_eq_roundQuotDirected sign entropy _ _ hden)
         (by cases sign <;> rfl) (by cases sign <;> rfl)
     dsimp only at hdirected
     rw [hdirected, roundRatMagnitudeDirectedScaled_dyadic_eq]
@@ -422,6 +423,13 @@ theorem roundDyadicGeneral_nearestAway_eq_roundDyadicNearestAway (fmt : FloatFor
         dyadicIsGridTie fmt { negative := sign, significand := mantissa, exponent := exponent } =
           false :=
       Bool.eq_false_of_not_eq_true htie
+    -- Exact scaling of a zero mantissa is zero, so a nonzero scaled numerator has a nonzero
+    -- mantissa.
+    have hmantissa_of_numerator
+        (hnumerator : (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1 exponent).1 ≠ 0) :
+        mantissa ≠ 0 := by
+      rintro rfl
+      exact hnumerator (by simp [Numerics.RationalBinary.scaleByPowerOfTwo]; split <;> rfl)
     have heven :
         roundRatGeneralOfDenNeZero fmt
             { rounding := .nearestAway, overflow := .native, underflow := .gradual }
@@ -438,19 +446,13 @@ theorem roundDyadicGeneral_nearestAway_eq_roundDyadicNearestAway (fmt : FloatFor
       · intro _ _
         rfl
       · intro hnumerator hsub
-        have hmantissa : mantissa ≠ 0 := by
-          intro hzero
-          subst hzero
-          exact hnumerator (by simp [Numerics.RationalBinary.scaleByPowerOfTwo]; split <;> rfl)
-        rw [floorLog2_scaleByPowerOfTwo_den_one mantissa exponent hmantissa] at hsub
+        rw [floorLog2_scaleByPowerOfTwo_den_one mantissa exponent
+          (hmantissa_of_numerator hnumerator)] at hsub
         apply roundQuot_nearestAway_eq_nearest_of_ne
         intro hsiteTie
         exact htie ((subnormalQuotient_tie_iff fmt sign mantissa exponent hsub).mp hsiteTie)
       · intro hnumerator hnormal _
-        have hmantissa : mantissa ≠ 0 := by
-          intro hzero
-          subst hzero
-          exact hnumerator (by simp [Numerics.RationalBinary.scaleByPowerOfTwo]; split <;> rfl)
+        have hmantissa := hmantissa_of_numerator hnumerator
         rw [floorLog2_scaleByPowerOfTwo_den_one mantissa exponent hmantissa] at hnormal
         dsimp only
         apply roundQuot_nearestAway_eq_nearest_of_ne
@@ -468,12 +470,10 @@ end Policy
 
 /-- The nonnegative scaled-rational comparison with a positive dyadic is the real comparison. -/
 private theorem compareDyadicScaled?_false_eq_some_compare (numerator denominator : Nat)
-    (value : Numerics.Dyadic) (hdenominator : denominator ≠ 0) (hsign : value.negative = false)
-    (hsignificand : value.significand ≠ 0) :
+    (value : Numerics.Dyadic) (hdenominator : denominator ≠ 0) :
     Numerics.RationalBinary.compareDyadicScaled? false numerator denominator 0 value =
       some (compare ((numerator : ℝ) / denominator) value.toReal) := by
-  rw [compareDyadicScaled?_false_eq_compare numerator denominator 0 value hdenominator hsign
-    hsignificand]
+  rw [compareDyadicScaled?_false_eq_compare numerator denominator 0 value hdenominator]
   simp [scaledRatToReal]
 
 /--
@@ -485,8 +485,7 @@ theorem rationalNearestAwayOverflowsScaled_eq_true_iff (fmt : FloatFormat)
     rationalNearestAwayOverflowsScaled fmt numerator denominator 0 = true ↔
       (overflowMidpoint fmt).toReal ≤ (numerator : ℝ) / denominator := by
   unfold rationalNearestAwayOverflowsScaled
-  rw [compareDyadicScaled?_false_eq_some_compare numerator denominator _ hdenominator rfl
-    (by simp [overflowMidpoint])]
+  rw [compareDyadicScaled?_false_eq_some_compare numerator denominator _ hdenominator]
   cases hcompare : compare ((numerator : ℝ) / denominator) (overflowMidpoint fmt).toReal
   · simp only [Bool.false_eq_true, false_iff, not_le]
     exact compare_lt_iff_lt.mp hcompare
@@ -505,13 +504,8 @@ theorem rationalIsTinyAfterRoundingScaled_nearest_eq {fmt : FloatFormat} (sign :
     rationalIsTinyAfterRoundingScaled fmt .nearest sign numerator denominator 0 rounded =
       (isTinyAfterRounding rounded ||
         decide ((numerator : ℝ) / denominator < (underflowMidpoint fmt).toReal)) := by
-  have hsignificand : (underflowMidpoint fmt).significand ≠ 0 := by
-    have := Nat.two_pow_pos fmt.fracWidth
-    simp only [underflowMidpoint, pow2_eq_two_pow]
-    omega
   simp only [rationalIsTinyAfterRoundingScaled]
-  rw [compareDyadicScaled?_false_eq_some_compare numerator denominator _ hdenominator rfl
-    hsignificand]
+  rw [compareDyadicScaled?_false_eq_some_compare numerator denominator _ hdenominator]
   cases isTinyAfterRounding rounded
   · cases hcompare : compare ((numerator : ℝ) / denominator) (underflowMidpoint fmt).toReal
     · simp [compare_lt_iff_lt.mp hcompare]

@@ -10,9 +10,10 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Proof
 public import Mathlib.Analysis.Real.Pi.Irrational
 
 /-!
-# Every nonzero argument has an accepting window
+# Every argument has an accepting window
 
-For `m > 0`, `m * 2 ^ e * 2/π` is irrational because `π` is (`irrational_pi`), so it keeps a
+For `m = 0` the error bound is zero and every window is accepted. For `m > 0`, `m * 2 ^ e * 2/π`
+is irrational because `π` is (`irrational_pi`), so it keeps a
 positive distance `d` from every integer. A reduction of it satisfies
 `|fraction + η| ≥ d * 2 ^ scale` with `0 ≤ η < error`, so `|fraction| > d * 2 ^ scale - error`.
 The error of `reduceWindow` is `2 m` for every window while `2 ^ scale` doubles with each bit of
@@ -59,11 +60,15 @@ theorem irrational_mul_two_div_pi {m : ℕ} (hm : 0 < m) (e : ℤ) :
   rwa [hcast] at h
 
 /--
-For `m > 0`, every wide enough window reduces `m * 2 ^ e` with `bits` relative bits:
+Every wide enough window reduces `m * 2 ^ e` with `bits` relative bits:
 `QuarterTurns.accepts bits` holds for all windows from some `start` on.
+
+For `m = 0` the error bound is zero, so every window is accepted.
 -/
-theorem exists_accepting_window {m : ℕ} (hm : 0 < m) (e : ℤ) (bits : ℕ) :
+theorem exists_accepting_window {m : ℕ} (e : ℤ) (bits : ℕ) :
     ∃ start, ∀ window, start ≤ window → (reduceWindow m e window).accepts bits = true := by
+  rcases Nat.eq_zero_or_pos m with rfl | hm
+  · exact ⟨0, fun window _ => by simp [reduceWindow, QuarterTurns.accepts]⟩
   obtain ⟨d, hd, hdist⟩ := exists_pos_le_abs_sub_intCast (irrational_mul_two_div_pi hm e)
   obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt (2 * m * (2 ^ (bits + 1) + 1) / d : ℝ)
     (by norm_num : (1 : ℝ) < 2)
@@ -100,10 +105,10 @@ theorem exists_accepting_window {m : ℕ} (hm : 0 < m) (e : ℤ) (bits : ℕ) :
     exact_mod_cast this
   simpa [QuarterTurns.accepts, Nat.shiftLeft_eq] using hnat
 
-/-- For `m > 0`, enough fuel makes `reduce` return an accepted reduction. -/
-theorem exists_accepts_reduce {m : ℕ} (hm : 0 < m) (e : ℤ) (p bits : ℕ) :
+/-- Enough fuel makes `reduce` return an accepted reduction. -/
+theorem exists_accepts_reduce {m : ℕ} (e : ℤ) (p bits : ℕ) :
     ∃ fuel, (reduce m e p bits fuel).accepts bits = true := by
-  obtain ⟨start, hstart⟩ := exists_accepting_window hm e bits
+  obtain ⟨start, hstart⟩ := exists_accepting_window (m := m) e bits
   refine ⟨start, accepts_reduce le_rfl (hstart _ ?_)⟩
   rw [attemptWindow, Nat.shiftLeft_eq]
   have hlt : start < 2 ^ start := Nat.lt_two_pow_self

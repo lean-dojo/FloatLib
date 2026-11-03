@@ -172,6 +172,9 @@ them is `x` itself, so rounding `x` moved a quarter unit toward zero selects the
 encoding of `sin x`, also when `x` is a rounding midpoint. A shorter-than-necessary unit gives
 an argument with at least about `2 |leading|` bits, whose sine is evaluated from every sine
 coefficient of the configuration.
+
+The public `sin`, `cos` and `sinCos` never call it: `sinCosWithProvider` returns a tiny format
+value itself. It is reached by calling `sinCosScaledWith` directly with a dyadic argument.
 -/
 def tinySine (fmt : FloatFormat) (config : Config) (value : Numerics.Dyadic)
     (leading : Int) : Model fmt :=
@@ -198,7 +201,8 @@ rounding of each result. The format's invalid result means that the reduction wo
 level above `trigReductionLevelLimit` or that no permitted window was accepted. For an argument
 `m * 2^e` whose significand has `k` bits, the first window stays within the limit when
 `max e 0 + 2 k + fracWidth + 59 ≤ 2^21`. The results are deterministic approximations without a
-numerical accuracy certificate.
+numerical accuracy certificate. `sinCosWithProvider` handles tiny format values before calling
+this function, so its tiny-argument branch serves direct dyadic calls.
 -/
 def sinCosScaledWith (fmt : FloatFormat) (config : Config)
     (value : Numerics.Dyadic) : Model fmt × Model fmt :=

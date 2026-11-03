@@ -184,10 +184,26 @@ end Binary
 /--
 An executable binary format selected by its numerical parameters.
 
+`exponentBits` and `fractionBits` are the widths of the exponent and fraction fields, `encoding`
+chooses how the special bit patterns are read (`.ieee` by default), and `bias` is the exponent
+bias, by default the encoding's conventional bias for that exponent width. The next four
+arguments are proofs that `exponentBits ≥ 2`, `fractionBits ≥ 1`, the bias is positive, and the
+bias is at most the largest finite exponent field; `decide` discharges them for literal parameters.
+
 The stored width is derived as `1 + exponentBits + fractionBits`, so no separate width parameter
-can disagree with the layout. Storage and operation implementations are selected statically
-from the resulting format. The optional `plan` and `code` parameters let generic code use the
-same interface with another certified carrier.
+can disagree with the layout. Storage and operation implementations are selected statically from
+the resulting format. `plan` is the storage plan. The default,
+`Configured.StoragePlan.forKnownWidth` at that width, stores the encoding in the smallest of
+`UInt8`, `UInt16`, `UInt32` and `UInt64` that holds it, in two `UInt64` words (`.pair`) for the
+65- to 128-bit layouts that the two-word kernels serve, and otherwise keeps the exact-width proof
+model (`.wide`). `ExecFloat.BinaryLimbs` chooses the `.limbs` plan instead. FloatLib's codec, and
+with it literals and arithmetic, is found for `forKnownWidth` plans and for `.limbs`. Another plan
+constructor written directly, such as `.word64 h` for a 32-bit format, still gives a well-formed
+type, but instance search does not find a codec for it. `code` is the type that stores the values
+and is not checked against `plan`: FloatLib provides the codec, and with it arithmetic, comparison
+and conversion, only for the default `Configured.Code plan`. Another type still gives a
+well-formed type, but its operations need a `ModelCodec plan (Model format) code` instance whose
+laws the user proves.
 -/
 abbrev Binary
     (exponentBits fractionBits : Nat)

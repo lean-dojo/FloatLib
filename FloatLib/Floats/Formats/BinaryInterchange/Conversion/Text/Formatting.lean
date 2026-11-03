@@ -28,7 +28,25 @@ infinities and NaNs, including the sign, signaling state and payload of a NaN.
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
-/-- How `format` writes a binary value. -/
+/--
+How `format` writes a binary value. For the binary32 value nearest `0.1`, rounding to nearest-even:
+
+| Style | Text | What `mode` does |
+| --- | --- | --- |
+| `.shortest` | `"0.1"` | the direction the text is read back in |
+| `.exact` | `"100000001490116119384765625e-27"` | nothing: every digit |
+| `.significant (digits := 4)` | `"1000e-4"` | rounds the digits |
+| `.fixed (places := 3)` | `"0.100"` | rounds the digits |
+| `.scientific (places := 3)` | `"1.000e-1"` | rounds the digits |
+| `.hex` | `"0xcccccdp-27"` | nothing: the exact integral significand and exponent |
+| `.hex (.significant (digits := 3))` | `"0x19ap-12"` | rounds the hexadecimal digits |
+
+`.fixed` and `.scientific` count places after the point, as C's `%.3f` and `%.3e` do, so
+`.scientific (places := 3)` keeps four significant digits. With `(mode := .up)` the three decimal
+styles that round give `"1001e-4"`, `"0.101"` and `"1.001e-1"`. With `(mode := .down)` the
+hexadecimal one gives `"0x199p-12"`, and the display is `"0.100000002"`, a shortest decimal that
+rounds down to this value.
+-/
 inductive TextStyle where
   /-- The shortest decimal that reads back as the value, or a short exact value: the display. -/
   | shortest
@@ -42,6 +60,7 @@ inductive TextStyle where
   | scientific (places : Nat)
   /-- A hexadecimal significand with a `p` binary exponent, exact or to significant digits. -/
   | hex (precision : Numerics.DecimalText.Precision := .exact)
+  deriving DecidableEq, Repr
 
 namespace Internal.Status
 
@@ -83,9 +102,15 @@ By default this is the display: the exact value when it has at most `d` signific
 17 for binary64), and otherwise the shortest decimal the search finds that `parse` reads back as
 `value`, with the exact value as the fallback. It uses fixed notation from `0.0001` up to `10^d` and
 an `e` exponent otherwise. `toString`, `repr` and `#eval` use it. `style` selects the exact decimal
-or hexadecimal digits, significant digits, or fixed or scientific notation. Styles that round do so
-once in `mode`, and with `mode` the display reads back in that mode. With `status := true` the
-result also carries the inexact indicator of that rounding.
+or hexadecimal digits, significant digits, or fixed or scientific notation, as the `TextStyle`
+table shows.
+
+What `mode` does depends on the style. For the display it is the direction the text is read back
+in: the search keeps a candidate only if `parse` in `mode` returns `value`. The styles that round,
+`.significant`, `.fixed`, `.scientific` and `.hex (.significant n)`, round the printed digits once
+in `mode`. `.exact` and the exact `.hex` print every digit and ignore it. With `status := true` the
+result also carries the inexact indicator, raised when the printed digits do not denote the finite
+value exactly. Infinities and NaNs never raise it, and the display writes every NaN as `nan`.
 -/
 @[inline] def format {fmt : FloatFormat} (value : Model fmt) (style : TextStyle := .shortest)
     (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
@@ -96,24 +121,27 @@ result also carries the inexact indicator of that rounding.
   | true => Internal.Status.format value style mode
   | false => (Internal.Status.format value style mode).text
 
-/-- Values print as a decimal that reads back as the same value, normally the shortest. -/
+/--
+Finite values print as a decimal that reads back as the same value, normally the shortest.
+Infinities print as `inf` and `-inf`, and every NaN prints as `nan`, without its sign, signaling
+state or payload; every other `TextStyle` of `format` keeps them.
+-/
 instance {fmt : FloatFormat} : ToString (Model fmt) where
   toString value := format value
 
-/-- `#eval` and `repr` show the same decimal, parenthesized when negative inside an argument. -/
+/-- `#eval` and `repr` show the same text as `toString`, parenthesized when negative inside an
+argument, so NaNs show as `nan` here too. -/
 instance {fmt : FloatFormat} : Repr (Model fmt) where
   reprPrec value precedence :=
     let text := format value
     if text.startsWith "-" then Repr.addAppParen text precedence else text
 
-/-- `#eval` shows the three fields, displaying the value as `toString` does. -/
+/-- `#eval` shows the three fields, displaying the value as `toString` does and listing only the
+raised flags, as `{ value := 0.3333333, status := { inexact := true }, ternary := Ordering.lt }`. -/
 instance {fmt : FloatFormat} : Repr (IEEEOutcome fmt) where
   reprPrec outcome _ :=
-    Std.Format.bracket "{ "
-      (Std.Format.joinSep
-        [f!"value := {repr outcome.value}", f!"status := {repr outcome.status}",
-          f!"ternary := {repr outcome.ternary}"]
-        ("," ++ Std.Format.line))
-      " }"
+    Numerics.reprRecord
+      [("value", repr outcome.value), ("status", repr outcome.status),
+        ("ternary", repr outcome.ternary)]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

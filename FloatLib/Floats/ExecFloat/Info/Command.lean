@@ -13,8 +13,9 @@ public import FloatLib.Floats.ExecFloat.Info.Inspection
 # Format inspection commands
 
 Syntax and elaboration for `#float_help`, `#float_info`, and `#float_info!`. Each format package
-registers a renderer for its configured types. The final rule reports an unsupported type when
-no renderer recognizes it.
+registers a renderer for its configured types. The final rule runs when no imported renderer
+recognizes the type: it names the module whose report covers the type, or says what
+`#float_info` reports on.
 
 Commands inspect elaborated types at compile time. Adding a format renderer requires no change
 to arithmetic execution.
@@ -33,13 +34,47 @@ namespace FloatLib.Floats.ExecFloat.FloatHelp.Command
 open Lean Elab Command
 
 /--
+The family entry points that `#float_help` lists: each name as it reads after
+`open FloatLib.Floats`, the arguments it takes, and what it is. This generic module imports no
+family, so the names are text; a conformance test checks that each one resolves. Every entry has a
+`#float_info` report except the one whose description says it has none.
+-/
+meta def entryPoints : List (String × String × String) :=
+  [ ("ExecFloat.Binary", "", "parameterized binary interchange")
+  , ("ExecFloat.BinaryLimbs", "", "binary interchange wider than 128 bits, stored in 32-bit limbs")
+  , ("ExecFloat.Posit", "", "current-standard posit by total width")
+  , ("ExecFloat.FixedPoint", "", "exact fixed point")
+  , ("ExecFloat.BoundedFixedPoint", "", "bounded fixed point")
+  , ("ExecFloat.Logarithmic", "", "exact logarithmic numbers")
+  , ("ExecFloat.Codebook", "", "finite lookup encodings")
+  , ("ExecFloat.P3109", " format", "IEEE P3109 representation and projection")
+  , ("ExecFloat.SharedScale", "", "generic shared-scale blocks")
+  , ("ExecFloat.OCP.MX.E8M0", "", "OCP exponent-only block scale")
+  , ("ExecFloat.OCP.MX.Block", "", "OCP jointly stored MX blocks")
+  , ("ExecFloat.Binary.Interval", "",
+      "outward-rounded closed binary intervals; no #float_info report")
+  , ("Formats.BinaryInterchange.ExecComplex", " fmt", "two-component rounded complex arithmetic")
+  , ("Formats.BinaryInterchange.Model", " fmt", "descriptor-indexed binary proof model")
+  , ("Formats.BinaryInterchange.Model.Interval", " fmt",
+      "closed intervals of binary proof-model values")
+  , ("Formats.Posit.Model", " fmt", "descriptor-indexed posit proof model")
+  ]
+
+/-- The entry points as aligned help lines. -/
+private meta def entryPointLines : List String :=
+  let call (entry : String × String × String) := entry.1 ++ entry.2.1
+  let width := entryPoints.foldl (fun width entry => max width (call entry).length) 0
+  entryPoints.map fun entry =>
+    "  " ++ call entry ++ "".pushn ' ' (width + 2 - (call entry).length) ++ entry.2.2
+
+/--
 Help text printed by `#float_help`, the same whatever formats are imported.
 
 It introduces the shared `ExecFloat` carrier, the operation notation, and the family entry points.
 Format packages register their own `#float_info` renderers.
 -/
 private meta def helpText : String :=
-  String.intercalate "\n"
+  String.intercalate "\n" <|
     [ "FloatLib executable-number help"
     , ""
     , "1. Pick a type. The standard formats have names after `open FloatLib.Floats`:"
@@ -50,68 +85,50 @@ private meta def helpText : String :=
     , "     ExecFloat.Binary (exponentBits := 5) (fractionBits := 2)"
     , "     ExecFloat.Posit (bits := 12)"
     , ""
-    , "2. Inspect the format and its proved surface:"
+    , "2. Inspect the format and its theorems:"
     , "     #float_info Binary32"
     , "   Focus on checked type-level range, roundoff, and exactness contracts:"
     , "     #float_info [errors] Binary32"
-    , "   Include theorem declarations and full hypotheses:"
+    , "   List every theorem behind those contracts, with its scope:"
     , "     #float_info! [errors] Binary32"
     , "   Request the complete theorem and backend audit only when needed:"
     , "     #float_info! Binary32"
+    , "   Hover a theorem name in a report to see its statement."
     , ""
     , "3. Use ordinary literals and arithmetic:"
     , "     def x : Binary32 := 1.5"
     , "     def y : Binary32 := x + 2.25"
     , "   Choose a rounding direction, or ask for the IEEE flags and ternary value:"
-    , "     open FloatLib.Rounding"
-    , "     #eval ExecFloat.Binary.sqrt x (mode := up) (status := true)"
+    , "     #eval ExecFloat.Binary.sqrt x (mode := .up) (status := true)"
     , "   Round a rational once, read an integer, or use a format constant:"
-    , "     #eval (ExecFloat.Binary.ofRat (1 / 3) (mode := up) : Binary32)"
-    , "     #eval x.toInt? (mode := nearest)"
+    , "     #eval (ExecFloat.Binary.ofRat (1 / 3) (mode := .up) : Binary32)"
+    , "     #eval x.toInt? (mode := .nearest)"
     , "     #eval (ExecFloat.Binary.epsilon : Binary32)"
     , "   `#eval y` prints the shortest decimal that reads back as `y`; `format` writes the rest:"
-    , "     #eval ExecFloat.Binary.format y (style := .scientific 3)"
+    , "     #eval y.format (style := .scientific (places := 3))"
     , ""
     , "4. Name the destination of every cross-format operation:"
     , "     #eval x.cast (target := Binary64)"
-    , "     #eval ExecFloat.addAs (target := Binary64) x (1 : Posit32)"
+    , "     #eval ExecFloat.Mixed.add (target := Binary64) x (1 : Posit32)"
     , "     #eval ExecFloat.convert (target := Binary64) (3 / 2 : Rat)"
     , "   These calls return `ConversionOutcome`, preserving status or an explicit failure."
     , ""
-    , "Core configurable and family entry points:"
-    , "  ExecFloat.Binary                  parameterized binary interchange"
-    , "  ExecFloat.Posit                   current-standard posit by total width"
-    , "  ExecFloat.FixedPoint              exact fixed point"
-    , "  ExecFloat.BoundedFixedPoint       bounded fixed point"
-    , "  ExecFloat.Logarithmic             exact logarithmic numbers"
-    , "  ExecFloat.Codebook                finite lookup encodings"
-    , "  ExecFloat.P3109 format            IEEE P3109 representation and projection"
-    , "  ExecFloat.SharedScale             generic shared-scale blocks"
-    , "  ExecFloat.OCP.MX.E8M0             OCP exponent-only block scale"
-    , "  ExecFloat.OCP.MX.Block            OCP jointly stored MX blocks"
-    , "  BinaryInterchange.ExecComplex fmt two-component rounded complex arithmetic"
-    , "  BinaryInterchange.Model.Interval fmt  outward-rounded closed intervals"
-    , "  BinaryInterchange.Model fmt       expert descriptor-indexed binary proof carrier"
-    , "  Posit.Model fmt                   expert descriptor-indexed posit proof carrier"
-    , ""
+    , "Family entry points, named as after `open FloatLib.Floats`:"
+    ] ++ entryPointLines ++
+    [ ""
     , "Different configurations are distinct Lean types, but executable numerical families use"
     , "the same `ExecFloat` operations. The active planning policy selects a certified backend"
-    , "for each operation; `#float_info` reports that selection."
+    , "for each operation; `#float_info` reports the policy and that selection."
     , "Each family exposes only values its encoding actually has. IEEE binary formats, for example,"
     , "have infinities and NaNs, while a finite-only format does not."
     , "Use raw-word constructors only for serialization, interoperability, or validation data."
     , ""
-    , "#float_info reports representation, exceptional values, rounding, selected execution"
-    , "strategy, universal and specialized operations, proof coverage, and current proof limits."
-    , "#float_info [errors] reports only explicitly registered type-level numerical theorems;"
-    , "it does not analyze compound expressions, guess input ranges, or invent an unproved bound."
-    , "#float_info! also reports checked theorem names, hypotheses, planner costs, and the complete"
-    , "proof boundary. Neither command infers semantics from a type alias or storage width."
-    , ""
-    , "Inspection scope:"
-    , "  #float_info is for stored or executable numerical carriers. Operation outcomes, proof"
-    , "  witnesses, backend certificates, descriptor records, and rounding contexts are supporting"
-    , "  infrastructure rather than numerical formats, so they intentionally have no renderer."
+    , "#float_info reports representation, exceptional values, rounding, conversions, execution,"
+    , "operations, theorems, and what the report does not claim. For most configured types it"
+    , "lists the theorems about the type's own values first, then those about its proof model or"
+    , "code. #float_info [errors] reports only registered type-level range, roundoff, and"
+    , "exactness theorems; it does not bound compound expressions or guess input ranges."
+    , "#float_info! adds every theorem name with its scope and the planner's costs."
     ]
 
 elab_rules : command
@@ -161,11 +178,12 @@ meta def elaborateType (type : Syntax) : TermElabM Expr := do
 /--
 Run one family renderer on a fully elaborated type without modifying the environment.
 
-Every `#float_info` extension goes through this one command-elaboration boundary.
+Every `#float_info` extension goes through this one command-elaboration boundary. The type's
+syntax is the reference while the renderer runs, so a report can name the type as written.
 -/
 meta def withElaboratedType
     (type : Syntax) (render : Expr → TermElabM Unit) : CommandElabM Unit :=
-  withoutModifyingEnv <| runTermElabM fun _ => Term.withDeclName `_float_info do
+  withoutModifyingEnv <| runTermElabM fun _ => Term.withDeclName `_float_info <| withRef type do
     render (← elaborateType type)
 
 /--
@@ -186,13 +204,67 @@ meta def withExecFamilyApplication
     render typeExpr family arguments
 
 /--
-Report an unsupported type after every imported representation family has declined it.
+The modules that register the `#float_info` reports for a family, keyed by the family's
+namespace. This generic module imports no family, so the names are not checked here; a conformance
+test checks that every module exists.
+-/
+meta def reportModules : List (Name × Name) :=
+  [ (`FloatLib.Floats.Formats.BinaryInterchange, `FloatLib.Floats.Formats.BinaryInterchange)
+  , (`FloatLib.Floats.Formats.Posit, `FloatLib.Floats.Formats.Posit)
+  , (`FloatLib.Floats.Formats.FixedPoint, `FloatLib.Floats.Formats.FixedPoint)
+  , (`FloatLib.Floats.Formats.Logarithmic, `FloatLib.Floats.Formats.Logarithmic)
+  , (`FloatLib.Floats.Formats.Codebook, `FloatLib.Floats.Formats.Codebook)
+  , (`FloatLib.Floats.Formats.Block, `FloatLib.Floats.Formats.Block)
+  , (`FloatLib.Floats.Formats.OCP.MX, `FloatLib.Floats.Formats.OCP.MX)
+  , (`FloatLib.Floats.Formats.P3109, `FloatLib.Floats.Formats.P3109)
+  , (`Float, `FloatLib.Floats.Formats.IEEE754)
+  , (`Float32, `FloatLib.Floats.Formats.IEEE754)
+  ]
+
+/--
+The head constant that names a type's family: the family of an `ExecFloat` type, otherwise the
+type's own head after unfolding the caller's abbreviations.
+-/
+private meta def familyHead? (type : Expr) : MetaM (Option Name) := do
+  if let some family ← FloatLib.Floats.ExecFloat.Inspection.execFamily? type then
+    return (← whnfR family).getAppFn.constName?
+  return (← whnfR type).getAppFn.constName?
+
+/--
+Explain why no report was printed, after every imported family renderer has declined the type.
 
 Family-specific rules call `throwUnsupportedSyntax` when their carrier shape does not match, so a
-new numerical family can add a renderer without modifying this module.
+new numerical family can add a renderer without modifying this module. A type in a FloatLib
+family whose report module is not imported, such as `Binary32` without
+`FloatLib.Floats.Formats.BinaryInterchange`, is told which module to import, and an `ExecFloat`
+type of an unknown family is told that `import FloatLib` brings every family's report. Any other
+type, including one whose report module is already imported but has no report for it, is told what
+`#float_info` reports on.
 -/
 elab_rules : command
-  | `(#float_info%$tk $_type:term) =>
-      throwErrorAt tk "`#float_info` has no renderer for this numerical type"
+  | `(#float_info%$tk $type:term) =>
+      FloatLib.Floats.ExecFloat.FloatInfo.Command.withElaboratedType type fun typeExpr => do
+        -- A type that failed to elaborate has already been reported.
+        if typeExpr.hasSyntheticSorry then throwAbortTerm
+        let subject ← FloatLib.Floats.ExecFloat.Inspection.subjectText
+        let environment ← getEnv
+        let imported (module : Name) : Bool := (environment.getModuleIdx? module).isSome
+        let family? := (← familyHead? typeExpr).bind fun head =>
+          reportModules.find? fun (namespace_, _) => namespace_.isPrefixOf head
+        let isExecFloat := (← FloatLib.Floats.ExecFloat.Inspection.execFamily? typeExpr).isSome
+        match family? with
+        | some (_, module) =>
+            unless imported module do
+              throwErrorAt tk "no `#float_info` report is imported for {subject}; add \
+                `import {module}` or `import FloatLib`"
+        | none =>
+            if isExecFloat && !imported `FloatLib then
+              throwErrorAt tk "no `#float_info` report is imported for the ExecFloat type \
+                {subject}; `import FloatLib` imports the report of every FloatLib family"
+        throwErrorAt tk "`#float_info` has no report for {subject}. It reports FloatLib's \
+          numerical types: ExecFloat types such as `Binary32` and `Posit32`, the proof models \
+          `Formats.BinaryInterchange.Model fmt` and `Formats.Posit.Model fmt`, the intervals \
+          `Formats.BinaryInterchange.Model.Interval fmt`, Lean's `Float` and `Float32`, and the \
+          complex, quire, and block types that `#float_help` lists"
 
 end FloatLib.Floats.ExecFloat.FloatInfo.Command

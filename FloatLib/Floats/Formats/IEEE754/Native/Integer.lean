@@ -20,7 +20,8 @@ existing specifications through one shared rounding proof for both binary32 and 
 
 The integer-to-float theorems identify the imported native word with `ExecDType.intToFloat` at
 nearest-even rounding. `Model.ofInt_conversion_spec` proves the underlying arbitrary-integer
-model satisfies the conversion specification, including the specification's status calculation.
+model gives the word and status of the reference conversion `runWith`, and
+`Model.toReal_ofModel_ofInt_eq_roundAt` gives its finite value as nearest-even rounding.
 Native casts return only a value; the word equalities make no claim about native exception flags.
 
 In the reverse direction, `ExecDType.floatToIntSaturating` uses the checked conversion's exact

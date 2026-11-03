@@ -84,34 +84,10 @@ theorem roundRat_toRat? (value : Model format) (exact : Rat)
   by_cases hnar : value = nar format
   · subst value
     simp at hexact
-  by_cases hzero : value = zero format
-  · subst value
-    simp only [toRat?_zero, Option.some.injEq] at hexact
-    subst exact
-    exact roundRat_zero format
-  have hnarBool : value.isNaR = false := by
-    apply Bool.eq_false_of_not_eq_true
-    intro h
-    exact hnar ((isNaR_eq_true_iff value).mp h)
-  have hzeroBool : value.isZero = false := by
-    apply Bool.eq_false_of_not_eq_true
-    intro h
-    exact hzero ((isZero_eq_true_iff value).mp h)
-  have hfields : value.decodeFields.toRat = exact := by
-    simpa [toRat?, decodeExact, hnarBool, hzeroBool, ExactValue.toRat?] using hexact
-  rw [← hfields, decodeFields_toRat_eq_signed_magnitude value hnar hzero]
+  rw [toRat?_eq_signed_magnitude value hnar, Option.some.injEq] at hexact
+  subst exact
   have hbound := magnitudeBits_lt_signMask_of_ne_nar value hnar
-  have hpositive := nonnegativeRatAt_pos format
-    (Nat.pos_of_ne_zero (magnitudeBits_ne_zero_of_ne_zero value hzero)) hbound
-  cases hsign : value.signBit with
-  | false =>
-      simp only [Bool.false_eq_true, ite_false]
-      rw [roundRat_nonnegativeRatAt format hbound]
-      simpa [hsign] using ofNatBits_magnitudeBits value
-  | true =>
-      simp only [ite_true]
-      rw [roundRat_of_neg (neg_lt_zero.mpr hpositive), neg_neg,
-        roundPositiveRat_nonnegativeRatAt format hbound]
-      simpa [hsign] using ofNatBits_magnitudeBits value
+  conv_rhs => rw [← ofNatBits_magnitudeBits value]
+  cases value.signBit <;> simp [roundRat_neg, roundRat_nonnegativeRatAt format hbound]
 
 end FloatLib.Floats.Formats.Posit.Model

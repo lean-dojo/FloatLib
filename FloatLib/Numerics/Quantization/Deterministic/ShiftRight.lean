@@ -209,41 +209,31 @@ theorem roundShiftRightEven_eq_roundQuotientEven (value shift : Nat) :
   rw [hp]
   simp only [Nat.mul_lt_mul_left (by decide : 0 < (2 : Nat))]
 
+/--
+Shifting a value below `2 ^ shift` by `shift > 0` bits rounds to one exactly when the value is
+above half of `2 ^ shift`; an exact half rounds to the even quotient zero.
+-/
+theorem roundShiftRightEven_of_lt_two_pow (value shift : Nat)
+    (hshift : shift ≠ 0) (hvalue : value < 2 ^ shift) :
+    roundShiftRightEven value shift = if 2 ^ (shift - 1) < value then 1 else 0 := by
+  have hquotient : value.shiftRight shift = 0 := by
+    rw [Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow]
+    exact Nat.div_eq_of_lt hvalue
+  rw [roundShiftRightEven_def]
+  simp only [beq_iff_eq, hshift, ite_false]
+  rw [hquotient, show Nat.shiftLeft 0 shift = 0 by simp [Nat.shiftLeft_eq]]
+  simp only [Nat.sub_zero, Nat.zero_mod]
+  split_ifs <;> omega
+
 private theorem roundShiftRightEven_eq_shiftRight_or_add_one
     (value shift : Nat) :
     roundShiftRightEven value shift = Nat.shiftRight value shift ∨
       roundShiftRightEven value shift = Nat.shiftRight value shift + 1 := by
-  classical
-  by_cases hshift : shift = 0
-  · subst shift
-    simp [roundShiftRightEven_def]
-  · have hshiftBool : (shift == 0) = false := by
-      simp [hshift]
-    let quotient := Nat.shiftRight value shift
-    let remainder := value - Nat.shiftLeft quotient shift
-    let half := 2 ^ (shift - 1)
-    have hround :
-        roundShiftRightEven value shift =
-          if remainder < half then quotient
-          else if remainder > half then quotient + 1
-          else if quotient % 2 = 0 then quotient else quotient + 1 := by
-      simp (config := { zeta := true })
-        [roundShiftRightEven_def, hshiftBool, quotient, remainder, half]
-    by_cases hlt : remainder < half
-    · left
-      simp [hround, hlt, quotient]
-    · by_cases hgt : remainder > half
-      · right
-        simp [hround, hlt, hgt, quotient]
-      · by_cases heven : quotient % 2 = 0
-        · left
-          rw [hround]
-          simp only [hlt, hgt, heven, ite_false, ite_true]
-          rfl
-        · right
-          rw [hround]
-          simp only [hlt, hgt, heven, ite_false]
-          rfl
+  rcases Nat.eq_zero_or_pos shift with rfl | hshift
+  · simp
+  · rw [roundShiftRightEven_eq_guard_sticky value shift hshift, Nat.shiftRight_eq',
+      Nat.shiftRight_eq_div_pow]
+    split <;> simp
 
 /-- Nearest-even shift rounding is never below the floor quotient. -/
 theorem shiftRight_le_roundShiftRightEven (value shift : Nat) :

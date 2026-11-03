@@ -16,8 +16,11 @@ the degree can therefore leave an enclosure straddling the same rounding boundar
 
 After a failed check, the search tries twice the degree and one extra working bit. If the interval
 width then shrinks by at most a factor of four, the next attempt doubles the working precision
-instead. The degree stays fixed for that attempt. This is a work-selection heuristic: acceptance
-always uses the supplied checker, and the witness theorem below does not assume convergence.
+instead (at least one bit). The degree stays fixed for that attempt. A degree of zero stays zero
+when doubled, so a search started at degree zero only ever changes the precision; callers start
+at a positive degree (the certified transcendental kernels promote zero to one). This is a
+work-selection heuristic: acceptance always uses the supplied checker, and the witness theorem
+below does not assume convergence.
 -/
 
 @[expose] public section
@@ -46,9 +49,12 @@ end Internal
 
 /--
 Try at most `steps` enclosures, increasing degree or precision according to the observed width.
+Each attempt evaluates `enclose` at its current degree and precision, and `refine` returns the
+first value that `check` accepts.
 
 The first attempt uses the supplied degree and precision exactly. A successful check returns
-immediately; an exhausted budget returns `none`.
+immediately; an exhausted budget returns `none`. The degree is doubled, so it grows only from a
+positive start: with `degree = 0` every attempt uses degree zero.
 -/
 @[specialize] def refine {α : Type} (enclose : Nat → Nat → RationalInterval)
     (check : RationalInterval → Option α) (degree precision steps : Nat) : Option α :=

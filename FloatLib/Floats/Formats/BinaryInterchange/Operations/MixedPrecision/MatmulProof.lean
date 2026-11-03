@@ -36,6 +36,41 @@ def MatmulRefines (p : SitePolicy) (A B : Matrix p.storage)
         ∀ j, (hj : j < ncols B) →
           dotSequential p A[i] (column B j) = .ok (C[i]!)[j]!
 
+/--
+A `forIn` loop in `Except` whose step pushes the result of `compute` for each element, and fails
+with its error, extends the initial array by values that `compute` produced for the elements, in
+order.
+-/
+private theorem forIn_push_eq_ok {α β ε : Type} (compute : α → Except ε β)
+    (step : α → Array β → Except ε (ForInStep (Array β)))
+    (hstep : ∀ element accumulator, step element accumulator = do
+      let value ← compute element
+      pure (ForInStep.yield (accumulator.push value))) :
+    ∀ (elements : List α) (initial output : Array β),
+      forIn elements initial step = Except.ok output →
+        ∃ produced, output.toList = initial.toList ++ produced ∧
+          List.Forall₂ (fun element value => compute element = Except.ok value)
+            elements produced := by
+  intro elements
+  induction elements with
+  | nil =>
+      intro initial output hloop
+      have hEq : initial = output := Except.ok.inj hloop
+      subst output
+      exact ⟨[], by simp, .nil⟩
+  | cons element rest ih =>
+      intro initial output hloop
+      rw [List.forIn_cons, hstep] at hloop
+      cases hcompute : compute element with
+      | error error =>
+          rw [hcompute] at hloop
+          contradiction
+      | ok value =>
+          rw [hcompute] at hloop
+          obtain ⟨produced, houtput, hproduced⟩ := ih (initial.push value) output hloop
+          exact ⟨value :: produced, by rw [houtput, Array.toList_push]; simp,
+            .cons hcompute hproduced⟩
+
 private theorem rowLoop_refines
     (p : SitePolicy) (row : Array (Model p.storage))
     (columns : List (Array (Model p.storage)))
@@ -54,40 +89,23 @@ private theorem rowLoop_refines
       List.Forall₂
         (fun column value => dotSequential p row column = .ok value)
         columns produced := by
-  induction columns generalizing initial with
-  | nil =>
-      change Except.ok initial = Except.ok output at hloop
-      have hEq : initial = output := Except.ok.inj hloop
-      subst output
-      exact ⟨[], by simp⟩
-  | cons column columns ih =>
-      rw [List.forIn_cons] at hloop
-      cases hdot : dotSequential p row column with
-      | error error =>
-          cases error with
-          | lengthMismatch rowLength columnLength =>
-              rw [hdot] at hloop
-              change Except.error
-                (MatrixShapeError.dotLengthMismatch rowLength columnLength) =
-                  Except.ok output at hloop
-              contradiction
-      | ok value =>
-          rw [hdot] at hloop
-          have htail :
-              forIn columns (initial.push value) (fun column outputRow =>
-                match dotSequential p row column with
-                | .ok value =>
-                    (pure (ForInStep.yield (outputRow.push value)) :
-                      Except MatrixShapeError (ForInStep (Array (Model p.output))))
-                | .error (.lengthMismatch rowLength columnLength) => do
-                    throw (MatrixShapeError.dotLengthMismatch rowLength columnLength)
-                    pure (ForInStep.yield outputRow)) = Except.ok output := by
-            exact hloop
-          obtain ⟨produced, houtput, hproduced⟩ :=
-            ih (initial := initial.push value) htail
-          refine ⟨value :: produced, ?_, .cons hdot hproduced⟩
-          rw [houtput, Array.toList_push]
-          simp
+  let compute (column : Array (Model p.storage)) : Except MatrixShapeError (Model p.output) :=
+    (dotSequential p row column).mapError fun
+      | .lengthMismatch rowLength columnLength => .dotLengthMismatch rowLength columnLength
+  obtain ⟨produced, houtput, hproduced⟩ := forIn_push_eq_ok compute _ (by
+    intro column outputRow
+    simp only [compute]
+    cases dotSequential p row column with
+    | ok value => rfl
+    | error error => cases error; rfl) columns initial output hloop
+  refine ⟨produced, houtput, hproduced.imp fun column value hvalue => ?_⟩
+  cases hdot : dotSequential p row column with
+  | ok result =>
+      simp only [compute, hdot, Except.mapError] at hvalue
+      rw [Except.ok.inj hvalue]
+  | error error =>
+      cases error
+      simp [compute, hdot, Except.mapError] at hvalue
 
 private theorem matrixLoop_refines
     (p : SitePolicy) (A : Matrix p.storage)
@@ -114,65 +132,15 @@ private theorem matrixLoop_refines
             (fun column value => dotSequential p A[i]! column = .ok value)
             columns.toList row.toList)
         indices produced := by
-  induction indices generalizing initial with
-  | nil =>
-      change Except.ok initial = Except.ok output at hloop
-      have hEq : initial = output := Except.ok.inj hloop
-      subst output
-      exact ⟨[], by simp⟩
-  | cons i indices ih =>
-      rw [List.forIn_cons] at hloop
-      cases hrow :
-          forIn columns #[] (fun column outputRow =>
-            match dotSequential p A[i]! column with
-            | .ok value =>
-                (pure (ForInStep.yield (outputRow.push value)) :
-                  Except MatrixShapeError (ForInStep (Array (Model p.output))))
-            | .error (.lengthMismatch rowLength columnLength) => do
-                throw (MatrixShapeError.dotLengthMismatch rowLength columnLength)
-                pure (ForInStep.yield outputRow)) with
-      | error error =>
-          rw [hrow] at hloop
-          change Except.error error = Except.ok output at hloop
-          contradiction
-      | ok row =>
-          rw [hrow] at hloop
-          have htail :
-              forIn indices (initial.push row) (fun i result => do
-                let outputRow ←
-                  forIn columns #[] (fun column outputRow =>
-                    match dotSequential p A[i]! column with
-                    | .ok value =>
-                        (pure (ForInStep.yield (outputRow.push value)) :
-                          Except MatrixShapeError
-                            (ForInStep (Array (Model p.output))))
-                    | .error (.lengthMismatch rowLength columnLength) => do
-                        throw (MatrixShapeError.dotLengthMismatch
-                          rowLength columnLength)
-                        pure (ForInStep.yield outputRow))
-                pure (ForInStep.yield (result.push outputRow))) = Except.ok output := by
-            exact hloop
-          obtain ⟨rows, houtput, hrows⟩ :=
-            ih (initial := initial.push row) htail
-          have hrowList :
-              forIn columns.toList #[] (fun column outputRow =>
-                match dotSequential p A[i]! column with
-                | .ok value =>
-                    (pure (ForInStep.yield (outputRow.push value)) :
-                      Except MatrixShapeError (ForInStep (Array (Model p.output))))
-                | .error (.lengthMismatch rowLength columnLength) => do
-                    throw (MatrixShapeError.dotLengthMismatch rowLength columnLength)
-                    pure (ForInStep.yield outputRow)) = Except.ok row := by
-            rw [Array.forIn_toList]
-            exact hrow
-          obtain ⟨produced, hproducedEq, hproduced⟩ :=
-            rowLoop_refines p A[i]! columns.toList #[] row hrowList
-          have hrowEq : row.toList = produced := by
-            simpa using hproducedEq
-          subst produced
-          refine ⟨row :: rows, ?_, .cons hproduced hrows⟩
-          rw [houtput, Array.toList_push]
-          simp
+  obtain ⟨produced, houtput, hproduced⟩ :=
+    forIn_push_eq_ok _ _ (fun _ _ => rfl) indices initial output hloop
+  refine ⟨produced, houtput, hproduced.imp fun i row hrow => ?_⟩
+  rw [← Array.forIn_toList] at hrow
+  obtain ⟨cells, hcellsEq, hcells⟩ := rowLoop_refines p A[i]! columns.toList #[] row hrow
+  have hrowEq : row.toList = cells := by
+    simpa using hcellsEq
+  rw [hrowEq]
+  exact hcells
 
 /--
 Every successful mixed-precision matrix multiplication satisfies its shape and entry contract.
@@ -240,36 +208,29 @@ theorem matmul_refines (p : SitePolicy) (A B : Matrix p.storage)
 
 /--
 The sequential-dot budget bounds a selected entry of a successful matrix product, under the
-dot theorem's IEEE-encoding and local finiteness hypotheses.
+dot theorem's encoding and local finiteness hypotheses.
 -/
 theorem matmul_entry_abs_error_le_budget (p : SitePolicy)
     (A B : Matrix p.storage) (C : Matrix p.output)
     (hmatmul : matmul p A B = .ok C)
     (i : Nat) (hi : i < A.size) (j : Nat) (hj : j < ncols B)
-    (hstorage : p.storage.isIEEE = true)
     (hproduct : p.product.isIEEE = true)
     (haccumulator : p.accumulator.isIEEE = true)
     (houtput : p.output.isIEEE = true)
     (hfinite : ∀ k < (A[i]!).size,
       MulAccFinite p (A[i]!)[k]! (column B j)[k]!
         (sequentialAccumulator p A[i]! (column B j) k))
-    (haccFinite :
-      isFinite (sequentialAccumulator p A[i]! (column B j) (A[i]!).size) = true)
     (hresultFinite : isFinite (C[i]!)[j]! = true) :
     |toReal (C[i]!)[j]! -
         sequentialDotReal p A[i]! (column B j) (A[i]!).size| ≤
-      epsilonAt p.output
+      halfUlpAt p.output
           (toReal (sequentialAccumulator p A[i]! (column B j) (A[i]!).size)) +
         sequentialErrorBudget p A[i]! (column B j) (A[i]!).size := by
   have hdot := (matmul_refines p A B C hmatmul).2 i hi |>.2 j hj
   have hdot' : dotSequential p A[i]! (column B j) = .ok (C[i]!)[j]! := by
     simpa [getElem!_pos A i hi] using hdot
-  have hsize : (A[i]!).size = (column B j).size := by
-    by_contra hne
-    simp [dotSequential, hne] at hdot'
-  apply dotSequential_abs_error_le_budget p A[i]! (column B j) (C[i]!)[j]!
-    hsize hstorage hproduct haccumulator houtput hfinite haccFinite hresultFinite
-  exact hdot'
+  exact dotSequential_abs_error_le_budget p A[i]! (column B j) (C[i]!)[j]!
+    hproduct haccumulator houtput hfinite hresultFinite hdot'
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

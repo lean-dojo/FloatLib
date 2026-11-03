@@ -47,7 +47,7 @@ def remainderFinite (sx : Bool) (cx : Nat) (qx : Int) (cy : Nat) (qy : Int) : Da
 /-- IEEE remainder, independent of the rounding direction.
 Finite dividend/infinite divisor returns the dividend, including its cohort. -/
 def remainder (f : Format) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
+  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
   | _, .nan s t p => nanResult f s p t
   | .infinity _, _ => invalidResult
   | .finite sx cx qx, .infinity _ => { value := .finite sx cx qx }

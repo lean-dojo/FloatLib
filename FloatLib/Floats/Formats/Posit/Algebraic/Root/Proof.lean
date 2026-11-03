@@ -85,6 +85,21 @@ private theorem root_radicand_rpow (q : Rat) (degree : Int) :
     simp [hnegative, hcast]
 
 /--
+Rounding the degree-adjusted radicand of a nonnegative rational rounds its real root once.
+Negative degrees invert the radicand before the positive-degree root.
+-/
+private theorem round_radicand_eq_roundPositive (r : Rat) (degree : Int)
+    (hr : 0 ≤ r) (hdegree : degree ≠ 0) :
+    RootRounding.round format (if degree < 0 then r⁻¹ else r) degree.natAbs =
+      RealRounding.roundPositive format ((r : ℝ) ^ (degree : ℝ)⁻¹) := by
+  have hradicand : 0 ≤ (if degree < 0 then r⁻¹ else r : Rat) := by
+    split_ifs
+    · exact inv_nonneg.mpr hr
+    · exact hr
+  rw [RootRounding.round_eq_rpow format _ degree.natAbs hradicand
+    (Int.natAbs_ne_zero.mpr hdegree), root_radicand_rpow]
+
+/--
 A nonnegative finite integer root rounds the exact real power `q ^ (1 / degree)`.
 
 The degree is nonzero; a zero radicand additionally requires positive degree. Negative degrees
@@ -99,14 +114,9 @@ theorem rootN_eq_roundPositive (value : Model format) {q : Rat} (degree : Int)
     rcases hdomain with hq | hdegree
     · exact fun h => hq h.1
     · exact fun h => (not_lt.mpr hdegree.le) h.2
-  have hradicand : 0 ≤ (if degree < 0 then q⁻¹ else q : Rat) := by
-    split_ifs
-    · exact inv_nonneg.mpr hq
-    · exact hq
   simp only [rootN, hvalue, ite_eq_right hdegree, ite_eq_right hzero, not_lt.mpr hq,
     false_and, ite_false, abs_of_nonneg hq]
-  rw [RootRounding.round_eq_rpow format _ degree.natAbs hradicand
-    (Int.natAbs_ne_zero.mpr hdegree), root_radicand_rpow]
+  exact round_radicand_eq_roundPositive q degree hq hdegree
 
 /--
 For a negative finite input and odd integer degree, the signed real root is rounded once.
@@ -121,14 +131,9 @@ theorem rootN_eq_neg_roundPositive (value : Model format) {q : Rat} (degree : In
   have hdegree : degree ≠ 0 := by
     intro hzero
     exact hodd (by simp [hzero])
-  have hradicand : 0 ≤ (if degree < 0 then (-q)⁻¹ else -q : Rat) := by
-    split_ifs
-    · exact inv_nonneg.mpr (neg_nonneg.mpr hq.le)
-    · exact neg_nonneg.mpr hq.le
   simp only [rootN, hvalue, ite_eq_right hdegree, ne_of_lt hq, false_and, ite_false,
     hodd, and_false, abs_of_neg hq, ite_eq_left hq]
-  rw [RootRounding.round_eq_rpow format _ degree.natAbs hradicand
-    (Int.natAbs_ne_zero.mpr hdegree), root_radicand_rpow]
+  rw [round_radicand_eq_roundPositive (-q) degree (neg_nonneg.mpr hq.le) hdegree]
   simp
 
 /-- Integer roots propagate NaR for every degree. -/

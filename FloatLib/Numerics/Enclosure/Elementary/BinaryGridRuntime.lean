@@ -303,11 +303,15 @@ def logSeries (x : ℚ) (degree precision : Nat) : Interval Int :=
   add half half
 
 /--
-A logarithm series degree for a positive `value` whose truncation error is below about
+A logarithm series degree for a positive `value`, aiming at a truncation error of about
 `2 ^ -bits`.
 
 For `value = n / d` in lowest terms the series runs in `t = (n - d) / (n + d)`, so each pair of
-degrees gains `log₂ (1 / t²)` bits. The estimate uses the integer part of `1 / t²`.
+degrees gains `log₂ (1 / t²)` bits. The estimate counts `log₂` of the integer part of `1 / t²`,
+rounded down and at least one bit. It never overcounts while `t² ≤ 1/2`, that is for `value`
+between `3 - 2√2 ≈ 0.17` and `3 + 2√2 ≈ 5.83`. Farther from one a pair of degrees gains less than
+one bit, so the degree falls short of the target and the enclosure is wider; it stays sound
+(`containsReal_logUnreduced`) at every degree.
 -/
 def logSeriesDegree (value : ℚ) (bits : Nat) : Nat :=
   let numerator := value.num.natAbs
@@ -318,7 +322,8 @@ def logSeriesDegree (value : ℚ) (bits : Nat) : Nat :=
 /--
 Enclose `log value` for a positive rational on the grid of `precision` fractional bits with the
 transformed series in `(value - 1) / (value + 1)`, without the argument reduction of `log`. It
-suits values near one.
+suits values near one: its degree (`logSeriesDegree`) aims at an error of about `2 ^ -precision`
+only for values between about `0.17` and `5.83`, and gives a sound but wider enclosure outside.
 -/
 def logUnreduced (value : ℚ) (precision : Nat) : Interval Int :=
   logSeries value (logSeriesDegree value precision) precision

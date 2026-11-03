@@ -83,21 +83,8 @@ private theorem toModel_of_positive_normal (h : Eligible fmt)
     simp only [Option.map_some, hsign]
     rw [normalComponents_toDyadic h false (expField fmt (toWords x).hi).toNat mantissa
       hexponentNat hmantissa]
-  have hieeeDecode :
-      Model.ieeeToDyadic? x =
-        some
-          ({ negative := false
-             significand := mantissa
-             exponent :=
-              Int.ofNat (expField fmt (toWords x).hi).toNat -
-                Int.ofNat (fmt.bias + fmt.fracWidth) } :
-            Numerics.Dyadic) := by
-    simpa [Model.toDyadic?, h.isIEEE] using hdyadic
-  simpa [mantissa, Model.modelSign] using
-    Model.toModel_eq_finite_of_ieeeToDyadic?_eq_some
-      x false mantissa
-      (Int.ofNat (expField fmt (toWords x).hi).toNat - Int.ofNat (fmt.bias + fmt.fracWidth))
-      hmantissa hieeeDecode
+  exact Model.toModel_eq_finite_positive_of_toDyadic?_eq_some h.isIEEE x mantissa _ hmantissa
+    hdyadic
 
 /-- The model's smallest exponent is the negated subnormal alignment shift. -/
 private theorem model_minExponent (h : Eligible fmt) :
@@ -135,11 +122,11 @@ private theorem sqrt_target_exponent (h : Eligible fmt)
   unfold Float.Model.totalExponent
   exact target_exponent m.log2 scale (fmt.bias + fmt.fracWidth - 1)
     (fmt.bias - fmt.fracWidth + 1) fmt.bias fmt.fracWidth
-    (by omega) (by omega) fmt.bias_pos (by omega) (by omega)
+    (by omega) (by omega) (by omega)
 
 private theorem sqrt_shift_amount (h : Eligible fmt)
     (hbiasGe : fmt.fracWidth + 1 ≤ fmt.bias)
-    (m scale : Nat) (hleading : m.log2 < fmt.fracWidth + 1) :
+    (m scale : Nat) :
     let inputExponent := Int.ofNat scale - Int.ofNat (fmt.bias + fmt.fracWidth - 1)
     let position := m.log2 + scale
     let rootExponent :=
@@ -149,7 +136,7 @@ private theorem sqrt_shift_amount (h : Eligible fmt)
   dsimp only
   have hfrac := h.frac_gt
   exact shift_amount m.log2 scale (fmt.bias + fmt.fracWidth - 1)
-    (fmt.bias - fmt.fracWidth + 1) fmt.bias fmt.fracWidth (by omega) (by omega)
+    (fmt.bias - fmt.fracWidth + 1) fmt.bias fmt.fracWidth (by omega)
 
 private def sqrtNormalSpec (fmt : FloatFormat) (exponent mantissa : Nat) : Model fmt :=
   let scale := exponent - 1
@@ -204,7 +191,7 @@ private theorem sqrtNormalSpec_eq_model (h : Eligible fmt)
     (by omega) (by omega)
     (by rw [hleadingEq]; omega) (by rw [hleadingEq]; omega)
     (sqrt_target_exponent h hbiasGe mantissa (exponent - 1) hleading)
-    (sqrt_shift_amount h hbiasGe mantissa (exponent - 1) hleading)]
+    (sqrt_shift_amount h hbiasGe mantissa (exponent - 1))]
   simp only [sqrtNormalSpec]
 
 private theorem exponentShift_eq_modelShift
@@ -245,6 +232,27 @@ private theorem exponentShift_eq_modelShift
     rw [ite_eq_right hodd]
     omega
 
+/--
+The guards of an accepted two-word square root: a positive operand with a normal exponent field,
+in a format whose bias and fraction width fit the kernel.
+-/
+private theorem sqrtNormal?_guard (x result : Model fmt) (hfast : sqrtNormal? x = some result) :
+    x.bits.msb = false ∧ fmt.fracWidth + 1 ≤ fmt.bias ∧ fmt.fracWidth ≤ 124 ∧
+      expField fmt (toWords x).hi ≠ 0 ∧ expField fmt (toWords x).hi ≠ expAllOnes fmt := by
+  have hsignFalse : x.bits.msb = false := by
+    by_cases hsign : x.bits.msb = true
+    · simp [sqrtNormal?, hsign] at hfast
+    · exact Bool.eq_false_of_not_eq_true hsign
+  have hnotBias : ¬fmt.bias < fmt.fracWidth + 1 := by
+    intro hlt
+    simp [sqrtNormal?, hsignFalse, hlt] at hfast
+  have hnotFrac : ¬124 < fmt.fracWidth := by
+    intro hlt
+    simp [sqrtNormal?, hsignFalse, hlt] at hfast
+  refine ⟨hsignFalse, not_lt.mp hnotBias, not_lt.mp hnotFrac, fun hzero => ?_, fun hall => ?_⟩
+  · simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, hzero] at hfast
+  · simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, hall] at hfast
+
 private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
     (hbiasGe : fmt.fracWidth + 1 ≤ fmt.bias) (hfracLe : fmt.fracWidth ≤ 124)
     (x result : Model fmt) (hfast : sqrtNormal? x = some result) :
@@ -269,13 +277,7 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
   let normalized := normalizeCarry fmt carry rounded
   let resultExponent := (exponent + UInt64.ofNat fmt.bias) / 2 + if carry then 1 else 0
   change result = sqrtNormalSpec fmt exponent.toNat mantissa.toNat
-  by_cases hsign : x.bits.msb = true
-  · simp [sqrtNormal?, hsign] at hfast
-  have hsignFalse : x.bits.msb = false := Bool.eq_false_of_not_eq_true hsign
-  by_cases hexponentZero : exponent = 0
-  · simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, words, exponent, hexponentZero] at hfast
-  by_cases hexponentAll : exponent = expAllOnes fmt
-  · simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, words, exponent, hexponentAll] at hfast
+  obtain ⟨hsignFalse, -, -, hexponentZero, hexponentAll⟩ := sqrtNormal?_guard x result hfast
   have hresult : result = packNormal fmt false resultExponent normalized := by
     simpa [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, words, exponent, hexponentZero,
       hexponentAll, mantissa, shift, radicand, state, rounded, carry, normalized,
@@ -319,57 +321,21 @@ private theorem sqrtNormal?_eq_sqrtNormalSpec (h : Eligible fmt)
     rw [show radicand = alignSqrtRadicand mantissa shift by rfl,
       alignSqrtRadicand_toNat mantissa shift hshiftLower hshiftUpper]
     simp only [scaled, hshift]
-  have hscaledUpper : scaled < 2 ^ (2 * fmt.fracWidth + 2) := by
-    dsimp only [scaled]
-    rw [← hshift, Nat.shiftLeft_eq]
-    rcases hshiftCases with hs | hs <;> rw [hs]
-    · calc
-        mantissa.toNat * 2 ^ fmt.fracWidth < 2 ^ (fmt.fracWidth + 1) * 2 ^ fmt.fracWidth :=
-          Nat.mul_lt_mul_of_pos_right hmantissaBounds.2 (Nat.two_pow_pos _)
-        _ ≤ 2 ^ (2 * fmt.fracWidth + 2) := by
-          rw [← pow_add]
-          exact Nat.pow_le_pow_right (by decide) (by omega)
-    · calc
-        mantissa.toNat * 2 ^ (fmt.fracWidth + 1) <
-            2 ^ (fmt.fracWidth + 1) * 2 ^ (fmt.fracWidth + 1) :=
-          Nat.mul_lt_mul_of_pos_right hmantissaBounds.2 (Nat.two_pow_pos _)
-        _ = 2 ^ (2 * fmt.fracWidth + 2) := by
-          rw [← pow_add]
-          congr 1
-          omega
-  have hscaledLower : 2 ^ (2 * fmt.fracWidth) ≤ scaled := by
-    dsimp only [scaled]
-    rw [← hshift, Nat.shiftLeft_eq]
-    rcases hshiftCases with hs | hs <;> rw [hs]
-    · calc
-        2 ^ (2 * fmt.fracWidth) = 2 ^ fmt.fracWidth * 2 ^ fmt.fracWidth := by
-          rw [← pow_add, two_mul]
-        _ ≤ mantissa.toNat * 2 ^ fmt.fracWidth :=
-          Nat.mul_le_mul_right _ hmantissaBounds.1
-    · calc
-        2 ^ (2 * fmt.fracWidth) ≤ 2 ^ fmt.fracWidth * 2 ^ (fmt.fracWidth + 1) := by
-          rw [← pow_add]
-          exact Nat.pow_le_pow_right (by decide) (by omega)
-        _ ≤ mantissa.toNat * 2 ^ (fmt.fracWidth + 1) :=
-          Nat.mul_le_mul_right _ hmantissaBounds.1
+  obtain ⟨hscaledLower, hscaledUpper, hrootLower, hrootUpper⟩ :
+      2 ^ (2 * fmt.fracWidth) ≤ scaled ∧ scaled < 2 ^ (2 * fmt.fracWidth + 2) ∧
+        2 ^ fmt.fracWidth ≤ root ∧ root < 2 ^ (fmt.fracWidth + 1) :=
+    sqrt_shiftLeft_bounds fmt.fracWidth mantissa.toNat modelShift hmantissaNe
+      (by rw [hleading]; rcases hshiftCases with hs | hs <;> omega)
+      (by rw [hleading]; rcases hshiftCases with hs | hs <;> omega)
   have hradicandFit : radicand.toNat < 2 ^ (2 * (fmt.fracWidth + 1)) := by
     rw [hradicand, show 2 * (fmt.fracWidth + 1) = 2 * fmt.fracWidth + 2 by omega]
     exact hscaledUpper
   have hrounded : rounded.toNat = genericRounded := by
     have hnative :=
-      roundRoot_toNat radicand (fmt.fracWidth + 1) (by omega) (by omega) hradicandFit
+      roundRoot_toNat radicand (fmt.fracWidth + 1) (by omega) hradicandFit
     simpa only [rounded, state, root, remainder, genericRounded, hradicand] using hnative
   have hcarry : carry = true ↔ genericCarry := by
     rw [show carry = isCarry fmt rounded by rfl, isCarry_iff h rounded, hrounded]
-  have hrootLower : 2 ^ fmt.fracWidth ≤ root := by
-    dsimp only [root]
-    rw [Nat.le_sqrt, ← pow_add, ← two_mul]
-    exact hscaledLower
-  have hrootUpper : root < 2 ^ (fmt.fracWidth + 1) := by
-    dsimp only [root]
-    rw [Nat.sqrt_lt, ← pow_add, show fmt.fracWidth + 1 + (fmt.fracWidth + 1) =
-      2 * fmt.fracWidth + 2 by omega]
-    exact hscaledUpper
   have hgenericRoundedLower : 2 ^ fmt.fracWidth ≤ genericRounded := by
     dsimp only [genericRounded]
     split <;> omega
@@ -461,26 +427,8 @@ theorem sqrtNormal_refines (h : Eligible fmt)
     result = Model.Spec.sqrt x := by
   let exponent := expField fmt (toWords x).hi
   let mantissa := normalMantissa fmt (fracHigh fmt (toWords x).hi) (toWords x).lo
-  have hsignFalse : x.bits.msb = false := by
-    by_cases hsign : x.bits.msb = true
-    · simp [sqrtNormal?, hsign] at hfast
-    · exact Bool.eq_false_of_not_eq_true hsign
-  by_cases hbiasGe : fmt.fracWidth + 1 ≤ fmt.bias
-  swap
-  · have hlt : fmt.bias < fmt.fracWidth + 1 := not_le.mp hbiasGe
-    simp [sqrtNormal?, hsignFalse, hlt] at hfast
-  by_cases hfracLe : fmt.fracWidth ≤ 124
-  swap
-  · have hlt : 124 < fmt.fracWidth := not_le.mp hfracLe
-    simp [sqrtNormal?, hsignFalse, hlt] at hfast
-  have hnotBias : ¬fmt.bias < fmt.fracWidth + 1 := not_lt.mpr hbiasGe
-  have hnotFrac : ¬124 < fmt.fracWidth := not_lt.mpr hfracLe
-  have hexponentZero : exponent ≠ 0 := by
-    intro hzero
-    simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, exponent, hzero] at hfast
-  have hexponentFinite : exponent ≠ expAllOnes fmt := by
-    intro hall
-    simp [sqrtNormal?, hsignFalse, hnotBias, hnotFrac, exponent, hall] at hfast
+  obtain ⟨hsignFalse, hbiasGe, hfracLe, hexponentZero, hexponentFinite⟩ :=
+    sqrtNormal?_guard x result hfast
   have hsignNative : signBit fmt (toWords x).hi = false := by
     rw [signBit_eq h x, Model.signBit_eq_msb]
     exact hsignFalse
@@ -505,7 +453,7 @@ theorem sqrtNormal_refines (h : Eligible fmt)
   have hmodel :=
     sqrtNormalSpec_eq_model h hbiasGe exponent.toNat mantissa.toNat
       hexponentBounds.1 hexponentBounds.2 hbounds.1 hbounds.2
-  have hpublic := Model.Spec.sqrt_eq_model h.isIEEE x hfinite hnonzero hsignPublic
+  have hpublic := Model.Spec.sqrt_eq_model h.isIEEE x hfinite hsignPublic
   calc
     result = sqrtNormalSpec fmt exponent.toNat mantissa.toNat := hnative
     _ = ofModel fmt

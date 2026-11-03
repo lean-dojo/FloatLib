@@ -64,7 +64,7 @@ private theorem shiftLeft_toCommon_toNat
     (FixedWord.uint64_toNat_eq_zero value).not.mpr hvalue
   have hbounds :=
     DirectDyadicQuotient.shiftToCommon_bounds value.toNat common hvalueNat hleading
-  exact FixedWord.shiftLeft_toNat value _ (by omega)
+  exact FixedWord.shiftLeft_toNat value _
     (hbounds.2.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))
 
 /-- Native common-leading normalization is exactly the arbitrary-width normalization. -/
@@ -105,21 +105,11 @@ private theorem jamState_toNat
   by_cases hhi : state.remainder.hi = 0
   · by_cases hlo : state.remainder.lo = 0
     · simp [hhi, hlo, UInt128.toNat]
-    · have hnonzero : state.remainder.toNat ≠ 0 := by
-        unfold UInt128.toNat
-        have hloNat : state.remainder.lo.toNat ≠ 0 := by
-          simpa [← UInt64.toNat_inj] using hlo
-        omega
+    · have hnonzero := (UInt128.toNat_ne_zero_iff state.remainder).2 (Or.inl hlo)
       simp only [hhi, beq_self_eq_true, Bool.true_and, hlo,
         beq_iff_eq, ite_false, hnonzero]
       rw [UInt128.setLowBit_toNat]
-  · have hnonzero : state.remainder.toNat ≠ 0 := by
-      unfold UInt128.toNat
-      have hhiPositive : 0 < state.remainder.hi.toNat := by
-        have : state.remainder.hi.toNat ≠ 0 := by
-          simpa [← UInt64.toNat_inj] using hhi
-        omega
-      omega
+  · have hnonzero := (UInt128.toNat_ne_zero_iff state.remainder).2 (Or.inr hhi)
     simp [hhi, hnonzero, UInt128.setLowBit_toNat]
 
 /-- A quotient prefix generated from nonzero magnitudes has a nonzero leading bit. -/
@@ -322,7 +312,7 @@ theorem roundPositiveCode_eq
 
 /-- The word-valued positive result is definitionally the natural API's code. -/
 theorem roundPositiveCodeWord_toNat
-    (format : Format) (_heligible : NativeWord.Eligible format)
+    (format : Format)
     (numeratorSignificand : UInt64) (numeratorExponent : Int)
     (denominatorSignificand : UInt64) (denominatorExponent : Int) :
     (roundPositiveCodeWord format
@@ -371,7 +361,7 @@ theorem roundFields_eq
 
 /-- The word-valued signed result contains the complete scalar code. -/
 theorem roundFieldsWord_toNat
-    (format : Format) (_heligible : NativeWord.Eligible format)
+    (format : Format)
     (numeratorNegative : Bool)
     (numeratorSignificand : UInt64) (numeratorExponent : Int)
     (denominatorNegative : Bool)
@@ -440,7 +430,7 @@ theorem divWordsCodeWordValid_toNat
   rw [NativeWord.withTwoDyadicWordFieldsValid_toNat,
     NativeWord.signMaskWord_toNat format
       heligible]
-  simp only [roundFieldsWord_toNat format heligible]
+  simp only [roundFieldsWord_toNat format]
 
 /-- Every packed quotient is a complete in-range Posit encoding. -/
 theorem divWordsCodeValid_lt_modulus

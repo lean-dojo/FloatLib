@@ -49,24 +49,18 @@ theorem ofNat_toNat_biasedExponent (fmt : FloatFormat) (exponent : Int)
       exponent + Int.ofNat fmt.exponentBias :=
   Int.toNat_of_nonneg (biasedExponent_pos fmt exponent hmin).le
 
-/-- A representable normal exponent remains within the descriptor's finite exponent range. -/
+/--
+An exponent at most the largest normal exponent is encoded within the descriptor's finite exponent
+range. An exponent below the normal range encodes as the zero field.
+-/
 theorem encodedExponent_le_maxFiniteExpField
     (fmt : FloatFormat) (exponent : Int)
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent) :
     Int.toNat (exponent + Int.ofNat fmt.exponentBias) ≤
       fmt.maxFiniteExpField := by
-  have hencoded :
-      Int.ofNat (Int.toNat (exponent + Int.ofNat fmt.exponentBias)) =
-        exponent + Int.ofNat fmt.exponentBias :=
-    ofNat_toNat_biasedExponent fmt exponent hmin
-  have hupper :
-      Int.ofNat (Int.toNat (exponent + Int.ofNat fmt.exponentBias)) ≤
-        Int.ofNat fmt.maxFiniteExpField := by
-    rw [hencoded]
-    unfold FloatFormat.maxNormalExponent at hmax
-    omega
-  exact Int.ofNat_le.mp hupper
+  unfold FloatFormat.maxNormalExponent at hmax
+  simp only [Int.ofNat_eq_natCast] at hmax ⊢
+  omega
 
 /-- A normal unbiased exponent never encodes as the zero exponent field. -/
 theorem encodedExponent_ne_zero
@@ -89,13 +83,15 @@ theorem decode_encodedExponent
   rw [ofNat_toNat_biasedExponent fmt exponent hmin]
   ring
 
-/-- Removing the implicit leading bit from a normalized mantissa fits the fraction field. -/
+/--
+Removing the implicit leading bit from a mantissa below `2^(fracWidth + 1)` fits the fraction
+field. Below `2^fracWidth` the truncated subtraction is zero.
+-/
 theorem normalizedMantissa_sub_pow2_lt
     (fmt : FloatFormat) (mantissa : Nat)
-    (hlow : pow2 fmt.fracWidth ≤ mantissa)
     (hhigh : mantissa < pow2 (fmt.fracWidth + 1)) :
     mantissa - pow2 fmt.fracWidth < 2 ^ fmt.fracWidth := by
-  rw [pow2_eq_two_pow] at hlow hhigh ⊢
+  rw [pow2_eq_two_pow] at hhigh ⊢
   rw [pow_succ] at hhigh
   omega
 
@@ -118,23 +114,18 @@ theorem fraction_le_maxFiniteFracField_ieee
     (hhigh : mantissa < pow2 (fmt.fracWidth + 1)) :
     mantissa - pow2 fmt.fracWidth ≤ fmt.maxFiniteFracField := by
   have hfraction : mantissa - pow2 fmt.fracWidth < pow2 fmt.fracWidth := by
-    by_cases hlow : pow2 fmt.fracWidth ≤ mantissa
-    · simpa [pow2_eq_two_pow] using
-        normalizedMantissa_sub_pow2_lt fmt mantissa hlow hhigh
-    · rw [Nat.sub_eq_zero_of_le (le_of_not_ge hlow)]
-      simp [pow2_eq_two_pow]
+    simpa [pow2_eq_two_pow] using normalizedMantissa_sub_pow2_lt fmt mantissa hhigh
   simp only [FloatFormat.maxFiniteFracField,
     FloatFormat.encoding_eq_ieee_of_isIEEE fmt hfmt,
     FloatFormat.fracMaskNat, pow2_eq_two_pow]
   simpa [pow2_eq_two_pow] using Nat.le_sub_one_of_lt hfraction
 
 /--
-In-range normal fields cannot trigger the overflow guard shared by the dyadic and rational
-packers.
+Fields with an exponent at most the largest normal exponent and a legal fraction cannot trigger
+the overflow guard shared by the dyadic and rational packers.
 -/
 theorem packingGuard_eq_false
     (fmt : FloatFormat) (exponent : Int) (fraction : Nat)
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent)
     (hfraction : fraction ≤ fmt.maxFiniteFracField) :
     let encodedExponent :=
@@ -144,7 +135,7 @@ theorem packingGuard_eq_false
           decide (fraction > fmt.maxFiniteFracField)) =
       false := by
   have hexponent :=
-    encodedExponent_le_maxFiniteExpField fmt exponent hmin hmax
+    encodedExponent_le_maxFiniteExpField fmt exponent hmax
   have hexponentNot :
       ¬Int.toNat (exponent + Int.ofNat fmt.exponentBias) >
         fmt.maxFiniteExpField :=
@@ -155,15 +146,14 @@ theorem packingGuard_eq_false
     Bool.and_false, Bool.or_false]
 
 /--
-A normalized in-range IEEE significand cannot trigger the overflow guard shared by the dyadic and
-rational packers: the encoded exponent does not exceed the maximal finite field and the fraction
-is legal.
+An IEEE significand below `2^(fracWidth + 1)` at an exponent at most the largest normal exponent
+cannot trigger the overflow guard shared by the dyadic and rational packers: the encoded exponent
+does not exceed the maximal finite field and the fraction is legal.
 -/
 theorem normalizedGuard_eq_false
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (mantissa : Nat)
     (exponent : Int)
     (hhigh : mantissa < pow2 (fmt.fracWidth + 1))
-    (hmin : fmt.minNormalExponent ≤ exponent)
     (hmax : exponent ≤ fmt.maxNormalExponent) :
     let encodedExponent :=
       Int.toNat (exponent + Int.ofNat fmt.exponentBias)
@@ -172,7 +162,7 @@ theorem normalizedGuard_eq_false
         encodedExponent == fmt.maxFiniteExpField &&
           decide (fraction > fmt.maxFiniteFracField)) =
       false :=
-  packingGuard_eq_false fmt exponent (mantissa - pow2 fmt.fracWidth) hmin hmax
+  packingGuard_eq_false fmt exponent (mantissa - pow2 fmt.fracWidth) hmax
     (fraction_le_maxFiniteFracField_ieee fmt hfmt mantissa hhigh)
 
 end Directed.Internal

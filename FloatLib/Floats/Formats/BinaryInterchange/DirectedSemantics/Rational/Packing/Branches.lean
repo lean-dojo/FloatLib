@@ -103,15 +103,17 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_underflow
     (fmt : FloatFormat) (roundUp : Bool) (numerator denominator : Nat)
     (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hunderflow :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minSubnormalExponent) :
     roundRatMagnitudeDirectedScaled
         fmt roundUp false numerator denominator exponent =
       if roundUp then posMinSubnormal fmt else zero fmt false := by
+  have hmax :
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
+        fmt.maxNormalExponent :=
+    (hunderflow.trans (minSubnormalExponent_lt_minNormalExponent fmt)).le.trans
+      (minNormalExponent_le_maxNormalExponent fmt)
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt roundUp numerator denominator exponent
     hnumerator hdenominator]
   simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_left hunderflow]
@@ -120,9 +122,6 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_underflow
 theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_down
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hlow :
       fmt.minSubnormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
@@ -137,12 +136,16 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_down
         fmt false false numerator denominator exponent =
       ofFields fmt false 0 rounded := by
   dsimp only
+  have hmax :
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
+        fmt.maxNormalExponent :=
+    hhigh.le.trans (minNormalExponent_le_maxNormalExponent fmt)
   have hpos :=
     (roundQuotDirected_subnormal_bounds fmt false numerator denominator exponent
       hnumerator hdenominator hlow hhigh).1
   have hlt :=
     roundQuotDirected_false_subnormal_lt_pow2
-      fmt numerator denominator exponent hnumerator hdenominator hlow hhigh
+      fmt numerator denominator exponent hnumerator hdenominator hhigh
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt false numerator denominator exponent
     hnumerator hdenominator]
   simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_right (not_lt_of_ge hlow), ite_eq_left hhigh,
@@ -155,9 +158,6 @@ smallest normal value when the quotient fills the mantissa.
 theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_up
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hlow :
       fmt.minSubnormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
@@ -175,6 +175,10 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_up
       else
         ofFields fmt false 0 rounded := by
   dsimp only
+  have hmax :
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
+        fmt.maxNormalExponent :=
+    hhigh.le.trans (minNormalExponent_le_maxNormalExponent fmt)
   have hpos :=
     (roundQuotDirected_subnormal_bounds fmt true numerator denominator exponent
       hnumerator hdenominator hlow hhigh).1
@@ -215,7 +219,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_down
     not_lt_of_ge ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal)
   have hlt :=
     roundQuotDirected_false_normal_lt_pow2_succ fmt numerator denominator hnumerator hdenominator
-  have hguard := Directed.Internal.normalizedGuard_eq_false fmt hfmt _ _ hlt hnormal hmax
+  have hguard := Directed.Internal.normalizedGuard_eq_false fmt hfmt _ _ hlt hmax
   dsimp only at hlt hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt false numerator denominator exponent
     hnumerator hdenominator]
@@ -265,7 +269,7 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_no_carry
     lt_of_le_of_ne
       (roundQuotDirected_normal_bounds fmt true numerator denominator hnumerator hdenominator).2
       hcarry
-  have hguard := Directed.Internal.normalizedGuard_eq_false fmt hfmt _ _ hlt hnormal hmax
+  have hguard := Directed.Internal.normalizedGuard_eq_false fmt hfmt _ _ hlt hmax
   dsimp only at hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
@@ -280,9 +284,6 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
     (hnormal :
       fmt.minNormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hcarry :
       let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
       let scaled :=
@@ -308,11 +309,12 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
   have hguard :=
     Directed.Internal.packingGuard_eq_false fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1) 0
-      (by omega) hcarryMax (Nat.zero_le _)
+      hcarryMax (Nat.zero_le _)
   dsimp only at hguard
   rw [roundRatMagnitudeDirectedScaled_pos_eq fmt true numerator denominator exponent
     hnumerator hdenominator]
-  simp only [ite_eq_right (not_lt_of_ge hmax), hnotUnderflow, ite_false,
+  simp only [ite_eq_right (not_lt_of_ge (by omega : Numerics.RationalBinary.floorLog2
+      numerator denominator + exponent ≤ fmt.maxNormalExponent)), hnotUnderflow, ite_false,
     ite_eq_right (not_lt_of_ge hnormal),
     ite_eq_left hcarry, ite_eq_right (not_lt_of_ge hcarryMax), Nat.sub_self, hguard,
       Bool.false_eq_true]

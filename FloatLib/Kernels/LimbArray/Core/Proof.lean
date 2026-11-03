@@ -52,9 +52,22 @@ theorem limb_eq_getElem (v : LimbArray) {i : Nat} (h : i < v.limbs.size) :
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem h]
   rfl
 
+/-- A limb of an array built by `Array.ofFn` is the generator below its length and zero above. -/
+theorem limb_ofFn {count : Nat} (generate : Fin count → UInt32) (i : Nat) :
+    (⟨Array.ofFn generate⟩ : LimbArray).limb i =
+      if h : i < count then generate ⟨i, h⟩ else 0 := by
+  by_cases h : i < count <;> simp [limb, Array.getD_eq_getD_getElem?, h]
+
 /-- Every limb is below the radix. -/
 theorem limb_toNat_lt (v : LimbArray) (i : Nat) : (v.limb i).toNat < radix :=
   UInt32.toNat_lt_size _
+
+/-- Digits read off native words are below the radix, as the `Nat.ofDigits` lemmas require. -/
+theorem forall_mem_map_toNat_lt_radix {α : Type*} (l : List α) (word : α → UInt32) :
+    ∀ d ∈ l.map (fun x => (word x).toNat), d < radix := by
+  intro d hd
+  obtain ⟨x, _, rfl⟩ := List.mem_map.mp hd
+  exact UInt32.toNat_lt_size (word x)
 
 /-- The radix is `2^32`. -/
 theorem radix_eq : radix = 2 ^ 32 := by decide
@@ -95,10 +108,7 @@ theorem segment_succ_back (v : LimbArray) (s n : Nat) :
 theorem segment_lt (v : LimbArray) (s n : Nat) : segment v s n < radix ^ n := by
   rw [segment_eq_ofDigits]
   have h := Nat.ofDigits_lt_base_pow_length (by decide : 1 < radix)
-    (l := (List.range' s n).map fun i ↦ (v.limb i).toNat) (by
-      intro d hd
-      obtain ⟨i, _, rfl⟩ := List.mem_map.mp hd
-      exact limb_toNat_lt v i)
+    (forall_mem_map_toNat_lt_radix (List.range' s n) v.limb)
   simpa using h
 
 /-- Segments depend only on the limbs they cover. -/
@@ -185,6 +195,16 @@ theorem toNat_eq_segment_of_size_le {v : LimbArray} {n : Nat} (h : v.size ≤ n)
   intro i hi _
   exact limb_eq_zero_of_size_le v (by omega)
 
+/-- The value is zero exactly when every limb is zero. -/
+theorem toNat_eq_zero_iff (v : LimbArray) : toNat v = 0 ↔ ∀ i, v.limb i = 0 := by
+  rw [toNat, segment_eq_zero_iff]
+  constructor
+  · intro h i
+    by_cases hi : i < v.size
+    · simpa using h i hi
+    · exact limb_eq_zero_of_size_le v (by omega)
+  · exact fun h i _ => h _
+
 /-- A limb array's value is below `radix ^ size`. -/
 theorem toNat_lt (v : LimbArray) : toNat v < radix ^ v.size :=
   segment_lt v 0 v.size
@@ -209,9 +229,7 @@ theorem segment_zero_eq_mod (v : LimbArray) (n : Nat) :
     Nat.ofDigits_mod_pow_eq_ofDigits_take n (by decide)]
   · simp only [← List.map_take, ← List.range_eq_range', List.take_range,
       Nat.min_eq_left (Nat.le_max_right v.size n)]
-  · intro d hd
-    obtain ⟨i, _, rfl⟩ := List.mem_map.mp hd
-    exact limb_toNat_lt v i
+  · exact forall_mem_map_toNat_lt_radix _ v.limb
 
 /-- Limb `i` is the base-`2^32` digit `i` of the value. -/
 theorem limb_toNat_eq (v : LimbArray) (i : Nat) :
@@ -241,16 +259,29 @@ theorem limb_testBit_eq_false (v : LimbArray) (i j : Nat) (hj : 32 ≤ j) :
     _ = 2 ^ 32 := radix_eq
     _ ≤ 2 ^ j := Nat.pow_le_pow_right (by decide) hj
 
+/-- A value equals `n` when every bit of every limb agrees with the matching bit of `n`. -/
+theorem toNat_eq_of_limb_testBit (v : LimbArray) (n : Nat)
+    (h : ∀ i j, j < 32 → (v.limb i).toNat.testBit j = n.testBit (32 * i + j)) :
+    toNat v = n := by
+  apply Nat.eq_of_testBit_eq
+  intro k
+  have hk : k % 32 < 32 := Nat.mod_lt _ (by decide)
+  rw [← Nat.div_add_mod k 32, ← limb_testBit _ _ _ hk]
+  exact h _ _ hk
+
+/-- A value has no bits at or above `32` times its limb count. -/
+theorem testBit_toNat_eq_false_of_size_le (v : LimbArray) {m : Nat} (h : 32 * v.size ≤ m) :
+    (toNat v).testBit m = false :=
+  Nat.testBit_lt_two_pow (lt_of_lt_of_le (toNat_lt_two_pow_of_size_le (Nat.le_refl _))
+    (Nat.pow_le_pow_right (by decide) h))
+
 /-- Limb arrays with equal size and value are equal. -/
 theorem ext_of_toNat {a b : LimbArray} (hsize : a.size = b.size) (h : toNat a = toNat b) :
     a = b := by
-  have hbound (v : LimbArray) : ∀ d ∈ v.limbs.toList.map UInt32.toNat, d < radix := by
-    intro d hd
-    obtain ⟨w, _, rfl⟩ := List.mem_map.mp hd
-    exact UInt32.toNat_lt_size w
   rw [toNat_eq_ofDigits, toNat_eq_ofDigits] at h
   have hdigits := Nat.ofDigits_inj_of_len_eq (by decide : 1 < radix)
-    (by simpa [size] using hsize) (hbound a) (hbound b) h
+    (by simpa [size] using hsize) (forall_mem_map_toNat_lt_radix _ id)
+    (forall_mem_map_toNat_lt_radix _ id) h
   have hlimbs : a.limbs.toList = b.limbs.toList :=
     (List.map_inj_right (fun _ _ h ↦ UInt32.toNat_inj.mp h)).mp hdigits
   cases a
@@ -476,18 +507,22 @@ theorem isZero_eq (v : LimbArray) : isZero v = decide (toNat v = 0) := by
   unfold UInt32.log2 Fin.log2
   rfl
 
-/-- The leading-bit position of a nonzero array is the natural-number logarithm of its value. -/
-theorem log2_eq (v : LimbArray) (h : toNat v ≠ 0) : log2 v = (toNat v).log2 := by
+/--
+The leading-bit position of an array is the natural-number logarithm of its value.
+
+Both are zero for the zero value.
+-/
+theorem log2_eq (v : LimbArray) : log2 v = (toNat v).log2 := by
   unfold log2
   cases htop : topLimb v v.size with
   | zero =>
-      exfalso
-      apply h
-      unfold toNat
-      rw [segment_eq_zero_iff]
-      intro i hi
-      rw [Nat.zero_add]
-      exact (topLimb_eq_zero_iff v v.size).mp htop i (by simpa using hi)
+      have hzero : toNat v = 0 := by
+        unfold toNat
+        rw [segment_eq_zero_iff]
+        intro i hi
+        rw [Nat.zero_add]
+        exact (topLimb_eq_zero_iff v v.size).mp htop i (by simpa using hi)
+      rw [hzero, Nat.log2_zero]
   | succ i =>
       obtain ⟨hne, hlt, hzero⟩ := topLimb_spec v v.size i htop
       dsimp only
@@ -617,20 +652,16 @@ theorem limb_lowBits (v : LimbArray) (k i : Nat) :
 
 /-- Masking keeps the value modulo `2^k`. -/
 @[simp, grind =] theorem toNat_lowBits (v : LimbArray) (k : Nat) : toNat (lowBits v k) = toNat v % 2 ^ k := by
-  apply Nat.eq_of_testBit_eq
-  intro n
-  rw [Nat.testBit_mod_two_pow]
-  have hn : n % 32 < 32 := Nat.mod_lt _ (by decide)
-  have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
-  rw [← hdecomp, ← limb_testBit _ _ _ hn, ← limb_testBit _ _ _ hn, limb_lowBits]
-  by_cases hlt : n / 32 < k / 32
-  · have : 32 * (n / 32) + n % 32 < k := by omega
+  refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
+  rw [Nat.testBit_mod_two_pow, ← limb_testBit _ _ _ hj, limb_lowBits]
+  by_cases hlt : i < k / 32
+  · have : 32 * i + j < k := by omega
     simp [hlt, this]
-  · by_cases heq : n / 32 = k / 32
+  · by_cases heq : i = k / 32
     · rw [ite_eq_right hlt, ite_eq_left heq, testBit_and_lowMask32 _ _ _ (Nat.mod_lt _ (by decide))]
-      have : (32 * (n / 32) + n % 32 < k) ↔ (n % 32 < k % 32) := by omega
+      have : (32 * i + j < k) ↔ (j < k % 32) := by omega
       simp [this, Bool.and_comm]
-    · have : ¬ (32 * (n / 32) + n % 32 < k) := by omega
+    · have : ¬ (32 * i + j < k) := by omega
       simp [hlt, heq, this]
 
 /-- `resize` has exactly the requested limb count. -/
@@ -640,30 +671,18 @@ theorem limb_lowBits (v : LimbArray) (k i : Nat) :
 /-- `resize` keeps the limbs inside the new size and reads zero above it. -/
 theorem limb_resize (v : LimbArray) (count i : Nat) :
     (resize v count).limb i = if i < count then v.limb i else 0 := by
-  by_cases hi : i < count
-  · have hi' : i < (resize v count).limbs.size := by
-      change i < (resize v count).size
-      rw [size_resize]
-      exact hi
-    rw [limb_eq_getElem _ hi']
-    simp [resize, hi]
-  · rw [limb_eq_zero_of_size_le _ (by simpa using hi)]
-    simp [hi]
+  simp only [resize, limb_ofFn, dite_eq_ite]
 
 /-- Resizing keeps the value modulo `radix ^ count`. -/
 @[simp, grind =] theorem toNat_resize (v : LimbArray) (count : Nat) :
     toNat (resize v count) = toNat v % radix ^ count := by
   rw [radix_pow]
-  apply Nat.eq_of_testBit_eq
-  intro n
-  rw [Nat.testBit_mod_two_pow]
-  have hn : n % 32 < 32 := Nat.mod_lt _ (by decide)
-  have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
-  rw [← hdecomp, ← limb_testBit _ _ _ hn, ← limb_testBit _ _ _ hn, limb_resize]
-  by_cases hi : n / 32 < count
-  · have : 32 * (n / 32) + n % 32 < 32 * count := by omega
+  refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
+  rw [Nat.testBit_mod_two_pow, ← limb_testBit _ _ _ hj, limb_resize]
+  by_cases hi : i < count
+  · have : 32 * i + j < 32 * count := by omega
     simp [hi, this]
-  · have : ¬ (32 * (n / 32) + n % 32 < 32 * count) := by omega
+  · have : ¬ (32 * i + j < 32 * count) := by omega
     simp [hi, this]
 
 /-- Resizing to at least the stored size keeps the value. -/
@@ -710,29 +729,20 @@ theorem anyBelow_eq_true_iff (v : LimbArray) (k : Nat) :
   rw [anyLimbBelow_min_size, Bool.or_eq_true, anyLimbBelow_eq_true_iff, bne_iff_ne]
   constructor
   · rintro (⟨i, hi, hne⟩ | hne) hzero
-    · rw [toNat, segment_eq_zero_iff] at hzero
-      apply hne
-      by_cases hsize : i < v.size
-      · have := hzero i (by simpa using hsize)
-        rw [Nat.zero_add, limb_lowBits, ite_eq_left hi] at this
-        exact this
-      · exact limb_eq_zero_of_size_le v (by omega)
-    · rw [toNat, segment_eq_zero_iff] at hzero
-      apply hne
-      by_cases hsize : k / 32 < v.size
-      · have := hzero (k / 32) (by simpa using hsize)
-        rw [Nat.zero_add, limb_lowBits, ite_eq_right (Nat.lt_irrefl _), ite_eq_left rfl] at this
-        exact this
-      · rw [limb_eq_zero_of_size_le v (by omega)]
-        simp
+    · have := (toNat_eq_zero_iff _).mp hzero i
+      rw [limb_lowBits, ite_eq_left hi] at this
+      exact hne this
+    · have := (toNat_eq_zero_iff _).mp hzero (k / 32)
+      rw [limb_lowBits, ite_eq_right (Nat.lt_irrefl _), ite_eq_left rfl] at this
+      exact hne this
   · intro hne
     by_contra hcontra
     apply hne
     rw [not_or, not_exists] at hcontra
     obtain ⟨hall, hmask⟩ := hcontra
-    rw [toNat, segment_eq_zero_iff]
-    intro i _
-    rw [Nat.zero_add, limb_lowBits]
+    rw [toNat_eq_zero_iff]
+    intro i
+    rw [limb_lowBits]
     split
     · rename_i hi
       by_contra hne'
@@ -775,18 +785,14 @@ theorem toNat_orLowBit (v : LimbArray) (hsize : 0 < v.size) (sticky : Bool) :
   cases sticky
   · simp [orLowBit]
   · simp only [ite_true]
-    apply Nat.eq_of_testBit_eq
-    intro n
-    rw [Nat.testBit_or]
-    have hn : n % 32 < 32 := Nat.mod_lt _ (by decide)
-    have hdecomp : 32 * (n / 32) + n % 32 = n := Nat.div_add_mod n 32
-    rw [← hdecomp, ← limb_testBit _ _ _ hn, ← limb_testBit _ _ _ hn, limb_orLowBit_true v hsize]
-    by_cases hq : n / 32 = 0
+    refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
+    rw [Nat.testBit_or, ← limb_testBit _ _ _ hj, limb_orLowBit_true v hsize]
+    by_cases hq : i = 0
     · rw [ite_eq_left hq, UInt32.toNat_or, Nat.testBit_or,
       show (1 : UInt32).toNat = 1 by decide, hq,
         Nat.mul_zero, Nat.zero_add]
     · rw [ite_eq_right hq]
-      have hone : (1 : Nat).testBit (32 * (n / 32) + n % 32) = false := by
+      have hone : (1 : Nat).testBit (32 * i + j) = false := by
         rw [Bool.eq_false_iff, Ne, Nat.testBit_one_eq_true_iff_self_eq_zero]
         omega
       rw [hone, Bool.or_false]

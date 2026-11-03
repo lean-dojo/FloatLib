@@ -105,6 +105,19 @@ theorem value_max (precision : Nat) (a b : Int) :
     value precision (max a b) = max (value precision a) (value precision b) := by
   simp [value, max_div_div_right (real_scale_pos precision).le]
 
+/-- A product of two coefficients is exact on the grid with twice the fractional bits. -/
+theorem value_mul (precision : Nat) (a b : Int) :
+    value (precision + precision) (a * b) = value precision a * value precision b := by
+  simp only [value, scale_eq_pow, pow_add, Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
+  ring
+
+/-- Shifting a coefficient left by `shift` bits keeps its value on a grid with `shift` more bits. -/
+theorem value_shiftLeft (precision shift : Nat) (z : Int) :
+    value (precision + shift) (z <<< shift) = value precision z := by
+  simp only [value, Int.shiftLeft_eq, scale_eq_pow, pow_add, Int.cast_mul, Int.cast_pow,
+    Int.cast_ofNat]
+  field_simp
+
 private theorem fdiv_eq_rat_floor_of_nonneg (a b : Int) (hb : 0 ≤ b) :
     a.fdiv b = ⌊((a : ℚ) / (b : ℚ))⌋ := by
   lift b to Nat using hb
@@ -133,7 +146,7 @@ private theorem divBounds_rat_bounds (a b : Int) (hb : b ≠ 0) :
     · rw [Int.cast_add, Int.cast_one, fdiv_eq_rat_floor]
       exact (Int.lt_floor_add_one _).le
 
-/-- The integer quotient bounds enclose exact division in any ordered field. -/
+/-- The integer quotient bounds enclose exact division by a nonzero `b`, in any ordered field. -/
 theorem divBounds_bounds {α : Type*} [Field α] [LinearOrder α]
     [IsStrictOrderedRing α] (a b : Int) (hb : b ≠ 0) :
     ((divBounds a b).lo : α) ≤ (a : α) / b ∧
@@ -178,21 +191,32 @@ theorem containsReal_coarsen {shift precision : Nat} {I : Interval Int} {x : ℝ
         div_le_div_of_nonneg_right (le_roundUp shift I.hi) (real_scale_pos precision).le
       _ = value precision (roundUp shift I.hi) := rfl
 
+/--
+The quotient bounds of the numerator shifted onto the grid, read on the grid, enclose the exact
+quotient `a / b` for a nonzero denominator `b`, in any ordered field.
+-/
+theorem divBounds_shiftLeft_bounds {α : Type*} [Field α] [LinearOrder α] [IsStrictOrderedRing α]
+    (precision : Nat) (a b : Int) (hb : b ≠ 0) :
+    ((divBounds (a <<< precision) b).lo : α) / (scale precision : α) ≤ (a : α) / b ∧
+      (a : α) / b ≤ ((divBounds (a <<< precision) b).hi : α) / (scale precision : α) := by
+  have h := divBounds_bounds (α := α) (a <<< precision) b hb
+  have hs : (0 : α) < scale precision := by exact_mod_cast scale_pos precision
+  have hq : ((a <<< precision : Int) : α) / b / (scale precision : α) = (a : α) / b := by
+    rw [Int.shiftLeft_eq, Int.cast_mul, ← scale_eq_pow, mul_div_right_comm,
+      mul_div_cancel_right₀ _ (ne_of_gt hs)]
+  rw [← hq]
+  exact ⟨div_le_div_of_nonneg_right h.1 hs.le, div_le_div_of_nonneg_right h.2 hs.le⟩
+
 /-- Conversion from an exact rational produces a containing binary-grid interval. -/
 theorem contains_enclose (precision : Nat) (q : ℚ) :
     (enclose precision q).Contains (decode precision) q := by
-  have hs : (0 : ℚ) < scale precision := by exact_mod_cast scale_pos precision
-  have h := divBounds_bounds (α := ℚ) (q.num <<< precision) q.den
+  have h := divBounds_shiftLeft_bounds (α := ℚ) precision q.num q.den
     (by exact_mod_cast q.den_nz)
-  have hq : (((q.num <<< precision : Int) : ℚ) / q.den) /
-      (scale precision : ℚ) = q := by
-    rw [Int.shiftLeft_eq, Int.cast_mul, ← scale_eq_pow, mul_div_right_comm,
-      mul_div_cancel_right₀ _ (ne_of_gt hs)]
-    exact Rat.num_div_den q
+  rw [Int.cast_natCast, Rat.num_div_den] at h
   refine ⟨toRat precision (enclose precision q).lo,
     toRat precision (enclose precision q).hi, rfl, rfl, ?_, ?_⟩
-  · simpa [enclose, toRat, Rat.divInt_eq_div, hq] using div_le_div_of_nonneg_right h.1 hs.le
-  · simpa [enclose, toRat, Rat.divInt_eq_div, hq] using div_le_div_of_nonneg_right h.2 hs.le
+  · simpa [enclose, toRat, Rat.divInt_eq_div] using h.1
+  · simpa [enclose, toRat, Rat.divInt_eq_div] using h.2
 
 /-- Total outward rounding from exact rationals onto a fixed binary grid. -/
 def rounding (precision : Nat) : OutwardRounding Int ℚ where
@@ -232,55 +256,32 @@ theorem containsReal_sub (precision : Nat) {I J : Interval Int} {x y : ℝ}
   rw [containsReal_iff] at hx hy ⊢
   simpa [sub] using And.intro (sub_le_sub hx.1 hy.2) (sub_le_sub hx.2 hy.1)
 
-private theorem value_roundDown_le (precision : Nat) (z : Int) :
-    value precision (roundDown precision z) ≤
-      value precision z / (scale precision : ℝ) :=
-  div_le_div_of_nonneg_right (roundDown_le precision z) (real_scale_pos precision).le
-
-private theorem le_value_roundUp (precision : Nat) (z : Int) :
-    value precision z / (scale precision : ℝ) ≤ value precision (roundUp precision z) :=
-  div_le_div_of_nonneg_right (le_roundUp precision z) (real_scale_pos precision).le
-
-private theorem value_product_scaled (precision : Nat) (a b : Int) :
-    value precision (a * b) / (scale precision : ℝ) =
-      value precision a * value precision b := by
-  simp only [value, Int.cast_mul]
-  ring
-
-/-- Integer four-corner multiplication encloses products of arbitrary real input members. -/
+/--
+Integer four-corner multiplication encloses products of arbitrary real input members: the corner
+products are exact on the grid with twice the fractional bits, and `mul` coarsens them outward.
+-/
 theorem containsReal_mul (precision : Nat) {I J : Interval Int} {x y : ℝ}
     (hx : I.ContainsReal (decode precision) x)
     (hy : J.ContainsReal (decode precision) y) :
     (mul precision I J).ContainsReal (decode precision) (x * y) := by
-  rw [containsReal_iff] at hx hy ⊢
-  have hxy := mul_bounds_Icc (value precision I.lo) (value precision I.hi)
-    (value precision J.lo) (value precision J.hi) x y hx hy
-  refine ⟨(value_roundDown_le precision _).trans ?_,
-    (le_value_roundUp precision _).trans' ?_⟩
-  · simpa only [minOfFour, value_min,
-      ← min_div_div_right (real_scale_pos precision).le, value_product_scaled] using hxy.1
-  · simpa only [maxOfFour, value_max,
-      ← max_div_div_right (real_scale_pos precision).le, value_product_scaled] using hxy.2
+  rw [containsReal_iff] at hx hy
+  refine containsReal_coarsen (I := ⟨_, _⟩) (shift := precision) ?_
+  rw [containsReal_iff]
+  simpa only [minOfFour, maxOfFour, value_min, value_max, value_mul, Set.mem_Icc] using
+    mul_bounds_Icc (value precision I.lo) (value precision I.hi)
+      (value precision J.lo) (value precision J.hi) x y hx hy
 
 private theorem value_divBounds (precision : Nat) (a b : Int) (hb : b ≠ 0) :
     value precision (divBounds (a <<< precision) b).lo ≤
         value precision a / value precision b ∧
       value precision a / value precision b ≤
         value precision (divBounds (a <<< precision) b).hi := by
-  have h := divBounds_bounds (α := ℝ) (a <<< precision) b hb
-  have hs := real_scale_pos precision
-  have hq : (((a <<< precision : Int) : ℝ) / b) / (scale precision : ℝ) =
-      value precision a / value precision b := by
-    rw [Int.shiftLeft_eq, Int.cast_mul, ← scale_eq_pow]
-    dsimp [value]
+  have hs := (real_scale_pos precision).ne'
+  have hq : value precision a / value precision b = (a : ℝ) / b := by
+    simp only [value]
     field_simp
-  constructor
-  · have hl := div_le_div_of_nonneg_right h.1 hs.le
-    rw [hq] at hl
-    simpa only [value] using hl
-  · have hh := div_le_div_of_nonneg_right h.2 hs.le
-    rw [hq] at hh
-    simpa only [value] using hh
+  rw [hq]
+  exact divBounds_shiftLeft_bounds precision a b hb
 
 /-- Successful integer division encloses quotients of arbitrary real input members. -/
 theorem containsReal_div? (precision : Nat) {I J K : Interval Int}
@@ -343,23 +344,22 @@ private theorem mul_self_le_max_of_mem {a b x : ℝ} (hx : x ∈ Set.Icc a b) :
 theorem containsReal_square (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) :
     (square precision I).ContainsReal (decode precision) (x ^ 2) := by
-  rw [containsReal_iff] at hx ⊢
-  refine ⟨(value_roundDown_le precision _).trans ?_,
-    (le_value_roundUp precision _).trans' ?_⟩
-  · change value precision
-        (if 0 ≤ I.lo then I.lo * I.lo else if I.hi ≤ 0 then I.hi * I.hi else 0) /
-        (scale precision : ℝ) ≤ x ^ 2
+  rw [containsReal_iff] at hx
+  refine containsReal_coarsen (I := ⟨_, _⟩) (shift := precision) ?_
+  rw [containsReal_iff]
+  refine ⟨?_, ?_⟩
+  · change value (precision + precision)
+        (if 0 ≤ I.lo then I.lo * I.lo else if I.hi ≤ 0 then I.hi * I.hi else 0) ≤ x ^ 2
     split_ifs with hlo hhi
     · have hl : 0 ≤ value precision I.lo := by
         simpa only [← value_zero precision, value_le_value_iff] using hlo
-      simpa only [value_product_scaled, pow_two] using mul_self_le_mul_self hl hx.1
+      simpa only [value_mul, pow_two] using mul_self_le_mul_self hl hx.1
     · have hh : value precision I.hi ≤ 0 := by
         simpa only [← value_zero precision, value_le_value_iff] using hhi
-      simpa only [value_product_scaled, pow_two, neg_mul_neg] using
+      simpa only [value_mul, pow_two, neg_mul_neg] using
         mul_self_le_mul_self (neg_nonneg.mpr hh) (neg_le_neg hx.2)
     · simpa using sq_nonneg x
-  · simpa only [value_max, ← max_div_div_right (real_scale_pos precision).le,
-      value_product_scaled, pow_two] using mul_self_le_max_of_mem hx
+  · simpa only [value_max, value_mul, pow_two] using mul_self_le_max_of_mem hx
 
 private theorem containsReal_pow_internal (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) (n : Nat) :

@@ -35,11 +35,17 @@ specialize independently for every IEEE, non-IEEE, or user-defined format.
 -/
 inductive Descriptor (_format : FloatFormat) : Type
 
+/-- A binary descriptor stores its model word as its code and uses real scalars. -/
 instance encodedFormat (format : FloatFormat) :
     EncodedFormat (Descriptor format) where
   Code := Model format
   Scalar := ℝ
 
+/--
+Total interpretation of descriptor codes through `Model.toNumericalValue`: finite codes denote
+their real value, so both signed zeros denote `0`; infinities keep their sign; NaNs keep their
+sign, payload, and signaling bit.
+-/
 noncomputable instance formatSemantics (format : FloatFormat) :
     FormatSemantics (Descriptor format) where
   denote := Model.toNumericalValue

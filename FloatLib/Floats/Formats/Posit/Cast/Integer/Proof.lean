@@ -71,7 +71,7 @@ theorem toInt_toFixedInt_of_inRange (value : Model format) (hwidth : 0 < width) 
     (hvalue : value.toRat? = some q) (hrange : FixedInt.InRange width (roundRatEven q)) :
     (toFixedInt width value hwidth).toInt = roundRatEven q := by
   rw [toFixedInt_eq_of_inRange value hwidth hvalue hrange]
-  exact FixedInt.toInt_ofInt_eq_self hwidth hrange
+  exact FixedInt.toInt_ofInt_eq_self hrange
 
 /--
 For a finite posit, sentinel output means either overflow after rounding or a rounded result
@@ -88,7 +88,7 @@ theorem toFixedInt_eq_minCode_iff (value : Model format) (hwidth : 0 < width) {q
     constructor
     · intro h
       have := congrArg FixedInt.toInt h
-      simpa only [FixedInt.toInt_ofInt_eq_self hwidth hrange, FixedInt.toInt_minCode] using this
+      simpa only [FixedInt.toInt_ofInt_eq_self hrange, FixedInt.toInt_minCode] using this
     · intro h
       rw [h]
       exact FixedInt.ofInt_toInt (FixedInt.minCode width)
@@ -120,13 +120,17 @@ theorem toFixedInt_eq_of_int (value : Model format) (hwidth : 0 < width) {intege
     toFixedInt_eq_of_inRange value hwidth hvalue (by simpa only [roundRatEven_intCast])
 
 /--
-An integer round trip is exact when its Section 4.1 posit rounding still denotes that integer
-and its input word is not the sentinel. Representability is essential here.
+An integer round trip is exact when its Section 4.1 posit rounding still denotes that integer.
+The sentinel `FixedInt.minCode width` maps to NaR and back with no condition, so representability
+is required only of the other values.
 -/
 theorem toFixedInt_ofFixedInt (value : FixedInt width) (hwidth : 0 < width)
-    (hvalue : value ≠ FixedInt.minCode width)
-    (hexact : (roundRat format (value.toInt : Rat)).toRat? = some (value.toInt : Rat)) :
+    (hexact : value ≠ FixedInt.minCode width →
+      (roundRat format (value.toInt : Rat)).toRat? = some (value.toInt : Rat)) :
     toFixedInt width (ofFixedInt format value hwidth) hwidth = value := by
+  by_cases hvalue : value = FixedInt.minCode width
+  · subst hvalue
+    simp
   have hrange : FixedInt.InRange width value.toInt := by
     constructor
     · rw [FixedInt.minValue_eq hwidth]
@@ -134,6 +138,6 @@ theorem toFixedInt_ofFixedInt (value : FixedInt width) (hwidth : 0 < width)
     · rw [FixedInt.maxValue_eq]
       exact BitVec.toInt_le
   rw [ofFixedInt_eq_roundRat value hwidth hvalue,
-    toFixedInt_eq_of_int _ hwidth hexact hrange, FixedInt.ofInt_toInt]
+    toFixedInt_eq_of_int _ hwidth (hexact hvalue) hrange, FixedInt.ofInt_toInt]
 
 end FloatLib.Floats.Formats.Posit.Model

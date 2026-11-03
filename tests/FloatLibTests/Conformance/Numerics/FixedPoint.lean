@@ -38,7 +38,7 @@ example {left right : ℚ}
     (x : AtFinite binaryRadix 4 8 left)
     (y : AtFinite binaryRadix 4 8 right) :
     (numericalSystem binaryRadix 4 8).At (.finite (left + right)) :=
-  Operation.Checked2On.applyAt (checkedAdd_refines (by decide)) hresult x y
+  Operation.Checked2On.applyAt checkedAdd_refines hresult x y
 
 example {left right : ℚ}
     (x : AtFinite binaryRadix 4 8 left)

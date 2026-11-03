@@ -26,8 +26,11 @@ namespace FloatLib.Numerics.DecimalText
 
 /-- Exact representation and a requested significant-digit count are distinct output modes. -/
 inductive Precision where
+  /-- Every digit of the exact value. Nothing is rounded, so the rounding direction is unused. -/
   | exact
+  /-- This many significant digits, rounded once in the caller's rounding direction. -/
   | significant (digits : ℕ+)
+  deriving DecidableEq, Repr
 
 /-- Decimal position of the last requested digit. -/
 def significantQuantum (coefficient : Nat) (quantum : Int) (digits : ℕ+) : Int :=

@@ -103,13 +103,16 @@ theorem roundRatScaled_false_eq_posZero_of_lt_minSubnormal_sub_one
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hmax :
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
-        fmt.maxNormalExponent)
     (hunderflow :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minSubnormalExponent - 1) :
     roundRatScaled fmt false numerator denominator exponent = posZero fmt := by
+  have hmax :
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
+        fmt.maxNormalExponent := by
+    have := minSubnormalExponent_lt_minNormalExponent fmt
+    have := minNormalExponent_le_maxNormalExponent fmt
+    omega
   rw [roundRatScaled_false_eq_of_isIEEE fmt numerator denominator exponent hfmt
     hnumerator hdenominator]
   simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_left hunderflow]
@@ -199,13 +202,48 @@ theorem roundRatScaled_false_eq_normal_of_ne_carry
     ite_eq_right hcarry]
 
 /--
+A normal-grid nearest-even carry needs a nonzero numerator and denominator: a zero numerator rounds
+to zero, and a zero denominator rounds to at most one.
+-/
+private theorem ne_zero_of_roundQuotientEven_eq_pow2_succ
+    (fmt : FloatFormat) (numerator denominator : Nat)
+    (hcarry :
+      let scaled :=
+        Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator
+          (Int.ofNat fmt.fracWidth - Numerics.RationalBinary.floorLog2 numerator denominator)
+      roundQuotientEven scaled.1 scaled.2 = pow2 (fmt.fracWidth + 1)) :
+    numerator ≠ 0 ∧ denominator ≠ 0 := by
+  dsimp only at hcarry
+  have hpow : 2 ≤ pow2 (fmt.fracWidth + 1) := by
+    rw [pow2_eq_two_pow, pow_succ]
+    have := Nat.two_pow_pos fmt.fracWidth
+    omega
+  generalize Int.ofNat fmt.fracWidth -
+    Numerics.RationalBinary.floorLog2 numerator denominator = shift at hcarry
+  constructor
+  · rintro rfl
+    have hzero : (Numerics.RationalBinary.scaleByPowerOfTwo 0 denominator shift).1 = 0 := by
+      cases shift <;> simp
+    rw [hzero, roundQuotientEven_eq_zero_of_two_mul_le 0 _ (by omega)] at hcarry
+    omega
+  · rintro rfl
+    have hzero : (Numerics.RationalBinary.scaleByPowerOfTwo numerator 0 shift).2 = 0 := by
+      cases shift <;> simp
+    rw [hzero] at hcarry
+    have hle : roundQuotientEven
+        (Numerics.RationalBinary.scaleByPowerOfTwo numerator 0 shift).1 0 ≤ 1 := by
+      unfold roundQuotientEven
+      dsimp only
+      split_ifs <;> simp_all
+    omega
+
+/--
 A carry-out whose incremented exponent still fits stores the smallest mantissa one binade
 higher.
 -/
 theorem roundRatScaled_false_eq_normal_of_carry
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
     (hnormal :
       fmt.minNormalExponent ≤
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
@@ -223,6 +261,8 @@ theorem roundRatScaled_false_eq_normal_of_carry
           (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1 +
             Int.ofNat fmt.exponentBias))
         0 := by
+  obtain ⟨hnumerator, hdenominator⟩ :=
+    ne_zero_of_roundQuotientEven_eq_pow2_succ fmt numerator denominator hcarry
   have hnotUnderflow :
       ¬Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minSubnormalExponent - 1 := by
@@ -242,9 +282,6 @@ theorem roundRatScaled_false_eq_posInf_of_carry
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
-    (hnormal :
-      fmt.minNormalExponent ≤
-        Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
     (hmax :
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent ≤
         fmt.maxNormalExponent)
@@ -257,6 +294,11 @@ theorem roundRatScaled_false_eq_posInf_of_carry
       fmt.maxNormalExponent <
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1) :
     roundRatScaled fmt false numerator denominator exponent = posInf fmt := by
+  have hnormal :
+      fmt.minNormalExponent ≤
+        Numerics.RationalBinary.floorLog2 numerator denominator + exponent := by
+    have := minNormalExponent_le_maxNormalExponent fmt
+    omega
   have hnotUnderflow :
       ¬Numerics.RationalBinary.floorLog2 numerator denominator + exponent <
         fmt.minSubnormalExponent - 1 := by

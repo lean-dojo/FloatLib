@@ -45,12 +45,13 @@ packed-carrier selection and codecs, and `Configured.Plan.Dispatch` installs cer
 backends. The value layer is split further:
 
 * `Configured.Value.Runtime` provides packing, decoding, classification, and raw-word conversion;
-* `Configured.Instances` installs comparison, display, literals, and negation;
+* `Configured.Instances` defines `ofRat` and installs comparison, display, literals, and negation;
 * `Configured.Value.Proof` proves round trips, special-value semantics, and comparison laws.
 
 Raw words are deliberately lower-level than ordinary numeric construction. They are for
-serialization, conformance vectors, and encoding proofs. Arithmetic clients should use numeric
-literals and the operation interface once the matching certified capability is imported.
+serialization, conformance vectors, and encoding proofs. Arithmetic clients should build values
+from numeric literals or `.ofRat q` and use the operation interface once the matching certified
+capability is imported.
 
 ## References
 

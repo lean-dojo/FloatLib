@@ -94,22 +94,21 @@ theorem maximum_comm (left right : NumericalValue Rat) :
     maximumNumber nan (.finite value) = .finite value :=
   rfl
 
+/-- A finite rational and its negation have the same exact magnitude. -/
+private theorem abs_finite_neg (value : Rat) : abs (.finite (-value)) = abs (.finite value) := by
+  simp only [abs]
+  split_ifs <;> simp_all <;> linarith
+
 /-- Equal nonnegative magnitudes are resolved toward the negative datum by minimum. -/
 theorem minimumMagnitude_neg_self (value : Rat) (hvalue : 0 ≤ value) :
     minimumMagnitude (.finite (-value)) (.finite value) = .finite (-value) := by
-  have habs : abs (.finite (-value)) = abs (.finite value) := by
-    simp only [abs]
-    split_ifs <;> simp_all <;> linarith
-  simp only [minimumMagnitude, habs, less_self, Bool.false_eq_true, ite_false]
+  simp only [minimumMagnitude, abs_finite_neg, less_self, Bool.false_eq_true, ite_false]
   rw [minimum_finite, min_eq_left (by linarith)]
 
 /-- Equal nonnegative magnitudes are resolved toward the positive datum by maximum. -/
 theorem maximumMagnitude_neg_self (value : Rat) (hvalue : 0 ≤ value) :
     maximumMagnitude (.finite (-value)) (.finite value) = .finite value := by
-  have habs : abs (.finite (-value)) = abs (.finite value) := by
-    simp only [abs]
-    split_ifs <;> simp_all <;> linarith
-  simp only [maximumMagnitude, habs, less_self, Bool.false_eq_true, ite_false]
+  simp only [maximumMagnitude, abs_finite_neg, less_self, Bool.false_eq_true, ite_false]
   rw [maximum_finite, max_eq_right (by linarith)]
 
 /-- Reversed clamp bounds have the report's indeterminate NaN result. -/

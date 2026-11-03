@@ -99,20 +99,6 @@ theorem significand_mod_two_pow
       simp only [Nat.add_mod, Nat.mod_self,
         Nat.mod_eq_of_lt hfraction, zero_add]
 
-/-- The low `leading` bits of the complete tail are its explicit fraction. -/
-theorem exactTailRaw_mod_two_pow
-    (exponentField significand leading : Nat)
-    (hlower : 2 ^ leading ≤ significand)
-    (hupper : significand < 2 ^ (leading + 1)) :
-    exactTailRaw exponentField significand leading % 2 ^ leading =
-      fractionRaw significand leading := by
-  have hfraction :=
-    fractionRaw_lt_two_pow significand leading hlower hupper
-  unfold exactTailRaw
-  rw [mul_comm exponentField (2 ^ leading)]
-  simp only [Nat.add_mod, Nat.mul_mod_right,
-    Nat.mod_eq_of_lt hfraction, zero_add]
-
 /--
 Every suffix contained in the explicit fraction is shared by the complete tail and significand.
 
@@ -122,24 +108,35 @@ smaller power of two observes exactly the same fraction suffix.
 theorem exactTailRaw_mod_eq_significand_mod
     (exponentField significand leading suffix : Nat)
     (hsuffix : suffix ≤ leading)
-    (hlower : 2 ^ leading ≤ significand)
-    (hupper : significand < 2 ^ (leading + 1)) :
+    (hlower : 2 ^ leading ≤ significand) :
     exactTailRaw exponentField significand leading % 2 ^ suffix =
       significand % 2 ^ suffix := by
-  have hdivisor : 2 ^ suffix ∣ 2 ^ leading :=
+  obtain ⟨factor, hfactor⟩ : 2 ^ suffix ∣ 2 ^ leading :=
     Nat.pow_dvd_pow 2 hsuffix
-  calc
-    exactTailRaw exponentField significand leading % 2 ^ suffix =
-        (exactTailRaw exponentField significand leading %
-          2 ^ leading) % 2 ^ suffix := by
-      exact (Nat.mod_mod_of_dvd _ hdivisor).symm
-    _ = (fractionRaw significand leading) % 2 ^ suffix := by
-      rw [exactTailRaw_mod_two_pow
-        exponentField significand leading hlower hupper]
-    _ = (significand % 2 ^ leading) % 2 ^ suffix := by
-      rw [significand_mod_two_pow significand leading hlower hupper]
-    _ = significand % 2 ^ suffix :=
-      Nat.mod_mod_of_dvd significand hdivisor
+  have htail :
+      exactTailRaw exponentField significand leading =
+        fractionRaw significand leading + 2 ^ suffix * (exponentField * factor) := by
+    unfold exactTailRaw
+    rw [hfactor]
+    ring
+  have hsignificand :
+      significand = fractionRaw significand leading + 2 ^ suffix * factor := by
+    unfold fractionRaw
+    rw [← hfactor]
+    omega
+  rw [htail, Nat.add_mul_mod_self_left]
+  conv_rhs => rw [hsignificand]
+  rw [Nat.add_mul_mod_self_left]
+
+/-- The low `leading` bits of the complete tail are its explicit fraction. -/
+theorem exactTailRaw_mod_two_pow
+    (exponentField significand leading : Nat)
+    (hlower : 2 ^ leading ≤ significand)
+    (hupper : significand < 2 ^ (leading + 1)) :
+    exactTailRaw exponentField significand leading % 2 ^ leading =
+      fractionRaw significand leading :=
+  (exactTailRaw_mod_eq_significand_mod exponentField significand leading leading le_rfl
+    hlower).trans (significand_mod_two_pow significand leading hlower hupper)
 
 /--
 The Posit exponent/fraction prefix is ordinary truncation of the complete finite tail.
@@ -155,9 +152,6 @@ theorem tailPrefix_eq_streamPrefix
       streamPrefix
         (exactTailRaw exponentField significand leading)
         (leading + 2) count := by
-  have hfraction :
-      fractionRaw significand leading < 2 ^ leading :=
-    fractionRaw_lt_two_pow significand leading hlower hupper
   by_cases hcountTwo : count ≤ 2
   · have hcountWidth : count ≤ leading + 2 := by
       omega
@@ -169,16 +163,8 @@ theorem tailPrefix_eq_streamPrefix
       rw [← Nat.pow_add]
       congr 1
       omega
-    rw [hpower, ← Nat.div_div_eq_div_mul]
-    have hrawDiv :
-        exactTailRaw exponentField significand leading /
-            2 ^ leading =
-          exponentField := by
-      unfold exactTailRaw
-      rw [mul_comm exponentField (2 ^ leading)]
-      rw [Nat.mul_add_div (Nat.two_pow_pos leading)]
-      rw [Nat.div_eq_of_lt hfraction, Nat.add_zero]
-    rw [hrawDiv]
+    rw [hpower, ← Nat.div_div_eq_div_mul,
+      exactTailRaw_div_two_pow exponentField significand leading hlower hupper]
   · have hcountLarge : 2 < count := by
       omega
     simp only [DirectDyadicPacking.tailPrefix, ite_eq_right hcountTwo,
@@ -294,22 +280,10 @@ theorem tailBit_eq_streamGuard
       have hsignificandBit :=
         Nat.testBit_mod_two_pow significand leading bit
       simp only [hbitLt, decide_true, Bool.true_and] at hrawBit hsignificandBit
-      rw [hposition]
-      calc
-        significand.testBit bit =
-            (significand % 2 ^ leading).testBit bit :=
-          hsignificandBit.symm
-        _ = (fractionRaw significand leading).testBit bit := by
-          rw [significand_mod_two_pow
-            significand leading hlower hupper]
-        _ =
-            (exactTailRaw exponentField significand leading %
-              2 ^ leading).testBit bit := by
-          rw [exactTailRaw_mod_two_pow
-            exponentField significand leading hlower hupper]
-        _ =
-            (exactTailRaw exponentField significand leading).testBit bit :=
-          hrawBit
+      rw [hposition, ← hrawBit,
+        exactTailRaw_mod_eq_significand_mod exponentField significand leading leading le_rfl
+          hlower,
+        hsignificandBit]
   · have hindexLe : leading + 2 ≤ index :=
       Nat.le_of_not_gt hindex
     rw [tailBit_eq_false_of_le
@@ -403,7 +377,7 @@ theorem tailHasNonzeroAfter_succ_eq_streamSticky
       · rw [ite_eq_left hretained]
         rw [exactTailRaw_mod_eq_significand_mod
           exponentField significand leading (leading - retained)
-          (by omega) hlower hupper]
+          (by omega) hlower]
       · rw [ite_eq_right hretained]
         have hzero : leading - retained = 0 := by
           omega
@@ -443,21 +417,8 @@ theorem tailPrefix_full
     DirectDyadicPacking.tailPrefix exponentField significand leading
         (leading + 2) =
       exactTailRaw exponentField significand leading := by
-  cases leading with
-  | zero =>
-      have hsignificand : significand = 1 := by
-        norm_num at hlower hupper
-        omega
-      subst significand
-      simp [DirectDyadicPacking.tailPrefix,
-        exactTailRaw, fractionRaw]
-  | succ leading =>
-      unfold DirectDyadicPacking.tailPrefix
-      rw [ite_eq_right (by omega)]
-      unfold DirectDyadicPacking.fractionPrefix
-      rw [ite_eq_left (by omega)]
-      simp [Nat.shiftLeft_eq, Nat.shiftRight_eq_div_pow,
-        exactTailRaw, fractionRaw]
+  rw [tailPrefix_eq_streamPrefix exponentField significand leading (leading + 2) hlower hupper,
+    streamPrefix_eq_div_of_le le_rfl, Nat.sub_self, Nat.pow_zero, Nat.div_one]
 
 /--
 The finite exponent/fraction stream denotes the normalized significand scaled by its exponent.
@@ -576,50 +537,24 @@ theorem trailingRat_mul_two_pow
         _ = Model.trailingRat trailing raw :=
           inductionHypothesis
 
-/--
-Truncating a bounded exponent/fraction stream cannot increase its exact value.
+/-- Zero padding a finite tail out to any wider stream preserves its rational value. -/
+theorem trailingRat_widen {narrow wide : Nat} (raw : Nat) (hwidth : narrow ≤ wide) :
+    Model.trailingRat wide (raw * 2 ^ (wide - narrow)) = Model.trailingRat narrow raw := by
+  have hpadded := trailingRat_mul_two_pow narrow raw (wide - narrow)
+  rwa [Nat.add_sub_cancel' hwidth] at hpadded
 
-The retained prefix is padded back to the complete stream width before applying strict
-monotonicity. This formulation also covers tails with zero retained bits.
+/--
+A retained prefix whose zero padding to the complete width is at most a bounded stream has at
+most the stream's exact value.
 -/
-theorem trailingRat_streamPrefix_le
-    {raw width retained : Nat}
-    (hraw : raw < 2 ^ width)
-    (hretained : retained ≤ width) :
-    Model.trailingRat retained (streamPrefix raw width retained) ≤
-      Model.trailingRat width raw := by
-  let shift := width - retained
-  let pfx := streamPrefix raw width retained
-  have hprefix :
-      pfx = raw / 2 ^ shift := by
-    dsimp [pfx, shift]
-    unfold streamPrefix
-    rw [ite_eq_left hretained]
-  have hwidth : retained + shift = width := by
-    dsimp [shift]
-    omega
-  have hprefixBound :
-      pfx < 2 ^ retained := by
-    dsimp [pfx]
-    unfold streamPrefix
-    rw [ite_eq_left hretained, Nat.div_lt_iff_lt_mul
-      (Nat.two_pow_pos (width - retained))]
-    rw [← Nat.pow_add, Nat.add_comm,
-      Nat.sub_add_cancel hretained]
-    exact hraw
-  have hpaddedBound :
-      pfx * 2 ^ shift < 2 ^ width := by
-    rw [← hwidth, Nat.pow_add]
-    exact (Nat.mul_lt_mul_right (Nat.two_pow_pos shift)).2
-      hprefixBound
-  have hpaddedLe : pfx * 2 ^ shift ≤ raw := by
-    rw [hprefix]
-    exact Nat.div_mul_le_self raw (2 ^ shift)
-  rw [← trailingRat_mul_two_pow retained pfx shift, hwidth]
-  by_cases hequal : pfx * 2 ^ shift = raw
+theorem trailingRat_le_of_padded_le {retained width pfx raw : Nat}
+    (hretained : retained ≤ width) (hraw : raw < 2 ^ width)
+    (hpadded : pfx * 2 ^ (width - retained) ≤ raw) :
+    Model.trailingRat retained pfx ≤ Model.trailingRat width raw := by
+  rw [← trailingRat_widen pfx hretained]
+  rcases hpadded.eq_or_lt with hequal | hlt
   · rw [hequal]
-  · exact (Model.trailingRat_lt_of_lt
-      hpaddedBound hraw (lt_of_le_of_ne hpaddedLe hequal)).le
+  · exact (Model.trailingRat_lt_of_lt hraw hlt).le
 
 /--
 Retaining at least the complete finite stream is exact.
@@ -641,49 +576,49 @@ theorem trailingRat_streamPrefix_eq_of_width_le
       simp
     · rw [ite_eq_right (by omega)]
   rw [hprefix]
-  have hsum : width + (retained - width) = retained :=
-    Nat.add_sub_of_le hwidth
-  calc
-    Model.trailingRat retained
-        (raw * 2 ^ (retained - width)) =
-      Model.trailingRat (width + (retained - width))
-        (raw * 2 ^ (retained - width)) := by rw [hsum]
-    _ = Model.trailingRat width raw :=
-      trailingRat_mul_two_pow width raw (retained - width)
+  exact trailingRat_widen raw hwidth
 
-/-- Retaining an arbitrary number of leading stream bits never increases the exact value. -/
-theorem trailingRat_streamPrefix_le_total
+/--
+Truncating a bounded exponent/fraction stream cannot increase its exact value.
+
+The retained prefix is padded back to the complete stream width before applying strict
+monotonicity. This formulation also covers tails with zero retained bits, and a prefix longer
+than the stream is exact.
+-/
+theorem trailingRat_streamPrefix_le
     {raw width retained : Nat}
     (hraw : raw < 2 ^ width) :
     Model.trailingRat retained (streamPrefix raw width retained) ≤
       Model.trailingRat width raw := by
   by_cases hretained : retained ≤ width
-  · exact trailingRat_streamPrefix_le hraw hretained
+  · refine trailingRat_le_of_padded_le hretained hraw ?_
+    rw [streamPrefix_eq_div_of_le hretained]
+    exact Nat.div_mul_le_self raw _
   · exact (trailingRat_streamPrefix_eq_of_width_le
       raw width retained (by omega)).le
 
 /--
 When the retained prefix has an in-regime successor, the exact stream lies strictly below it.
 
-The successor is padded to the complete width and compared there. Regime-boundary carry is
-intentionally excluded and handled once by the Posit layout layer.
+The successor is padded to the complete width and compared there. A prefix at least as long as
+the stream is the zero-padded stream itself. Regime-boundary carry is intentionally excluded and
+handled once by the Posit layout layer.
 -/
 theorem trailingRat_lt_streamPrefix_succ
     {raw width retained : Nat}
-    (hraw : raw < 2 ^ width)
-    (hretained : retained < width)
     (hprefixSucc :
       streamPrefix raw width retained + 1 < 2 ^ retained) :
     Model.trailingRat width raw <
       Model.trailingRat retained
         (streamPrefix raw width retained + 1) := by
+  by_cases hretained : retained < width
+  swap
+  · rw [← trailingRat_streamPrefix_eq_of_width_le raw width retained (by omega)]
+    exact Model.trailingRat_lt_of_lt hprefixSucc (Nat.lt_succ_self _)
   let shift := width - retained
   let pfx := streamPrefix raw width retained
-  have hprefix :
-      pfx = raw / 2 ^ shift := by
-    dsimp [pfx, shift]
-    unfold streamPrefix
-    rw [ite_eq_left hretained.le]
+  have hprefix : pfx = raw / 2 ^ shift :=
+    streamPrefix_eq_div_of_le hretained.le
   have hwidth : retained + shift = width := by
     dsimp [shift]
     omega
@@ -708,9 +643,8 @@ theorem trailingRat_lt_streamPrefix_succ
     rw [← hwidth, Nat.pow_add]
     exact (Nat.mul_lt_mul_right
       (Nat.two_pow_pos shift)).2 hprefixSucc
-  rw [← trailingRat_mul_two_pow retained
-    (pfx + 1) shift, hwidth]
-  exact Model.trailingRat_lt_of_lt hraw hpaddedBound hrawUpper
+  rw [← trailingRat_widen (pfx + 1) hretained.le]
+  exact Model.trailingRat_lt_of_lt hpaddedBound hrawUpper
 
 /-- Bounded raw-tail order is equivalent to exact rational-tail order. -/
 theorem trailingRat_lt_iff_of_bounded
@@ -729,9 +663,9 @@ theorem trailingRat_lt_iff_of_bounded
     · subst right
       exact (lt_irrefl _ hrat)
     · have hreverse :=
-        Model.trailingRat_lt_of_lt hright hleft hlt
+        Model.trailingRat_lt_of_lt hleft hlt
       exact (not_lt_of_ge hreverse.le) hrat
-  · exact Model.trailingRat_lt_of_lt hleft hright
+  · exact Model.trailingRat_lt_of_lt hright
 
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding

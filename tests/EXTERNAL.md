@@ -37,9 +37,9 @@ python3 tests/oracles/render_release_result.py \
 
 The renderer only reads saved data. It doesn't validate or regenerate any numerical
 answer. Point it at an output directory outside `tests/results/`. For the ecosystem summary,
-`render_ecosystem_result.py` takes the same two arguments. New figures carry the FloatLib name, but
-the verifier passes `--historical-branding` so that its redraws match the original titles and SVG
-identifiers. We left the old names and hashes in the recorded files as they were.
+`render_ecosystem_result.py` takes the same two arguments. The verifier redraws both summaries
+and compares the bytes with the saved files. Raw logs and provenance records keep the names and
+hashes they were recorded with.
 
 ## Run comparisons on current source
 
@@ -72,8 +72,8 @@ files (version 4.1.0 or newer) and `pkg-config`. On the Python side you need `ma
 `numpy`, and `python-flint`, and the release profile also wants the `z3` executable. Arb is optional
 in `tests/verify.sh`, but both of these profiles require it.
 
-Here are the suites in the `release` profile. `quick` runs `01`–`07`, with TestFloat's smoke subset
-and P3109 tables through 8 bits.
+Here are the suites in the `release` profile. `quick` runs `01` through `07`, with TestFloat's
+smoke subset and P3109 tables through 8 bits.
 
 | Suite | Evidence class | Scope |
 | --- | --- | --- |
@@ -173,12 +173,14 @@ arguments near `2^(2^20)`, which FloatLib reduces with the `2^20`- and `2^21`-bi
 A run fails on any difference that the [known-failures
 list](oracles/data/transcendental-known-failures.tsv) doesn't name, on a listed case whose kind,
 FloatLib encoding or FloatLib ternary changes, on a listed case that now matches, and on any value
-difference in a domain FloatLib declares correctly rounded. Right now that domain is `pow` in
-nearest rounding, for formats with the IEEE encoding and the conventional exponent bias, of a finite
-nonzero base with an integral exponent whenever FloatLib's result is finite. A run fails, too, when
-a shard is missing, when the shards disagree about the invocation or its manifest is incomplete, and
-when its requests differ from those the [census](oracles/data/transcendental-census.json) records
-for the same random count, tier and exhaustive16 setting. The script tells the report which options
+difference in a domain FloatLib declares correctly rounded. Those domains are `pi`, and `pow` with
+an integral exponent, in nearest rounding for formats with the IEEE encoding and the conventional
+exponent bias. For `pow` that means a finite base whenever FloatLib's result is finite, except
+where both results are zeros, since the theorem fixes the value but not the sign of a zero. A run
+fails, too, when a shard is missing, when the shards disagree about the invocation or its manifest
+is incomplete, and when its requests differ from those the
+[census](oracles/data/transcendental-census.json) records for the same random count, tier and
+exhaustive16 setting. The script tells the report which options
 it gave the emitter, so an emitter that misreports them fails, and the release check in `check.sh`
 requires the census entry for its invocation. The census covers three runs: the default run, the
 release run (`--random-count 256`) and the qualification run (`--slow --random-count 256`). For each
@@ -266,9 +268,10 @@ individual measurements.
 In the [TensorLib comparison](../benchmarks/external/tensorlib/README.md) we convert every FP16,
 BF16, E4M3FN, and E5M2 encoding to Float32, and in the other direction we test rounding boundaries
 and selected Float32 inputs. Both libraries pass 952,612 numerical checks against an independent
-adjacent-value reference, and all 2,964 result words that differ are E4M3FN NaN signs, on negative
-overflow or negative infinity. This comparison doesn't look at NaN payloads, signaling behavior, or
-exception flags. Timings use 128 matching normal finite fixtures. You can reproduce this focused
+adjacent-value reference, and all 2,423 result words that differ come from NaN inputs, where
+FloatLib keeps the input's sign and payload and TensorLib returns a canonical NaN. This comparison
+records those NaN encodings without counting them as errors, and it doesn't test signaling behavior
+or exception flags. Timings use 128 matching normal finite fixtures. You can reproduce this focused
 experiment from the linked instructions without running the release suite.
 
 ### MPFR and underflow
@@ -287,8 +290,8 @@ with inexact, which matches the policy under test. An exact subnormal doesn't co
 
 In the native suite we compare the public binary32/64 dispatch results with the proved software
 kernels, and we also sample the opt-in `NativeFPU.Unchecked` operations. Agreement is valuable
-regression evidence for the current compiler, ABI, and machine, but the theorem that the host
-replacement implements the software model for every input is still missing.
+regression evidence for the current compiler, ABI, and machine, but no theorem states that the
+host replacement implements the software model for every input.
 
 ### SoftPosit
 

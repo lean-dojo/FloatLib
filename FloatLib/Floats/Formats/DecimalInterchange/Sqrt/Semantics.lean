@@ -36,7 +36,7 @@ theorem sqrt_negative (f : Format) (mode : RoundingMode) (c : Nat)
 
 /-- The returned square root has at most half a decimal grid unit of real error. -/
 theorem sqrt_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 ≤ a)
     (hfinite : (sqrt f mode x).status.overflow = false) :
     ∃ value : ℚ, (sqrt f mode x).value.toRat? = some value ∧

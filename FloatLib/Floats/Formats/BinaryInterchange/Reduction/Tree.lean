@@ -46,35 +46,36 @@ theorem FiniteEval.isFinite_eval {t : Numerics.ReductionTree (Model fmt)}
   | leaf x => exact h
   | node a b => exact h.2.2
 
-/-- The rounded real interpretation agrees with encoded execution at each finite node. -/
-theorem toReal_eval (t : Numerics.ReductionTree (Model fmt))
-    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
-    toReal (t.eval add id) = t.eval (fun x y => roundAt fmt (x + y)) toReal := by
-  apply t.map_eval add id toReal (fun x y => roundAt fmt (x + y))
+/-- A node property that holds for every finite addition of finite operands holds at every node
+of a finite execution certificate. -/
+private theorem FiniteEval.allNodes {t : Numerics.ReductionTree (Model fmt)}
+    {P : Model fmt → Model fmt → Prop}
+    (hP : ∀ x y, isFinite x = true → isFinite y = true → isFinite (add x y) = true → P x y)
+    (h : FiniteEval t) : t.AllNodes add id P := by
   induction t with
   | leaf x => trivial
   | node a b ha hb =>
-    exact ⟨ha hfinite.1, hb hfinite.2.1,
-      toReal_add_eq_roundAt _ _ hfmt hfinite.1.isFinite_eval
-        hfinite.2.1.isFinite_eval hfinite.2.2⟩
+    exact ⟨ha h.1, hb h.2.1, hP _ _ h.1.isFinite_eval h.2.1.isFinite_eval h.2.2⟩
+
+/-- The rounded real interpretation agrees with encoded execution at each finite node. -/
+theorem toReal_eval (t : Numerics.ReductionTree (Model fmt))
+    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
+    toReal (t.eval add id) = t.eval (fun x y => roundAt fmt (x + y)) toReal :=
+  t.map_eval add id toReal (fun x y => roundAt fmt (x + y))
+    (FiniteEval.allNodes (fun x y _ _ => toReal_add_eq_roundAt x y hfmt) hfinite)
 
 /-- The sum of half-ULPs at the actual intermediate additions. -/
 noncomputable def errorBudget (t : Numerics.ReductionTree (Model fmt)) : ℝ :=
-  t.errorBudget add id (fun x y => epsilonAt fmt (toReal x + toReal y))
+  t.errorBudget add id (fun x y => halfUlpAt fmt (toReal x + toReal y))
 
 /-- No normal-range hypothesis is needed: each finite addition has an absolute half-ULP bound. -/
 theorem abs_toReal_eval_sub_sum_le (t : Numerics.ReductionTree (Model fmt))
     (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
     |toReal (t.eval add id) - (t.leaves.map toReal).sum| ≤ errorBudget t := by
   rw [← Numerics.ReductionTree.eval_add_eq_sum]
-  apply t.abs_eval_sub_exact_le_errorBudget add id toReal
-    (fun x y => epsilonAt fmt (toReal x + toReal y))
-  induction t with
-  | leaf x => trivial
-  | node a b ha hb =>
-    exact ⟨ha hfinite.1, hb hfinite.2.1,
-      abs_toReal_add_sub_le _ _ hfmt hfinite.1.isFinite_eval
-        hfinite.2.1.isFinite_eval hfinite.2.2⟩
+  exact t.abs_eval_sub_exact_le_errorBudget add id toReal
+    (fun x y => halfUlpAt fmt (toReal x + toReal y))
+    (FiniteEval.allNodes (fun x y _ _ => abs_toReal_add_sub_le x y hfmt) hfinite)
 
 /-- Two finite schedules over the same inputs can differ by at most their combined budgets. -/
 theorem abs_toReal_eval_sub_eval_le {a b : Numerics.ReductionTree (Model fmt)}
@@ -101,15 +102,9 @@ theorem allNodes_abs_toReal_add_sub_le (t : Numerics.ReductionTree (Model fmt))
     t.AllNodes add id (fun x y =>
       |toReal (add x y) - (toReal x + toReal y)| ≤
         unitRoundoffAt fmt * (|toReal x| + |toReal y|)) := by
-  induction t with
-  | leaf x => trivial
-  | node a b ha hb =>
-    refine ⟨ha hfinite.1, hb hfinite.2.1, ?_⟩
-    have hu : 0 ≤ unitRoundoffAt fmt :=
-      FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _
-    exact (abs_toReal_add_sub_le_unitRoundoffAt _ _ hfmt hfinite.1.isFinite_eval
-      hfinite.2.1.isFinite_eval hfinite.2.2).trans
-      (mul_le_mul_of_nonneg_left (abs_add_le _ _) hu)
+  exact FiniteEval.allNodes (fun x y _ _ hxy =>
+    (abs_toReal_add_sub_le_unitRoundoffAt x y hfmt hxy).trans
+      (mul_le_mul_of_nonneg_left (abs_add_le _ _) (unitRoundoffAt_pos fmt).le)) hfinite
 
 /--
 A finite IEEE reduction tree satisfies the mixed-budget bound with relative allowance
@@ -121,7 +116,7 @@ theorem abs_toReal_eval_sub_sum_le_mixedBudget (t : Numerics.ReductionTree (Mode
       t.mixedBudget toReal (unitRoundoffAt fmt) 0 := by
   rw [← Numerics.ReductionTree.eval_add_eq_sum]
   exact t.abs_eval_sub_exact_le_relativeBudget add id toReal (unitRoundoffAt fmt)
-    (FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _)
+    (unitRoundoffAt_pos fmt).le
     (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
 
 /--
@@ -134,7 +129,7 @@ theorem abs_toReal_eval_sub_sum_le_geometric (t : Numerics.ReductionTree (Model 
       ((1 + unitRoundoffAt fmt) ^ t.nodeCount - 1) * t.sumAbs toReal := by
   rw [← Numerics.ReductionTree.eval_add_eq_sum]
   exact t.abs_eval_sub_exact_le_geometric add id toReal (unitRoundoffAt fmt)
-    (FloatLib.Floats.Formats.Flocq.bpow.nonneg Numerics.binaryRadix _)
+    (unitRoundoffAt_pos fmt).le
     (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
 
 end ReductionTree

@@ -256,9 +256,9 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def negInf (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.signMask fmt ||| FloatFormat.expMask fmt)
 
-/-- Finite value of greatest magnitude with the requested sign. -/
-@[inline] def maxFinite (fmt : FloatFormat) (sign : Bool) : Model fmt :=
-  ofFields fmt sign fmt.maxFiniteExpField fmt.maxFiniteFracField
+/-- Finite value of greatest magnitude, negative when `negative` is set. -/
+@[inline] def maxFinite (fmt : FloatFormat) (negative : Bool) : Model fmt :=
+  ofFields fmt negative fmt.maxFiniteExpField fmt.maxFiniteFracField
 
 /-- Largest finite positive value. -/
 @[inline] def posMaxFinite (fmt : FloatFormat) : Model fmt :=
@@ -275,12 +275,12 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 /-! ## Policy-aware constants -/
 
 /-- Signed zero, canonicalizing negative zero when the format has only one zero. -/
-@[inline] def zero (fmt : FloatFormat) (sign : Bool) : Model fmt :=
-  if sign && fmt.supportsSignedZero then negZero fmt else posZero fmt
+@[inline] def zero (fmt : FloatFormat) (negative : Bool) : Model fmt :=
+  if negative && fmt.supportsSignedZero then negZero fmt else posZero fmt
 
 /-- Signed infinity when the format supports it. -/
-@[inline] def infinity? (fmt : FloatFormat) (sign : Bool) : Option (Model fmt) :=
-  if fmt.supportsInfinity then some (if sign then negInf fmt else posInf fmt) else none
+@[inline] def infinity? (fmt : FloatFormat) (negative : Bool) : Option (Model fmt) :=
+  if fmt.supportsInfinity then some (if negative then negInf fmt else posInf fmt) else none
 
 /-- A canonical NaN when the format has a NaN encoding. -/
 @[inline] def canonicalNaN? (fmt : FloatFormat) : Option (Model fmt) :=
@@ -312,10 +312,10 @@ This constructs a range boundary for saturation and interval endpoints. Nonsatur
 conversion, arithmetic, and exact reductions use `nativeOverflow`, which may return NaN
 when the format reserves an exceptional encoding.
 -/
-@[inline] def infinityOrMaxFinite (fmt : FloatFormat) (sign : Bool) : Model fmt :=
+@[inline] def infinityOrMaxFinite (fmt : FloatFormat) (negative : Bool) : Model fmt :=
   match fmt.encoding with
-  | .ieee => if sign then negInf fmt else posInf fmt
-  | .finiteMaxNaN | .finiteUnsignedZero | .finite => maxFinite fmt sign
+  | .ieee => if negative then negInf fmt else posInf fmt
+  | .finiteMaxNaN | .finiteUnsignedZero | .finite => maxFinite fmt negative
 
 /-- Conventional IEEE policy zero is the usual signed zero. -/
 @[simp] theorem zero_eq_signedZero_of_isIEEE

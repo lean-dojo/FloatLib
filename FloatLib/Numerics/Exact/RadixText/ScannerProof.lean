@@ -13,7 +13,9 @@ import all Init.Data.Repr
 
 Digit scanning computes the positional value, counts consumed digits, and leaves a nondigit
 suffix unchanged. For radix greater than one and a decoder that recognizes the printed digits,
-printing then scanning recovers any natural number, including zero.
+printing then scanning recovers any natural number, including zero. `Nat.digitChar` prints `*`
+for every digit from 16 on, so such a decoder exists only up to radix 17; decimal and
+hexadecimal text use radix 10 and 16.
 -/
 
 @[expose] public section
@@ -28,7 +30,9 @@ theorem scanDigits_stop (radix : Nat) (readDigit : Char → Option Nat)
   | nil => rfl
   | cons c rest => simp [scanDigits, htail c (by simp)]
 
-/-- Digit scanning computes the positional value, independently of the chosen radix. -/
+/-- Scanning the characters of `digits` followed by a nondigit suffix gives the positional value
+in base `radix` after `accumulator`, the digit count, and the suffix, for every radix: no bound
+`digit < radix` is assumed. -/
 theorem scanDigits_map_append (radix : Nat) (readDigit : Char → Option Nat)
     (digits : List Nat) (tail : List Char)
     (hdigits : ∀ digit ∈ digits, readDigit (Nat.digitChar digit) = some digit)

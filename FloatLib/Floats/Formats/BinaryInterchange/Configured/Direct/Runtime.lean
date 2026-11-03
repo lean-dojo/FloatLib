@@ -16,13 +16,17 @@ On the `word64` plan the code is the encoding itself. Binary64 addition and subt
 one-word kernel on the stored `UInt64` values and rebuild the proof model only when the kernel
 declines. A binary64 model value with the sign bit set is a natural number of at least `2 ^ 63`,
 which the runtime allocates, so negative operands would otherwise pay for several allocations per
-operation.
+operation. The direct kernels assume the binary64 layout and bias, so each direct binary64
+operation takes an erased proof `FloatFormat.IsBinary64 format`.
 
 On the `pair` plan the code is the two storage words of the encoding. Formats with the two-word
 layout of `NativePair` add, subtract, multiply, divide, fuse multiply-adds, and take square roots
-through the two-word kernels on those words. Above 64 bits every model value is an allocated
-natural number, and splitting and joining it costs far more than the arithmetic. `Direct.Proof`
-shows each direct operation equals the word operation it replaces.
+through the two-word kernels on those words. Each two-word operation takes an erased proof
+`Model.NativePair.Eligible format`, since the kernels assume that layout and the IEEE bias. Above
+64 bits every model value is an allocated natural number, and splitting and joining it costs far
+more than the arithmetic. `Direct.Proof` shows each direct operation equals the word operation it
+replaces. The plan dispatchers already decide eligibility and pass that proof along, so the
+proofs add no runtime branch.
 -/
 
 @[expose] public section
@@ -50,8 +54,15 @@ specialized on the format so declined inputs run the descriptor-specialized disp
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   wordAdd left right
 
-/-- Addition on stored binary64 words, rebuilding the model only when the word kernel declines. -/
+/--
+Addition on stored binary64 words, rebuilding the model only when the word kernel declines.
+
+The one-word kernel uses the conventional IEEE bias `2 ^ (expWidth - 1) - 1`, which another
+format in a `word64` carrier need not have (E4M3FNUZ has bias 8, not 7), so the erased `_h64`
+restricts this to binary64.
+-/
 @[inline] def binary64Add {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    (_h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   match Model.NativeSmallWordAdd.addFiniteWord? format left.raw.1 right.raw.1 false with
@@ -65,8 +76,12 @@ specialized on the format so declined inputs run the descriptor-specialized disp
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   wordSub left right
 
-/-- Subtraction on stored binary64 words, with the right operand's sign toggled in the kernel. -/
+/--
+Subtraction on stored binary64 words, with the right operand's sign toggled in the kernel. The
+erased `_h64` restricts this to binary64, as for `binary64Add`.
+-/
 @[inline] def binary64Sub {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    (_h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   match Model.NativeSmallWordAdd.addFiniteWord? format left.raw.1 right.raw.1 true with
@@ -80,8 +95,15 @@ specialized on the format so declined inputs run the descriptor-specialized disp
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   wordMul left right
 
-/-- Multiplication on stored binary64 words through the two-word normal-product kernel. -/
+/--
+Multiplication on stored binary64 words through the two-word normal-product kernel.
+
+The kernel reads the descriptor but assumes the operand layouts of `NativeTwoWordMul.Eligible`,
+which a narrower format in a `word64` carrier does not have, so the erased `_h64` restricts this
+to binary64.
+-/
 @[inline] def binary64Mul {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    (_h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   match Model.NativeTwoWordMul.mulNormalWord? format left.raw.1 right.raw.1 with
@@ -95,8 +117,14 @@ specialized on the format so declined inputs run the descriptor-specialized disp
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   wordDiv left right
 
-/-- Division on stored binary64 words through the normal-result divider. -/
+/--
+Division on stored binary64 words through the normal-result divider.
+
+The divider decodes its words with the binary64 layout, so the erased `_h64` restricts this to
+binary64.
+-/
 @[inline] def binary64Div {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    (_h64 : FloatFormat.IsBinary64 format)
     (left right : FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   match Model.NativeBinary64.divNormalWord? left.raw.1 right.raw.1 with
@@ -111,8 +139,14 @@ specialized on the format so declined inputs run the descriptor-specialized disp
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
   wordFma left right addend
 
-/-- Fused multiply-add on stored binary64 words through the normal-result kernel. -/
+/--
+Fused multiply-add on stored binary64 words through the normal-result kernel.
+
+The kernel decodes its words with the binary64 layout, so the erased `_h64` restricts this to
+binary64.
+-/
 @[inline] def binary64Fma {format : FloatFormat} (hw : format.bitWidth ≤ 64)
+    (_h64 : FloatFormat.IsBinary64 format)
     (left right addend :
       FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.word64 hw)) (.word64 hw)) :=
@@ -171,9 +205,14 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   wordAdd left right
 
-/-- Addition on stored two-word codes through the two-word finite addition kernel. -/
+/--
+Addition on stored two-word codes through the two-word finite addition kernel.
+
+The kernels assume the layout and IEEE bias of `Model.NativePair.Eligible`, which another format
+in a `pair` carrier need not have, so the erased `_hpair` restricts this to eligible formats.
+-/
 @[specialize format] def pairAdd {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
@@ -190,9 +229,12 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   wordSub left right
 
-/-- Subtraction on stored two-word codes, with the right operand's sign toggled in the kernel. -/
+/--
+Subtraction on stored two-word codes, with the right operand's sign toggled in the kernel. The
+erased `_hpair` restricts this to eligible formats, as for `pairAdd`.
+-/
 @[specialize format] def pairSub {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
@@ -209,9 +251,12 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   wordMul left right
 
-/-- Multiplication on stored two-word codes through the two-word normal-product kernel. -/
+/--
+Multiplication on stored two-word codes through the two-word normal-product kernel. The erased
+`_hpair` restricts this to eligible formats, as for `pairAdd`.
+-/
 @[specialize format] def pairMul {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
@@ -228,9 +273,12 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   wordDiv left right
 
-/-- Division on stored two-word codes through the certified two-word normal divider. -/
+/--
+Division on stored two-word codes through the certified two-word normal divider. The erased `_hpair`
+restricts this to eligible formats, as for `pairAdd`.
+-/
 @[specialize format] def pairDiv {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
@@ -246,9 +294,12 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   fixedLimbSqrt value
 
-/-- Square root of a stored two-word code through the two-word normal root kernel. -/
+/--
+Square root of a stored two-word code through the two-word normal root kernel. The erased `_hpair`
+restricts this to eligible formats, as for `pairAdd`.
+-/
 @[specialize format] def pairSqrt {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (value : FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   match Model.NativePair.sqrtNormalWords? format value.raw.1 with
@@ -264,9 +315,12 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
   fixedLimbFma left right addend
 
-/-- Fused multiply-add on stored two-word codes through the two-word finite FMA kernel. -/
+/--
+Fused multiply-add on stored two-word codes through the two-word finite FMA kernel. The erased
+`_hpair` restricts this to eligible formats, as for `pairAdd`.
+-/
 @[specialize format] def pairFma {format : FloatFormat} (hgt : 64 < format.bitWidth)
-    (hle : format.bitWidth ≤ 128)
+    (hle : format.bitWidth ≤ 128) (_hpair : Model.NativePair.Eligible format)
     (left right addend :
       FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle))) :
     FloatLib.Floats.ExecFloat (Family format (Code (.pair hgt hle)) (.pair hgt hle)) :=
@@ -282,8 +336,9 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan) →
         FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
-  | .word64 hw => if FloatFormat.IsBinary64 format then binary64Add hw else wordAdd
-  | .pair hgt hle => if Model.NativePair.Eligible format then pairAdd hgt hle else wordAdd
+  | .word64 hw => if h64 : FloatFormat.IsBinary64 format then binary64Add hw h64 else wordAdd
+  | .pair hgt hle =>
+      if hpair : Model.NativePair.Eligible format then pairAdd hgt hle hpair else wordAdd
   | _ => wordAdd
 
 /-- Word subtraction for the configured code, with direct binary64 and two-word kernels. -/
@@ -292,8 +347,9 @@ theorem pairWords_lt {format : FloatFormat} (hgt : 64 < format.bitWidth)
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan) →
         FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
-  | .word64 hw => if FloatFormat.IsBinary64 format then binary64Sub hw else wordSub
-  | .pair hgt hle => if Model.NativePair.Eligible format then pairSub hgt hle else wordSub
+  | .word64 hw => if h64 : FloatFormat.IsBinary64 format then binary64Sub hw h64 else wordSub
+  | .pair hgt hle =>
+      if hpair : Model.NativePair.Eligible format then pairSub hgt hle hpair else wordSub
   | _ => wordSub
 
 /--
@@ -304,7 +360,8 @@ Word multiplication for the configured code, using the two-word kernel when the 
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan) →
         FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
-  | .pair hgt hle => if Model.NativePair.Eligible format then pairMul hgt hle else wordMul
+  | .pair hgt hle =>
+      if hpair : Model.NativePair.Eligible format then pairMul hgt hle hpair else wordMul
   | _ => wordMul
 
 /-- Word division for the configured code, using the two-word kernel when the layout allows. -/
@@ -313,7 +370,8 @@ Word multiplication for the configured code, using the two-word kernel when the 
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan) →
         FloatLib.Floats.ExecFloat (Family format (Code plan) plan) :=
   match plan with
-  | .pair hgt hle => if Model.NativePair.Eligible format then pairDiv hgt hle else wordDiv
+  | .pair hgt hle =>
+      if hpair : Model.NativePair.Eligible format then pairDiv hgt hle hpair else wordDiv
   | _ => wordDiv
 
 end Backend

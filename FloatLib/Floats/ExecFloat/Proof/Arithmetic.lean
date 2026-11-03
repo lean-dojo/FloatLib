@@ -20,6 +20,11 @@ state the same equations for `left + right`, `left - right`, `left * right`, and
 Rewriting, `simp`, and `grind` match terms up to reducible unfolding, and notation elaborates to
 `HAdd.hAdd` and its siblings rather than to `ExecFloat.add`, so both forms are registered. The
 equations hold for built-in and user-defined formats under any supported planning policy.
+
+Each equation is an equality of `ExecFloat F` values, that is of stored codes, and it holds for
+every operand, exceptional values included. The executable result is therefore the reference
+result exactly, including the sign of a zero and, in formats that have NaNs, the NaN returned.
+These operations return a value only and carry no exception flags.
 -/
 
 @[expose] public section

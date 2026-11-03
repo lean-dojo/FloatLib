@@ -46,7 +46,7 @@ theorem projectMagnitude_same_quantum (f : Format) (mode : RoundingMode)
       decide_false, Bool.false_eq_true, ite_false]
     exact ⟨_, _, rfl⟩
   have hclosest := projectMagnitude_quantum_closest f mode negative coefficient quantum quantum
-    hvalid d r hout coefficient quantum hvalid rfl
+    d r hout coefficient quantum hvalid rfl
   have hr : quantum = r := by
     simpa only [sub_self, abs_zero, abs_nonpos_iff, sub_eq_zero] using hclosest
   subst r
@@ -178,7 +178,7 @@ private theorem parse_quantum_le (f : Format) (mode : RoundingMode)
 
 /-- Nearest decimal parsing has half-grid error unless the destination overflows. -/
 theorem parse_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (text : String) (value : Decimal)
     (hread : parseCharacters text.toList = some value)
     (hfinite : (parse f mode text).status.overflow = false) :
@@ -192,49 +192,74 @@ theorem parse_error_le_half (f : Format) (mode : RoundingMode)
     projectMagnitude_error_le_half f mode hm value.negative
       (decimal_magnitude_nonneg value) value.exponent hq
 
-/-- A finite parser result is inexact precisely when its numerical value changed. -/
+/-- A finite parser result is inexact precisely when its numerical value changed, also when it
+overflows to the greatest finite datum. -/
 theorem parse_inexact_iff (f : Format) (mode : RoundingMode)
     (text : String) (value : Decimal) (result : ℚ)
     (hread : parseCharacters text.toList = some value)
-    (hfinite : (parse f mode text).status.overflow = false)
     (hvalue : (parse f mode text).value.toRat? = some result) :
     (parse f mode text).status.inexact = true ↔ result ≠ value.toRat := by
-  have hq := parse_quantum_le f mode text value hread hfinite
   rw [parse_of_decimal f mode text value hread] at hvalue ⊢
   simpa only [decimal_signed_magnitude] using
-    projectMagnitude_inexact_iff f mode value.negative _ result value.exponent hq hvalue
+    projectMagnitude_inexact_iff f mode value.negative _ result value.exponent hvalue
 
-/-- Upward parsing returns an upper bound on the exact decimal input. -/
-theorem le_parse_towardPositive (f : Format) (text : String) (value : Decimal)
+/-- If upward parsing does not overflow, its result is finite and at least the exact decimal input.
+`le_parse_up_of_toRat?_eq_some` covers every finite result, including a very negative
+input saturated to the most negative finite datum. -/
+theorem le_parse_up (f : Format) (text : String) (value : Decimal)
     (hread : parseCharacters text.toList = some value)
-    (hfinite : (parse f .towardPositive text).status.overflow = false) :
-    ∃ result, (parse f .towardPositive text).value.toRat? = some result ∧
+    (hfinite : (parse f .up text).status.overflow = false) :
+    ∃ result, (parse f .up text).value.toRat? = some result ∧
       value.toRat ≤ result := by
-  have hq := parse_quantum_le f .towardPositive text value hread hfinite
-  rw [parse_of_decimal f .towardPositive text value hread]
+  have hq := parse_quantum_le f .up text value hread hfinite
+  rw [parse_of_decimal f .up text value hread]
   simpa only [decimal_signed_magnitude] using
-    projectMagnitude_towardPositive_le f value.negative
+    projectMagnitude_up_le f value.negative
       (decimal_magnitude_nonneg value) value.exponent hq
 
-/-- Downward parsing returns a lower bound on the exact decimal input. -/
-theorem parse_towardNegative_le (f : Format) (text : String) (value : Decimal)
+/-- If downward parsing does not overflow, its result is finite and at most the exact decimal input.
+`parse_down_le_of_toRat?_eq_some` covers every finite result, including a very positive
+input saturated to the greatest finite datum. -/
+theorem parse_down_le (f : Format) (text : String) (value : Decimal)
     (hread : parseCharacters text.toList = some value)
-    (hfinite : (parse f .towardNegative text).status.overflow = false) :
-    ∃ result, (parse f .towardNegative text).value.toRat? = some result ∧
+    (hfinite : (parse f .down text).status.overflow = false) :
+    ∃ result, (parse f .down text).value.toRat? = some result ∧
       result ≤ value.toRat := by
-  have hq := parse_quantum_le f .towardNegative text value hread hfinite
-  rw [parse_of_decimal f .towardNegative text value hread]
+  have hq := parse_quantum_le f .down text value hread hfinite
+  rw [parse_of_decimal f .down text value hread]
   simpa only [decimal_signed_magnitude] using
-    projectMagnitude_towardNegative_le f value.negative
+    projectMagnitude_down_le f value.negative
       (decimal_magnitude_nonneg value) value.exponent hq
 
-/-- Exact input selects the valid cohort member closest to the written quantum.
-The written coefficient and quantum need not themselves fit the destination. -/
+/-- Every finite result of upward parsing is at least the exact decimal input, also when parsing
+overflows and saturates a very negative input to the most negative finite datum. -/
+theorem le_parse_up_of_toRat?_eq_some (f : Format) (text : String) (value : Decimal)
+    (result : ℚ) (hread : parseCharacters text.toList = some value)
+    (hvalue : (parse f .up text).value.toRat? = some result) :
+    value.toRat ≤ result := by
+  rw [parse_of_decimal f .up text value hread] at hvalue
+  simpa only [decimal_signed_magnitude] using
+    le_projectMagnitude_up_of_toRat?_eq_some f value.negative
+      (decimal_magnitude_nonneg value) result value.exponent hvalue
+
+/-- Every finite result of downward parsing is at most the exact decimal input, also when parsing
+overflows and saturates a very positive input to the greatest finite datum. -/
+theorem parse_down_le_of_toRat?_eq_some (f : Format) (text : String) (value : Decimal)
+    (result : ℚ) (hread : parseCharacters text.toList = some value)
+    (hvalue : (parse f .down text).value.toRat? = some result) :
+    result ≤ value.toRat := by
+  rw [parse_of_decimal f .down text value hread] at hvalue
+  simpa only [decimal_signed_magnitude] using
+    projectMagnitude_down_le_of_toRat?_eq_some f value.negative
+      (decimal_magnitude_nonneg value) result value.exponent hvalue
+
+/-- Exact input selects the valid cohort member closest to the written quantum. The written value
+`coefficient * 10 ^ quantum` need not fit the destination; the comparison ranges over every valid
+representation `(e, t)` of it. -/
 theorem parse_exact_cohort_closest (f : Format) (mode : RoundingMode)
     (text : String) (value : Decimal)
     (hread : parseCharacters text.toList = some value)
     (coefficient : Nat) (quantum : Int)
-    (hvalid : (Datum.finite value.negative coefficient quantum).Valid f)
     (hexact : (value.significand : ℚ) * (10 : ℚ) ^ value.exponent =
       (coefficient : ℚ) * (10 : ℚ) ^ quantum)
     (d : Nat) (r : Int)
@@ -244,7 +269,7 @@ theorem parse_exact_cohort_closest (f : Format) (mode : RoundingMode)
     |value.exponent - r| ≤ |value.exponent - t| := by
   rw [parse_of_decimal f mode text value hread, hexact] at hout
   exact projectMagnitude_quantum_closest f mode value.negative coefficient quantum
-    value.exponent hvalid d r hout e t he hvalue
+    value.exponent d r hout e t he hvalue
 
 /-- Inexact parsing uses the least quantum in the result's cohort, including directed overflow. -/
 theorem parse_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
@@ -256,7 +281,7 @@ theorem parse_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
     (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) :
     q ≤ r := by
   rw [parse_of_decimal f mode text value hread] at hinexact hout
-  exact projectMagnitude_inexact_quantum_minimal f mode value.negative
-    (decimal_magnitude_nonneg value) value.exponent hinexact c q hout d r hvalid hvalue
+  exact projectMagnitude_inexact_quantum_minimal f mode value.negative _ value.exponent hinexact
+    c q hout d r hvalid hvalue
 
 end FloatLib.Floats.Formats.DecimalInterchange.Formatting

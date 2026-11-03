@@ -39,7 +39,7 @@ Decimal and scientific literals are rounded once from an exact rational to neare
 -/
 instance : OfScientific (ExecFloat.FixedPoint radix fractionalDigits) where
   ofScientific mantissa exponentSign decimalExponent :=
-    roundRat
+    ofRat
       (OfScientific.ofScientific mantissa exponentSign decimalExponent : Rat)
 
 /-- Same-scale fixed-point addition participates in ordinary `ExecFloat` dispatch. -/

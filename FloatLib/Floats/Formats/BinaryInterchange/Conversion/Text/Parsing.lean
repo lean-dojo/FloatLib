@@ -15,7 +15,7 @@ public import FloatLib.Numerics.Exact.HexText.Runtime
 
 Decimal integers, fractions and e/E exponents use the shared exact scanner.
 Hexadecimal input follows IEEE 754 §5.12.3, including its mandatory p/P exponent.
-The legacy `m * 2^e` spelling is accepted too. ASCII edge whitespace is ignored.
+ASCII edge whitespace is ignored.
 Finite conversion rounds once and reports the binary exception policy,
 including tininess after rounding, and the ternary value of that rounding.
 Syntax errors are `ParseError`s.
@@ -35,7 +35,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 inductive ParseError where
   /-- The input contains no non-whitespace characters. -/
   | emptyInput
-  /-- The input is not a supported decimal, radix-two, infinity, or NaN spelling. -/
+  /--
+  The original input is not a supported decimal, radix-two, infinity, or NaN spelling, or it
+  spells a NaN whose diagnostic the destination format cannot encode.
+  -/
   | invalidSyntax (input : String)
   /-- The input requests an infinity from a finite-only encoding. -/
   | unsupportedInfinity (negative : Bool)
@@ -66,27 +69,13 @@ instance : ToString ParseError where
 inductive TextValue where
   /-- An exact decimal coefficient and written decimal exponent. -/
   | decimal (value : Numerics.DecimalText.Decimal)
-  /-- An exact dyadic from hexadecimal or legacy radix-two syntax. -/
+  /-- An exact dyadic from hexadecimal syntax. -/
   | dyadic (value : Numerics.Dyadic)
   /-- A signed infinity. -/
   | infinity (negative : Bool)
   /-- A signed NaN with signaling state and complete-fraction diagnostic suffix. -/
   | nan (negative signaling : Bool) (payload : Nat)
   deriving DecidableEq, Repr
-
-/-- Decode the legacy exact radix-two spelling, using the common integer scanner. -/
-def readLegacyDyadic (text : String) : Option Numerics.Dyadic := do
-  let parts := (text.replace " " "").splitOn "*2^"
-  let (coefficient, exponent) ← match parts with
-    | [coefficient, exponent] => some (coefficient, exponent)
-    | _ => none
-  let (negative, rest) := Numerics.DecimalText.splitSign coefficient.toList
-  let (significand, count, tail) := Numerics.RadixText.scanDigits rest 0 10
-    Numerics.DecimalText.digitValue?
-  if count = 0 ∨ tail ≠ [] then none
-  else
-    let exponent ← Numerics.DecimalText.parseInteger exponent.toList
-    some { negative, significand, exponent }
 
 /-- Decode one complete trimmed string before choosing a destination format or rounding. -/
 def readText (text : String) : Option TextValue :=
@@ -96,11 +85,8 @@ def readText (text : String) : Option TextValue :=
       match Numerics.HexText.parse text with
       | some value => some (.dyadic value)
       | none =>
-          match readLegacyDyadic text with
-          | some value => some (.dyadic value)
-          | none =>
-              let (negative, rest) := Numerics.DecimalText.splitSign text.toList
-              Numerics.SpecialText.parseSpecial TextValue.infinity TextValue.nan negative rest
+          let (negative, rest) := Numerics.DecimalText.splitSign text.toList
+          Numerics.SpecialText.parseSpecial TextValue.infinity TextValue.nan negative rest
 
 /--
 One exact decimal-to-binary rounding, paired with the shared binary status and ternary
@@ -181,19 +167,20 @@ def convertDecimalText (fmt : FloatFormat) (mode : IEEERoundingMode)
   else
     inline (convertDecimalTextExact fmt mode (clampDecimalExponent fmt exact))
 
-/-- One hexadecimal or legacy dyadic conversion with binary rounding status and ternary value. -/
+/-- One hexadecimal dyadic conversion with binary rounding status and ternary value. -/
 def convertDyadicText (fmt : FloatFormat) (mode : IEEERoundingMode)
     (exact : Numerics.Dyadic) : IEEEOutcome fmt :=
   let value := Internal.Directed.roundDyadic fmt mode exact
   dyadicRoundingOutcome fmt mode exact value
 
 /--
-Interpret a NaN diagnostic according to the descriptor, rejecting unrepresentable payloads.
+Interpret a NaN diagnostic according to the descriptor. An unrepresentable payload is the error
+`invalidSyntax input`, where `input` is the text it was read from.
 
 A NaN result has the ternary value `.eq`.
 -/
-def convertNaNText (fmt : FloatFormat) (negative signaling : Bool) (payload : Nat) :
-    Except ParseError (IEEEOutcome fmt) :=
+def convertNaNText (fmt : FloatFormat) (input : String) (negative signaling : Bool)
+    (payload : Nat) : Except ParseError (IEEEOutcome fmt) :=
   match canonicalNaN? fmt with
   | none => .error .unsupportedNaN
   | some canonical =>
@@ -209,14 +196,15 @@ def convertNaNText (fmt : FloatFormat) (negative signaling : Bool) (payload : Na
         .ok { value := candidate, status := {}, ternary := .eq }
       else if payload = 0 then
         .ok { value := defaultValue, status := { invalid := signaling }, ternary := .eq }
-      else .error (.invalidSyntax "unrepresentable NaN diagnostic")
+      else .error (.invalidSyntax input)
 
 /--
-Convert a decoded text value. Unsupported specials and invalid diagnostics are errors.
+Convert a value decoded from the text `input`. Unsupported specials and invalid diagnostics are
+errors, and `input` is the text an invalid diagnostic reports.
 
 An infinity is delivered only by a format that has it, so its ternary value is `.eq`.
 -/
-def convertText (fmt : FloatFormat) (mode : IEEERoundingMode) :
+def convertText (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
     TextValue → Except ParseError (IEEEOutcome fmt)
   | .decimal value => .ok (convertDecimalText fmt mode value)
   | .dyadic value => .ok (convertDyadicText fmt mode value)
@@ -224,7 +212,7 @@ def convertText (fmt : FloatFormat) (mode : IEEERoundingMode) :
       match infinity? fmt negative with
       | some value => .ok { value, status := {}, ternary := .eq }
       | none => .error (.unsupportedInfinity negative)
-  | .nan negative signaling payload => convertNaNText fmt negative signaling payload
+  | .nan negative signaling payload => convertNaNText fmt input negative signaling payload
 
 /--
 The value of `convertText`, with the same errors (`Internal.Value.convertText_eq_map`).
@@ -233,7 +221,7 @@ Decimal and dyadic text inline their converter and keep only its value, so finit
 parsing runs no rounding classifier. An infinity is delivered directly, and a NaN keeps the value
 of `convertNaNText`, which builds a constant outcome.
 -/
-def Internal.Value.convertText (fmt : FloatFormat) (mode : IEEERoundingMode) :
+def Internal.Value.convertText (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
     TextValue → Except ParseError (Model fmt)
   | .decimal value => .ok (inline (convertDecimalText fmt mode value)).value
   | .dyadic value => .ok (inline (convertDyadicText fmt mode value)).value
@@ -242,13 +230,13 @@ def Internal.Value.convertText (fmt : FloatFormat) (mode : IEEERoundingMode) :
       | some value => .ok value
       | none => .error (.unsupportedInfinity negative)
   | .nan negative signaling payload =>
-      (convertNaNText fmt negative signaling payload).map (·.value)
+      (convertNaNText fmt input negative signaling payload).map (·.value)
 
 /-- Value conversion is the value of the complete conversion, with the same errors. -/
 theorem Internal.Value.convertText_eq_map (fmt : FloatFormat) (mode : IEEERoundingMode)
-    (value : TextValue) :
-    Internal.Value.convertText fmt mode value =
-      (Model.convertText fmt mode value).map (·.value) := by
+    (input : String) (value : TextValue) :
+    Internal.Value.convertText fmt mode input value =
+      (Model.convertText fmt mode input value).map (·.value) := by
   cases value with
   | infinity negative =>
       simp only [Internal.Value.convertText, Model.convertText]
@@ -267,12 +255,12 @@ is needed for termination. The caller-facing entrypoint is `Model.parse` in `Bou
 def run (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
     Except ParseError (IEEEOutcome fmt) :=
   match readText input with
-  | some value => convertText fmt mode value
+  | some value => convertText fmt mode input value
   | none =>
       let trimmed := input.trimAscii.toString
       if trimmed.isEmpty then .error .emptyInput
       else match readText trimmed with
-        | some value => convertText fmt mode value
+        | some value => convertText fmt mode input value
         | none => .error (.invalidSyntax input)
 
 end TextParser

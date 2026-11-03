@@ -40,11 +40,11 @@ example : (Model.cast .e4m3fn .binary32
 example : (Model.cast .e4m3fn .binary32
     (Model.ofNatBits (fmt := .e4m3fn) 0xff)).toNatBits = 0xffc00000 := by decide +kernel
 
-example (x : Model .e4m3fn) (hx : Model.isFinite x = true)
+example (x : Model .e4m3fn)
     (hout : Model.isFinite (Model.cast .e4m3fn .binary16 x) = true) :
     |Model.toReal (Model.cast .e4m3fn .binary16 x) - Model.toReal x| ≤
-      Model.epsilonAt .binary16 (Model.toReal x) :=
-  Model.abs_toReal_cast_sub_le_of_isIEEE_destination x (by decide) hx hout
+      Model.halfUlpAt .binary16 (Model.toReal x) :=
+  Model.abs_toReal_cast_sub_le x (by decide) hout
 
 /-- Inexact decimal text is connected to its exact rational value, beyond text round trips. -/
 theorem parse_tenth_real :
@@ -111,10 +111,10 @@ example : (Model.binaryExponentInt (Model.canonicalNaN .binary32)).status.invali
 
 -- The ceiling is two, outside these descriptors' finite range.
 example : (ExecFloat.Binary.roundToIntegral (1.5 : Narrow)
-    .up (status := true)).2.overflow = true := by decide +kernel
+    .up (status := true)).status.overflow = true := by decide +kernel
 
 example : (ExecFloat.Binary.roundToIntegral (1.5 : NarrowFinite)
-    .up (status := true)).2.overflow = true := by decide +kernel
+    .up (status := true)).status.overflow = true := by decide +kernel
 
 example : ExecFloat.Binary.toRat?
     (ExecFloat.Binary.roundToIntegral (1.5 : Narrow) .down) = some 1 := by
@@ -150,7 +150,7 @@ example : Model.Interval.mul quotient (Model.Interval.point (Model.posZero _)) =
 
 example : Model.Interval.ValidExtended
     (Model.Interval.mul quotient (Model.Interval.point (Model.posZero _))) :=
-  Model.Interval.mul_validExtended _ _ (by decide)
+  Model.Interval.mul_validExtended _ _
 
 example (x : EReal) : Model.Interval.ERealMem
     (Model.Interval.mul quotient (Model.Interval.point (Model.posZero _))) x := by
@@ -170,7 +170,7 @@ example {fmt : FloatFormat} (A B : Model.Interval fmt) (hfmt : fmt.isIEEE = true
       (Model.Interval.relu (Model.Interval.abs (Model.Interval.neg (Model.Interval.add A B))))
       ((|x + y| : ℝ) : EReal) := by
   have hsum := Model.Interval.add_sound A B hfmt hA hB hx hy
-  have hsumValid := Model.Interval.add_validExtended A B hfmt
+  have hsumValid := Model.Interval.add_validExtended A B
   have hneg := Model.Interval.neg_sound_extended _ hsumValid hsum
   have hnegValid := Model.Interval.neg_validExtended _ hsumValid
   have habs := Model.Interval.abs_sound_extended _ hnegValid hneg
@@ -208,12 +208,11 @@ example (x : ℝ) :
   exact ⟨δ, η, h, by norm_num at hδ ⊢; linarith, by norm_num at hη ⊢; linarith, hδη⟩
 
 -- Finite binary32 addition has no underflow term.
-example (x y : Model FloatFormat.binary32) (hx : Model.isFinite x = true)
-    (hy : Model.isFinite y = true) (hout : Model.isFinite (Model.add x y) = true) :
+example (x y : Model FloatFormat.binary32) (hout : Model.isFinite (Model.add x y) = true) :
     ∃ δ : ℝ, Model.toReal (Model.add x y) = (Model.toReal x + Model.toReal y) * (1 + δ) ∧
       |δ| ≤ 2 ^ (-24 : ℤ) := by
   simpa only [binary32_unitRoundoffAt] using
-    Model.toReal_add_eq_mul_one_add x y (by decide) hx hy hout
+    Model.toReal_add_eq_mul_one_add x y (by decide) hout
 
 private abbrev IntegralNarrow := FloatFormat.ieee 2 3
 
@@ -238,13 +237,13 @@ theorem truncation_custom_value :
   have hvalue : Model.toReal value = (15 / 4 : ℝ) := by
     norm_num [Model.toReal_eq, hd, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
   change Model.toReal (Model.roundToIntegral value .towardZero) = 3
-  rw [Model.toReal_roundToIntegral_towardZero_of_isFinite (by decide) value (by decide), hvalue]
+  rw [Model.toReal_roundToIntegral_towardZero (by decide) value (by decide), hvalue]
   norm_num
 
 example : (Model.roundToIntegral
     (Model.ofNatBits (fmt := IntegralNarrow) 23) .towardZero (status := true)).status.overflow =
       false :=
-  Model.roundToIntegral_towardZero_overflow_eq_false (by decide) _ (by decide)
+  Model.roundToIntegral_towardZero_overflow_eq_false (by decide) _
 
 -- Nearest rounding still overflows here, so its range guard cannot be dropped wholesale.
 example : Model.isInf (Model.roundToIntegral
@@ -264,7 +263,7 @@ theorem scaled_rational_zero (sign : Bool) (denominator : Nat) (hd : denominator
     Model.toReal (Model.roundRatScaled FloatFormat.binary64 sign 0 denominator exponent) =
       Model.roundAt FloatFormat.binary64
         (Model.signedScaledRatToReal sign 0 denominator exponent) := by
-  apply Model.toReal_roundRatScaled_eq_roundAt_of_isFinite _ _ _ _ _ (by decide) hd
+  apply Model.toReal_roundRatScaled_eq_roundAt _ _ _ _ _ (by decide)
   rw [Model.roundRatScaled_num_zero _ _ _ _ hd]
   exact Model.isFinite_eq_true_of_isZero_eq_true _ (Model.isZero_zero _ _)
 
@@ -302,8 +301,8 @@ example : Model.toReal (Model.sub (Model.negZero .binary64) (Model.posZero .bina
   rw [Model.toReal_sub_eq_of_sterbenz_of_same_sign
     (x := Model.negZero .binary64) (y := Model.posZero .binary64)
     hfmt (by decide) (by decide)
-    (by simp [hfmt]) (by simp [hfmt]) (by simp [hfmt])]
-  simp [hfmt]
+    (by simp) (by simp) (by simp)]
+  simp
 
 -- FNUZ is a finite-with-NaN encoding with a different bias from the IEEE layout.
 example : FloatFormat.e4m3fnuz.isIEEE = false := by decide +kernel
@@ -313,8 +312,8 @@ theorem cast_fnuz_source :
     Model.toReal (Model.cast FloatFormat.e4m3fnuz FloatFormat.binary32
       (Model.ofNatBits (fmt := .e4m3fnuz) 68)) =
       Model.toReal (Model.ofNatBits (fmt := .e4m3fnuz) 68) :=
-  Model.cast_exact_of_gridExtension_of_isIEEE_destination _ (by decide)
-    (by decide) (by decide) (by decide) (by decide)
+  Model.cast_exact_of_gridExtension _ (by decide)
+    (by decide) (by decide) (by decide)
 
 example : (Model.cast FloatFormat.e4m3fnuz (FloatFormat.ieee 4 3)
     (Model.ofNatBits (fmt := .e4m3fnuz) 68)).toNatBits = 60 := by decide +kernel
@@ -360,7 +359,7 @@ theorem dot_cancellation_real :
     decide +kernel
   refine ⟨outcome, houtcome, ?_⟩
   simpa using Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite
-    _ _ _ 0 outcome (by decide) (by decide)
+    _ _ _ 0 outcome (by decide)
     (by
       intro position hposition
       have h : position = 0 ∨ position = 1 := by

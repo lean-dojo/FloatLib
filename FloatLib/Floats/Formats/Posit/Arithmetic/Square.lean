@@ -8,7 +8,9 @@ module
 
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Plan.Dispatch
 public import FloatLib.Floats.Formats.Posit.Configured.Type
+public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 
 /-!
 # Once-rounded posit squares
@@ -16,6 +18,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Type
 The model square reuses exact dyadic multiplication. The public configured square reuses the
 selected certified multiplication kernel, including its packed carriers and width-generic
 fallback. Neither entry point adds a rounding step.
+
+`square_eq_mul` and `square_eq_spec` hold for any multiplication capability. For the built-in
+storage plans of `ExecFloat.Posit`, `toModel_square` identifies the decoded result with
+`Model.square`, and `square_eq_roundRat` with one rounding of the exact rational square.
 -/
 
 @[expose] public section
@@ -49,6 +55,8 @@ namespace FloatLib.Floats.ExecFloat.Posit
 
 open FloatLib.Floats.Formats.Posit
 
+section AnyCapability
+
 variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
     [FloatLib.Floats.ExecFloat.Mul (Configured.Family format code plan)]
@@ -56,18 +64,61 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Square using the selected certified posit multiplication, with one final rounding. -/
+/--
+Square through the multiplication capability in scope. For the built-in storage plans this is the
+selected certified posit multiplication, rounded once (`square_eq_roundRat`).
+-/
 @[inline] def square (value : Value) : Value :=
   ExecFloat.mul value value
 
-/-- Public squaring uses the same certified multiplication call as `value * value`. -/
+/-- Public squaring is the call `ExecFloat.mul value value`, the one `value * value` makes. -/
 theorem square_eq_mul (value : Value) :
     square value = ExecFloat.mul value value :=
   rfl
 
-/-- Squaring preserves the selected multiplication capability's reference result. -/
+/--
+Squaring returns the reference result of the multiplication capability in scope.
+
+This holds for any `ExecFloat.Mul` instance and says nothing about posit rounding by itself; the
+reference operation is whatever the capability declares. `toModel_square` states the posit result
+for the built-in storage plans.
+-/
 theorem square_eq_spec (value : Value) :
     square value = ExecFloat.Spec.mul value value :=
   ExecFloat.Proof.mul_eq_spec value value
+
+end AnyCapability
+
+section BuiltInPlans
+
+variable {format : Format} {plan : Configured.StoragePlan format}
+    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
+      (Configured.Family format (Configured.Code plan) plan)]
+
+local notation "Value" =>
+  FloatLib.Floats.ExecFloat (Configured.Family format (Configured.Code plan) plan)
+
+/--
+For every built-in storage plan, decoding the configured square gives the model square of the
+decoded operand, NaR included.
+
+The selected multiplication capability of each plan, byte table or direct kernel, has the
+configured posit multiplication as its reference operation.
+-/
+@[simp] theorem toModel_square (value : Value) :
+    toModel (square value) = Model.square (toModel value) := by
+  have hspec : square value = Configured.Spec.mul value value := by
+    rw [square_eq_spec]
+    cases plan <;> rfl
+  rw [hspec, Model.square_eq_spec]
+  simp [Configured.Spec.mul, toModel, Configured.Family.toModel]
+
+/-- A finite configured square rounds the exact rational square once. -/
+theorem square_eq_roundRat (value : Value) {q : Rat} (hvalue : toRat? value = some q) :
+    toModel (square value) = Model.roundRat format (q * q) := by
+  rw [toModel_square]
+  exact Model.square_of_toRat _ q hvalue
+
+end BuiltInPlans
 
 end FloatLib.Floats.ExecFloat.Posit

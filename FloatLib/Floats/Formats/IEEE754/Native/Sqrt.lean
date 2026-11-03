@@ -8,9 +8,11 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 
 /-!
 # Square-root agreement with Lean's floating-point model
@@ -18,7 +20,8 @@ public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 These theorems relate FloatLib square root to the Lean logical model underlying the native
 floating-point types. Canonicalization forgets NaN payloads and signs and keeps all numeric bits,
 including the sign of zero. The model equality does not verify the machine instructions used by
-compiled native operations.
+compiled native operations. The configured square root is the first-order instance of
+`Configured.NativeDispatch`, the one a client that imports `Configured` elaborates.
 -/
 
 @[expose] public section
@@ -70,6 +73,24 @@ private theorem toModel_of_isZero {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   apply toModel_eq_zero_of_ieeeToDyadic?_eq_some x (signBit x) 0
   simpa [toDyadic?, hfmt] using toDyadic?_eq_zero_of_isZero_eq_true x hx
 
+/--
+OR-ing any word into one with an all-ones exponent keeps that exponent; the result is a NaN once
+either operand has a nonzero mantissa.
+-/
+private theorem unpack_or_eq_notANumber (spec : Format) {x y : BitVec spec.numBits}
+    (he : unpackExponent x = -1#_)
+    (hm : unpackMantissa x ≠ 0#_ ∨ unpackMantissa y ≠ 0#_) :
+    unpack spec (x ||| y) = .notANumber := by
+  have hm' : unpackMantissa (x ||| y) ≠ 0#_ := by
+    simpa [unpackMantissa, BitVec.extractLsb'_or, BitVec.or_eq_zero_iff] using
+      (show ¬(unpackMantissa x = 0#_ ∧ unpackMantissa y = 0#_) from fun h =>
+        hm.elim (· h.1) (· h.2))
+  have he' : unpackExponent (x ||| y) = -1#_ := by
+    simp only [unpackExponent, BitVec.extractLsb'_or]
+    change unpackExponent x ||| unpackExponent y = -1#_
+    simp [he, BitVec.neg_one_eq_allOnes]
+  simp [unpack, he', hm']
+
 private theorem unpack_nan_or (spec : Format) (x y : BitVec spec.numBits)
     (hx : unpack spec x = .notANumber) : unpack spec (x ||| y) = .notANumber := by
   have he : unpackExponent x = -1#_ := by
@@ -80,14 +101,7 @@ private theorem unpack_nan_or (spec : Format) (x y : BitVec spec.numBits)
   have hm : unpackMantissa x ≠ 0#_ := by
     intro hm
     simp [unpack, he, hm] at hx
-  have hm' : unpackMantissa (x ||| y) ≠ 0#_ := by
-    simpa [unpackMantissa, BitVec.extractLsb'_or, BitVec.or_eq_zero_iff] using
-      (show ¬(unpackMantissa x = 0#_ ∧ unpackMantissa y = 0#_) from fun h => hm h.1)
-  have he' : unpackExponent (x ||| y) = -1#_ := by
-    simp only [unpackExponent, BitVec.extractLsb'_or]
-    change unpackExponent x ||| unpackExponent y = -1#_
-    simp [he, BitVec.neg_one_eq_allOnes]
-  simp [unpack, he', hm']
+  exact unpack_or_eq_notANumber spec he (Or.inl hm)
 
 private theorem canonicalizeModel_quietNaN {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) (hx : isNaN x = true) :
@@ -122,22 +136,7 @@ private theorem toModel_canonicalNaN (fmt : FloatFormat) :
     exact Nat.ne_of_gt (Nat.two_pow_pos _)
   change unpack (FloatFormat.toModel fmt)
     ((posInf fmt).bits ||| FloatFormat.quietBit fmt) = .notANumber
-  have hm : unpackMantissa (spec := FloatFormat.toModel fmt)
-      ((posInf fmt).bits ||| FloatFormat.quietBit fmt) ≠ 0#_ := by
-    change ((posInf fmt).bits ||| FloatFormat.quietBit fmt).extractLsb' 0 fmt.fracWidth ≠
-      0#_
-    rw [BitVec.extractLsb'_or, ne_eq, BitVec.or_eq_zero_iff]
-    intro h
-    exact hq h.2
-  have he' : unpackExponent (spec := FloatFormat.toModel fmt)
-      ((posInf fmt).bits ||| FloatFormat.quietBit fmt) = -1#_ := by
-    change ((posInf fmt).bits ||| FloatFormat.quietBit fmt).extractLsb'
-      fmt.fracWidth fmt.expWidth = -1#_
-    rw [BitVec.extractLsb'_or]
-    change (posInf fmt).bits.extractLsb' fmt.fracWidth fmt.expWidth = -1#fmt.expWidth at he
-    rw [he]
-    simp [BitVec.neg_one_eq_allOnes]
-  simp [unpack, he', hm]
+  exact unpack_or_eq_notANumber _ he (Or.inr hq)
 
 /--
 Square root agrees with Lean's model on every input of an IEEE format after NaN
@@ -176,7 +175,7 @@ theorem canonicalizeModel_sqrt_eq_model {fmt : FloatFormat} (hfmt : fmt.isIEEE =
                 x hnan hinf
               cases hsign : signBit x with
               | false =>
-                  rw [Spec.sqrt_eq_model hfmt x hfinite hzero hsign,
+                  rw [Spec.sqrt_eq_model hfmt x hfinite hsign,
                     canonicalizeModel_ofModel]
               | true =>
                   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
@@ -248,15 +247,6 @@ theorem toModel_ofFloat_sqrt (x : Float) :
   rw [Model.toModel_ofFloatModel] at h
   exact h
 
-private theorem toModel_execSqrt {format : FloatFormat} {plan : Configured.StoragePlan format}
-    [ExecFloat.Backend.PolicyFor (Configured.Family format (Configured.Code plan) plan)]
-    (x : ExecFloat (Configured.Family format (Configured.Code plan) plan)) :
-    toModel (ExecFloat.sqrt x) = Model.Spec.sqrt (toModel x) := by
-  rw [ExecFloat.Proof.sqrt_eq_spec]
-  change Configured.Family.toModel
-    (ExecFloat.ModelCodec.liftUnary (Model.Spec.sqrt) x) = _
-  simp [Configured.Family.toModel, toModel]
-
 /--
 Configured binary32 square root commutes with export to Lean's native `Float32`, for every
 input word. This uses the installed certified software operation.
@@ -267,7 +257,8 @@ theorem toFloat32_sqrt (x : Binary32) :
     fun ⟨a⟩ ⟨b⟩ h => congrArg Float32.ofModel h)
   change (toFloat32 (ExecFloat.sqrt x)).toModel = (toFloat32 x).toModel.sqrt
   rw [toModel_toFloat32_eq, toModel_toFloat32_eq]
-  erw [toModel_execSqrt, ← Model.Proof.sqrt_eq_spec, Model.toFloat32Model_sqrt]
+  rw [← Model.toFloat32Model_sqrt]
+  exact congrArg Model.toFloat32Model (toModel_execFloat_sqrt x)
 
 /--
 Configured binary64 square root commutes with export to Lean's native `Float`, including
@@ -279,6 +270,7 @@ theorem toFloat_sqrt (x : Binary64) :
     fun ⟨a⟩ ⟨b⟩ h => congrArg Float.ofModel h)
   change (toFloat (ExecFloat.sqrt x)).toModel = (toFloat x).toModel.sqrt
   rw [toModel_toFloat_eq, toModel_toFloat_eq]
-  erw [toModel_execSqrt, ← Model.Proof.sqrt_eq_spec, Model.toFloatModel_sqrt]
+  rw [← Model.toFloatModel_sqrt]
+  exact congrArg Model.toFloatModel (toModel_execFloat_sqrt x)
 
 end FloatLib.Floats.ExecFloat.Binary

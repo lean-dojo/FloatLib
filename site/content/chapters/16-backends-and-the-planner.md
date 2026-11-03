@@ -6,9 +6,9 @@ summary: The planner chooses a proved implementation from estimated computation 
 phases: [backends, planner-and-configured, execution]
 ---
 
-A lookup table, a word kernel, and the exact generic baseline can all implement the same arithmetic operation. They satisfy the same specification, but their setup costs, memory use, and costs per call differ. The planner chooses among those available for the format, operation, and storage representation. The [kernels from chapter 15](#/chapter/kernels-fixed-word-algorithms) supply the arithmetic; the policy tells the planner how to weigh their costs for the expected workload.
+A lookup table, a word kernel, and the exact generic baseline can all implement the same arithmetic operation. They satisfy the same specification, but their setup costs, memory use, and costs per call differ. The planner chooses among those available for the format, operation, and storage representation. The [kernels from chapter 15](#/chapter/kernels-fixed-word-algorithms) supply the arithmetic, and the policy tells the planner how to weigh their costs for the expected workload.
 
-For an eight-bit format, there are 256 codes and 65,536 ordered operand pairs. We can calculate every addition once, store the answers in 64 KiB, and replace each later addition with a table lookup. That saves arithmetic on every call, but first we have to generate the table. For IEEE E4M3, the default policy estimates that a word kernel is cheaper over 100,000 calls; the throughput policy, expecting five million calls, selects the table instead.
+For an eight-bit format, there are 256 codes and 65,536 ordered operand pairs. We can calculate every addition once, store the answers in 64 KiB, and replace each later addition with a table lookup. That saves arithmetic on every call, but first we have to generate the table. For IEEE E4M3 addition, the default policy estimates that a word kernel is cheaper over 100,000 calls, while the throughput policy, expecting five million calls, selects the table.
 
 Each candidate carries a proof that its `run` equals the common specification, and the planner keeps that proof when it chooses a candidate. A bad cost estimate can select slow code, but the selected operation still has to return the specified result. GMP also chooses algorithms by size [@gmpManual], and FFTW separates a transform description from its execution plan [@fftwPlanner].
 
@@ -153,7 +153,7 @@ Setup cost matters for tables. A 64 KiB table is expensive to build but cheap to
 
 A [[FloatLib.Floats.ExecFloat.Backend.Policy]] sets the expected workload and memory limits, and three come built in. `latency` expects one call, the balanced profile [[FloatLib.Floats.ExecFloat.Backend.Policy.default]] expects 100,000, and `throughput` expects 5,000,000. Latency and the balanced profile allow 1 MiB of resident memory per candidate, and throughput raises that to 16 MiB. All three allow 64 MiB of temporary memory, charge 32 units per allocation, and count memory in 64-byte blocks.
 
-These workload assumptions and weights are defined in the [policy](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Selection/Policy.lean). The 32-unit allocation charge and 64-byte memory block are parameters of that model, and its scores are relative costs rather than nanoseconds. The microsecond estimates from earlier are the reason to avoid allocation, but they don't feed into this configured score calculation.
+These workload assumptions and weights are defined in the [policy](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Selection/Policy.lean). The 32-unit allocation charge and 64-byte memory block are parameters of that model, and its scores are relative costs rather than nanoseconds. The calibrated estimates from earlier are the candidates' steady costs, in units of roughly 100 ns, so 256-bit addition enters the score as 41 units and its three allocations add another $3\cdot32=96$. Only the relative sizes of these numbers affect selection.
 
 ## How the planner chooses
 
@@ -215,18 +215,16 @@ Here the 80-bit layout from the eligibility section shows up as `generic`, as th
 -- FloatLib.Floats.ExecFloat.Backend.KernelClass.generic
 ```
 
-If you want to know which implementation an arithmetic expression will use, ask `#float_info`. It synthesizes the capability instances for the six operations and reads the selected candidate from each. Its execution section looks like this:
+If you want to know which implementation an arithmetic expression will use, ask `#float_info`. It synthesizes the capability instances for the six operations and reads the selected candidate from each, under the planning policy it names. Its execution section looks like this:
 
 ```lean
 #float_info E4M3IEEE
 -- Execution:
---   carrier: packed persistent storage; the exact binary descriptor is retained as the proof model
---   dispatch: representation-aware certified selection among direct tables, word, limb, and exact baseline kernels
+--   planning policy: balanced
 --   backends: add, sub, mul, div = machine-word kernel (UInt8); sqrt = exhaustive encoded-value table (UInt8); fma = exact baseline (UInt8)
 #float_info Binary32
 -- Execution:
---   carrier: packed persistent storage; the exact binary descriptor is retained as the proof model
---   dispatch: representation-aware certified selection among direct tables, word, limb, and exact baseline kernels
+--   planning policy: balanced
 --   backends: add, sub, mul, div, sqrt, fma = fixed-format word kernel (UInt32)
 ```
 
@@ -411,7 +409,7 @@ The public equation is the projection of a certificate the format built with its
 
 ## Using the host FPU
 
-Lean's `Float` and `Float32` expose host arithmetic, a faster path for ordinary binary32 and binary64 operations. To put it in the planner we'd need a `Backend.Certified` value proving `run = spec` as a Lean equality. That theorem would have to establish exact packed-word equality with the specification on every guarded finite input, overflow, underflow, and signed zeros included. It would also need the side conditions in Lean's logical model of multiplication and division, and it would have to assume the process uses round-to-nearest-even with gradual underflow. FloatLib doesn't supply such a host-refinement theorem, so these host results are only available through the unchecked interface.
+Lean's `Float` and `Float32` expose host arithmetic, a faster path for ordinary binary32 and binary64 operations. To put it in the planner we'd need a `Backend.Certified` value, whose `run_eq_spec : run = spec` is an equality in Lean's logic, with exact packed-word equality on every guarded finite input, overflow, underflow, and signed zeros included. For Lean's logical model we have those word equalities on finite operands, and for square root on every input ([chapter 18](#/chapter/lean-native-floats/arithmetic-through-the-same-model)). The compiled operations are `@[extern]` C calls, though. Such a certificate would be about Lean's model of the call, and no Lean theorem says what the processor returns for it or that the process rounds to nearest even with gradual underflow. Trusting the host there is a separate decision, so these host results are only available through the unchecked interface.
 
 To choose guarded host arithmetic, import its own module and name the operation at the call site. The import leaves ordinary `+` on the certified software path:
 

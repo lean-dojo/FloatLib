@@ -25,7 +25,7 @@ namespace Arithmetic
 /-- Exact input normalization supplies the hypotheses of the grid-step proofs. -/
 theorem neighbor_normalize (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hvalid : (Datum.finite s c q).Valid f) (hc : c ≠ 0) :
-    ∃ d r, roundedPair f .nearestEven false ((c : ℚ) * (10 : ℚ) ^ q) = (d, r) ∧
+    ∃ d r, roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q) = (d, r) ∧
       d < f.coefficientBound ∧ 0 < d ∧ f.minQuantum ≤ r ∧ r ≤ f.maxQuantum ∧
       (r = f.minQuantum ∨ f.payloadBound ≤ d) ∧
       (d : ℚ) * (10 : ℚ) ^ r = (c : ℚ) * (10 : ℚ) ^ q := by
@@ -33,22 +33,42 @@ theorem neighbor_normalize (f : Format) (s : Bool) (c : Nat) (q : Int)
     simpa only [Datum.valid_quantum_iff] using hvalid
   have hx : 0 ≤ (c : ℚ) * (10 : ℚ) ^ q :=
     mul_nonneg (Nat.cast_nonneg _) (zpow_pos (by norm_num) _).le
-  have he := roundedPair_exact_value f .nearestEven false c q hv
-  refine ⟨_, _, rfl, roundedPair_coefficient_lt f .nearestEven false hx, ?_,
-    roundedPair_quantum_ge_min f .nearestEven false _, ?_,
-    roundedPair_minimum_or_full f .nearestEven false hx, he⟩
+  have he := roundedPair_exact_value f .nearest false c q hv
+  refine ⟨_, _, rfl, roundedPair_coefficient_lt f .nearest false hx, ?_,
+    roundedPair_quantum_ge_min f .nearest false _, ?_,
+    roundedPair_minimum_or_full f .nearest false _, he⟩
   · have hp : (0 : ℚ) < (c : ℚ) * (10 : ℚ) ^ q :=
       mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hc) (zpow_pos (by norm_num) _)
-    change 0 < (roundedPair f .nearestEven false ((c : ℚ) * (10 : ℚ) ^ q)).1
+    change 0 < (roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q)).1
     by_contra h
-    change ¬0 < (roundedPair f .nearestEven false ((c : ℚ) * (10 : ℚ) ^ q)).1 at h
-    have hz : (roundedPair f .nearestEven false ((c : ℚ) * (10 : ℚ) ^ q)).1 = 0 :=
+    change ¬0 < (roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q)).1 at h
+    have hz : (roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q)).1 = 0 :=
       by omega
     rw [hz, Nat.cast_zero, zero_mul] at he
     linarith
-  · exact (roundedPair_quantum_le_of_valid f .nearestEven false c q hv).trans
+  · exact (roundedPair_quantum_le_of_valid f .nearest false c q hv).trans
       ((Datum.valid_quantum_iff ..).mp hv).2.2
 
+/-- A grid step from a valid nonzero finite operand delivers a valid datum, and a finite result is
+on the least grid or has a full leading digit. -/
+private theorem nextUp_finite_valid_full (f : Format) (s : Bool) (c : Nat) (q : Int)
+    (hx : (Datum.finite s c q).Valid f) (hc : c ≠ 0) :
+    (nextUp f (.finite s c q)).value.Valid f ∧
+      ∀ t d r, (nextUp f (.finite s c q)).value = .finite t d r →
+        r = f.minQuantum ∨ f.payloadBound ≤ d := by
+  obtain ⟨a, b, hp, ha, hapos, hbmin, hbmax, hfull, _⟩ := neighbor_normalize f s c q hx hc
+  simp only [nextUp, ite_eq_right hc, hp]
+  cases s
+  · exact ⟨neighborAbove_valid f a b hbmin hbmax,
+      fun t d r hout => neighborAbove_full f a d b r t hfull hout⟩
+  · obtain ⟨d, r, he, hv, hdfull, _⟩ := neighborBelow_spec f a b ha hapos hbmin hbmax hfull
+    simp only [↓reduceIte, he, Datum.negate, Bool.not_false, Datum.finite.injEq]
+    refine ⟨by simpa [Datum.valid_quantum_iff] using hv, ?_⟩
+    rintro t d' r' ⟨-, rfl, rfl⟩
+    exact hdfull
+
+/-- For a valid operand, `nextUp` delivers a valid datum, including the propagated NaN, the step
+from either zero to the least positive value, and the steps at both ends of the finite range. -/
 theorem nextUp_valid (f : Format) (x : Datum) (hx : x.Valid f) :
     (nextUp f x).value.Valid f := by
   cases x with
@@ -62,33 +82,31 @@ theorem nextUp_valid (f : Format) (x : Datum) (hx : x.Valid f) :
       · simp only [nextUp, hc, ↓reduceIte]
         apply (Datum.valid_quantum_iff ..).mpr
         exact ⟨f.one_lt_coefficientBound, le_rfl, f.minQuantum_le_maxQuantum⟩
-      · obtain ⟨d, r, hp, hd, hdpos, hrmin, hrmax, hfull, _⟩ :=
-          neighbor_normalize f s c q hx hc
-        simp only [nextUp, ite_eq_right hc, hp]
-        cases s
-        · exact neighborAbove_valid f d r hrmin hrmax
-        · obtain ⟨a, b, he, hv, _, _⟩ :=
-            neighborBelow_spec f d r hd hdpos hrmin hrmax hfull
-          simpa [he, Datum.negate, Datum.valid_quantum_iff] using hv
+      · exact (nextUp_finite_valid_full f s c q hx hc).1
 
+/-- `nextDown` is `nextUp` of the negated operand, negated back, for every datum including NaNs. -/
+theorem nextDown_value (f : Format) (x : Datum) :
+    (nextDown f x).value = (nextUp f x.negate).value.negate := rfl
+
+/-- For a valid operand, `nextDown` delivers a valid datum, including the propagated NaN and the
+steps at both ends of the finite range. -/
 theorem nextDown_valid (f : Format) (x : Datum) (hx : x.Valid f) :
     (nextDown f x).value.Valid f := by
-  have hn : x.negate.Valid f := by
-    simpa [Datum.negate_eq_withSign] using hx
-  simpa [nextDown, Datum.negate_eq_withSign] using nextUp_valid f x.negate hn
+  simpa [nextDown_value] using nextUp_valid f x.negate (by simpa using hx)
 
 /-- Neighbor steps raise `invalid` exactly for signaling NaNs and leave all other flags clear. -/
 theorem nextUp_status (f : Format) (x : Datum) :
-    (nextUp f x).status = { invalid := x.isSignaling } := by
+    (nextUp f x).status = { invalid := x.isSNaN } := by
   cases x with
   | nan s t p => rfl
   | infinity s => cases s <;> rfl
   | finite s c q =>
-      simp only [nextUp, Datum.isSignaling]
+      simp only [nextUp, Datum.isSNaN]
       split <;> rfl
 
+/-- `nextDown` raises invalid exactly for a signaling NaN and leaves all other flags clear. -/
 theorem nextDown_status (f : Format) (x : Datum) :
-    (nextDown f x).status = { invalid := x.isSignaling } := by
+    (nextDown f x).status = { invalid := x.isSNaN } := by
   simp only [nextDown, nextUp_status]
   cases x <;> rfl
 
@@ -109,17 +127,7 @@ theorem nextUp_full (f : Format) (x : Datum) (hx : x.Valid f)
       by_cases hd : d = 0
       · simp only [nextUp, hd, ↓reduceIte, Datum.finite.injEq] at hout
         exact Or.inl hout.2.2.symm
-      · obtain ⟨a, b, hp, ha, hapos, hbmin, hbmax, hfull, _⟩ :=
-          neighbor_normalize f t d r hx hd
-        simp only [nextUp, ite_eq_right hd, hp] at hout
-        cases t
-        · exact neighborAbove_full f a c b q s hfull hout
-        · obtain ⟨e, u, he, _, hefull, _⟩ :=
-            neighborBelow_spec f a b ha hapos hbmin hbmax hfull
-          simp only [Bool.true_eq, ↓reduceIte, he, Datum.negate,
-            Bool.not_false, Datum.finite.injEq] at hout
-          obtain ⟨rfl, rfl, rfl⟩ := hout
-          exact hefull
+      · exact (nextUp_finite_valid_full f t d r hx hd).2 s c q hout
 
 /-- The actual successor's quantum is minimal among all valid equal-magnitude cohorts. -/
 theorem nextUp_quantum_minimal (f : Format) (x : Datum) (hx : x.Valid f)
@@ -127,19 +135,16 @@ theorem nextUp_quantum_minimal (f : Format) (x : Datum) (hx : x.Valid f)
     (d : Nat) (r : Int) (hd : (Datum.finite s d r).Valid f)
     (he : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
   have hv := (Datum.valid_quantum_iff ..).mp hd
-  exact neighbor_quantum_minimal f c d q r (nextUp_full f x hx s c q hout) hv.1 hv.2.1 he
+  exact quantum_le_of_minimum_or_full f c d q r (nextUp_full f x hx s c q hout) hv.1 hv.2.1 he
 
+/-- A finite result of `nextDown` uses the least quantum among all valid representations of its
+value. -/
 theorem nextDown_quantum_minimal (f : Format) (x : Datum) (hx : x.Valid f)
     (s : Bool) (c : Nat) (q : Int) (hout : (nextDown f x).value = .finite s c q)
     (d : Nat) (r : Int) (hd : (Datum.finite s d r).Valid f)
     (he : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
-  have hn : x.negate.Valid f := by simpa [Datum.negate_eq_withSign] using hx
-  have ho : (nextUp f x.negate).value = .finite (!s) c q := by
-    have h := congrArg Datum.negate hout
-    change (nextUp f x.negate).value.negate.negate = (Datum.finite s c q).negate at h
-    rw [Datum.negate_negate] at h
-    exact h
-  exact nextUp_quantum_minimal f x.negate hn (!s) c q ho d r hd he
+  rw [nextDown_value, Datum.negate_eq_iff_eq_negate] at hout
+  exact nextUp_quantum_minimal f x.negate (by simpa using hx) (!s) c q hout d r hd he
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

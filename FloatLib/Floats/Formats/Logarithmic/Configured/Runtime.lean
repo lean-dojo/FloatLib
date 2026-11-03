@@ -40,14 +40,25 @@ variable {radix : Radix}
 @[inline] def zero : ExecFloat.Logarithmic radix :=
   ofCode .zero
 
-/-- Construct the exact value `(-1)^negative * radix^exponent`. -/
-@[inline] def ofSignExponent (negative : Bool) (exponent : Int) :
+/--
+Construct the exact value `radix ^ exponent`, positive by default. `(negative := true)` gives
+`-radix ^ exponent`.
+-/
+@[inline] def ofExponent (exponent : Int) (negative : Bool := false) :
     ExecFloat.Logarithmic radix :=
   ofCode (.value negative exponent)
 
 /-- Decode a configured logarithmic value to its exact real meaning. -/
 @[inline] noncomputable def toReal (value : ExecFloat.Logarithmic radix) : ℝ :=
   value.toCode.toReal
+
+/--
+Exact rational value of a configured logarithmic value, zero or `±radix^exponent`.
+
+Every value is finite, so the reading is total.
+-/
+@[inline] def toRat (value : ExecFloat.Logarithmic radix) : Rat :=
+  value.toCode.toRat
 
 /-- Exact multiplication of configured logarithmic values. -/
 @[inline] def mul (left right : ExecFloat.Logarithmic radix) :

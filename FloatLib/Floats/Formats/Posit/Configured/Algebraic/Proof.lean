@@ -108,14 +108,14 @@ theorem rootN_eq_neg_roundPositive (value : Value) {q : Rat} (degree : Int)
 
 /-- Defined configured integer powers round the exact rational power once. -/
 theorem powInt_eq_roundRat (value : Value) {q : Rat} (exponent : Int)
-    (hvalue : toRat? value = some q) (hdomain : q ≠ 0 ∨ 0 < exponent) :
+    (hvalue : toRat? value = some q) (hdomain : q ≠ 0 ∨ 0 ≤ exponent) :
     toModel (powInt value exponent) = Model.roundRat format (q ^ exponent) := by
   rw [toModel_powInt]
   exact Model.powInt_eq_roundRat _ exponent hvalue hdomain
 
 /-- Defined configured compound rounds the exact addition and integer power once. -/
 theorem compound_eq_roundRat (value : Value) {q : Rat} (exponent : Int)
-    (hvalue : toRat? value = some q) (hdomain : 1 + q ≠ 0 ∨ 0 < exponent) :
+    (hvalue : toRat? value = some q) (hdomain : 1 + q ≠ 0 ∨ 0 ≤ exponent) :
     toModel (compound value exponent) = Model.roundRat format ((1 + q) ^ exponent) := by
   rw [toModel_compound]
   exact Model.compound_eq_roundRat _ exponent hvalue hdomain

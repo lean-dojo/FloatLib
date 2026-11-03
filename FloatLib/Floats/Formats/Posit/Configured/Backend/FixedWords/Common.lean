@@ -27,7 +27,8 @@ namespace FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords
 variable {format : Format} {capacity observed exactResult : Nat}
 
 /--
-A result below the exact format modulus also fits any carrier at least as wide as the format.
+A result below the format modulus `2 ^ format.bits` is below `2 ^ capacity` for every carrier of
+at least `format.bits` bits, so it fits the carrier.
 -/
 theorem result_lt_capacity
     (width_le : format.bits ≤ capacity)
@@ -38,7 +39,8 @@ theorem result_lt_capacity
     exact Nat.pow_le_pow_right (by decide) width_le
 
 /--
-Reducing an exact format result modulo a sufficiently wide carrier does not change the result.
+Reducing a result below the format modulus modulo a carrier of at least `format.bits` bits
+returns the result unchanged, so storing it in the carrier loses nothing.
 -/
 theorem result_mod_capacity
     (width_le : format.bits ≤ capacity)
@@ -47,16 +49,15 @@ theorem result_mod_capacity
   Nat.mod_eq_of_lt (result_lt_capacity width_le result_lt)
 
 /--
-An observed result remains below the format modulus when narrowing to the carrier preserves
-the exact result.
+Reducing a result below the format modulus modulo the carrier capacity keeps it below the
+modulus, whatever the capacity: the remainder is at most the result.
 -/
 theorem observed_lt_modulus
-    (width_le : format.bits ≤ capacity)
     (observed_eq : observed = exactResult % 2 ^ capacity)
     (result_lt : exactResult < format.modulus) :
     observed < format.modulus := by
-  rw [observed_eq, result_mod_capacity width_le result_lt]
-  exact result_lt
+  rw [observed_eq]
+  exact lt_of_le_of_lt (Nat.mod_le _ _) result_lt
 
 /-! ## Packed-word range invariants -/
 

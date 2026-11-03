@@ -6,6 +6,8 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Numerics.Repr
+
 /-!
 # Shared IEEE exception indicators
 
@@ -30,7 +32,7 @@ structure IEEEStatus where
   underflow : Bool := false
   /-- The delivered result differs from the exact result. -/
   inexact : Bool := false
-  deriving Repr, DecidableEq, Inhabited
+  deriving DecidableEq, Inhabited
 
 /-- The five IEEE floating-point exceptions, individually addressable as flags. -/
 inductive IEEEException where
@@ -40,6 +42,14 @@ inductive IEEEException where
   | underflow
   | inexact
   deriving DecidableEq, Repr
+
+/-- `#eval` lists only the raised flags, as `{ overflow := true, inexact := true }`, and shows `{}`
+when none is raised. -/
+instance : Repr IEEEStatus where
+  reprPrec flags _ :=
+    reprFlags
+      [("invalid", flags.invalid), ("divideByZero", flags.divideByZero),
+        ("overflow", flags.overflow), ("underflow", flags.underflow), ("inexact", flags.inexact)]
 
 namespace IEEEStatus
 

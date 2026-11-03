@@ -208,6 +208,14 @@ theorem mod_two_pow_ne_zero_iff_guard_or_sticky (value shift : Nat) (hshift : 0 
   rw [Nat.add_sub_cancel, mod_two_pow_succ_eq]
   cases value.testBit t <;> simp
 
+/-- The Boolean form of `mod_two_pow_ne_zero_iff_guard_or_sticky`. -/
+theorem guard_or_sticky_eq_decide (value shift : Nat) (hshift : 0 < shift) :
+    (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0)) =
+      decide (value % 2 ^ shift ≠ 0) :=
+  Bool.eq_iff_iff.mpr <| by
+    rw [decide_eq_true_iff]
+    exact (mod_two_pow_ne_zero_iff_guard_or_sticky value shift hshift).symm
+
 /-- A positive shift is a tie exactly when it discards half of a retained unit. -/
 theorem shiftRightIsTie_eq_true_iff (value shift : Nat) :
     shiftRightIsTie value shift = true ↔ 0 < shift ∧ value % 2 ^ shift = 2 ^ (shift - 1) := by
@@ -277,21 +285,9 @@ theorem roundShiftRight_eq_guard_sticky (rule : MagnitudeRounding) (value shift 
   | down =>
       simp [roundShiftRight, MagnitudeRounding.increment, Nat.shiftRight_eq_div_pow]
   | up =>
-      have hinexact := mod_two_pow_ne_zero_iff_guard_or_sticky value shift hshift
-      simp only [roundShiftRight, MagnitudeRounding.increment, shiftRightCeil_eq]
-      by_cases hzero : value % 2 ^ shift = 0
-      · have hbits :
-            (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0)) = false := by
-          cases hbits : (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0))
-          · rfl
-          · exact absurd hzero (hinexact.mpr hbits)
-        simp only [hbits]
-        simp [hzero]
-      · have hbits :
-            (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0)) = true :=
-          hinexact.mp hzero
-        simp only [hbits]
-        simp [hzero]
+      simp only [roundShiftRight, MagnitudeRounding.increment, shiftRightCeil_eq,
+        guard_or_sticky_eq_decide value shift hshift]
+      by_cases hzero : value % 2 ^ shift = 0 <;> simp [hzero]
   | nearestEven =>
       exact roundShiftRightEven_eq_guard_sticky value shift hshift
   | nearestAway =>
@@ -435,6 +431,22 @@ private theorem two_mul_mod_eq_iff_exists (numerator denominator : Nat)
     omega
 
 /--
+One direction of `two_mul_mod_eq_iff_of_mul_eq`, which is symmetric in the two quotients: an odd
+multiple of half the denominator stays one under equal cross products.
+-/
+private theorem exists_odd_mul_of_mul_eq {numerator denominator numerator' denominator' : Nat}
+    (hdenominator : denominator ≠ 0)
+    (hcross : numerator * denominator' = numerator' * denominator)
+    (h : ∃ k, 2 * numerator = (2 * k + 1) * denominator) :
+    ∃ k, 2 * numerator' = (2 * k + 1) * denominator' := by
+  obtain ⟨k, hk⟩ := h
+  refine ⟨k, Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero hdenominator) ?_⟩
+  calc
+    denominator * (2 * numerator') = 2 * (numerator' * denominator) := by ring
+    _ = 2 * numerator * denominator' := by rw [← hcross]; ring
+    _ = denominator * ((2 * k + 1) * denominator') := by rw [hk]; ring
+
+/--
 Whether a quotient is an exact tie depends only on the rational it represents.
 
 Two quotients with nonzero denominators and equal cross products are ties together: twice the
@@ -446,19 +458,8 @@ theorem two_mul_mod_eq_iff_of_mul_eq (numerator denominator numerator' denominat
     2 * (numerator % denominator) = denominator ↔
       2 * (numerator' % denominator') = denominator' := by
   rw [two_mul_mod_eq_iff_exists _ _ hdenominator, two_mul_mod_eq_iff_exists _ _ hdenominator']
-  constructor
-  · rintro ⟨k, hk⟩
-    refine ⟨k, Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero hdenominator) ?_⟩
-    calc
-      denominator * (2 * numerator') = 2 * (numerator' * denominator) := by ring
-      _ = 2 * numerator * denominator' := by rw [← hcross]; ring
-      _ = denominator * ((2 * k + 1) * denominator') := by rw [hk]; ring
-  · rintro ⟨k, hk⟩
-    refine ⟨k, Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero hdenominator') ?_⟩
-    calc
-      denominator' * (2 * numerator) = 2 * (numerator * denominator') := by ring
-      _ = 2 * numerator' * denominator := by rw [hcross]; ring
-      _ = denominator' * ((2 * k + 1) * denominator) := by rw [hk]; ring
+  exact ⟨exists_odd_mul_of_mul_eq hdenominator hcross,
+    exists_odd_mul_of_mul_eq hdenominator' hcross.symm⟩
 
 /-- Shift rounding under every rule is quotient rounding by the corresponding power of two. -/
 theorem roundShiftRight_eq_roundQuotient (rule : MagnitudeRounding) (value shift : Nat) :
@@ -526,30 +527,26 @@ theorem compare_roundShiftRight_mul_two_pow (rule : MagnitudeRounding) (value sh
             (decide (value % 2 ^ (shift - 1) ≠ 0)) then .gt else .lt
       else
         .eq := by
-  have hinexact := mod_two_pow_ne_zero_iff_guard_or_sticky value shift hshift
+  have hbits := guard_or_sticky_eq_decide value shift hshift
   have hsplit := Nat.div_add_mod value (2 ^ shift)
   have hlow : value % 2 ^ shift < 2 ^ shift := Nat.mod_lt _ (Nat.two_pow_pos shift)
   rw [roundShiftRight_eq_guard_sticky rule value shift hshift]
   have hmul : value / 2 ^ shift * 2 ^ shift = 2 ^ shift * (value / 2 ^ shift) :=
     Nat.mul_comm _ _
-  by_cases hbits : (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0)) = true
-  · have hnonzero : value % 2 ^ shift ≠ 0 := hinexact.mpr hbits
-    rw [ite_eq_left hbits]
+  by_cases hzero : value % 2 ^ shift = 0
+  · have hexact : (value.testBit (shift - 1) || decide (value % 2 ^ (shift - 1) ≠ 0)) = false := by
+      rw [hbits, hzero]
+      decide
+    obtain ⟨hguard, hsticky⟩ := Bool.or_eq_false_iff.mp hexact
+    rw [hexact, hguard, hsticky, MagnitudeRounding.increment_false_false]
+    simp only [Bool.false_eq_true, ite_false, Nat.add_zero, compare_eq_iff_eq]
+    omega
+  · rw [hbits, decide_eq_true hzero, ite_eq_left rfl]
     split_ifs with hincrement
     · rw [compare_gt_iff_gt, Nat.add_mul, Nat.one_mul]
       omega
     · rw [compare_lt_iff_lt, Nat.add_zero]
       omega
-  · have hzero : value % 2 ^ shift = 0 := by
-      by_contra hne
-      exact hbits (hinexact.mp hne)
-    have hguard : value.testBit (shift - 1) = false := by
-      cases h : value.testBit (shift - 1) <;> simp_all
-    have hsticky : decide (value % 2 ^ (shift - 1) ≠ 0) = false := by
-      cases h : decide (value % 2 ^ (shift - 1) ≠ 0) <;> simp_all
-    rw [ite_eq_right hbits, hguard, hsticky, MagnitudeRounding.increment_false_false]
-    simp only [Bool.false_eq_true, ite_false, Nat.add_zero, compare_eq_iff_eq]
-    omega
 
 /--
 The ternary value of a signed shift rounding, read off its rounding bits.

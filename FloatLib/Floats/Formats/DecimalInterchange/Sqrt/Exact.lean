@@ -24,14 +24,11 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 theorem scaled_decimal_sq (c : Nat) {q r : Int} (hqr : r ≤ q) :
     ((c : ℚ) * (10 : ℚ) ^ q) ^ 2 / (10 : ℚ) ^ (2 * r) =
       (((c * 10 ^ (q - r).toNat : Nat) : ℚ)) ^ 2 := by
-  have he : r + ((q - r).toNat : Int) = q := by omega
   have hp : (10 : ℚ) ^ (2 * r) = ((10 : ℚ) ^ r) ^ 2 := by
     rw [mul_comm 2 r, zpow_mul]
     norm_num
-  conv_lhs => rw [← he, zpow_add₀ (by norm_num), zpow_natCast]
-  rw [hp]
-  push_cast
-  field_simp
+  rw [← Arithmetic.finer_grid_value c q r hqr, hp, mul_pow, mul_div_assoc,
+    div_self (pow_ne_zero 2 (zpow_pos (by norm_num) r).ne'), mul_one]
 
 /-- Recovering a representable root on any finer grid preserves its exact value. -/
 theorem RoundingMode.sqrtRound_exact_value (mode : RoundingMode) (c : Nat)
@@ -39,10 +36,7 @@ theorem RoundingMode.sqrtRound_exact_value (mode : RoundingMode) (c : Nat)
     (mode.sqrtRound (((c : ℚ) * (10 : ℚ) ^ q) ^ 2 / (10 : ℚ) ^ (2 * r)) : ℚ) *
         (10 : ℚ) ^ r = (c : ℚ) * (10 : ℚ) ^ q := by
   rw [scaled_decimal_sq c hqr, mode.sqrtRound_nat_sq]
-  have he : r + ((q - r).toNat : Int) = q := by omega
-  conv_rhs => rw [← he, zpow_add₀ (by norm_num), zpow_natCast]
-  push_cast
-  ring
+  exact Arithmetic.finer_grid_value c q r hqr
 
 /-- The coefficient of an exact representable root cannot require a carry. -/
 theorem sqrtRound_lt_coefficientBound_of_valid (f : Format) (mode : RoundingMode)
@@ -51,7 +45,7 @@ theorem sqrtRound_lt_coefficientBound_of_valid (f : Format) (mode : RoundingMode
       (10 : ℚ) ^ (2 * sqrtQuantum f (((c : ℚ) * (10 : ℚ) ^ q) ^ 2))) <
       f.coefficientBound := by
   have hq := sqrtQuantum_le_of_valid f s c q hvalid
-  have hbound := div_sqrtQuantum_lt f (sq_nonneg ((c : ℚ) * (10 : ℚ) ^ q))
+  have hbound := div_sqrtQuantum_lt f (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)
   rw [scaled_decimal_sq c hq] at hbound ⊢
   rw [mode.sqrtRound_nat_sq]
   have hn : (0 : ℚ) ≤ ((c * 10 ^

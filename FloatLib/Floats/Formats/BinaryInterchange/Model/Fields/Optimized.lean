@@ -27,23 +27,10 @@ Semantic facts about the public field operations are in `Model.Fields.Proof`.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
-private theorem fracMaskNat_lt_storage (fmt : FloatFormat) :
-    FloatFormat.fracMaskNat fmt < 2 ^ fmt.bitWidth := by
-  unfold FloatFormat.fracMaskNat FloatFormat.bitWidth
-  have hpow :
-      2 ^ fmt.fracWidth ≤ 2 ^ (1 + fmt.expWidth + fmt.fracWidth) :=
-    Nat.pow_le_pow_right (by decide) (by omega)
-  have hpos : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos fmt.fracWidth
-  omega
-
-private theorem expAllOnesNat_lt_storage (fmt : FloatFormat) :
-    FloatFormat.expAllOnesNat fmt < 2 ^ fmt.bitWidth := by
-  unfold FloatFormat.expAllOnesNat FloatFormat.bitWidth
-  have hpow :
-      2 ^ fmt.expWidth ≤ 2 ^ (1 + fmt.expWidth + fmt.fracWidth) :=
-    Nat.pow_le_pow_right (by decide) (by omega)
-  have hpos : 0 < 2 ^ fmt.expWidth := Nat.two_pow_pos fmt.expWidth
-  omega
+/-- A value that fits a field no wider than the storage word fits the storage word. -/
+private theorem lt_storage_of_lt_two_pow {fmt : FloatFormat} {n width : Nat}
+    (hwidth : width ≤ fmt.bitWidth) (h : n < 2 ^ width) : n < 2 ^ fmt.bitWidth :=
+  Nat.lt_of_lt_of_le h (Nat.pow_le_pow_right (by decide) hwidth)
 
 private theorem signPower_lt_storage (fmt : FloatFormat) :
     2 ^ (fmt.expWidth + fmt.fracWidth) < 2 ^ fmt.bitWidth := by
@@ -63,6 +50,14 @@ private theorem expAllOnesNat_lt_field (fmt : FloatFormat) :
   have hpos : 0 < 2 ^ fmt.expWidth := Nat.two_pow_pos fmt.expWidth
   omega
 
+private theorem fracMaskNat_lt_storage (fmt : FloatFormat) :
+    FloatFormat.fracMaskNat fmt < 2 ^ fmt.bitWidth :=
+  lt_storage_of_lt_two_pow (by unfold FloatFormat.bitWidth; omega) (fracMaskNat_lt_field fmt)
+
+private theorem expAllOnesNat_lt_storage (fmt : FloatFormat) :
+    FloatFormat.expAllOnesNat fmt < 2 ^ fmt.bitWidth :=
+  lt_storage_of_lt_two_pow (by unfold FloatFormat.bitWidth; omega) (expAllOnesNat_lt_field fmt)
+
 /-- Masked sign, exponent, and fraction fields always fit their declared storage word. -/
 theorem packedFields_lt_storage (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
@@ -75,21 +70,15 @@ theorem packedFields_lt_storage (fmt : FloatFormat) (sign : Bool)
     Nat.and_lt_two_pow exponent (expAllOnesNat_lt_field fmt)
   have hExponent :
       Nat.shiftLeft (exponent &&& FloatFormat.expAllOnesNat fmt) fmt.fracWidth <
-        2 ^ fmt.bitWidth := by
-    have hShifted := Nat.shiftLeft_lt (m := fmt.fracWidth) hExponentField
-    exact Nat.lt_of_lt_of_le hShifted <|
-      Nat.pow_le_pow_right (by decide) (by
-        unfold FloatFormat.bitWidth
-        omega)
+        2 ^ fmt.bitWidth :=
+    lt_storage_of_lt_two_pow (by unfold FloatFormat.bitWidth; omega)
+      (Nat.shiftLeft_lt (m := fmt.fracWidth) hExponentField)
   have hFractionField :
       fraction &&& FloatFormat.fracMaskNat fmt < 2 ^ fmt.fracWidth :=
     Nat.and_lt_two_pow fraction (fracMaskNat_lt_field fmt)
   have hFraction :
       fraction &&& FloatFormat.fracMaskNat fmt < 2 ^ fmt.bitWidth :=
-    Nat.lt_of_lt_of_le hFractionField <|
-      Nat.pow_le_pow_right (by decide) (by
-        unfold FloatFormat.bitWidth
-        omega)
+    lt_storage_of_lt_two_pow (by unfold FloatFormat.bitWidth; omega) hFractionField
   have hSign :
       (if sign then Nat.shiftLeft 1 (fmt.expWidth + fmt.fracWidth) else 0) <
         2 ^ fmt.bitWidth := by
@@ -117,13 +106,9 @@ theorem signBit_eq_internal_apply {fmt : FloatFormat} (x : Model fmt) :
   let index := fmt.expWidth + fmt.fracWidth
   have hmask :
       (FloatFormat.signMask fmt).toNat = 2 ^ index := by
-    unfold FloatFormat.signMask FloatFormat.signMaskNat
-      FloatFormat.signBitIndex FloatFormat.ofWordNat
-    rw [BitVec.toNat_ofNat]
-    have hindex : fmt.bitWidth - 1 = index := by
-      unfold index FloatFormat.bitWidth
-      omega
-    rw [hindex, Nat.mod_eq_of_lt (signPower_lt_storage fmt)]
+    unfold FloatFormat.signMask FloatFormat.ofWordNat
+    rw [BitVec.toNat_ofNat, FloatFormat.signMaskNat_eq_two_pow,
+      Nat.mod_eq_of_lt (signPower_lt_storage fmt)]
   by_cases hzero : x.bits &&& FloatFormat.signMask fmt = 0
   · have hand : x.bits.toNat &&& 2 ^ index = 0 := by
       have h := congrArg BitVec.toNat hzero
@@ -212,12 +197,7 @@ theorem mkBits_eq_internal_apply (fmt : FloatFormat) (sign : Bool)
   have hsign :
       FloatFormat.signMaskNat fmt % 2 ^ fmt.bitWidth =
         Nat.shiftLeft 1 (fmt.expWidth + fmt.fracWidth) % 2 ^ fmt.bitWidth := by
-    unfold FloatFormat.signMaskNat FloatFormat.signBitIndex FloatFormat.bitWidth
-    have hindex :
-        1 + fmt.expWidth + fmt.fracWidth - 1 =
-          fmt.expWidth + fmt.fracWidth := by
-      omega
-    rw [hindex]
+    rw [FloatFormat.signMaskNat_eq_two_pow]
     simp [Nat.shiftLeft_eq]
   rw [hexponent]
   cases sign <;>

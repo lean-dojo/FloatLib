@@ -37,103 +37,6 @@ private theorem finite_maxFiniteFracField (fmt : FloatFormat)
   simp [FloatFormat.maxFiniteFracField, FloatFormat.fracMaskNat,
     pow2_eq_two_pow, hfmt]
 
-private theorem finite_packingGuard_eq_false
-    (fmt : FloatFormat) (hfmt : fmt.encoding = .finite)
-    (exponent : Int) (fraction : Nat)
-    (hmin : fmt.minNormalExponent ≤ exponent)
-    (hmax : exponent ≤ fmt.maxNormalExponent)
-    (hfraction : fraction < pow2 fmt.fracWidth) :
-    let encodedExponent :=
-      Int.toNat (exponent + Int.ofNat fmt.exponentBias)
-    (decide (encodedExponent > fmt.maxFiniteExpField) ||
-        encodedExponent == fmt.maxFiniteExpField &&
-          decide (fraction > fmt.maxFiniteFracField)) = false := by
-  have hexponent :=
-    encodedExponent_le_maxFiniteExpField fmt exponent hmin hmax
-  have hfractionLe : fraction ≤ fmt.maxFiniteFracField := by
-    rw [finite_maxFiniteFracField fmt hfmt]
-    omega
-  have hexponentNot :
-      ¬Int.toNat (exponent + Int.ofNat fmt.exponentBias) > fmt.maxFiniteExpField :=
-    not_lt_of_ge hexponent
-  have hfractionNot : ¬fraction > fmt.maxFiniteFracField :=
-    not_lt_of_ge hfractionLe
-  simp only [hexponentNot, hfractionNot, decide_false, Bool.and_false,
-    Bool.or_false]
-
-/-- Positive downward rounding in a finite-only format is a real lower bound. -/
-theorem toReal_roundDyadicPosDown_le_of_encoding_finite
-    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
-    (hfmt : fmt.encoding = .finite) (hm : mantissa ≠ 0) :
-    toReal (roundDyadicPosDown fmt mantissa exponent) ≤
-      (mantissa : ℝ) * bpow exponent := by
-  by_cases hoverflow :
-      fmt.maxNormalExponent < (mantissa.log2 : Int) + exponent
-  · rw [roundDyadicPosDown_eq_posMaxFinite_of_overflow
-      fmt mantissa exponent hoverflow]
-    have hleading :
-        bpow ((mantissa.log2 : Int) + exponent) ≤
-          (mantissa : ℝ) * bpow exponent := by
-      rw [bpow_add]
-      have hmantissa : bpow (Int.ofNat mantissa.log2) ≤ (mantissa : ℝ) := by
-        rw [bpow_ofNat]
-        exact_mod_cast pow2_log2_le hm
-      exact mul_le_mul_of_nonneg_right hmantissa (bpow_nonneg exponent)
-    have hpower :
-        bpow (fmt.maxNormalExponent + 1) ≤
-          bpow ((mantissa.log2 : Int) + exponent) :=
-      bpow_le_bpow_of_le hoverflow
-    exact (toReal_posMaxFinite_lt_bpow fmt).le.trans (hpower.trans hleading)
-  · have hmax :
-        (mantissa.log2 : Int) + exponent ≤ fmt.maxNormalExponent :=
-      le_of_not_gt hoverflow
-    by_cases hunderflow :
-        (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent
-    · rw [roundDyadicPosDown_eq_zero_of_underflow
-        fmt mantissa exponent hunderflow, toReal_zero]
-      exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
-    · have hlow :
-          fmt.minSubnormalExponent ≤ (mantissa.log2 : Int) + exponent :=
-        le_of_not_gt hunderflow
-      by_cases hsubnormal :
-          (mantissa.log2 : Int) + exponent < fmt.minNormalExponent
-      · rw [roundDyadicPosDown_eq_subnormal
-          fmt mantissa exponent hlow hsubnormal]
-        let rounded := roundMantissaAtExponentDown mantissa exponent
-          fmt.minSubnormalExponent
-        have hrounded : rounded < pow2 fmt.fracWidth :=
-          roundMantissaAtExponentDown_minSubnormal_lt_pow2
-            fmt mantissa exponent hsubnormal
-        rw [toReal_roundSubnormalDown fmt rounded hrounded]
-        exact roundMantissaAtExponentDown_mul_bpow_le
-          mantissa exponent fmt.minSubnormalExponent
-      · have hnormal :
-          fmt.minNormalExponent ≤ (mantissa.log2 : Int) + exponent :=
-        le_of_not_gt hsubnormal
-        let rounded := roundMantissaToLeadingBitDown mantissa fmt.fracWidth
-        have hroundedLow : pow2 fmt.fracWidth ≤ rounded :=
-          pow2_le_roundMantissaToLeadingBitDown mantissa fmt.fracWidth hm
-        have hroundedHigh : rounded < pow2 (fmt.fracWidth + 1) :=
-          roundMantissaToLeadingBitDown_lt_pow2_succ mantissa fmt.fracWidth
-        have hfraction : rounded - pow2 fmt.fracWidth < pow2 fmt.fracWidth :=
-          by simpa [pow2_eq_two_pow] using
-            normalizedMantissa_sub_pow2_lt fmt rounded hroundedLow hroundedHigh
-        have hguard := finite_packingGuard_eq_false fmt hfmt
-          ((mantissa.log2 : Int) + exponent)
-          (rounded - pow2 fmt.fracWidth) hnormal hmax hfraction
-        rw [roundDyadicPosDown_eq_normal
-          fmt mantissa exponent hnormal hmax]
-        simp only [rounded] at hguard
-        simp only [hguard, Bool.false_eq_true, ite_false]
-        rw [toReal_ofFields_normalized fmt rounded
-          ((mantissa.log2 : Int) + exponent)
-          hroundedLow hroundedHigh hnormal hmax
-          (isFinite_eq_true_of_encoding_finite hfmt _)]
-        have halign := roundMantissaAtExponentDown_mul_bpow_le mantissa exponent
-          ((mantissa.log2 : Int) + exponent - (fmt.fracWidth : Int))
-        rw [roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown] at halign
-        simpa only [rounded, Int.ofNat_eq_natCast] using halign
-
 /--
 Within the largest-finite range, positive upward rounding in a finite-only format is a real upper
 bound. Outside that range the executable operation saturates, so no such theorem is possible.
@@ -197,7 +100,7 @@ theorem le_toReal_roundDyadicPosUp_of_encoding_finite
                   fmt.maxNormalExponent :=
               le_of_not_gt hcarryOverflow
             rw [roundDyadicPosUp_eq_normal_of_carry
-              fmt mantissa exponent hnormal hmax hcarry hcarryMax]
+              fmt mantissa exponent hnormal hcarry hcarryMax]
             have hpack := toReal_ofFields_normalized fmt (pow2 fmt.fracWidth)
               ((mantissa.log2 : Int) + exponent + 1)
               le_rfl (pow2_lt_pow2_succ fmt.fracWidth)
@@ -227,10 +130,11 @@ theorem le_toReal_roundDyadicPosUp_of_encoding_finite
                 mantissa fmt.fracWidth) hcarry
           have hfraction : rounded - pow2 fmt.fracWidth < pow2 fmt.fracWidth :=
             by simpa [pow2_eq_two_pow] using
-              normalizedMantissa_sub_pow2_lt fmt rounded hroundedLow hroundedHigh
-          have hguard := finite_packingGuard_eq_false fmt hfmt
+              normalizedMantissa_sub_pow2_lt fmt rounded hroundedHigh
+          have hguard := packingGuard_eq_false fmt
             ((mantissa.log2 : Int) + exponent)
-            (rounded - pow2 fmt.fracWidth) hnormal hmax hfraction
+            (rounded - pow2 fmt.fracWidth) hmax
+            (by rw [finite_maxFiniteFracField fmt hfmt]; omega)
           rw [roundDyadicPosUp_eq_normal_of_no_carry
             fmt mantissa exponent hnormal hmax hcarry]
           simp only [rounded] at hguard
@@ -250,52 +154,16 @@ theorem supportsSignedZero_eq_true_of_encoding_finite
     fmt.supportsSignedZero = true := by
   simp [FloatFormat.supportsSignedZero, hfmt]
 
-/-- Saturating overflow results of opposite signs are negations of each other. -/
-theorem nativeOverflow_true_eq_neg_false_of_encoding_finite
-    (fmt : FloatFormat) (hfmt : fmt.encoding = .finite) :
-    nativeOverflow fmt true = neg (nativeOverflow fmt false) := by
-  simp [nativeOverflow, hfmt]
-
-/--
-Range-limited downward rounding of an exact dyadic is a real lower bound in a finite-only format.
--/
-theorem toReal_roundDyadicDown_le_of_encoding_finite
-    (fmt : FloatFormat) (d : Numerics.Dyadic)
-    (hfmt : fmt.encoding = .finite)
+/-- A dyadic whose real value is within the finite range has its magnitude within it too. -/
+private theorem magnitude_le_toReal_posMaxFinite {fmt : FloatFormat} {d : Numerics.Dyadic}
     (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
-    toReal (roundDyadicDown fmt d) ≤ d.toReal := by
-  by_cases hmant : d.significand = 0
-  · simp [roundDyadicDown, Numerics.Dyadic.toReal, hmant]
-  · have hmagnitudeNonneg :
-        0 ≤ (d.significand : ℝ) * bpow d.exponent :=
-      mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
-    have hmagnitude :
-        (d.significand : ℝ) * bpow d.exponent ≤
-          toReal (posMaxFinite fmt) := by
-      by_cases hsign : d.negative <;>
-        simpa [Numerics.Dyadic.toReal, hsign,
-          abs_of_nonneg hmagnitudeNonneg,
-          bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hbound
-    by_cases hsign : d.negative
-    · have hupper := le_toReal_roundDyadicPosUp_of_encoding_finite
-        fmt d.significand d.exponent hfmt hmant hmagnitude
-      have hfinite := isFinite_eq_true_of_encoding_finite hfmt
-        (roundDyadicPosUp fmt d.significand d.exponent)
-      rw [show roundDyadicDown fmt d =
-          neg (roundDyadicPosUp fmt d.significand d.exponent) by
-        simp only [roundDyadicDown, beq_iff_eq, hmant, ite_false, hsign, ite_true,
-          roundDyadicPosUp]
-        exact roundDyadicMagnitudeUp_true_eq_neg_false fmt d.significand d.exponent
-          (supportsSignedZero_eq_true_of_encoding_finite fmt hfmt)
-          (nativeOverflow_true_eq_neg_false_of_encoding_finite fmt hfmt)]
-      rw [toReal_neg _ hfinite]
-      simpa [Numerics.Dyadic.toReal, hsign,
-        bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using neg_le_neg hupper
-    · simpa [roundDyadicDown, roundDyadicPosDown,
-        Numerics.Dyadic.toReal, hmant, hsign,
-        bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
-        toReal_roundDyadicPosDown_le_of_encoding_finite
-          fmt d.significand d.exponent hfmt hmant
+    (d.significand : ℝ) * bpow d.exponent ≤ toReal (posMaxFinite fmt) := by
+  have hmagnitudeNonneg : 0 ≤ (d.significand : ℝ) * bpow d.exponent :=
+    mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
+  by_cases hsign : d.negative <;>
+    simpa [Numerics.Dyadic.toReal, hsign,
+      abs_of_nonneg hmagnitudeNonneg,
+      bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hbound
 
 /--
 Range-limited upward rounding of an exact dyadic is a real upper bound in a finite-only format.
@@ -307,27 +175,12 @@ theorem le_toReal_roundDyadicUp_of_encoding_finite
     d.toReal ≤ toReal (roundDyadicUp fmt d) := by
   by_cases hmant : d.significand = 0
   · simp [roundDyadicUp, Numerics.Dyadic.toReal, hmant]
-  · have hmagnitudeNonneg :
-        0 ≤ (d.significand : ℝ) * bpow d.exponent :=
-      mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
-    have hmagnitude :
-        (d.significand : ℝ) * bpow d.exponent ≤
-          toReal (posMaxFinite fmt) := by
-      by_cases hsign : d.negative <;>
-        simpa [Numerics.Dyadic.toReal, hsign,
-          abs_of_nonneg hmagnitudeNonneg,
-          bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hbound
+  · have hmagnitude := magnitude_le_toReal_posMaxFinite hbound
     by_cases hsign : d.negative
-    · have hlower := toReal_roundDyadicPosDown_le_of_encoding_finite
-        fmt d.significand d.exponent hfmt hmant
+    · have hlower := toReal_roundDyadicPosDown_le fmt d.significand d.exponent hmant
       have hfinite := isFinite_eq_true_of_encoding_finite hfmt
         (roundDyadicPosDown fmt d.significand d.exponent)
-      rw [show roundDyadicUp fmt d =
-          neg (roundDyadicPosDown fmt d.significand d.exponent) by
-        simp only [roundDyadicUp, beq_iff_eq, hmant, ite_false, hsign, ite_true,
-          roundDyadicPosDown]
-        exact roundDyadicMagnitudeDown_true_eq_neg_false fmt d.significand d.exponent
-          (supportsSignedZero_eq_true_of_encoding_finite fmt hfmt)]
+      rw [roundDyadicUp_eq_neg_roundDyadicPosDown_of_negative fmt d hmant hsign]
       rw [toReal_neg _ hfinite]
       simpa [Numerics.Dyadic.toReal, hsign,
         bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using neg_le_neg hlower
@@ -336,6 +189,24 @@ theorem le_toReal_roundDyadicUp_of_encoding_finite
         bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
         le_toReal_roundDyadicPosUp_of_encoding_finite
           fmt d.significand d.exponent hfmt hmant hmagnitude
+
+/--
+Range-limited downward rounding of an exact dyadic is a real lower bound in a finite-only format.
+Downward rounding is negated upward rounding of the negated dyadic, whose magnitude bound is the
+same.
+-/
+theorem toReal_roundDyadicDown_le_of_encoding_finite
+    (fmt : FloatFormat) (d : Numerics.Dyadic)
+    (hfmt : fmt.encoding = .finite)
+    (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
+    toReal (roundDyadicDown fmt d) ≤ d.toReal := by
+  rw [roundDyadicDown_eq_neg_roundDyadicUp_neg fmt d
+      (supportsSignedZero_eq_true_of_encoding_finite fmt hfmt),
+    toReal_neg _ (isFinite_eq_true_of_encoding_finite hfmt _)]
+  have hupper := le_toReal_roundDyadicUp_of_encoding_finite fmt d.neg hfmt
+    (by rwa [Dyadic.toReal_neg, abs_neg])
+  rw [Dyadic.toReal_neg] at hupper
+  linarith
 
 /-- Range-limited downward addition is a real lower bound in a finite-only format. -/
 theorem toReal_add_down_le_of_encoding_finite

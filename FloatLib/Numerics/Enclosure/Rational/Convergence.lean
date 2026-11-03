@@ -25,6 +25,14 @@ namespace FloatLib.Numerics.RationalInterval
 open Filter
 open scoped Topology
 
+/-- Values within a vanishing radius of a real number converge to it. -/
+theorem tendsto_of_abs_sub_le {α : Type*} {l : Filter α} {f radius : α → ℝ} {x : ℝ}
+    (hbound : ∀ a, |x - f a| ≤ radius a) (hradius : Tendsto radius l (𝓝 0)) :
+    Tendsto f l (𝓝 x) := by
+  rw [tendsto_iff_dist_tendsto_zero]
+  exact squeeze_zero (fun _ => dist_nonneg)
+    (fun a => by simpa only [Real.dist_eq, abs_sub_comm] using hbound a) hradius
+
 /-- The lower endpoints of a repeatedly squared enclosure approach the corresponding power. -/
 theorem tendsto_squareRepeat_lo {α : Type*} {l : Filter α}
     {intervals : α → RationalInterval} {x : ℝ}

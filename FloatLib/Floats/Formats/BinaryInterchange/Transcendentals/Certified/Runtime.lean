@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Certified
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 public import FloatLib.Numerics.Enclosure.Constants.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Enclosure.Runtime
@@ -24,10 +25,11 @@ enclosures.
 
 Exponential uses format-derived rational argument bounds to skip impossible underflow and overflow
 checks. Beyond these bounds, total logarithm-based comparisons handle extreme inputs. These
-comparisons terminate independently of the options, which bound the direct enclosure search.
-Every accepted result has a finite real-rounding certificate. A call that does not certify a result
-returns a `Failure` saying why: an unsupported descriptor, a nonfinite input, an argument outside
-the function's domain, a result beyond the finite range, or a search that did not settle.
+comparisons terminate independently of the `Certified.Budget`, which bounds the attempts of the
+direct enclosure search. Every accepted result has a finite real-rounding certificate. A call that
+does not certify a result returns a `Certified.Failure` saying why: an unsupported descriptor, a
+nonfinite input, an argument outside the function's domain, a result beyond the finite range, or a
+search that did not settle.
 
 The power `a ^ b` of a positive base is `exp (b * log a)`. Writing `a = s * 2 ^ e` with `s` near
 one, an enclosure of `t = b * log a` settles underflow and rejects overflow. It also gives an
@@ -47,39 +49,7 @@ is enclosed exactly, such as binary16 `4 ^ -12.5 = 2 ^ -25`, can still settle.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Certified
 
 open FloatLib.Numerics
-
-/--
-Why a certified evaluation returned no result.
-
-An `inconclusive` result makes no claim about whether more refinement would succeed. The other
-cases identify a format, input, domain, or finite-range obstruction.
--/
-inductive Failure where
-  /-- The descriptor is not an IEEE binary format, which the enclosure kernels require. -/
-  | unsupportedFormat
-  /-- An input is a NaN or an infinity. -/
-  | nonfiniteInput
-  /--
-  The input is outside the supported real domain: the logarithm of a number at most zero,
-  `log (1 + x)` for `x ≤ -1`, or a certified power whose base is at most zero.
-  -/
-  | domain
-  /-- The exact result rounds beyond the largest finite value of the format. -/
-  | range
-  /--
-  The search stopped without a certificate: its budget ran out, or the exact result lies on or
-  too close to a rounding boundary, or it is a power the search does not settle.
-  -/
-  | inconclusive
-  deriving DecidableEq, Repr
-
-/-- Degree and attempt budget for direct enclosure refinement. -/
-structure Options where
-  /-- First Taylor degree. Zero is promoted to one before refinement. -/
-  initialDegree : Nat := 8
-  /-- Maximum enclosure attempts, including retries at higher degree or precision. -/
-  maxSteps : Nat := 16
-  deriving DecidableEq, Repr
+open FloatLib.Floats.Certified
 
 /-- Try successive enclosures, stopping immediately when the endpoints certify one encoding. -/
 @[inline] def refine (fmt : FloatFormat) (enclose : Nat → Nat → RationalInterval)
@@ -131,7 +101,7 @@ def expSearchFailure (fmt : FloatFormat) (argument shift : ℚ) : Failure :=
   else .range
 
 /-- Round the exponential of an exact rational if the enclosure budget certifies a finite result. -/
-@[inline] def expRat (fmt : FloatFormat) (argument : ℚ) (options : Options := {}) :
+@[inline] def expRat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if argument = 0 then accept (Enclosure.round? fmt (RationalInterval.point 1)) .inconclusive
@@ -141,26 +111,26 @@ def expSearchFailure (fmt : FloatFormat) (argument shift : ℚ) : Failure :=
   else if expUpperArgumentBound fmt < argument ∧
       ElementaryComparison.compareExp argument (expUpperBound fmt) ≠ .lt then .error .range
   else
-    let degree := max 1 options.initialDegree
+    let degree := max 1 budget.initialDegree
     let precision := FloatLib.Numerics.Enclosure.BinaryGrid.expPrecision
       (fmt.fracWidth + 1) argument degree
     let search := refine fmt (FloatLib.Numerics.Enclosure.BinaryGrid.exp argument)
-      degree precision options.maxSteps
+      degree precision budget.maxAttempts
     -- The exact overflow comparison runs only after an exhausted search.
     accept search (if search.isSome then .inconclusive else expSearchFailure fmt argument 0)
 
 /-- Certify a finite rounded logarithm of a positive rational, rejecting other arguments. -/
-@[inline] def logRat (fmt : FloatFormat) (argument : ℚ) (options : Options := {}) :
+@[inline] def logRat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if argument ≤ 0 then .error .domain
   else if argument = 1 then accept (Enclosure.round? fmt (RationalInterval.point 0)) .inconclusive
   else
-    let degree := max 1 options.initialDegree
+    let degree := max 1 budget.initialDegree
     let precision := FloatLib.Numerics.Enclosure.BinaryGrid.logPrecision
       (fmt.fracWidth + 1) argument degree
     accept (refine fmt (FloatLib.Numerics.Enclosure.BinaryGrid.log argument)
-      degree precision options.maxSteps) .inconclusive
+      degree precision budget.maxAttempts) .inconclusive
 
 /--
 Certify `exp argument - 1`, subtracting one from the exact rational enclosure before rounding.
@@ -169,7 +139,7 @@ This retains small results that would be lost by rounding the exponential to one
 The same comparison shortcut as `expRat` handles very negative arguments without constructing
 their exponential. Unsupported descriptors, overflow, and an exhausted budget are failures.
 -/
-@[inline] def expMinus1Rat (fmt : FloatFormat) (argument : ℚ) (options : Options := {}) :
+@[inline] def expMinus1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if argument = 0 then
@@ -181,13 +151,13 @@ their exponential. Unsupported descriptors, overflow, and an exhausted budget ar
   else if expUpperArgumentBound fmt < argument ∧
       ElementaryComparison.compareExp argument (expUpperBound fmt + 1) ≠ .lt then .error .range
   else
-    let degree := max 1 options.initialDegree
+    let degree := max 1 budget.initialDegree
     let precision := FloatLib.Numerics.Enclosure.BinaryGrid.expPrecision
       (fmt.fracWidth + 1) argument degree true
     let search := refine fmt
       (fun degree precision => (FloatLib.Numerics.Enclosure.BinaryGrid.exp argument
         degree precision).sub (RationalInterval.point 1))
-      degree precision options.maxSteps
+      degree precision budget.maxAttempts
     accept search (if search.isSome then .inconclusive else expSearchFailure fmt argument 1)
 
 /--
@@ -196,9 +166,9 @@ Certify `log (1 + argument)`, forming the sum exactly before enclosing the logar
 In particular, a small nonzero argument is not lost by rounding `1 + argument` to one.
 Arguments at or below `-1` are a domain failure, and the other failures are those of `logRat`.
 -/
-@[inline] def logPlus1Rat (fmt : FloatFormat) (argument : ℚ) (options : Options := {}) :
+@[inline] def logPlus1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
-  logRat fmt (1 + argument) options
+  logRat fmt (1 + argument) budget
 
 /-! ## Real powers -/
 
@@ -274,13 +244,13 @@ result below half the least subnormal as `+0`, by rounding `[0, 1]` times
 least `2 ^ (maxNormalExponent + 1)`, comparing `t` with the same grid's enclosure of `log 2`.
 Otherwise refinement encloses `exp (t - k * log 2)` for an integer `k` near `t / log 2`, reusing
 the first enclosure of `t` in its first attempt, and accepts when both endpoints times `2 ^ k`
-round to the same finite encoding. The options' degree applies to the exponential, while the
+round to the same finite encoding. The budget's degree applies to the exponential, while the
 logarithm series take their degrees from the grid. Unsupported descriptors, nonpositive `scaled`,
 overflow, and an exhausted budget are failures. A result within a rounding step of the overflow
 threshold also ends the search as `inconclusive`.
 -/
 def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) (exponent : ℚ)
-    (options : Options := {}) : Except Failure (Model fmt) :=
+    (budget : Budget := {}) : Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if scaled ≤ 0 then .error .domain
   else if exponent = 0 then accept (Enclosure.round? fmt (RationalInterval.point 1)) .inconclusive
@@ -290,7 +260,7 @@ def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) (expo
     if 1 / 2 ≤ scaled ∧ scaled < 2 ∧
         ((fmt.maxNormalExponent + 1 : ℤ) : ℚ) + |exponent| ≤ product then .error .range
     else
-      let degree := max 1 options.initialDegree
+      let degree := max 1 budget.initialDegree
       let precision :=
         FloatLib.Numerics.Enclosure.BinaryGrid.workingPrecision (fmt.fracWidth + 1) degree
       let extraBits := max (magnitudeBits exponent) (magnitudeBits product) + 1
@@ -317,7 +287,7 @@ def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) (expo
               exponent multiple
         accept (RationalInterval.refine (expReduced reduced extraBits)
           (fun interval => Enclosure.roundScaled? fmt interval scale) degree precision
-          options.maxSteps) .inconclusive
+          budget.maxAttempts) .inconclusive
 
 /-- Write a positive rational as `scaled * 2 ^ exponent` with `scaled` in `[3/4, 3/2)`. -/
 def splitTwoPow (value : ℚ) : ℚ × ℤ :=
@@ -330,12 +300,12 @@ Round `base ^ exponent` for exact rationals with a positive base if the enclosur
 certifies a finite result. Nonpositive bases, unsupported descriptors, overflow, and an exhausted
 budget are failures.
 -/
-def powRat (fmt : FloatFormat) (base exponent : ℚ) (options : Options := {}) :
+def powRat (fmt : FloatFormat) (base exponent : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if base ≤ 0 then .error .domain
   else
     let split := splitTwoPow base
-    powRatScaled fmt split.1 split.2 exponent options
+    powRatScaled fmt split.1 split.2 exponent budget
 
 /--
 An integer `n` with `|exponent * log base| < 2 ^ n` for a positive dyadic base, read from the
@@ -353,7 +323,9 @@ def powNearOne (fmt : FloatFormat) : RationalInterval :=
 /--
 The failure of a power whose stored exponent field marks an integer exponent too large for the
 search: `range` when the power overflows, a base above one with a positive exponent or below one
-with a negative exponent, and `inconclusive` otherwise.
+with a negative exponent, and `inconclusive` otherwise. `pow` calls it only for such an exponent
+and a base other than one, so `inconclusive` then covers the powers that shrink toward zero, which
+it leaves undecided.
 -/
 def powHugeFailure (base exponent : Numerics.Dyadic) : Failure :=
   let lead : ℤ := (base.significand.log2 : ℤ) + base.exponent
@@ -363,28 +335,30 @@ def powHugeFailure (base exponent : Numerics.Dyadic) : Failure :=
   else .inconclusive
 
 /-- Certify a finite exponential using exact decoding and outward-rounded enclosures. -/
-def exp {fmt : FloatFormat} (input : Model fmt) (options : Options := {}) :
+def exp {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => expRat fmt argument options
+    | some argument => expRat fmt argument budget
 
 /-- Certify a finite logarithm. `log 1` returns positive zero. -/
-def log {fmt : FloatFormat} (input : Model fmt) (options : Options := {}) :
+def log {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => logRat fmt argument options
+    | some argument => logRat fmt argument budget
 
 /--
 Certify `base ^ exponent` for a finite positive base and a finite exponent.
 
-Both inputs are decoded exactly as dyadics, and the base's significand alone is split as
-`scaled * 2 ^ e`, so the base's power-of-two scale is never formed. When the stored fields show
+Both inputs are decoded exactly as dyadics. A base equal to `posOne`, the only encoding of one in
+an IEEE format, returns one for every finite exponent (`pow_posOne`). For any other base the
+significand alone is split as `scaled * 2 ^ e`, so the base's power-of-two scale is never formed.
+When the stored fields show
 `|exponent * log base| < 2 ^ -(fracWidth + 4)` the result rounds to one without forming the
 exponent's rational: in a format with a very wide exponent field its denominator can have billions
 of bits. An exponent decoded as a dyadic `b` with stored binary exponent
@@ -394,40 +368,41 @@ whether the power overflows. Once these two checks have bounded its size, the ge
 the exponent's rational. Non-IEEE descriptors, nonpositive or nonfinite bases, nonfinite exponents,
 overflow, and an exhausted budget are failures too.
 -/
-def pow {fmt : FloatFormat} (base exponent : Model fmt) (options : Options := {}) :
+def pow {fmt : FloatFormat} (base exponent : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else
     match toDyadic? base, toDyadic? exponent with
     | some a, some b =>
         if a.negative || a.significand == 0 then .error .domain
+        else if base = posOne fmt then .ok base
         else if powArgumentExponent a b ≤ -((fmt.fracWidth : ℤ) + 4) then
           accept (Enclosure.round? fmt (powNearOne fmt)) .inconclusive
         else if b.exponent > ((fmt.fracWidth + fmt.expWidth : ℕ) : ℤ) + 8 then
           .error (powHugeFailure a b)
         else
           let split := splitTwoPow a.significand
-          powRatScaled fmt split.1 (split.2 + a.exponent) b.toRat options
+          powRatScaled fmt split.1 (split.2 + a.exponent) b.toRat budget
     | _, _ => .error .nonfiniteInput
 
 /-- Certify `exp x - 1` with one final rounding, preserving either IEEE signed zero. -/
-@[inline] def expMinus1 {fmt : FloatFormat} (input : Model fmt) (options : Options := {}) :
+@[inline] def expMinus1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if isZero input then .ok input
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => expMinus1Rat fmt argument options
+    | some argument => expMinus1Rat fmt argument budget
 
 /-- Certify `log (1 + x)` with one final rounding, preserving either IEEE signed zero. -/
-@[inline] def logPlus1 {fmt : FloatFormat} (input : Model fmt) (options : Options := {}) :
+@[inline] def logPlus1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if isZero input then .ok input
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => logPlus1Rat fmt argument options
+    | some argument => logPlus1Rat fmt argument budget
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Certified

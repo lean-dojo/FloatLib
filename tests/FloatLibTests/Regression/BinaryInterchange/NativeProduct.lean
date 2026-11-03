@@ -268,6 +268,57 @@ def mixedAccumulationMatches : Thunk Bool := ⟨fun _ =>
       Model.mulAddFinite? storage accumulator policy 0 x y acc == some expected
   | _, _, _ => false⟩
 
+/-- Rounding rules, each with native, saturating and flush-to-zero output policies. -/
+def cancellationPolicies : List QuantizationPolicy :=
+  [RoundingMode.nearest, .nearestAway, .towardZero, .up, .down, .away, .stochastic].flatMap
+    fun rounding =>
+      [{ rounding }, { rounding, overflow := .saturate }, { rounding, underflow := .flushToZero }]
+
+/--
+An exactly cancelling sum is `-0` when the policy rounds toward negative infinity and `+0`
+otherwise, and two zeros of one sign keep it (IEEE 754-2019 Section 6.3). The fused forms sign the
+zero from the exact product and the addend. A format without a signed zero returns its one zero.
+-/
+def cancellationMatches (fmt : FloatFormat) (policy : QuantizationPolicy) : Bool :=
+  let one := Model.posOne fmt
+  let minusOne := Model.negOne fmt
+  let positiveZero := Model.zero fmt false
+  let negativeZero := Model.zero fmt true
+  let cancelled := Model.zero fmt (policy.rounding == .down)
+  Model.addFinite? fmt policy 5 one minusOne == some cancelled &&
+  Model.addFinite? fmt policy 5 minusOne one == some cancelled &&
+  Model.subFinite? fmt policy 5 one one == some cancelled &&
+  Model.addFinite? fmt policy 5 positiveZero negativeZero == some cancelled &&
+  Model.addFinite? fmt policy 5 negativeZero negativeZero == some negativeZero &&
+  Model.addFinite? fmt policy 5 positiveZero positiveZero == some positiveZero &&
+  Model.fmaFinite? fmt policy 5 one one minusOne == some cancelled &&
+  Model.fmaFinite? fmt policy 5 minusOne one one == some cancelled &&
+  Model.fmaFinite? fmt policy 5 negativeZero one negativeZero == some negativeZero &&
+  Model.mulAddFinite? FloatFormat.e4m3fn fmt policy 5
+    (Model.posOne _) (Model.negOne _) one == some cancelled
+
+/--
+On an IEEE direction with native overflow and gradual underflow, exact cancellation agrees with
+the directed kernels behind `Model.add` and `Model.fma`, which sign it independently through
+`zeroForExactSum`.
+-/
+def cancellationDirectedMatches (fmt : FloatFormat) (mode : IEEERoundingMode) : Bool :=
+  let policy : QuantizationPolicy := { rounding := mode.toRoundingMode }
+  let one := Model.posOne fmt
+  let minusOne := Model.negOne fmt
+  let zeros := [Model.zero fmt false, Model.zero fmt true]
+  ([(one, minusOne), (minusOne, one)] ++ zeros.flatMap fun x => zeros.map fun y => (x, y)).all
+      (fun (x, y) => Model.addFinite? fmt policy 0 x y == some (Model.add x y (mode := mode))) &&
+    [(one, one, minusOne), (minusOne, one, one)].all fun (x, y, z) =>
+      Model.fmaFinite? fmt policy 0 x y z == some (Model.fma x y z (mode := mode))
+
+def cancellationFailures : Thunk Nat := ⟨fun _ =>
+  let formats := [FloatFormat.e2m1, .e2m3, .e3m2, .e4m3fn, .e4m3fnuz, .e5m2, .e5m2fnuz, .binary32,
+    .binary64]
+  formats.foldl (fun total fmt =>
+    total + countWhereFailures cancellationPolicies (cancellationMatches fmt) +
+      countWhereFailures IEEERoundingMode.all (cancellationDirectedMatches fmt)) 0⟩
+
 def failures : Thunk Nat := ⟨fun _ =>
   failureCount (formatMatches FloatFormat.e2m1) +
   failureCount (formatMatches FloatFormat.e2m3) +
@@ -279,7 +330,8 @@ def failures : Thunk Nat := ⟨fun _ =>
   failureCount (formatMatches FloatFormat.tf32) +
   failureCount (formatMatches FloatFormat.binary256) +
   failureCount (formatMatches wide512) +
-  failureCount mixedAccumulationMatches.get⟩
+  failureCount mixedAccumulationMatches.get +
+  cancellationFailures.get⟩
 
 end PolicyAware
 

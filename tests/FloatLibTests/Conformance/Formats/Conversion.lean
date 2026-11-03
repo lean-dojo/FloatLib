@@ -91,7 +91,7 @@ private abbrev Block4 :=
 
 /-!
 There is no heterogeneous `+` instance between binary and posit values. A user must name the
-destination with `ExecFloat.addAs`.
+destination with `ExecFloat.Mixed.add`.
 -/
 /--
 error: failed to synthesize instance of type class
@@ -131,12 +131,12 @@ Addition, subtraction, multiplication, division, and FMA may use different sourc
 all five compute in exact rational arithmetic and round once into binary64.
 -/
 example :
-    [ binary64Rat? (ExecFloat.addAs (target := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.subAs (target := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.mulAs (target := Binary64) mixedLeft mixedRight)
-    , binary64Rat? (ExecFloat.divAs (target := Binary64) mixedLeft mixedRight)
+    [ binary64Rat? (ExecFloat.Mixed.add (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.Mixed.sub (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.Mixed.mul (target := Binary64) mixedLeft mixedRight)
+    , binary64Rat? (ExecFloat.Mixed.div (target := Binary64) mixedLeft mixedRight)
     , binary64Rat?
-        (ExecFloat.fmaAs (target := Binary64) mixedLeft mixedRight mixedAddend)
+        (ExecFloat.Mixed.fma (target := Binary64) mixedLeft mixedRight mixedAddend)
     ] =
       [ some 10, some 2, some 24, some (3 / 2), some (51 / 2) ] := by
   native_decide
@@ -161,7 +161,7 @@ private def bipolarNegative : Bipolar :=
   ExecFloat.Codebook.ofNatBits 0
 
 private def logarithmicHundred : Log10 :=
-  ExecFloat.Logarithmic.ofSignExponent false 2
+  .ofExponent 2
 
 private def scaleEight : MXScale :=
   ExecFloat.OCP.MX.E8M0.ofExponentSaturating 3
@@ -211,7 +211,7 @@ example :
 
 /-- Posit destinations use the standard posit rounder and preserve exact ordinary values. -/
 example :
-    (ExecFloat.addAs (target := Posit32) (1.5 : Binary32) (2.25 : Binary64)).value?.bind
+    (ExecFloat.Mixed.add (target := Posit32) (1.5 : Binary32) (2.25 : Binary64)).value?.bind
         ExecFloat.Posit.toRat? =
       some (15 / 4) := by
   native_decide
@@ -240,7 +240,7 @@ example :
 /-- Saturation is available only through an explicit bounded-destination context. -/
 example :
     let outcome :=
-      ExecFloat.addAs (target := Cents8) (1 : Binary32) (1 : Posit32)
+      ExecFloat.Mixed.add (target := Cents8) (1 : Binary32) (1 : Posit32)
         (context := ExecFloat.BoundedFixedPoint.OverflowPolicy.saturate)
     outcome.value?.map ExecFloat.BoundedFixedPoint.coefficient = some 127 ∧
       outcome.status?.map (·.overflow) = some true ∧
@@ -270,7 +270,7 @@ private def positiveInfinity : Binary32 :=
 
 /-- Mixed arithmetic rejects a non-finite input before destination quantization. -/
 example :
-    (ExecFloat.addAs (target := Binary64) positiveInfinity (1 : Posit32)).failure? =
+    (ExecFloat.Mixed.add (target := Binary64) positiveInfinity (1 : Posit32)).failure? =
       some (.infinity .left false) := by
   native_decide
 
@@ -290,8 +290,8 @@ private def binary32OverflowMidpoint : Rat := 2 ^ 128 - 2 ^ 103
 /-- Retain the configured conversion's bits and every status flag. -/
 private def binary32Conversion (rounding : RoundingMode) (exact : Rat)
     (entropy : Nat := 0) : ExecFloat.ConversionOutcome Nat :=
-  (ExecFloat.convert (target := Binary32) exact (context :=
-    ({ quantization := { rounding }, entropy } : ExecFloat.Binary.Conversion.Context))).map
+  (ExecFloat.convert (target := Binary32) exact (mode := rounding) (context :=
+    ({ entropy } : ExecFloat.Binary.Conversion.Policy))).map
       ExecFloat.Binary.toNatBits
 
 private structure DiagnosticNaN where
@@ -550,12 +550,17 @@ but is expected to have type
 
 /-! ## Rounding direction and context options -/
 
-/-- A cast with `mode` delivers the bits of the model cast with the same direction. -/
+/--
+A cast with `mode` delivers the bits of the model cast with the same direction. Conversions take a
+`Numerics.RoundingMode`, so the `IEEERoundingMode` of the model cast is passed through
+`toRoundingMode`.
+-/
 private def directedCastAgrees (bits : Nat) (mode : Model.IEEERoundingMode) : Bool :=
   let x : Binary64 := ExecFloat.Binary.ofNatBits bits
   let expected : Binary32 :=
     ExecFloat.Binary.ofModel (Model.cast _ _ (ExecFloat.Binary.toModel x) (mode := mode))
-  (x.cast (target := Binary32) (mode := mode)).value?.map ExecFloat.Binary.toNatBits ==
+  (x.cast (target := Binary32) (mode := mode.toRoundingMode)).value?.map
+      ExecFloat.Binary.toNatBits ==
     some (ExecFloat.Binary.toNatBits expected)
 
 /-- Directed casts agree with `Model.cast` on ties, overflow, underflow, and signed zero. -/
@@ -597,19 +602,19 @@ Mixed operations take the same option. An exactly cancelling sum or difference r
 is negative zero, and the quotient `1 / 3` rounds to either neighbour.
 -/
 example :
-    [ (ExecFloat.addAs (target := Binary32) (1 : Binary32) (-1 : Posit32)).map
+    [ (ExecFloat.Mixed.add (target := Binary32) (1 : Binary32) (-1 : Posit32)).map
         ExecFloat.Binary.toNatBits
-    , (ExecFloat.addAs (target := Binary32) (1 : Binary32) (-1 : Posit32) (mode := .down)).map
+    , (ExecFloat.Mixed.add (target := Binary32) (1 : Binary32) (-1 : Posit32) (mode := .down)).map
         ExecFloat.Binary.toNatBits
-    , (ExecFloat.subAs (target := Binary32) (1 : Binary32) (1 : Posit32) (mode := .down)).map
+    , (ExecFloat.Mixed.sub (target := Binary32) (1 : Binary32) (1 : Posit32) (mode := .down)).map
         ExecFloat.Binary.toNatBits
-    , (ExecFloat.fmaAs (target := Binary32) (1 : Binary32) (1 : Posit32) (-1 : Binary64)
+    , (ExecFloat.Mixed.fma (target := Binary32) (1 : Binary32) (1 : Posit32) (-1 : Binary64)
         (mode := .down)).map ExecFloat.Binary.toNatBits
-    , (ExecFloat.divAs (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .down)).map
+    , (ExecFloat.Mixed.div (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .down)).map
         ExecFloat.Binary.toNatBits
-    , (ExecFloat.divAs (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .up)).map
+    , (ExecFloat.Mixed.div (target := Binary32) (1 : Binary32) (3 : Posit32) (mode := .up)).map
         ExecFloat.Binary.toNatBits
-    , (ExecFloat.mulAs (target := Binary32) (1 / 3 : Rat) (1 : Posit32) (mode := .up)).map
+    , (ExecFloat.Mixed.mul (target := Binary32) (1 / 3 : Rat) (1 : Posit32) (mode := .up)).map
         ExecFloat.Binary.toNatBits
     ] =
       [ .success 0 {}, .success 0x80000000 {}, .success 0x80000000 {}
@@ -642,17 +647,208 @@ example :
       [ .success 0x80000000 {}, .success 0 {}, .success 0x3eaaaaab { inexact := true } ] := by
   decide +kernel
 
+/-! ## The mode decides the direction, and the context the other policies -/
+
+private abbrev BinaryPolicy := ExecFloat.Binary.Conversion.Policy
+
+/--
+A context holds every binary policy but the direction, and the mode's direction applies under it:
+rejected infinities, saturation, and flush-to-zero. Binary64's `0.1` lies between the binary32
+words `0x3dcccccc` and `0x3dcccccd`, and the second is nearer, so a context without a mode rounds
+to nearest.
+-/
+example :
+    let tenth : Binary64 := 0.1
+    [ (tenth.cast (target := Binary32) (mode := .down)
+        (context := ({ infinity := .reject } : BinaryPolicy))).map ExecFloat.Binary.toNatBits
+    , (tenth.cast (target := Binary32)
+        (context := ({ infinity := .reject } : BinaryPolicy))).map ExecFloat.Binary.toNatBits
+    , ((ExecFloat.Binary.infinity false : Binary64).cast (target := Binary32) (mode := .down)
+        (context := ({ infinity := .reject } : BinaryPolicy))).map ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) ((2 : Rat) ^ 128) (mode := .up)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) ((2 : Rat) ^ 128) (mode := .up)
+        (context := ({ overflow := .saturate } : BinaryPolicy))).map
+          ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (-(2 : Rat) ^ 128) (mode := .up)
+        (context := ({ overflow := .saturate } : BinaryPolicy))).map
+          ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (1 / 2 ^ 160 : Rat) (mode := .up)).map
+        ExecFloat.Binary.toNatBits
+    , (ExecFloat.convert (target := Binary32) (1 / 2 ^ 160 : Rat) (mode := .up)
+        (context := ({ underflow := .flushToZero } : BinaryPolicy))).map
+          ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0x3dcccccc { inexact := true }
+      , .success 0x3dcccccd { inexact := true }
+      , .failure (.infinity .source false)
+      , .success 0x7f800000 { inexact := true, overflow := true }
+      , .success 0x7f7fffff { inexact := true, overflow := true, saturated := true }
+      , .success 0xff7fffff { inexact := true, overflow := true, saturated := true }
+      , .success 0x00000001 { inexact := true, underflow := true }
+      , .success 0x00000000 { inexact := true, underflow := true }
+      ] := by
+  decide +kernel
+
+/--
+Nominal FP8 destinations combine the two options the same way. Rounding 500 upward overflows
+E4M3FN to its NaN, and a saturating context clamps it to 448.
+-/
+example :
+    [ ((500 : Binary32).cast (target := OCPFloat8) (mode := .up)).value?.map
+        Formats.BinaryInterchange.StaticByte.Conversion.decode
+    , ((500 : Binary32).cast (target := OCPFloat8) (mode := .up)
+        (context := ({ overflow := .saturate } : BinaryPolicy))).value?.map
+          Formats.BinaryInterchange.StaticByte.Conversion.decode
+    ] =
+      [ some (.exceptional (.nan (some 0) false false)), some (.finite 448) ] := by
+  decide +kernel
+
+private abbrev B8P4 :=
+  ExecFloat.P3109 .binary8p4se
+
+/--
+A P3109 conversion takes its rounding as the mode and its saturation as the context. One third
+rounds to code 51 at nearest and 50 toward zero, and 300 rounds up past the largest finite code
+126 to infinity unless the context saturates.
+-/
+example :
+    [ (ExecFloat.convert (1 / 3 : Rat) (target := B8P4)).value?.map (·.toNatBits)
+    , (ExecFloat.convert (1 / 3 : Rat) (target := B8P4) (mode := .towardZero)
+        (context := Formats.P3109.SaturationMode.finite)).value?.map (·.toNatBits)
+    , (ExecFloat.convert (300 : Rat) (target := B8P4) (mode := .up)).value?.map (·.toNatBits)
+    , (ExecFloat.convert (300 : Rat) (target := B8P4) (mode := .up)
+        (context := Formats.P3109.SaturationMode.finite)).value?.map (·.toNatBits)
+    ] =
+      [ some 51, some 50, some 127, some 126 ] := by
+  decide +kernel
+
+/-- Where the destination is known, a P3109 saturation is written with a leading dot. -/
+private def p3109TowardZeroFinite : ExecFloat.ConversionOutcome B8P4 :=
+  ExecFloat.convert (target := B8P4) (1 / 3 : Rat) (mode := .towardZero) (context := .finite)
+
+example : p3109TowardZeroFinite.value?.map (·.toNatBits) = some 50 := by
+  decide +kernel
+
+/--
+Mixed operations and exact expressions take the cancellation sign from the mode as well: an
+exactly cancelling sum rounded downward is negative zero with an explicit context too, and
+positive zero without a mode.
+-/
+example :
+    [ (ExecFloat.Mixed.add (target := Binary32) (1 : Binary32) (-1 : Posit32) (mode := .down)
+        (context := ({ infinity := .reject } : BinaryPolicy))).map ExecFloat.Binary.toNatBits
+    , (ExecFloat.Mixed.add (target := Binary32) (1 : Binary32) (-1 : Posit32)
+        (context := ({ infinity := .reject } : BinaryPolicy))).map ExecFloat.Binary.toNatBits
+    , (ExecFloat.roundOnce (target := Binary32) (mode := .down)
+        (context := ({ exceptional := .reject } : BinaryPolicy)) do
+          let a ← ExecFloat.ExactExpression.operand 0 (1 : Binary32)
+          let b ← ExecFloat.ExactExpression.operand 1 (-1 : Binary32)
+          ExecFloat.ExactExpression.add (target := Binary32) a b (mode := .down)
+            (context := ({ overflow := .saturate } : BinaryPolicy))).map
+        ExecFloat.Binary.toNatBits
+    ] =
+      [ .success 0x80000000 {}, .success 0 {}, .success 0x80000000 {} ] := by
+  decide +kernel
+
+/--
+The quantizer context of each family: binary rounds in the mode under the policy's other fields,
+P3109 pairs the mode with the saturation, and a posit context is used as given.
+-/
+example (policy : BinaryPolicy) (saturation : Formats.P3109.SaturationMode) :
+    ExecFloat.RoundingModes.withMode (Destination := Binary32) RoundingMode.down policy =
+        ({ quantization :=
+            { rounding := .down, overflow := policy.overflow, underflow := policy.underflow }
+           entropy := policy.entropy
+           infinity := policy.infinity
+           exceptional := policy.exceptional } : ExecFloat.Binary.Conversion.Context) ∧
+      ExecFloat.RoundingModes.withMode (Destination := B8P4) Formats.P3109.RoundingMode.up
+          saturation =
+        ({ rounding := .up, saturation } : Formats.P3109.ProjectionPolicy) ∧
+      ExecFloat.RoundingModes.withMode (Destination := Posit32) ({} : ExecFloat.NoRoundingDirection)
+          ExecFloat.Posit.Conversion.Context.default =
+        ExecFloat.Posit.Conversion.Context.default :=
+  ⟨rfl, rfl, rfl⟩
+
+/-- A binary conversion rounds in its mode under every policy, and keeps the policy's rules. -/
+example (mode : RoundingMode) (policy : BinaryPolicy) :
+    let context := ExecFloat.RoundingModes.withMode (Destination := Binary32) mode policy
+    context.quantization.rounding = mode ∧ context.quantization.overflow = policy.overflow ∧
+      context.entropy = policy.entropy := by
+  simp
+
 /-!
-A family without directed conversion rejects a direction when the call is elaborated, and a
-destination without a canonical context requires an explicit one.
+A context has no rounding direction, so a 2.0.0 context that names one is rejected when the call
+is elaborated rather than ignored: the binary direction field, the stochastic recipe with its
+record ascribed to the quantizer's full context, and a P3109 projection-policy record.
 -/
 /--
-error: failed to synthesize instance of type class
-  ExecFloat.RoundingModes Posit32 IEEERoundingMode
+error: `quantization` is not a field of structure `ExecFloat.Binary.Conversion.Policy`
 -/
 #guard_msgs (substring := true) in
+example : ExecFloat.ConversionOutcome Binary32 :=
+  (0.1 : Binary64).cast (target := Binary32) (context := { quantization.rounding := .down })
+
+/--
+error: Application type mismatch
+-/
+#guard_msgs (substring := true) in
+example (entropy : Nat) : ExecFloat.ConversionOutcome Binary32 :=
+  (0.1 : Binary64).cast (target := Binary32)
+    (context := ({ quantization := { rounding := .stochastic }, entropy } :
+      ExecFloat.Binary.Conversion.Context))
+
+/--
+error: invalid {...} notation, structure type expected
+-/
+#guard_msgs (substring := true) in
+example : ExecFloat.ConversionOutcome B8P4 :=
+  ExecFloat.convert (target := B8P4) (1 / 3 : Rat)
+    (context := { rounding := .towardZero, saturation := .finite })
+
+/-!
+A family without directed conversion rejects a direction when the call is elaborated, and a
+destination without a canonical context requires an explicit one. A leading-dot direction is
+looked up in the posit mode type `NoRoundingDirection`, so the error names that type. A typed mode
+finds no `RoundingModes` instance, and since that instance also gives the type of `context`, the
+default context fails after it: the errors are pinned exactly. Binary conversions take a
+`Numerics.RoundingMode`, so an `IEEERoundingMode` value needs `toRoundingMode`.
+-/
+/--
+error: Unknown constant `FloatLib.Floats.ExecFloat.NoRoundingDirection.down`
+-/
+#guard_msgs (substring := true) in
+#check fun (value : Binary32) => value.cast (target := Posit32) (mode := .down)
+
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.RoundingModes Posit32 ℚ IEEERoundingMode
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+---
+error: could not synthesize default value for parameter 'context' using tactics
+---
+error: failed to synthesize instance of type class
+  ExecFloat.ModeContext Posit32 ℚ Model.IEEERoundingMode.up
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+-/
+#guard_msgs (error, drop info) in
 open FloatLib.Rounding in
-#check fun (value : Binary32) => value.cast (target := Posit32) (mode := up)
+#check fun (value : Binary32) =>
+  value.cast (target := Posit32) (mode := (.up : IEEERoundingMode))
+
+/-- A destination without rounding directions converts with its one mode by default. -/
+example (value : Binary32) :
+    value.cast (target := Posit32) = value.cast (target := Posit32) (mode := {}) := rfl
+
+/--
+error: failed to synthesize instance of type class
+  ExecFloat.RoundingModes Binary32 SignedRat Model.IEEERoundingMode
+-/
+#guard_msgs (substring := true) in
+#check fun (value : Binary64) (mode : Model.IEEERoundingMode) =>
+  value.cast (target := Binary32) (mode := mode)
 
 /--
 error: failed to synthesize instance of type class

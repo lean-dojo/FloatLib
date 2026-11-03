@@ -9,14 +9,15 @@ module
 import Mathlib.Tactic.Ring
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
 public import FloatLib.Floats.Formats.P3109.Proof
+import FloatLib.Floats.Formats.P3109.Projection.Rounding
 
 /-!
 # Finite-value correctness for P3109 projection
 
-Positive-row encoding and decoding preserve the rational value of a positive dyadic on the
-descriptor's precision grid, including the carry significand `2^P`. These formulas use natural
-numbers without an upper exponent bound. `Projection.Range` adds the finite-range and bit-width
-bounds needed for full datum encoding.
+Positive-row encoding and decoding preserve the rational value of a nonnegative dyadic on the
+descriptor's precision grid, including zero and the carry significand `2^P`. These formulas use
+natural numbers without an upper exponent bound. `Projection.Range` adds the finite-range and
+bit-width bounds needed for full datum encoding.
 -/
 
 @[expose] public section
@@ -73,7 +74,8 @@ theorem decodePositiveFinite_encodeRow_toRat
     omega
 
 /--
-Positive-row encoding preserves every positive dyadic accepted by the precision grid.
+Positive-row encoding preserves every nonnegative dyadic accepted by the precision grid; a zero
+significand encodes to the zero code.
 
 The significand bound is not strict: the carry value `2^P`, produced when precision rounding
 increments an all-ones significand, is encoded in the next exponent row. The exponent lower bound
@@ -83,17 +85,17 @@ valid descriptor.
 theorem decodePositiveFinite_encodePositiveFinite_eq_of_le
     (format : Format) (value : Numerics.Dyadic)
     (hnegative : value.negative = false)
-    (hzero : value.significand ≠ 0)
     (hprecision : value.significand ≤ 2 ^ format.precision)
     (hexponent : format.minimumQuantumExponent ≤ value.exponent) :
     (format.decodePositiveFinite
       (Internal.encodePositiveFinite format value)).toRat =
       value.toRat := by
+  by_cases hzero : value.significand = 0
+  · simp [Internal.encodePositiveFinite, hzero, Numerics.Dyadic.toRat,
+      Numerics.Dyadic.signedSignificand, hnegative]
   have hT := format.trailingBits_add_one
   have hTi := format.trailingBits_int
   have hminQ := format.minimumQuantumExponent_eq
-  have hlog_lt : value.significand < 2 ^ (value.significand.log2 + 1) :=
-    (Nat.log2_lt hzero).1 (Nat.lt_succ_self _)
   have hlog_le : 2 ^ value.significand.log2 ≤ value.significand :=
     (Nat.le_log2 hzero).1 le_rfl
   have hvalue : value.toRat = (value.significand : Rat) * 2 ^ value.exponent := by
@@ -122,13 +124,8 @@ theorem decodePositiveFinite_encodePositiveFinite_eq_of_le
         zpow_add₀ (by norm_num : (2 : Rat) ≠ 0), zpow_natCast]
       push_cast
       ring
-    · rw [Nat.shiftLeft_eq', Nat.shiftLeft_eq]
-      calc value.significand * 2 ^ shift
-          < 2 ^ (value.significand.log2 + 1) * 2 ^ shift :=
-            Nat.mul_lt_mul_of_pos_right hlog_lt (Nat.two_pow_pos _)
-        _ = 2 ^ (value.significand.log2 + shift + 1) := by ring
-        _ ≤ 2 ^ (format.trailingBits + 1) := Nat.pow_le_pow_right (by decide) (by omega)
-        _ = 2 * 2 ^ format.trailingBits := by ring
+    · have h := format.shiftLeft_lt_precision value.significand shift (by omega)
+      rwa [← hT, Nat.pow_succ, Nat.mul_comm] at h
     · exact hminE
     · intro hsub
       by_contra hne

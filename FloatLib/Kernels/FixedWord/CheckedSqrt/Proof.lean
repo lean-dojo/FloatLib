@@ -31,6 +31,27 @@ private theorem toNat_of_hi_eq_zero {x : UInt128} (h : x.hi = 0) :
     x.lo.toNat = x.toNat := by
   simp [UInt128.toNat, h]
 
+/-- A four-word value with zero upper limbs is below `2^128`. -/
+private theorem toNat_lt_of_limb3_limb2_eq_zero {x : UInt256}
+    (h3 : x.limb3 = 0) (h2 : x.limb2 = 0) :
+    x.toNat < 2 ^ 128 := by
+  have h0 := x.limb0.toNat_lt
+  have h1 := x.limb1.toNat_lt
+  unfold UInt256.toNat
+  simp only [h3, h2, UInt64.toNat_zero, zero_mul, add_zero]
+  omega
+
+/-- A candidate whose square is at most `n`, with remainder at most twice the candidate, is the
+floor square root of `n`. -/
+private theorem eq_sqrt_of_sub_le {guess n : Nat} (hle : guess * guess ≤ n)
+    (hremainder : n - guess * guess ≤ guess + guess) :
+    guess = Nat.sqrt n := by
+  apply Nat.eq_sqrt.mpr
+  refine ⟨hle, ?_⟩
+  have : (guess + 1) * (guess + 1) = guess * guess + (guess + guess) + 1 := by
+    rw [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]; omega
+  omega
+
 /-- An accepted candidate is the floor square root, with the exact remainder. -/
 theorem checkRoot?_spec {radicand : UInt128} {guess : UInt64}
     {state : RestoringRootState UInt64} (h : checkRoot? radicand guess = some state) :
@@ -95,17 +116,31 @@ theorem checkRoot?_spec {radicand : UInt128} {guess : UInt64}
           rw [UInt64.toNat_add]; exact Nat.mod_eq_of_lt (by omega)
         have hremNat : radicand.toNat - guess.toNat * guess.toNat ≤ guess.toNat + guess.toNat := by
           rw [← hsub, ← toNat_of_hi_eq_zero hrem.1, ← hdouble]; exact hrem.2
-        have hroot : guess.toNat = Nat.sqrt radicand.toNat := by
-          apply Nat.eq_sqrt.mpr
-          refine ⟨hle, ?_⟩
-          have : (guess.toNat + 1) * (guess.toNat + 1) =
-              guess.toNat * guess.toNat + (guess.toNat + guess.toNat) + 1 := by
-            rw [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]; omega
-          omega
+        have hroot := eq_sqrt_of_sub_le hle hremNat
         refine ⟨hroot, ?_⟩
         rw [toNat_of_hi_eq_zero hrem.1, hsub, ← hroot]
       · simp at h
   · simp at h
+
+/--
+A two-word state that carries the floor square root of the radicand and its remainder is the
+restoring loop's result, within the loop's range.
+-/
+private theorem eq_loop_of_spec {radicand : UInt256} {steps : Nat}
+    (hupper : steps ≤ 125) (hfit : radicand.toNat < 2 ^ (2 * steps))
+    {state : RestoringRootState UInt128}
+    (hroot : state.root.toNat = Nat.sqrt radicand.toNat)
+    (hrem : state.remainder.toNat =
+      radicand.toNat - Nat.sqrt radicand.toNat * Nat.sqrt radicand.toNat) :
+    state = RestoringSquareRoot.rootAndRemainder radicand steps := by
+  obtain ⟨hroot', hrem'⟩ := RestoringSquareRoot.rootAndRemainder_spec radicand steps hupper hfit
+  cases state
+  cases hloop : RestoringSquareRoot.rootAndRemainder radicand steps
+  rw [hloop] at hroot' hrem'
+  simp only at hroot hrem hroot' hrem' ⊢
+  congr 1
+  · exact UInt128.toNat_injective (hroot.trans hroot'.symm)
+  · exact UInt128.toNat_injective (hrem.trans hrem'.symm)
 
 /-- `rootAndRemainder` equals the restoring loop on every input. -/
 theorem rootAndRemainder_eq (radicand : UInt256) (steps : Nat) :
@@ -119,28 +154,14 @@ theorem rootAndRemainder_eq (radicand : UInt256) (steps : Nat) :
     · rename_i state hstate
       simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at hguard
       obtain ⟨⟨⟨hlower, hupper⟩, h3⟩, h2⟩ := hguard
-      have hfit128 : radicand.toNat < 2 ^ 128 := by
-        have h0 := radicand.limb0.toNat_lt
-        have h1 := radicand.limb1.toNat_lt
-        unfold UInt256.toNat
-        simp only [h3, h2, UInt64.toNat_zero, zero_mul, add_zero]
-        omega
+      have hfit128 := toNat_lt_of_limb3_limb2_eq_zero h3 h2
       have hlow := UInt256.low128_toNat_of_lt radicand hfit128
       have hfit : radicand.toNat < 2 ^ (2 * steps) :=
         lt_of_lt_of_le hfit128 (Nat.pow_le_pow_right (by decide) (by omega))
-      obtain ⟨hroot, hrem⟩ :=
-        RestoringSquareRoot.rootAndRemainder_spec radicand steps hlower hupper hfit
-      obtain ⟨hroot', hrem'⟩ := checkRoot?_spec hstate
-      rw [hlow] at hroot' hrem'
-      cases hloop : RestoringSquareRoot.rootAndRemainder radicand steps with
-      | mk root remainder =>
-        rw [hloop] at hroot hrem
-        simp only at hroot hrem ⊢
-        congr 1
-        · apply UInt128.toNat_injective
-          rw [hroot]; simp [UInt128.toNat, hroot']
-        · apply UInt128.toNat_injective
-          rw [hrem]; simp [UInt128.toNat, hrem']
+      obtain ⟨hroot, hrem⟩ := checkRoot?_spec hstate
+      rw [hlow] at hroot hrem
+      exact eq_loop_of_spec hupper hfit (by simpa [UInt128.toNat] using hroot)
+        (by simpa [UInt128.toNat] using hrem)
     · rfl
   · rfl
 
@@ -173,14 +194,7 @@ theorem acceptRootWide?_spec {radicand : UInt256} {guess : UInt128}
         subst h
         simp only [Bool.and_eq_true, beq_iff_eq, Bool.not_eq_eq_eq_not, Bool.not_true] at hrem
         obtain ⟨⟨h3, h2⟩, hdoubleLe⟩ := hrem
-        have hremFit :
-            (UInt256.sub radicand (mul128 guess guess)).toNat < 2 ^ 128 := by
-          have h0 := (UInt256.sub radicand (mul128 guess guess)).limb0.toNat_lt
-          have h1 := (UInt256.sub radicand (mul128 guess guess)).limb1.toNat_lt
-          unfold UInt256.toNat
-          rw [h3, h2]
-          simp only [UInt64.toNat_zero, zero_mul, add_zero]
-          omega
+        have hremFit := toNat_lt_of_limb3_limb2_eq_zero h3 h2
         have hlow := UInt256.low128_toNat_of_lt _ hremFit
         have hdouble : (add128 guess guess).value.toNat = guess.toNat + guess.toNat :=
           add128_value_toNat_of_lt guess guess (by omega)
@@ -192,13 +206,7 @@ theorem acceptRootWide?_spec {radicand : UInt256} {guess : UInt128}
             decide
           rw [UInt128.less_eq_true_iff, hdouble, hlow, hsub] at hnot
           omega
-        have hroot : guess.toNat = Nat.sqrt radicand.toNat := by
-          apply Nat.eq_sqrt.mpr
-          refine ⟨hle, ?_⟩
-          have : (guess.toNat + 1) * (guess.toNat + 1) =
-              guess.toNat * guess.toNat + (guess.toNat + guess.toNat) + 1 := by
-            rw [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]; omega
-          omega
+        have hroot := eq_sqrt_of_sub_le hle hremLe
         refine ⟨hroot, ?_⟩
         rw [hlow, hsub, ← hroot]
       · simp at h
@@ -223,18 +231,8 @@ theorem Internal.rootAndRemainder_eq (radicand : UInt256) (steps : Nat) :
         · rw [hzero]; exact Nat.two_pow_pos _
         · exact (Nat.lt_log2_self (n := radicand.toNat)).trans_le
             (Nat.pow_le_pow_right (by decide) (by omega))
-      obtain ⟨hroot, hrem⟩ :=
-        RestoringSquareRoot.rootAndRemainder_spec radicand steps hlower hupper hfit
-      obtain ⟨hroot', hrem'⟩ := acceptRootWide?_spec hstate
-      cases hloop : RestoringSquareRoot.rootAndRemainder radicand steps with
-      | mk root remainder =>
-        rw [hloop] at hroot hrem
-        cases state with
-        | mk sroot sremainder =>
-          simp only at hroot hrem hroot' hrem' ⊢
-          congr 1
-          · exact UInt128.toNat_injective (hroot'.trans hroot.symm)
-          · exact UInt128.toNat_injective (hrem'.trans hrem.symm)
+      obtain ⟨hroot, hrem⟩ := acceptRootWide?_spec hstate
+      exact eq_loop_of_spec hupper hfit hroot hrem
     · rfl
   · rfl
 

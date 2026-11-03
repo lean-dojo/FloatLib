@@ -136,27 +136,31 @@ private theorem certifiedQuotient_bounds (precision : Nat)
       exact absurd (lt_of_le_of_lt (hproductLower.trans hproductLeScaled) hscaledUpper)
         (lt_irrefl _)
 
+/-- The native two-limb comparison is the comparison of the limb values. -/
+private theorem less_eq_decide (num den : UInt128) :
+    UInt128.less num den = decide (num.toNat < den.toNat) := by
+  rw [Bool.eq_iff_iff, UInt128.less_eq_true_iff, decide_eq_true_iff]
+
+/-- The normal significand read from a stored value's two words has `fracWidth + 1` bits. -/
+private theorem normalMantissa_toWords_bounds (h : Eligible fmt) (z : Model fmt) :
+    2 ^ fmt.fracWidth ≤ (normalMantissa fmt (fracHigh fmt (toWords z).hi) (toWords z).lo).toNat ∧
+      (normalMantissa fmt (fracHigh fmt (toWords z).hi) (toWords z).lo).toNat <
+        2 ^ (fmt.fracWidth + 1) :=
+  normalMantissa_bounds h _ _ (fracHigh_lt h (toWords z).hi)
+
 private theorem candidateShift_eq (num den : UInt128) :
     (if UInt128.less num den then CandidateShift.extra else CandidateShift.exact) =
       if den.toNat ≤ num.toNat then CandidateShift.exact else CandidateShift.extra := by
+  rw [less_eq_decide]
   by_cases hle : den.toNat ≤ num.toNat
-  · have hless : UInt128.less num den = false := by
-      apply Bool.eq_false_iff.mpr
-      intro htrue
-      exact (Nat.not_lt_of_ge hle) ((UInt128.less_eq_true_iff num den).1 htrue)
-    simp [hless, hle]
-  · have hless : UInt128.less num den = true :=
-      (UInt128.less_eq_true_iff num den).2 (Nat.lt_of_not_ge hle)
-    simp [hless, hle]
+  · simp [hle, Nat.not_lt_of_ge hle]
+  · simp [hle, Nat.lt_of_not_ge hle]
 
 private theorem checkedRound_facts (h : Eligible fmt)
     (num den : UInt128) (candidateShift : CandidateShift)
     (shift : Nat) (rounded : UInt128)
     (hnum : 2 ^ fmt.fracWidth ≤ num.toNat ∧ num.toNat < 2 ^ (fmt.fracWidth + 1))
     (hden : 2 ^ fmt.fracWidth ≤ den.toNat ∧ den.toNat < 2 ^ (fmt.fracWidth + 1))
-    (hcandidateShift :
-      candidateShift =
-        if den.toNat ≤ num.toNat then CandidateShift.exact else CandidateShift.extra)
     (hshift : shift = if den.toNat ≤ num.toNat then fmt.fracWidth else fmt.fracWidth + 1)
     (hshiftCandidate : shift = candidateShift.toNat fmt.fracWidth)
     (hroundedDef :
@@ -175,7 +179,7 @@ private theorem checkedRound_facts (h : Eligible fmt)
     simpa only [quotient, remainder, checked] using hroundedDef
   have hcertifiedRaw :=
     checkedCandidate_sound fmt.fracWidth h.precision_bounds num den candidateShift
-      hnum hden hcandidateShift
+      hnum hden
   have hcertified :
       quotient.toNat * den.toNat + remainder.toNat = num.toNat * 2 ^ shift ∧
         remainder.toNat < den.toNat := by
@@ -185,8 +189,6 @@ private theorem checkedRound_facts (h : Eligible fmt)
       hnum hden hshift hcertified
   have hpowSucc : 2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 126 :=
     Nat.pow_le_pow_right (by decide) (by omega)
-  have hdenFit : den.toNat < 2 ^ 127 :=
-    lt_of_lt_of_le hden.2 (hpowSucc.trans (by norm_num))
   have hquotientFit : quotient.toNat + 1 < 2 ^ 128 := by
     have hcapacity : 2 ^ 126 + 1 < 2 ^ 128 := by norm_num
     omega
@@ -194,7 +196,7 @@ private theorem checkedRound_facts (h : Eligible fmt)
       rounded.toNat = Numerics.roundQuotientEven (num.toNat * 2 ^ shift) den.toNat := by
     rw [hroundedDef']
     exact roundQuotient_toNat den quotient remainder (num.toNat * 2 ^ shift)
-      hdenFit hcertified.1 hcertified.2 hquotientFit
+      hcertified.1 hcertified.2 hquotientFit
   have hroundedCases :
       rounded.toNat = quotient.toNat ∨ rounded.toNat = quotient.toNat + 1 := by
     rw [hroundedDef']
@@ -360,28 +362,8 @@ private theorem divNormal_accepted
     AcceptedNormalDivision fmt xExponent yExponent totalExponent resultExponent
       (Bool.xor (signBit fmt xWords.hi) (signBit fmt yWords.hi))
       rounded carry result := by
-  let xWords := toWords x
-  let yWords := toWords y
-  let xExponent := expField fmt xWords.hi
-  let yExponent := expField fmt yWords.hi
-  let num := normalMantissa fmt (fracHigh fmt xWords.hi) xWords.lo
-  let den := normalMantissa fmt (fracHigh fmt yWords.hi) yWords.lo
-  let less := UInt128.less num den
-  let rationalExponent : Int := if less then -1 else 0
-  let totalExponent :=
-    rationalExponent + (Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat)
-  let candidateShift : CandidateShift := if less then .extra else .exact
-  let shift := candidateShift.toNat fmt.fracWidth
-  let checked := checkedCandidate fmt.fracWidth num den candidateShift
-  let rounded := roundQuotient den checked.quotient checked.remainder
-  let carry := isCarry fmt rounded
-  let resultExponent : Int :=
-    Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat +
-      Int.ofNat (fmt.bias + fmt.fracWidth) - Int.ofNat shift + if carry then 1 else 0
-  change
-    AcceptedNormalDivision fmt xExponent yExponent totalExponent resultExponent
-      (Bool.xor (signBit fmt xWords.hi) (signBit fmt yWords.hi))
-      rounded carry result
+  intro xWords yWords xExponent yExponent num den less rationalExponent totalExponent
+    candidateShift shift checked rounded carry resultExponent
   by_cases hxZero : xExponent = 0
   · simp [divNormal?, divNormalWords?, xWords, xExponent, hxZero] at hresult
   by_cases hxAll : xExponent = expAllOnes fmt
@@ -472,7 +454,7 @@ private theorem certifiedNormalRound_of_candidate (h : Eligible fmt)
     candidateShift_toNat_eq fmt num den candidateShift shift hcandidateShift hshiftCandidate
   have hroundFacts :=
     checkedRound_facts h num den candidateShift shift rounded hnum hden
-      hcandidateShift hshift hshiftCandidate hroundedDef
+      hshift hshiftCandidate hroundedDef
   exact
     { shift_eq := hshift
       rounded_eq := hroundFacts.1
@@ -538,12 +520,10 @@ private theorem divNormal_eq_roundNormalSpec_of_some (h : Eligible fmt)
       rounded carry result at haccepted
   have hnumBounds :
       2 ^ fmt.fracWidth ≤ num.toNat ∧ num.toNat < 2 ^ (fmt.fracWidth + 1) :=
-    normalMantissa_bounds h (fracHigh fmt (toWords x).hi) (toWords x).lo
-      (fracHigh_lt h (toWords x).hi)
+    normalMantissa_toWords_bounds h x
   have hdenBounds :
       2 ^ fmt.fracWidth ≤ den.toNat ∧ den.toNat < 2 ^ (fmt.fracWidth + 1) :=
-    normalMantissa_bounds h (fracHigh fmt (toWords y).hi) (toWords y).lo
-      (fracHigh_lt h (toWords y).hi)
+    normalMantissa_toWords_bounds h y
   have hcandidateShiftEq :
       candidateShift =
         if den.toNat ≤ num.toNat then CandidateShift.exact else CandidateShift.extra := by
@@ -664,29 +644,15 @@ theorem divNormal_refines (h : Eligible fmt)
   let rationalExponent : Int := if less then -1 else 0
   let totalExponent :=
     rationalExponent + (Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat)
-  by_cases hxZero : xExponent = 0
-  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxZero] at hresult
-  by_cases hxAll : xExponent = expAllOnes fmt
-  · simp [divNormal?, divNormalWords?, xWords, xExponent, hxAll] at hresult
-  by_cases hyZero : yExponent = 0
-  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyZero] at hresult
-  by_cases hyAll : yExponent = expAllOnes fmt
-  · simp [divNormal?, divNormalWords?, yWords, yExponent, hyAll] at hresult
+  have haccepted := divNormal_accepted x y result hresult
+  change AcceptedNormalDivision fmt xExponent yExponent totalExponent _ _ _ _ result at haccepted
+  obtain ⟨hxZero, hxAll, hyZero, hyAll, hlowNative, -, -⟩ := haccepted
   have hnumBounds :
       2 ^ fmt.fracWidth ≤ num.toNat ∧ num.toNat < 2 ^ (fmt.fracWidth + 1) :=
-    normalMantissa_bounds h (fracHigh fmt (toWords x).hi) (toWords x).lo
-      (fracHigh_lt h (toWords x).hi)
+    normalMantissa_toWords_bounds h x
   have hdenBounds :
       2 ^ fmt.fracWidth ≤ den.toNat ∧ den.toNat < 2 ^ (fmt.fracWidth + 1) :=
-    normalMantissa_bounds h (fracHigh fmt (toWords y).hi) (toWords y).lo
-      (fracHigh_lt h (toWords y).hi)
-  have hlowNative : ¬totalExponent < fmt.ieeeMinNormalExponent := by
-    have hroute := hresult
-    simp [divNormal?, divNormalWords?, and_assoc, xWords, yWords, xExponent, yExponent,
-      hxZero, hxAll, hyZero, hyAll] at hroute
-    apply not_lt.mpr
-    simpa [totalExponent, rationalExponent, less, num, den,
-      xExponent, yExponent, xWords, yWords] using hroute.1
+    normalMantissa_toWords_bounds h y
   have hlow :
       ¬(if den.toNat ≤ num.toNat then
           Int.ofNat xExponent.toNat - Int.ofNat yExponent.toNat
@@ -695,14 +661,12 @@ theorem divNormal_refines (h : Eligible fmt)
         fmt.ieeeMinNormalExponent := by
     by_cases hle : den.toNat ≤ num.toNat
     · have hless : less = false := by
-        apply Bool.eq_false_iff.mpr
-        intro htrue
-        exact (Nat.not_lt_of_ge hle) ((UInt128.less_eq_true_iff num den).1 htrue)
+        simp [less, less_eq_decide, Nat.not_lt_of_ge hle]
       have hlowNative' := hlowNative
       simp [totalExponent, rationalExponent, hless] at hlowNative'
       simpa [hle] using hlowNative'
-    · have hless : less = true :=
-        (UInt128.less_eq_true_iff num den).2 (Nat.lt_of_not_ge hle)
+    · have hless : less = true := by
+        simp [less, less_eq_decide, Nat.lt_of_not_ge hle]
       have hlowNative' := hlowNative
       simp [totalExponent, rationalExponent, hless] at hlowNative'
       rw [ite_eq_right hle]

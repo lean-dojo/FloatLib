@@ -23,6 +23,11 @@ reopening the variable-length regime parser.
 
 These lemmas form the local bridge used by the full code-order theorem: regime bits establish the
 coarse scale interval, while this module handles exact order inside that interval.
+
+`zpow_add_le_mul_zpow` and `mul_zpow_lt_zpow_add_succ` give the two binade bounds for a rational
+fraction scaled by `2 ^ targetExponent`: a fraction in `[2 ^ leading, 2 ^ (leading + 1))` lands in
+`[2 ^ (targetExponent + leading), 2 ^ (targetExponent + leading + 1))`. The guard/sticky and
+quotient rounding proofs share them.
 -/
 
 @[expose] public section
@@ -84,6 +89,46 @@ private theorem normalized_lt_two
   linarith
 
 /--
+A normalized significand times `2 ^ exponent` lies in the binade
+`[2 ^ exponent, 2 ^ (exponent + 1))`.
+-/
+private theorem normalized_mul_zpow_bounds
+    (denominator raw : Nat) (hdenominator : 0 < denominator) (exponent : Int) :
+    (2 : Rat) ^ exponent ≤
+        (1 + natToRat (raw % denominator) / natToRat denominator) * (2 : Rat) ^ exponent ∧
+      (1 + natToRat (raw % denominator) / natToRat denominator) * (2 : Rat) ^ exponent <
+        (2 : Rat) ^ (exponent + 1) := by
+  have hpower : (0 : Rat) < 2 ^ exponent := zpow_pos (by norm_num) _
+  constructor
+  · exact le_mul_of_one_le_left hpower.le (normalized_ge_one denominator raw hdenominator)
+  · rw [zpow_add_one₀ (by norm_num : (2 : Rat) ≠ 0), mul_comm _ (2 : Rat)]
+    exact mul_lt_mul_of_pos_right (normalized_lt_two denominator raw hdenominator) hpower
+
+/--
+Scaling a fraction of at least `2 ^ leading` by `2 ^ targetExponent` gives at least
+`2 ^ (targetExponent + leading)`.
+-/
+theorem zpow_add_le_mul_zpow {fraction : Rat} (targetExponent : Int) (leading : Nat)
+    (hlower : (2 : Rat) ^ Int.ofNat leading ≤ fraction) :
+    (2 : Rat) ^ (targetExponent + Int.ofNat leading) ≤
+      fraction * (2 : Rat) ^ targetExponent := by
+  rw [add_comm, zpow_add₀ (by norm_num)]
+  exact mul_le_mul_of_nonneg_right hlower (zpow_nonneg (by norm_num) _)
+
+/--
+Scaling a fraction below `2 ^ (leading + 1)` by `2 ^ targetExponent` stays below
+`2 ^ (targetExponent + leading + 1)`.
+-/
+theorem mul_zpow_lt_zpow_add_succ {fraction : Rat} (targetExponent : Int) (leading : Nat)
+    (hupper : fraction < (2 : Rat) ^ Int.ofNat (leading + 1)) :
+    fraction * (2 : Rat) ^ targetExponent <
+      (2 : Rat) ^ (targetExponent + Int.ofNat leading + 1) := by
+  rw [show targetExponent + Int.ofNat leading + 1 = Int.ofNat (leading + 1) + targetExponent by
+      simp only [Int.ofNat_eq_natCast]; push_cast; ring,
+    zpow_add₀ (by norm_num)]
+  exact mul_lt_mul_of_pos_right hupper (zpow_pos (by norm_num) _)
+
+/--
 Moving to the next raw exponent/fraction field strictly increases its binary-bucket value.
 -/
 private theorem bucketRat_strictMono
@@ -120,53 +165,12 @@ private theorem bucketRat_strictMono
     rw [hquotientEqInt]
     exact mul_lt_mul_of_pos_right hnormalized
       (zpow_pos (by norm_num : (0 : Rat) < 2) _)
-  · have hleftUpper :
-        bucketRat denominator left <
-          (2 : Rat) ^
-            (Int.ofNat (left / denominator) + 1) := by
-      calc
-        bucketRat denominator left =
-            (1 + natToRat (left % denominator) / natToRat denominator) *
-              (2 : Rat) ^ Int.ofNat (left / denominator) := rfl
-        _ < 2 * (2 : Rat) ^ Int.ofNat (left / denominator) :=
-          mul_lt_mul_of_pos_right
-            (normalized_lt_two denominator left hdenominator)
-            (zpow_pos (by norm_num : (0 : Rat) < 2) _)
-        _ = (2 : Rat) ^ Int.ofNat (left / denominator) * 2 := by
-          ring
-        _ = (2 : Rat) ^
-            (Int.ofNat (left / denominator) + 1) := by
-          rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
-          norm_num
-    have hexponents :
-        Int.ofNat (left / denominator) + 1 ≤
-          Int.ofNat (right / denominator) := by
-      have hsuccessor :
-          left / denominator + 1 ≤ right / denominator :=
-        Nat.succ_le_of_lt hquotientLt
-      rw [Int.ofNat_eq_natCast, Int.ofNat_eq_natCast]
-      exact_mod_cast hsuccessor
-    have hpowers :
-        (2 : Rat) ^
-            (Int.ofNat (left / denominator) + 1) ≤
+  · have hpowers :
+        (2 : Rat) ^ (Int.ofNat (left / denominator) + 1) ≤
           (2 : Rat) ^ Int.ofNat (right / denominator) :=
-      zpow_le_zpow_right₀
-        (by norm_num : (1 : Rat) ≤ 2) hexponents
-    have hrightLower :
-        (2 : Rat) ^ Int.ofNat (right / denominator) ≤
-          bucketRat denominator right := by
-      calc
-        (2 : Rat) ^ Int.ofNat (right / denominator) =
-            1 * (2 : Rat) ^ Int.ofNat (right / denominator) := by
-          ring
-        _ ≤
-            (1 + natToRat (right % denominator) / natToRat denominator) *
-              (2 : Rat) ^ Int.ofNat (right / denominator) :=
-          mul_le_mul_of_nonneg_right
-            (normalized_ge_one denominator right hdenominator)
-            (zpow_pos (by norm_num : (0 : Rat) < 2) _).le
-        _ = bucketRat denominator right := rfl
-    exact hleftUpper.trans_le (hpowers.trans hrightLower)
+      zpow_le_zpow_right₀ (by norm_num) (by simp only [Int.ofNat_eq_natCast]; omega)
+    exact (normalized_mul_zpow_bounds denominator left hdenominator _).2.trans_le
+      (hpowers.trans (normalized_mul_zpow_bounds denominator right hdenominator _).1)
 
 /--
 Exact positive value contributed by `trailing` exponent/fraction bits before applying the regime.
@@ -185,10 +189,10 @@ bits and omitted low exponent bits are restored as zero.
 /-- The exact exponent/fraction tail is strictly ordered by its bounded raw field. -/
 theorem trailingRat_lt_of_lt
     {trailing left right : Nat}
-    (hleft : left < 2 ^ trailing)
     (hright : right < 2 ^ trailing)
     (hlt : left < right) :
     trailingRat trailing left < trailingRat trailing right := by
+  have hleft : left < 2 ^ trailing := hlt.trans hright
   cases trailing with
   | zero =>
       norm_num at hleft hright
@@ -206,27 +210,13 @@ theorem trailingRat_lt_of_lt
           subst right
           norm_num [trailingRat, natToRat]
       | succ fractionBits =>
-          have hleftQuotient :
-              left / 2 ^ fractionBits < 4 := by
-            rw [Nat.div_lt_iff_lt_mul
-              (Nat.two_pow_pos fractionBits)]
-            convert hleft using 1
+          have hfield (value : Nat) (hvalue : value < 2 ^ (fractionBits + 1 + 1)) :
+              value / 2 ^ fractionBits % 4 = value / 2 ^ fractionBits := by
+            apply Nat.mod_eq_of_lt
+            rw [Nat.div_lt_iff_lt_mul (Nat.two_pow_pos fractionBits)]
+            convert hvalue using 1
             ring
-          have hrightQuotient :
-              right / 2 ^ fractionBits < 4 := by
-            rw [Nat.div_lt_iff_lt_mul
-              (Nat.two_pow_pos fractionBits)]
-            convert hright using 1
-            ring
-          have hleftMod :
-              left / 2 ^ fractionBits % 4 =
-                left / 2 ^ fractionBits :=
-            Nat.mod_eq_of_lt hleftQuotient
-          have hrightMod :
-              right / 2 ^ fractionBits % 4 =
-                right / 2 ^ fractionBits :=
-            Nat.mod_eq_of_lt hrightQuotient
-          simpa [trailingRat, bucketRat, hleftMod, hrightMod] using
+          simpa [trailingRat, bucketRat, hfield left hleft, hfield right hright] using
             bucketRat_strictMono
               (2 ^ fractionBits) (Nat.two_pow_pos _) hlt
 
@@ -306,7 +296,6 @@ blocks cannot overlap, independently of the total posit width.
 theorem trailingRat_bounds (trailing raw : Nat) :
     (1 : Rat) ≤ trailingRat trailing raw ∧
       trailingRat trailing raw < 16 := by
-  simp only [trailingRat, natToRat_eq_cast, Int.ofNat_eq_natCast, zpow_natCast]
   have hused : min 2 trailing ≤ 2 := Nat.min_le_left _ _
   have hexponent :
       raw / 2 ^ (trailing - min 2 trailing) % 2 ^ min 2 trailing *
@@ -316,26 +305,16 @@ theorem trailingRat_bounds (trailing raw : Nat) :
     calc _ < 2 ^ min 2 trailing * 2 ^ (2 - min 2 trailing) :=
           (Nat.mul_lt_mul_right (Nat.two_pow_pos _)).mpr hstored
       _ = 4 := by rw [← Nat.pow_add, Nat.add_sub_of_le hused]
-  have hpowerUpper :
-      (2 : Rat) ^ (raw / 2 ^ (trailing - min 2 trailing) % 2 ^ min 2 trailing *
-        2 ^ (2 - min 2 trailing)) ≤ 8 := by
-    calc (2 : Rat) ^ _ ≤ (2 : Rat) ^ 3 := pow_le_pow_right₀ (by norm_num) (by omega)
-      _ = 8 := by norm_num
-  have hpowerLower :
-      (1 : Rat) ≤ (2 : Rat) ^ (raw / 2 ^ (trailing - min 2 trailing) % 2 ^ min 2 trailing *
-        2 ^ (2 - min 2 trailing)) :=
-    one_le_pow₀ (by norm_num)
-  have hden : (0 : Rat) < ((2 ^ (trailing - min 2 trailing) : Nat) : Rat) := by
-    positivity
-  have hfraction :
-      ((raw % 2 ^ (trailing - min 2 trailing) : Nat) : Rat) /
-        ((2 ^ (trailing - min 2 trailing) : Nat) : Rat) < 1 :=
-    (div_lt_one hden).2 (Nat.cast_lt.mpr (Nat.mod_lt _ (Nat.two_pow_pos _)))
-  have hfractionNonneg :
-      (0 : Rat) ≤ ((raw % 2 ^ (trailing - min 2 trailing) : Nat) : Rat) /
-        ((2 ^ (trailing - min 2 trailing) : Nat) : Rat) := by
-    positivity
-  constructor <;> nlinarith
+  obtain ⟨hlower, hupper⟩ :=
+    normalized_mul_zpow_bounds (2 ^ (trailing - min 2 trailing)) raw (Nat.two_pow_pos _)
+      (Int.ofNat (raw / 2 ^ (trailing - min 2 trailing) % 2 ^ min 2 trailing *
+        2 ^ (2 - min 2 trailing)))
+  constructor
+  · exact (one_le_zpow₀ (by norm_num) (Int.natCast_nonneg _)).trans hlower
+  · refine hupper.trans_le ?_
+    calc (2 : Rat) ^ (Int.ofNat _ + 1) ≤ (2 : Rat) ^ (4 : Int) :=
+          zpow_le_zpow_right₀ (by norm_num) (by simp only [Int.ofNat_eq_natCast]; omega)
+      _ = 16 := by norm_num
 
 /--
 For decoded fields with a clear sign bit, the rational field value factors into the trailing

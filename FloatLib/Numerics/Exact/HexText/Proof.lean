@@ -79,6 +79,20 @@ theorem radixPair_value (value : Dyadic) :
     (value : Dyadic) (digits : ℕ+) :
     (significant roundMagnitude value digits).negative = value.negative := rfl
 
+/--
+The hexadecimal output denotes the sign of the input times the radix-16 value
+`coefficient * 16 ^ exponent` of the pair that `RadixText.significant` returns.
+-/
+theorem significant_toRat (roundMagnitude : Bool → ℚ → Nat) (value : Dyadic) (digits : ℕ+) :
+    (significant roundMagnitude value digits).toRat =
+      (if value.negative then (-1 : ℚ) else 1) *
+        (((RadixText.significant 16 roundMagnitude value.negative
+            (radixPair value).1 (radixPair value).2 digits).1 : ℚ) *
+          (16 : ℚ) ^ (RadixText.significant 16 roundMagnitude value.negative
+            (radixPair value).1 (radixPair value).2 digits).2) := by
+  cases hs : value.negative <;>
+    simp [significant, Dyadic.toRat, Dyadic.signedSignificand, hs, ← sixteen_zpow]
+
 /-- The hexadecimal output value is one integer rounding on the requested hexadecimal grid. -/
 theorem significant_value (roundMagnitude : Bool → ℚ → Nat)
     (value : Dyadic) (digits : ℕ+) :
@@ -91,12 +105,8 @@ theorem significant_value (roundMagnitude : Bool → ℚ → Nat)
           RadixText.significantQuantum 16 (radixPair value).1 (radixPair value).2 digits := by
   have h := RadixText.significant_value 16 (by decide) roundMagnitude value.negative
     (radixPair value).1 (radixPair value).2 digits
-  cases hs : value.negative <;>
-    simp only [significant, Dyadic.toRat, Dyadic.signedSignificand, hs,
-      Bool.false_eq_true, ite_false, ite_true,
-      ← sixteen_zpow]
-  · simpa [hs] using h
-  · simpa [hs, neg_mul] using congrArg Neg.neg h
+  push_cast at h
+  rw [significant_toRat, h, mul_assoc]
 
 /-- Enough requested hexadecimal digits preserve the exact value in every integer-exact rounder. -/
 theorem significant_exact (roundMagnitude : Bool → ℚ → Nat)
@@ -104,14 +114,11 @@ theorem significant_exact (roundMagnitude : Bool → ℚ → Nat)
     (value : Dyadic) (digits : ℕ+)
     (hc : (radixPair value).1 < 16 ^ (digits : Nat)) :
     (significant roundMagnitude value digits).toRat = value.toRat := by
-  have h := (RadixText.significant_exact 16 (by decide) roundMagnitude hexact
+  have h := (RadixText.significant_exact 16 roundMagnitude hexact
     value.negative (radixPair value).1 (radixPair value).2 digits hc).trans
     (radixPair_value value)
-  cases hs : value.negative <;>
-    simp only [significant, Dyadic.toRat, Dyadic.signedSignificand, hs,
-      Bool.false_eq_true, ite_false, ite_true,
-      ← sixteen_zpow]
-  · simpa [hs] using h
-  · simpa [hs, neg_mul] using congrArg Neg.neg h
+  push_cast at h
+  rw [significant_toRat, h]
+  cases hs : value.negative <;> simp [Dyadic.toRat, Dyadic.signedSignificand, hs]
 
 end FloatLib.Numerics.HexText

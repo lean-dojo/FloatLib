@@ -16,7 +16,9 @@ Finite decimal inputs are evaluated as exact rationals, independently of their
 cohort. Nearest-even conversion refines binary rounded-real semantics, and nearest-away
 conversion has the integer-grid semantics proved in `NearestAwayProof`.
 The directed conversions inherit the binary kernels' extended-real enclosure
-bounds, which include overflow to infinity.
+bounds, which include overflow to infinity. Only that half of the directed contract is stated.
+These bounds alone would also be met by an infinite result, so neither the nearest-in-direction
+property nor exactness on a representable input follows from them; neither is proved here.
 
 Exception theorems state the overflow and tininess predicates, including
 the distinction between exponent overflow and an inexact result at the largest
@@ -33,11 +35,8 @@ open FloatLib.Floats.Formats BinaryInterchange
 theorem signedScaledRatToReal_eq_rat (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     Model.signedScaledRatToReal s x.num.natAbs x.den 0 =
       if s then -(x : ℝ) else x := by
-  have hcast : (x.num.natAbs : ℝ) / x.den = (x : ℝ) := by
-    simpa only [Rat.cast_div, Rat.cast_natCast] using
-      congrArg (fun q : ℚ => (q : ℝ)) (rat_eq_unsigned_div hx).symm
   simp only [Model.signedScaledRatToReal, Model.scaledRatToReal, Flocq.bpow,
-    zpow_zero, mul_one, hcast]
+    zpow_zero, mul_one, ← rat_cast_eq_unsigned_div hx]
 
 /-- The source cohort affects neither the rounded binary value, its flags, nor its ternary value. -/
 theorem toBinary_eq_of_magnitude_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
@@ -47,11 +46,20 @@ theorem toBinary_eq_of_magnitude_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = tru
       toBinary fmt hfmt mode (.finite s c₂ q₂) := by
   simp only [toBinary, h]
 
-/-- An infinity keeps its sign and raises no exception. -/
+/-- An infinity delivers `infinityOrMaxFinite` of its sign and raises no exception;
+`toBinary_infinity_value` shows that this is the infinity of the same sign. -/
 @[simp] theorem toBinary_infinity (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (mode : RoundingMode) (s : Bool) :
     toBinary fmt hfmt mode (.infinity s) =
       { value := Model.infinityOrMaxFinite fmt s, status := {}, ternary := .eq } := rfl
+
+/-- Under the IEEE destination that `toBinary` requires, an infinity keeps its sign. -/
+theorem toBinary_infinity_value (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (mode : RoundingMode) (s : Bool) :
+    (toBinary fmt hfmt mode (.infinity s)).value =
+      if s then Model.negInf fmt else Model.posInf fmt := by
+  have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
+  simp [Model.infinityOrMaxFinite, hencoding]
 
 /-- A signaling NaN raises invalid and a quiet NaN does not. Both deliver the quiet NaN
 of `binaryNaN` and raise no other flag. -/
@@ -61,10 +69,17 @@ of `binaryNaN` and raise no other flag. -/
       { value := binaryNaN fmt s payload, status := { invalid := signaling }, ternary := .eq } :=
     rfl
 
-/-- Zero magnitude rounds to the binary zero of sign `s` in every mode. -/
-@[simp] theorem roundBinaryMagnitude_zero (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+/-- Zero magnitude rounds to the binary zero of sign `s` in every mode, for every binary format. -/
+@[simp] theorem roundBinaryMagnitude_zero (fmt : FloatFormat)
     (mode : RoundingMode) (s : Bool) :
     roundBinaryMagnitude fmt mode s 0 = Model.zero fmt s := by
+  by_cases hfmt : fmt.isIEEE = true
+  swap
+  · cases mode <;>
+      simp [roundBinaryMagnitude, Model.Internal.Directed.roundRat,
+        Model.Internal.Directed.roundRatScaled,
+        Model.roundRatMagnitudeDirectedScaled, binaryNearestAwayDyadic,
+        RoundingMode.roundMagnitude, Model.roundDyadic, hfmt, Model.roundDyadicGeneral]
   cases mode <;>
     norm_num [roundBinaryMagnitude, Model.Internal.Directed.roundRat,
       Model.Internal.Directed.roundRatScaled,
@@ -75,30 +90,28 @@ of `binaryNaN` and raise no other flag. -/
     ← Model.posZero_eq_ofModel_zero]
 
 /-- Finite nearest-even rational conversion equals binary rounded-real semantics. -/
-theorem roundBinaryMagnitude_nearestEven_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+theorem roundBinaryMagnitude_nearest_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) {x : ℚ} (hx : 0 ≤ x)
-    (hfinite : Model.isFinite (roundBinaryMagnitude fmt .nearestEven s x) = true) :
-    Model.toReal (roundBinaryMagnitude fmt .nearestEven s x) =
+    (hfinite : Model.isFinite (roundBinaryMagnitude fmt .nearest s x) = true) :
+    Model.toReal (roundBinaryMagnitude fmt .nearest s x) =
       Model.roundAt fmt (if s then -(x : ℝ) else x) := by
   by_cases hz : x = 0
   · subst x
-    rw [roundBinaryMagnitude_zero fmt hfmt]
+    rw [roundBinaryMagnitude_zero fmt]
     simp
-  have hn : x.num.natAbs ≠ 0 :=
-    Int.natAbs_ne_zero.mpr (ne_of_gt (Rat.num_pos.mpr (lt_of_le_of_ne hx (Ne.symm hz))))
   change Model.toReal (Model.roundRatScaled fmt s x.num.natAbs x.den 0) = _
-  rw [Model.toReal_roundRatScaled_eq_roundAt fmt s _ _ 0 hfmt hn x.den_nz hfinite,
+  rw [Model.toReal_roundRatScaled_eq_roundAt fmt s _ _ 0 hfmt hfinite,
     signedScaledRatToReal_eq_rat s hx]
 
 /-- Nearest-even conversion of a finite decimal input is one binary rounding of its value,
 provided the delivered result is finite. -/
-theorem toBinary_nearestEven_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+theorem toBinary_nearest_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) (c : Nat) (q : Int)
     (hfinite : Model.isFinite
-      (toBinary fmt hfmt .nearestEven (.finite s c q)).value = true) :
-    Model.toReal (toBinary fmt hfmt .nearestEven (.finite s c q)).value =
+      (toBinary fmt hfmt .nearest (.finite s c q)).value = true) :
+    Model.toReal (toBinary fmt hfmt .nearest (.finite s c q)).value =
       Model.roundAt fmt ((Datum.finiteValue s c q : ℚ) : ℝ) := by
-  have h := roundBinaryMagnitude_nearestEven_eq fmt hfmt s
+  have h := roundBinaryMagnitude_nearest_eq fmt hfmt s
     (by positivity : (0 : ℚ) ≤ c * (10 : ℚ) ^ q) hfinite
   cases s <;> simpa [toBinary, Datum.finiteValue] using h
 
@@ -113,55 +126,59 @@ theorem toBinary_nearestAway_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
   roundBinaryMagnitude_nearestAway_eq fmt hfmt s (by positivity) hfinite
 
 /-- Upward rational conversion encloses the exact input, including an infinite result. -/
-theorem le_roundBinaryMagnitude_towardPositive (fmt : FloatFormat)
+theorem le_roundBinaryMagnitude_up (fmt : FloatFormat)
     (hfmt : fmt.isIEEE = true) (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     (((if s then -(x : ℝ) else (x : ℝ)) : ℝ) : EReal) ≤
-      Model.toEReal (roundBinaryMagnitude fmt .towardPositive s x) := by
+      Model.toEReal (roundBinaryMagnitude fmt .up s x) := by
   have h := Model.le_toEReal_roundRatUp fmt s x.num.natAbs x.den hfmt x.den_nz
   rwa [signedScaledRatToReal_eq_rat s hx] at h
 
 /-- Downward rational conversion encloses the exact input, including an infinite result. -/
-theorem roundBinaryMagnitude_towardNegative_le (fmt : FloatFormat)
+theorem roundBinaryMagnitude_down_le (fmt : FloatFormat)
     (hfmt : fmt.isIEEE = true) (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
-    Model.toEReal (roundBinaryMagnitude fmt .towardNegative s x) ≤
+    Model.toEReal (roundBinaryMagnitude fmt .down s x) ≤
       (((if s then -(x : ℝ) else (x : ℝ)) : ℝ) : EReal) := by
   have h := Model.toEReal_roundRatDown_le fmt s x.num.natAbs x.den hfmt x.den_nz
   rwa [signedScaledRatToReal_eq_rat s hx] at h
 
-/-- Conversion toward positive infinity is an extended-real upper bound. -/
-theorem le_toBinary_towardPositive (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+/-- Conversion toward positive infinity gives an extended-real upper bound of the input. This is
+the enclosure half of the directed contract; minimality is not stated. -/
+theorem le_toBinary_up (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) (c : Nat) (q : Int) :
     (((Datum.finiteValue s c q : ℚ) : ℝ) : EReal) ≤
-      Model.toEReal (toBinary fmt hfmt .towardPositive (.finite s c q)).value := by
-  have h := le_roundBinaryMagnitude_towardPositive fmt hfmt s
+      Model.toEReal (toBinary fmt hfmt .up (.finite s c q)).value := by
+  have h := le_roundBinaryMagnitude_up fmt hfmt s
     (by positivity : (0 : ℚ) ≤ c * (10 : ℚ) ^ q)
   cases s <;> simpa [toBinary, Datum.finiteValue] using h
 
-/-- Conversion toward negative infinity is an extended-real lower bound. -/
-theorem toBinary_towardNegative_le (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+/-- Conversion toward negative infinity gives an extended-real lower bound of the input. This is
+the enclosure half of the directed contract; maximality is not stated. -/
+theorem toBinary_down_le (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) (c : Nat) (q : Int) :
-    Model.toEReal (toBinary fmt hfmt .towardNegative (.finite s c q)).value ≤
+    Model.toEReal (toBinary fmt hfmt .down (.finite s c q)).value ≤
       (((Datum.finiteValue s c q : ℚ) : ℝ) : EReal) := by
-  have h := roundBinaryMagnitude_towardNegative_le fmt hfmt s
+  have h := roundBinaryMagnitude_down_le fmt hfmt s
     (by positivity : (0 : ℚ) ≤ c * (10 : ℚ) ^ q)
   cases s <;> simpa [toBinary, Datum.finiteValue] using h
 
-/-- A positive decimal input rounded toward zero does not increase. -/
+/-- A positive decimal input rounded toward zero does not increase. Like the other directed
+conversions, only this enclosure is stated. -/
 theorem toBinary_towardZero_positive_le (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (c : Nat) (q : Int) :
     Model.toEReal (toBinary fmt hfmt .towardZero (.finite false c q)).value ≤
       (((Datum.finiteValue false c q : ℚ) : ℝ) : EReal) := by
   simpa only [toBinary, roundBinaryMagnitude, Model.Internal.Directed.roundRat,
-    Model.Internal.Directed.roundRatScaled] using toBinary_towardNegative_le fmt hfmt false c q
+    Model.Internal.Directed.roundRatScaled] using toBinary_down_le fmt hfmt false c q
 
-/-- A negative decimal input rounded toward zero does not decrease. -/
+/-- A negative decimal input rounded toward zero does not decrease. Like the other directed
+conversions, only this enclosure is stated. -/
 theorem le_toBinary_towardZero_negative (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (c : Nat) (q : Int) :
     (((Datum.finiteValue true c q : ℚ) : ℝ) : EReal) ≤
       Model.toEReal (toBinary fmt hfmt .towardZero (.finite true c q)).value := by
   simpa only [toBinary, roundBinaryMagnitude, Model.Internal.Directed.roundRat,
     Model.Internal.Directed.roundRatScaled, Bool.not_true] using
-      le_toBinary_towardPositive fmt hfmt true c q
+      le_toBinary_up fmt hfmt true c q
 
 /-- A finite decimal input cannot raise invalid during numeric conversion. -/
 @[simp] theorem toBinary_finite_invalid (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)

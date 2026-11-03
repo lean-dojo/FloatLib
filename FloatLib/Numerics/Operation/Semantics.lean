@@ -182,19 +182,29 @@ def Checked3 (A B C D : NumericalSystem)
   RefinesFinite3 A B C run fun x y z result =>
     Option.map D.denote result = some (spec x y z)
 
-/-- A checked unary operation is correct whenever its scalar precondition holds. -/
+/--
+Whenever the scalar precondition holds for a represented input, a checked unary operation
+succeeds and its code denotes `spec x`. Outside the precondition it may fail or return anything.
+-/
 def Checked1On (A B : NumericalSystem) (run : A.Code → Option B.Code)
     (spec : A.Scalar → NumericalValue B.Scalar) (pre : A.Scalar → Prop) : Prop :=
   ∀ a x, pre x → A.Represents a x → Option.map B.denote (run a) = some (spec x)
 
-/-- A checked two-input operation is correct whenever its scalar precondition holds. -/
+/--
+Whenever the scalar precondition holds for represented inputs, a checked two-input operation
+succeeds and its code denotes `spec x y`. Outside the precondition it may fail or return anything.
+-/
 def Checked2On (A B C : NumericalSystem) (run : A.Code → B.Code → Option C.Code)
     (spec : A.Scalar → B.Scalar → NumericalValue C.Scalar)
     (pre : A.Scalar → B.Scalar → Prop) : Prop :=
   ∀ a b x y, pre x y → A.Represents a x → B.Represents b y →
     Option.map C.denote (run a b) = some (spec x y)
 
-/-- A checked three-input operation is correct whenever its scalar precondition holds. -/
+/--
+Whenever the scalar precondition holds for represented inputs, a checked three-input operation
+succeeds and its code denotes `spec x y z`. Outside the precondition it may fail or return
+anything.
+-/
 def Checked3On (A B C D : NumericalSystem)
     (run : A.Code → B.Code → C.Code → Option D.Code)
     (spec : A.Scalar → B.Scalar → C.Scalar → NumericalValue D.Scalar)

@@ -99,6 +99,16 @@ private theorem model_div_of_finite (mode : IEEERoundingMode)
       simp [Model.div, Internal.Directed.div, hchoose, hxInf, hyInf, hxZero, hyZero, hdx, hdy,
         ← hxSign, ← hySign, Bool.xor]
 
+/-- A finite stored operand decodes to the dyadic of its division components. -/
+private theorem toDyadic?_toModel_eq_division (h : Eligible fmt) (v : Value fmt)
+    (hfinite : expField v ≠ fmt.expAllOnesNat) :
+    toDyadic? (toModel v) =
+      some ((⟨signBit v, expField v, divisionMantissa v⟩ : FiniteKernel.Components).toDyadic
+        fmt) := by
+  rw [FiniteKernel.toDyadic_eq_decode, divisionMantissa_eq,
+    decode?_toModel v h.isIEEE h.exp_le hfinite]
+  rfl
+
 /-- Every accepted finite quotient has the exact public result in the requested rounding mode. -/
 theorem divFinite?_refines (h : Eligible fmt) (mode : IEEERoundingMode)
     (x y r : Value fmt) (hr : divFinite? fmt x y mode = some r) :
@@ -111,20 +121,10 @@ theorem divFinite?_refines (h : Eligible fmt) (mode : IEEERoundingMode)
     simp only [Bool.or_eq_true, beq_iff_eq, not_or, expWord_eq_all_iff h.exp_le] at hfields
     let dx : FiniteKernel.Components := ⟨signBit x, expField x, divisionMantissa x⟩
     let dy : FiniteKernel.Components := ⟨signBit y, expField y, divisionMantissa y⟩
-    have hxDecode : FiniteKernel.decode? (toModel x) = some dx := by
-      dsimp only [dx]
-      rw [divisionMantissa_eq]
-      exact decode?_toModel x h.isIEEE h.exp_le hfields.1
-    have hyDecode : FiniteKernel.decode? (toModel y) = some dy := by
-      dsimp only [dy]
-      rw [divisionMantissa_eq]
-      exact decode?_toModel y h.isIEEE h.exp_le hfields.2
-    have hdx : toDyadic? (toModel x) = some (dx.toDyadic fmt) := by
-      rw [FiniteKernel.toDyadic_eq_decode, hxDecode]
-      rfl
-    have hdy : toDyadic? (toModel y) = some (dy.toDyadic fmt) := by
-      rw [FiniteKernel.toDyadic_eq_decode, hyDecode]
-      rfl
+    have hdx : toDyadic? (toModel x) = some (dx.toDyadic fmt) :=
+      toDyadic?_toModel_eq_division h x hfields.1
+    have hdy : toDyadic? (toModel y) = some (dy.toDyadic fmt) :=
+      toDyadic?_toModel_eq_division h y hfields.2
     rw [← Option.some.inj hr, toModel_ofModel, model_div_of_finite mode hdx hdy]
     simp only [FiniteKernel.Components.toDyadic_negative, FiniteKernel.Components.toDyadic_mant]
     by_cases hyZero : divisionMantissa y = 0

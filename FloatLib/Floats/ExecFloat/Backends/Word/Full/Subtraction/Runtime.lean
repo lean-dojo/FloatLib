@@ -50,9 +50,9 @@ as subnormals; all other results are normalized without rounding.
 Try exact subtraction of positive normal binary64 values in Sterbenz's factor-two region.
 
 The same-exponent case aligns immediately. Adjacent exponents are accepted precisely when the
-significand of the larger operand is no greater than that of the smaller operand, which is the
-native field form of the
-factor-two condition.
+significand of the operand with the larger exponent is no greater than the other significand,
+which is the native field form of the factor-two condition. `subSterbenz?_isSome_iff` in
+`Subtraction.Proof` states the accepted inputs.
 -/
 @[inline] def subSterbenz? (x y : Value) : Option Value :=
   let xBits := toUInt64 x

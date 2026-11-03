@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import all FloatLib.Floats.Formats.Posit.Model.Decode
@@ -14,7 +15,14 @@ import all FloatLib.Kernels.FixedWord.Quotient.Compiler
 import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
+public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
+public import FloatLibTests.Conformance.BinaryInterchange.MixedError
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
+public import FloatLibTests.Conformance.BinaryInterchange.Roundoff
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations
+public import FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples
 public import FloatLibTests.Conformance.Execution.Certificates
 public import FloatLibTests.Conformance.Posit.Quire
 public meta import Lean.Compiler.CSimpAttr
@@ -29,7 +37,8 @@ public meta import Lean.Util.CollectAxioms
 At build time, collect the transitive axioms of every loaded declaration whose originating
 module belongs to `FloatLib`, including private declarations available in this environment.
 Only propositional extensionality, quotient soundness, and classical choice are accepted.
-The imports cover the public root and the optional binary and decimal transcendental proofs.
+The imports cover the public root, the optional binary and decimal transcendental proofs and the
+`roundoff` analysis.
 The quotient, integer square root, and checked square root compiler certificates are loaded
 explicitly because their clients import them privately.
 Unimported modules are outside this check. Symbolic certificate, quire, and native-model regression
@@ -66,6 +75,63 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.truncation_custom_value,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.scaled_rational_zero,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.sterbenz_negative,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.toReal_expMinus1_tinyThreeHalves,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.exp_eightyNine_overflows,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expMinus1_lt_zero_binary32,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expMinus1_lt_zero_bfloat16,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.logPlus1_pos_leastSubnormal,
+    ``FloatLibTests.Conformance.BinaryInterchange.MixedError.oneHot_sum_binary32,
+    ``FloatLibTests.Conformance.BinaryInterchange.MixedError.oneHot_sum_bfloat16,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.horner_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.dot_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.horner_array_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.mulVec_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.expSum_nonneg,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.softmax_weight_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.fma_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scale_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.peak_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scaled_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions.sum_squares_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions.ping_mutual_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions.quarter_of_abs_le_one,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.round32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.ofInt32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.quantize_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.peak32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scale32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scale32_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.quarter_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.rotate32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scaleSize32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.ofSmallInt32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.ofSize32_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.quantize_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.online_sum_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.online_sum_of_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.max_sum_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.online_attention_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.blocked_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.welford_squares_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.merged_squares_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.kahan_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.kahanStep_relation,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.kahan_sum_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.kahan_sum_abs_sub_le,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.kahan_product_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.max_vector_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.ema_corrected_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.kahan_list_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.kahan_list_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.kahan_array_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.kahan_vector_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.neumaierStep_relation,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.neumaierRelation_read,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.neumaier_sum_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.neumaier_sum_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.neumaier_array_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations.kahan_squares_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples.square_gated_sum_mixedError,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_roundtrip,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_roundtrip,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_nan_canonicalized,
@@ -84,6 +150,10 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_commutes,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_sqrt_negative_zero,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_sqrt_negative_one,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_bridges_rewrite,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_isFinite_mul_rewrite,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_bridges_simp,
+    ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_sqrt_rewrite,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native64_add_sub_commute,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.native32_add_overflow,
     ``FloatLibTests.Conformance.BinaryInterchange.NativeModel.unpacked64_div_zero_quotient,

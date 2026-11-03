@@ -37,7 +37,11 @@ namespace RationalInterval
 def point (x : ℚ) : RationalInterval :=
   ⟨x, x⟩
 
-/-- An interval described by its midpoint and absolute-error radius. -/
+/--
+The interval with endpoints `midpoint - radius` and `midpoint + radius`, for any `radius`. With a
+nonnegative radius it is the ball of absolute error `radius` around `midpoint` (`contains_around`);
+a negative radius gives reversed endpoints, an empty interval.
+-/
 def around (midpoint radius : ℚ) : RationalInterval :=
   ⟨midpoint - radius, midpoint + radius⟩
 
@@ -53,7 +57,12 @@ def add (left right : RationalInterval) : RationalInterval :=
 def sub (left right : RationalInterval) : RationalInterval :=
   add left (neg right)
 
-/-- Multiply both endpoints by a nonnegative rational scale. -/
+/--
+Multiply both endpoints of `interval` by `factor` without exchanging them, for any rational
+`factor`. The intended use is a nonnegative factor, where the result encloses `factor * x` for
+every enclosed `x` (`contains_scaleNonnegative`). With a negative factor and ordered endpoints, the
+new lower endpoint is the larger one; `scale` exchanges them.
+-/
 def scaleNonnegative (interval : RationalInterval) (factor : ℚ) : RationalInterval :=
   ⟨factor * interval.lo, factor * interval.hi⟩
 

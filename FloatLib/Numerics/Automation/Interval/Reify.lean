@@ -20,6 +20,10 @@ The interval tactic translates real arithmetic into the common expression langua
 its real interpretation equal to the original expression. Numerical constants carry `norm_num`
 certificates. Unrecognized subexpressions become atoms whose bounds are collected by `Bounds`.
 One state keeps atom indices, shared syntax, and the certificates needed for equality proofs.
+
+These routines construct syntax and proof terms in Lean's metaprogramming layer. Definitional
+unfolding can enlarge quoted syntax, so the expression walks use `partial` with Lean's heartbeat
+and recursion-depth checks. The kernel checks the constructed evidence before a goal is closed.
 -/
 
 public section
@@ -107,16 +111,17 @@ private def reifyAtom (e : Q(ℝ)) : StateRefT ReifyState MetaM Q(Interval.Expr)
 Reify real arithmetic, natural powers, and elementary functions.
 
 Registered functions and rational constants are recognized before the structural cases.
-An unsupported operation is kept
-as an atom, so the caller must supply an interval for that complete real subexpression.
+An unsupported operation becomes an atom whose complete real subexpression needs an input bound.
 -/
 partial def reify (e : Q(ℝ)) :
-    StateRefT ReifyState MetaM Q(Interval.Expr) := do
-  let e : Q(ℝ) ← pure e.consumeMData
-  if let some result := (← get).expressions.get? e then return result
-  let result ← build e
-  modify fun cache ↦ { cache with expressions := cache.expressions.insert e result }
-  return result
+    StateRefT ReifyState MetaM Q(Interval.Expr) :=
+  withIncRecDepth do
+    checkSystem "interval reification"
+    let e : Q(ℝ) ← pure e.consumeMData
+    if let some result := (← get).expressions.get? e then return result
+    let result ← build e
+    modify fun cache ↦ { cache with expressions := cache.expressions.insert e result }
+    return result
 where
   /-- Recognize a scalar expression that has not yet been reified. -/
   build (e : Q(ℝ)) :
@@ -202,52 +207,54 @@ agree definitionally with its environment entry; no numerical evaluation of a re
 -/
 partial def evalEquality (source : Q(ℝ)) (expression : Q(Interval.Expr))
     (values : Q(Nat → ℝ)) (cache : ReifyState)
-    (functions : Q(Nat → List ℝ → ℝ)) : MetaM Lean.Expr := do
-  let source : Q(ℝ) ← pure source.consumeMData
-  match expression with
-  | ~q(Interval.Expr.const $c) =>
-    let some equality := cache.rationals.get? source
-      | throwError "interval could not recover the rational value of {source}"
-    unless ← isDefEq (← inferType equality) q($source = ($c : ℝ)) do
-      throwError "interval found inconsistent rational expressions"
-    return equality
-  | ~q(Interval.Expr.var $_i) => mkEqRefl source
-  | ~q(Interval.Expr.unary $op $a) =>
-    let input ← unaryOperand op source
-    let h ← evalEquality input a values cache functions
-    mkCongrArg q(UnaryOp.eval $op) h
-  | ~q(Interval.Expr.binary $op $a $b) =>
-    let (left, right) ← binaryOperands op source
-    let hleft ← evalEquality left a values cache functions
-    let hright ← evalEquality right b values cache functions
-    mkCongr (← mkCongrArg q(BinaryOp.eval $op) hleft) hright
-  | ~q(Interval.Expr.ternary $op $a $b $c) =>
-    let ~q($first * $second + $third) := source
-      | throwError "interval could not recover the multiply-add operands of {source}"
-    let hfirst ← evalEquality first a values cache functions
-    let hsecond ← evalEquality second b values cache functions
-    let hthird ← evalEquality third c values cache functions
-    mkCongr (← mkCongr (← mkCongrArg q(TernaryOp.eval $op) hfirst) hsecond) hthird
-  | ~q(Interval.Expr.call $index $args) =>
-    let some inputs := cache.calls.get? source
-      | throwError "interval could not recover registered arguments of {source}"
-    let mut sourceArgs : Q(List ℝ) := q([])
-    let mut equality : Lean.Expr := ← mkEqRefl sourceArgs
-    let mut nodes := args
-    let mut expressions : Array Q(Interval.Expr) := #[]
-    for _ in inputs do
-      let ~q($head :: $tail) := nodes
-        | throwError "interval found inconsistent registered arguments"
-      expressions := expressions.push head
-      nodes := tail
-    for input in inputs.reverse, expression in expressions.reverse do
-      let h ← evalEquality input expression values cache functions
-      equality ← mkCongr (← mkCongrArg q(List.cons (α := ℝ)) h) equality
-      sourceArgs := q($input :: $sourceArgs)
-    let sourceEquality ← mkEqRefl source
-    unless ← isDefEq source q($functions $index $sourceArgs) do
-      throwError "interval found an inconsistent registered real function"
-    mkEqTrans sourceEquality (← mkCongrArg q($functions $index) equality)
-  | _ => throwError "interval could not interpret its reified expression"
+    (functions : Q(Nat → List ℝ → ℝ)) : MetaM Lean.Expr :=
+  withIncRecDepth do
+    checkSystem "interval equality reconstruction"
+    let source : Q(ℝ) ← pure source.consumeMData
+    match expression with
+    | ~q(Interval.Expr.const $c) =>
+      let some equality := cache.rationals.get? source
+        | throwError "interval could not recover the rational value of {source}"
+      unless ← isDefEq (← inferType equality) q($source = ($c : ℝ)) do
+        throwError "interval found inconsistent rational expressions"
+      return equality
+    | ~q(Interval.Expr.var $_i) => mkEqRefl source
+    | ~q(Interval.Expr.unary $op $a) =>
+      let input ← unaryOperand op source
+      let h ← evalEquality input a values cache functions
+      mkCongrArg q(UnaryOp.eval $op) h
+    | ~q(Interval.Expr.binary $op $a $b) =>
+      let (left, right) ← binaryOperands op source
+      let hleft ← evalEquality left a values cache functions
+      let hright ← evalEquality right b values cache functions
+      mkCongr (← mkCongrArg q(BinaryOp.eval $op) hleft) hright
+    | ~q(Interval.Expr.ternary $op $a $b $c) =>
+      let ~q($first * $second + $third) := source
+        | throwError "interval could not recover the multiply-add operands of {source}"
+      let hfirst ← evalEquality first a values cache functions
+      let hsecond ← evalEquality second b values cache functions
+      let hthird ← evalEquality third c values cache functions
+      mkCongr (← mkCongr (← mkCongrArg q(TernaryOp.eval $op) hfirst) hsecond) hthird
+    | ~q(Interval.Expr.call $index $args) =>
+      let some inputs := cache.calls.get? source
+        | throwError "interval could not recover registered arguments of {source}"
+      let mut sourceArgs : Q(List ℝ) := q([])
+      let mut equality : Lean.Expr := ← mkEqRefl sourceArgs
+      let mut nodes := args
+      let mut expressions : Array Q(Interval.Expr) := #[]
+      for _ in inputs do
+        let ~q($head :: $tail) := nodes
+          | throwError "interval found inconsistent registered arguments"
+        expressions := expressions.push head
+        nodes := tail
+      for input in inputs.reverse, expression in expressions.reverse do
+        let h ← evalEquality input expression values cache functions
+        equality ← mkCongr (← mkCongrArg q(List.cons (α := ℝ)) h) equality
+        sourceArgs := q($input :: $sourceArgs)
+      let sourceEquality ← mkEqRefl source
+      unless ← isDefEq source q($functions $index $sourceArgs) do
+        throwError "interval found an inconsistent registered real function"
+      mkEqTrans sourceEquality (← mkCongrArg q($functions $index) equality)
+    | _ => throwError "interval could not interpret its reified expression"
 
 end FloatLib.Numerics.Interval.Tactic

@@ -48,6 +48,11 @@ def natQuotientSteps (den : Nat) :
   | 0, state => state
   | n + 1, state => natQuotientSteps den n (natQuotientStep den state)
 
+/-- One restoring step at most doubles the quotient and adds one. -/
+theorem natQuotientStep_quotient_le (den : Nat) (state : QuotientState Nat) :
+    (natQuotientStep den state).quotient ≤ 2 * state.quotient + 1 := by
+  by_cases hbelow : 2 * state.remainder < den <;> simp [natQuotientStep, hbelow]
+
 /--
 One restoring step doubles the represented numerator, preserves a reduced remainder, and never
 decreases the quotient.
@@ -279,19 +284,23 @@ theorem quotientStep128_toNat
     FloatLib.Numerics.FixedWord.UInt128.shiftLeft state.quotient 1
   let doubledRemainder :=
     FloatLib.Numerics.FixedWord.UInt128.shiftLeft state.remainder 1
-  have hremainderDoubleFit :
-      state.remainder.toNat + state.remainder.toNat < 2 ^ 128 := by
-    nlinarith
-  have hremainderShiftFit :
-      state.remainder.toNat <<< 1 < 2 ^ 128 := by
-    simp only [Nat.shiftLeft_eq, pow_one]
-    omega
   have hremainderDouble :
       doubledRemainder.toNat = 2 * state.remainder.toNat := by
     dsimp only [doubledRemainder]
-    rw [FloatLib.Numerics.FixedWord.UInt128.shiftLeft_toNat
-      _ 1 (by omega) hremainderShiftFit]
-    simp [Nat.shiftLeft_eq, Nat.mul_comm]
+    rw [FloatLib.Numerics.FixedWord.UInt128.shiftLeft_toNat_eq_mul
+      _ 1 (by omega)]
+    omega
+  have hquotientFit : 2 * state.quotient.toNat < 2 ^ 128 := by
+    by_cases hbelow : 2 * state.remainder.toNat < den.toNat <;>
+      simp only [natQuotientStep, QuotientState.toNat128, hbelow, ite_true,
+        ite_false] at hnextFit <;>
+      omega
+  have hquotientDouble :
+      doubledQuotient.toNat = 2 * state.quotient.toNat := by
+    dsimp only [doubledQuotient]
+    rw [FloatLib.Numerics.FixedWord.UInt128.shiftLeft_toNat_eq_mul
+      _ 1 (by omega)]
+    omega
   by_cases hbelow :
       2 * state.remainder.toNat < den.toNat
   · have hnativeBelow :
@@ -301,23 +310,6 @@ theorem quotientStep128_toNat
         (FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff
           doubledRemainder den).2
       rwa [hremainderDouble]
-    have hquotientDoubleFit :
-        state.quotient.toNat + state.quotient.toNat < 2 ^ 128 := by
-      have hbound :
-          2 * state.quotient.toNat < 2 ^ 128 := by
-        simpa only [natQuotientStep, hbelow, ite_true,
-          QuotientState.toNat128] using hnextFit
-      nlinarith
-    have hquotientShiftFit :
-        state.quotient.toNat <<< 1 < 2 ^ 128 := by
-      simp only [Nat.shiftLeft_eq, pow_one]
-      omega
-    have hquotientDouble :
-        doubledQuotient.toNat = 2 * state.quotient.toNat := by
-      dsimp only [doubledQuotient]
-      rw [FloatLib.Numerics.FixedWord.UInt128.shiftLeft_toNat
-        _ 1 (by omega) hquotientShiftFit]
-      simp [Nat.shiftLeft_eq, Nat.mul_comm]
     have hstep :
         quotientStep128 den state =
           { quotient := doubledQuotient
@@ -351,33 +343,11 @@ theorem quotientStep128_toNat
     have hge : den.toNat ≤ doubledRemainder.toNat := by
       rw [hremainderDouble]
       omega
-    have hnextQuotientFit :
-        2 * state.quotient.toNat + 1 < 2 ^ 128 := by
-      simpa only [natQuotientStep, hbelow, ite_false,
-        QuotientState.toNat128] using hnextFit
-    have hquotientDoubleFit :
-        state.quotient.toNat + state.quotient.toNat < 2 ^ 128 := by
-      omega
-    have hquotientShiftFit :
-        state.quotient.toNat <<< 1 < 2 ^ 128 := by
-      simp only [Nat.shiftLeft_eq, pow_one]
-      omega
-    have hquotientDouble :
-        doubledQuotient.toNat = 2 * state.quotient.toNat := by
-      dsimp only [doubledQuotient]
-      rw [FloatLib.Numerics.FixedWord.UInt128.shiftLeft_toNat
-        _ 1 (by omega) hquotientShiftFit]
-      simp [Nat.shiftLeft_eq, Nat.mul_comm]
     have hquotientSetLowBit :
         doubledQuotient.setLowBit.toNat =
           2 * state.quotient.toNat + 1 := by
-      rw [FloatLib.Numerics.FixedWord.UInt128.setLowBit_toNat,
-        hquotientDouble]
-      have happend :=
-        Nat.shiftLeft_add_eq_or_of_lt
-          (a := state.quotient.toNat) (i := 1) (b := 1)
-          (by norm_num)
-      simpa [Nat.shiftLeft_eq, Nat.mul_comm] using happend.symm
+      rw [FloatLib.Numerics.FixedWord.UInt128.setLowBit_toNat_of_even _
+        (by rw [hquotientDouble]; omega), hquotientDouble]
     have hremainderSubtract :
         (FloatLib.Numerics.FixedWord.UInt128.sub
             doubledRemainder den).toNat =
@@ -555,23 +525,35 @@ theorem roundScaledQuotient_toNat
 
 
 /--
-The native-word rational logarithm selector agrees with the representation-independent
-`floorLog2` specification for nonzero operands.
+Leading-bit positions bound a shifted comparison strictly: if the top bit of `n * 2 ^ a` lies below
+the top bit of `d * 2 ^ b`, then `n * 2 ^ a < d * 2 ^ b`.
 -/
-theorem floorLog2RatWord_eq (num den : UInt64)
-    (hnum : num ≠ 0) (hden : den ≠ 0) :
+private theorem mul_two_pow_lt_mul_two_pow_of_log2 {n d a b : Nat} (hd : d ≠ 0)
+    (h : n.log2 + 1 + a ≤ d.log2 + b) : n * 2 ^ a < d * 2 ^ b :=
+  calc n * 2 ^ a < 2 ^ (n.log2 + 1) * 2 ^ a :=
+        Nat.mul_lt_mul_of_pos_right Nat.lt_log2_self (Nat.two_pow_pos _)
+    _ = 2 ^ (n.log2 + 1 + a) := (pow_add 2 (n.log2 + 1) a).symm
+    _ ≤ 2 ^ (d.log2 + b) := Nat.pow_le_pow_right (by decide) h
+    _ = 2 ^ d.log2 * 2 ^ b := pow_add 2 d.log2 b
+    _ ≤ d * 2 ^ b := Nat.mul_le_mul_right _ (Nat.log2_self_le hd)
+
+/--
+The native-word rational logarithm selector agrees with the representation-independent
+`floorLog2` specification whenever the denominator is nonzero.
+-/
+theorem floorLog2RatWord_eq (num den : UInt64) (hden : den ≠ 0) :
     floorLog2RatWord num den =
       FloatLib.Numerics.RationalBinary.floorLog2
         num.toNat den.toNat := by
-  have hnumNat : num.toNat ≠ 0 := by
-    simpa [← UInt64.toNat_inj] using hnum
   have hdenNat : den.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hden
   have hnumLog := FloatLib.Numerics.FixedWord.log2_toNat num
   have hdenLog := FloatLib.Numerics.FixedWord.log2_toNat den
   have hnumLogLt : num.toNat.log2 < 64 := by
-    rw [Nat.log2_lt hnumNat]
-    exact num.toNat_lt
+    rcases Nat.eq_zero_or_pos num.toNat with hzero | hpositive
+    · simp [hzero]
+    · rw [Nat.log2_lt hpositive.ne']
+      exact num.toNat_lt
   have hdenLogLt : den.toNat.log2 < 64 := by
     rw [Nat.log2_lt hdenNat]
     exact den.toNat_lt
@@ -592,24 +574,13 @@ theorem floorLog2RatWord_eq (num den : UInt64)
       dsimp only [shift]
       omega
     have hdenShiftFit :
-        den.toNat <<< shift < 2 ^ 64 := by
-      have hbound :
-          den.toNat <<< shift <
-            2 ^ (den.toNat.log2 + 1 + shift) :=
-        Nat.shiftLeft_lt Nat.lt_log2_self
-      rw [← hdenLog] at hbound
-      have hexponent :
-          den.log2.toNat + 1 + shift =
-            num.log2.toNat + 1 := by
-        dsimp only [shift]
-        omega
-      rw [hexponent] at hbound
-      exact lt_of_lt_of_le hbound <|
-        Nat.pow_le_pow_right (by decide) (by omega)
+        den.toNat <<< shift < 2 ^ 64 :=
+      shiftLeft_lt_two_pow_of_log2_add_le _ _ 64
+        (by rw [← hdenLog]; dsimp only [shift]; omega)
     have hshifted :
         (den <<< UInt64.ofNat shift).toNat =
           den.toNat <<< shift :=
-      FloatLib.Numerics.FixedWord.shiftLeft_toNat den shift hshiftLt hdenShiftFit
+      FloatLib.Numerics.FixedWord.shiftLeft_toNat den shift hdenShiftFit
     have hinitial :
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat =
           Int.ofNat shift := by
@@ -626,23 +597,11 @@ theorem floorLog2RatWord_eq (num den : UInt64)
     by_cases hbelow : num.toNat < den.toNat <<< shift
     · simp [hbelow]
     · simp [hbelow]
-      have hnumUpper : num.toNat < 2 ^ (num.toNat.log2 + 1) :=
-        Nat.lt_log2_self
-      have hdenLower : 2 ^ den.toNat.log2 ≤ den.toNat :=
-        Nat.log2_self_le hdenNat
       have hupper :
           num.toNat < den.toNat <<< (shift + 1) := by
         rw [Nat.shiftLeft_eq]
-        calc
-          num.toNat < 2 ^ (num.toNat.log2 + 1) := hnumUpper
-          _ = 2 ^ den.toNat.log2 * 2 ^ (shift + 1) := by
-            rw [← pow_add]
-            congr 1
-            rw [← hnumLog, ← hdenLog]
-            dsimp only [shift]
-            omega
-          _ ≤ den.toNat * 2 ^ (shift + 1) :=
-            Nat.mul_le_mul_right _ hdenLower
+        simpa using mul_two_pow_lt_mul_two_pow_of_log2 (a := 0) (b := shift + 1) hdenNat
+          (by rw [← hnumLog, ← hdenLog]; dsimp only [shift]; omega)
       have hnotGe :
           Numerics.RationalBinary.atLeastPowerOfTwo num.toNat den.toNat
               (Int.ofNat shift + 1) = false := by
@@ -663,24 +622,13 @@ theorem floorLog2RatWord_eq (num den : UInt64)
       dsimp only [shift]
       omega
     have hnumShiftFit :
-        num.toNat <<< shift < 2 ^ 64 := by
-      have hbound :
-          num.toNat <<< shift <
-            2 ^ (num.toNat.log2 + 1 + shift) :=
-        Nat.shiftLeft_lt Nat.lt_log2_self
-      rw [← hnumLog] at hbound
-      have hexponent :
-          num.log2.toNat + 1 + shift =
-            den.log2.toNat + 1 := by
-        dsimp only [shift]
-        omega
-      rw [hexponent] at hbound
-      exact lt_of_lt_of_le hbound <|
-        Nat.pow_le_pow_right (by decide) (by omega)
+        num.toNat <<< shift < 2 ^ 64 :=
+      shiftLeft_lt_two_pow_of_log2_add_le _ _ 64
+        (by rw [← hnumLog]; dsimp only [shift]; omega)
     have hshifted :
         (num <<< UInt64.ofNat shift).toNat =
           num.toNat <<< shift :=
-      FloatLib.Numerics.FixedWord.shiftLeft_toNat num shift hshiftLt hnumShiftFit
+      FloatLib.Numerics.FixedWord.shiftLeft_toNat num shift hnumShiftFit
     have hinitial :
         Int.ofNat num.log2.toNat - Int.ofNat den.log2.toNat =
           -Int.ofNat shift := by
@@ -712,20 +660,10 @@ theorem floorLog2RatWord_eq (num den : UInt64)
           hshiftSucc, hbelow]
       simpa [hnotGe]
     · simp [hbelow]
-      have hnumUpper : num.toNat < 2 ^ (num.toNat.log2 + 1) :=
-        Nat.lt_log2_self
-      have hdenLower : 2 ^ den.toNat.log2 ≤ den.toNat :=
-        Nat.log2_self_le hdenNat
       by_cases hshiftOne : shift = 1
       · have hnumDen : num.toNat < den.toNat := by
-          calc
-            num.toNat < 2 ^ (num.toNat.log2 + 1) := hnumUpper
-            _ = 2 ^ den.toNat.log2 := by
-              rw [← hnumLog, ← hdenLog]
-              congr 1
-              dsimp only [shift] at hshiftOne
-              omega
-            _ ≤ den.toNat := hdenLower
+          simpa using mul_two_pow_lt_mul_two_pow_of_log2 (a := 0) (b := 0) hdenNat
+            (by rw [← hnumLog, ← hdenLog]; dsimp only [shift] at hshiftOne; omega)
         have hnotGe :
             Numerics.RationalBinary.atLeastPowerOfTwo num.toNat den.toNat 0 = false := by
           simp [Numerics.RationalBinary.atLeastPowerOfTwo, hnumDen]
@@ -737,17 +675,8 @@ theorem floorLog2RatWord_eq (num den : UInt64)
         have hupper :
             num.toNat <<< (shift - 1) < den.toNat := by
           rw [Nat.shiftLeft_eq]
-          calc
-            num.toNat * 2 ^ (shift - 1) <
-                2 ^ (num.toNat.log2 + 1) * 2 ^ (shift - 1) :=
-              Nat.mul_lt_mul_of_pos_right hnumUpper (pow_pos (by decide) _)
-            _ = 2 ^ den.toNat.log2 := by
-              rw [← pow_add]
-              congr 1
-              rw [← hnumLog, ← hdenLog]
-              dsimp only [shift]
-              omega
-            _ ≤ den.toNat := hdenLower
+          simpa using mul_two_pow_lt_mul_two_pow_of_log2 (a := shift - 1) (b := 0) hdenNat
+            (by rw [← hnumLog, ← hdenLog]; dsimp only [shift]; omega)
         have hexponent :
             Int.negSucc (shift - 1) + 1 =
               Int.negSucc (shift - 2) := by

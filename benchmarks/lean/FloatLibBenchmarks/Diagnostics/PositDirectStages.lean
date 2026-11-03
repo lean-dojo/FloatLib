@@ -217,7 +217,7 @@ private def parseNat (label text : String) : IO Nat :=
 
 private def formatOfWidth (width : Nat) : IO Format := do
   if hwidth : 2 ≤ width then
-    pure (Format.ofBits width hwidth)
+    pure { bits := width, bits_ge_two := hwidth }
   else
     throw <| IO.userError s!"Posit width must be at least 2: {width}"
 
@@ -235,15 +235,15 @@ private def auditWideWidth (width : Nat) : IO Unit := do
     (boundaryCodes format ++ publicSquareRootCodes format)
 
 private def wideFormats : Array Format :=
-  #[Format.ofBits 32, Format.ofBits 64, Format.ofBits 128,
-    Format.ofBits 256, Format.ofBits 512, Format.ofBits 1024,
-    Format.ofBits 2048, Format.ofBits 4096]
+  #[{ bits := 32 }, { bits := 64 }, { bits := 128 },
+    { bits := 256 }, { bits := 512 }, { bits := 1024 },
+    { bits := 2048 }, { bits := 4096 }]
 
 private def smallFormats : Array Format :=
-  #[Format.ofBits 2, Format.ofBits 3, Format.ofBits 4, Format.ofBits 5,
-    Format.ofBits 6, Format.ofBits 7, Format.ofBits 8, Format.ofBits 9,
-    Format.ofBits 10, Format.ofBits 11, Format.ofBits 12, Format.ofBits 13,
-    Format.ofBits 14, Format.ofBits 15, Format.ofBits 16]
+  #[{ bits := 2 }, { bits := 3 }, { bits := 4 }, { bits := 5 },
+    { bits := 6 }, { bits := 7 }, { bits := 8 }, { bits := 9 },
+    { bits := 10 }, { bits := 11 }, { bits := 12 }, { bits := 13 },
+    { bits := 14 }, { bits := 15 }, { bits := 16 }]
 
 def run : IO Unit := do
   printAuditHeader

@@ -21,10 +21,11 @@ each require only the corresponding property of that function. In particular, th
 is not restricted to nearest-even rounding.
 
 `AffineQuantizer.toReal` embeds the executable rational quantizer's parameters without changing
-the code interval. `toReal_quantize` and `toReal_roundedValue` transport any agreement between
-rational and real integer rounding to the complete saturated operation. The Flocq rounding
-adapter specializes this agreement to nearest-even; executable clients can continue importing
-`Affine` alone without loading real-number theory.
+the code interval. The executable quantizer rounds with `roundRatEven`, so `toReal_quantize` and
+`toReal_roundedValue` assume a real rounder that agrees with `roundRatEven` on rationals; the real
+quantizer with that rounder then reproduces the complete saturated operation. The Flocq rounding
+adapter discharges the agreement for its nearest-even rounder; executable clients can continue
+importing `Affine` alone without loading real-number theory.
 -/
 
 @[expose] public section
@@ -160,7 +161,10 @@ noncomputable def toReal (q : AffineQuantizer) : RealAffineQuantizer where
     q.toReal.dequantize code = (q.dequantize code : ℝ) := by
   simp [toReal, RealAffineQuantizer.dequantize, dequantize]
 
-/-- Agreement of integer rounding lifts to affine quantization, including saturation. -/
+/--
+A real rounder that agrees with `roundRatEven` on rationals makes the real quantizer reproduce the
+executable one on rational inputs, including saturation.
+-/
 theorem toReal_quantize (q : AffineQuantizer) (rnd : ℝ → ℤ)
     (hround : ∀ x : ℚ, rnd x = roundRatEven x) (x : ℚ) :
     q.toReal.quantize rnd x = q.quantize x := by
@@ -168,7 +172,10 @@ theorem toReal_quantize (q : AffineQuantizer) (rnd : ℝ → ℤ)
   rw [← Rat.cast_div, hround]
   rfl
 
-/-- Reconstruction commutes with exact embedding whenever integer rounding does. -/
+/--
+With a real rounder that agrees with `roundRatEven` on rationals, reconstruction commutes with the
+exact rational-to-real embedding.
+-/
 theorem toReal_roundedValue (q : AffineQuantizer) (rnd : ℝ → ℤ)
     (hround : ∀ x : ℚ, rnd x = roundRatEven x) (x : ℚ) :
     q.toReal.roundedValue rnd x = (q.roundedValue x : ℝ) := by

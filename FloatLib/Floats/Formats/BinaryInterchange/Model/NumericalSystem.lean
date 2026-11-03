@@ -19,6 +19,8 @@ public import Mathlib.Algebra.Order.Algebra
 The `NumericalSystem` interface gives `Model fmt` a representation-independent semantic view.
 Its ordinary semantic domain is `ℝ`; supported infinities retain their signs, and NaNs retain
 their diagnostic payload without the quiet bit, together with their sign bit and signaling class.
+Both zeros denote the real `0`, so the refinement theorems stated through this interface say
+nothing about the sign of a zero result; signed-zero behaviour has its own word-level theorems.
 
 `Model.toDyadic?` supplies the executable exact dyadic decoder. This real-valued view lets
 generic refinement results compose with other numerical families.
@@ -31,7 +33,8 @@ namespace Model
 
 open FloatLib.Numerics
 
-/-- Complete real-valued interpretation of an executable float. -/
+/-- Real-valued interpretation of every executable float. Finite values, both zeros included,
+denote their real value, so the zero sign is not observed. -/
 noncomputable def toNumericalValue {fmt : FloatFormat}
     (x : Model fmt) : NumericalValue ℝ :=
   if isNaN x then
@@ -138,12 +141,31 @@ theorem neg_refines (fmt : FloatFormat) :
     exact isFinite_of_represents hx'
   rw [toReal_neg x (isFinite_of_represents hx'), toReal_eq_of_represents hx']
 
-/-- Executable addition refines one nearest-even rounding for a conventional IEEE format,
-provided the result is finite. -/
-theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
-    Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
-      (numericalSystem fmt) Model.add
-      (fun (x y : ℝ) => roundAt fmt (x + y))
+/--
+A conversion whose finite results have the real value `spec` of the real value of a finite operand
+refines `spec` on represented finite reals, provided the result is finite.
+-/
+private theorem finite1If_of_toReal {src dst : FloatFormat} (run : Model src → Model dst)
+    (spec : ℝ → ℝ)
+    (h : ∀ x, isFinite x = true → isFinite (run x) = true → toReal (run x) = spec (toReal x)) :
+    Operation.Finite1If (numericalSystem src) (numericalSystem dst) run spec
+      (fun _ result => isFinite result = true) := by
+  unfold Operation.Finite1If numericalSystem
+  intro x r hx hout
+  have hx' : Represents x r := hx
+  apply (represents_iff _ _).2
+  refine ⟨hout, ?_⟩
+  rw [h x (isFinite_of_represents hx') hout, toReal_eq_of_represents hx']
+
+/--
+A binary operation whose finite results have the real value `spec` of the real values of finite
+operands refines `spec` on represented finite reals, provided the result is finite.
+-/
+private theorem finite2If_of_toReal {fmt : FloatFormat}
+    (run : Model fmt → Model fmt → Model fmt) (spec : ℝ → ℝ → ℝ)
+    (h : ∀ x y, isFinite x = true → isFinite y = true → isFinite (run x y) = true →
+      toReal (run x y) = spec (toReal x) (toReal y)) :
+    Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt) (numericalSystem fmt) run spec
       (fun _ _ result => isFinite result = true) := by
   unfold Operation.Finite2If numericalSystem
   intro x y r s hx hy hout
@@ -151,9 +173,17 @@ theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
   have hy' : Represents y s := hy
   apply (represents_iff _ _).2
   refine ⟨hout, ?_⟩
-  rw [toReal_add_eq_roundAt x y hfmt (isFinite_of_represents hx')
-    (isFinite_of_represents hy') hout]
-  rw [toReal_eq_of_represents hx', toReal_eq_of_represents hy']
+  rw [h x y (isFinite_of_represents hx') (isFinite_of_represents hy') hout,
+    toReal_eq_of_represents hx', toReal_eq_of_represents hy']
+
+/-- Executable addition refines one nearest-even rounding for a conventional IEEE format,
+provided the result is finite. -/
+theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+    Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
+      (numericalSystem fmt) Model.add
+      (fun (x y : ℝ) => roundAt fmt (x + y))
+      (fun _ _ result => isFinite result = true) :=
+  finite2If_of_toReal Model.add _ fun x y _ _ hout => toReal_add_eq_roundAt x y hfmt hout
 
 /-- Executable subtraction refines one nearest-even rounding for a conventional IEEE format,
 provided the result is finite. -/
@@ -161,16 +191,8 @@ theorem sub_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
       (numericalSystem fmt) Model.sub
       (fun (x y : ℝ) => roundAt fmt (x - y))
-      (fun _ _ result => isFinite result = true) := by
-  unfold Operation.Finite2If numericalSystem
-  intro x y r s hx hy hout
-  have hx' : Represents x r := hx
-  have hy' : Represents y s := hy
-  apply (represents_iff _ _).2
-  refine ⟨hout, ?_⟩
-  rw [toReal_sub_eq_roundAt x y hfmt (isFinite_of_represents hx')
-    (isFinite_of_represents hy') hout]
-  rw [toReal_eq_of_represents hx', toReal_eq_of_represents hy']
+      (fun _ _ result => isFinite result = true) :=
+  finite2If_of_toReal Model.sub _ fun x y _ _ hout => toReal_sub_eq_roundAt x y hfmt hout
 
 /-- Executable multiplication refines one nearest-even rounding for a conventional IEEE format,
 provided the result is finite. -/
@@ -178,16 +200,8 @@ theorem mul_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
       (numericalSystem fmt) Model.mul
       (fun (x y : ℝ) => roundAt fmt (x * y))
-      (fun _ _ result => isFinite result = true) := by
-  unfold Operation.Finite2If numericalSystem
-  intro x y r s hx hy hout
-  have hx' : Represents x r := hx
-  have hy' : Represents y s := hy
-  apply (represents_iff _ _).2
-  refine ⟨hout, ?_⟩
-  rw [toReal_mul_eq_roundAt x y hfmt (isFinite_of_represents hx')
-    (isFinite_of_represents hy') hout]
-  rw [toReal_eq_of_represents hx', toReal_eq_of_represents hy']
+      (fun _ _ result => isFinite result = true) :=
+  finite2If_of_toReal Model.mul _ fun x y _ _ hout => toReal_mul_eq_roundAt x y hfmt hout
 
 /--
 For a conventional IEEE format, executable fused multiply-add refines one nearest-even rounding
@@ -205,38 +219,20 @@ theorem fma_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
   have hz' : Represents z t := hz
   apply (represents_iff _ _).2
   refine ⟨hout, ?_⟩
-  rw [toReal_fma_eq_roundAt x y z hfmt (isFinite_of_represents hx')
-    (isFinite_of_represents hy') (isFinite_of_represents hz') hout]
+  rw [toReal_fma_eq_roundAt x y z hfmt hout]
   rw [toReal_eq_of_represents hx', toReal_eq_of_represents hy',
     toReal_eq_of_represents hz']
 
-/-- A finite cross-format cast refines nearest-even rounding in its destination format. -/
-theorem cast_refines_of_isIEEE_destination (src dst : FloatFormat)
-    (hdst : dst.isIEEE = true) :
+/--
+A finite cast from any source descriptor refines nearest-even rounding in a conventional IEEE
+destination format.
+-/
+theorem cast_refines (src dst : FloatFormat) (hdst : dst.isIEEE = true) :
     Operation.Finite1If (numericalSystem src) (numericalSystem dst)
       (Model.cast src dst) (fun (x : ℝ) => roundAt dst x)
-      (fun _ result => isFinite result = true) := by
-  unfold Operation.Finite1If numericalSystem
-  intro x r hx hout
-  have hx' : Represents x r := hx
-  apply (represents_iff _ _).2
-  refine ⟨hout, ?_⟩
-  rw [cast_eq_roundAt_of_isIEEE_destination hdst x (isFinite_of_represents hx') hout]
-  rw [toReal_eq_of_represents hx']
-
-/-- IEEE-source specialization of `cast_refines_of_isIEEE_destination`. -/
-theorem cast_refines (src dst : FloatFormat)
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true) :
-    Operation.Finite1If (numericalSystem src) (numericalSystem dst)
-      (Model.cast src dst) (fun (x : ℝ) => roundAt dst x)
-      (fun _ result => isFinite result = true) := by
-  unfold Operation.Finite1If numericalSystem
-  intro x r hx hout
-  have hx' : Represents x r := hx
-  apply (represents_iff _ _).2
-  refine ⟨hout, ?_⟩
-  rw [cast_eq_roundAt hsrc hdst x (isFinite_of_represents hx') hout]
-  rw [toReal_eq_of_represents hx']
+      (fun _ result => isFinite result = true) :=
+  finite1If_of_toReal (Model.cast src dst) _ fun x _ hout =>
+    cast_eq_roundAt hdst x hout
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

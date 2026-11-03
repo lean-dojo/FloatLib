@@ -95,6 +95,43 @@ theorem zero_ne_nar (format : Format) : zero format ≠ nar format := by
   simp only [zero_toNatBits, nar_toNatBits] at bitsEquality
   exact (Nat.ne_of_gt (Nat.two_pow_pos format.signIndex)) bitsEquality.symm
 
+/-- An in-range nonzero word is not the zero encoding. -/
+theorem ofNatBits_ne_zero {bits : Nat} (hbits : bits < format.modulus) (hzero : bits ≠ 0) :
+    ofNatBits (format := format) bits ≠ zero format := by
+  intro equality
+  have bitsEquality := congrArg toNatBits equality
+  rw [toNatBits_ofNatBits_of_lt bits hbits, zero_toNatBits] at bitsEquality
+  exact hzero bitsEquality
+
+/-- An in-range word other than the lone sign bit is not the NaR encoding. -/
+theorem ofNatBits_ne_nar {bits : Nat} (hbits : bits < format.modulus)
+    (hnar : bits ≠ format.signMaskNat) :
+    ofNatBits (format := format) bits ≠ nar format := by
+  intro equality
+  have bitsEquality := congrArg toNatBits equality
+  rw [toNatBits_ofNatBits_of_lt bits hbits, nar_toNatBits] at bitsEquality
+  exact hnar bitsEquality
+
+/-- Zero is the only posit whose encoded word is zero. -/
+theorem toNatBits_eq_zero_iff (value : Model format) :
+    value.toNatBits = 0 ↔ value = zero format := by
+  constructor
+  · intro hbits
+    rw [← ofNatBits_toNatBits value, hbits]
+    rfl
+  · rintro rfl
+    exact zero_toNatBits format
+
+/-- NaR is the only posit whose encoded word is the lone sign bit. -/
+theorem toNatBits_eq_signMaskNat_iff (value : Model format) :
+    value.toNatBits = format.signMaskNat ↔ value = nar format := by
+  constructor
+  · intro hbits
+    rw [← ofNatBits_toNatBits value, hbits]
+    rfl
+  · rintro rfl
+    exact nar_toNatBits format
+
 /-- Whether this is the unique zero code. -/
 @[inline] def isZero (value : Model format) : Bool :=
   value == zero format

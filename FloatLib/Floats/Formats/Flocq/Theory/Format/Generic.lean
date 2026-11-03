@@ -71,20 +71,10 @@ theorem generic_format_abs_iff (x : ℝ) :
 /-- A radix power is representable whenever its canonical exponent is no larger than its exponent. -/
 theorem generic_format_bpow (e : ℤ) (h : fexp (e + 1) ≤ e) :
     genericFormat β fexp (bpow β e) := by
-  apply generic_format_of_scaled_mantissa_int
-    (n := Int.ofNat (β.base ^ (e - fexp (e + 1)).toNat))
-  have hd : 0 ≤ e - fexp (e + 1) := sub_nonneg.mpr h
-  calc
-    scaledMantissa β fexp (bpow β e) =
-        bpow β e * bpow β (-fexp (e + 1)) := by
-      simp [scaledMantissa, cexp]
-    _ = bpow β (e - fexp (e + 1)) := by
-      rw [← bpow.add_exp]
-      congr 1
-    _ = Int.ofNat (β.base ^ (e - fexp (e + 1)).toNat) := by
-      obtain ⟨k, hk⟩ := Int.eq_ofNat_of_zero_le hd
-      rw [hk]
-      simp [bpow, Numerics.Radix.toReal]
+  obtain ⟨m, hm⟩ := exists_bpow_eq_int_mul_bpow β h
+  apply generic_format_of_scaled_mantissa_int (n := m)
+  rw [scaledMantissa_eq_div, div_eq_iff (bpow.ne_zero β _)]
+  simpa [cexp] using hm
 
 /--
 A mantissa/exponent representation is generic when its stored exponent is at least the canonical
@@ -93,22 +83,39 @@ exponent selected for its value.
 theorem generic_format_of_toReal_of_cexp_le (f : FloatRep β) (x : ℝ)
     (hxf : x = toReal f) (he : cexp β fexp x ≤ f.exponent) :
     genericFormat β fexp x := by
-  obtain ⟨n, hn⟩ := bpow_eq_natCast_of_nonneg β
-    (f.exponent - cexp β fexp x) (sub_nonneg.mpr he)
-  apply generic_format_of_scaled_mantissa_int (n := f.mantissa * Int.ofNat n)
-  rw [scaledMantissa_eq_div]
-  have hxfdiv : x / bpow β (cexp β fexp x) =
-      toReal f / bpow β (cexp β fexp x) :=
-    congrArg (fun y : ℝ => y / bpow β (cexp β fexp x)) hxf
-  rw [hxfdiv, toReal]
-  calc
-    (f.mantissa : ℝ) * bpow β f.exponent /
-        bpow β (cexp β fexp x) =
-        (f.mantissa : ℝ) * bpow β (f.exponent - cexp β fexp x) := by
-      rw [bpow.sub_exp]
-      field_simp
-    _ = (f.mantissa : ℝ) * n := by rw [hn]
-    _ = (f.mantissa * Int.ofNat n : ℤ) := by norm_num
+  obtain ⟨m, hm⟩ := exists_int_mul_bpow_of_le β f.mantissa he
+  apply generic_format_of_scaled_mantissa_int (n := m)
+  rw [scaledMantissa_eq_div, div_eq_iff (bpow.ne_zero β _)]
+  exact hxf.trans hm
+
+/-- A generic-format value is an integer multiple of the radix power at its canonical exponent. -/
+theorem exists_int_mul_bpow_cexp_of_generic {x : ℝ} (hx : genericFormat β fexp x) :
+    ∃ n : ℤ, x = (n : ℝ) * bpow β (cexp β fexp x) :=
+  ⟨_, hx⟩
+
+/--
+A generic-format value is an integer multiple of every radix power at or below its canonical
+exponent, so values with different canonical exponents can be aligned on the finer grid.
+-/
+theorem exists_int_mul_bpow_of_le_cexp {x : ℝ} (hx : genericFormat β fexp x) {e : ℤ}
+    (he : e ≤ cexp β fexp x) : ∃ m : ℤ, x = (m : ℝ) * bpow β e := by
+  obtain ⟨n, hxn⟩ := exists_int_mul_bpow_cexp_of_generic hx
+  obtain ⟨m, hm⟩ := exists_int_mul_bpow_of_le β n he
+  exact ⟨m, hxn.trans hm⟩
+
+/-- A grid point at exponent `fexp E` in the magnitude bin `[β^(E-1), β^E)` is representable. -/
+theorem generic_format_of_mul_bpow_of_mem_bin {y : ℝ} {E : ℤ} (m : ℤ)
+    (hy : y = (m : ℝ) * bpow β (fexp E))
+    (hlower : bpow β (E - 1) ≤ y) (hupper : y < bpow β E) :
+    genericFormat β fexp y := by
+  have hypos : 0 < y := (bpow.pos β (E - 1)).trans_le hlower
+  have hmag : magnitude β y = E :=
+    magnitude_eq_of_bpow_bounds β y E
+      (by simpa [abs_of_pos hypos] using hlower)
+      (by simpa [abs_of_pos hypos] using hupper)
+  apply generic_format_of_toReal_of_cexp_le
+    ({ mantissa := m, exponent := fexp E } : FloatRep β) y hy
+  simp [cexp, hmag]
 
 /-- A positive representable value uses a canonical exponent strictly below its magnitude. -/
 theorem cexp_lt_magnitude_of_pos_generic {x : ℝ} (hx : 0 < x)
@@ -162,15 +169,8 @@ theorem generic_inclusion_mag {fexp₁ fexp₂ : ℤ → ℤ}
   by_cases hx0 : x = 0
   · subst x
     exact generic_format_zero
-  obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic
-    (β := β) (fexp := fexp₁) x hx
-  let f : FloatRep β :=
-    { mantissa := n, exponent := cexp β fexp₁ x }
-  have hxf : x = toReal f := by
-    have hrepr := scaled_mantissa_mul_bpow (β := β) (fexp := fexp₁) x
-    rw [hn] at hrepr
-    exact hrepr.symm
-  apply generic_format_of_toReal_of_cexp_le f x hxf
+  -- `hx` is the canonical representation of `x` at the exponent selected by `fexp₁`.
+  apply generic_format_of_toReal_of_cexp_le _ x hx
   change fexp₂ (magnitude β x) ≤ fexp₁ (magnitude β x)
   exact hexp hx0
 
@@ -187,15 +187,12 @@ theorem generic_format_discrete (x : ℝ) (m : ℤ)
     (hupper : x < ((m + 1 : ℤ) : ℝ) * bpow β (cexp β fexp x)) :
     ¬genericFormat β fexp x := by
   intro hx
-  obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic
-    (β := β) (fexp := fexp) x hx
+  obtain ⟨n, hrepr⟩ := exists_int_mul_bpow_cexp_of_generic hx
   have hb : 0 < bpow β (cexp β fexp x) := bpow.pos β _
-  have hrepr := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
-  rw [hn] at hrepr
   have hlower' : (m : ℝ) * bpow β (cexp β fexp x) <
-      (n : ℝ) * bpow β (cexp β fexp x) := hlower.trans_eq hrepr.symm
+      (n : ℝ) * bpow β (cexp β fexp x) := hlower.trans_eq hrepr
   have hupper' : (n : ℝ) * bpow β (cexp β fexp x) <
-      ((m + 1 : ℤ) : ℝ) * bpow β (cexp β fexp x) := hrepr.trans_lt hupper
+      ((m + 1 : ℤ) : ℝ) * bpow β (cexp β fexp x) := hrepr.symm.trans_lt hupper
   have hmnR : (m : ℝ) < (n : ℝ) := by
     nlinarith [hlower']
   have hnmR : (n : ℝ) < ((m + 1 : ℤ) : ℝ) := by

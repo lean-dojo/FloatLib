@@ -26,25 +26,24 @@ open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 section
 
-/-- An in-range IEEE subnormal fraction field denotes a finite value. -/
+/--
+An IEEE word with a zero exponent field denotes a finite value. `ofFields` truncates the fraction
+to the descriptor width, so the fraction needs no bound.
+-/
 theorem isFinite_ofFields_subnormal
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (mantissa : Nat)
-    (_hmantissa : mantissa < 2 ^ fmt.fracWidth) :
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (mantissa : Nat) :
     isFinite (ofFields fmt false 0 mantissa) = true :=
   isFinite_ofFields_ieee fmt hfmt false 0 mantissa fmt.expAllOnesNat_pos
 
-/-- The canonical IEEE minimum-normal field pair denotes a finite value. -/
-theorem isFinite_ofFields_minNormal
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
-    isFinite (ofFields fmt false 1 0) = true :=
-  isFinite_ofFields_ieee fmt hfmt false 1 0
-    (by
-      have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-        simpa using
-          Nat.pow_le_pow_right (by decide : 0 < (2 : Nat))
-            fmt.expWidth_ge_two
-      unfold FloatFormat.expAllOnesNat
-      omega)
+/-- The minimum-normal field pair denotes a finite value in every encoding. -/
+theorem isFinite_ofFields_minNormal (fmt : FloatFormat) :
+    isFinite (ofFields fmt false 1 0) = true := by
+  have hone := FloatFormat.one_lt_expAllOnesNat fmt
+  have hexponent : 1 < 2 ^ fmt.expWidth := by
+    unfold FloatFormat.expAllOnesNat at hone
+    omega
+  rw [isFinite_ofFields fmt false 1 0 hexponent (Nat.two_pow_pos _)]
+  cases fmt.encoding <;> simp [Nat.ne_of_lt hone]
 
 /-- Positive IEEE overflow rounds to positive infinity when the direction is upward. -/
 theorem directedOverflow_false_true_eq_posInf

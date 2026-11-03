@@ -116,7 +116,7 @@ def rootLoopWords
 Compute the floor root and square remainder from the requested base-four digits.
 
 The digit count fixes the verified capacity, and `rootAndRemainder_spec` covers radicands below
-`2^(2 * steps)` for any digit count from 64 to 125. Larger radicands lose their leading digits,
+`2^(2 * steps)` for any digit count up to 125. Larger radicands lose their leading digits,
 so the result need not be the root of the original radicand.
 -/
 @[inline] def rootAndRemainder
@@ -135,7 +135,7 @@ so the result need not be the root of the original radicand.
 Round a floor root to the nearest integer root.
 
 The root increments exactly when the remainder exceeds the root, which is the midpoint test for
-the square. `roundRoot_toNat` verifies this for every digit count from 64 to 125.
+the square. `roundRoot_toNat` verifies this for every digit count up to 125.
 -/
 @[inline] def roundRoot
     (state : RestoringRootState FloatLib.Numerics.FixedWord.UInt128) :

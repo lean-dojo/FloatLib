@@ -9,6 +9,7 @@ module -- shake: keep-all
 public import FloatLib.Floats.Formats.IEEE754.Native
 public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer
+public import FloatLib.Floats.Formats.IEEE754.Native.MulDiv
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
 public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
 public meta import FloatLib.Floats.Formats.IEEE754.Native.Info
@@ -22,8 +23,9 @@ semantics, and certified execution remain in `Formats.BinaryInterchange`; there 
 width-specific executable carrier. The representation proofs connect those adapters to Lean's
 packed models, including Lean's named NaN and infinity constants.
 Integer conversion proofs connect the newly exposed constructors and signed casts to FloatLib's
-rounding specifications. Arithmetic bridges cover addition and subtraction on finite inputs and
-square root on every input, with NaNs canonicalized at the native boundary.
+rounding specifications. Arithmetic bridges cover addition, subtraction, multiplication and
+division on finite inputs and square root on every input, with NaNs canonicalized at the native
+boundary.
 Importing this entry point also registers `#float_info` reports for the two native runtime types.
 
 ## Reference

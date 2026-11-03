@@ -12,14 +12,20 @@ public import FloatLib.Floats.Formats.P3109.Projection.Correctness
 /-!
 # Real semantics and executable refinement of P3109 square root
 
-The reference rounder takes the floor of a real square root and compares that root with the
-report's exact rounding thresholds. The executable rounder computes the same result using
-natural-number square roots and products. Neither implementation first projects a rational
-approximation of the root.
+The reference rounder takes the floor of a real square root and runs the report's rounding
+decision (`sqrtRoundDecision`) by comparing that root with the decision's thresholds. The
+executable rounder computes the same result using natural-number square roots and products.
+Neither implementation first projects a rational approximation of the root.
+
+What `sqrtValue_eq_real` establishes is that the integer arithmetic is exact: both rounders share
+the quantum selection and the decision procedure, so a wrong quantum or tie rule would be shared
+too. That the decision selects the correctly rounded neighbour of `√x` in every mode is not proved
+here.
 
 `decode_projectSqrt` composes this equality with the report's saturation and encoding
 theorem. Reciprocal square root and hypotenuse reuse the same rounder after forming
-their exact rational radicands.
+their exact rational radicands, whose real roots are `1 / √x` on positive finite inputs and
+`√(x² + y²)` on finite operands (`rsqrtRadicand_finite_real`, `hypotRadicand_finite_real`).
 -/
 
 @[expose] public section
@@ -81,7 +87,11 @@ theorem roundSqrtRatToPrecision_eq_real (format : Format) (mode : RoundingMode)
         (-2 * sqrtQuantum format radicand.num.natAbs radicand.den) radicand.den_nz)
     simp only [floor_real_sqrt _ _ hd, sqrtRoundAway_eq_real _ _ _ _ _ _ hd]
 
-/-- Closed square-root reference, followed by the supplied report saturation policy. -/
+/-- Closed square-root reference for `format` under `policy`: the canonical NaN for every
+exceptional input, `-∞` and negative finite `value`, `+∞` for `+∞`, and otherwise the real-root
+evaluation of the report's precision rounding (`roundSqrtRealToPrecision`), followed by the
+supplied saturation policy. It reuses the executable quantum and decision procedure, so it checks
+the integer arithmetic rather than independently specifying correct rounding. -/
 noncomputable def sqrtRealValue (format : Format) (policy : ProjectionPolicy)
     (value : NumericalValue Rat) : NumericalValue FloatLib.Numerics.Dyadic :=
   format.saturate policy.saturation policy.rounding
@@ -116,18 +126,34 @@ theorem sameDatum_decode_sqrtCode (format : Format) (policy : ProjectionPolicy)
   | infinity negative => cases negative <;> trivial
   | exceptional _ => trivial
 
-/-- Reciprocal square root uses the same real value as reciprocal of the positive square root. -/
-theorem sqrt_recip_real (value : Rat) :
-    Real.sqrt ((1 / value : Rat) : Real) = 1 / Real.sqrt (value : Real) := by
-  simp [one_div, Real.sqrt_inv]
+/--
+On a positive finite input the reciprocal-square-root radicand is `1 / value`, whose real square
+root is the reciprocal of the positive root of `value`; composed with `decode_rsqrt`, the result is
+the reference rounding (`sqrtRealValue`) of that radicand. The other inputs are covered by
+`rsqrtRadicand_finite_of_nonpos` and the definition: NaN and `-∞` give NaN, and `+∞` gives the
+radicand zero, whose root is zero.
+-/
+theorem rsqrtRadicand_finite_real {value : Rat} (h : 0 < value) :
+    rsqrtRadicand (.finite value) = .finite (1 / value) ∧
+      Real.sqrt ((1 / value : Rat) : Real) = 1 / Real.sqrt (value : Real) :=
+  ⟨by simp [rsqrtRadicand, not_le.2 h], by simp [one_div, Real.sqrt_inv]⟩
 
-/-- The finite hypotenuse radicand is the real sum of squares and is nonnegative. -/
+/-- A zero or negative finite input has no real reciprocal square root: its radicand is NaN. -/
+theorem rsqrtRadicand_finite_of_nonpos {value : Rat} (h : value ≤ 0) :
+    rsqrtRadicand (.finite value) = nan := by
+  simp [rsqrtRadicand, h]
+
+/--
+On finite operands the hypotenuse radicand is the exact sum of squares, a nonnegative rational
+whose real square root is `√(left ^ 2 + right ^ 2)`; composed with `decode_hypot`, the result is
+the reference rounding (`sqrtRealValue`) of that radicand.
+-/
 theorem hypotRadicand_finite_real (left right : Rat) :
-    ((left * left + right * right : Rat) : Real) = (left : Real) ^ 2 + (right : Real) ^ 2 ∧
-      0 ≤ left * left + right * right := by
-  constructor
-  · simp [pow_two]
-  · exact add_nonneg (mul_self_nonneg left) (mul_self_nonneg right)
+    hypotRadicand (.finite left) (.finite right) = .finite (left * left + right * right) ∧
+      0 ≤ left * left + right * right ∧
+      Real.sqrt ((left * left + right * right : Rat) : Real) =
+        Real.sqrt ((left : Real) ^ 2 + (right : Real) ^ 2) :=
+  ⟨rfl, add_nonneg (mul_self_nonneg left) (mul_self_nonneg right), by simp [pow_two]⟩
 
 end FloatLib.Floats.Formats.P3109.Arithmetic
 

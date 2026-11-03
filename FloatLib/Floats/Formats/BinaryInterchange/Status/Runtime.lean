@@ -265,8 +265,9 @@ Ternary value of delivering `rounded` for the exact dyadic result `exact`.
 A finite delivery is compared exactly with `exact` by `cmpDyadic`, the bounded comparison that
 `dyadicRoundingStatus` uses for inexactness. A non-finite delivery stands for the overflow of a
 finite exact value and gets the sign of `exact`: `.gt` for a positive and `.lt` for a negative
-value. For an infinity this is the order, and for the NaN that replaces the infinity in a format
-without one it is the convention of `IEEEOutcome.ternary`.
+value. For an infinity of the sign of `exact`, which is what an overflowing rounding delivers, this
+is the order. For any other non-finite argument, such as the NaN that replaces the infinity in a
+format without one, it is only the convention of `IEEEOutcome.ternary`.
 -/
 def dyadicTernary {fmt : FloatFormat} (exact : Numerics.Dyadic) (rounded : Model fmt) :
     Ordering :=

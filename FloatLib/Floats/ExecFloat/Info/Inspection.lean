@@ -17,10 +17,10 @@ public import FloatLib.Floats.ExecFloat.Core.Operations
 # Inspecting proof-carrying capabilities and backend plans
 
 Capability inspection reads the instances that execution uses. It reports the installed
-conversions, which universal operations exist, the candidate selected by each capability, and the
-planner decisions behind that selection. The selected candidate comes from the capability itself.
-Diagnostic assessments rerun the shared selector on the capability's candidate estimates and
-policy.
+conversions, which universal operations exist, the planning policy, the candidate selected by each
+capability, and the planner decisions behind that selection. The selected candidate comes from the
+capability itself. Diagnostic assessments rerun the shared selector on the capability's candidate
+estimates and policy.
 -/
 
 @[expose] public section
@@ -49,91 +49,142 @@ private meta def outputExactDomain?
 private meta def exactDomainDescription (exactType : Expr) : MetaM String :=
   return toString (← ppExpr exactType)
 
+/--
+The destination quantizer and rounding-mode instances of a destination, with the mode type,
+as the arguments `quantizer`, `Mode`, `modes` that `DefaultQuantizer` and `RoundingModes.Policy`
+take after the destination and its exact domain.
+-/
+private meta def roundingModes?
+    (destination exactType : Expr) : MetaM (Option (Expr × Expr × Expr)) := do
+  let quantizerClass ←
+    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.Quantizer
+  let some quantizer ←
+      synthInstance? (mkApp2 quantizerClass destination exactType)
+    | return none
+  let modeType ← mkFreshExprMVar (mkSort Level.one)
+  let modesClass ←
+    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.RoundingModes
+  let some modes ←
+      synthInstance? (mkApp4 modesClass destination exactType quantizer modeType)
+    | return none
+  return some (quantizer, ← instantiateMVars modeType, modes)
+
 /-- Whether a destination quantizer has an installed default context. -/
 private meta def hasDefaultQuantizer
     (destination exactType : Expr) : MetaM Bool := do
-  let quantizerClass ←
-    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.Quantizer
-  let some quantizer ←
-      synthInstance? (mkApp2 quantizerClass destination exactType)
+  let some (quantizer, modeType, modes) ← roundingModes? destination exactType
     | return false
   let defaultClass ←
     mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.DefaultQuantizer
-  let capabilityType := mkApp3 defaultClass destination exactType quantizer
+  let capabilityType := mkApp5 defaultClass destination exactType quantizer modeType modes
   return (← synthInstance? capabilityType).isSome
 
-/-- Render the context type selected by a synthesized destination quantizer. -/
-private meta def quantizerContextDescription
-    (destination exactType : Expr) : MetaM String := do
-  let quantizerClass ←
-    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.Quantizer
-  let some quantizer ←
-      synthInstance? (mkApp2 quantizerClass destination exactType)
+/--
+Render the type of the `(context := ...)` option of conversions into a destination, its
+`RoundingModes.Policy`, or `none` when it is `Unit`, which leaves nothing to choose. For a
+destination without rounding directions the policy is the quantizer context itself.
+-/
+private meta def quantizerContextDescription?
+    (destination exactType : Expr) : MetaM (Option String) := do
+  let some (quantizer, modeType, modes) ← roundingModes? destination exactType
     | throwError "conversion inspection lost the synthesized destination quantizer"
-  let contextProjection ←
-    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.Quantizer.Context
-  let contextType := mkApp3 contextProjection destination exactType quantizer
-  let contextType ← withTransparency .all <| whnf contextType
-  return toString (← ppExpr (← instantiateMVars contextType))
+  let policyProjection ←
+    mkConstWithFreshMVarLevels ``FloatLib.Floats.ExecFloat.RoundingModes.Policy
+  let policyType := mkApp5 policyProjection destination exactType quantizer modeType modes
+  let policyType ← instantiateMVars (← withTransparency .all <| whnf policyType)
+  if policyType.isConstOf ``PUnit then
+    return none
+  return some (toString (← ppExpr policyType))
+
+/-- Whether conversions into `destination` take a rounding direction, a mode type other than
+`NoRoundingDirection`. -/
+private meta def hasRoundingModes (destination exactType : Expr) : MetaM Bool := do
+  let some (_, modeType, _) ← roundingModes? destination exactType
+    | return false
+  let modeType ← instantiateMVars (← withTransparency .all <| whnf modeType)
+  return !modeType.isConstOf ``FloatLib.Floats.ExecFloat.NoRoundingDirection
 
 /--
-Inspect the explicit conversion capabilities installed for one value type.
+Describe the explicit conversions installed for one value type by the calls that use them.
 
-Source decoding, destination quantization, and a default context are inspected independently.
-A source-only family can supply operands to casts or mixed arithmetic. A destination without a
-default context needs a `(context := ...)` argument.
+Decoding and rounding are inspected independently. A type with only an exact decoder can be the
+source of a conversion or an operand of mixed arithmetic, and a type with only a destination
+quantizer can be a target. A target without a default context needs a `(context := ...)` argument,
+and a `Unit` context leaves no option to choose.
 -/
 meta def conversions (valueType : Expr) : MetaM (List InfoEntry) := do
   let sourceExact? ←
     outputExactDomain? ``FloatLib.Floats.ExecFloat.ExactDecoder valueType
   let destinationExact? ←
     outputExactDomain? ``FloatLib.Floats.ExecFloat.Quantizer valueType
-  let sourceDescription ←
+  let exactValue ←
     match sourceExact? with
-    | some exactType =>
-        pure s!"installed; finite payload domain = {← exactDomainDescription exactType}"
-    | none =>
-        pure "not installed"
-  let destinationDescription ←
+    | some exactType => pure s!"{← exactDomainDescription exactType}; decoding never rounds"
+    | none => pure "none; values of this type are not a conversion source"
+  let target ←
     match destinationExact? with
     | some exactType => do
-        let context ← quantizerContextDescription valueType exactType
+        let hasDefault ← hasDefaultQuantizer valueType exactType
+        let options ←
+          match ← quantizerContextDescription? valueType exactType, hasDefault with
+          | none, true =>
+              pure <| if ← hasRoundingModes valueType exactType then "it takes no context options"
+                else "it takes no conversion options"
+          | none, false =>
+              pure "its context is `Unit` and has no default, so pass `(context := ())`"
+          | some context, true => pure s!"the destination context {context} has a default"
+          | some context, false =>
+              pure s!"the destination context {context} has no default, so pass `(context := ...)`"
         pure <|
-          s!"installed and proof-backed; input domain = " ++
-            s!"{← exactDomainDescription exactType}; context = {context}"
-    | none =>
-        pure <|
-          if sourceExact?.isSome then
-            "not installed; this type may still participate as an exact conversion source"
-          else
-            "not installed"
-  let defaultDescription ←
-    match destinationExact? with
-    | some exactType =>
-        if ← hasDefaultQuantizer valueType exactType then
-          pure "installed; `cast` and destination-driven `*As` helpers may omit the context"
-        else
-          pure "none; callers must supply `(context := ...)` to `cast` and the `*As` helpers"
-    | none =>
-        pure "not applicable because no destination quantizer is installed"
-  let mixedDescription :=
+          s!"`cast` and `ExecFloat.convert` round once into this type from " ++
+            s!"{← exactDomainDescription exactType}; {options}"
+    | none => pure "none; nothing converts into this type"
+  -- The mixed operations reject what IEEE 754's formatOf operations would turn into an infinity
+  -- or a NaN, so the entry says so wherever they apply.
+  let failures :=
+    "a non-finite operand fails, and so does a division by zero, where IEEE arithmetic would " ++
+      "return an infinity or a NaN"
+  let mixed :=
     match sourceExact?, destinationExact? with
     | some _, some _ =>
-        "available as source and destination: decode exactly, embed through `ExactMap`, operate in the destination exact domain, and round once"
+        "as an operand or as the named target of `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, " ++
+          "and `fma`: operands decode exactly and map into the target's exact domain through " ++
+          s!"`ExactMap`, the operation is exact, and the result rounds once; {failures}"
     | none, some _ =>
-        "available as an explicitly named result type when every operand supplies an exact decoder and an `ExactMap` preserving numerical value"
+        "as the named target of `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma`, when " ++
+          "every operand decodes exactly and maps into this type's exact domain through " ++
+          s!"`ExactMap`; the result rounds once, and {failures}"
     | some _, none =>
-        "available as an operand only when another explicitly named result type supplies the destination quantizer"
+        "as an operand of `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma`, with another " ++
+          s!"type named as the target; {failures}"
     | none, none =>
-        "not installed for this carrier; use its family-specific operation and conversion policy"
+        "none; use the family's own operations and conversions"
   pure
-    [ ⟨"source decoder", sourceDescription⟩
-    , ⟨"destination quantizer", destinationDescription⟩
-    , ⟨"default context", defaultDescription⟩
-    , ⟨"mixed arithmetic", mixedDescription⟩
-    , ⟨"implicit promotion",
-        "none; ordinary same-type arithmetic stays in that type and cross-type results are named explicitly"⟩
+    [ ⟨"exact value", exactValue⟩
+    , ⟨"as a target", target⟩
+    , ⟨"mixed arithmetic", mixed⟩
+    , ⟨"implicit promotion", "none; a result of another type always names its target"⟩
     ]
+
+/-- Collapse each run of whitespace in `text` to one space and drop it at both ends. -/
+private meta def collapseWhitespace (text : String) : String :=
+  (text.foldl
+      (fun (state : String × Bool) c =>
+        if c.isWhitespace then (state.1, true)
+        else ((if state.2 && !state.1.isEmpty then state.1.push ' ' else state.1).push c, false))
+      ("", false)).1
+
+/--
+The inspected type as the command wrote it: the source text of the reference syntax, which
+`FloatInfo.Command.withElaboratedType` sets to the type, with whitespace runs collapsed.
+-/
+meta def subjectText : MetaM String := do
+  let ref ← getRef
+  let text :=
+    match ref.getSubstring? (withLeading := false) (withTrailing := false) with
+    | some source => source.toString
+    | none => toString ref.prettyPrint
+  return collapseWhitespace text
 
 /-- Attach synthesized conversion capabilities to a family-authored format profile. -/
 meta def withConversions
@@ -216,12 +267,19 @@ meta def hasCapability (className : Name) (family : Expr) : MetaM Bool := do
   let capabilityClass ← mkConstWithFreshMVarLevels className
   return (← synthInstance? (mkApp3 capabilityClass family encodedFormat planning)).isSome
 
-/-- Inspect all six universal operation capabilities for one configured family. -/
+/--
+Inspect all six universal operation capabilities for one configured family. A report chooses the
+refinement theorems it lists from this coverage in every mode.
+-/
+meta def installedOperations (family : Expr) : MetaM CoreOperationCoverage :=
+  Backend.Operation.all.mapM fun operation => do
+    pure (operation, ← hasCapability (capabilityClass operation) family)
+
+/-- The operation coverage a report prints: none in errors-only mode, which omits that section. -/
 meta def coreOperations (family : Expr) : MetaM CoreOperationCoverage := do
   if floatlib.floatInfo.errors.get (← getOptions) then
     return .none
-  Backend.Operation.all.mapM fun operation => do
-    pure (operation, ← hasCapability (capabilityClass operation) family)
+  installedOperations family
 
 /--
 Reduce the projection `fieldName` of a closed expression at full transparency.
@@ -478,7 +536,20 @@ private meta def candidatePlanDescription
     candidates.map fun (status, description) => s!"{status}: {description}"
 
 /--
-Report the selected backend and every alternative for each synthesized universal capability.
+The profile name of the planning policy that execution uses for `family`, `custom` for an
+application policy, or `none` when no `Backend.PolicyFor` instance is found.
+-/
+meta def planningPolicy? (family : Expr) : MetaM (Option String) := do
+  let policyForClass ← mkConstWithFreshMVarLevels ``Backend.PolicyFor
+  let some planning ← synthInstance? (mkApp policyForClass family)
+    | return none
+  let policy ← mkAppM ``Backend.PolicyFor.policy #[planning]
+  let profileName ← mkConstWithFreshMVarLevels ``Backend.Policy.profileName
+  return some (← readString "selection policy profile" (mkApp profileName policy))
+
+/--
+Report the planning policy, then the selected backend and every alternative for each synthesized
+universal capability.
 
 Families append these entries to their own execution profile, so selection reports look the same
 across families without imposing a common numerical model.
@@ -496,6 +567,9 @@ meta def selectedBackends (family : Expr) : MetaM (List InfoEntry) := do
       let plan ← inspectCandidatePlan operation family
       entries := entries ++
         [⟨s!"{label} decision", candidatePlanDescription plan⟩]
-  pure entries
+  if entries.isEmpty then
+    return []
+  let policy := (← planningPolicy? family).toList.map fun name => ⟨"planning policy", name⟩
+  pure (policy ++ entries)
 
 end FloatLib.Floats.ExecFloat.Inspection

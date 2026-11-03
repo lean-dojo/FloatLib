@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats
 public import FloatLib.Numerics.Automation.Interval
+meta import FloatLib.Numerics.Automation.Interval
 
 /-!
 # Regression checks for representation-independent numerical automation
@@ -181,24 +182,67 @@ example
 
 /-! ## Real inequalities by certified interval evaluation -/
 
-open Lean Elab Tactic in
-elab "check_interval_budget_failure" : tactic => do
-  let saved ← saveState
-  let message ← try
-    evalTactic (← `(tactic| interval (depth := 64) (maxHeartbeats := 1)))
-    throwError "unexpected interval success"
-  catch error =>
-    pure (← error.toMessageData.toString)
-  saved.restore
-  unless message.contains "interval budget of 1 heartbeats" do
-    throwError "unexpected interval failure: {message}"
-  evalTactic (← `(tactic| exact le_rfl))
+open Lean Elab Tactic Meta in
+/--
+`check_interval_failure (goal) "expected" "forbidden" (options)` runs `interval` with the given
+options on `goal` in the current context. It must fail with a message that contains `expected` and
+does not contain `forbidden`; the proof state is left as it was.
+-/
+syntax (name := checkIntervalFailure)
+  "check_interval_failure " term:max str str (ppSpace "(" ident " := " num ")")* : tactic
 
--- The tactic keeps its own finite budget when the surrounding declaration disables limits.
--- Failure restores the goal so its ordinary proof can still close it.
+open Lean Elab Tactic Meta in
+elab_rules : tactic
+  | `(tactic| check_interval_failure $goal:term $expected:str $forbidden:str
+      $[($option:ident := $value:num)]*) => withMainContext do
+    let saved ← saveState
+    let mvar ← mkFreshExprMVar (← elabTerm goal (some (mkSort .zero)))
+    let message ← try
+      discard <| Tactic.run mvar.mvarId!
+        (evalTactic (← `(tactic| interval $[($option:ident := $value:num)]*)))
+      pure "unexpected interval success"
+    catch error =>
+      pure (← error.toMessageData.toString)
+    saved.restore
+    unless message.contains expected.getString do
+      throwError "the interval failure does not say {expected.getString}: {message}"
+    if message.contains forbidden.getString then
+      throwError "the interval failure says {forbidden.getString}: {message}"
+
+#allow_unused_tactic checkIntervalFailure
+
+-- The tactic keeps its own finite kernel budget when the surrounding declaration disables limits.
+-- The goal is true, so a budget of 1 heartbeat fails only because kernel verification runs out,
+-- and the message says so. Failure restores the goal so its ordinary proof can still close it.
 set_option maxHeartbeats 0 in
-example (x : ℝ) (_hl : 0 ≤ x) (_hu : x ≤ 1) : x ≤ x := by
-  check_interval_budget_failure
+example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
+  check_interval_failure (x * (1 - x) ≤ 1 / 3)
+    "Kernel verification of the binary-grid attempt ran out of the interval budget of 1 heartbeats"
+    "does not establish" (precision := 32) (depth := 4) (maxHeartbeats := 1)
+  interval (precision := 32) (depth := 4)
+
+-- With 1 heartbeat the kernel also runs out on the exact-rational attempt, which alone can prove
+-- this bound. The binary-grid attempt fails on its merits, since its endpoints cannot equal 1/3,
+-- so the advice names only the exact-rational attempt.
+example (x : ℝ) (_hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : True := by
+  check_interval_failure (x ≤ 1 / 3)
+    "Kernel verification of the exact-rational attempt ran out of the interval budget of 1 \
+      heartbeats" "binary-grid attempt" (maxHeartbeats := 1)
+  trivial
+
+-- A false goal, or an enclosure outside a registered function's accepted domain, is not a
+-- resource problem, so the failure gives no heartbeat advice. The quadratic peaks at 1/4, and
+-- `x ≤ x` fails only because `x - x` is enclosed by a box-wide interval at every depth. An
+-- argument that is itself a registered call is shown by its enclosure alone.
+example (x : ℝ) (_hx : x ∈ Set.Icc 0 1) : True := by
+  check_interval_failure (x ≤ x) "does not establish" "maxHeartbeats" (depth := 64)
+  check_interval_failure (x * (1 - x) ≤ 1 / 5) "does not establish" "maxHeartbeats"
+  check_interval_failure (Real.exp x < 2) "does not establish" "maxHeartbeats"
+  check_interval_failure (Real.log x ≤ 1)
+    "accepts only argument enclosures with a positive lower endpoint" "maxHeartbeats"
+  check_interval_failure (Real.log (Real.sin x) ≤ 1)
+    "the Real.log enclosure rejected its argument in [" "argument argument"
+  trivial
 
 -- The initial enclosure is too wide, so subdivision must preserve the original variable bounds.
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
@@ -420,5 +464,79 @@ example (A : Matrix (Fin 2) (Fin 3) ℝ) (hA : ∀ i j, A i j ∈ Set.Icc (-1) 1
   interval (depth := 0)
 
 end
+
+/-! ## Failure diagnostics -/
+
+section Diagnostics
+open Lean Meta Qq Interval Interval.Tactic
+
+/--
+info: interval could not certify: the enclosure of (x[0] - (1/2)) is [-1, 1]; its upper endpoint does not establish ≤ 0.
+Box: x[0] in [0, 1/4]. Subdivision depth 0 exhausted after 0 splits on this branch.
+A diagnostic retry passes on this box with precision := 16; retry the tactic with that setting.
+-/
+#guard_msgs in
+#eval show MetaM Unit from do
+  logInfo (← diagnoseFailure q(Interval.Expr.binary .sub (.var 0) (.const (1 / 2)))
+    q(([⟨0, 1 / 4⟩] : Box)) q((⟨0, 16⟩ : Backend.Config)) q(Relation.nonpositive) q(0))
+
+-- An algebraic failure that a larger precision does not fix gets no retry hint: the Taylor
+-- degree is never probed, since the binary-grid backend reads it only for elementary functions.
+/--
+info: interval could not certify: the enclosure of ((x[0] * x[0]) - (1/2)) is [-1/4, 1/16]; its upper endpoint does not establish < 0.
+Box: x[0] in [1/2, 3/4]. Subdivision depth 2 exhausted after 2 splits on this branch.
+Try tighter input bounds or more subdivision depth.
+-/
+#guard_msgs in
+#eval show MetaM Unit from do
+  logInfo (← diagnoseFailure
+    q(Interval.Expr.binary .sub (.binary .mul (.var 0) (.var 0)) (.const (1 / 2)))
+    q(([⟨0, 1⟩] : Box)) q((⟨64, 16⟩ : Backend.Config)) q(Relation.negative) q(2))
+
+/-- A strict relation reached through an abbreviation rather than the literal constructor. -/
+abbrev strictRelation : Relation := .negative
+
+-- A registered-function diagnosis reduces the relation, so a strict goal whose enclosure only
+-- reaches `0` is reported as a failure, not as a heartbeat problem.
+/--
+info: interval could not certify: on the original box, the expression is enclosed by [-1, 0]; its upper endpoint does not establish < 0.
+Box: x[0] in [-1, 0]. Verification used subdivision depth 8. Try tighter input bounds, more subdivision, or higher approximation settings.
+-/
+#guard_msgs in
+#eval show MetaM Unit from do
+  logInfo (← diagnoseRegisteredFailure q(Interval.Expr.var 0) q(Backend.binaryGrid {})
+    q(([⟨-1, 0⟩] : Box)) q(({} : Backend.Config)) q(strictRelation) q(8))
+
+-- A registered call outside its enclosure's accepted domain is named, with the argument enclosure
+-- and the domain its registration states, rather than a request to raise a budget.
+/--
+info: interval could not certify: on the original box, the Real.log enclosure rejected its argument x[0] in [0, 1]. It accepts only argument enclosures with a positive lower endpoint.
+Box: x[0] in [0, 1].
+-/
+#guard_msgs in
+#eval show MetaM Unit from do
+  logInfo (← diagnoseRegisteredFailure q(Interval.Expr.call 0 [.var 0])
+    q(Backend.withExtensions (Backend.binaryGrid {}) {} [Backend.elementaryExtension .log])
+    q(([⟨0, 1⟩] : Box)) q(({} : Backend.Config)) q(Relation.nonpositive) q(8)
+    (calls := #[{ function := ``Real.log
+                  acceptedDomain? := Interval.acceptedDomain? ``Interval.log_extension_sound }]))
+
+-- An argument that is itself a registered call has no algebraic source text, so the message names
+-- its position, when there are several, and its enclosure.
+/--
+info: interval could not certify: on the original box, the Real.rpow enclosure rejected its first argument x[0] in [-1, 1] and its second argument in [-379531823822684255/18446744073709551616, 9033606124943433681/9223372036854775808]. It accepts only base enclosures with a positive lower endpoint.
+Box: x[0] in [-1, 1], x[1] in [0, 1].
+-/
+#guard_msgs in
+#eval show MetaM Unit from do
+  logInfo (← diagnoseRegisteredFailure q(Interval.Expr.call 0 [.var 0, .call 1 [.var 1] ])
+    q(Backend.withExtensions (Backend.binaryGrid {}) {}
+      [Backend.rpowExtension, Backend.elementaryExtension .sin])
+    q(([⟨-1, 1⟩, ⟨0, 1⟩] : Box)) q(({} : Backend.Config)) q(Relation.nonpositive) q(8)
+    (calls := #[{ function := ``Real.rpow
+                  acceptedDomain? := Interval.acceptedDomain? ``Interval.rpow_extension_sound },
+                { function := ``Real.sin }]))
+
+end Diagnostics
 
 end FloatLibTests.Conformance.Numerics.Automation

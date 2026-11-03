@@ -243,8 +243,9 @@ The complete-width branch avoids the modulo-64 interpretation of `1 <<< 64`.
 /--
 Count leading zeroes in the retained low-width field without crossing through `Nat`.
 
-Callers establish `width ≤ 64`. For a nonzero field, `log2Word` gives its highest set-bit index,
-so the result is `width - bitLength`, and under that contract the subtraction cannot underflow.
+For a nonzero field, `log2Word` gives its highest set-bit index, so the result is
+`width - bitLength`. The retained field lies below `2 ^ width`, so the subtraction cannot
+underflow.
 -/
 @[inline] def countLeadingZerosWord (value width : UInt64) : UInt64 :=
   let truncated := lowBitsWord value width

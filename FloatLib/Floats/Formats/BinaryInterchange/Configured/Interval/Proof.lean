@@ -163,69 +163,69 @@ theorem validExtended_point_of_isNaN_eq_false (x : Value) (hx : Binary.isNaN x =
   simpa [ValidExtended] using
     Model.Interval.validExtended_point_of_isNaN_eq_false (Binary.toModel x) hx
 
-/-- The full IEEE range is extended-valid. -/
-theorem validExtended_whole (hformat : format.isIEEE = true) :
+/-- The full range is extended-valid in every format. -/
+theorem validExtended_whole :
     ValidExtended (whole (format := format) (plan := plan) (code := code)) := by
-  simpa [ValidExtended] using Model.Interval.validExtended_whole format hformat
+  simpa [ValidExtended] using Model.Interval.validExtended_whole format
 
 /-- The full IEEE range contains every extended real. -/
-theorem eRealMem_whole (hformat : format.isIEEE = true) (x : EReal) :
+theorem eRealMem_whole (x : EReal) (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (whole (format := format) (plan := plan) (code := code)) x := by
   simpa [ERealMem] using Model.Interval.eRealMem_whole format hformat x
 
-/-- Checked IEEE bounds are extended-valid even when the supplied pair is unordered. -/
-theorem validExtended_ofBounds (lo hi : Value) (hformat : format.isIEEE = true) :
+/-- Checked bounds are extended-valid even when the supplied pair is unordered. -/
+theorem validExtended_ofBounds (lo hi : Value) :
     ValidExtended (ofBounds lo hi) := by
   simpa [ValidExtended] using
-    Model.Interval.validExtended_ofBounds (Binary.toModel lo) (Binary.toModel hi) hformat
+    Model.Interval.validExtended_ofBounds (Binary.toModel lo) (Binary.toModel hi)
 
 /-- Outward-rounded add encloses the exact real result, including overflow. -/
-theorem add_sound (I J : Bounds) (hformat : format.isIEEE = true)
-    (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x) (hy : RealMem J y) :
+theorem add_sound (I J : Bounds) (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x)
+    (hy : RealMem J y) (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (add I J) ((x + y : ℝ) : EReal) := by
   simpa [ERealMem] using
     Model.Interval.add_sound I.toModel J.toModel hformat hI hJ hx hy
 
-/-- IEEE add returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
-theorem add_validExtended (I J : Bounds) (hformat : format.isIEEE = true) :
+/-- Add returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
+theorem add_validExtended (I J : Bounds) :
     ValidExtended (add I J) := by
-  simpa [ValidExtended] using Model.Interval.add_validExtended I.toModel J.toModel hformat
+  simpa [ValidExtended] using Model.Interval.add_validExtended I.toModel J.toModel
 
 /-- Outward-rounded sub encloses the exact real result, including overflow. -/
-theorem sub_sound (I J : Bounds) (hformat : format.isIEEE = true)
-    (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x) (hy : RealMem J y) :
+theorem sub_sound (I J : Bounds) (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x)
+    (hy : RealMem J y) (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (sub I J) ((x - y : ℝ) : EReal) := by
   simpa [ERealMem] using
     Model.Interval.sub_sound I.toModel J.toModel hformat hI hJ hx hy
 
-/-- IEEE sub returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
-theorem sub_validExtended (I J : Bounds) (hformat : format.isIEEE = true) :
+/-- Sub returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
+theorem sub_validExtended (I J : Bounds) :
     ValidExtended (sub I J) := by
-  simpa [ValidExtended] using Model.Interval.sub_validExtended I.toModel J.toModel hformat
+  simpa [ValidExtended] using Model.Interval.sub_validExtended I.toModel J.toModel
 
 /-- Outward-rounded mul encloses the exact real result, including overflow. -/
-theorem mul_sound (I J : Bounds) (hformat : format.isIEEE = true)
-    (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x) (hy : RealMem J y) :
+theorem mul_sound (I J : Bounds) (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x)
+    (hy : RealMem J y) (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (mul I J) ((x * y : ℝ) : EReal) := by
   simpa [ERealMem] using
     Model.Interval.mul_sound I.toModel J.toModel hformat hI hJ hx hy
 
-/-- IEEE mul returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
-theorem mul_validExtended (I J : Bounds) (hformat : format.isIEEE = true) :
+/-- Mul returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
+theorem mul_validExtended (I J : Bounds) :
     ValidExtended (mul I J) := by
-  simpa [ValidExtended] using Model.Interval.mul_validExtended I.toModel J.toModel hformat
+  simpa [ValidExtended] using Model.Interval.mul_validExtended I.toModel J.toModel
 
 /-- Outward-rounded div encloses the exact real result, including overflow. -/
-theorem div_sound (I J : Bounds) (hformat : format.isIEEE = true)
-    (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x) (hy : RealMem J y) :
+theorem div_sound (I J : Bounds) (hI : Valid I) (hJ : Valid J) {x y : ℝ} (hx : RealMem I x)
+    (hy : RealMem J y) (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (div I J) ((x / y : ℝ) : EReal) := by
   simpa [ERealMem] using
     Model.Interval.div_sound I.toModel J.toModel hformat hI hJ hx hy
 
-/-- IEEE div returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
-theorem div_validExtended (I J : Bounds) (hformat : format.isIEEE = true) :
+/-- Div returns ordered, non-NaN bounds, even for indeterminate input endpoints. -/
+theorem div_validExtended (I J : Bounds) :
     ValidExtended (div I J) := by
-  simpa [ValidExtended] using Model.Interval.div_validExtended I.toModel J.toModel hformat
+  simpa [ValidExtended] using Model.Interval.div_validExtended I.toModel J.toModel
 
 /-- The neg image encloses every represented real, permitting infinite bounds. -/
 theorem neg_sound_extended (I : Bounds) (hI : ValidExtended I)
@@ -261,27 +261,29 @@ theorem abs_validExtended (I : Bounds) (hI : ValidExtended I) :
   simpa [ValidExtended] using Model.Interval.abs_validExtended I.toModel hI
 
 /-- Reciprocal soundness includes zero: the whole-range fallback encloses the totalized result. -/
-theorem inv_sound (I : Bounds) (hformat : format.isIEEE = true) (hI : Valid I)
-    {x : ℝ} (hx : RealMem I x) : ERealMem (inv I) ((1 / x : ℝ) : EReal) := by
+theorem inv_sound (I : Bounds) (hI : Valid I) {x : ℝ} (hx : RealMem I x)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    ERealMem (inv I) ((1 / x : ℝ) : EReal) := by
   simpa [ERealMem] using Model.Interval.inv_sound I.toModel hformat hI hx
 
-/-- IEEE reciprocal returns extended-valid bounds. -/
-theorem inv_validExtended (I : Bounds) (hformat : format.isIEEE = true) :
+/-- Reciprocal returns extended-valid bounds in every format. -/
+theorem inv_validExtended (I : Bounds) :
     ValidExtended (inv I) := by
   simpa [ValidExtended, Model.Interval.inv] using
     Model.Interval.div_validExtended
-      (Model.Interval.point (Model.posOne format)) I.toModel hformat
+      (Model.Interval.point (Model.posOne format)) I.toModel
 
 /-- Directed square root encloses the real square root on nonnegative finite input bounds. -/
-theorem sqrt_sound (I : Bounds) (hformat : format.isIEEE = true) (hI : Valid I)
-    (hnonnegative : 0 ≤ Model.toReal (Binary.toModel I.lo))
-    {x : ℝ} (hx : RealMem I x) :
+theorem sqrt_sound (I : Bounds) (hI : Valid I)
+    (hnonnegative : 0 ≤ Model.toReal (Binary.toModel I.lo)) {x : ℝ} (hx : RealMem I x)
+    (hformat : format.isIEEE = true := by ieee_format) :
     ERealMem (sqrt I) ((Real.sqrt x : ℝ) : EReal) := by
   simpa [ERealMem] using Model.Interval.sqrt_sound I.toModel hformat hI hnonnegative hx
 
 /-- Directed square root preserves extended validity on nonnegative finite input bounds. -/
-theorem sqrt_validExtended (I : Bounds) (hformat : format.isIEEE = true) (hI : Valid I)
-    (hnonnegative : 0 ≤ Model.toReal (Binary.toModel I.lo)) :
+theorem sqrt_validExtended (I : Bounds) (hI : Valid I)
+    (hnonnegative : 0 ≤ Model.toReal (Binary.toModel I.lo))
+    (hformat : format.isIEEE = true := by ieee_format) :
     ValidExtended (sqrt I) := by
   simpa [ValidExtended] using
     Model.Interval.sqrt_validExtended I.toModel hformat hI hnonnegative

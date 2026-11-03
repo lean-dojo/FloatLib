@@ -36,7 +36,6 @@ Build the E8M0 inspection profile shared by the raw code and configured `ExecFlo
 meta def profile : FormatProfile where
   family := "exponent-only microscaling scale"
   standard := "Open Compute Project MX E8M0"
-  declarationPrefix := "FloatLib.Floats.Formats.OCP.MX.E8M0."
   representation :=
     [ ⟨"storage", "8-bit word"⟩
     , ⟨"finite codes", "0x00 through 0xfe"⟩
@@ -80,6 +79,9 @@ meta def profile : FormatProfile where
     , { topic := "exact scale and element refinement"
         declarations :=
           [ ``FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines
+          , ``FloatLib.Floats.Formats.OCP.MX.E8M0.map_toRat_scaleDyadic?
+          , ``FloatLib.Floats.Formats.OCP.MX.E8M0.toRat_scaledValue_of_toDyadic?_eq_some
+          , ``FloatLib.Floats.Formats.OCP.MX.E8M0.toRat_of_toDyadic?_eq_some
           , ``FloatLib.Floats.Formats.OCP.MX.E8M0.decodeElement_refines
           ]
         applicability := .verifiedForType
@@ -118,11 +120,24 @@ meta def blockElementIdentity (format : Expr) : MetaM String := do
     return "OCP MX E3M2"
   return toString (← Meta.ppExpr format)
 
+/-- The theorem group about joint block decoding, which the configured block report also lists. -/
+meta def blockRepresentation : TheoremSurface :=
+  { topic := "joint block representation"
+    declarations :=
+      [ ``FloatLib.Floats.Formats.OCP.MX.blockSystem_represents_iff
+      , ``FloatLib.Floats.Formats.OCP.MX.BlockCode.decode_refines
+      ]
+    applicability := .verifiedForType
+    scope := "every runtime block length and every selected binary element descriptor"
+    numericalGuarantee? := some {
+      kinds := [.exactness]
+      statement :=
+        "Successful joint decoding returns exactly the dyadic array denoted by the stored scale and element words." } }
+
 /-- Build the report for the joint shared-scale-and-elements block carrier. -/
 meta def blockProfile (elementIdentity : String) : FormatProfile where
   family := "E8M0-scaled binary block"
   standard := "OCP MX representation when the chosen element descriptor and block size satisfy MX"
-  declarationPrefix := "FloatLib.Floats.Formats.OCP.MX."
   representation :=
     [ ⟨"scale storage", "one E8M0 byte"⟩
     , ⟨"element format", elementIdentity⟩
@@ -148,17 +163,7 @@ meta def blockProfile (elementIdentity : String) : FormatProfile where
   specializedOperations :=
     [ ⟨"decode?", "checked exact joint decoding of the stored scale and every element word"⟩ ]
   theoremSurfaces :=
-    [ { topic := "joint block representation"
-        declarations :=
-          [ ``FloatLib.Floats.Formats.OCP.MX.blockSystem_represents_iff
-          , ``FloatLib.Floats.Formats.OCP.MX.BlockCode.decode_refines
-          ]
-        applicability := .verifiedForType
-        scope := "every runtime block length and every selected binary element descriptor"
-        numericalGuarantee? := some {
-          kinds := [.exactness]
-          statement :=
-            "Successful joint decoding returns exactly the dyadic array denoted by the stored scale and element words." } }
+    [ blockRepresentation
     , { topic := "exact E8M0 element scaling"
         declarations :=
           [ ``FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines

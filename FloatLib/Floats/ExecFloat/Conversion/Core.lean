@@ -15,9 +15,11 @@ public import Mathlib.Algebra.Order.Field.Basic
 
 A source's `ExactDecoder` gives its exact value. An `ExactMap` embeds that value into the
 destination's exact domain, and a `Quantizer` rounds it under the policy of its context.
-`ConversionOutcome` retains the resulting value and flags, or the reason conversion failed.
-`RoundingModes` and `ModeContext` give the type of a conversion's `(mode := ...)` option and the
-destination context each mode selects.
+`ConversionOutcome` retains the resulting value and flags, or the reason conversion failed, and
+`#eval` shows it as `.success v { inexact := true }` or `.failure .outOfRange`, with only the
+raised flags. `RoundingModes` gives the types of a conversion's `(mode := ...)` and
+`(context := ...)` options, the rounding direction and a policy without one, and combines them into
+the quantizer's context. `ModeContext` supplies the policy a call uses when it names none.
 
 `Conversion.Runtime` has the entry points, and `Conversion.Proof` has their correctness theorems
 and the laws for composing outcomes.
@@ -44,7 +46,17 @@ inductive InputPosition where
   | addend
   /-- A zero-based input of a user-defined exact expression. -/
   | operand (index : Nat)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
+
+/-- `#eval` writes a position with a leading dot, as `.source` or `.operand 2`. -/
+instance : Repr InputPosition where
+  reprPrec position prec :=
+    match position with
+    | .source => reprConstructor "source" [] prec
+    | .left => reprConstructor "left" [] prec
+    | .right => reprConstructor "right" [] prec
+    | .addend => reprConstructor "addend" [] prec
+    | .operand index => reprConstructor "operand" [repr index] prec
 
 /-- Why an explicit conversion or mixed-format operation produced no destination value. -/
 inductive ConversionFailure where
@@ -58,7 +70,22 @@ inductive ConversionFailure where
   | outOfRange
   /-- The requested family-specific conversion policy is not implemented by the destination. -/
   | unsupportedPolicy
-  deriving DecidableEq, Repr
+  deriving DecidableEq
+
+/--
+`#eval` writes a failure with leading dots and names the sign of an infinity, as
+`.infinity .source (negative := false)`, `.exceptional .left .nan` or `.outOfRange`.
+-/
+instance : Repr ConversionFailure where
+  reprPrec failure prec :=
+    match failure with
+    | .infinity position negative =>
+        reprConstructor "infinity" [reprArg position, reprNamedArg "negative" (repr negative)] prec
+    | .exceptional position value =>
+        reprConstructor "exceptional" [reprArg position, reprArg value] prec
+    | .divisionByZero => reprConstructor "divisionByZero" [] prec
+    | .outOfRange => reprConstructor "outOfRange" [] prec
+    | .unsupportedPolicy => reprConstructor "unsupportedPolicy" [] prec
 
 /--
 An exact scalar computation that may reject a non-finite input or an undefined operation.
@@ -95,7 +122,16 @@ structure ConversionStatus where
   /-- The conversion signaled invalid operation. Binary destinations raise it for a signaling NaN
   source, as IEEE 754 §7.2 requires. -/
   invalid : Bool := false
-  deriving DecidableEq, Repr, Inhabited
+  deriving DecidableEq, Inhabited
+
+/-- `#eval` lists only the raised flags, as `{ inexact := true, overflow := true }`, and shows `{}`
+when none is raised. -/
+instance : Repr ConversionStatus where
+  reprPrec flags _ :=
+    reprFlags
+      [("inexact", flags.inexact), ("overflow", flags.overflow), ("underflow", flags.underflow),
+        ("saturated", flags.saturated), ("wrapped", flags.wrapped),
+        ("mappedSpecial", flags.mappedSpecial), ("invalid", flags.invalid)]
 
 namespace ConversionStatus
 
@@ -117,7 +153,21 @@ inductive ConversionOutcome (α : Type u) where
   | success (value : α) (status : ConversionStatus := {})
   /-- A conversion rejected by its policy or by finite-only mixed arithmetic. -/
   | failure (reason : ConversionFailure)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
+
+/--
+`#eval` writes `.success v` followed by the raised flags, which it leaves out when none is raised,
+or `.failure reason`. The value prints as its type displays it, so this is text to read, not a
+serialization. An overflow to an IEEE infinity shows as
+`.success inf { inexact := true, overflow := true }`.
+-/
+instance {α : Type u} [Repr α] : Repr (ConversionOutcome α) where
+  reprPrec outcome prec :=
+    match outcome with
+    | .success value status =>
+        reprConstructor "success" (reprArg value :: if status = {} then [] else [reprArg status])
+          prec
+    | .failure reason => reprConstructor "failure" [reprArg reason] prec
 
 namespace ConversionOutcome
 
@@ -243,58 +293,89 @@ class Quantizer (Destination : Type u) (Exact : outParam (Type v)) where
   subExact : [Sub Exact] → Context → Exact → Exact → Exact := fun _ left right => left - right
 
 /--
-The canonical context used when a conversion or mixed operation names neither `mode` nor
-`context`.
--/
-class DefaultQuantizer (Destination : Type u) (Exact : outParam (Type v))
-    [Quantizer Destination Exact] where
-  /-- Context selected by a conversion that names neither `mode` nor `context`. -/
-  defaultContext : Quantizer.Context Destination
+The `mode` and `context` options of conversions into `Destination`. `Mode` is the type of the
+rounding direction, and `default` is the direction of a call that names none. `Policy` is the type
+of `context`, every other destination policy, and `withMode` combines a direction and a policy
+into the quantizer's context.
 
-/--
-The type of the `mode` option of conversions into `Destination`, with the direction used when a
-call names none.
-
-Binary destinations use `IEEERoundingMode`, nearest-even by default. A destination without
-directed conversion falls back to `RoundingModes.unit`, so naming a direction for it is a type
-error rather than an ignored option.
+A policy has no direction, so the mode decides it. A conversion runs the destination quantizer in
+`withMode mode context`, whether the caller passes `context` or the call uses the canonical
+policy. Binary and nominal static-byte destinations take a `Numerics.RoundingMode`, nearest-even
+by default, and the binary `Conversion.Policy`, whose `entropy` feeds `.stochastic`. P3109
+destinations take a P3109 `RoundingMode` and a `SaturationMode`. A destination without selectable
+directions, such as a posit, falls back to the mode type `NoRoundingDirection`.
 -/
-class RoundingModes (Destination : Type u) (Mode : outParam Type) where
+class RoundingModes (Destination : Type u) (Exact : outParam (Type v))
+    [quantizer : Quantizer Destination Exact] (Mode : outParam Type) where
+  /-- The destination's policies other than the rounding direction: the type of `context`. -/
+  Policy : Type
   /-- The direction used when a call names no `mode`. -/
   default : Mode
-
-/-- A destination without selectable rounding directions has the single mode `()`. -/
-instance (priority := low) RoundingModes.unit {Destination : Type u} :
-    RoundingModes Destination Unit where
-  default := ()
+  /-- The quantizer context that rounds in direction `mode` under `policy`. -/
+  withMode : Mode → Policy → quantizer.Context
 
 /--
-The context type of `Destination`, indexed by the `mode` that selects its default.
+The mode type of a destination without selectable rounding directions. Its one value is the mode
+of every conversion into such a destination.
 
-Conversions take `(context : ContextFor target mode := ...)`. The index lets the default value
-find `ModeContext target mode`, and a caller's context of type `Quantizer.Context target` fits
-because the two types are definitionally equal.
+Naming a direction for such a destination is an error rather than an ignored option.
+`(mode := .down)` is looked up in this type and fails as the unknown constant
+`NoRoundingDirection.down`, and a mode of another type, such as an `IEEERoundingMode` variable, has
+no `RoundingModes` instance for the destination.
+-/
+structure NoRoundingDirection where
+  deriving DecidableEq, Repr, Inhabited
+
+/--
+A destination without selectable rounding directions has the single mode of `NoRoundingDirection`,
+and its policy is the whole quantizer context.
+-/
+instance (priority := low) RoundingModes.noRoundingDirection {Destination : Type u}
+    {Exact : Type v} [quantizer : Quantizer Destination Exact] :
+    RoundingModes Destination Exact NoRoundingDirection where
+  Policy := quantizer.Context
+  default := {}
+  withMode _ context := context
+
+/--
+The canonical policy of a destination, used by a conversion or mixed operation that names no
+`context`. The call's `mode` gives the rounding direction.
+-/
+class DefaultQuantizer (Destination : Type u) (Exact : outParam (Type v))
+    [Quantizer Destination Exact] {Mode : Type} [modes : RoundingModes Destination Exact Mode] where
+  /-- Policy used by a conversion that names no `context`. -/
+  defaultContext : modes.Policy
+
+/--
+The type of the `context` option of conversions into `Destination`, the destination's
+`RoundingModes.Policy`.
+
+Conversions take `(context : ContextFor target mode := ...)`. The `mode` index does not change the
+type: it is there so that the default value can find `ModeContext target mode`. A caller's policy
+of type `RoundingModes.Policy target` fits because the two types are definitionally equal.
 -/
 abbrev ContextFor (Destination : Type u) {Exact : Type v}
-    [quantizer : Quantizer Destination Exact] {Mode : Type} (_mode : Mode) : Type :=
-  quantizer.Context
+    [Quantizer Destination Exact] {Mode : Type} [modes : RoundingModes Destination Exact Mode]
+    (_mode : Mode) : Type :=
+  modes.Policy
 
 /--
-The destination context that a conversion's `mode` option selects when it names no `context`.
+The policy a conversion uses when it names no `context`.
 
-`ModeContext.canonical` gives the canonical context to every destination with a
-`DefaultQuantizer` and no rounding directions. Binary destinations install an instance for every
-direction. A destination without a canonical context, such as a shared-scale block, has no
+`ModeContext.canonical` gives every destination with a `DefaultQuantizer` its canonical policy,
+whatever the mode. A destination without a canonical policy, such as a shared-scale block, has no
 instance and needs a `context` argument.
 -/
 class ModeContext (Destination : Type u) (Exact : outParam (Type v))
-    [Quantizer Destination Exact] {Mode : Type} (mode : Mode) where
-  /-- The context that rounds in direction `mode`. -/
+    [Quantizer Destination Exact] {Mode : Type} [RoundingModes Destination Exact Mode]
+    (mode : Mode) where
+  /-- The policy used for a call with this `mode` and no `context`. -/
   context : ContextFor Destination mode
 
-/-- A destination without rounding directions uses its canonical context for its one mode. -/
-@[inline] instance ModeContext.canonical {Destination : Type u} {Exact : Type v}
-    [Quantizer Destination Exact] [defaults : DefaultQuantizer Destination Exact] (mode : Unit) :
+/-- A destination with a canonical policy uses it for every mode. -/
+@[inline] instance (priority := low) ModeContext.canonical {Destination : Type u} {Exact : Type v}
+    [Quantizer Destination Exact] {Mode : Type} [RoundingModes Destination Exact Mode]
+    [defaults : DefaultQuantizer Destination Exact] (mode : Mode) :
     ModeContext Destination Exact mode where
   context := defaults.defaultContext
 

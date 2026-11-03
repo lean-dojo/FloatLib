@@ -13,9 +13,10 @@ public import Mathlib.Data.FinEnum
 # Standard posit comparisons and finite enumeration
 
 The Posit Standard (2022) defines comparisons by regarding the complete encoded words as
-two's-complement signed integers. In particular, NaR compares as the least encoded value and two
-NaR words compare equal. This is an ordering of *posit values*, including NaR; it is deliberately
-not presented as an order embedding into `Rat` or `Real`, because NaR has no real denotation.
+two's-complement signed integers. In particular, NaR compares as the least encoded value
+(`nar_le`, `nar_lt_iff_ne_nar`) and two NaR words compare equal. This is an ordering of *posit
+values*, including NaR; it is deliberately not presented as an order embedding into `Rat` or
+`Real`, because NaR has no real denotation.
 
 This module transports Lean's proved `BitVec.toInt` order to `Model format`. It also exposes the
 exact equivalence with `BitVec format.bits` and derives Mathlib's `FinEnum`/`Fintype`
@@ -149,6 +150,23 @@ instance : LinearOrder (Model format) where
 @[simp] theorem compareEqual_nar_nar (format : Format) :
     compareEqual (nar format) (nar format) = true := by
   simp
+
+/-- The NaR word is the two's-complement minimum `BitVec.intMin`, the word `100...0`. -/
+private theorem nar_bits (format : Format) :
+    (nar format).bits = BitVec.intMin format.bits := by
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_intMin_of_pos (by have := format.bits_ge_two; omega)]
+  exact nar_toNatBits format
+
+/-- NaR is the least posit word in the standard comparison order. -/
+theorem nar_le (value : Model format) : nar format ≤ value := by
+  change (nar format).bits.toInt ≤ value.bits.toInt
+  rw [nar_bits]
+  exact BitVec.toInt_intMin_le value.bits
+
+/-- Every word other than NaR compares strictly greater than NaR. -/
+theorem nar_lt_iff_ne_nar (value : Model format) : nar format < value ↔ value ≠ nar format :=
+  ⟨ne_of_gt, fun hvalue => lt_of_le_of_ne (nar_le value) (Ne.symm hvalue)⟩
 
 end Model
 

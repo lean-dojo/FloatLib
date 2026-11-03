@@ -17,8 +17,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 # Binary-interchange inspection command
 
 Resolve configured, descriptor, static-byte, and proof-model carriers for `#float_info`.
-Their reports share the descriptor profile in `Info.Profile`, with storage and operation
-availability taken from the elaborated type and its instances.
+Their reports share the descriptor profile in `Info.Profile`, which chooses rounding entries and
+theorem groups by carrier. Storage, the planning policy, and the installed operations come from
+the elaborated type and its instances.
 -/
 
 @[expose] public section
@@ -62,56 +63,38 @@ private meta def staticByteFormat? (family : Expr) : MetaM (Option Expr) := do
   let formatProjection ← mkConstWithFreshMVarLevels ``StaticByte.Family.format
   return some (← withTransparency .all <| whnf (mkApp2 formatProjection family familyInstance))
 
-/-- Runtime identity entries shared by the binary inspection profile. -/
-private meta def executionIdentity
-    (carrier dispatch : String) :
-    List FloatLib.Floats.ExecFloat.InfoEntry :=
-  [ ⟨"carrier", carrier⟩
-  , ⟨"dispatch", dispatch⟩
-  ]
-
 /--
-Certified operations exposed directly by the descriptor-indexed proof model.
-
-They are listed as specialized operations because `Model format` does not install the configured
-`ExecFloat` capability planner.
+Operations of the descriptor-indexed proof model, which has no planning policy or capability
+dictionary: each operation dispatches to its kernels itself.
 -/
 private meta def modelOperations :
     List FloatLib.Floats.ExecFloat.InfoEntry :=
   [ ⟨"add",
-      "`Model.add`; automatic tiny-table/native-word dispatch, with `Model.Proof.add_eq_spec`"⟩
+      "`Model.add`; tiny-table or machine-word dispatch, with `Model.Proof.add_eq_spec`"⟩
   , ⟨"sub",
-      "`Model.sub`; automatic tiny-table/native-word dispatch, with `Model.Proof.sub_eq_spec`"⟩
+      "`Model.sub`; tiny-table or machine-word dispatch, with `Model.Proof.sub_eq_spec`"⟩
   , ⟨"mul",
-      "`Model.mul`; automatic tiny-table/native-word dispatch, with `Model.Proof.mul_eq_spec`"⟩
+      "`Model.mul`; tiny-table or machine-word dispatch, with `Model.Proof.mul_eq_spec`"⟩
   , ⟨"div",
-      "`Model.div`; automatic tiny-table/native-word dispatch, with `Model.Proof.div_eq_spec`"⟩
+      "`Model.div`; tiny-table or machine-word dispatch, with `Model.Proof.div_eq_spec`"⟩
   , ⟨"sqrt",
-      "`Model.sqrt`; automatic tiny-table/word/generic dispatch, with `Model.Proof.sqrt_eq_spec`"⟩
+      "`Model.sqrt`; tiny-table, word, or generic dispatch, with `Model.Proof.sqrt_eq_spec`"⟩
   , ⟨"fma",
-      "`Model.fma`; single-rounding automatic dispatch, with `Model.Proof.fma_eq_spec`"⟩
-  , ⟨"directed arithmetic",
-      "`(mode := m)` on each operation selects one of six rounding directions, " ++
-        "including MPFR's away-from-zero rounding"⟩
-  , ⟨"status-bearing arithmetic",
-      "`(status := true)` returns the encoded result with invalid, divide-by-zero, overflow, " ++
-        "underflow, and inexact flags and the ternary value"⟩
+      "`Model.fma`; single-rounding dispatch, with `Model.Proof.fma_eq_spec`"⟩
   ]
 
-/-- Persistent storage specified by the configured family's selected plan. -/
+/-- The storage a configured family's plan selects. -/
 private meta def configuredStorage (plan : Expr) (bitWidth : Nat) : MetaM String := do
-  let plan ← withTransparency .all <| whnf plan
-  let storage ←
-    if plan.isAppOfArity ``Configured.StoragePlan.wide 1 then
-      pure s!"BitVec {bitWidth} in Model"
-    else do
-      let storageClass ← mkAppM
-        ``Configured.StoragePlan.storageClass #[plan]
-      let storageDisplay ← mkAppM
-        ``FloatLib.Floats.ExecFloat.Backend.StorageClass.display #[storageClass]
-      FloatLib.Floats.ExecFloat.Inspection.readString
-        "configured storage class" storageDisplay
-  pure s!"{storage} specified by the configured storage plan"
+  let head := (← withTransparency .all <| whnf plan).getAppFn
+  if head.isConstOf ``Configured.StoragePlan.byte then return "UInt8"
+  if head.isConstOf ``Configured.StoragePlan.word16 then return "UInt16"
+  if head.isConstOf ``Configured.StoragePlan.word32 then return "UInt32"
+  if head.isConstOf ``Configured.StoragePlan.word64 then return "UInt64"
+  if head.isConstOf ``Configured.StoragePlan.pair then return "two UInt64 words"
+  if head.isConstOf ``Configured.StoragePlan.wide then
+    return s!"BitVec {bitWidth} (the proof model itself)"
+  if head.isConstOf ``Configured.StoragePlan.limbs then return "an array of 32-bit limbs"
+  throwError "failed to inspect the configured storage plan"
 
 /-- Read the standards identity supplied by a nominal static-byte family. -/
 private meta def staticByteStandard (family : Expr) : MetaM String := do
@@ -132,72 +115,45 @@ elab_rules : command
         match ← Inspection.execFamily? typeExpr with
         | some family => do
             let family ← withTransparency .reducible <| whnf family
-            let (summary, standard, storage, execution) ←
+            let (summary, standard, storage, carrier) ←
               match configuredFormatPlan? family with
               | some (format, plan) => do
                   let summary ← FloatInfo.inspectSummary format
-                  let storage ← configuredStorage plan summary.bitWidth
                   pure
-                    ( summary
-                    , FloatInfo.standardName summary
-                    , storage
-                    , executionIdentity
-                        "packed persistent storage; the exact binary descriptor is retained as the proof model"
-                        "representation-aware certified selection among direct tables, word, limb, and exact baseline kernels"
-                    )
+                    ( summary, FloatInfo.standardName summary
+                    , ← configuredStorage plan summary.bitWidth, FloatInfo.Carrier.configured )
               | none =>
                   match descriptorFormat? family with
                   | some format => do
                       let summary ← FloatInfo.inspectSummary format
                       pure
-                        ( summary
-                        , FloatInfo.standardName summary
-                        , s!"BitVec {summary.bitWidth}"
-                        , executionIdentity
-                            "the descriptor's exact-width encoded word; no host Float conversion"
-                            "one-time proof-carrying selection among table, specialized, word, limb, and generic kernels"
-                        )
+                        ( summary, FloatInfo.standardName summary
+                        , FloatInfo.carrierStorage summary .descriptor
+                        , FloatInfo.Carrier.descriptor )
                   | none =>
                       match ← staticByteFormat? family with
                       | some format => do
                           let summary ← FloatInfo.inspectSummary format
-                          let standard ← staticByteStandard family
                           pure
-                            ( summary
-                            , standard
-                            , "UInt8 with an erased valid-code-range proof"
-                            , executionIdentity
-                                "direct byte storage; the binary descriptor is used only as a proof model"
-                                "proof-carrying automatic planner over byte tables and exact baseline kernels"
-                            )
+                            ( summary, ← staticByteStandard family
+                            , FloatInfo.carrierStorage summary .staticByte
+                            , FloatInfo.Carrier.staticByte )
                       | none => throwUnsupportedSyntax
-            let operations ← Inspection.coreOperations family
-            let selectedBackends ← Inspection.selectedBackends family
-            let profile := FloatInfo.profile summary standard storage execution
             let profile :=
-              { profile with execution := profile.execution ++ selectedBackends }
-            logInfoAt tk <| ← Inspection.renderProfile profile typeExpr operations
+              FloatInfo.profile summary standard storage carrier
+                (← Inspection.installedOperations family)
+            let profile :=
+              { profile with
+                execution := profile.execution ++ (← Inspection.selectedBackends family) }
+            logInfoAt tk <|
+              ← Inspection.renderProfile profile typeExpr (← Inspection.coreOperations family)
         | none => do
             let some format ← extractModelFormat? typeExpr
               | throwUnsupportedSyntax
             let summary ← FloatInfo.inspectSummary format
             let profile :=
-              FloatInfo.profile summary (FloatInfo.standardName summary)
-                s!"BitVec {summary.bitWidth} descriptor-indexed proof carrier"
-                (executionIdentity
-                  "the exact-width bit model; intended for specifications, conformance, and backend proofs"
-                  "operation-local certified dispatch; no configured capability planner or packed persistent carrier")
-            let profile :=
-              { profile with
-                rounding :=
-                  [ ⟨"numeric literals",
-                      "exact integer/rational input rounded once to nearest, ties to even"⟩
-                  , ⟨"model arithmetic", "nearest, ties to even"⟩
-                  , ⟨"directed APIs",
-                      "explicit IEEE rounding modes and downward/upward convenience operations"⟩
-                  , ⟨"status flags",
-                      "invalid, divide-by-zero, overflow, underflow, and inexact are modeled explicitly"⟩
-                  ]
+              { FloatInfo.profile summary (FloatInfo.standardName summary)
+                  (FloatInfo.carrierStorage summary .model) with
                 specializedOperations := modelOperations }
             logInfoAt tk <| ← Inspection.renderProfile profile typeExpr .none
 

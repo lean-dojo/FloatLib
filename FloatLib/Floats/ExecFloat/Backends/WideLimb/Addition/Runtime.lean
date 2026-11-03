@@ -26,7 +26,8 @@ of two routes.
 
 Both routes end in `roundNormal?`. `addNormal?` decodes two normal stored values into this core;
 `add` and `sub` use `Model.Spec.add` and `Model.Spec.sub`, respectively, for declined cases.
-`Addition.Proof` proves that they equal `Model.Spec.add` and `Model.Spec.sub`.
+For every `Eligible` format, `Addition.Proof` proves that they equal `Model.Spec.add` and
+`Model.Spec.sub`.
 -/
 
 @[expose] public section

@@ -39,20 +39,18 @@ theorem tendsto_atan2Interval_lo (x y : ℚ) :
     Tendsto (fun n => ((atan2Interval x y n).lo : ℝ)) atTop
       (𝓝 (Complex.arg ⟨(x : ℝ), (y : ℝ)⟩)) := by
   rw [← atan2Reduction_eq_arg]
-  simpa only [atan2Interval, RationalInterval.add, Rat.cast_add] using
-    (Enclosure.tendsto_atan_lo (atan2Reduction x y).1).add
-      (RationalInterval.tendsto_scale_lo Enclosure.tendsto_piQuarter_lo
-        Enclosure.tendsto_piQuarter_hi (atan2Reduction x y).2)
+  exact RationalInterval.tendsto_add_lo (Enclosure.tendsto_atan_lo (atan2Reduction x y).1)
+    (RationalInterval.tendsto_scale_lo Enclosure.tendsto_piQuarter_lo
+      Enclosure.tendsto_piQuarter_hi (atan2Reduction x y).2)
 
 /-- Upper rational argument endpoints converge to the exact principal value. -/
 theorem tendsto_atan2Interval_hi (x y : ℚ) :
     Tendsto (fun n => ((atan2Interval x y n).hi : ℝ)) atTop
       (𝓝 (Complex.arg ⟨(x : ℝ), (y : ℝ)⟩)) := by
   rw [← atan2Reduction_eq_arg]
-  simpa only [atan2Interval, RationalInterval.add, Rat.cast_add] using
-    (Enclosure.tendsto_atan_hi (atan2Reduction x y).1).add
-      (RationalInterval.tendsto_scale_hi Enclosure.tendsto_piQuarter_lo
-        Enclosure.tendsto_piQuarter_hi (atan2Reduction x y).2)
+  exact RationalInterval.tendsto_add_hi (Enclosure.tendsto_atan_hi (atan2Reduction x y).1)
+    (RationalInterval.tendsto_scale_hi Enclosure.tendsto_piQuarter_lo
+      Enclosure.tendsto_piQuarter_hi (atan2Reduction x y).2)
 
 /-- A rational complex point outside the nonnegative real axis has no rational argument. -/
 theorem arg_ne_ratCast (x y boundary : ℚ) (hnonzero : ¬ (0 ≤ x ∧ y = 0)) :
@@ -73,10 +71,8 @@ theorem arg_ne_ratCast (x y boundary : ℚ) (hnonzero : ¬ (0 ≤ x ∧ y = 0)) 
 /-- Refinement eventually separates every rational boundary away from the exact zero branch. -/
 theorem exists_atan2_separating (x y boundary : ℚ) (hnonzero : ¬ (0 ≤ x ∧ y = 0)) :
     ∃ n, Enclosure.Comparison.Separates (atan2Interval x y (2 ^ n)) boundary :=
-  Enclosure.Comparison.exists_separating boundary (arg_ne_ratCast x y boundary hnonzero)
-    ((tendsto_atan2Interval_lo x y).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_atan2Interval_hi x y).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+  Enclosure.Comparison.exists_separating_two_pow boundary (arg_ne_ratCast x y boundary hnonzero)
+    (tendsto_atan2Interval_lo x y)
+    (tendsto_atan2Interval_hi x y)
 
 end FloatLib.Numerics.TrigonometricComparison

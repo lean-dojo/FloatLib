@@ -35,12 +35,14 @@ theorem toReal_cast_bfloat16_binary32
 noncomputable abbrev bf16Round (x : ℝ) : ℝ :=
   roundAt FloatFormat.bfloat16 x
 
-/-- Finite bfloat16 addition is exact real addition followed by one nearest-even rounding step. -/
+/--
+Bfloat16 addition with a finite result is exact real addition followed by one nearest-even
+rounding step.
+-/
 theorem bfloat16_add_eq_bf16Round
-    {x y : Model FloatFormat.bfloat16}
-    (hx : isFinite x = true) (hy : isFinite y = true) (hfin : isFinite (add x y) = true) :
+    {x y : Model FloatFormat.bfloat16} (hfin : isFinite (add x y) = true) :
     toReal (add x y) = bf16Round (toReal x + toReal y) := by
-  exact toReal_add_eq_roundAt x y (by decide) hx hy hfin
+  exact toReal_add_eq_roundAt x y (by decide) hfin
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

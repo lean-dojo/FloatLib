@@ -125,7 +125,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
       .failure (.exceptional .source exceptional)
   | .toNaR =>
       .success (ExecFloat.Posit.nar)
-        { mappedSpecial := true, invalid := exceptional.isSignalingNaN }
+        { mappedSpecial := true, invalid := exceptional.isSNaN }
 
 /-- Reference conversion for every exact-rational observation. -/
 @[inline] def run (context : Context) :

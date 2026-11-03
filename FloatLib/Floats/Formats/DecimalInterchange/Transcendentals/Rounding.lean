@@ -50,21 +50,24 @@ theorem roundAt_mono (f : Format) {x y : ℝ} (hxy : x ≤ y) :
     roundAt f x ≤ roundAt f y :=
   Flocq.round_mono Flocq.nearestEven hxy
 
+/-- A radix-ten power on the real Flocq grid is the cast of the rational power of ten. -/
+private theorem bpow_decimalRadix (e : ℤ) :
+    Flocq.bpow decimalRadix e = (((10 : ℚ) ^ e : ℚ) : ℝ) := by
+  simp [Flocq.bpow, Radix.toReal, decimalRadix]
+
 /-- The exact decimal digit count selects the Flocq canonical exponent away from zero. -/
 theorem cexp_eq_roundingQuantum (f : Format) {x : ℚ} (hx : x ≠ 0) :
     Flocq.cexp decimalRadix (fexpOf f) (x : ℝ) = roundingQuantum f |x| := by
   have hxreal : (x : ℝ) ≠ 0 := by exact_mod_cast hx
   have hmin := roundingQuantum_ge_min f |x|
   have hu : 0 < (10 : ℚ) ^ roundingQuantum f |x| := zpow_pos (by norm_num) _
-  have hupper := (div_lt_iff₀ hu).mp (div_roundingQuantum_lt f (abs_nonneg x))
+  have hupper := (div_lt_iff₀ hu).mp (div_roundingQuantum_lt f |x|)
   rw [Format.coefficientBound_eq, Nat.cast_pow, Nat.cast_ofNat] at hupper
   have hupper' : |(x : ℝ)| <
       Flocq.bpow decimalRadix (roundingQuantum f |x| + (f.precision : ℤ)) := by
-    simp only [Flocq.bpow, Radix.toReal, decimalRadix, Nat.cast_ofNat,
-      zpow_add₀ (by norm_num : (10 : ℝ) ≠ 0), zpow_natCast]
-    have hcast := (Rat.cast_lt (K := ℝ)).mpr hupper
-    simpa only [Rat.cast_abs, Rat.cast_mul, Rat.cast_pow, Rat.cast_ofNat, Rat.cast_zpow,
-      mul_comm] using hcast
+    rw [bpow_decimalRadix, ← Rat.cast_abs, Rat.cast_lt, zpow_add₀ (by norm_num), zpow_natCast,
+      mul_comm]
+    exact hupper
   have hmag := Flocq.magnitude_le_of_abs_lt_bpow decimalRadix
     (x : ℝ) _ hxreal hupper'
   apply le_antisymm
@@ -79,7 +82,7 @@ theorem cexp_eq_roundingQuantum (f : Format) {x : ℚ} (hx : x ≠ 0) :
     · have hstrict : f.minQuantum < roundingQuantum f |x| :=
         lt_of_le_of_ne hmin (Ne.symm hq)
       have hlower := (le_div_iff₀ hu).mp
-        (payloadBound_le_div_roundingQuantum f (abs_nonneg x) hstrict)
+        (payloadBound_le_div_roundingQuantum f hstrict)
       rw [Format.payloadBound_eq, Nat.cast_pow, Nat.cast_ofNat] at hlower
       have hprec : ((f.precision - 1 : ℕ) : ℤ) = (f.precision : ℤ) - 1 := by
         have := f.precision_pos
@@ -87,28 +90,26 @@ theorem cexp_eq_roundingQuantum (f : Format) {x : ℚ} (hx : x ≠ 0) :
       have hlower' :
           Flocq.bpow decimalRadix (roundingQuantum f |x| + f.precision - 1) ≤
             |(x : ℝ)| := by
-        have hcast := (Rat.cast_le (K := ℝ)).mpr hlower
         rw [show roundingQuantum f |x| + (f.precision : ℤ) - 1 =
-          ((f.precision - 1 : ℕ) : ℤ) + roundingQuantum f |x| by omega]
-        simpa only [Flocq.bpow, Radix.toReal, decimalRadix, Nat.cast_ofNat,
-          zpow_add₀ (by norm_num : (10 : ℝ) ≠ 0), zpow_natCast, Rat.cast_abs,
-          Rat.cast_mul, Rat.cast_pow, Rat.cast_ofNat, Rat.cast_zpow] using hcast
+          ((f.precision - 1 : ℕ) : ℤ) + roundingQuantum f |x| by omega, bpow_decimalRadix,
+          ← Rat.cast_abs, Rat.cast_le, zpow_add₀ (by norm_num), zpow_natCast]
+        exact hlower
       have hmag' := (Flocq.bpow_lt_bpow_iff decimalRadix _ _).mp
-        (hlower'.trans_lt (Flocq.abs_lt_bpow_magnitude decimalRadix (x : ℝ) hxreal))
+        (hlower'.trans_lt (Flocq.abs_lt_bpow_magnitude decimalRadix (x : ℝ)))
       change roundingQuantum f |x| ≤
         max (Flocq.magnitude decimalRadix (x : ℝ) - f.precision) f.minQuantum
       exact le_max_of_le_left (by omega)
 
 /-- Decimal nearest-even coefficient rounding uses the shared exact quotient decision. -/
 theorem roundMagnitude_eq_roundQuotientEven (s : Bool) (x : ℚ) :
-    RoundingMode.nearestEven.roundMagnitude s x =
+    RoundingMode.nearest.roundMagnitude s x =
       roundQuotientEven x.num.toNat x.den := by
   simp only [RoundingMode.roundMagnitude, roundQuotientEven, decide_eq_true_eq,
     beq_iff_eq]
   split_ifs <;> simp_all <;> omega
 
 private theorem roundRatEven_of_nonneg {x : ℚ} (hx : 0 ≤ x) (s : Bool) :
-    roundRatEven x = (RoundingMode.nearestEven.roundMagnitude s x : ℤ) := by
+    roundRatEven x = (RoundingMode.nearest.roundMagnitude s x : ℤ) := by
   have hn := Rat.num_nonneg.mpr hx
   have habs : x.num.natAbs = x.num.toNat := by omega
   simp [roundRatEven, not_lt.mpr hn, roundMagnitude_eq_roundQuotientEven,
@@ -122,11 +123,14 @@ private theorem roundRatEven_neg (x : ℚ) : roundRatEven (-x) = -roundRatEven x
       Int.natAbs_neg, neg_lt_zero]
     split_ifs <;> omega
 
-/-- The real specification agrees with exact rational rounding at the selected quantum. -/
-theorem roundAt_ratCast (f : Format) {x : ℚ} (hx : x ≠ 0) :
+/-- The real specification agrees with exact rational rounding at the selected quantum, zero
+included. -/
+theorem roundAt_ratCast (f : Format) (x : ℚ) :
     roundAt f (x : ℝ) =
       (roundRatEven (x / (10 : ℚ) ^ roundingQuantum f |x|) : ℝ) *
         (10 : ℝ) ^ roundingQuantum f |x| := by
+  by_cases hx : x = 0
+  · simp [hx, roundRatEven, roundQuotientEven]
   change (Flocq.nearestEven
       (Flocq.scaledMantissa decimalRadix (fexpOf f) (x : ℝ)) : ℝ) *
       Flocq.bpow decimalRadix (Flocq.cexp decimalRadix (fexpOf f) (x : ℝ)) = _
@@ -139,38 +143,38 @@ theorem roundAt_ratCast (f : Format) {x : ℚ} (hx : x ≠ 0) :
 
 private theorem roundRatEven_signed (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
     roundRatEven (if s then -x else x) =
-      if s then -(RoundingMode.nearestEven.roundMagnitude s x : ℤ)
-      else (RoundingMode.nearestEven.roundMagnitude s x : ℤ) := by
+      if s then -(RoundingMode.nearest.roundMagnitude s x : ℤ)
+      else (RoundingMode.nearest.roundMagnitude s x : ℤ) := by
   cases s
   · exact roundRatEven_of_nonneg hx false
   · simpa only [Bool.true_eq, ite_true, roundRatEven_neg] using
       congrArg Neg.neg (roundRatEven_of_nonneg hx true)
 
 /-- Every finite nearest-even decimal projection equals the independent real rounding. -/
-theorem project_nearestEven_eq_roundAt (f : Format) (x : ℚ)
+theorem project_nearest_eq_roundAt (f : Format) (x : ℚ)
     (preferred : ℤ) (negativeZero : Bool)
     {value : ℚ}
-    (hvalue : (project f .nearestEven x preferred negativeZero).value.toRat? = some value) :
+    (hvalue : (project f .nearest x preferred negativeZero).value.toRat? = some value) :
     (value : ℝ) = roundAt f (x : ℝ) := by
   let s := if x = 0 then negativeZero else decide (x < 0)
-  have hq : (roundedPair f .nearestEven s |x|).2 ≤ f.maxQuantum := by
+  have hq : (roundedPair f .nearest s |x|).2 ≤ f.maxQuantum := by
     by_contra h
-    have hgt : f.maxQuantum < (roundedPair f .nearestEven s |x|).2 := lt_of_not_ge h
-    change (projectMagnitude f .nearestEven s |x| preferred).value.toRat? = some value
+    have hgt : f.maxQuantum < (roundedPair f .nearest s |x|).2 := lt_of_not_ge h
+    change (projectMagnitude f .nearest s |x| preferred).value.toRat? = some value
       at hvalue
     rw [projectMagnitude_eq, ite_eq_left hgt] at hvalue
     cases hvalue
-  have hv := projectMagnitude_value f .nearestEven s |x| preferred hq
-  change (project f .nearestEven x preferred negativeZero).value.toRat? = _ at hv
+  have hv := projectMagnitude_value f .nearest s |x| preferred hq
+  change (project f .nearest x preferred negativeZero).value.toRat? = _ at hv
   have heq := Option.some.inj (hvalue.symm.trans hv)
   by_cases hx : x = 0
-  · have hz : RoundingMode.nearestEven.roundMagnitude s (0 : ℚ) = 0 :=
-      RoundingMode.roundMagnitude_natCast RoundingMode.nearestEven s 0
+  · have hz : RoundingMode.nearest.roundMagnitude s (0 : ℚ) = 0 :=
+      RoundingMode.roundMagnitude_natCast RoundingMode.nearest s 0
     have heq0 : value = 0 := by
       simpa only [hx, abs_zero, RoundingMode.roundAt, zero_div, hz,
         Nat.cast_zero, mul_zero, zero_mul] using heq
     rw [heq0, hx, Rat.cast_zero, roundAt_zero]
-  · rw [roundAt_ratCast f hx, heq]
+  · rw [roundAt_ratCast f x, heq]
     have hstep : 0 < (10 : ℚ) ^ roundingQuantum f |x| := zpow_pos (by norm_num) _
     have harg : x / (10 : ℚ) ^ roundingQuantum f |x| =
         if s then -(|x| / (10 : ℚ) ^ roundingQuantum f |x|)

@@ -12,6 +12,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.GeneralPr
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
+import FloatLib.Kernels.FixedWord.Core.Proof
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
@@ -113,6 +114,21 @@ theorem exponent_eq_scale (fmt : FloatFormat) (encoded : Nat) :
     simp only [beq_iff_eq, hzero, ite_false, Int.ofNat_eq_natCast]
     omega
 
+/--
+The machine-word finite scale `FixedWord.finiteScale` has the value of the compact finite scale
+`scale` of its exponent field.
+-/
+theorem finiteScale_toNat_eq_scale (exponent : UInt64) :
+    (FloatLib.Numerics.FixedWord.finiteScale exponent).toNat = scale exponent.toNat := by
+  rw [FloatLib.Numerics.FixedWord.finiteScale_toNat]
+  unfold scale
+  by_cases hzero : exponent = 0
+  · subst hzero
+    simp
+  · have hzeroNat : exponent.toNat ≠ 0 := by
+      simpa [← UInt64.toNat_inj] using hzero
+    simp [hzero, hzeroNat]
+
 private theorem finiteScaleOffset_eq_ieeeAlign
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     finiteScaleOffset fmt = FloatFormat.ieeeSubnormalAlignExp fmt := by
@@ -120,32 +136,42 @@ private theorem finiteScaleOffset_eq_ieeeAlign
   simp [finiteScaleOffset, FloatFormat.ieeeSubnormalAlignExp, hbias]
 
 /--
-Adding nonzero components with the same sign and exponent reduces to one product-round call.
+Adding components with the same sign and exponent reduces to one product-round call.
 
-The scale is derived entirely from the format descriptor, so fixed-width backends do not need
-their own binary32, binary64, or binary128 versions of this argument.
+Two zero significands give the signed zero of `sign`. The scale is derived entirely from the
+format descriptor, so fixed-width backends do not need their own binary32, binary64, or binary128
+versions of this argument.
 -/
 theorem addComponents_sameSign_sameExponent
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
-    (sign : Bool) (left right exponent : Nat)
-    (hleft : left ≠ 0) (hright : right ≠ 0) :
+    (sign : Bool) (left right exponent : Nat) :
     addComponents fmt
         { sign, exponent, mantissa := left }
         { sign, exponent, mantissa := right } =
       FiniteProductRound.round fmt sign (left + right)
         (scale exponent + finiteScaleOffset fmt) := by
-  have hleftDyadic :
-      Components.toDyadic fmt { sign, exponent, mantissa := left } =
+  by_cases hzero : left = 0 ∧ right = 0
+  · obtain ⟨rfl, rfl⟩ := hzero
+    unfold addComponents
+    rw [← roundDyadic_eq_internal, FiniteProductRound.round_eq_roundDyadic fmt hfmt]
+    simp [Components.toDyadic, addDyadic, roundDyadic, hfmt, ieeeRoundDyadic]
+  have hsum :
+      addDyadic
+          (Components.toDyadic fmt { sign, exponent, mantissa := left })
+          (Components.toDyadic fmt { sign, exponent, mantissa := right }) =
         { negative := sign
-          significand := left
+          significand := left + right
           exponent := dyadicExponent fmt exponent } := by
-    simp [Components.toDyadic, hleft]
-  have hrightDyadic :
-      Components.toDyadic fmt { sign, exponent, mantissa := right } =
-        { negative := sign
-          significand := right
-          exponent := dyadicExponent fmt exponent } := by
-    simp [Components.toDyadic, hright]
+    by_cases hleft : left = 0
+    · have hright : right ≠ 0 := by omega
+      subst hleft
+      simp [Components.toDyadic, addDyadic, hright]
+    by_cases hright : right = 0
+    · subst hright
+      simp [Components.toDyadic, addDyadic, hleft]
+    simp only [Components.toDyadic, beq_iff_eq, hleft, hright, ite_false]
+    exact Model.addDyadic_sameSign_sameExponent sign left right
+      (dyadicExponent fmt exponent) hleft hright
   have hscale :
       Int.ofNat (scale exponent + finiteScaleOffset fmt) -
           Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) =
@@ -154,10 +180,7 @@ theorem addComponents_sameSign_sameExponent
     simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
     ring
   unfold addComponents
-  rw [← roundDyadic_eq_internal, hleftDyadic, hrightDyadic,
-    Model.addDyadic_sameSign_sameExponent sign left right
-      (dyadicExponent fmt exponent) hleft hright,
-    FiniteProductRound.round_eq_roundDyadic fmt hfmt, hscale]
+  rw [← roundDyadic_eq_internal, hsum, FiniteProductRound.round_eq_roundDyadic fmt hfmt, hscale]
 
 private theorem scaleRoundExponent_eq
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (encoded : Nat) :
@@ -314,13 +337,8 @@ theorem mul_eq_spec {fmt : FloatFormat} (x y : Model fmt) :
               Components.toDyadic_exp_of_mantissa_ne_zero fmt dy hyZero]
             rw [exponent_add_eq_scales]
             by_cases hieee : fmt.isIEEE
-            · have hbias := (fmt.isIEEE_eq_true_iff.mp hieee).2
-              have hoffset :
-                  finiteScaleOffset fmt =
-                    FloatFormat.ieeeSubnormalAlignExp fmt := by
-                simp [finiteScaleOffset, FloatFormat.ieeeSubnormalAlignExp, hbias]
-              simp only [hieee, ite_true, Option.some.injEq]
-              simpa only [hoffset] using
+            · simp only [hieee, ite_true, Option.some.injEq]
+              simpa only [finiteScaleOffset_eq_ieeeAlign fmt hieee] using
                 FiniteProductRound.round_eq_roundDyadic
                   fmt hieee (Bool.xor dx.sign dy.sign)
                     (dx.mantissa * dy.mantissa)
@@ -429,18 +447,15 @@ theorem Internal.fmaComponents_eq
 An aligned same-sign FMA reduces to one product-round call for every IEEE binary format.
 
 The caller supplies the significand alignment width. As in
-`addComponents_sameSign_sameExponent`, the exponent offset comes from the descriptor.
+`addComponents_sameSign_sameExponent`, the exponent offset comes from the descriptor. A zero
+exponent field (a subnormal operand) has scale `0 = 0 - 1`, and a zero addend leaves the product.
 -/
 theorem fmaComponents_sameSign_aligned
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (alignment : Nat)
     (xSign ySign : Bool)
     (xExponent yExponent zExponent xMantissa yMantissa zMantissa : Nat)
-    (hxExponent : xExponent ≠ 0)
-    (hyExponent : yExponent ≠ 0)
-    (hzExponent : zExponent ≠ 0)
     (hxMantissa : xMantissa ≠ 0)
     (hyMantissa : yMantissa ≠ 0)
-    (hzMantissa : zMantissa ≠ 0)
     (haligned :
       (xExponent - 1) + (yExponent - 1) + alignment =
         (zExponent - 1) + finiteScaleOffset fmt) :
@@ -458,18 +473,23 @@ theorem fmaComponents_sameSign_aligned
         (Bool.xor xSign ySign)
         (xMantissa * yMantissa + (zMantissa <<< alignment))
         ((xExponent - 1) + (yExponent - 1)) := by
+  have hscaleSub (encoded : Nat) : scale encoded = encoded - 1 := by
+    unfold scale
+    split <;> simp_all
   rw [← Internal.fmaComponents_eq]
   unfold Internal.fmaComponents
   rw [ite_eq_left hfmt]
   unfold FiniteScaleAdd.roundSum
-  simp only [scale, hxExponent, hyExponent, hzExponent,
-    ite_false, hxMantissa, hyMantissa, hzMantissa, mul_eq_zero,
-    beq_iff_eq]
+  simp only [hscaleSub, hxMantissa, hyMantissa, mul_eq_zero, beq_iff_eq, or_self, ite_false]
+  by_cases hzMantissa : zMantissa = 0
+  · subst hzMantissa
+    simp only [ite_true, Nat.zero_shiftLeft, Nat.add_zero]
+    rfl
   have hscale :
       (xExponent - 1) + (yExponent - 1) ≤
         (zExponent - 1) + finiteScaleOffset fmt := by
     omega
-  simp only [or_self, ite_false]
+  simp only [hzMantissa, ite_false]
   rw [ite_eq_left hscale]
   rw [FiniteScaleAdd.roundAligned_eq]
   unfold FiniteScaleAdd.roundMagnitudes

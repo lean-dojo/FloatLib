@@ -38,7 +38,7 @@ private theorem magnitude_le_round_FLX_of_pos (prec : ℤ) (hprec : 0 < prec)
     (β := β) (fexp := flxExp prec) rnd x hx hlarge).1.1
   let q := round (β := β) (fexp := flxExp prec) rnd x
   have hqpos : 0 < q := (bpow.pos β _).trans_le hb
-  have hqUpper := abs_lt_bpow_magnitude β q hqpos.ne'
+  have hqUpper := abs_lt_bpow_magnitude β q
   have hpowers : bpow β (magnitude β x - 1) <
       bpow β (magnitude β q) := by
     exact lt_of_le_of_lt hb (by simpa [abs_of_pos hqpos] using hqUpper)
@@ -46,10 +46,9 @@ private theorem magnitude_le_round_FLX_of_pos (prec : ℤ) (hprec : 0 < prec)
     (bpow_lt_bpow_iff β _ _).mp hpowers
   linarith
 
-/-- A nonzero FLX rounded result has magnitude at least that of its exact input. -/
+/-- An FLX rounded result has magnitude at least that of its exact input. -/
 theorem magnitude_le_round_FLX (prec : ℤ) (hprec : 0 < prec)
-    (rnd : ℝ → ℤ) [ValidRnd rnd] {x : ℝ}
-    (hround : @round β (flxExp prec) (flxValidExp prec hprec) rnd x ≠ 0) :
+    (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     magnitude β x ≤
       magnitude β
         (@round β (flxExp prec) (flxValidExp prec hprec) rnd x) := by
@@ -105,7 +104,7 @@ theorem generic_format_FLX_sub_mul_of_bounds (prec : ℤ) (hprec : 0 < prec) {x 
   apply generic_format_FLX_add_of_repr_bounds prec hprec fx negProduct x (-(a * b)) hfx hnegProduct
   · rw [← sub_eq_add_neg, hfxexp]
     refine lt_trans hlt ?_
-    simpa [cexp, flxExp] using abs_lt_bpow_magnitude β x hx0
+    simpa [cexp, flxExp] using abs_lt_bpow_magnitude β x
   · rw [← sub_eq_add_neg]
     refine hbound.trans_le ((bpow_le_bpow_iff β _ _).2 ?_)
     simp only [negProduct, hfaexp, hfbexp, cexp, flxExp]
@@ -160,13 +159,13 @@ theorem div_round_residual_FLX (prec : ℤ) (hprec : 0 < prec)
       bpow β (cexp β (flxExp prec) q + magnitude β y) := by
     have hcexpZQ : cexp β (flxExp prec) z ≤ cexp β (flxExp prec) q := by
       simp only [cexp, flxExp]
-      exact sub_le_sub_right (magnitude_le_round_FLX (β := β) prec hprec rnd hq0) prec
+      exact sub_le_sub_right (magnitude_le_round_FLX (β := β) prec hprec rnd z) prec
     have herrBpowQ : abs (q - z) < bpow β (cexp β (flxExp prec) q) := by
       have herrBpow : abs (q - z) < bpow β (cexp β (flxExp prec) z) := by
         simpa [ulp, hz0] using herrorStrict
       exact herrBpow.trans_le ((bpow_le_bpow_iff β _ _).2 hcexpZQ)
     rw [hresAbs, bpow.add_exp, mul_comm (bpow β _)]
-    exact mul_lt_mul (abs_lt_bpow_magnitude β y hy0) herrBpowQ.le
+    exact mul_lt_mul (abs_lt_bpow_magnitude β y) herrBpowQ.le
       (abs_pos.mpr (sub_ne_zero.mpr hinexact)) (bpow.nonneg β _)
   exact generic_format_FLX_sub_mul_of_bounds prec hprec hx (generic_format_round rnd z) hy hlt
     hbound
@@ -235,11 +234,11 @@ theorem sqrt_round_residual_FLX (prec : ℤ) (hprec : 1 < prec) {x : ℝ}
   have hbound : abs (x - q ^ 2) <
       bpow β (cexp β (flxExp prec) q + magnitude β q) := by
     have hmagSQ : magnitude β s ≤ magnitude β q :=
-      magnitude_le_round_FLX (β := β) prec hp0 nearestEven hqpos.ne'
+      magnitude_le_round_FLX (β := β) prec hp0 nearestEven s
     have herrorBpow : abs (q - s) ≤ bpow β (cexp β (flxExp prec) s) / 2 := by
       simpa [ulp, hspos.ne'] using error_bound_ulp (β := β) (fexp := flxExp prec) nearestEven s
     have hsumStrict : q + s < 2 * bpow β (magnitude β s) := by
-      have hsUpper := abs_lt_bpow_magnitude β s hspos.ne'
+      have hsUpper := abs_lt_bpow_magnitude β s
       rw [abs_of_pos hspos] at hsUpper
       linarith [hqBounds.2]
     have hcexpSQ : cexp β (flxExp prec) s ≤ cexp β (flxExp prec) q := by

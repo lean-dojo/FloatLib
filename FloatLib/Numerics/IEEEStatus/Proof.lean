@@ -39,6 +39,9 @@ namespace FloatLib.Numerics.IEEEStatus
   cases he
   rfl
 
+/-- Two flag states are equal exactly when every exception has the same state. -/
+add_decl_doc FloatLib.Numerics.IEEEStatus.ext_isSet_iff
+
 /-- Constructing a flag group preserves its membership predicate. -/
 @[simp] theorem isSet_ofPredicate (selected : IEEEException → Bool) (exception : IEEEException) :
     (ofPredicate selected).isSet exception = selected exception := by

@@ -151,12 +151,78 @@ also carries the `invalid` indicator of a signaling NaN.
   | false =>
       ModelCodec.liftUnary (Model := Model format) (plan := plan) (fun x => Model.nextDown x) value
 
-/-- IEEE-2008-style `minNum`, retaining the numeric operand against one quiet NaN. -/
-@[inline] def minNum (left right : Value) : Value :=
-  ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.minNum left right
+/--
+IEEE 754-2019 §9.6 `minimum`, the operation that `min left right` runs: the lesser operand, with
+`-0` below `+0`, or a quiet NaN when an operand is a NaN. With `status := true` the result also
+carries the `invalid` indicator of a signaling NaN operand.
+-/
+@[macro_inline] def minimum (left right : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.minimum (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+          (status := true)
+  | false =>
+      ModelCodec.liftBinary (Model := Model format) (plan := plan)
+        (fun x y => Model.minimum x y) left right
 
-/-- IEEE-2008-style `maxNum`, retaining the numeric operand against one quiet NaN. -/
-@[inline] def maxNum (left right : Value) : Value :=
-  ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.maxNum left right
+/--
+IEEE 754-2019 §9.6 `maximum`, the operation that `max left right` runs: the greater operand, with
+`+0` above `-0`, or a quiet NaN when an operand is a NaN. With `status := true` the result also
+carries the `invalid` indicator of a signaling NaN operand.
+-/
+@[macro_inline] def maximum (left right : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.maximum (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+          (status := true)
+  | false =>
+      ModelCodec.liftBinary (Model := Model format) (plan := plan)
+        (fun x y => Model.maximum x y) left right
+
+/--
+IEEE 754-2019 §9.6 `minimumNumber`: the lesser operand, with `-0` below `+0`, and the number when
+the other operand is a NaN, quiet or signaling. Two NaNs give a quiet NaN. With `status := true`
+the result also carries the `invalid` indicator that a signaling NaN raises, including when the
+other operand is a number and supplies the result.
+-/
+@[macro_inline] def minimumNumber (left right : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.minimumNumber (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+          (status := true)
+  | false =>
+      ModelCodec.liftBinary (Model := Model format) (plan := plan)
+        (fun x y => Model.minimumNumber x y) left right
+
+/--
+IEEE 754-2019 §9.6 `maximumNumber`: the greater operand, with `+0` above `-0`, and the number when
+the other operand is a NaN, quiet or signaling. Two NaNs give a quiet NaN. With `status := true`
+the result also carries the `invalid` indicator that a signaling NaN raises, including when the
+other operand is a number and supplies the result.
+-/
+@[macro_inline] def maximumNumber (left right : Value) (status : Bool := false) :
+    match status with
+    | true => IEEEOutcome (format := format) (plan := plan) (code := code)
+    | false => Value :=
+  match status with
+  | true =>
+      IEEEOutcome.ofModel <|
+        Model.maximumNumber (ExecFloat.Binary.toModel left) (ExecFloat.Binary.toModel right)
+          (status := true)
+  | false =>
+      ModelCodec.liftBinary (Model := Model format) (plan := plan)
+        (fun x y => Model.maximumNumber x y) left right
 
 end FloatLib.Floats.ExecFloat.Binary

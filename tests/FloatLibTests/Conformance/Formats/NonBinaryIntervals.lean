@@ -43,7 +43,8 @@ private def divideAcrossZero? {α : Type} (R : OutwardRounding α ℚ) :
   let positive ← R.enclose? 1
   Interval.div? R positive ⟨negative.lo, positive.hi⟩
 
-private def tinyDecimal : DecimalInterchange.Format := ⟨0, 1, 2, by decide⟩
+private def tinyDecimal : DecimalInterchange.Format :=
+  { declets := 0, exponentBits := 1, bias := 2 }
 
 private def decimalR := DecimalInterchange.intervalRounding tinyDecimal .bid
 
@@ -81,7 +82,7 @@ example :
     decoded? R (R.enclose? (1 / 3)) = some (3333333 / 10000000, 1666667 / 5000000) := by
   decide +kernel
 
-private def positFormat : Posit.Format := ⟨8, by decide⟩
+private def positFormat : Posit.Format := { bits := 8 }
 
 private def positR := Posit.intervalRounding positFormat
 

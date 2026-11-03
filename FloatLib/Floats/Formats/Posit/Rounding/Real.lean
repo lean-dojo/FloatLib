@@ -107,15 +107,20 @@ theorem lowerCode_minPositive (format : Format) :
     Model.lowerCodeForPositive_nonnegativeRatAt
       format 1 format.one_lt_signMaskNat]
 
+/-- The smallest positive real posit value is positive. -/
+private theorem minPositive_pos (format : Format) : 0 < minPositive format := by
+  unfold minPositive nonnegativeRealAt
+  exact_mod_cast Model.nonnegativeRatAt_pos format (by decide) format.one_lt_signMaskNat
+
 /--
 Interior positive rounding selects either its lower code or its immediate successor.
 -/
 theorem roundPositiveCode_bounds
     (format : Format) (target : ℝ)
-    (hpositive : 0 < target)
     (hminimum : minPositive format ≤ target) :
     lowerCode format target ≤ roundPositiveCode format target ∧
       roundPositiveCode format target ≤ lowerCode format target + 1 := by
+  have hpositive := (minPositive_pos format).trans_le hminimum
   unfold roundPositiveCode
   rw [ite_eq_right (not_le_of_gt hpositive),
     ite_eq_right (not_lt_of_ge hminimum)]
@@ -128,24 +133,25 @@ theorem roundPositiveCode_bounds
       · split <;> constructor <;> omega
   · constructor <;> omega
 
-/-- An interior target below its appended-bit boundary selects the lower code. -/
+/--
+An interior target below its appended-bit boundary selects the lower code, including when that
+code is `maxPos`. At `maxPos` the boundary test is not needed:
+`roundPositiveCode_eq_lower_of_not_succ_lt` gives the lower code for every target there.
+-/
 theorem roundPositiveCode_eq_lower_of_lt_threshold
     (format : Format) (target : ℝ)
-    (hpositive : 0 < target)
     (hminimum : minPositive format ≤ target)
-    (hupper :
-      lowerCode format target + 1 < format.signMaskNat)
     (hbelow :
       target <
         roundingThreshold format (lowerCode format target)) :
     roundPositiveCode format target = lowerCode format target := by
+  have hpositive := (minPositive_pos format).trans_le hminimum
   simp [roundPositiveCode, not_le_of_gt hpositive,
-    not_lt_of_ge hminimum, hupper, hbelow]
+    not_lt_of_ge hminimum, hbelow]
 
 /-- An interior target above its appended-bit boundary selects the successor code. -/
 theorem roundPositiveCode_eq_succ_of_threshold_lt
     (format : Format) (target : ℝ)
-    (hpositive : 0 < target)
     (hminimum : minPositive format ≤ target)
     (hupper :
       lowerCode format target + 1 < format.signMaskNat)
@@ -153,6 +159,7 @@ theorem roundPositiveCode_eq_succ_of_threshold_lt
       roundingThreshold format (lowerCode format target) < target) :
     roundPositiveCode format target =
       lowerCode format target + 1 := by
+  have hpositive := (minPositive_pos format).trans_le hminimum
   simp [roundPositiveCode, not_le_of_gt hpositive,
     not_lt_of_ge hminimum, hupper, habove,
     not_lt_of_ge habove.le]
@@ -160,11 +167,11 @@ theorem roundPositiveCode_eq_succ_of_threshold_lt
 /-- A saturated interior lower code is already the final rounded code. -/
 theorem roundPositiveCode_eq_lower_of_not_succ_lt
     (format : Format) (target : ℝ)
-    (hpositive : 0 < target)
     (hminimum : minPositive format ≤ target)
     (hupper :
       ¬lowerCode format target + 1 < format.signMaskNat) :
     roundPositiveCode format target = lowerCode format target := by
+  have hpositive := (minPositive_pos format).trans_le hminimum
   simp [roundPositiveCode, not_le_of_gt hpositive,
     not_lt_of_ge hminimum, hupper]
 

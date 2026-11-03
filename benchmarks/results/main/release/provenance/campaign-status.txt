@@ -1,8 +1,6 @@
-campaign_id=20260911T123411Z
+campaign_id=20261031T193210Z
 run_mode=benchmark
+started_utc=2026-10-31T19:34:42Z
+finished_utc=2026-10-31T22:07:09Z
+benchmark_cpu=91
 run_exit_code=0
-packaging_exit_code=0
-final_exit_code=0
-pod_name=floatlean-bench-20260911-123411-r4-rnqhf
-node_name=benchmark-host.example.invalid
-finished_utc=2026-09-11T14:39:57Z

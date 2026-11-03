@@ -49,17 +49,13 @@ theorem le_round_ceil (x : ℝ) :
 
 /-- Every valid integer rounding rule returns a value at least as large as the floor. -/
 theorem floor_le_valid_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
-    floorRound x ≤ rnd x := by
-  unfold floorRound
-  rw [← ValidRnd.id (rnd := rnd) ⌊x⌋]
-  exact ValidRnd.monotone (rnd := rnd) (⌊x⌋ : ℝ) x (Int.floor_le x)
+    floorRound x ≤ rnd x :=
+  ValidRnd.le_of_intCast_le rnd (Int.floor_le x)
 
 /-- Every valid integer rounding rule returns a value at most as large as the ceiling. -/
 theorem valid_round_le_ceil (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
-    rnd x ≤ ceilRound x := by
-  unfold ceilRound
-  rw [← ValidRnd.id (rnd := rnd) ⌈x⌉]
-  exact ValidRnd.monotone (rnd := rnd) x (⌈x⌉ : ℝ) (Int.le_ceil x)
+    rnd x ≤ ceilRound x :=
+  ValidRnd.le_of_le_intCast rnd (Int.le_ceil x)
 
 /-- Every valid integer rounding chooses either floor or ceiling. -/
 theorem valid_round_eq_floor_or_ceil (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
@@ -78,37 +74,21 @@ theorem valid_round_eq_floor_or_ceil (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ
 /-- Every valid format rounding lies above directed-down rounding. -/
 theorem round_floor_le_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     round (β := β) (fexp := fexp) floorRound x ≤
-      round (β := β) (fexp := fexp) rnd x := by
-  have hi := floor_le_valid_round (rnd := rnd) (scaledMantissa β fexp x)
-  have hiR : (floorRound (scaledMantissa β fexp x) : ℝ) ≤
-      (rnd (scaledMantissa β fexp x) : ℝ) := by exact_mod_cast hi
-  unfold round toReal
-  exact mul_le_mul_of_nonneg_right
-    hiR (bpow.nonneg β _)
+      round (β := β) (fexp := fexp) rnd x :=
+  round_le_round_of_le (floor_le_valid_round rnd _)
 
 /-- Every valid format rounding lies below directed-up rounding. -/
 theorem round_le_ceil (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     round (β := β) (fexp := fexp) rnd x ≤
-      round (β := β) (fexp := fexp) ceilRound x := by
-  have hi := valid_round_le_ceil (rnd := rnd) (scaledMantissa β fexp x)
-  have hiR : (rnd (scaledMantissa β fexp x) : ℝ) ≤
-      (ceilRound (scaledMantissa β fexp x) : ℝ) := by exact_mod_cast hi
-  unfold round toReal
-  exact mul_le_mul_of_nonneg_right
-    hiR (bpow.nonneg β _)
+      round (β := β) (fexp := fexp) ceilRound x :=
+  round_le_round_of_le (valid_round_le_ceil rnd _)
 
 /-- Every valid generic rounding chooses either directed-down or directed-up rounding. -/
 theorem round_eq_floor_or_ceil (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     round (β := β) (fexp := fexp) rnd x =
         round (β := β) (fexp := fexp) floorRound x ∨
       round (β := β) (fexp := fexp) rnd x =
-        round (β := β) (fexp := fexp) ceilRound x := by
-  rcases valid_round_eq_floor_or_ceil rnd (scaledMantissa β fexp x) with h | h
-  · left
-    unfold round
-    rw [h]
-  · right
-    unfold round
-    rw [h]
+        round (β := β) (fexp := fexp) ceilRound x :=
+  (valid_round_eq_floor_or_ceil rnd (scaledMantissa β fexp x)).imp round_congr round_congr
 
 end FloatLib.Floats.Formats.Flocq

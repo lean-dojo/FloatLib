@@ -182,10 +182,40 @@ theorem shiftRightJam_mul_two_pow_sub (A B j : Nat) (hB : B ≤ A * 2 ^ j) :
     have hne : 2 ^ j - B % 2 ^ j ≠ 0 := by omega
     simp [hexact, hne]
 
-/-- Jamming preserves the shifted leading-bit position when the truncated quotient is at least two. -/
-theorem log2_shiftRightJam (x j : Nat) (hx : 2 ^ (j + 1) ≤ x) :
+/--
+Jamming preserves the shifted leading-bit position.
+
+When the truncated quotient is below two, the jammed result is at most one and the shifted
+leading-bit position is zero on both sides.
+-/
+theorem log2_shiftRightJam (x j : Nat) :
     (shiftRightJam x j).log2 = x.log2 - j := by
   have hpos : 0 < 2 ^ j := Nat.two_pow_pos j
+  by_cases hx : 2 ^ (j + 1) ≤ x
+  swap
+  · have hsmall : x / 2 ^ j ≤ 1 := by
+      rw [Nat.le_iff_lt_add_one, Nat.div_lt_iff_lt_mul hpos]
+      rw [pow_succ] at hx
+      omega
+    have hjam : shiftRightJam x j ≤ 1 := by
+      unfold shiftRightJam
+      dsimp only
+      split
+      · exact hsmall
+      · rw [or_one_eq]
+        split <;> omega
+    have hleft : (shiftRightJam x j).log2 = 0 := by
+      rcases Nat.lt_or_ge (shiftRightJam x j) 1 with hzero | hone
+      · rw [show shiftRightJam x j = 0 by omega, Nat.log2_zero]
+      · rw [show shiftRightJam x j = 1 by omega]
+        rfl
+    have hright : x.log2 ≤ j := by
+      rcases Nat.eq_zero_or_pos x with hzero | hxpos
+      · simp [hzero]
+      · have := (Nat.log2_lt hxpos.ne').2 (Nat.lt_of_not_le hx)
+        omega
+    rw [hleft]
+    omega
   have hquotient : 2 ≤ x / 2 ^ j := by
     rw [Nat.le_div_iff_mul_le hpos]
     rw [pow_succ] at hx
@@ -213,47 +243,13 @@ theorem log2_shiftRightJam (x j : Nat) (hx : 2 ^ (j + 1) ≤ x) :
   · rw [ite_eq_left (by rw [beq_iff_eq]; exact hexact)]
   · rw [ite_eq_right (by rw [beq_iff_eq]; exact hexact)]
     have hqne : x / 2 ^ j ≠ 0 := by omega
-    have hor : (x / 2 ^ j ||| 1) = x / 2 ^ j ∨ (x / 2 ^ j ||| 1) = x / 2 ^ j + 1 := by
-      by_cases hodd : x / 2 ^ j % 2 = 1
-      · left
-        apply Nat.eq_of_testBit_eq
-        intro i
-        rw [Nat.testBit_or]
-        cases i with
-        | zero =>
-            simp [Nat.testBit_zero, hodd]
-        | succ i =>
-            simp [testBit_one_succ]
-      · right
-        have heven : x / 2 ^ j % 2 = 0 := by omega
-        apply Nat.eq_of_testBit_eq
-        intro i
-        rw [Nat.testBit_or]
-        cases i with
-        | zero =>
-            simp [Nat.testBit_zero, heven, Nat.succ_mod_two_eq_one_iff]
-        | succ i =>
-            rw [testBit_one_succ, Bool.or_false, Nat.testBit_add_one, Nat.testBit_add_one]
-            congr 1
-            omega
-    rcases hor with hor | hor
-    · rw [hor]
-    · rw [hor]
+    rw [or_one_eq]
+    split
+    · rename_i heven
       symm
       rw [Nat.log2_eq_iff hqne]
       have hlog2 := Nat.log2_self_le (n := x / 2 ^ j + 1) (by omega)
       have hlog2' := Nat.lt_log2_self (n := x / 2 ^ j + 1)
-      have heven : x / 2 ^ j % 2 = 0 := by
-        by_contra hodd
-        have : x / 2 ^ j % 2 = 1 := by omega
-        have hor' : (x / 2 ^ j ||| 1) = x / 2 ^ j := by
-          apply Nat.eq_of_testBit_eq
-          intro i
-          rw [Nat.testBit_or]
-          cases i with
-          | zero => simp [Nat.testBit_zero, this]
-          | succ i => simp [testBit_one_succ]
-        omega
       have hpowEven : ∀ m, 1 ≤ m → 2 ^ m % 2 = 0 := by
         intro m hm
         obtain ⟨m', rfl⟩ : ∃ m', m = m' + 1 := ⟨m - 1, by omega⟩
@@ -273,6 +269,7 @@ theorem log2_shiftRightJam (x j : Nat) (hx : 2 ^ (j + 1) ≤ x) :
           omega
         · exact hge
       · omega
+    · rfl
 
 /-! ## Scaling -/
 

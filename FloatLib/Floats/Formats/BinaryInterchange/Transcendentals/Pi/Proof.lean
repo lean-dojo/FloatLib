@@ -17,9 +17,9 @@ public import Mathlib.Analysis.Real.Pi.Bounds
 /-!
 # Correct rounding of pi
 
-`toReal_pi` proves that `Model.pi` is the nearest-even rounding of `Real.pi` in every IEEE
-descriptor, and `isFinite_pi` that it is finite. The cached enclosure contains `π * 2 ^ bits` by
-`halfPiLower_spec`, so an accepted enclosure gives the rounding by
+`toReal_pi_eq_roundAt` proves that `Model.pi` is the nearest-even rounding of `Real.pi` in every
+IEEE descriptor, and `isFinite_pi` that it is finite. The cached enclosure contains `π * 2 ^ bits`
+by `halfPiLower_spec`, so an accepted enclosure gives the rounding by
 `toReal_eq_roundAt_of_roundScaled?_eq_some`. The comparator fallback compares `atan 1 = π / 4`
 exactly, and its result is finite because `π < 3.15` lies below the overflow threshold of every
 IEEE descriptor: the smallest, `ieee 2 1`, has largest finite value 3 and threshold 3.5.
@@ -62,25 +62,13 @@ theorem isFinite_round_of_lt_overflow (fmt : FloatFormat) (hfmt : fmt.isIEEE = t
       rw [hcompare, cast_powerOfTwo]
       exact (cmp_eq_lt_iff _ _).mpr hupper
     rw [ite_eq_right_iff.mpr (fun h => absurd hlt h)]
-    have hlo :
-        FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (lowerExponent fmt) ≤ target := by
-      have hgt : compare (powerOfTwo (lowerExponent fmt)) = .gt := by
-        simpa only [not_not] using hlarge
-      have := (cmp_eq_gt_iff _ _).mp
-        (show cmp target
-            (FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (lowerExponent fmt)) = .gt by
-          simpa only [hcompare, cast_powerOfTwo] using hgt)
-      exact this.le
-    obtain ⟨hm, ha, he⟩ := certificate_spec fmt hfmt compare target hcompare hlo hupper
-    let c := certificate fmt compare
-    have hc : target / FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix c.exponent *
-        FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix c.exponent = target :=
-      div_mul_cancel₀ _ (FloatLib.Floats.Formats.Flocq.bpow.ne_zero _ _)
-    simp only [roundCertificate, hfmt, ite_true]
-    apply isFinite_ofModel_roundWithAccuracy_of_lt_overflow fmt hfmt (modelSign sign)
-      c.mantissa c.exponent c.accuracy
-      (target / FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix c.exponent) hm ha he
-    rw [hc]
+    have hlo := (bpow_lowerExponent_lt_of_compare_eq_gt fmt hcompare
+      (by simpa only [not_not] using hlarge)).le
+    obtain ⟨hround, ha, he⟩ :=
+      roundCertificate_certificate_spec fmt hfmt sign compare target hcompare hlo hupper
+    rw [hround]
+    apply isFinite_ofModel_roundWithAccuracy_of_lt_overflow fmt hfmt (modelSign sign) _ _ _ _ ha he
+    rw [div_mul_cancel₀ target (FloatLib.Floats.Formats.Flocq.bpow.ne_zero _ _)]
     rw [hemax] at hbound
     simpa using hbound
 
@@ -115,9 +103,7 @@ theorem pi_lt_overflowThreshold (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     omega
   have hfrac := fmt.fracWidth_pos
   set m := fmt.maxNormalExponent
-  have hbpow (e : ℤ) : FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix e = (2 : ℝ) ^ e := by
-    simp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-  rw [hbpow, hbpow]
+  rw [Flocq.bpow_binaryRadix, Flocq.bpow_binaryRadix]
   have hlow : (2 : ℝ) ^ (m - fmt.fracWidth - 1) ≤ 2 ^ (m - 2) :=
     zpow_le_zpow_right₀ (by norm_num) (by omega)
   have hsplit : (2 : ℝ) ^ (m + 1) = 8 * 2 ^ (m - 2) := by
@@ -142,7 +128,7 @@ theorem isFinite_pi (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) : isFinite (p
       (prepareArctan_one_compare_div_four 16) (pi_lt_overflowThreshold fmt hfmt)
 
 /-- `Model.pi` is the nearest-even rounding of `Real.pi` in every IEEE descriptor. -/
-theorem toReal_pi (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+theorem toReal_pi_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     toReal (pi fmt) = roundAt fmt Real.pi := by
   have hfinite := isFinite_pi fmt hfmt
   unfold pi at hfinite ⊢

@@ -42,9 +42,9 @@ variable {radix : Radix} {fractionalDigits p q : Nat}
       ExecFloat.FixedPoint radix fractionalDigits) = stored :=
   rfl
 
-/-- `roundRat` stores the ties-to-even rounded grid coefficient. -/
-@[simp, grind =] theorem coefficient_roundRat (value : Rat) :
-    coefficient (roundRat value :
+/-- `ofRat` stores the ties-to-even rounded grid coefficient. -/
+@[simp, grind =] theorem coefficient_ofRat (value : Rat) :
+    coefficient (ofRat value :
       ExecFloat.FixedPoint radix fractionalDigits) =
         roundRatEven (value * scale radix fractionalDigits) :=
   rfl

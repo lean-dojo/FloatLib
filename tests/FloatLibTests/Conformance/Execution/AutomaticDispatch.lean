@@ -203,6 +203,80 @@ example :
     (ExecFloat.Add.selectedCandidate (F := Binary32Family)).storage = .word32 := by
   rfl
 
+/--
+A static-byte family reports its `UInt8` carrier for the table candidate and for the exact
+baseline, which decodes to the proof model only while it computes.
+-/
+example :
+    [ (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).storage
+    , (ExecFloat.Fma.selectedCandidate (F := E4M3FN.Family)).storage
+    , (StaticByte.Plans.exactEstimate .add).storage
+    , (StaticByte.Plans.tableEstimate FloatFormat.e4m3fn "table" .add).storage
+    ] = [.byte, .byte, .byte, .byte] := by
+  rfl
+
+/--
+The direct binary64 multiplication, division, and fused multiply-add kernels read stored words
+with the binary64 layout. They take a binary64 layout proof, so they cannot be applied to another
+format in a `word64` carrier, such as binary32, where they computed `1 / 1 = 0` and
+`1.5 * 1.5 = 1.25`.
+-/
+example (hw : FloatFormat.binary32.bitWidth ≤ 64)
+    (x y : ExecFloat (Configured.Family FloatFormat.binary32
+      (Configured.Code (.word64 hw)) (.word64 hw))) : x = x ∧ y = y := by
+  fail_if_success have := Configured.Backend.binary64Div hw x y
+  fail_if_success have := Configured.Backend.binary64Mul hw x y
+  fail_if_success have := Configured.Backend.binary64Fma hw x y x
+  fail_if_success have := Configured.Backend.binary64Div hw (by decide) x y
+  exact ⟨rfl, rfl⟩
+
+/-- On binary64 itself the direct kernels are the word operations they replace. -/
+example (hw : FloatFormat.binary64.bitWidth ≤ 64)
+    (x y : ExecFloat (Configured.Family FloatFormat.binary64
+      (Configured.Code (.word64 hw)) (.word64 hw))) :
+    Configured.Backend.binary64Div hw (by decide) x y = Configured.Backend.wordDiv x y :=
+  Configured.Backend.binary64Div_eq hw (by decide) x y
+
+/--
+The direct binary64 addition and subtraction kernels use the conventional IEEE bias, and the
+two-word kernels assume the `NativePair` layout and that bias. They take the matching proof, so
+they cannot be applied to E4M3FNUZ (bias 8) in a `word64` carrier, or to the 70-bit unsigned-zero
+format `finiteUnsignedZero 4 65` in a `pair` carrier, where both computed `1 + 1 = 4`.
+-/
+example (hw : FloatFormat.e4m3fnuz.bitWidth ≤ 64)
+    (x y : ExecFloat (Configured.Family FloatFormat.e4m3fnuz
+      (Configured.Code (.word64 hw)) (.word64 hw))) : x = x ∧ y = y := by
+  fail_if_success have := Configured.Backend.binary64Add hw x y
+  fail_if_success have := Configured.Backend.binary64Sub hw x y
+  fail_if_success have := Configured.Backend.binary64Add hw (by decide) x y
+  exact ⟨rfl, rfl⟩
+
+example (hgt : 64 < (FloatFormat.finiteUnsignedZero 4 65).bitWidth)
+    (hle : (FloatFormat.finiteUnsignedZero 4 65).bitWidth ≤ 128)
+    (x y : ExecFloat (Configured.Family (FloatFormat.finiteUnsignedZero 4 65)
+      (Configured.Code (.pair hgt hle)) (.pair hgt hle))) : x = x ∧ y = y := by
+  fail_if_success have := Configured.Backend.pairAdd hgt hle x y
+  fail_if_success have := Configured.Backend.pairSub hgt hle x y
+  fail_if_success have := Configured.Backend.pairMul hgt hle x y
+  fail_if_success have := Configured.Backend.pairDiv hgt hle x y
+  fail_if_success have := Configured.Backend.pairSqrt hgt hle x
+  fail_if_success have := Configured.Backend.pairFma hgt hle x y x
+  fail_if_success have := Configured.Backend.pairAdd hgt hle (by decide) x y
+  exact ⟨rfl, rfl⟩
+
+/-- On binary64 and binary128 the direct addition kernels are word addition. -/
+example (hw : FloatFormat.binary64.bitWidth ≤ 64)
+    (x y : ExecFloat (Configured.Family FloatFormat.binary64
+      (Configured.Code (.word64 hw)) (.word64 hw))) :
+    Configured.Backend.binary64Add hw (by decide) x y = Configured.Backend.wordAdd x y :=
+  Configured.Backend.binary64Add_eq hw (by decide) x y
+
+example (hgt : 64 < FloatFormat.binary128.bitWidth) (hle : FloatFormat.binary128.bitWidth ≤ 128)
+    (x y : ExecFloat (Configured.Family FloatFormat.binary128
+      (Configured.Code (.pair hgt hle)) (.pair hgt hle))) :
+    Configured.Backend.pairAdd hgt hle (by decide) x y = Configured.Backend.wordAdd x y :=
+  Configured.Backend.pairAdd_eq hgt hle (by decide) x y
+
 /-- Public configured binary32 uses certified fixed-format software for all six operations. -/
 example :
     [ (ExecFloat.Add.selectedCandidate

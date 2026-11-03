@@ -36,27 +36,46 @@ elab_rules : command
           Inspection.readNatProjection "logarithmic radix" ``Radix.base radix
         let coreProfile :=
           FloatLib.Floats.Formats.Logarithmic.FloatInfo.Command.profile base
-        let configuredMultiplication : TheoremSurface :=
-          { topic := "configured exact multiplication"
-            declarations :=
-              [ ``FloatLib.Floats.ExecFloat.Logarithmic.toReal_mul
-              , ``FloatLib.Floats.ExecFloat.Proof.mul_eq_spec
-              ]
-            applicability := .verifiedForType
-            scope := "all configured logarithmic values"
-            numericalGuarantee? := some {
-              kinds := [.exactness]
-              statement :=
-                "Configured multiplication has zero real error because signs and unbounded exponents combine exactly." } }
+        let ownSurfaces : List TheoremSurface :=
+          refinementEquations (← Inspection.installedOperations family) ++
+          [ { topic := "exact multiplication"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.Logarithmic.toReal_mul
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.toReal_zero
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.toRat_mul
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.toRat_zero
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.cast_toRat
+                ]
+              definitions := [``FloatLib.Floats.ExecFloat.Logarithmic.toRat]
+              applicability := .verifiedForType
+              scope := "all values; `toRat` reads a value exactly, and its cast to ℝ is `toReal`"
+              numericalGuarantee? := some {
+                kinds := [.exactness]
+                statement :=
+                  "Multiplication has zero real error because signs and unbounded exponents combine exactly." } }
+          , { topic := "decoding to the code"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.Logarithmic.toCode_ofCode
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.ofCode_toCode
+                ]
+              definitions :=
+                [ ``FloatLib.Floats.ExecFloat.Logarithmic.toCode
+                , ``FloatLib.Floats.ExecFloat.Logarithmic.ofCode ]
+              applicability := .verifiedForType
+              scope :=
+                "every value; `toCode` and `ofCode` are inverse, so the theorems about the code " ++
+                "below apply through `toCode`" } ]
         let baseProfile : FormatProfile :=
           { coreProfile with
-            declarationPrefix := "FloatLib.Floats.ExecFloat.Logarithmic."
             execution :=
               [ ⟨"carrier", "ExecFloat over the exact logarithmic code"⟩
               , ⟨"dispatch", "direct certified multiplication kernel"⟩
               ]
-            theoremSurfaces :=
-              configuredMultiplication :: coreProfile.theoremSurfaces
+            theoremSurfaces := ownSurfaces
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.Logarithmic.Code
+                  embedding := ``FloatLib.Floats.ExecFloat.Logarithmic.toCode
+                  surfaces := coreProfile.theoremSurfaces } ]
             nonclaims :=
               [ "addition, division, square root, fused multiply-add, or transcendental functions are provided"
               , "a bounded hardware encoding or fractional logarithm field is implied" ] }

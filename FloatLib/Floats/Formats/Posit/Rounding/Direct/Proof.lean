@@ -38,7 +38,7 @@ open FloatLib.Numerics
 The scalar leading-exponent underflow check is exactly comparison with the format's minimum
 positive value.
 -/
-private theorem isLessMinPositive_eq
+theorem isLessMinPositive_eq
     (format : Format) (target : FloatLib.Numerics.Dyadic)
     (hnegative : target.negative = false) :
     Dyadic.isLessPowerOfTwoAtLeading
@@ -110,7 +110,6 @@ private theorem roundPositiveCode_eq_maxPositive_of_saturated
 private theorem negativeSaturatedUnderflows
     (format : Format) (targetExponent regime : Int)
     (exponentField significand leading : Nat)
-    (hregime : regime < 0)
     (hsaturated : format.payloadBits ≤ (-regime).toNat)
     (hexponent : exponentField < 4)
     (hupper : significand < 2 ^ (leading + 1))
@@ -135,8 +134,7 @@ private theorem negativeSaturatedUnderflows
   exact
     GuardStickyRounding.normalizedTarget_lt_minPositive_of_saturatedScale
       format (significand : Rat) targetExponent regime
-      exponentField leading hregime hsaturated hexponent
-      hupperRat hscale
+      exponentField leading hsaturated hexponent hupperRat hscale
 
 /-- Direct positive rounding selects exactly the shared exact-dyadic code. -/
 theorem roundPositiveCode_eq_dyadic
@@ -155,21 +153,8 @@ theorem roundPositiveCode_eq_dyadic
     hleading ▸ Nat.log2_self_le hsignificand
   have hupper : significand < 2 ^ (leadingBit significand + 1) :=
     hleading ▸ Nat.lt_log2_self
-  have hmod : 0 ≤ (exponent + Int.ofNat (leadingBit significand)).emod 4 :=
-    Int.emod_nonneg _ (by decide)
-  have hmodLt : (exponent + Int.ofNat (leadingBit significand)).emod 4 < 4 :=
-    Int.emod_lt_of_pos _ (by decide)
-  have hexponent :
-      ((exponent + Int.ofNat (leadingBit significand)).emod 4).toNat < 4 := by
-    omega
-  have hscale :
-      exponent + Int.ofNat (leadingBit significand) =
-        (exponent + Int.ofNat (leadingBit significand)).ediv 4 * 4 +
-          Int.ofNat
-            ((exponent + Int.ofNat (leadingBit significand)).emod 4).toNat := by
-    simp only [Int.ofNat_eq_natCast] at hmod ⊢
-    rw [Int.toNat_of_nonneg hmod]
-    exact (Int.ediv_mul_add_emod _ 4).symm
+  obtain ⟨hexponent, hscale⟩ :=
+    exponentField_lt_four_and_scale_eq (exponent + Int.ofNat (leadingBit significand))
   have hmin := isLessMinPositive_eq format ⟨false, significand, exponent⟩ rfl
   dsimp only at hmin
   unfold roundPositiveCode
@@ -189,15 +174,13 @@ theorem roundPositiveCode_eq_dyadic
   · rw [GuardStickyRounding.roundInteriorCodeFromFields_eq_roundInteriorCode
       _ _ _ _ _ _ hlower hupper]
     exact GuardStickyRounding.roundInteriorCode_eq_roundPositiveCode_positive
-      format exponent _ _ significand _ hregime (by omega) hexponent hlower
-      hupper hscale hnotUnderflow
+      format exponent _ _ significand _ hregime (by omega) hexponent hlower hupper hscale
   · exact absurd (negativeSaturatedUnderflows format exponent _ _ significand _
-      (by omega) hsaturated hexponent hupper hscale) hunderflow
+      hsaturated hexponent hupper hscale) hunderflow
   · rw [GuardStickyRounding.roundInteriorCodeFromFields_eq_roundInteriorCode
       _ _ _ _ _ _ hlower hupper]
     exact GuardStickyRounding.roundInteriorCode_eq_roundPositiveCode_negative
-      format exponent _ _ significand _ (by omega) (by omega) hexponent hlower
-      hupper hscale hnotUnderflow
+      format exponent _ _ significand _ (by omega) (by omega) hexponent hlower hupper hscale
 
 /-! ## Shift-with-jam preservation -/
 
@@ -437,10 +420,7 @@ theorem roundPositiveCode_shiftRightJam
     (hpayload : format.payloadBits ≤ window)
     (significand shift : Nat) (exponent : Int)
     (hlower : 2 ^ (shift + window) ≤ significand)
-    (hupper : significand < 2 ^ (shift + window + 1))
-    (hjammedUpper :
-      FloatLib.Numerics.shiftRightJam significand shift <
-        2 ^ (window + 1)) :
+    (hupper : significand < 2 ^ (shift + window + 1)) :
     roundPositiveCode format
         { negative := false
           significand :=
@@ -460,6 +440,14 @@ theorem roundPositiveCode_shiftRightJam
       FloatLib.Numerics.shiftRightJam_div_pow significand shift window (by omega)
     exact (Nat.div_pos_iff.1
       (hquotient ▸ Nat.div_pos hlower (Nat.two_pow_pos _))).2
+  have hjammedUpper :
+      FloatLib.Numerics.shiftRightJam significand shift < 2 ^ (window + 1) := by
+    have hquotient :=
+      FloatLib.Numerics.shiftRightJam_div_pow significand shift (window + 1) (by omega)
+    rw [← Nat.add_assoc, Nat.div_eq_of_lt hupper] at hquotient
+    by_contra hlarge
+    have := Nat.div_pos (Nat.le_of_not_lt hlarge) (Nat.two_pow_pos (window + 1))
+    omega
   have hjammedNe : FloatLib.Numerics.shiftRightJam significand shift ≠ 0 :=
     Nat.ne_of_gt ((Nat.two_pow_pos _).trans_le hjammedLower)
   have hjammedLog :

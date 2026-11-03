@@ -163,22 +163,14 @@ private theorem Internal.toDyadic?_eq
   by_cases hnar : value = nar format
   · subst value
     simp [Internal.toDyadic?, Model.toDyadic?, decodeExact]
-  · have hnarCode : value.toNatBits ≠ format.signMaskNat := by
-      intro equality
-      apply hnar
-      rw [← ofNatBits_toNatBits value, equality]
-      rfl
+  · have hnarCode := mt (toNatBits_eq_signMaskNat_iff value).1 hnar
     by_cases hzero : value = zero format
     · subst value
       have hsignMask : (0 : Nat) ≠ format.signMaskNat := by
         simpa [Format.signMaskNat] using
           (Nat.ne_of_lt (Nat.two_pow_pos format.signIndex))
       simp [Internal.toDyadic?, Model.toDyadic?, decodeExact, hsignMask]
-    · have hzeroCode : value.toNatBits ≠ 0 := by
-        intro equality
-        apply hzero
-        rw [← ofNatBits_toNatBits value, equality]
-        rfl
+    · have hzeroCode := mt (toNatBits_eq_zero_iff value).1 hzero
       have hnarFalse : value.isNaR = false :=
         beq_eq_false_iff_ne.mpr hnar
       have hzeroFalse : value.isZero = false :=

@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
+import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Constants
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
@@ -119,48 +120,15 @@ The result includes custom biases, FNUZ, and finite-only encodings.
 theorem toReal_genericFormat_of_isFinite {fmt : FloatFormat} (x : Model fmt)
     (hfin : isFinite x = true) :
     genericFormat Numerics.binaryRadix (fexpOf fmt) (toReal x) := by
-  have hdecode := toDyadic?_ofFields_of_isFinite fmt (signBit x) (expField x) (fracField x)
-    (by simpa [← pow2_eq_two_pow] using expField_lt_pow2 x)
-    (by simpa [← pow2_eq_two_pow] using fracField_lt_pow2 x)
-    (by simpa only [ofFields_signBit_expField_fracField] using hfin)
-  rw [ofFields_signBit_expField_fracField] at hdecode
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfin
+  obtain ⟨hsignificand, hexponent⟩ := toDyadic?_significand_lt_and_minSubnormalExponent_le x hd
   have hprec : (0 : ℤ) < fmt.fracWidth + 1 := by positivity
   apply (generic_format_FLT_iff fmt.minSubnormalExponent (fmt.fracWidth + 1) hprec _).2
-  have hmin : fmt.minSubnormalExponent ≤ 0 := by
-    have := fmt.exponentBias_pos
-    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-      Int.ofNat_eq_natCast]
-    omega
-  have hfrac := fracField_lt_pow2 x
-  by_cases he : expField x = 0
-  · by_cases hf : fracField x = 0
-    · simp only [he, hf, ite_true] at hdecode
-      refine ⟨hprec, ⟨0, 0⟩, ?_, by simp [Numerics.binaryRadix], hmin⟩
-      simp [toReal_eq, hdecode, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-        Flocq.toReal]
-    · simp only [he, hf, ite_true, ite_false] at hdecode
-      refine ⟨hprec, ⟨if signBit x then -(fracField x : ℤ) else fracField x,
-        fmt.minSubnormalExponent⟩, ?_, ?_, le_rfl⟩
-      · cases hs : signBit x <;>
-          simp [toReal_eq, hdecode, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-            Flocq.toReal, hs, bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-      · have hbound : fracField x < 2 ^ (fmt.fracWidth + 1) :=
-          hfrac.trans (Nat.pow_lt_pow_right (by decide) (by omega))
-        cases hs : signBit x <;> simpa [Numerics.binaryRadix, hs] using hbound
-  · simp only [he, ite_false] at hdecode
-    let m := pow2 fmt.fracWidth + fracField x
-    refine ⟨hprec, ⟨if signBit x then -(m : ℤ) else m,
-      (expField x : ℤ) - fmt.exponentBias - fmt.fracWidth⟩, ?_, ?_, ?_⟩
-    · cases hs : signBit x <;>
-        simp [toReal_eq, hdecode, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-          Flocq.toReal, hs, m, bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-    · have hbound : m < 2 ^ (fmt.fracWidth + 1) := by
-        simp only [m, pow2_eq_two_pow, pow_succ]
-        omega
-      cases hs : signBit x <;> simpa [Numerics.binaryRadix, hs] using hbound
-    · simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
-        Int.ofNat_eq_natCast]
-      omega
+  refine ⟨hprec, ⟨d.signedSignificand, d.exponent⟩, ?_, ?_, hexponent⟩
+  · simp [toReal_eq, hd, Numerics.Dyadic.toReal, Flocq.toReal, bpow, Numerics.binaryRadix,
+      Numerics.Radix.toReal]
+  · cases hs : d.negative <;>
+      simpa [Numerics.Dyadic.signedSignificand, Numerics.binaryRadix, hs] using hsignificand
 
 /-- Rounding a finite decoded value back to its own format is the identity. -/
 @[simp] theorem roundAt_toReal_eq {fmt : FloatFormat} (x : Model fmt)
@@ -168,6 +136,13 @@ theorem toReal_genericFormat_of_isFinite {fmt : FloatFormat} (x : Model fmt)
     roundAt fmt (toReal x) = toReal x := by
   exact round_preserves_generic nearestEven (toReal x)
     (toReal_genericFormat_of_isFinite x hfin)
+
+/-- Every rounding direction fixes one. -/
+@[simp] theorem roundAt_one (fmt : FloatFormat) (mode : IEEERoundingMode := .nearest) :
+    roundAt fmt 1 mode = 1 := by
+  rw [roundAt_eq_round]
+  exact round_preserves_generic (roundingFunction mode) 1
+    (by simpa using toReal_genericFormat_of_isFinite (posOne fmt) (isFinite_posOne fmt))
 
 namespace Dyadic
 
@@ -214,12 +189,14 @@ theorem cexp_toReal_eq_targetExponent (fmt : FloatFormat) (d : Numerics.Dyadic)
 
 /-- The canonical scaled mantissa of a dyadic is its signed magnitude at the target exponent. -/
 theorem scaledMantissa_toReal (fmt : FloatFormat) (d : Numerics.Dyadic)
-    (hfmt : fmt.isIEEE = true) (hm : d.significand ≠ 0) :
+    (hfmt : fmt.isIEEE = true) :
     scaledMantissa Numerics.binaryRadix (fexpOf fmt) d.toReal =
       (if d.negative then (-1 : ℝ) else 1) * (d.significand : ℝ) *
         bpow Numerics.binaryRadix
           (d.exponent - (FloatFormat.toModel fmt).targetExponent
             (Float.Model.totalExponent d.significand d.exponent)) := by
+  by_cases hm : d.significand = 0
+  · simp [scaledMantissa, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hm]
   rw [scaledMantissa, cexp_toReal_eq_targetExponent fmt d hfmt hm]
   have hpow := bpow.add_exp Numerics.binaryRadix d.exponent
     (-(FloatFormat.toModel fmt).targetExponent
@@ -294,13 +271,14 @@ theorem natCast_pow2_eq_bpow (exponent : Nat) :
   simp [pow2_eq_two_pow, bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
 /--
-Rounded-real semantics of a nonzero dyadic at a conventional IEEE descriptor.
+Rounded-real semantics of a dyadic at a conventional IEEE descriptor.
 
 The integer on the right is computed entirely by shifts and nearest-even rounding. The exponent is
-chosen by Lean's generic logical float model and independently characterized by `fexpOf`.
+chosen by Lean's generic logical float model and independently characterized by `fexpOf`. A zero
+significand rounds to zero.
 -/
 theorem roundAt_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
-    (hfmt : fmt.isIEEE = true) (hm : d.significand ≠ 0) :
+    (hfmt : fmt.isIEEE = true) :
     let target := (FloatFormat.toModel fmt).targetExponent
       (Float.Model.totalExponent d.significand d.exponent)
     let rounded := roundMantissaAtExponentEven d.significand d.exponent target
@@ -311,10 +289,22 @@ theorem roundAt_dyadic_eq (fmt : FloatFormat) (d : Numerics.Dyadic)
   let target := (FloatFormat.toModel fmt).targetExponent
     (Float.Model.totalExponent d.significand d.exponent)
   let rounded := roundMantissaAtExponentEven d.significand d.exponent target
+  by_cases hm : d.significand = 0
+  · have hrounded : rounded = 0 := by
+      have h := nearestEven_scaledMagnitude 0 d.exponent target
+      rw [Nat.cast_zero, zero_mul, ← Int.cast_zero, ValidRnd.id (rnd := nearestEven)] at h
+      simp only [rounded, hm]
+      exact Int.ofNat_eq_zero.mp h.symm
+    have hzero : d.toReal = 0 := by
+      simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hm]
+    rw [hzero, roundAt_zero]
+    change (0 : ℝ) = ((if d.negative then -Int.ofNat rounded else Int.ofNat rounded : Int) : ℝ) *
+      bpow Numerics.binaryRadix target
+    simp [hrounded]
   have hscaled :
       nearestEven (scaledMantissa Numerics.binaryRadix (fexpOf fmt) d.toReal) =
         if d.negative then -Int.ofNat rounded else Int.ofNat rounded := by
-    rw [scaledMantissa_toReal fmt d hfmt hm]
+    rw [scaledMantissa_toReal fmt d hfmt]
     exact nearestEven_scaledDyadic d.negative d.significand d.exponent target
   calc
     roundAt fmt d.toReal =
@@ -344,7 +334,8 @@ theorem toReal_ofModel_finishRoundedMantissa_minSubnormal
         ((rounded : ℝ) *
           bpow Numerics.binaryRadix (FloatFormat.ieeeMinSubnormalExponent fmt)) := by
   by_cases hzero : rounded = 0
-  · rw [hzero, finishRoundedMantissa_zero, toReal_ofModel_zero fmt hfmt]
+  · rw [hzero, finishRoundedMantissa_zero,
+      toReal_ofModel_zero fmt (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt)]
     simp
   · rw [finishRoundedMantissa_at_minSubnormal fmt sign rounded hzero hle,
       toReal_ofModel_finite_at_minSubnormal fmt hfmt sign rounded hzero
@@ -385,7 +376,7 @@ theorem toReal_ofModel_finishRoundedMantissa_normal
       (by
         change (pow2 fmt.fracWidth).log2 + 1 = 1 + fmt.fracWidth
         simp [pow2_eq_two_pow, Nat.add_comm])
-      (hbiased (k + 1) (by omega)).le (hbiased (k + 1) (by omega))
+      (hbiased (k + 1) (by omega))
       (noOverflow_of_isFinite_ofModel_finite fmt hfmt sign (pow2 fmt.fracWidth)
         (k + 1 - fmt.fracWidth) hpow hfin)]
     rw [natCast_pow2_eq_bpow, natCast_pow2_eq_bpow, mul_assoc, ← bpow.add_exp, ← bpow.add_exp]
@@ -401,7 +392,7 @@ theorem toReal_ofModel_finishRoundedMantissa_normal
         change rounded.log2 + 1 = 1 + fmt.fracWidth
         rw [log2_eq_fracWidth_of_normalized fmt rounded hlow hhighLt]
         omega)
-      (hbiased k hk).le (hbiased k hk)
+      (hbiased k hk)
       (noOverflow_of_isFinite_ofModel_finite fmt hfmt sign rounded (k - fmt.fracWidth) hne hfin)]
     ring
 
@@ -421,10 +412,11 @@ theorem toReal_roundDyadic_eq_roundAt
       simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hm]
     rw [hdzero, roundAt_zero]
     unfold ieeeRoundDyadic
-    rw [hm, round_exact_zero, toReal_ofModel_zero fmt hfmt]
-  · rw [roundAt_dyadic_eq fmt d hfmt hm]
+    rw [hm, round_exact_zero,
+      toReal_ofModel_zero fmt (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt)]
+  · rw [roundAt_dyadic_eq fmt d hfmt]
     unfold ieeeRoundDyadic at hfin ⊢
-    rw [round_exact_eq_finishRoundedMantissa _ _ _ _ hm] at hfin ⊢
+    rw [round_exact_eq_finishRoundedMantissa] at hfin ⊢
     by_cases hsub : (d.significand.log2 : Int) + d.exponent < FloatFormat.ieeeMinNormalExponent fmt
     · rw [targetExponent_eq_minSubnormal_of_lt_minNormal fmt d.significand d.exponent hsub,
         toReal_ofModel_finishRoundedMantissa_minSubnormal fmt hfmt _ _

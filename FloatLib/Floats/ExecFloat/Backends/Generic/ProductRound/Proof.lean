@@ -19,8 +19,9 @@ satisfying `fmt.isIEEE = true`. The equality covers signed zero, subnormal resul
 normalization, and overflow.
 
 `normalSpec_refines` supplies the common natural-number normal-product contract used by word
-backends. `round_normalized_sum` gives the one-bit nearest-even reduction used by equal-exponent
-addition.
+backends. It needs a nonzero product with at least `fracWidth + 1` bits; those are caller
+obligations, not checks made by `normalSpec?`. `round_normalized_sum` gives the one-bit
+nearest-even reduction used by equal-exponent addition.
 -/
 
 @[expose] public section
@@ -33,6 +34,11 @@ Specification of the successful normal-product path.
 The word backends use different integer representations, but their successful normal results all
 have this format-independent meaning. Keeping it here stops one specialized backend from becoming
 a proof dependency of another.
+
+The definition does not check that the product is nonzero or that it has at least
+`fracWidth + 1` bits (`fmt.fracWidth ≤ product.log2`); `normalSpec_refines` assumes both. Outside
+those conditions a `some` result need not be the rounded product: a zero product at a large scale
+gives a nonzero normal word.
 -/
 def normalSpec? (fmt : FloatFormat) (sign : Bool)
     (xExponent yExponent xMantissa yMantissa : Nat) :
@@ -108,6 +114,21 @@ theorem normalSpec_refines
   unfold round
   simp only [beq_iff_eq, hproduct, ite_false]
   rw [ite_eq_right hsubnormal, ite_eq_left hleading, ite_eq_right hoverflow]
+
+/--
+The exact product of two significands with `fracWidth + 1` bits each has `2 * fracWidth + 1` or
+`2 * fracWidth + 2` bits.
+-/
+theorem normalizedProduct_bounds (fmt : FloatFormat) {xMantissa yMantissa : Nat}
+    (hxMantissa : 2 ^ fmt.fracWidth ≤ xMantissa ∧ xMantissa < 2 ^ (fmt.fracWidth + 1))
+    (hyMantissa : 2 ^ fmt.fracWidth ≤ yMantissa ∧ yMantissa < 2 ^ (fmt.fracWidth + 1)) :
+    2 ^ (2 * fmt.fracWidth) ≤ xMantissa * yMantissa ∧
+      xMantissa * yMantissa < 2 ^ (2 * fmt.fracWidth + 2) := by
+  constructor
+  · rw [two_mul, pow_add]
+    exact Nat.mul_le_mul hxMantissa.1 hyMantissa.1
+  · rw [show 2 * fmt.fracWidth + 2 = (fmt.fracWidth + 1) + (fmt.fracWidth + 1) by omega, pow_add]
+    exact Nat.mul_lt_mul'' hxMantissa.2 hyMantissa.2
 
 /--
 Significands at least `2 ^ fmt.fracWidth` satisfy the side conditions of `normalSpec_refines`.
@@ -247,7 +268,7 @@ theorem round_shiftRightJam (fmt : FloatFormat) (sign : Bool) (product scale jam
   have hjam : Numerics.shiftRightJam product jam ≠ 0 :=
     Numerics.shiftRightJam_ne_zero product jam <|
       (Nat.pow_le_pow_right (by decide) (Nat.le_succ jam)).trans hlower
-  have hlog := Numerics.log2_shiftRightJam product jam hlower
+  have hlog := Numerics.log2_shiftRightJam product jam
   have hposition : product.log2 - jam + (scale + jam) = product.log2 + scale := by
     omega
   unfold round
@@ -301,6 +322,16 @@ private theorem normalized_exponent_eq
     simp only [Int.ofNat_eq_natCast]
     exact_mod_cast hnat
   omega
+
+/-- The encoded exponent of a normal result at leading position `position` is `position` minus
+the product exponent offset. -/
+private theorem encodedExponent_toNat (fmt : FloatFormat) (position : Nat) :
+    (Int.ofNat position - Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) +
+        Int.ofNat fmt.bias).toNat =
+      position - (fmt.bias + 2 * fmt.fracWidth - 2) := by
+  rw [normalized_exponent_eq]
+  simpa only [Int.ofNat_eq_natCast] using
+    (Int.toNat_sub position (fmt.bias + 2 * fmt.fracWidth - 2))
 
 private theorem normalized_exponent_gt_max_iff
     (fmt : FloatFormat) (position : Nat) :
@@ -439,58 +470,20 @@ theorem round_eq_roundDyadic
         ring
       rw [hnormalized]
       by_cases hoverflow : overflowThreshold < position + 1
-      · have hgenericOverflow :
-            Int.ofNat (position + 1) -
-                  Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) >
-                Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
-          exact
-            (normalized_exponent_gt_max_iff fmt (position + 1)).2 hoverflow
-        rw [ite_eq_left hoverflow, ite_eq_left hgenericOverflow]
-      · have hnoOverflow : position + 1 ≤ overflowThreshold :=
-          Nat.le_of_not_gt hoverflow
-        have hgenericNoOverflow :
-            ¬Int.ofNat (position + 1) -
-                  Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) >
-                Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
-          exact fun h =>
-            hoverflow <|
-              (normalized_exponent_gt_max_iff fmt (position + 1)).1 h
-        rw [ite_eq_right hoverflow, ite_eq_right hgenericNoOverflow]
+      · rw [ite_eq_left hoverflow,
+          ite_eq_left ((normalized_exponent_gt_max_iff fmt (position + 1)).2 hoverflow)]
+      · rw [ite_eq_right hoverflow,
+          ite_eq_right (mt (normalized_exponent_gt_max_iff fmt (position + 1)).1 hoverflow)]
         congr 2
-        change position + 1 - (fmt.bias + 2 * fmt.fracWidth - 2) =
-          (Int.ofNat (position + 1) -
-              Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) +
-              Int.ofNat fmt.bias).toNat
-        rw [normalized_exponent_eq]
-        simpa only [Int.ofNat_eq_natCast] using
-          (Int.toNat_sub (position + 1)
-            (fmt.bias + 2 * fmt.fracWidth - 2)).symm
+        exact (encodedExponent_toNat fmt (position + 1)).symm
     · simp only [roundedMantissa, leading] at hcarry
       simp only [hcarry, ite_false]
       by_cases hoverflow : overflowThreshold < position
-      · have hgenericOverflow :
-            Int.ofNat position -
-                  Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) >
-                Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
-          exact (normalized_exponent_gt_max_iff fmt position).2 hoverflow
-        rw [ite_eq_left hoverflow, ite_eq_left hgenericOverflow]
-      · have hnoOverflow : position ≤ overflowThreshold :=
-          Nat.le_of_not_gt hoverflow
-        have hgenericNoOverflow :
-            ¬Int.ofNat position -
-                  Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) >
-                Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
-          exact fun h =>
-            hoverflow <| (normalized_exponent_gt_max_iff fmt position).1 h
-        rw [ite_eq_right hoverflow, ite_eq_right hgenericNoOverflow]
+      · rw [ite_eq_left hoverflow,
+          ite_eq_left ((normalized_exponent_gt_max_iff fmt position).2 hoverflow)]
+      · rw [ite_eq_right hoverflow,
+          ite_eq_right (mt (normalized_exponent_gt_max_iff fmt position).1 hoverflow)]
         congr 2
-        change position - (fmt.bias + 2 * fmt.fracWidth - 2) =
-          (Int.ofNat position -
-              Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) +
-              Int.ofNat fmt.bias).toNat
-        rw [normalized_exponent_eq]
-        simpa only [Int.ofNat_eq_natCast] using
-          (Int.toNat_sub position
-            (fmt.bias + 2 * fmt.fracWidth - 2)).symm
+        exact (encodedExponent_toNat fmt position).symm
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteProductRound

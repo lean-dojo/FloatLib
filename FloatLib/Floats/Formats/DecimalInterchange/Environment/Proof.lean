@@ -12,9 +12,9 @@ public import FloatLib.Numerics.IEEEStatus.Proof
 /-!
 # Sticky flags and scoped rounding laws
 
-Flags raised by an operation remain set after later operations. Clearing and restoring
-affect exactly the requested group. Scoped rounding restores the caller's direction while
-preserving the flags produced by the inner computation.
+Flags raised by an operation remain set after later operations. Raising, clearing and restoring
+affect exactly the requested group and keep the rounding direction. Scoped rounding restores the
+caller's direction while preserving the flags produced by the inner computation.
 -/
 
 public section
@@ -28,6 +28,41 @@ theorem restoreFlags_allFlags (environment : Environment) (saved : Numerics.IEEE
     environment.restoreFlags saved.saveAllFlags Numerics.IEEEStatus.allFlags =
       { environment with flags := saved } := by
   simp [restoreFlags]
+
+/-- Raising a group sets its flags and leaves every other flag unchanged. -/
+theorem isSet_flags_raiseFlags (environment : Environment) (group : Numerics.IEEEStatus)
+    (exception : Numerics.IEEEException) :
+    (environment.raiseFlags group).flags.isSet exception =
+      (environment.flags.isSet exception || group.isSet exception) :=
+  Numerics.IEEEStatus.isSet_raiseFlags _ _ _
+
+/-- Clearing a group clears exactly its flags and leaves every other flag unchanged. -/
+theorem isSet_flags_lowerFlags (environment : Environment) (group : Numerics.IEEEStatus)
+    (exception : Numerics.IEEEException) :
+    (environment.lowerFlags group).flags.isSet exception =
+      (environment.flags.isSet exception && !group.isSet exception) :=
+  Numerics.IEEEStatus.isSet_lowerFlags _ _ _
+
+/-- Restoring a group takes the saved flags inside it and keeps the current flags outside it. -/
+theorem isSet_flags_restoreFlags (environment : Environment) (saved group : Numerics.IEEEStatus)
+    (exception : Numerics.IEEEException) :
+    (environment.restoreFlags saved group).flags.isSet exception =
+      if group.isSet exception then saved.isSet exception
+      else environment.flags.isSet exception :=
+  Numerics.IEEEStatus.isSet_restoreFlags _ _ _ _
+
+/-- Raising flags keeps the rounding direction. -/
+@[simp] theorem rounding_raiseFlags (environment : Environment) (group : Numerics.IEEEStatus) :
+    (environment.raiseFlags group).rounding = environment.rounding := rfl
+
+/-- Clearing flags keeps the rounding direction. -/
+@[simp] theorem rounding_lowerFlags (environment : Environment) (group : Numerics.IEEEStatus) :
+    (environment.lowerFlags group).rounding = environment.rounding := rfl
+
+/-- Restoring flags keeps the rounding direction. -/
+@[simp] theorem rounding_restoreFlags (environment : Environment)
+    (saved group : Numerics.IEEEStatus) :
+    (environment.restoreFlags saved group).rounding = environment.rounding := rfl
 
 /-- Exception accumulation never changes the operation's delivered datum. -/
 @[simp] theorem accept_value (environment : Environment) (outcome : Outcome) :

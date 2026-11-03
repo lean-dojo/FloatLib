@@ -17,10 +17,16 @@ The bounded fixed-point kernels satisfy the rational contracts defined in `Seman
 operation contracts distinguish three policies:
 
 * wrapping operations denote centered reduction of the exact coefficient;
-* checked operations denote exact rational arithmetic when the destination coefficient fits;
+* checked operations denote exact rational arithmetic when the destination coefficient fits, and
+  return `none` exactly when it does not;
 * saturating operations denote exact coefficient arithmetic followed by signed-range clamping.
 
 The wrapping addition, subtraction, and multiplication kernels use direct `BitVec` operations.
+
+The checked refinements are `Checked2On` contracts, which only constrain inputs whose exact
+coefficient fits. The failure half is `FixedInt.checkedAdd_eq_none_iff`,
+`FixedInt.checkedSub_eq_none_iff` (the same-scale kernels are the `FixedInt` ones) and
+`checkedMul_eq_none_iff`.
 -/
 
 @[expose] public section
@@ -142,68 +148,92 @@ theorem checkedMul_eq_some
   change FixedInt.InRange outWidth (left.toInt * right.toInt) at hresult
   simp [checkedMul, hresult, coefficient]
 
+/-- Checked multiplication returns `none` exactly when the exact product does not fit the
+destination width. Same-scale checked addition and subtraction are the `FixedInt` kernels, whose
+failure laws are `FixedInt.checkedAdd_eq_none_iff` and `FixedInt.checkedSub_eq_none_iff`. -/
+theorem checkedMul_eq_none_iff
+    {leftWidth rightWidth outWidth : Nat}
+    (left : FixedInt leftWidth) (right : FixedInt rightWidth) :
+    checkedMul outWidth left right = none ↔
+      ¬FixedInt.InRange outWidth (coefficient left * coefficient right) := by
+  simp [checkedMul]
+
 /-- Decoding saturating addition exposes exact coefficient addition followed by clamping. -/
 theorem toRat_saturatingAdd
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width)
+    {radix : Radix} {fractionalDigits width : Nat}
     (left right : Code radix fractionalDigits width) :
     toRat radix fractionalDigits (saturatingAdd left right) =
       valueOfCoefficient radix fractionalDigits
         (FixedInt.clamp width (coefficient left + coefficient right)) := by
   unfold Code at left right
   simp [toRat, valueOfCoefficient, coefficient, saturatingAdd,
-    FixedInt.toInt_saturatingAdd hwidth]
+    FixedInt.toInt_saturatingAdd]
 
 /-- Decoding saturating subtraction exposes exact coefficient subtraction followed by clamping. -/
 theorem toRat_saturatingSub
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width)
+    {radix : Radix} {fractionalDigits width : Nat}
     (left right : Code radix fractionalDigits width) :
     toRat radix fractionalDigits (saturatingSub left right) =
       valueOfCoefficient radix fractionalDigits
         (FixedInt.clamp width (coefficient left - coefficient right)) := by
   unfold Code at left right
   simp [toRat, valueOfCoefficient, coefficient, saturatingSub,
-    FixedInt.toInt_saturatingSub hwidth]
+    FixedInt.toInt_saturatingSub]
 
 /-- Decoding saturating multiplication exposes the clamped product at the composed scale. -/
 theorem toRat_saturatingMul
     {radix : Radix} {p q leftWidth rightWidth outWidth : Nat}
-    (houtWidth : 0 < outWidth)
     (left : Code radix p leftWidth) (right : Code radix q rightWidth) :
     toRat radix (p + q) (saturatingMul outWidth left right) =
       valueOfCoefficient radix (p + q)
         (FixedInt.clamp outWidth (coefficient left * coefficient right)) := by
   unfold Code at left right
   simp [toRat, valueOfCoefficient, coefficient, saturatingMul,
-    FixedInt.toInt_ofIntSaturating houtWidth]
+    FixedInt.toInt_ofIntSaturating]
+
+/-- Codes of one format share a scale, so a coefficient sum identity is a rational sum identity. -/
+theorem toRat_eq_add_of_coefficient_eq
+    {radix : Radix} {fractionalDigits width : Nat}
+    {result left right : Code radix fractionalDigits width}
+    (h : coefficient result = coefficient left + coefficient right) :
+    toRat radix fractionalDigits result =
+      toRat radix fractionalDigits left + toRat radix fractionalDigits right := by
+  simp only [toRat]
+  rw [h, Int.cast_add, add_div]
+
+/-- Codes of one format share a scale, so a coefficient difference identity is a rational
+difference identity. -/
+theorem toRat_eq_sub_of_coefficient_eq
+    {radix : Radix} {fractionalDigits width : Nat}
+    {result left right : Code radix fractionalDigits width}
+    (h : coefficient result = coefficient left - coefficient right) :
+    toRat radix fractionalDigits result =
+      toRat radix fractionalDigits left - toRat radix fractionalDigits right := by
+  simp only [toRat]
+  rw [h, Int.cast_sub, sub_div]
 
 /--
 Decoding a wrapped sum whose exact coefficient fits the width gives the exact rational sum.
 -/
 theorem toRat_wrapAdd_of_inRange
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width)
+    {radix : Radix} {fractionalDigits width : Nat}
     (left right : Code radix fractionalDigits width)
     (hresult : FixedInt.InRange width (coefficient left + coefficient right)) :
     toRat radix fractionalDigits (wrapAdd left right) =
-      toRat radix fractionalDigits left + toRat radix fractionalDigits right := by
-  unfold Code at left right
-  simp only [toRat]
-  rw [show coefficient (wrapAdd left right) = coefficient left + coefficient right from
-    FixedInt.toInt_wrapAdd_of_inRange hwidth left right hresult, Int.cast_add, add_div]
+      toRat radix fractionalDigits left + toRat radix fractionalDigits right :=
+  toRat_eq_add_of_coefficient_eq (FixedInt.toInt_wrapAdd_of_inRange left right hresult)
 
 /--
 Decoding a wrapped difference whose exact coefficient fits the width gives the exact rational
 difference.
 -/
 theorem toRat_wrapSub_of_inRange
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width)
+    {radix : Radix} {fractionalDigits width : Nat}
     (left right : Code radix fractionalDigits width)
     (hresult : FixedInt.InRange width (coefficient left - coefficient right)) :
     toRat radix fractionalDigits (wrapSub left right) =
-      toRat radix fractionalDigits left - toRat radix fractionalDigits right := by
-  unfold Code at left right
-  simp only [toRat]
-  rw [show coefficient (wrapSub left right) = coefficient left - coefficient right from
-    FixedInt.toInt_wrapSub_of_inRange hwidth left right hresult, Int.cast_sub, sub_div]
+      toRat radix fractionalDigits left - toRat radix fractionalDigits right :=
+  toRat_eq_sub_of_coefficient_eq (FixedInt.toInt_wrapSub_of_inRange left right hresult)
 
 /--
 Encoding an exact coefficient product that fits the destination width decodes to the rational
@@ -211,7 +241,6 @@ product at the composed scale.
 -/
 theorem toRat_ofInt_mul_of_inRange
     {radix : Radix} {p q leftWidth rightWidth outWidth : Nat}
-    (houtWidth : 0 < outWidth)
     (left : Code radix p leftWidth) (right : Code radix q rightWidth)
     (hresult : FixedInt.InRange outWidth (coefficient left * coefficient right)) :
     toRat radix (p + q)
@@ -224,7 +253,7 @@ theorem toRat_ofInt_mul_of_inRange
     coefficient
         (FixedInt.ofInt (width := outWidth) (coefficient left * coefficient right) :
           Code radix (p + q) outWidth) =
-      coefficient left * coefficient right from FixedInt.toInt_ofInt_eq_self houtWidth hresult]
+      coefficient left * coefficient right from FixedInt.toInt_ofInt_eq_self hresult]
   simp only [scale, FixedPoint.scale, pow_add, Int.cast_mul, Nat.cast_mul, Nat.cast_pow]
   exact (div_mul_div_comm _ _ _ _).symm
 
@@ -277,9 +306,10 @@ theorem wrapMul_refines
   Operation.Finite2.ofFinite fun left right => by
     rw [toRat_wrapMul, wrapMulValue, coefficientOf_toRat, coefficientOf_toRat]
 
-/-- Checked addition returns the exact rational sum whenever its coefficient fits. -/
+/-- Checked addition returns the exact rational sum whenever its coefficient fits.
+On overflow it returns `none`, by `FixedInt.checkedAdd_eq_none_iff`. -/
 theorem checkedAdd_refines
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width) :
+    {radix : Radix} {fractionalDigits width : Nat} :
     Operation.Checked2On (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
@@ -290,12 +320,13 @@ theorem checkedAdd_refines
             coefficientOf radix fractionalDigits right)) :=
   checked2On_of_toRat_eq fun left right hresult => by
     rw [coefficientOf_toRat, coefficientOf_toRat] at hresult
-    exact ⟨wrapAdd left right, FixedInt.checkedAdd_eq_some hwidth left right hresult,
-      toRat_wrapAdd_of_inRange hwidth left right hresult⟩
+    exact ⟨wrapAdd left right, FixedInt.checkedAdd_eq_some left right hresult,
+      toRat_wrapAdd_of_inRange left right hresult⟩
 
-/-- Checked subtraction returns the exact rational difference whenever its coefficient fits. -/
+/-- Checked subtraction returns the exact rational difference whenever its coefficient fits.
+On overflow it returns `none`, by `FixedInt.checkedSub_eq_none_iff`. -/
 theorem checkedSub_refines
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width) :
+    {radix : Radix} {fractionalDigits width : Nat} :
     Operation.Checked2On (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
@@ -306,13 +337,13 @@ theorem checkedSub_refines
             coefficientOf radix fractionalDigits right)) :=
   checked2On_of_toRat_eq fun left right hresult => by
     rw [coefficientOf_toRat, coefficientOf_toRat] at hresult
-    exact ⟨wrapSub left right, FixedInt.checkedSub_eq_some hwidth left right hresult,
-      toRat_wrapSub_of_inRange hwidth left right hresult⟩
+    exact ⟨wrapSub left right, FixedInt.checkedSub_eq_some left right hresult,
+      toRat_wrapSub_of_inRange left right hresult⟩
 
-/-- Checked multiplication returns the exact rational product whenever its coefficient fits. -/
+/-- Checked multiplication returns the exact rational product whenever its coefficient fits.
+On overflow it returns `none`, by `checkedMul_eq_none_iff`. -/
 theorem checkedMul_refines
-    {radix : Radix} {p q leftWidth rightWidth outWidth : Nat}
-    (houtWidth : 0 < outWidth) :
+    {radix : Radix} {p q leftWidth rightWidth outWidth : Nat} :
     Operation.Checked2On (numericalSystem radix p leftWidth)
       (numericalSystem radix q rightWidth)
       (numericalSystem radix (p + q) outWidth)
@@ -323,38 +354,37 @@ theorem checkedMul_refines
   checked2On_of_toRat_eq fun left right hresult => by
     rw [coefficientOf_toRat, coefficientOf_toRat] at hresult
     exact ⟨_, checkedMul_eq_some left right hresult,
-      toRat_ofInt_mul_of_inRange houtWidth left right hresult⟩
+      toRat_ofInt_mul_of_inRange left right hresult⟩
 
 /-- Saturating addition refines exact coefficient addition followed by clamping. -/
 theorem saturatingAdd_refines
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width) :
+    {radix : Radix} {fractionalDigits width : Nat} :
     Operation.Finite2 (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       saturatingAdd (saturatingAddValue radix fractionalDigits width) :=
   Operation.Finite2.ofFinite fun left right => by
-    rw [toRat_saturatingAdd hwidth, saturatingAddValue, coefficientOf_toRat, coefficientOf_toRat]
+    rw [toRat_saturatingAdd, saturatingAddValue, coefficientOf_toRat, coefficientOf_toRat]
 
 /-- Saturating subtraction refines exact coefficient subtraction followed by clamping. -/
 theorem saturatingSub_refines
-    {radix : Radix} {fractionalDigits width : Nat} (hwidth : 0 < width) :
+    {radix : Radix} {fractionalDigits width : Nat} :
     Operation.Finite2 (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       (numericalSystem radix fractionalDigits width)
       saturatingSub (saturatingSubValue radix fractionalDigits width) :=
   Operation.Finite2.ofFinite fun left right => by
-    rw [toRat_saturatingSub hwidth, saturatingSubValue, coefficientOf_toRat, coefficientOf_toRat]
+    rw [toRat_saturatingSub, saturatingSubValue, coefficientOf_toRat, coefficientOf_toRat]
 
 /-- Saturating multiplication refines exact coefficient multiplication followed by clamping. -/
 theorem saturatingMul_refines
-    {radix : Radix} {p q leftWidth rightWidth outWidth : Nat}
-    (houtWidth : 0 < outWidth) :
+    {radix : Radix} {p q leftWidth rightWidth outWidth : Nat} :
     Operation.Finite2 (numericalSystem radix p leftWidth)
       (numericalSystem radix q rightWidth)
       (numericalSystem radix (p + q) outWidth)
       (saturatingMul outWidth) (saturatingMulValue radix p q outWidth) :=
   Operation.Finite2.ofFinite fun left right => by
-    rw [toRat_saturatingMul houtWidth, saturatingMulValue, coefficientOf_toRat,
+    rw [toRat_saturatingMul, saturatingMulValue, coefficientOf_toRat,
       coefficientOf_toRat]
 
 end FloatLib.Floats.Formats.FixedPoint.Bounded

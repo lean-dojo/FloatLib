@@ -32,11 +32,14 @@ Cost estimate for evaluating the exact baseline directly.
 
 This is the mandatory proved implementation in table-backed plans. The constants are calibration
 inputs, not semantic facts; changing them can alter a plan without changing any refinement theorem.
+The baseline decodes to the proof model only while it computes, so the persistent carrier it
+reports is the family's byte.
 -/
 def exactEstimate (operation : FloatLib.Floats.ExecFloat.Backend.Operation) :
     FloatLib.Floats.ExecFloat.Backend.Candidate where
   name := s!"static-byte exact {operation.longLabel} baseline"
   kind := .generic
+  storage := .byte
   steadyCost := 512
   allocations := 4
 
@@ -45,6 +48,11 @@ Estimate a dense byte-result table from the format width and operation arity.
 
 Table construction evaluates a certified kernel once per entry. `residentBytes` counts the
 result bytes in the cached `ByteArray`; it excludes object and allocator overhead.
+
+The size comes from `operation.arity`, while the kernel's shape comes from the constructor that
+uses the estimate. Nothing ties the two together: `binaryTable name .sqrt ...` also typechecks and
+would price a binary table as a unary one. The library's own calls pass matching operations
+(the four binary operations, `.sqrt` to the unary and `.fma` to the ternary constructors).
 -/
 def tableEstimate (format : FloatFormat) (name : String)
     (operation : FloatLib.Floats.ExecFloat.Backend.Operation) :
@@ -53,6 +61,7 @@ def tableEstimate (format : FloatFormat) (name : String)
   let generator := exactEstimate operation
   { name
     kind := .exhaustiveTable
+    storage := .byte
     steadyCost := 4
     setupCost := entries * generator.steadyCost
     setupAllocations := 1 + entries * generator.allocations

@@ -13,13 +13,21 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
 
 Binary arithmetic proofs need an exact value that is cheaper and more concrete than a real
 number. `toDyadic?` decodes every finite encoding to that value and rejects exceptional
-encodings. Conventional IEEE descriptors reuse the established unpacked model; configurable
+encodings. Conventional IEEE descriptors use the IEEE layout reading `ieeeToDyadic?`; configurable
 descriptors follow their declared bias and exceptional-value policy.
 
-The central theorem proves that executable field decoding agrees with Lean's logical floating
-model. Later lemmas recover finiteness, sign, zero, and sign-toggle facts from successful
-decoding. This direction is deliberate: optimized kernels may inspect fields, while their proofs
-can immediately move to one canonical exact dyadic semantics.
+The theorems of this file are about `ieeeToDyadic?`. It reads any layout with the conventional
+bias and the IEEE exceptional patterns, and it is `toDyadic?` only when `fmt.isIEEE`. The central
+theorem `ieeeToDyadic?_eq_unpackedToDyadic?_toModel` proves that this field decoding agrees with
+Lean's logical floating model. Later lemmas recover IEEE finiteness, sign, zero, and sign-toggle
+facts from a successful IEEE decode. For a custom bias or a finite-only, maximum-NaN, or
+unsigned-zero encoding they do not describe the declared semantics.
+
+The descriptor-aware facts about `toDyadic?` are in `Dyadic.Classification`
+(`toDyadic?_isSome_eq_isFinite`, `toDyadic?_ieee_eq_model`, and the sign and zero lemmas), and
+`toDyadic?_neg_of_toDyadic?_some` covers negation. This direction is deliberate: optimized kernels
+may inspect fields, while their proofs can immediately move to one canonical exact dyadic
+semantics.
 -/
 
 @[expose] public section
@@ -63,6 +71,21 @@ declared exponent bias and exceptional-value policy directly.
 @[inline] def toRat? {fmt : FloatFormat} (x : Model fmt) : Option Rat :=
   (toDyadic? x).map Numerics.Dyadic.toRat
 
+private theorem unpackMantissa_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
+    Float.Model.UnpackedFloat.unpackMantissa (spec := FloatFormat.toModel fmt) (toModelBits x) =
+        0#_ ↔ fracField x = 0 := by
+  rw [← BitVec.toNat_inj, unpackMantissa_toNat x, BitVec.toNat_zero]
+
+private theorem unpackExponent_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
+    Float.Model.UnpackedFloat.unpackExponent (spec := FloatFormat.toModel fmt) (toModelBits x) =
+        0#_ ↔ expField x = 0 := by
+  rw [← BitVec.toNat_inj, unpackExponent_toNat x, BitVec.toNat_zero]
+
+private theorem unpackExponent_eq_neg_one_iff {fmt : FloatFormat} (x : Model fmt) :
+    Float.Model.UnpackedFloat.unpackExponent (spec := FloatFormat.toModel fmt) (toModelBits x) =
+        -1#_ ↔ expField x = FloatFormat.expAllOnesNat fmt := by
+  rw [← BitVec.toNat_inj, unpackExponent_toNat x, toNat_neg_one_exponentBits fmt]
+
 /--
 The IEEE field decoder agrees with Lean's logical IEEE model.
 
@@ -77,45 +100,22 @@ theorem ieeeToDyadic?_eq_unpackedToDyadic?_toModel {fmt : FloatFormat} (x : Mode
       (FloatFormat.toModel fmt).exponentBias = fmt.bias := rfl
   simp only [toModel, Float.Model.UnpackedFloat.unpack]
   split <;> rename_i hExponentOnes
-  · have hExpField : expField x = FloatFormat.expAllOnesNat fmt := by
-      rw [← unpackExponent_toNat x, hExponentOnes]
-      exact toNat_neg_one_exponentBits fmt
+  · have hExpField := (unpackExponent_eq_neg_one_iff x).1 hExponentOnes
     split <;> rename_i hMantissa
-    · have hFracField : fracField x = 0 := by
-        rw [← unpackMantissa_toNat x, hMantissa]
-        rfl
+    · have hFracField := (unpackMantissa_eq_zero_iff x).1 hMantissa
       simp [unpackedToDyadic?, ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, hExpField, hFracField]
-    · have hFracField : fracField x ≠ 0 := by
-        intro h
-        apply hMantissa
-        apply BitVec.toNat_inj.mp
-        rw [unpackMantissa_toNat x, h]
-        rfl
+    · have hFracField := mt (unpackMantissa_eq_zero_iff x).2 hMantissa
       simp [unpackedToDyadic?, ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, hExpField, hFracField]
-  · have hExpField : expField x ≠ FloatFormat.expAllOnesNat fmt := by
-      intro h
-      apply hExponentOnes
-      apply BitVec.toNat_inj.mp
-      rw [unpackExponent_toNat x, h]
-      exact (toNat_neg_one_exponentBits fmt).symm
+  · have hExpField := mt (unpackExponent_eq_neg_one_iff x).2 hExponentOnes
     have hNaN : IEEE.isNaN x = false := by simp [IEEE.isNaN, hExpField]
     have hInf : IEEE.isInf x = false := by simp [IEEE.isInf, hExpField]
     split <;> rename_i hExponentZero
-    · have hExpFieldZero : expField x = 0 := by
-        rw [← unpackExponent_toNat x, hExponentZero]
-        rfl
+    · have hExpFieldZero := (unpackExponent_eq_zero_iff x).1 hExponentZero
       split <;> rename_i hMantissa
-      · have hFracField : fracField x = 0 := by
-          rw [← unpackMantissa_toNat x, hMantissa]
-          rfl
+      · have hFracField := (unpackMantissa_eq_zero_iff x).1 hMantissa
         simp [unpackedToDyadic?, ieeeToDyadic?, hNaN, hInf, hExpFieldZero,
           hFracField, modelSignBit_ofBitVec_unpackSign]
-      · have hFracField : fracField x ≠ 0 := by
-          intro h
-          apply hMantissa
-          apply BitVec.toNat_inj.mp
-          rw [unpackMantissa_toNat x, h]
-          rfl
+      · have hFracField := mt (unpackMantissa_eq_zero_iff x).2 hMantissa
         have hMantissaNat := unpackMantissa_toNat x
         have hExponentNat :
             (Float.Model.UnpackedFloat.unpackExponent
@@ -138,12 +138,7 @@ theorem ieeeToDyadic?_eq_unpackedToDyadic?_toModel {fmt : FloatFormat} (x : Mode
         constructor
         · exact hMantissaNat.symm
         · exact hSubnormalExp
-    · have hExpFieldZero : expField x ≠ 0 := by
-        intro h
-        apply hExponentZero
-        apply BitVec.toNat_inj.mp
-        rw [unpackExponent_toNat x, h]
-        rfl
+    · have hExpFieldZero := mt (unpackExponent_eq_zero_iff x).2 hExponentZero
       have hMantissaNat := unpackMantissa_toNat x
       have hExponentNat := unpackExponent_toNat x
       have hAppended :
@@ -172,6 +167,23 @@ theorem ieeeToDyadic?_eq_unpackedToDyadic?_toModel {fmt : FloatFormat} (x : Mode
       · exact hExponentNat.symm
 
 /--
+A successful decode of Lean's unpacked model is a signed zero or a finite value, read field for
+field with its sign bit.
+-/
+theorem unpackedToDyadic?_eq_some_cases {value : Float.Model.UnpackedFloat}
+    {d : Numerics.Dyadic} (h : unpackedToDyadic? value = some d) :
+    (∃ sign, value = .zero sign ∧
+        d = { negative := modelSignBit sign, significand := 0, exponent := 0 }) ∨
+      ∃ sign mantissa exponent hmantissa,
+        value = .finite sign mantissa exponent hmantissa ∧
+          d = { negative := modelSignBit sign, significand := mantissa, exponent } := by
+  cases value with
+  | notANumber | infinity _ => simp [unpackedToDyadic?] at h
+  | zero sign => exact Or.inl ⟨sign, rfl, (Option.some.inj h).symm⟩
+  | finite sign mantissa exponent hmantissa =>
+      exact Or.inr ⟨sign, mantissa, exponent, hmantissa, rfl, (Option.some.inj h).symm⟩
+
+/--
 A nonzero successful dyadic decode determines the corresponding finite logical model value.
 -/
 theorem toModel_eq_finite_of_ieeeToDyadic?_eq_some
@@ -182,29 +194,13 @@ theorem toModel_eq_finite_of_ieeeToDyadic?_eq_some
     toModel x =
       .finite (modelSign sign) mantissa exponent
         (Nat.pos_of_ne_zero hmantissa) := by
-  have hdecodedModel :
-      unpackedToDyadic? (toModel x) =
-        some ({ negative := sign, significand := mantissa, exponent := exponent } : Numerics.Dyadic) := by
-    rw [← ieeeToDyadic?_eq_unpackedToDyadic?_toModel x]
-    exact hdecode
-  generalize hmodel : toModel x = value at hdecodedModel ⊢
-  cases value with
-  | infinity modelSign =>
-      simp [unpackedToDyadic?] at hdecodedModel
-  | notANumber =>
-      simp [unpackedToDyadic?] at hdecodedModel
-  | zero modelSign =>
-      simp [unpackedToDyadic?] at hdecodedModel
-      exact (hmantissa hdecodedModel.2.1.symm).elim
-  | finite modelSign modelMantissa modelExponent modelMantissaPositive =>
-      simp only [unpackedToDyadic?, Option.some.injEq, Numerics.Dyadic.mk.injEq] at hdecodedModel
-      rcases hdecodedModel with ⟨hsign, hmantissaValue, hexponent⟩
-      subst modelMantissa
-      subst modelExponent
-      have hmodelSign : modelSign = Model.modelSign sign := by
-        cases modelSign <;> cases sign <;> simp_all
-      subst modelSign
-      rfl
+  rw [ieeeToDyadic?_eq_unpackedToDyadic?_toModel x] at hdecode
+  rcases unpackedToDyadic?_eq_some_cases hdecode with ⟨_, -, hd⟩ | ⟨s, _, _, _, hmodel, hd⟩
+  · exact absurd (congrArg Numerics.Dyadic.significand hd) hmantissa
+  · simp only [Numerics.Dyadic.mk.injEq] at hd
+    obtain ⟨rfl, rfl, rfl⟩ := hd
+    rw [hmodel]
+    cases s <;> rfl
 
 /-- A zero dyadic decode determines the corresponding signed model zero. -/
 theorem toModel_eq_zero_of_ieeeToDyadic?_eq_some
@@ -212,26 +208,13 @@ theorem toModel_eq_zero_of_ieeeToDyadic?_eq_some
     (hdecode :
       ieeeToDyadic? x = some ({ negative := sign, significand := 0, exponent := exponent } : Numerics.Dyadic)) :
     toModel x = .zero (modelSign sign) := by
-  have hdecodedModel :
-      unpackedToDyadic? (toModel x) =
-        some ({ negative := sign, significand := 0, exponent := exponent } : Numerics.Dyadic) := by
-    rw [← ieeeToDyadic?_eq_unpackedToDyadic?_toModel x]
-    exact hdecode
-  generalize hmodel : toModel x = value at hdecodedModel ⊢
-  cases value with
-  | infinity modelSign =>
-      simp [unpackedToDyadic?] at hdecodedModel
-  | notANumber =>
-      simp [unpackedToDyadic?] at hdecodedModel
-  | zero modelSign =>
-      simp only [unpackedToDyadic?, Option.some.injEq, Numerics.Dyadic.mk.injEq] at hdecodedModel
-      have hmodelSign : modelSign = Model.modelSign sign := by
-        cases modelSign <;> cases sign <;> simp_all
-      subst modelSign
-      rfl
-  | finite modelSign modelMantissa modelExponent modelMantissaPositive =>
-      simp only [unpackedToDyadic?, Option.some.injEq, Numerics.Dyadic.mk.injEq] at hdecodedModel
-      exact (Nat.ne_of_gt modelMantissaPositive hdecodedModel.2.1).elim
+  rw [ieeeToDyadic?_eq_unpackedToDyadic?_toModel x] at hdecode
+  rcases unpackedToDyadic?_eq_some_cases hdecode with ⟨s, hmodel, hd⟩ | ⟨_, _, _, hm, -, hd⟩
+  · simp only [Numerics.Dyadic.mk.injEq] at hd
+    obtain ⟨rfl, -, -⟩ := hd
+    rw [hmodel]
+    cases s <;> rfl
+  · exact absurd (congrArg Numerics.Dyadic.significand hd).symm (Nat.ne_of_gt hm)
 
 /-!
 ## Decoding and finiteness
@@ -251,6 +234,34 @@ theorem isInf_eq_false_of_ieeeToDyadic?_some {fmt : FloatFormat} {x : Model fmt}
   · rfl
   · simp [ieeeToDyadic?, h] at hx
 
+/--
+A successful IEEE decode is one of the three finite shapes: a signed zero, a subnormal read at the
+least subnormal exponent, or a normal value with its implicit leading bit.
+-/
+theorem ieeeToDyadic?_eq_some_cases {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
+    (hx : ieeeToDyadic? x = some d) :
+    (expField x = 0 ∧ fracField x = 0 ∧
+        d = { negative := signBit x, significand := 0, exponent := 0 }) ∨
+      (expField x = 0 ∧ fracField x ≠ 0 ∧
+        d = { negative := signBit x
+              significand := fracField x
+              exponent := FloatFormat.ieeeMinSubnormalExponent fmt }) ∨
+      (expField x ≠ 0 ∧
+        d = { negative := signBit x
+              significand := pow2 fmt.fracWidth + fracField x
+              exponent := Int.ofNat (expField x) -
+                Int.ofNat (FloatFormat.ieeeNormalMantissaExpOffset fmt) }) := by
+  have hnan := isNaN_eq_false_of_ieeeToDyadic?_some hx
+  have hinf := isInf_eq_false_of_ieeeToDyadic?_some hx
+  unfold ieeeToDyadic? at hx
+  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, ite_false] at hx
+  split at hx <;> rename_i hexponent
+  · split at hx <;> rename_i hfraction
+    · exact Or.inl ⟨beq_iff_eq.1 hexponent, beq_iff_eq.1 hfraction, (Option.some.inj hx).symm⟩
+    · exact Or.inr (Or.inl ⟨beq_iff_eq.1 hexponent, fun h => hfraction (beq_iff_eq.2 h),
+        (Option.some.inj hx).symm⟩)
+  · exact Or.inr (Or.inr ⟨fun h => hexponent (beq_iff_eq.2 h), (Option.some.inj hx).symm⟩)
+
 /-- IEEE decoding preserves magnitude and exponent when the storage sign bit is toggled. -/
 theorem ieeeToDyadic?_toggleSign_of_ieeeToDyadic?_some
     {fmt : FloatFormat} (x : Model fmt) {d : Numerics.Dyadic}
@@ -261,78 +272,26 @@ theorem ieeeToDyadic?_toggleSign_of_ieeeToDyadic?_some
     isNaN_eq_false_of_ieeeToDyadic?_some hx
   have hxInf : IEEE.isInf x = false :=
     isInf_eq_false_of_ieeeToDyadic?_some hx
-  have hnaninf : (IEEE.isNaN x || IEEE.isInf x) = false := by
-    simp [hxNaN, hxInf]
-  unfold ieeeToDyadic? at hx ⊢
-  simp (config := { zeta := true })
-    [hnaninf, signBit_toggleSign, expField_toggleSign, fracField_toggleSign] at hx ⊢
-  by_cases he : expField x = 0
-  · by_cases hf : fracField x = 0
-    · have hx' : some { negative := signBit x, significand := 0, exponent := 0 } = some d := by
-        simpa [he, hf] using hx
-      have hd : d = { negative := signBit x, significand := 0, exponent := 0 } :=
-        (Option.some.inj hx').symm
-      simp [he, hf, hd]
-    · have hx' : some {
-          negative := signBit x
-          significand := fracField x
-          exponent := FloatFormat.ieeeMinSubnormalExponent fmt } = some d := by
-        simpa [he, hf] using hx
-      have hd : d = {
-          negative := signBit x
-          significand := fracField x
-          exponent := FloatFormat.ieeeMinSubnormalExponent fmt } := (Option.some.inj hx').symm
-      simp [he, hf, hd]
-  · have hx' : some {
-        negative := signBit x
-        significand := pow2 fmt.fracWidth + fracField x
-        exponent := Int.ofNat (expField x) -
-          Int.ofNat (FloatFormat.ieeeNormalMantissaExpOffset fmt) } = some d := by
-      simpa [he] using hx
-    have hd : d = {
-        negative := signBit x
-        significand := pow2 fmt.fracWidth + fracField x
-        exponent := Int.ofNat (expField x) -
-          Int.ofNat (FloatFormat.ieeeNormalMantissaExpOffset fmt) } := (Option.some.inj hx').symm
-    simp [he, hd]
+  unfold ieeeToDyadic?
+  rcases ieeeToDyadic?_eq_some_cases hx with ⟨he, hf, rfl⟩ | ⟨he, hf, rfl⟩ | ⟨he, rfl⟩ <;>
+    simp (config := { zeta := true })
+      [signBit_toggleSign, expField_toggleSign, fracField_toggleSign, *]
 
 /-- IEEE dyadic decoding preserves the stored sign bit. -/
 theorem sign_eq_signBit_of_ieeeToDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hx : ieeeToDyadic? x = some d) : d.negative = signBit x := by
-  have hnan := isNaN_eq_false_of_ieeeToDyadic?_some hx
-  have hinf := isInf_eq_false_of_ieeeToDyadic?_some hx
-  unfold ieeeToDyadic? at hx
-  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, ite_false] at hx
-  split at hx
-  · split at hx
-    · simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
-    · simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
-  · simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
+  rcases ieeeToDyadic?_eq_some_cases hx with ⟨-, -, rfl⟩ | ⟨-, -, rfl⟩ | ⟨-, rfl⟩ <;> rfl
 
 /-- A decoded dyadic has zero mantissa only when the source is an IEEE signed zero. -/
 theorem isZero_eq_true_of_ieeeToDyadic?_some_of_mant_eq_zero
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hx : ieeeToDyadic? x = some d) (hmant : d.significand = 0) :
     IEEE.isZero x = true := by
-  have hnan := isNaN_eq_false_of_ieeeToDyadic?_some hx
-  have hinf := isInf_eq_false_of_ieeeToDyadic?_some hx
-  unfold ieeeToDyadic? at hx
-  simp only [hnan, hinf, Bool.false_or, Bool.false_eq_true, ite_false] at hx
-  split at hx <;> rename_i hexponent
-  · split at hx <;> rename_i hfraction
-    · simp [IEEE.isZero, hexponent, hfraction]
-    · have hdMant :
-          d.significand = fracField x := by
-        simpa using congrArg Numerics.Dyadic.significand (Option.some.inj hx.symm)
-      simp [hmant] at hdMant
-      exact (hfraction (beq_iff_eq.2 hdMant.symm)).elim
-  · have hdMant :
-        d.significand = pow2 fmt.fracWidth + fracField x := by
-      simpa using congrArg Numerics.Dyadic.significand (Option.some.inj hx.symm)
-    simp [hmant, pow2_eq_two_pow] at hdMant
-    have hpow : 0 < 2 ^ fmt.fracWidth := Nat.pow_pos (by decide)
-    omega
+  rcases ieeeToDyadic?_eq_some_cases hx with ⟨he, hf, -⟩ | ⟨-, hf, rfl⟩ | ⟨-, rfl⟩
+  · simp [IEEE.isZero, he, hf]
+  · exact absurd hmant hf
+  · simp [pow2_eq_two_pow] at hmant
 
 /-- A successful dyadic decode certifies that the source bit pattern is finite. -/
 theorem isFinite_eq_true_of_ieeeToDyadic?_some {fmt : FloatFormat}

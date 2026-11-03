@@ -22,7 +22,7 @@ capabilities independently: notation and explicit calls such as `ExecFloat.add` 
 selected implementation. `ExecFloat.Proof.*_eq_spec` rewrites each operation, in call or notation
 form, to its reference definition in `ExecFloat.Spec`.
 
-Conversions name the destination type. Mixed operations such as `addAs` name their result type;
+Conversions name the destination type. Mixed operations such as `Mixed.add` name their result type;
 `roundOnce` evaluates a finite expression in that destination's exact domain and quantizes once.
 
 Backend selection uses certified candidates and their cost estimates. `#float_info` reports the

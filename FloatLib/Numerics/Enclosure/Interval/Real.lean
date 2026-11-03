@@ -47,20 +47,10 @@ theorem containsReal_encloseInterval? (R : OutwardRounding α ℚ)
     {a : Interval ℚ} {I : Interval α} (h : encloseInterval? R a = some I)
     {x : ℝ} (hx : (a.lo : ℝ) ≤ x ∧ x ≤ (a.hi : ℝ)) :
     I.ContainsReal R.decode x := by
-  cases hlo : R.enclose? a.lo with
-  | none => simp [encloseInterval?, hlo] at h
-  | some lo =>
-    cases hhi : R.enclose? a.hi with
-    | none => simp [encloseInterval?, hlo, hhi] at h
-    | some hi =>
-      simp [encloseInterval?, hlo, hhi] at h
-      subst I
-      obtain ⟨a₁, a₂, ha₁, _, ha, _⟩ := R.sound hlo
-      obtain ⟨b₁, b₂, _, hb₂, _, hb⟩ := R.sound hhi
-      have hal : (a₁ : ℝ) ≤ (a.lo : ℝ) := by exact_mod_cast ha
-      have hbu : (a.hi : ℝ) ≤ (b₂ : ℝ) := by exact_mod_cast hb
-      exact ⟨(a₁ : ℝ), (b₂ : ℝ), by simp [ha₁], by simp [hb₂],
-        hal.trans hx.1, hx.2.trans hbu⟩
+  obtain ⟨lo, hi, hlo, hhi, hlower, hupper⟩ := decode_bounds_of_encloseInterval? R h
+  have hal : (lo : ℝ) ≤ (a.lo : ℝ) := by exact_mod_cast hlower
+  have hbu : (a.hi : ℝ) ≤ (hi : ℝ) := by exact_mod_cast hupper
+  exact ⟨(lo : ℝ), (hi : ℝ), by simp [hlo], by simp [hhi], hal.trans hx.1, hx.2.trans hbu⟩
 
 /-- Lift a rational endpoint enclosure whose interpreted bounds enclose the desired real image. -/
 theorem containsReal_liftUnary? (R : OutwardRounding α ℚ)
@@ -69,11 +59,8 @@ theorem containsReal_liftUnary? (R : OutwardRounding α ℚ)
       ((f a).lo : ℝ) ≤ g x ∧ g x ≤ ((f a).hi : ℝ))
     {I K : Interval α} (h : liftUnary? R f I = some K)
     {x : ℝ} (hx : I.ContainsReal R.decode x) : K.ContainsReal R.decode (g x) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [liftUnary?, ha] at h
-  | some a =>
-    exact containsReal_encloseInterval? R (by simpa [liftUnary?, ha] using h)
-      (hf a x ((containsReal_iff_of_decode? ha x).1 hx))
+  obtain ⟨a, ha, hK⟩ := (liftUnary?_eq_some_iff R f).1 h
+  exact containsReal_encloseInterval? R hK (hf a x ((containsReal_iff_of_decode? ha x).1 hx))
 
 /-- Lift a rational binary endpoint enclosure to arbitrary real members of its input intervals. -/
 theorem containsReal_liftBinary? (R : OutwardRounding α ℚ)
@@ -84,15 +71,10 @@ theorem containsReal_liftBinary? (R : OutwardRounding α ℚ)
     {I J K : Interval α} (h : liftBinary? R f I J = some K)
     {x y : ℝ} (hx : I.ContainsReal R.decode x) (hy : J.ContainsReal R.decode y) :
     K.ContainsReal R.decode (g x y) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [liftBinary?, ha] at h
-  | some a =>
-    cases hb : J.decode? R.decode with
-    | none => simp [liftBinary?, ha, hb] at h
-    | some b =>
-      exact containsReal_encloseInterval? R (by simpa [liftBinary?, ha, hb] using h)
-        (hf a b x y ((containsReal_iff_of_decode? ha x).1 hx)
-          ((containsReal_iff_of_decode? hb y).1 hy))
+  obtain ⟨a, b, ha, hb, hK⟩ := (liftBinary?_eq_some_iff R f).1 h
+  exact containsReal_encloseInterval? R hK
+    (hf a b x y ((containsReal_iff_of_decode? ha x).1 hx)
+      ((containsReal_iff_of_decode? hb y).1 hy))
 
 /-- Successful negation encloses the negative of every represented real. -/
 theorem containsReal_neg? (R : OutwardRounding α ℚ) {I K : Interval α}
@@ -135,20 +117,12 @@ theorem containsReal_div? (R : OutwardRounding α ℚ) {I J K : Interval α}
     (h : div? R I J = some K) {x y : ℝ}
     (hx : I.ContainsReal R.decode x) (hy : J.ContainsReal R.decode y) :
     K.ContainsReal R.decode (x / y) := by
-  cases ha : I.decode? R.decode with
-  | none => simp [div?, ha] at h
-  | some a =>
-    cases hb : J.decode? R.decode with
-    | none => simp [div?, ha, hb] at h
-    | some b =>
-      by_cases hzero : b.hi < 0 ∨ 0 < b.lo
-      · simp only [div?, ha, hb, ite_eq_left hzero] at h
-        apply containsReal_encloseInterval? R h
-        have hzeroReal : (b.hi : ℝ) < 0 ∨ 0 < (b.lo : ℝ) := by exact_mod_cast hzero
-        simpa [minOfFour, maxOfFour] using
-          div_bounds_Icc (a.lo : ℝ) a.hi b.lo b.hi x y
-            ((containsReal_iff_of_decode? ha x).1 hx)
-            ((containsReal_iff_of_decode? hb y).1 hy) hzeroReal
-      · simp [div?, ha, hb, hzero] at h
+  obtain ⟨a, b, ha, hb, hzero, hK⟩ := (div?_eq_some_iff R).1 h
+  apply containsReal_encloseInterval? R hK
+  have hzeroReal : (b.hi : ℝ) < 0 ∨ 0 < (b.lo : ℝ) := by exact_mod_cast hzero
+  simpa [minOfFour, maxOfFour] using
+    div_bounds_Icc (a.lo : ℝ) a.hi b.lo b.hi x y
+      ((containsReal_iff_of_decode? ha x).1 hx)
+      ((containsReal_iff_of_decode? hb y).1 hy) hzeroReal
 
 end FloatLib.Numerics.Interval

@@ -10,6 +10,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.ModelSqrt.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
+import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 
 /-!
 # Correctness of compact finite square root
@@ -97,17 +98,23 @@ theorem sqrtGeneral_eq_unscaled
 
 /--
 For a conventional IEEE descriptor, exact-dyadic square root agrees with the unpacked model
-`UnpackedFloat.sqrt` applied to the encoded value.
+`UnpackedFloat.sqrt` applied to the encoded value. A positive zero is its own square root.
 -/
 theorem sqrtPositiveDyadic_eq_model_of_ieee
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt) (value : Numerics.Dyadic)
     (hdecode : toDyadic? x = some value)
-    (hsign : value.negative = false) (hmantissa : value.significand ≠ 0) :
+    (hsign : value.negative = false) :
     sqrtPositiveDyadic fmt value.significand value.exponent =
       ofModel fmt
         (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt) (toModel x)) := by
   have hieeeDecode : ieeeToDyadic? x = some value := by
     simpa [toDyadic?, hfmt] using hdecode
+  by_cases hmantissa : value.significand = 0
+  · obtain ⟨negative, significand, exponent⟩ := value
+    simp only at hsign hmantissa
+    subst hsign hmantissa
+    rw [toModel_eq_zero_of_ieeeToDyadic?_eq_some x false exponent hieeeDecode]
+    simp [sqrtPositiveDyadic, modelSign, Float.Model.UnpackedFloat.sqrt, posZero_eq_ofModel_zero]
   have hmodel :=
     toModel_eq_finite_of_ieeeToDyadic?_eq_some
       x value.negative value.significand value.exponent hmantissa hieeeDecode
@@ -160,6 +167,38 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
     (hpositive : signBit x = false) :
     sqrtPositiveRuntime? x =
       some (sqrtPositiveRuntime x hfinite hnonzero hpositive) := by
+  -- A positive finite value with zero exponent and fraction fields is zero in every encoding.
+  have hfraction (hexponentZero : expField x = 0) : fracField x ≠ 0 := by
+    intro hfraction
+    have hzero : isZero x = true := by
+      have hreconstruct := ofFields_signBit_expField_fracField x
+      have hreconstructZero :
+          ofFields fmt false 0 0 = x := by
+        simpa [hpositive, hexponentZero, hfraction] using hreconstruct
+      cases hencoding : fmt.encoding with
+      | ieee | finiteMaxNaN | finite =>
+          simp [isZero, hencoding, IEEE.isZero, hexponentZero, hfraction]
+      | finiteUnsignedZero =>
+          have hbits : x.bits = 0 := by
+            simpa [posZero, ofNatBits, ofBits, FloatFormat.ofWordNat] using
+              (congrArg (fun value : Model fmt => value.bits)
+                hreconstructZero).symm
+          simp [isZero, hencoding, hbits]
+    simp [hzero] at hnonzero
+  -- Both decoding routes reach the scalar kernel on the same nonzero fields.
+  have hfields :
+      sqrtFields? fmt false (expField x)
+          (FiniteKernel.decodeMantissa fmt (expField x) (fracField x)) =
+        some (sqrtPositiveDyadic fmt
+          (FiniteKernel.decodeMantissa fmt (expField x) (fracField x))
+          (FiniteKernel.dyadicExponent fmt (expField x))) := by
+    unfold sqrtFields?
+    simp only [Bool.false_eq_true, ite_false]
+    by_cases hexponentZero : expField x = 0
+    · simp [FiniteKernel.decodeMantissa, hexponentZero, hfraction hexponentZero]
+    · have hpowne : pow2 fmt.fracWidth ≠ 0 := by
+        simp [pow2_eq_two_pow]
+      simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
   unfold sqrtPositiveRuntime? FiniteKernel.withFinite? sqrtPositiveRuntime
   by_cases hieee : fmt.isIEEE = true
   · simp only [hieee, ite_true]
@@ -183,55 +222,13 @@ theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
     · rename_i heq
       exact (hexponent ((beq_iff_eq).1 heq)).elim
     · rw [signBit_eq_internal_apply] at hpositive
-      rw [← expField_eq_internal_apply x]
-      rw [← fracField_eq_internal_apply x]
-      unfold sqrtFields?
-      simp only [hpositive, Bool.false_eq_true, ite_false]
-      by_cases hexponentZero : expField x = 0
-      · have hfraction : fracField x ≠ 0 := by
-          intro hfraction
-          have hzero : isZero x = true := by
-            simp [isZero, hencoding, IEEE.isZero, hexponentZero, hfraction]
-          simp [hzero] at hnonzero
-        simp [FiniteKernel.decodeMantissa, hexponentZero, hfraction]
-      · have hmantissa : pow2 fmt.fracWidth + fracField x ≠ 0 := by
-          have hpow : 0 < pow2 fmt.fracWidth := by
-            simp [pow2_eq_two_pow]
-          omega
-        have hpowne : pow2 fmt.fracWidth ≠ 0 := by
-          simp [pow2_eq_two_pow]
-        simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
+      rw [← expField_eq_internal_apply x, ← fracField_eq_internal_apply x, hpositive]
+      exact hfields
   · simp only [hieee]
     unfold FiniteKernel.decode?
     simp only [hfinite, Bool.not_true, Bool.false_eq_true, ite_false]
-    unfold sqrtFields?
-    simp only [hpositive, Bool.false_eq_true, ite_false]
-    by_cases hexponentZero : expField x = 0
-    · have hfraction : fracField x ≠ 0 := by
-        intro hfraction
-        have hzero : isZero x = true := by
-          have hreconstruct := ofFields_signBit_expField_fracField x
-          have hreconstructZero :
-              ofFields fmt false 0 0 = x := by
-            simpa [hpositive, hexponentZero, hfraction] using hreconstruct
-          cases hencoding : fmt.encoding with
-          | ieee | finiteMaxNaN | finite =>
-              simp [isZero, hencoding, IEEE.isZero, hexponentZero, hfraction]
-          | finiteUnsignedZero =>
-              have hbits : x.bits = 0 := by
-                simpa [posZero, ofNatBits, ofBits, FloatFormat.ofWordNat] using
-                  (congrArg (fun value : Model fmt => value.bits)
-                    hreconstructZero).symm
-              simp [isZero, hencoding, hbits]
-        simp [hzero] at hnonzero
-      simp [FiniteKernel.decodeMantissa, hexponentZero, hfraction]
-    · have hmantissa : pow2 fmt.fracWidth + fracField x ≠ 0 := by
-        have hpow : 0 < pow2 fmt.fracWidth := by
-          simp [pow2_eq_two_pow]
-        omega
-      have hpowne : pow2 fmt.fracWidth ≠ 0 := by
-        simp [pow2_eq_two_pow]
-      simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
+    rw [hpositive]
+    exact hfields
 
 /--
 `sqrtPositiveRuntime` takes the square root of the exact dyadic that its finite input

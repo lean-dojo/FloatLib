@@ -40,12 +40,12 @@ open FloatLib.Floats.Formats.Posit.Model.StickyPrefix
 /-- A Euclidean quotient plus its proper remainder lies in its unit interval. -/
 theorem quotientFraction_bounds
     (quotient remainder denominator : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (quotient : Rat) ≤
         (quotient : Rat) + (remainder : Rat) / (denominator : Rat) ∧
       (quotient : Rat) + (remainder : Rat) / (denominator : Rat) <
         (quotient : Rat) + 1 := by
+  have hdenominator : 0 < denominator := Nat.zero_lt_of_lt hremainder
   have hdenominatorRat : (0 : Rat) < (denominator : Rat) := by
     exact_mod_cast hdenominator
   have hremainderNonnegative : (0 : Rat) ≤ (remainder : Rat) :=
@@ -82,12 +82,11 @@ quotient does.
 -/
 theorem quotientFraction_lt_natCast_iff
     (quotient remainder denominator boundary : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (quotient : Rat) + (remainder : Rat) / (denominator : Rat) < (boundary : Rat) ↔
       quotient < boundary := by
   have hbounds :=
-    quotientFraction_bounds quotient remainder denominator hdenominator hremainder
+    quotientFraction_bounds quotient remainder denominator hremainder
   constructor
   · intro hexact
     exact_mod_cast hbounds.1.trans_lt hexact
@@ -102,12 +101,12 @@ below the quotient, or equals the quotient and the remainder is nonzero.
 -/
 theorem natCast_lt_quotientFraction_iff
     (quotient remainder denominator boundary : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     (boundary : Rat) < (quotient : Rat) + (remainder : Rat) / (denominator : Rat) ↔
       boundary < quotient ∨ (boundary = quotient ∧ remainder ≠ 0) := by
+  have hdenominator : 0 < denominator := Nat.zero_lt_of_lt hremainder
   have hbounds :=
-    quotientFraction_bounds quotient remainder denominator hdenominator hremainder
+    quotientFraction_bounds quotient remainder denominator hremainder
   rcases lt_trichotomy boundary quotient with hlt | rfl | hgt
   · exact iff_of_true
       ((by exact_mod_cast hlt : (boundary : Rat) < quotient).trans_le hbounds.1) (Or.inl hlt)
@@ -126,13 +125,12 @@ boundary. A stream threshold with at least one zero padding bit has this form.
 -/
 theorem quotientFraction_lt_even_iff_jam_lt
     (quotient remainder denominator boundary : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary % 2 = 0) :
     (quotient : Rat) + (remainder : Rat) / (denominator : Rat) <
         (boundary : Rat) ↔
       jamRemainder quotient remainder < boundary := by
-  rw [quotientFraction_lt_natCast_iff _ _ _ _ hdenominator hremainder, jamRemainder_eq]
+  rw [quotientFraction_lt_natCast_iff _ _ _ _ hremainder, jamRemainder_eq]
   split_ifs <;> omega
 
 /--
@@ -141,13 +139,12 @@ boundary.
 -/
 theorem even_lt_quotientFraction_iff_lt_jam
     (quotient remainder denominator boundary : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary % 2 = 0) :
     (boundary : Rat) <
         (quotient : Rat) + (remainder : Rat) / (denominator : Rat) ↔
       boundary < jamRemainder quotient remainder := by
-  rw [natCast_lt_quotientFraction_iff _ _ _ _ hdenominator hremainder, jamRemainder_eq]
+  rw [natCast_lt_quotientFraction_iff _ _ _ _ hremainder, jamRemainder_eq]
   split_ifs <;> omega
 
 /--
@@ -163,9 +160,7 @@ theorem exactTailRaw_jamRemainder
         (jamRemainder quotient remainder) leading =
       jamRemainder
         (exactTailRaw exponentField quotient leading) remainder := by
-  have hpowerEven : 2 ^ leading % 2 = 0 := by
-    obtain ⟨preceding, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : leading ≠ 0)
-    simp [pow_succ]
+  have hpowerEven : 2 ^ leading % 2 = 0 := Nat.two_pow_mod_two_eq_zero.2 hleading
   have hrawParity :
       exactTailRaw exponentField quotient leading % 2 =
         quotient % 2 := by
@@ -180,27 +175,19 @@ theorem exactTailRaw_jamRemainder
     simp [exactTailRaw, fractionRaw, Nat.add_mod, Nat.mul_mod,
       hpowerEven, hfractionParity]
   rw [jamRemainder_eq, jamRemainder_eq, hrawParity]
-  by_cases hremainder : remainder = 0
-  · simp [hremainder]
-  · rw [ite_eq_right hremainder, ite_eq_right hremainder]
-    by_cases hquotientEven : quotient % 2 = 0
-    · rw [ite_eq_left hquotientEven, ite_eq_left hquotientEven]
-      unfold exactTailRaw fractionRaw
-      omega
-    · rw [ite_eq_right hquotientEven, ite_eq_right hquotientEven]
+  split_ifs
+  · rfl
+  · unfold exactTailRaw fractionRaw
+    omega
+  · rfl
 
 /-- A zero-padded midpoint is even whenever at least one padding bit remains. -/
 theorem streamMidpointRaw_mod_two
     (raw width retained : Nat)
     (hpadding : retained + 1 < width) :
     streamMidpointRaw raw width retained % 2 = 0 := by
-  have hexponent :
-      width - retained - 1 =
-        (width - retained - 2) + 1 := by
-    omega
   unfold streamMidpointRaw
-  rw [hexponent, pow_succ]
-  simp [Nat.mul_mod]
+  simp [Nat.mul_mod, Nat.two_pow_mod_two_eq_zero.2 (by omega : 0 < width - retained - 1)]
 
 /--
 Padding a retained jammed prefix back to the complete stream width never exceeds the unjammed
@@ -217,30 +204,19 @@ theorem paddedStreamPrefix_jamRemainder_le
       quotient := by
   have hshift : 0 < width - retained := by
     omega
-  have hpowerEven : 2 ^ (width - retained) % 2 = 0 := by
-    obtain ⟨preceding, hshiftEq⟩ :=
-      Nat.exists_eq_succ_of_ne_zero (by omega : width - retained ≠ 0)
-    rw [hshiftEq, pow_succ]
-    simp
-  unfold streamPrefix
-  rw [ite_eq_left hretained.le, jamRemainder_eq]
-  by_cases hremainder : remainder = 0
-  · rw [ite_eq_left hremainder]
-    exact Nat.div_mul_le_self quotient (2 ^ (width - retained))
-  · rw [ite_eq_right hremainder]
-    by_cases hquotientEven : quotient % 2 = 0
-    · rw [ite_eq_left hquotientEven]
-      have hle :=
-        Nat.div_mul_le_self (quotient + 1) (2 ^ (width - retained))
-      have hleftEven :
-          (((quotient + 1) / 2 ^ (width - retained)) *
-              2 ^ (width - retained)) % 2 = 0 := by
-        simp [Nat.mul_mod, hpowerEven]
-      have hsuccessorOdd : (quotient + 1) % 2 = 1 := by
-        omega
-      omega
-    · rw [ite_eq_right hquotientEven]
-      exact Nat.div_mul_le_self quotient (2 ^ (width - retained))
+  have hpowerEven : 2 ^ (width - retained) % 2 = 0 :=
+    Nat.two_pow_mod_two_eq_zero.2 hshift
+  rw [streamPrefix_eq_div_of_le hretained.le]
+  rcases jamRemainder_eq_or quotient remainder with hjam | ⟨hjam, hquotientEven⟩ <;>
+    rw [hjam]
+  · exact Nat.div_mul_le_self quotient (2 ^ (width - retained))
+  · have hle :=
+      Nat.div_mul_le_self (quotient + 1) (2 ^ (width - retained))
+    have hleftEven :
+        (((quotient + 1) / 2 ^ (width - retained)) *
+            2 ^ (width - retained)) % 2 = 0 := by
+      simp [Nat.mul_mod, hpowerEven]
+    omega
 
 /--
 The exact quotient fraction lies strictly below the successor of its retained jammed prefix.
@@ -250,7 +226,6 @@ and discards at least one stream bit; no Posit width, storage tier, or candidate
 -/
 theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
     (quotient remainder denominator width retained : Nat)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hretained : retained < width) :
     (quotient : Rat) + (remainder : Rat) / (denominator : Rat) <
@@ -278,29 +253,18 @@ theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
         Nat.add_lt_add_right hremainderBound _
       _ = (jammed / 2 ^ shift + 1) * 2 ^ shift := by
         ring
-  have hquotientLeJammed : quotient ≤ jammed := by
-    dsimp [jammed]
-    rw [jamRemainder_eq]
-    by_cases hremainderZero : remainder = 0
-    · simp [hremainderZero]
-    · rw [ite_eq_right hremainderZero]
-      by_cases hquotientEven : quotient % 2 = 0
-      · simp [hquotientEven]
-      · simp [hquotientEven]
+  have hquotientLeJammed : quotient ≤ jammed := le_jamRemainder quotient remainder
   have hquotientSuccessorLe :
       quotient + 1 ≤
         (jammed / 2 ^ shift + 1) * 2 ^ shift := by
     omega
-  have hfractionLtOne :
-      (remainder : Rat) / (denominator : Rat) < 1 := by
-    exact (div_lt_one (by exact_mod_cast hdenominator)).2
-      (by exact_mod_cast hremainder)
+  have hfraction :=
+    (quotientFraction_bounds quotient remainder denominator hremainder).2
   have hquotientSuccessorLeRat :
       (quotient : Rat) + 1 ≤
         (((jammed / 2 ^ shift + 1) * 2 ^ shift : Nat) : Rat) := by
     exact_mod_cast hquotientSuccessorLe
-  unfold streamPrefix
-  rw [ite_eq_left hretained.le]
+  rw [streamPrefix_eq_div_of_le hretained.le]
   dsimp [jammed, shift] at *
   linarith
 
@@ -312,7 +276,6 @@ theorem quotientTailFraction_lt_midpoint_iff_jammed
     (exponentField quotient remainder denominator leading retained : Nat)
     (hleading : 0 < leading)
     (hlower : 2 ^ leading ≤ quotient)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hpadding : retained + 1 < leading + 2) :
     (exactTailRaw exponentField quotient leading : Rat) +
@@ -330,7 +293,6 @@ theorem quotientTailFraction_lt_midpoint_iff_jammed
   rw [exactTailRaw_jamRemainder
     exponentField quotient remainder leading hleading hlower]
   apply quotientFraction_lt_even_iff_jam_lt
-  · exact hdenominator
   · exact hremainder
   · exact streamMidpointRaw_mod_two _ _ _ hpadding
 
@@ -342,7 +304,6 @@ theorem midpoint_lt_quotientTailFraction_iff_jammed
     (exponentField quotient remainder denominator leading retained : Nat)
     (hleading : 0 < leading)
     (hlower : 2 ^ leading ≤ quotient)
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hpadding : retained + 1 < leading + 2) :
     (streamMidpointRaw
@@ -360,7 +321,6 @@ theorem midpoint_lt_quotientTailFraction_iff_jammed
   rw [exactTailRaw_jamRemainder
     exponentField quotient remainder leading hleading hlower]
   apply even_lt_quotientFraction_iff_lt_jam
-  · exact hdenominator
   · exact hremainder
   · exact streamMidpointRaw_mod_two _ _ _ hpadding
 
@@ -376,11 +336,11 @@ decoder proofs.
 
 /--
 Advancing one finite tail word advances a normalized significand by one unit in its stored
-leading position, including a carry into the next exponent within the bounded tail.
+leading position, including a carry into the next exponent within the bounded tail. The tail
+bound keeps the exponent field below four.
 -/
 theorem trailingRat_exactTailRaw_succ
     (exponentField significand leading : Nat)
-    (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ significand)
     (hupper : significand < 2 ^ (leading + 1))
     (hsuccessor :
@@ -390,6 +350,16 @@ theorem trailingRat_exactTailRaw_succ
         (exactTailRaw exponentField significand leading + 1) =
       ((significand : Rat) + 1) / (2 ^ leading : Nat) *
         (2 : Rat) ^ Int.ofNat exponentField := by
+  have hpowerWidth : 2 ^ (leading + 2) = 4 * 2 ^ leading := by
+    rw [pow_add]
+    omega
+  have hexponent : exponentField < 4 := by
+    have hfield : exponentField * 2 ^ leading ≤ exactTailRaw exponentField significand leading := by
+      unfold exactTailRaw
+      omega
+    by_contra hlarge
+    have := Nat.mul_le_mul_right (2 ^ leading) (Nat.le_of_not_lt hlarge)
+    omega
   by_cases hsignificandSuccessor : significand + 1 < 2 ^ (leading + 1)
   · have hrawSuccessor :
         exactTailRaw exponentField significand leading + 1 =
@@ -402,9 +372,6 @@ theorem trailingRat_exactTailRaw_succ
         hexponent (by omega) hsignificandSuccessor
   · have hpower : 2 ^ (leading + 1) = 2 * 2 ^ leading := by
       rw [pow_succ]
-      omega
-    have hpowerWidth : 2 ^ (leading + 2) = 4 * 2 ^ leading := by
-      rw [pow_add]
       omega
     have hsignificandMax : significand + 1 = 2 * 2 ^ leading := by
       omega
@@ -440,7 +407,6 @@ private theorem quotientFraction_scaled_bounds
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator) :
     exactTailRaw exponentField quotient leading < 2 ^ (leading + 2) ∧
       Model.trailingRat (leading + 2)
@@ -454,7 +420,7 @@ private theorem quotientFraction_scaled_bounds
         ((quotient : Rat) + 1) / (2 ^ leading : Nat) *
           (2 : Rat) ^ Int.ofNat exponentField := by
   have hbounds :=
-    quotientFraction_bounds quotient remainder denominator hdenominator hremainder
+    quotientFraction_bounds quotient remainder denominator hremainder
   refine ⟨exactTailRaw_lt_two_pow exponentField quotient leading hexponent hlower hupper, ?_, ?_⟩
   · rw [trailingRat_exactTailRaw exponentField quotient leading hexponent hlower hupper]
     exact mul_le_mul_of_nonneg_right
@@ -468,7 +434,6 @@ private theorem trailingRat_le_quotientFraction_of_le
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary < 2 ^ (leading + 2))
     (hle : boundary ≤ exactTailRaw exponentField quotient leading) :
@@ -477,9 +442,9 @@ private theorem trailingRat_le_quotientFraction_of_le
           (2 ^ leading : Nat) * (2 : Rat) ^ Int.ofNat exponentField := by
   have hbounds := quotientFraction_scaled_bounds
     exponentField quotient remainder denominator leading
-    hexponent hlower hupper hdenominator hremainder
+    hexponent hlower hupper hremainder
   rcases hle.lt_or_eq with hlt | rfl
-  · exact (Model.trailingRat_lt_of_lt hboundary hbounds.1 hlt).le.trans hbounds.2.1
+  · exact (Model.trailingRat_lt_of_lt hbounds.1 hlt).le.trans hbounds.2.1
   · exact hbounds.2.1
 
 /-- Every bounded finite-stream word above the exact quotient word exceeds the exact quotient. -/
@@ -488,7 +453,6 @@ private theorem quotientFraction_lt_trailingRat_of_lt
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary < 2 ^ (leading + 2))
     (hlt : exactTailRaw exponentField quotient leading < boundary) :
@@ -497,13 +461,13 @@ private theorem quotientFraction_lt_trailingRat_of_lt
       Model.trailingRat (leading + 2) boundary := by
   have hbounds := quotientFraction_scaled_bounds
     exponentField quotient remainder denominator leading
-    hexponent hlower hupper hdenominator hremainder
+    hexponent hlower hupper hremainder
   have hsuccessor : exactTailRaw exponentField quotient leading + 1 < 2 ^ (leading + 2) := by
     omega
   rw [← trailingRat_exactTailRaw_succ exponentField quotient leading
-    hexponent hlower hupper hsuccessor] at hbounds
+    hlower hupper hsuccessor] at hbounds
   rcases (Nat.succ_le_of_lt hlt).lt_or_eq with hlt' | heq
-  · exact hbounds.2.2.trans (Model.trailingRat_lt_of_lt hsuccessor hboundary hlt')
+  · exact hbounds.2.2.trans (Model.trailingRat_lt_of_lt hboundary hlt')
   · exact heq ▸ hbounds.2.2
 
 /-- The exact quotient word denotes strictly less than the exact quotient exactly when the
@@ -533,7 +497,6 @@ theorem quotientFraction_lt_trailingRat_iff
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary < 2 ^ (leading + 2)) :
     (((quotient : Rat) +
@@ -544,12 +507,12 @@ theorem quotientFraction_lt_trailingRat_iff
     (exactTailRaw exponentField quotient leading : Rat) +
           (remainder : Rat) / (denominator : Rat) <
         (boundary : Rat) := by
-  rw [quotientFraction_lt_natCast_iff _ _ _ _ hdenominator hremainder]
+  rw [quotientFraction_lt_natCast_iff _ _ _ _ hremainder]
   rcases lt_or_ge (exactTailRaw exponentField quotient leading) boundary with hlt | hge
   · exact iff_of_true (quotientFraction_lt_trailingRat_of_lt _ _ _ _ _ _
-      hexponent hlower hupper hdenominator hremainder hboundary hlt) hlt
+      hexponent hlower hupper hremainder hboundary hlt) hlt
   · exact iff_of_false (not_lt.2 (trailingRat_le_quotientFraction_of_le _ _ _ _ _ _
-      hexponent hlower hupper hdenominator hremainder hboundary hge)) (not_lt.2 hge)
+      hexponent hlower hupper hremainder hboundary hge)) (not_lt.2 hge)
 
 /-- The reverse bounded finite-stream comparison has the corresponding fractional meaning. -/
 theorem trailingRat_lt_quotientFraction_iff
@@ -557,7 +520,6 @@ theorem trailingRat_lt_quotientFraction_iff
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ quotient)
     (hupper : quotient < 2 ^ (leading + 1))
-    (hdenominator : 0 < denominator)
     (hremainder : remainder < denominator)
     (hboundary : boundary < 2 ^ (leading + 2)) :
     (Model.trailingRat (leading + 2) boundary <
@@ -568,15 +530,16 @@ theorem trailingRat_lt_quotientFraction_iff
     (boundary : Rat) <
       (exactTailRaw exponentField quotient leading : Rat) +
         (remainder : Rat) / (denominator : Rat) := by
-  rw [natCast_lt_quotientFraction_iff _ _ _ _ hdenominator hremainder]
+  have hdenominator : 0 < denominator := Nat.zero_lt_of_lt hremainder
+  rw [natCast_lt_quotientFraction_iff _ _ _ _ hremainder]
   have hraw := exactTailRaw_lt_two_pow exponentField quotient leading hexponent hlower hupper
   rcases lt_trichotomy boundary (exactTailRaw exponentField quotient leading) with hlt | rfl | hgt
-  · exact iff_of_true ((Model.trailingRat_lt_of_lt hboundary hraw hlt).trans_le
+  · exact iff_of_true ((Model.trailingRat_lt_of_lt hraw hlt).trans_le
       (trailingRat_le_quotientFraction_of_le _ _ _ _ _ _
-        hexponent hlower hupper hdenominator hremainder hraw le_rfl)) (Or.inl hlt)
+        hexponent hlower hupper hremainder hraw le_rfl)) (Or.inl hlt)
   · simpa using trailingRat_exactTailRaw_lt_quotientFraction_iff exponentField quotient remainder
       denominator leading hexponent hlower hupper hdenominator
   · exact iff_of_false (not_lt.2 (quotientFraction_lt_trailingRat_of_lt _ _ _ _ _ _
-      hexponent hlower hupper hdenominator hremainder hboundary hgt).le) (by omega)
+      hexponent hlower hupper hremainder hboundary hgt).le) (by omega)
 
 end FloatLib.Floats.Formats.Posit.Model.DirectDyadicQuotient

@@ -32,7 +32,7 @@ variable {radix : Radix}
 instance exactDecoder :
     FloatLib.Floats.ExecFloat.ExactDecoder
       (ExecFloat.Logarithmic radix) Rat where
-  decode value := .finite value.toCode.toRat
+  decode value := .finite value.toRat
 
 end Conversion
 end ExecFloat.Logarithmic

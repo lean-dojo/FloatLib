@@ -236,27 +236,27 @@ can make that bound very different from the relative error of either call. VCFlo
 Appel and Ariel E. Kellison, addresses this expression-level problem in Rocq, building on Flocq and
 the [Interval package](https://coqinterval.gitlabpages.inria.fr/) [@vcfloat2]. Gappa, by Marc Daumas
 and Guillaume Melquiond, combines interval reasoning and properties of rounded operators to certify
-numerical bounds [@gappa]. These are natural tools to compare against for error-bound automation:
-which expressions they accept, which input assumptions they need, and how tight a bound they prove.
-FloatLib's operation refinements and rounding theorems are ingredients for such arguments, but on
-their own they aren't that automation.
+numerical bounds [@gappa]. FloatLib's [`roundoff`
+tactic](#/chapter/proving-numerical-bounds/error-bounds-from-floating-point-code) works on the same
+problem. It reads the configured program itself, applies the rounding theorem of each operation it
+meets, and proves an absolute or mixed error bound, leaving the range conditions it can't prove as
+hypotheses on the inputs. We haven't compared it with VCFloat2 or Gappa on common programs.
 
 Closer to home, LeanCert uses interval arithmetic and Taylor
 models to automate proofs of bounds, roots, and integrals for real-valued functions in Lean
 [@leanCert]. Both libraries provide proved interval enclosures, but FloatLib's focus is customizable
 numerical formats, rounding rules, and certified executable arithmetic. FloatLib's [interval
 tactic](#/chapter/proving-numerical-bounds) proves real inequalities from rational input bounds by
-evaluating the expression and subdividing. It can discharge numerical subgoals in an error analysis
-once a separate theorem accounts for the program's rounding steps.
+evaluating the expression and subdividing. It can discharge the numerical subgoals of an error analysis
+once `roundoff` or a hand-written theorem has accounted for the program's rounding steps.
 
 ### Symbolic arithmetic and tensors
 
 SymFPU implements SMT-LIB floating-point operations with bit-vector operations
 [@symfpu]. Pick a backend and the same arithmetic either runs on concrete values or
 builds symbolic formulas for an SMT solver. Our Z3 comparisons below exercise
-floating-point semantics through a solver. Comparing with SymFPU itself would mean choosing
-a concrete backend and comparing encoded operations, and solver time and arithmetic
-time answer different performance questions.
+floating-point semantics through a solver. We haven't compared encoded operations with SymFPU
+itself, and we haven't timed it.
 
 TensorLib covers the storage side [@tensorLib]. Its Lean APIs represent tensor shapes, strides, byte
 storage, broadcasting, and elementwise operations. It also supplies scalar conversions between
@@ -320,13 +320,13 @@ ran for binary16, so we checked the MPFR emulation against SoftFloat on every pa
 it for bfloat16. In nearest-even mode each case also compared the planner's kernel with the model.
 All 154,618,822,656 cases agreed.
 
-We also ran the certified `expMinus1` and `logPlus1` on all $2^{32}$ binary32 inputs and on
-CORE-MATH's binary64 worst cases, and every result they returned was MPFR's correctly rounded value.
-IBM FPgen [@ibmFpgen] supplied 81,513 more supported inputs, and we compared 27,492 bounded ground
-QF_FP cases with Z3 [@z3] [@smtLibQfFp]. Neither check found a mismatch. SMT floating-point NaNs are
-abstract, so the Z3 adapter checks the exact encoding where the theory determines it and the right
-class where it doesn't. Another, larger comparison evaluated 147,876 FloatLib/Z3 cases with zero
-mismatches.
+We also ran the certified `ExecFloat.Binary.Certified.expMinus1` and `logPlus1` on all $2^{32}$
+binary32 inputs and on CORE-MATH's binary64 worst cases, and every result they returned was MPFR's
+correctly rounded value. IBM FPgen [@ibmFpgen] supplied 81,513 more supported inputs, and we
+compared 27,492 bounded ground QF_FP cases with Z3 [@z3] [@smtLibQfFp]. Neither check found a
+mismatch. SMT floating-point NaNs are abstract, so the Z3 adapter checks the exact encoding where
+the theory determines it and the right class where it doesn't. Another, larger comparison evaluated
+147,876 FloatLib/Z3 cases with zero mismatches.
 
 ### Binary arithmetic with Flocq and MPFR
 
@@ -451,8 +451,8 @@ it covers every pair $(x,y)$, with the third code chosen as $(17x+29y+43)\bmod25
 and the formula for the third operand are integer *codes*, not decoded real values, so the eight-bit
 FMA comparison samples the triples. It also checks all 192 input/output fixtures of the [P3109
 timing experiment](#/chapter/performance/p3109-arithmetic-with-flops), which adds an independent
-arithmetic check to the published-table checks below. Stochastic rounding and the two saturation
-modes still need comparisons of their own.
+arithmetic check to the published-table checks below. This comparison doesn't cover stochastic
+rounding or the two saturation modes.
 
 ### Scalar conversions with TensorLib
 
@@ -474,10 +474,12 @@ seeded random words per format. That exercises subnormal rounding and ties as we
 values, though it doesn't enumerate all $2^{32}$ source words.
 
 Non-NaN results agree bit for bit,
-signed zeros and infinities included. All 2,964 differing words are E4M3FN NaN signs on negative
-overflow or negative infinity, where FloatLib returns `0x7f` and TensorLib returns `0xff`. Both
-convert $-512$ to NaN, for example, one with each encoding. Neither word is a finite number or an
-infinity, so we record the bit difference and don't count it as a numerical error.
+signed zeros and infinities included. All 2,423 differing words come from NaN inputs, and both
+results are NaNs in each of them. FloatLib keeps the input NaN's sign and the part of its payload
+that fits, as [its casts do](#/chapter/ieee-binary-formats/casting-between-widths), while TensorLib
+returns a canonical NaN. The FP16 word `0x7c01`, a NaN with payload 1, widens to `0x7fc00001` in
+FloatLib and `0x7fc00000` in TensorLib. Neither word is a finite number or an infinity, so we record
+the bit difference and don't count it as a numerical error.
 
 TensorLib's input
 type also decides what the comparison can observe. Lean's `Float32.ofBits` canonicalizes NaN signs
@@ -513,10 +515,10 @@ bit-pattern pairs, and we checked 65,536 of them. MPFR checks the rounded finite
 representation can't check every IEEE payload or NaN-selection rule.
 
 That retained run used the four
-rounding directions IEEE 754 requires for binary formats. Now the primitive and reduction oracles
-run every case in all six directions of [chapter
+rounding directions IEEE 754 requires for binary formats. The primitive and reduction oracles in
+the repository run every case in all six directions of [chapter
 07](#/chapter/the-mathematics-of-rounding/rounding-directions-and-the-ternary-value) and compare the
-delivered encoding and all five flags. Rounding away from zero is `MPFR_RNDA`. MPFR's nearest mode
+delivered encoding and all five flags, and that six-direction run isn't part of the release record. Rounding away from zero is `MPFR_RNDA`. MPFR's nearest mode
 with ties away from zero doesn't support subnormalization, so for `nearestAway` the oracle rounds to
 nearest even and then corrects an exact tie.
 
@@ -556,11 +558,15 @@ case that starts to match. That list is empty. Every case of the three tiers mat
 
 For binary elementary functions we compared FloatLib with MPFR, CORE-MATH [@coreMath], OpenLibm
 [@openLibm], and the supported RLIBM functions [@rlibmAll], which offer different functions and
-accuracy guarantees. FloatLib's [certified exponential and
-logarithm](#/chapter/elementary-functions/certified-exponential-and-logarithm) are a different set
-of functions, and they prove nearest-even rounding for every successful finite result. The [proved
-posit exponentials and logarithms](#/chapter/posits-and-the-quire/exponentials-and-logarithms) use
-their own algorithms.
+accuracy guarantees. FloatLib's correctly rounded `ExecFloat.Binary.CorrectlyRounded.exp`, `log`,
+`expMinus1`, `logPlus1` and weighted `exp x * w`, from the `Configured.CorrectlyRounded` import, are
+a different set of functions. On an IEEE format they always return a value, every finite result on a
+finite input in the domain is the nearest-even rounding of the exact value, and a result at or
+beyond the overflow threshold is the infinity with the exact result's sign. The [certified
+search](#/chapter/elementary-functions/certified-exponential-and-logarithm) that `exp` and
+`expMinus1` start from is also available on its own as `ExecFloat.Binary.Certified.exp` and
+`expMinus1`, and it returns an error when it can't settle. The [proved posit exponentials and
+logarithms](#/chapter/posits-and-the-quire/exponentials-and-logarithms) use their own algorithms.
 
 Take the representable value just below 1. If you approximate the logarithm of
 a significand near 2 and then subtract an approximation to `log 2`, cancellation eats the accuracy.
@@ -582,7 +588,7 @@ rounded limiting value.
 
 ## Why some performance markers are missing
 
-![Universal comparisons for six operations at thirteen posit widths; seven square-root results differ.](assets/ch11-universal-preflight.png "Width/operation comparisons against Universal, not execution times. Each blue cell matched on all sixteen benchmark inputs; seven wide square-root configurations differed and are omitted from timings.")
+![Universal comparisons for six operations at thirteen posit widths, where seven square-root results differ.](assets/ch11-universal-preflight.png "Width/operation comparisons against Universal, not execution times. Each blue cell matched on all sixteen benchmark inputs, and seven wide square-root configurations differed and are omitted from timings.")
 
 Square-root differences in [Figure
 19.3](#/chapter/external-validation/figure-ch11-universal-preflight) explain the gaps in the timing
@@ -604,4 +610,4 @@ arbitrary-precision posit square root.
 
 ## Running the comparisons
 
-To reproduce the comparisons, see [tests/EXTERNAL.md](https://github.com/lean-dojo/FloatLib/blob/main/tests/EXTERNAL.md).
+The [external comparison guide](https://github.com/lean-dojo/FloatLib/blob/main/tests/EXTERNAL.md) has the commands for reproducing these comparisons.

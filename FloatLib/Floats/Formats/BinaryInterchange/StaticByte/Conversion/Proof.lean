@@ -48,7 +48,12 @@ variable {F : Type u} [Family F]
       quantizeExceptional context exceptional :=
   rfl
 
-/-- The static-byte converter inherits the shared nearest-value and complete-outcome clauses. -/
+/--
+The static-byte converter inherits the shared clauses of `specWith`: the outcome is `run`'s, and
+for a finite input under the nearest quantization policy in an IEEE-encoded family format the
+result is also a `NearestFinite` rounding of the exact value. For other policies, and for a family
+whose format is not IEEE-encoded, only the equation with `run` is asserted.
+-/
 theorem implements_run :
     Quantization.Spec.Implements (spec (F := F)) (run (F := F)) :=
   FloatLib.Floats.ExecFloat.Binary.Conversion.implements_runWith pack

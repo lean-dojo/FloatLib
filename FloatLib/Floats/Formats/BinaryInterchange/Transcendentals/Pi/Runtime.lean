@@ -44,7 +44,7 @@ def Transcendentals.piScaledEnclosure (bits : Nat) : Numerics.RationalInterval :
 
 /--
 Pi rounded to nearest-even in `fmt`. For an IEEE descriptor the result is proved finite and
-correctly rounded (`toReal_pi`, `isFinite_pi`).
+correctly rounded (`toReal_pi_eq_roundAt`, `isFinite_pi`).
 
 The cached enclosure is checked first. An enclosure that straddles a rounding boundary falls back
 to `AlgebraicRounding.round` with exact arctangent comparisons. A descriptor other than IEEE

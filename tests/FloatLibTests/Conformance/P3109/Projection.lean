@@ -250,6 +250,13 @@ example :
       outcome.status? = some {} := by
   native_decide
 
+/-- `toRat?` reads a value back as an exact rational, with no reading for NaN or infinity. -/
+example :
+    (.ofRat (3 / 16) : Binary6p5seValue).toRat? = some (3 / 16) ∧
+      (ExecFloat.P3109.nan : Binary6p5seValue).toRat? = none ∧
+      (ExecFloat.P3109.positiveInfinity : Binary6p5seValue).toRat? = none := by
+  decide +kernel
+
 /-- A non-grid rational reports inexact without reporting overflow or underflow. -/
 example :
     let outcome :=
@@ -272,7 +279,7 @@ example :
 example :
     let outcome :=
       ExecFloat.convert (target := Binary6p5seValue) (2 : Rat)
-        (context := { saturation := .finite })
+        (context := .finite)
     outcome.value?.map ExecFloat.P3109.toNatBits =
         some binary6p5se.maxFiniteBits ∧
       outcome.status?.map (fun status =>

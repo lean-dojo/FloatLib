@@ -173,6 +173,55 @@ private theorem sqrt_shift_mul_bpow
   rw [hexponent]
 
 /--
+Lean's positive finite model square root is one `roundWithAccuracy` of a certified integer root.
+The root is nonzero, its accuracy locates a real `value` with `value * 2^target` equal to the exact
+square root, and `target` never exceeds the root's target exponent, so normalization only discards
+low bits.
+-/
+private theorem sqrt_finite_eq_roundWithAccuracy
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) (hmantissa : mantissa ≠ 0) :
+    ∃ (root : Nat) (target : Int) (accuracy : Accuracy) (value : Real),
+      Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
+          (.finite .positive mantissa exponent (Nat.pos_of_ne_zero hmantissa)) =
+        Float.Model.UnpackedFloat.roundWithAccuracy
+          (FloatFormat.toModel fmt) .positive root target accuracy ∧
+      root ≠ 0 ∧ accuracyRepresents root accuracy value ∧
+      target ≤ (FloatFormat.toModel fmt).targetExponent
+        (Float.Model.totalExponent root target) ∧
+      value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix target =
+        Real.sqrt ((mantissa : Real) *
+          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent) := by
+  let spec := FloatFormat.toModel fmt
+  let total := (Float.Model.totalExponent mantissa exponent + 1).ediv 2
+  let target := min (exponent.ediv 2) (spec.targetExponent total)
+  let shift := (exponent - 2 * target).toNat
+  let scaled := mantissa <<< shift
+  let root := Nat.sqrt scaled
+  let remainder := scaled - root * root
+  let accuracy : Accuracy :=
+    if remainder = 0 then .exact
+    else .inexact (if remainder ≤ root then .lt else .gt)
+  have htargetLeHalf : target ≤ exponent.ediv 2 := min_le_left _ _
+  have htwiceTargetLe : 2 * target ≤ exponent := by
+    have h := Int.mul_le_of_le_ediv (a := target) (b := exponent) (c := 2)
+      (by norm_num) htargetLeHalf
+    omega
+  have hshiftInt : (shift : Int) = exponent - 2 * target :=
+    Int.toNat_of_nonneg (by omega)
+  have hscaledNe : scaled ≠ 0 := by
+    simp [scaled, Nat.shiftLeft_eq, hmantissa]
+  have htotalRoot : Float.Model.totalExponent root target = total :=
+    totalExponent_sqrt_shift mantissa shift root exponent target hmantissa hshiftInt rfl
+  refine ⟨root, target, accuracy, Real.sqrt scaled, ?_, ?_, ?_, ?_,
+    sqrt_shift_mul_bpow mantissa shift exponent target hshiftInt⟩
+  · simp [spec, total, target, shift, scaled, root, remainder, accuracy,
+      Float.Model.UnpackedFloat.sqrt, Float.Model.UnpackedFloat.sqrtCore]
+  · exact Nat.ne_of_gt ((Nat.sqrt_pos).2 (Nat.pos_of_ne_zero hscaledNe))
+  · simpa [root, remainder, accuracy] using accuracyRepresents_natSqrt scaled
+  · have hright : target ≤ spec.targetExponent total := min_le_right _ _
+    simpa [htotalRoot] using hright
+
+/--
 Lean's positive finite model square root has the same real value as independent nearest-even
 rounding of the exact real square root whenever the packed result is finite.
 -/
@@ -194,54 +243,12 @@ theorem toReal_ofModel_sqrt_finite_eq_roundAt
       roundAt fmt
         (Real.sqrt ((mantissa : Real) *
           FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent)) := by
-  let spec := FloatFormat.toModel fmt
-  let total := (Float.Model.totalExponent mantissa exponent + 1).ediv 2
-  let target := min (exponent.ediv 2) (spec.targetExponent total)
-  let shift := (exponent - 2 * target).toNat
-  let scaled := mantissa <<< shift
-  let root := Nat.sqrt scaled
-  let remainder := scaled - root * root
-  let accuracy : Accuracy :=
-    if remainder = 0 then .exact
-    else .inexact (if remainder ≤ root then .lt else .gt)
-  have htargetLeHalf : target ≤ exponent.ediv 2 := min_le_left _ _
-  have htwiceTargetLe : 2 * target ≤ exponent := by
-    have h := Int.mul_le_of_le_ediv (a := target) (b := exponent) (c := 2)
-      (by norm_num) htargetLeHalf
-    omega
-  have hshiftNonneg : 0 ≤ exponent - 2 * target := by
-    omega
-  have hshiftInt : (shift : Int) = exponent - 2 * target := by
-    exact Int.toNat_of_nonneg hshiftNonneg
-  have hscaledNe : scaled ≠ 0 := by
-    simp [scaled, Nat.shiftLeft_eq, hmantissa]
-  have hrootNe : root ≠ 0 := by
-    exact Nat.ne_of_gt ((Nat.sqrt_pos).2 (Nat.pos_of_ne_zero hscaledNe))
-  have haccuracy :
-      accuracyRepresents root accuracy (Real.sqrt scaled) := by
-    simpa [root, remainder, accuracy] using accuracyRepresents_natSqrt scaled
-  have htotalRoot :
-      Float.Model.totalExponent root target = total := by
-    exact totalExponent_sqrt_shift mantissa shift root exponent target
-      hmantissa hshiftInt rfl
-  have htargetLe :
-      target ≤ spec.targetExponent
-        (Float.Model.totalExponent root target) := by
-    have hright : target ≤ spec.targetExponent total := min_le_right _ _
-    simpa [htotalRoot] using hright
-  have hround :=
-    toReal_ofModel_roundWithAccuracy_eq_roundAt
-      fmt hfmt .positive root target accuracy (Real.sqrt scaled)
-      hrootNe haccuracy htargetLe
-      (by
-        simpa [spec, total, target, shift, scaled, root, remainder, accuracy,
-          Float.Model.UnpackedFloat.sqrt,
-          Float.Model.UnpackedFloat.sqrtCore] using hfinite)
-  have hscale :=
-    sqrt_shift_mul_bpow mantissa shift exponent target hshiftInt
-  simpa [spec, total, target, shift, scaled, root, remainder, accuracy,
-    Float.Model.UnpackedFloat.sqrt, Float.Model.UnpackedFloat.sqrtCore,
-    hscale] using hround
+  obtain ⟨root, target, accuracy, value, hsqrt, -, haccuracy, htargetLe, hscale⟩ :=
+    sqrt_finite_eq_roundWithAccuracy fmt mantissa exponent hmantissa
+  rw [hsqrt] at hfinite ⊢
+  rw [toReal_ofModel_roundWithAccuracy_eq_roundAt fmt hfmt .positive root target accuracy value
+    haccuracy htargetLe hfinite, ← hscale]
+  simp [modelSignBit]
 
 /-!
 ## Square root never overflows
@@ -287,15 +294,116 @@ theorem isFinite_ofModel_finite_of_noOverflow
     omega
 
 /--
-Rounding a positive certified real whose magnitude is below `2^maxNormal` never overflows, so the
-packed result is finite. The exponent premise is the documented precondition of
+In the normal range the target exponent is `k - fracWidth` for the leading exponent
+`k = log2 mantissa + exponent`, so the real scaled to the target exponent times `2^(k - fracWidth)`
+is the exact product.
+-/
+private theorem scaled_mul_bpow_eq_of_normal
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) (value : Real)
+    (hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤ Int.ofNat mantissa.log2 + exponent) :
+    value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
+        (exponent - (FloatFormat.toModel fmt).targetExponent
+          (Float.Model.totalExponent mantissa exponent)) *
+      FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
+        (Int.ofNat mantissa.log2 + exponent - fmt.fracWidth) =
+      value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent := by
+  rw [targetExponent_eq_normal fmt mantissa exponent hnormal, mul_assoc, ← bpow.add_exp]
+  congr 2
+  simp only [Int.ofNat_eq_natCast]
+  ring
+
+/--
+In the normal range a certified real at least `2^k`, for the leading exponent
+`k = log2 mantissa + exponent`, scales to at least `2^fracWidth` at the target exponent.
+-/
+private theorem pow2_le_scaled_of_normal
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) (value : Real)
+    (hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤ Int.ofNat mantissa.log2 + exponent)
+    (hlower : FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
+        (Int.ofNat mantissa.log2 + exponent) ≤
+      value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent) :
+    (pow2 fmt.fracWidth : Real) ≤
+      value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
+        (exponent - (FloatFormat.toModel fmt).targetExponent
+          (Float.Model.totalExponent mantissa exponent)) := by
+  apply le_of_mul_le_mul_right (a0 := bpow.pos Numerics.binaryRadix
+    (Int.ofNat mantissa.log2 + exponent - fmt.fracWidth))
+  rw [scaled_mul_bpow_eq_of_normal fmt mantissa exponent value hnormal, natCast_pow2_eq_bpow,
+    ← bpow.add_exp]
+  convert hlower using 2
+  ring
+
+/-- A rounded mantissa of at most `2^fracWidth` on the least-subnormal grid packs to a finite value. -/
+private theorem isFinite_ofModel_finishRoundedMantissa_minSubnormal
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (sign : Sign) (rounded : Nat)
+    (hle : rounded ≤ pow2 fmt.fracWidth) :
+    isFinite
+      (ofModel fmt
+        (finishRoundedMantissa (FloatFormat.toModel fmt) sign
+          (rounded, FloatFormat.ieeeMinSubnormalExponent fmt))) = true := by
+  have hbias := FloatFormat.two_pow_expWidth_eq_two_mul_bias_add_two fmt
+  have hbiasPos : 1 ≤ fmt.bias := FloatFormat.bias_pos fmt
+  by_cases hzero : rounded = 0
+  · rw [hzero, finishRoundedMantissa_zero]
+    exact isFinite_ofModel_zero fmt hfmt sign
+  · rw [finishRoundedMantissa_at_minSubnormal fmt sign rounded hzero hle]
+    apply isFinite_ofModel_finite_of_noOverflow fmt hfmt sign rounded _ hzero
+    change
+      ¬2 ^ fmt.expWidth ≤
+        (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat + 1
+    simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]
+    omega
+
+/--
+Under a conventional IEEE descriptor a normalized rounded mantissa,
+`2^fracWidth ≤ rounded < 2^(fracWidth + 1)`, at a normal leading exponent `k ≤ bias` packs to a
+finite value.
+-/
+private theorem isFinite_ofModel_finishRoundedMantissa_normalized
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (sign : Sign) (rounded : Nat) (k : Int)
+    (hlow : pow2 fmt.fracWidth ≤ rounded) (hhigh : rounded < pow2 (fmt.fracWidth + 1))
+    (hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤ k) (hk : k ≤ Int.ofNat fmt.bias) :
+    isFinite
+      (ofModel fmt
+        (finishRoundedMantissa (FloatFormat.toModel fmt) sign
+          (rounded, k - fmt.fracWidth))) = true := by
+  have hbias := FloatFormat.two_pow_expWidth_eq_two_mul_bias_add_two fmt
+  have hbiasPos : 1 ≤ fmt.bias := FloatFormat.bias_pos fmt
+  rw [finishRoundedMantissa_normalized fmt sign rounded k hlow hhigh hnormal]
+  apply isFinite_ofModel_finite_of_noOverflow fmt hfmt sign _ _
+    (Nat.ne_of_gt ((pow2_pos _).trans_le hlow))
+  change ¬2 ^ fmt.expWidth ≤ (k - fmt.fracWidth + fmt.bias + fmt.fracWidth).toNat + 1
+  have hexp : k - fmt.fracWidth + fmt.bias + fmt.fracWidth = k + fmt.bias := by ring
+  rw [hexp, hbias]
+  simp only [FloatFormat.ieeeMinNormalExponent, Int.ofNat_eq_natCast] at hnormal hk
+  omega
+
+/-- Rounding a zero mantissa lands on the least-subnormal grid, so the packed result is finite. -/
+private theorem isFinite_ofModel_roundWithAccuracy_zero
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (sign : Sign) (exponent : Int) (accuracy : Accuracy) (value : Real)
+    (haccuracy : accuracyRepresents 0 accuracy value)
+    (hle : exponent ≤
+      (FloatFormat.toModel fmt).targetExponent (Float.Model.totalExponent 0 exponent)) :
+    isFinite
+      (ofModel fmt
+        (Float.Model.UnpackedFloat.roundWithAccuracy
+          (FloatFormat.toModel fmt) sign 0 exponent accuracy)) = true := by
+  obtain ⟨rounded, hone, -, hround⟩ :=
+    roundWithAccuracy_zero_eq_finishRoundedMantissa fmt sign exponent accuracy value haccuracy hle
+  rw [hround]
+  exact isFinite_ofModel_finishRoundedMantissa_minSubnormal fmt hfmt sign rounded
+    (hone.trans (by rw [pow2_eq_two_pow]; exact Nat.one_le_two_pow))
+
+/--
+Rounding a nonnegative certified real whose magnitude is below `2^maxNormal` never overflows, so
+the packed result is finite. The exponent premise is the documented precondition of
 `roundWithAccuracy`: normalization may discard low bits but never shifts left.
 -/
 theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Sign) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real)
-    (hmantissa : mantissa ≠ 0)
     (haccuracy : accuracyRepresents mantissa accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent
@@ -308,6 +416,10 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
       (ofModel fmt
         (Float.Model.UnpackedFloat.roundWithAccuracy
           (FloatFormat.toModel fmt) sign mantissa exponent accuracy)) = true := by
+  by_cases hmantissa : mantissa = 0
+  · subst mantissa
+    exact isFinite_ofModel_roundWithAccuracy_zero fmt hfmt sign exponent accuracy value
+      haccuracy hle
   let k : Int := Int.ofNat mantissa.log2 + exponent
   let target : Int :=
     (FloatFormat.toModel fmt).targetExponent
@@ -317,22 +429,15 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
   let rounded : Nat :=
     (Float.Model.UnpackedFloat.shiftToTargetExponent
       (FloatFormat.toModel fmt) mantissa exponent accuracy).1.roundedMantissa
-  have hvaluePos : 0 < value := by
-    have hbounds := accuracyRepresents_bounds haccuracy
-    have hmantissaPos : (0 : Real) < mantissa := by
-      exact_mod_cast Nat.pos_of_ne_zero hmantissa
-    exact hmantissaPos.trans_le hbounds.1
+  have hvaluePos : 0 < value := pos_of_accuracyRepresents hmantissa haccuracy
   have hexactPos :
       0 < value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
     mul_pos hvaluePos (bpow.pos _ _)
   have hmagnitude :
       magnitude Numerics.binaryRadix
           (value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent) =
-        k + 1 := by
-    dsimp only [k]
-    rw [magnitude_mul_bpow _ _ _ hvaluePos.ne',
-      magnitude_of_accuracyRepresents hmantissa haccuracy]
-    ring
+        k + 1 :=
+    magnitude_mul_bpow_of_accuracyRepresents exponent hmantissa haccuracy
   have hk : k + 1 ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
     rw [← hmagnitude]
     exact magnitude_le_of_abs_lt_bpow Numerics.binaryRadix _ _ hexactPos.ne'
@@ -345,10 +450,7 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
   have hrounded : Int.ofNat rounded = nearestEven scaled :=
     roundedMantissa_shiftToTargetExponent_eq_nearestEven fmt mantissa exponent accuracy value haccuracy hle
   have hbias := FloatFormat.two_pow_expWidth_eq_two_mul_bias_add_two fmt
-  have hbiasPos : 1 ≤ fmt.bias := by
-    have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-      simpa using Nat.pow_le_pow_right (by decide : 0 < 2) fmt.expWidth_ge_two
-    omega
+  have hbiasPos : 1 ≤ fmt.bias := FloatFormat.bias_pos fmt
   rw [roundWithAccuracy_eq_finishRoundedMantissa,
     shiftToTargetExponent_eq_of_le_targetExponent fmt mantissa exponent accuracy hle]
   change
@@ -365,7 +467,6 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
       have hupper :=
         abs_lt_bpow_magnitude Numerics.binaryRadix
           (value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent)
-          hexactPos.ne'
       rw [abs_of_pos hexactPos, hmagnitude] at hupper
       refine hupper.trans_le ((bpow_le_bpow_iff Numerics.binaryRadix _ _).2 ?_)
       unfold FloatFormat.ieeeMinNormalExponent at hsub
@@ -397,16 +498,7 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
     have hroundedLe : rounded ≤ pow2 fmt.fracWidth :=
       Int.ofNat_le.mp (hrounded.trans_le (nearestEven_le_natCast_of_le hscaledLe))
     rw [htargetMin]
-    by_cases hzero : rounded = 0
-    · rw [hzero, finishRoundedMantissa_zero]
-      exact isFinite_ofModel_zero fmt hfmt sign
-    · rw [finishRoundedMantissa_at_minSubnormal fmt sign rounded hzero hroundedLe]
-      apply isFinite_ofModel_finite_of_noOverflow fmt hfmt sign rounded _ hzero
-      change
-        ¬2 ^ fmt.expWidth ≤
-          (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat + 1
-      simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]
-      omega
+    exact isFinite_ofModel_finishRoundedMantissa_minSubnormal fmt hfmt sign rounded hroundedLe
   · have hnormal : FloatFormat.ieeeMinNormalExponent fmt ≤ k := le_of_not_gt hsub
     have htargetNormal : target = k - fmt.fracWidth :=
       targetExponent_eq_normal fmt mantissa exponent hnormal
@@ -424,32 +516,16 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
       have hupper :=
         abs_lt_bpow_magnitude Numerics.binaryRadix
           (value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent)
-          hexactPos.ne'
       simpa [abs_of_pos hexactPos, hmagnitude] using hupper
     have hdenPos :
         0 < FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) :=
       bpow.pos _ _
     have hscaledEq :
         scaled * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) =
-          value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent := by
-      dsimp only [scaled]
-      rw [htargetNormal, mul_assoc, ← bpow.add_exp]
-      congr 1
-      ring_nf
-    have hscaledLower : (pow2 fmt.fracWidth : Real) ≤ scaled := by
-      apply le_of_mul_le_mul_right (a0 := hdenPos)
-      calc
-        (pow2 fmt.fracWidth : Real) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) =
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix k := by
-          rw [natCast_pow2_eq_bpow, ← bpow.add_exp]
-          congr 1
-          ring
-        _ ≤ value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
-          hlowerExact
-        _ = scaled *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) :=
-          hscaledEq.symm
+          value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
+      scaled_mul_bpow_eq_of_normal fmt mantissa exponent value hnormal
+    have hscaledLower : (pow2 fmt.fracWidth : Real) ≤ scaled :=
+      pow2_le_scaled_of_normal fmt mantissa exponent value hnormal hlowerExact
     have hscaledUpper : scaled ≤ (pow2 (fmt.fracWidth + 1) : Real) := by
       apply le_of_mul_le_mul_right (a0 := hdenPos)
       calc
@@ -480,19 +556,12 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_bpow
       rw [hexp, hbias]
       simp only [Int.ofNat_eq_natCast] at hkBias hkMin
       omega
-    · have hhigh : rounded < pow2 (fmt.fracWidth + 1) := lt_of_le_of_ne hroundedHigh hcarry
-      rw [htargetNormal, finishRoundedMantissa_normalized fmt sign rounded k hroundedLow hhigh hnormal]
-      apply isFinite_ofModel_finite_of_noOverflow fmt hfmt sign _ _
-        (Nat.ne_of_gt ((pow2_pos _).trans_le hroundedLow))
-      change ¬2 ^ fmt.expWidth ≤ (k - fmt.fracWidth + fmt.bias + fmt.fracWidth).toNat + 1
-      have hexp : k - fmt.fracWidth + fmt.bias + fmt.fracWidth = k + fmt.bias := by
-        ring
-      rw [hexp, hbias]
-      simp only [Int.ofNat_eq_natCast] at hkBias hkMin
-      omega
+    · rw [htargetNormal]
+      exact isFinite_ofModel_finishRoundedMantissa_normalized fmt hfmt sign rounded k hroundedLow
+        (lt_of_le_of_ne hroundedHigh hcarry) hnormal (by omega)
 
 /--
-Rounding a positive certified real below the overflow threshold
+Rounding a nonnegative certified real below the overflow threshold
 `2^(maxNormal + 1) - 2^(maxNormal - fracWidth - 1)` never overflows, so the packed result is finite.
 Below `2^maxNormal` this is `isFinite_ofModel_roundWithAccuracy_of_lt_bpow`. In the top binade the
 bound keeps the rounded mantissa below `2^(fracWidth + 1)`, so no carry reaches the next binade.
@@ -501,7 +570,6 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Sign) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real)
-    (hmantissa : mantissa ≠ 0)
     (haccuracy : accuracyRepresents mantissa accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent
@@ -516,12 +584,16 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
       (ofModel fmt
         (Float.Model.UnpackedFloat.roundWithAccuracy
           (FloatFormat.toModel fmt) sign mantissa exponent accuracy)) = true := by
+  by_cases hmantissa : mantissa = 0
+  · subst mantissa
+    exact isFinite_ofModel_roundWithAccuracy_zero fmt hfmt sign exponent accuracy value
+      haccuracy hle
   set emax : Int := Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) with hemax
   by_cases hbelow :
       value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent <
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix emax
   · exact isFinite_ofModel_roundWithAccuracy_of_lt_bpow fmt hfmt sign mantissa exponent accuracy
-      value hmantissa haccuracy hle hbelow
+      value haccuracy hle hbelow
   have hlower : FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix emax ≤
       value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
     le_of_not_gt hbelow
@@ -534,22 +606,15 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
   let rounded : Nat :=
     (Float.Model.UnpackedFloat.shiftToTargetExponent
       (FloatFormat.toModel fmt) mantissa exponent accuracy).1.roundedMantissa
-  have hvaluePos : 0 < value := by
-    have hbounds := accuracyRepresents_bounds haccuracy
-    have hmantissaPos : (0 : Real) < mantissa := by
-      exact_mod_cast Nat.pos_of_ne_zero hmantissa
-    exact hmantissaPos.trans_le hbounds.1
+  have hvaluePos : 0 < value := pos_of_accuracyRepresents hmantissa haccuracy
   have hexactPos :
       0 < value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
     mul_pos hvaluePos (bpow.pos _ _)
   have hmagnitude :
       magnitude Numerics.binaryRadix
           (value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent) =
-        k + 1 := by
-    dsimp only [k]
-    rw [magnitude_mul_bpow _ _ _ hvaluePos.ne',
-      magnitude_of_accuracyRepresents hmantissa haccuracy]
-    ring
+        k + 1 :=
+    magnitude_mul_bpow_of_accuracyRepresents exponent hmantissa haccuracy
   have hupperBound :
       value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent <
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (emax + 1) := by
@@ -564,7 +629,6 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
     have hupper :=
       abs_lt_bpow_magnitude Numerics.binaryRadix
         (value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent)
-        hexactPos.ne'
     rw [abs_of_pos hexactPos, hmagnitude] at hupper
     have : FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix emax <
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k + 1) := hlower.trans_lt hupper
@@ -588,26 +652,13 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
     bpow.pos _ _
   have hscaledEq :
       scaled * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) =
-        value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent := by
-    dsimp only [scaled]
-    rw [htargetNormal, mul_assoc, ← bpow.add_exp]
-    congr 1
-    ring_nf
-  have hscaledLower : (pow2 fmt.fracWidth : Real) ≤ scaled := by
-    apply le_of_mul_le_mul_right (a0 := hdenPos)
-    calc
-      (pow2 fmt.fracWidth : Real) *
-          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) =
-          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix k := by
-        rw [natCast_pow2_eq_bpow, ← bpow.add_exp]
-        congr 1
-        ring
-      _ ≤ value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent := by
-        rw [hk]
-        exact hlower
-      _ = scaled *
-          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (k - fmt.fracWidth) :=
-        hscaledEq.symm
+        value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent :=
+    scaled_mul_bpow_eq_of_normal fmt mantissa exponent value hnormal
+  have hscaledLower : (pow2 fmt.fracWidth : Real) ≤ scaled :=
+    pow2_le_scaled_of_normal fmt mantissa exponent value hnormal (by
+      change FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix k ≤ _
+      rw [hk]
+      exact hlower)
   have hscaledUpper : scaled < (pow2 (fmt.fracWidth + 1) : Real) - 1 / 2 := by
     apply lt_of_mul_lt_mul_right (a0 := hdenPos.le)
     calc
@@ -650,14 +701,9 @@ theorem isFinite_ofModel_roundWithAccuracy_of_lt_overflow
     isFinite
       (ofModel fmt
         (finishRoundedMantissa (FloatFormat.toModel fmt) sign (rounded, target))) = true
-  rw [htargetNormal, finishRoundedMantissa_normalized fmt sign rounded k hroundedLow hhigh hnormal]
-  apply isFinite_ofModel_finite_of_noOverflow fmt hfmt sign _ _
-    (Nat.ne_of_gt ((pow2_pos _).trans_le hroundedLow))
-  change ¬2 ^ fmt.expWidth ≤ (k - fmt.fracWidth + fmt.bias + fmt.fracWidth).toNat + 1
-  have hexp : k - fmt.fracWidth + fmt.bias + fmt.fracWidth = k + fmt.bias := by ring
-  rw [hexp, hbias, hk, hemax]
-  simp only [FloatFormat.ieeeMaxNormalExponent, Int.ofNat_eq_natCast]
-  omega
+  rw [htargetNormal]
+  exact isFinite_ofModel_finishRoundedMantissa_normalized fmt hfmt sign rounded k hroundedLow
+    hhigh hnormal (by rw [hk, hemax]; rfl)
 
 /--
 Lean's positive finite model square root packs to a finite word whenever the radicand is below
@@ -675,43 +721,8 @@ theorem isFinite_modelSqrt_of_lt_bpow
       (ofModel fmt
         (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
           (.finite .positive mantissa exponent (Nat.pos_of_ne_zero hmantissa)))) = true := by
-  let spec := FloatFormat.toModel fmt
-  let total := (Float.Model.totalExponent mantissa exponent + 1).ediv 2
-  let target := min (exponent.ediv 2) (spec.targetExponent total)
-  let shift := (exponent - 2 * target).toNat
-  let scaled := mantissa <<< shift
-  let root := Nat.sqrt scaled
-  let remainder := scaled - root * root
-  let accuracy : Accuracy :=
-    if remainder = 0 then .exact
-    else .inexact (if remainder ≤ root then .lt else .gt)
-  have htargetLeHalf : target ≤ exponent.ediv 2 := min_le_left _ _
-  have htwiceTargetLe : 2 * target ≤ exponent := by
-    have h := Int.mul_le_of_le_ediv (a := target) (b := exponent) (c := 2)
-      (by norm_num) htargetLeHalf
-    omega
-  have hshiftNonneg : 0 ≤ exponent - 2 * target := by
-    omega
-  have hshiftInt : (shift : Int) = exponent - 2 * target := by
-    exact Int.toNat_of_nonneg hshiftNonneg
-  have hscaledNe : scaled ≠ 0 := by
-    simp [scaled, Nat.shiftLeft_eq, hmantissa]
-  have hrootNe : root ≠ 0 := by
-    exact Nat.ne_of_gt ((Nat.sqrt_pos).2 (Nat.pos_of_ne_zero hscaledNe))
-  have haccuracy :
-      accuracyRepresents root accuracy (Real.sqrt scaled) := by
-    simpa [root, remainder, accuracy] using accuracyRepresents_natSqrt scaled
-  have htotalRoot :
-      Float.Model.totalExponent root target = total := by
-    exact totalExponent_sqrt_shift mantissa shift root exponent target
-      hmantissa hshiftInt rfl
-  have htargetLe :
-      target ≤ spec.targetExponent
-        (Float.Model.totalExponent root target) := by
-    have hright : target ≤ spec.targetExponent total := min_le_right _ _
-    simpa [htotalRoot] using hright
-  have hscale :=
-    sqrt_shift_mul_bpow mantissa shift exponent target hshiftInt
+  obtain ⟨root, target, accuracy, value, hsqrt, -, haccuracy, htargetLe, hscale⟩ :=
+    sqrt_finite_eq_roundWithAccuracy fmt mantissa exponent hmantissa
   have hmaxPos :
       0 < FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
         (Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt)) := bpow.pos _ _
@@ -724,19 +735,51 @@ theorem isFinite_modelSqrt_of_lt_bpow
     congr 1
     ring
   have hsqrtBound :
-      Real.sqrt scaled * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix target <
+      value * FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix target <
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
           (Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt)) := by
     rw [hscale]
     apply (Real.sqrt_lt' hmaxPos).2
     rw [hsquare]
     exact hbound
-  have hfinite :=
-    isFinite_ofModel_roundWithAccuracy_of_lt_bpow
-      fmt hfmt .positive root target accuracy (Real.sqrt scaled)
-      hrootNe haccuracy htargetLe hsqrtBound
-  simpa [spec, total, target, shift, scaled, root, remainder, accuracy,
-    Float.Model.UnpackedFloat.sqrt, Float.Model.UnpackedFloat.sqrtCore] using hfinite
+  rw [hsqrt]
+  exact isFinite_ofModel_roundWithAccuracy_of_lt_bpow fmt hfmt .positive root target accuracy
+    value haccuracy htargetLe hsqrtBound
+
+/--
+A positive finite value of a conventional IEEE descriptor is `significand * 2^exponent` with a
+nonzero significand, and its square root packs Lean's positive finite model square root of that
+pair.
+-/
+private theorem sqrt_eq_ofModel_sqrt_finite
+    {fmt : FloatFormat} (x : Model fmt) (hfmt : fmt.isIEEE = true)
+    (hfinite : isFinite x = true) (hnonzero : isZero x = false)
+    (hnonnegative : signBit x = false) :
+    ∃ (significand : Nat) (exponent : Int) (hsignificand : significand ≠ 0),
+      toReal x = (significand : Real) *
+          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent ∧
+        sqrt x =
+          ofModel fmt
+            (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
+              (.finite .positive significand exponent (Nat.pos_of_ne_zero hsignificand))) := by
+  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
+  have hsign : d.negative = false :=
+    (sign_eq_signBit_of_toDyadic?_some hd).trans hnonnegative
+  have hmantissa : d.significand ≠ 0 :=
+    significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hd hnonzero
+  have hmodel :
+      toModel x =
+        .finite .positive d.significand d.exponent (Nat.pos_of_ne_zero hmantissa) := by
+    have hieeeDecode : ieeeToDyadic? x = some d := by
+      simpa [toDyadic?, hfmt] using hd
+    simpa [hsign] using
+      toModel_eq_finite_of_ieeeToDyadic?_eq_some
+        x d.negative d.significand d.exponent hmantissa hieeeDecode
+  refine ⟨d.significand, d.exponent, hmantissa, ?_, ?_⟩
+  · rw [toReal_eq, hd]
+    simp [Numerics.Dyadic.toReal, hsign, Flocq.bpow, Numerics.binaryRadix,
+      Numerics.Radix.toReal]
+  · rw [Proof.sqrt_eq_spec, Spec.sqrt_eq_model hfmt x hfinite hnonnegative, hmodel]
 
 /--
 The square root of a finite nonnegative value, including either signed zero, is finite for every
@@ -749,54 +792,21 @@ theorem isFinite_sqrt_of_isFinite
     (hdomain : isZero x = true ∨ signBit x = false) :
     isFinite (sqrt x) = true := by
   by_cases hzero : isZero x = true
-  · rw [sqrt_of_isZero hfinite hzero]
+  · rw [sqrt_of_isZero hzero]
     exact hfinite
   · have hnonnegative : signBit x = false := hdomain.resolve_left hzero
     have hnonzero : isZero x = false := Bool.eq_false_iff.mpr hzero
-    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-    have hsign : d.negative = false :=
-      (sign_eq_signBit_of_toDyadic?_some hd).trans hnonnegative
-    have hmantissa : d.significand ≠ 0 := by
-      intro hzero'
-      have hzeroResult :=
-        isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hzero'
-      simp [hnonzero] at hzeroResult
-    have hmodel :
-        toModel x =
-          .finite .positive d.significand d.exponent (Nat.pos_of_ne_zero hmantissa) := by
-      have hieeeDecode : ieeeToDyadic? x = some d := by
-        simpa [toDyadic?, hfmt] using hd
-      simpa [hsign] using
-        toModel_eq_finite_of_ieeeToDyadic?_eq_some
-          x d.negative d.significand d.exponent hmantissa hieeeDecode
-    have hsqrt :
-        sqrt x =
-          ofModel fmt
-            (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
-              (.finite .positive d.significand d.exponent
-                (Nat.pos_of_ne_zero hmantissa))) := by
-      rw [Proof.sqrt_eq_spec, Spec.sqrt_eq_model hfmt x hfinite hnonzero hnonnegative, hmodel]
-    have hxReal :
-        toReal x =
-          (d.significand : Real) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix d.exponent := by
-      rw [toReal_eq, hd]
-      simp [Numerics.Dyadic.toReal, hsign, Flocq.bpow, Numerics.binaryRadix,
-        Numerics.Radix.toReal]
+    obtain ⟨significand, exponent, hmantissa, hxReal, hsqrt⟩ :=
+      sqrt_eq_ofModel_sqrt_finite x hfmt hfinite hnonzero hnonnegative
     have hxNonneg : 0 ≤ toReal x := by
       rw [hxReal]
       exact mul_nonneg (Nat.cast_nonneg _) (bpow.pos _ _).le
     have hxLe : toReal x ≤ toReal (posMaxFinite fmt) := by
-      have := abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite x hfmt hfinite
+      have := abs_toReal_le_posMaxFinite_of_isFinite x hfinite
       rwa [abs_of_nonneg hxNonneg] at this
     have hmaxLt := toReal_posMaxFinite_lt_bpow fmt
     rw [FloatFormat.maxNormalExponent_eq_ieee fmt hfmt] at hmaxLt
-    have hbiasPos : 1 ≤ FloatFormat.ieeeMaxNormalExponent fmt := by
-      have hwidth := fmt.expWidth_ge_two
-      have hpow : 2 ≤ 2 ^ (fmt.expWidth - 1) := by
-        simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) (by omega : 1 ≤ fmt.expWidth - 1)
-      unfold FloatFormat.ieeeMaxNormalExponent FloatFormat.bias
-      omega
+    have hbiasPos : 1 ≤ FloatFormat.ieeeMaxNormalExponent fmt := FloatFormat.bias_pos fmt
     have hexpLe :
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
             (Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) + 1) ≤
@@ -806,14 +816,14 @@ theorem isFinite_sqrt_of_isFinite
         simp only [Int.ofNat_eq_natCast]
         omega)
     have hbound :
-        (d.significand : Real) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix d.exponent <
+        (significand : Real) *
+            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent <
           FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
             (2 * Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt)) := by
       rw [← hxReal]
       exact (hxLe.trans_lt hmaxLt).trans_le hexpLe
     rw [hsqrt]
-    exact isFinite_modelSqrt_of_lt_bpow fmt hfmt d.significand d.exponent hmantissa hbound
+    exact isFinite_modelSqrt_of_lt_bpow fmt hfmt significand exponent hmantissa hbound
 
 private theorem toReal_sqrt_eq_roundAt_of_nonzero
     {fmt : FloatFormat} (x : Model fmt) (hfmt : fmt.isIEEE = true)
@@ -822,66 +832,11 @@ private theorem toReal_sqrt_eq_roundAt_of_nonzero
     (hnonnegative : signBit x = false)
     (hresult : isFinite (sqrt x) = true) :
     toReal (sqrt x) = roundAt fmt (Real.sqrt (toReal x)) := by
-  obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hsign : d.negative = false :=
-    (sign_eq_signBit_of_toDyadic?_some hd).trans hnonnegative
-  have hmantissa : d.significand ≠ 0 := by
-    intro hzero
-    have hzeroResult :=
-      isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hd hzero
-    simp [hnonzero] at hzeroResult
-  have hmodel :
-      toModel x =
-        .finite .positive d.significand d.exponent (Nat.pos_of_ne_zero hmantissa) := by
-    have hieeeDecode : ieeeToDyadic? x = some d := by
-      simpa [toDyadic?, hfmt] using hd
-    simpa [hsign] using
-      toModel_eq_finite_of_ieeeToDyadic?_eq_some
-        x d.negative d.significand d.exponent hmantissa hieeeDecode
-  have hsqrt :
-      sqrt x =
-        ofModel fmt
-          (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
-            (.finite .positive d.significand d.exponent
-              (Nat.pos_of_ne_zero hmantissa))) := by
-    calc
-      sqrt x = Spec.sqrt x := Proof.sqrt_eq_spec x
-      _ = ofModel fmt
-          (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
-            (.finite .positive d.significand d.exponent
-              (Nat.pos_of_ne_zero hmantissa))) := by
-        simpa [hmodel] using
-          Spec.sqrt_eq_model
-            hfmt x hfinite hnonzero hnonnegative
-  have hmodelFinite :
-      isFinite
-        (ofModel fmt
-          (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
-            (.finite .positive d.significand d.exponent
-              (Nat.pos_of_ne_zero hmantissa)))) = true := by
-    rw [← hsqrt]
-    exact hresult
-  have hxReal :
-      toReal x =
-        (d.significand : Real) *
-          FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix d.exponent := by
-    rw [toReal_eq, hd]
-    simp [Numerics.Dyadic.toReal, hsign, Flocq.bpow, Numerics.binaryRadix,
-      Numerics.Radix.toReal]
-  calc
-    toReal (sqrt x) =
-        toReal
-          (ofModel fmt
-            (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
-              (.finite .positive d.significand d.exponent
-                (Nat.pos_of_ne_zero hmantissa)))) := by
-          rw [hsqrt]
-    _ = roundAt fmt
-          (Real.sqrt ((d.significand : Real) *
-            FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix d.exponent)) :=
-      toReal_ofModel_sqrt_finite_eq_roundAt
-        fmt hfmt d.significand d.exponent hmantissa hmodelFinite
-    _ = roundAt fmt (Real.sqrt (toReal x)) := by rw [hxReal]
+  obtain ⟨significand, exponent, hmantissa, hxReal, hsqrt⟩ :=
+    sqrt_eq_ofModel_sqrt_finite x hfmt hfinite hnonzero hnonnegative
+  rw [hsqrt] at hresult ⊢
+  rw [toReal_ofModel_sqrt_finite_eq_roundAt fmt hfmt significand exponent hmantissa hresult,
+    hxReal]
 
 /--
 A finite value with a nonnegative real interpretation satisfies the domain condition of
@@ -901,10 +856,7 @@ theorem isZero_or_signBit_eq_false_of_toReal_nonneg {fmt : FloatFormat} (x : Mod
     have hnonpos : toReal x ≤ 0 := by
       have hreal : toReal x = d.toReal := by simp [toReal_eq, hd]
       rw [hreal]
-      simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-        hsign.trans hs, ↓reduceIte, Int.cast_neg]
-      exact mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.mpr (Nat.cast_nonneg _))
-        (bpow.pos Numerics.binaryRadix d.exponent).le
+      exact Dyadic.toReal_nonpos_of_negative_eq_true (hsign.trans hs)
     exact absurd (le_antisymm hnonpos hnonneg) hzero
 
 /--
@@ -921,18 +873,25 @@ theorem toReal_sqrt_eq_roundAt
   have hresult : isFinite (sqrt x) = true := isFinite_sqrt_of_isFinite x hfmt hfinite hdomain
   by_cases hzero : isZero x = true
   · have hxReal : toReal x = 0 := toReal_eq_zero_of_isZero x hzero
-    rw [sqrt_of_isZero hfinite hzero, hxReal, Real.sqrt_zero, roundAt_zero]
+    rw [sqrt_of_isZero hzero, hxReal, Real.sqrt_zero, roundAt_zero]
   · exact toReal_sqrt_eq_roundAt_of_nonzero x hfmt hfinite
       (Bool.eq_false_iff.mpr hzero) (hdomain.resolve_left hzero) hresult
 
+/-- The square root of a zero is exactly zero, for every descriptor. -/
+theorem toReal_sqrt_of_isZero {fmt : FloatFormat} (x : Model fmt) (hzero : isZero x = true) :
+    toReal (sqrt x) = 0 := by
+  rw [sqrt_of_isZero hzero, toReal_eq_zero_of_isZero x hzero]
+
 /--
-The square root of a positive finite value is nonnegative in every rounding direction and for
-every descriptor.
+The square root of a finite value with a clear sign bit is nonnegative in every rounding direction
+and for every descriptor. A zero is its own square root.
 -/
 theorem toReal_sqrt_nonneg {fmt : FloatFormat} (mode : IEEERoundingMode)
-    {x : Model fmt} (hfinite : isFinite x = true) (hzero : isZero x = false)
-    (hsign : signBit x = false) :
+    {x : Model fmt} (hfinite : isFinite x = true) (hsign : signBit x = false) :
     0 ≤ toReal (sqrt x (mode := mode)) := by
+  by_cases hzeroTrue : isZero x = true
+  · rw [sqrt_of_isZero hzeroTrue, toReal_eq_zero_of_isZero x hzeroTrue]
+  have hzero : isZero x = false := Bool.eq_false_iff.mpr hzeroTrue
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
   have hchoose := chooseNaN1_none_of_isFinite x hfinite
   have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite

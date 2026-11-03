@@ -72,13 +72,19 @@ theorem two_pow_bitWidth_le (fmt : FloatFormat) :
   rw [LimbArray.radix_pow]
   exact Nat.pow_le_pow_right (by decide) (bitWidth_le_limbBits fmt)
 
-/-- The fraction offset lies strictly below the top limb boundary. -/
+/--
+The limb holding bit `fracWidth`, the lowest exponent bit, is a valid limb: its index
+`fracWidth / 32` is below `limbCount fmt`.
+-/
 theorem fracWidth_div_lt (fmt : FloatFormat) : fmt.fracWidth / 32 + 1 ≤ limbCount fmt := by
   have hw := bitWidth_le_limbBits fmt
   unfold FloatFormat.bitWidth at hw
   omega
 
-/-- The sign offset lies strictly below the top limb boundary. -/
+/--
+The limb holding the sign bit `expWidth + fracWidth` is a valid limb: its index
+`(expWidth + fracWidth) / 32` is below `limbCount fmt`.
+-/
 theorem signIndex_div_lt (fmt : FloatFormat) :
     (fmt.expWidth + fmt.fracWidth) / 32 + 1 ≤ limbCount fmt := by
   have hw := bitWidth_le_limbBits fmt
@@ -165,23 +171,25 @@ theorem toNatBits_toModel (v : Value fmt) : (toModel v).toNatBits = v.1.toNat :=
 
 /-! ## Codec laws -/
 
+/-- A number below `2 ^ bitWidth` is stored unchanged in `limbCount fmt` limbs. -/
+private theorem ofLimbs_ofNat_val {n : Nat} (hn : n < 2 ^ fmt.bitWidth) :
+    (ofLimbs fmt (LimbArray.ofNat n (limbCount fmt))).1 = LimbArray.ofNat n (limbCount fmt) ∧
+      (LimbArray.ofNat n (limbCount fmt)).toNat = n := by
+  have hvalue : (LimbArray.ofNat n (limbCount fmt)).toNat = n :=
+    LimbArray.toNat_ofNat_of_lt (lt_of_lt_of_le hn (two_pow_bitWidth_le fmt))
+  exact ⟨ofLimbs_val _ (LimbArray.size_ofNat _ _) (by rw [hvalue]; exact hn), hvalue⟩
+
 /-- Storing and reading back a model value is the identity. -/
 theorem toModel_ofModel (x : Model fmt) : toModel (ofModel x) = x := by
   unfold toModel ofModel
-  have hlt : x.toNatBits < 2 ^ fmt.bitWidth := Model.toNatBits_lt_two_pow x
-  have hvalue : (LimbArray.ofNat x.toNatBits (limbCount fmt)).toNat = x.toNatBits :=
-    LimbArray.toNat_ofNat_of_lt (lt_of_lt_of_le hlt (two_pow_bitWidth_le fmt))
-  rw [ofLimbs_val _ (LimbArray.size_ofNat _ _) (by rw [hvalue]; exact hlt), hvalue,
-    Model.ofNatBits_toNatBits]
+  obtain ⟨hval, hvalue⟩ := ofLimbs_ofNat_val (Model.toNatBits_lt_two_pow x)
+  rw [hval, hvalue, Model.ofNatBits_toNatBits]
 
 /-- Reading a stored value and storing it again is the identity. -/
 theorem ofModel_toModel (v : Value fmt) : ofModel (toModel v) = v := by
   apply Subtype.ext
   unfold ofModel
-  rw [toNatBits_toModel]
-  have hvalue : (LimbArray.ofNat v.1.toNat (limbCount fmt)).toNat = v.1.toNat :=
-    LimbArray.toNat_ofNat_of_lt (lt_of_lt_of_le v.toNat_lt (two_pow_bitWidth_le fmt))
-  rw [ofLimbs_val _ (LimbArray.size_ofNat _ _) (by rw [hvalue]; exact v.toNat_lt)]
+  rw [toNatBits_toModel, (ofLimbs_ofNat_val v.toNat_lt).1]
   have h := LimbArray.ofNat_toNat v.1
   rwa [v.size_eq] at h
 
@@ -256,23 +264,24 @@ theorem fraction_toNat_lt (v : Value fmt) : (fraction v).toNat < 2 ^ fmt.fracWid
   rw [fraction_toNat]
   exact Model.fracField_lt_pow2 _
 
+/-- Adding a word at bit `k` to a stored-size array is exact while the sum stays below
+`2 ^ bitWidth`. -/
+private theorem toNat_addAt_of_lt (limbs : LimbArray) (hsize : limbs.size = limbCount fmt)
+    (k : Nat) (word : UInt32) (hfit : limbs.toNat + word.toNat * 2 ^ k < 2 ^ fmt.bitWidth) :
+    (limbs.addAt k word).toNat = limbs.toNat + word.toNat * 2 ^ k :=
+  LimbArray.toNat_addAt _ _ _ (hsize ▸ lt_of_lt_of_le hfit (two_pow_bitWidth_le fmt))
+
 /-- The normal significand is the fraction with the implicit bit. -/
 theorem normalMantissa_toNat (v : Value fmt) :
     (normalMantissa v).toNat = 2 ^ fmt.fracWidth + Model.fracField (toModel v) := by
   unfold normalMantissa
   have hfrac := fraction_toNat_lt v
-  have hw := bitWidth_le_limbBits fmt
   have hbits := bitWidth_eq fmt
-  rw [LimbArray.toNat_addAt _ _ _ (by rw [size_fraction]; exact fracWidth_div_lt fmt),
+  have hpow : 2 ^ fmt.fracWidth + 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth + 1) := by ring
+  have hwidth : 2 ^ (fmt.fracWidth + 1) ≤ 2 ^ fmt.bitWidth :=
+    Nat.pow_le_pow_right (by decide) (by omega)
+  rw [toNat_addAt_of_lt _ (size_fraction v) _ _ (by rw [UInt32.toNat_one]; omega),
     fraction_toNat, UInt32.toNat_one, Nat.one_mul, Nat.add_comm]
-  rw [size_fraction, fraction_toNat, UInt32.toNat_one, Nat.one_mul]
-  calc
-    Model.fracField (toModel v) + 2 ^ fmt.fracWidth < 2 ^ fmt.fracWidth + 2 ^ fmt.fracWidth := by
-      rw [← fraction_toNat]
-      omega
-    _ = 2 ^ (fmt.fracWidth + 1) := by ring
-    _ ≤ 2 ^ fmt.bitWidth := Nat.pow_le_pow_right (by decide) (by omega)
-    _ ≤ LimbArray.radix ^ limbCount fmt := two_pow_bitWidth_le fmt
 
 /-- The normal significand, fraction plus implicit bit, has the format's limb count. -/
 @[simp] theorem size_normalMantissa (v : Value fmt) :
@@ -325,6 +334,14 @@ theorem expWord_and_mask_toNat (exponent : UInt32) (h : fmt.expWidth ≤ 32) :
     (exponent &&& expMask32 fmt).toNat = exponent.toNat % 2 ^ fmt.expWidth := by
   rw [UInt32.toNat_and, expMask32_toNat h, Nat.and_two_pow_sub_one_eq_mod]
 
+/-- The masked exponent field placed above the fraction leaves room for one more fraction unit
+below `2 ^ (expWidth + fracWidth)`. -/
+private theorem exponentShift_add_le (exponent : Nat) :
+    exponent % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth + 2 ^ fmt.fracWidth ≤
+      2 ^ (fmt.expWidth + fmt.fracWidth) := by
+  rw [pow_add, ← Nat.succ_mul]
+  exact Nat.mul_le_mul_right _ (Nat.mod_lt _ (Nat.two_pow_pos _))
+
 /-- The limbs that `pack` builds, before the storage wrapper, denote the masked fields. -/
 theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
     (h : fmt.expWidth ≤ 32) :
@@ -342,12 +359,7 @@ theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray
     Nat.mod_lt _ (Nat.two_pow_pos _)
   have hexp : exponent.toNat % 2 ^ fmt.expWidth < 2 ^ fmt.expWidth :=
     Nat.mod_lt _ (Nat.two_pow_pos _)
-  have hexpPow : exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth + 2 ^ fmt.fracWidth ≤
-      2 ^ (fmt.expWidth + fmt.fracWidth) := by
-    rw [pow_add]
-    have := Nat.mul_le_mul_right (2 ^ fmt.fracWidth) (Nat.succ_le_of_lt hexp)
-    rw [Nat.succ_mul] at this
-    exact this
+  have hexpPow := exponentShift_add_le (fmt := fmt) exponent.toNat
   have hsumLt : fraction.toNat % 2 ^ fmt.fracWidth +
       exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth +
       (if sign then 2 ^ (fmt.expWidth + fmt.fracWidth) else 0) < 2 ^ fmt.bitWidth := by
@@ -363,48 +375,31 @@ theorem pack_limbs_toNat (sign : Bool) (exponent : UInt32) (fraction : LimbArray
   have hbaseSize : base.size = limbCount fmt := LimbArray.size_resize _ _
   have hwithExponent : withExponent.toNat = fraction.toNat % 2 ^ fmt.fracWidth +
       exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth := by
-    rw [LimbArray.toNat_addAt _ _ _ (by rw [hbaseSize]; exact fracWidth_div_lt fmt), hbase,
-      expWord_and_mask_toNat _ h]
-    rw [hbaseSize, hbase, expWord_and_mask_toNat _ h]
-    have : fraction.toNat % 2 ^ fmt.fracWidth + exponent.toNat % 2 ^ fmt.expWidth *
-        2 ^ fmt.fracWidth < 2 ^ fmt.bitWidth := by
-      have hs := hsumLt
-      split at hs <;> omega
-    exact lt_of_lt_of_le this hradix
+    rw [toNat_addAt_of_lt _ hbaseSize _ _ (by
+        rw [hbase, expWord_and_mask_toNat _ h]
+        have hs := hsumLt
+        split at hs <;> omega),
+      hbase, expWord_and_mask_toNat _ h]
   have hwithExponentSize : withExponent.size = limbCount fmt := by
     rw [LimbArray.size_addAt, hbaseSize]
-  refine ⟨?_, ?_, ?_⟩
-  · unfold limbs
+  have hvalue : limbs.toNat = fraction.toNat % 2 ^ fmt.fracWidth +
+      exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth +
+      (if sign then 2 ^ (fmt.expWidth + fmt.fracWidth) else 0) := by
+    unfold limbs
     cases sign
     · simp [hwithExponent]
     · simp only [ite_true]
-      rw [LimbArray.toNat_addAt _ _ _ (by rw [hwithExponentSize]; exact signIndex_div_lt fmt),
-        hwithExponent, UInt32.toNat_one, Nat.one_mul]
-      rw [hwithExponentSize, hwithExponent, UInt32.toNat_one, Nat.one_mul]
       have hs := hsumLt
       simp only [ite_true] at hs
-      exact lt_of_lt_of_le hs hradix
-  · unfold limbs
-    split
-    · rw [LimbArray.size_addAt, hwithExponentSize]
-    · exact hwithExponentSize
-  · unfold limbs
-    cases sign
-    · simp only [Bool.false_eq_true, ite_false]
-      rw [hwithExponent]
-      have hs := hsumLt
-      simp only [Bool.false_eq_true, ite_false, Nat.add_zero] at hs
-      exact hs
-    · simp only [ite_true]
-      rw [LimbArray.toNat_addAt _ _ _ (by rw [hwithExponentSize]; exact signIndex_div_lt fmt),
+      rw [toNat_addAt_of_lt _ hwithExponentSize _ _ (by
+          rw [hwithExponent, UInt32.toNat_one, Nat.one_mul]
+          exact hs),
         hwithExponent, UInt32.toNat_one, Nat.one_mul]
-      · have hs := hsumLt
-        simp only [ite_true] at hs
-        exact hs
-      · rw [hwithExponentSize, hwithExponent, UInt32.toNat_one, Nat.one_mul]
-        have hs := hsumLt
-        simp only [ite_true] at hs
-        exact lt_of_lt_of_le hs hradix
+  refine ⟨hvalue, ?_, by rw [hvalue]; exact hsumLt⟩
+  unfold limbs
+  split
+  · rw [LimbArray.size_addAt, hwithExponentSize]
+  · exact hwithExponentSize
 
 /-- `pack` is the model field constructor on the masked fields. -/
 theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
@@ -439,9 +434,7 @@ theorem toModel_pack (sign : Bool) (exponent : UInt32) (fraction : LimbArray)
     rw [← Nat.shiftLeft_add_eq_or_of_lt hfrac, Nat.shiftLeft_eq]
   have hmiddleLt : exponent.toNat % 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth +
       fraction.toNat % 2 ^ fmt.fracWidth < 2 ^ (fmt.expWidth + fmt.fracWidth) := by
-    rw [pow_add]
-    have := Nat.mul_le_mul_right (2 ^ fmt.fracWidth) (Nat.succ_le_of_lt hexp)
-    rw [Nat.succ_mul] at this
+    have := exponentShift_add_le (fmt := fmt) exponent.toNat
     omega
   rw [hexpMask, hfracMask]
   simp only [Nat.shiftLeft_eq']

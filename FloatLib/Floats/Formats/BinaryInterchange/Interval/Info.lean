@@ -36,7 +36,6 @@ meta def profile (summary : BinarySummary) : FormatProfile where
   standard :=
     "outward-rounded interval carrier over " ++
       FloatLib.Floats.Formats.BinaryInterchange.FloatInfo.standardName summary
-  declarationPrefix := "FloatLib.Floats.Formats.BinaryInterchange.Model.Interval."
   representation :=
     [ ⟨"storage", "one lower and one upper binary `Model` endpoint"⟩
     , ⟨"endpoint payload bits", toString summary.bitWidth⟩

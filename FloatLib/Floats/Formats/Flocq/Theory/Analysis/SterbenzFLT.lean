@@ -48,7 +48,7 @@ theorem generic_format_FLX_to_FLT_of_normal (emin prec : ℤ) (hprec : 0 < prec)
   refine (generic_format_FLT_iff (β := β) emin prec hprec x).mpr ⟨hprec, f, hxf, hmant, ?_⟩
   have habsx : abs x < bpow β (f.exponent + prec) := by
     rw [hxf]
-    exact f.abs_toReal_lt_bpow prec hprec.le hmant
+    exact f.abs_toReal_lt_bpow prec hmant
   have hlt : bpow β (emin + prec - 1) < bpow β (f.exponent + prec) :=
     lt_of_le_of_lt hnorm habsx
   have hexp : emin + prec - 1 < f.exponent + prec :=
@@ -56,11 +56,11 @@ theorem generic_format_FLX_to_FLT_of_normal (emin prec : ℤ) (hprec : 0 < prec)
   linarith
 
 /--
-Directed Sterbenz lemma for `FLT`: if `0 < y ≤ x ≤ 2y` and both operands are representable, then
-their exact difference is representable.
+Directed Sterbenz lemma for `FLT`: if `y ≤ x ≤ 2y` and both operands are representable, then
+their exact difference is representable. The bounds force `0 ≤ y`.
 -/
 theorem generic_format_FLT_sub_of_le_two_mul (emin prec : ℤ) (hprec : 0 < prec)
-    {x y : ℝ} (hy : 0 < y) (hyx : y ≤ x) (hx2y : x ≤ 2 * y)
+    {x y : ℝ} (hyx : y ≤ x) (hx2y : x ≤ 2 * y)
     (hxFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)
     (hyFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y) :
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x - y) := by
@@ -76,24 +76,25 @@ theorem generic_format_FLT_sub_of_le_two_mul (emin prec : ℤ) (hprec : 0 < prec
     have hxFLX := generic_format_FLT_to_FLX (β := β) emin prec hprec hxFmt
     have hyFLX := generic_format_FLT_to_FLX (β := β) emin prec hprec hyFmt
     have hdFLX := generic_format_FLX_sub_of_le_two_mul (β := β) prec hprec
-      hy hyx hx2y hxFLX hyFLX
+      hyx hx2y hxFLX hyFLX
     exact generic_format_FLX_to_FLT_of_normal (β := β) emin prec hprec
       hdFLX (le_of_lt hsmall)
 
 /--
-Sterbenz's lemma for `FLT`: if two positive representable values are within a factor of two, then
-their exact difference is representable, including across the subnormal boundary.
+Sterbenz's lemma for `FLT`: if two representable values are within a factor of two of each other,
+then their exact difference is representable, including across the subnormal boundary. The two
+bounds force both values to be nonnegative.
 -/
 theorem generic_format_FLT_sterbenz (emin prec : ℤ) (hprec : 0 < prec)
-    {x y : ℝ} (hx : 0 < x) (hy : 0 < y) (hx2y : x ≤ 2 * y) (hy2x : y ≤ 2 * x)
+    {x y : ℝ} (hx2y : x ≤ 2 * y) (hy2x : y ≤ 2 * x)
     (hxFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)
     (hyFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y) :
     @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x - y) := by
   let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
   rcases le_total y x with hyx | hxy
-  · exact generic_format_FLT_sub_of_le_two_mul emin prec hprec hy hyx hx2y hxFmt hyFmt
+  · exact generic_format_FLT_sub_of_le_two_mul emin prec hprec hyx hx2y hxFmt hyFmt
   · have hdiff :=
-      generic_format_FLT_sub_of_le_two_mul emin prec hprec hx hxy hy2x hyFmt hxFmt
+      generic_format_FLT_sub_of_le_two_mul emin prec hprec hxy hy2x hyFmt hxFmt
     have hneg := generic_format_neg (β := β) (fexp := fltExp emin prec) (y - x) hdiff
     simpa only [neg_sub] using hneg
 

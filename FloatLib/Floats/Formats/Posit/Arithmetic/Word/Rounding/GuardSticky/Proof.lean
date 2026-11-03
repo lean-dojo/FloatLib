@@ -43,21 +43,7 @@ theorem candidateCarrierLawful :
     GuardStickyCarrier.LawfulCandidateCarrier candidateCarrier UInt64.toNat 64 where
   bitAt_eq_testBit := NativeWord.bitAt_eq_testBit
   hasLowBits_eq value width := by
-    have htoNat :
-        (NativeWord.lowBits value width).toNat =
-          value.toNat % 2 ^ width := by
-      by_cases hwidth : width ≤ 64
-      · exact NativeWord.lowBits_toNat_of_le value width hwidth
-      · have hlarge : 64 < width := Nat.lt_of_not_ge hwidth
-        have hvalue : value.toNat < 2 ^ width :=
-          value.toNat_lt.trans_le <|
-            Nat.pow_le_pow_right (by decide) hlarge.le
-        unfold NativeWord.lowBits NativeWord.lowMask
-        rw [ite_eq_right (Nat.not_lt.mpr hlarge.le), UInt64.toNat_and]
-        change value.toNat &&& (2 ^ 64 - 1) =
-          value.toNat % 2 ^ width
-        rw [Nat.and_two_pow_sub_one_eq_mod,
-          Nat.mod_eq_of_lt value.toNat_lt, Nat.mod_eq_of_lt hvalue]
+    have htoNat := NativeWord.lowBits_toNat value width
     apply Bool.eq_iff_iff.mpr
     simp only [hasLowBits, bne_iff_ne]
     constructor
@@ -75,8 +61,8 @@ theorem candidateCarrierLawful :
   toNat_ofWord _ := rfl
   shiftLeft_toNat value shift hshift hfit := by
     simpa only [shiftLeft, ite_eq_left hshift] using
-      FixedWord.shiftLeft_toNat value shift hshift hfit
-  shiftRight_toNat := NativeWord.shiftRight_toNat
+      FixedWord.shiftLeft_toNat value shift hfit
+  shiftRight_toNat value shift _ := NativeWord.shiftRight_toNat value shift
   fractionBelow_toNat value leading hleading hlower _ := by
     have honeShift : (shiftLeft 1 leading).toNat = 2 ^ leading := by
       simpa only [shiftLeft, ite_eq_left hleading] using
@@ -149,10 +135,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
       simp [hnonzero]
     rw [ite_eq_right hspecial, ite_eq_left hunderflow, UInt64.toNat_one]
   · rw [ite_eq_right hunderflow]
-    apply GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
+    exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
       format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
-    rw [← isLessMinPositive_eq]
-    exact Bool.eq_false_of_not_eq_true hunderflow
 
 /-- Natural-number positive rounding has the same direct semantics. -/
 theorem roundPositiveCode_eq_direct

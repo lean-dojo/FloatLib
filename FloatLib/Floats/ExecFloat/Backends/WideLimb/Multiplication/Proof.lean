@@ -68,12 +68,8 @@ theorem mulNormal?_refines (h : Eligible fmt) (x y r : Value fmt)
     rw [decode?_toModel x h.isIEEE h.exp_le hxeFinite, decode?_toModel y h.isIEEE h.exp_le hyeFinite,
       decodeMantissa_eq_normalMantissa x hxe0,
       decodeMantissa_eq_normalMantissa y hye0]
-    have hx0' : ((normalMantissa x).toNat == 0) = false := by simpa using hxNe
-    have hy0' : ((normalMantissa y).toNat == 0) = false := by simpa using hyNe
-    have hxe0' : (expField x == 0) = false := by simpa using hxe0
-    have hye0' : (expField y == 0) = false := by simpa using hye0
-    simp only [hx0', hy0', Bool.or_self, Bool.false_eq_true, ite_false, h.isIEEE, ite_true,
-      FiniteKernel.scale, hxe0', hye0', Option.some.injEq]
+    simp only [Bool.or_eq_true, beq_iff_eq, hxNe, hyNe, or_self, ite_false, h.isIEEE, ite_true,
+      FiniteKernel.scale, hxe0, hye0, Option.some.injEq]
     rw [← hround, hproduct]
     rfl
 

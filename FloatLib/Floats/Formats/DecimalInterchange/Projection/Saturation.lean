@@ -31,7 +31,7 @@ theorem projectMagnitude_of_overflow (f : Format) (mode : RoundingMode) (s : Boo
   have hq : f.maxQuantum < roundingQuantum f x := by
     by_contra h
     push Not at h
-    have hlt := div_roundingQuantum_lt f hx0
+    have hlt := div_roundingQuantum_lt f x
     have hu : 0 < (10 : ℚ) ^ (roundingQuantum f x) := zpow_pos (by norm_num) _
     rw [div_lt_iff₀ hu, Format.coefficientBound_eq] at hlt
     push_cast at hlt

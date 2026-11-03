@@ -66,12 +66,16 @@ theorem rootBinade_bounds (radicand : Rat) (degree : Nat) (target : ℝ)
 
 /-- The computed root binade agrees with the bounded search throughout the finite interval. -/
 theorem rootBinade_eq_binade (fmt : FloatFormat) (radicand : Rat) (degree : Nat)
-    (target : ℝ) (hrad : 0 < radicand) (hdegree : degree ≠ 0) (htarget : 0 ≤ target)
-    (hroot : target ^ degree = (radicand : ℝ))
+    (target : ℝ) (hdegree : degree ≠ 0) (hroot : target ^ degree = (radicand : ℝ))
     (hlower : Flocq.bpow Numerics.binaryRadix (lowerExponent fmt) ≤ target)
     (hupper : target < Flocq.bpow Numerics.binaryRadix (upperExponent fmt)) :
     rootBinade radicand degree =
       binade fmt (Posit.Model.RootRounding.compareRoot radicand degree) := by
+  have htargetPos : 0 < target := (bpow.pos _ _).trans_le hlower
+  have htarget : 0 ≤ target := htargetPos.le
+  have hrad : 0 < radicand := by
+    have hreal : (0 : ℝ) < radicand := hroot ▸ pow_pos htargetPos degree
+    exact_mod_cast hreal
   have hfast := rootBinade_bounds radicand degree target hrad hdegree htarget hroot
   have hslow := binade_bounds fmt _ target
     (Posit.Model.RootRounding.compareRoot_eq_real radicand degree target htarget hdegree hroot)
@@ -137,22 +141,45 @@ theorem cmp_halfIntegerPower_eq_root
     constructor <;> intro h <;> linarith
   simp only [cmp, cmpUsing, hlt, hgt]
 
+/--
+A natural number whose `degree`-th power brackets the integer part of a quotient brackets the real
+`degree`-th root of the exact quotient: `mantissa ≤ value < mantissa + 1` for the nonnegative
+`value` with `value ^ degree = numerator / denominator`.
+-/
+private theorem floorRoot_real_bounds (numerator denominator degree mantissa : Nat) (value : ℝ)
+    (hden : 0 < denominator) (hdegree : degree ≠ 0) (hvalue : 0 ≤ value)
+    (hpow : value ^ degree = (numerator : ℝ) / denominator)
+    (hlower : mantissa ^ degree ≤ numerator / denominator)
+    (hupper : numerator / denominator < (mantissa + 1) ^ degree) :
+    (mantissa : ℝ) ≤ value ∧ value < (mantissa : ℝ) + 1 := by
+  have hdenReal : (0 : ℝ) < denominator := by exact_mod_cast hden
+  constructor
+  · apply (pow_le_pow_iff_left₀ (Nat.cast_nonneg _) hvalue hdegree).mp
+    rw [hpow, le_div_iff₀ hdenReal]
+    exact_mod_cast (Nat.le_div_iff_mul_le hden).mp hlower
+  · apply (pow_lt_pow_iff_left₀ hvalue (by positivity) hdegree).mp
+    rw [hpow, div_lt_iff₀ hdenReal]
+    exact_mod_cast (Nat.div_lt_iff_lt_mul hden).mp hupper
+
 /-- Integer square root of an integer quotient brackets the square root of the exact quotient. -/
 theorem sqrtQuotient_bounds (numerator denominator : Nat) (hd : 0 < denominator) :
     (Nat.sqrt (numerator / denominator) : ℝ) ≤ Real.sqrt (numerator / denominator) ∧
-      Real.sqrt (numerator / denominator) < Nat.sqrt (numerator / denominator) + 1 := by
-  have hdReal : (0 : ℝ) < denominator := by exact_mod_cast hd
-  have hn : (0 : ℝ) ≤ numerator / denominator := by positivity
-  constructor
-  · apply Real.le_sqrt_of_sq_le
-    apply (le_div_iff₀ hdReal).mpr
-    exact_mod_cast (Nat.le_div_iff_mul_le hd).mp (Nat.sqrt_le' (numerator / denominator))
-  · apply (Real.sqrt_lt hn (by positivity)).mpr
-    apply (div_lt_iff₀ hdReal).mpr
-    exact_mod_cast (Nat.div_lt_iff_lt_mul hd).mp
-      (Nat.lt_succ_sqrt' (numerator / denominator))
+      Real.sqrt (numerator / denominator) < Nat.sqrt (numerator / denominator) + 1 :=
+  floorRoot_real_bounds numerator denominator 2 _ _ hd (by decide) (Real.sqrt_nonneg _)
+    (Real.sq_sqrt (by positivity)) (Nat.sqrt_le' (numerator / denominator))
+    (Nat.lt_succ_sqrt' (numerator / denominator))
 
-/-- Target scaling commutes with the nonnegative square root. -/
+/-- At degree two the general integer-root mantissa is the integer square root mantissa. -/
+theorem rootMantissa_two_eq_sqrtMantissa (fmt : FloatFormat) (radicand : Rat) (exponent : Int) :
+    rootMantissa fmt radicand 2 exponent = sqrtMantissa radicand exponent :=
+  rfl
+
+/--
+The integer square root of the scaled radicand floors the real square root after target scaling:
+for a nonnegative radicand, `sqrtMantissa radicand exponent ≤ √radicand / 2^exponent <
+sqrtMantissa radicand exponent + 1`. By `rootMantissa_two_eq_sqrtMantissa` this is the degree-two
+mantissa `rootMantissa` that `sqrtRat` computes.
+-/
 theorem sqrtMantissa_bounds (radicand : Rat) (exponent : Int) (hrad : 0 ≤ radicand) :
     (sqrtMantissa radicand exponent : ℝ) ≤
         Real.sqrt (radicand : ℝ) / Flocq.bpow Numerics.binaryRadix exponent ∧
@@ -170,12 +197,13 @@ theorem sqrtMantissa_bounds (radicand : Rat) (exponent : Int) (hrad : 0 ≤ radi
 
 /-- The exact integer root agrees with the comparison search throughout its finite interval. -/
 theorem rootMantissa_eq_truncatedMantissa (fmt : FloatFormat) (radicand : Rat) (degree : Nat)
-    (target : ℝ) (exponent : Int) (hrad : 0 ≤ radicand) (hdegree : degree ≠ 0)
+    (target : ℝ) (exponent : Int) (hdegree : degree ≠ 0)
     (htarget : 0 ≤ target) (hroot : target ^ degree = (radicand : ℝ))
     (hupper : target / Flocq.bpow Numerics.binaryRadix exponent <
       (2 : ℝ) ^ (fmt.fracWidth + 3)) :
     rootMantissa fmt radicand degree exponent =
       truncatedMantissa fmt (Posit.Model.RootRounding.compareRoot radicand degree) exponent := by
+  have hrad : 0 ≤ radicand := Rat.cast_nonneg.mp (hroot ▸ pow_nonneg htarget degree)
   let compare := Posit.Model.RootRounding.compareRoot radicand degree
   have hcompare : ∀ candidate : Rat,
       compare candidate = cmp target (candidate : ℝ) :=
@@ -186,34 +214,26 @@ theorem rootMantissa_eq_truncatedMantissa (fmt : FloatFormat) (radicand : Rat) (
     hcompare hnonneg hupper
   rw [rootMantissa, ite_eq_right hdegree, Numerics.IntegerRoot.root_eq_nthRoot]
   let scaled := rootScale radicand degree exponent
-  let mantissa := Nat.nthRoot degree (scaled.1 / scaled.2)
-  have hden := rootScale_den_pos radicand degree exponent
-  have hdenReal : (0 : ℝ) < scaled.2 := by exact_mod_cast hden
   have hrootScaled : (target / Flocq.bpow Numerics.binaryRadix exponent) ^ degree =
       (scaled.1 : ℝ) / scaled.2 := by
     rw [rootScale_real radicand degree exponent hrad, div_pow, hroot]
-  have hfloor : (mantissa : ℝ) ≤ target / Flocq.bpow Numerics.binaryRadix exponent ∧
-      target / Flocq.bpow Numerics.binaryRadix exponent < (mantissa : ℝ) + 1 := by
-    constructor
-    · apply (pow_le_pow_iff_left₀ (Nat.cast_nonneg _) hnonneg hdegree).mp
-      rw [hrootScaled, le_div_iff₀ hdenReal]
-      exact_mod_cast (Nat.le_div_iff_mul_le hden).mp
-        (Nat.pow_nthRoot_le (n := degree) (a := scaled.1 / scaled.2) (Or.inl hdegree))
-    · apply (pow_lt_pow_iff_left₀ hnonneg (by positivity) hdegree).mp
-      rw [hrootScaled, div_lt_iff₀ hdenReal]
-      exact_mod_cast (Nat.div_lt_iff_lt_mul hden).mp
-        (Nat.lt_pow_nthRoot_add_one hdegree (scaled.1 / scaled.2))
+  have hfloor := floorRoot_real_bounds scaled.1 scaled.2 degree
+    (Nat.nthRoot degree (scaled.1 / scaled.2)) _ (rootScale_den_pos radicand degree exponent)
+    hdegree hnonneg hrootScaled
+    (Nat.pow_nthRoot_le (n := degree) (a := scaled.1 / scaled.2) (Or.inl hdegree))
+    (Nat.lt_pow_nthRoot_add_one hdegree (scaled.1 / scaled.2))
   exact ((Nat.floor_eq_iff hnonneg).mpr hfloor).symm.trans
     ((Nat.floor_eq_iff hnonneg).mpr hbisect)
 
 /-- Integer comparisons preserve the complete exactness and midpoint classification. -/
 theorem rootAccuracy_eq_accuracyAt (radicand : Rat) (degree : Nat) (exponent : Int)
-    (mantissa : Nat) (target : ℝ) (hrad : 0 ≤ radicand) (hdegree : degree ≠ 0)
+    (mantissa : Nat) (target : ℝ) (hdegree : degree ≠ 0)
     (htarget : 0 ≤ target) (hroot : target ^ degree = (radicand : ℝ)) :
     rootAccuracy radicand degree exponent mantissa =
       accuracyAt (fun candidate =>
         Posit.Model.RootRounding.compareRoot radicand degree
           (candidate * powerOfTwo exponent)) mantissa := by
+  have hrad : 0 ≤ radicand := Rat.cast_nonneg.mp (hroot ▸ pow_nonneg htarget degree)
   let scaled := rootScale radicand degree exponent
   let value := target / Flocq.bpow Numerics.binaryRadix exponent
   have hvalue : 0 ≤ value := div_nonneg htarget (bpow.pos _ _).le
@@ -242,41 +262,38 @@ theorem rootCertificateAt_eq (fmt : FloatFormat) (radicand : Rat) (degree : Nat)
 
 /-- Integer-root construction preserves every field of the reference accuracy certificate. -/
 theorem rootCertificate_eq_certificate (fmt : FloatFormat) (radicand : Rat) (degree : Nat)
-    (target : ℝ) (hrad : 0 < radicand) (hdegree : degree ≠ 0) (htarget : 0 ≤ target)
-    (hroot : target ^ degree = (radicand : ℝ))
+    (target : ℝ) (hdegree : degree ≠ 0) (hroot : target ^ degree = (radicand : ℝ))
     (hlower : Flocq.bpow Numerics.binaryRadix (lowerExponent fmt) ≤ target)
     (hupper : target < Flocq.bpow Numerics.binaryRadix (upperExponent fmt)) :
     rootCertificate fmt radicand degree =
       certificate fmt (Posit.Model.RootRounding.compareRoot radicand degree) := by
+  have htarget : 0 ≤ target := ((bpow.pos _ _).trans_le hlower).le
   let compare := Posit.Model.RootRounding.compareRoot radicand degree
   let exponent := certificateExponent fmt (binade fmt compare)
   have hcompare := Posit.Model.RootRounding.compareRoot_eq_real
     radicand degree target htarget hdegree hroot
   have hbinade := rootBinade_eq_binade fmt radicand degree target
-    hrad hdegree htarget hroot hlower hupper
+    hdegree hroot hlower hupper
   obtain ⟨_, hupperScaled⟩ :=
     certificate_scaled_bounds fmt compare target hcompare hlower hupper
   have hm := rootMantissa_eq_truncatedMantissa fmt radicand degree target exponent
-    hrad.le hdegree htarget hroot hupperScaled
+    hdegree htarget hroot hupperScaled
   simpa only [rootCertificate, rootCertificateAt_eq, certificate, hbinade,
-    rootAccuracy_eq_accuracyAt radicand degree _ _ target hrad.le hdegree htarget hroot] using
+    rootAccuracy_eq_accuracyAt radicand degree _ _ target hdegree htarget hroot] using
     congrArg (fun mantissa =>
       Certificate.mk mantissa exponent
         (accuracyAt (fun candidate => compare (candidate * powerOfTwo exponent)) mantissa)) hm
 
 /-- The integer-square-root certificate equals the comparison certificate throughout its range. -/
 theorem sqrtCertificate_eq_certificate (fmt : FloatFormat) (radicand : Rat)
-    (hrad : 0 ≤ radicand)
     (hlower : Flocq.bpow Numerics.binaryRadix (lowerExponent fmt) ≤ Real.sqrt (radicand : ℝ))
     (hupper : Real.sqrt (radicand : ℝ) < Flocq.bpow Numerics.binaryRadix (upperExponent fmt)) :
     sqrtCertificate fmt radicand =
       certificate fmt (Posit.Model.RootRounding.compareRoot radicand 2) := by
   have hpositive : 0 < Real.sqrt (radicand : ℝ) := (bpow.pos _ _).trans_le hlower
-  have hradPositive : 0 < radicand := by
-    exact_mod_cast Real.sqrt_pos.mp hpositive
+  have hradPositive : (0 : ℝ) < radicand := Real.sqrt_pos.mp hpositive
   exact rootCertificate_eq_certificate fmt radicand 2 (Real.sqrt (radicand : ℝ))
-    hradPositive (by decide) (Real.sqrt_nonneg _) (Real.sq_sqrt (by exact_mod_cast hrad))
-    hlower hupper
+    (by decide) (Real.sq_sqrt hradPositive.le) hlower hupper
 
 /-- Integer binade classification and exact roots preserve every reference result bit. -/
 theorem rootRat_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat) (degree : Nat) :
@@ -350,12 +367,10 @@ theorem rootRat_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat) (degr
           exact hgt.ne' heqReal
         rw [ite_eq_right (not_le.mpr hupper), ite_eq_right hmidpoint]
         exact congrArg (roundCertificate fmt sign)
-          (rootCertificate_eq_certificate fmt radicand degree target hrad hdegree htarget
-            hroot hgt.le hlt)
+          (rootCertificate_eq_certificate fmt radicand degree target hdegree hroot hgt.le hlt)
 
 /-- The optimized square root preserves every result bit for any complete descriptor. -/
-theorem sqrtRat_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat)
-    (_hrad : 0 ≤ radicand) :
+theorem sqrtRat_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat) :
     sqrtRat fmt sign radicand = root fmt sign radicand 2 := by
   exact rootRat_eq_root fmt sign radicand 2
 
@@ -365,12 +380,12 @@ theorem toReal_sqrtRat_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (hfinite : isFinite (sqrtRat fmt sign radicand) = true) :
     toReal (sqrtRat fmt sign radicand) =
       roundAt fmt (if sign then -Real.sqrt (radicand : ℝ) else Real.sqrt (radicand : ℝ)) := by
-  rw [sqrtRat_eq_root fmt sign radicand hrad] at hfinite ⊢
+  rw [sqrtRat_eq_root fmt sign radicand] at hfinite ⊢
   exact toReal_root_two_eq_roundAt_sqrt fmt hfmt sign radicand hrad hfinite
 
-/-- Selecting the square-root specialization preserves the complete general-root result. -/
+/-- `rootWithSqrt` delivers every bit of the reference rational root `root`, at every degree. -/
 theorem rootWithSqrt_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat)
-    (degree : Nat) (_hrad : 0 ≤ radicand) :
+    (degree : Nat) :
     rootWithSqrt fmt sign radicand degree = root fmt sign radicand degree := by
   exact rootRat_eq_root fmt sign radicand degree
 

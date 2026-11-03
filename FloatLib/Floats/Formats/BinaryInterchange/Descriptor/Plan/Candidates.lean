@@ -41,6 +41,7 @@ open FloatLib.Floats.ExecFloat.Backend
 
 /-! ## Generic certified constructors -/
 
+/-- Every word of a descriptor at most eight bits wide indexes a 256-entry table. -/
 theorem toNatBits_lt_256_of_bitWidth_le
     {format : FloatFormat} (hwidth : format.bitWidth ≤ 8)
     (value : Model format) :
@@ -82,7 +83,7 @@ def binaryTableCertified
       calc
         runModel left.raw right.raw = modelRun left.raw right.raw := by
           exact Model.TinyTable.runLazyBinaryTotal_eq
-            format radix (by positivity) modelRun table (by rfl)
+            format radix modelRun table (by rfl)
             left.raw right.raw
             (Model.toNatBits_lt_two_pow left.raw)
             (Model.toNatBits_lt_two_pow right.raw)
@@ -158,7 +159,7 @@ def ternaryTableCertified
         runModel left.raw right.raw addend.raw =
             modelRun left.raw right.raw addend.raw := by
           exact Model.TinyTable.runLazyTernaryTotal_eq
-            format radix (by positivity) modelRun table (by rfl)
+            format radix modelRun table (by rfl)
             left.raw right.raw addend.raw
             (Model.toNatBits_lt_two_pow left.raw)
             (Model.toNatBits_lt_two_pow right.raw)

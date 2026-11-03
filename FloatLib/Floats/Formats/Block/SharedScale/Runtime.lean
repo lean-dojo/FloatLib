@@ -21,7 +21,12 @@ namespace FloatLib.Floats.Formats.Block
 
 open FloatLib.Numerics
 
-/-- Quantize every rational lane at an explicitly supplied shared exponent. -/
+/--
+Quantize every rational lane at an explicitly supplied shared exponent.
+
+Each lane is divided by `2 ^ exponent` and rounded to the nearest integer significand, ties to
+even. Significands are unbounded integers, so no lane saturates or overflows.
+-/
 @[inline] def quantizeAt {lanes : Nat} (exponent : Int) (input : Vector Rat lanes) :
     SharedScaleCode lanes where
   exponent := exponent

@@ -306,63 +306,31 @@ theorem floorLog2_den_one (n : Nat) (hn : n ≠ 0) :
   simpa only [Nat.cast_one, div_one, Int.log_natCast, Nat.log2_eq_log_two,
     Int.ofNat_eq_natCast] using floorLog2_eq_int_log n 1 hn (by decide)
 
-/-- A binary interval characterization determines `Numerics.RationalBinary.floorLog2`. -/
+/--
+A binary interval characterization determines `Numerics.RationalBinary.floorLog2`. The positive
+lower bound forces a nonzero numerator and denominator.
+-/
 theorem floorLog2_eq_of_bounds
     (numerator denominator : Nat) (exponent : Int)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
     (hlower :
       bpow exponent ≤ (numerator : Real) / (denominator : Real))
     (hupper :
       (numerator : Real) / (denominator : Real) < bpow (exponent + 1)) :
     Numerics.RationalBinary.floorLog2 numerator denominator = exponent := by
+  have hpositive : 0 < (numerator : Real) / (denominator : Real) :=
+    (bpow_pos exponent).trans_le hlower
+  have hnumerator : numerator ≠ 0 := by
+    rintro rfl
+    simp at hpositive
+  have hdenominator : denominator ≠ 0 := by
+    rintro rfl
+    simp at hpositive
   have hfloor :=
     floorLog2_bounds numerator denominator hnumerator hdenominator
   exact bpow_interval_exponent_unique
     ((numerator : Real) / (denominator : Real))
     (Numerics.RationalBinary.floorLog2 numerator denominator) exponent
     hfloor.1 hfloor.2 hlower hupper
-
-/-- Exact binary scaling adds its exponent to the rational floor logarithm. -/
-theorem floorLog2_scaleByPowerOfTwo
-    (numerator denominator : Nat) (exponent : Int)
-    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
-    Numerics.RationalBinary.floorLog2 (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).1
-        (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 =
-      Numerics.RationalBinary.floorLog2 numerator denominator + exponent := by
-  let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent
-  have hscaledNumerator : scaled.1 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero numerator denominator exponent hnumerator
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator exponent hdenominator
-  let baseExponent := Numerics.RationalBinary.floorLog2 numerator denominator
-  have hbase :=
-    floorLog2_bounds numerator denominator hnumerator hdenominator
-  have hreal :
-      (scaled.1 : Real) / (scaled.2 : Real) =
-        (numerator : Real) / (denominator : Real) * bpow exponent := by
-    simpa [scaled, scaledRatToReal] using
-      scaleByPowerOfTwo_real numerator denominator exponent
-  have hlower :
-      bpow (baseExponent + exponent) ≤
-        (scaled.1 : Real) / (scaled.2 : Real) := by
-    rw [hreal, bpow_add]
-    exact mul_le_mul_of_nonneg_right hbase.1 (bpow_nonneg exponent)
-  have hupper :
-      (scaled.1 : Real) / (scaled.2 : Real) <
-        bpow (baseExponent + exponent + 1) := by
-    rw [hreal]
-    calc
-      (numerator : Real) / denominator * bpow exponent <
-          bpow (baseExponent + 1) * bpow exponent :=
-        mul_lt_mul_of_pos_right hbase.2 (bpow_pos exponent)
-      _ = bpow (baseExponent + 1 + exponent) :=
-        (bpow_add (baseExponent + 1) exponent).symm
-      _ = bpow (baseExponent + exponent + 1) := by
-        congr 1
-        ring
-  exact floorLog2_eq_of_bounds
-    scaled.1 scaled.2 (baseExponent + exponent)
-    hscaledNumerator hscaledDenominator hlower hupper
 
 /--
 The leading exponent of a scaled positive rational bounds its exact real value between
@@ -390,6 +358,23 @@ theorem scaledRatToReal_floorLog2_bounds
         congr 1
         ring
 
+/-- Exact binary scaling adds its exponent to the rational floor logarithm. -/
+theorem floorLog2_scaleByPowerOfTwo
+    (numerator denominator : Nat) (exponent : Int)
+    (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.floorLog2 (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).1
+        (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 =
+      Numerics.RationalBinary.floorLog2 numerator denominator + exponent := by
+  let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent
+  have hscaledNumerator : scaled.1 ≠ 0 :=
+    Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero numerator denominator exponent hnumerator
+  have hscaledDenominator : scaled.2 ≠ 0 :=
+    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator exponent hdenominator
+  obtain ⟨hlower, hupper⟩ :=
+    scaledRatToReal_floorLog2_bounds numerator denominator exponent hnumerator hdenominator
+  rw [← scaleByPowerOfTwo_real] at hlower hupper
+  exact floorLog2_eq_of_bounds scaled.1 scaled.2 _ hlower hupper
+
 /--
 After moving an external binary exponent into a positive rational, its quotient stays between
 the binary powers determined by the original leading exponent plus that scale.
@@ -402,56 +387,24 @@ theorem scaleByPowerOfTwo_floorLog2_bounds
         (scaled.1 : Real) / (scaled.2 : Real) ∧
       (scaled.1 : Real) / (scaled.2 : Real) <
         bpow (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1) := by
-  let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent
-  have hscaledNumerator : scaled.1 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero numerator denominator exponent hnumerator
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator exponent hdenominator
-  have hbounds :=
-    floorLog2_bounds scaled.1 scaled.2 hscaledNumerator hscaledDenominator
-  have hfloor :
-      Numerics.RationalBinary.floorLog2 scaled.1 scaled.2 =
-        Numerics.RationalBinary.floorLog2 numerator denominator + exponent := by
-    simpa [scaled] using
-      floorLog2_scaleByPowerOfTwo
-        numerator denominator exponent hnumerator hdenominator
-  simpa [scaled, hfloor] using hbounds
+  dsimp only
+  rw [scaleByPowerOfTwo_real]
+  exact scaledRatToReal_floorLog2_bounds numerator denominator exponent hnumerator hdenominator
 
 /-! ## Comparison with a positive dyadic -/
 
+/-- Dividing by a positive real is strictly monotone, so it preserves comparisons. -/
 private theorem compare_div_one_eq_compare
     (left right : Real) (hright : 0 < right) :
     compare (left / right) 1 = compare left right := by
-  cases hcomparison : compare left right with
-  | lt =>
-      have hless : left < right := compare_lt_iff_lt.mp hcomparison
-      have hquotient : left / right < 1 := (div_lt_one hright).2 hless
-      exact compare_lt_iff_lt.mpr hquotient
-  | eq =>
-      have hequal : left = right := compare_eq_iff_eq.mp hcomparison
-      have hquotient : left / right = 1 :=
-        (div_eq_one_iff_eq hright.ne').2 hequal
-      exact compare_eq_iff_eq.mpr hquotient
-  | gt =>
-      have hgreater : right < left := compare_gt_iff_gt.mp hcomparison
-      have hquotient : 1 < left / right := (one_lt_div hright).2 hgreater
-      exact compare_gt_iff_gt.mpr hquotient
+  have hmono : StrictMono fun value : Real => value / right :=
+    fun _ _ h => div_lt_div_of_pos_right h hright
+  simpa only [cmp_eq_compare, div_self hright.ne'] using hmono.cmp_map_eq left right
 
+/-- The cast of natural numbers to the reals preserves comparisons. -/
 private theorem compare_eq_compare_natCast (left right : Nat) :
     compare left right = compare (left : Real) (right : Real) := by
-  cases hcomparison : compare left right with
-  | lt =>
-      have hless : left < right := Nat.compare_eq_lt.mp hcomparison
-      have hreal : (left : Real) < right := by exact_mod_cast hless
-      exact (compare_lt_iff_lt.mpr hreal).symm
-  | eq =>
-      have hequal : left = right := Nat.compare_eq_eq.mp hcomparison
-      have hreal : (left : Real) = right := by exact_mod_cast hequal
-      exact (compare_eq_iff_eq.mpr hreal).symm
-  | gt =>
-      have hgreater : right < left := Nat.compare_eq_gt.mp hcomparison
-      have hreal : (right : Real) < left := by exact_mod_cast hgreater
-      exact (compare_gt_iff_gt.mpr hreal).symm
+  simpa only [cmp_eq_compare] using (Nat.strictMono_cast.cmp_map_eq left right).symm
 
 private theorem scaledRatToReal_div_positiveDyadic
     (numerator denominator : Nat) (exponent : Int)
@@ -509,11 +462,7 @@ private theorem compareScaledPositiveMagnitude
   dsimp only
   have hscaledDenominator : denominator * value.significand ≠ 0 :=
     Nat.mul_ne_zero hdenominator hvalue
-  have hvaluePositive : 0 < value.toReal := by
-    have hsignificand : (0 : Real) < value.significand := by
-      exact_mod_cast Nat.pos_of_ne_zero hvalue
-    simpa [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hvalueSign] using
-      mul_pos hsignificand (zpow_pos (by norm_num : (0 : ℝ) < 2) value.exponent)
+  have hvaluePositive := Dyadic.toReal_pos_of_negative_eq_false hvalueSign hvalue
   have hbounds :=
     scaledRatToReal_floorLog2_bounds numerator (denominator * value.significand)
       (exponent - value.exponent) hnumerator hscaledDenominator
@@ -547,7 +496,7 @@ real-number ordering.
 The comparison first uses the leading exponent of the ratio to the dyadic. Only when that
 exponent is zero does it compare the scaled numerator and denominator.
 -/
-theorem compareDyadicScaled?_false_eq_compare
+private theorem compareDyadicScaled?_false_eq_compare_of_positive
     (numerator denominator : Nat) (exponent : Int)
     (value : Numerics.Dyadic)
     (hdenominator : denominator ≠ 0)
@@ -559,12 +508,7 @@ theorem compareDyadicScaled?_false_eq_compare
         (scaledRatToReal numerator denominator exponent) value.toReal) := by
   by_cases hnumerator : numerator = 0
   · subst numerator
-    have hvaluePositive : 0 < value.toReal := by
-      have hsignificand : (0 : Real) < value.significand := by
-        exact_mod_cast Nat.pos_of_ne_zero hvalue
-      simpa [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-        hvalueSign] using
-        mul_pos hsignificand (zpow_pos (by norm_num : (0 : ℝ) < 2) value.exponent)
+    have hvaluePositive := Dyadic.toReal_pos_of_negative_eq_false hvalueSign hvalue
     have hcomparison :
         compare (scaledRatToReal 0 denominator exponent) value.toReal =
           .lt := by
@@ -578,72 +522,18 @@ theorem compareDyadicScaled?_false_eq_compare
         numerator denominator exponent value hnumerator hdenominator
           hvalueSign hvalue
 
-/-- Nonnegative scaled-rational comparison returns `.lt` exactly for strict real order. -/
-theorem compareDyadicScaled?_false_eq_lt_iff
-    (numerator denominator : Nat) (exponent : Int)
-    (value : Numerics.Dyadic)
-    (hdenominator : denominator ≠ 0)
-    (hvalueSign : value.negative = false)
-    (hvalue : value.significand ≠ 0) :
-    Numerics.RationalBinary.compareDyadicScaled?
-        false numerator denominator exponent value = some .lt ↔
-      scaledRatToReal numerator denominator exponent < value.toReal := by
-  rw [compareDyadicScaled?_false_eq_compare
-    numerator denominator exponent value hdenominator hvalueSign hvalue]
-  simp [compare_lt_iff_lt]
-
-/-- Nonnegative scaled-rational comparison returns `.eq` exactly for real equality. -/
-theorem compareDyadicScaled?_false_eq_eq_iff
-    (numerator denominator : Nat) (exponent : Int)
-    (value : Numerics.Dyadic)
-    (hdenominator : denominator ≠ 0)
-    (hvalueSign : value.negative = false)
-    (hvalue : value.significand ≠ 0) :
-    Numerics.RationalBinary.compareDyadicScaled?
-        false numerator denominator exponent value = some .eq ↔
-      scaledRatToReal numerator denominator exponent = value.toReal := by
-  rw [compareDyadicScaled?_false_eq_compare
-    numerator denominator exponent value hdenominator hvalueSign hvalue]
-  simp
-
-/-- Nonnegative scaled-rational comparison returns `.gt` exactly for reverse strict real order. -/
-theorem compareDyadicScaled?_false_eq_gt_iff
-    (numerator denominator : Nat) (exponent : Int)
-    (value : Numerics.Dyadic)
-    (hdenominator : denominator ≠ 0)
-    (hvalueSign : value.negative = false)
-    (hvalue : value.significand ≠ 0) :
-    Numerics.RationalBinary.compareDyadicScaled?
-        false numerator denominator exponent value = some .gt ↔
-      value.toReal < scaledRatToReal numerator denominator exponent := by
-  rw [compareDyadicScaled?_false_eq_compare
-    numerator denominator exponent value hdenominator hvalueSign hvalue]
-  simp [compare_gt_iff_gt]
-
 /-! ## Comparison with an arbitrary dyadic -/
 
+/-- Negation is strictly antitone, so it reverses comparisons. -/
 private theorem compare_neg_neg_eq_swap (left right : Real) :
     compare (-left) (-right) = (compare left right).swap := by
-  rcases lt_trichotomy left right with hless | hequal | hgreater
-  · rw [compare_lt_iff_lt.mpr hless, compare_gt_iff_gt.mpr (neg_lt_neg hless)]
-    rfl
-  · subst hequal
-    simp
-  · rw [compare_gt_iff_gt.mpr hgreater, compare_lt_iff_lt.mpr (neg_lt_neg hgreater)]
-    rfl
+  have hanti : StrictAnti fun value : Real => -value := fun _ _ h => neg_lt_neg h
+  rw [← cmp_eq_compare, ← cmp_eq_compare, hanti.cmp_map_eq, cmp_swap]
 
 private theorem dyadic_toReal_eq_zero (value : Numerics.Dyadic)
     (hvalue : value.significand = 0) :
     value.toReal = 0 := by
   simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hvalue]
-
-private theorem dyadic_toReal_pos (value : Numerics.Dyadic)
-    (hvalueSign : value.negative = false) (hvalue : value.significand ≠ 0) :
-    0 < value.toReal := by
-  have hsignificand : (0 : Real) < value.significand := by
-    exact_mod_cast Nat.pos_of_ne_zero hvalue
-  simpa [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hvalueSign] using
-    mul_pos hsignificand (zpow_pos (by norm_num : (0 : ℝ) < 2) value.exponent)
 
 private theorem dyadic_toReal_neg (value : Numerics.Dyadic)
     (hvalueSign : value.negative = true) :
@@ -655,7 +545,7 @@ The optimized comparison of a signed scaled rational with an arbitrary dyadic re
 real-number ordering whenever the denominator is nonzero.
 
 Zero operands and opposite signs are decided from the signs alone. Two negative operands compare
-their magnitudes in reverse order, which reduces to `compareDyadicScaled?_false_eq_compare`.
+their magnitudes in reverse order, which reduces to the comparison of two positive values.
 -/
 theorem compareDyadicScaled?_eq_compare
     (negative : Bool) (numerator denominator : Nat) (exponent : Int)
@@ -674,14 +564,9 @@ theorem compareDyadicScaled?_eq_compare
         dyadic_toReal_eq_zero value hvalue]
     · cases hvalueSign : value.negative
       · simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hvalue, hvalueSign,
-          compare_lt_iff_lt.mpr (dyadic_toReal_pos value hvalueSign hvalue)]
-      · have hmagnitude :=
-          dyadic_toReal_pos { value with negative := false } rfl hvalue
-        have hnegative : value.toReal < 0 := by
-          rw [dyadic_toReal_neg value hvalueSign]
-          exact neg_lt_zero.mpr hmagnitude
-        simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hvalue, hvalueSign,
-          compare_gt_iff_gt.mpr hnegative]
+          compare_lt_iff_lt.mpr (Dyadic.toReal_pos_of_negative_eq_false hvalueSign hvalue)]
+      · simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hvalue, hvalueSign,
+          compare_gt_iff_gt.mpr (Dyadic.toReal_lt_zero_of_negative_eq_true hvalueSign hvalue)]
   · have hrational := scaledRatToReal_pos numerator denominator exponent hnumerator hdenominator
     by_cases hvalue : value.significand = 0
     · cases negative
@@ -691,23 +576,19 @@ theorem compareDyadicScaled?_eq_compare
       · simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hnumerator, hvalue,
           signedScaledRatToReal, dyadic_toReal_eq_zero value hvalue,
           compare_lt_iff_lt.mpr (neg_lt_zero.mpr hrational)]
-    · have hmagnitude :=
-        dyadic_toReal_pos { value with negative := false } rfl hvalue
-      cases negative <;> cases hvalueSign : value.negative
+    · cases negative <;> cases hvalueSign : value.negative
       · simpa [signedScaledRatToReal] using
-          compareDyadicScaled?_false_eq_compare numerator denominator exponent value
+          compareDyadicScaled?_false_eq_compare_of_positive numerator denominator exponent value
             hdenominator hvalueSign hvalue
-      · have hnegative : value.toReal < 0 := by
-          rw [dyadic_toReal_neg value hvalueSign]
-          exact neg_lt_zero.mpr hmagnitude
+      · have hnegative := Dyadic.toReal_lt_zero_of_negative_eq_true hvalueSign hvalue
         simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hnumerator, hvalue,
           hvalueSign, signedScaledRatToReal, compare_gt_iff_gt.mpr (hnegative.trans hrational)]
-      · have hpositive := dyadic_toReal_pos value hvalueSign hvalue
+      · have hpositive := Dyadic.toReal_pos_of_negative_eq_false hvalueSign hvalue
         simp [Numerics.RationalBinary.compareDyadicScaled?, hdenominator, hnumerator, hvalue,
           hvalueSign, signedScaledRatToReal,
           compare_lt_iff_lt.mpr ((neg_lt_zero.mpr hrational).trans hpositive)]
       · have hfalse :=
-          compareDyadicScaled?_false_eq_compare numerator denominator exponent
+          compareDyadicScaled?_false_eq_compare_of_positive numerator denominator exponent
             { value with negative := false } hdenominator rfl hvalue
         have hunfold :
             Numerics.RationalBinary.compareDyadicScaled? true numerator denominator exponent
@@ -718,6 +599,58 @@ theorem compareDyadicScaled?_eq_compare
             hvalueSign]
         rw [hunfold, hfalse, dyadic_toReal_neg value hvalueSign]
         simp [signedScaledRatToReal, compare_neg_neg_eq_swap]
+
+
+/--
+The optimized comparison of a nonnegative scaled rational with any dyadic returns their real-number
+ordering whenever the denominator is nonzero.
+-/
+theorem compareDyadicScaled?_false_eq_compare
+    (numerator denominator : Nat) (exponent : Int)
+    (value : Numerics.Dyadic)
+    (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.compareDyadicScaled?
+        false numerator denominator exponent value =
+      some (compare
+        (scaledRatToReal numerator denominator exponent) value.toReal) := by
+  simpa [signedScaledRatToReal] using
+    compareDyadicScaled?_eq_compare false numerator denominator exponent value hdenominator
+
+/-- Nonnegative scaled-rational comparison returns `.lt` exactly for strict real order. -/
+theorem compareDyadicScaled?_false_eq_lt_iff
+    (numerator denominator : Nat) (exponent : Int)
+    (value : Numerics.Dyadic)
+    (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.compareDyadicScaled?
+        false numerator denominator exponent value = some .lt ↔
+      scaledRatToReal numerator denominator exponent < value.toReal := by
+  rw [compareDyadicScaled?_false_eq_compare
+    numerator denominator exponent value hdenominator]
+  simp [compare_lt_iff_lt]
+
+/-- Nonnegative scaled-rational comparison returns `.eq` exactly for real equality. -/
+theorem compareDyadicScaled?_false_eq_eq_iff
+    (numerator denominator : Nat) (exponent : Int)
+    (value : Numerics.Dyadic)
+    (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.compareDyadicScaled?
+        false numerator denominator exponent value = some .eq ↔
+      scaledRatToReal numerator denominator exponent = value.toReal := by
+  rw [compareDyadicScaled?_false_eq_compare
+    numerator denominator exponent value hdenominator]
+  simp
+
+/-- Nonnegative scaled-rational comparison returns `.gt` exactly for reverse strict real order. -/
+theorem compareDyadicScaled?_false_eq_gt_iff
+    (numerator denominator : Nat) (exponent : Int)
+    (value : Numerics.Dyadic)
+    (hdenominator : denominator ≠ 0) :
+    Numerics.RationalBinary.compareDyadicScaled?
+        false numerator denominator exponent value = some .gt ↔
+      value.toReal < scaledRatToReal numerator denominator exponent := by
+  rw [compareDyadicScaled?_false_eq_compare
+    numerator denominator exponent value hdenominator]
+  simp [compare_gt_iff_gt]
 
 end
 

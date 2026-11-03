@@ -78,10 +78,6 @@ export function referencesPath(key?: string): string {
 
 export function href(path: string): string { return `#${path}`; }
 
-export function navigate(path: string, replace = false): void {
-  const next = `#${path}`;
-  if (replace) {
-    history.replaceState(null, '', next);
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-  } else location.hash = path;
+export function navigate(path: string): void {
+  location.hash = path;
 }

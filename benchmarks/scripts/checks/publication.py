@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-"""Check external preflight and requested agreement without changing retained evidence."""
+"""Check external preflight, documented exceptions, and requested agreement without changing retained evidence."""
 
 from __future__ import annotations
 
 import csv
+import json
 import sys
 import tempfile
 import unittest
@@ -59,6 +60,33 @@ class PreflightTests(unittest.TestCase):
         self.capture("OtherLibrary")
         with self.assertRaisesRegex(ValueError, "lacks the expected disagreement"):
             matrix.read_universal_preflight(self.benchmark)
+
+
+class ExceptionsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory(prefix="floatlib-exceptions-")
+        self.addCleanup(self.temporary.cleanup)
+        self.path = Path(self.temporary.name) / "exceptions.json"
+
+    def write(self, omitted: dict[str, str]) -> None:
+        self.path.write_text(json.dumps({
+            "schema": matrix.EXCEPTIONS_SCHEMA,
+            "omittedLanes": omitted,
+            "timingFloorExceptions": [],
+        }))
+
+    def test_documented_flocq_omission_drops_only_flocq_cells(self) -> None:
+        self.write({"flocq-reference": "measured by the matched campaign"})
+        exceptions = matrix.read_exceptions(self.path)
+        cells = matrix.expected_cells(False, {}, exceptions.omitted_lanes)
+        full = matrix.expected_cells(False, {})
+        self.assertEqual(full - cells,
+                         {cell for cell in full if cell[0] == "flocq-reference"})
+
+    def test_core_lanes_cannot_be_omitted(self) -> None:
+        self.write({"mpfr-reference": "not allowed"})
+        with self.assertRaisesRegex(ValueError, "cannot be omitted"):
+            matrix.read_exceptions(self.path)
 
 
 class RequestedAgreementTests(unittest.TestCase):

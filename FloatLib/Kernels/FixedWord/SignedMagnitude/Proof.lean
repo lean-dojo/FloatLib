@@ -35,16 +35,45 @@ def signedMagnitudeDyadic
   else
     { negative, significand := magnitude.toNat, exponent }
 
+/-- Subtracting a strictly smaller native word leaves a nonzero word. -/
+private theorem sub_ne_zero_of_lt {small large : UInt64} (h : small < large) :
+    large - small ≠ 0 := by
+  intro hzero
+  have hzeroNat := congrArg UInt64.toNat hzero
+  rw [UInt64.toNat_sub_of_le _ _ (UInt64.le_of_lt h), UInt64.toNat_zero] at hzeroNat
+  have hnatLt := UInt64.lt_iff_toNat_lt.mp h
+  omega
+
+/-- A native sum below the word capacity with a nonzero operand is a nonzero word. -/
+private theorem add_ne_zero_of_lt {left right : UInt64} (hleft : left.toNat ≠ 0)
+    (hsum : left.toNat + right.toNat < 2 ^ 64) :
+    left + right ≠ 0 := by
+  intro hzero
+  have hzeroNat := congrArg UInt64.toNat hzero
+  rw [UInt64.toNat_add, Nat.mod_eq_of_lt hsum, UInt64.toNat_zero] at hzeroNat
+  omega
+
+/-- Of two distinct native words, the one that is not smaller is larger. -/
+private theorem lt_of_not_lt_of_ne {left right : UInt64}
+    (hlt : ¬left < right) (hne : left ≠ right) :
+    right < left := by
+  have hnatNotLt : ¬left.toNat < right.toNat := fun h =>
+    hlt (UInt64.lt_iff_toNat_lt.mpr h)
+  have hnatNe : left.toNat ≠ right.toNat := fun h =>
+    hne (UInt64.toNat_inj.mp h)
+  exact UInt64.lt_iff_toNat_lt.mpr (by omega)
+
 /--
 A zero magnitude returned by native signed-magnitude addition always has a positive sign.
 
-The no-overflow premise rules out a wrapped same-sign sum. With nonzero inputs, the remaining
-zero case is exact cancellation of opposite, equal magnitudes.
+The no-overflow premise rules out a wrapped same-sign sum. With a nonzero left input, the
+remaining zero case is exact cancellation of opposite, equal magnitudes. Some input must be
+nonzero: two negative zeros add to a negative zero.
 -/
 theorem addSignedMagnitudes_sign_eq_false_of_magnitude_eq_zero
     (leftNegative rightNegative : Bool)
     (leftMagnitude rightMagnitude : UInt64)
-    (hleft : leftMagnitude ≠ 0) (hright : rightMagnitude ≠ 0)
+    (hleft : leftMagnitude ≠ 0)
     (hsum :
       leftNegative = rightNegative →
         leftMagnitude.toNat + rightMagnitude.toNat < 2 ^ 64)
@@ -55,52 +84,25 @@ theorem addSignedMagnitudes_sign_eq_false_of_magnitude_eq_zero
       leftNegative rightNegative leftMagnitude rightMagnitude).1 = false := by
   have hleftNat : leftMagnitude.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hleft
-  have hrightNat : rightMagnitude.toNat ≠ 0 := by
-    simpa [← UInt64.toNat_inj] using hright
   cases leftNegative <;> cases rightNegative
   · simp [addSignedMagnitudes]
   · by_cases heq : leftMagnitude = rightMagnitude
     · simp [addSignedMagnitudes, heq]
     · by_cases hlt : leftMagnitude < rightMagnitude
       · exfalso
-        have hsubZero : rightMagnitude - leftMagnitude = 0 := by
-          simpa [addSignedMagnitudes, heq, hlt] using hzero
-        have hsubNat := congrArg UInt64.toNat hsubZero
-        rw [UInt64.toNat_sub_of_le] at hsubNat
-        · simp only [UInt64.toNat_zero] at hsubNat
-          have hnatLt := UInt64.lt_iff_toNat_lt.mp hlt
-          omega
-        · exact UInt64.le_of_lt hlt
+        exact sub_ne_zero_of_lt hlt
+          (by simpa [addSignedMagnitudes, heq, hlt] using hzero)
       · simp [addSignedMagnitudes, heq, hlt]
   · by_cases heq : leftMagnitude = rightMagnitude
     · simp [addSignedMagnitudes, heq]
     · by_cases hlt : leftMagnitude < rightMagnitude
       · simp [addSignedMagnitudes, heq, hlt]
       · exfalso
-        have hnotLt : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
-          intro h
-          exact hlt (UInt64.lt_iff_toNat_lt.mpr h)
-        have hne : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
-          intro h
-          exact heq (UInt64.toNat_inj.mp h)
-        have hrightLt : rightMagnitude < leftMagnitude :=
-          UInt64.lt_iff_toNat_lt.mpr (by omega)
-        have hsubZero : leftMagnitude - rightMagnitude = 0 := by
-          simpa [addSignedMagnitudes, heq, hlt] using hzero
-        have hsubNat := congrArg UInt64.toNat hsubZero
-        rw [UInt64.toNat_sub_of_le] at hsubNat
-        · simp only [UInt64.toNat_zero] at hsubNat
-          have hnatLt := UInt64.lt_iff_toNat_lt.mp hrightLt
-          omega
-        · exact UInt64.le_of_lt hrightLt
+        exact sub_ne_zero_of_lt (lt_of_not_lt_of_ne hlt heq)
+          (by simpa [addSignedMagnitudes, heq, hlt] using hzero)
   · exfalso
-    have hsum' := hsum rfl
-    have haddZero : leftMagnitude + rightMagnitude = 0 := by
-      simpa [addSignedMagnitudes] using hzero
-    have haddNat := congrArg UInt64.toNat haddZero
-    rw [UInt64.toNat_add, Nat.mod_eq_of_lt hsum'] at haddNat
-    simp only [UInt64.toNat_zero] at haddNat
-    omega
+    exact add_ne_zero_of_lt hleftNat (hsum rfl)
+      (by simpa [addSignedMagnitudes] using hzero)
 
 /--
 Native signed-magnitude addition denotes exact dyadic addition at a common exponent.
@@ -129,190 +131,28 @@ theorem signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
     simpa [← UInt64.toNat_inj] using hleft
   have hrightNat : rightMagnitude.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hright
-  cases leftNegative <;> cases rightNegative
-  all_goals
-    unfold addSignedMagnitudes signedMagnitudeDyadic Dyadic.addFields
-    simp only [hleftNat, hrightNat, beq_iff_eq, ite_false, le_refl, ite_true,
-      Bool.false_eq_true, Bool.true_eq_false, sub_self, Int.toNat_zero]
-  · have hsum' := hsum rfl
+  rw [Dyadic.addFields_eq]
+  by_cases hsign : leftNegative = rightNegative
+  · subst rightNegative
     have hadd :
         (leftMagnitude + rightMagnitude).toNat =
           leftMagnitude.toNat + rightMagnitude.toNat := by
-      rw [UInt64.toNat_add, Nat.mod_eq_of_lt hsum']
-    have hpositiveNat :
-        0 < leftMagnitude.toNat + rightMagnitude.toNat := by
-      omega
-    have hpositive :
-        0 < (leftMagnitude.toNat : Int) + rightMagnitude.toNat := by
-      exact_mod_cast hpositiveNat
-    have hnatAbs :
-        ((leftMagnitude.toNat : Int) + rightMagnitude.toNat).natAbs =
-          leftMagnitude.toNat + rightMagnitude.toNat := by
-      rw [Int.natAbs_add_of_nonneg] <;> simp
-    have hwordNe : leftMagnitude + rightMagnitude ≠ 0 := by
-      intro hzero
-      have hzeroNat := congrArg UInt64.toNat hzero
-      rw [hadd] at hzeroNat
-      simp only [UInt64.toNat_zero] at hzeroNat
-      omega
-    have hintNe :
-        (leftMagnitude.toNat : Int) + rightMagnitude.toNat ≠ 0 :=
-      ne_of_gt hpositive
-    simp [hadd, hwordNe, hintNe, Int.not_lt.mpr hpositive.le, hnatAbs]
+      rw [UInt64.toNat_add, Nat.mod_eq_of_lt (hsum rfl)]
+    rw [Dyadic.add_same_sign_same_exponent _ _ _ _ hleftNat hrightNat]
+    simp [addSignedMagnitudes, signedMagnitudeDyadic, hadd, add_ne_zero_of_lt hleftNat (hsum rfl)]
   · by_cases heq : leftMagnitude = rightMagnitude
     · subst rightMagnitude
-      simp
+      rw [Dyadic.add_opposite_sign_same_exponent_eq_zero _ _ _ _ hsign]
+      simp [addSignedMagnitudes, signedMagnitudeDyadic, hsign]
     · by_cases hlt : leftMagnitude < rightMagnitude
-      · have hnatLt : leftMagnitude.toNat < rightMagnitude.toNat :=
-          UInt64.lt_iff_toNat_lt.mp hlt
-        have hsub :
-            (rightMagnitude - leftMagnitude).toNat =
-              rightMagnitude.toNat - leftMagnitude.toNat := by
-          rw [UInt64.toNat_sub_of_le]
-          exact UInt64.le_iff_toNat_le.mpr hnatLt.le
-        have hnegative :
-            (leftMagnitude.toNat : Int) + -rightMagnitude.toNat < 0 := by
-          omega
-        have hnatAbs :
-            ((leftMagnitude.toNat : Int) + -rightMagnitude.toNat).natAbs =
-              rightMagnitude.toNat - leftMagnitude.toNat := by
-          have hcast :=
-            Int.ofNat_natAbs_of_nonpos (le_of_lt hnegative)
-          norm_num at hcast ⊢
-          omega
-        have hwordNe : rightMagnitude - leftMagnitude ≠ 0 := by
-          intro hzero
-          have hzeroNat := congrArg UInt64.toNat hzero
-          rw [hsub] at hzeroNat
-          simp only [UInt64.toNat_zero] at hzeroNat
-          omega
-        have hintNe :
-            (leftMagnitude.toNat : Int) + -rightMagnitude.toNat ≠ 0 :=
-          ne_of_lt hnegative
-        simp [heq, hlt, hsub, hwordNe, hintNe, hnegative, hnatAbs]
-      · have hnatNotLt : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
-          intro h
-          exact hlt (UInt64.lt_iff_toNat_lt.mpr h)
-        have hnatNe : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
-          intro h
-          apply heq
-          exact UInt64.toNat_inj.mp h
-        have hnatGt : rightMagnitude.toNat < leftMagnitude.toNat := by
-          omega
-        have hsub :
-            (leftMagnitude - rightMagnitude).toNat =
-              leftMagnitude.toNat - rightMagnitude.toNat := by
-          rw [UInt64.toNat_sub_of_le]
-          exact UInt64.le_iff_toNat_le.mpr hnatGt.le
-        have hpositive :
-            0 < (leftMagnitude.toNat : Int) + -rightMagnitude.toNat := by
-          omega
-        have hnatAbs :
-            ((leftMagnitude.toNat : Int) + -rightMagnitude.toNat).natAbs =
-              leftMagnitude.toNat - rightMagnitude.toNat := by
-          have hcast := Int.natAbs_of_nonneg (le_of_lt hpositive)
-          norm_num at hcast ⊢
-          omega
-        have hwordNe : leftMagnitude - rightMagnitude ≠ 0 := by
-          intro hzero
-          have hzeroNat := congrArg UInt64.toNat hzero
-          rw [hsub] at hzeroNat
-          simp only [UInt64.toNat_zero] at hzeroNat
-          omega
-        have hintNe :
-            (leftMagnitude.toNat : Int) + -rightMagnitude.toNat ≠ 0 :=
-          ne_of_gt hpositive
-        simp [heq, hlt, hsub, hwordNe, hintNe, hnatNotLt, hnatAbs]
-  · by_cases heq : leftMagnitude = rightMagnitude
-    · subst rightMagnitude
-      simp
-    · by_cases hlt : leftMagnitude < rightMagnitude
-      · have hnatLt : leftMagnitude.toNat < rightMagnitude.toNat :=
-          UInt64.lt_iff_toNat_lt.mp hlt
-        have hsub :
-            (rightMagnitude - leftMagnitude).toNat =
-              rightMagnitude.toNat - leftMagnitude.toNat := by
-          rw [UInt64.toNat_sub_of_le]
-          exact UInt64.le_iff_toNat_le.mpr hnatLt.le
-        have hpositive :
-            0 < -(leftMagnitude.toNat : Int) + rightMagnitude.toNat := by
-          omega
-        have hnatAbs :
-            (-(leftMagnitude.toNat : Int) + rightMagnitude.toNat).natAbs =
-              rightMagnitude.toNat - leftMagnitude.toNat := by
-          have hcast := Int.natAbs_of_nonneg (le_of_lt hpositive)
-          norm_num at hcast ⊢
-          omega
-        have hnotReverse : ¬rightMagnitude.toNat < leftMagnitude.toNat := by
-          omega
-        have hwordNe : rightMagnitude - leftMagnitude ≠ 0 := by
-          intro hzero
-          have hzeroNat := congrArg UInt64.toNat hzero
-          rw [hsub] at hzeroNat
-          simp only [UInt64.toNat_zero] at hzeroNat
-          omega
-        have hintNe :
-            -(leftMagnitude.toNat : Int) + rightMagnitude.toNat ≠ 0 :=
-          ne_of_gt hpositive
-        simp [heq, hlt, hsub, hwordNe, hintNe, hnotReverse, hnatAbs]
-      · have hnatNotLt : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
-          intro h
-          exact hlt (UInt64.lt_iff_toNat_lt.mpr h)
-        have hnatNe : leftMagnitude.toNat ≠ rightMagnitude.toNat := by
-          intro h
-          apply heq
-          exact UInt64.toNat_inj.mp h
-        have hnatGt : rightMagnitude.toNat < leftMagnitude.toNat := by
-          omega
-        have hsub :
-            (leftMagnitude - rightMagnitude).toNat =
-              leftMagnitude.toNat - rightMagnitude.toNat := by
-          rw [UInt64.toNat_sub_of_le]
-          exact UInt64.le_iff_toNat_le.mpr hnatGt.le
-        have hnegative :
-            -(leftMagnitude.toNat : Int) + rightMagnitude.toNat < 0 := by
-          omega
-        have hnatAbs :
-            (-(leftMagnitude.toNat : Int) + rightMagnitude.toNat).natAbs =
-              leftMagnitude.toNat - rightMagnitude.toNat := by
-          have hcast :=
-            Int.ofNat_natAbs_of_nonpos (le_of_lt hnegative)
-          norm_num at hcast ⊢
-          omega
-        have hwordNe : leftMagnitude - rightMagnitude ≠ 0 := by
-          intro hzero
-          have hzeroNat := congrArg UInt64.toNat hzero
-          rw [hsub] at hzeroNat
-          simp only [UInt64.toNat_zero] at hzeroNat
-          omega
-        have hintNe :
-            -(leftMagnitude.toNat : Int) + rightMagnitude.toNat ≠ 0 :=
-          ne_of_lt hnegative
-        simp [heq, hlt, hsub, hwordNe, hintNe, hnegative, hnatAbs]
-  · have hsum' := hsum rfl
-    have hadd :
-        (leftMagnitude + rightMagnitude).toNat =
-          leftMagnitude.toNat + rightMagnitude.toNat := by
-      rw [UInt64.toNat_add, Nat.mod_eq_of_lt hsum']
-    have hnegative :
-        -(leftMagnitude.toNat : Int) + -rightMagnitude.toNat < 0 := by
-      omega
-    have hnatAbs :
-        (-(leftMagnitude.toNat : Int) + -rightMagnitude.toNat).natAbs =
-          leftMagnitude.toNat + rightMagnitude.toNat := by
-      have hcast :=
-        Int.ofNat_natAbs_of_nonpos (le_of_lt hnegative)
-      norm_num at hcast ⊢
-      omega
-    have hwordNe : leftMagnitude + rightMagnitude ≠ 0 := by
-      intro hzero
-      have hzeroNat := congrArg UInt64.toNat hzero
-      rw [hadd] at hzeroNat
-      simp only [UInt64.toNat_zero] at hzeroNat
-      omega
-    have hintNe :
-        -(leftMagnitude.toNat : Int) + -rightMagnitude.toNat ≠ 0 :=
-      ne_of_lt hnegative
-    simp [hadd, hwordNe, hintNe, hnegative, hnatAbs]
+      · rw [Dyadic.add_opposite_sign_same_exponent_large_right _ _ _ _ _ hsign
+          (UInt64.lt_iff_toNat_lt.mp hlt)]
+        simp [addSignedMagnitudes, signedMagnitudeDyadic, hsign, heq, hlt,
+          sub_ne_zero_of_lt hlt, UInt64.toNat_sub_of_le _ _ (UInt64.le_of_lt hlt)]
+      · have hgt := lt_of_not_lt_of_ne hlt heq
+        rw [Dyadic.add_opposite_sign_same_exponent_large_left _ _ _ _ _ hsign
+          (UInt64.lt_iff_toNat_lt.mp hgt)]
+        simp [addSignedMagnitudes, signedMagnitudeDyadic, hsign, heq, hlt,
+          sub_ne_zero_of_lt hgt, UInt64.toNat_sub_of_le _ _ (UInt64.le_of_lt hgt)]
 
 end FloatLib.Numerics.FixedWord

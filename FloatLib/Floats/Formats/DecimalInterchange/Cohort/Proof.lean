@@ -21,6 +21,7 @@ trailing zero, so it never discards a significant decimal digit.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
+/-- Stripping trailing zeros removes at most `fuel` digits. -/
 theorem stripTrailing_count_le (fuel c : Nat) : (stripTrailing fuel c).2 ≤ fuel := by
   induction fuel generalizing c with
   | zero => simp [stripTrailing]

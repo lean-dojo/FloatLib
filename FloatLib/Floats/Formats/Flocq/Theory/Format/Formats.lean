@@ -101,23 +101,18 @@ instance fixValidExp (emin : ℤ) : ValidExp (fixExp emin) where
     · intro h; simp [fixExp] at h ⊢; exact Int.le_of_lt h
     · intro _; simp [fixExp]
 
+/-- The constant FIX exponent function is monotone. -/
 instance fixMonotoneExp (emin : ℤ) : MonotoneExp (fixExp emin) where
   monotone := by simp [fixExp]
 
+/-- The constant FIX exponent function selects the same exponent in successive bins. -/
 instance fixBoundedExpGrowth (emin : ℤ) : BoundedExpGrowth (fixExp emin) where
   boundedGrowth := by simp [fixExp]
 
 /-- The ULP at zero for a fixed-point grid is its fixed grid step. -/
 theorem ulp_zero_FIX (emin : ℤ) :
-    ulp β (fixExp emin) 0 = bpow β emin := by
-  rw [ulp.zero]
-  cases hopt : negligibleExp (fixExp emin) with
-  | none =>
-      have hnone := (negligibleExp_eq_none_iff (fixExp emin)).mp hopt
-      exfalso
-      apply hnone
-      exact ⟨emin, by simp [IsNegligibleExp, fixExp]⟩
-  | some n => simp [fixExp]
+    ulp β (fixExp emin) 0 = bpow β emin :=
+  ulp.zero_of_isNegligibleExp β (fixExp emin) (m := emin) le_rfl
 
 /--
 `FIXFormat emin x` says that `x` is exactly representable on the fixed grid with exponent `emin`.
@@ -351,22 +346,8 @@ theorem exists_negligibleExp_FLT (emin prec : ℤ) :
 /-- The ULP at zero for FLT is the smallest grid step $\beta^{\mathtt{emin}}$. -/
 theorem ulp_zero_FLT (emin prec : ℤ) (hprec : 0 < prec) :
     @ulp β (fltExp emin prec) (fltValidExp emin prec hprec) 0 = bpow β emin := by
-  rw [ulp.zero]
-  cases hopt : negligibleExp (fltExp emin prec) with
-  | none =>
-      have hnone := (negligibleExp_eq_none_iff (fltExp emin prec)).mp hopt
-      exact False.elim (hnone (exists_negligibleExp_FLT emin prec))
-  | some n =>
-      have hn := negligibleExp_spec hopt
-      have hp : 0 ≤ prec := hprec.le
-      have hnE : n ≤ emin := by
-        rcases (le_max_iff.mp hn) with hbad | hgood
-        · exfalso
-          linarith
-        · exact hgood
-      have hselected : fltExp emin prec n = emin := by
-        apply max_eq_right
-        exact (sub_le_self n hp).trans hnE
-      simp [hselected]
+  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
+  rw [ulp.zero_of_isNegligibleExp β (fltExp emin prec) (le_max_right (emin - prec) emin)]
+  rw [fltExp, max_eq_right (sub_le_self emin hprec.le)]
 
 end FloatLib.Floats.Formats.Flocq

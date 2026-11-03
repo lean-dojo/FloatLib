@@ -309,8 +309,8 @@ returned pair is correct on the normalized domain, so the backend needs no failu
 /--
 Round a certified quotient to nearest, ties to even.
 
-`roundQuotient_toNat` requires `den < 2^127`, `remainder < den`, and the incremented quotient
-below `2^128`. The two-word backends satisfy these for their normalized operands.
+`roundQuotient_toNat` requires `remainder < den` and the incremented quotient below `2^128`. The
+two-word backends satisfy these for their normalized operands.
 -/
 @[inline] def roundQuotient
     (den quotient remainder : FloatLib.Numerics.FixedWord.UInt128) :

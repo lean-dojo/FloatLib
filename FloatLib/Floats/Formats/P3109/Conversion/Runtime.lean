@@ -17,10 +17,12 @@ dyadics, configured binary floats, configured posits, and other rationally decod
 ordinary `convert`, `cast`, and destination-driven mixed-operation APIs without first passing
 through a host float.
 
-The conversion context is `ProjectionPolicy` itself, so the P3109 rounding and saturation modes
-live in one policy type. Every policy produces a P3109 datum, so conversion returns success for
-finite, infinite, and exceptional observations. Changes to an input infinity or exceptional
-observation are reported through `mappedSpecial`, and endpoint clamping through `saturated`.
+The quantizer context is `ProjectionPolicy` itself, so `run` takes the P3109 rounding and
+saturation modes in one policy. The conversion entry points take the rounding as their `mode` and
+the `SaturationMode` as their `context`. Every policy produces a P3109 datum, so conversion
+returns success for finite, infinite, and exceptional observations. Changes to an input infinity
+or exceptional observation are reported through `mappedSpecial`, and endpoint clamping through
+`saturated`.
 -/
 
 @[expose] public section
@@ -152,7 +154,7 @@ The report defines no status flags, so these are FloatLib's conversion indicator
       {
         saturated := isFiniteEndpoint format projected
         mappedSpecial := mappedSpecial input projected
-        invalid := exceptional.isSignalingNaN
+        invalid := exceptional.isSNaN
       }
 
 /-- Quantize one complete exact-rational observation according to its P3109 projection policy. -/
@@ -169,7 +171,8 @@ Conversion contract: the outcome has `run`'s word and status, and the word denot
 round-then-saturate datum.
 
 `SameDatum` compares finite values numerically and identifies NaN payloads, so the word equality
-is stated as well.
+is stated as well. The status clause is `status` itself, so this contract does not check the flags
+against a separate statement.
 -/
 def spec :
     Quantization.Spec Formats.P3109.ProjectionPolicy

@@ -20,7 +20,7 @@ including small negative inputs that round to zero.
 The sentinel characterization includes the in-range integer `2^(width-1)`;
 its unsigned encoding is indistinguishable from the NaR or out-of-range result.
 Input conversion reserves that word before numerical rounding. Representable
-non-sentinel integers have exact round trips.
+integers have exact round trips; the sentinel word goes through NaR and back.
 -/
 
 @[expose] public section
@@ -36,6 +36,10 @@ theorem unsignedSentinel_toNat (hwidth : 0 < width) :
     (BitVec.intMin width).toNat = 2 ^ (width - 1) :=
   BitVec.toNat_intMin_of_pos hwidth
 
+/--
+The MSB-only unsigned word converts to NaR. Posit Standard (2022) §6.4 reserves it on input,
+although as an unsigned number it would denote `2 ^ (width - 1)`.
+-/
 @[simp] theorem ofUnsigned_intMin (format : Format) (hwidth : 0 < width) :
     ofUnsigned format (BitVec.intMin width) hwidth = nar format := by
   simp [ofUnsigned]
@@ -54,10 +58,12 @@ theorem ofUnsigned_eq_of_toRat? (value : BitVec width) (hwidth : 0 < width)
   rw [ofUnsigned_eq_roundRat value hwidth hvalue]
   exact roundRat_toRat? result _ hexact
 
+/-- NaR converts to the MSB-only unsigned word. -/
 @[simp] theorem toUnsigned_nar (format : Format) (hwidth : 0 < width) :
     toUnsigned width (nar format) hwidth = BitVec.intMin width := by
   simp [toUnsigned]
 
+/-- A posit without a rational value, which is exactly NaR, converts to the MSB-only word. -/
 theorem toUnsigned_eq_intMin_of_none (value : Model format) (hwidth : 0 < width)
     (hvalue : value.toRat? = none) :
     toUnsigned width value hwidth = BitVec.intMin width := by
@@ -70,6 +76,10 @@ theorem toUnsigned_eq_of_inRange (value : Model format) (hwidth : 0 < width) {q 
     toUnsigned width value hwidth = BitVec.ofNat width (roundRatEven q).toNat := by
   simp [toUnsigned, hvalue, IntegerRange.round?, hrange]
 
+/--
+A finite posit whose nearest-even integer lies outside the `width`-bit unsigned range converts to
+the MSB-only word.
+-/
 theorem toUnsigned_eq_intMin_of_not_inRange (value : Model format) (hwidth : 0 < width)
     {q : Rat} (hvalue : value.toRat? = some q)
     (hrange : ¬ (IntegerFormat.unsigned width).InRange (roundRatEven q)) :
@@ -131,20 +141,26 @@ theorem toUnsigned_eq_of_nat (value : Model format) (hwidth : 0 < width) {intege
     (hvalue : value.toRat? = some (integer : Rat)) (hrange : integer < 2 ^ width) :
     toUnsigned width value hwidth = BitVec.ofNat width integer := by
   have hr : (IntegerFormat.unsigned width).InRange (integer : Int) := by
-    have hb : (integer : Int) < (2 : Int) ^ width := by exact_mod_cast hrange
-    change 0 ≤ (integer : Int) ∧ (integer : Int) ≤ (2 : Int) ^ width - 1
-    omega
+    simpa [Nat.mod_eq_of_lt hrange] using
+      IntegerFormat.toNat_inRange (BitVec.ofNat width integer)
   have he : roundRatEven (integer : Rat) = (integer : Int) :=
     roundRatEven_intCast (integer : Int)
   rw [toUnsigned_eq_of_inRange value hwidth hvalue (by rwa [he]), he, Int.toNat_natCast]
 
-/-- Exact posit representability and a non-sentinel input suffice for an unsigned round trip. -/
+/--
+Exact posit representability suffices for an unsigned round trip. The sentinel word
+`BitVec.intMin width` maps to NaR and back with no condition, so representability is required only
+of the other words.
+-/
 theorem toUnsigned_ofUnsigned (value : BitVec width) (hwidth : 0 < width)
-    (hvalue : value ≠ BitVec.intMin width)
-    (hexact : (roundRat format (value.toNat : Rat)).toRat? = some (value.toNat : Rat)) :
+    (hexact : value ≠ BitVec.intMin width →
+      (roundRat format (value.toNat : Rat)).toRat? = some (value.toNat : Rat)) :
     toUnsigned width (ofUnsigned format value hwidth) hwidth = value := by
+  by_cases hvalue : value = BitVec.intMin width
+  · subst hvalue
+    simp
   rw [ofUnsigned_eq_roundRat value hwidth hvalue,
-    toUnsigned_eq_of_nat _ hwidth hexact value.isLt, BitVec.ofNat_toNat]
+    toUnsigned_eq_of_nat _ hwidth (hexact hvalue) value.isLt, BitVec.ofNat_toNat]
   simp
 
 end FloatLib.Floats.Formats.Posit.Model

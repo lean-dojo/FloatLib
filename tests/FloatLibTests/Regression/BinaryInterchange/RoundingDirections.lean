@@ -37,9 +37,10 @@ The checks cover, under all six directions:
   conversion, and the sign of exactly cancelling sums, and boundary vectors at the tininess
   thresholds, an exact subnormal, the overflow midpoint of E4M3FN, and saturation in E2M1.
 
-Compile-time checks confirm that `open FloatLib.Rounding` lets a directed operation take the
-bare mode name in `(mode := up)`, that the open makes a pattern spelled `up` the constructor, and
-that partial application and a symbolic `status` elaborate.
+Compile-time checks confirm that `(mode := .up)` names the upward direction of every mode type a
+call expects, that `open FloatLib.Rounding` names the type `IEEERoundingMode` and no direction, so
+a pattern spelled `up` stays a variable, and that partial application and a symbolic `status`
+elaborate.
 
 Exhaustive fused multiply-add over every operand triple of both eight-bit formats is the opt-in
 campaign `exhaustiveFmaFailures`, run in shards by `tests/oracles/rounding-fma-exhaustive.sh`, and
@@ -737,27 +738,27 @@ def boundaryFailures : Thunk Nat := ⟨fun _ =>
         overflowInexact .lt
     ]⟩
 
-/-! ## Bare mode names -/
+/-! ## Mode spelling -/
 
 open FloatLib.Rounding in
-/-- After `open FloatLib.Rounding`, `(mode := up)` names `IEEERoundingMode.up`. -/
-example (x : Model FloatFormat.binary32) :
-    Model.sqrt x (mode := up) = Model.sqrt x (mode := .up) ∧
-      (Model.sqrt x (mode := up) (status := true)).value = Model.sqrt x (mode := .up) :=
-  ⟨rfl, Model.value_sqrt x .up⟩
-
-open FloatLib.Rounding in
-/--
-With the bare names open, a pattern spelled `up` is the constructor `IEEERoundingMode.up`, not a
-fresh variable, so this match sends `.down` to its last arm. Bind such values under other names,
-and keep the `open` as narrow as `open ... in`.
--/
-example : (match Model.IEEERoundingMode.down with | up => true | _ => false) = false := rfl
-
-open FloatLib.Rounding in
-/-- The open also names the mode type, so a definition can take a direction as a parameter. -/
+/-- `open FloatLib.Rounding` names the mode type, so a definition can take a direction as a
+parameter. -/
 example (mode : IEEERoundingMode) (x : Model FloatFormat.binary32) :
     Model.sqrt x (mode := mode) = Model.sqrt x (mode := (mode : Model.IEEERoundingMode)) := rfl
+
+-- The open names no direction: a direction keeps its leading dot, and a bare `up` is unknown.
+/--
+error: Unknown identifier `up`
+-/
+#guard_msgs (substring := true) in
+open FloatLib.Rounding in
+example (x : Model FloatFormat.binary32) : Model FloatFormat.binary32 :=
+  Model.sqrt x (mode := up)
+
+set_option linter.constructorNameAsVariable false in
+open FloatLib.Rounding in
+/-- Even with the open, a pattern spelled `up` binds a fresh variable that matches every mode. -/
+example : (match Model.IEEERoundingMode.down with | up => up) = .down := rfl
 
 /-- `toString` prints the constructor names, while `name` keeps the interchange-file spellings. -/
 example :
@@ -767,10 +768,6 @@ example :
         ["nearestEven", "nearestAway", "towardZero", "towardPositive", "towardNegative",
           "awayFromZero"] := by
   decide
-
-set_option linter.constructorNameAsVariable false in
-/-- Without the open, the same spelling binds a variable that matches every mode. -/
-example : (match Model.IEEERoundingMode.down with | up => up) = .down := rfl
 
 /-- Partial application keeps the default options of a one-name operation. -/
 example (xs : List (Model FloatFormat.binary32)) :

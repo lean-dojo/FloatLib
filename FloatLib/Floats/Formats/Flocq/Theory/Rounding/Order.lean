@@ -40,7 +40,7 @@ theorem round_le_of_cexp_eq (rnd : ℝ → ℤ) [ValidRnd rnd]
   exact mul_le_mul_of_nonneg_right hmR (bpow.nonneg β _)
 
 /-- Positive generic rounding is monotone. -/
-theorem round_mono_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
+private theorem round_mono_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
     {x y : ℝ} (hx : 0 < x) (hxy : x ≤ y) :
     round (β := β) (fexp := fexp) rnd x ≤
       round (β := β) (fexp := fexp) rnd y := by
@@ -85,26 +85,14 @@ theorem round_mono_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
 /-- Rounding a nonnegative value with a valid mode produces a nonnegative value. -/
 theorem round_nonneg (rnd : ℝ → ℤ) [ValidRnd rnd] {x : ℝ} (hx : 0 ≤ x) :
     0 ≤ round (β := β) (fexp := fexp) rnd x := by
-  have hs : 0 ≤ scaledMantissa β fexp x := by
-    rw [scaledMantissa_eq_div]
-    exact div_nonneg hx (bpow.nonneg β _)
-  have hm : 0 ≤ rnd (scaledMantissa β fexp x) := by
-    have := ValidRnd.monotone (rnd := rnd) 0 (scaledMantissa β fexp x) hs
-    have hr0 : rnd 0 = 0 := by simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
-    rwa [hr0] at this
+  have hm := ValidRnd.nonneg rnd (scaledMantissa_nonneg (β := β) (fexp := fexp) hx)
   unfold round toReal
   exact mul_nonneg (by exact_mod_cast hm) (bpow.nonneg β _)
 
 /-- Rounding a nonpositive value with a valid mode produces a nonpositive value. -/
 theorem round_nonpos (rnd : ℝ → ℤ) [ValidRnd rnd] {x : ℝ} (hx : x ≤ 0) :
     round (β := β) (fexp := fexp) rnd x ≤ 0 := by
-  have hs : scaledMantissa β fexp x ≤ 0 := by
-    rw [scaledMantissa_eq_div]
-    exact div_nonpos_of_nonpos_of_nonneg hx (bpow.nonneg β _)
-  have hm : rnd (scaledMantissa β fexp x) ≤ 0 := by
-    have := ValidRnd.monotone (rnd := rnd) (scaledMantissa β fexp x) 0 hs
-    have hr0 : rnd 0 = 0 := by simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
-    rwa [hr0] at this
+  have hm := ValidRnd.nonpos rnd (scaledMantissa_nonpos (β := β) (fexp := fexp) hx)
   unfold round toReal
   exact mul_nonpos_of_nonpos_of_nonneg (by exact_mod_cast hm) (bpow.nonneg β _)
 
@@ -120,11 +108,7 @@ theorem round_mono (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ} (hxy : x ≤ y
     · have hy0 : y ≤ 0 := le_of_not_gt hy
       by_cases hyz : y = 0
       · subst y
-        exact (round_nonpos rnd hx0).trans (by
-          have hr0 : round (β := β) (fexp := fexp) rnd 0 = 0 := by
-            have hgeneric : genericFormat β fexp 0 := generic_format_zero
-            exact round_preserves_generic rnd 0 hgeneric
-          rw [hr0])
+        exact (round_nonpos rnd hx0).trans (round_zero rnd).ge
       · have hny : 0 < -y := neg_pos.mpr (lt_of_le_of_ne hy0 hyz)
         have hnegxy : -y ≤ -x := neg_le_neg hxy
         have hmono := round_mono_pos (β := β) (fexp := fexp)
@@ -171,24 +155,10 @@ theorem round_trunc_point (x : ℝ) :
       (round (β := β) (fexp := fexp) truncRound x) := by
   constructor
   · intro hx
-    have hs : 0 ≤ scaledMantissa β fexp x := by
-      rw [scaledMantissa_eq_div]
-      exact div_nonneg hx (bpow.nonneg β _)
-    have hr : round (β := β) (fexp := fexp) truncRound x =
-        round (β := β) (fexp := fexp) floorRound x := by
-      unfold round
-      rw [truncRound_eq_floor hs]
-    rw [hr]
+    rw [round_congr (rnd' := floorRound) (truncRound_eq_floor (scaledMantissa_nonneg hx))]
     exact round_floor_point x
   · intro hx
-    have hs : scaledMantissa β fexp x ≤ 0 := by
-      rw [scaledMantissa_eq_div]
-      exact div_nonpos_of_nonpos_of_nonneg hx (bpow.nonneg β _)
-    have hr : round (β := β) (fexp := fexp) truncRound x =
-        round (β := β) (fexp := fexp) ceilRound x := by
-      unfold round
-      rw [truncRound_eq_ceil hs]
-    rw [hr]
+    rw [round_congr (rnd' := ceilRound) (truncRound_eq_ceil (scaledMantissa_nonpos hx))]
     exact round_ceil_point x
 
 /--
@@ -209,32 +179,24 @@ theorem toNearest_is_nearest_integer (rnd : ℝ → ℤ) [ValidRndToNearest rnd]
     rw [abs_sub_comm (n : ℝ) x]
     linarith
 
+/-- The rounding error is the integer rounding error of the scaled mantissa, at its scale. -/
+private theorem round_sub_self (rnd : ℝ → ℤ) (x : ℝ) :
+    round (β := β) (fexp := fexp) rnd x - x =
+      ((rnd (scaledMantissa β fexp x) : ℝ) - scaledMantissa β fexp x) *
+        bpow β (cexp β fexp x) := by
+  have hx := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
+  unfold round toReal
+  linear_combination hx
+
 /-- Nearest generic rounding is no farther from the input than any other integer rounding. -/
 theorem round_toNearest_error_le (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (other : ℝ → ℤ)
     (x : ℝ) :
     abs (round (β := β) (fexp := fexp) rnd x - x) ≤
       abs (round (β := β) (fexp := fexp) other x - x) := by
   let s := scaledMantissa β fexp x
-  let b := bpow β (cexp β fexp x)
-  have hxb : x = s * b := by
-    simpa [s, b] using (scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x).symm
-  have hlocal := toNearest_is_nearest_integer rnd s (other s)
-  have hb : 0 ≤ b := by simp [b, bpow.nonneg]
-  have hscaled := mul_le_mul_of_nonneg_right hlocal hb
-  have hnear : round (β := β) (fexp := fexp) rnd x - x =
-      ((rnd s : ℝ) - s) * b := by
-    unfold round toReal
-    change (rnd s : ℝ) * b - x = ((rnd s : ℝ) - s) * b
-    rw [hxb]
-    ring
-  have hother : round (β := β) (fexp := fexp) other x - x =
-      ((other s : ℝ) - s) * b := by
-    unfold round toReal
-    change (other s : ℝ) * b - x = ((other s : ℝ) - s) * b
-    rw [hxb]
-    ring
-  rw [hnear, hother, abs_mul, abs_mul, abs_of_nonneg hb]
-  exact hscaled
+  have hb : 0 ≤ bpow β (cexp β fexp x) := bpow.nonneg β _
+  rw [round_sub_self rnd x, round_sub_self other x, abs_mul, abs_mul, abs_of_nonneg hb]
+  exact mul_le_mul_of_nonneg_right (toNearest_is_nearest_integer rnd s (other s)) hb
 
 /-- Nearest-even generic rounding is no farther from the input than any other integer rounding. -/
 theorem round_nearestEven_error_le (rnd : ℝ → ℤ) (x : ℝ) :

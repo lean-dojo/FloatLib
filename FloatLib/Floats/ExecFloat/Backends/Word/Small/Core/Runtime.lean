@@ -77,6 +77,22 @@ Mask of the complete storage word: `2 ^ bitWidth - 1` for formats below 64 bits 
     0xffffffffffffffff
 
 /--
+The word `(1 <<< k) - 1` is `2 ^ k - 1` below the word width.
+
+`storageMask_toNat_lt` and the descriptor masks of `Core.Proof` are words of this shape.
+-/
+theorem powTwo_sub_one_toNat (k : Nat) (hk : k < 64) :
+    ((1 : UInt64) <<< UInt64.ofNat k - 1).toNat = 2 ^ k - 1 := by
+  have hsize : k < 2 ^ 64 := lt_trans hk (by decide)
+  have hpow : 2 ^ k < 2 ^ 64 := Nat.pow_lt_pow_right (by decide) hk
+  have hshift : ((1 : UInt64) <<< UInt64.ofNat k).toNat = 2 ^ k := by
+    rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat', UInt64.toNat_one, Nat.mod_eq_of_lt hsize,
+      Nat.mod_eq_of_lt hk, Nat.shiftLeft_eq, Nat.one_mul, Nat.mod_eq_of_lt hpow]
+  rw [UInt64.toNat_sub_of_le, hshift, UInt64.toNat_one]
+  rw [UInt64.le_iff_toNat_le, hshift, UInt64.toNat_one]
+  exact Nat.one_le_two_pow
+
+/--
 The storage mask lies below the format's radix.
 
 This bound lets `ofWord` build its exact-width model word with `BitVec.ofNatLT`, so the
@@ -87,15 +103,8 @@ theorem storageMask_toNat_lt (fmt : FloatFormat) :
   unfold storageMask
   split
   · rename_i hlt
-    have hsize : fmt.bitWidth < 2 ^ 64 := lt_trans hlt (by decide)
-    have hpow : 2 ^ fmt.bitWidth < 2 ^ 64 := Nat.pow_lt_pow_right (by decide) hlt
-    have hshift : ((1 : UInt64) <<< UInt64.ofNat fmt.bitWidth).toNat = 2 ^ fmt.bitWidth := by
-      rw [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat', UInt64.toNat_one, Nat.mod_eq_of_lt hsize,
-        Nat.mod_eq_of_lt hlt, Nat.shiftLeft_eq, Nat.one_mul, Nat.mod_eq_of_lt hpow]
-    rw [UInt64.toNat_sub_of_le, hshift, UInt64.toNat_one]
-    · exact Nat.sub_lt (Nat.two_pow_pos _) Nat.one_pos
-    · rw [UInt64.le_iff_toNat_le, hshift, UInt64.toNat_one]
-      exact Nat.one_le_two_pow
+    rw [powTwo_sub_one_toNat _ hlt]
+    exact Nat.sub_lt (Nat.two_pow_pos _) Nat.one_pos
   · rename_i hge
     have hbound : (0xffffffffffffffff : UInt64).toNat < 2 ^ 64 := by decide
     exact lt_of_lt_of_le hbound (Nat.pow_le_pow_right (by decide) (Nat.le_of_not_lt hge))

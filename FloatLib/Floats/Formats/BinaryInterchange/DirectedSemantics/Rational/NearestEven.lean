@@ -11,14 +11,22 @@ public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
 
 /-!
-# Nearest-even rounding of positive rational numbers
+# Nearest-even rounding of rational quotients
 
 Lean's logical floating-point model represents an inexact quotient by its integer quotient and an
-`Accuracy` value computed from the remainder. `Model.roundRatScaled` rounds the same rational
-after moving a binary exponent into its numerator or denominator. This module proves that the two
-representations agree through model normalization.
+`Accuracy` value computed from the remainder (`quotientExtendedMantissa`). This module proves the
+facts about nearest-even quotient rounding `roundQuotientEven` that the rational rounding proofs
+use. It lies between the floor and ceiling quotients, it depends only on the represented rational,
+so a common scale factor does not change it, and it commutes with exact power-of-two scaling,
+which shifts of the extended mantissa realize. `roundQuotientEven_normal_bounds` keeps a
+normal-path result in a format's normalized mantissa interval, and
+`roundWithAccuracy_quotient_eq_finishRoundedMantissa` reduces the model's `roundWithAccuracy` of a
+quotient at a format's target exponent to one `roundQuotientEven` call.
 
-All results are independent of a particular floating-point format.
+No theorem here is about `Model.roundRatScaled` itself; its real value is
+`toReal_roundRatScaled_eq_roundAt` in `Rational.RoundingSemantics.Executable`, which uses these
+bounds. The quotient lemmas allow a zero numerator, the bounds lemma and the final reduction take a
+format or a model format, and the rest do not depend on one.
 -/
 
 @[expose] public section
@@ -125,13 +133,11 @@ theorem roundQuotientEven_normal_bounds
   constructor
   · exact
       (pow2_le_roundQuotDirected_of_le_div false
-        scaled.1 scaled.2 fmt.fracWidth
-        hscaledDenominator hlowerReal).trans hsandwich.1
+        scaled.1 scaled.2 fmt.fracWidth hlowerReal).trans hsandwich.1
   · exact
       hsandwich.2.trans <|
         roundQuotDirected_le_pow2_of_div_lt true
-          scaled.1 scaled.2 (fmt.fracWidth + 1)
-          hscaledDenominator hupperReal
+          scaled.1 scaled.2 (fmt.fracWidth + 1) hupperReal
 
 /-- The integer quotient and remainder accuracy used to round `numerator / denominator`. -/
 def quotientExtendedMantissa (numerator denominator : Nat) : ExtendedMantissa :=
@@ -303,12 +309,15 @@ private theorem quotientExtendedMantissa_shiftRightOne
   have hmantissa :
       numerator / denominator / 2 = numerator / (denominator * 2) :=
     Nat.div_div_eq_div_mul numerator denominator 2
+  -- The remainder modulo the doubled denominator adds the quotient's low bit times the denominator.
+  have hsplit :
+      numerator % (denominator * 2) =
+        numerator % denominator + denominator * (numerator / denominator % 2) :=
+    Nat.mod_mul
   rcases Nat.mod_two_eq_zero_or_one (numerator / denominator) with hbit | hbit
   · have hremainder :
         numerator % (denominator * 2) = numerator % denominator := by
-      have hdecomp := Nat.div_add_mod (numerator % (denominator * 2)) denominator
-      rw [Nat.mod_mul_right_div_self, Nat.mod_mul_right_mod, hbit] at hdecomp
-      simpa using hdecomp.symm
+      rw [hsplit, hbit, Nat.mul_zero, Nat.add_zero]
     by_cases hzero : numerator % denominator = 0
     · simp [quotientExtendedMantissa, ExtendedMantissa.shiftRightOne,
         ExtendedMantissa.ofMantissaAndAccuracy, accuracyOfFraction, hzero, hremainder,
@@ -327,9 +336,7 @@ private theorem quotientExtendedMantissa_shiftRightOne
           hbit, hcompare', haccuracy, hmantissa]
   · have hremainder :
         numerator % (denominator * 2) = denominator + numerator % denominator := by
-      have hdecomp := Nat.div_add_mod (numerator % (denominator * 2)) denominator
-      rw [Nat.mod_mul_right_div_self, Nat.mod_mul_right_mod, hbit] at hdecomp
-      simpa [Nat.add_comm] using hdecomp.symm
+      rw [hsplit, hbit, Nat.mul_one, Nat.add_comm]
     by_cases hzero : numerator % denominator = 0
     · have hcompare' :
           Ord.compare (2 * denominator) (denominator * 2) = Ordering.eq :=

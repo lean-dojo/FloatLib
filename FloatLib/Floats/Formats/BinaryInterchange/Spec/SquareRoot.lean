@@ -39,30 +39,55 @@ namespace Model.Spec
         | none => invalidResult fmt
 
 /--
-For a positive finite conventional-IEEE value, the descriptor-aware square root agrees with the
-established unpacked-model result used by the binary32 and binary64 refinements.
+For a zero of either sign in a conventional-IEEE format, the descriptor-aware square root agrees
+with the unpacked-model result: both return the zero unchanged, so `sqrt (-0) = -0`.
 -/
-theorem sqrt_eq_model
+theorem sqrt_eq_model_of_isZero
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt)
-    (hfinite : isFinite x = true) (hnonzero : isZero x = false)
-    (hnonnegative : signBit x = false) :
+    (hzero : isZero x = true) :
     sqrt x =
       ofModel fmt
         (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt) (toModel x)) := by
+  have hfinite := isFinite_eq_true_of_isZero_eq_true x hzero
+  have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
+  have hfields : expField x = 0 ∧ fracField x = 0 := by
+    simpa [isZero, hencoding, IEEE.isZero] using hzero
+  have hmodel : toModel x = .zero (modelSign (signBit x)) := by
+    apply toModel_eq_zero_of_ieeeToDyadic?_eq_some x (signBit x) 0
+    simpa [toDyadic?, hfmt] using toDyadic?_eq_zero_of_isZero_eq_true x hzero
+  simp only [sqrt, chooseNaN1, hnan, hinf, hzero, Bool.false_eq_true, ite_false, ite_true,
+    hmodel]
+  conv_lhs => rw [← ofFields_signBit_expField_fracField x, hfields.1, hfields.2]
+  cases signBit x
+  · rw [ofFields_false_zero_zero, posZero_eq_ofModel_zero]
+    rfl
+  · rw [ofFields_true_zero_zero, negZero_eq_ofModel_zero]
+    rfl
+
+/--
+For a finite conventional-IEEE value with a clear sign bit, `+0` included, the descriptor-aware
+square root agrees with the established unpacked-model result used by the binary32 and binary64
+refinements. `sqrt_eq_model_of_isZero` covers `-0`.
+-/
+theorem sqrt_eq_model
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt)
+    (hfinite : isFinite x = true) (hnonnegative : signBit x = false) :
+    sqrt x =
+      ofModel fmt
+        (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt) (toModel x)) := by
+  by_cases hzero : isZero x = true
+  · exact sqrt_eq_model_of_isZero hfmt x hzero
+  have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hnonzero : isZero x = false := Bool.eq_false_iff.mpr hzero
   obtain ⟨value, hdecode⟩ := exists_toDyadic?_of_isFinite hfinite
   have hsign : value.negative = false :=
     (sign_eq_signBit_of_toDyadic?_some hdecode).trans hnonnegative
-  have hmantissa : value.significand ≠ 0 := by
-    intro hzero
-    have hzeroSource :=
-      isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hdecode hzero
-    rw [hnonzero] at hzeroSource
-    contradiction
   have hbridge :=
     FiniteSqrt.sqrtPositiveDyadic_eq_model_of_ieee
-      hfmt x value hdecode hsign hmantissa
-  have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+      hfmt x value hdecode hsign
   simp [sqrt, chooseNaN1, hnan, hinf, hnonzero, hnonnegative,
     hdecode, hbridge]
 

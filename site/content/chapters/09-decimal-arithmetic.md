@@ -26,18 +26,20 @@ $$
 
 For addition the preferred exponent is the smaller input exponent, here $-2$, so the runtime returns $1.50$ and raises no exception flags. Multiplication adds the input exponents, so $1.2\cdot3.0$ has preferred exponent $-2$ and comes back as $3.60$. Dropping a trailing zero from either result would keep the number and change the cohort member. `preferredCohort` moves toward the preferred exponent within the destination's limits. It gets there only by removing trailing zeros of the coefficient, so the value never changes on the way.
 
-The [decimal arithmetic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Basic.lean) has addition, subtraction, multiplication, division, fused multiply-add and square root for decimal32, decimal64 and decimal128. Every one of them takes decoded `Datum` values and returns an `Outcome` that pairs the result with five exception flags, and you only choose BID or DPD when you read or write the bits. All six operations accept the five decimal rounding modes: nearest with ties to even or away, toward zero, toward positive infinity, and toward negative infinity.
+The [decimal arithmetic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Basic.lean) has addition, subtraction, multiplication, division, fused multiply-add and square root for decimal32, decimal64 and decimal128. Every one of them takes decoded `Datum` values and returns an `Outcome` that pairs the result with five exception flags, and you only choose BID or DPD when you read or write the bits. All six operations accept the five decimal rounding modes: nearest with ties to even or away, toward zero, toward positive infinity, and toward negative infinity. A `Datum` literal keeps the digits it's written with, so `1.20` is $120\cdot10^{-2}$, `1.2e4` is $12\cdot10^{3}$ and `-0.0` is a negative zero. Writing a literal doesn't expand its power of ten. These six operations read a literal exactly, even one with more digits than the format holds, and round only their result.
 
 ```lean standalone
 import FloatLib
 
 open FloatLib.Floats.Formats.DecimalInterchange
 
-#eval (Arithmetic.add Format.decimal32 .nearestEven
-    (.finite false 120 (-2)) (.finite false 30 (-2))).value
+#eval ((1.20 : Datum), (1.2e4 : Datum), (-0.0 : Datum))
+-- (1.20, 1.2e4, -0.0)
+example : (1.20 : Datum) ≠ 1.2 := by decide
+
+#eval (Arithmetic.add Format.decimal32 .nearest 1.20 0.30).value
 -- 1.50
-#eval (Arithmetic.mul Format.decimal32 .nearestEven
-    (.finite false 12 (-1)) (.finite false 30 (-1))).value
+#eval (Arithmetic.mul Format.decimal32 .nearest 1.2 3.0).value
 -- 3.60
 ```
 
@@ -45,7 +47,7 @@ When the digits don't fit, the rounding mode settles the numerical result first.
 
 In the [arithmetic proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Proof.lean) we prove that the rational operations deliver a valid datum in the destination, and the [square-root proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Sqrt/Proof.lean) do the same for square root. With finite operands and no overflow, the error in a nearest mode is at most half the selected decimal grid step. For that bound, division needs a nonzero denominator and square root a nonnegative input. In the directed modes the theorems put the result on the required side of the exact value, and the midpoint theorems settle ties. Any representable rational projects to its own value. The inexactness theorems tie the flag to a numerical change, so moving to another cohort member doesn't raise inexact by itself.
 
-Signs and flags tell apart cases that rational equality can't. Exact cancellation in $1.20-1.20$ returns a zero with exponent $-2$, and that zero is negative when rounding toward negative infinity and positive in the other four modes. A signaling NaN raises invalid and comes back quiet. When the first NaN operand's payload fits the destination, that operand supplies both the sign and the payload. Five flags come back: invalid, divide-by-zero, overflow, underflow and inexact. Decimal tests tininess **before rounding**, unlike the [binary kernels](#/chapter/ieee-binary-formats/status-flags), which test it after rounding, and underflow needs both a tiny exact result and inexactness. The cohort theorems also determine the returned exponent. For an exact result, the projection and square-root theorems compare its exponent with every valid representation of that value and prove that it is the one closest to the preferred exponent. An inexact finite result takes the smallest quantum exponent in its cohort, even when the exact square root is irrational. All of this is proved in the [preferred-cohort proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Cohort.lean), the [minimal-quantum proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Minimal.lean) and their square-root counterparts.
+Signs and flags tell apart cases that rational equality can't. Exact cancellation in $1.20-1.20$ returns a zero with exponent $-2$, and that zero is negative when rounding toward negative infinity and positive in the other four modes. A signaling NaN raises invalid and comes back quiet. The first NaN operand supplies the sign and the payload, and a payload too large for the destination becomes zero. Five flags come back: invalid, divide-by-zero, overflow, underflow and inexact. Decimal tests tininess **before rounding**, unlike the [binary kernels](#/chapter/ieee-binary-formats/status-flags), which test it after rounding, and underflow needs both a tiny exact result and inexactness. The cohort theorems also determine the returned exponent. For an exact result, the projection and square-root theorems compare its exponent with every valid representation of that value and prove that it is the one closest to the preferred exponent. An inexact finite result takes the smallest quantum exponent in its cohort, even when the exact square root is irrational. All of this is proved in the [preferred-cohort proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Cohort.lean), the [minimal-quantum proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Minimal.lean) and their square-root counterparts.
 
 ### Powers and roots retain a quantum
 
@@ -60,9 +62,9 @@ we cube $2.0$. That gives $8.000$, and the cube root of that gives $2.0$ again.
 import FloatLib
 open FloatLib.Floats.Formats.DecimalInterchange
 
-#eval (Arithmetic.powInt Format.decimal32 .nearestEven (.finite false 20 (-1)) 3).value
+#eval (Arithmetic.powInt Format.decimal32 .nearest 2.0 3).value
 -- 8.000
-#eval (Arithmetic.rootN Format.decimal32 .nearestEven (.finite false 8000 (-3)) 3).value
+#eval (Arithmetic.rootN Format.decimal32 .nearest 8.000 3).value
 -- 2.0
 ```
 
@@ -91,7 +93,7 @@ Integral rounding chooses exponent $\max(q,0)$ for an input exponent $q$. The tw
 
 ## Comparing values and representations
 
-Numerical comparison treats $1.20$ and $1.2$ as equal, but `totalOrder` can tell them apart by their exponents, and it orders signed zeros and NaNs as well. Its proofs give transitivity, totality, and agreement with the numerical, sign and cohort rules, and for NaN payloads it follows the documented implementation choice. For each of the 22 quiet and signaling comparisons, the Boolean answer agrees with its counterpart. The invalid flags differ when a quiet NaN is present. Classification tells the ten IEEE classes apart, and we prove that changing cohort never turns a normal value into a subnormal one. Sign operations on raw BID and DPD words leave every other bit alone, even in redundant encodings and signaling NaNs.
+Numerical comparison treats $1.20$ and $1.2$ as equal, but `totalOrder` can tell them apart by their exponents, and it orders signed zeros and NaNs as well. Its proofs give transitivity, totality, and agreement with the numerical, sign and cohort rules, and for NaN payloads it follows the documented implementation choice. Ten of the 22 IEEE comparisons come in both a quiet and a signaling form, and we prove that the two forms return the same Boolean. Only the invalid flag differs, because the signaling form also raises it for a quiet NaN. Classification tells the ten IEEE classes apart, and we prove that changing cohort never turns a normal value into a subnormal one. Sign operations on raw BID and DPD words leave every other bit alone, even in redundant encodings and signaling NaNs.
 
 ## Adjacent values, scaling, and remainder
 
@@ -107,4 +109,4 @@ Print $1.20$ as `1.2` and the number is fine, but its quantum is gone. `Formatti
 
 No finite binary fraction equals $1/10$, so decimal $0.1$ can't keep its value when it is converted to binary. The converter starts from that exact rational and rounds once into the destination. Going back, it starts from the binary value actually stored, so it need not recover the original decimal spelling. Decimal formats convert to each other and to posits by the same route: the source is decoded exactly and then rounded in the destination. When the value is exact, decimal-to-decimal conversion also picks the available cohort exponent closest to the source's preferred exponent. Posit destinations follow their own appended-bit rounding rule, which saturates at the range limits, and encoding to BID or DPD adds no rounding of its own.
 
-Integer conversion rounds before checking the destination range. That ordering matters, because a small negative fraction can round to unsigned zero. Each of the five directions has a quiet and an `Exact` variant that return the same integer, and only the second reports inexactness. Exceptional sources, and rounded values outside the destination range, raise invalid and deliver zero in this binding. Integer-to-decimal conversion uses the same decimal projection as every other source. The proofs state the rounding bounds and exception behavior for each destination. Certified decimal `expMinus1` and `logPlus1` are in [Elementary functions](#/chapter/elementary-functions/certified-decimal-functions), and those APIs return a value only when its rounding has been certified.
+Integer conversion rounds before checking the destination range. That ordering matters, because a small negative fraction can round to unsigned zero. Each of the five directions has a quiet and an `Exact` variant that return the same integer, and only the second reports inexactness. Exceptional sources, and rounded values outside the destination range, raise invalid and return integer zero, which is the value we chose for an invalid integer result. Integer-to-decimal conversion uses the same decimal projection as every other source. The proofs state the rounding bounds and exception behavior for each destination. Certified decimal `expMinus1` and `logPlus1` are in [Elementary functions](#/chapter/elementary-functions/certified-decimal-functions), and those APIs return a value only when its rounding has been certified.

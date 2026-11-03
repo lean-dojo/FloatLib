@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 
-"""Verify that a retained benchmark is the complete public release matrix."""
+"""Verify that a retained benchmark is the complete public release matrix.
+
+A retained campaign may declare documented departures in an exceptions file
+(``--exceptions``): lanes measured by a separate campaign, and single timed rows
+below the publication floor. Without that file every check is strict.
+"""
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 WIDTHS = (2, 3, 4, 5, 6, 7, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
@@ -109,6 +116,40 @@ AGREEMENT_LANES = {
     "softfloat-reference",
     "cpython-float64",
 }
+# Flocq has its own matched campaign, which pairs exponent ranges and inputs.
+OMITTABLE_LANES = {"flocq-reference": "includeFlocq"}
+EXCEPTIONS_SCHEMA = "floatlib-release-matrix-exceptions-v1"
+
+
+@dataclass
+class Exceptions:
+    """Departures a retained campaign documents instead of failing on."""
+
+    omitted_lanes: frozenset[str] = frozenset()
+    floor: frozenset[tuple[str, str, int, str]] = frozenset()
+    used_floor: set[tuple[str, str, int, str]] = field(default_factory=set)
+
+
+def read_exceptions(path: Path | None) -> Exceptions:
+    if path is None:
+        return Exceptions()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("schema") != EXCEPTIONS_SCHEMA:
+        raise ValueError(f"unknown exceptions schema in {path}: {data.get('schema')!r}")
+    omitted = data.get("omittedLanes", {})
+    for lane, reason in omitted.items():
+        if lane not in OMITTABLE_LANES or not reason:
+            raise ValueError(f"lane {lane!r} cannot be omitted, or has no reason, in {path}")
+    floor: set[tuple[str, str, int, str]] = set()
+    for entry in data.get("timingFloorExceptions", []):
+        if not entry.get("reason") or entry["lane"] not in LANES or entry["operation"] not in OPERATIONS:
+            raise ValueError(f"malformed timing-floor exception in {path}: {entry!r}")
+        for trial in entry["trials"]:
+            key = (f"{int(trial):02d}", entry["lane"], int(entry["totalBits"]), entry["operation"])
+            if key in floor:
+                raise ValueError(f"duplicate timing-floor exception in {path}: {key}")
+            floor.add(key)
+    return Exceptions(frozenset(omitted), frozenset(floor))
 
 
 def read_metadata(path: Path) -> dict[str, str]:
@@ -273,6 +314,7 @@ def read_universal_preflight(
 def expected_cells(
     python_has_fma: bool,
     universal: dict[tuple[int, str], str],
+    omitted_lanes: frozenset[str] = frozenset(),
 ) -> set[tuple[str, int, str]]:
     cells: set[tuple[str, int, str]] = set()
     for width in WIDTHS:
@@ -289,7 +331,7 @@ def expected_cells(
                 cells.add(("cpython-float64", width, operation))
             if universal.get((width, operation)) == "pass":
                 cells.add(("universal-posit", width, operation))
-    return cells
+    return {cell for cell in cells if cell[0] not in omitted_lanes}
 
 
 def verify_agreement_fields(
@@ -575,7 +617,9 @@ def verify_trials(
     minimum_nanos: int,
     agreement_iterations: int,
     trial_order: dict[str, list[tuple[str, int, str]]],
+    exceptions: Exceptions | None = None,
 ) -> dict[tuple[str, int, str], tuple[str, str]]:
+    exceptions = exceptions or Exceptions()
     raw = benchmark / "raw"
     paths = sorted(raw.glob("trial-*.csv"))
     expected_names = [f"trial-{trial:02d}.csv" for trial in range(1, TRIALS + 1)]
@@ -628,7 +672,11 @@ def verify_trials(
                     f"{iterations} != {selected.get(key)}"
                 )
             total_nanos = parse_positive(row, "totalNanos", path)
-            if total_nanos < minimum_nanos:
+            if total_nanos < minimum_nanos and (trial_number, *key) in exceptions.floor:
+                exceptions.used_floor.add((trial_number, *key))
+                print(f"documented timing-floor exception: {path.name} {key} "
+                      f"{total_nanos} < {minimum_nanos}")
+            elif total_nanos < minimum_nanos:
                 raise ValueError(
                     f"timed cell is shorter than the publication floor in {path} "
                     f"at {key}: {total_nanos} < {minimum_nanos}"
@@ -855,12 +903,20 @@ def verify_backend_selection(
         )
 
 
-def verify(benchmark: Path) -> None:
+def verify(benchmark: Path, exceptions: Exceptions | None = None) -> None:
+    exceptions = exceptions or Exceptions()
     metadata = read_metadata(benchmark / "metadata.txt")
     require(metadata, "runs", str(TRIALS))
     require(metadata, "measurementMethod", MEASUREMENT_METHOD)
-    require(metadata, "publicationReadiness", "eligible")
-    require(metadata, "developmentOnly", "0")
+    if exceptions.omitted_lanes:
+        # The campaign script marks any run without the full lane set as
+        # development-only; an exceptions file records why that run is published.
+        require(metadata, "publicationReadiness", "development-only")
+        require(metadata, "developmentOnly", "1")
+    else:
+        require(metadata, "publicationReadiness", "eligible")
+        require(metadata, "developmentOnly", "0")
+    lanes = tuple(lane for lane in LANES if lane not in exceptions.omitted_lanes)
     require(metadata, "widths", " ".join(map(str, WIDTHS)))
     require(metadata, "operations", " ".join(OPERATIONS))
     require(metadata, "iterationsOverride", "adaptive")
@@ -872,7 +928,8 @@ def verify(benchmark: Path) -> None:
         "includeFlocq",
         "includeUniversal",
     ):
-        require(metadata, key, "1")
+        omitted = any(OMITTABLE_LANES[lane] == key for lane in exceptions.omitted_lanes)
+        require(metadata, key, "0" if omitted else "1")
     benchmark_cpu = metadata.get("benchmarkCPU")
     if benchmark_cpu is None or re.fullmatch(r"[0-9]+", benchmark_cpu) is None:
         raise ValueError(
@@ -880,8 +937,8 @@ def verify(benchmark: Path) -> None:
             f"{benchmark_cpu!r}"
         )
 
-    if "lanes" in metadata:
-        require(metadata, "lanes", " ".join(LANES))
+    if "lanes" in metadata or exceptions.omitted_lanes:
+        require(metadata, "lanes", " ".join(lanes))
     minimum_trials = int(metadata.get("minimumPublicationTrials", "0"))
     minimum_nanos = int(metadata.get("minimumPublicationNanos", "0"))
     target_nanos = int(metadata.get("targetMeasuredNanos", "0"))
@@ -905,7 +962,9 @@ def verify(benchmark: Path) -> None:
         )
 
     universal = read_universal_preflight(benchmark)
-    expected = expected_cells(python_has_fma_raw == "1", universal)
+    expected = expected_cells(
+        python_has_fma_raw == "1", universal, exceptions.omitted_lanes
+    )
     trial_order = read_trial_order(benchmark, expected)
     selected = verify_calibration(
         benchmark,
@@ -921,7 +980,13 @@ def verify(benchmark: Path) -> None:
         minimum_nanos,
         AGREEMENT_ITERATIONS,
         trial_order,
+        exceptions,
     )
+    if exceptions.used_floor != exceptions.floor:
+        raise ValueError(
+            "timing-floor exceptions do not match short rows: unused="
+            f"{sorted(exceptions.floor - exceptions.used_floor)}"
+        )
     verify_backend_selection(benchmark, timed_rows)
     print(
         f"verified {len(expected)} timed cells in each of {TRIALS} trials "
@@ -932,9 +997,13 @@ def verify(benchmark: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("benchmark", type=Path)
+    parser.add_argument(
+        "--exceptions", type=Path,
+        help="JSON file of documented departures for a retained campaign",
+    )
     arguments = parser.parse_args()
     try:
-        verify(arguments.benchmark.resolve())
+        verify(arguments.benchmark.resolve(), read_exceptions(arguments.exceptions))
     except (OSError, ValueError) as error:
         raise SystemExit(str(error)) from error
 

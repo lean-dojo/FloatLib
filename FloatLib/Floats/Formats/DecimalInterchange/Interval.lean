@@ -39,8 +39,8 @@ def decodeIntervalEndpoint (format : Format) (encoding : Encoding)
 
 /-- Directed decimal projections encoded in the selected interchange representation. -/
 def intervalCandidates (format : Format) (encoding : Encoding) (x : ℚ) : Interval format :=
-  ⟨encoding.codec.encode format (project format .towardNegative x 0).value,
-    encoding.codec.encode format (project format .towardPositive x 0).value⟩
+  ⟨encoding.codec.encode format (project format .down x 0).value,
+    encoding.codec.encode format (project format .up x 0).value⟩
 
 /--
 Checked outward rounding for decimal words, valid for every descriptor and either codec.

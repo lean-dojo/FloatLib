@@ -42,12 +42,12 @@ def rootFloor (degree : Nat) (radicand : ℚ) : Nat :=
 def RoundingMode.rootIncrement (mode : RoundingMode) (negative : Bool)
     (degree lower : Nat) (radicand : ℚ) : Bool :=
   match mode with
-  | .nearestEven =>
+  | .nearest =>
       decide ((2 * (lower : ℚ) + 1) ^ degree < 2 ^ degree * radicand ∨
         ((2 * (lower : ℚ) + 1) ^ degree = 2 ^ degree * radicand ∧ lower % 2 = 1))
   | .nearestAway => decide ((2 * (lower : ℚ) + 1) ^ degree ≤ 2 ^ degree * radicand)
-  | .towardPositive => !negative && decide ((lower : ℚ) ^ degree < radicand)
-  | .towardNegative => negative && decide ((lower : ℚ) ^ degree < radicand)
+  | .up => !negative && decide ((lower : ℚ) ^ degree < radicand)
+  | .down => negative && decide ((lower : ℚ) ^ degree < radicand)
   | .towardZero => false
 
 /-- Round a nonnegative root magnitude on the integer grid. -/
@@ -83,8 +83,9 @@ def rootMagnitude (f : Format) (mode : RoundingMode) (negative : Bool)
 
 /-- Integer-degree root with one final rounding. Degree zero is invalid for every
 operand, including NaNs. Other degrees use the usual decimal NaN propagation. For an exact finite
-result, the preferred quantum is the floor of the signed operand quantum divided
-by the positive degree magnitude. -/
+result, the preferred quantum is `⌊q / n⌋` for the operand quantum `q` and the signed degree `n`:
+`⌊q / |n|⌋` for a positive degree and `⌊-q / |n|⌋` for a negative one, since the reciprocal
+negates the quantum. -/
 def Arithmetic.rootN (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
   | .nan s t p, n => if n = 0 then invalidResult else nanResult f s p t
   | .infinity s, n =>

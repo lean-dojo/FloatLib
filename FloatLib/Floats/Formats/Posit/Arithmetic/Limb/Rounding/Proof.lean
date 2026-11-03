@@ -83,31 +83,16 @@ theorem roundPositiveCode_eq_direct
                 target.significand target.exponent
                 (DirectDyadicPacking.leadingBit target.significand)
                 (-(4 * Int.ofNat (format.payloadBits - 1))) = true := by
-          rw [Dyadic.isLessPowerOfTwoAtLeading_eq
-            target.significand target.exponent
-            (DirectDyadicPacking.leadingBit target.significand)
-            (-(4 * Int.ofNat (format.payloadBits - 1)))
-            (DirectDyadicPacking.leadingBit_eq_log2 target.significand)]
-          rw [Dyadic.isLessNonnegativeFields_eq, Dyadic.isLessFields_eq]
-          simpa only [DyadicRounding.minPositive_eq_fields, htarget] using
-            hunderflowTarget
+          rw [DirectDyadicPacking.isLessMinPositive_eq format target hnegative]
+          exact hunderflowTarget
         unfold DirectDyadicPacking.roundPositiveCode
         rw [ite_eq_right hspecial]
         rw [ite_eq_left hunderflowDirect]
       · rw [ite_eq_right hunderflow]
-        have hnotUnderflow :
-            ({ negative := false
-               significand := nativeSignificand.toNat
-               exponent := target.exponent } :
-              FloatLib.Numerics.Dyadic).isLess
-                (DyadicRounding.minPositive format) = false := by
-          rw [hnative, htarget, ← hunderflowEq]
-          exact Bool.eq_false_of_not_eq_true hunderflow
         have hresult :=
           GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct
             GuardSticky.candidateCarrierLawful format nativeSignificand target.exponent
-            (GuardSticky.payloadBits_lt_of_eligible format heligible)
-            hnativeNonzero hnotUnderflow
+            (GuardSticky.payloadBits_lt_of_eligible format heligible) hnativeNonzero
         rw [hnative, htarget] at hresult
         exact hresult
     · rw [dite_eq_right hcapacity]
@@ -245,10 +230,8 @@ theorem GuardSticky.roundPositiveCodeWord_toNat
             exponent } := by
         unfold roundPositiveCode
         rw [ite_eq_left hzeroTest]
-  · have hnonzeroNat : significand.toNat ≠ 0 := by
-      intro equality
-      exact hzero <|
-        (NativeLimb.isZero_eq_true_iff significand).mpr equality
+  · have hnonzeroNat : significand.toNat ≠ 0 :=
+      mt (NativeLimb.isZero_eq_true_iff significand).mpr hzero
     have hnonzeroTest :
         ¬(significand.toNat == 0 || false) = true := by
       simpa using hnonzeroNat
@@ -261,16 +244,26 @@ theorem GuardSticky.roundPositiveCodeWord_toNat
         UInt64.toNat_zero, UInt64.toNat_one, zero_mul, add_zero]
     · rw [ite_eq_right hsmall, ite_eq_right hsmall]
 
-/-- Carrier-returning positive rounding always stays below the Posit sign bit. -/
+/--
+Carrier-returning positive rounding always stays below the Posit sign bit. Formats wider than
+two words satisfy the bound because every two-word value is below `2 ^ 128`.
+-/
 theorem GuardSticky.roundPositiveCodeWord_lt_signMask
-    (format : Format) (heligible : NativeLimb.Eligible format)
+    (format : Format)
     (significand : FloatLib.Numerics.FixedWord.UInt128)
     (exponent : Int) :
     (GuardSticky.roundPositiveCodeWord
         format significand exponent).toNat <
       format.signMaskNat := by
-  rw [GuardSticky.roundPositiveCodeWord_toNat format heligible]
-  exact roundPositiveCode_lt_signMask format heligible _
+  by_cases heligible : NativeLimb.Eligible format
+  · rw [GuardSticky.roundPositiveCodeWord_toNat format heligible]
+    exact roundPositiveCode_lt_signMask format heligible _
+  · have hbits : 128 < format.bits := Nat.lt_of_not_le heligible
+    calc
+      _ < 2 ^ 128 := FixedWord.UInt128.toNat_lt _
+      _ ≤ format.signMaskNat := by
+        unfold Format.signMaskNat Format.signIndex
+        exact Nat.pow_le_pow_right (by decide) (by omega)
 
 /-- Signed carrier-returning rounding is the general two-limb exact round code. -/
 theorem GuardSticky.roundCodeWord_toNat
@@ -288,8 +281,7 @@ theorem GuardSticky.roundCodeWord_toNat
   rw [GuardSticky.restoreSignWord_toNat format heligible
     negative (GuardSticky.roundPositiveCodeWord
       format significand exponent)
-    (GuardSticky.roundPositiveCodeWord_lt_signMask
-      format heligible significand exponent)]
+    (GuardSticky.roundPositiveCodeWord_lt_signMask format significand exponent)]
   rw [GuardSticky.roundPositiveCodeWord_toNat format heligible]
   unfold roundCodeNat
   by_cases hzero : significand.toNat = 0
@@ -348,25 +340,15 @@ theorem GuardSticky.roundPositiveCode_normalizeJam128
         2 ^ (shift + 127) ≤ significand.toNat := by
       rw [← hlog]
       exact Nat.log2_self_le hnonzero
-    have hupper :
-        significand.toNat < 2 ^ (shift + 128) := by
-      have hbound : significand.toNat < 2 ^ (significand.toNat.log2 + 1) :=
-        Nat.lt_log2_self
-      rw [hlog] at hbound
-      simpa [show shift + 127 + 1 = shift + 128 by omega] using hbound
-    have hjammedUpper :
-        FloatLib.Numerics.shiftRightJam significand.toNat shift <
-          2 ^ 128 := by
-      rw [← hjammed]
-      exact significand.normalizeJam128.toNat_lt
+    have hupper : significand.toNat < 2 ^ (shift + 128) :=
+      significand.toNat_lt_pow_normalizationShift128_add
     apply DirectDyadicPacking.roundPositiveCode_shiftRightJam
       format 127 (by omega) (by
         unfold NativeLimb.Eligible at heligible
         unfold Format.payloadBits
         omega)
       significand.toNat shift exponent hlower
-    · simpa [show shift + 127 + 1 = shift + 128 by omega] using hupper
-    · simpa [show 127 + 1 = 128 by omega] using hjammedUpper
+    simpa [show shift + 127 + 1 = shift + 128 by omega] using hupper
 
 /--
 Signed two-limb rounding of a normalized jammed four-limb significand is exactly the shared

@@ -38,12 +38,11 @@ theorem roundFiniteRatToPrecision_fitsPrecisionGrid
     (format : Format) (mode : RoundingMode) (exact : Rat) :
     format.FitsPrecisionGrid
       (format.roundFiniteRatToPrecision mode exact) := by
-  unfold FitsPrecisionGrid
   unfold roundFiniteRatToPrecision
   simp only [beq_iff_eq]
   split
   next hzero =>
-    simp
+    exact Or.inl rfl
   next hzero =>
     let numerator := exact.num.natAbs
     let leadingExponent :=
@@ -61,13 +60,11 @@ theorem roundFiniteRatToPrecision_fitsPrecisionGrid
         lower + 1
       else
         lower
-    have hnumerator : numerator ≠ 0 := by
-      simpa [numerator] using hzero
     have hlower :
         lower < 2 ^ format.precision := by
       simpa [lower, scaled, quantumExponent, leadingExponent, numerator] using
         RationalRounding.quotientFloor_lt_precision format.precision
-          format.minimumNormalExponent numerator exact.den hnumerator exact.den_nz
+          format.minimumNormalExponent numerator exact.den exact.den_nz
     have hrounded :
         rounded ≤ 2 ^ format.precision := by
       unfold rounded
@@ -76,35 +73,7 @@ theorem roundFiniteRatToPrecision_fitsPrecisionGrid
         format.minimumQuantumExponent ≤ quantumExponent := by
       unfold quantumExponent
       exact format.quantumExponent_lower leadingExponent
-    change
-      (if rounded = 0 then
-        Numerics.Dyadic.zero
-      else
-        {
-          negative := exact.num < 0
-          significand := rounded
-          exponent := quantumExponent
-        }).significand = 0 ∨
-      (if rounded = 0 then
-        Numerics.Dyadic.zero
-      else
-        {
-          negative := exact.num < 0
-          significand := rounded
-          exponent := quantumExponent
-        }).significand ≤ 2 ^ format.precision ∧
-      format.minimumQuantumExponent ≤
-        (if rounded = 0 then
-          Numerics.Dyadic.zero
-        else
-          {
-            negative := exact.num < 0
-            significand := rounded
-            exponent := quantumExponent
-          }).exponent
-    by_cases hroundedZero : rounded = 0
-    · simp [hroundedZero]
-    · simp [hroundedZero, hrounded, hquantum]
+    exact format.fitsPrecisionGrid_of_rounded (exact.num < 0) hrounded hquantum
 
 /--
 Decoding exact-rational projection returns its round-then-saturate datum.

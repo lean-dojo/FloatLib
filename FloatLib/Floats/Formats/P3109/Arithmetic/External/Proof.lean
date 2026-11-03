@@ -72,7 +72,8 @@ theorem project_finite (format : FloatFormat) (hformat : format.isIEEE = true)
     saturate_finite format hformat policy _ hgrid result hresult
   simpa only [project, hresult] using encode_finite format hformat result hprecision hbound
 
-/-- The exact external decoder agrees with the real interpretation on every finite word. -/
+/-- If a finite word has the real value of `value`, the exact external decoder returns that value's
+rational. -/
 theorem decode_eq_finite_of_isFinite (format : FloatFormat) (word : Model format)
     (value : Numerics.Dyadic) (hfinite : Model.isFinite word = true)
     (hreal : Model.toReal word = value.toReal) :
@@ -84,6 +85,21 @@ theorem decode_eq_finite_of_isFinite (format : FloatFormat) (word : Model format
     apply Rat.cast_injective (α := Real)
     simpa only [Numerics.Dyadic.cast_toRat] using hdyadic
   simp [decode, Model.exactNumericalSystem, hdecode, Arithmetic.toRat, hrat]
+
+/--
+Mixed report arithmetic decodes a binary model to the observation `decode` gives.
+
+The binary decoder `ExecFloat.Binary.Conversion.modelDecoder` keeps the zero sign and the NaN
+details, and `Mixed.decode` erases both: `ExactMap.signedRatToRat` keeps only the rational value,
+and `canonical` turns every NaN into the report's one NaN (§4.8.1).
+-/
+theorem mixed_decode_eq_decode {format : FloatFormat} (value : Model format) :
+    Mixed.decode value = decode value := by
+  change canonical ((((Model.exactNumericalSystem format).denote value).map
+      SignedRat.ofDyadic).map SignedRat.value) =
+    Arithmetic.toRat ((Model.exactNumericalSystem format).denote value)
+  generalize (Model.exactNumericalSystem format).denote value = observation
+  cases observation <;> rfl
 
 /-- Finite external results refine the exact report projection through the executable decoder. -/
 theorem decode_project_finite (format : FloatFormat) (hformat : format.isIEEE = true)
@@ -116,19 +132,27 @@ theorem project_zero (format : FloatFormat) (hformat : format.isIEEE = true)
     project format hformat policy input = Model.zero format false := by
   simp [project, hresult, encode, hzero]
 
-/-- Exact finite decoding, with the report's prescribed external exceptional encodings. -/
+/--
+Exact finite decoding, with the report's prescribed external encodings: positive zero for a zero
+datum (the decoder alone erases zero signs), signed infinities, and the canonical quiet NaN.
+-/
 def Encodes {format : FloatFormat} (word : Model format) :
     NumericalValue Numerics.Dyadic → Prop
-  | .finite value => decode word = .finite value.toRat
+  | .finite value =>
+      decode word = .finite value.toRat ∧
+        (value.significand = 0 → word = Model.zero format false)
   | .infinity negative => word = if negative then Model.negInf format else Model.posInf format
   | .exceptional _ => word = Model.canonicalNaN format
 
-/-- External projection refines its rounded and saturated datum on every input class. -/
+/-- External projection refines its rounded and saturated datum on every input class, writing a
+zero result as positive zero. -/
 theorem project_refines (format : FloatFormat) (hformat : format.isIEEE = true)
     (policy : ProjectionPolicy) (input : NumericalValue Rat) :
     Encodes (project format hformat policy input) (projectValue format policy input) := by
   cases hresult : projectValue format policy input with
-  | finite value => exact decode_project_finite format hformat policy input value hresult
+  | finite value =>
+      exact ⟨decode_project_finite format hformat policy input value hresult,
+        project_zero format hformat policy input value hresult⟩
   | infinity negative => exact project_infinity format hformat policy input negative hresult
   | exceptional exception => exact project_nan format hformat policy input exception hresult
 

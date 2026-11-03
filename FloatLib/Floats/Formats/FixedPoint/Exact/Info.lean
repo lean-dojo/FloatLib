@@ -38,7 +38,6 @@ single account of the value set, scale, and exact arithmetic.
 meta def profile (base fractionalDigits : Nat) : FormatProfile where
   family := "radix-parametric fixed point"
   standard := "mathematical fixed-point format; no external encoding standard claimed"
-  declarationPrefix := "FloatLib.Floats.Formats.FixedPoint."
   representation :=
     [ ⟨"storage", "Int coefficient"⟩
     , ⟨"radix", toString base⟩

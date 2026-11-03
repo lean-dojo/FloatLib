@@ -130,7 +130,7 @@ theorem roundToIntegralExact_of_nonneg_quantum (f : Format) (mode : RoundingMode
 /-- Both nearest integral modes differ from the input by at most one half,
 independent of its cohort. -/
 theorem roundToIntegralExact_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (s : Bool) (c : Nat) (q : Int) (hv : (Datum.finite s c q).Valid f)
     (hzero : 0 ≤ f.maxQuantum) :
     ∃ value, (roundToIntegralExact f mode (.finite s c q)).value.toRat? = some value ∧

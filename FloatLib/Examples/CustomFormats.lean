@@ -119,8 +119,8 @@ private def p3109Reading : ExecFloat.ConversionOutcome CompactP3109 :=
   ExecFloat.convert (target := CompactP3109) (3 / 16 : Rat)
 
 private def p3109TowardZero : ExecFloat.ConversionOutcome CompactP3109 :=
-  ExecFloat.convert (target := CompactP3109) (1 / 3 : Rat)
-    (context := { rounding := .towardZero, saturation := .finite })
+  ExecFloat.convert (target := CompactP3109) (1 / 3 : Rat) (mode := .towardZero)
+    (context := .finite)
 
 private def p3109Meaning : Option (NumericalValue Rat) :=
   p3109Reading.value?.map ExecFloat.P3109.Conversion.decodeRat
@@ -132,11 +132,12 @@ private def p3109TowardZeroMeaning : Option (NumericalValue Rat) :=
 
 /-
 The source is a `Rat`, so `3/16` is exact before the destination rounds it, and it is
-representable. `1/3` is not, so rounding toward zero picks the neighbour below, `5/16`. The
-`.finite` saturation policy would clamp an overflowing result to the largest finite value instead
-of producing an exceptional code. A successful outcome carries the value and status, a failure
-carries its reason, and `value?` keeps only the optional value. Decoding then separates finite
-rationals from the format's exceptional values through `NumericalValue`.
+representable. `1/3` is not, so rounding toward zero picks the neighbour below, `5/16`. The mode
+sets the direction and the context the saturation: `.finite` would clamp an overflowing result to
+the largest finite value instead of producing an exceptional code. A successful outcome carries
+the value and status, a failure carries its reason, and `value?` keeps only the optional value.
+Decoding then separates finite rationals from the format's exceptional values through
+`NumericalValue`.
 -/
 
 end FloatLib.Examples.CustomFormats

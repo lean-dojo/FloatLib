@@ -192,7 +192,7 @@ private theorem rounded_toNat (h : Eligible fmt) (magnitude : UInt128)
     have hleWord := UInt64.le_of_lt hltWord
     rw [ite_eq_left hltWord, ite_eq_left hlt.le, UInt64.toNat_sub_of_le _ _ hleWord, hleading,
       hfracWord]
-    exact UInt128.roundShiftRightEven128_toNat _ _ (by omega) (by omega)
+    exact UInt128.roundShiftRightEven128_toNat _ _ (by omega)
   · have hltWord : ¬UInt64.ofNat fmt.fracWidth < UInt64.ofNat magnitude.log2 := by
       rw [UInt64.lt_iff_toNat_lt, hfracWord, hleading]
       exact hlt
@@ -207,7 +207,7 @@ private theorem rounded_toNat (h : Eligible fmt) (magnitude : UInt128)
       rw [show magnitude.toNat.log2 + 1 + (fmt.fracWidth - magnitude.toNat.log2) =
         fmt.fracWidth + 1 by omega] at hshifted
       exact hshifted.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
-    rw [UInt128.shiftLeft_toNat _ _ (by omega) hfit]
+    rw [UInt128.shiftLeft_toNat _ _ hfit]
     by_cases heq : fmt.fracWidth = magnitude.toNat.log2
     · rw [ite_eq_left heq.le, heq, Nat.sub_self, Numerics.roundShiftRightEven_zero,
         Nat.shiftLeft_zero]
@@ -341,7 +341,7 @@ theorem roundAlignedWords_refines (h : Eligible fmt) (offset : UInt64) (leftSign
 
 private theorem jammedMagnitudeWords_toNat (sameSign : Bool) (high low : UInt128) (gap : UInt64)
     (hhigh : high.toNat < 2 ^ 124) (hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat)
-    (hlowNe : low.toNat ≠ 0) (hgap : 3 ≤ gap.toNat) :
+    (hgap : 3 ≤ gap.toNat) :
     (jammedMagnitudeWords sameSign high low gap).toNat =
       Numerics.shiftRightJam
         (if sameSign then high.toNat * 2 ^ gap.toNat + low.toNat
@@ -356,9 +356,9 @@ private theorem jammedMagnitudeWords_toNat (sameSign : Bool) (high low : UInt128
       ((low.shiftRight (gap - 3).toNat).shiftLeft (gap - 3).toNat == low) =
         decide (low.toNat % 2 ^ d = 0) := by
     rw [hdiscard]
-    exact UInt128.shiftRight_shiftLeft_beq low d hlowNe
+    exact UInt128.shiftRight_shiftLeft_beq low d
   have hupper : (high.shiftLeft 3).toNat = high.toNat * 2 ^ 3 := by
-    rw [UInt128.shiftLeft_toNat _ _ (by decide) (by rw [Nat.shiftLeft_eq]; omega),
+    rw [UInt128.shiftLeft_toNat _ _ (by rw [Nat.shiftLeft_eq]; omega),
       Nat.shiftLeft_eq]
   have hgapSplit : high.toNat * 2 ^ gap.toNat = high.toNat * 2 ^ 3 * 2 ^ d := by
     rw [Nat.mul_assoc, ← Nat.pow_add]
@@ -406,7 +406,7 @@ private theorem jammedMagnitudeWords_toNat (sameSign : Bool) (high low : UInt128
 /-- An accepted sticky alignment is the exact signed-magnitude combination of the same fields. -/
 theorem roundJammedWords_refines (h : Eligible fmt) (offset : UInt64) (highSign lowSign : Bool)
     (high low : UInt128) (gap scale : UInt64)
-    (hlow : low.toNat ≤ 2 ^ (fmt.fracWidth + gap.toNat - 1)) (hlowNe : low.toNat ≠ 0)
+    (hlow : low.toNat ≤ 2 ^ (fmt.fracWidth + gap.toNat - 1))
     (hscale : scale.toNat + gap.toNat + offset.toNat < 2 ^ 63)
     (words : UInt128)
     (hresult : roundJammedWords? fmt offset highSign lowSign high low gap scale = some words) :
@@ -420,15 +420,9 @@ theorem roundJammedWords_refines (h : Eligible fmt) (offset : UInt64) (highSign 
     simp only [Bool.and_eq_true, decide_eq_true_eq] at hguard
     obtain ⟨⟨himplicit, hhighWord⟩, hgap⟩ := hguard
     have hhighLower : 2 ^ fmt.fracWidth ≤ high.toNat := by
-      have hnat := UInt64.le_iff_toNat_le.mp himplicit
-      rw [implicitBit_toNat h] at hnat
-      have hsplit : 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 := by
-        rw [← Nat.pow_add]
-        congr 1
-        omega
+      have := two_pow_fracWidth_le_of_implicitBit_le h _ himplicit
       unfold UInt128.toNat
-      rw [hsplit]
-      exact (Nat.mul_le_mul_right _ hnat).trans (Nat.le_add_left _ _)
+      omega
     have hhigh : high.toNat < 2 ^ 124 := by
       have hnat := UInt64.lt_iff_toNat_lt.mp hhighWord
       have hlo := high.lo.toNat_lt
@@ -436,29 +430,19 @@ theorem roundJammedWords_refines (h : Eligible fmt) (offset : UInt64) (highSign 
       norm_num at hnat hlo ⊢
       omega
     have hgapNat : 3 ≤ gap.toNat := by simpa using UInt64.le_iff_toNat_le.mp hgap
-    have hbelow := NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth high.toNat low.toNat
-      gap.toNat false hhighLower hlow hgapNat
-    have hlowLt : low.toNat < high.toNat * 2 ^ gap.toNat := by
-      simp only [Bool.false_eq_true, ite_false] at hbelow
-      have hpos : 0 < 2 ^ (fmt.fracWidth + gap.toNat - 1) := Nat.two_pow_pos _
-      omega
+    have hlowLt := NativeSmallWordAdd.low_lt_alignedHigh fmt.fracWidth high.toNat low.toNat
+      gap.toNat hhighLower hlow (by omega)
     have hmag := jammedMagnitudeWords_toNat (highSign == lowSign) high low gap hhigh hlowLt
-      hlowNe hgapNat
-    have hdiscard : (gap - 3).toNat = gap.toNat - 3 :=
-      UInt64.toNat_sub_of_le _ _ hgap
-    have hscaleSum : (scale + (gap - 3)).toNat = scale.toNat + (gap.toNat - 3) := by
-      rw [UInt64.toNat_add, hdiscard]
-      exact Nat.mod_eq_of_lt (by omega)
+      hgapNat
+    have hscaleSum := NativeSmallWordAdd.jammedScale_toNat scale gap hgapNat (by omega)
     have hmagNe : (jammedMagnitudeWords (highSign == lowSign) high low gap).toNat ≠ 0 := by
       rw [hmag]
-      refine Numerics.shiftRightJam_ne_zero _ _ ?_
-      exact (Nat.pow_le_pow_right (by decide) (by omega)).trans
-        (NativeSmallWordAdd.alignedMagnitude_lower fmt.fracWidth high.toNat low.toNat
-          gap.toNat _ hhighLower hlow hgapNat)
+      exact NativeSmallWordAdd.shiftRightJam_alignedMagnitude_ne_zero fmt.fracWidth high.toNat
+        low.toNat gap.toNat _ hhighLower hlow (by omega)
     rw [roundMagnitudeWords_refines h offset highSign _ _ hmagNe (by rw [hscaleSum]; omega) words
       hresult, hmag, hscaleSum]
     exact FiniteScaleAdd.roundMagnitude_shiftRightJam fmt _ highSign lowSign high.toNat low.toNat
-      gap.toNat scale.toNat hhighLower hlow hgapNat
+      gap.toNat scale.toNat hhighLower hlow
   · simp at hresult
 
 /-! ## Field addition -/
@@ -470,20 +454,28 @@ private theorem scale_lt (h : Eligible fmt) (exponent : UInt64)
     (hexponent : exponent.toNat < 2 ^ fmt.expWidth) :
     (finiteScale exponent).toNat < 2 ^ 62 := by
   have hpow : 2 ^ fmt.expWidth ≤ 2 ^ 62 := Nat.pow_le_pow_right (by decide) h.exp_le
-  rw [NativeSmallWordAdd.finiteScale_toNat_eq_scale]
+  rw [FiniteKernel.finiteScale_toNat_eq_scale]
   unfold FiniteKernel.scale
   split <;> omega
 
-private theorem shiftedMantissa_toNat (h : Eligible fmt) (mantissa : UInt128) (shift : UInt64)
+/-- An accepted alignment shift of a significand is exact, and adding a second significand to the
+shifted one does not wrap. -/
+private theorem shiftedMantissa_add_fits (mantissa other : UInt128) (shift : UInt64)
     (hmantissa : mantissa.toNat < 2 ^ (fmt.fracWidth + 1))
+    (hother : other.toNat < 2 ^ (fmt.fracWidth + 1))
     (hshift : shift.toNat + fmt.fracWidth ≤ 126) :
     (mantissa.shiftLeft shift.toNat).toNat = mantissa.toNat <<< shift.toNat ∧
-      mantissa.toNat <<< shift.toNat < 2 ^ 127 := by
+      (mantissa.shiftLeft shift.toNat).toNat + other.toNat < 2 ^ 128 := by
   have hfit : mantissa.toNat <<< shift.toNat < 2 ^ 127 := by
     have hshifted := Nat.shiftLeft_lt (m := shift.toNat) hmantissa
     exact hshifted.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
-  exact ⟨UInt128.shiftLeft_toNat _ _ (by have := h.frac_gt; omega) (hfit.trans (by norm_num)),
-    hfit⟩
+  have hshifted := UInt128.shiftLeft_toNat _ _ (hfit.trans (by norm_num))
+  have hotherFit : other.toNat < 2 ^ 127 :=
+    hother.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+  refine ⟨hshifted, ?_⟩
+  rw [hshifted]
+  norm_num at hfit hotherFit ⊢
+  omega
 
 private theorem shiftedMantissa_ne_zero (mantissa : UInt128) (shift : Nat)
     (hmantissa : mantissa.toNat ≠ 0)
@@ -508,7 +500,6 @@ theorem addFieldsWords_refines (h : Eligible fmt)
         xSign xExponent.toNat xMantissa.toNat ySign yExponent.toNat yMantissa.toNat := by
   have hfracLe := h.frac_le
   have hlimit := shiftLimit_toNat h
-  have hpow127 : 2 ^ (fmt.fracWidth + 1) ≤ 2 ^ 127 := Nat.pow_le_pow_right (by decide) (by omega)
   unfold addFieldsWords? at hresult
   by_cases hzero : (xMantissa == ⟨0, 0⟩ || yMantissa == ⟨0, 0⟩) = true
   · simp [hzero] at hresult
@@ -517,8 +508,8 @@ theorem addFieldsWords_refines (h : Eligible fmt)
   obtain ⟨hxNe, hyNe⟩ := hzero
   have hxNeNat := toNat_ne_zero_of_ne hxNe
   have hyNeNat := toNat_ne_zero_of_ne hyNe
-  have hxScale := NativeSmallWordAdd.finiteScale_toNat_eq_scale xExponent
-  have hyScale := NativeSmallWordAdd.finiteScale_toNat_eq_scale yExponent
+  have hxScale := FiniteKernel.finiteScale_toNat_eq_scale xExponent
+  have hyScale := FiniteKernel.finiteScale_toNat_eq_scale yExponent
   have hxScaleLt := scale_lt h xExponent hxExponent
   have hyScaleLt := scale_lt h yExponent hyExponent
   have hoffset := alignOffset_toNat h
@@ -553,16 +544,12 @@ theorem addFieldsWords_refines (h : Eligible fmt)
         have hnat := UInt64.le_iff_toNat_le.mp hshift
         rw [hlimit] at hnat
         omega
-      obtain ⟨hshifted, hshiftedLt⟩ :=
-        shiftedMantissa_toNat h yMantissa (yScale - xScale) hyMantissa hshiftBound
-      have hsum :
-          xMantissa.toNat + (yMantissa.shiftLeft (yScale - xScale).toNat).toNat < 2 ^ 128 := by
-        rw [hshifted]
-        norm_num at hpow127 hshiftedLt ⊢
-        omega
+      obtain ⟨hshifted, hsum⟩ :=
+        shiftedMantissa_add_fits yMantissa xMantissa (yScale - xScale) hyMantissa hxMantissa
+          hshiftBound
       rw [FiniteScaleAdd.roundMagnitudes_comm, roundAlignedWords_refines h (alignOffset fmt) xSign
-        ySign xMantissa _ xScale (shiftedMantissa_ne_zero _ _ hyNeNat hshifted) hsum hxBound words
-        hresult, hshifted, hshiftNat, hxScale, hoffset]
+        ySign xMantissa _ xScale (shiftedMantissa_ne_zero _ _ hyNeNat hshifted) (by omega) hxBound
+        words hresult, hshifted, hshiftNat, hxScale, hoffset]
     · rw [ite_eq_right hshift] at hresult
       have hgt := UInt64.lt_iff_toNat_lt.mp (UInt64.not_le.mp hshift)
       rw [hlimit] at hgt
@@ -575,7 +562,7 @@ theorem addFieldsWords_refines (h : Eligible fmt)
         have := UInt64.le_iff_toNat_le.mp hle
         omega
       rw [roundJammedWords_refines h (alignOffset fmt) ySign xSign yMantissa xMantissa
-        (yScale - xScale) xScale hlowBound hxNeNat hscaleBound words hresult, hshiftNat, hxScale,
+        (yScale - xScale) xScale hlowBound hscaleBound words hresult, hshiftNat, hxScale,
         hoffset]
   · have hleNat :
         ¬FiniteKernel.scale xExponent.toNat ≤ FiniteKernel.scale yExponent.toNat := by
@@ -599,13 +586,9 @@ theorem addFieldsWords_refines (h : Eligible fmt)
         have hnat := UInt64.le_iff_toNat_le.mp hshift
         rw [hlimit] at hnat
         omega
-      obtain ⟨hshifted, hshiftedLt⟩ :=
-        shiftedMantissa_toNat h xMantissa (xScale - yScale) hxMantissa hshiftBound
-      have hsum :
-          (xMantissa.shiftLeft (xScale - yScale).toNat).toNat + yMantissa.toNat < 2 ^ 128 := by
-        rw [hshifted]
-        norm_num at hpow127 hshiftedLt ⊢
-        omega
+      obtain ⟨hshifted, hsum⟩ :=
+        shiftedMantissa_add_fits xMantissa yMantissa (xScale - yScale) hxMantissa hyMantissa
+          hshiftBound
       rw [roundAlignedWords_refines h (alignOffset fmt) xSign ySign _ yMantissa yScale hyNeNat hsum
         hyBound words hresult, hshifted, hshiftNat, hyScale, hoffset]
     · rw [ite_eq_right hshift] at hresult
@@ -620,7 +603,7 @@ theorem addFieldsWords_refines (h : Eligible fmt)
         have := UInt64.le_iff_toNat_le.mp hge
         omega
       rw [roundJammedWords_refines h (alignOffset fmt) xSign ySign xMantissa yMantissa
-        (xScale - yScale) yScale hlowBound hyNeNat hscaleBound words hresult, hshiftNat, hyScale,
+        (xScale - yScale) yScale hlowBound hscaleBound words hresult, hshiftNat, hyScale,
         hoffset]
 
 /-! ## Storage-word decoding -/

@@ -14,7 +14,7 @@ public import Mathlib.Tactic.Ring
 
 Moving a trailing decimal zero into the quantum exponent preserves the cohort. Zero's cohort
 depends on its sign but not its quantum; infinities have singleton cohorts, and NaNs belong to
-no cohort.
+no cohort. A literal has the rational value of the same literal in `ℚ`.
 -/
 
 @[expose] public section
@@ -35,6 +35,7 @@ theorem sameCohort_zero_iff (s t : Bool) (q r : Int) :
     SameCohort (.finite s 0 q) (.finite t 0 r) ↔ s = t := by
   simp [SameCohort]
 
+/-- `+0` and `-0` lie in different cohorts, whatever their quanta. -/
 theorem not_sameCohort_opposite_zeros (q r : Int) :
     ¬SameCohort (.finite false 0 q) (.finite true 0 r) := by
   simp [sameCohort_zero_iff]
@@ -56,5 +57,18 @@ theorem sameCohort_infinity_iff (s : Bool) (d : Datum) :
 theorem not_sameCohort_nan (s signaling : Bool) (p : Nat) (d : Datum) :
     ¬SameCohort (.nan s signaling p) d := by
   cases d <;> simp [SameCohort]
+
+/-- A natural literal has the value of that natural number. -/
+theorem toRat?_ofNat (n : Nat) : (OfNat.ofNat n : Datum).toRat? = some (n : ℚ) := by
+  change (Datum.finite false n 0).toRat? = _
+  simp [toRat?_eq]
+
+/-- A decimal literal has the rational value of the same literal written in `ℚ`. -/
+theorem toRat?_ofScientific (mantissa : Nat) (exponentSign : Bool) (decimalExponent : Nat) :
+    (OfScientific.ofScientific mantissa exponentSign decimalExponent : Datum).toRat? =
+      some (OfScientific.ofScientific mantissa exponentSign decimalExponent : ℚ) := by
+  change (Datum.finite false mantissa _).toRat? = _
+  rw [Rat.ofScientific_def']
+  simp [toRat?_eq]
 
 end FloatLib.Floats.Formats.DecimalInterchange.Datum

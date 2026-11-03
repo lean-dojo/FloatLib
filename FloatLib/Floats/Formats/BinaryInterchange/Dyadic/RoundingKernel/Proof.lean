@@ -21,8 +21,10 @@ model-facing definitions.
 
 The IEEE proof covers signed zero, subnormal rounding, the minimum-normal transition,
 normalization carry, and overflow at arbitrary field widths. `roundDyadicGeneral_eq_roundDyadic`
-then relates the descriptor-aware algorithm to the public specification, including non-IEEE
-encoding policies.
+then shows that for an IEEE descriptor the descriptor-aware algorithm agrees with that logical
+specification. For any other descriptor `roundDyadic` is defined to be `roundDyadicGeneral`, so
+there the equality holds by definition; this file does not relate the non-IEEE rounding to an
+independent specification.
 -/
 
 @[expose] public section
@@ -35,6 +37,34 @@ private theorem ofModel_zero_eq_signedZero (fmt : FloatFormat) (negative : Bool)
   cases negative
   · exact (posZero_eq_ofModel_zero fmt).symm
   · exact (negZero_eq_ofModel_zero fmt).symm
+
+/-- Lean's packed sign/exponent/fraction word decodes to the corresponding explicit fields. -/
+private theorem ofModelBits_packComponents (fmt : FloatFormat) (sign : Bool)
+    (exponent fraction : Nat) :
+    ofModelBits (fmt := fmt)
+        (Float.Model.UnpackedFloat.packComponents (FloatFormat.toModel fmt) (modelSign sign)
+          (BitVec.ofNat fmt.expWidth exponent) (BitVec.ofNat fmt.fracWidth fraction)) =
+      ofFields fmt sign exponent fraction := by
+  rw [← toModelBits_ofFields, ofModelBits_toModelBits]
+
+/-- At the least subnormal exponent, Lean's biased exponent field is one. -/
+private theorem minSubnormal_biasedExponent (fmt : FloatFormat) :
+    (FloatFormat.ieeeMinSubnormalExponent fmt + (FloatFormat.toModel fmt).exponentBias +
+      (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat = 1 := by
+  change (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat = 1
+  unfold FloatFormat.ieeeMinSubnormalExponent
+  simp only [Int.ofNat_eq_natCast]
+  omega
+
+/-- The least subnormal exponent never takes Lean's packer to the overflow branch. -/
+private theorem not_overflow_minSubnormal (fmt : FloatFormat) :
+    ¬2 ^ (FloatFormat.toModel fmt).exponentBits ≤
+      (FloatFormat.ieeeMinSubnormalExponent fmt + (FloatFormat.toModel fmt).exponentBias +
+        (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat + 1 := by
+  rw [minSubnormal_biasedExponent]
+  have hfour := fmt.four_le_two_pow_expWidth
+  change ¬2 ^ fmt.expWidth ≤ 1 + 1
+  omega
 
 private theorem ofModel_finite_subnormal_eq_ofFields
     (fmt : FloatFormat) (negative : Bool) (mantissa : Nat)
@@ -51,23 +81,9 @@ private theorem ofModel_finite_subnormal_eq_ofFields
       ¬mantissa.log2 + 1 = (FloatFormat.toModel fmt).mantissaBits := by
     simp only [FloatFormat.toModel, Float.Model.Format.mantissaBits]
     omega
-  have hnotOverflow :
-      ¬2 ^ (FloatFormat.toModel fmt).exponentBits ≤
-        (FloatFormat.ieeeMinSubnormalExponent fmt +
-            (FloatFormat.toModel fmt).exponentBias +
-            (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat + 1 := by
-    change ¬2 ^ fmt.expWidth ≤
-      (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat + 1
-    have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-      simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat))
-        fmt.expWidth_ge_two
-    simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]
-    omega
   unfold ofModel ofModelBits Float.Model.UnpackedFloat.pack
-  simp only [hnotOverflow, ite_false, hnotNormal]
-  rw [← ofModelBits_toModelBits (ofFields fmt negative 0 mantissa)]
-  rw [toModelBits_ofFields]
-  rfl
+  simp only [not_overflow_minSubnormal fmt, ite_false, hnotNormal]
+  exact ofModelBits_packComponents fmt negative 0 mantissa
 
 private theorem ofModel_finite_normal_eq_ofFields_raw
     (fmt : FloatFormat) (negative : Bool) (mantissa : Nat) (exponent : Int)
@@ -85,13 +101,7 @@ private theorem ofModel_finite_normal_eq_ofFields_raw
         mantissa := by
   unfold ofModel ofModelBits Float.Model.UnpackedFloat.pack
   simp only [hnoOverflow, ite_false, hbits, ite_true]
-  rw [← ofModelBits_toModelBits
-    (ofFields fmt negative
-      (exponent + (FloatFormat.toModel fmt).exponentBias +
-        (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat
-      mantissa)]
-  rw [toModelBits_ofFields]
-  rfl
+  exact ofModelBits_packComponents fmt negative _ mantissa
 
 private theorem ofModel_finite_overflow_eq_signedInfinity
     (fmt : FloatFormat) (negative : Bool) (mantissa : Nat) (exponent : Int)
@@ -126,53 +136,21 @@ private theorem ofModel_finite_minNormal_eq_ofFields
         (FloatFormat.toModel fmt).mantissaBits := by
     simp [pow2_eq_two_pow, FloatFormat.toModel,
       Float.Model.Format.mantissaBits, Nat.add_comm]
-  have hnoOverflow :
-      ¬2 ^ (FloatFormat.toModel fmt).exponentBits ≤
-        (FloatFormat.ieeeMinSubnormalExponent fmt +
-          (FloatFormat.toModel fmt).exponentBias +
-          (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat + 1 := by
-    have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-      simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat))
-        fmt.expWidth_ge_two
-    change
-      ¬2 ^ fmt.expWidth ≤
-        (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat + 1
-    unfold FloatFormat.ieeeMinSubnormalExponent
-    simp only [Int.ofNat_eq_natCast]
-    omega
   rw [ofModel_finite_normal_eq_ofFields_raw fmt negative
     (pow2 fmt.fracWidth) (FloatFormat.ieeeMinSubnormalExponent fmt)
-    (by simp [pow2_eq_two_pow]) hbits hnoOverflow]
-  have hexponent :
-      (FloatFormat.ieeeMinSubnormalExponent fmt +
-        (FloatFormat.toModel fmt).exponentBias +
-        (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit).toNat = 1 := by
-    change
-      (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat = 1
-    unfold FloatFormat.ieeeMinSubnormalExponent
-    simp only [Int.ofNat_eq_natCast]
-    omega
-  rw [hexponent]
+    (by simp [pow2_eq_two_pow]) hbits (not_overflow_minSubnormal fmt)]
+  rw [minSubnormal_biasedExponent]
   have hfraction :
       BitVec.ofNat fmt.fracWidth (pow2 fmt.fracWidth) = 0#fmt.fracWidth := by
     apply BitVec.eq_of_toNat_eq
     simp [pow2_eq_two_pow]
-  rw [← ofModelBits_toModelBits
-    (ofFields fmt negative 1 (pow2 fmt.fracWidth))]
-  rw [← ofModelBits_toModelBits (ofFields fmt negative 1 0)]
-  rw [toModelBits_ofFields, toModelBits_ofFields]
-  rw [hfraction]
+  rw [← ofModelBits_packComponents, ← ofModelBits_packComponents, hfraction]
 
 private theorem ieeeSubnormalAlignExp_eq_neg_minSubnormalExp (fmt : FloatFormat) :
     Int.ofNat (FloatFormat.ieeeSubnormalAlignExp fmt) =
       -FloatFormat.ieeeMinSubnormalExponent fmt := by
   unfold FloatFormat.ieeeSubnormalAlignExp FloatFormat.ieeeMinSubnormalExponent
-  have hbias : 0 < fmt.bias := by
-    unfold FloatFormat.bias
-    have hwidth := fmt.expWidth_ge_two
-    have hpow : 2 ≤ 2 ^ (fmt.expWidth - 1) := by
-      exact Nat.one_lt_two_pow (by omega)
-    omega
+  have hbias := fmt.bias_pos
   have hsum : 1 ≤ fmt.bias + fmt.fracWidth := by omega
   have hnat :
       FloatFormat.ieeeSubnormalAlignExp fmt + 1 = fmt.bias + fmt.fracWidth :=
@@ -303,14 +281,73 @@ theorem ofModel_finite_normalized_eq_ofFields
     have hlow' : 2 ^ fmt.fracWidth ≤ mantissa := by
       simpa [pow2_eq_two_pow] using hlow
     simpa [pow2_eq_two_pow] using Nat.mod_eq_sub_mod hlow'
-  rw [← ofModelBits_toModelBits
-    (ofFields fmt negative
-      (Int.toNat (exponent + Int.ofNat fmt.bias)) mantissa)]
-  rw [← ofModelBits_toModelBits
-    (ofFields fmt negative
-      (Int.toNat (exponent + Int.ofNat fmt.bias))
-      (mantissa - pow2 fmt.fracWidth))]
-  rw [toModelBits_ofFields, toModelBits_ofFields, hfraction]
+  rw [← ofModelBits_packComponents, ← ofModelBits_packComponents, hfraction]
+
+/--
+Packing a normalized finite model value gives the signed infinity above the largest normal
+exponent and the direct field encoding otherwise.
+-/
+private theorem ofModel_finite_normalized_eq_ite
+    (fmt : FloatFormat) (negative : Bool) (mantissa : Nat) (exponent : Int)
+    (hlow : pow2 fmt.fracWidth ≤ mantissa)
+    (hhigh : mantissa < pow2 (fmt.fracWidth + 1))
+    (hmin : FloatFormat.ieeeMinNormalExponent fmt ≤ exponent) {hpos : 0 < mantissa} :
+    ofModel fmt (.finite (modelSign negative) mantissa (exponent - fmt.fracWidth) hpos) =
+      if exponent > Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
+        if negative then negInf fmt else posInf fmt
+      else
+        ofFields fmt negative (Int.toNat (exponent + Int.ofNat fmt.bias))
+          (mantissa - pow2 fmt.fracWidth) := by
+  by_cases hoverflow : Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) < exponent
+  · rw [ite_eq_left hoverflow]
+    exact ofModel_finite_overflow_eq_signedInfinity fmt negative mantissa
+      (exponent - fmt.fracWidth) (Nat.ne_of_gt hpos)
+      ((modelOverflow_iff_gt_maxNormal fmt exponent hmin).2 hoverflow)
+  · rw [ite_eq_right hoverflow]
+    exact ofModel_finite_normalized_eq_ofFields fmt negative mantissa exponent hlow hhigh hmin
+      (le_of_not_gt hoverflow)
+
+/-- Below the normal range, the specialized IEEE rounder packs the subnormal-aligned fraction. -/
+private theorem Internal.ieeeRoundDyadic_of_subnormal
+    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
+    (hsub :
+      (d.significand.log2 : Int) + d.exponent < FloatFormat.ieeeMinNormalExponent fmt) :
+    Internal.ieeeRoundDyadic fmt d =
+      let fraction :=
+        match d.exponent + Int.ofNat (FloatFormat.ieeeSubnormalAlignExp fmt) with
+        | .ofNat shift => d.significand <<< shift
+        | .negSucc shift => Numerics.roundShiftRightEven d.significand (shift + 1)
+      if fraction == 0 then
+        if d.negative then negZero fmt else posZero fmt
+      else if fraction == pow2 fmt.fracWidth then
+        Model.ofFields fmt d.negative 1 0
+      else
+        Model.ofFields fmt d.negative 0 fraction := by
+  unfold Internal.ieeeRoundDyadic
+  simp only [beq_iff_eq, hm, ite_false]
+  rw [ite_eq_left hsub]
+  rfl
+
+private theorem Internal.ieeeRoundDyadic_of_normal
+    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
+    (hnormal :
+      FloatFormat.ieeeMinNormalExponent fmt ≤ (d.significand.log2 : Int) + d.exponent) :
+    Internal.ieeeRoundDyadic fmt d =
+      let totalExponent := (d.significand.log2 : Int) + d.exponent
+      let rounded := roundMantissaToLeadingBitEven d.significand fmt.fracWidth
+      let carry := rounded == pow2 (fmt.fracWidth + 1)
+      let normalizedExponent := if carry then totalExponent + 1 else totalExponent
+      if normalizedExponent > Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
+        if d.negative then negInf fmt else posInf fmt
+      else
+        let normalizedMantissa := if carry then pow2 fmt.fracWidth else rounded
+        Model.ofFields fmt d.negative
+          (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
+          (normalizedMantissa - pow2 fmt.fracWidth) := by
+  unfold Internal.ieeeRoundDyadic
+  simp only [beq_iff_eq, hm, ite_false]
+  rw [ite_eq_right (not_lt_of_ge hnormal)]
+  rfl
 
 private theorem ieeeRoundDyadic_eq_internal_of_subnormal
     (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
@@ -345,21 +382,19 @@ private theorem ieeeRoundDyadic_eq_internal_of_subnormal
       exact
         (roundMantissaAtExponentEven_minSubnormal_eq_match
           fmt d.significand d.exponent).symm
-    unfold Internal.ieeeRoundDyadic
-    simp only [beq_iff_eq, hm, ite_false]
-    rw [ite_eq_left hsub]
+    rw [Internal.ieeeRoundDyadic_of_subnormal fmt d hm hsub]
     exact congrArg
       (fun fraction : Nat =>
-        if fraction = 0 then
+        if fraction == 0 then
           if d.negative then negZero fmt else posZero fmt
-        else if fraction = pow2 fmt.fracWidth then
+        else if fraction == pow2 fmt.fracWidth then
           ofFields fmt d.negative 1 0
         else
           ofFields fmt d.negative 0 fraction)
       hrounded
   rw [himpl]
   unfold ieeeRoundDyadic
-  rw [round_exact_eq_finishRoundedMantissa _ _ _ _ hm, htarget]
+  rw [round_exact_eq_finishRoundedMantissa, htarget]
   change
     ofModel fmt
         (finishRoundedMantissa (FloatFormat.toModel fmt) (modelSign d.negative)
@@ -419,70 +454,27 @@ private theorem ieeeRoundDyadic_eq_internal_of_normal
             if carry then pow2 fmt.fracWidth else rounded
           ofFields fmt d.negative
             (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
-            (normalizedMantissa - pow2 fmt.fracWidth) := by
-    unfold Internal.ieeeRoundDyadic
-    simp only [beq_iff_eq, hm, ite_false]
-    rw [ite_eq_right (not_lt_of_ge hnormal)]
-    rfl
+            (normalizedMantissa - pow2 fmt.fracWidth) :=
+    Internal.ieeeRoundDyadic_of_normal fmt d hm hnormal
   rw [himpl]
   unfold ieeeRoundDyadic
-  rw [round_exact_eq_finishRoundedMantissa _ _ _ _ hm, htarget, hrounded]
+  rw [round_exact_eq_finishRoundedMantissa, htarget, hrounded]
   by_cases hcarry : rounded = pow2 (fmt.fracWidth + 1)
-  · rw [hcarry, finishRoundedMantissa_normalized_carry
-      fmt (modelSign d.negative) exponent hnormal]
-    have hminCarry :
+  · have hminCarry :
         FloatFormat.ieeeMinNormalExponent fmt ≤ exponent + 1 := by
       dsimp only [exponent] at hnormal ⊢
       omega
-    by_cases hoverflow :
-        Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) < exponent + 1
-    · have hmodelOverflow :=
-        (modelOverflow_iff_gt_maxNormal fmt (exponent + 1) hminCarry).2
-          hoverflow
-      rw [ofModel_finite_overflow_eq_signedInfinity
-        fmt d.negative (pow2 fmt.fracWidth)
-        (exponent + 1 - fmt.fracWidth)
-        (by simp [pow2_eq_two_pow]) hmodelOverflow]
-      simp only [beq_iff_eq, ite_true]
-      rw [ite_eq_left hoverflow]
-    · have hmax :
-          exponent + 1 ≤
-            Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) :=
-        le_of_not_gt hoverflow
-      rw [ofModel_finite_normalized_eq_ofFields
-        fmt d.negative (pow2 fmt.fracWidth) (exponent + 1)
-        le_rfl
-        (by
-          have hp : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos _
-          simp only [pow2_eq_two_pow, pow_succ]
-          omega)
-        hminCarry hmax]
-      simp only [beq_iff_eq, ite_true]
-      rw [ite_eq_right (not_lt_of_ge hmax)]
-  · have hhigh : rounded < pow2 (fmt.fracWidth + 1) :=
-      lt_of_le_of_ne hhighLe hcarry
-    have hroundedNe : rounded ≠ 0 :=
-      Nat.ne_of_gt ((show 0 < pow2 fmt.fracWidth by
-        simp [pow2_eq_two_pow]).trans_le hlow)
-    rw [finishRoundedMantissa_normalized
+    rw [hcarry, finishRoundedMantissa_normalized_carry
+      fmt (modelSign d.negative) exponent hnormal,
+      ofModel_finite_normalized_eq_ite fmt d.negative (pow2 fmt.fracWidth) (exponent + 1)
+        le_rfl (by simp [pow2_eq_two_pow, pow_succ]) hminCarry]
+    simp only [beq_iff_eq, ite_true]
+  · rw [finishRoundedMantissa_normalized
       fmt (modelSign d.negative) rounded exponent
-      hlow hhigh hnormal]
-    by_cases hoverflow :
-        Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) < exponent
-    · have hmodelOverflow :=
-        (modelOverflow_iff_gt_maxNormal fmt exponent hnormal).2 hoverflow
-      rw [ofModel_finite_overflow_eq_signedInfinity
-        fmt d.negative rounded (exponent - fmt.fracWidth)
-        hroundedNe hmodelOverflow]
-      simp only [beq_iff_eq, hcarry, ite_false]
-      rw [ite_eq_left hoverflow]
-    · have hmax :
-          exponent ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) :=
-        le_of_not_gt hoverflow
-      rw [ofModel_finite_normalized_eq_ofFields
-        fmt d.negative rounded exponent hlow hhigh hnormal hmax]
-      simp only [beq_iff_eq, hcarry, ite_false]
-      rw [ite_eq_right (not_lt_of_ge hmax)]
+      hlow (lt_of_le_of_ne hhighLe hcarry) hnormal,
+      ofModel_finite_normalized_eq_ite fmt d.negative rounded exponent
+        hlow (lt_of_le_of_ne hhighLe hcarry) hnormal]
+    simp only [beq_iff_eq, hcarry, ite_false]
 
 /--
 The direct integer dyadic rounder computes the same result as Lean's format-parameterized logical
@@ -500,27 +492,6 @@ float model. The compiler uses this checked equality to replace the logical mode
         FloatFormat.ieeeMinNormalExponent fmt
     · exact ieeeRoundDyadic_eq_internal_of_subnormal fmt d hm hsub
     · exact ieeeRoundDyadic_eq_internal_of_normal fmt d hm (le_of_not_gt hsub)
-
-private theorem Internal.ieeeRoundDyadic_of_normal
-    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
-    (hnormal :
-      FloatFormat.ieeeMinNormalExponent fmt ≤ (d.significand.log2 : Int) + d.exponent) :
-    Internal.ieeeRoundDyadic fmt d =
-      let totalExponent := (d.significand.log2 : Int) + d.exponent
-      let rounded := roundMantissaToLeadingBitEven d.significand fmt.fracWidth
-      let carry := rounded == pow2 (fmt.fracWidth + 1)
-      let normalizedExponent := if carry then totalExponent + 1 else totalExponent
-      if normalizedExponent > Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) then
-        if d.negative then negInf fmt else posInf fmt
-      else
-        let normalizedMantissa := if carry then pow2 fmt.fracWidth else rounded
-        Model.ofFields fmt d.negative
-          (Int.toNat (normalizedExponent + Int.ofNat fmt.bias))
-          (normalizedMantissa - pow2 fmt.fracWidth) := by
-  unfold Internal.ieeeRoundDyadic
-  simp only [beq_iff_eq, hm, ite_false]
-  rw [ite_eq_right (not_lt_of_ge hnormal)]
-  rfl
 
 /--
 On conventional IEEE descriptors, the descriptor-general integer rounder and the specialized
@@ -641,11 +612,8 @@ private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
               else if fraction == pow2 fmt.fracWidth then
                 ofFields fmt d.negative 1 0
               else
-                ofFields fmt d.negative 0 fraction := by
-          unfold Internal.ieeeRoundDyadic
-          simp only [beq_iff_eq, hm, ite_false]
-          rw [ite_eq_left hsubIEEE']
-          rfl
+                ofFields fmt d.negative 0 fraction :=
+          Internal.ieeeRoundDyadic_of_subnormal fmt d hm hsubIEEE'
         rw [hgeneral, himpl]
         by_cases hzero : fraction = 0
         · simp [hzero, zero_eq_signedZero_of_isIEEE fmt hfmt]
@@ -724,7 +692,7 @@ private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
             have hguard :=
               Directed.Internal.normalizedGuard_eq_false fmt hfmt
                 (pow2 fmt.fracWidth) (totalExponent + 1)
-                hmantissaHigh hnormalizedMin hnormalizedMax
+                hmantissaHigh hnormalizedMax
             dsimp only at hguard
             have hnormalizedMaxIEEE :
                 totalExponent + 1 ≤
@@ -742,7 +710,7 @@ private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
             lt_of_le_of_ne hroundedHigh hcarry
           have hguard :=
             Directed.Internal.normalizedGuard_eq_false fmt hfmt
-              rounded totalExponent hmantissaHigh hnormal htotalMax
+              rounded totalExponent hmantissaHigh htotalMax
           dsimp only at hguard
           have htotalMaxIEEE :
               totalExponent ≤
@@ -757,8 +725,12 @@ private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
           rw [hbias]
 
 /--
-The descriptor-general nearest-even dyadic algorithm agrees with the public dyadic rounding
-specification, including signed zero and every packed exceptional result.
+The descriptor-general nearest-even dyadic algorithm computes `roundDyadic`.
+
+For an IEEE descriptor this is the agreement with the logical model rounding `ieeeRoundDyadic`,
+word for word, signed zero and overflow to infinity included. For every other descriptor
+`roundDyadic` is defined as `roundDyadicGeneral`, so the equality is definitional and checks
+nothing about the non-IEEE encoding policies.
 -/
 theorem roundDyadicGeneral_eq_roundDyadic
     (fmt : FloatFormat) (d : Numerics.Dyadic) :

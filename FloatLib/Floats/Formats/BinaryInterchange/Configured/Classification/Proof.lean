@@ -13,9 +13,13 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 /-!
 # Classification refinement for configured binary values
 
-Every storage codec preserves classification and canonicality. The ten class characterizations
-and the exact numerical threshold theorems are transported from the descriptor model, with no
-assumptions on storage width, bias, or exceptional-value policy beyond a valid descriptor.
+Every storage codec preserves classification. The ten class characterizations and the exact
+numerical threshold theorems are transported from the descriptor model, with no assumptions on
+storage width, bias, or exceptional-value policy beyond a valid descriptor.
+
+Canonicality carries no information here. An implicit-leading-bit binary layout has no
+non-canonical words, so `isCanonical` is the constant `true` predicate (`isCanonical_eq_true`),
+and the canonicality lemmas below record that fact rather than an invariant a codec must keep.
 -/
 
 @[expose] public section
@@ -35,7 +39,7 @@ theorem classify_eq_model (x : Value) : classify x = Model.classify (toModel x) 
 /-- Configured normality is the descriptor-model normality predicate. -/
 theorem isNormal_eq_model (x : Value) : isNormal x = Model.isNormal (toModel x) := rfl
 
-/-- Configured canonicality concerns the exact interchange word decoded by the codec. -/
+/-- Configured canonicality is that of the descriptor model, which is always `true`. -/
 theorem isCanonical_eq_model (x : Value) :
     isCanonical x = Model.isCanonical (toModel x) := rfl
 
@@ -49,7 +53,7 @@ theorem isCanonical_eq_model (x : Value) :
     isNormal (ofModel (plan := plan) (code := code) x) = Model.isNormal x := by
   simp [isNormal]
 
-/-- Packing a descriptor model preserves its canonicality. -/
+/-- Packing a descriptor model keeps its canonicality; both sides are `true`. -/
 @[simp] theorem isCanonical_ofModel (x : Model format) :
     isCanonical (ofModel (plan := plan) (code := code) x) = Model.isCanonical x := by
   simp [isCanonical]
@@ -58,10 +62,10 @@ theorem isCanonical_eq_model (x : Value) :
 theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
     classify x = c ↔
       match c with
-      | .signalingNaN => isSignalingNaN x = true
-      | .quietNaN => isQuietNaN x = true
-      | .negativeInfinity => isInfinite x = true ∧ signBit x = true
-      | .positiveInfinity => isInfinite x = true ∧ signBit x = false
+      | .signalingNaN => isSNaN x = true
+      | .quietNaN => isQNaN x = true
+      | .negativeInfinity => isInf x = true ∧ signBit x = true
+      | .positiveInfinity => isInf x = true ∧ signBit x = false
       | .negativeZero => isZero x = true ∧ signBit x = true
       | .positiveZero => isZero x = true ∧ signBit x = false
       | .negativeSubnormal => isSubnormal x = true ∧ signBit x = true
@@ -72,20 +76,20 @@ theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
 
 /-- The signaling class is exactly the configured signaling predicate. -/
 @[simp] theorem classify_eq_signalingNaN_iff (x : Value) :
-    classify x = .signalingNaN ↔ isSignalingNaN x = true := classify_eq_iff x _
+    classify x = .signalingNaN ↔ isSNaN x = true := classify_eq_iff x _
 
 /-- The quiet class is exactly the configured quiet-NaN predicate. -/
 @[simp] theorem classify_eq_quietNaN_iff (x : Value) :
-    classify x = .quietNaN ↔ isQuietNaN x = true := classify_eq_iff x _
+    classify x = .quietNaN ↔ isQNaN x = true := classify_eq_iff x _
 
 /-- Negative infinity retains its stored negative sign. -/
 @[simp] theorem classify_eq_negativeInfinity_iff (x : Value) :
-    classify x = .negativeInfinity ↔ isInfinite x = true ∧ signBit x = true :=
+    classify x = .negativeInfinity ↔ isInf x = true ∧ signBit x = true :=
   classify_eq_iff x _
 
 /-- Positive infinity retains its stored positive sign. -/
 @[simp] theorem classify_eq_positiveInfinity_iff (x : Value) :
-    classify x = .positiveInfinity ↔ isInfinite x = true ∧ signBit x = false :=
+    classify x = .positiveInfinity ↔ isInf x = true ∧ signBit x = false :=
   classify_eq_iff x _
 
 /-- Negative zero is a zero with a negative stored sign under the configured policy. -/
@@ -157,10 +161,18 @@ theorem classify_eq_match_exactValue (x : Value) :
             if d.negative then .negativeNormal else .positiveNormal :=
   Model.classify_eq_match_exactValue (toModel x)
 
-/-- Every configured implicit-leading-bit binary word is canonical. -/
+/--
+Every configured implicit-leading-bit binary word is canonical, including every NaN payload:
+`isCanonical` is the constant `true` predicate.
+-/
 @[simp] theorem isCanonical_eq_true (x : Value) : isCanonical x = true := rfl
 
-/-- Canonicality agrees with lossless reconstruction from the full interchange word. -/
+/--
+Canonicality agrees with lossless reconstruction from the full interchange word.
+
+Both sides hold for every value (`isCanonical_eq_true` and `ofNatBits_toNatBits`), so this
+explains why the constant predicate is right; it excludes no word.
+-/
 theorem isCanonical_iff_word_roundtrip (x : Value) :
     isCanonical x = true ↔ ofNatBits (toNatBits x) = x := by
   simp [ofNatBits_toNatBits]

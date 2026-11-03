@@ -91,13 +91,26 @@ theorem regimeRunLength_pos (value : Model format) :
   format.payloadBits - value.regimeRunLength -
     (if value.hasRegimeTerminator then 1 else 0)
 
+/--
+The trailing field is what remains after the regime run and its terminator bit. A run filling the
+whole payload has no terminator, and the formula still gives zero by truncated subtraction.
+-/
+theorem trailingBits_eq (value : Model format) :
+    value.trailingBits = format.payloadBits - value.regimeRunLength - 1 := by
+  have hrun := regimeRunLength_le_payload value
+  unfold trailingBits hasRegimeTerminator
+  by_cases hterminator : value.regimeRunLength < format.payloadBits
+  · simp [hterminator]
+  · simp only [hterminator, decide_false, Bool.false_eq_true, ite_false]
+    omega
+
 /-- Regime and trailing fields together fit inside the payload. -/
 theorem regimeRunLength_add_trailingBits_le_payload
     (value : Model format) :
     value.regimeRunLength + value.trailingBits ≤ format.payloadBits := by
-  unfold trailingBits
   have hrun := regimeRunLength_le_payload value
-  split <;> omega
+  rw [trailingBits_eq]
+  omega
 
 /-- Number of exponent bits actually present in this tapered encoding. -/
 @[inline] def usedExponentBits (value : Model format) : Nat :=
@@ -127,6 +140,11 @@ theorem regimeRunLength_add_fractionBits_le_payload
 /-- Low explicit fraction field. -/
 @[inline] def fractionField (value : Model format) : Nat :=
   value.magnitudeBits % 2 ^ value.fractionBits
+
+/-- The explicit fraction field fits in its width. -/
+theorem fractionField_lt_two_pow (value : Model format) :
+    value.fractionField < 2 ^ value.fractionBits :=
+  Nat.mod_lt _ (Nat.two_pow_pos _)
 
 /-- Exponent bits physically present between the regime and fraction. -/
 @[inline] def storedExponentField (value : Model format) : Nat :=
@@ -178,20 +196,17 @@ theorem exponentField_lt_four (value : Model format) :
   value.regimeValue * Int.ofNat format.regimeExponentStep +
     Int.ofNat value.exponentField - Int.ofNat value.fractionBits
 
-/-- Every decoded posit scale is no smaller than `-4` times its payload width. -/
-theorem neg_four_payloadBits_le_scale (value : Model format) :
-    -(4 * Int.ofNat format.payloadBits) ≤ value.scale := by
-  have hrunPositive : 0 < value.regimeRunLength :=
-    regimeRunLength_pos value
-  have hfields :
-      value.regimeRunLength + value.fractionBits ≤ format.payloadBits :=
-    regimeRunLength_add_fractionBits_le_payload value
-  have hrunPositiveInt : (0 : Int) < value.regimeRunLength := by
-    exact_mod_cast hrunPositive
-  have hfieldsInt :
-      (value.regimeRunLength : Int) + value.fractionBits ≤
-        format.payloadBits := by
-    exact_mod_cast hfields
+/--
+Adding back the fraction width, a decoded scale lies within four regime steps of zero per regime
+bit: the regime contributes `4 (r - 1)` or `-4 r` and the exponent field less than four.
+-/
+private theorem scale_add_fractionBits_bounds (value : Model format) :
+    -(4 * (value.regimeRunLength : Int)) ≤ value.scale + value.fractionBits ∧
+      value.scale + value.fractionBits < 4 * (value.regimeRunLength : Int) := by
+  have hrunPositive : (0 : Int) < value.regimeRunLength := by
+    exact_mod_cast regimeRunLength_pos value
+  have hexponent : (value.exponentField : Int) < 4 := by
+    exact_mod_cast exponentField_lt_four value
   have hstep :
       Int.ofNat format.regimeExponentStep = (4 : Int) :=
     rfl
@@ -205,34 +220,47 @@ theorem neg_four_payloadBits_le_scale (value : Model format) :
         hstep, Int.ofNat_eq_natCast]
       omega
 
+/-- Every decoded posit scale is no smaller than `-4` times its payload width. -/
+theorem neg_four_payloadBits_le_scale (value : Model format) :
+    -(4 * Int.ofNat format.payloadBits) ≤ value.scale := by
+  have hfields :
+      (value.regimeRunLength : Int) + value.fractionBits ≤
+        format.payloadBits := by
+    exact_mod_cast regimeRunLength_add_fractionBits_le_payload value
+  have hbounds := scale_add_fractionBits_bounds value
+  simp only [Int.ofNat_eq_natCast]
+  omega
+
 /-- Every decoded posit scale is strictly below four times its total encoded width. -/
 theorem scale_lt_four_bits (value : Model format) :
     value.scale < 4 * Int.ofNat format.bits := by
-  have hrun := regimeRunLength_le_payload value
-  have hexponent := exponentField_lt_four value
-  have hpayload : format.payloadBits + 1 = format.bits := by
-    simpa only [Format.payloadBits] using
-      Nat.sub_add_cancel
-        (Nat.le_trans (by decide : 1 ≤ 2) format.bits_ge_two)
-  have hrunInt :
-      (value.regimeRunLength : Int) ≤ format.payloadBits := by
-    exact_mod_cast hrun
-  have hexponentInt : (value.exponentField : Int) < 4 := by
-    exact_mod_cast hexponent
-  have hpayloadInt : (format.payloadBits : Int) + 1 = format.bits := by
+  have hrun : (value.regimeRunLength : Int) ≤ format.payloadBits := by
+    exact_mod_cast regimeRunLength_le_payload value
+  have hpayload : format.payloadBits < format.bits := by
+    have := format.bits_ge_two
+    unfold Format.payloadBits
+    omega
+  have hpayloadInt : (format.payloadBits : Int) < format.bits := by
     exact_mod_cast hpayload
-  have hstep :
-      Int.ofNat format.regimeExponentStep = (4 : Int) :=
-    rfl
-  cases hbit : value.regimeBit with
-  | false =>
-      simp only [scale, regimeValue, hbit, Bool.false_eq_true, ite_false,
-        hstep, Int.ofNat_eq_natCast]
-      omega
-  | true =>
-      simp only [scale, regimeValue, hbit, ite_true,
-        hstep, Int.ofNat_eq_natCast]
-      omega
+  have hbounds := scale_add_fractionBits_bounds value
+  simp only [Int.ofNat_eq_natCast]
+  omega
+
+/-- At the minimum width, the two unit-magnitude encodings `1` and `3` have dyadic scale zero. -/
+private theorem scale_ofNatBits_eq_zero_of_bits_eq_two
+    (hbits : format.bits = 2) {code : Nat} (hcode : code = 1 ∨ code = 3) :
+    (ofNatBits (format := format) code).scale = 0 := by
+  have hencoded : (ofNatBits (format := format) code).toNatBits = code := by
+    apply toNatBits_ofNatBits_of_lt
+    rcases hcode with rfl | rfl <;> simp [Format.modulus, hbits]
+  have hencodedBits : (ofNatBits (format := format) code).bits.toNat = code :=
+    hencoded
+  rcases hcode with rfl | rfl <;>
+    simp [scale, regimeValue, regimeRunLength, regimeBit, magnitudeBits,
+      signBit, BitVec.msb_eq_decide, trailingBits, hasRegimeTerminator,
+      fractionBits, usedExponentBits, exponentField, storedExponentField,
+      Format.payloadBits, Format.exponentBits, Format.regimeExponentStep,
+      Format.modulus, hbits, hencoded, hencodedBits, countLeadingRun]
 
 /--
 At the minimum standard width, every word is zero, NaR, or one of the two encodings of unit
@@ -251,47 +279,22 @@ theorem zero_or_nar_or_scale_eq_zero_of_bits_eq_two
         value.toNatBits = 2 ∨ value.toNatBits = 3 := by
     omega
   rcases hcases with hvalue | hvalue | hvalue | hvalue
-  · left
-    rw [← ofNatBits_toNatBits value, hvalue]
-    rfl
+  · exact Or.inl ((toNatBits_eq_zero_iff value).1 hvalue)
   · right
     right
-    have hencoded :
-        (ofNatBits (format := format) 1).toNatBits = 1 := by
-      apply toNatBits_ofNatBits_of_lt
-      simp [Format.modulus, hbits]
-    have hencodedBits :
-        (ofNatBits (format := format) 1).bits.toNat = 1 :=
-      hencoded
     rw [← ofNatBits_toNatBits value, hvalue]
-    simp [scale, regimeValue, regimeRunLength, regimeBit, magnitudeBits,
-      signBit, BitVec.msb_eq_decide, trailingBits, hasRegimeTerminator,
-      fractionBits, usedExponentBits, exponentField, storedExponentField,
-      Format.payloadBits, Format.exponentBits, Format.regimeExponentStep,
-      hbits, hencoded, hencodedBits, countLeadingRun]
-  · right
-    left
-    rw [← ofNatBits_toNatBits value, hvalue]
-    apply congrArg ofBits
-    apply BitVec.eq_of_toNat_eq
-    simp [Format.signMaskNat, Format.signIndex, hbits]
+    exact scale_ofNatBits_eq_zero_of_bits_eq_two hbits (Or.inl rfl)
+  · refine Or.inr (Or.inl ((toNatBits_eq_signMaskNat_iff value).1 ?_))
+    simp [Format.signMaskNat, Format.signIndex, hbits, hvalue]
   · right
     right
-    have hencoded :
-        (ofNatBits (format := format) 3).toNatBits = 3 := by
-      apply toNatBits_ofNatBits_of_lt
-      simp [Format.modulus, hbits]
-    have hencodedBits :
-        (ofNatBits (format := format) 3).bits.toNat = 3 :=
-      hencoded
     rw [← ofNatBits_toNatBits value, hvalue]
-    simp [scale, regimeValue, regimeRunLength, regimeBit, magnitudeBits,
-      signBit, BitVec.msb_eq_decide, trailingBits, hasRegimeTerminator,
-      fractionBits, usedExponentBits, exponentField, storedExponentField,
-      Format.payloadBits, Format.exponentBits, Format.regimeExponentStep,
-      Format.modulus, hbits, hencoded, hencodedBits, countLeadingRun]
+    exact scale_ofNatBits_eq_zero_of_bits_eq_two hbits (Or.inr rfl)
 
-/-- Complete decoded fields of a nonzero finite posit. -/
+/--
+Complete decoded fields of a nonzero finite posit. The structure itself does not constrain its
+fields; `decodeFields` fills them from a word.
+-/
 structure DecodedFields (format : Format) where
   /-- Sign of the represented finite value. -/
   negative : Bool
@@ -309,13 +312,20 @@ structure DecodedFields (format : Format) where
   fractionBits : Nat
   /-- Explicit fraction field. -/
   fractionField : Nat
-  /-- Positive integer significand, including its implicit leading bit. -/
+  /-- Integer significand, including its implicit leading bit; positive in every `decodeFields`
+  result (`decodeFields_significand_pos`). -/
   significand : Nat
   /-- Binary exponent applied to `significand`. -/
   scale : Int
   deriving DecidableEq, Repr
 
-/-- Decode all fields of a nonzero finite posit word. -/
+/--
+Decode all fields of a nonzero finite posit word.
+
+The decoder is total and does not test for the two exceptional words. Its significand is always
+positive, so on zero and NaR it returns fields that `DecodedFields.toRat` reads as a nonzero value;
+`decodeExact` handles those two words before calling it.
+-/
 @[inline] def decodeFields (value : Model format) : DecodedFields format where
   negative := value.signBit
   regimeBit := value.regimeBit
@@ -328,35 +338,22 @@ structure DecodedFields (format : Format) where
   significand := 2 ^ value.fractionBits + value.fractionField
   scale := value.scale
 
-/-- A decoded posit significand fits within the complete posit word's width. -/
-theorem decodeFields_significand_lt_modulus (value : Model format) :
-    value.decodeFields.significand < format.modulus := by
-  have hfraction :
-      value.fractionField < 2 ^ value.fractionBits := by
-    unfold fractionField
-    exact Nat.mod_lt _ (Nat.two_pow_pos _)
-  have hsignificand :
-      2 ^ value.fractionBits + value.fractionField <
-        2 ^ (value.fractionBits + 1) := by
-    calc
-      2 ^ value.fractionBits + value.fractionField <
-          2 ^ value.fractionBits + 2 ^ value.fractionBits :=
-        Nat.add_lt_add_left hfraction _
-      _ = 2 ^ (value.fractionBits + 1) := by
-        rw [Nat.pow_succ]
-        omega
-  have hpayload : format.payloadBits + 1 = format.bits := by
-    simpa only [Format.payloadBits] using
-      Nat.sub_add_cancel
-        (Nat.le_trans (by decide : 1 ≤ 2) format.bits_ge_two)
-  have hfractionBits : value.fractionBits + 1 ≤ format.bits := by
-    have hfields :=
-      regimeRunLength_add_fractionBits_le_payload value
-    have hrun := regimeRunLength_pos value
-    omega
-  apply lt_of_lt_of_le hsignificand
-  unfold Format.modulus
-  exact Nat.pow_le_pow_right (by decide) hfractionBits
+/-- A decoded posit significand is positive: it includes the implicit leading bit. -/
+theorem decodeFields_significand_pos (value : Model format) :
+    0 < value.decodeFields.significand :=
+  Nat.add_pos_left (Nat.two_pow_pos _) _
+
+/--
+A decoded significand fits in one bit more than its explicit fraction: with the hidden bit just
+above the fraction, it is below `2 ^ (fractionBits + 1)`.
+-/
+theorem decodeFields_significand_lt_two_pow_succ_fractionBits
+    (value : Model format) :
+    value.decodeFields.significand < 2 ^ (value.fractionBits + 1) := by
+  have hfraction := fractionField_lt_two_pow value
+  change 2 ^ value.fractionBits + value.fractionField < 2 ^ (value.fractionBits + 1)
+  rw [Nat.pow_succ]
+  omega
 
 /--
 A decoded posit significand fits in the format payload.
@@ -367,23 +364,17 @@ together with every explicit fraction bit occupies at most `payloadBits` positio
 theorem decodeFields_significand_lt_two_pow_payloadBits
     (value : Model format) :
     value.decodeFields.significand < 2 ^ format.payloadBits := by
-  have hfraction :
-      value.fractionField < 2 ^ value.fractionBits := by
-    unfold fractionField
-    exact Nat.mod_lt _ (Nat.two_pow_pos _)
-  have hsignificand :
-      value.decodeFields.significand <
-        2 ^ (value.fractionBits + 1) := by
-    change
-      2 ^ value.fractionBits + value.fractionField <
-        2 ^ (value.fractionBits + 1)
-    rw [Nat.pow_succ]
-    omega
   have hfields :=
     regimeRunLength_add_fractionBits_le_payload value
   have hrun := regimeRunLength_pos value
-  exact hsignificand.trans_le <|
+  exact (decodeFields_significand_lt_two_pow_succ_fractionBits value).trans_le <|
     Nat.pow_le_pow_right (by decide) (by omega)
+
+/-- A decoded posit significand fits within the complete posit word's width. -/
+theorem decodeFields_significand_lt_modulus (value : Model format) :
+    value.decodeFields.significand < format.modulus :=
+  (decodeFields_significand_lt_two_pow_payloadBits value).trans_le
+    (Nat.pow_le_pow_right (by decide) (Nat.sub_le format.bits 1))
 
 namespace DecodedFields
 

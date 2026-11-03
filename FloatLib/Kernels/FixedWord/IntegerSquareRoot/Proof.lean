@@ -116,7 +116,7 @@ decreasing_by
       simp only [UInt64.reduceToNat, Nat.shiftLeft_eq, Nat.one_mul]
       exact Nat.pow_lt_pow_right (by decide) hshift
     simpa only [shift, hlog, UInt64.reduceToNat] using
-      FloatLib.Numerics.FixedWord.shiftLeft_toNat (1 : UInt64) shift hshift hfit
+      FloatLib.Numerics.FixedWord.shiftLeft_toNat (1 : UInt64) shift hfit
 
 /-- An accepted candidate is the floor square root. -/
 theorem isFloorRoot_spec {value guess : UInt64} (h : isFloorRoot value guess = true) :

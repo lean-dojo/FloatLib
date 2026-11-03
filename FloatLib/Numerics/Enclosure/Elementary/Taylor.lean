@@ -9,6 +9,7 @@ module
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Nat.Factorial.Basic
 public import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Data.Nat.Factorial.BigOperators
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Ring
 
@@ -82,6 +83,25 @@ theorem horner_add (term : Nat → Block) (start m n : Nat) (tail : ℚ) :
     simp only [Nat.succ_add, horner, ih]
     congr 2
 
+/--
+Horner evaluation of affine steps `tail ↦ a k + m k * tail` from a zero tail is the sum of the
+constant terms `a (start + i)`, each weighted by the product of the multipliers before it.
+-/
+theorem horner_eq_sum_prod (term : Nat → Block) (a m : Nat → ℚ)
+    (hterm : ∀ k tail, (term k).eval tail = a k + m k * tail) (start n : Nat) :
+    horner term start n 0 =
+      ∑ i ∈ Finset.range n, (∏ j ∈ Finset.range i, m (start + j)) * a (start + i) := by
+  induction n generalizing start with
+  | zero => simp [horner]
+  | succ n ih =>
+    rw [horner, hterm, ih, Finset.sum_range_succ', Finset.mul_sum, add_comm]
+    simp only [Finset.prod_range_zero, one_mul, add_zero, Finset.prod_range_succ']
+    congr 1
+    apply Finset.sum_congr rfl
+    intro i _
+    simp only [show ∀ j, start + 1 + j = start + (j + 1) by omega]
+    ring
+
 /-- Compose a range of Horner steps by splitting it into halves. -/
 @[specialize] def split (term : Nat → Block) (start length : Nat) : Block :=
   match length with
@@ -121,20 +141,13 @@ theorem eval_expStep (x : ℚ) (k : Nat) (tail : ℚ) :
 theorem horner_expStep (x : ℚ) (start n : Nat) :
     horner (expStep x) start n 0 =
       ∑ i ∈ Finset.range n, x ^ i / ((start + 1).ascFactorial i : ℚ) := by
-  induction n generalizing start with
-  | zero => simp [horner]
-  | succ n ih =>
-    rw [horner, eval_expStep, ih, Finset.sum_range_succ']
-    simp only [pow_zero, Nat.ascFactorial_zero, Nat.cast_one, div_one]
-    rw [Finset.mul_sum, add_comm]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i hi
-    rw [Nat.ascFactorial_succ, ← Nat.succ_ascFactorial]
-    simp only [Nat.succ_eq_add_one, Nat.cast_mul, Nat.cast_add, Nat.cast_one]
-    rw [div_mul_div_comm]
-    congr 1
-    ring
+  rw [horner_eq_sum_prod _ (fun _ => 1) (fun k => x / (k + 1)) (eval_expStep x)]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [Finset.prod_div_distrib, Finset.prod_const, Finset.card_range,
+    Nat.ascFactorial_eq_prod_range]
+  push_cast
+  simp only [mul_one, add_right_comm]
 
 /-- The logarithm Horner step `tail ↦ x / (k + 1) + x * tail`. -/
 def logStep (x : ℚ) (k : Nat) : Block :=
@@ -157,17 +170,12 @@ theorem eval_logStep (x : ℚ) (k : Nat) (tail : ℚ) :
 theorem horner_logStep (x : ℚ) (start n : Nat) :
     horner (logStep x) start n 0 =
       ∑ i ∈ Finset.range n, x ^ (i + 1) / ((start + i + 1 : Nat) : ℚ) := by
-  induction n generalizing start with
-  | zero => simp [horner]
-  | succ n ih =>
-    rw [horner, eval_logStep, ih, Finset.sum_range_succ']
-    simp only [Nat.add_zero, Nat.zero_add, Nat.cast_add, Nat.cast_one, pow_one]
-    rw [Finset.mul_sum, add_comm]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i hi
-    rw [← mul_div_assoc]
-    congr 1 <;> ring
+  rw [horner_eq_sum_prod _ (fun k => x / (k + 1)) (fun _ => x) (eval_logStep x)]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [Finset.prod_const, Finset.card_range]
+  push_cast
+  ring
 
 /-- The arctangent Horner step `tail ↦ 1 / (2k + 1) - x ^ 2 * tail`. -/
 def atanStep (x : ℚ) (k : Nat) : Block :=
@@ -192,17 +200,13 @@ theorem eval_atanStep (x : ℚ) (k : Nat) (tail : ℚ) :
 theorem horner_atanStep (x : ℚ) (start n : Nat) :
     horner (atanStep x) start n 0 =
       ∑ i ∈ Finset.range n, (-x ^ 2) ^ i / ((2 * (start + i) + 1 : Nat) : ℚ) := by
-  induction n generalizing start with
-  | zero => simp [horner]
-  | succ n ih =>
-    rw [horner, eval_atanStep, ih, Finset.sum_range_succ']
-    simp only [Nat.add_zero, pow_zero, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_one]
-    rw [Finset.mul_sum, sub_eq_add_neg, ← Finset.sum_neg_distrib, add_comm]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i hi
-    rw [pow_succ]
-    ring_nf
+  rw [horner_eq_sum_prod _ (fun k => 1 / (2 * k + 1)) (fun _ => -x ^ 2)
+    (fun k tail => by rw [eval_atanStep]; ring)]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [Finset.prod_const, Finset.card_range]
+  push_cast
+  ring
 
 /-- Sum of the first `n` exponential terms, with one final rational normalization. -/
 def exp (x : ℚ) (n : Nat) : ℚ :=

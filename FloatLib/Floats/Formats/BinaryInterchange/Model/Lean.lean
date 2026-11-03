@@ -19,6 +19,14 @@ encodings for their field widths. This module connects the two without selecting
 other fixed format. Custom descriptor biases and encoding policies require separate semantic
 agreement theorems.
 
+`FloatFormat.toModel` keeps only the two field widths, so `toModel`, `ofModel`,
+`IsModelCanonical`, and `canonicalizeModel` follow the descriptor's own semantics only when
+`fmt.isIEEE`. For a finite-only, maximum-NaN, or unsigned-zero encoding, Lean's model can read a
+finite word as infinity or NaN, and `canonicalizeModel` can rewrite it. The agreement theorems for
+IEEE descriptors are `toDyadic?_ieee_eq_model`, `isFinite_toModel`, and
+`toReal_eq_unpackedToReal_toModel`; `toModel_eq_notANumber_iff` says which words Lean's model
+reads as NaN under every descriptor.
+
 The bridge is width preserving: `FloatFormat.toModel` has exactly `fmt.bitWidth` packed bits, so no
 padding, truncation, or host `Float` conversion occurs. Packing a model value canonicalizes NaNs,
 as Lean's model requires; unpacking arbitrary `Model` bits remains total.
@@ -122,6 +130,15 @@ theorem packComponents_unpackComponents (spec : Float.Model.Format)
       subst i
       simp [unpackSign]
 
+/-- Masking with the low `width` bits of a wider word keeps the residue modulo `2^width`. -/
+private theorem and_lowMask_mod_eq {width total : Nat} (hwidth : width ≤ total) (n : Nat) :
+    n &&& ((2 ^ width - 1) % 2 ^ total) = n % 2 ^ width := by
+  have hpow : 2 ^ width ≤ 2 ^ total := Nat.pow_le_pow_right (by decide) hwidth
+  have hmask : 2 ^ width - 1 < 2 ^ total := by
+    have hpos : 0 < 2 ^ width := Nat.two_pow_pos width
+    omega
+  rw [Nat.mod_eq_of_lt hmask, Nat.and_two_pow_sub_one_eq_mod]
+
 /-- Masking a widened natural bit vector agrees with widening the low-width vector. -/
 private theorem ofNat_and_lowMask_eq_setWidth
     {width total : Nat} (hwidth : width ≤ total) (n : Nat) :
@@ -131,10 +148,7 @@ private theorem ofNat_and_lowMask_eq_setWidth
   simp only [BitVec.toNat_and, BitVec.toNat_ofNat, BitVec.toNat_setWidth]
   have hpow : 2 ^ width ≤ 2 ^ total :=
     Nat.pow_le_pow_right (by decide) hwidth
-  have hmask : 2 ^ width - 1 < 2 ^ total := by
-    have hpos : 0 < 2 ^ width := Nat.two_pow_pos width
-    omega
-  rw [Nat.mod_eq_of_lt hmask, Nat.and_two_pow_sub_one_eq_mod]
+  rw [and_lowMask_mod_eq hwidth]
   rw [Nat.mod_mod_of_dvd n (Nat.pow_dvd_pow 2 hwidth)]
   rw [Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le (Nat.mod_lt n (Nat.two_pow_pos width)) hpow)]
 
@@ -244,13 +258,7 @@ theorem unpackMantissa_toNat {fmt : FloatFormat} (x : Model fmt) :
       (x.bits.toNat >>> 0) % 2 ^ fractionWidth =
         x.bits.toNat &&&
           ((2 ^ fractionWidth - 1) % 2 ^ (1 + exponentWidth + fractionWidth))
-    rw [Nat.shiftRight_zero]
-    have hmask : 2 ^ fractionWidth - 1 < 2 ^ (1 + exponentWidth + fractionWidth) := by
-      have hpow : 0 < 2 ^ fractionWidth := Nat.pow_pos (by decide)
-      have hle : 2 ^ fractionWidth ≤ 2 ^ (1 + exponentWidth + fractionWidth) :=
-        Nat.pow_le_pow_right (by decide) (by omega)
-      omega
-    rw [Nat.mod_eq_of_lt hmask, Nat.and_two_pow_sub_one_eq_mod]
+    rw [Nat.shiftRight_zero, and_lowMask_mod_eq (by omega)]
 
 /-- The decoded fraction field fits in exactly the number of bits declared by its format. -/
 theorem fracField_lt_pow2 {fmt : FloatFormat} (x : Model fmt) :
@@ -281,12 +289,7 @@ theorem unpackExponent_toNat {fmt : FloatFormat} (x : Model fmt) :
       (x.bits.toNat >>> fractionWidth) % 2 ^ exponentWidth =
         (x.bits.toNat >>> fractionWidth) &&&
           ((2 ^ exponentWidth - 1) % 2 ^ (1 + exponentWidth + fractionWidth))
-    have hmask : 2 ^ exponentWidth - 1 < 2 ^ (1 + exponentWidth + fractionWidth) := by
-      have hpow : 0 < 2 ^ exponentWidth := Nat.pow_pos (by decide)
-      have hle : 2 ^ exponentWidth ≤ 2 ^ (1 + exponentWidth + fractionWidth) :=
-        Nat.pow_le_pow_right (by decide) (by omega)
-      omega
-    rw [Nat.mod_eq_of_lt hmask, Nat.and_two_pow_sub_one_eq_mod]
+    rw [and_lowMask_mod_eq (by omega)]
 
 /-- The decoded biased exponent fits in exactly the number of bits declared by its format. -/
 theorem expField_lt_pow2 {fmt : FloatFormat} (x : Model fmt) :
@@ -427,15 +430,54 @@ theorem expField_ofFields_of_lt (fmt : FloatFormat) (sign : Bool)
     expField (ofFields fmt sign exponent fraction) = exponent := by
   simp [Nat.mod_eq_of_lt hexponent]
 
-/-- Interpret an arbitrary bit pattern using Lean's width-parameterized IEEE model. -/
+/--
+Interpret an arbitrary bit pattern using Lean's width-parameterized IEEE model.
+
+Only the field widths of `fmt` are used: the bias is the conventional one, and an all-ones
+exponent means infinity or NaN, whatever `fmt.encoding` and `fmt.exponentBias` say. The result is
+the descriptor's meaning when `fmt.isIEEE` (`toDyadic?_ieee_eq_model`).
+-/
 @[inline] def toModel {fmt : FloatFormat} (x : Model fmt) : Float.Model.UnpackedFloat :=
   Float.Model.UnpackedFloat.unpack (FloatFormat.toModel fmt) (toModelBits x)
 
-/-- Encode a Lean logical value at `fmt`'s field widths; NaNs use Lean's canonical payload. -/
+/--
+Lean's model reads a word as NaN exactly when its layout has the IEEE NaN pattern, an all-ones
+exponent with a nonzero fraction. This holds for every descriptor; the descriptor's own `isNaN` is
+this predicate for the `.ieee` encoding only.
+-/
+theorem toModel_eq_notANumber_iff {fmt : FloatFormat} (x : Model fmt) :
+    toModel x = .notANumber ↔ IEEE.isNaN x = true := by
+  have hexponent :
+      Float.Model.UnpackedFloat.unpackExponent (spec := FloatFormat.toModel fmt)
+          (toModelBits x) = -1#_ ↔ expField x = FloatFormat.expAllOnesNat fmt := by
+    rw [← BitVec.toNat_inj, unpackExponent_toNat x, toNat_neg_one_exponentBits fmt]
+  have hmantissa :
+      Float.Model.UnpackedFloat.unpackMantissa (spec := FloatFormat.toModel fmt)
+          (toModelBits x) = 0#_ ↔ fracField x = 0 := by
+    rw [← BitVec.toNat_inj, unpackMantissa_toNat x, BitVec.toNat_zero]
+  simp only [toModel, Float.Model.UnpackedFloat.unpack, IEEE.isNaN]
+  split <;> rename_i hallOnes
+  · split <;> rename_i hzero
+    · simp [hexponent.1 hallOnes, hmantissa.1 hzero]
+    · simp [hexponent.1 hallOnes, mt hmantissa.2 hzero]
+  · have hfield := mt hexponent.2 hallOnes
+    split
+    · split <;> simp [hfield]
+    · simp [hfield]
+
+/--
+Encode a Lean logical value at `fmt`'s field widths with the conventional IEEE bias and exceptional
+patterns; NaNs use Lean's canonical payload. When `fmt.isIEEE` is false the word need not denote
+the same value under the descriptor.
+-/
 @[inline] def ofModel (fmt : FloatFormat) (x : Float.Model.UnpackedFloat) : Model fmt :=
   ofModelBits (Float.Model.UnpackedFloat.pack (FloatFormat.toModel fmt) x)
 
-/-- Whether the bits satisfy Lean's canonical-NaN invariant for packed model values. -/
+/--
+Whether the bits satisfy Lean's canonical-NaN invariant for packed model values: a word with the
+IEEE NaN pattern at `fmt`'s widths must be Lean's canonical NaN. For encodings other than `.ieee`
+that pattern is not the descriptor's set of NaNs.
+-/
 def IsModelCanonical {fmt : FloatFormat} (x : Model fmt) : Prop :=
   (FloatFormat.toModel fmt).Valid (toModelBits x)
 
@@ -444,7 +486,14 @@ theorem isModelCanonical_ofModel (fmt : FloatFormat) (x : Float.Model.UnpackedFl
     IsModelCanonical (ofModel fmt x) :=
   Float.Model.UnpackedFloat.valid_pack
 
-/-- Repacking through Lean's model canonicalizes bit patterns it interprets as IEEE NaNs. -/
+/--
+Repacking through Lean's model canonicalizes bit patterns it interprets as IEEE NaNs.
+
+Every word with an all-ones exponent and a nonzero fraction becomes Lean's canonical NaN, and
+every other word is unchanged (`pack_unpack_eq`). Under the `.ieee` encoding the rewritten words
+are NaNs. Under the other encodings they can be finite values or the descriptor's own NaN, so the
+operation is meant for IEEE descriptors.
+-/
 @[inline] def canonicalizeModel {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   ofModel fmt (toModel x)
 

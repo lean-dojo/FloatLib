@@ -21,6 +21,7 @@ at the preferred decimal quantum, without rounding the result.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
+/-- The remainder magnitude never exceeds the dividend. -/
 theorem remainderCoefficient_le (a b : Nat) :
     remainderCoefficient a b ≤ a := by
   have hr := Nat.mod_le a b
@@ -30,12 +31,14 @@ theorem remainderCoefficient_le (a b : Nat) :
     omega
   · exact hr
 
+/-- For a nonzero divisor, the remainder magnitude is at most half the divisor. -/
 theorem remainderCoefficient_twice_le (a b : Nat) (hb : b ≠ 0) :
     2 * remainderCoefficient a b ≤ b := by
   have hr := Nat.mod_lt a (Nat.pos_of_ne_zero hb)
   unfold remainderCoefficient remainderRoundUp
   split <;> simp only [decide_eq_true_eq] at * <;> omega
 
+/-- For a nonzero divisor, the remainder is zero exactly when the divisor divides the dividend. -/
 theorem remainderCoefficient_eq_zero_iff (a b : Nat) (hb : b ≠ 0) :
     remainderCoefficient a b = 0 ↔ a % b = 0 := by
   have hr := Nat.mod_lt a (Nat.pos_of_ne_zero hb)
@@ -63,6 +66,7 @@ theorem remainderCoefficient_signed (a b : Nat) (hb : b ≠ 0) :
     linarith
   · linarith
 
+/-- The nearest-even quotient leaves a residual of at most half the divisor in magnitude. -/
 theorem remainderQuotient_error (a b : Nat) (hb : b ≠ 0) :
     2 * |(a : ℚ) - (remainderQuotient a b : ℚ) * (b : ℚ)| ≤ (b : ℚ) := by
   rw [← remainderCoefficient_signed a b hb]
@@ -86,10 +90,13 @@ theorem remainderQuotient_even_at_tie (a b : Nat) (hb : b ≠ 0)
     simp only [remainderRoundUp, decide_eq_true_eq] at h
     omega
 
-/-- Every other integer quotient has at least as large a residual magnitude. -/
-theorem remainderQuotient_nearest (a b : Nat) (hb : b ≠ 0) (n : Int) :
+/-- Every other integer quotient has at least as large a residual magnitude. A zero divisor leaves
+every residual equal to the dividend. -/
+theorem remainderQuotient_nearest (a b : Nat) (n : Int) :
     |(a : ℚ) - (remainderQuotient a b : ℚ) * (b : ℚ)| ≤
       |(a : ℚ) - (n : ℚ) * (b : ℚ)| := by
+  by_cases hb : b = 0
+  · simp [hb]
   have hhalf := remainderQuotient_error a b hb
   have hb' : (0 : ℚ) < b := by exact_mod_cast Nat.pos_of_ne_zero hb
   rcases lt_trichotomy n (remainderQuotient a b : Int) with hn | hn | hn

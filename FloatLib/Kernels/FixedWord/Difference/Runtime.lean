@@ -97,8 +97,8 @@ through an arbitrary-precision power before their final mathematical conversion.
 Shift a two-word value left, returning zero at and beyond the 128-bit carrier width.
 
 Bits carried above position 127 are discarded, so the result is `value * 2^shift` reduced modulo
-`2^128`. `shiftLeft_toNat` gives the exact product when `shift < 128` and no bit is lost, and
-`shiftLeft_of_ge` covers the total branch. The explicit ranges avoid the modulo reduction
+`2^128`. `shiftLeft_toNat` gives the exact product when no bit is lost, and `shiftLeft_of_ge`
+covers the total branch. The explicit ranges avoid the modulo reduction
 performed by native machine-word shifts.
 -/
 @[inline] def shiftLeft (value : UInt128) (shift : Nat) : UInt128 :=

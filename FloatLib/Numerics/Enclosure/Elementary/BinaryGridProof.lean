@@ -103,6 +103,38 @@ theorem containsReal_expHorner (precision : Nat) {X : Interval Int} {x : ℚ}
         (containsReal_mul precision hx (ih (start + 1))) (start + 1))
     simpa [expHorner, Taylor.horner, Taylor.eval_expStep, div_mul_eq_mul_div] using h
 
+namespace LogPolynomial
+
+/--
+The even-power sum `∑ i < n, q ^ i / (2 (start + i) + 1)`. With `q = x ^ 2`, multiplying it by `x`
+gives the odd logarithm polynomial from index `start` (`mul_evenSum_sq`).
+-/
+noncomputable def evenSum (q : ℝ) (start n : Nat) : ℝ :=
+  ∑ i ∈ Finset.range n, q ^ i / ((2 * (start + i) + 1 : Nat) : ℝ)
+
+/-- Splitting a range factors the first omitted power from the remaining terms. -/
+theorem evenSum_add (q : ℝ) (start a b : Nat) :
+    evenSum q start (a + b) =
+      evenSum q start a + q ^ a * evenSum q (start + a) b := by
+  simp only [evenSum, Finset.sum_range_add, Finset.mul_sum]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [pow_add, ← mul_div_assoc]
+  congr 2
+  omega
+
+/-- Multiplying the even-power sum by its argument gives the reference odd polynomial. -/
+theorem mul_evenSum_sq (x : ℝ) (start n : Nat) :
+    x * evenSum (x ^ 2) start n =
+      ∑ i ∈ Finset.range n, x ^ (2 * i + 1) / ((2 * (start + i) + 1 : Nat) : ℝ) := by
+  rw [evenSum, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [← mul_div_assoc, ← pow_mul, pow_add, pow_one, mul_comm x]
+
+end LogPolynomial
+
 /-- Rounded odd Horner steps enclose the corresponding tail of the logarithm polynomial. -/
 theorem containsReal_logOddHorner (precision : Nat) {X Q : Interval Int} {x : ℝ}
     (hx : X.ContainsReal (decode precision) x)
@@ -114,20 +146,11 @@ theorem containsReal_logOddHorner (precision : Nat) {X Q : Interval Int} {x : �
   | succ n ih =>
     have h := containsReal_add precision (containsReal_divideNat precision hx (2 * start + 1))
       (containsReal_mul precision hq (ih (start + 1)))
-    rw [logOddHorner]
+    rw [← LogPolynomial.mul_evenSum_sq] at h ⊢
+    rw [logOddHorner, Nat.add_comm n 1, LogPolynomial.evenSum_add]
     convert h using 1
-    rw [Finset.sum_range_succ']
-    simp only [Nat.mul_zero, Nat.zero_add, Nat.add_zero, pow_one]
-    rw [Finset.mul_sum, add_comm]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i hi
-    rw [← mul_div_assoc]
-    congr 1
-    · simp only [Nat.mul_add, Nat.mul_one, pow_add]
-      ring
-    · congr 1
-      omega
+    simp only [LogPolynomial.evenSum, Finset.sum_range_one, Nat.add_zero]
+    ring
 
 /-- The rounded exponential radius contains the rational remainder bound `Enclosure.expRadius`. -/
 theorem containsReal_expRadius (precision : Nat) {X : Interval Int} {x : ℚ}
@@ -239,22 +262,6 @@ theorem containsReal_powerTable (precision : Nat) {Q : Interval Int} {q : ℝ}
     simp at hi
   · simp [Interval.point]
 
-/-- Even-power sum that gives the odd logarithm polynomial once multiplied by the argument. -/
-noncomputable def evenSum (q : ℝ) (start n : Nat) : ℝ :=
-  ∑ i ∈ Finset.range n, q ^ i / ((2 * (start + i) + 1 : Nat) : ℝ)
-
-/-- Splitting a range factors the first omitted power from the remaining terms. -/
-theorem evenSum_add (q : ℝ) (start a b : Nat) :
-    evenSum q start (a + b) =
-      evenSum q start a + q ^ a * evenSum q (start + a) b := by
-  simp only [evenSum, Finset.sum_range_add, Finset.mul_sum]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro i hi
-  rw [pow_add, ← mul_div_assoc]
-  congr 2
-  omega
-
 /-- A block accumulator contains the exact partial sum plus its incoming real value. -/
 theorem containsReal_blockSumAux (precision : Nat) {powers : Array (Interval Int)} {q : ℝ}
     (hpowers : ∀ (i : Nat) (hi : i < powers.size),
@@ -314,15 +321,6 @@ theorem containsReal_blockHorner (precision : Nat) {powers : Array (Interval Int
       ring
     rw [hvalue] at h
     simpa only [blockHorner, Internal.reverseHorner, Nat.zero_add] using h
-
-/-- Multiplying the even-power sum by its argument gives the reference odd polynomial. -/
-theorem mul_evenSum_sq (x : ℝ) (start n : Nat) :
-    x * evenSum (x ^ 2) start n =
-      ∑ i ∈ Finset.range n, x ^ (2 * i + 1) / ((2 * (start + i) + 1 : Nat) : ℝ) := by
-  rw [evenSum, Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro i hi
-  rw [← mul_div_assoc, ← pow_mul, pow_add, pow_one, mul_comm x]
 
 /-- Rectangular splitting encloses the same odd polynomial for every positive block size. -/
 theorem containsReal_logOddRectangular (precision : Nat) {X Q : Interval Int} {x : ℝ}

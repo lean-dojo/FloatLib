@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Numerical inexactness and signed-zero arithmetic
 
-For finite operands and results without overflow, inexactness means that the
-returned value differs from the exact rational expression; the division theorem
-also requires a nonzero divisor. Zero results use the operation's sign rule and
+For finite operands and a finite result, inexactness means that the returned value differs from
+the exact rational expression, also when the result overflows to the greatest finite datum. A finite
+quotient already excludes a zero divisor. Zero results use the operation's sign rule and
 preferred quantum clamped to the destination range. Changing a zero's cohort
 alone does not raise inexact.
 -/
@@ -23,20 +23,22 @@ alone does not raise inexact.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
+/-- Adding two finite datums raises inexact exactly when a finite result differs from the exact
+sum. -/
 theorem add_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
-    (hfinite : (add f mode x y).status.overflow = false)
     (hv : (add f mode x y).value.toRat? = some value) :
     (add f mode x y).status.inexact = true ↔ value ≠ a + b := by
   cases x <;> cases y <;>
     simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx hy
   subst a
   subst b
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  exact project_inexact_iff f mode _ value _ _ hv
 
+/-- Subtracting two finite datums raises inexact exactly when a finite result differs from the exact
+difference. -/
 theorem sub_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
-    (hfinite : (sub f mode x y).status.overflow = false)
     (hv : (sub f mode x y).value.toRat? = some value) :
     (sub f mode x y).status.inexact = true ↔ value ≠ a - b := by
   cases x <;> cases y <;>
@@ -46,23 +48,25 @@ theorem sub_inexact_iff (f : Format) (mode : RoundingMode)
   rename_i sx cx qx sy cy qy
   have hn : Datum.finiteValue (!sy) cy qy = -Datum.finiteValue sy cy qy := by
     cases sy <;> simp [Datum.finiteValue]
-  simp only [sub, Datum.negate, add, hn, ← sub_eq_add_neg] at hfinite hv ⊢
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  simp only [sub, Datum.negate, add, hn, ← sub_eq_add_neg] at hv ⊢
+  exact project_inexact_iff f mode _ value _ _ hv
 
+/-- Multiplying two finite datums raises inexact exactly when a finite result differs from the exact
+product. -/
 theorem mul_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
-    (hfinite : (mul f mode x y).status.overflow = false)
     (hv : (mul f mode x y).value.toRat? = some value) :
     (mul f mode x y).status.inexact = true ↔ value ≠ a * b := by
   cases x <;> cases y <;>
     simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx hy
   subst a
   subst b
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  exact project_inexact_iff f mode _ value _ _ hv
 
+/-- Dividing two finite datums raises inexact exactly when a finite result differs from the exact
+quotient. A zero divisor gives a NaN or an infinity, so a finite result has a nonzero divisor. -/
 theorem div_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
-    (hb : b ≠ 0) (hfinite : (div f mode x y).status.overflow = false)
     (hv : (div f mode x y).value.toRat? = some value) :
     (div f mode x y).status.inexact = true ↔ value ≠ a / b := by
   cases x <;> cases y <;>
@@ -70,16 +74,17 @@ theorem div_inexact_iff (f : Format) (mode : RoundingMode)
   subst a
   subst b
   rename_i sx cx qx sy cy qy
-  have hc : cy ≠ 0 := by
-    intro h
-    simp [h] at hb
-  simp only [div, ite_eq_right hc] at hfinite hv ⊢
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  by_cases hc : cy = 0
+  · by_cases hcx : cx = 0 <;>
+      simp [div, hc, hcx, invalidResult, Datum.toRat?_eq] at hv
+  simp only [div, hc, ↓reduceIte] at hv ⊢
+  exact project_inexact_iff f mode _ value _ _ hv
 
+/-- A fused multiply-add of three finite datums raises inexact exactly when a finite result differs
+from the exact value of `a * b + c`. -/
 theorem fma_inexact_iff (f : Format) (mode : RoundingMode)
     (x y z : Datum) (a b c value : ℚ)
     (hx : x.toRat? = some a) (hy : y.toRat? = some b) (hz : z.toRat? = some c)
-    (hfinite : (fma f mode x y z).status.overflow = false)
     (hv : (fma f mode x y z).value.toRat? = some value) :
     (fma f mode x y z).status.inexact = true ↔ value ≠ a * b + c := by
   cases x <;> cases y <;> cases z <;>
@@ -87,7 +92,7 @@ theorem fma_inexact_iff (f : Format) (mode : RoundingMode)
   subst a
   subst b
   subst c
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  exact project_inexact_iff f mode _ value _ _ hv
 
 /-- Equal-sign zeros preserve their sign; opposite signs use the cancellation rule. -/
 theorem add_zeros (f : Format) (mode : RoundingMode) (sx sy : Bool) (qx qy : Int) :
@@ -104,6 +109,8 @@ theorem mul_zero_left (f : Format) (mode : RoundingMode)
           (max f.minQuantum (min (qx + qy) f.maxQuantum)) } := by
   simp [mul, Datum.finiteValue, project_zero]
 
+/-- A zero divided by a nonzero finite datum is an exact zero with the XOR sign and no flags; its
+quantum is the difference of the operand quanta, clamped to the format range. -/
 theorem div_zero_numerator (f : Format) (mode : RoundingMode)
     (sx sy : Bool) (c : Nat) (hc : c ≠ 0) (qx qy : Int) :
     div f mode (.finite sx 0 qx) (.finite sy c qy) =

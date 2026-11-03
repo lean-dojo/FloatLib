@@ -90,6 +90,14 @@ theorem cosPi_eq_zero_iff (argument : ℚ) :
         · split at hclassified <;> simp_all
   · exact cosPi_eq_zero_of_fract_half argument
 
+private theorem tan_quarter_mul_pi : Real.tan (((1 / 4 : ℚ) : ℝ) * Real.pi) = 1 := by
+  push_cast
+  rw [show (1 / 4 : ℝ) * Real.pi = Real.pi / 4 by ring, Real.tan_pi_div_four]
+
+private theorem tan_neg_quarter_mul_pi : Real.tan (((-1 / 4 : ℚ) : ℝ) * Real.pi) = -1 := by
+  push_cast
+  rw [show (-1 / 4 : ℝ) * Real.pi = -(Real.pi / 4) by ring, Real.tan_neg, Real.tan_pi_div_four]
+
 /-- Every classified tangent value is exact. -/
 theorem tanPiExact_eq_real (argument value : ℚ)
     (hvalue : tanPiExact argument = some value) :
@@ -99,10 +107,8 @@ theorem tanPiExact_eq_real (argument value : ℚ)
   split at hvalue
   · rename_i h
     cases hvalue
-    rw [h]
-    push_cast
-    rw [show (-1 / 4 : ℝ) * Real.pi = -(Real.pi / 4) by ring,
-      Real.tan_neg, Real.tan_pi_div_four]
+    rw [h, tan_neg_quarter_mul_pi]
+    norm_num
   · split at hvalue
     · rename_i h
       cases hvalue
@@ -110,10 +116,23 @@ theorem tanPiExact_eq_real (argument value : ℚ)
     · split at hvalue
       · rename_i h
         cases hvalue
-        rw [h]
-        push_cast
-        rw [show (1 / 4 : ℝ) * Real.pi = Real.pi / 4 by ring, Real.tan_pi_div_four]
+        rw [h, tan_quarter_mul_pi]
+        norm_num
       · cases hvalue
+
+/-- Rational multiples of pi strictly between `-π/2` and `π/2` are determined by their tangent. -/
+private theorem eq_of_tan_mul_pi_eq {q r : ℚ} (hq : -1 / 2 < q ∧ q < 1 / 2)
+    (hr : -1 / 2 < r ∧ r < 1 / 2)
+    (htan : Real.tan ((q : ℝ) * Real.pi) = Real.tan ((r : ℝ) * Real.pi)) : q = r := by
+  have hangle {s : ℚ} (hs : -1 / 2 < s ∧ s < 1 / 2) :
+      -(Real.pi / 2) < (s : ℝ) * Real.pi ∧ (s : ℝ) * Real.pi < Real.pi / 2 := by
+    have hlower : (-1 / 2 : ℝ) < s := by exact_mod_cast hs.1
+    have hupper : (s : ℝ) < ((1 / 2 : ℚ) : ℝ) := Rat.cast_lt.mpr hs.2
+    push_cast at hupper
+    constructor <;> nlinarith [Real.pi_pos]
+  have hsame := Real.tan_inj_of_lt_of_lt_pi_div_two (hangle hq).1 (hangle hq).2
+    (hangle hr).1 (hangle hr).2 htan
+  exact_mod_cast mul_right_cancel₀ Real.pi_ne_zero hsame
 
 /-- Away from poles, an unclassified tangent value is irrational. -/
 theorem irrational_tanPi_of_exact_none (argument : ℚ)
@@ -121,43 +140,21 @@ theorem irrational_tanPi_of_exact_none (argument : ℚ)
     Irrational (Real.tan ((argument : ℝ) * Real.pi)) := by
   rintro ⟨value, hvalue⟩
   have hbounds := centeredPi_mem argument hpole
-  have hangle_lower : -(Real.pi / 2) < (centeredPi argument : ℚ) * Real.pi := by
-    have h : (-1 / 2 : ℝ) < (centeredPi argument : ℚ) := by exact_mod_cast hbounds.1
-    nlinarith [Real.pi_pos, mul_lt_mul_of_pos_right h Real.pi_pos]
-  have hangle_upper : (centeredPi argument : ℚ) * Real.pi < Real.pi / 2 := by
-    have h : ((centeredPi argument : ℚ) : ℝ) < ((1 / 2 : ℚ) : ℝ) :=
-      Rat.cast_lt.mpr hbounds.2
-    push_cast at h
-    nlinarith [Real.pi_pos, mul_lt_mul_of_pos_right h Real.pi_pos]
   have htan : Real.tan ((centeredPi argument : ℚ) * Real.pi) = (value : ℝ) := by
     rw [tan_centeredPi, ← hvalue]
   rcases rational_tan_pi_mem argument value hvalue.symm with h | h | h
-  · have hsame : (centeredPi argument : ℚ) * Real.pi = -(Real.pi / 4) := by
-      apply Real.tan_inj_of_lt_of_lt_pi_div_two hangle_lower hangle_upper
-        (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
-      simp [htan, h, Real.tan_neg, Real.tan_pi_div_four]
-    have hcenter : centeredPi argument = -1 / 4 := by
-      have : ((centeredPi argument : ℚ) : ℝ) = -1 / 4 := by
-        nlinarith [Real.pi_pos]
-      exact_mod_cast this
+  · have hcenter : centeredPi argument = -1 / 4 := by
+      refine eq_of_tan_mul_pi_eq hbounds (by norm_num) ?_
+      rw [htan, h, tan_neg_quarter_mul_pi]
+      norm_num
     norm_num [tanPiExact, hcenter] at hnone
-  · have hsame : (centeredPi argument : ℚ) * Real.pi = 0 := by
-      apply Real.tan_inj_of_lt_of_lt_pi_div_two hangle_lower hangle_upper
-        (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
-      simp [htan, h]
-    have hcenter : centeredPi argument = 0 := by
-      have := (mul_eq_zero.mp hsame).resolve_right Real.pi_ne_zero
-      exact_mod_cast this
+  · have hcenter : centeredPi argument = 0 :=
+      eq_of_tan_mul_pi_eq hbounds (by norm_num) (by simp [htan, h])
     norm_num [tanPiExact, hcenter] at hnone
-  · have hsame : (centeredPi argument : ℚ) * Real.pi = Real.pi / 4 := by
-      apply Real.tan_inj_of_lt_of_lt_pi_div_two hangle_lower hangle_upper
-        (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
-      simp [htan, h, Real.tan_pi_div_four]
-    have hcenter : centeredPi argument = 1 / 4 := by
-      have : ((centeredPi argument : ℚ) : ℝ) = 1 / 4 := by nlinarith [Real.pi_pos]
-      apply Rat.cast_injective (α := ℝ)
-      push_cast
-      exact this
+  · have hcenter : centeredPi argument = 1 / 4 := by
+      refine eq_of_tan_mul_pi_eq hbounds (by norm_num) ?_
+      rw [htan, h, tan_quarter_mul_pi]
+      norm_num
     norm_num [tanPiExact, hcenter] at hnone
 
 end FloatLib.Numerics.TrigonometricComparison

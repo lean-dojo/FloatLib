@@ -438,6 +438,10 @@ ordinary family kernels. With a `TablePlan`, the planning profile chooses betwee
 the exact baseline.
 -/
 
+/--
+Addition for a static-byte family with a `TablePlan`: the planning profile chooses between the
+plan's certified addition table and the exact baseline.
+-/
 @[always_inline, instance_reducible] instance (priority := 200) tablePlanAddCapability
     (F : Type u) [Family F] [plan : TablePlan F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -445,6 +449,10 @@ the exact baseline.
   Internal.addTableCapability plan.addName plan.addSelection
     (Family.width_le_eight (F := F)) plan.addTable
 
+/--
+Subtraction for a static-byte family with a `TablePlan`: the planning profile chooses between the
+plan's certified subtraction table and the exact baseline.
+-/
 @[always_inline, instance_reducible] instance (priority := 200) tablePlanSubCapability
     (F : Type u) [Family F] [plan : TablePlan F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -452,6 +460,10 @@ the exact baseline.
   Internal.subTableCapability plan.subName plan.subSelection
     (Family.width_le_eight (F := F)) plan.subTable
 
+/--
+Multiplication for a static-byte family with a `TablePlan`: the planning profile chooses between the
+plan's certified multiplication table and the exact baseline.
+-/
 @[always_inline, instance_reducible] instance (priority := 200) tablePlanMulCapability
     (F : Type u) [Family F] [plan : TablePlan F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -459,6 +471,10 @@ the exact baseline.
   Internal.mulTableCapability plan.mulName plan.mulSelection
     (Family.width_le_eight (F := F)) plan.mulTable
 
+/--
+Division for a static-byte family with a `TablePlan`: the planning profile chooses between the
+plan's certified division table and the exact baseline.
+-/
 @[always_inline, instance_reducible] instance (priority := 200) tablePlanDivCapability
     (F : Type u) [Family F] [plan : TablePlan F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
@@ -466,6 +482,10 @@ the exact baseline.
   Internal.divTableCapability plan.divName plan.divSelection
     (Family.width_le_eight (F := F)) plan.divTable
 
+/--
+Square root for a static-byte family with a `TablePlan`: the planning profile chooses between the
+plan's certified square root table and the exact baseline.
+-/
 @[always_inline, instance_reducible] instance (priority := 200) tablePlanSqrtCapability
     (F : Type u) [Family F] [plan : TablePlan F]
     [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :

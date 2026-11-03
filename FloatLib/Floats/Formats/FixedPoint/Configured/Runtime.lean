@@ -45,10 +45,11 @@ abbrev scale := Formats.FixedPoint.scale
 /--
 Round an exact rational once to the nearest fixed-point grid value, breaking ties to even.
 
-This is the construction policy used by decimal and scientific literals. It never converts
-through a host floating-point value.
+The expected type selects the grid, as in
+`(.ofRat (1 / 3) : ExecFloat.FixedPoint decimalRadix 2)`. Decimal and scientific literals round
+the same way. It never converts through a host floating-point value.
 -/
-@[inline] def roundRat (value : Rat) :
+@[inline] def ofRat (value : Rat) :
     ExecFloat.FixedPoint radix fractionalDigits :=
   ofCoefficient (roundRatEven (value * scale radix fractionalDigits))
 

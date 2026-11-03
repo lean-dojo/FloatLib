@@ -15,8 +15,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 # Exact dyadic decoding primitives
 
 Finite binary interchange values decode exactly to a sign, natural significand, and integral
-power-of-two exponent. This module defines that bridge and the exact comparison used by
-arithmetic, conversions, and rounding.
+power-of-two exponent. This module defines the IEEE-layout decoder `ieeeToDyadic?` and the exact
+comparison used by arithmetic, conversions, and rounding. The descriptor-aware decoder is
+`toDyadic?` (`Dyadic.Decode`), which agrees with `ieeeToDyadic?` when `fmt.isIEEE`.
 
 The decoding layer depends on no arithmetic operation, so addition, multiplication, FMA,
 conversion, and directed rounding share the same exact domain and each prove their own final
@@ -208,7 +209,10 @@ Decode an IEEE bit pattern into an exact dyadic.
 - subnormal → `mant = frac`, `exp = ieeeMinSubnormalExponent fmt`
 - normal → `mant = 2^fracWidth + frac`, `exp = e_biased - (bias + fracWidth)`
 
-Every threshold is derived from `fmt`, and no fixed-width constants are used.
+Every threshold is derived from `fmt`, and no fixed-width constants are used. The reading is the
+IEEE one: the layout-derived bias `fmt.bias` rather than `fmt.exponentBias`, and the IEEE NaN and
+infinity patterns. It is the value of `x` only when `fmt.isIEEE`; for a custom bias or a
+finite-only, maximum-NaN or unsigned-zero encoding use `toDyadic?`.
 -/
 @[inline] def ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   if IEEE.isNaN x || IEEE.isInf x then
@@ -232,7 +236,7 @@ Every threshold is derived from `fmt`, and no fixed-width constants are used.
       some { negative := s, significand, exponent := exp }
 
 /--
-Compiled IEEE finite decoder.
+Compiled IEEE finite decoder, with the same IEEE-layout reading as `ieeeToDyadic?`.
 
 The storage word is converted to `Nat` once, then all three fields are extracted from that shared
 value. The exponent field alone determines whether an IEEE encoding is exceptional, so the

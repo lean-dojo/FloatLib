@@ -95,27 +95,20 @@ theorem lowerCodeForPositive_eq_maxPositive_of_saturatedScale
         hexponentPower
       _ = (2 : Rat) ^ (targetExponent + Int.ofNat leading) := by
         rw [hscale]
-      _ = (2 : Rat) ^ Int.ofNat leading *
-          (2 : Rat) ^ targetExponent := by
-        rw [show
-            targetExponent + Int.ofNat leading =
-              Int.ofNat leading + targetExponent by omega,
-          zpow_add₀ (by norm_num)]
       _ ≤ fraction * (2 : Rat) ^ targetExponent :=
-        mul_le_mul_of_nonneg_right hlower
-          (zpow_nonneg (by norm_num) _)
+        zpow_add_le_mul_zpow targetExponent leading hlower
   · intro hsuccessor
     have hsignMaskPositive := format.signMaskNat_pos
     omega
 
 /--
-A negative regime that consumes the payload places every normalized target below `minPos`.
+A negative regime that consumes the payload places every normalized target below `minPos`. The
+saturation bound alone forces the regime to be negative, since the payload is never empty.
 -/
 theorem normalizedTarget_lt_minPositive_of_saturatedScale
     (format : Format) (fraction : Rat)
     (targetExponent regime : Int)
     (exponentField leading : Nat)
-    (hregime : regime < 0)
     (hsaturated : format.payloadBits ≤ (-regime).toNat)
     (hexponent : exponentField < 4)
     (hupper :
@@ -125,6 +118,9 @@ theorem normalizedTarget_lt_minPositive_of_saturatedScale
         regime * 4 + Int.ofNat exponentField) :
     fraction * (2 : Rat) ^ targetExponent <
       Model.minPositiveRat format := by
+  have hregime : regime < 0 := by
+    have := format.payloadBits_pos
+    omega
   let minScale : Int :=
     -(4 * Int.ofNat (format.payloadBits - 1))
   have hscaleBound :
@@ -136,40 +132,9 @@ theorem normalizedTarget_lt_minPositive_of_saturatedScale
     simp only [Int.ofNat_eq_natCast] at hscale ⊢
     rw [hpayloadPredInt]
     omega
-  have htargetUpper :
-      fraction * (2 : Rat) ^ targetExponent <
-        (2 : Rat) ^ (targetExponent + Int.ofNat leading + 1) := by
-    calc
-      fraction * (2 : Rat) ^ targetExponent <
-          (2 : Rat) ^ Int.ofNat (leading + 1) *
-            (2 : Rat) ^ targetExponent :=
-        mul_lt_mul_of_pos_right hupper
-          (zpow_pos (by norm_num : (0 : Rat) < 2) _)
-      _ = (2 : Rat) ^
-          (targetExponent + Int.ofNat leading + 1) := by
-        rw [← zpow_add₀ (by norm_num)]
-        congr 1
-        simp
-        omega
-  have htargetMinScale :
-      fraction * (2 : Rat) ^ targetExponent <
-        (2 : Rat) ^ minScale :=
-    htargetUpper.trans_le
-      (zpow_le_zpow_right₀
-        (by norm_num : (1 : Rat) ≤ 2) hscaleBound)
-  rw [← DyadicRounding.minPositive_toRat,
-    DyadicRounding.minPositive_eq_fields]
-  norm_num [FloatLib.Numerics.Dyadic.toRat,
-    FloatLib.Numerics.Dyadic.signedSignificand]
-  calc
-    fraction * (2 : Rat) ^ targetExponent <
-        (2 : Rat) ^ minScale :=
-      htargetMinScale
-    _ =
-        (2 ^ (4 * (format.payloadBits - 1) : Nat) : Rat)⁻¹ := by
-      dsimp [minScale]
-      rw [zpow_neg]
-      congr 1
+  rw [DyadicRounding.minPositiveRat_eq_zpow]
+  exact (mul_zpow_lt_zpow_add_succ targetExponent leading hupper).trans_le
+    (zpow_le_zpow_right₀ (by norm_num) hscaleBound)
 
 /-!
 ## Layout of the direct lower candidate
@@ -271,6 +236,36 @@ theorem lowerCandidateValue_negative
     hregime hrun]
 
 /--
+A retained tail prefix of any length, placed at the regime scale, is never above the normalized
+exact target: truncating the finite exponent/fraction stream can only lower its value.
+-/
+private theorem tailPrefix_value_le_normalized
+    (targetExponent regime : Int)
+    (exponentField significand leading trailing : Nat)
+    (hexponent : exponentField < 4)
+    (hlower : 2 ^ leading ≤ significand)
+    (hupper : significand < 2 ^ (leading + 1))
+    (hscale :
+      targetExponent + Int.ofNat leading =
+        regime * 4 + Int.ofNat exponentField) :
+    Model.trailingRat trailing
+          (DirectDyadicPacking.tailPrefix exponentField significand leading trailing) *
+        (2 : Rat) ^ (regime * 4) ≤
+      (significand : Rat) * (2 : Rat) ^ targetExponent := by
+  rw [normalizedValue_eq_trailingRat_mul_regime
+    targetExponent regime exponentField significand leading
+    hexponent hlower hupper hscale]
+  rw [tailPrefix_eq_streamPrefix
+    exponentField significand leading trailing
+    hlower hupper]
+  exact mul_le_mul_of_nonneg_right
+    (trailingRat_streamPrefix_le
+      (exactTailRaw_lt_two_pow
+        exponentField significand leading
+        hexponent hlower hupper))
+    (zpow_pos (by norm_num : (0 : Rat) < 2) _).le
+
+/--
 The direct positive-regime candidate is never above its normalized exact target.
 
 This is the lower half of the local adjacency certificate, proved by ordinary bitstream
@@ -294,19 +289,8 @@ theorem lowerCandidateValue_le_normalized_positive
   rw [lowerCandidateValue_positive format regime
     exponentField significand leading
     hregime hrun hexponent hlower hupper]
-  rw [normalizedValue_eq_trailingRat_mul_regime
-    targetExponent regime exponentField significand leading
-    hexponent hlower hupper hscale]
-  rw [tailPrefix_eq_streamPrefix
-    exponentField significand leading
-    (format.payloadBits - (regime.toNat + 1) - 1)
-    hlower hupper]
-  exact mul_le_mul_of_nonneg_right
-    (trailingRat_streamPrefix_le_total
-      (exactTailRaw_lt_two_pow
-        exponentField significand leading
-        hexponent hlower hupper))
-    (zpow_pos (by norm_num : (0 : Rat) < 2) _).le
+  exact tailPrefix_value_le_normalized targetExponent regime exponentField significand leading _
+    hexponent hlower hupper hscale
 
 /--
 The direct negative-regime candidate is never above its normalized exact target.
@@ -332,19 +316,8 @@ theorem lowerCandidateValue_le_normalized_negative
   rw [lowerCandidateValue_negative format regime
     exponentField significand leading
     hregime hrun hexponent hlower hupper]
-  rw [normalizedValue_eq_trailingRat_mul_regime
-    targetExponent regime exponentField significand leading
-    hexponent hlower hupper hscale]
-  rw [tailPrefix_eq_streamPrefix
-    exponentField significand leading
-    (format.payloadBits - (-regime).toNat - 1)
-    hlower hupper]
-  exact mul_le_mul_of_nonneg_right
-    (trailingRat_streamPrefix_le_total
-      (exactTailRaw_lt_two_pow
-        exponentField significand leading
-        hexponent hlower hupper))
-    (zpow_pos (by norm_num : (0 : Rat) < 2) _).le
+  exact tailPrefix_value_le_normalized targetExponent regime exponentField significand leading _
+    hexponent hlower hupper hscale
 
 /--
 The successor of an interior candidate is strictly above the normalized target.
@@ -409,16 +382,18 @@ private theorem normalized_lt_succ_of_interior
     by_cases htailSucc : tail + 1 < 2 ^ trailing
     · rw [Nat.add_assoc, hinterior (tail + 1) htailSucc, htailStream]
       exact mul_lt_mul_of_pos_right
-        (trailingRat_lt_streamPrefix_succ hraw (by omega) (htailStream ▸ htailSucc)) hpos
+        (trailingRat_lt_streamPrefix_succ (htailStream ▸ htailSucc)) hpos
     · rw [show tail = 2 ^ trailing - 1 by omega, hcarry, regimeScale_succ]
       exact mul_lt_mul_of_pos_right (Model.trailingRat_bounds width raw).2 hpos
 
-/-- The successor of the direct positive-regime candidate exceeds the normalized target. -/
+/--
+The successor of the direct positive-regime candidate exceeds the normalized target. The successor
+bound already excludes the saturated run, whose candidate is `maxPos`.
+-/
 theorem normalized_lt_lowerCandidateSuccessor_positive
     (format : Format) (targetExponent regime : Int)
     (exponentField significand leading : Nat)
     (hregime : 0 ≤ regime)
-    (hrun : regime.toNat + 1 < format.payloadBits)
     (hexponent : exponentField < 4)
     (hlower : 2 ^ leading ≤ significand)
     (hupper : significand < 2 ^ (leading + 1))
@@ -433,6 +408,15 @@ theorem normalized_lt_lowerCandidateSuccessor_positive
       Model.nonnegativeRatAt format
         (DirectDyadicPacking.lowerCandidateFromFields
           format regime exponentField significand leading + 1) := by
+  have hrun : regime.toNat + 1 < format.payloadBits := by
+    by_contra hsaturated
+    have hmax :
+        DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading =
+          format.signMaskNat - 1 := by
+      simp [DirectDyadicPacking.lowerCandidateFromFields, hregime, Nat.le_of_not_lt hsaturated]
+    have := format.signMaskNat_pos
+    omega
   have hrunPos : 0 < regime.toNat + 1 := Nat.succ_pos _
   refine normalized_lt_succ_of_interior format targetExponent regime exponentField significand
     leading _ _ hexponent hlower hupper hscale
@@ -444,7 +428,7 @@ theorem normalized_lt_lowerCandidateSuccessor_positive
       rwa [ofNat_toNat_add_one_sub_one regime hregime] at hsemantic)
     (by
       have hsemantic :=
-        nonnegativeRatAt_positiveInteriorCarry format (regime.toNat + 1) hrunPos hrun
+        nonnegativeRatAt_positiveInteriorCarry format (regime.toNat + 1) hrun
       rwa [show Int.ofNat (regime.toNat + 1) = regime + 1 by
         have := ofNat_toNat_add_one_sub_one regime hregime
         omega] at hsemantic)
@@ -486,6 +470,48 @@ theorem normalized_lt_lowerCandidateSuccessor_negative
     hsuccessor
 
 /--
+Direct field packing returns the specification's lower code once the candidate is at most the
+normalized target and, whenever it is finite, its successor is above it. Both regime signs supply
+these two bounds from their own layout lemmas.
+-/
+private theorem lowerCodeForPositive_eq_lowerCandidateFromFields_of_bracket
+    (format : Format) (targetExponent regime : Int)
+    (exponentField significand leading : Nat)
+    (hexponent : exponentField < 4)
+    (hlower : 2 ^ leading ≤ significand)
+    (hupper : significand < 2 ^ (leading + 1))
+    (hcandidate :
+      Model.nonnegativeRatAt format
+          (DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading) ≤
+        (significand : Rat) * (2 : Rat) ^ targetExponent)
+    (hsuccessor :
+      DirectDyadicPacking.lowerCandidateFromFields
+          format regime exponentField significand leading + 1 <
+        format.signMaskNat →
+      (significand : Rat) * (2 : Rat) ^ targetExponent <
+        Model.nonnegativeRatAt format
+          (DirectDyadicPacking.lowerCandidateFromFields
+            format regime exponentField significand leading + 1)) :
+    DyadicRounding.lowerCodeForPositive format
+        { negative := false
+          significand
+          exponent := targetExponent } =
+      DirectDyadicPacking.lowerCandidateFromFields
+        format regime exponentField significand leading := by
+  apply DyadicRounding.lowerCodeForPositive_eq_of_bracket
+  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
+      format regime exponentField significand leading
+      hexponent hlower hupper
+  · simp only [Dyadic.isLessOrEqual_eq_decide, decide_eq_true_eq,
+      DyadicRounding.nonnegativeDyadicAt_toRat]
+    exact hcandidate
+  · intro hnext
+    simp only [Dyadic.isLess_eq_decide, decide_eq_true_eq,
+      DyadicRounding.nonnegativeDyadicAt_toRat]
+    exact hsuccessor hnext
+
+/--
 For a positive regime, direct field packing returns exactly the specification's lower code.
 
 The normalized-field invariants imply that the candidate lies below the target and its successor
@@ -508,30 +534,14 @@ theorem lowerCodeForPositive_eq_lowerCandidateFromFields_positive
           exponent := targetExponent } =
       DirectDyadicPacking.lowerCandidateFromFields
         format regime exponentField significand leading := by
-  let candidate :=
-    DirectDyadicPacking.lowerCandidateFromFields
-      format regime exponentField significand leading
-  apply DyadicRounding.lowerCodeForPositive_eq_of_bracket
-  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
-      format regime exponentField significand leading
-      hexponent hlower hupper
-  · simp only [Dyadic.isLessOrEqual_eq_decide, decide_eq_true_eq,
-      DyadicRounding.nonnegativeDyadicAt_toRat]
-    change
-      Model.nonnegativeRatAt format candidate ≤
-        (significand : Rat) * (2 : Rat) ^ targetExponent
-    exact lowerCandidateValue_le_normalized_positive
+  exact lowerCodeForPositive_eq_lowerCandidateFromFields_of_bracket
+    format targetExponent regime exponentField significand leading hexponent hlower hupper
+    (lowerCandidateValue_le_normalized_positive
       format targetExponent regime exponentField significand leading
-      hregime hrun hexponent hlower hupper hscale
-  · intro hsuccessor
-    simp only [Dyadic.isLess_eq_decide, decide_eq_true_eq,
-      DyadicRounding.nonnegativeDyadicAt_toRat]
-    change
-      (significand : Rat) * (2 : Rat) ^ targetExponent <
-        Model.nonnegativeRatAt format (candidate + 1)
-    exact normalized_lt_lowerCandidateSuccessor_positive
+      hregime hrun hexponent hlower hupper hscale)
+    (normalized_lt_lowerCandidateSuccessor_positive
       format targetExponent regime exponentField significand leading
-      hregime hrun hexponent hlower hupper hscale hsuccessor
+      hregime hexponent hlower hupper hscale)
 
 /--
 For a negative regime, direct field packing returns exactly the specification's lower code.
@@ -557,30 +567,14 @@ theorem lowerCodeForPositive_eq_lowerCandidateFromFields_negative
           exponent := targetExponent } =
       DirectDyadicPacking.lowerCandidateFromFields
         format regime exponentField significand leading := by
-  let candidate :=
-    DirectDyadicPacking.lowerCandidateFromFields
-      format regime exponentField significand leading
-  apply DyadicRounding.lowerCodeForPositive_eq_of_bracket
-  · exact DirectDyadicPacking.lowerCandidateFromFields_lt_signMask
-      format regime exponentField significand leading
-      hexponent hlower hupper
-  · simp only [Dyadic.isLessOrEqual_eq_decide, decide_eq_true_eq,
-      DyadicRounding.nonnegativeDyadicAt_toRat]
-    change
-      Model.nonnegativeRatAt format candidate ≤
-        (significand : Rat) * (2 : Rat) ^ targetExponent
-    exact lowerCandidateValue_le_normalized_negative
+  exact lowerCodeForPositive_eq_lowerCandidateFromFields_of_bracket
+    format targetExponent regime exponentField significand leading hexponent hlower hupper
+    (lowerCandidateValue_le_normalized_negative
       format targetExponent regime exponentField significand leading
-      hregime hrun hexponent hlower hupper hscale
-  · intro hsuccessor
-    simp only [Dyadic.isLess_eq_decide, decide_eq_true_eq,
-      DyadicRounding.nonnegativeDyadicAt_toRat]
-    change
-      (significand : Rat) * (2 : Rat) ^ targetExponent <
-        Model.nonnegativeRatAt format (candidate + 1)
-    exact normalized_lt_lowerCandidateSuccessor_negative
+      hregime hrun hexponent hlower hupper hscale)
+    (normalized_lt_lowerCandidateSuccessor_negative
       format targetExponent regime exponentField significand leading
-      hregime hrun hexponent hlower hupper hscale hsuccessor
+      hregime hrun hexponent hlower hupper hscale)
 
 /-- The direct positive-regime lower candidate has the expected one-bit-wider boundary value. -/
 theorem lowerCandidateThreshold_positive

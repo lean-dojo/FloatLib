@@ -132,22 +132,20 @@ theorem ieeeBias_pos (expWidth : Nat) (h : 2 ≤ expWidth) :
   omega
 
 /-- The conventional IEEE bias fits below the largest finite IEEE exponent encoding. -/
-theorem ieeeBias_le_maxFiniteExponent (expWidth : Nat) (h : 2 ≤ expWidth) :
+theorem ieeeBias_le_maxFiniteExponent (expWidth : Nat) :
     ieeeBias expWidth ≤ Encoding.maxFiniteExponent .ieee expWidth := by
-  have hwidthPos : 0 < expWidth := by omega
-  have hindex : expWidth - 1 < expWidth := Nat.sub_lt hwidthPos (by decide)
-  have hpow : 2 ^ (expWidth - 1) < 2 ^ expWidth :=
-    Nat.pow_lt_pow_right (by decide) hindex
   change 2 ^ (expWidth - 1) - 1 ≤ 2 ^ expWidth - 2
-  omega
+  rcases expWidth with _ | width
+  · simp
+  · have hpos := Nat.two_pow_pos width
+    rw [Nat.add_sub_cancel, Nat.pow_succ]
+    omega
 
 /-- The conventional IEEE bias fits below the largest finite-only exponent encoding. -/
-theorem ieeeBias_le_finiteMaxExponent (expWidth : Nat) (h : 2 ≤ expWidth) :
+theorem ieeeBias_le_finiteMaxExponent (expWidth : Nat) :
     ieeeBias expWidth ≤ Encoding.maxFiniteExponent .finite expWidth := by
-  have hwidthPos : 0 < expWidth := by omega
-  have hindex : expWidth - 1 < expWidth := Nat.sub_lt hwidthPos (by decide)
-  have hpow : 2 ^ (expWidth - 1) < 2 ^ expWidth :=
-    Nat.pow_lt_pow_right (by decide) hindex
+  have hpow : 2 ^ (expWidth - 1) ≤ 2 ^ expWidth :=
+    Nat.pow_le_pow_right (by decide) (Nat.sub_le expWidth 1)
   change 2 ^ (expWidth - 1) - 1 ≤ 2 ^ expWidth - 1
   omega
 
@@ -156,10 +154,7 @@ theorem finiteUnsignedBias_le_maxFiniteExponent
     (expWidth : Nat) (h : 2 ≤ expWidth) :
     ieeeBias expWidth + 1 ≤
       Encoding.maxFiniteExponent .finiteUnsignedZero expWidth := by
-  have hwidthPos : 0 < expWidth := by omega
-  have hindex : expWidth - 1 < expWidth := Nat.sub_lt hwidthPos (by decide)
-  have hpow : 2 ^ (expWidth - 1) < 2 ^ expWidth :=
-    Nat.pow_lt_pow_right (by decide) hindex
+  have hpow : 2 ^ (expWidth - 1) < 2 ^ expWidth := Nat.two_pow_pred_lt_two_pow (by omega)
   have hbase : 0 < 2 ^ (expWidth - 1) := Nat.two_pow_pos _
   change (2 ^ (expWidth - 1) - 1) + 1 ≤ 2 ^ expWidth - 1
   omega
@@ -196,7 +191,7 @@ For literal widths and biases, Lean discharges the four side conditions with `by
   encoding := .ieee
   exponentBias_pos := ieeeBias_pos expWidth expWidth_ge_two
   exponentBias_le_maxFinite :=
-    ieeeBias_le_maxFiniteExponent expWidth expWidth_ge_two
+    ieeeBias_le_maxFiniteExponent expWidth
 
 /-- OCP E4M3-style format with no infinity and one maximum-magnitude NaN per sign. -/
 @[inline] def finiteMaxNaN (expWidth fracWidth : Nat)
@@ -210,7 +205,7 @@ For literal widths and biases, Lean discharges the four side conditions with `by
   encoding := .finiteMaxNaN
   exponentBias_pos := ieeeBias_pos expWidth expWidth_ge_two
   exponentBias_le_maxFinite :=
-    ieeeBias_le_finiteMaxExponent expWidth expWidth_ge_two
+    ieeeBias_le_finiteMaxExponent expWidth
 
 /-- FNUZ format with bias one above the IEEE bias and negative zero reused as NaN. -/
 @[inline] def finiteUnsignedZero (expWidth fracWidth : Nat)
@@ -238,7 +233,7 @@ For literal widths and biases, Lean discharges the four side conditions with `by
   encoding := .finite
   exponentBias_pos := ieeeBias_pos expWidth expWidth_ge_two
   exponentBias_le_maxFinite :=
-    ieeeBias_le_finiteMaxExponent expWidth expWidth_ge_two
+    ieeeBias_le_finiteMaxExponent expWidth
 
 /-- Total storage width: sign + exponent + fraction. -/
 @[inline] def bitWidth (fmt : FloatFormat) : Nat :=
@@ -275,7 +270,7 @@ The conversion assigns the conventional IEEE bias and exceptional-value interpre
   encoding := .ieee
   exponentBias_pos := ieeeBias_pos fmt.exponentBits h
   exponentBias_le_maxFinite :=
-    ieeeBias_le_maxFiniteExponent fmt.exponentBits h
+    ieeeBias_le_maxFiniteExponent fmt.exponentBits
 
 /-- Converting a Lean logical format to an executable descriptor and back is exact. -/
 @[simp] theorem toModel_ofModel (fmt : Float.Model.Format) (h : 2 ≤ fmt.exponentBits) :

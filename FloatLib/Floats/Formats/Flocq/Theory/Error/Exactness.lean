@@ -43,20 +43,7 @@ theorem round_toReal_exists_same_exponent (rnd : ℝ → ℤ) [ValidRnd rnd]
     have hx : genericFormat β fexp x :=
       generic_format_of_toReal_of_cexp_le f x rfl he
     simpa [x] using round_preserves_generic rnd x hx
-  · have he' : f.exponent < e' := lt_of_not_ge he
-    obtain ⟨scale, hscale⟩ := bpow_eq_natCast_of_nonneg β
-      (e' - f.exponent) (sub_nonneg.mpr he'.le)
-    refine ⟨rnd (scaledMantissa β fexp x) * Int.ofNat scale, ?_⟩
-    unfold round toReal
-    change
-      (rnd (scaledMantissa β fexp x) : ℝ) * bpow β e' =
-        ((rnd (scaledMantissa β fexp x) * Int.ofNat scale : ℤ) : ℝ) *
-          bpow β f.exponent
-    rw [show e' = (e' - f.exponent) + f.exponent by ring]
-    rw [bpow.add_exp, hscale]
-    have hcast : (((Int.ofNat scale : ℤ) : ℝ)) = (scale : ℝ) := by norm_num
-    rw [Int.cast_mul, hcast]
-    ring
+  · exact exists_int_mul_bpow_of_le β (rnd (scaledMantissa β fexp x)) (lt_of_not_ge he).le
 
 /-- The sum of two mantissa/exponent values has a representation at the smaller exponent. -/
 theorem toReal_add_exists_min_exponent (f g : FloatRep β) :

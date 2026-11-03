@@ -33,14 +33,14 @@ namespace Model
 
 namespace NativeBinary32
 
-/-- Native binary32 square root agrees with `Model.Spec.sqrt`. -/
+/--
+Native binary32 square root equals `Model.Spec.sqrt` on every input, including NaNs, infinities,
+signed zeros and negative operands.
+-/
 theorem sqrt_eq_spec (x : Value) :
     sqrt x = Model.Spec.sqrt x := by
   have hcanonical :
       ofUInt32 0x7fc00000 = Model.canonicalNaN FloatFormat.binary32 := by
-    decide
-  have hpositiveInfinity :
-      ofUInt32 0x7f800000 = Model.posInf FloatFormat.binary32 := by
     decide
   have hexpAll :
       FloatFormat.expAllOnesNat FloatFormat.binary32 = 255 := by
@@ -50,30 +50,21 @@ theorem sqrt_eq_spec (x : Value) :
   rw [expField_beq_allOnes, expField_beq_zero, fracField_beq_zero, signBit_eq]
   by_cases hexponentAllOnes : Model.expField x = 255
   · by_cases hfractionZero : Model.fracField x = 0
-    · by_cases hsign : Model.signBit x = true
-      · have hnan : Model.isNaN x = false := by
-          change Model.IEEE.isNaN x = false
-          simp [Model.IEEE.isNaN, hexpAll, hexponentAllOnes, hfractionZero]
-        have hinf : Model.isInf x = true := by
-          change Model.IEEE.isInf x = true
-          simp [Model.IEEE.isInf, hexpAll, hexponentAllOnes, hfractionZero]
-        simp [hexponentAllOnes, hfractionZero, hsign, Model.Spec.sqrt,
-          Model.chooseNaN1, hnan, hinf, hcanonical]
-      · have hsignFalse : Model.signBit x = false :=
-          Bool.eq_false_of_not_eq_true hsign
-        have hnan : Model.isNaN x = false := by
-          change Model.IEEE.isNaN x = false
-          simp [Model.IEEE.isNaN, hexpAll, hexponentAllOnes, hfractionZero]
-        have hinf : Model.isInf x = true := by
-          change Model.IEEE.isInf x = true
-          simp [Model.IEEE.isInf, hexpAll, hexponentAllOnes, hfractionZero]
-        simp only [hexponentAllOnes, hfractionZero, hsignFalse,
-          beq_self_eq_true, ite_true]
-        simp [Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hsignFalse]
+    · have hnan : Model.isNaN x = false := by
+        change Model.IEEE.isNaN x = false
+        simp [Model.IEEE.isNaN, hexpAll, hexponentAllOnes, hfractionZero]
+      have hinf : Model.isInf x = true := by
+        change Model.IEEE.isInf x = true
+        simp [Model.IEEE.isInf, hexpAll, hexponentAllOnes, hfractionZero]
+      cases hsign : Model.signBit x
+      · simp only [hexponentAllOnes, hfractionZero, beq_self_eq_true, ite_true]
+        simp [Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hsign]
         rw [← ofUInt32_toUInt32 x, ← mkBits_fields (toUInt32 x)]
-        rw [signBit_eq, expField_toNat, fracField_toNat, hsignFalse,
+        rw [signBit_eq, expField_toNat, fracField_toNat, hsign,
           hexponentAllOnes, hfractionZero]
         decide
+      · simp [hexponentAllOnes, hfractionZero, hsign, Model.Spec.sqrt,
+          Model.chooseNaN1, hnan, hinf, hcanonical]
     · have hnanIEEE : Model.IEEE.isNaN x = true := by
         simp [Model.IEEE.isNaN, hexpAll, hexponentAllOnes, hfractionZero]
       have hnan : Model.isNaN x = true := by
@@ -96,69 +87,25 @@ theorem sqrt_eq_spec (x : Value) :
     have hinf : Model.isInf x = false := by
       change Model.IEEE.isInf x = false
       simp [Model.IEEE.isInf, hexpAll, hexponentAllOnes]
-    by_cases hexponentZero : Model.expField x = 0
-    · by_cases hfractionZero : Model.fracField x = 0
-      · have hzero : Model.isZero x = true := by
-          change Model.IEEE.isZero x = true
-          simp [Model.IEEE.isZero, hexponentZero, hfractionZero]
-        simp [hexponentZero, hfractionZero,
-          Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hzero]
-      · by_cases hsign : Model.signBit x = true
-        · have hzero : Model.isZero x = false := by
-            change Model.IEEE.isZero x = false
-            simp [Model.IEEE.isZero, hfractionZero]
-          simp [hexponentZero, hfractionZero, hsign,
-            Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hzero,
-            hcanonical]
-        · have hsignFalse : Model.signBit x = false :=
-            Bool.eq_false_of_not_eq_true hsign
-          have hnonzero : Model.isZero x = false := by
-            change Model.IEEE.isZero x = false
-            simp [Model.IEEE.isZero, hfractionZero]
-          have hfinitePolicy : Model.isFinite x = true := by
-            change Model.IEEE.isFinite x = true
-            exact (bne_iff_ne).2 hexponentNotAllOnes
-          have hnative :=
-            NativeBinary32.sqrt_eq_generic_of_positive_finite
-              x hexponentNotAllOnes hnonzero hsignFalse
-          have hpublic :=
-            Model.Spec.sqrt_eq_model
-              (fmt := FloatFormat.binary32) (by decide) x
-              hfinitePolicy hnonzero hsignFalse
-          calc
-            _ = ofModel FloatFormat.binary32
-                (Float.Model.UnpackedFloat.sqrt
-                  (FloatFormat.toModel FloatFormat.binary32) (toModel x)) := by
-              simpa [hexponentAllOnes, hexponentZero, hfractionZero, hsignFalse]
-                using hnative
-            _ = Model.Spec.sqrt x := hpublic.symm
-    · by_cases hsign : Model.signBit x = true
-      · have hzero : Model.isZero x = false := by
-          change Model.IEEE.isZero x = false
-          simp [Model.IEEE.isZero, hexponentZero]
-        simp [hexponentAllOnes, hexponentZero, hsign, Model.Spec.sqrt,
-          Model.chooseNaN1, hnan, hinf, hzero, hcanonical]
-      · have hsignFalse : Model.signBit x = false :=
-          Bool.eq_false_of_not_eq_true hsign
-        have hnonzero : Model.isZero x = false := by
-          change Model.IEEE.isZero x = false
-          simp [Model.IEEE.isZero, hexponentZero]
-        have hfinitePolicy : Model.isFinite x = true := by
-          change Model.IEEE.isFinite x = true
-          exact (bne_iff_ne).2 hexponentNotAllOnes
-        have hnative :=
-          NativeBinary32.sqrt_eq_generic_of_positive_finite
-            x hexponentNotAllOnes hnonzero hsignFalse
-        have hpublic :=
-          Model.Spec.sqrt_eq_model
-            (fmt := FloatFormat.binary32) (by decide) x
-            hfinitePolicy hnonzero hsignFalse
-        calc
-          _ = ofModel FloatFormat.binary32
-              (Float.Model.UnpackedFloat.sqrt
-                (FloatFormat.toModel FloatFormat.binary32) (toModel x)) := by
-            simpa [hexponentAllOnes, hexponentZero, hsignFalse] using hnative
-          _ = Model.Spec.sqrt x := hpublic.symm
+    by_cases hzeroFields : Model.expField x = 0 ∧ Model.fracField x = 0
+    · have hzero : Model.isZero x = true := by
+        change Model.IEEE.isZero x = true
+        simp [Model.IEEE.isZero, hzeroFields]
+      simp [hzeroFields, Model.Spec.sqrt, Model.chooseNaN1, hnan, hinf, hzero]
+    have hnonzero : Model.isZero x = false := by
+      change Model.IEEE.isZero x = false
+      simpa [Model.IEEE.isZero] using hzeroFields
+    cases hsign : Model.signBit x
+    · -- A positive finite nonzero input takes the model square root.
+      have hfinitePolicy : Model.isFinite x = true := by
+        change Model.IEEE.isFinite x = true
+        exact (bne_iff_ne).2 hexponentNotAllOnes
+      rw [Model.Spec.sqrt_eq_model (fmt := FloatFormat.binary32) (by decide) x
+        hfinitePolicy hsign]
+      simpa [hexponentAllOnes, hzeroFields, hsign] using
+        NativeBinary32.sqrt_eq_generic_of_positive_finite x hexponentNotAllOnes hnonzero hsign
+    · simp [hexponentAllOnes, hzeroFields, hsign, Model.Spec.sqrt,
+        Model.chooseNaN1, hnan, hinf, hnonzero, hcanonical]
 
 end NativeBinary32
 
@@ -166,7 +113,10 @@ end NativeBinary32
 
 namespace NativeBinary64
 
-/-- Native binary64 square root agrees with `Model.Spec.sqrt`. -/
+/--
+Native binary64 square root equals `Model.Spec.sqrt` on every input, including NaNs, infinities,
+signed zeros and negative operands.
+-/
 theorem sqrt_eq_spec (x : Value) :
     sqrt x = Model.Spec.sqrt x := by
   unfold sqrt Model.Spec.sqrt
@@ -192,33 +142,19 @@ theorem sqrt_eq_spec (x : Value) :
                   simp
               | false =>
                   simp only [Bool.false_eq_true, ite_false]
+                  have hfinitePolicy : Model.isFinite x = true :=
+                    Model.isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnanFalse hinf
                   have hfinite :
                       Model.expField x ≠
-                        FloatFormat.expAllOnesNat FloatFormat.binary64 := by
-                    intro hexponent
-                    by_cases hfraction : Model.fracField x = 0
-                    · have hInfTrue : Model.IEEE.isInf x = true := by
-                        simp [Model.IEEE.isInf, hexponent, hfraction]
-                      have hInfPolicy : Model.isInf x = true := by
-                        simpa [Model.isInf, FloatFormat.binary64] using hInfTrue
-                      rw [hInfPolicy] at hinf
-                      contradiction
-                    · have hNaNTrue : Model.IEEE.isNaN x = true := by
-                        simp [Model.IEEE.isNaN, hexponent, hfraction]
-                      have hNaNPolicy : Model.isNaN x = true := by
-                        simpa [Model.isNaN, FloatFormat.binary64] using hNaNTrue
-                      rw [hNaNPolicy] at hnanFalse
-                      contradiction
-                  have hfinitePolicy : Model.isFinite x = true := by
-                    change Model.IEEE.isFinite x = true
-                    exact (bne_iff_ne).2 hfinite
+                        FloatFormat.expAllOnesNat FloatFormat.binary64 :=
+                    (bne_iff_ne).1 hfinitePolicy
                   have hnative :=
                     sqrt_eq_generic_of_positive_finite
                       x hfinite hzero hsign
                   have hpublic :=
                     Model.Spec.sqrt_eq_model
                       (fmt := FloatFormat.binary64) (by decide) x
-                      hfinitePolicy hzero hsign
+                      hfinitePolicy hsign
                   simp only [Model.Spec.sqrt, Model.chooseNaN1, hnanFalse,
                     Bool.false_eq_true, ite_false, hinf, hzero, hsign] at hpublic
                   rw [hnative, ← hpublic]

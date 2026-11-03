@@ -10,6 +10,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Division.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Word.Quotient.Proof
 public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Div.Proof
 
 /-!
 # Verified native normal-result division for binary64
@@ -29,6 +31,43 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64
 open FloatLib.Numerics.FixedWord.RestoringQuotient
 open FloatLib.Numerics.FixedWord
 
+/-! ## The one-word normal quotient rounder at binary64 -/
+
+/-- At binary64, one-word storage of a word is the native binary64 wrapper. -/
+private theorem ofWord_eq_ofUInt64 (bits : UInt64) :
+    NativeSmallWord.ofWord (fmt := FloatFormat.binary64) bits = ofUInt64 bits := by
+  unfold NativeSmallWord.ofWord ofUInt64
+  apply congrArg Model.ofBits
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_ofNatLT, NativeSmallWord.and_storageMask_toNat]
+  exact Nat.mod_eq_of_lt bits.toNat_lt
+
+/-- At binary64, one-word field packing is the native binary64 packing. -/
+private theorem packFields_eq_packFieldsWord (sign : Bool) (exponent fraction : UInt64) :
+    NativeSmallWord.packFields FloatFormat.binary64 sign exponent fraction =
+      packFieldsWord sign exponent fraction := by
+  have hexponent : NativeSmallWord.exponentMask FloatFormat.binary64 = 0x7ff := by decide
+  have hfraction :
+      NativeSmallWord.fractionMask FloatFormat.binary64 = 0x000fffffffffffff := by decide
+  unfold NativeSmallWord.packFields packFieldsWord
+  rw [hexponent, hfraction]
+  rfl
+
+private theorem binary64_biasInt : NativeSmallWord.biasInt FloatFormat.binary64 = 1023 := by
+  decide
+
+private theorem binary64_carryBit :
+    NativeSmallWord.carryBit FloatFormat.binary64 = 0x0020000000000000 := by
+  decide
+
+private theorem binary64_hiddenBit :
+    NativeSmallWord.hiddenBit FloatFormat.binary64 = 0x0010000000000000 := by
+  decide
+
+/--
+The binary64 normal quotient rounder is the one-word rounder `roundNormalNative?` at binary64,
+so its agreement with `normalSpec?` is the one-word theorem.
+-/
 private theorem roundNormalNative_eq_spec
     (sign : Bool) (num den : UInt64) (exponent : Int)
     (hnum : num ≠ 0) (hden : den ≠ 0)
@@ -58,137 +97,12 @@ private theorem roundNormalNative_eq_spec
             packFieldsWord sign encodedExponent fraction) =
       FiniteQuotientRound.normalSpec? FloatFormat.binary64
         sign num.toNat den.toNat exponent := by
-  have hnumNat : num.toNat ≠ 0 :=
-    (uint64_toNat_eq_zero num).not.mpr hnum
-  have hdenNat : den.toNat ≠ 0 :=
-    (uint64_toNat_eq_zero den).not.mpr hden
-  have hnumZero : (num.toNat == 0) = false := by
-    simp [hnumNat]
-  have hdenZero : (den.toNat == 0) = false := by
-    simp [hdenNat]
-  have hfloor :=
-    floorLog2RatWord_eq num den hnum hden
-  have hshift :
-      Int.ofNat
-          (Int.toNat
-            (52 - floorLog2RatWord num den)) =
-        52 - floorLog2RatWord num den := by
-    simpa only [
-      show Int.ofNat FloatFormat.binary64.fracWidth = (52 : Int) by decide
-    ] using
-      (NativeWordQuotient.normalShift_eq
-        FloatFormat.binary64 num den hnum hnumFit)
-  have hquotientFit :
-      (num.toNat <<<
-            Int.toNat (52 - floorLog2RatWord num den)) /
-          den.toNat + 1 < 2 ^ 63 := by
-    simpa only [
-      show Int.ofNat FloatFormat.binary64.fracWidth = (52 : Int) by decide
-    ] using
-      (NativeWordQuotient.quotient_lt_two_pow_63
-        FloatFormat.binary64 num den hnum hden hnumFit (by decide))
-  have hquotient :=
-    roundScaledQuotient_toNat num den
-      (Int.toNat
-        (52 - floorLog2RatWord num den))
-      hden (lt_trans hdenFit (by norm_num))
-      hquotientFit
-  have hfracWidth :
-      FloatFormat.binary64.fracWidth = 52 := by decide
-  have hbias :
-      FloatFormat.binary64.bias = 1023 := by decide
-  have hminExponent :
-      FloatFormat.binary64.ieeeMinNormalExponent = -1022 := by decide
-  have hmaxExponent :
-      FloatFormat.binary64.ieeeMaxNormalExponent = 1023 := by decide
-  unfold FiniteQuotientRound.normalSpec?
-  simp only [hfracWidth, hbias, hminExponent, hmaxExponent,
-    Int.ofNat_eq_natCast, Nat.cast_ofNat]
-  rw [← hfloor]
-  by_cases hrange :
-      floorLog2RatWord num den + exponent < -1022 ∨
-        1023 <
-          floorLog2RatWord num den + exponent
-  · simp [hrange, hnumZero, hdenZero]
-  have hlow :
-      ¬floorLog2RatWord num den + exponent < -1022 :=
-    fun h => hrange (Or.inl h)
-  have hhigh :
-      ¬1023 < floorLog2RatWord num den + exponent :=
-    fun h => hrange (Or.inr h)
-  let shift :=
-    Int.toNat
-      (52 - floorLog2RatWord num den)
-  let nativeMantissa := roundScaledQuotient num den shift
-  let genericMantissa :=
-    Numerics.roundQuotientEven (num.toNat <<< shift) den.toNat
-  have hmantissa :
-      nativeMantissa.toNat = genericMantissa := by
-    simpa only [shift, nativeMantissa, genericMantissa] using hquotient
-  have hcarry :
-      nativeMantissa = 0x0020000000000000 ↔
-        genericMantissa = Model.pow2 53 := by
-    rw [← UInt64.toNat_inj, hmantissa]
-    have hword :
-        (0x0020000000000000 : UInt64).toNat =
-          9007199254740992 := by decide
-    rw [hword]
-    norm_num [Model.pow2_eq_two_pow]
-  have hbounds :
-      2 ^ 52 ≤ genericMantissa ∧ genericMantissa ≤ 2 ^ 53 := by
-    simpa only [shift, genericMantissa,
-      show FloatFormat.binary64.fracWidth = 52 by decide,
-      Int.ofNat_eq_natCast, Nat.cast_ofNat, Nat.reduceAdd] using
-      (NativeWordQuotient.roundedMantissa_bounds
-        FloatFormat.binary64 num den hnum hden hnumFit)
-  by_cases hnativeCarry :
-      nativeMantissa = 0x0020000000000000
-  · have hgenericCarry := hcarry.mp hnativeCarry
-    have hnativeCarryBool :
-        (nativeMantissa == 0x0020000000000000) = true := by
-      simpa using hnativeCarry
-    have hgenericCarryBool :
-        (genericMantissa == Model.pow2 53) = true := by
-      simpa using hgenericCarry
-    simp only [shift, nativeMantissa, genericMantissa,
-      hnativeCarryBool, hgenericCarryBool]
-    simp [hdenZero, hnumZero, hlow, hhigh, Model.pow2_eq_two_pow]
-    split
-    · rfl
-    · exact congrArg (fun value : Value => some value)
-        (packFieldsWord_eq_ofNat sign _ 0)
-  · have hgenericCarry :
-        genericMantissa ≠ Model.pow2 53 :=
-      (not_congr hcarry).mp hnativeCarry
-    have hnativeCarryBool :
-        (nativeMantissa == 0x0020000000000000) = false := by
-      simpa using hnativeCarry
-    have hgenericCarryBool :
-        (genericMantissa == Model.pow2 53) = false := by
-      simpa using hgenericCarry
-    have hbase :
-        (0x0010000000000000 : UInt64).toNat = 2 ^ 52 := by
-      decide
-    have hbaseLe :
-        (0x0010000000000000 : UInt64) ≤ nativeMantissa := by
-      apply UInt64.le_iff_toNat_le.mpr
-      rw [hbase, hmantissa]
-      exact hbounds.1
-    have hfractionFit :
-        genericMantissa - 2 ^ 52 < 2 ^ 64 := by
-      omega
-    have hfraction :
-        nativeMantissa - 0x0010000000000000 =
-          UInt64.ofNat (genericMantissa - 2 ^ 52) := by
-      apply UInt64.toNat_inj.mp
-      rw [UInt64.toNat_sub_of_le _ _ hbaseLe, hbase, hmantissa]
-      exact (UInt64.toNat_ofNat_of_lt hfractionFit).symm
-    simp only [shift, nativeMantissa, genericMantissa,
-      hnativeCarryBool, hgenericCarryBool]
-    simp [hdenZero, hnumZero, hlow, hhigh, Model.pow2_eq_two_pow]
-    rw [hfraction]
-    norm_num at hfraction ⊢
-    exact packFieldsWord_eq_ofNat sign _ _
+  rw [← NativeSmallWordDiv.roundNormalNative_eq_spec FloatFormat.binary64 (by decide)
+    sign num den exponent hnum hden hnumFit hdenFit]
+  unfold NativeSmallWordDiv.roundNormalNative?
+  simp only [binary64_biasInt, binary64_carryBit, binary64_hiddenBit, ofWord_eq_ofUInt64,
+    packFields_eq_packFieldsWord, binary64_fracWidth]
+  rfl
 
 private theorem divNormal_refines
     (x y result : Value)
@@ -229,34 +143,6 @@ private theorem divNormal_refines
       Int.ofNat (finiteScale yExponent).toNat
   let rationalExponent :=
     floorLog2RatWord xMantissa yMantissa
-  have hround :
-      (let totalExponent := rationalExponent + exponent
-        if totalExponent < -1022 || 1023 < totalExponent then
-          (none : Option Value)
-        else
-          let shift := Int.toNat (52 - rationalExponent)
-          let roundedMantissa :=
-            roundScaledQuotient xMantissa yMantissa shift
-          let carry := roundedMantissa == 0x0020000000000000
-          let normalizedExponent :=
-            if carry then totalExponent + 1 else totalExponent
-          if 1023 < normalizedExponent then
-            none
-          else
-            let normalizedMantissa :=
-              if carry then 0x0010000000000000 else roundedMantissa
-            let encodedExponent :=
-              UInt64.ofNat (Int.toNat (normalizedExponent + 1023))
-            let fraction := normalizedMantissa - 0x0010000000000000
-            some <| ofUInt64 <|
-              packFieldsWord
-                (Bool.xor (signBit xBits) (signBit yBits))
-                encodedExponent fraction) =
-        some result := by
-    simpa [divNormal?, divNormalWord?, apply_ite (Option.map ofUInt64), xBits, yBits,
-      xExponent, yExponent, xFraction, yFraction, xMantissa, yMantissa, exponent,
-      rationalExponent, hxExceptional, hyExceptional, hxZero, hyZero,
-      beq_iff_eq] using hresult
   have hspec :
       FiniteQuotientRound.normalSpec? FloatFormat.binary64
           (Bool.xor (signBit xBits) (signBit yBits))
@@ -266,39 +152,14 @@ private theorem divNormal_refines
       (Bool.xor (signBit xBits) (signBit yBits))
       xMantissa yMantissa exponent hxZero hyZero
       hxMantissaFit hyMantissaFit]
-    exact hround
-  have hfloor :=
-    floorLog2RatWord_eq
-      xMantissa yMantissa hxZero hyZero
-  have hshiftInt :
-      Int.ofNat
-          (Int.toNat
-            (52 - floorLog2RatWord xMantissa yMantissa)) =
-        52 - floorLog2RatWord xMantissa yMantissa := by
-    simpa only [
-      show Int.ofNat FloatFormat.binary64.fracWidth = (52 : Int) by decide
-    ] using
-      (NativeWordQuotient.normalShift_eq
-        FloatFormat.binary64 xMantissa yMantissa hxZero hxMantissaFit)
-  have hshiftNonnegative :
-      0 ≤
-        52 -
-          Numerics.RationalBinary.floorLog2
-            xMantissa.toNat yMantissa.toNat := by
-    rw [← hfloor, ← hshiftInt]
-    exact Int.natCast_nonneg _
-  have hshiftNonnegative' :
-      0 ≤ Int.ofNat FloatFormat.binary64.fracWidth -
-        Numerics.RationalBinary.floorLog2
-          xMantissa.toNat yMantissa.toNat := by
-    norm_num at hshiftNonnegative ⊢
-    exact hshiftNonnegative
+    simpa [divNormal?, divNormalWord?, apply_ite (Option.map ofUInt64), xBits, yBits,
+      xExponent, yExponent, xFraction, yFraction, xMantissa, yMantissa, exponent,
+      rationalExponent, hxExceptional, hyExceptional, hxZero, hyZero,
+      beq_iff_eq] using hresult
   have hrounded :=
-    FiniteQuotientRound.normalSpec_eq_roundRatScaled_of_some
-      FloatFormat.binary64 (by decide)
-      (Bool.xor (signBit xBits) (signBit yBits))
-      xMantissa.toNat yMantissa.toNat exponent result
-      hshiftNonnegative' hspec
+    NativeWordQuotient.roundRatScaled_eq_of_normalSpec FloatFormat.binary64 (by decide)
+      (Bool.xor (signBit xBits) (signBit yBits)) xMantissa yMantissa exponent hyZero
+      hxMantissaFit result hspec
   unfold NativeBinary64.divFiniteComponents? NativeBinary64.decode?
   simp only [xBits, yBits, xExponent, yExponent, hxExceptional,
     hyExceptional, beq_iff_eq, ite_false, Option.some.injEq]
@@ -317,31 +178,7 @@ private theorem divNormal_refines
   have hyZeroNat : yMantissa.toNat ≠ 0 :=
     (uint64_toNat_eq_zero yMantissa).not.mpr hyZero
   simp only [hxZeroNat, hyZeroNat, beq_iff_eq, ite_false]
-  have hxScale :
-      FiniteKernel.scale xExponent.toNat =
-        (finiteScale xExponent).toNat := by
-    by_cases hxExponentZero : xExponent = 0
-    · simp [FiniteKernel.scale, finiteScale_toNat, hxExponentZero]
-    · have hxExponentNatZero : xExponent.toNat ≠ 0 := by
-        intro h
-        apply hxExponentZero
-        apply UInt64.toNat_inj.mp
-        simpa using h
-      simp [FiniteKernel.scale, finiteScale_toNat, hxExponentZero,
-        hxExponentNatZero]
-  have hyScale :
-      FiniteKernel.scale yExponent.toNat =
-        (finiteScale yExponent).toNat := by
-    by_cases hyExponentZero : yExponent = 0
-    · simp [FiniteKernel.scale, finiteScale_toNat, hyExponentZero]
-    · have hyExponentNatZero : yExponent.toNat ≠ 0 := by
-        intro h
-        apply hyExponentZero
-        apply UInt64.toNat_inj.mp
-        simpa using h
-      simp [FiniteKernel.scale, finiteScale_toNat, hyExponentZero,
-        hyExponentNatZero]
-  rw [hxScale, hyScale]
+  rw [← FiniteKernel.finiteScale_toNat_eq_scale, ← FiniteKernel.finiteScale_toNat_eq_scale]
   simpa only [exponent] using hrounded.symm
 
 /-- Native finite division with its fallback equals the generic component kernel. -/

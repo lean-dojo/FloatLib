@@ -72,58 +72,29 @@ private theorem encodedExponent_lt_expAllOnesNat_ieee
       _ = Int.ofNat (2 * fmt.bias) := by
         simp only [Int.ofNat_eq_natCast, Int.natCast_mul]
         ring
-  have hge := fmt.expWidth_ge_two
-  have hwidth : fmt.expWidth = (fmt.expWidth - 1) + 1 := by
-    omega
-  have hpow :
-      2 ^ fmt.expWidth = 2 * 2 ^ (fmt.expWidth - 1) := by
-    rw [hwidth, pow_succ]
-    exact Nat.mul_comm _ _
-  have hbiasDouble : 2 * fmt.bias = 2 ^ fmt.expWidth - 2 := by
-    unfold FloatFormat.bias
-    rw [hpow]
-    omega
-  rw [hbiasDouble] at hupper
-  have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using
-      Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
-  unfold FloatFormat.expAllOnesNat
+  rw [FloatFormat.expAllOnesNat_eq_two_mul_bias_add_one]
   omega
 
-private theorem bpow_le_abs_toReal_of_mant_ne_zero
-    (d : Numerics.Dyadic) (hm : d.significand ≠ 0) :
-    bpow (Int.ofNat d.significand.log2 + d.exponent) ≤ |d.toReal| := by
-  rw [Dyadic.abs_toReal]
-  have hleading : pow2 d.significand.log2 ≤ d.significand :=
-    pow2_log2_le hm
+/--
+The leading binary exponent of a nonzero dyadic within the largest finite magnitude does not
+exceed the largest normal exponent.
+-/
+theorem Dyadic.leadingExponent_le_maxNormalExponent
+    (fmt : FloatFormat) (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
+    (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
+    (d.significand.log2 : Int) + d.exponent ≤ fmt.maxNormalExponent := by
+  have hleading : pow2 d.significand.log2 ≤ d.significand := pow2_log2_le hm
   have hleadingReal : (pow2 d.significand.log2 : ℝ) ≤ d.significand := by
     exact_mod_cast hleading
-  calc
-    bpow (Int.ofNat d.significand.log2 + d.exponent) =
-        bpow (Int.ofNat d.significand.log2) * bpow d.exponent := bpow_add _ _
-    _ = (pow2 d.significand.log2 : ℝ) * bpow d.exponent := by
-      rw [bpow_ofNat]
-    _ ≤ (d.significand : ℝ) * bpow d.exponent :=
-      mul_le_mul_of_nonneg_right hleadingReal (bpow_nonneg _)
-
-private theorem leadingExponent_le_maxNormal
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
-    (d : Numerics.Dyadic) (hm : d.significand ≠ 0)
-    (hbound : |d.toReal| ≤ toReal (posMaxFinite fmt)) :
-    Int.ofNat d.significand.log2 + d.exponent ≤
-      Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
-  have hmaximum :=
-    toReal_posMaxFinite_lt_bpow fmt
-  rw [FloatFormat.maxNormalExponent_eq_ieee fmt hfmt] at hmaximum
+  have hlower :
+      bpow ((d.significand.log2 : Int) + d.exponent) ≤ |d.toReal| := by
+    rw [Dyadic.abs_toReal, bpow_add, ← Int.ofNat_eq_natCast, bpow_ofNat]
+    exact mul_le_mul_of_nonneg_right hleadingReal (bpow_nonneg _)
   have hpow :
-      bpow (Int.ofNat d.significand.log2 + d.exponent) <
-        bpow (Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) + 1) :=
-    (bpow_le_abs_toReal_of_mant_ne_zero d hm).trans_lt
-      (hbound.trans_lt hmaximum)
-  have hexponent :
-      Int.ofNat d.significand.log2 + d.exponent <
-        Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) + 1 :=
-    (bpow_lt_bpow_iff Numerics.binaryRadix _ _).mp hpow
+      bpow ((d.significand.log2 : Int) + d.exponent) <
+        bpow (fmt.maxNormalExponent + 1) :=
+    hlower.trans_lt (hbound.trans_lt (toReal_posMaxFinite_lt_bpow fmt))
+  have := (bpow_lt_bpow_iff Numerics.binaryRadix _ _).mp hpow
   omega
 
 private theorem roundMantissaToLeadingBitEven_lt_top_of_bound_at_max
@@ -219,8 +190,9 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
     exact isFinite_signedZero_ieee fmt hfmt d.negative
   · let k : Int := Int.ofNat d.significand.log2 + d.exponent
     have hkmax :
-        k ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) :=
-      leadingExponent_le_maxNormal fmt hfmt d hm hbound
+        k ≤ Int.ofNat (FloatFormat.ieeeMaxNormalExponent fmt) := by
+      rw [← FloatFormat.maxNormalExponent_eq_ieee fmt hfmt]
+      exact Dyadic.leadingExponent_le_maxNormalExponent fmt d hm hbound
     by_cases hsub :
         k < FloatFormat.ieeeMinNormalExponent fmt
     · have hsub' :
@@ -249,13 +221,8 @@ theorem isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
       · rw [ite_eq_right hzero]
         by_cases hminNormal : fraction = pow2 fmt.fracWidth
         · rw [ite_eq_left hminNormal]
-          exact isFinite_ofFields_ieee fmt hfmt d.negative 1 0 (by
-            have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-              simpa using
-                Nat.pow_le_pow_right (by decide : 0 < (2 : Nat))
-                  fmt.expWidth_ge_two
-            unfold FloatFormat.expAllOnesNat
-            omega)
+          exact isFinite_ofFields_ieee fmt hfmt d.negative 1 0
+            (FloatFormat.one_lt_expAllOnesNat fmt)
         · rw [ite_eq_right hminNormal]
           exact isFinite_ofFields_ieee fmt hfmt d.negative 0 _
             fmt.expAllOnesNat_pos

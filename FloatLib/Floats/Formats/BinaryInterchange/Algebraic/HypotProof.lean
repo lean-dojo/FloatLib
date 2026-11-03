@@ -33,7 +33,7 @@ theorem toReal_sqrtPositiveDyadic (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
       roundAt fmt (Real.sqrt ((mantissa : ℝ) *
         FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent)) := by
   by_cases hm : mantissa = 0
-  · simp [hm, FiniteSqrt.sqrtPositiveDyadic, toReal_posZero fmt hfmt]
+  · simp [hm, FiniteSqrt.sqrtPositiveDyadic, toReal_posZero]
   · simp only [FiniteSqrt.sqrtPositiveDyadic, hm, dite_false, hfmt, ite_true,
       NativeModelSqrt.sqrt_eq] at hfinite ⊢
     exact toReal_ofModel_sqrt_finite_eq_roundAt fmt hfmt mantissa exponent hm hfinite
@@ -72,16 +72,41 @@ theorem hypot_eq_hypotDyadic {fmt : FloatFormat} (left right : Model fmt)
     hnan, hleft, hright]
 
 /--
+Under a conventional IEEE descriptor a finite norm has finite operands. A signaling NaN gives a
+quiet NaN, an infinity gives positive infinity even beside a quiet NaN, and a remaining quiet NaN
+propagates.
+-/
+theorem isFinite_of_isFinite_hypot {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    {left right : Model fmt} (h : isFinite (hypot left right) = true) :
+    isFinite left = true ∧ isFinite right = true := by
+  have hquiet {z : Model fmt} (hz : isNaN z = true) : isFinite (quietNaN z) = false :=
+    isFinite_eq_false_of_isNaN ((isNaN_quietNaN z).trans hz)
+  by_cases hsl : isSNaN left = true
+  · simp [hypot, chooseNaN2, hsl, hquiet (isNaN_of_isSNaN hsl)] at h
+  by_cases hsr : isSNaN right = true
+  · simp [hypot, chooseNaN2, hsl, hsr, hquiet (isNaN_of_isSNaN hsr)] at h
+  by_cases hinf : (isInf left || isInf right) = true
+  · simp [hypot, hsl, hsr, hinf, isFinite_nativeOverflow hfmt] at h
+  by_cases hnl : isNaN left = true
+  · simp [hypot, chooseNaN2, hsl, hsr, hinf, hnl, hquiet hnl] at h
+  by_cases hnr : isNaN right = true
+  · simp [hypot, chooseNaN2, hsl, hsr, hinf, hnl, hnr, hquiet hnr] at h
+  simp only [Bool.or_eq_true, not_or, Bool.not_eq_true] at hinf hnl hnr
+  exact ⟨isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false left hnl hinf.1,
+    isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false right hnr hinf.2⟩
+
+/--
 The finite IEEE Euclidean norm is one nearest-even rounding of `sqrt (x² + y²)`.
 
 The exact sum may exceed the representable range. Only finiteness of the final result is
-required; the theorem includes subnormal inputs, signed zeros and underflow boundaries.
+required, and it forces finite operands (`isFinite_of_isFinite_hypot`). The theorem includes
+subnormal inputs, signed zeros and underflow boundaries.
 -/
 theorem toReal_hypot_eq_roundAt {fmt : FloatFormat} (left right : Model fmt)
-    (hfmt : fmt.isIEEE = true) (hleft : isFinite left = true) (hright : isFinite right = true)
-    (hfinite : isFinite (hypot left right) = true) :
+    (hfmt : fmt.isIEEE = true) (hfinite : isFinite (hypot left right) = true) :
     toReal (hypot left right) =
       roundAt fmt (Real.sqrt (toReal left ^ 2 + toReal right ^ 2)) := by
+  obtain ⟨hleft, hright⟩ := isFinite_of_isFinite_hypot hfmt hfinite
   obtain ⟨a, ha⟩ := exists_toDyadic?_of_isFinite hleft
   obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hright
   rw [hypot_eq_hypotDyadic left right ha hb] at hfinite ⊢

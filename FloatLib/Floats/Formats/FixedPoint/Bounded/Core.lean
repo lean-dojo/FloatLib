@@ -22,8 +22,11 @@ integer at a fixed radix scale. Arithmetic names state their overflow policy exp
 * checked operations return `none` when the exact coefficient is out of range;
 * saturating operations clamp the exact coefficient to the destination range.
 
-Multiplication composes scales: operands with `p` and `q` fractional digits produce `p + q`
-fractional digits. The destination width is independent of the two input widths.
+Multiplication composes scales: the coefficient product of operands with `p` and `q` fractional
+digits is read at `p + q` fractional digits. These kernels take plain `FixedInt` words, so the
+composition appears in the decoding theorems (`toRat_wrapMul`) and in the result type of the
+configured `ExecFloat.BoundedFixedPoint.mul`. The destination width is independent of the two
+input widths.
 -/
 
 @[expose] public section
@@ -36,9 +39,10 @@ namespace FloatLib.Floats.Formats.FixedPoint.Bounded
 /--
 A signed `width`-bit coefficient interpreted with a fixed radix scale.
 
-This is a transparent type definition rather than an abbreviation. It has exactly the
-`FixedInt width` runtime representation, while retaining the radix and scale in elaborated type
-expressions so proof-aware tooling can identify the numerical format.
+The definition is reducible and has exactly the `FixedInt width` runtime representation. The radix
+and scale arguments are kept in elaborated type expressions so that `#float_info` can identify
+the numerical format, but they are not enforced: codes of different scales unify with each other
+and with `FixedInt width`, and `toRat` takes the radix and scale as explicit arguments.
 -/
 @[reducible] def Code (_radix : Radix) (_fractionalDigits : Nat) (width : Nat) :=
   FixedInt width

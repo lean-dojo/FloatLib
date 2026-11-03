@@ -90,10 +90,10 @@ example (value : Binary32) : ExecFloat.ConversionOutcome Posit32 :=
 
 private def third (mode : IEEERoundingMode) : Binary32 :=
   ExecFloat.Binary.div 1 3 (mode := mode)
--- third nearest = 0.33333334
--- third towardZero = 0.3333333
--- third up = 0.33333334
--- third down = 0.3333333
+-- third .nearest = 0.33333334
+-- third .towardZero = 0.3333333
+-- third .up = 0.33333334
+-- third .down = 0.3333333
 
 /-
 One third lies between two binary32 neighbours, 0.3333333 below and 0.33333334 above. Nearest-even
@@ -113,8 +113,8 @@ private def showArithmetic : IO Unit := do
 private def showRounding : IO Unit := do
   IO.println "Binary32 1 / 3: exact stored values"
   let modes : List (String × IEEERoundingMode) :=
-    [("nearest, ties to even", nearest), ("toward zero", towardZero),
-     ("toward +infinity", up), ("toward -infinity", down)]
+    [("nearest, ties to even", .nearest), ("toward zero", .towardZero),
+     ("toward +infinity", .up), ("toward -infinity", .down)]
   for (label, mode) in modes do
     IO.println s!"  {label}: {third mode}"
   IO.println "  Nearest-even selects the upper neighbor for this input."

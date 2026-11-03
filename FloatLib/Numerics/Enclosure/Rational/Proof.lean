@@ -73,7 +73,9 @@ theorem contains_scaleNonnegative {interval : RationalInterval} {x : ℝ}
   · simpa [scaleNonnegative] using mul_le_mul_of_nonneg_left hx.1 hreal
   · simpa [scaleNonnegative] using mul_le_mul_of_nonneg_left hx.2 hreal
 
-/-- Signed rational scaling preserves enclosure with the appropriate endpoint order. -/
+/--
+Scaling by any rational factor encloses `factor * x`; a negative factor exchanges the endpoints.
+-/
 theorem contains_scale {interval : RationalInterval} {x : ℝ}
     (hx : interval.Contains x) (factor : ℚ) :
     (interval.scale factor).Contains ((factor : ℝ) * x) := by

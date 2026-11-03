@@ -49,11 +49,11 @@ theorem addDyadic_sameSign_sameExponent
 Adding equal-exponent dyadics of opposite signs subtracts the smaller magnitude from the larger
 left one.
 
-The result keeps the sign of the larger magnitude and needs no rounding or exponent adjustment.
+The result keeps the sign of the larger magnitude and needs no rounding or exponent adjustment. A
+zero smaller magnitude leaves the larger operand unchanged.
 -/
 theorem addDyadic_oppositeSign_sameExponent_largeLeft
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
-    (hlarge : large ≠ 0) (hsmall : small ≠ 0)
     (hsign : largeSign ≠ smallSign) (hlt : small < large) :
     addDyadic
         { negative := largeSign, significand := large, exponent }
@@ -61,7 +61,7 @@ theorem addDyadic_oppositeSign_sameExponent_largeLeft
       { negative := largeSign, significand := large - small, exponent } := by
   simpa [addDyadic] using
     Numerics.Dyadic.add_opposite_sign_same_exponent_large_left
-      largeSign smallSign large small exponent hlarge hsmall hsign hlt
+      largeSign smallSign large small exponent hsign hlt
 
 /--
 Adding equal-exponent dyadics of opposite signs subtracts the smaller left magnitude from the
@@ -69,7 +69,6 @@ larger right one.
 -/
 theorem addDyadic_oppositeSign_sameExponent_largeRight
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
-    (hsmall : small ≠ 0) (hlarge : large ≠ 0)
     (hsign : smallSign ≠ largeSign) (hlt : small < large) :
     addDyadic
         { negative := smallSign, significand := small, exponent }
@@ -77,24 +76,24 @@ theorem addDyadic_oppositeSign_sameExponent_largeRight
       { negative := largeSign, significand := large - small, exponent } := by
   simpa [addDyadic] using
     Numerics.Dyadic.add_opposite_sign_same_exponent_large_right
-      smallSign largeSign small large exponent hsmall hlarge hsign hlt
+      smallSign largeSign small large exponent hsign hlt
 
-/-- Equal nonzero magnitudes with opposite signs cancel to canonical positive zero. -/
+/-- Equal magnitudes with opposite signs cancel to canonical positive zero. -/
 theorem addDyadic_oppositeSign_sameExponent_eq_zero
     (leftSign rightSign : Bool) (magnitude : Nat) (exponent : Int)
-    (hmagnitude : magnitude ≠ 0) (hsign : leftSign ≠ rightSign) :
+    (hsign : leftSign ≠ rightSign) :
     addDyadic
         { negative := leftSign, significand := magnitude, exponent }
         { negative := rightSign, significand := magnitude, exponent } =
       { negative := false, significand := 0, exponent := 0 } := by
   simpa [addDyadic] using
     Numerics.Dyadic.add_opposite_sign_same_exponent_eq_zero
-      leftSign rightSign magnitude exponent hmagnitude hsign
+      leftSign rightSign magnitude exponent hsign
 
 /-- Opposite signs with the larger left operand one exponent higher give `2 * large - small`. -/
 theorem addDyadic_oppositeSign_adjacentExponent_largeLeft
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
-    (hlarge : large ≠ 0) (hsmall : small ≠ 0)
+    (hsmall : small ≠ 0)
     (hsign : largeSign ≠ smallSign) (hlt : small < large.shiftLeft 1) :
     addDyadic
         { negative := largeSign, significand := large, exponent := exponent + 1 }
@@ -104,12 +103,12 @@ theorem addDyadic_oppositeSign_adjacentExponent_largeLeft
         exponent } := by
   simpa [addDyadic] using
     Numerics.Dyadic.add_opposite_sign_adjacent_exponent_large_left
-      largeSign smallSign large small exponent hlarge hsmall hsign hlt
+      largeSign smallSign large small exponent hsmall hsign hlt
 
 /-- Opposite signs with the larger right operand one exponent higher give `2 * large - small`. -/
 theorem addDyadic_oppositeSign_adjacentExponent_largeRight
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
-    (hsmall : small ≠ 0) (hlarge : large ≠ 0)
+    (hsmall : small ≠ 0)
     (hsign : smallSign ≠ largeSign) (hlt : small < large.shiftLeft 1) :
     addDyadic
         { negative := smallSign, significand := small, exponent }
@@ -119,13 +118,17 @@ theorem addDyadic_oppositeSign_adjacentExponent_largeRight
         exponent } := by
   simpa [addDyadic] using
     Numerics.Dyadic.add_opposite_sign_adjacent_exponent_large_right
-      smallSign largeSign small large exponent hsmall hlarge hsign hlt
+      smallSign largeSign small large exponent hsmall hsign hlt
 
-/-- Align the right dyadic magnitude to the left exponent without changing the exact sum. -/
+/--
+Align the right dyadic magnitude to the left exponent without changing the exact sum.
+
+A zero right magnitude stays zero after the shift, and both sums return the left operand.
+-/
 theorem addDyadic_alignRightOffset
     (offset : Nat) (xSign ySign : Bool)
     (xMagnitude yMagnitude xScale yScale : Nat)
-    (hx : xMagnitude ≠ 0) (hy : yMagnitude ≠ 0)
+    (hx : xMagnitude ≠ 0)
     (hscale : xScale ≤ yScale) :
     Model.addDyadic
         { negative := xSign
@@ -158,13 +161,17 @@ theorem addDyadic_alignRightOffset
       xSign ySign xMagnitude yMagnitude
       (Int.ofNat xScale - Int.ofNat offset)
       (Int.ofNat yScale - Int.ofNat offset)
-      hx hy hscaleInt
+      hx hscaleInt
 
-/-- Align the left dyadic magnitude to the right exponent without changing the exact sum. -/
+/--
+Align the left dyadic magnitude to the right exponent without changing the exact sum.
+
+A zero left magnitude stays zero after the shift, and both sums return the right operand.
+-/
 theorem addDyadic_alignLeftOffset
     (offset : Nat) (xSign ySign : Bool)
     (xMagnitude yMagnitude xScale yScale : Nat)
-    (hx : xMagnitude ≠ 0) (hy : yMagnitude ≠ 0)
+    (hy : yMagnitude ≠ 0)
     (hscale : yScale < xScale) :
     Model.addDyadic
         { negative := xSign
@@ -197,7 +204,28 @@ theorem addDyadic_alignLeftOffset
       xSign ySign xMagnitude yMagnitude
       (Int.ofNat xScale - Int.ofNat offset)
       (Int.ofNat yScale - Int.ofNat offset)
-      hx hy hscaleInt
+      hy hscaleInt
+
+/--
+Signed-magnitude combination is symmetric in its operands, including the sign of an exact
+cancellation, which is the conjunction of the two signs.
+-/
+private theorem addDyadicMagnitudes_comm (leftSign rightSign : Bool) (left right : Nat)
+    (exponent : Int) :
+    addDyadicMagnitudes leftSign rightSign left right exponent =
+      addDyadicMagnitudes rightSign leftSign right left exponent := by
+  unfold addDyadicMagnitudes
+  by_cases hsign : leftSign = rightSign
+  · subst hsign
+    simp [Nat.add_comm]
+  · have hsign' : ¬rightSign = leftSign := fun h => hsign h.symm
+    by_cases heq : left = right
+    · subst heq
+      simp [hsign, hsign', Bool.and_comm]
+    · by_cases hlt : left < right
+      · simp [hsign, hsign', heq, hlt, Nat.not_lt_of_gt hlt, Ne.symm heq]
+      · have hgt : right < left := by omega
+        simp [hsign, hsign', heq, hlt, hgt, Ne.symm heq]
 
 private theorem addDyadicMagnitudes_eq
     (leftSign rightSign : Bool) (left right : Nat) (exponent : Int)
@@ -210,6 +238,25 @@ private theorem addDyadicMagnitudes_eq
         { negative := leftSign && rightSign, significand := 0, exponent := 0 }
       else
         { negative := sum < 0, significand := Int.natAbs sum, exponent := exponent } := by
+  -- The mixed-sign case with the negative operand on the right.
+  have hmixed (left right : Nat) :
+      addDyadicMagnitudes false true left right exponent =
+        let sum : Int := Int.ofNat left + -(Int.ofNat right)
+        if sum == 0 then
+          { negative := false && true, significand := 0, exponent := 0 }
+        else
+          { negative := sum < 0, significand := Int.natAbs sum, exponent := exponent } := by
+    by_cases heq : left = right
+    · subst right
+      simp [addDyadicMagnitudes]
+    · by_cases hlt : left < right
+      · have hsumNeg : (left : Int) + -(right : Int) < 0 := by omega
+        have hsumNe : (left : Int) + -(right : Int) ≠ 0 := by omega
+        have hnatAbs : ((left : Int) + -(right : Int)).natAbs = right - left := by omega
+        simp [addDyadicMagnitudes, heq, hlt, hsumNeg, hsumNe, hnatAbs]
+      · have hsumNe : (left : Int) + -(right : Int) ≠ 0 := by omega
+        have hnatAbs : ((left : Int) + -(right : Int)).natAbs = left - right := by omega
+        simp [addDyadicMagnitudes, heq, hlt, hsumNe, hnatAbs]
   cases leftSign <;> cases rightSign
   · have hsumPos : (0 : Int) < (left : Int) + right := by
       have hleftPos : 0 < left := Nat.pos_of_ne_zero hleft
@@ -218,51 +265,11 @@ private theorem addDyadicMagnitudes_eq
     have hsumNe : (left : Int) + right ≠ 0 := by omega
     have hsumNonneg : (0 : Int) ≤ (left : Int) + right := by omega
     simp [addDyadicMagnitudes, hsumNe, hsumNonneg, natAbs_natCast_add]
-  · by_cases heq : left = right
-    · subst right
-      simp [addDyadicMagnitudes]
-    · by_cases hlt : left < right
-      · have hsumNeg : (left : Int) + -(right : Int) < 0 := by omega
-        have hsumNe : (left : Int) + -(right : Int) ≠ 0 := by omega
-        have hnatAbs :
-            ((left : Int) + -(right : Int)).natAbs = right - left := by
-          rw [← Int.sub_eq_add_neg, ← Int.natAbs_neg, Int.neg_sub]
-          exact Int.natAbs_natCast_sub_natCast_of_ge (Nat.le_of_lt hlt)
-        simp [addDyadicMagnitudes, heq, hlt, hsumNeg, hsumNe, hnatAbs]
-      · have hrightLt : right < left := by omega
-        have hsumPos : 0 < (left : Int) + -(right : Int) := by omega
-        have hsumNe : (left : Int) + -(right : Int) ≠ 0 := by omega
-        have hnatAbs :
-            ((left : Int) + -(right : Int)).natAbs = left - right := by
-          rw [← Int.sub_eq_add_neg]
-          exact Int.natAbs_natCast_sub_natCast_of_ge (Nat.le_of_lt hrightLt)
-        simp [addDyadicMagnitudes, heq, hlt, hsumNe, hnatAbs]
-  · by_cases heq : left = right
-    · subst right
-      simp [addDyadicMagnitudes]
-    · by_cases hlt : left < right
-      · have hsumPos : 0 < -(left : Int) + (right : Int) := by omega
-        have hsumNe : -(left : Int) + (right : Int) ≠ 0 := by omega
-        have hle : left ≤ right := Nat.le_of_lt hlt
-        have hnatAbs :
-            (-(left : Int) + (right : Int)).natAbs = right - left := by
-          have hsumEq :
-              -(left : Int) + (right : Int) = (right : Int) - (left : Int) := by
-            omega
-          rw [hsumEq]
-          exact Int.natAbs_natCast_sub_natCast_of_ge (Nat.le_of_lt hlt)
-        simp [addDyadicMagnitudes, heq, hlt, hsumNe, hnatAbs, hle]
-      · have hrightLt : right < left := by omega
-        have hsumNeg : -(left : Int) + (right : Int) < 0 := by omega
-        have hsumNe : -(left : Int) + (right : Int) ≠ 0 := by omega
-        have hnatAbs :
-            (-(left : Int) + (right : Int)).natAbs = left - right := by
-          have hsumEq :
-              -(left : Int) + (right : Int) = -((left : Int) - (right : Int)) := by
-            omega
-          rw [hsumEq, Int.natAbs_neg]
-          exact Int.natAbs_natCast_sub_natCast_of_ge (Nat.le_of_lt hrightLt)
-        simp [addDyadicMagnitudes, heq, hlt, hsumNeg, hsumNe, hnatAbs]
+  · exact hmixed left right
+  · -- Exchanging the operands gives the case above.
+    rw [addDyadicMagnitudes_comm, hmixed right left]
+    simp only [Bool.false_and, Bool.true_and, ite_true, Bool.false_eq_true, ite_false,
+      Int.add_comm (Int.ofNat right)]
   · have hsumNeg : -(left : Int) + -(right : Int) < 0 := by
       have hleftPos : 0 < left := Nat.pos_of_ne_zero hleft
       have hrightPos : 0 < right := Nat.pos_of_ne_zero hright

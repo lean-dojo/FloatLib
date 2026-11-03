@@ -39,6 +39,24 @@ encoding. `roundDyadic` below selects it only when `fmt.isIEEE`.
     Float.Model.UnpackedFloat.round (FloatFormat.toModel fmt)
       (modelSign d.negative) d.significand d.exponent
 
+/-- A right shift by `shift + 1` is a right shift by `shift` followed by one single-bit shift. -/
+theorem extendedMantissa_shiftRight_succ (em : Float.Model.UnpackedFloat.ExtendedMantissa)
+    (shift : Nat) :
+    em >>> (shift + 1) =
+      Float.Model.UnpackedFloat.ExtendedMantissa.shiftRightOne (em >>> shift) :=
+  rfl
+
+/-- Shifting an extended mantissa right by `shift` divides its mantissa by `2 ^ shift`. -/
+theorem extendedMantissa_shiftRight_mantissa (em : Float.Model.UnpackedFloat.ExtendedMantissa)
+    (shift : Nat) :
+    (em >>> shift).mantissa = em.mantissa / 2 ^ shift := by
+  induction shift with
+  | zero => simp [HShiftRight.hShiftRight, Nat.repeat]
+  | succ shift ih =>
+      rw [extendedMantissa_shiftRight_succ]
+      simp only [Float.Model.UnpackedFloat.ExtendedMantissa.shiftRightOne, ih,
+        Nat.div_div_eq_div_mul, pow_succ]
+
 /-- Right shifts preserve a zero mantissa with clear round and sticky bits. -/
 theorem zero_extendedMantissa_shiftRight (shift : Nat) :
     (({ mantissa := 0, roundBit := false, stickyBit := false } :
@@ -47,10 +65,7 @@ theorem zero_extendedMantissa_shiftRight (shift : Nat) :
   induction shift with
   | zero => rfl
   | succ shift ih =>
-      change Nat.repeat Float.Model.UnpackedFloat.ExtendedMantissa.shiftRightOne shift _ = _ at ih
-      change Nat.repeat Float.Model.UnpackedFloat.ExtendedMantissa.shiftRightOne (Nat.succ shift)
-        _ = _
-      rw [Nat.repeat, ih]
+      rw [extendedMantissa_shiftRight_succ, ih]
       rfl
 
 /-- Rounding in Lean's IEEE model preserves signed zero for every model format. -/
@@ -78,12 +93,12 @@ theorem zero_extendedMantissa_shiftRight (shift : Nat) :
   simp [ieeeRoundDyadic]
 
 /-- Default overflow result: infinity, NaN, or saturation according to the encoding. -/
-@[inline] def nativeOverflow (fmt : FloatFormat) (sign : Bool) : Model fmt :=
+@[inline] def nativeOverflow (fmt : FloatFormat) (negative : Bool) : Model fmt :=
   match fmt.encoding with
-  | .ieee => if sign then negInf fmt else posInf fmt
-  | .finiteMaxNaN => propagatedNaN fmt sign 0
+  | .ieee => if negative then negInf fmt else posInf fmt
+  | .finiteMaxNaN => propagatedNaN fmt negative 0
   | .finiteUnsignedZero => invalidResult fmt
-  | .finite => maxFinite fmt sign
+  | .finite => maxFinite fmt negative
 
 /-- Conventional IEEE native overflow is the usual signed infinity. -/
 @[simp] theorem nativeOverflow_eq_signedInf_of_isIEEE
@@ -103,9 +118,9 @@ toward negative infinity rounds a negative magnitude up. Nearest modes always ro
 directed and policy rounders share this definition so that a finite-with-NaN encoding saturates
 in the truncating direction under both engines.
 -/
-@[inline] def directedOverflow (fmt : FloatFormat) (sign roundMagnitudeUp : Bool) :
+@[inline] def directedOverflow (fmt : FloatFormat) (negative roundMagnitudeUp : Bool) :
     Model fmt :=
-  if roundMagnitudeUp then nativeOverflow fmt sign else maxFinite fmt sign
+  if roundMagnitudeUp then nativeOverflow fmt negative else maxFinite fmt negative
 
 /--
 Pack a rounded subnormal significand.

@@ -23,70 +23,50 @@ universe u
 /-- Static-byte addition agrees with the family's independent reference specification. -/
 theorem Backend.add_eq_spec {F : Type u} [Family F]
     (left right : FloatLib.Floats.ExecFloat F) :
-    Backend.add left right = Spec.add left right := by
-  apply toModel_injective (F := F)
-  simp only [Spec.add, toModel_ofModel]
-  change byteCodeToModel ((Family.kernels (F := F)).add left.raw right.raw) =
+    Backend.add left right = Spec.add left right :=
+  liftBinary_eq_spec (Family.kernels (F := F)).add
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.add
-      (byteCodeToModel left.raw) (byteCodeToModel right.raw)
-  exact (Family.kernels (F := F)).add_eq_spec left.raw right.raw
+    (Family.kernels (F := F)).add_eq_spec left right
 
 /-- Static-byte subtraction agrees with the family's independent reference specification. -/
 theorem Backend.sub_eq_spec {F : Type u} [Family F]
     (left right : FloatLib.Floats.ExecFloat F) :
-    Backend.sub left right = Spec.sub left right := by
-  apply toModel_injective (F := F)
-  simp only [Spec.sub, toModel_ofModel]
-  change byteCodeToModel ((Family.kernels (F := F)).sub left.raw right.raw) =
+    Backend.sub left right = Spec.sub left right :=
+  liftBinary_eq_spec (Family.kernels (F := F)).sub
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sub
-      (byteCodeToModel left.raw) (byteCodeToModel right.raw)
-  exact (Family.kernels (F := F)).sub_eq_spec left.raw right.raw
+    (Family.kernels (F := F)).sub_eq_spec left right
 
 /-- Static-byte multiplication agrees with the family's independent reference specification. -/
 theorem Backend.mul_eq_spec {F : Type u} [Family F]
     (left right : FloatLib.Floats.ExecFloat F) :
-    Backend.mul left right = Spec.mul left right := by
-  apply toModel_injective (F := F)
-  simp only [Spec.mul, toModel_ofModel]
-  change byteCodeToModel ((Family.kernels (F := F)).mul left.raw right.raw) =
+    Backend.mul left right = Spec.mul left right :=
+  liftBinary_eq_spec (Family.kernels (F := F)).mul
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.mul
-      (byteCodeToModel left.raw) (byteCodeToModel right.raw)
-  exact (Family.kernels (F := F)).mul_eq_spec left.raw right.raw
+    (Family.kernels (F := F)).mul_eq_spec left right
 
 /-- Static-byte division agrees with the family's independent reference specification. -/
 theorem Backend.div_eq_spec {F : Type u} [Family F]
     (left right : FloatLib.Floats.ExecFloat F) :
-    Backend.div left right = Spec.div left right := by
-  apply toModel_injective (F := F)
-  simp only [Spec.div, toModel_ofModel]
-  change byteCodeToModel ((Family.kernels (F := F)).div left.raw right.raw) =
+    Backend.div left right = Spec.div left right :=
+  liftBinary_eq_spec (Family.kernels (F := F)).div
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.div
-      (byteCodeToModel left.raw) (byteCodeToModel right.raw)
-  exact (Family.kernels (F := F)).div_eq_spec left.raw right.raw
+    (Family.kernels (F := F)).div_eq_spec left right
 
 /-- Static-byte square root agrees with the family's independent reference specification. -/
 theorem Backend.sqrt_eq_spec {F : Type u} [Family F]
     (value : FloatLib.Floats.ExecFloat F) :
-    Backend.sqrt value = Spec.sqrt value := by
-  apply toModel_injective (F := F)
-  simp only [Spec.sqrt, toModel_ofModel]
-  change byteCodeToModel ((Family.kernels (F := F)).sqrt value.raw) =
+    Backend.sqrt value = Spec.sqrt value :=
+  liftUnary_eq_spec (Family.kernels (F := F)).sqrt
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt
-      (byteCodeToModel value.raw)
-  exact (Family.kernels (F := F)).sqrt_eq_spec value.raw
+    (Family.kernels (F := F)).sqrt_eq_spec value
 
 /-- Static-byte fused multiply-add agrees with the family's independent reference specification. -/
 theorem Backend.fma_eq_spec {F : Type u} [Family F]
     (left right addend : FloatLib.Floats.ExecFloat F) :
-    Backend.fma left right addend = Spec.fma left right addend := by
-  apply toModel_injective (F := F)
-  simp only [Spec.fma, toModel_ofModel]
-  change byteCodeToModel
-      ((Family.kernels (F := F)).fma left.raw right.raw addend.raw) =
+    Backend.fma left right addend = Spec.fma left right addend :=
+  liftTernary_eq_spec (Family.kernels (F := F)).fma
     FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.fma
-      (byteCodeToModel left.raw) (byteCodeToModel right.raw)
-      (byteCodeToModel addend.raw)
-  exact (Family.kernels (F := F)).fma_eq_spec left.raw right.raw addend.raw
+    (Family.kernels (F := F)).fma_eq_spec left right addend
 
 namespace Backend.Table
 

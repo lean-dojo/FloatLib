@@ -43,55 +43,32 @@ private theorem quotient_value (numerator denominator : Nat) :
     Int.fract_div_natCast_eq_div_natCast_mod] using
     (Int.floor_add_fract ((numerator : ℚ) / denominator)).symm
 
-private theorem floor_error_le_half (numerator denominator : Nat)
-    (hdenominator : denominator ≠ 0)
-    (hround : 2 * (numerator % denominator) ≤ denominator) :
-    |((numerator / denominator : Nat) : ℚ) - (numerator : ℚ) / denominator| ≤
-      (1 : ℚ) / 2 := by
-  have hdenominatorPos : 0 < denominator := Nat.pos_of_ne_zero hdenominator
+/-- The floor quotient falls short of the exact quotient by the remainder fraction. -/
+private theorem floor_error_eq (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
+    |((numerator / denominator : Nat) : ℚ) - (numerator : ℚ) / denominator| =
+      (numerator % denominator : Nat) / (denominator : ℚ) := by
   have hdenominatorRatPos : (0 : ℚ) < denominator := by
-    exact_mod_cast hdenominatorPos
-  have hremainderNonneg :
-      (0 : ℚ) ≤ (numerator % denominator : Nat) / denominator :=
-    div_nonneg (by norm_num) hdenominatorRatPos.le
-  have hroundRat :
-      (2 : ℚ) * (numerator % denominator : Nat) ≤ denominator := by
-    exact_mod_cast hround
-  have hremainderLeHalf :
-      (numerator % denominator : Nat) / (denominator : ℚ) ≤ (1 : ℚ) / 2 := by
-    rw [div_le_iff₀ hdenominatorRatPos]
-    linarith
+    exact_mod_cast Nat.pos_of_ne_zero hdenominator
   rw [quotient_value numerator denominator]
   rw [show
     ((numerator / denominator : Nat) : ℚ) -
         ((numerator / denominator : Nat) +
           (numerator % denominator : Nat) / denominator) =
       -((numerator % denominator : Nat) / denominator) by ring]
-  rw [abs_neg, abs_of_nonneg hremainderNonneg]
-  exact hremainderLeHalf
+  rw [abs_neg, abs_of_nonneg (div_nonneg (by positivity) hdenominatorRatPos.le)]
 
-private theorem ceil_error_le_half (numerator denominator : Nat)
-    (hdenominator : denominator ≠ 0)
-    (hround : denominator ≤ 2 * (numerator % denominator)) :
-    |(((numerator / denominator : Nat) + 1 : Nat) : ℚ) -
-        (numerator : ℚ) / denominator| ≤ (1 : ℚ) / 2 := by
+/-- The incremented quotient exceeds the exact quotient by one minus the remainder fraction. -/
+private theorem ceil_error_eq (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
+    |(((numerator / denominator : Nat) + 1 : Nat) : ℚ) - (numerator : ℚ) / denominator| =
+      1 - (numerator % denominator : Nat) / (denominator : ℚ) := by
   have hdenominatorPos : 0 < denominator := Nat.pos_of_ne_zero hdenominator
   have hdenominatorRatPos : (0 : ℚ) < denominator := by
     exact_mod_cast hdenominatorPos
-  have hremainderLt : numerator % denominator < denominator :=
-    Nat.mod_lt _ hdenominatorPos
   have hremainderLe :
       (numerator % denominator : Nat) / (denominator : ℚ) ≤ 1 := by
     rw [div_le_iff₀ hdenominatorRatPos]
     norm_num
-    exact_mod_cast hremainderLt.le
-  have hroundRat :
-      (denominator : ℚ) ≤ 2 * (numerator % denominator : Nat) := by
-    exact_mod_cast hround
-  have hhalfLeRemainder :
-      (1 : ℚ) / 2 ≤ (numerator % denominator : Nat) / denominator := by
-    rw [le_div_iff₀ hdenominatorRatPos]
-    linarith
+    exact_mod_cast (Nat.mod_lt numerator hdenominatorPos).le
   rw [quotient_value numerator denominator]
   push_cast
   rw [show
@@ -100,6 +77,35 @@ private theorem ceil_error_le_half (numerator denominator : Nat)
           (numerator % denominator : Nat) / denominator) =
       1 - (numerator % denominator : Nat) / denominator by ring]
   rw [abs_of_nonneg (by linarith)]
+
+private theorem floor_error_le_half (numerator denominator : Nat)
+    (hdenominator : denominator ≠ 0)
+    (hround : 2 * (numerator % denominator) ≤ denominator) :
+    |((numerator / denominator : Nat) : ℚ) - (numerator : ℚ) / denominator| ≤
+      (1 : ℚ) / 2 := by
+  have hdenominatorRatPos : (0 : ℚ) < denominator := by
+    exact_mod_cast Nat.pos_of_ne_zero hdenominator
+  have hroundRat :
+      (2 : ℚ) * (numerator % denominator : Nat) ≤ denominator := by
+    exact_mod_cast hround
+  rw [floor_error_eq numerator denominator hdenominator, div_le_iff₀ hdenominatorRatPos]
+  linarith
+
+private theorem ceil_error_le_half (numerator denominator : Nat)
+    (hdenominator : denominator ≠ 0)
+    (hround : denominator ≤ 2 * (numerator % denominator)) :
+    |(((numerator / denominator : Nat) + 1 : Nat) : ℚ) -
+        (numerator : ℚ) / denominator| ≤ (1 : ℚ) / 2 := by
+  have hdenominatorRatPos : (0 : ℚ) < denominator := by
+    exact_mod_cast Nat.pos_of_ne_zero hdenominator
+  have hroundRat :
+      (denominator : ℚ) ≤ 2 * (numerator % denominator : Nat) := by
+    exact_mod_cast hround
+  have hhalfLeRemainder :
+      (1 : ℚ) / 2 ≤ (numerator % denominator : Nat) / denominator := by
+    rw [le_div_iff₀ hdenominatorRatPos]
+    linarith
+  rw [ceil_error_eq numerator denominator hdenominator]
   linarith
 
 /--
@@ -123,22 +129,21 @@ theorem roundQuotientEven_error_le_half
 /-- Nearest-even rational rounding fixes every integer exactly. -/
 @[simp, grind =] theorem roundRatEven_intCast (value : Int) :
     roundRatEven (value : Rat) = value := by
+  have hone : roundQuotientEven value.natAbs 1 = value.natAbs := by
+    simp only [roundQuotientEven, Nat.div_one, Nat.mod_one, mul_zero,
+      Nat.zero_lt_one, ite_true]
   unfold roundRatEven
   dsimp only
   by_cases hvalue : (value : Rat).num < 0
   · rw [ite_eq_left hvalue]
     simp only [Rat.num_intCast, Rat.den_intCast]
-    rw [show roundQuotientEven value.natAbs 1 = value.natAbs by
-      simp only [roundQuotientEven, Nat.div_one, Nat.mod_one, mul_zero,
-        Nat.zero_lt_one, ite_true]]
+    rw [hone]
     have hvalue' : value < 0 := by
       simpa only [Rat.num_intCast] using hvalue
     simp [abs_of_neg hvalue']
   · rw [ite_eq_right hvalue]
     simp only [Rat.num_intCast, Rat.den_intCast]
-    rw [show roundQuotientEven value.natAbs 1 = value.natAbs by
-      simp only [roundQuotientEven, Nat.div_one, Nat.mod_one, mul_zero,
-        Nat.zero_lt_one, ite_true]]
+    rw [hone]
     have hvalue' : ¬ value < 0 := by
       simpa only [Rat.num_intCast] using hvalue
     simp [abs_of_nonneg (Int.not_lt.mp hvalue')]
@@ -210,40 +215,22 @@ theorem roundQuotientEven_error_lt_half (numerator denominator : Nat)
     |(roundQuotientEven numerator denominator : Rat) -
       (numerator : Rat) / denominator| < (1 : Rat) / 2 := by
   have hdp : (0 : Rat) < denominator := by exact_mod_cast Nat.pos_of_ne_zero hd
-  have hrn : (0 : Rat) ≤ (numerator % denominator : Nat) / denominator :=
-    div_nonneg (by positivity) hdp.le
-  have hrl : (numerator % denominator : Rat) / denominator < 1 := by
-    rw [div_lt_iff₀ hdp, one_mul]
-    exact_mod_cast Nat.mod_lt numerator (Nat.pos_of_ne_zero hd)
   unfold roundQuotientEven
   dsimp only
   split
   · rename_i h
-    rw [quotient_value numerator denominator]
-    have hhalf : (numerator % denominator : Rat) / denominator < (1 : Rat) / 2 := by
-      rw [div_lt_iff₀ hdp]
-      have hh : (2 : Rat) * (numerator % denominator : Nat) < denominator := by
-        exact_mod_cast h
-      linarith
-    rw [show ((numerator / denominator : Nat) : Rat) -
-        ((numerator / denominator : Nat) + (numerator % denominator : Nat) / denominator) =
-        -((numerator % denominator : Nat) / denominator) by ring,
-      abs_neg, abs_of_nonneg hrn]
-    exact hhalf
+    have hh : (2 : Rat) * (numerator % denominator : Nat) < denominator := by
+      exact_mod_cast h
+    rw [floor_error_eq numerator denominator hd, div_lt_iff₀ hdp]
+    linarith
   · rename_i h
     have hg : denominator < 2 * (numerator % denominator) := by omega
-    rw [ite_eq_left hg, quotient_value numerator denominator]
-    push_cast
-    have hhalf : (1 : Rat) / 2 < (numerator % denominator : Rat) / denominator := by
+    have hh : (denominator : Rat) < 2 * (numerator % denominator : Nat) := by
+      exact_mod_cast hg
+    have hhalf : (1 : Rat) / 2 < (numerator % denominator : Nat) / (denominator : Rat) := by
       rw [lt_div_iff₀ hdp]
-      have hh : (denominator : Rat) < 2 * (numerator % denominator : Nat) := by
-        exact_mod_cast hg
       linarith
-    rw [show ((numerator / denominator : Nat) : Rat) + 1 -
-        ((numerator / denominator : Nat) + (numerator % denominator : Nat) / denominator) =
-        1 - ((numerator % denominator : Nat) / denominator) by ring,
-      abs_of_pos (by linarith : (0 : Rat) < 1 -
-        (numerator % denominator : Nat) / denominator)]
+    rw [ite_eq_left hg, ceil_error_eq numerator denominator hd]
     linarith
 
 /-- An exact quotient midpoint rounds to an even integer, regardless of its sign. -/

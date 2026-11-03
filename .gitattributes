@@ -2,6 +2,7 @@
 
 # Evidence manifests hash the original bytes, including their line endings.
 /benchmarks/results/main/** -text
+/benchmarks/results/public-binary/** -text
 /tests/results/main/** -text
 
 # Preserve the original bytes of upstream licenses and source notices.

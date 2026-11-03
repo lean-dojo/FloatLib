@@ -535,13 +535,13 @@ def ieee_nearest_declaration(case: Case) -> bool:
 
 def integral_pow_declaration(case: Case) -> bool:
     """`Model.Power.toReal_pow_of_eq_intCast`: for an IEEE descriptor (IEEE encoding and bias),
-    a finite nonzero base and a finite integral exponent, a finite FloatLib result has the real
-    value of the nearest-even rounding. The theorem fixes the value, not the sign of a zero."""
+    a finite base and a finite integral exponent, a finite FloatLib result has the real value of
+    the nearest-even rounding. The theorem fixes the value, not the sign of a zero."""
     fmt = case.fmt
     if not ieee_nearest_declaration(case):
         return False
     base, exponent = case.arguments
-    if not (is_finite(base, fmt) and not is_zero(base, fmt) and is_finite(exponent, fmt)):
+    if not (is_finite(base, fmt) and is_finite(exponent, fmt)):
         return False
     if case.floatlib is None or not is_finite(case.floatlib, fmt):
         return False

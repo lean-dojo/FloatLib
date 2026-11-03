@@ -29,6 +29,14 @@ open FloatLib.Numerics
     (widen significand).toNat = significand.toNat := by
   simp [widen, FixedWord.UInt128.toNat]
 
+/-- A two-limb value below an eligible one-word format's modulus lies entirely in its low limb. -/
+theorem lo_toNat_eq_toNat_of_lt_modulus
+    (format : Format) (heligible : NativeWord.Eligible format)
+    {value : FixedWord.UInt128} (hvalue : value.toNat < format.modulus) :
+    value.lo.toNat = value.toNat :=
+  FixedWord.UInt128.lo_toNat_eq_toNat_of_lt_two_pow value
+    (hvalue.trans_le (NativeWord.modulus_le_two_pow_64 format heligible))
+
 /--
 Project a complete two-limb rounding result into the storage word of an eligible one-word format.
 
@@ -46,34 +54,14 @@ theorem roundCodeWordLow_toNat_eq_direct
         { negative
           significand := significand.toNat
           exponent } := by
-  let hlimb : NativeLimb.Eligible format :=
-    limbEligible format heligible
-  let result :=
-    NativeLimbRounding.GuardSticky.roundCodeWord
-      format negative significand exponent
-  have hmodulus :
-      format.modulus ≤ 2 ^ 64 :=
-    NativeWord.modulus_le_two_pow_64 format heligible
-  have hresultModulus :
-      result.toNat < format.modulus := by
+  have hresult :
+      (NativeLimbRounding.GuardSticky.roundCodeWord
+        format negative significand exponent).toNat < format.modulus := by
     rw [NativeLimbRounding.GuardSticky.roundCodeWord_toNat_eq_direct
-      format hlimb]
+      format (limbEligible format heligible)]
     exact DirectDyadicPacking.roundCode_lt_modulus format _
-  have hresult : result.toNat < 2 ^ 64 :=
-    hresultModulus.trans_le hmodulus
-  change result.lo.toNat =
-    DirectDyadicPacking.roundCode format
-      { negative
-        significand := significand.toNat
-        exponent }
-  calc
-    result.lo.toNat = result.toNat :=
-      FixedWord.UInt128.lo_toNat_eq_toNat_of_lt_two_pow result hresult
-    _ = DirectDyadicPacking.roundCode format
-          { negative
-            significand := significand.toNat
-            exponent } :=
-      NativeLimbRounding.GuardSticky.roundCodeWord_toNat_eq_direct
-        format hlimb negative significand exponent
+  rw [lo_toNat_eq_toNat_of_lt_modulus format heligible hresult]
+  exact NativeLimbRounding.GuardSticky.roundCodeWord_toNat_eq_direct
+    format (limbEligible format heligible) negative significand exponent
 
 end FloatLib.Floats.Formats.Posit.Model.NativeWordLimb

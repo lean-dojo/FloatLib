@@ -80,8 +80,11 @@ Elementary functions (`exp`, `log`, `sin`, ...) and `Model.pow` are not on this 
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals` (or the model barrel
 `BinaryInterchange.Transcendentals`) by name to install `Model.exp`, `Model.pow`, and
 `MathFunctions`. These are software approximation kernels without a general accuracy theorem, and
-they do not call the host FPU. For an IEEE descriptor, `Model.pow` with a finite nonzero base and a
-finite integral exponent is correctly rounded whenever its result is finite
+they do not call the host FPU. Opening the scope
+`FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath` switches the `MathFunctions`
+`exp` and `log` of IEEE descriptors to the correctly rounded `Transcendentals.CorrectlyRounded`
+functions. For an IEEE descriptor, `Model.pow` with a finite base and a finite integral exponent
+is correctly rounded whenever its result is finite
 (`Model.Power.toReal_pow_of_eq_intCast`), and a finite positive base with any other finite exponent
 is correctly rounded whenever its certified enclosure search settles
 (`Model.Power.pow_spec_of_certified`). Certified `sqrt` and `abs` are available here, but their

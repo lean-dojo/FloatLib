@@ -26,7 +26,6 @@ example shows what `#eval` prints.
 namespace FloatLib.Examples.BasicOperations
 
 open FloatLib.Floats
-open FloatLib.Rounding
 
 /-! ## The famous sum -/
 
@@ -36,8 +35,8 @@ private def tenthPlusFifth : Binary32 :=
 
 /-
 The stored value is 0.300000011920928955078125. Binary values print a decimal that reads
-back as the same value, normally the shortest one, and `ExecFloat.Binary.format` with
-`(style := .exact)` prints every digit. Neither 0.1 nor 0.2 is a binary fraction, so each literal is
+back as the same value, normally the shortest one, and `tenthPlusFifth.format (style := .exact)`
+prints every digit. Neither 0.1 nor 0.2 is a binary fraction, so each literal is
 rounded once when it is read, and the sum is rounded once more.
 -/
 
@@ -80,15 +79,12 @@ example (a b : Binary32) :
 /-! ## Choose a rounding direction and inspect the status -/
 
 private def thirdUp : Binary32 :=
-  ExecFloat.Binary.div 1 3 (mode := up)
+  ExecFloat.Binary.div 1 3 (mode := .up)
 -- 0.33333334
 
 private def thirdDownOutcome :=
-  ExecFloat.Binary.div (1 : Binary32) 3 (mode := down) (status := true)
--- { value := 0.3333333,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false,
---     inexact := true },
---   ternary := Ordering.lt }
+  ExecFloat.Binary.div (1 : Binary32) 3 (mode := .down) (status := true)
+-- { value := 0.3333333, status := { inexact := true }, ternary := Ordering.lt }
 
 private def divisionWasRounded : Bool :=
   thirdDownOutcome.status.inexact
@@ -100,12 +96,12 @@ private def roundedBelow : Bool :=
 
 /-
 One third is not a binary fraction, so the two directed roundings return the neighbours above and
-below it, printed as 0.33333334 and 0.3333333. `up` and `down` are the rounding directions toward
-positive and negative infinity, available without a leading dot after `open FloatLib.Rounding`.
-Plain `/` rounds to nearest, ties to even, and picks the upper neighbour for this input. With
-`status := true` the division also returns the IEEE flags and the ternary value. `inexact` tells us
-that rounding changed the value, and the ternary value `.lt` that the delivered value is below the
-exact quotient, as in MPFR.
+below it, printed as 0.33333334 and 0.3333333. `.up` and `.down` are the rounding directions
+toward positive and negative infinity. Plain `/` rounds to nearest, ties to even, and picks the
+upper neighbour for this input. With `status := true` the division also returns the IEEE flags and
+the ternary value, and `#eval` lists only the flags that were raised. `inexact` tells us that
+rounding changed the value, and the ternary value `.lt` that the delivered value is below the exact
+quotient, as in MPFR.
 -/
 
 /-! ## Use collections and round a reduction only once -/
@@ -135,7 +131,7 @@ private def exactDot :
 private def mismatchedDot :
     Except Numerics.ReductionError Binary32 :=
   ExecFloat.Binary.dotList values [2, 3]
--- Except.error (ReductionError.lengthMismatch 3 2)
+-- Except.error (FloatLib.Numerics.ReductionError.lengthMismatch 3 2)
 
 /-
 `1.5 * 2 + 2 * 3 + 4 * 4 = 25`, again with one rounding at the end. The dot product checks that
@@ -150,12 +146,12 @@ private def positValue : Posit16 :=
 
 private def asPosit : ExecFloat.ConversionOutcome Posit16 :=
   x.cast (target := Posit16)
--- ConversionOutcome.success 6 { inexact := false, overflow := false, ... }
+-- .success 6
 
 /-
 There is no implicit promotion between formats. A cast names its destination and returns an
 outcome that carries the converted value with its conversion status, or a failure with its reason.
-Here 6 is representable in Posit16 and every flag is false.
+Here 6 is representable in Posit16, so no flag is raised and `#eval` shows no status.
 -/
 
 private def exactMeaning : Option Rat :=

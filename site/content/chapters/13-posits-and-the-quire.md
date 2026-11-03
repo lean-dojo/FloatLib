@@ -19,22 +19,25 @@ def z : Posit32 := x * y + (x + y)
 
 #eval ExecFloat.Posit.toRat? z
 -- some (57 / 8)
+
+#eval ExecFloat.Posit.toRat? (.ofRat (1 / 3) : Posit8)
+-- some (11 / 32)
 ```
 
-We get $1.5 \cdot 2.25 + (1.5 + 2.25) = 7.125 = 57/8$ with no error at all, because every intermediate is a dyadic rational that fits in the posit's available fraction bits.
+We get $1.5 \cdot 2.25 + (1.5 + 2.25) = 7.125 = 57/8$ with no error at all, because every intermediate is a dyadic rational that fits in the posit's available fraction bits. A literal rounds once from its exact rational value, and `.ofRat` does the same for any rational, here one third in eight bits.
 
 ## Width fixes the standard posit format
 
-Gustafson and Yonemoto's 2017 proposal [@gustafsonYonemoto2017] wrote posit formats as `posit<n, es>`, with `es` the maximum width of the exponent field, and in 2022 the standard dropped that second parameter. Every standard posit has at most two exponent bits, so the total width $n$ alone identifies a format. The descriptor [[FloatLib.Floats.Formats.Posit.Format]] holds one natural number and a proof that it is at least 2. That lower bound is the standard's own, since Section 2 defines $n$ as any integer greater than 1, and `bits_ge_two` carries the requirement into the type. Two bits is the smallest width at which zero, one, NaR and minus one, the four distinguished words, all exist.
+Gustafson and Yonemoto's 2017 proposal [@gustafsonYonemoto2017] wrote posit formats as `posit<n, es>`, with `es` the maximum width of the exponent field, and in 2022 the standard dropped that second parameter. Every standard posit has at most two exponent bits, so the total width $n$ alone identifies a format. The descriptor [[FloatLib.Floats.Formats.Posit.Format]] holds one natural number and a proof that it is at least 2. That lower bound is the standard's own, since Section 2 defines $n$ as any integer greater than 1, and `bits_ge_two` carries the requirement into the type. Two bits is the smallest width at which zero, one, NaR and minus one, the four distinguished words, all exist. We write a descriptor as `{ bits := 32 }`, and for a numeral width `decide` fills in the proof, so `{ bits := 1 }` fails with the message `a posit format requires bits ≥ 2`. `ExecFloat.Posit.descriptor 32` is the same record, the one `Posit32` uses.
 
 ```lean
-example : (ExecFloat.Posit.format 32).payloadBits = 31 := rfl
-example : (ExecFloat.Posit.format 32).exponentBits = 2 := rfl
-example : (ExecFloat.Posit.format 32).regimeExponentStep = 4 := rfl
-example : (ExecFloat.Posit.format 32).oneCodeNat = 0x40000000 := by decide
+example : (ExecFloat.Posit.descriptor 32).payloadBits = 31 := rfl
+example : (ExecFloat.Posit.descriptor 32).exponentBits = 2 := rfl
+example : (ExecFloat.Posit.descriptor 32).regimeExponentStep = 4 := rfl
+example : (ExecFloat.Posit.descriptor 32).oneCodeNat = 0x40000000 := by decide
 ```
 
-Everything else in the [posit descriptor](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Descriptor.lean) is derived from the width. Below the sign the payload has $n - 1$ bits, and the exponent field has at most two bits. One unit of regime is worth $2^2 = 4$ in the binary exponent, which is what `regimeExponentStep` records. The encoding of one is `0x40000000`: sign 0, regime `10`, exponent `00`, fraction zero. We also put `nextPrecision` in the descriptor, the same format with one more bit, because the standard defines the rounding boundary between two $n$-bit posits as an $(n+1)$-bit posit, and our rounding definition refers to that higher-precision format. The width lives in the type, so a `Posit32` value carries no format tag at runtime, and the width also picks the storage carrier. `forKnownWidth` is a chain of guards. Widths through 8 bits pack into a `UInt8`, through 16 into a `UInt16`, through 32 into a `UInt32` and through 64 into a `UInt64`, widths through 128 use two `UInt64` limbs, and anything wider uses the exact-width model itself. None of this changes what a posit means. Every operation on every carrier is proved equal to the same model, and `#float_info Posit32` prints which kernel was selected.
+Everything else in the [posit descriptor](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Descriptor.lean) is derived from the width. Below the sign the payload has $n - 1$ bits, and the exponent field has at most two bits. One unit of regime is worth $2^2 = 4$ in the binary exponent, which is what `regimeExponentStep` records. The encoding of one is `0x40000000`: sign 0, regime `10`, exponent `00`, fraction zero. The descriptor module also defines `nextPrecision`, the same format with one more bit, because the standard defines the rounding boundary between two $n$-bit posits as an $(n+1)$-bit posit, and our rounding definition refers to that higher-precision format. The width lives in the type, so a `Posit32` value carries no format tag at runtime, and the width also picks the storage carrier. `forKnownWidth` is a chain of guards. Widths through 8 bits pack into a `UInt8`, through 16 into a `UInt16`, through 32 into a `UInt32` and through 64 into a `UInt64`, widths through 128 use two `UInt64` limbs, and anything wider uses the exact-width model itself. None of this changes what a posit means. Every operation on every carrier is proved equal to the same model, and `#float_info Posit32` prints which kernel was selected.
 
 <a id="finding-the-posit-implementation"></a>
 
@@ -56,7 +59,7 @@ where $s$ is the sign bit of the original word $w$. The implicit leading one com
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
-#eval (Model.ofNatBits (format := ExecFloat.Posit.format 8) 0x6C).decodeExact
+#eval (Model.ofNatBits (format := ExecFloat.Posit.descriptor 8) 0x6C).decodeExact
 -- FloatLib.Floats.Formats.Posit.Model.ExactValue.finite
 --   { negative := false,
 --     regimeBit := true,
@@ -76,13 +79,13 @@ So `0x6C` is $4 \cdot 2^5 = 128$. The smallest and largest positive 8-bit words 
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
-#eval (Model.ofNatBits (format := ExecFloat.Posit.format 8) 0x01).toDyadic?
+#eval (Model.ofNatBits (format := ExecFloat.Posit.descriptor 8) 0x01).toDyadic?
 -- some { negative := false, significand := 1, exponent := -24 }
 open FloatLib.Floats.Formats.Posit in
-#eval (Model.ofNatBits (format := ExecFloat.Posit.format 8) 0x7F).toDyadic?
+#eval (Model.ofNatBits (format := ExecFloat.Posit.descriptor 8) 0x7F).toDyadic?
 -- some { negative := false, significand := 1, exponent := 24 }
 open FloatLib.Floats.Formats.Posit in
-#eval (Model.ofNatBits (format := ExecFloat.Posit.format 8) 0x80).toDyadic?
+#eval (Model.ofNatBits (format := ExecFloat.Posit.descriptor 8) 0x80).toDyadic?
 -- none
 ```
 
@@ -128,7 +131,7 @@ That's $1 + 2^{-27}$, so a 32-bit posit has 28 significand bits at one where bin
 
 These two magnitudes are reciprocals, and $2^{120}$ is the larger. In the wrapping encoding order NaR comes right after the largest positive posit, which is why `prior nar` returns that largest value. So a 32-bit posit covers $[2^{-120}, 2^{120}]$, with precision falling toward each end. Binary32 reaches about $2^{128}$ at the top and, through subnormals, $2^{-149}$ at the bottom, and it has the same 24 bits everywhere in the normal range. At $2^{64}$ a 32-bit posit has 12 significand bits against binary32's 24. [Figure 13.2](#/chapter/posits-and-the-quire/figure-ch14-tapered-precision) follows that change across the range, with the precision computed from the two formats' parameters. The posit's fraction shrinks as the regime grows, while binary32 keeps its fraction width until the subnormal range. Near the extremes the regime leaves too few exponent bits to reach every binade, so in the figure, gaps mark binades with no positive posit and isolated ticks mark those with just one.
 
-![Significand bits available to a 32-bit posit and to binary32, computed from the two formats' parameters; gaps mark binades with no positive posit, and isolated ticks mark binades containing just one](assets/ch14-tapered-precision.png "Significand bits by magnitude; gaps and isolated ticks mark empty and single-posit binades.")
+![Significand bits available to a 32-bit posit and to binary32, computed from the two formats' parameters; gaps mark binades with no positive posit, and isolated ticks mark binades containing just one](assets/ch14-tapered-precision.png "Significand bits by magnitude, with gaps for empty binades and isolated ticks for single-posit ones.")
 
 In 16 bits you see the effect at quite ordinary magnitudes. Take, say, 4096. Its successor is 4112, a spacing of 16, which means 8 fraction bits where binary16 has 10.
 
@@ -184,7 +187,7 @@ Every answer is the largest or the smallest positive posit, $2^{\pm 120}$. The l
 -- true
 ```
 
-Section 6.5 of the 2022 Posit Standard [@positStandard2022] converts every IEEE infinity and every NaN to NaR, and both signed zeros to the one posit zero. FloatLib does the same by default, since our [conversion context](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Configured/Conversion/Runtime.lean) selects `toNaR` for both `InfinityPolicy` and `ExceptionalPolicy`. A mapped infinity or NaN sets `mappedSpecial := true`. For infinities the context also offers a `saturate` policy, which clamps to signed `maxPos` and sets the inexact, overflow and saturation status. If your application needs a failure on infinity or NaN, pass a rejection context to `cast` as its `context` option.
+Section 6.5 of the 2022 Posit Standard [@positStandard2022] converts every IEEE infinity and every NaN to NaR, and both signed zeros to the one posit zero. FloatLib does the same by default, since our [conversion context](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Configured/Conversion/Runtime.lean) selects `toNaR` for both `InfinityPolicy` and `ExceptionalPolicy`. A mapped infinity or NaN sets `mappedSpecial := true`. For infinities the context also offers a `saturate` policy, which clamps to signed `maxPos` and sets `inexact`, `overflow`, `saturated` and `mappedSpecial`. If your application needs a failure on infinity or NaN, pass a rejection context to `cast` as its `context` option.
 
 ```lean
 example : ExecFloat.Posit.Conversion.Context :=
@@ -227,7 +230,7 @@ example (a : Posit32) : ExecFloat.Posit.prior (ExecFloat.Posit.next a) = a :=
   ExecFloat.Posit.prior_next a
 
 open FloatLib.Floats.Formats.Posit in
-example : FinEnum.card (Model (ExecFloat.Posit.format 8)) = 256 :=
+example : FinEnum.card (Model (ExecFloat.Posit.descriptor 8)) = 256 :=
   Model.finEnum_card _
 ```
 
@@ -241,9 +244,9 @@ A quire accumulates exact products in a fixed-point word. It has room for every 
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
-example : Quire.width (ExecFloat.Posit.format 32) = 512 := rfl
+example : Quire.width (ExecFloat.Posit.descriptor 32) = 512 := rfl
 open FloatLib.Floats.Formats.Posit in
-example : Quire.scaleExponent (ExecFloat.Posit.format 32) = -240 := by decide
+example : Quire.scaleExponent (ExecFloat.Posit.descriptor 32) = -240 := by decide
 ```
 
 In the model a quire is [[FloatLib.Floats.Formats.Posit.Quire.Model]], a `FixedInt` of width `width`. Its configured type is `ExecFloat.Posit.Quire (bits := n)`, named `Quire32` for `Posit32` and likewise for the other standard widths. It shares its width parameter with the posit, so mixing widths is a type error. To accumulate a product, `qMulAdd` decodes the operands to dyadics and aligns their exact product with the quire's integer coefficient, and `qToP` rounds that coefficient back to a posit. None of this arithmetic goes through `Rat`. For the inputs from the first example, `x * y` is $1.5 \cdot 2.25 = 27/8$, which lands in the quire with no error, and since $27/8$ is itself a 32-bit posit, `qToP` returns it unchanged.
@@ -307,7 +310,7 @@ Converting back applies the standard's rounding rule. [[FloatLib.Floats.Formats.
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
-example (q : Quire.Model (ExecFloat.Posit.format 32)) :
+example (q : Quire.Model (ExecFloat.Posit.descriptor 32)) :
     Quire.Model.qToP q =
       match q.toRat? with
       | some rational => Model.roundRat _ rational
@@ -348,9 +351,7 @@ Two-posit `pow` also accepts nonintegral exponents. A finite posit exponent is a
 
 ## Exponentials and logarithms
 
-With the same comparison method we get proved operations for $2^x$, $10^x$, and their minus-one variants. For every finite input, the [rational-power theorems](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Algebraic/RationalPower/Proof.lean) `exp2Minus1_eq_round` and `exp10Minus1_eq_round` identify the result with one rounding of the exact real expression $2^x-1$ or $10^x-1$. Subtraction happens before rounding, because the comparator tests the unrounded power against the candidate boundary plus one.
-
-To compare these powers independently you'd need exact rational answers or directed MPFR intervals, and an interval only settles the answer if both endpoints round to the same posit under an independent decoder and rounder. Negative integer powers, tiny exponents, shifted cancellation, and the minus-one functions each need their own cases.
+With the same comparison method we get proved operations for $2^x$, $10^x$, and their minus-one variants. For every finite input, the [rational-power theorems](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Algebraic/RationalPower/Proof.lean) `exp2Minus1_eq_round` and `exp10Minus1_eq_round` identify the result with one rounding of the exact real expression $2^x-1$ or $10^x-1$. Subtraction happens before rounding, because the comparator tests the unrounded power against the candidate boundary plus one. These functions have no independent external comparison, so their guarantee is the real-rounding theorem alone.
 
 We have real-rounding proofs for the [base-two and base-ten logarithms](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Logarithm) too, including `log2Plus1` and `log10Plus1`. To compare a logarithm with a rational boundary, they compare its argument with the corresponding power. The [natural-function API](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Elementary) adds `exp`, `expMinus1`, `log`, and `logPlus1`, and their [configured proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Configured/Elementary/Proof.lean) state equality with the real function followed by posit rounding. When `x` decodes to a rational $q>-1$, for example, `logPlus1_eq_real` says the output decodes to the model word
 
@@ -366,7 +367,7 @@ import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Proof
 open FloatLib.Numerics
 open FloatLib.Floats.Formats.Posit
 
-def format8 : Format := ⟨8, by decide⟩
+def format8 : Format := { bits := 8 }
 
 #eval (Model.Enclosure.roundPositive? format8
   (Enclosure.exp (1 / 2) 5)).map Model.toNatBits

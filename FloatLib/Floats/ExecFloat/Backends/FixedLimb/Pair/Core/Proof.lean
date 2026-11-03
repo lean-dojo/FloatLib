@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 import Mathlib.Tactic.Convert
 import Mathlib.Tactic.Linarith
@@ -97,25 +98,14 @@ theorem fracHighWidth_toNat (h : Eligible fmt) :
 /-- The high fraction mask is `2^(fracWidth - 64) - 1`. -/
 theorem fracHighMask_toNat (h : Eligible fmt) :
     (fracHighMask fmt).toNat = 2 ^ (fmt.fracWidth - 64) - 1 := by
-  have hpow :=
-    uint64_powTwo_toNat (fmt.fracWidth - 64) (by have := h.frac_le; omega)
   unfold fracHighMask fracHighWidth
-  rw [UInt64.toNat_sub_of_le, hpow]
-  · simp
-  · apply UInt64.le_iff_toNat_le.mpr
-    rw [hpow]
-    simpa using Nat.one_le_two_pow
+  exact NativeSmallWord.powTwo_sub_one_toNat _ (by have := h.frac_le; omega)
 
 /-- The native all-ones exponent field is the descriptor's all-ones exponent. -/
 theorem expAllOnes_toNat (h : Eligible fmt) :
     (expAllOnes fmt).toNat = fmt.expAllOnesNat := by
-  have hpow := uint64_powTwo_toNat fmt.expWidth (by have := h.exp_le; omega)
   unfold expAllOnes FloatFormat.expAllOnesNat
-  rw [UInt64.toNat_sub_of_le, hpow]
-  · simp
-  · apply UInt64.le_iff_toNat_le.mpr
-    rw [hpow]
-    simpa using Nat.one_le_two_pow
+  exact NativeSmallWord.powTwo_sub_one_toNat _ (by have := h.exp_le; omega)
 
 /-- The implicit bit sits at high-word position `fracWidth - 64`. -/
 theorem implicitBit_toNat (h : Eligible fmt) :
@@ -212,6 +202,23 @@ theorem expField_toNat (h : Eligible fmt) (x : Model fmt) :
   rw [Nat.shiftRight_eq_div_pow, Nat.shiftRight_eq_div_pow, Nat.div_div_eq_div_mul,
     ← pow_add, show 64 + (fmt.fracWidth - 64) = fmt.fracWidth by omega]
 
+/-- The fraction width splits at the low limb: `2^fracWidth = 2^(fracWidth - 64) * 2^64`. -/
+private theorem two_pow_fracWidth_split (h : Eligible fmt) :
+    2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 := by
+  have hfrac := h.frac_gt
+  rw [← pow_add]
+  congr 1
+  omega
+
+/-- A high word at least the implicit bit carries `2 ^ fracWidth` on its own. -/
+theorem two_pow_fracWidth_le_of_implicitBit_le (h : Eligible fmt) (high : UInt64)
+    (himplicit : implicitBit fmt ≤ high) :
+    2 ^ fmt.fracWidth ≤ high.toNat * 2 ^ 64 := by
+  have hnat := UInt64.le_iff_toNat_le.mp himplicit
+  rw [implicitBit_toNat h] at hnat
+  rw [two_pow_fracWidth_split h]
+  exact Nat.mul_le_mul_right _ hnat
+
 /-- The two fraction limbs reconstruct the public fraction field. -/
 theorem fraction_toNat (h : Eligible fmt) (x : Model fmt) :
     (fracHigh fmt (toWords x).hi).toNat * 2 ^ 64 + (toWords x).lo.toNat =
@@ -221,11 +228,7 @@ theorem fraction_toNat (h : Eligible fmt) (x : Model fmt) :
   have hfrac := h.frac_gt
   rw [UInt64.toNat_and, high_word_toNat h x, low_word_toNat, fracHighMask_toNat h,
     Nat.and_two_pow_sub_one_eq_mod, Nat.and_two_pow_sub_one_eq_mod,
-    show 2 ^ fmt.fracWidth = 2 ^ 64 * 2 ^ (fmt.fracWidth - 64) by
-      rw [← pow_add]
-      congr 1
-      omega,
-    Nat.mod_mul]
+    two_pow_fracWidth_split h, Nat.mul_comm (2 ^ (fmt.fracWidth - 64)), Nat.mod_mul]
   ring
 
 /-- The high fraction limb occupies at most `fracWidth - 64` bits. -/
@@ -272,10 +275,7 @@ theorem normalMantissa_toNat (h : Eligible fmt) (high low : UInt64)
   have hfrac := h.frac_gt
   unfold normalMantissa UInt128.toNat
   rw [UInt64.toNat_or, implicitBit_toNat h, Nat.or_two_pow_eq_add_of_lt hhigh,
-    show 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 by
-      rw [← pow_add]
-      congr 1
-      omega]
+    two_pow_fracWidth_split h]
   ring
 
 /-- A normal significand occupies exactly `fracWidth + 1` bits, including its implicit bit. -/
@@ -286,10 +286,7 @@ theorem normalMantissa_bounds (h : Eligible fmt) (high low : UInt64)
   rw [normalMantissa_toNat h high low hhigh]
   have hfrac := h.frac_gt
   have hlow := low.toNat_lt
-  have hsplit : 2 ^ fmt.fracWidth = 2 ^ (fmt.fracWidth - 64) * 2 ^ 64 := by
-    rw [← pow_add]
-    congr 1
-    omega
+  have hsplit := two_pow_fracWidth_split h
   have hsucc : 2 ^ (fmt.fracWidth + 1) = 2 * 2 ^ fmt.fracWidth := by
     rw [pow_succ]
     ring
@@ -301,13 +298,18 @@ theorem normalMantissa_bounds (h : Eligible fmt) (high low : UInt64)
   · rw [hsucc]
     nlinarith
 
+/-- Two limbs whose high limb is `2^j` and whose low limb is zero represent `2^(j + 64)`. -/
+private theorem highPow_toNat (high : UInt64) (j : Nat) (hhigh : high.toNat = 2 ^ j) :
+    (⟨high, 0⟩ : UInt128).toNat = 2 ^ (j + 64) := by
+  unfold UInt128.toNat
+  rw [hhigh, pow_add]
+  simp
+
 /-- The significand `2^fracWidth` as two limbs. -/
 theorem implicitMantissa_toNat (h : Eligible fmt) :
     (implicitMantissa fmt).toNat = 2 ^ fmt.fracWidth := by
   have hfrac := h.frac_gt
-  unfold implicitMantissa UInt128.toNat
-  rw [implicitBit_toNat h, ← pow_add]
-  simp only [UInt64.toNat_zero, zero_add]
+  rw [implicitMantissa, highPow_toNat _ _ (implicitBit_toNat h)]
   congr 1
   omega
 
@@ -315,9 +317,7 @@ theorem implicitMantissa_toNat (h : Eligible fmt) :
 theorem carryMantissa_toNat (h : Eligible fmt) :
     (carryMantissa fmt).toNat = 2 ^ (fmt.fracWidth + 1) := by
   have hfrac := h.frac_gt
-  unfold carryMantissa UInt128.toNat
-  rw [carryBit_toNat h, ← pow_add]
-  simp only [UInt64.toNat_zero, zero_add]
+  rw [carryMantissa, highPow_toNat _ _ (carryBit_toNat h)]
   congr 1
   omega
 
@@ -365,6 +365,14 @@ private theorem two_pow_or_eq_add {b i : Nat} (hb : b < 2 ^ i) :
   rw [Nat.mul_one] at hor
   exact hor.symm
 
+/-- A field below `2^E` placed above `n` low bits leaves the value below `2^(E + n)`. -/
+private theorem mul_two_pow_add_lt {field low E n : Nat} (hfield : field < 2 ^ E)
+    (hlow : low < 2 ^ n) :
+    field * 2 ^ n + low < 2 ^ (E + n) := by
+  have hstep : (field + 1) * 2 ^ n ≤ 2 ^ E * 2 ^ n := Nat.mul_le_mul_right _ hfield
+  rw [pow_add]
+  nlinarith
+
 /--
 Native packing agrees with the field constructor for a normalized significand and an in-range
 exponent field.
@@ -388,10 +396,7 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
   set lo := mantissa.lo.toNat with hlo
   have hm : mantissa.toNat = lo + hi * 2 ^ 64 := UInt128.toNat.eq_1 mantissa
   have hloLt : lo < 2 ^ 64 := mantissa.lo.toNat_lt
-  have hpowF : 2 ^ F = 2 ^ k * 2 ^ 64 := by
-    rw [← pow_add]
-    congr 1
-    omega
+  have hpowF : 2 ^ F = 2 ^ k * 2 ^ 64 := two_pow_fracWidth_split h
   have hpowEF : 2 ^ (E + F) = 2 ^ (E + k) * 2 ^ 64 := by
     rw [← pow_add]
     congr 1
@@ -441,11 +446,8 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
   -- The three fields of the high word occupy disjoint bit ranges.
   have hmiddle : X * 2 ^ k ||| (hi - 2 ^ k) = X * 2 ^ k + (hi - 2 ^ k) :=
     mul_two_pow_or_eq_add hhiRest
-  have hmiddleLt : X * 2 ^ k + (hi - 2 ^ k) < 2 ^ (E + k) := by
-    have hstep : (X + 1) * 2 ^ k ≤ 2 ^ E * 2 ^ k :=
-      Nat.mul_le_mul_right _ hexponent
-    rw [hpowEk]
-    nlinarith
+  have hmiddleLt : X * 2 ^ k + (hi - 2 ^ k) < 2 ^ (E + k) :=
+    mul_two_pow_add_lt hexponent hhiRest
   have hhighValue :
       ((if sign then signMask fmt else 0) |||
           ((exponent &&& expAllOnes fmt) <<< fracHighWidth fmt) |||
@@ -478,14 +480,8 @@ theorem packNormal_eq_ofFields (h : Eligible fmt)
     have := Nat.mul_le_mul_right (2 ^ 64) hhiLower
     omega
   have hfractionLt : mantissa.toNat - 2 ^ F < 2 ^ F := by omega
-  have hexpF : X * 2 ^ F < 2 ^ (E + F) := by
-    rw [pow_add]
-    exact Nat.mul_lt_mul_of_pos_right hexponent (Nat.two_pow_pos F)
-  have hbodyLt : X * 2 ^ F + (mantissa.toNat - 2 ^ F) < 2 ^ (E + F) := by
-    have hstep : (X + 1) * 2 ^ F ≤ 2 ^ E * 2 ^ F :=
-      Nat.mul_le_mul_right _ hexponent
-    rw [pow_add]
-    nlinarith
+  have hbodyLt : X * 2 ^ F + (mantissa.toNat - 2 ^ F) < 2 ^ (E + F) :=
+    mul_two_pow_add_lt hexponent hfractionLt
   have htotal :
       ((if sign then 2 ^ (E + k) else 0) + (X * 2 ^ k + (hi - 2 ^ k))) * 2 ^ 64 + lo =
         (if sign then 2 ^ (E + F) else 0) + (X * 2 ^ F + (mantissa.toNat - 2 ^ F)) := by
@@ -579,12 +575,13 @@ theorem normalComponents_toDyadic (h : Eligible fmt)
     hexponent, hmantissa, h.exponentBias_eq]
   omega
 
-/-- The product-round scale of an eligible format simplifies to `exponent - bias - fracWidth`. -/
-theorem roundScaleExponent (h : Eligible fmt) (exponent : Nat) :
+/-- The product-round scale simplifies to `exponent - bias - fracWidth`. -/
+theorem roundScaleExponent (exponent : Nat) :
     Int.ofNat (exponent + (fmt.bias + fmt.fracWidth - 2)) -
         Int.ofNat (2 * FloatFormat.ieeeSubnormalAlignExp fmt) =
       Int.ofNat exponent - Int.ofNat (fmt.bias + fmt.fracWidth) := by
-  have hfrac := h.frac_gt
+  have hbias := fmt.bias_pos
+  have hfrac := fmt.fracWidth_pos
   unfold FloatFormat.ieeeSubnormalAlignExp
   simp only [Int.ofNat_eq_natCast]
   omega

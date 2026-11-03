@@ -10,14 +10,17 @@ public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Real
 public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 import FloatLib.Floats.Formats.Posit.Cast.Widening
+import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Layout
+import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 
 /-!
 # Configured posit conversion proofs
 
 The conversion relation specifies finite results through real posit rounding and the complete
-decoded model. Its implementation proof uses the rational-to-real rounding bridge and codec
-inverse laws. The exponent size is fixed at two bits by the Posit Standard (2022), so width is the
-only descriptor parameter.
+decoded model. Its status flags are `finiteStatus`, which `finiteStatus_eq` states in closed form
+against maxPos and minPos. The implementation proof uses the rational-to-real rounding bridge and
+codec inverse laws. The exponent size is fixed at two bits by the Posit Standard (2022), so width
+is the only descriptor parameter.
 
 Conversion to an equally wide or wider descriptor appends zero bits to the source word.
 The configured results follow from exact model widening and the codec inverse laws.
@@ -60,7 +63,32 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 /--
-Finite conversion follows real posit rounding, with exact status for the delivered model.
+The finite conversion status in closed form, for an `n`-bit format. The result is inexact exactly
+when the delivered posit does not denote the input. Overflow, and with it saturation, is set
+exactly when the input magnitude exceeds maxPos `= 2 ^ (4 (n - 2))`, and underflow exactly when a
+nonzero input magnitude is below minPos `= 2 ^ (-4 (n - 2))`.
+-/
+theorem finiteStatus_eq (exact : Rat) (rounded : Model format) :
+    finiteStatus exact rounded =
+      { inexact := decide (rounded.toRat? ≠ some exact)
+        overflow := decide ((2 : Rat) ^ ((Int.ofNat format.payloadBits - 1) * 4) < |exact|)
+        underflow :=
+          decide (exact ≠ 0 ∧
+            |exact| < (2 : Rat) ^ (-(4 * Int.ofNat (format.payloadBits - 1))))
+        saturated :=
+          decide ((2 : Rat) ^ ((Int.ofNat format.payloadBits - 1) * 4) < |exact|) } := by
+  have hmagnitude : (if exact < 0 then -exact else exact) = |exact| := by
+    split
+    · exact (abs_of_neg ‹_›).symm
+    · exact (abs_of_nonneg (not_lt.mp ‹_›)).symm
+  simp only [finiteStatus, maxPositiveRat, hmagnitude,
+    Model.GuardStickyRounding.nonnegativeRatAt_maxPositive,
+    Model.DyadicRounding.minPositiveRat_eq_zpow, Bool.decide_and, ne_eq, decide_not, bne,
+    Bool.beq_eq_decide_eq]
+
+/--
+Finite conversion follows real posit rounding; its status is `finiteStatus` of the input and the
+delivered model, characterized flag by flag in `finiteStatus_eq`.
 
 The real rounder uses the standard appended-bit boundary, minPos underflow, and maxPos saturation.
 Model equality retains the complete word. Infinity and exceptional observations obey their
@@ -118,7 +146,10 @@ theorem implements_run :
   | infinity negative => rfl
   | exceptional exceptional => rfl
 
-/-- Real rounding plus the codec law determines the complete original outcome and status. -/
+/--
+Real rounding plus the codec law determines the complete outcome. Its status component is
+`finiteStatus`, stated in closed form by `finiteStatus_eq`.
+-/
 theorem spec_iff_eq_run (context : Context) (input : NumericalValue Rat)
     (outcome : FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan))) :
@@ -162,7 +193,7 @@ A signaling NaN source also raises invalid, as IEEE 754-2019 §7.2 requires. -/
     run (format := format) (plan := plan) (code := code)
         Context.default (.exceptional exceptional) =
       .success ExecFloat.Posit.nar
-        { mappedSpecial := true, invalid := exceptional.isSignalingNaN } :=
+        { mappedSpecial := true, invalid := exceptional.isSNaN } :=
   rfl
 
 /-- Quantizing a decoded finite source into a wider codec appends exactly the additional zero bits.

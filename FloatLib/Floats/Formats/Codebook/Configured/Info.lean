@@ -37,13 +37,22 @@ elab_rules : command
           FloatLib.Floats.Formats.Codebook.FloatInfo.catalogIdentity book
         let base :=
           FloatLib.Floats.Formats.Codebook.FloatInfo.profile width selected
-        let configuredDenotation : TheoremSurface :=
-          { topic := "configured complete denotation"
-            declarations := []
-            definitions := [``FloatLib.Floats.ExecFloat.Codebook.decode]
+        let configuredCode : TheoremSurface :=
+          { topic := "decoding to the code"
+            declarations :=
+              [ ``FloatLib.Floats.ExecFloat.Codebook.toCode_ofCode
+              , ``FloatLib.Floats.ExecFloat.Codebook.ofCode_toCode
+              , ``FloatLib.Floats.ExecFloat.Codebook.toNatBits_ofNatBits
+              ]
+            definitions :=
+              [ ``FloatLib.Floats.ExecFloat.Codebook.toCode
+              , ``FloatLib.Floats.ExecFloat.Codebook.ofCode
+              , ``FloatLib.Floats.ExecFloat.Codebook.decode ]
             applicability := .verifiedForType
             scope :=
-              "every stored word; the configured carrier decodes through the selected table" }
+              "every stored word; the configured carrier decodes through the selected table, " ++
+              "and `toCode` and `ofCode` are inverse, so the theorems about the code below " ++
+              "apply through `toCode`" }
         let baseProfile : FormatProfile :=
           { base with
             execution :=
@@ -54,7 +63,12 @@ elab_rules : command
               ]
             specializedOperations :=
               FloatLib.Floats.Formats.Codebook.FloatInfo.configuredSpecializedOperations selected
-            theoremSurfaces := configuredDenotation :: base.theoremSurfaces }
+            theoremSurfaces :=
+              refinementEquations (← Inspection.installedOperations family) ++ [configuredCode]
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.Codebook.Code
+                  embedding := ``FloatLib.Floats.ExecFloat.Codebook.toCode
+                  surfaces := base.theoremSurfaces } ] }
         logInfoAt tk <| ← Inspection.renderExecProfile baseProfile typeExpr family
 
 end FloatLib.Floats.Formats.Codebook.Configured.FloatInfo.Command

@@ -93,10 +93,7 @@ theorem lowerNeighbor_le {system : NumericalSystem} [Preorder system.Scalar]
     (houtput : system.Represents code output) :
     output ≤ input := by
   obtain ⟨selected, hselected, hle, _⟩ := hcode
-  have : selected = output := by
-    rw [NumericalSystem.Represents] at hselected houtput
-    exact NumericalValue.finite.inj (hselected.symm.trans houtput)
-  simpa [this] using hle
+  exact hselected.unique houtput ▸ hle
 
 /-- Every upper-neighbor value lies above its exact input. -/
 theorem le_upperNeighbor {system : NumericalSystem} [Preorder system.Scalar]
@@ -105,9 +102,6 @@ theorem le_upperNeighbor {system : NumericalSystem} [Preorder system.Scalar]
     (houtput : system.Represents code output) :
     input ≤ output := by
   obtain ⟨selected, hselected, hle, _⟩ := hcode
-  have : selected = output := by
-    rw [NumericalSystem.Represents] at hselected houtput
-    exact NumericalValue.finite.inj (hselected.symm.trans houtput)
-  simpa [this] using hle
+  exact hselected.unique houtput ▸ hle
 
 end FloatLib.Numerics.Quantization.Ordered

@@ -37,11 +37,16 @@ an asymptotic-complexity theorem.
   bits * bits / 16
 
 /--
-Width- and operation-sensitive estimate for the generic kernel.
+Width- and operation-sensitive estimate for the generic kernel of `format` and `operation`.
 
 The constants are calibrated with `benchmarks/scripts/format-comparison.sh`, in units of
-approximately 100 ns. Above 128 bits, fixed allocation costs dominate the measured range;
-limb-count terms account for the remaining arbitrary-precision work.
+approximately 100 ns, separately for three width bands: at most 8 bits, at most 128 bits, and
+wider. Above 128 bits, fixed allocation costs dominate the measured range; limb-count terms
+account for the remaining arbitrary-precision work. Because the bands are fitted separately, the
+estimate is not monotone in the width: at 129 bits the wide band gives a much smaller value than
+the 128-bit band. Selection only compares candidates for one format and operation, so the jump
+does not reorder the candidates of a format, but these values should not be used to compare
+formats with each other.
 -/
 def genericEstimate (format : FloatFormat) (operation : Operation) : Candidate :=
   let bits := format.bitWidth
@@ -183,8 +188,11 @@ def tableGenerationCost (format : FloatFormat) (operation : Operation) : Nat :=
 /--
 Estimate for a dense byte table over all encoded operands.
 
-One result occupies one byte because this candidate is only constructed when `bitWidth ≤ 8`.
-The selector's memory policy independently rejects tables that are valid but too large.
+One result occupies one byte because every caller (the `*TableCertified` constructors and
+`Configured.directByteEstimate` in the byte plan) holds a proof of `bitWidth ≤ 8`. The function
+itself takes no width hypothesis and leaves `storage` at its default; for a wider format
+`residentBytes` would understate the table. The selector's memory policy independently rejects
+tables that are valid but too large.
 
 `execFloatBackendCalibration` showed table construction to be approximately linear in the number
 of encoded results for each operation. The operation-specific coefficient is therefore a more

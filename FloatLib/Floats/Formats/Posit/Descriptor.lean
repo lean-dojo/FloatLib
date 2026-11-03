@@ -30,12 +30,21 @@ the width in every runtime value.
 
 namespace FloatLib.Floats.Formats.Posit
 
-/-- A validated, statically configured Posit Standard encoding. -/
+/--
+A validated, statically configured Posit Standard encoding, written `{ bits := 32 }`.
+
+With a numeral width `decide` supplies the proof field, and a width below two fails with the
+message `a posit format requires bits ≥ 2`. Any other width passes its proof as
+`bits_ge_two := h`.
+-/
 structure Format where
   /-- Total encoded width, including the sign bit. -/
   bits : Nat
   /-- The Posit Standard requires at least two total bits. -/
-  bits_ge_two : 2 ≤ bits
+  bits_ge_two : 2 ≤ bits := by
+    first
+    | decide
+    | fail "a posit format requires bits ≥ 2"
   deriving Repr
 
 namespace Format
@@ -157,11 +166,6 @@ theorem modulus_eq_two_mul_signMaskNat (format : Format) :
   unfold modulus signMaskNat
   rw [← hindex, Nat.pow_succ]
   omega
-
-/-- Construct a Posit Standard descriptor from its total encoded width. -/
-def ofBits (bits : Nat) (bits_ge_two : 2 ≤ bits := by decide) : Format where
-  bits := bits
-  bits_ge_two := bits_ge_two
 
 end Format
 end FloatLib.Floats.Formats.Posit

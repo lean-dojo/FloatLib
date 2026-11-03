@@ -89,7 +89,7 @@ private theorem round_addDyadic_eq_ofModel_add_finite
     cases sign <;> rfl
   by_cases hexponents : exponent₁ ≤ exponent₂
   · rw [addDyadic, FloatLib.Numerics.Dyadic.add_align_right_to_left_exponent
-      _ _ _ _ _ _ hmantissa₁.ne' hmantissa₂.ne' hexponents]
+      _ _ _ _ _ _ hmantissa₁.ne' hexponents]
     have hshifted : 0 < mantissa₂ <<< (exponent₂ - exponent₁).toNat :=
       Nat.shiftLeft_pos_iff.mpr hmantissa₂
     simpa only [FloatLib.Numerics.Dyadic.add, Float.Model.UnpackedFloat.add,
@@ -100,7 +100,7 @@ private theorem round_addDyadic_eq_ofModel_add_finite
         hmantissa₁ hshifted
   · have hlt : exponent₂ < exponent₁ := lt_of_not_ge hexponents
     rw [addDyadic, FloatLib.Numerics.Dyadic.add_align_left_to_right_exponent
-      _ _ _ _ _ _ hmantissa₁.ne' hmantissa₂.ne' hlt]
+      _ _ _ _ _ _ hmantissa₂.ne' hlt]
     have hshifted : 0 < mantissa₁ <<< (exponent₁ - exponent₂).toNat :=
       Nat.shiftLeft_pos_iff.mpr hmantissa₁
     simpa only [FloatLib.Numerics.Dyadic.add, Float.Model.UnpackedFloat.add,

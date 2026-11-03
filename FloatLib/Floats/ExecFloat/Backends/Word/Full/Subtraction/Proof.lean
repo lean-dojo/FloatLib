@@ -18,7 +18,8 @@ By Sterbenz's lemma, the difference of two finite floating-point values with the
 magnitudes within a factor of two is representable. The kernel computes the exact significand
 difference in `UInt64` and packs it without entering the arbitrary-precision generic addition
 kernel. This module proves the positive normal-input core, then handles negative operands by
-negating and swapping them.
+negating and swapping them. `subSterbenz_refines` shows that every accepted result is the finite
+kernel's, and `subSterbenz?_isSome_iff` states exactly which inputs the positive kernel accepts.
 
 Rejected inputs use the exact generic implementation.
 -/
@@ -120,6 +121,31 @@ private def packExactDifferenceSpec
     Model.ofFields FloatFormat.binary64 sign encodedExponent
       (mantissa - 2 ^ 52)
 
+/-- The native leading-bit position of a nonzero difference below `2 ^ 53` is its natural one. -/
+private theorem leadingPosition_facts (difference : UInt64)
+    (hdifference : difference ≠ 0) (hdifferenceFit : difference.toNat < 2 ^ 53) :
+    difference.log2.toNat = difference.toNat.log2 ∧ difference.log2.toNat < 53 :=
+  ⟨FloatLib.Numerics.FixedWord.log2_toNat difference,
+    log2_toNat_lt_of_toNat_lt_two_pow difference 53 hdifference hdifferenceFit⟩
+
+/-- A left shift that keeps the leading bit of a word below bit 64 is exact. -/
+private theorem shiftLeft_toNat_of_log2 (value shift : UInt64)
+    (hfit : value.toNat.log2 + 1 + shift.toNat ≤ 64) :
+    (value <<< shift).toNat = value.toNat <<< shift.toNat := by
+  have hshiftLt : shift.toNat < 64 := by omega
+  have hvalueFit : value.toNat <<< shift.toNat < 2 ^ 64 :=
+    lt_of_lt_of_le (Nat.shiftLeft_lt Nat.lt_log2_self) (Nat.pow_le_pow_right (by decide) hfit)
+  rw [UInt64.toNat_shiftLeft, Nat.mod_eq_of_lt hshiftLt, Nat.mod_eq_of_lt hvalueFit]
+
+/-- The native subnormal test on a difference's leading-bit position is the test on its value. -/
+private theorem leadingPosition_lt_iff (difference exponent : UInt64)
+    (hdifference : difference ≠ 0) (hdifferenceFit : difference.toNat < 2 ^ 53)
+    (hexponentFinite : exponent.toNat < 2047) :
+    difference.log2 + exponent < 53 ↔ difference.toNat.log2 + exponent.toNat < 53 := by
+  obtain ⟨hleading, hleadingLt⟩ := leadingPosition_facts difference hdifference hdifferenceFit
+  rw [UInt64.lt_iff_toNat_lt, uint64_add_toNat_of_lt _ _ (by omega), hleading]
+  exact Iff.rfl
+
 private theorem packExactDifference_eq_spec_subnormal
     (sign : Bool) (difference exponent : UInt64)
     (hdifference : difference ≠ 0)
@@ -131,26 +157,9 @@ private theorem packExactDifference_eq_spec_subnormal
       packExactDifferenceSpec sign difference.toNat exponent.toNat := by
   have hzeroNat : difference.toNat ≠ 0 := by
     simpa [uint64_toNat_eq_zero] using hdifference
-  have hleading : difference.log2.toNat = difference.toNat.log2 :=
-    FloatLib.Numerics.FixedWord.log2_toNat difference
-  have hleadingLt : difference.log2.toNat < 53 :=
-    log2_toNat_lt_of_toNat_lt_two_pow difference 53
-      hdifference hdifferenceFit
-  have hpositionFit :
-      difference.log2.toNat + exponent.toNat < 2 ^ 64 := by
-    have hsmall :
-        difference.log2.toNat + exponent.toNat < 2100 := by
-      omega
-    exact lt_trans hsmall (by norm_num)
-  have hposition :
-      (difference.log2 + exponent).toNat =
-        difference.log2.toNat + exponent.toNat :=
-    uint64_add_toNat_of_lt difference.log2 exponent hpositionFit
-  have hsubnormalNat :
-      difference.toNat.log2 + exponent.toNat < 53 := by
-    have hnative := UInt64.lt_iff_toNat_lt.mp hsubnormal
-    rw [hposition, hleading] at hnative
-    simpa using hnative
+  have hsubnormalNat :=
+    (leadingPosition_lt_iff difference exponent hdifference hdifferenceFit
+      hexponentFinite).mp hsubnormal
   unfold packExactDifference packExactDifferenceSpec
   simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
@@ -163,21 +172,14 @@ private theorem packExactDifference_eq_spec_subnormal
       (exponent - 1).toNat = exponent.toNat - 1 := by
     rw [UInt64.toNat_sub_of_le exponent 1 hexponentWord]
     simp
-  have hshiftLt : exponent.toNat - 1 < 64 := by
-    omega
-  have hfractionFit :
-      difference.toNat <<< (exponent.toNat - 1) < 2 ^ 64 := by
-    have hbound :
-        difference.toNat.log2 + 1 + (exponent.toNat - 1) < 53 := by
-      omega
-    exact lt_trans
-      (Nat.shiftLeft_lt (m := exponent.toNat - 1) Nat.lt_log2_self)
-      (Nat.pow_lt_pow_right (by decide) (by omega))
   have hnativeFraction :
       (difference <<< (exponent - 1)).toNat =
         difference.toNat <<< (exponent.toNat - 1) := by
-    rw [UInt64.toNat_shiftLeft, hwordShift,
-      Nat.mod_eq_of_lt hshiftLt, Nat.mod_eq_of_lt hfractionFit]
+    rw [shiftLeft_toNat_of_log2 _ _ (by omega), hwordShift]
+  have hfractionFit :
+      difference.toNat <<< (exponent.toNat - 1) < 2 ^ 64 := by
+    rw [← hnativeFraction]
+    exact UInt64.toNat_lt _
   have hnativeFractionWord :
       difference <<< (exponent - 1) =
         UInt64.ofNat
@@ -194,11 +196,7 @@ private theorem normalizedMantissa_toNat
     (hdifferenceFit : difference.toNat < 2 ^ 53) :
     (difference <<< (52 - difference.log2)).toNat =
       difference.toNat <<< (52 - difference.toNat.log2) := by
-  have hleading : difference.log2.toNat = difference.toNat.log2 :=
-    FloatLib.Numerics.FixedWord.log2_toNat difference
-  have hleadingLt : difference.log2.toNat < 53 :=
-    log2_toNat_lt_of_toNat_lt_two_pow difference 53
-      hdifference hdifferenceFit
+  obtain ⟨hleading, hleadingLt⟩ := leadingPosition_facts difference hdifference hdifferenceFit
   have hleadingLe : difference.log2 ≤ (52 : UInt64) := by
     apply UInt64.le_iff_toNat_le.mpr
     change difference.log2.toNat ≤ 52
@@ -208,16 +206,7 @@ private theorem normalizedMantissa_toNat
         52 - difference.toNat.log2 := by
     rw [UInt64.toNat_sub_of_le _ _ hleadingLe, hleading]
     rfl
-  have hshiftLt : 52 - difference.toNat.log2 < 64 := by
-    omega
-  have hmantissaFit :
-      difference.toNat <<< (52 - difference.toNat.log2) < 2 ^ 64 := by
-    exact lt_trans
-      (Nat.shiftLeft_lt (m := 52 - difference.toNat.log2)
-        Nat.lt_log2_self)
-      (Nat.pow_lt_pow_right (by decide) (by omega))
-  rw [UInt64.toNat_shiftLeft, hshift,
-    Nat.mod_eq_of_lt hshiftLt, Nat.mod_eq_of_lt hmantissaFit]
+  rw [shiftLeft_toNat_of_log2 _ _ (by omega), hshift]
 
 private theorem encodedExponent_word
     (difference exponent : UInt64)
@@ -228,11 +217,7 @@ private theorem encodedExponent_word
     exponent + difference.log2 - 52 =
       UInt64.ofNat
         (exponent.toNat + difference.toNat.log2 - 52) := by
-  have hleading : difference.log2.toNat = difference.toNat.log2 :=
-    FloatLib.Numerics.FixedWord.log2_toNat difference
-  have hleadingLt : difference.log2.toNat < 53 :=
-    log2_toNat_lt_of_toNat_lt_two_pow difference 53
-      hdifference hdifferenceFit
+  obtain ⟨hleading, hleadingLt⟩ := leadingPosition_facts difference hdifference hdifferenceFit
   have haddFit :
       exponent.toNat + difference.log2.toNat < 2 ^ 64 := by
     have hsmall : exponent.toNat + difference.log2.toNat < 2100 := by
@@ -243,20 +228,10 @@ private theorem encodedExponent_word
         exponent.toNat + difference.toNat.log2 := by
     have h := uint64_add_toNat_of_lt exponent difference.log2 haddFit
     simpa only [hleading] using h
-  have hpositionFit :
-      difference.log2.toNat + exponent.toNat < 2 ^ 64 := by
-    simpa only [Nat.add_comm] using haddFit
-  have hposition :
-      (difference.log2 + exponent).toNat =
-        difference.toNat.log2 + exponent.toNat := by
-    rw [uint64_add_toNat_of_lt difference.log2 exponent hpositionFit, hleading]
   have hnormalNat :
       53 ≤ difference.toNat.log2 + exponent.toNat := by
-    by_contra hlt
-    apply hnormal
-    apply UInt64.lt_iff_toNat_lt.mpr
-    change (difference.log2 + exponent).toNat < 53
-    rw [hposition]
+    have := (leadingPosition_lt_iff difference exponent hdifference hdifferenceFit
+      hexponentFinite).not.mp hnormal
     omega
   have h52 : (52 : UInt64) ≤ exponent + difference.log2 := by
     apply UInt64.le_iff_toNat_le.mpr
@@ -292,11 +267,7 @@ private theorem normalizedFraction_word
           2 ^ 52) := by
   have hzeroNat : difference.toNat ≠ 0 := by
     simpa [uint64_toNat_eq_zero] using hdifference
-  have hleading : difference.log2.toNat = difference.toNat.log2 :=
-    FloatLib.Numerics.FixedWord.log2_toNat difference
-  have hleadingLt : difference.log2.toNat < 53 :=
-    log2_toNat_lt_of_toNat_lt_two_pow difference 53
-      hdifference hdifferenceFit
+  obtain ⟨hleading, hleadingLt⟩ := leadingPosition_facts difference hdifference hdifferenceFit
   have hleadingNatLe : difference.toNat.log2 ≤ 52 := by
     rw [← hleading]
     omega
@@ -304,7 +275,7 @@ private theorem normalizedFraction_word
     normalizedMantissa_toNat difference hdifference hdifferenceFit
   have hmantissaLower :
       2 ^ 52 ≤ difference.toNat <<< (52 - difference.toNat.log2) := by
-    exact two_pow_le_shiftLeft_sub_log2 52 difference.toNat hzeroNat hleadingNatLe
+    exact two_pow_le_shiftLeft_sub_log2 52 difference.toNat hzeroNat
   have hbaseWord :
       (0x0010000000000000 : UInt64) ≤
         difference <<< (52 - difference.log2) := by
@@ -329,35 +300,16 @@ private theorem packExactDifference_eq_spec_normal
     (sign : Bool) (difference exponent : UInt64)
     (hdifference : difference ≠ 0)
     (hdifferenceFit : difference.toNat < 2 ^ 53)
-    (hexponentPositive : 0 < exponent.toNat)
     (hexponentFinite : exponent.toNat < 2047)
     (hnormal : ¬difference.log2 + exponent < 53) :
     packExactDifference sign difference exponent =
       packExactDifferenceSpec sign difference.toNat exponent.toNat := by
   have hzeroNat : difference.toNat ≠ 0 := by
     simpa [uint64_toNat_eq_zero] using hdifference
-  have hleading : difference.log2.toNat = difference.toNat.log2 :=
-    FloatLib.Numerics.FixedWord.log2_toNat difference
-  have hpositionFit :
-      difference.log2.toNat + exponent.toNat < 2 ^ 64 := by
-    have hsmall :
-        difference.log2.toNat + exponent.toNat < 2100 := by
-      have hleadingLt :=
-        log2_toNat_lt_of_toNat_lt_two_pow difference 53
-          hdifference hdifferenceFit
-      omega
-    exact lt_trans hsmall (by norm_num)
-  have hposition :
-      (difference.log2 + exponent).toNat =
-        difference.log2.toNat + exponent.toNat :=
-    uint64_add_toNat_of_lt difference.log2 exponent hpositionFit
   have hnormalNat :
-      ¬difference.toNat.log2 + exponent.toNat < 53 := by
-    intro h
-    apply hnormal
-    apply UInt64.lt_iff_toNat_lt.mpr
-    rw [hposition, hleading]
-    simpa using h
+      ¬difference.toNat.log2 + exponent.toNat < 53 := fun h =>
+    hnormal ((leadingPosition_lt_iff difference exponent hdifference hdifferenceFit
+      hexponentFinite).mpr h)
   unfold packExactDifference packExactDifferenceSpec
   simp only [FloatLib.Numerics.FixedWord.log2Word_eq_log2]
   simp only [beq_iff_eq, hdifference, hzeroNat, ite_false,
@@ -381,7 +333,7 @@ private theorem packExactDifference_eq_spec
   · exact packExactDifference_eq_spec_subnormal sign difference exponent
       hdifference hdifferenceFit hexponentPositive hexponentFinite hsubnormal
   · exact packExactDifference_eq_spec_normal sign difference exponent
-      hdifference hdifferenceFit hexponentPositive hexponentFinite hsubnormal
+      hdifference hdifferenceFit hexponentFinite hsubnormal
 
 private theorem packExactDifferenceSpec_eq_round
     (sign : Bool) (difference exponent : Nat)
@@ -502,31 +454,39 @@ theorem packExactDifference_eq_round
     (by simpa [uint64_toNat_eq_zero] using hdifference)
     hdifferenceFit hexponentPositive hexponentFinite
 
-/-! ## Sterbenz exactness in the dyadic model -/
-
-private theorem addDyadic_pos_neg_adjacent_left
-    (large small : Nat) (exponent : Int)
-    (hlarge : large ≠ 0) (hsmall : small ≠ 0)
-    (hlt : small < large <<< 1) :
-    addDyadic
-        { negative := false, significand := large, exponent := exponent + 1 }
-        { negative := true, significand := small, exponent := exponent } =
-      { negative := false, significand := (large <<< 1) - small, exponent := exponent } := by
-  exact addDyadic_oppositeSign_adjacentExponent_largeLeft
-    false true large small exponent hlarge hsmall (by decide) hlt
-
-private theorem addDyadic_pos_neg_adjacent_right
-    (small large : Nat) (exponent : Int)
-    (hsmall : small ≠ 0) (hlarge : large ≠ 0)
-    (hlt : small < large <<< 1) :
-    addDyadic
-        { negative := false, significand := small, exponent := exponent }
-        { negative := true, significand := large, exponent := exponent + 1 } =
-      { negative := true, significand := (large <<< 1) - small, exponent := exponent } := by
-  exact addDyadic_oppositeSign_adjacentExponent_largeRight
-    false true small large exponent hsmall hlarge (by decide) hlt
-
 /-! ## Component-level binary64 subtraction -/
+
+/-- Normal binary64 components add through the exact dyadic sum of their values. -/
+private theorem addComponents_normal (leftSign rightSign : Bool)
+    (leftExponent rightExponent left right : Nat)
+    (hleftExponent : leftExponent ≠ 0) (hrightExponent : rightExponent ≠ 0)
+    (hleft : left ≠ 0) (hright : right ≠ 0) :
+    FiniteKernel.addComponents FloatFormat.binary64
+        { sign := leftSign, exponent := leftExponent, mantissa := left }
+        { sign := rightSign, exponent := rightExponent, mantissa := right } =
+      roundDyadic FloatFormat.binary64
+        (addDyadic
+          { negative := leftSign, significand := left,
+            exponent := Int.ofNat leftExponent - 1075 }
+          { negative := rightSign, significand := right,
+            exponent := Int.ofNat rightExponent - 1075 }) := by
+  unfold FiniteKernel.addComponents
+  rw [← roundDyadic_eq_internal,
+    normalComponents_toDyadic leftSign leftExponent left hleftExponent hleft,
+    normalComponents_toDyadic rightSign rightExponent right hrightExponent hright]
+
+/-- A dyadic at a normal binary64 exponent rounds through the product rounder at that scale. -/
+private theorem roundDyadic_normalScale (sign : Bool) (significand exponent : Nat) :
+    roundDyadic FloatFormat.binary64
+        { negative := sign, significand, exponent := Int.ofNat exponent - 1075 } =
+      FiniteProductRound.round FloatFormat.binary64 sign significand (exponent + 1073) := by
+  rw [FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide),
+    roundScaleExponent]
+
+private theorem normalExponent_succ (exponent : Nat) :
+    Int.ofNat (exponent + 1) - 1075 = (Int.ofNat exponent - 1075) + 1 := by
+  simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
+  omega
 
 private theorem addComponents_same_large_left
     (large small exponent : Nat)
@@ -537,15 +497,11 @@ private theorem addComponents_same_large_left
         { sign := true, exponent, mantissa := small } =
       FiniteProductRound.round FloatFormat.binary64 false (large - small)
         (exponent + 1073) := by
-  have hlarge : large ≠ 0 := by omega
-  unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_internal,
-    normalComponents_toDyadic false exponent large hexponent hlarge,
-    normalComponents_toDyadic true exponent small hexponent hsmall,
+  rw [addComponents_normal false true exponent exponent large small hexponent hexponent
+      (by omega) hsmall,
     addDyadic_oppositeSign_sameExponent_largeLeft false true large small
-      (Int.ofNat exponent - 1075) hlarge hsmall (by decide) hlt,
-    FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide)]
-  rw [roundScaleExponent]
+      (Int.ofNat exponent - 1075) (by decide) hlt,
+    roundDyadic_normalScale]
 
 private theorem addComponents_same_equal
     (mantissa exponent : Nat)
@@ -565,7 +521,7 @@ private theorem addComponents_same_equal
         { negative := false, significand := 0, exponent := 0 } by
       exact addDyadic_oppositeSign_sameExponent_eq_zero
         false true mantissa (Int.ofNat exponent - 1075)
-        hmantissa (by decide)]
+        (by decide)]
   rfl
 
 private theorem addComponents_same_large_right
@@ -577,15 +533,11 @@ private theorem addComponents_same_large_right
         { sign := true, exponent, mantissa := large } =
       FiniteProductRound.round FloatFormat.binary64 true (large - small)
         (exponent + 1073) := by
-  have hlarge : large ≠ 0 := by omega
-  unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_internal,
-    normalComponents_toDyadic false exponent small hexponent hsmall,
-    normalComponents_toDyadic true exponent large hexponent hlarge,
+  rw [addComponents_normal false true exponent exponent small large hexponent hexponent hsmall
+      (by omega),
     addDyadic_oppositeSign_sameExponent_largeRight false true small large
-      (Int.ofNat exponent - 1075) hsmall hlarge (by decide) hlt,
-    FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide)]
-  rw [roundScaleExponent]
+      (Int.ofNat exponent - 1075) (by decide) hlt,
+    roundDyadic_normalScale]
 
 private theorem addComponents_adjacent_large_left
     (large small exponent : Nat)
@@ -596,22 +548,13 @@ private theorem addComponents_adjacent_large_left
         { sign := true, exponent, mantissa := small } =
       FiniteProductRound.round FloatFormat.binary64 false
         ((large <<< 1) - small) (exponent + 1073) := by
-  have hexponentSucc : exponent + 1 ≠ 0 := by omega
-  have hexponentShift :
-      Int.ofNat (exponent + 1) - 1075 =
-        (Int.ofNat exponent - 1075) + 1 := by
-    simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
-    omega
-  unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_internal,
-    normalComponents_toDyadic false (exponent + 1) large
-      hexponentSucc hlarge,
-    normalComponents_toDyadic true exponent small hexponent hsmall,
-    hexponentShift,
-    addDyadic_pos_neg_adjacent_left large small
-      (Int.ofNat exponent - 1075) hlarge hsmall hlt,
-    FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide)]
-  rw [roundScaleExponent]
+  rw [addComponents_normal false true (exponent + 1) exponent large small (by omega) hexponent
+      hlarge hsmall,
+    normalExponent_succ,
+    addDyadic_oppositeSign_adjacentExponent_largeLeft false true large small
+      (Int.ofNat exponent - 1075) hsmall (by decide) hlt,
+    roundDyadic_normalScale]
+  rfl
 
 private theorem addComponents_adjacent_large_right
     (small large exponent : Nat)
@@ -622,22 +565,32 @@ private theorem addComponents_adjacent_large_right
         { sign := true, exponent := exponent + 1, mantissa := large } =
       FiniteProductRound.round FloatFormat.binary64 true
         ((large <<< 1) - small) (exponent + 1073) := by
-  have hexponentSucc : exponent + 1 ≠ 0 := by omega
-  have hexponentShift :
-      Int.ofNat (exponent + 1) - 1075 =
-        (Int.ofNat exponent - 1075) + 1 := by
-    simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
+  rw [addComponents_normal false true exponent (exponent + 1) small large hexponent (by omega)
+      hsmall hlarge,
+    normalExponent_succ,
+    addDyadic_oppositeSign_adjacentExponent_largeRight false true small large
+      (Int.ofNat exponent - 1075) hsmall (by decide) hlt,
+    roundDyadic_normalScale]
+  rfl
+
+/-- The successor of a finite binary64 exponent field is exact. -/
+private theorem exponent_succ_toNat (exponent : UInt64) (hexponent : exponent.toNat < 2047) :
+    (exponent + 1).toNat = exponent.toNat + 1 := by
+  rw [uint64_add_toNat_of_lt]
+  · rfl
+  · norm_num
     omega
-  unfold FiniteKernel.addComponents
-  rw [← roundDyadic_eq_internal,
-    normalComponents_toDyadic false exponent small hexponent hsmall,
-    normalComponents_toDyadic true (exponent + 1) large
-      hexponentSucc hlarge,
-    hexponentShift,
-    addDyadic_pos_neg_adjacent_right small large
-      (Int.ofNat exponent - 1075) hsmall hlarge hlt,
-    FiniteProductRound.round_eq_roundDyadic FloatFormat.binary64 (by decide)]
-  rw [roundScaleExponent]
+
+/-- Facts `packExactDifference` needs about the significand difference at equal exponents. -/
+private theorem sameExponentDifference_facts (upper lower : UInt64)
+    (hupper : upper.toNat < 2 ^ 53) (hlt : lower.toNat < upper.toNat) :
+    (upper - lower).toNat = upper.toNat - lower.toNat ∧ upper - lower ≠ 0 ∧
+      (upper - lower).toNat < 2 ^ 53 := by
+  have hdifference := UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr hlt.le)
+  refine ⟨hdifference, fun hzero => ?_, by omega⟩
+  have hzeroNat := congrArg UInt64.toNat hzero
+  rw [hdifference, UInt64.toNat_zero] at hzeroNat
+  omega
 
 private theorem adjacentDifference_facts (upper lower : UInt64)
     (hupper : 2 ^ 52 ≤ upper.toNat ∧ upper.toNat < 2 ^ 53)
@@ -652,7 +605,7 @@ private theorem adjacentDifference_facts (upper lower : UInt64)
     norm_num
     omega
   have hshift : (upper <<< 1).toNat = upper.toNat <<< 1 := by
-    simpa using shiftLeft_toNat upper 1 (by norm_num) hshiftFit
+    simpa using shiftLeft_toNat upper 1 hshiftFit
   have hlt : lower.toNat < upper.toNat <<< 1 := by
     rw [Nat.shiftLeft_eq]
     norm_num
@@ -706,55 +659,17 @@ theorem subSterbenz_refines (x y result : Value)
   · simp [hxSignFalse, hySignFalse, hxExponentExceptional] at hfast
   by_cases hyExponentExceptional : yExponent = 0x7ff
   · simp [hxSignFalse, hySignFalse, hyExponentExceptional] at hfast
-  have hxFractionFit : xFraction.toNat < 2 ^ 52 := by
-    simpa [xFraction, xBits, hxBits] using fracField_lt x
-  have hyFractionFit : yFraction.toNat < 2 ^ 52 := by
-    simpa [yFraction, yBits, hyBits] using fracField_lt y
-  have hxBounds :=
-    finiteMantissa_bounds xExponent xFraction
-      hxExponentZero hxFractionFit
-  have hyBounds :=
-    finiteMantissa_bounds yExponent yFraction
-      hyExponentZero hyFractionFit
-  have hxMantissaBounds :
-      2 ^ 52 ≤ xMantissa.toNat ∧ xMantissa.toNat < 2 ^ 53 := by
-    simpa [hxMantissa] using hxBounds
-  have hyMantissaBounds :
-      2 ^ 52 ≤ yMantissa.toNat ∧ yMantissa.toNat < 2 ^ 53 := by
-    simpa [hyMantissa] using hyBounds
-  have hxExponentBounds :
-      0 < xExponent.toNat ∧ xExponent.toNat < 2047 := by
-    simpa [xExponent, xBits, hxBits] using
-      normalExponent_bounds x
-        (by simpa [xExponent, xBits, hxBits] using hxExponentZero)
-        (by
-          simpa [xExponent, xBits, hxBits] using
-            hxExponentExceptional)
-  have hyExponentBounds :
-      0 < yExponent.toNat ∧ yExponent.toNat < 2047 := by
-    simpa [yExponent, yBits, hyBits] using
-      normalExponent_bounds y
-        (by simpa [yExponent, yBits, hyBits] using hyExponentZero)
-        (by
-          simpa [yExponent, yBits, hyBits] using
-            hyExponentExceptional)
-  have hxExponentPositive : 0 < xExponent.toNat :=
-    hxExponentBounds.1
-  have hyExponentPositive : 0 < yExponent.toNat :=
-    hyExponentBounds.1
-  have hxExponentFinite : xExponent.toNat < 2047 :=
-    hxExponentBounds.2
-  have hyExponentFinite : yExponent.toNat < 2047 :=
-    hyExponentBounds.2
-  have hxFiniteWord :
-      expField (toUInt64 x) ≠ 0x7ff := by
-    simpa [xExponent, xBits, hxBits] using hxExponentExceptional
-  have hyFiniteWord :
-      expField (toUInt64 y) ≠ 0x7ff := by
-    simpa [yExponent, yBits, hyBits] using hyExponentExceptional
+  obtain ⟨⟨hxExponentPositive, hxExponentFinite⟩, hxMantissaBounds⟩ :
+      (0 < xExponent.toNat ∧ xExponent.toNat < 2047) ∧
+        (2 ^ 52 ≤ xMantissa.toNat ∧ xMantissa.toNat < 2 ^ 53) :=
+    normalOperand_bounds x hxExponentZero hxExponentExceptional
+  obtain ⟨⟨hyExponentPositive, hyExponentFinite⟩, hyMantissaBounds⟩ :
+      (0 < yExponent.toNat ∧ yExponent.toNat < 2047) ∧
+        (2 ^ 52 ≤ yMantissa.toNat ∧ yMantissa.toNat < 2 ^ 53) :=
+    normalOperand_bounds y hyExponentZero hyExponentExceptional
   simp [hxSignFalse, hySignFalse, hxExponentZero, hyExponentZero,
     hxExponentExceptional, hyExponentExceptional] at hfast
-  rw [addFiniteComponents_negate_eq_components x y hxFiniteWord hyFiniteWord]
+  rw [addFiniteComponents_negate_eq_components x y hxExponentExceptional hyExponentExceptional]
   rw [← hxBits, ← hyBits, ← hxExponent, ← hyExponent, ← hxFraction,
     ← hyFraction, ← hxMantissa, ← hyMantissa, hxSignFalse, hySignFalse]
   simp only [Bool.not_false]
@@ -782,22 +697,15 @@ theorem subSterbenz_refines (x y result : Value)
           exact h.symm
         have hltNat : yMantissa.toNat < xMantissa.toNat :=
           Nat.lt_of_le_of_ne hleNat hneNat
+        obtain ⟨hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
+          sameExponentDifference_facts xMantissa yMantissa hxMantissaBounds.2 hltNat
         rw [← hsame]
         rw [addComponents_same_large_left
           xMantissa.toNat yMantissa.toNat xExponent.toNat
           hxExponentPositive.ne' (by omega) hltNat]
-        rw [packExactDifference_eq_round false
-          (xMantissa - yMantissa) xExponent]
-        · rw [UInt64.toNat_sub_of_le _ _ hle]
-        · intro hzero
-          have := congrArg UInt64.toNat hzero
-          rw [UInt64.toNat_sub_of_le _ _ hle] at this
-          simp at this
-          omega
-        · rw [UInt64.toNat_sub_of_le _ _ hle]
-          omega
-        · exact hxExponentPositive
-        · exact hxExponentFinite
+        rw [packExactDifference_eq_round false (xMantissa - yMantissa) xExponent
+          hdifferenceNonzero hdifferenceFit hxExponentPositive hxExponentFinite,
+          hdifferenceNat]
     · rw [ite_eq_right hle] at hfast
       have hresult := Option.some.inj hfast
       subst result
@@ -807,24 +715,15 @@ theorem subSterbenz_refines (x y result : Value)
           apply hle
           exact UInt64.le_iff_toNat_le.mpr hleNat
         omega
-      have hxyLe : xMantissa ≤ yMantissa :=
-        UInt64.le_iff_toNat_le.mpr hltNat.le
+      obtain ⟨hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
+        sameExponentDifference_facts yMantissa xMantissa hyMantissaBounds.2 hltNat
       rw [← hsame]
       rw [addComponents_same_large_right
         xMantissa.toNat yMantissa.toNat xExponent.toNat
         hxExponentPositive.ne' (by omega) hltNat]
-      rw [packExactDifference_eq_round true
-        (yMantissa - xMantissa) xExponent]
-      · rw [UInt64.toNat_sub_of_le _ _ hxyLe]
-      · intro hzero
-        have := congrArg UInt64.toNat hzero
-        rw [UInt64.toNat_sub_of_le _ _ hxyLe] at this
-        simp at this
-        omega
-      · rw [UInt64.toNat_sub_of_le _ _ hxyLe]
-        omega
-      · exact hxExponentPositive
-      · exact hxExponentFinite
+      rw [packExactDifference_eq_round true (yMantissa - xMantissa) xExponent
+        hdifferenceNonzero hdifferenceFit hxExponentPositive hxExponentFinite,
+        hdifferenceNat]
   · by_cases hleft :
         xExponent = yExponent + 1 ∧ xMantissa ≤ yMantissa
     · have hleftCondition := hleft
@@ -832,13 +731,8 @@ theorem subSterbenz_refines (x y result : Value)
       simp only [ite_eq_right hsame, ite_eq_left hleftCondition] at hfast
       have hresult := Option.some.inj hfast
       subst result
-      have hxExponentNat :
-          xExponent.toNat = yExponent.toNat + 1 := by
-        rw [hxAdjacent, uint64_add_toNat_of_lt]
-        · rfl
-        · norm_num
-          exact lt_trans (Nat.add_lt_add_right hyExponentFinite 1)
-            (by norm_num)
+      have hxExponentNat : xExponent.toNat = yExponent.toNat + 1 := by
+        rw [hxAdjacent, exponent_succ_toNat yExponent hyExponentFinite]
       obtain ⟨hyLtShiftNat, hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
         adjacentDifference_facts xMantissa yMantissa
           hxMantissaBounds hyMantissaBounds hxyMantissa
@@ -859,13 +753,8 @@ theorem subSterbenz_refines (x y result : Value)
           ite_eq_left hrightCondition] at hfast
         have hresult := Option.some.inj hfast
         subst result
-        have hyExponentNat :
-            yExponent.toNat = xExponent.toNat + 1 := by
-          rw [hyAdjacent, uint64_add_toNat_of_lt]
-          · rfl
-          · norm_num
-            exact lt_trans (Nat.add_lt_add_right hxExponentFinite 1)
-              (by norm_num)
+        have hyExponentNat : yExponent.toNat = xExponent.toNat + 1 := by
+          rw [hyAdjacent, exponent_succ_toNat xExponent hxExponentFinite]
         obtain ⟨hxLtShiftNat, hdifferenceNat, hdifferenceNonzero, hdifferenceFit⟩ :=
           adjacentDifference_facts yMantissa xMantissa
             hyMantissaBounds hxMantissaBounds hyxMantissa
@@ -879,6 +768,79 @@ theorem subSterbenz_refines (x y result : Value)
           hxExponentPositive hxExponentFinite]
         rw [hdifferenceNat]
       · simp [hsame, hleft, hright] at hfast
+
+/--
+`subSterbenz?` returns a result exactly when both operands are positive and normal and their
+exponent fields are equal, or adjacent with the significand of the operand with the larger exponent
+no greater than the other significand. For `x = m_x * 2 ^ (e + 1)` and `y = m_y * 2 ^ e` the
+adjacent test `m_x ≤ m_y` is `x ≤ 2 * y`, the factor-two condition of Sterbenz's lemma.
+`subFinite?` calls it through `subSignedSterbenz?`, which negates and swaps two negative operands.
+When `subSignedSterbenz?` declines, `subFinite?` falls back to `addFinite? x (negate y)`.
+-/
+theorem subSterbenz?_isSome_iff (x y : Value) :
+    (subSterbenz? x y).isSome = true ↔
+      signBit (toUInt64 x) = false ∧ signBit (toUInt64 y) = false ∧
+        expField (toUInt64 x) ≠ 0 ∧ expField (toUInt64 y) ≠ 0 ∧
+        expField (toUInt64 x) ≠ 0x7ff ∧ expField (toUInt64 y) ≠ 0x7ff ∧
+        (expField (toUInt64 x) = expField (toUInt64 y) ∨
+          expField (toUInt64 x) = expField (toUInt64 y) + 1 ∧
+            finiteMantissa (expField (toUInt64 x)) (fracField (toUInt64 x)) ≤
+              finiteMantissa (expField (toUInt64 y)) (fracField (toUInt64 y)) ∨
+          expField (toUInt64 y) = expField (toUInt64 x) + 1 ∧
+            finiteMantissa (expField (toUInt64 y)) (fracField (toUInt64 y)) ≤
+              finiteMantissa (expField (toUInt64 x)) (fracField (toUInt64 x))) := by
+  unfold subSterbenz?
+  dsimp only
+  generalize signBit (toUInt64 x) = xSign
+  generalize signBit (toUInt64 y) = ySign
+  generalize expField (toUInt64 x) = xExponent
+  generalize expField (toUInt64 y) = yExponent
+  generalize finiteMantissa xExponent (fracField (toUInt64 x)) = xMantissa
+  generalize finiteMantissa yExponent (fracField (toUInt64 y)) = yMantissa
+  by_cases hguard : (xSign || ySign || xExponent == 0 || yExponent == 0 ||
+      xExponent == 0x7ff || yExponent == 0x7ff) = true
+  · rw [ite_eq_left hguard]
+    simp only [Option.isSome_none, Bool.false_eq_true, false_iff]
+    simp only [Bool.or_eq_true, beq_iff_eq] at hguard
+    rintro ⟨hxSign, hySign, hxZero, hyZero, hxAll, hyAll, -⟩
+    rcases hguard with (((((h | h) | h) | h) | h) | h)
+    · rw [hxSign] at h; exact Bool.false_ne_true h
+    · rw [hySign] at h; exact Bool.false_ne_true h
+    · exact hxZero h
+    · exact hyZero h
+    · exact hxAll h
+    · exact hyAll h
+  · rw [ite_eq_right hguard]
+    simp only [Bool.or_eq_true, beq_iff_eq, not_or, Bool.not_eq_true] at hguard
+    obtain ⟨⟨⟨⟨⟨hxSign, hySign⟩, hxZero⟩, hyZero⟩, hxAll⟩, hyAll⟩ := hguard
+    simp only [hxSign, hySign, true_and]
+    refine ⟨fun h => ⟨hxZero, hyZero, hxAll, hyAll, ?_⟩, fun h => ?_⟩
+    · by_cases hsame : xExponent = yExponent
+      · exact Or.inl hsame
+      · rw [ite_eq_right (by simpa using hsame)] at h
+        by_cases hleft : (xExponent == yExponent + 1 && xMantissa ≤ yMantissa) = true
+        · simp only [Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hleft
+          exact Or.inr (Or.inl hleft)
+        · rw [ite_eq_right hleft] at h
+          by_cases hright : (yExponent == xExponent + 1 && yMantissa ≤ xMantissa) = true
+          · simp only [Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hright
+            exact Or.inr (Or.inr hright)
+          · rw [ite_eq_right hright] at h
+            simp at h
+    · obtain ⟨-, -, -, -, h⟩ := h
+      by_cases hsame : xExponent = yExponent
+      · rw [ite_eq_left (by simpa using hsame)]
+        split <;> rfl
+      rw [ite_eq_right (by simpa using hsame)]
+      by_cases hleft : (xExponent == yExponent + 1 && xMantissa ≤ yMantissa) = true
+      · rw [ite_eq_left hleft]
+        rfl
+      rw [ite_eq_right hleft]
+      rcases h with h | h | h
+      · exact absurd h hsame
+      · exact absurd (by simpa using h) hleft
+      · rw [ite_eq_left (by simpa using h)]
+        rfl
 
 /--
 Every result of `subSignedSterbenz?` is also the result of `addFiniteComponents? x (negate y)`.

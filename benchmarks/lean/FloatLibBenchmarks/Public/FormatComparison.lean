@@ -31,9 +31,10 @@ lane begins from the exact rational vectors in `FloatLibBenchmarks.Support.Exact
 format rounds those mathematical inputs once, before timing. So the comparison does not assume
 that unlike encodings represent the same set.
 
-This executable emits only `proved-software` rows. Public binary32 and binary64 dispatch already
-selects the proved fixed-word kernels. Their specialized rows pin those same kernels, so the
-benchmark label does not depend on planner metadata. The cross-implementation runner
+This executable emits only `proved-software` rows. Its binary32 and binary64 rows time the proved
+fixed-word kernels by name, so the benchmark label does not depend on planner metadata. Public
+calls on those formats can select other proved kernels, such as binary64's direct kernels on its
+stored words, so the public-call campaign is the one to read at those widths. The cross-implementation runner
 compiles its binary32/64 hardware ceiling as a separate C executable and validates every measured
 result against MPFR before timing. Keeping that external lane out of this module prevents a
 Lean-native diagnostic from being mistaken for the independent C baseline.
@@ -557,9 +558,8 @@ elab "binary_comparison_format " stem:ident " with " runner:ident " named "
               (F := ExecFloat.Binary.Family $exponentBits $fractionBits)).name $fmaName)
 
 /-
-Generate binary workloads that intentionally exercise the proved fixed-word kernels instead of the
-generic benchmark declaration. Public dispatch selects the same kernels. Only binary32 and
-binary64 use this specialized declaration.
+Generate binary workloads that exercise the proved fixed-word kernels by name instead of the
+generic benchmark declaration. Only binary32 and binary64 use this specialized declaration.
 -/
 open Lean Elab Command in
 elab "binary_word_comparison_format " stem:ident " with " runner:ident " named "

@@ -79,25 +79,16 @@ private theorem toNatBits_ofBits_ofNatLT (bits : Nat) (hbits : bits < 2 ^ format
       exact congrArg UInt8.toNat (@UInt8.ofNat_toNat code.1)
   | word16 width_le =>
       apply Subtype.ext
-      apply UInt16.toNat_inj.mp
-      change (UInt16.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits).toNat =
-        code.1.toNat
-      rw [toNatBits_ofBits_ofNatLT]
-      exact congrArg UInt16.toNat (@UInt16.ofNat_toNat code.1)
+      change UInt16.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits = code.1
+      rw [toNatBits_ofBits_ofNatLT, UInt16.ofNat_toNat]
   | word32 width_le =>
       apply Subtype.ext
-      apply UInt32.toNat_inj.mp
-      change (UInt32.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits).toNat =
-        code.1.toNat
-      rw [toNatBits_ofBits_ofNatLT]
-      exact congrArg UInt32.toNat (@UInt32.ofNat_toNat code.1)
+      change UInt32.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits = code.1
+      rw [toNatBits_ofBits_ofNatLT, UInt32.ofNat_toNat]
   | word64 width_le =>
       apply Subtype.ext
-      apply UInt64.toNat_inj.mp
-      change (UInt64.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits).toNat =
-        code.1.toNat
-      rw [toNatBits_ofBits_ofNatLT]
-      exact congrArg UInt64.toNat (@UInt64.ofNat_toNat code.1)
+      change UInt64.ofNat (Model.ofBits (BitVec.ofNatLT code.1.toNat code.2)).toNatBits = code.1
+      rw [toNatBits_ofBits_ofNatLT, UInt64.ofNat_toNat]
   | pair _ _ =>
       apply Subtype.ext
       apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective

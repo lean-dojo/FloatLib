@@ -20,8 +20,10 @@ results delivered on directed overflow.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
+/-- A rounded pair is either at the least quantum or has a full coefficient of `precision` digits,
+so no cohort member of its value has a smaller quantum. -/
 theorem roundedPair_minimum_or_full (f : Format) (mode : RoundingMode) (s : Bool)
-    {x : ℚ} (hx : 0 ≤ x) :
+    (x : ℚ) :
     (roundedPair f mode s x).2 = f.minQuantum ∨
       f.payloadBound ≤ (roundedPair f mode s x).1 := by
   simp only [roundedPair, f.carry_eq]
@@ -30,22 +32,33 @@ theorem roundedPair_minimum_or_full (f : Format) (mode : RoundingMode) (s : Bool
   · by_cases hq : roundingQuantum f x = f.minQuantum
     · exact Or.inl hq
     · right
-      have hl := payloadBound_le_div_roundingQuantum f hx
+      have hl := payloadBound_le_div_roundingQuantum f
         (lt_of_le_of_ne (roundingQuantum_ge_min f x) (Ne.symm hq))
       exact (Nat.le_floor hl).trans (mode.floor_le_roundMagnitude s _)
 
+/-- A rounded pair uses the least quantum among all representations of its value that fit the
+precision and the least quantum. -/
 theorem roundedPair_quantum_minimal (f : Format) (mode : RoundingMode) (s : Bool)
-    {x : ℚ} (hx : 0 ≤ x) (d : Nat) (r : Int)
+    (x : ℚ) (d : Nat) (r : Int)
     (hd : d < f.coefficientBound) (hr : f.minQuantum ≤ r)
     (hvalue : ((roundedPair f mode s x).1 : ℚ) * (10 : ℚ) ^ (roundedPair f mode s x).2 =
-      (d : ℚ) * (10 : ℚ) ^ r) : (roundedPair f mode s x).2 ≤ r := by
-  rcases roundedPair_minimum_or_full f mode s hx with h | h
-  · rwa [h]
-  · exact quantum_le_of_full_coefficient f _ d _ r h hd hvalue
+      (d : ℚ) * (10 : ℚ) ^ r) : (roundedPair f mode s x).2 ≤ r :=
+  Arithmetic.quantum_le_of_minimum_or_full f _ d _ r (roundedPair_minimum_or_full f mode s x) hd hr
+    hvalue
+
+/-- The greatest finite datum has a full coefficient at the largest quantum, so it uses the least
+quantum among all valid representations of its value. Directed overflow delivers it. -/
+theorem Format.maxFinite_quantum_minimal (f : Format) (s : Bool) {c : Nat} {q : Int}
+    (h : f.maxFinite s = .finite s c q) (d : Nat) (r : Int) (hd : d < f.coefficientBound)
+    (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
+  simp only [Format.maxFinite, Datum.finite.injEq] at h
+  obtain ⟨-, rfl, rfl⟩ := h
+  exact quantum_le_of_full_coefficient f _ d _ r f.payloadBound_le_coefficientBound_sub_one hd
+    hvalue
 
 /-- Every finite inexact result uses the least quantum in its valid cohort. -/
 theorem projectMagnitude_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
-    (s : Bool) {x : ℚ} (hx : 0 ≤ x) (preferred : Int)
+    (s : Bool) (x : ℚ) (preferred : Int)
     (hinexact : (projectMagnitude f mode s x preferred).status.inexact = true)
     (c : Nat) (q : Int) (hout : (projectMagnitude f mode s x preferred).value = .finite s c q)
     (d : Nat) (r : Int) (hv : (Datum.finite s d r).Valid f)
@@ -55,14 +68,11 @@ theorem projectMagnitude_inexact_quantum_minimal (f : Format) (mode : RoundingMo
   split at hout
   · split at hout
     · contradiction
-    · simp only [Format.maxFinite, Datum.finite.injEq] at hout
-      obtain ⟨_, rfl, rfl⟩ := hout
-      apply quantum_le_of_full_coefficient f _ d _ r _ hd.1 hvalue
-      exact f.payloadBound_le_coefficientBound_sub_one
+    · exact f.maxFinite_quantum_minimal s hout d r hd.1 hvalue
   · rename_i hq
     simp only [ite_eq_right hq] at hinexact
     simp only [hinexact, ite_true] at hout
     obtain ⟨_, rfl, rfl⟩ := Datum.finite.inj hout
-    exact roundedPair_quantum_minimal f mode s hx d r hd.1 hd.2.1 hvalue
+    exact roundedPair_quantum_minimal f mode s x d r hd.1 hd.2.1 hvalue
 
 end FloatLib.Floats.Formats.DecimalInterchange

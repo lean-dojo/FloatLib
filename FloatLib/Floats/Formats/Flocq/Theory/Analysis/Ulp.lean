@@ -26,15 +26,6 @@ namespace FloatLib.Floats.Formats.Flocq
 
 variable {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
 
-/-- Two negligible-exponent witnesses select the same format exponent. -/
-theorem negligibleExp_value_unique {n m : ℤ}
-    (hn : IsNegligibleExp fexp n) (hm : IsNegligibleExp fexp m) :
-    fexp n = fexp m := by
-  rcases le_total m (fexp n) with hmn | hnm
-  · exact (((ValidExp.flocq_valid (fexp := fexp) n).2 hn).2 m hmn).symm
-  · have hnfm : n ≤ fexp m := hn.trans (hnm.trans hm)
-    exact ((ValidExp.flocq_valid (fexp := fexp) m).2 hm).2 n hnfm
-
 omit [ValidExp fexp] in
 /-- Absence of a negligible exponent means `fexp n < n` at every exponent. -/
 theorem negligibleExp_none_iff_forall_lt :
@@ -114,23 +105,19 @@ theorem round_ceil_eq_floor_add_ulp {x : ℝ} (hx : ¬genericFormat β fexp x) :
   push_cast
   ring
 
-/-- One ULP is no larger than the absolute value of a nonzero representable number. -/
-theorem ulp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
-    (hx : genericFormat β fexp x) : ulp β fexp x ≤ abs x := by
-  obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic
-    (β := β) (fexp := fexp) x hx
+/--
+A nonzero representable number is a nonzero integer multiple of the radix power at its canonical
+exponent, so that power is no larger than its absolute value.
+-/
+theorem bpow_cexp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
+    (hx : genericFormat β fexp x) : bpow β (cexp β fexp x) ≤ abs x := by
+  obtain ⟨n, hxn⟩ := exists_int_mul_bpow_cexp_of_generic hx
   have hn0 : n ≠ 0 := by
-    intro hnzero
-    have hs0 : scaledMantissa β fexp x = 0 := by simpa [hnzero] using hn
-    have hrepr := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
-    rw [hs0, zero_mul] at hrepr
-    exact hx0 hrepr.symm
+    rintro rfl
+    exact hx0 (by simpa using hxn)
   have habsn : (1 : ℝ) ≤ abs (n : ℝ) := by
     exact_mod_cast (Int.one_le_abs hn0)
   have hb := bpow.nonneg β (cexp β fexp x)
-  rw [ulp.of_ne_zero β fexp x hx0]
-  have hrepr := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
-  rw [hn] at hrepr
   calc
     bpow β (cexp β fexp x) =
         1 * bpow β (cexp β fexp x) := by ring
@@ -138,7 +125,13 @@ theorem ulp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
       mul_le_mul_of_nonneg_right habsn hb
     _ = abs ((n : ℝ) * bpow β (cexp β fexp x)) := by
       rw [abs_mul, abs_of_nonneg hb]
-    _ = abs x := by rw [hrepr]
+    _ = abs x := by rw [← hxn]
+
+/-- One ULP is no larger than the absolute value of a nonzero representable number. -/
+theorem ulp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
+    (hx : genericFormat β fexp x) : ulp β fexp x ≤ abs x := by
+  rw [ulp.of_ne_zero β fexp x hx0]
+  exact bpow_cexp_le_abs_of_generic hx0 hx
 
 /-- ULP is monotone on positive inputs when the exponent selector is monotone. -/
 theorem ulp_mono_pos [MonotoneExp fexp] {x y : ℝ}

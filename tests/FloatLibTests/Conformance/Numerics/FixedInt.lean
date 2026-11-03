@@ -32,7 +32,7 @@ example {left right : Int}
     (hresult : InRange 8 (left + right))
     (x : AtFinite 8 left) (y : AtFinite 8 right) :
     (numericalSystem 8).At (.finite (left + right)) :=
-  Operation.Checked2On.applyAt (checkedAdd_refines (by decide)) hresult x y
+  Operation.Checked2On.applyAt checkedAdd_refines hresult x y
 
 example {left right : Int}
     (x : AtFinite 8 left) (y : AtFinite 8 right) :

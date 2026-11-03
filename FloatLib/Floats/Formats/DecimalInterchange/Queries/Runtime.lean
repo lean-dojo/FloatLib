@@ -39,13 +39,18 @@ def isZero : Datum → Bool
   | _ => false
 
 /-- Test either signed infinity. -/
-def isInfinite : Datum → Bool
+def isInf : Datum → Bool
   | .infinity _ => true
   | _ => false
 
 /-- Test either signaling or quiet NaN. -/
 def isNaN : Datum → Bool
   | .nan _ _ _ => true
+  | _ => false
+
+/-- Test a quiet NaN, a NaN whose signaling bit is clear. `isSNaN` tests the other kind. -/
+def isQNaN : Datum → Bool
+  | .nan _ signaling _ => !signaling
   | _ => false
 
 /-- A finite value is normal when its magnitude reaches the format's normal threshold. -/

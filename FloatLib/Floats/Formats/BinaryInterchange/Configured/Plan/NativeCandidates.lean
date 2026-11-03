@@ -226,6 +226,10 @@ def binary64FmaCandidates (width_le : FloatFormat.binary64.bitWidth ≤ 64) :
 
 /-! ## Cost facts for fixed-format selection -/
 
+/--
+The fixed-format structural candidate needs no resident or temporary memory, so the resource
+limits of every policy admit it.
+-/
 theorem admissible_structuralFixedFormat {format : FloatFormat}
     (policy : Policy) (plan : StoragePlan format) (operation : Operation) :
     (structuralEstimate plan operation .fixedFormat).admissible policy = true := by
@@ -266,8 +270,27 @@ theorem better_structuralFixedFormat_generic {format : FloatFormat}
       show (genericEstimate plan operation).residentBytes = 0 from rfl,
       Policy.memoryBlocks_zero]
 
+/--
+A portfolio whose only alternative is the fixed-format structural candidate selects that candidate
+under every policy once its steady cost is below the generic kernel's.
+-/
+theorem selectCertified_structuralFixedFormat {α : Type*} {spec : α} {format : FloatFormat}
+    (policy : Policy) (plan : StoragePlan format) (operation : Operation)
+    (dominant baseline : Certified spec)
+    (hdominant : dominant.estimate = structuralEstimate plan operation .fixedFormat)
+    (hbaseline : baseline.estimate = genericEstimate plan operation)
+    (hsteady : (Descriptor.Plan.fixedFormatEstimate operation).steadyCost <
+      (Descriptor.Plan.genericEstimate format operation).steadyCost) :
+    selectCertified policy { alternatives := [dominant], baseline } = dominant := by
+  refine selectCertified_cons_of_dominant policy dominant [] baseline ?_ ?_ (by simp)
+  · rw [hdominant]
+    exact admissible_structuralFixedFormat policy plan operation
+  · rw [hdominant, hbaseline]
+    exact better_structuralFixedFormat_generic policy plan operation hsteady
+
 /-! ## Fixed-format selection for binary32 -/
 
+/-- Under every policy the binary32 addition portfolio selects the certified software kernel. -/
 theorem selectCertified_binary32AddCandidates
     (policy : Policy) (width_le : FloatFormat.binary32.bitWidth ≤ 32) :
     selectCertified policy (binary32AddCandidates width_le) =
@@ -275,9 +298,8 @@ theorem selectCertified_binary32AddCandidates
   unfold binary32AddCandidates addCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .add =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .add
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .add (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .add _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary32 subtraction portfolio selects the certified software kernel. -/
 theorem selectCertified_binary32SubCandidates
@@ -287,9 +309,8 @@ theorem selectCertified_binary32SubCandidates
   unfold binary32SubCandidates subCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .sub =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .sub
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .sub (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .sub _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary32 multiplication portfolio selects the certified software
 kernel. -/
@@ -300,9 +321,8 @@ theorem selectCertified_binary32MulCandidates
   unfold binary32MulCandidates mulCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .mul =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .mul
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .mul (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .mul _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary32 division portfolio selects the certified software kernel. -/
 theorem selectCertified_binary32DivCandidates
@@ -312,9 +332,8 @@ theorem selectCertified_binary32DivCandidates
   unfold binary32DivCandidates divCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .div =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .div
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .div (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .div _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary32 square-root portfolio selects the certified software kernel. -/
 theorem selectCertified_binary32SqrtCandidates
@@ -324,9 +343,8 @@ theorem selectCertified_binary32SqrtCandidates
   unfold binary32SqrtCandidates sqrtCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .sqrt =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .sqrt
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .sqrt (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .sqrt _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary32 fused multiply-add portfolio selects the certified software
 kernel. -/
@@ -337,12 +355,12 @@ theorem selectCertified_binary32FmaCandidates
   unfold binary32FmaCandidates fmaCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary32 .fma =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word32 width_le) .fma
-  · exact better_structuralFixedFormat_generic policy (.word32 width_le) .fma (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word32 width_le) .fma _ _ rfl rfl
+    (by decide)
 
 /-! ## Fixed-format selection for binary64 -/
 
+/-- Under every policy the binary64 addition portfolio selects the certified software kernel. -/
 theorem selectCertified_binary64AddCandidates
     (policy : Policy) (width_le : FloatFormat.binary64.bitWidth ≤ 64) :
     selectCertified policy (binary64AddCandidates width_le) =
@@ -350,9 +368,8 @@ theorem selectCertified_binary64AddCandidates
   unfold binary64AddCandidates addCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .add =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .add
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .add (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .add _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary64 subtraction portfolio selects the certified software kernel. -/
 theorem selectCertified_binary64SubCandidates
@@ -362,9 +379,8 @@ theorem selectCertified_binary64SubCandidates
   unfold binary64SubCandidates subCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .sub =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .sub
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .sub (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .sub _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary64 multiplication portfolio selects the certified software
 kernel. -/
@@ -375,9 +391,8 @@ theorem selectCertified_binary64MulCandidates
   unfold binary64MulCandidates mulCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .mul =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .mul
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .mul (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .mul _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary64 division portfolio selects the certified software kernel. -/
 theorem selectCertified_binary64DivCandidates
@@ -387,9 +402,8 @@ theorem selectCertified_binary64DivCandidates
   unfold binary64DivCandidates divCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .div =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .div
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .div (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .div _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary64 square-root portfolio selects the certified software kernel. -/
 theorem selectCertified_binary64SqrtCandidates
@@ -399,9 +413,8 @@ theorem selectCertified_binary64SqrtCandidates
   unfold binary64SqrtCandidates sqrtCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .sqrt =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .sqrt
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .sqrt (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .sqrt _ _ rfl rfl
+    (by decide)
 
 /-- Under every policy the binary64 fused multiply-add portfolio selects the certified software
 kernel. -/
@@ -412,8 +425,7 @@ theorem selectCertified_binary64FmaCandidates
   unfold binary64FmaCandidates fmaCandidates
   rw [show Descriptor.Plan.structuralRoute? FloatFormat.binary64 .fma =
       some .fixedFormat from rfl]
-  refine selectCertified_cons_of_dominant policy _ [] _ ?_ ?_ (by simp)
-  · exact admissible_structuralFixedFormat policy (.word64 width_le) .fma
-  · exact better_structuralFixedFormat_generic policy (.word64 width_le) .fma (by decide)
+  exact selectCertified_structuralFixedFormat policy (.word64 width_le) .fma _ _ rfl rfl
+    (by decide)
 
 end FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan

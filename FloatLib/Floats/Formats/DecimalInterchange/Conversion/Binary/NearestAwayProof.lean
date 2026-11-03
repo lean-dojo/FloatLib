@@ -31,21 +31,28 @@ theorem rat_eq_unsigned_div {x : ℚ} (hx : 0 ≤ x) :
     x = (x.num.natAbs : ℚ) / x.den := by
   rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hx), Rat.num_div_den]
 
+/-- The real value of a nonnegative rational is its unsigned numerator divided by its denominator. -/
+theorem rat_cast_eq_unsigned_div {x : ℚ} (hx : 0 ≤ x) :
+    (x : ℝ) = (x.num.natAbs : ℝ) / x.den := by
+  simpa only [Rat.cast_div, Rat.cast_natCast] using
+    congrArg (fun q : ℚ => (q : ℝ)) (rat_eq_unsigned_div hx)
+
 /-- The binary grid exponent is never below the subnormal quantum. -/
 theorem minSubnormalExponent_le_binaryQuantum (fmt : FloatFormat) (x : ℚ) :
     fmt.minSubnormalExponent ≤ binaryQuantum fmt x :=
   le_max_left _ _
 
-/-- A positive magnitude scaled to its binary grid is below one full precision carry. -/
-theorem div_binaryQuantum_lt (fmt : FloatFormat) {x : ℚ} (hx : 0 < x) :
+/-- A magnitude scaled to its binary grid is below one full precision carry; a nonpositive one is
+below it trivially. -/
+theorem div_binaryQuantum_lt (fmt : FloatFormat) (x : ℚ) :
     x / (2 : ℚ) ^ binaryQuantum fmt x < 2 ^ (fmt.fracWidth + 1) := by
+  rcases le_or_gt x 0 with hx | hx
+  · exact (div_nonpos_of_nonpos_of_nonneg hx (zpow_pos (by norm_num) _).le).trans_lt
+      (by positivity)
   have hn : x.num.natAbs ≠ 0 := by
     exact Int.natAbs_ne_zero.mpr (ne_of_gt (Rat.num_pos.mpr hx))
   have hlog := (Model.floorLog2_bounds x.num.natAbs x.den hn x.den_nz).2
-  have hcast : (x : ℝ) = (x.num.natAbs : ℝ) / x.den := by
-    simpa only [Rat.cast_div, Rat.cast_natCast] using
-      congrArg (fun q : ℚ => (q : ℝ)) (rat_eq_unsigned_div hx.le)
-  rw [← hcast] at hlog
+  rw [← rat_cast_eq_unsigned_div hx.le] at hlog
   change (x : ℝ) < (2 : ℝ) ^
     (Numerics.RationalBinary.floorLog2 x.num.natAbs x.den + 1) at hlog
   have hexp : Numerics.RationalBinary.floorLog2 x.num.natAbs x.den + 1 ≤
@@ -68,13 +75,9 @@ theorem div_binaryQuantum_lt (fmt : FloatFormat) {x : ℚ} (hx : 0 < x) :
 theorem binaryNearestAwayDyadic_significand_le (fmt : FloatFormat) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) :
     (binaryNearestAwayDyadic fmt s x).significand ≤ 2 ^ (fmt.fracWidth + 1) := by
-  by_cases hz : x = 0
-  · subst x
-    norm_num [binaryNearestAwayDyadic, RoundingMode.roundMagnitude, RoundingMode.increment]
   have hfloor : ⌊x / (2 : ℚ) ^ binaryQuantum fmt x⌋₊ < 2 ^ (fmt.fracWidth + 1) := by
     apply (Nat.floor_lt (by positivity)).mpr
-    simpa only [Nat.cast_pow, Nat.cast_ofNat] using
-      div_binaryQuantum_lt fmt (lt_of_le_of_ne hx (Ne.symm hz))
+    simpa only [Nat.cast_pow, Nat.cast_ofNat] using div_binaryQuantum_lt fmt x
   exact (RoundingMode.roundMagnitude_le_floor_add_one .nearestAway s _).trans
     (Nat.succ_le_of_lt hfloor)
 
@@ -113,24 +116,8 @@ theorem roundBinaryMagnitude_nearestAway_error_le_half (fmt : FloatFormat)
         (2 : ℝ) ^ binaryQuantum fmt x / 2 := by
   rw [roundBinaryMagnitude_nearestAway_eq fmt hfmt s hx hfinite]
   have hu : (0 : ℚ) < (2 : ℚ) ^ binaryQuantum fmt x := by positivity
-  have herr := RoundingMode.roundMagnitude_error_le_half .nearestAway (Or.inr rfl) s
-    (div_nonneg hx hu.le)
-  have hscaled := mul_le_mul_of_nonneg_right herr hu.le
-  have habs : |(RoundingMode.nearestAway.roundMagnitude s
-      (x / (2 : ℚ) ^ binaryQuantum fmt x) : ℚ) - x / (2 : ℚ) ^ binaryQuantum fmt x| *
-      (2 : ℚ) ^ binaryQuantum fmt x =
-      |((RoundingMode.nearestAway.roundMagnitude s
-        (x / (2 : ℚ) ^ binaryQuantum fmt x) : ℚ) - x / (2 : ℚ) ^ binaryQuantum fmt x) *
-        (2 : ℚ) ^ binaryQuantum fmt x| := by rw [abs_mul, abs_of_pos hu]
-  rw [habs] at hscaled
-  have hmul : ((RoundingMode.nearestAway.roundMagnitude s
-      (x / (2 : ℚ) ^ binaryQuantum fmt x) : ℚ) - x / (2 : ℚ) ^ binaryQuantum fmt x) *
-      (2 : ℚ) ^ binaryQuantum fmt x =
-      (RoundingMode.nearestAway.roundMagnitude s
-        (x / (2 : ℚ) ^ binaryQuantum fmt x) : ℚ) *
-        (2 : ℚ) ^ binaryQuantum fmt x - x := by
-    field_simp
-  rw [hmul] at hscaled
+  have hscaled :=
+    RoundingMode.nearestAway.roundMagnitude_scaled_error_le_half (Or.inr rfl) s hx hu
   have hreal : |(RoundingMode.nearestAway.roundMagnitude s
       (x / (2 : ℚ) ^ binaryQuantum fmt x) : ℝ) *
       (2 : ℝ) ^ binaryQuantum fmt x - x| ≤

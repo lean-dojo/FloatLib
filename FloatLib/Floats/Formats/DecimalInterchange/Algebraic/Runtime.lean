@@ -67,7 +67,7 @@ An infinity dominates a quiet NaN. A signaling NaN raises invalid and propagates
 the first NaN's diagnostics, as in the other decimal binary operations. -/
 def hypot (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
   | .nan s t p, y =>
-      if t || y.isSignaling then nanResult f s p true
+      if t || y.isSNaN then nanResult f s p true
       else match y with
         | .infinity _ => { value := .infinity false }
         | _ => nanResult f s p false

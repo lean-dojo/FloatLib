@@ -84,17 +84,11 @@ theorem decode_eq {fmt : FloatFormat}
             else
               Model.pow2 fmt.fracWidth + Model.fracField x }
   by_cases hexceptional : exponent = allOnes
-  · have hgenericExceptional :
-        Model.expField x = fmt.expAllOnesNat := by
-      rw [← hexponent, ← hallOnes, hexceptional]
+  · have hgenericExceptional : Model.expField x = fmt.expAllOnesNat :=
+      (exponentField_eq_exponentMask_iff hwidth x).mp hexceptional
     simp [hexceptional, hgenericExceptional]
-  · have hgenericFinite :
-        Model.expField x ≠ fmt.expAllOnesNat := by
-      intro h
-      apply hexceptional
-      apply UInt64.toNat_inj.mp
-      rw [hexponent, hallOnes]
-      exact h
+  · have hgenericFinite : Model.expField x ≠ fmt.expAllOnesNat :=
+      fun h => hexceptional ((exponentField_eq_exponentMask_iff hwidth x).mpr h)
     have hgenericAllOnesPositive : 0 < fmt.expAllOnesNat := by
       unfold FloatFormat.expAllOnesNat
       have hpow : 1 < 2 ^ fmt.expWidth :=
@@ -130,7 +124,7 @@ theorem decode_eq {fmt : FloatFormat}
           (finiteMantissa fmt exponent fraction).toNat =
             2 ^ fmt.fracWidth + Model.fracField x := by
         simpa [finiteMantissa, hexponentZero, exponent, fraction, bits] using
-          NativeSmallWord.normalMantissa_toNat_of_width hwidth x
+          NativeSmallWord.normalMantissa_toNat hwidth x
       rw [hsign, hexponent, hmantissa]
       simp [hexceptional, hgenericFinite, hgenericNonzero,
         Model.pow2_eq_two_pow]
@@ -225,15 +219,8 @@ theorem sqrtPositive_eq_runtime {fmt : FloatFormat}
       exponent.toNat = expField x := by
     simpa [exponent, bits] using
       NativeSmallWord.exponentField_toNat hwidth x
-  have hallOnes :
-      (NativeSmallWord.exponentMask fmt).toNat =
-        FloatFormat.expAllOnesNat fmt :=
-    NativeSmallWord.exponentMask_toNat hwidth
-  have hexceptional :
-      exponent ≠ NativeSmallWord.exponentMask fmt := by
-    intro heq
-    apply hfieldFinite
-    rw [← hexponent, ← hallOnes, heq]
+  have hexceptional : exponent ≠ NativeSmallWord.exponentMask fmt :=
+    fun heq => hfieldFinite ((exponentField_eq_exponentMask_iff hwidth x).mp heq)
   have hnativeDecode :
       decode? x = some components := by
     unfold decode?

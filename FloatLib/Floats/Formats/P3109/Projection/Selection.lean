@@ -154,7 +154,7 @@ theorem roundFiniteToPrecision_report_spec (format : Format) (mode : RoundingMod
     · simp [hz]
     · simp [roundFiniteToPrecision, hz]
   · obtain ⟨lower, rem, d, hr, hv, hs, ho⟩ :=
-      Internal.roundFiniteToPrecision_spec format mode value hz
+      Internal.roundFiniteToPrecision_spec format mode value
     refine ⟨lower, rem, d, hr, hv, ?_⟩
     rw [ho, hs, Internal.roundAway_eq_rational format mode _ _ _ _ _ hr]
 

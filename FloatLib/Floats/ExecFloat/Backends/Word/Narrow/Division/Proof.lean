@@ -27,6 +27,22 @@ subnormal results and overflow included.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 open FloatLib.Numerics.FixedWord.RestoringQuotient
 
+/-- Both 24-bit significands have their leading bit below position 24. -/
+private theorem significand_log2_lt (num den : UInt64) (hnum : num ≠ 0) (hden : den ≠ 0)
+    (hnumFit : num.toNat < 2 ^ 24) (hdenFit : den.toNat < 2 ^ 24) :
+    num.log2.toNat < 24 ∧ den.log2.toNat < 24 :=
+  ⟨FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow num 24 hnum hnumFit,
+    FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow den 24 hden hdenFit⟩
+
+/-- A word whose leading bit stays below bit 63 after a shift by `k` shifts below `2 ^ 63`. -/
+private theorem shiftLeft_lt_two_pow_63_of_log2 (value : UInt64) (k : Nat)
+    (hk : value.log2.toNat + 1 + k ≤ 63) :
+    value.toNat <<< k < 2 ^ 63 := by
+  have hbound : value.toNat <<< k < 2 ^ (value.toNat.log2 + 1 + k) :=
+    Nat.shiftLeft_lt Nat.lt_log2_self
+  rw [← FloatLib.Numerics.FixedWord.log2_toNat] at hbound
+  exact lt_of_lt_of_le hbound (Nat.pow_le_pow_right (by decide) hk)
+
 private theorem subnormal_num_shift_bounds
     (num den : UInt64) (exponent : Int) (shift : Nat)
     (hnum : num ≠ 0) (hden : den ≠ 0)
@@ -35,25 +51,10 @@ private theorem subnormal_num_shift_bounds
     (hscale : exponent + 149 = Int.ofNat shift)
     (hhigh : floorLog2RatWord num den + exponent < -126) :
     shift < 64 ∧ num.toNat <<< shift < 2 ^ 63 := by
-  have hnumLog : num.log2.toNat < 24 :=
-    FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow
-      num 24 hnum hnumFit
-  have hdenLog : den.log2.toNat < 24 :=
-    FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow
-      den 24 hden hdenFit
+  obtain ⟨hnumLog, hdenLog⟩ := significand_log2_lt num den hnum hden hnumFit hdenFit
   have hrange := floorLog2RatWord_log_bounds num den
   simp only [Int.ofNat_eq_natCast] at hrange hscale
-  have hshiftLt : shift < 64 := by omega
-  have hexponent :
-      num.log2.toNat + 1 + shift ≤ 63 := by
-    omega
-  have hbound :
-      num.toNat <<< shift <
-        2 ^ (num.toNat.log2 + 1 + shift) :=
-    Nat.shiftLeft_lt Nat.lt_log2_self
-  rw [← FloatLib.Numerics.FixedWord.log2_toNat] at hbound
-  exact ⟨hshiftLt, lt_of_lt_of_le hbound <|
-    Nat.pow_le_pow_right (by decide) hexponent⟩
+  exact ⟨by omega, shiftLeft_lt_two_pow_63_of_log2 num shift (by omega)⟩
 
 private theorem subnormal_den_shift_bounds
     (num den : UInt64) (exponent : Int) (shift : Nat)
@@ -63,33 +64,15 @@ private theorem subnormal_den_shift_bounds
     (hscale : exponent + 149 = Int.negSucc shift)
     (hlow : ¬floorLog2RatWord num den + exponent < -150) :
     shift + 1 < 64 ∧ den.toNat <<< (shift + 1) < 2 ^ 63 := by
-  have hnumLog : num.log2.toNat < 24 :=
-    FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow
-      num 24 hnum hnumFit
-  have hdenLog : den.log2.toNat < 24 :=
-    FloatLib.Numerics.FixedWord.log2_toNat_lt_of_toNat_lt_two_pow
-      den 24 hden hdenFit
+  obtain ⟨hnumLog, hdenLog⟩ := significand_log2_lt num den hnum hden hnumFit hdenFit
   have hrange := floorLog2RatWord_log_bounds num den
   simp only [Int.ofNat_eq_natCast] at hrange
-  have hshiftLt : shift + 1 < 64 := by
-    simp only [Int.negSucc_eq] at hscale
-    omega
-  have hexponent :
-      den.log2.toNat + 1 + (shift + 1) ≤ 63 := by
-    simp only [Int.negSucc_eq] at hscale
-    omega
-  have hbound :
-      den.toNat <<< (shift + 1) <
-        2 ^ (den.toNat.log2 + 1 + (shift + 1)) :=
-    Nat.shiftLeft_lt Nat.lt_log2_self
-  rw [← FloatLib.Numerics.FixedWord.log2_toNat] at hbound
-  exact ⟨hshiftLt, lt_of_lt_of_le hbound <|
-    Nat.pow_le_pow_right (by decide) hexponent⟩
+  simp only [Int.negSucc_eq] at hscale
+  exact ⟨by omega, shiftLeft_lt_two_pow_63_of_log2 den (shift + 1) (by omega)⟩
 
 private theorem roundQuotientEven_num_shift_toNat
     (num den : UInt64) (shift : Nat)
     (hden : den ≠ 0)
-    (hshift : shift < 64)
     (hnumShiftFit : num.toNat <<< shift < 2 ^ 63) :
     (FloatLib.Numerics.FixedWord.roundQuotientEven
         (num <<< UInt64.ofNat shift) den).toNat =
@@ -99,22 +82,12 @@ private theorem roundQuotientEven_num_shift_toNat
   have hshifted :
       (num <<< UInt64.ofNat shift).toNat =
         num.toNat <<< shift :=
-    FloatLib.Numerics.FixedWord.shiftLeft_toNat num shift hshift hwordFit
-  have hquotientFit :
-      (num.toNat <<< shift) / den.toNat + 1 < 2 ^ 64 := by
-    have hquotientLe :
-        (num.toNat <<< shift) / den.toNat ≤ num.toNat <<< shift :=
-      Nat.div_le_self _ _
-    omega
-  rw [FloatLib.Numerics.FixedWord.roundQuotientEven_toNat _ _ hden]
-  · rw [hshifted]
-  · simpa [hshifted] using hquotientFit
+    FloatLib.Numerics.FixedWord.shiftLeft_toNat num shift hwordFit
+  rw [FloatLib.Numerics.FixedWord.roundQuotientEven_toNat _ _ hden, hshifted]
 
 private theorem roundQuotientEven_den_shift_toNat
     (num den : UInt64) (shift : Nat)
     (hden : den ≠ 0)
-    (hshift : shift < 64)
-    (hnumFit : num.toNat < 2 ^ 63)
     (hdenShiftFit : den.toNat <<< shift < 2 ^ 63) :
     (FloatLib.Numerics.FixedWord.roundQuotientEven
         num (den <<< UInt64.ofNat shift)).toNat =
@@ -124,7 +97,7 @@ private theorem roundQuotientEven_den_shift_toNat
   have hshifted :
       (den <<< UInt64.ofNat shift).toNat =
         den.toNat <<< shift :=
-    FloatLib.Numerics.FixedWord.shiftLeft_toNat den shift hshift hwordFit
+    FloatLib.Numerics.FixedWord.shiftLeft_toNat den shift hwordFit
   have hdenNat : den.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hden
   have hshiftedNatNonzero : den.toNat <<< shift ≠ 0 := by
@@ -135,15 +108,7 @@ private theorem roundQuotientEven_den_shift_toNat
     apply hshiftedNatNonzero
     rw [← hshifted, hzero]
     rfl
-  have hquotientFit :
-      num.toNat / (den.toNat <<< shift) + 1 < 2 ^ 64 := by
-    have hquotientLe :
-        num.toNat / (den.toNat <<< shift) ≤ num.toNat :=
-      Nat.div_le_self _ _
-    omega
-  rw [FloatLib.Numerics.FixedWord.roundQuotientEven_toNat _ _ hshiftedNonzero]
-  rw [hshifted]
-  · simpa [hshifted] using hquotientFit
+  rw [FloatLib.Numerics.FixedWord.roundQuotientEven_toNat _ _ hshiftedNonzero, hshifted]
 
 private theorem roundSubnormalWord_eq
     (sign : Bool) (nativeFraction : UInt64) (genericFraction : Nat)
@@ -256,7 +221,7 @@ theorem roundRatScaledWord_eq
       hdenZero, hdenNatNonzero, hnumZero]
   have hnumNatNonzero : num.toNat ≠ 0 := by
     simpa [← UInt64.toNat_inj] using hnumZero
-  have hfloor := floorLog2RatWord_eq num den hnumZero hdenZero
+  have hfloor := floorLog2RatWord_eq num den hdenZero
   unfold roundRatScaledWord NativeBinary32.roundRatScaled
   simp only [beq_iff_eq, hdenZero, hdenNatNonzero, hnumZero,
     hnumNatNonzero, ite_false]
@@ -285,7 +250,7 @@ theorem roundRatScaledWord_eq
             hnumZero hdenZero hnumFit hdenFit hscale hhighWord
         have hfraction :=
           roundQuotientEven_num_shift_toNat num den shift hdenZero
-            hbounds.1 hbounds.2
+            hbounds.2
         convert roundSubnormalWord_eq sign
             (FloatLib.Numerics.FixedWord.roundQuotientEven
               (num <<< UInt64.ofNat shift) den)
@@ -300,11 +265,9 @@ theorem roundRatScaledWord_eq
         have hbounds :=
           subnormal_den_shift_bounds num den exponent shift
             hnumZero hdenZero hnumFit hdenFit hscale hlowWord
-        have hnumFit63 : num.toNat < 2 ^ 63 :=
-          lt_trans hnumFit (by norm_num)
         have hfraction :=
           roundQuotientEven_den_shift_toNat num den (shift + 1)
-            hdenZero hbounds.1 hnumFit63 hbounds.2
+            hdenZero hbounds.2
         convert roundSubnormalWord_eq sign
             (FloatLib.Numerics.FixedWord.roundQuotientEven num
               (den <<< UInt64.ofNat (shift + 1)))
@@ -325,18 +288,18 @@ theorem roundRatScaledWord_eq
         show FloatFormat.binary32.fracWidth = 23 by
           decide] using
         (NativeWordQuotient.normalShift_bounds
-          FloatFormat.binary32 num den hnumZero hdenZero hnumFit hdenFit
+          FloatFormat.binary32 num den hnumFit hdenFit
           (by decide))
     have hfraction :=
       roundQuotientEven_num_shift_toNat num den shift hdenZero
-        hbounds.1 hbounds.2
+        hbounds.2
     have hshiftInt :
         Int.ofNat shift = 23 - rationalExponent := by
       simpa [shift, rationalExponent, hfloor,
         show FloatFormat.binary32.fracWidth = 23 by
           decide] using
         (NativeWordQuotient.normalShift_eq
-          FloatFormat.binary32 num den hnumZero hnumFit)
+          FloatFormat.binary32 num den hnumFit)
     have hscale :
         23 - Numerics.RationalBinary.floorLog2 num.toNat den.toNat =
           Int.ofNat shift := by

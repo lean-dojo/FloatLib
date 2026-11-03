@@ -40,24 +40,6 @@ theorem IntegerRange.round?_eq_none_iff (range : IntegerRange) (round : ℚ → 
     range.round? round value = none ↔ ¬ range.Contains (round value) := by
   simp [IntegerRange.round?]
 
-/-- Zero is representable in every signed or unsigned word format, including width zero. -/
-theorem IntegerFormat.zero_inRange (destination : IntegerFormat) : destination.InRange 0 := by
-  cases destination with
-  | signed width =>
-      cases width with
-      | zero => decide
-      | succ n =>
-          have hp : (0 : Int) < 2 ^ n := Int.pow_pos (by decide)
-          simp only [IntegerFormat.InRange, IntegerFormat.range, IntegerRange.Contains,
-            IntegerFormat.minValue, IntegerFormat.maxValue,
-            FixedInt.minValue_eq (Nat.succ_pos n), FixedInt.maxValue_eq, Nat.succ_sub_one]
-          omega
-  | unsigned width =>
-      have hp : (0 : Int) < 2 ^ width := Int.pow_pos (by decide)
-      simp only [IntegerFormat.InRange, IntegerFormat.range, IntegerRange.Contains,
-        IntegerFormat.minValue, IntegerFormat.maxValue]
-      omega
-
 /-- An unsigned word's natural-number interpretation lies in its numerical range. -/
 theorem IntegerFormat.toNat_inRange {width : Nat} (word : BitVec width) :
     (unsigned width).InRange (word.toNat : Int) := by
@@ -85,5 +67,17 @@ theorem IntegerFormat.signed_succ_inRange_of_unsigned {width : Nat} {value : Int
     FixedInt.minValue_eq (Nat.succ_pos width), FixedInt.maxValue_eq, Nat.succ_sub_one]
   have hp : (0 : Int) < 2 ^ width := Int.pow_pos (by decide)
   omega
+
+/--
+Zero is representable in every signed or unsigned word format, including width zero: it is the
+value of the zero word, and a signed format holds the unsigned range of one bit fewer.
+-/
+theorem IntegerFormat.zero_inRange (destination : IntegerFormat) : destination.InRange 0 := by
+  cases destination with
+  | signed width =>
+      cases width with
+      | zero => decide
+      | succ n => exact signed_succ_inRange_of_unsigned (by simpa using toNat_inRange 0#n)
+  | unsigned width => simpa using toNat_inRange 0#width
 
 end FloatLib.Numerics

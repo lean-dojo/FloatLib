@@ -7,10 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.MulDiv
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured
 public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.Constructors
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.FromInt
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.ToInt
+public import FloatLib.Floats.Formats.IEEE754.Native.MulDiv
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
 public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
 
@@ -18,7 +20,9 @@ public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
 # Native logical-model bridges
 
 These regressions apply the public FloatLib bridges to symbolic inputs and selected boundary
-cases. Concrete results are kernel-checked, and no host floating-point operation runs.
+cases. Concrete results are kernel-checked, and no host floating-point operation runs. The file
+imports `Configured`, as client code does, so its operations elaborate with the first-order
+binary32 and binary64 instances.
 -/
 
 @[expose] public section
@@ -145,6 +149,40 @@ theorem native32_add_overflow :
   rw [← ExecFloat.Binary.ofFloat32_add_of_isFinite _ _ (by decide +kernel) (by decide +kernel)]
   decide +kernel
 
+/-- Import commutes with binary64 multiplication and division on arbitrary finite operands. -/
+theorem native64_mul_div_commute (x y : Float)
+    (hx : x.isFinite = true) (hy : y.isFinite = true) :
+    (ExecFloat.Binary.ofFloat (x * y) : Binary64) =
+        ExecFloat.Binary.ofFloat x * ExecFloat.Binary.ofFloat y ∧
+      (ExecFloat.Binary.ofFloat (x / y) : Binary64) =
+        ExecFloat.Binary.ofFloat x / ExecFloat.Binary.ofFloat y :=
+  ⟨ExecFloat.Binary.ofFloat_mul_of_isFinite x y hx hy,
+    ExecFloat.Binary.ofFloat_div_of_isFinite x y hx hy⟩
+
+/-- The finite-input multiplication bridge permits overflow to infinity. -/
+theorem native32_mul_overflow :
+    ExecFloat.Binary.toBits32
+      (ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x7f7fffff) *
+        ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x40000000)) = 0x7f800000 := by
+  rw [← ExecFloat.Binary.ofFloat32_mul_of_isFinite _ _ (by decide +kernel) (by decide +kernel)]
+  decide +kernel
+
+/-- The finite-input division bridge covers division by a signed zero: `1 / -0` is `-∞`. -/
+theorem native32_div_negZero :
+    ExecFloat.Binary.toBits32
+      (ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x3f800000) /
+        ExecFloat.Binary.ofFloat32 (Float32.ofBits 0x80000000)) = 0xff800000 := by
+  rw [← ExecFloat.Binary.ofFloat32_div_of_isFinite _ _ (by decide +kernel) (by decide +kernel)]
+  decide +kernel
+
+/-- The finite-input division bridge covers `0 / 0`, Lean's canonical quiet NaN. -/
+theorem native32_div_zero_zero :
+    ExecFloat.Binary.toBits32
+      (ExecFloat.Binary.ofFloat32 (Float32.ofBits 0) /
+        ExecFloat.Binary.ofFloat32 (Float32.ofBits 0)) = 0x7fc00000 := by
+  rw [← ExecFloat.Binary.ofFloat32_div_of_isFinite _ _ (by decide +kernel) (by decide +kernel)]
+  decide +kernel
+
 /-- A zero provisional quotient still rounds: the least binary64 subnormal over 1.5 is itself. -/
 theorem unpacked64_div_zero_quotient :
     Model.roundAt FloatFormat.binary64
@@ -210,5 +248,54 @@ theorem native32_sqrt_negative_one :
       (ExecFloat.sqrt (ExecFloat.Binary.ofBits32 0xbf800000))).toBits = 0x7fc00000 := by
   rw [ExecFloat.Binary.toFloat32_sqrt]
   decide +kernel
+
+/-- In a client of `Configured`, `rw` turns configured binary32 operations on imported words
+back into native ones. -/
+theorem native32_bridges_rewrite (x y : Float32) (hx : x.isFinite = true)
+    (hy : y.isFinite = true) :
+    (ExecFloat.Binary.ofFloat32 x + ExecFloat.Binary.ofFloat32 y : Binary32) =
+        ExecFloat.Binary.ofFloat32 (x + y) ∧
+      (ExecFloat.Binary.ofFloat32 x - ExecFloat.Binary.ofFloat32 y : Binary32) =
+        ExecFloat.Binary.ofFloat32 (x - y) ∧
+      (ExecFloat.Binary.ofFloat32 x * ExecFloat.Binary.ofFloat32 y : Binary32) =
+        ExecFloat.Binary.ofFloat32 (x * y) ∧
+      (ExecFloat.Binary.ofFloat32 x / ExecFloat.Binary.ofFloat32 y : Binary32) =
+        ExecFloat.Binary.ofFloat32 (x / y) := by
+  rw [← ExecFloat.Binary.ofFloat32_add_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat32_sub_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat32_mul_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat32_div_of_isFinite x y hx hy]
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+/-- The binary32 product bridge rewrites inside a finiteness condition. -/
+theorem native32_isFinite_mul_rewrite (x y : Float32) (hx : x.isFinite = true)
+    (hy : y.isFinite = true)
+    (h : ExecFloat.Binary.isFinite (ExecFloat.Binary.ofFloat32 (x * y) : Binary32) = true) :
+    ExecFloat.Binary.isFinite
+      (ExecFloat.Binary.ofFloat32 x * ExecFloat.Binary.ofFloat32 y : Binary32) = true := by
+  rw [← ExecFloat.Binary.ofFloat32_mul_of_isFinite x y hx hy]
+  exact h
+
+/-- In a client of `Configured`, `simp` turns configured binary64 operations on imported words
+back into native ones. -/
+theorem native64_bridges_simp (x y : Float) (hx : x.isFinite = true) (hy : y.isFinite = true) :
+    (ExecFloat.Binary.ofFloat x + ExecFloat.Binary.ofFloat y : Binary64) =
+        ExecFloat.Binary.ofFloat (x + y) ∧
+      (ExecFloat.Binary.ofFloat x - ExecFloat.Binary.ofFloat y : Binary64) =
+        ExecFloat.Binary.ofFloat (x - y) ∧
+      (ExecFloat.Binary.ofFloat x * ExecFloat.Binary.ofFloat y : Binary64) =
+        ExecFloat.Binary.ofFloat (x * y) ∧
+      (ExecFloat.Binary.ofFloat x / ExecFloat.Binary.ofFloat y : Binary64) =
+        ExecFloat.Binary.ofFloat (x / y) := by
+  simp only [← ExecFloat.Binary.ofFloat_add_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat_sub_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat_mul_of_isFinite x y hx hy,
+    ← ExecFloat.Binary.ofFloat_div_of_isFinite x y hx hy, and_self]
+
+/-- In a client of `Configured`, `rw` exports a configured binary32 square root. -/
+theorem native32_sqrt_rewrite (value : Binary32) :
+    (ExecFloat.Binary.toFloat32 (ExecFloat.sqrt value)).toBits =
+      (ExecFloat.Binary.toFloat32 value).sqrt.toBits := by
+  rw [ExecFloat.Binary.toFloat32_sqrt]
 
 end FloatLibTests.Conformance.BinaryInterchange.NativeModel

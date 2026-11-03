@@ -82,25 +82,6 @@ theorem half_sub_eq
       (Int.natCast_ediv (position + outputOffset) 2).symm
   · decide
 
-/--
-Normalize the total-exponent numerator used by square-root target-exponent calculations.
--/
-theorem sum_half_sub_eq
-    (leading scale inputShift outputOffset outputBias : Nat)
-    (hinput : 2 ≤ inputShift)
-    (hbalance : inputShift - 2 + outputOffset = 2 * outputBias) :
-    (Int.ofNat leading + 1 + (Int.ofNat scale - Int.ofNat inputShift) + 1).ediv 2 =
-      Int.ofNat ((leading + scale + outputOffset) / 2) -
-        Int.ofNat outputBias := by
-  have hnumerator :
-      Int.ofNat leading + 1 + (Int.ofNat scale - Int.ofNat inputShift) + 1 =
-        Int.ofNat (leading + scale) - Int.ofNat (inputShift - 2) := by
-    simp only [Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_sub hinput]
-    omega
-  rw [hnumerator]
-  exact half_sub_eq (leading + scale) (inputShift - 2)
-    outputOffset outputBias hbalance
-
 /-- Cast a natural affine numerator before or after division by two. -/
 theorem sum_natCast_ediv_two (left right offset : Nat) :
     (Int.ofNat left + Int.ofNat right + Int.ofNat offset).ediv 2 =
@@ -122,8 +103,6 @@ for the normalized result significand, and the input leading bit must lie within
 theorem target_exponent
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)
     (hleading : leading ≤ fractionBits)
-    (hinput : 2 ≤ inputShift)
-    (hbias : 1 ≤ outputBias)
     (hnormal :
       outputBias + fractionBits ≤ inputShift + outputOffset / 2)
     (hbalance : inputShift + outputOffset = 2 * outputBias) :
@@ -140,18 +119,20 @@ theorem target_exponent
   let rootExponent :=
     Int.ofNat ((position + outputOffset) / 2) -
       Int.ofNat outputBias
-  have htotalBalance :
-      inputShift - 2 + outputOffset = 2 * (outputBias - 1) := by
-    omega
   have htotal :
       (Int.ofNat leading + 1 +
           (Int.ofNat scale - Int.ofNat inputShift) + 1).ediv 2 =
         rootExponent + 1 := by
-    dsimp only [rootExponent, position]
-    rw [sum_half_sub_eq leading scale inputShift outputOffset
-      (outputBias - 1) hinput htotalBalance]
-    simp only [Int.ofNat_eq_natCast, Nat.cast_sub hbias]
-    omega
+    have hnumerator :
+        Int.ofNat leading + 1 + (Int.ofNat scale - Int.ofNat inputShift) + 1 =
+          (Int.ofNat position - Int.ofNat inputShift) + 1 * 2 := by
+      dsimp only [position]
+      simp only [Int.ofNat_eq_natCast, Nat.cast_add]
+      omega
+    rw [hnumerator]
+    change (Int.ofNat position - Int.ofNat inputShift + 1 * 2) / 2 = rootExponent + 1
+    rw [Int.add_mul_ediv_right _ _ (by decide)]
+    exact congrArg (· + 1) (half_sub_eq position inputShift outputOffset outputBias hbalance)
   have hrhs :
       (Int.ofNat leading + Int.ofNat scale +
           Int.ofNat outputOffset).ediv 2 -
@@ -220,7 +201,6 @@ when the affine position is odd.
 -/
 theorem shift_amount
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)
-    (hleading : leading ≤ fractionBits)
     (hbalance : inputShift + outputOffset = 2 * outputBias) :
     let position := leading + scale
     let rootExponent :=
@@ -229,26 +209,8 @@ theorem shift_amount
         2 * (rootExponent - Int.ofNat fractionBits)).toNat =
       (position + outputOffset) % 2 + 2 * fractionBits - leading := by
   dsimp only
-  let position := leading + scale
-  let numerator := position + outputOffset
-  have hdecompose :
-      numerator % 2 + 2 * (numerator / 2) = numerator := by
-    simpa [Nat.mul_comm] using Nat.mod_add_div numerator 2
-  have hnonnegative :
-      leading ≤ numerator % 2 + 2 * fractionBits := by
-    omega
-  have hvalue :
-      Int.ofNat scale - Int.ofNat inputShift -
-          2 *
-            (Int.ofNat (numerator / 2) -
-              Int.ofNat outputBias - Int.ofNat fractionBits) =
-        Int.ofNat (numerator % 2 + 2 * fractionBits - leading) := by
-    simp only [Int.ofNat_eq_natCast, Nat.cast_sub hnonnegative, Nat.cast_add,
-      Nat.cast_mul, Nat.cast_ofNat]
-    dsimp only [numerator, position] at hdecompose ⊢
-    omega
-  rw [show leading + scale + outputOffset = numerator by rfl, hvalue]
-  simp
+  simp only [Int.ofNat_eq_natCast]
+  omega
 
 /--
 Express the square-root shift directly in terms of the input position when the affine offset is
@@ -256,7 +218,6 @@ even.
 -/
 theorem shift_amount_of_even_offset
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)
-    (hleading : leading ≤ fractionBits)
     (hbalance : inputShift + outputOffset = 2 * outputBias)
     (hoffset : outputOffset % 2 = 0) :
     let position := leading + scale
@@ -270,7 +231,7 @@ theorem shift_amount_of_even_offset
         2 * fractionBits + 1 - leading := by
   dsimp only
   rw [shift_amount leading scale inputShift outputOffset outputBias
-    fractionBits hleading hbalance]
+    fractionBits hbalance]
   split <;> omega
 
 /--
@@ -279,7 +240,6 @@ odd.
 -/
 theorem shift_amount_of_odd_offset
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)
-    (hleading : leading ≤ fractionBits)
     (hbalance : inputShift + outputOffset = 2 * outputBias)
     (hoffset : outputOffset % 2 = 1) :
     let position := leading + scale
@@ -293,7 +253,7 @@ theorem shift_amount_of_odd_offset
         2 * fractionBits - leading := by
   dsimp only
   rw [shift_amount leading scale inputShift outputOffset outputBias
-    fractionBits hleading hbalance]
+    fractionBits hbalance]
   split <;> omega
 
 end FloatLib.Floats.ExecFloat.Backends.SqrtArithmetic

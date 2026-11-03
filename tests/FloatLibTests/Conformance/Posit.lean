@@ -59,11 +59,22 @@ theorem all_operations_refine
   FloatLib.Floats.ExecFloat.Proof.fullArithmeticCertificate
     (Configured.Family format code plan)
 
+/--
+`simp` decodes a public square to the model square at closed widths with different carriers, a
+machine word for `Posit32` and the exact-width plan beyond 128 bits.
+-/
+theorem toModel_square_closed_widths (x : Posit32) (y : ExecFloat.Posit 200) :
+    ExecFloat.Posit.toModel (ExecFloat.Posit.square x) =
+        Model.square (ExecFloat.Posit.toModel x) ∧
+      ExecFloat.Posit.toModel (ExecFloat.Posit.square y) =
+        Model.square (ExecFloat.Posit.toModel y) := by
+  simp
+
 /-! ## Exhaustive tiny-format representation checks -/
 
 /-- Exact descriptor for the smallest standard posit width. -/
 abbrev posit2Format : Format :=
-  FloatLib.Floats.ExecFloat.Posit.format 2
+  FloatLib.Floats.ExecFloat.Posit.descriptor 2
 
 /--
 Check one encoded word against the exact decode-then-round law.
@@ -96,27 +107,27 @@ theorem posit2_all_words_round_trip :
   decide +kernel
 
 theorem posit3_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 3) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 3) = 0 := by
   decide +kernel
 
 theorem posit4_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 4) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 4) = 0 := by
   decide +kernel
 
 theorem posit5_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 5) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 5) = 0 := by
   decide +kernel
 
 theorem posit6_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 6) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 6) = 0 := by
   decide +kernel
 
 theorem posit7_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 7) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 7) = 0 := by
   decide +kernel
 
 theorem posit8_all_words_round_trip :
-    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.format 8) = 0 := by
+    roundTripFailures (FloatLib.Floats.ExecFloat.Posit.descriptor 8) = 0 := by
   decide +kernel
 
 /-! ## Standard extrema and canonical words -/
@@ -136,7 +147,7 @@ theorem posit2_standard_words :
 
 /-- Exact descriptor used by the standard posit8 examples. -/
 abbrev posit8Format : Format :=
-  FloatLib.Floats.ExecFloat.Posit.format 8
+  FloatLib.Floats.ExecFloat.Posit.descriptor 8
 
 /-- The eight-bit minimum positive value is the standard `2⁻²⁴`. -/
 theorem posit8_minPos :
@@ -151,7 +162,7 @@ theorem posit8_maxPos :
 
 /-- The sixteen-bit extrema follow the standard width-only formula `2^(±(4n - 8))`. -/
 theorem posit16_extrema :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 16
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 16
     Model.minPositiveRat format = (1 : Rat) / 72057594037927936 ∧
       Model.nonnegativeRatAt format (format.signMaskNat - 1) =
         (72057594037927936 : Rat) := by
@@ -159,7 +170,7 @@ theorem posit16_extrema :
 
 /-- The thirty-two-bit extrema follow the same standard formula without a format-specific table. -/
 theorem posit32_extrema :
-    let format := FloatLib.Floats.ExecFloat.Posit.format 32
+    let format := FloatLib.Floats.ExecFloat.Posit.descriptor 32
     Model.minPositiveRat format =
         (1 : Rat) / 1329227995784915872903807060280344576 ∧
       Model.nonnegativeRatAt format (format.signMaskNat - 1) =
@@ -188,6 +199,41 @@ posit8 value, including the zero word.
 theorem posit8_nar_comparison :
     Model.compareEqual (Model.nar posit8Format) (Model.nar posit8Format) = true ∧
       Model.compareLess (Model.nar posit8Format) (Model.zero posit8Format) = true := by
+  decide +kernel
+
+/-! ## Descriptors and rational construction -/
+
+/-- A descriptor is written by field name, and `decide` supplies the width proof. -/
+theorem descriptor_eq_named_fields :
+    FloatLib.Floats.ExecFloat.Posit.descriptor 8 = ({ bits := 8 } : Format) :=
+  rfl
+
+/--
+error: a posit format requires bits ≥ 2
+-/
+#guard_msgs (substring := true) in
+example : Format := { bits := 1 }
+
+/--
+error: ExecFloat.Posit requires bits ≥ 2
+-/
+#guard_msgs (substring := true) in
+#check ExecFloat.Posit 1
+
+/--
+error: ExecFloat.Posit.Quire requires bits ≥ 2
+-/
+#guard_msgs (substring := true) in
+#check ExecFloat.Posit.Quire 1
+
+/--
+`ofRat` rounds once, as literals do: one third becomes `11/32` in eight bits, and `3/2` is the
+word of the literal `1.5`.
+-/
+theorem ofRat_rounds_once :
+    ExecFloat.Posit.toRat? (.ofRat (1 / 3) : Posit8) = some (11 / 32) ∧
+      ExecFloat.Posit.toNatBits (.ofRat (3 / 2) : Posit16) =
+        ExecFloat.Posit.toNatBits (1.5 : Posit16) := by
   decide +kernel
 
 /-! ## Current-standard basic functions -/

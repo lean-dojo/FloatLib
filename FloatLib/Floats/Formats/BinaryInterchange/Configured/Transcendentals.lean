@@ -8,32 +8,51 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.PowerProof
 public import FloatLib.Numerics.Capabilities.Elementary
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
+public meta import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Extension
 
 /-!
 # Opt-in transcendentals for configured binary values
 
 This module adds deterministic `exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and `tanh`
 approximations, the floating-point power `pow`, and the `MathFunctions` instance to
-`ExecFloat.Binary`. The lifting theorems below carry the model results through packing. These
-kernels use nearest-even arithmetic and IEEE-style exceptional values. They carry no general
-real-error bound.
+`ExecFloat.Binary`. The approximations carry no general real-error bound. They use nearest-even
+arithmetic and IEEE-style exceptional values, and the lifting theorems below carry the model
+results through packing. `pow` is `Model.pow`, which is correctly rounded in the cases its
+documentation states and approximate otherwise.
 
-Certification is an option. `exp x (certify := true)`, and likewise `log` and `pow`, refines
-rational enclosures of the real function and returns `Except Certified.Failure Value`: either a
-result proved finite and equal to nearest-even rounding of the real function, or the reason
-there is none (an unsupported format, a nonfinite input, a domain or range failure, or a search
-that did not settle within its `budget`). Once certification is requested there is no fallback to
-the approximation. `expMinus1` and `logPlus1` exist only in certified form. They form `exp x - 1`
-and `log (1 + x)` before rounding, retaining small results near zero. The `MathFunctions`
-instance uses the approximation kernels.
+Two other namespaces hold functions with different result types and guarantees.
+`ExecFloat.Binary.Certified` holds certified searches for `exp`, `log`, `pow`, `expMinus1`, and
+`logPlus1`. Each refines rational enclosures of the real function within its `budget` and returns
+`Except Certified.Failure Value`: either a result proved finite and equal to nearest-even rounding
+of the real function, or the reason there is none (an unsupported format, a nonfinite input, a
+domain or range failure, or a search that did not settle). A search can fail on a valid input,
+and it never falls back to the approximation. `Certified.expMinus1` and `Certified.logPlus1` form
+`exp x - 1` and `log (1 + x)` before rounding, retaining small results near zero. The module also
+imports `Configured.CorrectlyRounded`, whose `CorrectlyRounded.exp`, `log`, `expMinus1`,
+`logPlus1`, and `expMul` always return a value. For an IEEE descriptor and a finite input in the
+domain, a finite result is the nearest-even rounding of the real function. A non-finite input is
+outside that statement: `exp (-∞)` is a finite zero. `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and
+`tanh` exist only as approximations.
+
+The `MathFunctions` instance uses the approximation kernels. Generic code that should get the
+correctly rounded `exp` and `log` on IEEE descriptors opts in, in one of two ways. After
+`open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`, the instance in
+that scope is `CorrectlyRounded.mathFunctions`. A library that builds its own
+dictionary passes `CorrectlyRounded.mathFunctions` by name, for example as the `MathFunctions`
+parent of its own class instance. `CorrectlyRounded.mathFunctions_exp_of_isIEEE` and
+`mathFunctions_log_of_isIEEE` then identify its `exp` and `log` with `CorrectlyRounded.exp` and
+`CorrectlyRounded.log`, whose theorems apply. In both cases `sin`, `cos`, `sinh`, `cosh`, and
+`tanh` stay the approximations, and a descriptor other than IEEE keeps the approximate `exp`
+and `log`.
 
 ```lean
-ExecFloat.Binary.exp x (certify := true)
-ExecFloat.Binary.pow x y (certify := true) (budget := { maxSteps := 32 })
+ExecFloat.Binary.Certified.exp x
+ExecFloat.Binary.Certified.pow x y (budget := { maxAttempts := 32 })
 ```
 
 Sine and cosine reduce their arguments by the Payne-Hanek reduction of
@@ -46,6 +65,9 @@ external library.
 
 `import FloatLib` keeps binary elementary functions opt-in. Certified `sqrt` and `abs`, the
 `MathFunctions` class, and its host `Float` and real instances are available by default.
+
+The module registers the default instance with `roundoff`: its methods decode through the model
+functions, and a finite value has a finite absolute value.
 -/
 
 @[expose] public section
@@ -65,101 +87,64 @@ local notation "Value" =>
     format.exponentBias_le_maxFinite plan code
 
 /--
-The exponential `eˣ` in the configured binary format: by default the deterministic approximation,
-and with `certify := true` a certified nearest-even result or the `Certified.Failure` that
-prevented one, searching within `budget`.
+An approximation to `eˣ` in the configured binary format, with no general error bound.
+`Certified.exp` is the certified search, which can fail, and `CorrectlyRounded.exp` the correctly
+rounded exponential.
 -/
-@[macro_inline] def exp (value : Value) (certify : Bool := false)
-    (budget : Certified.Options := {}) :
-    match certify with
-    | true => Except Certified.Failure Value
-    | false => Value :=
-  match certify with
-  | true => (Certified.exp (toModel value) budget).map ofModel
-  | false => ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp value
+@[inline] def exp (value : Value) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp value
 
 /--
-The natural logarithm in the configured binary format: by default the deterministic
-approximation, and with `certify := true` a certified nearest-even result or the
-`Certified.Failure` that prevented one, searching within `budget`.
+An approximation to the natural logarithm in the configured binary format, with no general error
+bound. `Certified.log` is the certified search, which can fail, and `CorrectlyRounded.log` the
+correctly rounded logarithm.
 -/
-@[macro_inline] def log (value : Value) (certify : Bool := false)
-    (budget : Certified.Options := {}) :
-    match certify with
-    | true => Except Certified.Failure Value
-    | false => Value :=
-  match certify with
-  | true => (Certified.log (toModel value) budget).map ofModel
-  | false => ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log value
+@[inline] def log (value : Value) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log value
 
 /--
-The power `base ^ exponent`, by `Model.pow` by default.
+The power `base ^ exponent` by `Model.pow`, with no general error bound.
 
 `Model.pow` gives zeros, infinities, and NaNs their IEEE 754 special cases. For an IEEE
 descriptor, a finite result for a nonzero base and an integral exponent is correctly rounded, and
 a positive base with any other exponent runs the certified search first. A certified range
-failure delivers positive overflow; other failures fall back to `exp (exponent * log base)`. With
-`certify := true` only the certified search runs, for a finite positive base and a finite exponent,
-and its failure is returned instead of the fallback.
+failure delivers positive overflow, and other failures fall back to `exp (exponent * log base)`.
+`Certified.pow` runs only the search, for a finite positive base and a finite exponent, and
+returns its failure instead of the fallback.
 -/
-@[macro_inline] def pow (base exponent : Value) (certify : Bool := false)
-    (budget : Certified.Options := {}) :
-    match certify with
-    | true => Except Certified.Failure Value
-    | false => Value :=
-  match certify with
-  | true => (Certified.pow (toModel base) (toModel exponent) budget).map ofModel
-  | false => ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.pow base exponent
+@[inline] def pow (base exponent : Value) : Value :=
+  ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.pow base exponent
 
-/--
-Certify `exp x - 1` with one final rounding, preserving signed zero, searching within `budget`.
-
-There is no uncertified form: the result is a certified nearest-even value or the
-`Certified.Failure` that prevented one.
--/
-@[inline] def expMinus1 (value : Value) (budget : Certified.Options := {}) :
-    Except Certified.Failure Value :=
-  (Certified.expMinus1 (toModel value) budget).map ofModel
-
-/--
-Certify `log (1 + x)` with one final rounding, preserving signed zero, searching within `budget`.
-
-There is no uncertified form: the result is a certified nearest-even value or the
-`Certified.Failure` that prevented one.
--/
-@[inline] def logPlus1 (value : Value) (budget : Certified.Options := {}) :
-    Except Certified.Failure Value :=
-  (Certified.logPlus1 (toModel value) budget).map ofModel
-
-/-- Deterministic approximation to sine in the configured binary format. -/
+/-- A deterministic approximation to sine, with no general error bound. -/
 @[inline] def sin
     (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sin value
 
-/-- Deterministic approximation to cosine in the configured binary format. -/
+/-- A deterministic approximation to cosine, with no general error bound. -/
 @[inline] def cos
     (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.cos value
 
 /--
-Compute sine and cosine together, sharing argument reduction before repacking both results.
+Approximate sine and cosine together, with no general error bound, sharing argument reduction
+before repacking both results.
 -/
 @[inline] def sinCos
     (value : Value) : Value × Value :=
   let result := Model.sinCos (toModel value)
   (ofModel result.1, ofModel result.2)
 
-/-- Deterministic approximation to hyperbolic sine in the configured binary format. -/
+/-- A deterministic approximation to hyperbolic sine, with no general error bound. -/
 @[inline] def sinh
     (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sinh value
 
-/-- Deterministic approximation to hyperbolic cosine in the configured binary format. -/
+/-- A deterministic approximation to hyperbolic cosine, with no general error bound. -/
 @[inline] def cosh
     (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.cosh value
 
-/-- Deterministic approximation to hyperbolic tangent in the configured binary format. -/
+/-- A deterministic approximation to hyperbolic tangent, with no general error bound. -/
 @[inline] def tanh
     (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.tanh value
@@ -218,6 +203,7 @@ Configured binary values implement the shared elementary-function interface.
 This lets generic programs use `MathFunctions.exp`, `MathFunctions.sin`, and the other operations
 without knowing the binary descriptor. `sqrt` and `abs` here are the certified operations already
 on the default import. The remaining fields are the approximations defined above.
+`CorrectlyRounded.mathFunctions` is the same dictionary with correctly rounded `exp` and `log`.
 -/
 instance : MathFunctions (ExecFloat (Configured.Family format code plan)) where
   exp := fun value => exp value
@@ -231,104 +217,251 @@ instance : MathFunctions (ExecFloat (Configured.Family format code plan)) where
   sin := sin
   sinh := sinh
 
-/-! ## Certified results -/
+namespace CorrectlyRounded
 
-section Certify
+/--
+The `MathFunctions` dictionary with correctly rounded `exp` and `log`. For an IEEE descriptor
+they are `CorrectlyRounded.exp` and `CorrectlyRounded.log` with the default budget, and otherwise
+the approximation kernels. The other fields are those of the default instance: `sqrt` and `abs`
+are the certified operations, `pi` is `Model.pi`, and `sin`, `cos`, `sinh`, `cosh`, and `tanh`
+are the approximations. Pass it where a dictionary is expected, or select it as the instance
+with `open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`.
+-/
+@[instance_reducible] def mathFunctions :
+    MathFunctions (ExecFloat (Configured.Family format code plan)) where
+  exp := fun value =>
+    if format.isIEEE then CorrectlyRounded.exp value else ExecFloat.Binary.exp value
+  tanh := ExecFloat.Binary.tanh
+  cosh := ExecFloat.Binary.cosh
+  sqrt := ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sqrt
+  abs := ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.abs
+  log := fun value =>
+    if format.isIEEE then CorrectlyRounded.log value else ExecFloat.Binary.log value
+  pi := ofModel (Model.pi format)
+  cos := ExecFloat.Binary.cos
+  sin := ExecFloat.Binary.sin
+  sinh := ExecFloat.Binary.sinh
 
-/-- Decoding a certified exponential gives the model kernel's result or failure. -/
-@[simp] theorem map_toModel_exp_certify (value : Value) (budget : Certified.Options) :
-    (exp value (certify := true) (budget := budget)).map toModel =
-      Certified.exp (toModel value) budget := by
-  cases h : Certified.exp (toModel value) budget <;> simp [exp, h, Except.map]
+/-- For an IEEE descriptor, the `exp` of `mathFunctions` is the correctly rounded exponential. -/
+theorem mathFunctions_exp_of_isIEEE (value : Value)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MathFunctions.exp (self := mathFunctions) value = CorrectlyRounded.exp value :=
+  ite_eq_left hformat
 
-/-- Decoding a certified logarithm gives the model kernel's result or failure. -/
-@[simp] theorem map_toModel_log_certify (value : Value) (budget : Certified.Options) :
-    (log value (certify := true) (budget := budget)).map toModel =
-      Certified.log (toModel value) budget := by
-  cases h : Certified.log (toModel value) budget <;> simp [log, h, Except.map]
+/-- For an IEEE descriptor, the `log` of `mathFunctions` is the correctly rounded logarithm. -/
+theorem mathFunctions_log_of_isIEEE (value : Value)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MathFunctions.log (self := mathFunctions) value = CorrectlyRounded.log value :=
+  ite_eq_left hformat
 
-/-- Decoding a certified power gives the model kernel's result or failure. -/
-@[simp] theorem map_toModel_pow_certify (base exponent : Value) (budget : Certified.Options) :
-    (pow base exponent (certify := true) (budget := budget)).map toModel =
-      Certified.pow (toModel base) (toModel exponent) budget := by
-  cases h : Certified.pow (toModel base) (toModel exponent) budget <;>
-    simp [pow, h, Except.map]
+end CorrectlyRounded
 
-/-- Decoding `expMinus1` gives the model kernel's result or failure. -/
-@[simp] theorem map_toModel_expMinus1 (value : Value) (budget : Certified.Options) :
-    (expMinus1 value budget).map toModel = Certified.expMinus1 (toModel value) budget := by
-  cases h : Certified.expMinus1 (toModel value) budget <;> simp [expMinus1, h, Except.map]
+/-- The absolute value that this module's `MathFunctions` instance computes keeps a configured
+value finite. -/
+theorem isFinite_abs {value : Value} (hvalue : isFinite value = true) :
+    isFinite (MathFunctions.abs value) = true := by
+  have decoded : toModel (MathFunctions.abs value) = Model.abs (toModel value) :=
+    ModelCodec.decode_liftUnary Model.abs value
+  change Model.isFinite (toModel (MathFunctions.abs value)) = true
+  rw [decoded, Model.isFinite_abs]
+  exact hvalue
 
-/-- Decoding `logPlus1` gives the model kernel's result or failure. -/
-@[simp] theorem map_toModel_logPlus1 (value : Value) (budget : Certified.Options) :
-    (logPlus1 value budget).map toModel = Certified.logPlus1 (toModel value) budget := by
-  cases h : Certified.logPlus1 (toModel value) budget <;> simp [logPlus1, h, Except.map]
+attribute [roundoff_rule] isFinite_abs
+
+/-! ## Certified searches -/
+
+namespace Certified
+
+/--
+Certify the exponential in the configured binary format, searching within `budget`: a finite
+result equal to nearest-even rounding of `eˣ`, or the `Certified.Failure` that prevented one. A
+search can fail on a valid input, and it never falls back to an approximation.
+-/
+@[inline] def exp (value : Value) (budget : Certified.Budget := {}) :
+    Except Certified.Failure Value :=
+  (Model.Transcendentals.Certified.exp (toModel value) budget).map ofModel
+
+/--
+Certify the natural logarithm in the configured binary format, searching within `budget`: a
+finite result equal to nearest-even rounding of the real logarithm, or the `Certified.Failure`
+that prevented one. A search can fail on a valid input, and it never falls back to an
+approximation.
+-/
+@[inline] def log (value : Value) (budget : Certified.Budget := {}) :
+    Except Certified.Failure Value :=
+  (Model.Transcendentals.Certified.log (toModel value) budget).map ofModel
+
+/--
+Certify `base ^ exponent` for a finite positive base and a finite exponent, searching within
+`budget`: a finite result equal to nearest-even rounding of the real power, or the
+`Certified.Failure` that prevented one. Unlike the plain `pow`, it has no fallback.
+-/
+@[inline] def pow (base exponent : Value) (budget : Certified.Budget := {}) :
+    Except Certified.Failure Value :=
+  (Model.Transcendentals.Certified.pow (toModel base) (toModel exponent) budget).map ofModel
+
+/--
+Certify `exp x - 1` with one final rounding, preserving signed zero, searching within `budget`:
+a finite nearest-even result or the `Certified.Failure` that prevented one.
+`CorrectlyRounded.expMinus1` always returns a value.
+-/
+@[inline] def expMinus1 (value : Value) (budget : Certified.Budget := {}) :
+    Except Certified.Failure Value :=
+  (Model.Transcendentals.Certified.expMinus1 (toModel value) budget).map ofModel
+
+/--
+Certify `log (1 + x)` with one final rounding, preserving signed zero, searching within `budget`:
+a finite nearest-even result or the `Certified.Failure` that prevented one.
+`CorrectlyRounded.logPlus1` always returns a value.
+-/
+@[inline] def logPlus1 (value : Value) (budget : Certified.Budget := {}) :
+    Except Certified.Failure Value :=
+  (Model.Transcendentals.Certified.logPlus1 (toModel value) budget).map ofModel
+
+/-- Decoding a certified exponential gives the model search's result or failure. -/
+@[simp] theorem map_toModel_exp (value : Value) (budget : Certified.Budget) :
+    (Certified.exp value budget).map toModel =
+      Model.Transcendentals.Certified.exp (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.exp (toModel value) budget <;>
+    simp [Certified.exp, h, Except.map]
+
+/-- Decoding a certified logarithm gives the model search's result or failure. -/
+@[simp] theorem map_toModel_log (value : Value) (budget : Certified.Budget) :
+    (Certified.log value budget).map toModel =
+      Model.Transcendentals.Certified.log (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.log (toModel value) budget <;>
+    simp [Certified.log, h, Except.map]
+
+/-- Decoding a certified power gives the model search's result or failure. -/
+@[simp] theorem map_toModel_pow (base exponent : Value) (budget : Certified.Budget) :
+    (Certified.pow base exponent budget).map toModel =
+      Model.Transcendentals.Certified.pow (toModel base) (toModel exponent) budget := by
+  cases h : Model.Transcendentals.Certified.pow (toModel base) (toModel exponent) budget <;>
+    simp [Certified.pow, h, Except.map]
+
+/-- Decoding a certified `expMinus1` gives the model search's result or failure. -/
+@[simp] theorem map_toModel_expMinus1 (value : Value) (budget : Certified.Budget) :
+    (Certified.expMinus1 value budget).map toModel =
+      Model.Transcendentals.Certified.expMinus1 (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.expMinus1 (toModel value) budget <;>
+    simp [Certified.expMinus1, h, Except.map]
+
+/-- Decoding a certified `logPlus1` gives the model search's result or failure. -/
+@[simp] theorem map_toModel_logPlus1 (value : Value) (budget : Certified.Budget) :
+    (Certified.logPlus1 value budget).map toModel =
+      Model.Transcendentals.Certified.logPlus1 (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.logPlus1 (toModel value) budget <;>
+    simp [Certified.logPlus1, h, Except.map]
 
 /-- A certified exponential is finite. -/
-theorem isFinite_of_exp_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : exp value (certify := true) (budget := budget) = Except.ok result) :
+theorem isFinite_of_exp_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.exp value budget = Except.ok result) :
     isFinite result = true :=
-  Certified.isFinite_of_exp_eq_ok (by rw [← map_toModel_exp_certify value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_exp_eq_ok
+    (by rw [← map_toModel_exp value budget, hresult]; rfl)
 
 /-- A certified exponential is the nearest-even rounding of the real exponential. -/
-theorem toReal_of_exp_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : exp value (certify := true) (budget := budget) = Except.ok result) :
+theorem toReal_of_exp_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.exp value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.exp (toReal value)) :=
-  Certified.toReal_of_exp_eq_ok (by rw [← map_toModel_exp_certify value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_exp_eq_ok
+    (by rw [← map_toModel_exp value budget, hresult]; rfl)
 
 /-- A certified logarithm is finite. -/
-theorem isFinite_of_log_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : log value (certify := true) (budget := budget) = Except.ok result) :
+theorem isFinite_of_log_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.log value budget = Except.ok result) :
     isFinite result = true :=
-  Certified.isFinite_of_log_eq_ok (by rw [← map_toModel_log_certify value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_log_eq_ok
+    (by rw [← map_toModel_log value budget, hresult]; rfl)
 
 /-- A certified logarithm is the nearest-even rounding of the real logarithm. -/
-theorem toReal_of_log_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : log value (certify := true) (budget := budget) = Except.ok result) :
+theorem toReal_of_log_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.log value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.log (toReal value)) :=
-  Certified.toReal_of_log_eq_ok (by rw [← map_toModel_log_certify value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_log_eq_ok
+    (by rw [← map_toModel_log value budget, hresult]; rfl)
 
 /-- A certified power is finite. -/
-theorem isFinite_of_pow_eq_ok {base exponent result : Value} {budget : Certified.Options}
-    (hresult : pow base exponent (certify := true) (budget := budget) = Except.ok result) :
+theorem isFinite_of_pow_eq_ok {base exponent result : Value} {budget : Certified.Budget}
+    (hresult : Certified.pow base exponent budget = Except.ok result) :
     isFinite result = true :=
-  Certified.isFinite_of_pow_eq_ok
-    (by rw [← map_toModel_pow_certify base exponent budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_pow_eq_ok
+    (by rw [← map_toModel_pow base exponent budget, hresult]; rfl)
 
 /--
 A certified power is the nearest-even rounding of the real power `toReal base ^ toReal exponent`
 (`Real.rpow`, since the base of a certified power is positive).
 -/
-theorem toReal_of_pow_eq_ok {base exponent result : Value} {budget : Certified.Options}
-    (hresult : pow base exponent (certify := true) (budget := budget) = Except.ok result) :
+theorem toReal_of_pow_eq_ok {base exponent result : Value} {budget : Certified.Budget}
+    (hresult : Certified.pow base exponent budget = Except.ok result) :
     toReal result = Model.roundAt format (toReal base ^ toReal exponent) :=
-  Certified.toReal_of_pow_eq_ok
-    (by rw [← map_toModel_pow_certify base exponent budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_pow_eq_ok
+    (by rw [← map_toModel_pow base exponent budget, hresult]; rfl)
 
 /-- A certified `expMinus1` result is finite. -/
-theorem isFinite_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : expMinus1 value budget = Except.ok result) :
+theorem isFinite_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.expMinus1 value budget = Except.ok result) :
     isFinite result = true :=
-  Certified.isFinite_of_expMinus1_eq_ok (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_expMinus1_eq_ok
+    (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
 
 /-- A certified `expMinus1` result is one nearest-even rounding of `Real.exp x - 1`. -/
-theorem toReal_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : expMinus1 value budget = Except.ok result) :
+theorem toReal_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.expMinus1 value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.exp (toReal value) - 1) :=
-  Certified.toReal_of_expMinus1_eq_ok (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_expMinus1_eq_ok
+    (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
 
 /-- A certified `logPlus1` result is finite. -/
-theorem isFinite_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : logPlus1 value budget = Except.ok result) :
+theorem isFinite_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.logPlus1 value budget = Except.ok result) :
     isFinite result = true :=
-  Certified.isFinite_of_logPlus1_eq_ok (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_logPlus1_eq_ok
+    (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
 
 /-- A certified `logPlus1` result is one nearest-even rounding of `Real.log (1 + x)`. -/
-theorem toReal_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Options}
-    (hresult : logPlus1 value budget = Except.ok result) :
+theorem toReal_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.logPlus1 value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.log (1 + toReal value)) :=
-  Certified.toReal_of_logPlus1_eq_ok (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_logPlus1_eq_ok
+    (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
 
-end Certify
+end Certified
 
 end FloatLib.Floats.ExecFloat.Binary
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath
+
+open FloatLib.Numerics FloatLib.Floats
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+    [ExecFloat.ModelCodec plan (Model format) code]
+
+/--
+Make `ExecFloat.Binary.CorrectlyRounded.mathFunctions` the `MathFunctions` instance of configured
+binary values, so generic code gets the correctly rounded `exp` and `log` on IEEE descriptors.
+-/
+scoped instance (priority := high) configured :
+    MathFunctions (ExecFloat (Configured.Family format code plan)) :=
+  ExecFloat.Binary.CorrectlyRounded.mathFunctions
+
+end FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath
+
+public meta section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Roundoff
+
+/-- The configured `MathFunctions` for `roundoff`: its methods decode through the model
+functions. A method gets the contract of a correctly rounded primitive when its selected
+implementation unfolds to that primitive's call, or through a registered implementation equality
+(`Extension.bridges`). `CorrectlyRounded.mathFunctions` selects the primitive only for an IEEE
+descriptor, so a client that uses it registers `CorrectlyRounded.mathFunctions_exp_of_isIEEE` and
+`mathFunctions_log_of_isIEEE` itself as bridges. -/
+def mathFunctions : Extension where
+  decodingRewrites := #[``ExecFloat.Binary.toModel_exp, ``ExecFloat.Binary.toModel_log]
+  decodeLemmas := #[``ExecFloat.Binary.toModel_exp, ``ExecFloat.Binary.toModel_log,
+    ``ExecFloat.Binary.toModel_pow]
+
+attribute [roundoff_extension] mathFunctions
+
+end FloatLib.Floats.Formats.BinaryInterchange.Roundoff

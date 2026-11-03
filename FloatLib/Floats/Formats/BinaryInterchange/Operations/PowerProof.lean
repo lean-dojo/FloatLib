@@ -30,9 +30,8 @@ working precision decides, `powInt` is the fallback. The endpoint lemmas show th
 brackets are sound, `toReal_of_attempt` turns an accepted bracket into correct rounding, and
 `toReal_integerPowerWith` combines the three routes.
 
-The main result is `toReal_pow_of_eq_intCast`: for an IEEE format, a finite nonzero base and a
-finite exponent with integer value `n`, every finite result of `pow` equals
-`roundAt fmt (toReal base ^ n)`.
+The main result is `toReal_pow_of_eq_intCast`: for an IEEE format, a finite base and a finite
+exponent with integer value `n`, every finite result of `pow` equals `roundAt fmt (toReal base ^ n)`.
 -/
 
 @[expose] public section
@@ -119,6 +118,31 @@ theorem le_two_zpow_of_leTwoPow {x : Endpoint} {bound : Int} (h : x.leTwoPow bou
 
 end Endpoint
 
+/--
+Directed truncation of the products of endpoint enclosures encloses the product of two nonnegative
+values: truncating the lower product down and the upper product up.
+-/
+private theorem mul_enclosure (precision : Nat) {lower₁ upper₁ lower₂ upper₂ : Endpoint}
+    {v w : Rat} (hv : 0 ≤ v) (hw : 0 ≤ w)
+    (hlower₁ : lower₁.toRat ≤ v) (hupper₁ : v ≤ upper₁.toRat)
+    (hlower₂ : lower₂.toRat ≤ w) (hupper₂ : w ≤ upper₂.toRat) :
+    (Endpoint.truncDown precision (lower₁.mul lower₂)).toRat ≤ v * w ∧
+      v * w ≤ (Endpoint.truncUp precision (upper₁.mul upper₂)).toRat := by
+  constructor
+  · refine (Endpoint.toRat_truncDown_le _ _).trans ?_
+    rw [Endpoint.toRat_mul]
+    exact mul_le_mul hlower₁ hlower₂ lower₂.toRat_nonneg hv
+  · refine le_trans ?_ (Endpoint.le_toRat_truncUp _ _)
+    rw [Endpoint.toRat_mul]
+    exact mul_le_mul hupper₁ hupper₂ hw (hv.trans hupper₁)
+
+/-- Squaring a nonnegative enclosure with directed truncation encloses the square. -/
+private theorem square_enclosure (precision : Nat) {lower upper : Endpoint} {v : Rat}
+    (hv : 0 ≤ v) (hlower : lower.toRat ≤ v) (hupper : v ≤ upper.toRat) :
+    (Endpoint.truncDown precision (lower.mul lower)).toRat ≤ v ^ 2 ∧
+      v ^ 2 ≤ (Endpoint.truncUp precision (upper.mul upper)).toRat := by
+  simpa only [sq] using mul_enclosure precision hv hv hlower hupper hlower hupper
+
 /-- Binary exponentiation with directed truncation encloses the exact power. -/
 theorem powBounds_spec (precision : Nat) (base : Endpoint) (exponent : Nat) :
     (powBounds precision base exponent).1.toRat ≤ base.toRat ^ exponent ∧
@@ -137,26 +161,11 @@ theorem powBounds_spec (precision : Nat) (base : Endpoint) (exponent : Nat) :
         rw [← pow_mul, ← pow_add]
         congr 1
         omega
-      have hlower : (Endpoint.truncDown precision (half.1.mul half.1)).toRat ≤
-          (base.toRat ^ (n / 2)) ^ 2 := by
-        refine (Endpoint.toRat_truncDown_le _ _).trans ?_
-        rw [Endpoint.toRat_mul, sq]
-        exact mul_le_mul hlo hlo hlo0 (hlo0.trans hlo)
-      have hupper : (base.toRat ^ (n / 2)) ^ 2 ≤
-          (Endpoint.truncUp precision (half.2.mul half.2)).toRat := by
-        refine le_trans ?_ (Endpoint.le_toRat_truncUp _ _)
-        rw [Endpoint.toRat_mul, sq]
-        exact mul_le_mul hhi hhi (by positivity) (hlo0.trans (hlo.trans hhi))
+      obtain ⟨hlower, hupper⟩ := square_enclosure precision (hlo0.trans hlo) hlo hhi
       split
       · rename_i hodd
         rw [hsq, hodd, pow_one]
-        constructor
-        · refine (Endpoint.toRat_truncDown_le _ _).trans ?_
-          rw [Endpoint.toRat_mul]
-          exact mul_le_mul_of_nonneg_right hlower ha0
-        · refine le_trans ?_ (Endpoint.le_toRat_truncUp _ _)
-          rw [Endpoint.toRat_mul]
-          exact mul_le_mul_of_nonneg_right hupper ha0
+        exact mul_enclosure precision (sq_nonneg _) ha0 hlower hupper le_rfl le_rfl
       · rename_i heven
         rw [hsq, show n % 2 = 0 by omega, pow_zero, mul_one]
         exact ⟨hlower, hupper⟩
@@ -167,63 +176,56 @@ def Screen.Holds (above below : Int) (remaining : Nat) (v : Rat) : Screen → Pr
   | .below => ∀ t, remaining ≤ t → v ^ (2 ^ t) ≤ (2 : Rat) ^ below
   | .bounds lower upper => lower.toRat ≤ v ^ (2 ^ remaining) ∧ v ^ (2 ^ remaining) ≤ upper.toRat
 
+/-- A lower endpoint at least `2 ^ max above 0` keeps every square power at least `2 ^ above`. -/
+private theorem two_zpow_le_pow_of_geTwoPow {above : Int} {lower : Endpoint} {v : Rat}
+    (h : lower.geTwoPow (max above 0) = true) (hlower : lower.toRat ≤ v) (t : Nat) :
+    (2 : Rat) ^ above ≤ v ^ (2 ^ t) := by
+  have h1 := Endpoint.two_zpow_le_of_geTwoPow h
+  have hone : (1 : Rat) ≤ v :=
+    le_trans (one_le_zpow₀ (by norm_num) (le_max_right _ _)) (h1.trans hlower)
+  calc (2 : Rat) ^ above ≤ 2 ^ max above 0 := zpow_le_zpow_right₀ (by norm_num) (le_max_left _ _)
+    _ ≤ v := h1.trans hlower
+    _ ≤ v ^ (2 ^ t) := le_self_pow₀ hone (by positivity)
+
+/-- An upper endpoint at most `2 ^ min below 0` keeps every square power at most `2 ^ below`. -/
+private theorem pow_le_two_zpow_of_leTwoPow {below : Int} {upper : Endpoint} {v : Rat}
+    (hv : 0 ≤ v) (h : upper.leTwoPow (min below 0) = true) (hupper : v ≤ upper.toRat)
+    (t : Nat) :
+    v ^ (2 ^ t) ≤ (2 : Rat) ^ below := by
+  have h1 := Endpoint.le_two_zpow_of_leTwoPow h
+  have hone : v ≤ 1 :=
+    le_trans (hupper.trans h1) (zpow_le_one_of_nonpos₀ (by norm_num) (min_le_right _ _))
+  calc v ^ (2 ^ t) ≤ v := pow_le_of_le_one hv hone (by positivity)
+    _ ≤ 2 ^ min below 0 := hupper.trans h1
+    _ ≤ 2 ^ below := zpow_le_zpow_right₀ (by norm_num) (min_le_left _ _)
+
 /-- Repeated squaring with early screening is sound for every value in the enclosure. -/
 theorem squareScreen_holds (precision : Nat) (above below : Int) (remaining : Nat)
-    (lower upper : Endpoint) (v : Rat) (hv : 0 ≤ v)
+    (lower upper : Endpoint) (v : Rat)
     (hlower : lower.toRat ≤ v) (hupper : v ≤ upper.toRat) :
     (squareScreen precision above below remaining lower upper).Holds above below remaining v := by
   induction remaining generalizing lower upper v with
   | zero =>
+    have hv : 0 ≤ v := lower.toRat_nonneg.trans hlower
     rw [squareScreen]
     split
     · rename_i h
-      intro t _
-      have h1 := Endpoint.two_zpow_le_of_geTwoPow h
-      have hone : (1 : Rat) ≤ v :=
-        le_trans (one_le_zpow₀ (by norm_num) (le_max_right _ _)) (h1.trans hlower)
-      calc (2 : Rat) ^ above ≤ 2 ^ max above 0 := zpow_le_zpow_right₀ (by norm_num) (le_max_left _ _)
-        _ ≤ v := h1.trans hlower
-        _ ≤ v ^ (2 ^ t) := le_self_pow₀ hone (by positivity)
+      exact fun t _ => two_zpow_le_pow_of_geTwoPow h hlower t
     · split
       · rename_i _ h
-        intro t _
-        have h1 := Endpoint.le_two_zpow_of_leTwoPow h
-        have hone : v ≤ 1 :=
-          le_trans (hupper.trans h1) (zpow_le_one_of_nonpos₀ (by norm_num) (min_le_right _ _))
-        calc v ^ (2 ^ t) ≤ v := pow_le_of_le_one hv hone (by positivity)
-          _ ≤ 2 ^ min below 0 := hupper.trans h1
-          _ ≤ 2 ^ below := zpow_le_zpow_right₀ (by norm_num) (min_le_left _ _)
+        exact fun t _ => pow_le_two_zpow_of_leTwoPow hv h hupper t
       · simpa [Screen.Holds] using ⟨hlower, hupper⟩
   | succ r ih =>
+    have hv : 0 ≤ v := lower.toRat_nonneg.trans hlower
     rw [squareScreen]
     split
     · rename_i h
-      intro t _
-      have h1 := Endpoint.two_zpow_le_of_geTwoPow h
-      have hone : (1 : Rat) ≤ v :=
-        le_trans (one_le_zpow₀ (by norm_num) (le_max_right _ _)) (h1.trans hlower)
-      calc (2 : Rat) ^ above ≤ 2 ^ max above 0 := zpow_le_zpow_right₀ (by norm_num) (le_max_left _ _)
-        _ ≤ v := h1.trans hlower
-        _ ≤ v ^ (2 ^ t) := le_self_pow₀ hone (by positivity)
+      exact fun t _ => two_zpow_le_pow_of_geTwoPow h hlower t
     · split
       · rename_i _ h
-        intro t _
-        have h1 := Endpoint.le_two_zpow_of_leTwoPow h
-        have hone : v ≤ 1 :=
-          le_trans (hupper.trans h1) (zpow_le_one_of_nonpos₀ (by norm_num) (min_le_right _ _))
-        calc v ^ (2 ^ t) ≤ v := pow_le_of_le_one hv hone (by positivity)
-          _ ≤ 2 ^ min below 0 := hupper.trans h1
-          _ ≤ 2 ^ below := zpow_le_zpow_right₀ (by norm_num) (min_le_left _ _)
-      · have hlo0 := lower.toRat_nonneg
-        have hsqlo : (Endpoint.truncDown precision (lower.mul lower)).toRat ≤ v ^ 2 := by
-          refine (Endpoint.toRat_truncDown_le _ _).trans ?_
-          rw [Endpoint.toRat_mul, sq]
-          exact mul_le_mul hlower hlower hlo0 hv
-        have hsqhi : v ^ 2 ≤ (Endpoint.truncUp precision (upper.mul upper)).toRat := by
-          refine le_trans ?_ (Endpoint.le_toRat_truncUp _ _)
-          rw [Endpoint.toRat_mul, sq]
-          exact mul_le_mul hupper hupper hv (hv.trans hupper)
-        have hrec := ih _ _ (v ^ 2) (by positivity) hsqlo hsqhi
+        exact fun t _ => pow_le_two_zpow_of_leTwoPow hv h hupper t
+      · obtain ⟨hsqlo, hsqhi⟩ := square_enclosure precision hv hlower hupper
+        have hrec := ih _ _ (v ^ 2) hsqlo hsqhi
         have hpow : ∀ t : Nat, (v ^ 2) ^ (2 ^ t) = v ^ (2 ^ (t + 1)) := by
           intro t
           rw [← pow_mul, pow_succ, mul_comm]
@@ -261,22 +263,12 @@ theorem toReal_of_roundEnclosure? {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
       ((roundAt_mono fmt hupper).trans_eq hhi.symm)
   · simp at h
 
-private theorem bpow_binary (e : Int) :
-    Flocq.bpow Numerics.binaryRadix e = (2 : ℝ) ^ e := by
-  simp [Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
-
 private theorem roundAt_signed_eq_zero (fmt : FloatFormat) (negative : Bool) {v : ℝ}
     (hv : 0 ≤ v) (hsmall : v ≤ (2 : ℝ) ^ AlgebraicRounding.lowerExponent fmt) :
     roundAt fmt ((if negative then -1 else 1) * v) = 0 := by
   have hz := AlgebraicRounding.roundAt_eq_zero_of_le_halfMinSubnormal fmt v hv
-    (by rwa [bpow_binary])
+    (by rwa [Flocq.bpow_binaryRadix])
   cases negative <;> simp [hz]
-
-private theorem isFinite_nativeOverflow {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (sign : Bool) : isFinite (nativeOverflow fmt sign) = false := by
-  have hs := FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
-  cases sign <;> simp [nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt,
-    isFinite_posInf fmt hs, isFinite_negInf fmt hs]
 
 /--
 The exact target of `attempt`: `(-1)^negative * ((base ^ magnitude) ^ (2 ^ shift)) ^ (±1)`,
@@ -304,7 +296,7 @@ theorem toReal_of_attempt {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   set start := powBounds precision base magnitude
   have hstart := powBounds_spec precision base magnitude
   have hholds := squareScreen_holds precision above below (min shift cap) start.1 start.2
-    (base.toRat ^ magnitude) (by have := base.toRat_nonneg; positivity) hstart.1 hstart.2
+    (base.toRat ^ magnitude) hstart.1 hstart.2
   set V : Rat := (base.toRat ^ magnitude) ^ (2 ^ shift) with hV
   have hV0 : 0 ≤ V := by have := base.toRat_nonneg; positivity
   unfold attemptTarget
@@ -443,11 +435,11 @@ theorem zpow_integralValue_eq_attemptTarget (b : Numerics.Dyadic) (negativeExpon
 
 /--
 `integerPowerWith` is correctly rounded for every exact budget: a finite result is the
-nearest-even rounding of the real power of a finite nonzero base.
+nearest-even rounding of the real power of a finite base.
 -/
 theorem toReal_integerPowerWith {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (exactBudget : Nat) {base : Model fmt} {b : Numerics.Dyadic} (hb : toDyadic? base = some b)
-    (hzero : isZero base = false) (negativeExponent : Bool) (magnitude shift : Nat)
+    (negativeExponent : Bool) (magnitude shift : Nat)
     (hfinite :
       isFinite (integerPowerWith exactBudget base b negativeExponent magnitude shift) = true) :
     toReal (integerPowerWith exactBudget base b negativeExponent magnitude shift) =
@@ -458,7 +450,7 @@ theorem toReal_integerPowerWith {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
       isFinite (powInt base (integralValue negativeExponent magnitude shift)) = true →
       toReal (powInt base (integralValue negativeExponent magnitude shift)) =
         roundAt fmt (toReal base ^ integralValue negativeExponent magnitude shift) :=
-    toReal_powInt_eq_roundAt base _ hfmt hbase hzero
+    toReal_powInt_eq_roundAt base _ hfmt hbase
   unfold integerPowerWith at hfinite ⊢
   dsimp only at hfinite ⊢
   split
@@ -516,31 +508,32 @@ theorem integralParts?_of_eq_natCast (y : Numerics.Dyadic) (value : Nat)
     rw [hmag, Nat.shiftLeft_eq, ← hsig]
     simp
 
+/-- A finite value that compares equal to one denotes one. -/
+private theorem toReal_eq_one_of_compare_posOne_eq {fmt : FloatFormat} {x : Model fmt}
+    (hx : isFinite x = true) (h : compare x (posOne fmt) = some .eq) : toReal x = 1 := by
+  simpa using
+    (compare_eq_some_eq_iff_toReal_eq_of_isFinite x (posOne fmt) hx (isFinite_posOne fmt)).mp h
+
+/-- A finite value with a nonzero real value does not compare equal to zero. -/
+private theorem compare_zero_ne_eq_of_toReal_ne_zero {fmt : FloatFormat} {x : Model fmt}
+    (hx : isFinite x = true) (h : toReal x ≠ 0) : compare x (zero fmt false) ≠ some .eq :=
+  fun hc => h (by
+    simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite x (zero fmt false) hx
+      (isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false))).mp hc)
+
 /--
-Main correctness theorem for integral exponents: when the base is finite and nonzero and the
-exponent is a finite float with integer value `n`, every finite result of `pow` is the
-nearest-even rounding of the real power `toReal base ^ n`.
+Main correctness theorem for integral exponents: when the base is finite and the exponent is a
+finite float with integer value `n`, every finite result of `pow` is the nearest-even rounding of
+the real power `toReal base ^ n`. A zero base gives a zero, or overflows for a negative exponent.
 -/
 theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     {base exponent : Model fmt} {n : ℤ} (hbase : isFinite base = true)
-    (hbzero : isZero base = false) (hexp : isFinite exponent = true)
+    (hexp : isFinite exponent = true)
     (hn : toReal exponent = n) (hfinite : isFinite (pow base exponent) = true) :
     toReal (pow base exponent) = roundAt fmt (toReal base ^ n) := by
   obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hbase
   obtain ⟨y, hy⟩ := exists_toDyadic?_of_isFinite hexp
-  have hone_finite : isFinite (posOne fmt) = true := isFinite_eq_true_of_toDyadic?_some
-    (Classical.choose_spec (exists_toDyadic?_of_isFinite (isFinite_posOne fmt)))
-  have hroundOne : roundAt fmt 1 = 1 := by
-    simpa using roundAt_toReal_eq (posOne fmt) hone_finite
-  have hbne : toReal base ≠ 0 := by
-    rw [toReal_eq, hb]
-    have hsig : b.significand ≠ 0 := by
-      have := isZero_eq_beq_zero_of_toDyadic?_some hb
-      rw [hbzero] at this
-      simpa using this.symm
-    simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand]
-    have : (b.significand : ℝ) ≠ 0 := by exact_mod_cast hsig
-    split <;> simp [this, zpow_ne_zero]
+  have hzeroFinite := isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false)
   have hbaseQuiet : isSNaN base = false :=
     isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
   unfold pow at hfinite ⊢
@@ -549,16 +542,13 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     rw [ite_eq_left hcond]
     have : (n : ℝ) = 0 := by rw [← hn]; exact toReal_eq_zero_of_isZero exponent hz
     have hn0 : n = 0 := by exact_mod_cast this
-    simp [hn0, hroundOne]
+    simp [hn0]
   have hcond : ¬ (isZero exponent && !isSNaN base) = true := by simp [hz]
   rw [ite_eq_right hcond] at hfinite ⊢
   by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
   · rw [ite_eq_left hunit]
     simp only [Bool.and_eq_true] at hunit
-    have h1 : toReal base = 1 := by
-      simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base (posOne fmt) hbase
-        hone_finite).mp (of_decide_eq_true hunit.1)
-    simp [h1, hroundOne]
+    simp [toReal_eq_one_of_compare_posOne_eq hbase (of_decide_eq_true hunit.1)]
   rw [ite_eq_right hunit] at hfinite ⊢
   rw [chooseNaN2_none_of_isFinite base exponent hbase hexp] at hfinite ⊢
   dsimp only at hfinite ⊢
@@ -566,18 +556,12 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   · rw [ite_eq_left hexp1]
     have : (n : ℝ) = 1 := by
       rw [← hn]
-      simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite exponent (posOne fmt) hexp
-        hone_finite).mp hexp1
+      exact toReal_eq_one_of_compare_posOne_eq hexp hexp1
     have hn1 : n = 1 := by exact_mod_cast this
     rw [hn1, zpow_one, roundAt_toReal_eq base hbase]
   rw [ite_eq_right hexp1] at hfinite ⊢
   have hinf : isInf exponent = false := isInf_eq_false_of_isFinite_eq_true exponent hexp
   rw [ite_eq_right (by simp [hinf])] at hfinite ⊢
-  have hbaseZero : compare base (zero fmt false) ≠ some .eq := by
-    intro h
-    exact hbne (by simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base
-      (zero fmt false) hbase
-      (isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false))).mp h)
   have hbinf : isInf base = false := isInf_eq_false_of_isFinite_eq_true base hbase
   -- The exponent's unsigned value is the natural number `n.natAbs`.
   have hyreal : y.toReal = n := by rw [← hn, toReal_eq, hy]
@@ -600,15 +584,24 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   have hpower : integerPower? base exponent =
       some (integerPowerWith exactBitBudget base b y.negative magnitude shift) := by
     simp [integerPower?, hb, hy, hparts]
+  have hcompareZero :
+      compare base (zero fmt false) = some .eq ↔ toReal base = 0 := by
+    simpa using compare_eq_some_eq_iff_toReal_eq_of_isFinite base _ hbase hzeroFinite
   rcases hc : compare base (zero fmt false) with _ | ⟨_ | _ | _⟩ <;>
     simp only [hc] at hfinite ⊢
-  all_goals first
-    | exact absurd hc hbaseZero
-    | rw [hbinf, ite_eq_right Bool.false_ne_true] at hfinite ⊢
-      rw [hpower] at hfinite ⊢
-      dsimp only at hfinite ⊢
-      rw [toReal_integerPowerWith hfmt exactBitBudget hb hbzero y.negative magnitude shift
-        hfinite, hint]
+  case some.eq =>
+    have hn0 : n ≠ 0 := fun h => hz <| (isZero_eq_true_iff_toReal_eq_zero exponent hexp).2
+      (by rw [hn, h, Int.cast_zero])
+    rw [hcompareZero.1 hc, zero_zpow n hn0, roundAt_zero]
+    split <;> (try split) <;>
+      simp_all [isFinite_nativeOverflow hfmt, -nativeOverflow_eq_signedInf_of_isIEEE,
+        -zero_eq_signedZero_of_isIEEE]
+  all_goals
+    rw [hbinf, ite_eq_right Bool.false_ne_true] at hfinite ⊢
+    rw [hpower] at hfinite ⊢
+    dsimp only at hfinite ⊢
+    rw [toReal_integerPowerWith hfmt exactBitBudget hb y.negative magnitude shift
+      hfinite, hint]
 
 /-- The parts found by `integralParts?` recombine to the dyadic's unsigned value. -/
 private theorem significand_mul_zpow_eq_of_integralParts?_eq_some {y : Numerics.Dyadic}
@@ -654,27 +647,43 @@ theorem integerPower?_eq_none_of_ne_intCast {fmt : FloatFormat} {base exponent :
         split <;> push_cast <;> ring
   · rfl
 
+/-- The certified power search settles only on a finite positive base and a finite exponent. -/
+private theorem operands_of_certified_pow_eq_ok {fmt : FloatFormat} {base exponent : Model fmt}
+    {budget : Certified.Budget} {result : Model fmt}
+    (h : Transcendentals.Certified.pow base exponent budget = .ok result) :
+    isFinite base = true ∧ 0 < toReal base ∧ isFinite exponent = true := by
+  unfold Transcendentals.Certified.pow at h
+  split at h
+  · simp at h
+  split at h
+  · rename_i a b ha hb
+    split at h
+    · simp at h
+    rename_i hpositive
+    simp only [Bool.or_eq_true, beq_iff_eq, not_or, Bool.not_eq_true] at hpositive
+    refine ⟨isFinite_eq_true_of_toDyadic?_some ha, ?_, isFinite_eq_true_of_toDyadic?_some hb⟩
+    rw [toReal_eq, ha]
+    exact Dyadic.toReal_pos_of_negative_eq_false hpositive.1 hpositive.2
+  · simp at h
+
 /--
-Main correctness theorem for non-integral exponents: for a finite positive base and a finite
-exponent whose value is not an integer, whenever the certified enclosure search
-`Transcendentals.Certified.pow` succeeds (which happens only for IEEE descriptors), `pow`
-returns a finite nearest-even rounding of the real power `toReal base ^ toReal exponent`.
+Main correctness theorem for non-integral exponents: for an exponent whose value is not an
+integer, whenever the certified enclosure search `Transcendentals.Certified.pow` succeeds, `pow`
+returns a finite nearest-even rounding of the real power `toReal base ^ toReal exponent`. The
+search succeeds only for an IEEE descriptor, a finite positive base, and a finite exponent.
 -/
 theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
-    (hbase : isFinite base = true) (hpositive : 0 < toReal base)
-    (hexp : isFinite exponent = true) (hnonintegral : ∀ n : ℤ, toReal exponent ≠ n)
+    (hnonintegral : ∀ n : ℤ, toReal exponent ≠ n)
     (hsettled :
-      (Transcendentals.Certified.pow base exponent certifiedOptions).isOk = true) :
+      (Transcendentals.Certified.pow base exponent certifiedBudget).isOk = true) :
     isFinite (pow base exponent) = true ∧
       toReal (pow base exponent) = roundAt fmt (toReal base ^ toReal exponent) := by
   obtain ⟨result, hresult⟩ : ∃ result,
-      Transcendentals.Certified.pow base exponent certifiedOptions = .ok result := by
-    cases h : Transcendentals.Certified.pow base exponent certifiedOptions with
+      Transcendentals.Certified.pow base exponent certifiedBudget = .ok result := by
+    cases h : Transcendentals.Certified.pow base exponent certifiedBudget with
     | error _ => simp [h, Except.isOk, Except.toBool] at hsettled
     | ok result => exact ⟨result, rfl⟩
-  have hone_finite : isFinite (posOne fmt) = true := isFinite_posOne fmt
-  have hroundOne : roundAt fmt 1 = 1 := by
-    simpa using roundAt_toReal_eq (posOne fmt) hone_finite
+  obtain ⟨hbase, hpositive, hexp⟩ := operands_of_certified_pow_eq_ok hresult
   have hbaseQuiet : isSNaN base = false :=
     isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
   have hexpZero : isZero exponent = false := by
@@ -688,30 +697,21 @@ theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
     · rfl
     · exfalso
       have hreal : toReal base = d.toReal := by rw [toReal_eq, hd]
-      have hnonpos : d.toReal ≤ 0 := by
-        simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand, hnegative,
-          ↓reduceIte, neg_mul]
-        exact neg_nonpos.mpr (by positivity)
+      have hnonpos := Dyadic.toReal_nonpos_of_negative_eq_true hnegative
       linarith
   unfold pow
   rw [ite_eq_right (by simp [hexpZero])]
   by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
   · rw [ite_eq_left hunit]
     simp only [Bool.and_eq_true] at hunit
-    have h1 : toReal base = 1 := by
-      simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base (posOne fmt) hbase
-        hone_finite).mp (of_decide_eq_true hunit.1)
-    simp [h1, hroundOne]
+    simp [toReal_eq_one_of_compare_posOne_eq hbase (of_decide_eq_true hunit.1)]
   rw [ite_eq_right hunit, chooseNaN2_none_of_isFinite base exponent hbase hexp]
   dsimp only
   have hexpOne : compare exponent (posOne fmt) ≠ some .eq := fun h =>
-    hnonintegral 1 (by simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite exponent
-      (posOne fmt) hexp hone_finite).mp h)
+    hnonintegral 1 (by simpa using toReal_eq_one_of_compare_posOne_eq hexp h)
   rw [ite_eq_right hexpOne,
     ite_eq_right (by simp [isInf_eq_false_of_isFinite_eq_true exponent hexp])]
-  have hbaseZero : compare base (zero fmt false) ≠ some .eq := fun h =>
-    hpositive.ne' (by simpa using (compare_eq_some_eq_iff_toReal_eq_of_isFinite base
-      (zero fmt false) hbase (isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false))).mp h)
+  have hbaseZero := compare_zero_ne_eq_of_toReal_ne_zero hbase hpositive.ne'
   split
   · rename_i hc
     exact absurd hc hbaseZero

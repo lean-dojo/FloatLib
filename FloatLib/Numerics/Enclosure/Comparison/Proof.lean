@@ -6,6 +6,7 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Numerics.Enclosure.Comparison.Cache
 public import FloatLib.Numerics.Enclosure.Comparison.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import Mathlib.NumberTheory.Real.Irrational
@@ -58,6 +59,18 @@ theorem exists_separating {intervals : Nat → RationalInterval} {x : ℝ} (boun
   · obtain ⟨n, hn⟩ := (hlo.eventually (eventually_gt_nhds hgt)).exists
     exact ⟨n, Or.inr (by exact_mod_cast hn)⟩
 
+/--
+A prepared comparison sharing a cached enclosure sequence agrees with the real ordering of any
+value that every enclosure contains, at every cache size.
+-/
+theorem Prepared.compare_enclosed_cacheIntervals (intervals : Nat → RationalInterval)
+    (count : Nat)
+    (terminates : ∀ boundary : ℚ, ∃ n, Separates ((cacheIntervals intervals count).get n) boundary)
+    (boundary : ℚ) (x : ℝ) (contains : ∀ n, (intervals n).Contains x) :
+    (Prepared.enclosed (cacheIntervals intervals count) terminates).compare boundary =
+      cmp x (boundary : ℝ) :=
+  compare_eq_real _ _ _ x fun n => by simpa only [cacheIntervals_apply] using contains n
+
 /-- An irrational limit cannot equal a rational comparison boundary. -/
 theorem exists_separating_of_irrational {intervals : Nat → RationalInterval}
     {x : ℝ} (hx : Irrational x) (boundary : ℚ)
@@ -65,5 +78,30 @@ theorem exists_separating_of_irrational {intervals : Nat → RationalInterval}
     (hhi : Tendsto (fun n => ((intervals n).hi : ℝ)) atTop (𝓝 x)) :
     ∃ n, Separates (intervals n) boundary :=
   exists_separating boundary (hx.ne_rat boundary) hlo hhi
+
+/-- The degrees `2 ^ n` tend to infinity. -/
+private theorem tendsto_two_pow_atTop : Tendsto (fun n : Nat => 2 ^ n) atTop atTop :=
+  StrictMono.tendsto_atTop fun _ _ h => Nat.pow_lt_pow_right (by decide) h
+
+/--
+Converging endpoints sampled at the doubling degrees `2 ^ n` of the adaptive comparisons
+eventually exclude every boundary different from their limit.
+-/
+theorem exists_separating_two_pow {intervals : Nat → RationalInterval} {x : ℝ} (boundary : ℚ)
+    (hne : x ≠ (boundary : ℝ))
+    (hlo : Tendsto (fun n => ((intervals n).lo : ℝ)) atTop (𝓝 x))
+    (hhi : Tendsto (fun n => ((intervals n).hi : ℝ)) atTop (𝓝 x)) :
+    ∃ n, Separates (intervals (2 ^ n)) boundary :=
+  exists_separating (intervals := fun n => intervals (2 ^ n)) boundary hne
+    (hlo.comp tendsto_two_pow_atTop) (hhi.comp tendsto_two_pow_atTop)
+
+/-- At the doubling degrees, an irrational limit is eventually separated from a rational
+boundary. -/
+theorem exists_separating_two_pow_of_irrational {intervals : Nat → RationalInterval}
+    {x : ℝ} (hx : Irrational x) (boundary : ℚ)
+    (hlo : Tendsto (fun n => ((intervals n).lo : ℝ)) atTop (𝓝 x))
+    (hhi : Tendsto (fun n => ((intervals n).hi : ℝ)) atTop (𝓝 x)) :
+    ∃ n, Separates (intervals (2 ^ n)) boundary :=
+  exists_separating_two_pow boundary (hx.ne_rat boundary) hlo hhi
 
 end FloatLib.Numerics.Enclosure.Comparison

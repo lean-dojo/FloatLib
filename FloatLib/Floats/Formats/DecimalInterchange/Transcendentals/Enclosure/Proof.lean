@@ -38,7 +38,7 @@ theorem toReal_roundEndpoint (f : Format) (value : ℚ)
     toReal (roundEndpoint f value) = roundAt f (value : ℝ) := by
   obtain ⟨rounded, hrounded⟩ := exists_toRat?_of_isFinite hfinite
   rw [toReal_of_toRat?_eq_some hrounded]
-  exact project_nearestEven_eq_roundAt f value f.minQuantum false hrounded
+  exact project_nearest_eq_roundAt f value f.minQuantum false hrounded
 
 /-- Acceptance records finiteness and equality of the two endpoint datums. -/
 theorem accepted {f : Format} {interval : RationalInterval} {result : Datum}
@@ -61,7 +61,7 @@ theorem isFinite_of_round?_eq_some {f : Format} {interval : RationalInterval} {r
 theorem valid_of_round?_eq_some {f : Format} {interval : RationalInterval} {result : Datum}
     (hresult : round? f interval = some result) : result.Valid f := by
   rw [← (accepted hresult).2.1]
-  exact project_valid f .nearestEven interval.lo f.minQuantum false
+  exact project_valid f .nearest interval.lo f.minQuantum false
 
 /-- Endpoint agreement certifies real nearest-even rounding of every enclosed target. -/
 theorem toReal_eq_roundAt_of_round?_eq_some {f : Format}

@@ -82,6 +82,12 @@ structure CandidateCarrier (α : Type) extends TailCarrier α where
   /-- Index of the leading one of a nonzero value. -/
   log2 : α → Nat
 
+/--
+The tail-inspection operations of a candidate carrier. The shared rounder reads the guard bit and
+the sticky suffix through this projection.
+-/
+add_decl_doc CandidateCarrier.toTailCarrier
+
 variable {α : Type}
 
 /-- Read one bit of the two-bit exponent followed by the finite fraction. -/
@@ -187,8 +193,7 @@ sticky suffix.
     lower
 
 /--
-Round the nonzero positive value `significand * 2 ^ exponent`, known not to underflow, to its
-unsigned posit code.
+Round the nonzero positive value `significand * 2 ^ exponent` to its unsigned posit code.
 
 Regimes that consume the payload map to `maxPos` or `minPos`, and interior values use the
 field-oriented guard/sticky rule. The regime `scale.ediv 4` and the exponent field `scale.emod 4`

@@ -44,4 +44,19 @@ variable {radix : Radix}
     toReal (mul left right) = toReal left * toReal right :=
   Formats.Logarithmic.Code.toReal_mul left.toCode right.toCode
 
+/-- The distinguished logarithmic zero code reads as the rational zero. -/
+@[simp, grind =] theorem toRat_zero :
+    toRat (zero : ExecFloat.Logarithmic radix) = 0 :=
+  Formats.Logarithmic.Code.toRat_zero radix
+
+/-- The exact rational reading agrees with the real semantics. -/
+@[simp, grind =, norm_cast] theorem cast_toRat (value : ExecFloat.Logarithmic radix) :
+    (value.toRat : ℝ) = value.toReal :=
+  Formats.Logarithmic.Code.cast_toRat value.toCode
+
+/-- Logarithmic multiplication agrees exactly with multiplication of the rational readings. -/
+@[simp, grind =] theorem toRat_mul (left right : ExecFloat.Logarithmic radix) :
+    toRat (mul left right) = toRat left * toRat right :=
+  Formats.Logarithmic.Code.toRat_mul left.toCode right.toCode
+
 end FloatLib.Floats.ExecFloat.Logarithmic

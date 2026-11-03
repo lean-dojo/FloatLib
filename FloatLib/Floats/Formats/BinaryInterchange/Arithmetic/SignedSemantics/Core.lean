@@ -165,6 +165,20 @@ private theorem isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero
   simp only [beq_iff_eq]
   exact BitVec.xor_eq_zero_iff
 
+/--
+In the unsigned-zero encoding, a value that is either `x` or the sign toggle of a non-NaN, nonzero
+`x` has the NaN and zero classification of `x`.
+-/
+private theorem isNaN_isZero_eq_of_eq_self_or_toggleSign {fmt : FloatFormat}
+    (hfmt : fmt.encoding = .finiteUnsignedZero) {x y : Model fmt}
+    (h : y = x ∨ (isNaN x = false ∧ isZero x = false ∧ y = toggleSign x)) :
+    isNaN y = isNaN x ∧ isZero y = isZero x := by
+  rcases h with rfl | ⟨hnan, hzero, rfl⟩
+  · exact ⟨rfl, rfl⟩
+  · rw [isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hfmt,
+      isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hfmt, hnan, hzero]
+    exact ⟨rfl, rfl⟩
+
 /-- Copying a sign never changes the fraction field. -/
 @[simp] theorem fracField_copySign {fmt : FloatFormat}
     (magnitude signSource : Model fmt) :
@@ -196,65 +210,49 @@ theorem signBit_copySign_of_supportsSignedZero
     cases hsource : signBit signSource <;>
     simp [copySign, hfmt, hmagnitude, hsource]
 
+/--
+`copySign` either returns the magnitude unchanged or toggles its stored sign. Without signed zeros
+it toggles only a magnitude that is neither a NaN nor a zero.
+-/
+private theorem copySign_eq_self_or_toggleSign {fmt : FloatFormat}
+    (magnitude signSource : Model fmt) :
+    copySign magnitude signSource = magnitude ∨
+      (copySign magnitude signSource = toggleSign magnitude ∧
+        (fmt.supportsSignedZero = false →
+          isNaN magnitude = false ∧ isZero magnitude = false)) := by
+  unfold copySign
+  split
+  · exact Or.inl rfl
+  · split
+    · exact Or.inl rfl
+    · refine Or.inr ⟨rfl, fun hunsigned => ?_⟩
+      simp_all
+
 /-- Copying a sign preserves NaN classification under every format policy. -/
 @[simp] theorem isNaN_copySign {fmt : FloatFormat}
     (magnitude signSource : Model fmt) :
     isNaN (copySign magnitude signSource) = isNaN magnitude := by
+  rcases copySign_eq_self_or_toggleSign magnitude signSource with h | ⟨h, hunsigned⟩ <;>
+    rw [h]
   cases hencoding : fmt.encoding with
   | ieee | finiteMaxNaN | finite =>
-      by_cases hsign : signBit magnitude = signBit signSource
-      · simp [copySign, isNaN, hencoding,
-          FloatFormat.supportsSignedZero, hsign]
-      · rw [show copySign magnitude signSource = toggleSign magnitude by
-          simp [copySign, hencoding, FloatFormat.supportsSignedZero, hsign]]
-        simp [isNaN, hencoding]
+      simp [isNaN, hencoding]
   | finiteUnsignedZero =>
-      have hunsigned : fmt.supportsSignedZero = false := by
-        simp [FloatFormat.supportsSignedZero, hencoding]
-      by_cases hnan : isNaN magnitude = true
-      · rw [copySign_eq_self_of_not_supportsSignedZero_of_isNaN
-          magnitude signSource hunsigned hnan]
-      · have hnanFalse := Bool.eq_false_of_not_eq_true hnan
-        by_cases hzero : isZero magnitude = true
-        · rw [copySign_eq_self_of_not_supportsSignedZero_of_isZero
-            magnitude signSource hunsigned hzero]
-        · have hzeroFalse := Bool.eq_false_of_not_eq_true hzero
-          by_cases hsign : signBit magnitude = signBit signSource
-          · simp [copySign, hunsigned, hnanFalse, hzeroFalse, hsign]
-          · rw [show copySign magnitude signSource = toggleSign magnitude by
-                simp [copySign, hunsigned, hnanFalse, hzeroFalse, hsign],
-              isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hencoding,
-              hzeroFalse, hnanFalse]
+      obtain ⟨hnan, hzero⟩ := hunsigned (by simp [FloatFormat.supportsSignedZero, hencoding])
+      rw [isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hencoding, hzero, hnan]
 
 /-- Copying a sign preserves zero classification under every format policy. -/
 @[simp] theorem isZero_copySign {fmt : FloatFormat}
     (magnitude signSource : Model fmt) :
     isZero (copySign magnitude signSource) = isZero magnitude := by
+  rcases copySign_eq_self_or_toggleSign magnitude signSource with h | ⟨h, hunsigned⟩ <;>
+    rw [h]
   cases hencoding : fmt.encoding with
   | ieee | finiteMaxNaN | finite =>
-      by_cases hsign : signBit magnitude = signBit signSource
-      · simp [copySign, isZero, hencoding,
-          FloatFormat.supportsSignedZero, hsign]
-      · rw [show copySign magnitude signSource = toggleSign magnitude by
-          simp [copySign, hencoding, FloatFormat.supportsSignedZero, hsign]]
-        simp [isZero, hencoding]
+      simp [isZero, hencoding]
   | finiteUnsignedZero =>
-      have hunsigned : fmt.supportsSignedZero = false := by
-        simp [FloatFormat.supportsSignedZero, hencoding]
-      by_cases hzero : isZero magnitude = true
-      · rw [copySign_eq_self_of_not_supportsSignedZero_of_isZero
-          magnitude signSource hunsigned hzero]
-      · have hzeroFalse := Bool.eq_false_of_not_eq_true hzero
-        by_cases hnan : isNaN magnitude = true
-        · rw [copySign_eq_self_of_not_supportsSignedZero_of_isNaN
-            magnitude signSource hunsigned hnan]
-        · have hnanFalse := Bool.eq_false_of_not_eq_true hnan
-          by_cases hsign : signBit magnitude = signBit signSource
-          · simp [copySign, hunsigned, hnanFalse, hzeroFalse, hsign]
-          · rw [show copySign magnitude signSource = toggleSign magnitude by
-                simp [copySign, hunsigned, hnanFalse, hzeroFalse, hsign],
-              isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding,
-              hnanFalse, hzeroFalse]
+      obtain ⟨hnan, hzero⟩ := hunsigned (by simp [FloatFormat.supportsSignedZero, hencoding])
+      rw [isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding, hnan, hzero]
 
 /-- Copying a sign preserves infinity classification. -/
 @[simp] theorem isInf_copySign {fmt : FloatFormat}
@@ -262,12 +260,8 @@ theorem signBit_copySign_of_supportsSignedZero
     isInf (copySign magnitude signSource) = isInf magnitude := by
   cases hencoding : fmt.encoding with
   | ieee =>
-      by_cases hsign : signBit magnitude = signBit signSource
-      · simp [copySign, isInf, hencoding,
-          FloatFormat.supportsSignedZero, hsign]
-      · rw [show copySign magnitude signSource = toggleSign magnitude by
-          simp [copySign, hencoding, FloatFormat.supportsSignedZero, hsign]]
-        simp [isInf, hencoding]
+      rcases copySign_eq_self_or_toggleSign magnitude signSource with h | ⟨h, -⟩ <;> rw [h]
+      simp [isInf, hencoding]
   | finiteMaxNaN | finite | finiteUnsignedZero =>
       simp [isInf, hencoding]
 
@@ -277,12 +271,8 @@ theorem signBit_copySign_of_supportsSignedZero
     isFinite (copySign magnitude signSource) = isFinite magnitude := by
   cases hencoding : fmt.encoding with
   | ieee =>
-      by_cases hsign : signBit magnitude = signBit signSource
-      · simp [copySign, isFinite, hencoding,
-          FloatFormat.supportsSignedZero, hsign]
-      · rw [show copySign magnitude signSource = toggleSign magnitude by
-          simp [copySign, hencoding, FloatFormat.supportsSignedZero, hsign]]
-        simp [isFinite, hencoding]
+      rcases copySign_eq_self_or_toggleSign magnitude signSource with h | ⟨h, -⟩ <;> rw [h]
+      simp [isFinite, hencoding]
   | finiteMaxNaN | finite | finiteUnsignedZero =>
       simp [isFinite, hencoding]
 
@@ -315,6 +305,21 @@ theorem signBit_abs_of_supportsSignedZero
     signBit_copySign_of_supportsSignedZero
       x (posZero fmt) hfmt
 
+/--
+In the unsigned-zero encoding, negation fixes a NaN and the zero and toggles the stored sign of
+every other value.
+-/
+private theorem neg_eq_self_or_toggleSign_of_finiteUnsignedZero {fmt : FloatFormat}
+    (x : Model fmt) (hencoding : fmt.encoding = .finiteUnsignedZero) :
+    neg x = x ∨ (isNaN x = false ∧ isZero x = false ∧ neg x = toggleSign x) := by
+  have hunsigned : fmt.supportsSignedZero = false := by
+    simp [FloatFormat.supportsSignedZero, hencoding]
+  cases hnan : isNaN x
+  · cases hzero : isZero x
+    · exact Or.inr ⟨rfl, rfl, neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false x hnan hzero⟩
+    · exact Or.inl (neg_eq_self_of_not_supportsSignedZero_of_isZero x hunsigned hzero)
+  · exact Or.inl (neg_eq_self_of_not_supportsSignedZero_of_isNaN x hunsigned hnan)
+
 /-- Policy-aware negation is involutive for every supported encoding. -/
 @[simp] theorem neg_neg {fmt : FloatFormat} (x : Model fmt) :
     neg (neg x) = x := by
@@ -322,27 +327,16 @@ theorem signBit_abs_of_supportsSignedZero
   | ieee | finiteMaxNaN | finite =>
       simp [neg, FloatFormat.supportsSignedZero, hencoding]
   | finiteUnsignedZero =>
-      have hunsigned : fmt.supportsSignedZero = false := by
-        simp [FloatFormat.supportsSignedZero, hencoding]
-      by_cases hnan : isNaN x = true
-      · have hx := neg_eq_self_of_not_supportsSignedZero_of_isNaN
-          x hunsigned hnan
-        rw [hx, hx]
-      · have hnanFalse : isNaN x = false := Bool.eq_false_of_not_eq_true hnan
-        by_cases hzero : isZero x = true
-        · have hx := neg_eq_self_of_not_supportsSignedZero_of_isZero
-            x hunsigned hzero
-          rw [hx, hx]
-        · have hzeroFalse : isZero x = false := Bool.eq_false_of_not_eq_true hzero
-          have hnanToggle : isNaN (toggleSign x) = false := by
-            rw [isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hencoding, hzeroFalse]
-          have hzeroToggle : isZero (toggleSign x) = false := by
-            rw [isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding, hnanFalse]
-          rw [neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
-            x hnanFalse hzeroFalse]
-          rw [neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
-            (toggleSign x) hnanToggle hzeroToggle]
-          exact toggleSign_toggleSign x
+      rcases neg_eq_self_or_toggleSign_of_finiteUnsignedZero x hencoding with
+        hx | ⟨hnan, hzero, hx⟩
+      · rw [hx, hx]
+      · have hnanToggle : isNaN (toggleSign x) = false := by
+          rw [isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hencoding, hzero]
+        have hzeroToggle : isZero (toggleSign x) = false := by
+          rw [isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding, hnan]
+        rw [hx, neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
+          (toggleSign x) hnanToggle hzeroToggle]
+        exact toggleSign_toggleSign x
 
 /-- Negation maps positive zero to the format's policy-selected negative zero. -/
 @[simp] theorem neg_posZero (fmt : FloatFormat) :
@@ -429,6 +423,25 @@ private theorem toggleSign_posMinSubnormal (fmt : FloatFormat) :
     unfold FloatFormat.bitWidth
     omega)
 
+/-- The field tuple of the least subnormal, with either sign, is finite in every encoding. -/
+private theorem isFinite_ofFields_zero_one (fmt : FloatFormat) (sign : Bool) :
+    isFinite (ofFields fmt sign 0 1) = true := by
+  have hfraction : 1 < 2 ^ fmt.fracWidth :=
+    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
+  have hexponentNe : (0 : Nat) ≠ fmt.expAllOnesNat :=
+    (FloatFormat.expAllOnesNat_pos fmt).ne
+  rw [isFinite_ofFields fmt sign 0 1 (by positivity) hfraction]
+  cases hencoding : fmt.encoding <;>
+    simp [hexponentNe]
+
+/-- The field tuple of the least subnormal, with either sign, is nonzero in every encoding. -/
+private theorem isZero_ofFields_zero_one (fmt : FloatFormat) (sign : Bool) :
+    isZero (ofFields fmt sign 0 1) = false := by
+  have hfraction : 1 < 2 ^ fmt.fracWidth :=
+    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
+  rw [isZero_ofFields fmt sign 0 1 (by positivity) hfraction]
+  cases hencoding : fmt.encoding <;> simp
+
 /-- The least positive subnormal has sign zero. -/
 @[simp] theorem signBit_posMinSubnormal (fmt : FloatFormat) :
     signBit (posMinSubnormal fmt) = false := by
@@ -438,23 +451,14 @@ private theorem toggleSign_posMinSubnormal (fmt : FloatFormat) :
 /-- The least positive subnormal is finite in every supported encoding. -/
 @[simp] theorem isFinite_posMinSubnormal (fmt : FloatFormat) :
     isFinite (posMinSubnormal fmt) = true := by
-  have hfraction : 1 < 2 ^ fmt.fracWidth :=
-    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
-  have hexponentNe : (0 : Nat) ≠ fmt.expAllOnesNat :=
-    (FloatFormat.expAllOnesNat_pos fmt).ne
-  rw [posMinSubnormal_eq_ofFields,
-    isFinite_ofFields fmt false 0 1 (by positivity) hfraction]
-  cases hencoding : fmt.encoding <;>
-    simp [hexponentNe]
+  rw [posMinSubnormal_eq_ofFields]
+  exact isFinite_ofFields_zero_one fmt false
 
 /-- The least positive subnormal is nonzero. -/
 @[simp] theorem isZero_posMinSubnormal (fmt : FloatFormat) :
     isZero (posMinSubnormal fmt) = false := by
-  have hfraction : 1 < 2 ^ fmt.fracWidth :=
-    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
-  rw [posMinSubnormal_eq_ofFields,
-    isZero_ofFields fmt false 0 1 (by positivity) hfraction]
-  cases hencoding : fmt.encoding <;> simp
+  rw [posMinSubnormal_eq_ofFields]
+  exact isZero_ofFields_zero_one fmt false
 
 /-- The least positive subnormal is not a NaN. -/
 @[simp] theorem isNaN_posMinSubnormal (fmt : FloatFormat) :
@@ -485,23 +489,14 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
 /-- The negative subnormal of least magnitude is finite in every supported encoding. -/
 @[simp] theorem isFinite_negMinSubnormal (fmt : FloatFormat) :
     isFinite (negMinSubnormal fmt) = true := by
-  have hfraction : 1 < 2 ^ fmt.fracWidth :=
-    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
-  have hexponentNe : (0 : Nat) ≠ fmt.expAllOnesNat :=
-    (FloatFormat.expAllOnesNat_pos fmt).ne
-  rw [negMinSubnormal_eq_ofFields,
-    isFinite_ofFields fmt true 0 1 (by positivity) hfraction]
-  cases hencoding : fmt.encoding <;>
-    simp [hexponentNe]
+  rw [negMinSubnormal_eq_ofFields]
+  exact isFinite_ofFields_zero_one fmt true
 
 /-- The negative subnormal of least magnitude is nonzero. -/
 @[simp] theorem isZero_negMinSubnormal (fmt : FloatFormat) :
     isZero (negMinSubnormal fmt) = false := by
-  have hfraction : 1 < 2 ^ fmt.fracWidth :=
-    Nat.one_lt_two_pow (Nat.ne_of_gt fmt.fracWidth_pos)
-  rw [negMinSubnormal_eq_ofFields,
-    isZero_ofFields fmt true 0 1 (by positivity) hfraction]
-  cases hencoding : fmt.encoding <;> simp
+  rw [negMinSubnormal_eq_ofFields]
+  exact isZero_ofFields_zero_one fmt true
 
 /-- The negative subnormal of least magnitude is not a NaN. -/
 @[simp] theorem isNaN_negMinSubnormal (fmt : FloatFormat) :
@@ -574,18 +569,8 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
   | ieee | finiteMaxNaN | finite =>
       simp [neg, FloatFormat.supportsSignedZero, hencoding, isNaN]
   | finiteUnsignedZero =>
-      have hunsigned : fmt.supportsSignedZero = false := by
-        simp [FloatFormat.supportsSignedZero, hencoding]
-      by_cases hnan : isNaN x = true
-      · rw [neg_eq_self_of_not_supportsSignedZero_of_isNaN x hunsigned hnan]
-      · have hnanFalse : isNaN x = false := Bool.eq_false_of_not_eq_true hnan
-        by_cases hzero : isZero x = true
-        · rw [neg_eq_self_of_not_supportsSignedZero_of_isZero x hunsigned hzero]
-        · have hzeroFalse : isZero x = false := Bool.eq_false_of_not_eq_true hzero
-          rw [neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
-            x hnanFalse hzeroFalse]
-          rw [isNaN_toggleSign_eq_isZero_of_finiteUnsignedZero hencoding, hzeroFalse]
-          exact hnanFalse.symm
+      exact (isNaN_isZero_eq_of_eq_self_or_toggleSign hencoding
+        (neg_eq_self_or_toggleSign_of_finiteUnsignedZero x hencoding)).1
 
 /-- Negation preserves infinity classification. -/
 @[simp] theorem isInf_neg {fmt : FloatFormat} (x : Model fmt) :
@@ -600,25 +585,8 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
   | ieee | finiteMaxNaN | finite =>
       simp [neg, FloatFormat.supportsSignedZero, hencoding, isZero]
   | finiteUnsignedZero =>
-      have hunsigned : fmt.supportsSignedZero = false := by
-        simp [FloatFormat.supportsSignedZero, hencoding]
-      by_cases hnan : isNaN x = true
-      · have hzeroFalse : isZero x = false := by
-          cases hzero : isZero x
-          · rfl
-          · have hfinite := isFinite_eq_true_of_isZero_eq_true x hzero
-            have hnanFalse := isNaN_eq_false_of_isFinite_eq_true x hfinite
-            rw [hnan] at hnanFalse
-            contradiction
-        rw [neg_eq_self_of_not_supportsSignedZero_of_isNaN x hunsigned hnan]
-      · have hnanFalse : isNaN x = false := Bool.eq_false_of_not_eq_true hnan
-        by_cases hzero : isZero x = true
-        · rw [neg_eq_self_of_not_supportsSignedZero_of_isZero x hunsigned hzero]
-        · have hzeroFalse : isZero x = false := Bool.eq_false_of_not_eq_true hzero
-          rw [neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
-            x hnanFalse hzeroFalse]
-          rw [isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding, hnanFalse]
-          exact hzeroFalse.symm
+      exact (isNaN_isZero_eq_of_eq_self_or_toggleSign hencoding
+        (neg_eq_self_or_toggleSign_of_finiteUnsignedZero x hencoding)).2
 
 /-- Negation preserves finiteness. -/
 @[simp] theorem isFinite_neg {fmt : FloatFormat} (x : Model fmt) :

@@ -327,7 +327,10 @@ structure IntegerExponentOutcome where
 def logBBound (fmt : FloatFormat) : Int :=
   fmt.maxNormalExponent + fmt.fracWidth
 
-/-- Exceptional integer outside the finite exponent range and the IEEE `logB` bound. -/
+/--
+Exceptional integer outside the finite exponent range and the IEEE `logB` bound
+(`abs_binaryExponentInt_lt_binaryExponentSentinel`, `binaryExponentSentinel_outside_logBBound`).
+-/
 def binaryExponentSentinel (fmt : FloatFormat) : Int :=
   2 * max (max |fmt.minSubnormalExponent| |fmt.maxNormalExponent|) |logBBound fmt| + 1
 

@@ -189,72 +189,79 @@ theorem sqrtDyadicBracket_sound (fmt : FloatFormat) (d : Numerics.Dyadic)
     ⟨mul_le_mul_of_nonneg_right hlower hscalePos.le,
       mul_le_mul_of_nonneg_right hupper hscalePos.le⟩
 
-private theorem signBit_eq_false_of_nonnegative_of_not_isZero
-    {fmt : FloatFormat} (x : Model fmt) {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) (hnonnegative : 0 ≤ toReal x)
-    (hzero : isZero x = false) :
-    signBit x = false := by
-  have hmant := significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hd hzero
-  rw [← sign_eq_signBit_of_toDyadic?_some hd]
-  cases hsign : d.negative with
-  | false => rfl
-  | true =>
-      have hmantPos : (0 : ℝ) < d.significand := by
-        exact_mod_cast Nat.pos_of_ne_zero hmant
-      have hdNegative : d.toReal < 0 := by
-        simpa [Numerics.Dyadic.toReal, hsign] using
-          neg_neg_of_pos (mul_pos hmantPos (zpow_pos (by norm_num : (0 : ℝ) < 2) d.exponent))
-      have hxReal : toReal x = d.toReal := by
-        simp [toReal_eq, hd]
-      rw [hxReal] at hnonnegative
-      exact (not_lt_of_ge hnonnegative hdNegative).elim
-
-/-- A finite value with clear sign bit has nonnegative real value. -/
-theorem toReal_nonneg_of_isFinite_of_signBit_eq_false
+/--
+A finite nonzero value with nonnegative real semantics decodes to a dyadic with a clear sign, its
+stored sign bit is clear, and its real value is that dyadic's.
+-/
+private theorem nonnegative_toDyadic?_of_not_isZero
     {fmt : FloatFormat} (x : Model fmt)
-    (hfinite : isFinite x = true) (hxsign : signBit x = false) :
-    0 ≤ toReal x := by
+    (hfinite : isFinite x = true) (hnonnegative : 0 ≤ toReal x)
+    (hzero : ¬isZero x = true) :
+    ∃ d, toDyadic? x = some d ∧ signBit x = false ∧ d.negative = false ∧
+      toReal x = d.toReal := by
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hsign : d.negative = false := (sign_eq_signBit_of_toDyadic?_some hd).trans hxsign
   have hxReal : toReal x = d.toReal := by
     simp [toReal_eq, hd]
-  rw [hxReal, Numerics.Dyadic.toReal]
-  simp only [Numerics.Dyadic.cast_signedSignificand, hsign, Bool.false_eq_true, ite_false, one_mul]
-  exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
+  have hmant :=
+    significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hd (Bool.eq_false_iff.mpr hzero)
+  have hdsign : d.negative = false := by
+    cases hsign : d.negative with
+    | false => rfl
+    | true =>
+        have hdNegative := Dyadic.toReal_lt_zero_of_negative_eq_true hsign hmant
+        rw [hxReal] at hnonnegative
+        exact (not_lt_of_ge hnonnegative hdNegative).elim
+  exact ⟨d, hd, (sign_eq_signBit_of_toDyadic?_some hd).symm.trans hdsign, hdsign, hxReal⟩
 
-/-- Downward square root is non-NaN on finite nonnegative inputs. -/
+/-- Square root of a zero of either sign is exact in the extended reals, in every direction. -/
+private theorem toEReal_sqrt_of_isZero {fmt : FloatFormat} {mode : IEEERoundingMode}
+    {x : Model fmt} (hzero : isZero x = true) :
+    toEReal (sqrt x (mode := mode)) = ((Real.sqrt (toReal x) : ℝ) : EReal) := by
+  rw [sqrt_of_isZero hzero,
+    toEReal_eq_coe_toReal_of_isFinite x (isFinite_eq_true_of_isZero_eq_true x hzero),
+    toReal_eq_zero_of_isZero x hzero]
+  simp
+
+/--
+Downward square root is non-NaN on finite nonnegative inputs, in every encoding: the lower bracket
+is nonnegative, and positive downward rounding never overflows to a NaN.
+-/
 theorem isNaN_sqrt_down_eq_false_of_isFinite_of_nonnegative
     {fmt : FloatFormat} (x : Model fmt)
-    (hfmt : fmt.isIEEE = true)
     (hfinite : isFinite x = true) (hnonnegative : 0 ≤ toReal x) :
     isNaN (sqrt x (mode := .down)) = false := by
   by_cases hzero : isZero x = true
-  · rw [sqrt_of_isZero hfinite hzero]
+  · rw [sqrt_of_isZero hzero]
     exact isNaN_eq_false_of_isFinite_eq_true x hfinite
-  · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-    have hzeroFalse : isZero x = false := Bool.eq_false_iff.mpr hzero
-    rw [sqrt_down_eq_roundDyadicDown_of_toDyadic?_some hd
-      (signBit_eq_false_of_nonnegative_of_not_isZero x hd hnonnegative hzeroFalse) hzeroFalse]
-    exact isNaN_roundDyadicDown_eq_false fmt _ hfmt
+  · obtain ⟨d, hd, hsign, -, -⟩ :=
+      nonnegative_toDyadic?_of_not_isZero x hfinite hnonnegative hzero
+    rw [sqrt_down_eq_roundDyadicDown_of_toDyadic?_some hd hsign]
+    have hlower : (sqrtDyadicBracket fmt d).lower.negative = false := by
+      simp [sqrtDyadicBracket]
+    unfold roundDyadicDown
+    simp only [hlower, Bool.false_eq_true, ite_false]
+    split_ifs
+    · simp
+    · exact isNaN_roundDyadicPosDown_eq_false fmt (sqrtDyadicBracket fmt d).lower.significand
+        (sqrtDyadicBracket fmt d).lower.exponent
 
-/-- Upward square root is non-NaN on finite nonnegative inputs. -/
+/-- In a conventional IEEE format, upward square root is non-NaN on finite nonnegative inputs. -/
 theorem isNaN_sqrt_up_eq_false_of_isFinite_of_nonnegative
     {fmt : FloatFormat} (x : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hfinite : isFinite x = true) (hnonnegative : 0 ≤ toReal x) :
     isNaN (sqrt x (mode := .up)) = false := by
   by_cases hzero : isZero x = true
-  · rw [sqrt_of_isZero hfinite hzero]
+  · rw [sqrt_of_isZero hzero]
     exact isNaN_eq_false_of_isFinite_eq_true x hfinite
-  · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-    have hzeroFalse : isZero x = false := Bool.eq_false_iff.mpr hzero
-    rw [sqrt_up_eq_roundDyadicUp_of_toDyadic?_some hd
-      (signBit_eq_false_of_nonnegative_of_not_isZero x hd hnonnegative hzeroFalse) hzeroFalse]
+  · obtain ⟨d, hd, hsign, -, -⟩ :=
+      nonnegative_toDyadic?_of_not_isZero x hfinite hnonnegative hzero
+    rw [sqrt_up_eq_roundDyadicUp_of_toDyadic?_some hd hsign]
     exact isNaN_roundDyadicUp_eq_false fmt _ hfmt
 
 /--
-Downward square root encloses the exact square root from below for every finite value with
-nonnegative real semantics, including negative zero.
+In a conventional IEEE format, downward square root encloses the exact square root from below for
+every finite value with nonnegative real semantics, including negative zero.
 -/
 theorem toEReal_sqrt_down_le_of_nonnegative
     {fmt : FloatFormat} (x : Model fmt)
@@ -262,26 +269,20 @@ theorem toEReal_sqrt_down_le_of_nonnegative
     (hfinite : isFinite x = true) (hnonnegative : 0 ≤ toReal x) :
     toEReal (sqrt x (mode := .down)) ≤ ((Real.sqrt (toReal x) : ℝ) : EReal) := by
   by_cases hzero : isZero x = true
-  · rw [sqrt_of_isZero hfinite hzero,
-      toEReal_eq_coe_toReal_of_isFinite x hfinite, toReal_eq_zero_of_isZero x hzero]
-    simp
-  · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-    have hzeroFalse : isZero x = false := Bool.eq_false_iff.mpr hzero
-    have hsign := signBit_eq_false_of_nonnegative_of_not_isZero x hd hnonnegative hzeroFalse
-    have hxReal : toReal x = d.toReal := by
-      simp [toReal_eq, hd]
-    rw [sqrt_down_eq_roundDyadicDown_of_toDyadic?_some hd hsign hzeroFalse, hxReal]
+  · exact (toEReal_sqrt_of_isZero hzero).le
+  · obtain ⟨d, hd, hsign, hdsign, hxReal⟩ :=
+      nonnegative_toDyadic?_of_not_isZero x hfinite hnonnegative hzero
+    rw [sqrt_down_eq_roundDyadicDown_of_toDyadic?_some hd hsign, hxReal]
     calc
       toEReal (roundDyadicDown fmt (sqrtDyadicBracket fmt d).lower) ≤
           ((sqrtDyadicBracket fmt d).lower.toReal : EReal) :=
         toEReal_roundDyadicDown_le fmt _ hfmt
       _ ≤ (Real.sqrt d.toReal : EReal) :=
-        EReal.coe_le_coe_iff.2
-          (sqrtDyadicBracket_sound fmt d ((sign_eq_signBit_of_toDyadic?_some hd).trans hsign)).1
+        EReal.coe_le_coe_iff.2 (sqrtDyadicBracket_sound fmt d hdsign).1
 
 /--
-The exact square root is bounded above by upward square root for every finite value with
-nonnegative real semantics, including negative zero.
+In a conventional IEEE format, the exact square root is bounded above by upward square root for
+every finite value with nonnegative real semantics, including negative zero.
 -/
 theorem le_toEReal_sqrt_up_of_nonnegative
     {fmt : FloatFormat} (x : Model fmt)
@@ -289,24 +290,19 @@ theorem le_toEReal_sqrt_up_of_nonnegative
     (hfinite : isFinite x = true) (hnonnegative : 0 ≤ toReal x) :
     ((Real.sqrt (toReal x) : ℝ) : EReal) ≤ toEReal (sqrt x (mode := .up)) := by
   by_cases hzero : isZero x = true
-  · rw [sqrt_of_isZero hfinite hzero,
-      toEReal_eq_coe_toReal_of_isFinite x hfinite, toReal_eq_zero_of_isZero x hzero]
-    simp
-  · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-    have hzeroFalse : isZero x = false := Bool.eq_false_iff.mpr hzero
-    have hsign := signBit_eq_false_of_nonnegative_of_not_isZero x hd hnonnegative hzeroFalse
-    have hxReal : toReal x = d.toReal := by
-      simp [toReal_eq, hd]
-    rw [sqrt_up_eq_roundDyadicUp_of_toDyadic?_some hd hsign hzeroFalse, hxReal]
+  · exact (toEReal_sqrt_of_isZero hzero).ge
+  · obtain ⟨d, hd, hsign, hdsign, hxReal⟩ :=
+      nonnegative_toDyadic?_of_not_isZero x hfinite hnonnegative hzero
+    rw [sqrt_up_eq_roundDyadicUp_of_toDyadic?_some hd hsign, hxReal]
     calc
       (Real.sqrt d.toReal : EReal) ≤ ((sqrtDyadicBracket fmt d).upper.toReal : EReal) :=
-        EReal.coe_le_coe_iff.2
-          (sqrtDyadicBracket_sound fmt d ((sign_eq_signBit_of_toDyadic?_some hd).trans hsign)).2
+        EReal.coe_le_coe_iff.2 (sqrtDyadicBracket_sound fmt d hdsign).2
       _ ≤ toEReal (roundDyadicUp fmt (sqrtDyadicBracket fmt d).upper) :=
         le_toEReal_roundDyadicUp fmt _ hfmt
 
 /--
-Downward square root bounds the exact square root from below on finite inputs with a clear sign bit.
+In a conventional IEEE format, downward square root bounds the exact square root from below on
+finite inputs with a clear sign bit.
 -/
 theorem toEReal_sqrt_down_le
     {fmt : FloatFormat} (x : Model fmt)
@@ -314,10 +310,11 @@ theorem toEReal_sqrt_down_le
     (hfinite : isFinite x = true) (hxsign : signBit x = false) :
     toEReal (sqrt x (mode := .down)) ≤ ((Real.sqrt (toReal x) : ℝ) : EReal) :=
   toEReal_sqrt_down_le_of_nonnegative x hfmt hfinite
-    (toReal_nonneg_of_isFinite_of_signBit_eq_false x hfinite hxsign)
+    (toReal_nonneg_of_signBit_eq_false hxsign)
 
 /--
-Upward square root bounds the exact square root from above on finite inputs with a clear sign bit.
+In a conventional IEEE format, upward square root bounds the exact square root from above on finite
+inputs with a clear sign bit.
 -/
 theorem le_toEReal_sqrt_up
     {fmt : FloatFormat} (x : Model fmt)
@@ -325,7 +322,7 @@ theorem le_toEReal_sqrt_up
     (hfinite : isFinite x = true) (hxsign : signBit x = false) :
     ((Real.sqrt (toReal x) : ℝ) : EReal) ≤ toEReal (sqrt x (mode := .up)) :=
   le_toEReal_sqrt_up_of_nonnegative x hfmt hfinite
-    (toReal_nonneg_of_isFinite_of_signBit_eq_false x hfinite hxsign)
+    (toReal_nonneg_of_signBit_eq_false hxsign)
 
 end
 

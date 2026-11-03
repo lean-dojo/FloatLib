@@ -62,6 +62,20 @@ theorem finiteMantissa_lt
   · rw [Model.pow2_eq_two_pow]
     omega
 
+/--
+Every decoded normal binary32 significand has exactly 24 bits, and its low 23 bits are the fraction
+field.
+-/
+theorem finiteMantissa_bounds
+    (exponent fraction : UInt32) (hexponent : exponent ≠ 0)
+    (hfraction : fraction.toNat < 2 ^ 23) :
+    2 ^ 23 ≤ (finiteMantissa exponent fraction).toNat ∧
+      (finiteMantissa exponent fraction).toNat < 2 ^ 24 ∧
+      (finiteMantissa exponent fraction).toNat - 2 ^ 23 = fraction.toNat := by
+  rw [finiteMantissa_toNat exponent fraction hfraction, ite_eq_right hexponent,
+    Model.pow2_eq_two_pow]
+  omega
+
 /-- Interpret the native finite scale as an ordinary natural number. -/
 theorem finiteScale_toNat (exponent : UInt32) :
     (finiteScale exponent).toNat =
@@ -124,16 +138,16 @@ theorem finiteScale_le_of_value (x : Value)
     hfinite
 
 /--
-The 24-bit mantissa bound also holds for components identified with a value's decoded fields.
+The 24-bit mantissa bound also holds for components identified with a value's decoded fraction,
+whatever the exponent field.
 -/
 theorem finiteMantissa_lt_of_components
     (x : Value) {exponent fraction : UInt32} {mantissa : UInt64}
-    (hexponent : exponent = expField (toUInt32 x))
     (hfraction : fraction = fracField (toUInt32 x))
     (hmantissa : mantissa = finiteMantissa exponent fraction) :
     mantissa.toNat < 2 ^ 24 := by
-  simpa only [hmantissa, hexponent, hfraction] using
-    finiteMantissa_lt_of_value x
+  rw [hmantissa, hfraction]
+  exact finiteMantissa_lt exponent _ (fracField_lt x)
 
 /--
 Transport the value-level finite-scale bound to the local component names used by a word kernel.
@@ -157,7 +171,7 @@ theorem finiteComponents_bounds
     (hmantissa : mantissa = finiteMantissa exponent fraction)
     (hscale : scale = finiteScale exponent) (hfinite : exponent ≠ 0xff) :
     mantissa.toNat < 2 ^ 24 ∧ scale.toNat ≤ 253 :=
-  ⟨finiteMantissa_lt_of_components x hexponent hfraction hmantissa,
+  ⟨finiteMantissa_lt_of_components x hfraction hmantissa,
     finiteScale_le_of_components x hexponent hscale hfinite⟩
 
 /-- Native finite components decode to the same exact dyadic as the generic binary32 decoder. -/

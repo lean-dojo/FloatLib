@@ -49,7 +49,12 @@ instance (format : Format) : Decidable (CandidateEligible format) := by
   unfold CandidateEligible
   infer_instance
 
-/-- Positive-code endpoint represented directly in the native storage word. -/
+/--
+Positive-code endpoint `format.signMaskNat`, represented directly in the native storage word.
+
+The word is exact only for `Eligible` formats (`signMaskWord_toNat`). At width 65, which
+`CandidateEligible` admits, the shift amount 64 is reduced modulo the word size and the word is 1.
+-/
 @[inline] def signMaskWord (format : Format) : UInt64 :=
   (1 : UInt64) <<< UInt64.ofNat format.signIndex
 

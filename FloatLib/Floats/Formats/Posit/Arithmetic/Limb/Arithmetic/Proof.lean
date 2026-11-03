@@ -8,8 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
-
-import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
 public import Mathlib.Analysis.Real.Sqrt
 
@@ -17,9 +16,9 @@ public import Mathlib.Analysis.Real.Sqrt
 # Refinement of two-limb posit arithmetic
 
 These kernels round exact dyadic results using two-limb candidates. Addition, subtraction,
-multiplication, and fused multiply-add agree with the rational posit specification. Pair-word
-division decodes the operands and delegates to the shared direct divider; `divWords_eq_div`
-relates that adapter to model division.
+multiplication, and fused multiply-add are the shared exact-dyadic operations, so they agree with
+the rational posit specification. Pair-word division decodes the operands and delegates to the
+shared direct divider; `divWords_eq_div` relates that adapter to model division.
 -/
 
 @[expose] public section
@@ -30,38 +29,55 @@ open FloatLib.Numerics
 
 variable {format : Format}
 
+/-- Two-limb-rounded addition is the shared exact-dyadic addition. -/
+theorem add_eq_dyadic (heligible : NativeLimb.Eligible format)
+    (left right : Model format) :
+    add heligible left right = DyadicArithmetic.add left right := by
+  unfold add DyadicArithmetic.add NativeLimbPacked.Boundary.binaryResult
+  cases left.toDyadic? <;> cases right.toDyadic? <;>
+    simp [NativeLimbRounding.round_eq_dyadic]
+
+/-- Two-limb-rounded subtraction is the shared exact-dyadic subtraction. -/
+theorem sub_eq_dyadic (heligible : NativeLimb.Eligible format)
+    (left right : Model format) :
+    sub heligible left right = DyadicArithmetic.sub left right := by
+  unfold sub DyadicArithmetic.sub NativeLimbPacked.Boundary.binaryResult
+  cases left.toDyadic? <;> cases right.toDyadic? <;>
+    simp [NativeLimbRounding.round_eq_dyadic]
+
+/-- Two-limb-rounded multiplication is the shared exact-dyadic multiplication. -/
+theorem mul_eq_dyadic (heligible : NativeLimb.Eligible format)
+    (left right : Model format) :
+    mul heligible left right = DyadicArithmetic.mul left right := by
+  unfold mul DyadicArithmetic.mul NativeLimbPacked.Boundary.binaryResult
+  cases left.toDyadic? <;> cases right.toDyadic? <;>
+    simp [NativeLimbRounding.round_eq_dyadic]
+
+/-- Two-limb-rounded FMA is the shared exact-dyadic FMA. -/
+theorem fma_eq_dyadic (heligible : NativeLimb.Eligible format)
+    (left right addend : Model format) :
+    fma heligible left right addend = DyadicArithmetic.fma left right addend := by
+  unfold fma DyadicArithmetic.fma NativeLimbPacked.Boundary.ternaryResult
+  cases left.toDyadic? <;> cases right.toDyadic? <;> cases addend.toDyadic? <;>
+    simp [NativeLimbRounding.round_eq_dyadic]
+
 /-- Two-limb-rounded addition refines the reference rational specification. -/
 theorem add_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
     add heligible left right = Spec.add left right := by
-  unfold add Spec.add
-  rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
-  cases left.toDyadic? <;> cases right.toDyadic? <;>
-    simp [NativeLimbPacked.Boundary.binaryResult,
-      NativeLimbRounding.round_eq_roundRat,
-      FloatLib.Numerics.Dyadic.add_toRat]
+  rw [add_eq_dyadic, DyadicArithmetic.add_eq_spec]
 
 /-- Two-limb-rounded subtraction refines the reference rational specification. -/
 theorem sub_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
     sub heligible left right = Spec.sub left right := by
-  unfold sub Spec.sub
-  rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
-  cases left.toDyadic? <;> cases right.toDyadic? <;>
-    simp [NativeLimbPacked.Boundary.binaryResult,
-      NativeLimbRounding.round_eq_roundRat,
-      FloatLib.Numerics.Dyadic.sub_toRat]
+  rw [sub_eq_dyadic, DyadicArithmetic.sub_eq_spec]
 
 /-- Two-limb-rounded multiplication refines the reference rational specification. -/
 theorem mul_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
     mul heligible left right = Spec.mul left right := by
-  unfold mul Spec.mul
-  rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
-  cases left.toDyadic? <;> cases right.toDyadic? <;>
-    simp [NativeLimbPacked.Boundary.binaryResult,
-      NativeLimbRounding.round_eq_roundRat,
-      FloatLib.Numerics.Dyadic.mul_toRat]
+  rw [mul_eq_dyadic, DyadicArithmetic.mul_eq_spec]
 
 /--
 Pair-word division is exactly the shared direct divider applied to the corresponding model
@@ -85,14 +101,6 @@ theorem divWords_eq_div
 theorem fma_eq_spec (heligible : NativeLimb.Eligible format)
     (left right addend : Model format) :
     fma heligible left right addend = Spec.fma left right addend := by
-  unfold fma Spec.fma
-  rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map,
-    Model.toRat?_eq_toDyadic?_map]
-  cases left.toDyadic? <;> cases right.toDyadic? <;>
-    cases addend.toDyadic? <;>
-      simp [NativeLimbPacked.Boundary.ternaryResult,
-        NativeLimbRounding.round_eq_roundRat,
-        FloatLib.Numerics.Dyadic.add_toRat,
-        FloatLib.Numerics.Dyadic.mul_toRat]
+  rw [fma_eq_dyadic, DyadicArithmetic.fma_eq_spec]
 
 end FloatLib.Floats.Formats.Posit.Model.NativeLimbArithmetic

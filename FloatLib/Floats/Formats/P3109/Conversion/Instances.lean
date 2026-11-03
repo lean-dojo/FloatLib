@@ -12,9 +12,11 @@ public import FloatLib.Floats.Formats.P3109.Conversion.Proof
 # P3109 conversion capabilities
 
 The destination quantizer uses the exact rational scalar domain and the `ProjectionPolicy`
-context. Context-free conversion selects FloatLib's nearest-even, no-saturation policy. A
-conversion's `(mode := ...)` option takes a P3109 `RoundingMode`, as in
-`x.cast (target := ExecFloat.P3109 .binary8p4se) (mode := .up)`.
+context. A conversion's `(mode := ...)` option takes a P3109 `RoundingMode` and its
+`(context := ...)` option a `SaturationMode`, as in
+`x.cast (target := ExecFloat.P3109 .binary8p4se) (mode := .up) (context := .finite)`, and the two
+make the projection policy. Context-free conversion selects FloatLib's nearest-even,
+no-saturation policy.
 -/
 
 @[expose] public section
@@ -36,31 +38,32 @@ instance quantizer :
   spec := spec
   correct := implements_run
 
-/-- Context-free P3109 conversion uses nearest-even rounding and no saturation request. -/
+/--
+Conversions into a P3109 destination take a P3109 `RoundingMode`, nearest-even by default, and a
+`SaturationMode`: `(mode := m) (context := s)` projects under `{ rounding := m, saturation := s }`.
+-/
+instance roundingModes :
+    FloatLib.Floats.ExecFloat.RoundingModes (ExecFloat.P3109 format) Rat
+      Formats.P3109.RoundingMode where
+  Policy := Formats.P3109.SaturationMode
+  default := .nearest
+  withMode rounding saturation := { rounding, saturation }
+
+/--
+Context-free P3109 conversion makes no saturation request, so with the default mode it projects
+under the default policy `{}`.
+-/
 instance defaultQuantizer :
     FloatLib.Floats.ExecFloat.DefaultQuantizer
       (ExecFloat.P3109 format) Rat where
-  defaultContext := {}
+  defaultContext := .none
 
-/-- Conversions into a P3109 destination take a P3109 `RoundingMode`, nearest-even by default. -/
-instance roundingModes :
-    FloatLib.Floats.ExecFloat.RoundingModes (ExecFloat.P3109 format)
-      Formats.P3109.RoundingMode where
-  default := .nearest
-
-/--
-A conversion's `(mode := m)` selects rounding `m` with no saturation request. Passing
-`(context := { rounding := m, saturation := s })` also chooses the saturation.
--/
-@[inline] instance modeContext (mode : Formats.P3109.RoundingMode) :
-    FloatLib.Floats.ExecFloat.ModeContext (ExecFloat.P3109 format) Rat mode where
-  context := { rounding := mode }
-
-/-- The context a P3109 conversion's `(mode := m)` selects is `{ rounding := m }`. -/
-@[simp] theorem context_modeContext (mode : Formats.P3109.RoundingMode) :
-    (FloatLib.Floats.ExecFloat.ModeContext.context :
-        FloatLib.Floats.ExecFloat.ContextFor (ExecFloat.P3109 format) mode) =
-      ({ rounding := mode } : Formats.P3109.ProjectionPolicy) :=
+/-- A P3109 conversion with `(mode := m) (context := s)` rounds by `m` and saturates by `s`. -/
+@[simp] theorem withMode_eq (mode : Formats.P3109.RoundingMode)
+    (saturation : Formats.P3109.SaturationMode) :
+    FloatLib.Floats.ExecFloat.RoundingModes.withMode (Destination := ExecFloat.P3109 format)
+        mode saturation =
+      ({ rounding := mode, saturation } : Formats.P3109.ProjectionPolicy) :=
   rfl
 
 end Conversion

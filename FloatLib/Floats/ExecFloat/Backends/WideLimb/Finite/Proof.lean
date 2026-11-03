@@ -112,10 +112,22 @@ theorem decode?_neg (hieee : fmt.isIEEE = true) (m : Model fmt) :
   FiniteKernel.decode?_neg hieee m
 
 /-- The unsigned-scale exact sum does not depend on the order of its operands. -/
-theorem roundSum_comm (hieee : fmt.isIEEE = true) (roundOffset : Nat) (aSign bSign : Bool)
+theorem roundSum_comm (roundOffset : Nat) (aSign bSign : Bool)
     (a sa b sb : Nat) :
     FiniteScaleAdd.roundSum fmt roundOffset aSign bSign a sa b sb =
       FiniteScaleAdd.roundSum fmt roundOffset bSign aSign b sb a sa := by
-  rw [FiniteScaleAdd.roundSum_eq fmt hieee, FiniteScaleAdd.roundSum_eq fmt hieee, addDyadic_comm]
+  unfold FiniteScaleAdd.roundSum
+  simp only [FiniteScaleAdd.roundAligned_eq, beq_iff_eq]
+  by_cases ha : a = 0 <;> by_cases hb : b = 0
+  · simp [ha, hb, Bool.and_comm]
+  · simp [ha, hb]
+  · simp [ha, hb]
+  · by_cases hab : sa ≤ sb <;> by_cases hba : sb ≤ sa
+    · obtain rfl : sa = sb := le_antisymm hab hba
+      simp only [ha, hb, le_refl, ite_true, ite_false, Nat.sub_self, Nat.shiftLeft_zero]
+      exact FiniteScaleAdd.roundMagnitudes_comm _ _ _ _ _ _ _
+    · simp [ha, hb, hab, hba]
+    · simp [ha, hb, hab, hba]
+    · omega
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

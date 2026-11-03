@@ -91,24 +91,24 @@ def roundBinaryMagnitude (fmt : BinaryInterchange.FloatFormat) (mode : RoundingM
   let num := magnitude.num.natAbs
   let den := magnitude.den
   match mode with
-  | .nearestEven =>
+  | .nearest =>
       BinaryInterchange.Model.Internal.Directed.roundRat fmt .nearest negative num den
   | .nearestAway =>
       BinaryInterchange.Model.roundDyadic fmt (binaryNearestAwayDyadic fmt negative magnitude)
   | .towardZero =>
       BinaryInterchange.Model.Internal.Directed.roundRat fmt .towardZero negative num den
-  | .towardPositive =>
+  | .up =>
       BinaryInterchange.Model.Internal.Directed.roundRat fmt .up negative num den
-  | .towardNegative =>
+  | .down =>
       BinaryInterchange.Model.Internal.Directed.roundRat fmt .down negative num den
 
 /-- Whether a directed conversion increases a nonzero magnitude. Nearest modes
 use midpoint rules and give `false` here. -/
 def binaryRoundsAway (mode : RoundingMode) (negative : Bool) : Bool :=
   match mode with
-  | .towardPositive => !negative
-  | .towardNegative => negative
-  | .nearestEven | .nearestAway | .towardZero => false
+  | .up => !negative
+  | .down => negative
+  | .nearest | .nearestAway | .towardZero => false
 
 /-- IEEE overflow test: the precision-rounded unbounded result against the exponent limit.
 The largest finite significand of an IEEE binary layout is odd, so both nearest modes
@@ -116,9 +116,9 @@ overflow at the upper midpoint itself. -/
 def binaryOverflow (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) : Bool :=
   match mode with
-  | .nearestEven | .nearestAway =>
+  | .nearest | .nearestAway =>
       decide ((BinaryInterchange.Model.overflowMidpoint fmt).toRat ≤ magnitude)
-  | .towardZero | .towardPositive | .towardNegative =>
+  | .towardZero | .up | .down =>
       if binaryRoundsAway mode negative then
         decide ((BinaryInterchange.Model.maxFiniteDyadic fmt).toRat < magnitude)
       else
@@ -130,9 +130,9 @@ def binaryTiny (fmt : BinaryInterchange.FloatFormat) (mode : RoundingMode)
     (negative : Bool) (magnitude : ℚ) (rounded : BinaryInterchange.Model fmt) : Bool :=
   BinaryInterchange.Model.isTinyAfterRounding rounded ||
     match mode with
-    | .nearestEven | .nearestAway =>
+    | .nearest | .nearestAway =>
         decide (magnitude < (BinaryInterchange.Model.underflowMidpoint fmt).toRat)
-    | .towardZero | .towardPositive | .towardNegative =>
+    | .towardZero | .up | .down =>
         if binaryRoundsAway mode negative then
           decide (magnitude ≤ (BinaryInterchange.Model.underflowPredecessor fmt).toRat)
         else

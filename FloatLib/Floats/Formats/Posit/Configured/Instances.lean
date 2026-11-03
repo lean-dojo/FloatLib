@@ -14,10 +14,10 @@ public import FloatLib.Floats.ExecFloat.Comparison
 public import FloatLib.Floats.Formats.Posit.Comparison
 
 /-!
-# Comparison, display, and literal instances for configured posits
+# Rational construction, comparison, display, and literal instances for configured posits
 
-Numerical literals are rounded once from exact rationals. Display and comparison operate on the
-exact-width model independently of the selected packed carrier.
+`ofRat` and numerical literals round once from exact rationals. Display and comparison operate on
+the exact-width model independently of the selected packed carrier.
 -/
 
 @[expose] public section
@@ -30,6 +30,17 @@ namespace ExecFloat.Posit
 
 variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [codec : FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
+
+/--
+Round an exact rational once into the configured posit with the standard's rounding,
+`Model.roundRat`.
+
+The expected type selects the format, as in `(.ofRat (1 / 3) : Posit16)`. Natural and decimal
+literals round the same way, and no value passes through a host float.
+-/
+@[inline] def ofRat (value : Rat) :
+    FloatLib.Floats.ExecFloat (Configured.Family format code plan) :=
+  ofModel (Model.roundRat format value)
 
 /-- Configured posits print their mathematical value rather than their packed carrier. -/
 instance :
@@ -55,17 +66,14 @@ namespace Formats.Posit
 instance {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] (value : Nat) :
     OfNat (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) value where
-  ofNat :=
-    Configured.Family.ofModel <| Model.roundRat format (value : Rat)
+  ofNat := ExecFloat.Posit.ofRat (value : Rat)
 
 /-- Decimal literals are rounded once from an exact rational, never through a host float. -/
 instance {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
     OfScientific (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) where
   ofScientific mantissa exponentSign decimalExponent :=
-    Configured.Family.ofModel <|
-      Model.roundRat format <|
-        (OfScientific.ofScientific mantissa exponentSign decimalExponent : Rat)
+    ExecFloat.Posit.ofRat (OfScientific.ofScientific mantissa exponentSign decimalExponent : Rat)
 
 /-- Posit negation is whole-word two's complement and fixes zero and NaR. -/
 instance {format : Format} {plan : Configured.StoragePlan format} {code : Type}

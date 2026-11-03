@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 import Mathlib.Data.Nat.Log
 import Mathlib.Tactic.NormNum
 
@@ -15,7 +16,9 @@ import Mathlib.Tactic.NormNum
 
 `scale` changes the exact binary exponent before rounding, and `binaryExponent` reports the
 leading binary exponent. The finite contracts reduce each operation to the shared dyadic rounder
-and status calculation. Zero, infinity, and NaNs have their own equations.
+and status calculation. Zero, infinity, and NaNs have their own equations, which return the
+exceptional integer or its negation. A finite nonzero answer lies in the descriptor's exponent
+range, so it never equals either of them.
 -/
 
 @[expose] public section
@@ -54,14 +57,62 @@ theorem binaryExponentInt_bounds {fmt : FloatFormat} (value : Model fmt)
   · simpa [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0), pow_succ, mul_assoc,
       mul_comm, mul_left_comm] using mul_lt_mul_of_pos_right hu hp
 
-/-- The exceptional integer is strictly beyond the IEEE integer-result bound in either sign. -/
+/--
+The exceptional integer exceeds twice the IEEE integer-result bound `emax + p - 1`, so neither it
+nor its negation lies within that bound.
+-/
 theorem binaryExponentSentinel_outside_logBBound (fmt : FloatFormat) :
-    2 * |logBBound fmt| < binaryExponentSentinel fmt ∧
-      -binaryExponentSentinel fmt < -(2 * |logBBound fmt|) := by
+    2 * |logBBound fmt| < binaryExponentSentinel fmt := by
   have hm := le_max_right (max |fmt.minSubnormalExponent| |fmt.maxNormalExponent|)
     |logBBound fmt|
   unfold binaryExponentSentinel
   omega
+
+/--
+The integer answer for a finite nonzero value lies in the descriptor's exponent range, from the
+least subnormal exponent up to the largest normal exponent.
+-/
+theorem binaryExponentInt_mem_exponentRange {fmt : FloatFormat} (value : Model fmt)
+    (exact : Numerics.Dyadic) (hvalue : exactValue value = .finite exact)
+    (hsignificand : exact.significand ≠ 0) :
+    fmt.minSubnormalExponent ≤ (binaryExponentInt value).value ∧
+      (binaryExponentInt value).value ≤ fmt.maxNormalExponent := by
+  rw [binaryExponentInt_of_finite_nonzero value exact hvalue hsignificand]
+  have hd := exactValue_eq_finite_iff.mp hvalue
+  have hmaxPos := fmt.maxFiniteExpField_pos
+  simp only [FloatFormat.maxNormalExponent, FloatFormat.minSubnormalExponent,
+    FloatFormat.minNormalExponent, Int.ofNat_eq_natCast]
+  rcases log2_significand_of_toDyadic?_some hd hsignificand with
+    ⟨-, hlog, he⟩ | ⟨hfield, hlog, hexp⟩
+  · rw [he]
+    simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
+      Int.ofNat_eq_natCast]
+    omega
+  · have hle := expField_le_maxFiniteExpField_of_isFinite value
+      (isFinite_eq_true_of_toDyadic?_some hd)
+    rw [hlog, hexp]
+    simp only [Int.ofNat_eq_natCast]
+    omega
+
+/--
+The integer answer for a finite nonzero value is strictly smaller in magnitude than the
+exceptional integer, so a genuine `logB` result never collides with the sentinel or its negation.
+-/
+theorem abs_binaryExponentInt_lt_binaryExponentSentinel {fmt : FloatFormat}
+    (value : Model fmt) (exact : Numerics.Dyadic) (hvalue : exactValue value = .finite exact)
+    (hsignificand : exact.significand ≠ 0) :
+    |(binaryExponentInt value).value| < binaryExponentSentinel fmt := by
+  obtain ⟨hlow, hhigh⟩ := binaryExponentInt_mem_exponentRange value exact hvalue hsignificand
+  have h1 := le_max_left |fmt.minSubnormalExponent| |fmt.maxNormalExponent|
+  have h2 := le_max_right |fmt.minSubnormalExponent| |fmt.maxNormalExponent|
+  have h3 := le_max_left (max |fmt.minSubnormalExponent| |fmt.maxNormalExponent|)
+    |logBBound fmt|
+  have hmin := neg_abs_le fmt.minSubnormalExponent
+  have hmax := le_abs_self fmt.maxNormalExponent
+  have habs := abs_nonneg fmt.maxNormalExponent
+  unfold binaryExponentSentinel
+  rw [abs_lt]
+  constructor <;> omega
 
 /-- An integer-result exponent query signals invalid on zero, rather than divide-by-zero. -/
 theorem binaryExponentInt_of_zero {fmt : FloatFormat} (value : Model fmt)
@@ -164,7 +215,8 @@ theorem binaryExponent_status_of_finite_nonzero
   simp [binaryExponent, Internal.Status.binaryExponent, dyadicRoundingOutcome, hvalue, hsignificand]
 
 /--
-`binaryExponent` of finite zero raises `divideByZero` and returns `nativeOverflow fmt true`.
+`binaryExponent` of finite zero raises `divideByZero` and returns the negative native overflow
+value `nativeOverflow fmt (negative := true)`.
 
 For IEEE encodings that value is negative infinity, as IEEE 754-2019 §5.3.3 requires. For the
 `finiteMaxNaN` and `finiteUnsignedZero` encodings, which have no infinity, it is the encoding's

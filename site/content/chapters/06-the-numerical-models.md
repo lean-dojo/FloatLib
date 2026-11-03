@@ -34,7 +34,7 @@ The second reading is the exact value. A finite word denotes a dyadic rational, 
 
 Decoding is done by [[FloatLib.Floats.Formats.BinaryInterchange.Model.toDyadic?]], which returns `none` for a NaN or an infinity and `some` for everything else, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toDyadic?_isSome_eq_isFinite]] says that succeeding and being finite are the same thing.
 
-For an IEEE descriptor the rule is the usual one. A zero exponent field with a zero fraction is a signed zero. With a nonzero fraction $f$, a zero exponent field gives the subnormal $f \cdot 2^{e_{\min}}$, where $e_{\min}$ is [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.minSubnormalExponent]]. A nonzero exponent field $E$ that isn't all ones, with fraction $f$, is $(2^{p} + f) \cdot 2^{E - \mathrm{bias} - p}$. Here $p$ is the fraction width and the $2^{p}$ is the hidden leading one. For binary32 that puts one at $8388608 \cdot 2^{-23}$, where $8388608 = 2^{23}$, and the least subnormal at $1 \cdot 2^{-149}$. Let's decode our two operands, and the least subnormal while we're at it:
+For an IEEE descriptor the rule is the usual one. A zero exponent field with a zero fraction is a signed zero. With a nonzero fraction $f$, a zero exponent field gives the subnormal $f \cdot 2^{e_{\min}}$, where $e_{\min}$ is [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.minSubnormalExponent]]. A nonzero exponent field $E$ that isn't all ones, with fraction $f$, is $(2^{w_f} + f) \cdot 2^{E - \mathrm{bias} - w_f}$. Here $w_f$ is the fraction width, as in [chapter 02](#/chapter/from-reals-to-machine-numbers), and the $2^{w_f}$ is the hidden leading one. For binary32 that puts one at $8388608 \cdot 2^{-23}$, where $8388608 = 2^{23}$, and the least subnormal at $1 \cdot 2^{-149}$. Let's decode our two operands, and the least subnormal while we're at it:
 
 ```lean
 /-- The binary32 word for 1.0. -/
@@ -91,9 +91,7 @@ We now have the operands for the addition: $x = 1$ and $y$ the binary32 value ne
 -- 1
 
 #eval Model.add one32 tiny32 (status := true)
--- { value := 1,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true },
---   ternary := Ordering.lt }
+-- { value := 1, status := { inexact := true }, ternary := Ordering.lt }
 ```
 
 We can make the comparison exact by measuring everything in units of $2^{-50}$, the scale `tiny32` already uses. Then one is $2^{50}$ units, the next binary32 value above one is another $2^{27}$ units away, and their midpoint is $2^{26}$ units above one. The increment is only $11258999$ units, with
@@ -117,7 +115,7 @@ Division can't stay inside the dyadics, because a quotient of dyadics is a gener
 <details>
 <summary>The square-root connection to Lean's logical model</summary>
 
-Lean's core library ships a logical model of IEEE floats, `Float.Model.UnpackedFloat`. It's an inductive with a zero, an infinity, a NaN, and a finite case carrying a sign, a mantissa, and an exponent, and it comes with its own rounding function. For an IEEE descriptor and a positive finite input, [[FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt_eq_model]] identifies our square root with the repacked result of that model. Its hypotheses require finiteness, a nonzero input, and a clear sign bit, so zero and exceptional inputs aren't covered. And agreeing with Lean's logical float model is a different thing from agreeing with host instructions.
+Lean's core library ships a logical model of IEEE floats, `Float.Model.UnpackedFloat`. It's an inductive with a zero, an infinity, a NaN, and a finite case carrying a sign, a mantissa, and an exponent, and it comes with its own rounding function. For an IEEE descriptor and a finite input with a clear sign bit, `+0` included, [[FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt_eq_model]] identifies our square root with the repacked result of that model, and `Spec.sqrt_eq_model_of_isZero` covers `-0`. Negative nonzero inputs, infinities and NaNs aren't covered. And agreeing with Lean's logical float model is a different thing from agreeing with host instructions.
 
 </details>
 
@@ -125,27 +123,27 @@ We prove the dispatched operations equal to these references for every descripto
 
 ## The rounding contract as a statement about reals
 
-To relate an operation to rounding on $\mathbb{R}$, we use Boldo and Melquiond's Flocq description of a grid [@boldoMelquiond2011]. Picture the real numbers a format can hold exactly. They're isolated points on the real line, evenly spaced between one power of two and the next, and in the normal range the spacing doubles at each power of two. We call this set the format's grid. Flocq describes the spacing through an exponent function. For a real $x$ with $2^{e-1} \le |x| < 2^{e}$, $\mathrm{fexp}(e)$ is the exponent of the spacing around $x$. For a descriptor `fmt`, [[FloatLib.Floats.Formats.BinaryInterchange.Model.fexpOf]] is [[FloatLib.Floats.Formats.Flocq.fltExp]] applied to the least subnormal exponent and the precision $p + 1$. That precision counts the $p$ stored fraction bits plus the hidden leading one, and the exponent function is
+To relate an operation to rounding on $\mathbb{R}$, we use Boldo and Melquiond's Flocq description of a grid [@boldoMelquiond2011]. Picture the real numbers a format can hold exactly. They're isolated points on the real line, evenly spaced between one power of two and the next, and in the normal range the spacing doubles at each power of two. We call this set the format's grid. Flocq describes the spacing through an exponent function. For a real $x$ with $2^{e-1} \le |x| < 2^{e}$, $\mathrm{fexp}(e)$ is the exponent of the spacing around $x$. For a descriptor `fmt`, [[FloatLib.Floats.Formats.BinaryInterchange.Model.fexpOf]] is [[FloatLib.Floats.Formats.Flocq.fltExp]] applied to the least subnormal exponent and the precision $p = w_f + 1$. That precision counts the $w_f$ stored fraction bits plus the hidden leading one, and the exponent function is
 
-$$\mathrm{fexp}(e) = \max\bigl(e - (p + 1),\; e_{\min}\bigr),$$
+$$\mathrm{fexp}(e) = \max\bigl(e - p,\; e_{\min}\bigr),$$
 
-so in the normal range the spacing is $2^{e - (p + 1)}$ and $p + 1$ significant bits are kept. Below the normal range the spacing stops shrinking and stays at $2^{e_{\min}}$, which is gradual underflow. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]] is Flocq's [[FloatLib.Floats.Formats.Flocq.round]] on that grid with the [[FloatLib.Floats.Formats.Flocq.nearestEven]] integer rounding rule. It's defined on all of $\mathbb{R}$ and its grid has no largest element, so `roundAt` never overflows. The packed executable operation can overflow, so the equality between these two computations requires the executable result to be finite.
+so in the normal range the spacing is $2^{e - p}$ and $p$ significant bits are kept. Below the normal range the spacing stops shrinking and stays at $2^{e_{\min}}$, which is gradual underflow. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]] is Flocq's [[FloatLib.Floats.Formats.Flocq.round]] on that grid with the [[FloatLib.Floats.Formats.Flocq.nearestEven]] integer rounding rule. It's defined on all of $\mathbb{R}$ and its grid has no largest element, so `roundAt` never overflows. The packed executable operation can overflow, so the equality between these two computations requires the executable result to be finite.
 
-Two theorems tie the grid to the words. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_genericFormat_of_isFinite]] says that every finite word decodes to a point of the descriptor's grid, in the sense of Flocq's [[FloatLib.Floats.Formats.Flocq.genericFormat]]. That holds for every descriptor, including custom biases and finite-only encodings. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_toReal_eq]] then says that rounding a finite word's value returns it unchanged. [Chapter 07](#/chapter/the-mathematics-of-rounding) develops the grid theory behind the half-ulp bound [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]], which reads $|\mathrm{roundAt}_f(x) - x| \le \varepsilon_f(x)$. Here $\varepsilon_f(x)$, the format's [[FloatLib.Floats.Formats.BinaryInterchange.Model.epsilonAt]], is half the grid spacing at $x$. Monotonicity, `roundAt_mono`, comes from the same theory.
+Two theorems tie the grid to the words. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_genericFormat_of_isFinite]] says that every finite word decodes to a point of the descriptor's grid, in the sense of Flocq's [[FloatLib.Floats.Formats.Flocq.genericFormat]]. That holds for every descriptor, including custom biases and finite-only encodings. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_toReal_eq]] then says that rounding a finite word's value returns it unchanged. [Chapter 07](#/chapter/the-mathematics-of-rounding) develops the grid theory behind the half-ulp bound [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_roundAt_sub_le]], which reads $|\mathrm{roundAt}_f(x) - x| \le \tfrac12 \mathrm{ulp}_f(x)$. The right side is the format's [[FloatLib.Floats.Formats.BinaryInterchange.Model.halfUlpAt]], half the grid spacing at $x$. Monotonicity, `roundAt_mono`, comes from the same theory.
 
 Our central refinement theorem is [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]]. For `x y : Model fmt` it states
 
 $$\operatorname{toReal}(\operatorname{add}(x, y)) = \operatorname{roundAt}_{f}\bigl(\operatorname{toReal}(x) + \operatorname{toReal}(y)\bigr)$$
 
-under four hypotheses: `fmt.isIEEE = true`, `isFinite x = true`, `isFinite y = true`, and `isFinite (add x y) = true`. It's an equation for the real value of the rounded result, and an error bound follows from properties of `roundAt`.
+under two hypotheses: `fmt.isIEEE = true` and `isFinite (add x y) = true`. A finite sum has finite operands, because adding a NaN gives a NaN and adding an infinity gives an infinity or a NaN. It's an equation for the real value of the rounded result, and an error bound follows from properties of `roundAt`.
 
-Its proof first replaces the dispatched `add` with `Spec.add` using `add_eq_spec`. Finiteness makes both decoders succeed, say with `dx` and `dy`, so the reference operation becomes `roundDyadic fmt (addDyadic dx dy)`. Then [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundDyadic_eq_roundAt]] identifies the executable rounder with `roundAt` on the exact dyadic sum, and because dyadic addition is exact, that supplies the real sum on the right.
+Its proof first recovers finite operands from the finite sum and replaces the dispatched `add` with `Spec.add` using `add_eq_spec`. Finiteness makes both decoders succeed, say with `dx` and `dy`, so the reference operation becomes `roundDyadic fmt (addDyadic dx dy)`. Then [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_roundDyadic_eq_roundAt]] identifies the executable rounder with `roundAt` on the exact dyadic sum, and because dyadic addition is exact, that supplies the real sum on the right.
 
 Back to `one32` and `tiny32`. Their exact sum lies between adjacent binary32 values near $1$, and in [Figure 6.2](#/chapter/the-numerical-models/figure-ch06-one-rounding) the shorter distance is back to $1$, so both the reference rounder and the executable addition return that grid point.
 
 ![Binary32 number line near 1, with neighbours 1 - 2^-24 and 1 + 2^-23; the exact sum 1 + 11258999 · 2^-50 lies about 0.084 of the gap above 1, before the midpoint, and rounds to 1 with inexact set](assets/ch06-one-rounding.png "The exact sum rounds back to one, setting the inexact flag.")
 
-For these concrete words every hypothesis is decidable. `apply` leaves four side goals (`isIEEE`, finiteness of each input, and finiteness of the sum), and `decide` closes each one by evaluating the boolean:
+For these concrete words every hypothesis is decidable. `apply` leaves two side goals (`isIEEE` and finiteness of the sum), and `decide` closes each one by evaluating the boolean:
 
 ```lean
 example :
@@ -159,7 +157,6 @@ For symbolic words the hypotheses become assumptions instead. The `numerics` tac
 
 ```lean
 example (x y : Model FloatFormat.binary32)
-    (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
     (hout : Model.isFinite (Model.add x y) = true) :
     Model.toReal (Model.add x y) =
       Model.roundAt FloatFormat.binary32
@@ -167,29 +164,28 @@ example (x y : Model FloatFormat.binary32)
   numerics
 ```
 
-Now we can rewrite the executable result using this equality and apply the rounding error bound. [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] does this for one addition, and its proof applies `toReal_add_eq_roundAt` followed by `abs_roundAt_sub_le`.
+Now we can rewrite the executable result using this equality and apply the rounding error bound. [[FloatLib.Floats.Formats.BinaryInterchange.Model.abs_toReal_add_sub_le]] does this for one addition, and its proof applies `toReal_add_eq_roundAt` followed by `abs_roundAt_sub_le`. It needs only a finite result, because a NaN or infinite operand makes the sum a NaN or an infinity.
 
 ```lean
 example (x y : Model FloatFormat.binary32)
-    (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
     (hout : Model.isFinite (Model.add x y) = true) :
     |Model.toReal (Model.add x y) - (Model.toReal x + Model.toReal y)| ≤
-      Model.epsilonAt FloatFormat.binary32 (Model.toReal x + Model.toReal y) :=
-  Model.abs_toReal_add_sub_le x y FloatFormat.isIEEE_binary32 hx hy hout
+      Model.halfUlpAt FloatFormat.binary32 (Model.toReal x + Model.toReal y) :=
+  Model.abs_toReal_add_sub_le x y FloatFormat.isIEEE_binary32 hout
 ```
 
-In the bound, `epsilonAt` takes the exact sum of the decoded operands as its argument. For `one32` and `tiny32` that sum lies in the binade from one to two, whose spacing is $2^{-23}$, so the bound is $2^{-24}$. The actual error is $11258999 \cdot 2^{-50}$, and the integer comparison above proves it's smaller. In a symbolic proof, keep the bound at the exact expression until you've justified its magnitude. If you substitute the rounded output as its argument, the spacing can change when rounding crosses a power of two.
+In the bound, `halfUlpAt` takes the exact sum of the decoded operands as its argument. For `one32` and `tiny32` that sum lies in the binade from one to two, whose spacing is $2^{-23}$, so the bound is $2^{-24}$. The actual error is $11258999 \cdot 2^{-50}$, and the integer comparison above proves it's smaller. In a symbolic proof, keep the bound at the exact expression until you've justified its magnitude. If you substitute the rounded output as its argument, the spacing can change when rounding crosses a power of two.
 
 <details>
 <summary>Rounding theorems for the other operations</summary>
 
-Subtraction, multiplication, and fused multiply-add have corresponding nearest-even real-rounding equations, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_eq_roundAt]], and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]]. They require `fmt.isIEEE = true` and finite inputs and results. Division also needs a nonzero divisor, in [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]], and casts between IEEE formats use [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]], again with finite source and result. Square root is different, because it can't overflow on a finite input that is nonnegative or a signed zero. So [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sqrt_eq_roundAt]] needs no output-finiteness premise, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_sqrt_of_isFinite]] proves finiteness under the same domain condition.
+Subtraction, multiplication, and fused multiply-add have corresponding nearest-even real-rounding equations, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_roundAt]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_eq_roundAt]], and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]]. They require `fmt.isIEEE = true` and a finite result, which forces finite inputs. Division also needs a finite divisor, in [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_div_eq_roundAt]], since a finite quotient rules out a zero divisor but not an infinite one, and a cast into an IEEE destination, from any source descriptor, uses [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]] with only a finite result. Square root is different, because it can't overflow on a finite input that is nonnegative or a signed zero. So [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sqrt_eq_roundAt]] needs no output-finiteness premise, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_sqrt_of_isFinite]] proves finiteness under the same domain condition.
 
 </details>
 
 ## Proving inputs and results are finite
 
-Each finiteness hypothesis rules out a case where the equality would fail. We need the input hypotheses because `toReal` returns a placeholder for nonfinite values. Without them, `toReal x` could be the $0$ that stands in for a NaN, and the theorem would happily claim that adding a NaN behaves like adding zero :) The output hypothesis rules out overflow. If $x$ and $y$ are both the largest finite binary32 value, the executable sum is $+\infty$ and `toReal` of it is $0$. The right-hand side is the ordinary real $\mathrm{roundAt}_f(2 \cdot \mathrm{maxFinite})$, near $6.8 \times 10^{38}$. An infinity can't be identified with that finite real value.
+The finiteness hypothesis rules out every case where the equality would fail. It keeps the inputs finite, and that matters because `toReal` returns a placeholder for nonfinite values. Without it, `toReal x` could be the $0$ that stands in for a NaN, and the theorem would happily claim that adding a NaN behaves like adding zero :) It also rules out overflow. If $x$ and $y$ are both the largest finite binary32 value, the executable sum is $+\infty$ and `toReal` of it is $0$. The right-hand side is the ordinary real $\mathrm{roundAt}_f(2 \cdot \mathrm{maxFinite})$, near $6.8 \times 10^{38}$. An infinity can't be identified with that finite real value.
 
 For known words, computing the result settles whether it's finite. For symbolic inputs, magnitude bounds can establish finiteness before the result is computed. [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite_add_of_abs_add_le_posMaxFinite]] says that if $|x| + |y|$ is at most the value of [[FloatLib.Floats.Formats.BinaryInterchange.Model.posMaxFinite]], the executable sum is finite. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt_of_abs_add_le_posMaxFinite]] combines it with the refinement so that the output hypothesis never appears. Subtraction, multiplication, division, and fused multiply-add have the same pair of lemmas with the corresponding triangle, product, quotient, or product-plus-addend bound. Division also keeps its nonzero-divisor hypothesis. For binary32, `posMaxFinite` decodes to $16777215 \cdot 2^{104}$, about $3.4 \times 10^{38}$.
 
@@ -207,7 +203,7 @@ example (x y : Model FloatFormat.binary32)
 
 A triangle bound is convenient when you have a bound on each operand, but it's only sufficient. Take one operand to be the largest finite value and the other its negation. Their sum is exactly zero, but the sum of their absolute values is twice the largest finite value. When cancellation matters, use `isFinite_add_of_abs_toReal_add_le_posMaxFinite`, which takes a bound on the absolute value of the exact sum itself. We derive the triangle-bound theorem from this tighter criterion with the triangle inequality, and which one you pick depends on what the application already knows about its operands.
 
-The remaining hypothesis is about the format. Our real-valued refinement theorem needs `fmt.isIEEE = true`, which restricts it to conventional IEEE descriptors. Exact decoding, the reference operations, and the `Spec` equalities hold for every descriptor, FNUZ and finite-only encodings included. The bridge to `roundAt` also goes through Lean's float model, because `roundDyadic` delegates its normalization to that model for IEEE descriptors. That model is IEEE-shaped. `toDyadic?_ieee_eq_model` and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_eq_unpackedToReal_toModel]] identify the binary decoder with it exactly when the descriptor is conventionally IEEE. So a non-IEEE format has exact dyadic semantics and executable arithmetic, but its operations don't have a `roundAt` theorem yet.
+The remaining hypothesis is about the format. Our real-valued refinement theorem needs `fmt.isIEEE = true`, which restricts it to conventional IEEE descriptors. Exact decoding, the reference operations, and the `Spec` equalities hold for every descriptor, FNUZ and finite-only encodings included. The bridge to `roundAt` also goes through Lean's float model, because `roundDyadic` delegates its normalization to that model for IEEE descriptors. That model is IEEE-shaped. `toDyadic?_ieee_eq_model` and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_eq_unpackedToReal_toModel]] identify the binary decoder with it exactly when the descriptor is conventionally IEEE. So a non-IEEE format has exact dyadic semantics and executable arithmetic, but its operations have no `roundAt` theorem.
 
 <a id="numerics-exact-values-and-contracts"></a>
 
@@ -230,7 +226,7 @@ Our binary IEEE operation interface implements six rounding modes, which [chapte
 
 A bound for directed rounding has to include infinite results if it's going to stay valid through overflow. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal]] maps words into Mathlib's `EReal`. Finite words coerce from `toReal`, and the two infinities become $-\infty$ and $+\infty$, which Mathlib writes $\bot$ and $\top$. A partial version, `toEReal?`, returns `none` on NaNs and only on NaNs. Its total counterpart `toEReal` sends a NaN to $0$, the same placeholder `toReal` uses, so the theorems still need to exclude NaNs.
 
-Our directed theorems are inequalities in `EReal` with no finiteness hypothesis on the output. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_add_down_le]] bounds the downward-rounded sum by the exact real sum. [[FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_add_up]] bounds the exact sum by the upward-rounded one. Multiplication and division have the same pairs. We built the library's interval arithmetic on these two directions, in the tradition of Moore [@moore1966]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Interval.add_sound]] encloses the exact sum of two reals between the downward-rounded sum of the lower bounds and the upward-rounded sum of the upper bounds. Its proof is the two inequalities above applied to the endpoints.
+Our directed theorems are inequalities in `EReal` with no finiteness hypothesis on the output. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toEReal_add_down_le]] bounds the downward-rounded sum by the exact real sum. [[FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_add_up]] bounds the exact sum by the upward-rounded one. Subtraction, multiplication, division, and square root have the same pairs. We built the library's interval arithmetic on these two directions, in the tradition of Moore [@moore1966]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Interval.add_sound]] encloses the exact sum of two reals between the downward-rounded sum of the lower bounds and the upward-rounded sum of the upper bounds. Its proof is the two inequalities above applied to the endpoints.
 
 For interval addition, we can write out the whole chain. If the finite endpoint values satisfy $a \le x \le b$ and $c \le y \le d$, monotonicity of real addition gives $a+c \le x+y \le b+d$. Downward rounding places the stored lower endpoint at or below $a+c$, upward rounding places the stored upper endpoint at or above $b+d$, and transitivity then encloses the exact sum. If an endpoint operation overflows outward, its infinite endpoint still makes sense in this order. A NaN doesn't, because it supplies no ordered bound to put into the chain, and that's why the NaN exclusions are necessary.
 
@@ -253,19 +249,13 @@ Two operations can return the same infinity for different reasons, and their fla
 def two32 : Model FloatFormat.binary32 := Model.ofNatBits 0x40000000
 
 #eval Model.div one32 (Model.posZero FloatFormat.binary32) (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := true, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := inf, status := { divideByZero := true }, ternary := Ordering.eq }
 
 #eval Model.mul (Model.posMaxFinite FloatFormat.binary32) two32 (status := true)
--- { value := inf,
---   status := { invalid := false, divideByZero := false, overflow := true, underflow := false, inexact := true },
---   ternary := Ordering.gt }
+-- { value := inf, status := { overflow := true, inexact := true }, ternary := Ordering.gt }
 
 #eval Model.sub (Model.posInf FloatFormat.binary32) (Model.posInf FloatFormat.binary32) (status := true)
--- { value := nan,
---   status := { invalid := true, divideByZero := false, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := nan, status := { invalid := true }, ternary := Ordering.eq }
 ```
 
 The least subnormal makes the underflow rule concrete. Adding the least subnormal to itself is exact, so nothing is raised even though the result is subnormal. Halving it falls below the grid, rounds to zero, and raises both `underflow` and `inexact`.
@@ -276,14 +266,10 @@ def half32 : Model FloatFormat.binary32 := Model.ofNatBits 0x3f000000
 
 #eval Model.add (Model.posMinSubnormal FloatFormat.binary32)
   (Model.posMinSubnormal FloatFormat.binary32) (status := true)
--- { value := 3e-45,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := false },
---   ternary := Ordering.eq }
+-- { value := 3e-45, status := {}, ternary := Ordering.eq }
 
 #eval Model.mul (Model.posMinSubnormal FloatFormat.binary32) half32 (status := true)
--- { value := 0,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := true, inexact := true },
---   ternary := Ordering.lt }
+-- { value := 0, status := { underflow := true, inexact := true }, ternary := Ordering.lt }
 ```
 
 Flags accumulate with [[FloatLib.Numerics.IEEEStatus.union]] when a caller wants them to persist across a sequence of operations, the way a hardware status register does.
@@ -296,4 +282,4 @@ $$
 s_2-(x+y+z) = \bigl(s_2-(s_1+z)\bigr) + \bigl(s_1-(x+y)\bigr).
 $$
 
-Now the triangle inequality combines the two local error bounds. Both local errors remain in the final answer; applying the theorem twice does not give a single rounding of the three-input sum. In a longer computation you have to establish the hypotheses at every step and account for each rounding. The relevant grid results are in [chapter 07](#/chapter/the-mathematics-of-rounding), and [further examples](#/chapter/further-examples) apply the interfaces to configured arithmetic and exact reductions.
+Now the triangle inequality combines the two local error bounds. Both local errors remain in the final answer, because applying the theorem twice does not give a single rounding of the three-input sum. In a longer computation you have to establish the hypotheses at every step and account for each rounding. The relevant grid results are in [chapter 07](#/chapter/the-mathematics-of-rounding), and [further examples](#/chapter/further-examples) apply the interfaces to configured arithmetic and exact reductions. For configured binary programs the [`roundoff` tactic](#/chapter/proving-numerical-bounds/error-bounds-from-floating-point-code) does this bookkeeping from the code, composing the per-operation theorems into an error bound together with the range conditions that bound needs. It takes its own import, `import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`.

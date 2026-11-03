@@ -40,24 +40,36 @@ elab_rules : command
           Inspection.readNat "fixed-point fractional-digit count" fractionalDigitsExpr
         let coreProfile :=
           FloatLib.Floats.Formats.FixedPoint.FloatInfo.Command.profile base fractionalDigits
-        let configuredArithmetic : TheoremSurface :=
-          { topic := "configured exact arithmetic"
-            declarations :=
-              [ ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_add
-              , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_sub
-              , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_mul
-              , ``FloatLib.Floats.ExecFloat.Proof.add_eq_spec
-              , ``FloatLib.Floats.ExecFloat.Proof.sub_eq_spec
-              ]
-            applicability := .verifiedForType
-            scope := "all coefficients; multiplication composes operand scales"
-            numericalGuarantee? := some {
-              kinds := [.exactness]
-              statement :=
-                "Configured addition, subtraction, and heterogeneous multiplication have zero rational error." } }
+        let ownSurfaces : List TheoremSurface :=
+          refinementEquations (← Inspection.installedOperations family) ++
+          [ { topic := "exact rational arithmetic"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_add
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_sub
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_neg
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_mul
+                ]
+              applicability := .verifiedForType
+              scope := "all values; multiplication returns the sum of the operand scales"
+              numericalGuarantee? := some {
+                kinds := [.exactness]
+                statement :=
+                  "Addition, subtraction, negation, and scale-composing multiplication have zero rational error." } }
+          , { topic := "decoding to the code"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toCode_ofCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.ofCode_toCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.coefficient_ofCoefficient
+                ]
+              definitions :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.ofCode ]
+              applicability := .verifiedForType
+              scope :=
+                "every value; `toCode` and `ofCode` are inverse, so the theorems about the code " ++
+                "below apply through `toCode`" } ]
         let baseProfile : FormatProfile :=
           { coreProfile with
-            declarationPrefix := "FloatLib.Floats.ExecFloat.FixedPoint."
             rounding :=
               ⟨"numeric literals", "exact rational input rounded once to nearest, ties to even"⟩ ::
                 coreProfile.rounding
@@ -69,8 +81,11 @@ elab_rules : command
               [ ⟨"mul",
                   "exact heterogeneous multiplication returning the statically composed output scale"⟩
               ]
-            theoremSurfaces :=
-              configuredArithmetic :: coreProfile.theoremSurfaces
+            theoremSurfaces := ownSurfaces
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.FixedPoint.Code
+                  embedding := ``FloatLib.Floats.ExecFloat.FixedPoint.toCode
+                  surfaces := coreProfile.theoremSurfaces } ]
             nonclaims :=
               [ "homogeneous multiplication silently rounds back to the input scale"
               , "division, square root, fused multiply-add, or transcendental functions are provided"

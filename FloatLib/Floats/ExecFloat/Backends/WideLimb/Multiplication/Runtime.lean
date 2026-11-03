@@ -18,7 +18,7 @@ position must reach the normal range before rounding, and its position after rou
 must stay in the finite range. In particular, the lower check can decline a product that would
 round up to the smallest normal value. Zero, subnormal, and exceptional operands are also
 declined. The total operation computes every declined case with `Model.Spec.mul` through the
-model codec; `Multiplication.Proof` proves agreement on all operands.
+model codec; for every `Eligible` format, `Multiplication.Proof` proves agreement on all operands.
 -/
 
 @[expose] public section

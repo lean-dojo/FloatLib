@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Pr
 # Configured binary-interchange conversion instances
 
 Configured binary-interchange destinations support signed-rational quantization with finite,
-infinity, and exceptional policies, and conversions into them accept all six rounding directions
-as `(mode := ...)`.
+infinity, and exceptional policies. Conversions into them take a `Numerics.RoundingMode` as
+`(mode := ...)`, the six directions of `IEEERoundingMode` and `.stochastic`, and a
+`Conversion.Policy` as `(context := ...)`, every other policy.
 -/
 
 @[expose] public section
@@ -42,37 +43,35 @@ instance quantizer :
   addExact := addExact
   subExact := subExact
 
-/-- Context-free conversion uses `Context.default`. -/
+/--
+Conversions into a binary destination take a `Numerics.RoundingMode`, nearest-even by default, and
+a `Policy`, which has no direction.
+
+They run in `policy.withRounding mode`, and `.stochastic` draws on the policy's `entropy`.
+-/
+instance roundingModes :
+    FloatLib.Floats.ExecFloat.RoundingModes
+      (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) SignedRat RoundingMode where
+  Policy := Policy
+  default := .nearest
+  withMode mode policy := policy.withRounding mode
+
+/--
+Context-free conversion uses `Policy.default`, so with the default mode it runs in
+`Context.default`.
+-/
 instance defaultQuantizer :
     FloatLib.Floats.ExecFloat.DefaultQuantizer
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) SignedRat where
-  defaultContext := Context.default
+  defaultContext := Policy.default
 
-/-- Conversions into a binary destination take an `IEEERoundingMode`, nearest-even by default. -/
-instance roundingModes :
-    FloatLib.Floats.ExecFloat.RoundingModes
-      (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) Model.IEEERoundingMode where
-  default := .nearest
-
-/--
-A conversion's `(mode := m)` selects `Context.withRounding m`, and `.nearest` the canonical
-`Context.default` that it equals.
--/
-@[inline] instance modeContext (mode : Model.IEEERoundingMode) :
-    FloatLib.Floats.ExecFloat.ModeContext
-      (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) SignedRat mode where
-  context :=
-    match mode with
-    | .nearest => Context.default
-    | mode => Context.withRounding mode
-
-/-- The context a binary conversion's `(mode := m)` selects is `Context.withRounding m`. -/
-@[simp] theorem context_modeContext (mode : Model.IEEERoundingMode) :
-    (FloatLib.Floats.ExecFloat.ModeContext.context :
-        FloatLib.Floats.ExecFloat.ContextFor
-          (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) mode) =
-      Context.withRounding mode := by
-  cases mode <;> rfl
+/-- A binary conversion with `(mode := m) (context := p)` runs in `p.withRounding m`. -/
+@[simp] theorem withMode_eq_withRounding (mode : RoundingMode) (policy : Policy) :
+    FloatLib.Floats.ExecFloat.RoundingModes.withMode
+        (Destination := FloatLib.Floats.ExecFloat (Configured.Family format code plan))
+        mode policy =
+      policy.withRounding mode :=
+  rfl
 
 /--
 A cast whose source decodes to a finite exact value is the canonical nearest-even rounding of

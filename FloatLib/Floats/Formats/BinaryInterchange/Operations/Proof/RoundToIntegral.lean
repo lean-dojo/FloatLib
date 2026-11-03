@@ -31,7 +31,8 @@ representable. This condition holds for the IEEE interchange formats. On finite 
 overflow. Truncation toward zero needs no such range
 condition: its result cannot exceed the input magnitude. Nearest-away rounding is
 roundToIntegralTiesToAway of IEEE 754-2019, Section 5.9, and it is Flocq's `nearestChoice` with
-the tie choice `nearestAwayChoice`.
+the tie choice `nearestAwayChoice`. Rounding to nearest moves a finite value by at most one half
+and any direction by at most one (`abs_toReal_roundToIntegral_sub_le`).
 
 ## References
 
@@ -101,31 +102,6 @@ private theorem roundDyadicToInt_up_kernel
         cases negative <;>
           simp [roundDyadicToInt, hsignificand,
             roundSignedMantissaAtExponentUp, roundMantissaAtExponentDown,
-            roundMantissaAtExponentUp, Numerics.shiftRightCeil,
-            shiftRightRemainder]
-
-private theorem roundDyadicToInt_down_kernel
-    (value : Numerics.Dyadic) :
-    roundDyadicToInt .down value =
-      roundSignedMantissaAtExponentDown value.negative
-        value.significand value.exponent 0 := by
-  rcases value with ⟨negative, significand, exponent⟩
-  by_cases hsignificand : significand = 0
-  · subst significand
-    cases negative <;> cases exponent <;>
-      simp [roundDyadicToInt,
-        roundSignedMantissaAtExponentDown, roundMantissaAtExponentDown,
-        roundMantissaAtExponentUp, Numerics.shiftRightCeil]
-  · cases exponent with
-    | ofNat shift =>
-        cases negative <;> cases shift <;>
-          simp [roundDyadicToInt, hsignificand,
-            roundSignedMantissaAtExponentDown, roundMantissaAtExponentDown,
-            roundMantissaAtExponentUp, Numerics.shiftRightCeil]
-    | negSucc shift =>
-        cases negative <;>
-          simp [roundDyadicToInt, hsignificand,
-            roundSignedMantissaAtExponentDown, roundMantissaAtExponentDown,
             roundMantissaAtExponentUp, Numerics.shiftRightCeil,
             shiftRightRemainder]
 
@@ -199,16 +175,21 @@ theorem roundDyadicToInt_up
     Numerics.Dyadic.signedSignificand,
     Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hsemantic.symm
 
+/--
+Integer rounding toward negative infinity is negated integer rounding toward positive infinity of
+the negated dyadic: the magnitude rule of each direction is the other's on the opposite sign.
+-/
+private theorem roundDyadicToInt_down_eq_neg_up_neg (value : Numerics.Dyadic) :
+    roundDyadicToInt .down value = -roundDyadicToInt .up value.neg := by
+  rcases value with ⟨negative, significand, exponent⟩
+  cases negative <;> cases exponent <;> simp [roundDyadicToInt] <;> split_ifs <;> simp
+
 /-- Rounding toward negative infinity computes the mathematical floor. -/
 theorem roundDyadicToInt_down
     (value : Numerics.Dyadic) :
     roundDyadicToInt .down value = ⌊value.toReal⌋ := by
-  rw [roundDyadicToInt_down_kernel]
-  have hsemantic :=
-    floor_scaledDyadic value.negative value.significand value.exponent 0
-  simpa [floorRound, Numerics.Dyadic.toReal,
-    Numerics.Dyadic.signedSignificand,
-    Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using hsemantic.symm
+  rw [roundDyadicToInt_down_eq_neg_up_neg, roundDyadicToInt_up, Dyadic.toReal_neg, Int.ceil_neg,
+    _root_.neg_neg]
 
 /--
 Rounding toward zero truncates the exact dyadic: nonnegative values use floor and negative values
@@ -222,25 +203,10 @@ theorem roundDyadicToInt_towardZero (value : Numerics.Dyadic) :
   · simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
       hsignificand]
   · cases hnegative : value.negative
-    · have hnonnegative : 0 ≤ value.toReal := by
-        rw [Numerics.Dyadic.toReal]
-        simp only [Numerics.Dyadic.signedSignificand, hnegative,
-          Bool.false_eq_true, ite_false]
-        have hcoefficient :
-            (0 : ℝ) ≤ ((Int.ofNat value.significand : Int) : ℝ) := by
-          norm_cast
-          exact Int.natCast_nonneg value.significand
-        exact mul_nonneg hcoefficient (bpow_pos value.exponent).le
+    · have hnonnegative := Dyadic.toReal_nonneg_of_negative_eq_false hnegative
       simp only [Bool.false_eq_true, ite_false]
       rw [ite_eq_left hnonnegative]
-    · have hnegativeReal : value.toReal < 0 := by
-        rw [Numerics.Dyadic.toReal]
-        simp only [Numerics.Dyadic.signedSignificand, hnegative, ite_true]
-        have hcoefficient :
-            ((-Int.ofNat value.significand : Int) : ℝ) < 0 := by
-          norm_num
-          exact Nat.pos_of_ne_zero hsignificand
-        exact mul_neg_of_neg_of_pos hcoefficient (bpow_pos value.exponent)
+    · have hnegativeReal := Dyadic.toReal_lt_zero_of_negative_eq_true hnegative hsignificand
       simp only [ite_true]
       rw [ite_eq_right (not_le.mpr hnegativeReal)]
 
@@ -375,25 +341,10 @@ theorem roundDyadicToInt_away (value : Numerics.Dyadic) :
       simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hsignificand]
     simp [roundDyadicToInt, hsignificand, hzero]
   · cases hnegative : value.negative
-    · have hnonnegative : 0 ≤ value.toReal := by
-        rw [Numerics.Dyadic.toReal]
-        simp only [Numerics.Dyadic.signedSignificand, hnegative,
-          Bool.false_eq_true, ite_false]
-        have hcoefficient :
-            (0 : ℝ) ≤ ((Int.ofNat value.significand : Int) : ℝ) := by
-          norm_cast
-          exact Int.natCast_nonneg value.significand
-        exact mul_nonneg hcoefficient (bpow_pos value.exponent).le
+    · have hnonnegative := Dyadic.toReal_nonneg_of_negative_eq_false hnegative
       simp only [Bool.false_eq_true, ite_false]
       rw [ite_eq_left hnonnegative, roundDyadicToInt_up]
-    · have hnegativeReal : value.toReal < 0 := by
-        rw [Numerics.Dyadic.toReal]
-        simp only [Numerics.Dyadic.signedSignificand, hnegative, ite_true]
-        have hcoefficient :
-            ((-Int.ofNat value.significand : Int) : ℝ) < 0 := by
-          norm_num
-          exact Nat.pos_of_ne_zero hsignificand
-        exact mul_neg_of_neg_of_pos hcoefficient (bpow_pos value.exponent)
+    · have hnegativeReal := Dyadic.toReal_lt_zero_of_negative_eq_true hnegative hsignificand
       simp only [ite_true]
       rw [ite_eq_right (not_le.mpr hnegativeReal), roundDyadicToInt_down]
 
@@ -498,60 +449,37 @@ theorem roundToIntegral_status_of_nan
 
 /-! ## Representability of the rounded integer -/
 
-/-- Every rounding direction lands at or above the floor of the exact value. -/
-theorem floor_le_roundDyadicToInt (mode : IEEERoundingMode) (value : Numerics.Dyadic) :
-    ⌊value.toReal⌋ ≤ roundDyadicToInt mode value := by
+/-- Integer rounding in every direction returns the floor or the ceiling of the exact value. -/
+theorem roundDyadicToInt_eq_floor_or_ceil (mode : IEEERoundingMode) (value : Numerics.Dyadic) :
+    roundDyadicToInt mode value = ⌊value.toReal⌋ ∨
+      roundDyadicToInt mode value = ⌈value.toReal⌉ := by
   cases mode with
   | nearest =>
       rw [roundDyadicToInt_nearest]
-      exact floor_le_valid_round nearestEven value.toReal
-  | towardZero =>
-      rw [roundDyadicToInt_towardZero]
-      split_ifs
-      · exact le_rfl
-      · exact Int.floor_le_ceil _
-  | up =>
-      rw [roundDyadicToInt_up]
-      exact Int.floor_le_ceil _
-  | down =>
-      rw [roundDyadicToInt_down]
+      exact valid_round_eq_floor_or_ceil nearestEven value.toReal
   | nearestAway =>
       rw [roundDyadicToInt_nearestAway]
-      exact (nearestChoice_bounds nearestAwayChoice value.toReal).1
+      exact nearestChoice_eq_floor_or_ceil nearestAwayChoice value.toReal
+  | towardZero =>
+      rw [roundDyadicToInt_towardZero]
+      split_ifs <;> simp
+  | up => exact Or.inr (roundDyadicToInt_up value)
+  | down => exact Or.inl (roundDyadicToInt_down value)
   | away =>
       rw [roundDyadicToInt_away]
-      split_ifs
-      · exact Int.floor_le_ceil _
-      · exact le_rfl
+      split_ifs <;> simp
+
+/-- Every rounding direction lands at or above the floor of the exact value. -/
+theorem floor_le_roundDyadicToInt (mode : IEEERoundingMode) (value : Numerics.Dyadic) :
+    ⌊value.toReal⌋ ≤ roundDyadicToInt mode value := by
+  rcases roundDyadicToInt_eq_floor_or_ceil mode value with h | h <;> rw [h]
+  exact Int.floor_le_ceil _
 
 /-- Every rounding direction lands at or below the ceiling of the exact value. -/
 theorem roundDyadicToInt_le_ceil (mode : IEEERoundingMode) (value : Numerics.Dyadic) :
     roundDyadicToInt mode value ≤ ⌈value.toReal⌉ := by
-  cases mode with
-  | nearest =>
-      rw [roundDyadicToInt_nearest]
-      exact valid_round_le_ceil nearestEven value.toReal
-  | towardZero =>
-      rw [roundDyadicToInt_towardZero]
-      split_ifs
-      · exact Int.floor_le_ceil _
-      · exact le_rfl
-  | up =>
-      rw [roundDyadicToInt_up]
-  | down =>
-      rw [roundDyadicToInt_down]
-      exact Int.floor_le_ceil _
-  | nearestAway =>
-      rw [roundDyadicToInt_nearestAway]
-      rcases nearestChoice_eq_floor_or_ceil nearestAwayChoice value.toReal with hfloor | hceil
-      · rw [hfloor]
-        exact Int.floor_le_ceil _
-      · rw [hceil]
-  | away =>
-      rw [roundDyadicToInt_away]
-      split_ifs
-      · exact le_rfl
-      · exact Int.floor_le_ceil _
+  rcases roundDyadicToInt_eq_floor_or_ceil mode value with h | h <;> rw [h]
+  exact Int.floor_le_ceil _
 
 /-- A dyadic with a negative exponent and an in-precision significand is below `2^fracWidth`. -/
 private theorem abs_toReal_lt_two_pow_of_exponent_neg
@@ -721,7 +649,7 @@ private theorem roundToIntegral_encoding_of_abs_le
 
 -- Once the exponent range reaches the precision, every selected integer lies in the finite range.
 private theorem abs_roundDyadicToInt_le_toReal_posMaxFinite
-    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    {fmt : FloatFormat}
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
     (value : Model fmt) (mode : IEEERoundingMode)
     (exact : Numerics.Dyadic) (hd : toDyadic? value = some exact) :
@@ -742,9 +670,8 @@ private theorem abs_roundDyadicToInt_le_toReal_posMaxFinite
       cases exact.negative <;>
         simp only [Bool.false_eq_true, ite_false, ite_true, Int.ofNat_eq_natCast,
           zpow_natCast] <;> push_cast <;> ring
-    rw [hreal, show exact.toReal = toReal value by simp [toReal_eq, hd]]
-    exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite value hfmt
-      (isFinite_eq_true_of_toDyadic?_some hd)
+    rw [hreal]
+    exact abs_toReal_le_posMaxFinite_of_toDyadic?_some value hd
 
 /--
 On finite input, `roundToIntegral` rounds the exact dyadic to an unbounded integer,
@@ -778,7 +705,7 @@ theorem roundToIntegral_status_of_finite
       simp only [FloatFormat.maxNormalExponent, Int.ofNat_eq_natCast]
       omega
     have hencoding := roundToIntegral_encoding_of_abs_le hfmt value mode exact hd
-      (abs_roundDyadicToInt_le_toReal_posMaxFinite hfmt hrange value mode exact hd)
+      (abs_roundDyadicToInt_le_toReal_posMaxFinite hrange value mode exact hd)
     simp only [roundToIntegral, Internal.Status.roundToIntegral, hvalue, hguard, ite_true]
     rw [hencoding.2.2]
   · simp only [roundToIntegral, Internal.Status.roundToIntegral, hvalue, hguard,
@@ -811,7 +738,7 @@ theorem roundToIntegral_finite_exact
       toReal (roundToIntegral value mode) = ((roundDyadicToInt mode exact : Int) : ℝ) ∧
       (roundToIntegral value mode (status := true)).status.overflow = false := by
   exact roundToIntegral_finite_exact_of_abs_le hfmt value mode exact hvalue
-    (abs_roundDyadicToInt_le_toReal_posMaxFinite hfmt hrange value mode exact
+    (abs_roundDyadicToInt_le_toReal_posMaxFinite hrange value mode exact
       (exactValue_eq_finite_iff.mp hvalue))
 
 /-- Truncation toward zero cannot increase the magnitude of an exact dyadic. -/
@@ -840,7 +767,7 @@ private theorem roundToIntegral_towardZero_finite_exact
       toReal (posMaxFinite fmt) := by
     apply (abs_roundDyadicToInt_towardZero_le exact).trans
     rw [← hx]
-    exact abs_toReal_le_posMaxFinite_of_isIEEE_of_isFinite value hfmt hfinite
+    exact abs_toReal_le_posMaxFinite_of_isFinite value hfinite
   have h := roundToIntegral_finite_exact_of_abs_le hfmt value .towardZero exact
     (exactValue_eq_finite_of_toDyadic?_eq_some hd) hbound
   refine ⟨h.1, ?_, h.2.2⟩
@@ -854,33 +781,39 @@ theorem isFinite_roundToIntegral_towardZero
     isFinite (roundToIntegral value .towardZero) = true :=
   (roundToIntegral_towardZero_finite_exact hfmt value hfinite).1
 
-/-- Truncation toward zero computes floor or ceiling without an exponent-range restriction. -/
-theorem toReal_roundToIntegral_towardZero_of_isFinite
-    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (value : Model fmt) (hfinite : isFinite value = true) :
-    toReal (roundToIntegral value .towardZero) =
-      if 0 ≤ toReal value then (⌊toReal value⌋ : ℝ) else (⌈toReal value⌉ : ℝ) :=
-  (roundToIntegral_towardZero_finite_exact hfmt value hfinite).2.1
-
-/-- Truncation toward zero of a finite IEEE value never signals overflow. -/
+/--
+Truncation toward zero never signals overflow under a conventional IEEE descriptor, for any
+exponent range. Infinities and NaNs are returned with no overflow flag.
+-/
 theorem roundToIntegral_towardZero_overflow_eq_false
-    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (value : Model fmt) (hfinite : isFinite value = true) :
-    (roundToIntegral value .towardZero (status := true)).status.overflow = false :=
-  (roundToIntegral_towardZero_finite_exact hfmt value hfinite).2.2
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (value : Model fmt) :
+    (roundToIntegral value .towardZero (status := true)).status.overflow = false := by
+  cases hv : exactValue value with
+  | finite exact =>
+      exact (roundToIntegral_towardZero_finite_exact hfmt value
+        (isFinite_eq_true_of_toDyadic?_some (exactValue_eq_finite_iff.mp hv))).2.2
+  | infinity negative =>
+      rw [roundToIntegral_status_of_infinity value _ negative hv]
+      rfl
+  | nan negative signaling payload =>
+      rw [roundToIntegral_status_of_nan value _ negative signaling payload hv]
 
 /--
-Integral rounding of a finite IEEE value never overflows when
-`fmt.fracWidth ≤ fmt.maxNormalExponent`.
+Integral rounding under a conventional IEEE descriptor never overflows when
+`fmt.fracWidth ≤ fmt.maxNormalExponent`. Infinities and NaNs are returned with no overflow flag.
 -/
 theorem roundToIntegral_overflow_eq_false
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
-    (value : Model fmt) (mode : IEEERoundingMode) (hfinite : isFinite value = true) :
+    (value : Model fmt) (mode : IEEERoundingMode) :
     (roundToIntegral value mode (status := true)).status.overflow = false := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  exact (roundToIntegral_finite_exact hfmt hrange value mode exact
-    (exactValue_eq_finite_of_toDyadic?_eq_some hd)).2.2
+  cases hv : exactValue value with
+  | finite exact => exact (roundToIntegral_finite_exact hfmt hrange value mode exact hv).2.2
+  | infinity negative =>
+      rw [roundToIntegral_status_of_infinity value mode negative hv]
+      rfl
+  | nan negative signaling payload =>
+      rw [roundToIntegral_status_of_nan value mode negative signaling payload hv]
 
 /--
 Integral rounding of a finite IEEE value is finite when the exponent range reaches the precision.
@@ -904,7 +837,10 @@ theorem toReal_roundToIntegral
   (roundToIntegral_finite_exact hfmt hrange value mode exact
     (exactValue_eq_finite_of_toDyadic?_eq_some hd)).2.1
 
-/-- The result of integral rounding is an integer. -/
+/--
+On a finite input, the result of integral rounding denotes an integer whenever the format's
+integers are representable, `fracWidth ≤ maxNormalExponent`.
+-/
 theorem exists_int_toReal_roundToIntegral
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
@@ -913,47 +849,51 @@ theorem exists_int_toReal_roundToIntegral
   obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
   exact ⟨_, toReal_roundToIntegral hfmt hrange value mode exact hd⟩
 
-/-- Rounding toward negative infinity computes the floor of the real value. -/
+/-- On a finite input, integral rounding delivers the kernel's integer for the decoded value. -/
+private theorem exists_toReal_roundToIntegral_of_isFinite
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (mode : IEEERoundingMode) (hfinite : isFinite value = true) :
+    ∃ exact : Numerics.Dyadic, toReal value = exact.toReal ∧
+      toReal (roundToIntegral value mode) = ((roundDyadicToInt mode exact : Int) : ℝ) := by
+  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
+  exact ⟨exact, by simp [toReal_eq, hd], toReal_roundToIntegral hfmt hrange value mode exact hd⟩
+
+/-- On a finite input, rounding toward negative infinity computes the floor of the real value. -/
 theorem toReal_roundToIntegral_down
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
     (value : Model fmt) (hfinite : isFinite value = true) :
     toReal (roundToIntegral value .down) = ⌊toReal value⌋ := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd,
-    roundDyadicToInt_down, hx]
+  obtain ⟨exact, hx, hround⟩ :=
+    exists_toReal_roundToIntegral_of_isFinite hfmt hrange value _ hfinite
+  rw [hround, roundDyadicToInt_down, hx]
 
-/-- Rounding toward positive infinity computes the ceiling of the real value. -/
+/-- On a finite input, rounding toward positive infinity computes the ceiling of the real value. -/
 theorem toReal_roundToIntegral_up
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
     (value : Model fmt) (hfinite : isFinite value = true) :
     toReal (roundToIntegral value .up) = ⌈toReal value⌉ := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd,
-    roundDyadicToInt_up, hx]
-
-/-- Rounding toward zero truncates the real value: floor when nonnegative, ceiling otherwise. -/
-theorem toReal_roundToIntegral_towardZero
-    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
-    (value : Model fmt) (hfinite : isFinite value = true) :
-    toReal (roundToIntegral value .towardZero) =
-      if 0 ≤ toReal value then (⌊toReal value⌋ : ℝ) else (⌈toReal value⌉ : ℝ) := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd, roundDyadicToInt_towardZero, hx]
-  split_ifs <;> rfl
+  obtain ⟨exact, hx, hround⟩ :=
+    exists_toReal_roundToIntegral_of_isFinite hfmt hrange value _ hfinite
+  rw [hround, roundDyadicToInt_up, hx]
 
 /--
-Rounding to nearest with ties away from zero computes the nearest integer and resolves a tie toward
-the integer of larger magnitude, roundToIntegralTiesToAway of IEEE 754-2019. This is Flocq's
-`nearestChoice nearestAwayChoice`.
+On a finite input, rounding toward zero truncates the real value: floor when nonnegative, ceiling
+otherwise. Truncation cannot increase the magnitude, so no exponent-range restriction is needed.
+-/
+theorem toReal_roundToIntegral_towardZero
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    toReal (roundToIntegral value .towardZero) =
+      if 0 ≤ toReal value then (⌊toReal value⌋ : ℝ) else (⌈toReal value⌉ : ℝ) :=
+  (roundToIntegral_towardZero_finite_exact hfmt value hfinite).2.1
+
+/--
+On a finite input, rounding to nearest with ties away from zero computes the nearest integer and
+resolves a tie toward the integer of larger magnitude, roundToIntegralTiesToAway of IEEE 754-2019.
+This is Flocq's `nearestChoice nearestAwayChoice`.
 -/
 theorem toReal_roundToIntegral_nearestAway
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
@@ -961,14 +901,13 @@ theorem toReal_roundToIntegral_nearestAway
     (value : Model fmt) (hfinite : isFinite value = true) :
     toReal (roundToIntegral value .nearestAway) =
       nearestChoice nearestAwayChoice (toReal value) := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd, roundDyadicToInt_nearestAway, hx]
+  obtain ⟨exact, hx, hround⟩ :=
+    exists_toReal_roundToIntegral_of_isFinite hfmt hrange value _ hfinite
+  rw [hround, roundDyadicToInt_nearestAway, hx]
 
 /--
-Rounding away from zero computes the ceiling of a nonnegative value and the floor of a negative
-one, as MPFR's `mpfr_rint` does under `MPFR_RNDA`.
+On a finite input, rounding away from zero computes the ceiling of a nonnegative value and the floor
+of a negative one, as MPFR's `mpfr_rint` does under `MPFR_RNDA`.
 -/
 theorem toReal_roundToIntegral_away
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
@@ -976,25 +915,114 @@ theorem toReal_roundToIntegral_away
     (value : Model fmt) (hfinite : isFinite value = true) :
     toReal (roundToIntegral value .away) =
       if 0 ≤ toReal value then (⌈toReal value⌉ : ℝ) else (⌊toReal value⌋ : ℝ) := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd, roundDyadicToInt_away, hx]
+  obtain ⟨exact, hx, hround⟩ :=
+    exists_toReal_roundToIntegral_of_isFinite hfmt hrange value _ hfinite
+  rw [hround, roundDyadicToInt_away, hx]
   split_ifs <;> rfl
 
 /--
-Rounding to nearest computes the nearest integer with ties to even, `nearestEven` from the Flocq
-theory. Mathlib's `round` resolves ties toward positive infinity.
+On a finite input, rounding to nearest computes the nearest integer with ties to even, `nearestEven`
+from the Flocq theory. Mathlib's `round` resolves ties toward positive infinity.
 -/
 theorem toReal_roundToIntegral_nearest
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
     (value : Model fmt) (hfinite : isFinite value = true) :
     toReal (roundToIntegral value .nearest) = nearestEven (toReal value) := by
-  obtain ⟨exact, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  have hx : toReal value = exact.toReal := by
-    simp [toReal_eq, hd]
-  rw [toReal_roundToIntegral hfmt hrange value _ exact hd, roundDyadicToInt_nearest, hx]
+  obtain ⟨exact, hx, hround⟩ :=
+    exists_toReal_roundToIntegral_of_isFinite hfmt hrange value _ hfinite
+  rw [hround, roundDyadicToInt_nearest, hx]
+
+/-- On a finite input, rounding to an integral value to nearest with ties to even moves the real
+value by at most one half. -/
+theorem abs_toReal_roundToIntegral_nearest_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .nearest) - toReal value| ≤ 1 / 2 := by
+  rw [toReal_roundToIntegral_nearest hfmt hrange value hfinite]
+  have := ValidRndToNearest.abs_sub_le_half (rnd := nearestEven) (toReal value)
+  norm_num at this ⊢
+  exact this
+
+/-- On a finite input, rounding to an integral value to nearest with ties away from zero moves the
+real value by at most one half. -/
+theorem abs_toReal_roundToIntegral_nearestAway_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .nearestAway) - toReal value| ≤ 1 / 2 := by
+  rw [toReal_roundToIntegral_nearestAway hfmt hrange value hfinite]
+  exact nearestChoice_abs_sub_le_half nearestAwayChoice _
+
+/-- On a finite input, rounding to an integral value toward zero moves the real value by at most
+one. Truncation needs no exponent-range restriction. -/
+theorem abs_toReal_roundToIntegral_towardZero_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .towardZero) - toReal value| ≤ 1 := by
+  rw [toReal_roundToIntegral_towardZero hfmt value hfinite]
+  have floor := Int.floor_le (toReal value)
+  have floor' := Int.lt_floor_add_one (toReal value)
+  have ceil := Int.le_ceil (toReal value)
+  have ceil' := Int.ceil_lt_add_one (toReal value)
+  split_ifs <;> rw [abs_le] <;> constructor <;> linarith
+
+/-- On a finite input, rounding to an integral value in any direction moves the real value by at
+most one. -/
+theorem abs_toReal_roundToIntegral_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (mode : IEEERoundingMode) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value mode) - toReal value| ≤ 1 := by
+  have floor := Int.floor_le (toReal value)
+  have floor' := Int.lt_floor_add_one (toReal value)
+  have ceil := Int.le_ceil (toReal value)
+  have ceil' := Int.ceil_lt_add_one (toReal value)
+  cases mode with
+  | nearest =>
+      exact (abs_toReal_roundToIntegral_nearest_sub_le hfmt hrange value hfinite).trans
+        (by norm_num)
+  | nearestAway =>
+      exact (abs_toReal_roundToIntegral_nearestAway_sub_le hfmt hrange value hfinite).trans
+        (by norm_num)
+  | towardZero => exact abs_toReal_roundToIntegral_towardZero_sub_le hfmt value hfinite
+  | up =>
+      rw [toReal_roundToIntegral_up hfmt hrange value hfinite, abs_le]
+      constructor <;> linarith
+  | down =>
+      rw [toReal_roundToIntegral_down hfmt hrange value hfinite, abs_le]
+      constructor <;> linarith
+  | away =>
+      rw [toReal_roundToIntegral_away hfmt hrange value hfinite]
+      split_ifs <;> rw [abs_le] <;> constructor <;> linarith
+
+/-- On a finite input, rounding to an integral value upward moves the real value by at most
+one. -/
+theorem abs_toReal_roundToIntegral_up_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .up) - toReal value| ≤ 1 :=
+  abs_toReal_roundToIntegral_sub_le hfmt hrange value _ hfinite
+
+/-- On a finite input, rounding to an integral value downward moves the real value by at most
+one. -/
+theorem abs_toReal_roundToIntegral_down_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .down) - toReal value| ≤ 1 :=
+  abs_toReal_roundToIntegral_sub_le hfmt hrange value _ hfinite
+
+/-- On a finite input, rounding to an integral value away from zero moves the real value by at
+most one. -/
+theorem abs_toReal_roundToIntegral_away_sub_le
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (hrange : (fmt.fracWidth : Int) ≤ fmt.maxNormalExponent)
+    (value : Model fmt) (hfinite : isFinite value = true) :
+    |toReal (roundToIntegral value .away) - toReal value| ≤ 1 :=
+  abs_toReal_roundToIntegral_sub_le hfmt hrange value _ hfinite
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

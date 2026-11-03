@@ -65,55 +65,38 @@ It is often the easiest lemma to use when a proof is naturally phrased in relati
 theorem relative_error_round_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) (hx : x ≠ 0) :
     relativeError x (round (β := β) (fexp := fexp) rnd x) hx ≤
       ulp β fexp x / (2 * abs x) := by
-  have h_rel :
-      relativeError x (round (β := β) (fexp := fexp) rnd x) hx =
-        abs (round (β := β) (fexp := fexp) rnd x - x) / abs x := by
-    rfl
-  rw [h_rel]
+  calc
+    relativeError x (round (β := β) (fexp := fexp) rnd x) hx ≤
+        (ulp β fexp x / 2) / abs x :=
+      div_le_div_of_nonneg_right
+        (error_bound_ulp (β := β) (fexp := fexp) (rnd := rnd) x) (abs_nonneg x)
+    _ = ulp β fexp x / (2 * abs x) := by rw [div_div]
 
-  set a : ℝ := ulp β fexp x
-
-  have h_bound := error_bound_ulp (β := β) (fexp := fexp) (rnd := rnd) x
-  have h_div :
-      abs (round (β := β) (fexp := fexp) rnd x - x) / abs x ≤ (a / 2) / abs x := by
-    simpa [a] using div_le_div_of_nonneg_right h_bound (abs_nonneg x)
-
-  have h_eq : (a / 2) / abs x = a / (2 * abs x) := by
-    simp [div_div]
-
-  simpa [a, h_eq] using h_div
+/--
+A relative-error bound gives the multiplicative model: a result `r` within relative error `B` of a
+nonzero `x` is `x * (1 + δ)` for some `|δ| ≤ B`.
+-/
+theorem exists_delta_of_relativeError_le {x r B : ℝ} (hx : x ≠ 0)
+    (h : relativeError x r hx ≤ B) : ∃ δ : ℝ, abs δ ≤ B ∧ r = x * (1 + δ) := by
+  refine ⟨(r - x) / x, ?_, ?_⟩
+  · rw [abs_div]
+    exact h
+  · field_simp [hx]
+    ring
 
 /--
 Relative error factorisation for rounding, with a ULP-based bound.
 
 This is the standard model $\operatorname{fl}(x)=x(1+\delta)$, with $|\delta|$ bounded using the
-ULP at $x$.
+ULP at $x$. Zero rounds exactly, with $\delta = 0$.
 -/
-theorem round_relative_error_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) (hx : x
-  ≠ 0) :
+theorem round_relative_error_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
     ∃ δ : ℝ,
       abs δ ≤ ulp β fexp x / (2 * abs x) ∧
       round (β := β) (fexp := fexp) rnd x = x * (1 + δ) := by
-  refine ⟨(round (β := β) (fexp := fexp) rnd x - x) / x, ?_, ?_⟩
-  · have h_abs := error_bound_ulp (β := β) (fexp := fexp) (rnd := rnd) x
-    have h_div :
-        abs (round (β := β) (fexp := fexp) rnd x - x) / abs x ≤
-          (ulp β fexp x / 2) / abs x :=
-      div_le_div_of_nonneg_right h_abs (abs_nonneg x)
-    have h_rhs :
-        (ulp β fexp x / 2) / abs x =
-          ulp β fexp x / (2 * abs x) := by
-      simp [div_div]
-    calc
-      abs ((round (β := β) (fexp := fexp) rnd x - x) / x)
-          = abs (round (β := β) (fexp := fexp) rnd x - x) / abs x := by
-              simp [abs_div]
-      _ ≤ (ulp β fexp x / 2) / abs x := h_div
-      _ = ulp β fexp x / (2 * abs x) := h_rhs
-  · have :
-        x * (1 + (round (β := β) (fexp := fexp) rnd x - x) / x) =
-          round (β := β) (fexp := fexp) rnd x := by
-      field_simp [hx]; ring
-    simpa using this.symm
+  by_cases hx : x = 0
+  · subst x
+    exact ⟨0, by simp, by simp [round_zero]⟩
+  · exact exists_delta_of_relativeError_le hx (relative_error_round_ulp rnd x hx)
 
 end FloatLib.Floats.Formats.Flocq.ErrorBounds

@@ -146,7 +146,7 @@ This is not the order-theoretic maximum of `≤`, since NaNs are unordered by `�
 instance : Max (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) where
   max left right :=
     FloatLib.Floats.ExecFloat.ModelCodec.liftBinary
-      (Model := Model format) (plan := plan) Model.maximum left right
+      (Model := Model format) (plan := plan) (fun x y => Model.maximum x y) left right
 
 /--
 IEEE `minimum`: NaN operands propagate as a quiet NaN and `min (-0) (+0) = -0`.
@@ -156,21 +156,21 @@ This is not the order-theoretic minimum of `≤`, since NaNs are unordered by `�
 instance : Min (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) where
   min left right :=
     FloatLib.Floats.ExecFloat.ModelCodec.liftBinary
-      (Model := Model format) (plan := plan) Model.minimum left right
+      (Model := Model format) (plan := plan) (fun x y => Model.minimum x y) left right
 
 /-- `max` decodes to IEEE `maximum` on the exact-width models. -/
 @[simp] theorem toModel_max
     (left right : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toModel (max left right) = Model.maximum (toModel left) (toModel right) :=
   FloatLib.Floats.ExecFloat.ModelCodec.decode_liftBinary
-    (Model := Model format) (plan := plan) Model.maximum left right
+    (Model := Model format) (plan := plan) (fun x y => Model.maximum x y) left right
 
 /-- `min` decodes to IEEE `minimum` on the exact-width models. -/
 @[simp] theorem toModel_min
     (left right : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toModel (min left right) = Model.minimum (toModel left) (toModel right) :=
   FloatLib.Floats.ExecFloat.ModelCodec.decode_liftBinary
-    (Model := Model format) (plan := plan) Model.minimum left right
+    (Model := Model format) (plan := plan) (fun x y => Model.minimum x y) left right
 
 section Order
 
@@ -236,20 +236,17 @@ theorem not_le_of_isNaN (h : isNaN left = true ∨ isNaN right = true) :
 /-- Strict order is irreflexive, for NaN because it is unordered and otherwise by equality. -/
 theorem lt_irrefl (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     ¬ value < value := by
-  rw [lt_iff_compare_eq_lt]
   cases h : isNaN value
-  · rw [Model.compare_self_of_isNaN_eq_false _ h]
+  · rw [lt_iff_compare_eq_lt, Model.compare_self_of_isNaN_eq_false _ h]
     simp
-  · rw [(Model.compare_eq_none_iff _ _).2 (Or.inl h)]
-    exact nofun
+  · exact not_lt_of_isNaN (Or.inl h)
 
 /-- `≤` is reflexive exactly on non-NaN values. -/
 theorem le_self_iff (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     value ≤ value ↔ isNaN value = false := by
-  rw [le_iff_compare_eq_lt_or_eq]
   cases h : isNaN value
-  · simp [Model.compare_self_of_isNaN_eq_false _ h]
-  · simp [(Model.compare_eq_none_iff _ _).2 (Or.inl h)]
+  · simp [le_iff_compare_eq_lt_or_eq, Model.compare_self_of_isNaN_eq_false _ h]
+  · simpa using not_le_of_isNaN (Or.inl h)
 
 end Order
 

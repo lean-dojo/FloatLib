@@ -1,0 +1,21 @@
+{
+  "replacements": {
+    "local evidence directory": "/workspace/binary-timing",
+    "host name": "benchmark-host.example.invalid"
+  },
+  "redacted_members": {
+    "release/benchmark/metadata.txt": {
+      "original_sha256": "ecafeb66935639c2e56cd4f6b083cabf6afcedf362f203ec282c50845609daaf",
+      "published_sha256": "ee73c21aefab233f927de5a6d546bf03bfeaaa1f22adffc0e46637c50ec83aba"
+    },
+    "release/provenance/run-format-comparison.sh": {
+      "original_sha256": "6ae8c98cfba917706b656c334021274d5703ebae5fa78ef5fd053c154dced2f6",
+      "published_sha256": "5f99b115971d7a55c2c55eace98d2bf0ba2913383a52ed284ef47aa5ae550c2f"
+    },
+    "release/provenance/uname.txt": {
+      "original_sha256": "bf56f131af736a6012b9a381fc03e7225030838d3fecfdc213c60470d8a806c0",
+      "published_sha256": "2a4eaa56171be7669ef67502e40b0ca1d6b15bc8ef3f5220be4fbd726b855145"
+    }
+  },
+  "note": "Only paths and the host name were replaced. Every other byte, including all raw trials, calibration, and environment records, is the campaign's own output."
+}

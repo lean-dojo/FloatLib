@@ -2,8 +2,8 @@
 
 We want FloatLib's proved arithmetic to be useful in real programs, so we measure what ordinary
 public operations cost across small and large formats. With these benchmarks we compare backends,
-catch slowdowns, and see how far we still are from the speed of libraries such as MPFR. None of
-this is part of the normal library build.
+catch slowdowns, and see how we compare with libraries such as MPFR. None of this is part of the
+normal library build.
 
 For a first measurement, run this from the repository root:
 

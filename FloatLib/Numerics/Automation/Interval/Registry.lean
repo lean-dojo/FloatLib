@@ -67,23 +67,29 @@ initialize registerBuiltinAttribute {
     let (_, function, _, _) ← extensionCertificate name
     intervalExtensionRegistry.add (function.constName!, name) kind }
 
-/-- Recognize registered applications through definitional aliases. -/
+/--
+Recognize registered applications through definitional aliases.
+
+Unfolding may enlarge syntax. Visited head names prevent revisiting an alias; Lean's heartbeat
+and recursion-depth checks bound the search without imposing a numerical precision limit.
+-/
 partial def registeredApplication? (e : Q(ℝ)) (visited : Array Name := #[]) :
-    MetaM (Option (Name × Array Q(ℝ))) := do
-  checkSystem "interval extension recognition"
-  let e : Q(ℝ) ← zetaReduce e
-  let .const name _ := e.getAppFn | return none
-  let registrations := intervalExtensionRegistry.getState (← getEnv)
-  if let some proof := registrations.find? name then
-    let (_, _, arity, _) ← extensionCertificate proof
-    if e.getAppNumArgs == arity then return some (proof, e.getAppArgs)
-    return none
-  if visited.contains name then return none
-  let reduced : Q(ℝ) ← withTransparency .instances (whnf e)
-  if reduced != e then
-    return ← registeredApplication? reduced (visited.push name)
-  let some unfolded ← unfoldDefinition? e | return none
-  let unfolded : Q(ℝ) := unfolded.headBeta
-  registeredApplication? unfolded (visited.push name)
+    MetaM (Option (Name × Array Q(ℝ))) :=
+  withIncRecDepth do
+    checkSystem "interval extension recognition"
+    let e : Q(ℝ) ← zetaReduce e
+    let .const name _ := e.getAppFn | return none
+    let registrations := intervalExtensionRegistry.getState (← getEnv)
+    if let some proof := registrations.find? name then
+      let (_, _, arity, _) ← extensionCertificate proof
+      if e.getAppNumArgs == arity then return some (proof, e.getAppArgs)
+      return none
+    if visited.contains name then return none
+    let reduced : Q(ℝ) ← withTransparency .instances (whnf e)
+    if reduced != e then
+      return ← registeredApplication? reduced (visited.push name)
+    let some unfolded ← unfoldDefinition? e | return none
+    let unfolded : Q(ℝ) := unfolded.headBeta
+    registeredApplication? unfolded (visited.push name)
 
 end FloatLib.Numerics.Interval.Tactic

@@ -86,7 +86,7 @@ only for NaR, so `some 0` confirms that the accumulator stayed finite.
 
 private def mismatchedResult : Except Numerics.ReductionError Posit32 :=
   dotProduct left [2, 0.5]
--- Except.error (ReductionError.lengthMismatch 3 2)
+-- Except.error (FloatLib.Numerics.ReductionError.lengthMismatch 3 2)
 
 /-! ## Use the quire's semantic theorems -/
 

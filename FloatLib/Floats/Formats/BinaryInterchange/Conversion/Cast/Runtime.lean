@@ -79,12 +79,19 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
 /--
-Widen a finite value when source and destination have the same exponent semantics.
+Widen `x` field by field into a destination `dst` with the same exponent semantics.
 
-The exponent field is copied and the source fraction is shifted into the high end of the wider
-destination fraction. Equal exponent width, bias, and encoding make this field copy
-value-preserving. The hypotheses stay in the signature so callers cannot use this operation as a
-narrowing conversion or across an encoding boundary.
+The sign and exponent fields are copied and the source fraction is shifted into the high end of
+the wider destination fraction. The operation is total and does not look at the value class. For
+a finite `x` it preserves the value (`isFinite_widenExact` and `toReal_widenExact`, which assume
+`isFinite x = true`), and the casts call it only on finite inputs. A non-finite `x` need not keep
+its class: in the `finiteMaxNaN` encoding a NaN (all-ones exponent and fraction, either sign)
+gains zero low fraction bits when `dst` has a wider fraction, and that is a finite pattern.
+
+The four proof arguments (equal exponent width, equal declared bias, equal encoding, and a
+destination fraction at least as wide) are not used in the computation. They restrict callers to
+compatible widening, so the operation cannot serve as a narrowing conversion or cross an encoding
+boundary.
 -/
 @[inline] def widenExact {src dst : FloatFormat} (x : Model src)
     (_ : src.expWidth = dst.expWidth)

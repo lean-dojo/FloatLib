@@ -49,8 +49,7 @@ theorem roundPositiveCode_of_maxPositive_le (target : Rat)
     roundPositiveCode format target = format.signMaskNat - 1 := by
   have hmin := (minPositiveRat_le_maxPositive format).trans hle
   have hmask := format.one_lt_signMaskNat
-  exact roundPositiveCode_eq_maxPositive_of_lowerCode format target
-    ((minPositiveRat_pos' format).trans_le hmin) hmin
+  exact roundPositiveCode_eq_maxPositive_of_lowerCode format target hmin
     (lowerCodeForPositive_eq_of_bracket format target _ (by omega) hle (fun h => by omega))
 
 private theorem le_num_of_pos (q : Rat) (hq : 0 < q) : q ≤ (q.num.natAbs : Rat) := by
@@ -133,10 +132,10 @@ private theorem roundRat_decimal (negative : Bool) (s : Nat) (e : Int) (hs : s �
       else roundPositiveRat format ((s : Rat) * (10 : Rat) ^ e) := by
   have hpos : 0 < (s : Rat) * (10 : Rat) ^ e :=
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hs) (zpow_pos (by norm_num) _)
-  unfold roundRat DecimalText.Decimal.toRat
+  unfold DecimalText.Decimal.toRat
   cases negative
-  · simp [hpos.ne', not_lt_of_gt hpos]
-  · simp [hpos.ne', hpos]
+  · simp [roundRat_of_nonneg hpos.le]
+  · simp [neg_mul, roundRat_neg, roundRat_of_nonneg hpos.le]
 
 /-- Clamping the decimal exponent never changes the rounded posit. -/
 theorem roundRat_clampDecimal (d : DecimalText.Decimal) :

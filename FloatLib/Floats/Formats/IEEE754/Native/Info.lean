@@ -8,8 +8,9 @@ module
 
 public import FloatLib.Floats.Formats.IEEE754.Native.AddSub
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer
+public import FloatLib.Floats.Formats.IEEE754.Native.MulDiv
 public import FloatLib.Floats.Formats.IEEE754.Native.Sqrt
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Proof -- shake: keep
 public import FloatLib.Floats.ExecFloat.Info
 
 /-!
@@ -76,6 +77,9 @@ private meta def theoremSurfaces (bits : Nat) : List TheoremSurface :=
   let addSub := if bits = 32 then
     [``Binary.ofFloat32_add_of_isFinite, ``Binary.ofFloat32_sub_of_isFinite]
     else [``Binary.ofFloat_add_of_isFinite, ``Binary.ofFloat_sub_of_isFinite]
+  let mulDiv := if bits = 32 then
+    [``Binary.ofFloat32_mul_of_isFinite, ``Binary.ofFloat32_div_of_isFinite]
+    else [``Binary.ofFloat_mul_of_isFinite, ``Binary.ofFloat_div_of_isFinite]
   let sqrt := if bits = 32 then [``Binary.toFloat32_sqrt] else [``Binary.toFloat_sqrt]
   [ { topic := s!"native binary{width} conversion boundary"
       declarations := conversions
@@ -92,6 +96,11 @@ private meta def theoremSurfaces (bits : Nat) : List TheoremSurface :=
       applicability := .verifiedForType
       scope :=
         "both operands finite, including signed zeros; the complete result word agrees, including overflow" }
+  , { topic := s!"native binary{width} multiplication and division models"
+      declarations := mulDiv
+      applicability := .verifiedForType
+      scope :=
+        "both operands finite, including signed zeros; the complete result word agrees, including overflow, division by zero and 0 / 0" }
   , { topic := s!"native binary{width} square-root model"
       declarations := sqrt
       applicability := .verifiedForType
@@ -109,7 +118,6 @@ meta def profile (bits exponentBits fractionBits : Nat) (name storage : String) 
     FormatProfile where
   family := s!"Lean native {name}"
   standard := s!"IEEE 754 binary{bits} runtime format through Lean's native float API"
-  declarationPrefix := "FloatLib.Floats.ExecFloat.Binary."
   representation :=
     [ ⟨"Lean type", name⟩
     , ⟨"runtime storage", storage⟩
@@ -131,8 +139,7 @@ meta def profile (bits exponentBits fractionBits : Nat) (name storage : String) 
         "exact interchange decoding followed by explicit destination rounding only when another type is requested"⟩
     ]
   execution :=
-    [ ⟨"carrier", storage⟩
-    , ⟨"compiled operations",
+    [ ⟨"compiled operations",
         "Lean native primitives lowered through the compiler and platform floating-point runtime"⟩
     , ⟨"interchange boundary",
         s!"public {name}.toBits and {name}.ofBits operations"⟩

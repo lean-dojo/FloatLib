@@ -56,9 +56,9 @@ theorem toReal_ofFields_normalized
     (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
     (mantissa - pow2 fmt.fracWidth)
     (encodedExponent_ne_zero fmt exponent hmin)
-    ((encodedExponent_le_maxFiniteExpField fmt exponent hmin hmax).trans_lt
+    ((encodedExponent_le_maxFiniteExpField fmt exponent hmax).trans_lt
       fmt.maxFiniteExpField_lt_two_pow)
-    (normalizedMantissa_sub_pow2_lt fmt mantissa hlow hhigh)
+    (normalizedMantissa_sub_pow2_lt fmt mantissa hhigh)
     hfinite]
   simp only [Bool.false_eq_true, ite_false, one_mul]
   rw [pow2_add_normalizedMantissa_sub fmt mantissa hlow]
@@ -89,7 +89,10 @@ theorem encodedExponent_minNormal_eq_one (fmt : FloatFormat) :
   simp
 
 /--
-The upward subnormal branch, including its smallest-normal boundary, preserves its grid value.
+For a nonzero rounded mantissa at most `2^fracWidth`, the upward subnormal branch, including its
+smallest-normal boundary, preserves its grid value. The `mantissa = 0` branch, which returns
+`posMinSubnormal` rather than a value `0 * …`, is excluded by `hzero`; callers that reach it handle
+it separately.
 -/
 theorem toReal_roundSubnormalUp
     (fmt : FloatFormat) (mantissa : Nat)
@@ -135,7 +138,6 @@ theorem toReal_roundSubnormalUp
           isFinite (ofFields fmt false 1 0) = true :=
         isFinite_ofFields_normal_of_le_maxFinite fmt false 1 0
           (by decide)
-          (hmaxExp.trans_lt fmt.maxFiniteExpField_lt_two_pow)
           (Nat.two_pow_pos _)
           hpair
       have hfinite :

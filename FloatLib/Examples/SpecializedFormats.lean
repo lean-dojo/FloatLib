@@ -38,10 +38,10 @@ private abbrev DecimalPower :=
   ExecFloat.Logarithmic decimalRadix
 
 private def hundred : DecimalPower :=
-  ExecFloat.Logarithmic.ofSignExponent false 2
+  .ofExponent 2
 
 private def negativeTenth : DecimalPower :=
-  ExecFloat.Logarithmic.ofSignExponent true (-1)
+  .ofExponent (-1) (negative := true)
 
 private def logarithmicProduct : DecimalPower :=
   hundred * negativeTenth
@@ -51,9 +51,9 @@ private def logarithmicCode : Formats.Logarithmic.Code decimalRadix :=
 -- Code.value true 1
 
 /-
-The Boolean selects the sign, `false` positive and `true` negative, and the integer is the exponent
-of ten. Multiplication combines the signs and adds the exponents, so `100 * (-0.1)` is exactly
-`-10`: a negative sign and exponent 1. No rounding can occur in a product of two such values.
+`.ofExponent e` is `10 ^ e`, and `(negative := true)` makes it negative. Multiplication combines
+the signs and adds the exponents, so `100 * (-0.1)` is exactly `-10`: a negative sign and
+exponent 1. No rounding can occur in a product of two such values.
 -/
 
 /-! ## Finite codebook arithmetic -/

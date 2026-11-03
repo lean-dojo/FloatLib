@@ -105,12 +105,12 @@ theorem totalOrder_nan_iff {x y : Value} (hx : isNaN x = true) (hy : isNaN y = t
     totalOrder x y = true ↔
       (signBit x = true ∧ signBit y = false) ∨ signBit x = signBit y ∧
         (if signBit x then
-          (isSignalingNaN x = false ∧ isSignalingNaN y = true) ∨
-            isSignalingNaN x = isSignalingNaN y ∧
+          (isSNaN x = false ∧ isSNaN y = true) ∨
+            isSNaN x = isSNaN y ∧
               Model.fracField (toModel y) ≤ Model.fracField (toModel x)
         else
-          (isSignalingNaN x = true ∧ isSignalingNaN y = false) ∨
-            isSignalingNaN x = isSignalingNaN y ∧
+          (isSNaN x = true ∧ isSNaN y = false) ∨
+            isSNaN x = isSNaN y ∧
               Model.fracField (toModel x) ≤ Model.fracField (toModel y)) :=
   Model.totalOrder_nan_iff hx hy
 
@@ -139,15 +139,17 @@ theorem totalOrderMag_eq_totalOrder_model_abs (x y : Value)
     totalOrderMag x y = Model.totalOrder (Model.abs (toModel x)) (Model.abs (toModel y)) :=
   Model.totalOrderMag_eq_totalOrder_abs _ _ hformat
 
-/-- All configured zeros tie under magnitude comparison. -/
-theorem totalOrderMag_zero {x y : Value} (hx : isZero x = true) (hy : isZero y = true) :
-    totalOrderMag x y = true := Model.totalOrderMag_zero hx hy
+/--
+A configured zero has the least magnitude: it precedes every value, and zeros of either sign tie.
+-/
+theorem totalOrderMag_zero {x y : Value} (hx : isZero x = true) :
+    totalOrderMag x y = true := Model.totalOrderMag_zero hx
 
 /-- Configured NaN magnitudes compare signaling class, then increasing fraction payload. -/
 theorem totalOrderMag_nan_iff {x y : Value} (hx : isNaN x = true) (hy : isNaN y = true) :
     totalOrderMag x y = true ↔
-      (isSignalingNaN x = true ∧ isSignalingNaN y = false) ∨
-        isSignalingNaN x = isSignalingNaN y ∧
+      (isSNaN x = true ∧ isSNaN y = false) ∨
+        isSNaN x = isSNaN y ∧
           Model.fracField (toModel x) ≤ Model.fracField (toModel y) :=
   Model.totalOrderMag_nan_iff hx hy
 

@@ -31,6 +31,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 
@@ -41,7 +42,7 @@ The binary semantic API combines the exact bit/model bridge, real interpretation
 rounding, arithmetic refinement, symbolic no-overflow criteria, signed arithmetic,
 arbitrary-format directed-rounding bounds, comparison semantics, extended-real min/max, interval
 enclosure soundness, cross-format casts, finite arithmetic bridges to Lean's unpacked model,
-generic error bounds, and exact-subtraction results.
+generic error bounds, mixed-error propagation, and exact-subtraction results.
 
 Import the operation-specific `Arithmetic.Runtime` and `Operations.Runtime` modules when keeping
 runtime dependencies narrow, or the `FloatLib.Floats.Formats.BinaryInterchange` family entry

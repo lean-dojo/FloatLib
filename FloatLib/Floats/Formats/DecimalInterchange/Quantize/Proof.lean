@@ -20,6 +20,8 @@ The range test is necessary and sufficient for a finite result.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.Arithmetic
 
+/-- Rounding a magnitude to a fixed quantum always delivers a valid datum: the default invalid NaN
+whenever the quantum or the rounded coefficient does not fit. -/
 theorem quantizeMagnitude_valid (f : Format) (mode : RoundingMode)
     (s : Bool) (x : ℚ) (q : Int) :
     (quantizeMagnitude f mode s x q).value.Valid f := by
@@ -29,6 +31,7 @@ theorem quantizeMagnitude_valid (f : Format) (mode : RoundingMode)
     exact (Datum.valid_quantum_iff ..).mpr ⟨h.2.2, h.1, h.2.1⟩
   · exact invalidResult_valid f
 
+/-- Quantize always delivers a valid datum, including NaN, invalid and infinite results. -/
 theorem quantize_valid (f : Format) (mode : RoundingMode) (x y : Datum) :
     (quantize f mode x y).value.Valid f := by
   cases x <;> cases y <;> simp only [quantize]
@@ -76,23 +79,47 @@ theorem quantize_same_quantum (f : Format) (mode : RoundingMode)
   simp only [sub_self, Int.toNat_zero, pow_zero, mul_one] at hr
   simp [quantize, quantizeMagnitude, hr, hc, hmin, hmax]
 
-/-- The nearest-mode error uses the requested quantum, not a normalized precision grid. -/
+/-- A finite input magnitude is nonnegative. -/
+private theorem magnitude_nonneg (c : Nat) (q : Int) : 0 ≤ (c : ℚ) * (10 : ℚ) ^ q :=
+  mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le
+
+/-- A quantization that does not raise invalid delivers the input sign applied to the magnitude
+rounded on the requested grid. -/
+private theorem quantize_toRat?_of_not_invalid (f : Format) (mode : RoundingMode)
+    (s t : Bool) (c d : Nat) (q r : Int)
+    (h : (quantize f mode (.finite s c q) (.finite t d r)).status.invalid = false) :
+    (quantize f mode (.finite s c q) (.finite t d r)).value.toRat? =
+      some ((if s then -1 else 1) * (mode.roundAt s ((c : ℚ) * (10 : ℚ) ^ q) r : ℚ) *
+        (10 : ℚ) ^ r) := by
+  simp only [quantize, quantizeMagnitude_of_not_invalid f mode s _ r h, Datum.toRat?_eq]
+
+/-- A successful quantization's error is the error of rounding the magnitude on the requested grid,
+for either sign. -/
+private theorem quantize_abs_sub (f : Format) (mode : RoundingMode)
+    (s t : Bool) (c d : Nat) (q r : Int)
+    (h : (quantize f mode (.finite s c q) (.finite t d r)).status.invalid = false) :
+    ∃ value, (quantize f mode (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
+      |value - Datum.finiteValue s c q| =
+        |(mode.roundAt s ((c : ℚ) * (10 : ℚ) ^ q) r : ℚ) * (10 : ℚ) ^ r -
+          (c : ℚ) * (10 : ℚ) ^ q| := by
+  refine ⟨_, quantize_toRat?_of_not_invalid f mode s t c d q r h, ?_⟩
+  cases s
+  · simp [Datum.finiteValue]
+  · simp only [Datum.finiteValue, ite_true, neg_mul, one_mul, neg_sub_neg]
+    rw [abs_sub_comm]
+
+/-- If nearest-mode quantization of a finite input does not raise invalid, its result decodes to a
+value within half a unit of the requested quantum (not of a normalized precision grid). -/
 theorem quantize_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (s t : Bool) (c d : Nat) (q r : Int)
     (h : (quantize f mode (.finite s c q) (.finite t d r)).status.invalid = false) :
     ∃ value, (quantize f mode (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
       |value - Datum.finiteValue s c q| ≤ (10 : ℚ) ^ r / 2 := by
-  have he := quantizeMagnitude_of_not_invalid f mode s _ r h
-  simp only [quantize, he, Datum.toRat?_eq]
-  refine ⟨_, rfl, ?_⟩
-  have herr := mode.roundAt_error_le_half hm s
-    (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num : (0 : ℚ) < 10) q).le) r
-  cases s
-  · simpa [Datum.finiteValue] using herr
-  · simp only [Datum.finiteValue, ite_true, neg_mul, one_mul, neg_sub_neg]
-    rw [abs_sub_comm]
-    exact herr
+  obtain ⟨value, hv, he⟩ := quantize_abs_sub f mode s t c d q r h
+  refine ⟨value, hv, ?_⟩
+  rw [he]
+  exact mode.roundAt_error_le_half hm s (magnitude_nonneg c q) r
 
 /-- On success the inexact flag records a numerical change, independently of the sign. -/
 theorem quantize_inexact_iff (f : Format) (mode : RoundingMode)
@@ -109,55 +136,38 @@ theorem quantize_inexact_iff (f : Format) (mode : RoundingMode)
     cases s <;> simp [Datum.finiteValue]
   · simp [invalidResult, Datum.toRat?_eq] at hv
 
-/-- Every rounding direction changes the value by less than one requested grid unit. -/
+/-- If quantization of a finite input does not raise invalid, then in every rounding direction its
+result decodes to a value less than one unit of the requested quantum from the input. -/
 theorem quantize_error_lt_one (f : Format) (mode : RoundingMode)
     (s t : Bool) (c d : Nat) (q r : Int)
     (h : (quantize f mode (.finite s c q) (.finite t d r)).status.invalid = false) :
     ∃ value, (quantize f mode (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
       |value - Datum.finiteValue s c q| < (10 : ℚ) ^ r := by
-  have he := quantizeMagnitude_of_not_invalid f mode s _ r h
-  simp only [quantize, he, Datum.toRat?_eq]
-  refine ⟨_, rfl, ?_⟩
-  have herr := mode.roundAt_error_lt_one s
-    (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num : (0 : ℚ) < 10) q).le) r
-  cases s
-  · simpa [Datum.finiteValue] using herr
-  · simp only [Datum.finiteValue, ite_true, neg_mul, one_mul, neg_sub_neg]
-    rw [abs_sub_comm]
-    exact herr
+  obtain ⟨value, hv, he⟩ := quantize_abs_sub f mode s t c d q r h
+  refine ⟨value, hv, ?_⟩
+  rw [he]
+  exact mode.roundAt_error_lt_one s (magnitude_nonneg c q) r
 
-/-- Upward quantization is an upper bound on the exact input value, for either sign. -/
-theorem le_quantize_towardPositive (f : Format)
+/-- If upward quantization of a finite input does not raise invalid, its result decodes to a value
+at least the input, for either sign. -/
+theorem le_quantize_up (f : Format)
     (s t : Bool) (c d : Nat) (q r : Int)
-    (h : (quantize f .towardPositive (.finite s c q) (.finite t d r)).status.invalid = false) :
-    ∃ value, (quantize f .towardPositive (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
+    (h : (quantize f .up (.finite s c q) (.finite t d r)).status.invalid = false) :
+    ∃ value, (quantize f .up (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
       Datum.finiteValue s c q ≤ value := by
-  have he := quantizeMagnitude_of_not_invalid f .towardPositive s _ r h
-  simp only [quantize, he, Datum.toRat?_eq]
-  refine ⟨_, rfl, ?_⟩
-  have hu : 0 < (10 : ℚ) ^ r := zpow_pos (by norm_num) _
-  have hx : 0 ≤ (c : ℚ) * (10 : ℚ) ^ q :=
-    mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le
-  have hs := mul_le_mul_of_nonneg_right
-    (RoundingMode.le_roundSigned_towardPositive s (div_nonneg hx hu.le)) hu.le
-  cases s <;> simpa [Datum.finiteValue, RoundingMode.roundSigned,
-    RoundingMode.roundAt, hu.ne'] using hs
+  refine ⟨_, quantize_toRat?_of_not_invalid f _ s t c d q r h, ?_⟩
+  have h := RoundingMode.le_roundAt_up s (magnitude_nonneg c q) r
+  cases s <;> simpa [Datum.finiteValue] using h
 
-/-- Downward quantization is a lower bound on the exact input value, for either sign. -/
-theorem quantize_towardNegative_le (f : Format)
+/-- If downward quantization of a finite input does not raise invalid, its result decodes to a value
+at most the input, for either sign. -/
+theorem quantize_down_le (f : Format)
     (s t : Bool) (c d : Nat) (q r : Int)
-    (h : (quantize f .towardNegative (.finite s c q) (.finite t d r)).status.invalid = false) :
-    ∃ value, (quantize f .towardNegative (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
+    (h : (quantize f .down (.finite s c q) (.finite t d r)).status.invalid = false) :
+    ∃ value, (quantize f .down (.finite s c q) (.finite t d r)).value.toRat? = some value ∧
       value ≤ Datum.finiteValue s c q := by
-  have he := quantizeMagnitude_of_not_invalid f .towardNegative s _ r h
-  simp only [quantize, he, Datum.toRat?_eq]
-  refine ⟨_, rfl, ?_⟩
-  have hu : 0 < (10 : ℚ) ^ r := zpow_pos (by norm_num) _
-  have hx : 0 ≤ (c : ℚ) * (10 : ℚ) ^ q :=
-    mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le
-  have hs := mul_le_mul_of_nonneg_right
-    (RoundingMode.roundSigned_towardNegative_le s (div_nonneg hx hu.le)) hu.le
-  cases s <;> simpa [Datum.finiteValue, RoundingMode.roundSigned,
-    RoundingMode.roundAt, hu.ne'] using hs
+  refine ⟨_, quantize_toRat?_of_not_invalid f _ s t c d q r h, ?_⟩
+  have h := RoundingMode.roundAt_down_le s (magnitude_nonneg c q) r
+  cases s <;> simpa [Datum.finiteValue] using h
 
 end FloatLib.Floats.Formats.DecimalInterchange.Arithmetic

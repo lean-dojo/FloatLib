@@ -16,6 +16,8 @@ public import FloatLib.Numerics.Enclosure.Interval.PowersProof
 
 The standard elementary functions use the same enclosure registration as user-defined operations.
 Their procedures and containment proofs reuse the existing endpoint-independent backend contracts.
+`acceptedDomain?` says which argument enclosures the partial ones accept, and `interval` quotes it
+when the backend rejects a call.
 -/
 
 @[expose] public section
@@ -118,5 +120,29 @@ theorem rpow_extension_sound : Backend.rpowExtension.Sound Real.rpow :=
 @[interval_extension]
 theorem logb_extension_sound : Backend.logbExtension.Sound Real.logb :=
   Extension.binary_sound _ _ (fun _ _ _ _ _ _ h hx hy => containsReal_logbBounds? h hx hy)
+
+/--
+The argument enclosures that a partial registered enclosure accepts, keyed by its registration and
+phrased for `interval`'s message when it rejects a call. These are conditions on the enclosures
+the backend computes, not on the real functions, which Mathlib defines at every real argument. The
+other registrations here accept every argument enclosure.
+-/
+meta def acceptedDomain? (registration : Lean.Name) : Option String :=
+  [ (``log_extension_sound, "argument enclosures with a positive lower endpoint")
+  , (``sqrt_extension_sound, "argument enclosures with a nonnegative lower endpoint")
+  , (``tan_extension_sound, "arguments whose cosine enclosure excludes zero")
+  , (``arcsin_extension_sound,
+      "argument enclosures inside [-1, 1]; an endpoint very close to -1 or 1 can also need a \
+        larger precision")
+  , (``arccos_extension_sound,
+      "argument enclosures inside [-1, 1]; an endpoint very close to -1 or 1 can also need a \
+        larger precision")
+  , (``arcosh_extension_sound, "argument enclosures with a lower endpoint of at least 1")
+  , (``artanh_extension_sound, "argument enclosures strictly inside (-1, 1)")
+  , (``rpow_extension_sound, "base enclosures with a positive lower endpoint")
+  , (``logb_extension_sound,
+      "positive base and argument enclosures whose base logarithm enclosure excludes zero, so \
+        the base enclosure must stay away from 1")
+  ].lookup registration
 
 end FloatLib.Numerics.Interval

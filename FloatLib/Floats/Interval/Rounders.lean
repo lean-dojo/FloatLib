@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
+import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 
 /-!
 # Directed rounding (down/up) for Flocq-style formats
@@ -18,6 +19,11 @@ typically wants **directed rounding** at interval endpoints:
   $\operatorname{down}(x)\le x$,
 - `up x` is a representable value with
   $x\le\operatorname{up}(x)$.
+
+The `Rounder` interface that the enclosure proofs take records only the two inequalities, so the
+identity maps form a `Rounder` too. Representability belongs to the particular rounder:
+`genericFormat_roundDown` and `genericFormat_roundUp` show that `formatRounder`'s endpoints lie on
+the $(\beta,\mathtt{fexp})$ grid.
 
 In IEEE-754 hardware this corresponds to the rounding modes toward $-\infty$ and toward
 $+\infty$. FloatLib represents these directions with Flocq-style
@@ -68,6 +74,16 @@ the exact real value.
 theorem le_roundUp (x : ℝ) : x ≤ roundUp (β := β) (fexp := fexp) x :=
   le_round_ceil x
 
+/-- `roundDown x` lies on the $(\beta,\mathtt{fexp})$ grid. -/
+theorem genericFormat_roundDown (x : ℝ) :
+    genericFormat β fexp (roundDown (β := β) (fexp := fexp) x) :=
+  generic_format_round floorRound x
+
+/-- `roundUp x` lies on the $(\beta,\mathtt{fexp})$ grid. -/
+theorem genericFormat_roundUp (x : ℝ) :
+    genericFormat β fexp (roundUp (β := β) (fexp := fexp) x) :=
+  generic_format_round ceilRound x
+
 /--
 A pair of real maps bracketing every real number from below and above.
 
@@ -76,7 +92,7 @@ $\operatorname{down}(x)\le x\le\operatorname{up}(x)$ and nothing else. In partic
 does not require `down x` or `up x` to lie on any representable grid, nor does it require
 monotonicity; the identity maps satisfy both bounds. Representability is a property of a
 particular instance such as `formatRounder`, whose outputs lie on the $(\beta,\mathtt{fexp})$ grid
-by construction.
+(`genericFormat_roundDown`, `genericFormat_roundUp`).
 -/
 structure Rounder where
   /-- A lower bound for an exact real value. -/
@@ -91,7 +107,8 @@ structure Rounder where
 /--
 Canonical rounder for the $(\beta,\mathtt{fexp})$ format via `roundDown`/`roundUp`.
 
-The outputs are values of the Flocq generic format, which has an unbounded exponent range: there is
+The outputs are values of the Flocq generic format (`genericFormat_roundDown`,
+`genericFormat_roundUp`), which has an unbounded exponent range: there is
 no overflow to infinity and no largest finite value, so this rounder models a binary format's
 finite grid extended past its exponent limits rather than the encoded format itself.
 -/

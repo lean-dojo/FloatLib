@@ -15,8 +15,10 @@ public import Mathlib.Analysis.Complex.ExponentialBounds
 /-!
 # Real rounding certificates for decimal exp-minus-one and log-plus-one
 
-Every returned datum is valid, finite, and equal to radix-ten Flocq nearest-even rounding of
-the exact real function. These conclusions follow from rational enclosure bounds and the
+Every returned datum is valid and finite, and its real value equals radix-ten Flocq
+nearest-even rounding of the exact real function. The theorems fix the real value only: they do
+not say which member of the cohort is returned, nor the sign of a zero result, except for the
+signed-zero passthrough below. These conclusions follow from rational enclosure bounds and the
 decimal projection bridge, independently of whether refinement eventually succeeds.
 
 These are partial-correctness theorems: they describe a result whenever the kernel returns
@@ -33,6 +35,7 @@ the destination range.
 namespace FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified
 
 open FloatLib.Numerics
+open FloatLib.Floats.Certified
 
 private theorem log_ten_bounds : (2 : ℝ) < Real.log 10 ∧ Real.log 10 < 3 := by
   rw [Real.log_ten_eq]
@@ -82,28 +85,31 @@ private theorem exp_lt_upper {f : Format} {argument : ℚ}
   push_cast
   linarith
 
+/-- The cheap argument screen of the tail guard is implied by the exact exponential comparison. -/
 private theorem expTail_guard_iff (f : Format) (argument : ℚ) :
     (argument < expMinus1TailArgumentBound f ∧
       ElementaryComparison.compareExp argument (expMinus1TailBound f) ≠ .gt) ↔
-      ElementaryComparison.compareExp argument (expMinus1TailBound f) ≠ .gt := by
-  refine ⟨And.right, fun hcompare => ⟨?_, hcompare⟩⟩
-  by_contra hargument
-  apply hcompare
-  rw [ElementaryComparison.compareExp_eq_real, cmp_eq_gt_iff]
-  exact tail_lt_exp (le_of_not_gt hargument)
+      ElementaryComparison.compareExp argument (expMinus1TailBound f) ≠ .gt :=
+  and_iff_right_of_imp fun hcompare => by
+    by_contra hargument
+    apply hcompare
+    rw [ElementaryComparison.compareExp_eq_real, cmp_eq_gt_iff]
+    exact tail_lt_exp (le_of_not_gt hargument)
 
+/-- The cheap argument screen of the overflow guard is implied by the exact exponential
+comparison. -/
 private theorem expUpper_guard_iff (f : Format) (argument : ℚ) :
     (expMinus1UpperArgumentBound f < argument ∧
       ElementaryComparison.compareExp argument (expMinus1UpperBound f + 1) ≠ .lt) ↔
-      ElementaryComparison.compareExp argument (expMinus1UpperBound f + 1) ≠ .lt := by
-  refine ⟨And.right, fun hcompare => ⟨?_, hcompare⟩⟩
-  by_contra hargument
-  apply hcompare
-  rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff]
-  exact exp_lt_upper (le_of_not_gt hargument)
+      ElementaryComparison.compareExp argument (expMinus1UpperBound f + 1) ≠ .lt :=
+  and_iff_right_of_imp fun hcompare => by
+    by_contra hargument
+    apply hcompare
+    rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff]
+    exact exp_lt_upper (le_of_not_gt hargument)
 
-private theorem expMinus1Rat_eq_guarded (f : Format) (argument : ℚ) (options : Options) :
-    expMinus1Rat f argument options =
+private theorem expMinus1Rat_eq_guarded (f : Format) (argument : ℚ) (budget : Budget) :
+    expMinus1Rat f argument budget =
       if argument = 0 then Enclosure.round? f (RationalInterval.point 0)
       else if ElementaryComparison.compareExp argument (expMinus1TailBound f) ≠ .gt then
         Enclosure.round? f (expMinus1TailInterval f)
@@ -114,10 +120,10 @@ private theorem expMinus1Rat_eq_guarded (f : Format) (argument : ℚ) (options :
           (fun degree precision => (FloatLib.Numerics.Enclosure.BinaryGrid.exp
             argument degree precision).sub
             (RationalInterval.point 1))
-          (max 1 options.initialDegree)
+          (max 1 budget.initialDegree)
           (FloatLib.Numerics.Enclosure.BinaryGrid.expPrecision
-            (f.coefficientBound.log2 + 1) argument (max 1 options.initialDegree) true)
-          options.maxSteps := by
+            (f.coefficientBound.log2 + 1) argument (max 1 budget.initialDegree) true)
+          budget.maxAttempts := by
   simp only [expMinus1Rat, expTail_guard_iff, expUpper_guard_iff]
 
 private theorem exists_enclosure_of_refine_eq_some {f : Format}
@@ -130,37 +136,60 @@ private theorem exists_enclosure_of_refine_eq_some {f : Format}
   obtain ⟨degree, precision, haccept⟩ := RationalInterval.exists_of_refine_eq_some hresult
   exact ⟨enclose degree precision, hcontains degree precision, haccept⟩
 
-private theorem exists_enclosure_of_expMinus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : expMinus1Rat f argument options = some result) :
-    ∃ interval : RationalInterval, interval.Contains (Real.exp (argument : ℝ) - 1) ∧
-      Enclosure.round? f interval = some result := by
+/-- A successful exponential-minus-one kernel took one of three paths, each with its real meaning:
+the exact zero, the negative tail (where `exp argument` is at most the tail bound), or the refined
+search below the overflow screen. The overflow screen itself never succeeds. -/
+private theorem expMinus1Rat_cases_of_eq_some {f : Format}
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) :
+    (argument = 0 ∧ Enclosure.round? f (RationalInterval.point 0) = some result) ∨
+      (Real.exp (argument : ℝ) ≤ expMinus1TailBound f ∧
+        Enclosure.round? f (expMinus1TailInterval f) = some result) ∨
+      (Real.exp (argument : ℝ) < (expMinus1UpperBound f + 1 : ℚ) ∧
+        ∃ degree precision, refine f
+          (fun degree precision => (FloatLib.Numerics.Enclosure.BinaryGrid.exp
+            argument degree precision).sub (RationalInterval.point 1))
+          degree precision budget.maxAttempts = some result) := by
   rw [expMinus1Rat_eq_guarded] at hresult
   split at hresult
-  · rename_i hzero
-    exact ⟨RationalInterval.point 0,
-      by simpa [hzero] using RationalInterval.contains_point (0 : ℚ), hresult⟩
+  · exact Or.inl ⟨‹_›, hresult⟩
   · split at hresult
     · rename_i hsmall
       simp only [ElementaryComparison.compareExp_eq_real, ne_eq, cmp_eq_gt_iff] at hsmall
-      have hexp :
-          (⟨0, expMinus1TailBound f⟩ : RationalInterval).Contains
-            (Real.exp (argument : ℝ)) :=
-        ⟨by simpa using (Real.exp_pos (argument : ℝ)).le, le_of_not_gt hsmall⟩
-      exact ⟨expMinus1TailInterval f, by
-        simpa [expMinus1TailInterval] using
-          RationalInterval.contains_sub hexp (RationalInterval.contains_point 1), hresult⟩
+      exact Or.inr (Or.inl ⟨le_of_not_gt hsmall, hresult⟩)
     · split at hresult
       · simp at hresult
-      · refine exists_enclosure_of_refine_eq_some ?_ hresult
-        intro degree precision
-        simpa using RationalInterval.contains_sub
-          (FloatLib.Numerics.Enclosure.BinaryGrid.contains_exp argument degree _)
-          (RationalInterval.contains_point 1)
+      · rename_i hlarge
+        have hlt :
+            ElementaryComparison.compareExp argument (expMinus1UpperBound f + 1) = .lt :=
+          of_not_not hlarge
+        rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff] at hlt
+        exact Or.inr (Or.inr ⟨hlt, _, _, hresult⟩)
+
+private theorem exists_enclosure_of_expMinus1Rat_eq_some {f : Format}
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) :
+    ∃ interval : RationalInterval, interval.Contains (Real.exp (argument : ℝ) - 1) ∧
+      Enclosure.round? f interval = some result := by
+  rcases expMinus1Rat_cases_of_eq_some hresult with
+    ⟨hzero, hround⟩ | ⟨hsmall, hround⟩ | ⟨-, _, _, hround⟩
+  · exact ⟨RationalInterval.point 0,
+      by simpa [hzero] using RationalInterval.contains_point (0 : ℚ), hround⟩
+  · have hexp :
+        (⟨0, expMinus1TailBound f⟩ : RationalInterval).Contains (Real.exp (argument : ℝ)) :=
+      ⟨by simpa using (Real.exp_pos (argument : ℝ)).le, hsmall⟩
+    exact ⟨expMinus1TailInterval f, by
+      simpa [expMinus1TailInterval] using
+        RationalInterval.contains_sub hexp (RationalInterval.contains_point 1), hround⟩
+  · refine exists_enclosure_of_refine_eq_some ?_ hround
+    intro degree precision
+    simpa using RationalInterval.contains_sub
+      (FloatLib.Numerics.Enclosure.BinaryGrid.contains_exp argument degree _)
+      (RationalInterval.contains_point 1)
 
 private theorem exists_enclosure_of_logPlus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : logPlus1Rat f argument options = some result) :
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : logPlus1Rat f argument budget = some result) :
     ∃ interval : RationalInterval, interval.Contains (Real.log (1 + (argument : ℝ))) ∧
       Enclosure.round? f interval = some result := by
   rw [logPlus1Rat] at hresult
@@ -179,60 +208,60 @@ private theorem exists_enclosure_of_logPlus1Rat_eq_some {f : Format}
 
 /-- An accepted rational-input exponential-minus-one result is valid in the destination format. -/
 theorem valid_of_expMinus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : expMinus1Rat f argument options = some result) : result.Valid f := by
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) : result.Valid f := by
   obtain ⟨_, _, haccept⟩ := exists_enclosure_of_expMinus1Rat_eq_some hresult
   exact Enclosure.valid_of_round?_eq_some haccept
 
 /-- An accepted rational-input exponential-minus-one result is finite. -/
 theorem isFinite_of_expMinus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : expMinus1Rat f argument options = some result) : result.isFinite = true := by
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) : result.isFinite = true := by
   obtain ⟨_, _, haccept⟩ := exists_enclosure_of_expMinus1Rat_eq_some hresult
   exact Enclosure.isFinite_of_round?_eq_some haccept
 
 /-- Acceptance certifies the single real rounding of `exp argument - 1`. -/
 theorem toReal_of_expMinus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : expMinus1Rat f argument options = some result) :
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) :
     toReal result = roundAt f (Real.exp (argument : ℝ) - 1) := by
   obtain ⟨_, hcontains, haccept⟩ := exists_enclosure_of_expMinus1Rat_eq_some hresult
   exact Enclosure.toReal_eq_roundAt_of_round?_eq_some hcontains haccept
 
 /-- An accepted rational-input logarithm-plus-one result is valid in the destination format. -/
 theorem valid_of_logPlus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : logPlus1Rat f argument options = some result) : result.Valid f := by
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : logPlus1Rat f argument budget = some result) : result.Valid f := by
   obtain ⟨_, _, haccept⟩ := exists_enclosure_of_logPlus1Rat_eq_some hresult
   exact Enclosure.valid_of_round?_eq_some haccept
 
 /-- An accepted rational-input logarithm-plus-one result is finite. -/
 theorem isFinite_of_logPlus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : logPlus1Rat f argument options = some result) : result.isFinite = true := by
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : logPlus1Rat f argument budget = some result) : result.isFinite = true := by
   obtain ⟨_, _, haccept⟩ := exists_enclosure_of_logPlus1Rat_eq_some hresult
   exact Enclosure.isFinite_of_round?_eq_some haccept
 
 /-- Acceptance certifies the single real rounding of `log (1 + argument)`. -/
 theorem toReal_of_logPlus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : logPlus1Rat f argument options = some result) :
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : logPlus1Rat f argument budget = some result) :
     toReal result = roundAt f (Real.log (1 + (argument : ℝ))) := by
   obtain ⟨_, hcontains, haccept⟩ := exists_enclosure_of_logPlus1Rat_eq_some hresult
   exact Enclosure.toReal_eq_roundAt_of_round?_eq_some hcontains haccept
 
 /-- The logarithm kernel rejects every rational argument at or below minus one. -/
 theorem logPlus1Rat_eq_none_of_le_neg_one (f : Format) {argument : ℚ}
-    (hdomain : argument ≤ -1) (options : Options) :
-    logPlus1Rat f argument options = none := by
+    (hdomain : argument ≤ -1) (budget : Budget) :
+    logPlus1Rat f argument budget = none := by
   simp [logPlus1Rat, hdomain]
 
 /-- Rational logarithm acceptance implies the true domain condition. -/
 theorem neg_one_lt_of_logPlus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : logPlus1Rat f argument options = some result) : -1 < argument := by
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : logPlus1Rat f argument budget = some result) : -1 < argument := by
   by_contra h
-  rw [logPlus1Rat_eq_none_of_le_neg_one f (le_of_not_gt h) options] at hresult
+  rw [logPlus1Rat_eq_none_of_le_neg_one f (le_of_not_gt h) budget] at hresult
   cases hresult
 
 private theorem zero_facts {input : Datum} (hzero : input.isZero = true) :
@@ -248,13 +277,19 @@ private theorem isFinite_of_toRat?_eq_some {input : Datum} {argument : ℚ}
     (hinput : input.toRat? = some argument) : input.isFinite = true := by
   cases input <;> simp_all [Datum.isFinite, Datum.toRat?]
 
-private theorem input_cases_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) :
+/-- A successful guarded call (an invalid input fails, a zero is returned unchanged, any other input
+goes to the rational kernel) had a valid input that is either the returned zero or a finite
+argument accepted by the kernel. -/
+private theorem input_cases_of_guarded_eq_some {f : Format} {input result : Datum}
+    {kernel : ℚ → Option Datum}
+    (hresult : (if ¬input.Valid f then none
+      else if input.isZero then some input
+      else
+        match input.toRat? with
+        | none => none
+        | some argument => kernel argument) = some result) :
     input.Valid f ∧ (input.isZero = true ∧ input = result ∨
-      ∃ argument : ℚ, input.toRat? = some argument ∧
-        expMinus1Rat f argument options = some result) := by
-  unfold expMinus1 at hresult
+      ∃ argument : ℚ, input.toRat? = some argument ∧ kernel argument = some result) := by
   split at hresult
   · simp at hresult
   · rename_i hvalid
@@ -268,42 +303,38 @@ private theorem input_cases_of_expMinus1_eq_some {f : Format}
           rw [hinput] at hresult
           exact Or.inr ⟨argument, rfl, hresult⟩
 
-private theorem input_cases_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) :
+private theorem input_cases_of_expMinus1_eq_some {f : Format}
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) :
     input.Valid f ∧ (input.isZero = true ∧ input = result ∨
       ∃ argument : ℚ, input.toRat? = some argument ∧
-        logPlus1Rat f argument options = some result) := by
-  unfold logPlus1 at hresult
-  split at hresult
-  · simp at hresult
-  · rename_i hvalid
-    refine ⟨of_not_not hvalid, ?_⟩
-    split at hresult
-    · rename_i hzero
-      exact Or.inl ⟨hzero, Option.some.inj hresult⟩
-    · cases hinput : input.toRat? with
-      | none => simp [hinput] at hresult
-      | some argument =>
-          rw [hinput] at hresult
-          exact Or.inr ⟨argument, rfl, hresult⟩
+        expMinus1Rat f argument budget = some result) :=
+  input_cases_of_guarded_eq_some hresult
+
+private theorem input_cases_of_logPlus1_eq_some {f : Format}
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) :
+    input.Valid f ∧ (input.isZero = true ∧ input = result ∨
+      ∃ argument : ℚ, input.toRat? = some argument ∧
+        logPlus1Rat f argument budget = some result) :=
+  input_cases_of_guarded_eq_some hresult
 
 /-- A successful datum-input exponential-minus-one call had a valid input. -/
 theorem valid_input_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) : input.Valid f :=
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) : input.Valid f :=
   (input_cases_of_expMinus1_eq_some hresult).1
 
 /-- A successful datum-input logarithm-plus-one call had a valid input. -/
 theorem valid_input_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) : input.Valid f :=
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) : input.Valid f :=
   (input_cases_of_logPlus1_eq_some hresult).1
 
 /-- Exponential-minus-one acceptance excludes infinities and NaNs as inputs. -/
 theorem isFinite_input_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) : input.isFinite = true := by
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) : input.isFinite = true := by
   rcases (input_cases_of_expMinus1_eq_some hresult).2 with
     ⟨hzero, _⟩ | ⟨_, hinput, _⟩
   · exact (zero_facts hzero).1
@@ -311,8 +342,8 @@ theorem isFinite_input_of_expMinus1_eq_some {f : Format}
 
 /-- Logarithm-plus-one acceptance excludes infinities and NaNs as inputs. -/
 theorem isFinite_input_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) : input.isFinite = true := by
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) : input.isFinite = true := by
   rcases (input_cases_of_logPlus1_eq_some hresult).2 with
     ⟨hzero, _⟩ | ⟨_, hinput, _⟩
   · exact (zero_facts hzero).1
@@ -320,8 +351,8 @@ theorem isFinite_input_of_logPlus1_eq_some {f : Format}
 
 /-- Every accepted exponential-minus-one datum is representable at the destination. -/
 theorem valid_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) : result.Valid f := by
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) : result.Valid f := by
   obtain ⟨hvalid, ⟨_, hsame⟩ | ⟨_, _, hvalue⟩⟩ :=
     input_cases_of_expMinus1_eq_some hresult
   · exact hsame ▸ hvalid
@@ -329,8 +360,8 @@ theorem valid_of_expMinus1_eq_some {f : Format}
 
 /-- Every accepted logarithm-plus-one datum is representable at the destination. -/
 theorem valid_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) : result.Valid f := by
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) : result.Valid f := by
   obtain ⟨hvalid, ⟨_, hsame⟩ | ⟨_, _, hvalue⟩⟩ :=
     input_cases_of_logPlus1_eq_some hresult
   · exact hsame ▸ hvalid
@@ -338,8 +369,8 @@ theorem valid_of_logPlus1_eq_some {f : Format}
 
 /-- Every accepted exponential-minus-one result is finite, including preserved signed zeros. -/
 theorem isFinite_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) : result.isFinite = true := by
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) : result.isFinite = true := by
   rcases (input_cases_of_expMinus1_eq_some hresult).2 with
     ⟨hzero, hsame⟩ | ⟨_, _, hvalue⟩
   · exact hsame ▸ (zero_facts hzero).1
@@ -347,17 +378,18 @@ theorem isFinite_of_expMinus1_eq_some {f : Format}
 
 /-- Every accepted logarithm-plus-one result is finite, including preserved signed zeros. -/
 theorem isFinite_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) : result.isFinite = true := by
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) : result.isFinite = true := by
   rcases (input_cases_of_logPlus1_eq_some hresult).2 with
     ⟨hzero, hsame⟩ | ⟨_, _, hvalue⟩
   · exact hsame ▸ (zero_facts hzero).1
   · exact isFinite_of_logPlus1Rat_eq_some hvalue
 
-/-- A returned exponential-minus-one datum equals nearest-even rounding of the exact real target. -/
+/-- The real value of a returned exponential-minus-one datum is the nearest-even rounding of the
+exact real target. -/
 theorem toReal_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) :
     toReal result = roundAt f (Real.exp (toReal input) - 1) := by
   rcases (input_cases_of_expMinus1_eq_some hresult).2 with
     ⟨hzero, hsame⟩ | ⟨_, hinput, hvalue⟩
@@ -366,10 +398,11 @@ theorem toReal_of_expMinus1_eq_some {f : Format}
   · rw [toReal_of_toRat?_eq_some hinput]
     exact toReal_of_expMinus1Rat_eq_some hvalue
 
-/-- A returned logarithm-plus-one datum equals nearest-even rounding of the exact real target. -/
+/-- The real value of a returned logarithm-plus-one datum is the nearest-even rounding of the exact
+real target. -/
 theorem toReal_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) :
     toReal result = roundAt f (Real.log (1 + toReal input)) := by
   rcases (input_cases_of_logPlus1_eq_some hresult).2 with
     ⟨hzero, hsame⟩ | ⟨_, hinput, hvalue⟩
@@ -380,8 +413,8 @@ theorem toReal_of_logPlus1_eq_some {f : Format}
 
 /-- Every accepted logarithm-plus-one input lies strictly above the singularity at minus one. -/
 theorem neg_one_lt_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) : -1 < toReal input := by
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) : -1 < toReal input := by
   rcases (input_cases_of_logPlus1_eq_some hresult).2 with
     ⟨hzero, _⟩ | ⟨_, hinput, hvalue⟩
   · rw [(zero_facts hzero).2]
@@ -391,8 +424,8 @@ theorem neg_one_lt_of_logPlus1_eq_some {f : Format}
 
 /-- The exponential-minus-one certificate includes a nearest-point property on the real grid. -/
 theorem nearest_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) :
     Flocq.RoundNearestPoint (Flocq.genericFormat decimalRadix (fexpOf f))
       (Real.exp (toReal input) - 1) (toReal result) := by
   rw [toReal_of_expMinus1_eq_some hresult]
@@ -400,8 +433,8 @@ theorem nearest_of_expMinus1_eq_some {f : Format}
 
 /-- The logarithm-plus-one certificate includes a nearest-point property on the real grid. -/
 theorem nearest_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) :
     Flocq.RoundNearestPoint (Flocq.genericFormat decimalRadix (fexpOf f))
       (Real.log (1 + toReal input)) (toReal result) := by
   rw [toReal_of_logPlus1_eq_some hresult]
@@ -409,8 +442,8 @@ theorem nearest_of_logPlus1_eq_some {f : Format}
 
 /-- The accepted exponential-minus-one result differs from its real target by at most half a ULP. -/
 theorem error_le_half_ulp_of_expMinus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : expMinus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : expMinus1 f input budget = some result) :
     |toReal result - (Real.exp (toReal input) - 1)| ≤
       Flocq.ulp decimalRadix (fexpOf f) (Real.exp (toReal input) - 1) / 2 := by
   rw [toReal_of_expMinus1_eq_some hresult]
@@ -418,8 +451,8 @@ theorem error_le_half_ulp_of_expMinus1_eq_some {f : Format}
 
 /-- The accepted logarithm-plus-one result differs from its real target by at most half a ULP. -/
 theorem error_le_half_ulp_of_logPlus1_eq_some {f : Format}
-    {input result : Datum} {options : Options}
-    (hresult : logPlus1 f input options = some result) :
+    {input result : Datum} {budget : Budget}
+    (hresult : logPlus1 f input budget = some result) :
     |toReal result - Real.log (1 + toReal input)| ≤
       Flocq.ulp decimalRadix (fexpOf f) (Real.log (1 + toReal input)) / 2 := by
   rw [toReal_of_logPlus1_eq_some hresult]
@@ -427,43 +460,43 @@ theorem error_le_half_ulp_of_logPlus1_eq_some {f : Format}
 
 /-- Either valid signed zero retains its entire datum, independently of the refinement budget. -/
 theorem expMinus1_of_isZero {f : Format} {input : Datum}
-    (hvalid : input.Valid f) (hzero : input.isZero = true) (options : Options) :
-    expMinus1 f input options = some input := by
+    (hvalid : input.Valid f) (hzero : input.isZero = true) (budget : Budget) :
+    expMinus1 f input budget = some input := by
   simp [expMinus1, hvalid, hzero]
 
 /-- Either valid signed zero retains its sign and quantum under logarithm-plus-one. -/
 theorem logPlus1_of_isZero {f : Format} {input : Datum}
-    (hvalid : input.Valid f) (hzero : input.isZero = true) (options : Options) :
-    logPlus1 f input options = some input := by
+    (hvalid : input.Valid f) (hzero : input.isZero = true) (budget : Budget) :
+    logPlus1 f input budget = some input := by
   simp [logPlus1, hvalid, hzero]
 
 /-- Invalid decimal representations are explicitly rejected by exponential-minus-one. -/
 theorem expMinus1_eq_none_of_not_valid {f : Format} {input : Datum}
-    (hvalid : ¬input.Valid f) (options : Options) : expMinus1 f input options = none := by
+    (hvalid : ¬input.Valid f) (budget : Budget) : expMinus1 f input budget = none := by
   simp [expMinus1, hvalid]
 
 /-- Invalid decimal representations are explicitly rejected by logarithm-plus-one. -/
 theorem logPlus1_eq_none_of_not_valid {f : Format} {input : Datum}
-    (hvalid : ¬input.Valid f) (options : Options) : logPlus1 f input options = none := by
+    (hvalid : ¬input.Valid f) (budget : Budget) : logPlus1 f input budget = none := by
   simp [logPlus1, hvalid]
 
 /-- Every infinity and NaN is explicitly rejected by exponential-minus-one. -/
 theorem expMinus1_eq_none_of_not_isFinite {f : Format} {input : Datum}
-    (hfinite : input.isFinite = false) (options : Options) :
-    expMinus1 f input options = none := by
+    (hfinite : input.isFinite = false) (budget : Budget) :
+    expMinus1 f input budget = none := by
   cases input <;> simp_all [Datum.isFinite, expMinus1, Datum.isZero, Datum.toRat?]
 
 /-- Every infinity and NaN is explicitly rejected by logarithm-plus-one. -/
 theorem logPlus1_eq_none_of_not_isFinite {f : Format} {input : Datum}
-    (hfinite : input.isFinite = false) (options : Options) :
-    logPlus1 f input options = none := by
+    (hfinite : input.isFinite = false) (budget : Budget) :
+    logPlus1 f input budget = none := by
   cases input <;> simp_all [Datum.isFinite, logPlus1, Datum.isZero, Datum.toRat?]
 
 /-- The datum logarithm interface rejects the real domain at and below minus one. -/
 theorem logPlus1_eq_none_of_le_neg_one {f : Format} {input : Datum}
-    (hdomain : toReal input ≤ -1) (options : Options) :
-    logPlus1 f input options = none := by
-  cases hresult : logPlus1 f input options with
+    (hdomain : toReal input ≤ -1) (budget : Budget) :
+    logPlus1 f input budget = none := by
+  cases hresult : logPlus1 f input budget with
   | none => rfl
   | some result =>
       exact (not_lt_of_ge hdomain (neg_one_lt_of_logPlus1_eq_some hresult)).elim
@@ -476,7 +509,7 @@ theorem logPlus1_eq_none_of_le_neg_one {f : Format} {input : Datum}
 /-- A nonzero logarithm argument with no refinement attempts returns `none`. -/
 theorem logPlus1Rat_eq_none_of_no_steps (f : Format) {argument : ℚ}
     (hzero : argument ≠ 0) (degree : Nat) :
-    logPlus1Rat f argument { initialDegree := degree, maxSteps := 0 } = none := by
+    logPlus1Rat f argument { initialDegree := degree, maxAttempts := 0 } = none := by
   simp [logPlus1Rat, hzero, refine]
 
 /-- The exponential tail comparison uses a strictly positive rational bound. -/
@@ -493,36 +526,25 @@ theorem expMinus1UpperBound_pos (f : Format) : 0 < expMinus1UpperBound f :=
 
 /-- Exponential-minus-one acceptance implies the real target lies below the overflow cutoff. -/
 theorem lt_upperBound_of_expMinus1Rat_eq_some {f : Format}
-    {argument : ℚ} {options : Options} {result : Datum}
-    (hresult : expMinus1Rat f argument options = some result) :
+    {argument : ℚ} {budget : Budget} {result : Datum}
+    (hresult : expMinus1Rat f argument budget = some result) :
     Real.exp (argument : ℝ) - 1 < (expMinus1UpperBound f : ℝ) := by
   have hupper : 0 < (expMinus1UpperBound f : ℝ) := by
     exact_mod_cast expMinus1UpperBound_pos f
-  rw [expMinus1Rat_eq_guarded] at hresult
-  split at hresult
-  · rename_i hzero
-    simpa [hzero] using hupper
-  · split at hresult
-    · rename_i hsmall
-      simp only [ElementaryComparison.compareExp_eq_real, ne_eq, cmp_eq_gt_iff] at hsmall
-      have htail : (expMinus1TailBound f : ℝ) < 1 := by
-        exact_mod_cast expMinus1TailBound_lt_one f
-      linarith [le_of_not_gt hsmall]
-    · split at hresult
-      · simp at hresult
-      · rename_i hlarge
-        have hlt :
-            ElementaryComparison.compareExp argument (expMinus1UpperBound f + 1) = .lt :=
-          of_not_not hlarge
-        rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff] at hlt
-        simp only [Rat.cast_add, Rat.cast_one] at hlt
-        linarith
+  rcases expMinus1Rat_cases_of_eq_some hresult with
+    ⟨hzero, -⟩ | ⟨hsmall, -⟩ | ⟨hlarge, -⟩
+  · simpa [hzero] using hupper
+  · have htail : (expMinus1TailBound f : ℝ) < 1 := by
+      exact_mod_cast expMinus1TailBound_lt_one f
+    linarith
+  · simp only [Rat.cast_add, Rat.cast_one] at hlarge
+    linarith
 
 /-- Real results beyond the explicit finite-range cutoff are rejected for every search budget. -/
 theorem expMinus1Rat_eq_none_of_upperBound_le {f : Format} {argument : ℚ}
     (hlarge : (expMinus1UpperBound f : ℝ) ≤ Real.exp (argument : ℝ) - 1)
-    (options : Options) : expMinus1Rat f argument options = none := by
-  cases hresult : expMinus1Rat f argument options with
+    (budget : Budget) : expMinus1Rat f argument budget = none := by
+  cases hresult : expMinus1Rat f argument budget with
   | none => rfl
   | some result =>
       exact (not_lt_of_ge hlarge (lt_upperBound_of_expMinus1Rat_eq_some hresult)).elim
@@ -532,7 +554,7 @@ theorem expMinus1Rat_eq_none_of_no_steps (f : Format) {argument : ℚ}
     (hzero : argument ≠ 0)
     (htail : ElementaryComparison.compareExp argument (expMinus1TailBound f) = .gt)
     (degree : Nat) :
-    expMinus1Rat f argument { initialDegree := degree, maxSteps := 0 } = none := by
+    expMinus1Rat f argument { initialDegree := degree, maxAttempts := 0 } = none := by
   simp [expMinus1Rat, hzero, htail, refine]
 
 end FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified

@@ -52,10 +52,10 @@ def roundedPair (f : Format) (mode : RoundingMode) (negative : Bool) (magnitude 
 /-- Whether overflow delivers an infinity rather than the greatest finite value. -/
 def RoundingMode.overflowToInfinity (mode : RoundingMode) (negative : Bool) : Bool :=
   match mode with
-  | .nearestEven | .nearestAway => true
+  | .nearest | .nearestAway => true
   | .towardZero => false
-  | .towardPositive => !negative
-  | .towardNegative => negative
+  | .up => !negative
+  | .down => negative
 
 /-- Project a nonnegative rational magnitude, retaining the supplied sign even at zero.
 Exact zero selects its cohort without forming the powers used for rounding or tininess. -/

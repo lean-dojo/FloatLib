@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Semantics.Proof
 
 Complete word conversions recover the stored code, and encoding preserves in-range words.
 Arithmetic with `(overflow := .wrap)` decodes to centered modular arithmetic on signed
-coefficients. The default `.reject` addition and subtraction are exact whenever they succeed, and
-so is multiplication at a positive destination width. At positive widths,
+coefficients. The default `.reject` addition, subtraction and multiplication are exact whenever
+they succeed, and they return `none` exactly when the exact coefficient does not fit.
 `(overflow := .saturate)` decodes to the exact coefficient clamped to the signed range.
 -/
 
@@ -95,20 +95,20 @@ variable {width leftWidth rightWidth outWidth : Nat}
   Formats.FixedPoint.Bounded.toRat_wrapMul left.toCode right.toCode
 
 /-- Addition succeeds with the wrapped sum when the exact coefficient sum fits. -/
-theorem add_eq_some (hwidth : 0 < width)
+theorem add_eq_some
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width)
     (hresult : FixedInt.InRange width (left.coefficient + right.coefficient)) :
     add left right = some (add left right .wrap) :=
   congrArg (Option.map ofCode)
-    (FixedInt.checkedAdd_eq_some hwidth left.toCode right.toCode hresult)
+    (FixedInt.checkedAdd_eq_some left.toCode right.toCode hresult)
 
 /-- Subtraction succeeds with the wrapped difference when the exact coefficient fits. -/
-theorem sub_eq_some (hwidth : 0 < width)
+theorem sub_eq_some
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width)
     (hresult : FixedInt.InRange width (left.coefficient - right.coefficient)) :
     sub left right = some (sub left right .wrap) :=
   congrArg (Option.map ofCode)
-    (FixedInt.checkedSub_eq_some hwidth left.toCode right.toCode hresult)
+    (FixedInt.checkedSub_eq_some left.toCode right.toCode hresult)
 
 /-- Multiplication succeeds with the encoded product when the exact coefficient fits. -/
 theorem mul_eq_some
@@ -120,6 +120,36 @@ theorem mul_eq_some
   congrArg (Option.map ofCode)
     (Formats.FixedPoint.Bounded.checkedMul_eq_some left.toCode right.toCode hresult)
 
+/-- Addition returns `none` exactly when the exact coefficient sum does not fit. -/
+theorem add_eq_none_iff
+    (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
+    add left right = none ↔ ¬FixedInt.InRange width (left.coefficient + right.coefficient) :=
+  Option.map_eq_none_iff.trans (FixedInt.checkedAdd_eq_none_iff left.toCode right.toCode)
+
+/-- Subtraction returns `none` exactly when the exact coefficient difference does not fit. -/
+theorem sub_eq_none_iff
+    (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
+    sub left right = none ↔ ¬FixedInt.InRange width (left.coefficient - right.coefficient) :=
+  Option.map_eq_none_iff.trans (FixedInt.checkedSub_eq_none_iff left.toCode right.toCode)
+
+/-- Multiplication returns `none` exactly when the exact coefficient product does not fit
+`outWidth`. -/
+theorem mul_eq_none_iff
+    (left : ExecFloat.BoundedFixedPoint radix p leftWidth)
+    (right : ExecFloat.BoundedFixedPoint radix q rightWidth) :
+    mul outWidth left right = none ↔
+      ¬FixedInt.InRange outWidth (left.coefficient * right.coefficient) :=
+  Option.map_eq_none_iff.trans
+    (Formats.FixedPoint.Bounded.checkedMul_eq_none_iff left.toCode right.toCode)
+
+/-- A checked operation that returns a value had an in-range exact result, since it returns `none`
+exactly outside the range. -/
+private theorem inRange_of_eq_some {α : Type} {result : Option α} {value : α} {inRange : Prop}
+    (hnone : result = none ↔ ¬inRange) (hsome : result = some value) : inRange := by
+  by_contra h
+  rw [hnone.2 h] at hsome
+  cases hsome
+
 /--
 Rejecting addition is exact: whenever it returns a value, that value decodes to the rational sum of
 the operands. No width hypothesis is needed because success already certifies the absence of
@@ -129,17 +159,10 @@ theorem toRat_of_add_eq_some
     {left right result : ExecFloat.BoundedFixedPoint radix fractionalDigits width}
     (hsome : add left right = some result) :
     toRat result = toRat left + toRat right := by
-  dsimp only [add, Formats.FixedPoint.Bounded.checkedAdd, FixedInt.checkedAdd] at hsome
-  split at hsome
-  · exact absurd hsome (by simp)
-  · rename_i hoverflow
-    simp only [Option.map_some, Option.some.injEq] at hsome
-    subst hsome
-    unfold toRat Formats.FixedPoint.Bounded.toRat Formats.FixedPoint.Bounded.coefficient
-    change ((FixedInt.wrapAdd left.toCode right.toCode).toInt : ℚ) / _ = _
-    rw [FixedInt.wrapAdd, FixedInt.toInt,
-      BitVec.toInt_add_of_not_saddOverflow (by simpa using hoverflow), Int.cast_add]
-    exact add_div _ _ _
+  have hrange := inRange_of_eq_some (add_eq_none_iff left right) hsome
+  rw [add_eq_some left right hrange, Option.some.injEq] at hsome
+  subst hsome
+  exact Formats.FixedPoint.Bounded.toRat_wrapAdd_of_inRange left.toCode right.toCode hrange
 
 /--
 Rejecting subtraction is exact: whenever it returns a value, that value decodes to the rational
@@ -149,61 +172,50 @@ theorem toRat_of_sub_eq_some
     {left right result : ExecFloat.BoundedFixedPoint radix fractionalDigits width}
     (hsome : sub left right = some result) :
     toRat result = toRat left - toRat right := by
-  dsimp only [sub, Formats.FixedPoint.Bounded.checkedSub, FixedInt.checkedSub] at hsome
-  split at hsome
-  · exact absurd hsome (by simp)
-  · rename_i hoverflow
-    simp only [Option.map_some, Option.some.injEq] at hsome
-    subst hsome
-    unfold toRat Formats.FixedPoint.Bounded.toRat Formats.FixedPoint.Bounded.coefficient
-    change ((FixedInt.wrapSub left.toCode right.toCode).toInt : ℚ) / _ = _
-    rw [FixedInt.wrapSub, FixedInt.toInt,
-      BitVec.toInt_sub_of_not_ssubOverflow (by simpa using hoverflow), Int.cast_sub]
-    exact sub_div _ _ _
+  have hrange := inRange_of_eq_some (sub_eq_none_iff left right) hsome
+  rw [sub_eq_some left right hrange, Option.some.injEq] at hsome
+  subst hsome
+  exact Formats.FixedPoint.Bounded.toRat_wrapSub_of_inRange left.toCode right.toCode hrange
 
 /--
-Rejecting multiplication is exact: whenever it returns a value at a positive destination width,
-that value decodes to the rational product of the operands at the composed scale.
+Rejecting multiplication is exact: whenever it returns a value, that value decodes to the rational
+product of the operands at the composed scale.
 -/
-theorem toRat_of_mul_eq_some (houtWidth : 0 < outWidth)
+theorem toRat_of_mul_eq_some
     {left : ExecFloat.BoundedFixedPoint radix p leftWidth}
     {right : ExecFloat.BoundedFixedPoint radix q rightWidth}
     {result : ExecFloat.BoundedFixedPoint radix (p + q) outWidth}
     (hsome : mul outWidth left right = some result) :
     toRat result = toRat left * toRat right := by
-  have hrange : FixedInt.InRange outWidth (left.coefficient * right.coefficient) := by
-    by_contra hrange
-    unfold mul Formats.FixedPoint.Bounded.checkedMul at hsome
-    simp at hsome
-    exact hrange hsome.1
+  have hrange := inRange_of_eq_some (mul_eq_none_iff left right) hsome
   rw [mul_eq_some left right hrange, Option.some.injEq] at hsome
   subst hsome
-  exact Formats.FixedPoint.Bounded.toRat_ofInt_mul_of_inRange houtWidth
+  exact Formats.FixedPoint.Bounded.toRat_ofInt_mul_of_inRange
     left.toCode right.toCode hrange
 
 /-- Addition with `.saturate` decodes to exact coefficient addition followed by clamping. -/
-@[simp, grind =] theorem toRat_add_saturate (hwidth : 0 < width)
+@[simp, grind =] theorem toRat_add_saturate
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
     toRat (add left right .saturate) =
       Formats.FixedPoint.Bounded.valueOfCoefficient radix fractionalDigits
         (FixedInt.clamp width (left.coefficient + right.coefficient)) :=
-  Formats.FixedPoint.Bounded.toRat_saturatingAdd hwidth left.toCode right.toCode
+  Formats.FixedPoint.Bounded.toRat_saturatingAdd left.toCode right.toCode
 
 /-- Subtraction with `.saturate` decodes to exact coefficient subtraction and clamping. -/
-@[simp, grind =] theorem toRat_sub_saturate (hwidth : 0 < width)
+@[simp, grind =] theorem toRat_sub_saturate
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
     toRat (sub left right .saturate) =
       Formats.FixedPoint.Bounded.valueOfCoefficient radix fractionalDigits
         (FixedInt.clamp width (left.coefficient - right.coefficient)) :=
-  Formats.FixedPoint.Bounded.toRat_saturatingSub hwidth left.toCode right.toCode
+  Formats.FixedPoint.Bounded.toRat_saturatingSub left.toCode right.toCode
 
 /-- Multiplication with `.saturate` decodes to the clamped exact product at the composed scale. -/
-@[simp, grind =] theorem toRat_mul_saturate (houtWidth : 0 < outWidth)
+@[simp, grind =] theorem toRat_mul_saturate
     (left : ExecFloat.BoundedFixedPoint radix p leftWidth)
     (right : ExecFloat.BoundedFixedPoint radix q rightWidth) :
     toRat (mul outWidth left right .saturate) =
       Formats.FixedPoint.Bounded.valueOfCoefficient radix (p + q)
         (FixedInt.clamp outWidth (left.coefficient * right.coefficient)) :=
-  Formats.FixedPoint.Bounded.toRat_saturatingMul houtWidth left.toCode right.toCode
+  Formats.FixedPoint.Bounded.toRat_saturatingMul left.toCode right.toCode
 
 end FloatLib.Floats.ExecFloat.BoundedFixedPoint

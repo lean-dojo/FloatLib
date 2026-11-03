@@ -140,22 +140,7 @@ theorem toDyadic_eq (x : Value) :
       _
   simp only [show FloatFormat.binary32.fracWidth = 23 by decide,
     show FloatFormat.binary32.ieeeMinSubnormalExponent = -149 by decide]
-  have hexceptional :
-      (exponent == 0xff) = (Model.expField x == 255) := by
-    apply Bool.eq_iff_iff.mpr
-    rw [beq_iff_eq, beq_iff_eq, ← hexponent]
-    exact UInt32.toNat_inj.symm
-  have hexponentZero :
-      (exponent == 0) = (Model.expField x == 0) := by
-    apply Bool.eq_iff_iff.mpr
-    rw [beq_iff_eq, beq_iff_eq, ← hexponent]
-    exact UInt32.toNat_inj.symm
-  have hfractionZero :
-      (fraction == 0) = (Model.fracField x == 0) := by
-    apply Bool.eq_iff_iff.mpr
-    rw [beq_iff_eq, beq_iff_eq, ← hfraction]
-    exact UInt32.toNat_inj.symm
-  rw [hexceptional, hexponentZero, hfractionZero]
+  rw [expField_beq_allOnes x, expField_beq_zero x, fracField_beq_zero x]
   rw [isNaN_or_isInf_eq_expAllOnes]
   rw [hsign, hexponent, hfraction]
   rfl

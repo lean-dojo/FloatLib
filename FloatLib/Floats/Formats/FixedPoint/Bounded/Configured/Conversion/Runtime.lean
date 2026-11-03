@@ -90,8 +90,11 @@ def coefficientSpec (policy : OverflowPolicy) (exact : Rat) (stored : Int) : Pro
 /--
 Conversion relates the delivered coefficient to integer rounding, range, wrap, and clamp.
 
-The status is retained in full. Rejection of a finite input occurs exactly when the nearest-even
-coefficient is out of range under `reject`. The other policies always deliver a value.
+The status is retained in full. Its clause names the runtime `finiteStatus`;
+`Conversion.finiteStatus_eq` states those flags through the same nearest-even coefficient and
+`InRange` as the value clauses, without the runtime range test. Rejection of a finite input occurs
+exactly when the nearest-even coefficient is out of range under `reject`. The other policies always
+deliver a value.
 -/
 def spec :
     Quantization.Spec OverflowPolicy (NumericalValue Rat)

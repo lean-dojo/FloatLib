@@ -32,13 +32,13 @@ variable {format : Format}
 
 /-- Native `log2` leading-zero counting agrees with the exact natural-number scan. -/
 theorem countLeadingZeros_eq_model
-    (value : UInt64) (width : Nat) (hwidth : width ≤ 64) :
+    (value : UInt64) (width : Nat) :
     countLeadingZeros value width =
       Model.countLeadingRun value.toNat width false := by
   let truncated := lowBits value width
   have htruncated :
       truncated.toNat = value.toNat % 2 ^ width :=
-    lowBits_toNat_of_le value width hwidth
+    lowBits_toNat value width
   have htruncatedLt : truncated.toNat < 2 ^ width := by
     rw [htruncated]
     exact Nat.mod_lt _ (Nat.two_pow_pos width)
@@ -77,10 +77,10 @@ theorem countLeadingRun_eq_model (value : UInt64) (width : Nat) (bit : Bool) :
   next hwidth =>
     cases bit with
     | false =>
-        exact countLeadingZeros_eq_model value width hwidth
+        exact countLeadingZeros_eq_model value width
     | true =>
         simp only [ite_true]
-        rw [countLeadingZeros_eq_model (~~~value) width hwidth]
+        rw [countLeadingZeros_eq_model (~~~value) width]
         exact
           (Model.countLeadingRun_true_eq_false_of_testBit_flip
             value.toNat (~~~value).toNat width (by
@@ -91,20 +91,24 @@ theorem countLeadingRun_eq_model (value : UInt64) (width : Nat) (bit : Bool) :
   next =>
     rfl
 
-/-- Native right shift agrees with natural-number right shift below the machine width. -/
-theorem shiftRight_toNat (value : UInt64) (shift : Nat) (hshift : shift < 64) :
+/--
+Native right shift agrees with natural-number right shift; shifts past the machine width give
+zero on both sides.
+-/
+theorem shiftRight_toNat (value : UInt64) (shift : Nat) :
     (shiftRight value shift).toNat = value.toNat >>> shift := by
   unfold shiftRight
-  rw [ite_eq_left hshift, UInt64.toNat_shiftRight]
-  simp [Nat.mod_eq_of_lt hshift]
+  by_cases hshift : shift < 64
+  · rw [ite_eq_left hshift, UInt64.toNat_shiftRight]
+    simp [Nat.mod_eq_of_lt hshift]
+  · rw [ite_eq_right hshift, UInt64.toNat_zero, Nat.shiftRight_eq_div_pow,
+      Nat.div_eq_of_lt (value.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))]
 
 /-- Extracting a shifted field in one word agrees with natural-number division and remainder. -/
-theorem shiftedLowBits_toNat (value : UInt64) (shift width : Nat)
-    (hshift : shift < 64) (hwidth : width < 64) :
+theorem shiftedLowBits_toNat (value : UInt64) (shift width : Nat) :
     (lowBits (shiftRight value shift) width).toNat =
       value.toNat / 2 ^ shift % 2 ^ width := by
-  rw [lowBits_toNat _ width hwidth, shiftRight_toNat value shift hshift,
-    Nat.shiftRight_eq_div_pow]
+  rw [lowBits_toNat _ width, shiftRight_toNat value shift, Nat.shiftRight_eq_div_pow]
 
 /-- Adding the implicit bit to a native fraction has the expected natural value. -/
 theorem significand_toNat (value : UInt64) (fractionBits : Nat)
@@ -112,17 +116,8 @@ theorem significand_toNat (value : UInt64) (fractionBits : Nat)
     (lowBits value fractionBits |||
         ((1 : UInt64) <<< UInt64.ofNat fractionBits)).toNat =
       2 ^ fractionBits + value.toNat % 2 ^ fractionBits := by
-  rw [UInt64.toNat_or, lowBits_toNat value fractionBits hfractionBits]
-  have hhidden :
-      (((1 : UInt64) <<< UInt64.ofNat fractionBits).toNat) =
-        2 ^ fractionBits := by
-    rw [
-      FloatLib.Numerics.FixedWord.shiftLeft_toNat
-        (1 : UInt64) fractionBits hfractionBits]
-    · simp [Nat.shiftLeft_eq]
-    · simp [Nat.shiftLeft_eq]
-      exact Nat.pow_lt_pow_right (by decide) hfractionBits
-  rw [hhidden]
+  rw [UInt64.toNat_or, lowBits_toNat value fractionBits,
+    FloatLib.Numerics.FixedWord.uint64_powTwo_toNat fractionBits hfractionBits]
   have hfraction :
       value.toNat % 2 ^ fractionBits < 2 ^ fractionBits :=
     Nat.mod_lt _ (Nat.two_pow_pos _)

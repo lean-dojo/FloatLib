@@ -163,11 +163,9 @@ theorem chooseNaN2_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     chooseNaN2 x y = none ↔ isNaN x = false ∧ isNaN y = false := by
   constructor
   · intro hnone
-    cases hxSNaN : isSNaN x <;>
-      cases hySNaN : isSNaN y <;>
-      cases hxNaN : isNaN x <;>
-      cases hyNaN : isNaN y <;>
-      simp_all [chooseNaN2]
+    unfold chooseNaN2 at hnone
+    split_ifs at hnone with _ _ hx hy
+    exact ⟨Bool.eq_false_iff.mpr hx, Bool.eq_false_iff.mpr hy⟩
   · rintro ⟨hxNaN, hyNaN⟩
     have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
     have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
@@ -179,13 +177,9 @@ theorem chooseNaN3_eq_none_iff {fmt : FloatFormat} (x y z : Model fmt) :
       isNaN x = false ∧ isNaN y = false ∧ isNaN z = false := by
   constructor
   · intro hnone
-    cases hxSNaN : isSNaN x <;>
-      cases hySNaN : isSNaN y <;>
-      cases hzSNaN : isSNaN z <;>
-      cases hxNaN : isNaN x <;>
-      cases hyNaN : isNaN y <;>
-      cases hzNaN : isNaN z <;>
-      simp_all [chooseNaN3]
+    unfold chooseNaN3 at hnone
+    split_ifs at hnone with _ _ _ hx hy hz
+    exact ⟨Bool.eq_false_iff.mpr hx, Bool.eq_false_iff.mpr hy, Bool.eq_false_iff.mpr hz⟩
   · rintro ⟨hxNaN, hyNaN, hzNaN⟩
     have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
     have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
@@ -225,14 +219,9 @@ theorem signMask_isNaN_of_encoding_finiteUnsignedZero {fmt : FloatFormat}
 /-- A NaN bit pattern is not finite under the same format descriptor. -/
 theorem isFinite_eq_false_of_isNaN {fmt : FloatFormat} {x : Model fmt}
     (hx : isNaN x = true) : isFinite x = false := by
-  cases hencoding : fmt.encoding
-  · simp only [isNaN, hencoding] at hx
-    simp only [isFinite, hencoding]
-    simp [IEEE.isNaN, IEEE.isFinite] at hx ⊢
-    exact hx.1
-  · simp [isFinite, hencoding, hx]
-  · simp [isFinite, hencoding, hx]
-  · simp [isNaN, hencoding] at hx
+  cases hfinite : isFinite x
+  · rfl
+  · simp [isNaN_eq_false_of_isFinite_eq_true x hfinite] at hx
 
 /-- A NaN bit pattern cannot be decoded as a finite dyadic. -/
 theorem toDyadic?_eq_none_of_isNaN {fmt : FloatFormat} {x : Model fmt}
@@ -273,10 +262,7 @@ theorem isSNaN_eq_false_of_toDyadic?_some {fmt : FloatFormat}
 theorem isInf_eq_false_of_toDyadic?_some {fmt : FloatFormat}
     {x : Model fmt} {d : Numerics.Dyadic} (hx : toDyadic? x = some d) :
     isInf x = false := by
-  have hfinite : isFinite x = true := by
-    have hsome := congrArg Option.isSome hx
-    rw [toDyadic?_isSome_eq_isFinite] at hsome
-    simpa using hsome
+  have hfinite := isFinite_eq_true_of_toDyadic?_some hx
   cases hencoding : fmt.encoding
   · simp only [isFinite, hencoding] at hfinite
     simp only [isInf, hencoding]
@@ -286,6 +272,36 @@ theorem isInf_eq_false_of_toDyadic?_some {fmt : FloatFormat}
   · simp [isInf, hencoding]
   · simp [isInf, hencoding]
 
+/--
+Outside the IEEE descriptors a successful decode comes from a finite value and is the policy zero,
+a subnormal read at the least subnormal exponent, or a normal value with its implicit leading bit
+under the declared bias.
+-/
+private theorem toDyadic?_eq_some_cases_of_not_isIEEE {fmt : FloatFormat}
+    (hieee : ¬fmt.isIEEE = true) {x : Model fmt} {d : Numerics.Dyadic}
+    (hx : toDyadic? x = some d) :
+    isFinite x = true ∧
+      ((isZero x = true ∧ d = { negative := signBit x, significand := 0, exponent := 0 }) ∨
+        (isZero x = false ∧ expField x = 0 ∧
+          d = { negative := signBit x
+                significand := fracField x
+                exponent := fmt.minSubnormalExponent }) ∨
+        (isZero x = false ∧ expField x ≠ 0 ∧
+          d = { negative := signBit x
+                significand := pow2 fmt.fracWidth + fracField x
+                exponent := Int.ofNat (expField x) - Int.ofNat fmt.exponentBias -
+                  Int.ofNat fmt.fracWidth })) := by
+  simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false] at hx
+  split at hx <;> rename_i hfinite
+  · simp at hx
+  · refine ⟨by cases h : isFinite x <;> simp_all, ?_⟩
+    split at hx <;> rename_i hzero
+    · exact Or.inl ⟨hzero, (Option.some.inj hx).symm⟩
+    · have hzeroFalse : isZero x = false := by simpa using hzero
+      split at hx <;> rename_i hexponent
+      · exact Or.inr (Or.inl ⟨hzeroFalse, by simpa using hexponent, (Option.some.inj hx).symm⟩)
+      · exact Or.inr (Or.inr ⟨hzeroFalse, by simpa using hexponent, (Option.some.inj hx).symm⟩)
+
 /-- Complete-format dyadic decoding preserves the stored sign bit. -/
 theorem sign_eq_signBit_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
@@ -294,13 +310,8 @@ theorem sign_eq_signBit_of_toDyadic?_some
   by_cases hieee : fmt.isIEEE = true
   · apply sign_eq_signBit_of_ieeeToDyadic?_some
     simpa [toDyadic?, hieee] using hx
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false] at hx
-    split at hx
-    · simp at hx
-    · split at hx
-      · simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
-      · split at hx <;>
-          simpa using congrArg Numerics.Dyadic.negative (Option.some.inj hx.symm)
+  · rcases toDyadic?_eq_some_cases_of_not_isIEEE hieee hx with
+      ⟨-, ⟨-, rfl⟩ | ⟨-, -, rfl⟩ | ⟨-, -, rfl⟩⟩ <;> rfl
 
 /-- A complete-format dyadic decode has zero mantissa only for a policy zero. -/
 theorem isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero
@@ -315,54 +326,34 @@ theorem isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero
     have hzero :=
       isZero_eq_true_of_ieeeToDyadic?_some_of_mant_eq_zero hdecode hmant
     simpa [isZero, hencoding] using hzero
-  · simp only [toDyadic?, hieee, Bool.false_eq_true, ite_false] at hx
-    split at hx <;> rename_i hfinite
-    · simp at hx
-    · have hfiniteTrue : isFinite x = true := by
-        cases h : isFinite x <;> simp_all
-      split at hx <;> rename_i hzero
-      · exact hzero
-      · split at hx <;> rename_i hexponent
-        · have hdMant : d.significand = fracField x := by
-            simpa using congrArg Numerics.Dyadic.significand (Option.some.inj hx.symm)
-          have hexponentZero : expField x = 0 := by
-            simpa using hexponent
-          have hfraction : fracField x = 0 := by
-            simpa [hmant] using hdMant.symm
-          have hzeroTrue : isZero x = true := by
-            have hreconstruct := ofFields_signBit_expField_fracField x
-            have hreconstructZero :
-                ofFields fmt (signBit x) 0 0 = x := by
-              simpa [hexponentZero, hfraction] using hreconstruct
-            cases hencoding : fmt.encoding with
-            | ieee | finiteMaxNaN | finite =>
-                simp [isZero, hencoding, IEEE.isZero, hexponent, hfraction]
-            | finiteUnsignedZero =>
-                cases hsign : signBit x with
-                | false =>
-                    have hbits : x.bits = 0 := by
-                      simpa [hsign, posZero, ofNatBits, ofBits,
-                        FloatFormat.ofWordNat] using
-                        (congrArg (fun value : Model fmt => value.bits)
-                          hreconstructZero).symm
-                    simp [isZero, hencoding, hbits]
-                | true =>
-                    have hbits : x.bits = fmt.signMask := by
-                      simpa [hsign, negZero, ofBits] using
-                        (congrArg (fun value : Model fmt => value.bits)
-                          hreconstructZero).symm
-                    have hnan : isNaN x = true := by
-                      simp [isNaN, hencoding, hbits]
-                    have hfiniteFalse := isFinite_eq_false_of_isNaN hnan
-                    rw [hfiniteTrue] at hfiniteFalse
-                    contradiction
-          exact (hzero hzeroTrue).elim
-        · have hdMant :
-              d.significand = pow2 fmt.fracWidth + fracField x := by
-            simpa using congrArg Numerics.Dyadic.significand (Option.some.inj hx.symm)
-          have hpow : 0 < pow2 fmt.fracWidth := by
-            simp [pow2_eq_two_pow]
-          omega
+  · rcases toDyadic?_eq_some_cases_of_not_isIEEE hieee hx with
+      ⟨hfiniteTrue, ⟨hzero, -⟩ | ⟨-, hexponentZero, rfl⟩ | ⟨-, -, rfl⟩⟩
+    · exact hzero
+    · -- A zero fraction at a zero exponent is a zero; in the unsigned-zero encoding the
+      -- negative pattern is the NaN, which a successful decode excludes.
+      have hfraction : fracField x = 0 := hmant
+      have hreconstructZero : ofFields fmt (signBit x) 0 0 = x := by
+        simpa [hexponentZero, hfraction] using ofFields_signBit_expField_fracField x
+      cases hencoding : fmt.encoding with
+      | ieee | finiteMaxNaN | finite =>
+          simp [isZero, hencoding, IEEE.isZero, hexponentZero, hfraction]
+      | finiteUnsignedZero =>
+          cases hsign : signBit x with
+          | false =>
+              have hbits : x.bits = 0 := by
+                simpa [hsign, posZero, ofNatBits, ofBits, FloatFormat.ofWordNat] using
+                  (congrArg (fun value : Model fmt => value.bits) hreconstructZero).symm
+              simp [isZero, hencoding, hbits]
+          | true =>
+              have hbits : x.bits = fmt.signMask := by
+                simpa [hsign, negZero, ofBits] using
+                  (congrArg (fun value : Model fmt => value.bits) hreconstructZero).symm
+              have hnan : isNaN x = true := by
+                simp [isNaN, hencoding, hbits]
+              have hfiniteFalse := isFinite_eq_false_of_isNaN hnan
+              rw [hfiniteTrue] at hfiniteFalse
+              contradiction
+    · simp [pow2_eq_two_pow] at hmant
 
 /-- A zero value decodes to the zero dyadic, preserving its meaningful sign bit. -/
 theorem toDyadic?_eq_zero_of_isZero_eq_true {fmt : FloatFormat}

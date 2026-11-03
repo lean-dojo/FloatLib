@@ -48,7 +48,8 @@ instance : ToString ParseError where
 /--
 A decimal exponent at which every nonzero significand already reaches maxPos.
 
-It is one more than the bit length of the numerator of maxPos, so ten to this power exceeds maxPos.
+It is the bit length of the numerator of maxPos (`log2 + 1`). That numerator is below two to this
+power, so ten to this power exceeds maxPos, and so does any nonzero significand scaled by it.
 -/
 def decimalSaturationExponent (format : Format) : Int :=
   ((nonnegativeRatAt format (format.signMaskNat - 1)).num.natAbs.log2 : Int) + 1

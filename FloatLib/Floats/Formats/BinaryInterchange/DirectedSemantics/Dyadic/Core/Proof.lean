@@ -79,10 +79,10 @@ theorem roundMantissaToLeadingBitDown_lt_pow2_succ
         rw [show 2 ^ (leadingBit + 1) * 2 ^ (mantissa.log2 - leadingBit) =
             2 ^ (mantissa.log2 + 1) by
           rw [← Nat.pow_add, hexponent]]
-        simpa [pow2_eq_two_pow] using lt_pow2_log2_add_one hm
+        simpa [pow2_eq_two_pow] using lt_pow2_log2_add_one mantissa
       simpa [pow2_eq_two_pow, Nat.shiftRight_eq_div_pow] using hdiv
     · have hlt : mantissa < 2 ^ (mantissa.log2 + 1) := by
-        simpa [pow2_eq_two_pow] using lt_pow2_log2_add_one hm
+        simpa [pow2_eq_two_pow] using lt_pow2_log2_add_one mantissa
       have hpowPos : 0 < 2 ^ (leadingBit - mantissa.log2) := Nat.pow_pos (by decide)
       have hmul := Nat.mul_lt_mul_of_pos_right hlt hpowPos
       have hexponent :
@@ -127,6 +127,26 @@ theorem roundMantissaToLeadingBitUp_ne_zero
 
 /-! ## Exponent alignment -/
 
+/--
+At the exponent that puts the leading bit at `leadingBit ≤ log2 mantissa`, alignment shifts right
+by `log2 mantissa - leadingBit`.
+-/
+private theorem toNat_leadingExponent_sub_exponent {mantissa leadingBit : Nat} (exponent : Int)
+    (hle : leadingBit ≤ mantissa.log2) :
+    (((mantissa.log2 : Int) + exponent - (leadingBit : Int)) - exponent).toNat =
+      mantissa.log2 - leadingBit := by
+  omega
+
+/--
+At the exponent that puts the leading bit at `leadingBit > log2 mantissa`, alignment shifts left
+by `leadingBit - log2 mantissa`.
+-/
+private theorem toNat_exponent_sub_leadingExponent {mantissa leadingBit : Nat} (exponent : Int)
+    (hlt : ¬leadingBit ≤ mantissa.log2) :
+    (exponent - ((mantissa.log2 : Int) + exponent - (leadingBit : Int))).toNat =
+      leadingBit - mantissa.log2 := by
+  omega
+
 /-- Rounding down at the exponent that puts the leading bit at `leadingBit` normalizes downward. -/
 theorem roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown
     (mantissa leadingBit : Nat) (exponent : Int) :
@@ -134,28 +154,12 @@ theorem roundMantissaAtExponentDown_eq_roundMantissaToLeadingBitDown
         ((mantissa.log2 : Int) + exponent - (leadingBit : Int)) =
       roundMantissaToLeadingBitDown mantissa leadingBit := by
   by_cases hle : leadingBit ≤ mantissa.log2
-  · have hexponentLe :
-        exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) := by
-      grind
-    have hdistance :
-        (((mantissa.log2 : Int) + exponent - (leadingBit : Int)) - exponent).toNat =
-          mantissa.log2 - leadingBit := by
-      rw [show (mantissa.log2 : Int) + exponent - (leadingBit : Int) - exponent =
-          ((mantissa.log2 - leadingBit : Nat) : Int) by grind]
-      rfl
-    simp [roundMantissaAtExponentDown, roundMantissaToLeadingBitDown,
-      hexponentLe, hle, hdistance]
-  · have hnotExponentLe :
-        ¬exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) := by
-      grind
-    have hdistance :
-        (exponent - ((mantissa.log2 : Int) + exponent - (leadingBit : Int))).toNat =
-          leadingBit - mantissa.log2 := by
-      rw [show exponent - ((mantissa.log2 : Int) + exponent - (leadingBit : Int)) =
-          ((leadingBit - mantissa.log2 : Nat) : Int) by grind]
-      rfl
-    simp [roundMantissaAtExponentDown, roundMantissaToLeadingBitDown,
-      hnotExponentLe, hle, hdistance]
+  · simp [roundMantissaAtExponentDown, roundMantissaToLeadingBitDown, hle,
+      show exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) by omega,
+      toNat_leadingExponent_sub_exponent exponent hle]
+  · simp [roundMantissaAtExponentDown, roundMantissaToLeadingBitDown, hle,
+      show ¬exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) by omega,
+      toNat_exponent_sub_leadingExponent exponent hle]
 
 /-- Rounding up at the exponent that puts the leading bit at `leadingBit` normalizes upward. -/
 theorem roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp
@@ -164,30 +168,53 @@ theorem roundMantissaAtExponentUp_eq_roundMantissaToLeadingBitUp
         ((mantissa.log2 : Int) + exponent - (leadingBit : Int)) =
       roundMantissaToLeadingBitUp mantissa leadingBit := by
   by_cases hle : leadingBit ≤ mantissa.log2
-  · have hexponentLe :
-        exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) := by
-      grind
-    have hdistance :
-        (((mantissa.log2 : Int) + exponent - (leadingBit : Int)) - exponent).toNat =
-          mantissa.log2 - leadingBit := by
-      rw [show (mantissa.log2 : Int) + exponent - (leadingBit : Int) - exponent =
-          ((mantissa.log2 - leadingBit : Nat) : Int) by grind]
-      rfl
-    simp [roundMantissaAtExponentUp, roundMantissaToLeadingBitUp,
-      hexponentLe, hle, hdistance]
-  · have hnotExponentLe :
-        ¬exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) := by
-      grind
-    have hdistance :
-        (exponent - ((mantissa.log2 : Int) + exponent - (leadingBit : Int))).toNat =
-          leadingBit - mantissa.log2 := by
-      rw [show exponent - ((mantissa.log2 : Int) + exponent - (leadingBit : Int)) =
-          ((leadingBit - mantissa.log2 : Nat) : Int) by grind]
-      rfl
-    simp [roundMantissaAtExponentUp, roundMantissaToLeadingBitUp,
-      hnotExponentLe, hle, hdistance]
+  · simp [roundMantissaAtExponentUp, roundMantissaToLeadingBitUp, hle,
+      show exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) by omega,
+      toNat_leadingExponent_sub_exponent exponent hle]
+  · simp [roundMantissaAtExponentUp, roundMantissaToLeadingBitUp, hle,
+      show ¬exponent ≤ (mantissa.log2 : Int) + exponent - (leadingBit : Int) by omega,
+      toNat_exponent_sub_leadingExponent exponent hle]
 
 /-! ## Executable exponent alignment -/
+
+/--
+Exponent alignment with right shift `shiftRight`, which fixes its argument at shift zero, takes
+the branch form of the executable rounders: a nonnegative `exponent - targetExponent` shifts left
+by it, and a negative one `-(shift + 1)` shifts right by `shift + 1`.
+-/
+private theorem alignment_eq_match (shiftRight : Nat → Nat → Nat)
+    (hzero : ∀ mantissa, shiftRight mantissa 0 = mantissa)
+    (mantissa : Nat) (exponent targetExponent : Int) :
+    (if exponent ≤ targetExponent then
+        shiftRight mantissa (targetExponent - exponent).toNat
+      else
+        Nat.shiftLeft mantissa (exponent - targetExponent).toNat) =
+      match exponent - targetExponent with
+      | .ofNat shift => Nat.shiftLeft mantissa shift
+      | .negSucc shift => shiftRight mantissa (shift + 1) := by
+  cases hdiff : exponent - targetExponent with
+  | ofNat shift =>
+      cases shift with
+      | zero =>
+          have heq : exponent = targetExponent := by
+            norm_num at hdiff
+            omega
+          simp [heq, hzero]
+      | succ shift =>
+          have hnot : ¬exponent ≤ targetExponent := by
+            norm_num at hdiff
+            omega
+          simp [hnot]
+  | negSucc shift =>
+      have hle : exponent ≤ targetExponent := by
+        omega
+      have htoNat : (targetExponent - exponent).toNat = shift + 1 := by
+        have hneg : targetExponent - exponent = Int.ofNat (shift + 1) := by
+          norm_num at hdiff ⊢
+          omega
+        rw [hneg]
+        rfl
+      simp [hle, htoNat]
 
 /-- The branch form used by the executable downward rounder is floor exponent alignment. -/
 theorem roundMantissaAtExponentDown_eq_match
@@ -195,30 +222,8 @@ theorem roundMantissaAtExponentDown_eq_match
     roundMantissaAtExponentDown mantissa exponent targetExponent =
       match exponent - targetExponent with
       | .ofNat shift => Nat.shiftLeft mantissa shift
-      | .negSucc shift => Nat.shiftRight mantissa (shift + 1) := by
-  cases hdiff : exponent - targetExponent with
-  | ofNat shift =>
-      cases shift with
-      | zero =>
-          have heq : exponent = targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentDown, heq]
-      | succ shift =>
-          have hnot : ¬exponent ≤ targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentDown, hnot, hdiff]
-  | negSucc shift =>
-      have hle : exponent ≤ targetExponent := by
-        omega
-      have htoNat : (targetExponent - exponent).toNat = shift + 1 := by
-        have hneg : targetExponent - exponent = Int.ofNat (shift + 1) := by
-          norm_num at hdiff ⊢
-          omega
-        rw [hneg]
-        rfl
-      simp [roundMantissaAtExponentDown, hle, htoNat]
+      | .negSucc shift => Nat.shiftRight mantissa (shift + 1) :=
+  alignment_eq_match Nat.shiftRight (fun _ => rfl) mantissa exponent targetExponent
 
 /-- The branch form used by the executable upward rounder is ceiling exponent alignment. -/
 theorem roundMantissaAtExponentUp_eq_match
@@ -226,37 +231,16 @@ theorem roundMantissaAtExponentUp_eq_match
     roundMantissaAtExponentUp mantissa exponent targetExponent =
       match exponent - targetExponent with
       | .ofNat shift => Nat.shiftLeft mantissa shift
-      | .negSucc shift => Numerics.shiftRightCeil mantissa (shift + 1) := by
-  cases hdiff : exponent - targetExponent with
-  | ofNat shift =>
-      cases shift with
-      | zero =>
-          have heq : exponent = targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentUp, heq, Numerics.shiftRightCeil]
-      | succ shift =>
-          have hnot : ¬exponent ≤ targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentUp, hnot, hdiff]
-  | negSucc shift =>
-      have hle : exponent ≤ targetExponent := by
-        omega
-      have htoNat : (targetExponent - exponent).toNat = shift + 1 := by
-        have hneg : targetExponent - exponent = Int.ofNat (shift + 1) := by
-          norm_num at hdiff ⊢
-          omega
-        rw [hneg]
-        rfl
-      simp [roundMantissaAtExponentUp, hle, htoNat]
+      | .negSucc shift => Numerics.shiftRightCeil mantissa (shift + 1) :=
+  alignment_eq_match Numerics.shiftRightCeil (fun _ => by simp [Numerics.shiftRightCeil])
+    mantissa exponent targetExponent
 
 /-! ## Exact rounded-real alignment -/
 
-/-- Positive downward rounded-real semantics is floor alignment at the model target exponent. -/
+/-- Downward rounded-real semantics of a nonnegative dyadic is floor alignment at its target. -/
 theorem roundAt_down_pos_eq
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
-    (hfmt : fmt.isIEEE = true) (hm : mantissa ≠ 0) :
+    (hfmt : fmt.isIEEE = true) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent)
@@ -266,12 +250,12 @@ theorem roundAt_down_pos_eq
   let d : Numerics.Dyadic := { negative := false, significand := mantissa, exponent := exponent }
   simpa [d, Numerics.Dyadic.toReal, roundSignedMantissaAtExponentDown,
     bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
-    roundAt_down_dyadic_eq fmt d hfmt hm
+    roundAt_down_dyadic_eq fmt d hfmt
 
-/-- Positive upward rounded-real semantics is ceiling alignment at the model target exponent. -/
+/-- Upward rounded-real semantics of a nonnegative dyadic is ceiling alignment at its target. -/
 theorem roundAt_up_pos_eq
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
-    (hfmt : fmt.isIEEE = true) (hm : mantissa ≠ 0) :
+    (hfmt : fmt.isIEEE = true) :
     let target :=
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent)
@@ -281,12 +265,19 @@ theorem roundAt_up_pos_eq
   let d : Numerics.Dyadic := { negative := false, significand := mantissa, exponent := exponent }
   simpa [d, Numerics.Dyadic.toReal, roundSignedMantissaAtExponentUp,
     bpow, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] using
-    roundAt_up_dyadic_eq fmt d hfmt hm
+    roundAt_up_dyadic_eq fmt d hfmt
+
+/-- A mantissa whose leading bit lies below `bits + shift` keeps fewer than `bits` bits after a
+right shift by `shift`. -/
+private theorem shiftRight_lt_two_pow_of_log2_lt {mantissa bits shift : Nat}
+    (h : mantissa.log2 < bits + shift) :
+    mantissa >>> shift < 2 ^ bits := by
+  rw [Nat.shiftRight_eq_div_pow, Nat.div_lt_iff_lt_mul (Nat.two_pow_pos shift), ← Nat.pow_add]
+  exact Nat.lt_log2_self.trans_le (Nat.pow_le_pow_right (by decide) h)
 
 /-- Below the subnormal grid, downward alignment has zero mantissa. -/
 theorem roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
-    (hm : mantissa ≠ 0)
     (hunderflow :
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent) :
     roundMantissaAtExponentDown mantissa exponent
@@ -298,21 +289,14 @@ theorem roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
   have hshiftInt :
       (shift : Int) = fmt.minSubnormalExponent - exponent :=
     Int.toNat_of_nonneg (sub_nonneg.mpr hexponentLe)
-  have hlogInt : (mantissa.log2 : Int) + 1 ≤ shift := by
-    rw [hshiftInt]
+  have hlog : mantissa.log2 < 0 + shift := by
+    have : (mantissa.log2 : Int) < shift := by
+      rw [hshiftInt]
+      omega
     omega
-  have hlogNat : mantissa.log2 + 1 ≤ shift := by
-    exact_mod_cast hlogInt
-  have hmantissaLt : mantissa < 2 ^ shift := by
-    have hleading := lt_pow2_log2_add_one hm
-    have hleading' : mantissa < 2 ^ (mantissa.log2 + 1) := by
-      simpa [pow2_eq_two_pow] using hleading
-    have hpow :
-        2 ^ (mantissa.log2 + 1) ≤ 2 ^ shift :=
-      Nat.pow_le_pow_right (by decide) hlogNat
-    exact hleading'.trans_le hpow
-  simp [roundMantissaAtExponentDown, hexponentLe, shift,
-    Nat.shiftRight_eq_div_pow, Nat.div_eq_of_lt hmantissaLt]
+  have hshift := shiftRight_lt_two_pow_of_log2_lt hlog
+  simp only [pow_zero, Nat.lt_one_iff] at hshift
+  simp [roundMantissaAtExponentDown, hexponentLe, shift, hshift]
 
 /-- Below the subnormal grid, upward alignment has the minimum positive mantissa. -/
 theorem roundMantissaAtExponentUp_eq_one_of_lt_minSubnormal
@@ -326,7 +310,7 @@ theorem roundMantissaAtExponentUp_eq_one_of_lt_minSubnormal
       roundMantissaAtExponentDown mantissa exponent
           (fmt.minSubnormalExponent) = 0 :=
     roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
-      fmt mantissa exponent hm hunderflow
+      fmt mantissa exponent hunderflow
   have hupLe :=
     roundMantissaAtExponentUp_le_down_add_one mantissa exponent
       (fmt.minSubnormalExponent)
@@ -336,7 +320,15 @@ theorem roundMantissaAtExponentUp_eq_one_of_lt_minSubnormal
   rw [hdown] at hupLe
   omega
 
-/-! ## Positive executable branches -/
+/-!
+## Positive executable branches
+
+These lemmas describe the branches of `roundDyadicPosDown` and `roundDyadicPosUp`, which select a
+branch from the leading exponent `Nat.log2 mantissa + exponent` alone. They do not assume
+`mantissa ≠ 0`. For a zero mantissa, where `Nat.log2 0 = 0`, an equation names the branch the
+function takes, not the rounding of zero: the signed rounders `roundDyadicDown` and `roundDyadicUp`
+return a zero for a zero significand before they reach these helpers.
+-/
 
 /-- Downward positive rounding saturates at the largest finite value on overflow. -/
 theorem roundDyadicPosDown_eq_posMaxFinite_of_overflow
@@ -367,22 +359,23 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_overflow
   unfold roundDyadicPosUp roundDyadicMagnitudeUp
   rw [ite_eq_left hoverflow']
 
+/--
+A leading exponent below the normal range is within the overflow bound, in the `Int.ofNat` form
+that the executable rounders test.
+-/
+private theorem ofNat_log2_add_le_maxNormalExponent {fmt : FloatFormat} {mantissa : Nat}
+    {exponent : Int} (h : (mantissa.log2 : Int) + exponent < fmt.minNormalExponent) :
+    Int.ofNat mantissa.log2 + exponent ≤ fmt.maxNormalExponent := by
+  simpa only [Int.ofNat_eq_natCast] using h.le.trans (minNormalExponent_le_maxNormalExponent fmt)
+
 /-- Downward positive rounding below the subnormal grid is format zero. -/
 theorem roundDyadicPosDown_eq_zero_of_underflow
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (hunderflow :
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent) :
     roundDyadicPosDown fmt mantissa exponent = zero fmt false := by
-  have hmax :
-      (mantissa.log2 : Int) + exponent ≤
-        fmt.maxNormalExponent :=
-    (le_of_lt hunderflow).trans
-      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans
-        (minNormalExponent_le_maxNormalExponent fmt))
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
+  have hmax' := ofNat_log2_add_le_maxNormalExponent
+    (hunderflow.trans (minSubnormalExponent_lt_minNormalExponent fmt))
   have hunderflow' :
       Int.ofNat mantissa.log2 + exponent <
         fmt.minSubnormalExponent := by
@@ -396,16 +389,8 @@ theorem roundDyadicPosUp_eq_posMinSubnormal_of_underflow
     (hunderflow :
       (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent) :
     roundDyadicPosUp fmt mantissa exponent = posMinSubnormal fmt := by
-  have hmax :
-      (mantissa.log2 : Int) + exponent ≤
-        fmt.maxNormalExponent :=
-    (le_of_lt hunderflow).trans
-      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans
-        (minNormalExponent_le_maxNormalExponent fmt))
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
+  have hmax' := ofNat_log2_add_le_maxNormalExponent
+    (hunderflow.trans (minSubnormalExponent_lt_minNormalExponent fmt))
   have hunderflow' :
       Int.ofNat mantissa.log2 + exponent <
         fmt.minSubnormalExponent := by
@@ -427,14 +412,7 @@ theorem roundDyadicPosDown_eq_subnormal
         roundMantissaAtExponentDown mantissa exponent
           (fmt.minSubnormalExponent)
       if rounded = 0 then zero fmt false else ofFields fmt false 0 rounded := by
-  have hmax :
-      (mantissa.log2 : Int) + exponent ≤
-        fmt.maxNormalExponent :=
-    hhigh.le.trans (minNormalExponent_le_maxNormalExponent fmt)
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
+  have hmax' := ofNat_log2_add_le_maxNormalExponent hhigh
   have hlow' :
       fmt.minSubnormalExponent ≤
         Int.ofNat mantissa.log2 + exponent := by
@@ -468,14 +446,7 @@ theorem roundDyadicPosUp_eq_subnormal
         ofFields fmt false 1 0
       else
         ofFields fmt false 0 rounded := by
-  have hmax :
-      (mantissa.log2 : Int) + exponent ≤
-        fmt.maxNormalExponent :=
-    hhigh.le.trans (minNormalExponent_le_maxNormalExponent fmt)
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
+  have hmax' := ofNat_log2_add_le_maxNormalExponent hhigh
   have hlow' :
       fmt.minSubnormalExponent ≤
         Int.ofNat mantissa.log2 + exponent := by
@@ -529,6 +500,32 @@ theorem roundDyadicPosDown_eq_normal
     ite_eq_right (not_lt_of_ge hnormal')]
   rfl
 
+/--
+In the normal range, upward positive rounding packs the upward leading-bit normalization with
+`packRoundedNormal`, whose overflow result is the format's positive overflow value.
+-/
+private theorem roundDyadicPosUp_eq_packRoundedNormal
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
+    (hnormal : fmt.minNormalExponent ≤ (mantissa.log2 : Int) + exponent)
+    (hmax : (mantissa.log2 : Int) + exponent ≤ fmt.maxNormalExponent) :
+    roundDyadicPosUp fmt mantissa exponent =
+      packRoundedNormal fmt false (nativeOverflow fmt false) (Int.ofNat mantissa.log2 + exponent)
+        (roundMantissaToLeadingBitUp mantissa fmt.fracWidth) := by
+  have hnormal' :
+      fmt.minNormalExponent ≤
+        Int.ofNat mantissa.log2 + exponent := by
+    simpa only [Int.ofNat_eq_natCast] using hnormal
+  have hmax' :
+      Int.ofNat mantissa.log2 + exponent ≤
+        fmt.maxNormalExponent := by
+    simpa only [Int.ofNat_eq_natCast] using hmax
+  unfold roundDyadicPosUp roundDyadicMagnitudeUp
+  rw [ite_eq_right (not_lt_of_ge hmax'),
+    ite_eq_right (not_lt_of_ge
+      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
+    ite_eq_right (not_lt_of_ge hnormal')]
+  rfl
+
 /-- Without a carry, the upward normal branch packs the mantissa or returns the overflow value. -/
 theorem roundDyadicPosUp_eq_normal_of_no_carry
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
@@ -554,26 +551,11 @@ theorem roundDyadicPosUp_eq_normal_of_no_carry
         nativeOverflow fmt false
       else
         ofFields fmt false encodedExponent fraction := by
-  have hnormal' :
-      fmt.minNormalExponent ≤
-        Int.ofNat mantissa.log2 + exponent := by
-    simpa only [Int.ofNat_eq_natCast] using hnormal
   have hmax' :
       Int.ofNat mantissa.log2 + exponent ≤
         fmt.maxNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hmax
-  unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [ite_eq_right (not_lt_of_ge hmax'),
-    ite_eq_right (not_lt_of_ge
-      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    ite_eq_right (not_lt_of_ge hnormal')]
-  have hrounded :
-      (if mantissa.log2 ≥ fmt.fracWidth then
-        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
-      else
-        Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
-        roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
-  rw [hrounded]
+  rw [roundDyadicPosUp_eq_packRoundedNormal fmt mantissa exponent hnormal hmax]
   simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_false]
   rw [ite_eq_right (not_lt_of_ge hmax')]
   rfl
@@ -584,9 +566,6 @@ theorem roundDyadicPosUp_eq_normal_of_carry
     (hnormal :
       fmt.minNormalExponent ≤
         (mantissa.log2 : Int) + exponent)
-    (hmax :
-      (mantissa.log2 : Int) + exponent ≤
-        fmt.maxNormalExponent)
     (hcarry :
       roundMantissaToLeadingBitUp mantissa fmt.fracWidth =
         pow2 (fmt.fracWidth + 1))
@@ -602,26 +581,11 @@ theorem roundDyadicPosUp_eq_normal_of_carry
       fmt.minNormalExponent ≤
         Int.ofNat mantissa.log2 + exponent := by
     simpa only [Int.ofNat_eq_natCast] using hnormal
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
   have hcarryMax' :
       Int.ofNat mantissa.log2 + exponent + 1 ≤
         fmt.maxNormalExponent := by
     simpa only [Int.ofNat_eq_natCast] using hcarryMax
-  unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [ite_eq_right (not_lt_of_ge hmax'),
-    ite_eq_right (not_lt_of_ge
-      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    ite_eq_right (not_lt_of_ge hnormal')]
-  have hrounded :
-      (if mantissa.log2 ≥ fmt.fracWidth then
-        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
-      else
-        Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
-        roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
-  rw [hrounded]
+  rw [roundDyadicPosUp_eq_packRoundedNormal fmt mantissa exponent hnormal (by omega)]
   simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_true]
   rw [ite_eq_right (not_lt_of_ge hcarryMax')]
   simp only [Nat.sub_self]
@@ -681,30 +645,11 @@ theorem roundDyadicPosUp_eq_nativeOverflow_of_carry_overflow
       fmt.maxNormalExponent <
         (mantissa.log2 : Int) + exponent + 1) :
     roundDyadicPosUp fmt mantissa exponent = nativeOverflow fmt false := by
-  have hnormal' :
-      fmt.minNormalExponent ≤
-        Int.ofNat mantissa.log2 + exponent := by
-    simpa only [Int.ofNat_eq_natCast] using hnormal
-  have hmax' :
-      Int.ofNat mantissa.log2 + exponent ≤
-        fmt.maxNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using hmax
   have hcarryOverflow' :
       fmt.maxNormalExponent <
         Int.ofNat mantissa.log2 + exponent + 1 := by
     simpa only [Int.ofNat_eq_natCast] using hcarryOverflow
-  unfold roundDyadicPosUp roundDyadicMagnitudeUp
-  rw [ite_eq_right (not_lt_of_ge hmax'),
-    ite_eq_right (not_lt_of_ge
-      ((minSubnormalExponent_lt_minNormalExponent fmt).le.trans hnormal')),
-    ite_eq_right (not_lt_of_ge hnormal')]
-  have hrounded :
-      (if mantissa.log2 ≥ fmt.fracWidth then
-        Numerics.shiftRightCeil mantissa (mantissa.log2 - fmt.fracWidth)
-      else
-        Nat.shiftLeft mantissa (fmt.fracWidth - mantissa.log2)) =
-        roundMantissaToLeadingBitUp mantissa fmt.fracWidth := rfl
-  rw [hrounded]
+  rw [roundDyadicPosUp_eq_packRoundedNormal fmt mantissa exponent hnormal hmax]
   simp only [packRoundedNormal, hcarry, beq_iff_eq, ite_true]
   rw [ite_eq_left hcarryOverflow']
 
@@ -732,16 +677,11 @@ theorem roundMantissaAtExponentDown_minSubnormal_lt_pow2
         (mantissa.log2 : Int) + 1 ≤ (fmt.fracWidth : Int) + shift := by
       rw [hshiftInt]
       omega
-    have hlogNat : mantissa.log2 + 1 ≤ fmt.fracWidth + shift := by
-      exact_mod_cast hlogInt
-    have hmLt : mantissa < 2 ^ (fmt.fracWidth + shift) :=
-      (Nat.lt_log2_self (n := mantissa)).trans_le
-        (Nat.pow_le_pow_right (by decide) hlogNat)
+    have hlogNat : mantissa.log2 < fmt.fracWidth + shift := by
+      omega
     have hq : mantissa >>> shift < pow2 fmt.fracWidth := by
-      rw [Nat.shiftRight_eq_div_pow]
-      rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos (by decide))]
-      rw [pow2_eq_two_pow, ← Nat.pow_add]
-      exact hmLt
+      rw [pow2_eq_two_pow]
+      exact shiftRight_lt_two_pow_of_log2_lt hlogNat
     simpa [roundMantissaAtExponentDown, hle, shift] using hq
   · have hlt : fmt.minSubnormalExponent < exponent := lt_of_not_ge hle
     let shift := (exponent - fmt.minSubnormalExponent).toNat
@@ -772,53 +712,9 @@ theorem roundMantissaAtExponentUp_minSubnormal_le_pow2
       fmt.minNormalExponent) :
     roundMantissaAtExponentUp mantissa exponent (fmt.minSubnormalExponent) ≤
       pow2 fmt.fracWidth := by
-  have hscale :
-      fmt.minSubnormalExponent + (fmt.fracWidth : Int) =
-        fmt.minNormalExponent := by
-    simpa only [Int.ofNat_eq_natCast] using minSubnormalExponent_add_fracWidth fmt
-  by_cases hle : exponent ≤ fmt.minSubnormalExponent
-  · let shift := (fmt.minSubnormalExponent - exponent).toNat
-    have hshiftInt :
-        (shift : Int) = fmt.minSubnormalExponent - exponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hle)
-    have hlogInt :
-        (mantissa.log2 : Int) + 1 ≤ (fmt.fracWidth : Int) + shift := by
-      rw [hshiftInt]
-      omega
-    have hlogNat : mantissa.log2 + 1 ≤ fmt.fracWidth + shift := by
-      exact_mod_cast hlogInt
-    have hmLt : mantissa < 2 ^ (fmt.fracWidth + shift) :=
-      (Nat.lt_log2_self (n := mantissa)).trans_le
-        (Nat.pow_le_pow_right (by decide) hlogNat)
-    have hq : mantissa >>> shift < pow2 fmt.fracWidth := by
-      rw [Nat.shiftRight_eq_div_pow]
-      rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos (by decide))]
-      rw [pow2_eq_two_pow, ← Nat.pow_add]
-      exact hmLt
-    have hround := Numerics.shiftRightCeil_le_shiftRight_add_one mantissa shift
-    simp only [roundMantissaAtExponentUp, hle, ite_true]
-    change Numerics.shiftRightCeil mantissa shift ≤ pow2 fmt.fracWidth
-    exact hround.trans (Nat.succ_le_iff.mpr hq)
-  · have hlt : fmt.minSubnormalExponent < exponent := lt_of_not_ge hle
-    let shift := (exponent - fmt.minSubnormalExponent).toNat
-    have hshiftInt :
-        (shift : Int) = exponent - fmt.minSubnormalExponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hlt.le)
-    have hlogInt :
-        (mantissa.log2 : Int) + shift < fmt.fracWidth := by
-      rw [hshiftInt]
-      omega
-    have hlogNat : mantissa.log2 + shift < fmt.fracWidth := by
-      exact_mod_cast hlogInt
-    have hraw :=
-      Nat.shiftLeft_lt (m := shift) (Nat.lt_log2_self (n := mantissa))
-    have hexponent : mantissa.log2 + 1 + shift ≤ fmt.fracWidth := by
-      omega
-    have hpow : 2 ^ (mantissa.log2 + 1 + shift) ≤ 2 ^ fmt.fracWidth :=
-      Nat.pow_le_pow_right (by decide) hexponent
-    simp only [roundMantissaAtExponentUp, hle, ite_false]
-    change mantissa <<< shift ≤ pow2 fmt.fracWidth
-    simpa [pow2_eq_two_pow] using (hraw.trans_le hpow).le
+  have hdown := roundMantissaAtExponentDown_minSubnormal_lt_pow2 fmt mantissa exponent hk
+  have hup := roundMantissaAtExponentUp_le_down_add_one mantissa exponent fmt.minSubnormalExponent
+  omega
 
 end
 

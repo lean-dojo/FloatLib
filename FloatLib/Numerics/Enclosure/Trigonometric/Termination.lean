@@ -32,29 +32,26 @@ open scoped Topology
 /-- Adaptive reduced sine enclosures eventually separate every rational boundary. -/
 theorem exists_sin_separating (argument boundary : ℚ) (hnonzero : argument ≠ 0) :
     ∃ n, Comparison.Separates (sinReduced argument (2 ^ n)) boundary :=
-  Comparison.exists_separating_of_irrational (irrational_sin_ratCast argument hnonzero) boundary
-    ((tendsto_sinReduced_lo argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_sinReduced_hi argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+  Comparison.exists_separating_two_pow_of_irrational
+    (irrational_sin_ratCast argument hnonzero) boundary
+    (tendsto_sinReduced_lo argument)
+    (tendsto_sinReduced_hi argument)
 
 /-- Adaptive reduced cosine enclosures eventually separate every rational boundary. -/
 theorem exists_cos_separating (argument boundary : ℚ) (hnonzero : argument ≠ 0) :
     ∃ n, Comparison.Separates (cosReduced argument (2 ^ n)) boundary :=
-  Comparison.exists_separating_of_irrational (irrational_cos_ratCast argument hnonzero) boundary
-    ((tendsto_cosReduced_lo argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_cosReduced_hi argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+  Comparison.exists_separating_two_pow_of_irrational
+    (irrational_cos_ratCast argument hnonzero) boundary
+    (tendsto_cosReduced_lo argument)
+    (tendsto_cosReduced_hi argument)
 
 /-- Adaptive arctangent enclosures eventually separate every rational boundary. -/
 theorem exists_atan_separating (argument boundary : ℚ) (hnonzero : argument ≠ 0) :
     ∃ n, Comparison.Separates (atan argument (2 ^ n)) boundary :=
-  Comparison.exists_separating_of_irrational (irrational_arctan_ratCast argument hnonzero) boundary
-    ((tendsto_atan_lo argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_atan_hi argument).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+  Comparison.exists_separating_two_pow_of_irrational
+    (irrational_arctan_ratCast argument hnonzero) boundary
+    (tendsto_atan_lo argument)
+    (tendsto_atan_hi argument)
 
 /-- The tangent residual enclosure contains its exact real linear combination. -/
 theorem contains_sinSubCos (argument boundary : ℚ) (degree : Nat) :
@@ -85,16 +82,14 @@ theorem sin_sub_rat_mul_cos_ne_zero (argument boundary : ℚ) (hnonzero : argume
   intro hzero
   apply (irrational_tan_ratCast argument hnonzero).ne_rat boundary
   rw [Real.tan_eq_sin_div_cos]
-  exact (div_eq_iff (cos_ratCast_ne_zero argument hnonzero)).mpr (sub_eq_zero.mp hzero)
+  exact (div_eq_iff (cos_ratCast_ne_zero argument)).mpr (sub_eq_zero.mp hzero)
 
 /-- The tangent residual comparison terminates without constructing a quotient enclosure. -/
 theorem exists_sinSubCos_separating (argument boundary : ℚ) (hnonzero : argument ≠ 0) :
     ∃ n, Comparison.Separates (sinSubCos argument boundary (2 ^ n)) 0 :=
-  Comparison.exists_separating 0
+  Comparison.exists_separating_two_pow 0
     (by simpa using sin_sub_rat_mul_cos_ne_zero argument boundary hnonzero)
-    ((tendsto_sinSubCos_lo argument boundary).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
-    ((tendsto_sinSubCos_hi argument boundary).comp
-      (tendsto_pow_atTop_atTop_of_one_lt (by decide)))
+    (tendsto_sinSubCos_lo argument boundary)
+    (tendsto_sinSubCos_hi argument boundary)
 
 end FloatLib.Numerics.Enclosure

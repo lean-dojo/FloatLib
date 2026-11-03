@@ -23,12 +23,15 @@ when they decode to the same complete datum.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
+/-- The least positive normal magnitude is positive in every format. -/
 theorem Format.minNormal_pos (f : Format) : 0 < f.minNormal := by
   unfold Format.minNormal
   positivity
 
 namespace Datum
 
+/-- The magnitude of a finite value is its coefficient times the quantum power, independent of the
+sign bit. -/
 theorem finiteValue_abs (s : Bool) (c : Nat) (q : Int) :
     |finiteValue s c q| = (c : ℚ) * (10 : ℚ) ^ q := by
   have h : 0 ≤ (c : ℚ) * (10 : ℚ) ^ q := by positivity
@@ -36,6 +39,14 @@ theorem finiteValue_abs (s : Bool) (c : Nat) (q : Int) :
     simp only [finiteValue, Bool.false_eq_true, ↓reduceIte, one_mul,
       neg_mul, abs_neg, abs_of_nonneg h]
 
+/-- A coefficient times a power of ten vanishes exactly when the coefficient does. -/
+private theorem coefficient_mul_zpow_eq_zero_iff (c : Nat) (q : Int) :
+    (c : ℚ) * (10 : ℚ) ^ q = 0 ↔ c = 0 := by
+  have hp : (10 : ℚ) ^ q ≠ 0 := ne_of_gt (zpow_pos (by norm_num) _)
+  simp [hp]
+
+/-- A finite value is zero exactly when its coefficient is zero, at every quantum and with either
+sign. -/
 theorem finiteValue_eq_zero_iff (s : Bool) (c : Nat) (q : Int) :
     finiteValue s c q = 0 ↔ c = 0 := by
   have hp : (10 : ℚ) ^ q ≠ 0 := ne_of_gt (zpow_pos (by norm_num) _)
@@ -63,6 +74,8 @@ theorem isNormal_iff (f : Format) (d : Datum) :
   | infinity s => simp [isNormal, toRat?]
   | nan s t p => simp [isNormal, toRat?]
 
+/-- A datum is subnormal exactly when it is finite with a nonzero value below the least normal
+magnitude; signed zeros, infinities and NaNs are not subnormal. -/
 theorem isSubnormal_iff (f : Format) (d : Datum) :
     d.isSubnormal f = true ↔
       ∃ x : ℚ, d.toRat? = some x ∧ x ≠ 0 ∧ |x| < f.minNormal := by
@@ -76,24 +89,20 @@ theorem isSubnormal_iff (f : Format) (d : Datum) :
   | infinity s => simp [isSubnormal, toRat?]
   | nan s t p => simp [isSubnormal, toRat?]
 
+/-- Normality depends only on the cohort: members of the same cohort are normal together. -/
 theorem sameCohort_isNormal (f : Format) {x y : Datum} (h : x.SameCohort y) :
     x.isNormal f = y.isNormal f := by
   cases x <;> cases y <;> simp only [SameCohort] at h
   · simp only [isNormal, h.2]
   · rfl
 
+/-- Subnormality depends only on the cohort: members of the same cohort are subnormal together. -/
 theorem sameCohort_isSubnormal (f : Format) {x y : Datum} (h : x.SameCohort y) :
     x.isSubnormal f = y.isSubnormal f := by
   cases x <;> cases y <;> simp only [SameCohort] at h
   · rename_i s c q t d r
     have hz : c = 0 ↔ d = 0 := by
-      have hc : (c : ℚ) * (10 : ℚ) ^ q = 0 ↔ c = 0 := by
-        simpa only [finiteValue, Bool.false_eq_true, ↓reduceIte, one_mul] using
-          finiteValue_eq_zero_iff false c q
-      have hd : (d : ℚ) * (10 : ℚ) ^ r = 0 ↔ d = 0 := by
-        simpa only [finiteValue, Bool.false_eq_true, ↓reduceIte, one_mul] using
-          finiteValue_eq_zero_iff false d r
-      rw [← hc, ← hd, h.2]
+      rw [← coefficient_mul_zpow_eq_zero_iff c q, ← coefficient_mul_zpow_eq_zero_iff d r, h.2]
     simp only [isSubnormal, h.2, ne_eq, hz]
   · rfl
 
@@ -106,6 +115,8 @@ theorem finite_classification (f : Format) (s : Bool) (c : Nat) (q : Int) :
     by_cases hm : f.minNormal ≤ (c : ℚ) * (10 : ℚ) ^ q <;>
       simp [hc, hm, lt_of_not_ge]
 
+/-- The class of a datum is one of the two signed zeros exactly when the datum is a zero, at any
+quantum. -/
 theorem classify_zero_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeZero ∨ d.classify f = .positiveZero) ↔ d.isZero = true := by
   cases d with
@@ -116,6 +127,7 @@ theorem classify_zero_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isZero]
   | nan s t p => cases t <;> simp [classify, isZero]
 
+/-- The class of a datum is a signed normal exactly when the datum is normal. -/
 theorem classify_normal_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeNormal ∨ d.classify f = .positiveNormal) ↔
       d.isNormal f = true := by
@@ -128,6 +140,7 @@ theorem classify_normal_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isNormal]
   | nan s t p => cases t <;> simp [classify, isNormal]
 
+/-- The class of a datum is a signed subnormal exactly when the datum is subnormal. -/
 theorem classify_subnormal_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeSubnormal ∨ d.classify f = .positiveSubnormal) ↔
       d.isSubnormal f = true := by
@@ -139,27 +152,42 @@ theorem classify_subnormal_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isSubnormal]
   | nan s t p => cases t <;> simp [classify, isSubnormal]
 
+/-- The class of a datum is `signalingNaN` exactly when the datum is a signaling NaN. -/
 theorem classify_signalingNaN_iff (f : Format) (d : Datum) :
-    d.classify f = .signalingNaN ↔ d.isSignaling = true := by
+    d.classify f = .signalingNaN ↔ d.isSNaN = true := by
   cases d with
   | finite s c q =>
       cases s <;> by_cases hc : c = 0 <;>
         by_cases hm : (c : ℚ) * (10 : ℚ) ^ q < f.minNormal <;>
-          simp [classify, isSignaling, hc, hm]
-  | infinity s => cases s <;> simp [classify, isSignaling]
-  | nan s t p => cases t <;> simp [classify, isSignaling]
+          simp [classify, isSNaN, hc, hm]
+  | infinity s => cases s <;> simp [classify, isSNaN]
+  | nan s t p => cases t <;> simp [classify, isSNaN]
 
+/-- The class of a datum is `quietNaN` exactly when the datum is a quiet NaN. -/
+theorem classify_quietNaN_iff (f : Format) (d : Datum) :
+    d.classify f = .quietNaN ↔ d.isQNaN = true := by
+  cases d with
+  | finite s c q =>
+      cases s <;> by_cases hc : c = 0 <;>
+        by_cases hm : (c : ℚ) * (10 : ℚ) ^ q < f.minNormal <;>
+          simp [classify, isQNaN, hc, hm]
+  | infinity s => cases s <;> simp [classify, isQNaN]
+  | nan s t p => cases t <;> simp [classify, isQNaN]
+
+/-- The class of a datum is a signed infinity exactly when the datum is infinite. -/
 theorem classify_infinite_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeInfinity ∨ d.classify f = .positiveInfinity) ↔
-      d.isInfinite = true := by
+      d.isInf = true := by
   cases d with
   | finite s c q =>
       cases s <;> by_cases hc : c = 0 <;>
         by_cases hm : (c : ℚ) * (10 : ℚ) ^ q < f.minNormal <;>
-          simp [classify, isInfinite, hc, hm]
-  | infinity s => cases s <;> simp [classify, isInfinite]
-  | nan s t p => cases t <;> simp [classify, isInfinite]
+          simp [classify, isInf, hc, hm]
+  | infinity s => cases s <;> simp [classify, isInf]
+  | nan s t p => cases t <;> simp [classify, isInf]
 
+/-- The class of a datum is one of the two NaN classes exactly when the datum is a NaN, signaling or
+quiet. -/
 theorem classify_nan_iff (f : Format) (d : Datum) :
     (d.classify f = .signalingNaN ∨ d.classify f = .quietNaN) ↔ d.isNaN = true := by
   cases d with
@@ -170,12 +198,16 @@ theorem classify_nan_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isNaN]
   | nan s t p => cases t <;> simp [classify, isNaN]
 
+/-- Every datum has the same quantum as itself, NaNs and infinities included. -/
 @[simp] theorem sameQuantum_self (x : Datum) : x.sameQuantum x = true := by
   cases x <;> simp [sameQuantum]
 
+/-- `sameQuantum` is symmetric. -/
 theorem sameQuantum_comm (x y : Datum) : x.sameQuantum y = y.sameQuantum x := by
   cases x <;> cases y <;> simp [sameQuantum, eq_comm]
 
+/-- `sameQuantum` is transitive, so it is an equivalence relation on datums whose classes are the
+finite quanta, the infinities and the NaNs. -/
 theorem sameQuantum_trans {x y z : Datum}
     (hxy : x.sameQuantum y = true) (hyz : y.sameQuantum z = true) :
     x.sameQuantum z = true := by

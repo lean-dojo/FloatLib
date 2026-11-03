@@ -32,11 +32,8 @@ theorem prepareSin_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
   · subst argument
     simp [prepareSin, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
   · rw [prepareSin, dite_eq_right hzero]
-    dsimp only [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simp only [Enclosure.Comparison.cacheIntervals_apply]
-    exact Enclosure.contains_sinReduced argument (2 ^ n)
+    exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_sinReduced argument (2 ^ n)
 
 /-- Sharing cosine enclosures preserves the exact real ordering, including `cos 0 = 1`. -/
 theorem prepareCos_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -48,11 +45,8 @@ theorem prepareCos_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     have hgt : (boundary : ℝ) < 1 ↔ boundary < (1 : ℚ) := by exact_mod_cast Iff.rfl
     simp [prepareCos, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing, hlt, hgt]
   · rw [prepareCos, dite_eq_right hzero]
-    dsimp only [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simp only [Enclosure.Comparison.cacheIntervals_apply]
-    exact Enclosure.contains_cosReduced argument (2 ^ n)
+    exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_cosReduced argument (2 ^ n)
 
 /-- Sharing arctangent enclosures preserves the exact real ordering. -/
 theorem prepareArctan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
@@ -62,11 +56,8 @@ theorem prepareArctan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
   · subst argument
     simp [prepareArctan, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
   · rw [prepareArctan, dite_eq_right hzero]
-    dsimp only [Enclosure.Comparison.Prepared.compare]
-    apply Enclosure.Comparison.compare_eq_real
-    intro n
-    simp only [Enclosure.Comparison.cacheIntervals_apply]
-    exact Enclosure.contains_atan argument (2 ^ n)
+    exact Enclosure.Comparison.Prepared.compare_enclosed_cacheIntervals _ _ _ _ _
+      fun n => Enclosure.contains_atan argument (2 ^ n)
 
 /-- Sine comparison is total and agrees with the real ordering. -/
 theorem compareSin_eq_real (argument boundary : ℚ) :
@@ -113,7 +104,7 @@ theorem prepareTan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     split
     · exact cmp_div_of_pos _ _ _ ‹_›
     · have hnegative : Real.cos (argument : ℝ) < 0 :=
-        lt_of_le_of_ne (le_of_not_gt ‹_›) (Enclosure.cos_ratCast_ne_zero argument hzero)
+        lt_of_le_of_ne (le_of_not_gt ‹_›) (Enclosure.cos_ratCast_ne_zero argument)
       exact cmp_div_of_neg _ _ _ hnegative
 
 /-- Tangent comparison terminates and agrees with the exact real value at every rational input. -/

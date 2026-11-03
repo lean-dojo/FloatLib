@@ -48,24 +48,40 @@ private theorem roundQuotientEven_scale_den_one (n p : Nat) :
     simp [he, RationalBinary.scaleByPowerOfTwo, roundQuotientEven, Nat.mod_one, h]
 
 /--
-Rounding an integer magnitude as a denominator-one rational gives the same complete IEEE word
-as dyadic rounding. The equality includes nearest-even ties and overflow to signed infinity.
+Rounding an integer magnitude as a denominator-one rational gives the same complete word as
+dyadic rounding, in every format. The equality includes nearest-even ties and overflow. Outside
+the IEEE encodings both sides use the descriptor-aware integer algorithms, and a nonzero integer
+always lies in the normal range because the bias is positive.
 -/
-theorem roundRat_den_one_eq_roundDyadic (fmt : FloatFormat)
-    (hfmt : fmt.isIEEE = true) (sign : Bool) (n : Nat) :
+theorem roundRat_den_one_eq_roundDyadic (fmt : FloatFormat) (sign : Bool) (n : Nat) :
     roundRat fmt sign n 1 =
       roundDyadic fmt { negative := sign, significand := n, exponent := 0 } := by
+  by_cases hfmt : fmt.isIEEE = true
+  swap
+  · rw [roundDyadic, ite_eq_right hfmt]
+    by_cases hn : n = 0
+    · subst n
+      simp [roundRat, roundRatScaled, hfmt, roundRatScaledGeneral, roundDyadicGeneral]
+    have hbias := fmt.exponentBias_pos
+    have hnormal : ¬ (n.log2 : Int) < fmt.minNormalExponent := by
+      unfold FloatFormat.minNormalExponent
+      simp only [Int.ofNat_eq_natCast]
+      omega
+    have hunder : ¬ (n.log2 : Int) + 1 < fmt.minSubnormalExponent := by
+      unfold FloatFormat.minSubnormalExponent FloatFormat.minNormalExponent
+      simp only [Int.ofNat_eq_natCast]
+      omega
+    simp only [roundRat, roundRatScaled, hfmt, ↓reduceDIte, roundRatScaledGeneral,
+      roundDyadicGeneral, beq_iff_eq, hn, Nat.one_ne_zero, ite_false,
+      floorLog2_den_one n hn, Int.add_zero, hnormal, hunder, Bool.false_eq_true]
+    simp only [Int.ofNat_eq_natCast, roundQuotientEven_scale_den_one]
   rw [roundDyadic, ite_eq_left hfmt, ieeeRoundDyadic_eq_internal]
   by_cases hn : n = 0
   · subst n
     simp [roundRat, roundRatScaled, hfmt, ieeeRoundRatScaled, Internal.ieeeRoundDyadic]
   have hmin : FloatFormat.ieeeMinNormalExponent fmt ≤ 0 := by
-    unfold FloatFormat.ieeeMinNormalExponent FloatFormat.bias
-    have hp : 2 ≤ 2 ^ (fmt.expWidth - 1) :=
-      (by
-        have := Nat.pow_le_pow_right (by decide : 0 < 2)
-          (show 1 ≤ fmt.expWidth - 1 by have := fmt.expWidth_ge_two; omega)
-        simpa using this)
+    have hbias := fmt.bias_pos
+    unfold FloatFormat.ieeeMinNormalExponent
     simp only [Int.ofNat_eq_natCast]
     omega
   have hnormal : ¬ (n.log2 : Int) < FloatFormat.ieeeMinNormalExponent fmt := by omega
@@ -101,14 +117,6 @@ theorem ofModel_ofInt_eq_roundDyadic (fmt : FloatFormat)
   | negSucc n =>
       simp [Dyadic.ofScaledInt, ieeeRoundDyadic, modelSign, Int.compare_eq_lt.mpr]
 
-private theorem extendedMantissa_shift_mantissa (em : ExtendedMantissa) (shift : Nat) :
-    (em >>> shift).mantissa = em.mantissa / 2 ^ shift := by
-  induction shift with
-  | zero => simp [HShiftRight.hShiftRight, Nat.repeat]
-  | succ shift ih =>
-      change (ExtendedMantissa.shiftRightOne (em >>> shift)).mantissa = _
-      simp only [ExtendedMantissa.shiftRightOne, ih, Nat.div_div_eq_div_mul, pow_succ]
-
 /--
 Lean's finite conversion kernel truncates toward zero the same dyadic that FloatLib decodes.
 No rounding of the floating-point value happens before the truncation.
@@ -118,7 +126,7 @@ theorem roundToInt_eq_roundDyadicToInt (sign : Sign) (mantissa : Nat) (exponent 
       roundDyadicToInt .towardZero
         { negative := modelSignBit sign, significand := mantissa, exponent } := by
   unfold Float.Model.UnpackedFloat.roundToInt decreaseExponent shiftToExponent
-  simp only [extendedMantissa_shift_mantissa, ExtendedMantissa.ofMantissaAndAccuracy]
+  simp only [extendedMantissa_shiftRight_mantissa, ExtendedMantissa.ofMantissaAndAccuracy]
   cases exponent <;> cases sign <;>
     simp [roundDyadicToInt, modelSignBit, Sign.apply, Nat.shiftRight_eq_div_pow] <;>
     intro h <;> simp [h]

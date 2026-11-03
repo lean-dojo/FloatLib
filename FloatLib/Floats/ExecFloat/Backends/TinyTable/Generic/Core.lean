@@ -74,24 +74,19 @@ variable {Model : Type u} (encoding : Encoding Model)
     rw [Nat.mod_eq_of_lt hbyte]
     exact (encoding.encode value).isLt⟩
 
+/-- The byte of an encoded value carries the value's ordinal. -/
+private theorem toNat_ofNat_encode (value : Model) :
+    (UInt8.ofNat (encoding.encode value).val).toNat = (encoding.encode value).val := by
+  rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt
+    (Nat.lt_of_lt_of_le (encoding.encode value).isLt encoding.radix_le_byte)]
+
 /-- Decoding a directly encoded model value recovers that value. -/
 @[simp] theorem decodeCode_encodeCode (value : Model) :
     encoding.decodeCode (encoding.encodeCode value) = value := by
-  let code := encoding.encode value
-  have hbyte : (encoding.encode value).val < 256 :=
-    Nat.lt_of_lt_of_le (encoding.encode value).isLt encoding.radix_le_byte
-  have hnat :
-      (UInt8.ofNat (encoding.encode value).val).toNat =
-        (encoding.encode value).val := by
-    rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt hbyte]
   have hcode :
-      (⟨(UInt8.ofNat (encoding.encode value).val).toNat,
-          by
-            simpa only [hnat] using (encoding.encode value).isLt⟩ :
-        Fin encoding.radix) =
-        code := by
-    apply Fin.ext
-    exact hnat
+      (⟨(UInt8.ofNat (encoding.encode value).val).toNat, (encoding.encodeCode value).2⟩ :
+        Fin encoding.radix) = encoding.encode value :=
+    Fin.ext (encoding.toNat_ofNat_encode value)
   change encoding.decode
       ⟨(UInt8.ofNat (encoding.encode value).val).toNat, _⟩ = value
   rw [hcode]
@@ -101,18 +96,15 @@ variable {Model : Type u} (encoding : Encoding Model)
 @[simp] theorem encodeCode_decodeCode (code : Code encoding) :
     encoding.encodeCode (encoding.decodeCode code) = code := by
   let ordinal : Fin encoding.radix := ⟨code.1.toNat, code.2⟩
-  have hordinal :
-      encoding.encode (encoding.decode ordinal) = ordinal :=
-    encoding.encode_decode ordinal
   have hval :
-      (encoding.encode (encoding.decode ordinal)).val = code.1.toNat := by
-    exact congrArg Fin.val hordinal
+      (encoding.encode (encoding.decode ordinal)).val = code.1.toNat :=
+    congrArg Fin.val (encoding.encode_decode ordinal)
   apply Subtype.ext
   apply UInt8.toNat_inj.mp
   change
     (UInt8.ofNat (encoding.encode (encoding.decode ordinal)).val).toNat =
       code.1.toNat
-  rw [hval, UInt8.toNat_ofNat', Nat.mod_eq_of_lt (UInt8.toNat_lt code.1)]
+  rw [encoding.toNat_ofNat_encode, hval]
 
 end Encoding
 

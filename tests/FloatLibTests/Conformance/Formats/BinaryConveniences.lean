@@ -12,9 +12,11 @@ public import FloatLib
 # Configured binary conveniences
 
 Checks for the configured binary API that a program reaches first: rounding a rational with
-`ofRat`, reading an integer with `toInt?`, the format constants and `ulp`, the native `Float` and
-`Float32` conversions at every width, status composition with `IEEEOutcome.bind`, and the real-value
-adapters `toReal_add` through `abs_toReal_sqrt_sub_le`. Closed cases are decided by the kernel.
+`ofRat`, reading an integer with `toInt?`, the format constants and `ulp`, classification, the
+native `Float` and `Float32` conversions at every width, status composition with
+`IEEEOutcome.bind`, and the real-value adapters `toReal_add_eq_roundAt` through
+`abs_toReal_sqrt_sub_le`, whose format proof is a default argument. Closed cases are decided by the
+kernel.
 -/
 
 @[expose] public section
@@ -56,7 +58,7 @@ example :
       (-2.5 : Binary32).toInt? (mode := .up) = some (-2) ∧
       (1e30 : Binary32).toInt? = some 1000000015047466219876688855040 ∧
       (ExecFloat.Binary.canonicalNaN : Binary32).toInt? = none ∧
-      (ExecFloat.Binary.infinity (sign := true) : Binary32).toInt? = none := by
+      (ExecFloat.Binary.infinity (negative := true) : Binary32).toInt? = none := by
   decide +kernel
 
 example (x : Binary32) (hx : x.isFinite = false) : x.toInt? = none :=
@@ -65,12 +67,33 @@ example (x : Binary32) (hx : x.isFinite = false) : x.toInt? = none :=
 -- The special values are positive by default.
 example :
     (ExecFloat.Binary.zero : Binary32).toNatBits = 0 ∧
-      (ExecFloat.Binary.zero (sign := true) : Binary32).toNatBits = 0x80000000 ∧
+      (ExecFloat.Binary.zero (negative := true) : Binary32).toNatBits = 0x80000000 ∧
       (ExecFloat.Binary.infinity : Binary32).toNatBits = 0x7f800000 ∧
       (ExecFloat.Binary.infinity? : Option Binary32).map ExecFloat.Binary.toNatBits =
         some 0x7f800000 ∧
       (ExecFloat.Binary.maxFinite : Binary32).toNatBits = 0x7f7fffff ∧
-      (ExecFloat.Binary.maxFinite (sign := true) : Binary32).toNatBits = 0xff7fffff := by
+      (ExecFloat.Binary.maxFinite (negative := true) : Binary32).toNatBits = 0xff7fffff := by
+  decide +kernel
+
+-- The sign option is called `negative` on the configured and the model constructors, and on the
+-- overflow values: E4M3FN saturates in `infinityOrMaxFinite` but overflows to NaN natively.
+example :
+    (.minNormal (negative := true) : Binary32).toNatBits = 0x80800000 ∧
+      (Model.zero FloatFormat.binary32 (negative := true)).toNatBits = 0x80000000 ∧
+      (Model.infinityOrMaxFinite FloatFormat.e4m3fn (negative := true)).toNatBits = 0xfe ∧
+      (Model.nativeOverflow FloatFormat.e4m3fn (negative := true)).toNatBits = 0xff ∧
+      (Model.nativeOverflow FloatFormat.binary32 (negative := true)).toNatBits = 0xff800000 ∧
+      (Model.directedOverflow FloatFormat.binary32 (negative := true)
+        (roundMagnitudeUp := false)).toNatBits = 0xff7fffff := by
+  decide +kernel
+
+-- Classification uses the names of `Model` (and `Float.isInf`): `isInf`, `isSNaN`, `isQNaN`.
+example :
+    (ExecFloat.Binary.infinity : Binary32).isInf = true ∧
+      (ExecFloat.Binary.maxFinite : Binary32).isInf = false ∧
+      (ExecFloat.Binary.canonicalNaN : Binary32).isQNaN = true ∧
+      (ExecFloat.Binary.canonicalNaN : Binary32).isSNaN = false ∧
+      (ExecFloat.Binary.ofNatBits 0x7f800001 : Binary32).isSNaN = true := by
   decide +kernel
 
 -- The constants of binary32, binary16, bfloat16, the OCP E4M3FN layout (no infinity, a NaN at the
@@ -78,7 +101,7 @@ example :
 example :
     (ExecFloat.Binary.minNormal : Binary32).toNatBits = 0x00800000 ∧
       (ExecFloat.Binary.minSubnormal : Binary32).toNatBits = 1 ∧
-      (ExecFloat.Binary.minSubnormal (sign := true) : Binary32).toNatBits = 0x80000001 ∧
+      (ExecFloat.Binary.minSubnormal (negative := true) : Binary32).toNatBits = 0x80000001 ∧
       (ExecFloat.Binary.epsilon : Binary32).toNatBits = 0x34000000 ∧
       (ExecFloat.Binary.epsilon : Binary16).toNatBits = 0x1400 ∧
       (ExecFloat.Binary.maxFinite : Binary16).toNatBits = 0x7bff ∧
@@ -137,29 +160,67 @@ example (x y : Binary32) :
   simp
 
 -- The real-value adapters apply to the notation on standard and limb-stored formats.
-example (a b : Binary32) (ha : a.isFinite = true) (hb : b.isFinite = true)
-    (hab : (a * b).isFinite = true) :
+example (a b : Binary32) (hab : (a * b).isFinite = true) :
     (a * b).toReal = Model.roundAt FloatFormat.binary32 (a.toReal * b.toReal) ∧
       |(a * b).toReal - a.toReal * b.toReal| ≤
-        Model.epsilonAt FloatFormat.binary32 (a.toReal * b.toReal) :=
-  ⟨ExecFloat.Binary.toReal_mul (by decide) ha hb hab,
-    ExecFloat.Binary.abs_toReal_mul_sub_le (by decide) ha hb hab⟩
+        Model.halfUlpAt FloatFormat.binary32 (a.toReal * b.toReal) :=
+  ⟨ExecFloat.Binary.toReal_mul_eq_roundAt hab,
+    ExecFloat.Binary.abs_toReal_mul_sub_le hab⟩
 
-example (a b : Binary128) (ha : a.isFinite = true) (hb : b.isFinite = true)
-    (hb0 : b.isZero = false) (hab : (a / b).isFinite = true) :
+-- The default format proof leaves the finiteness hypotheses in context unevaluated.
+example (a b : Binary128) (hb : b.isFinite = true) (hab : (a / b).isFinite = true) :
     |(a / b).toReal - a.toReal / b.toReal| ≤
-      Model.epsilonAt FloatFormat.binary128 (a.toReal / b.toReal) :=
-  ExecFloat.Binary.abs_toReal_div_sub_le (by decide) ha hb hb0 hab
+      Model.halfUlpAt FloatFormat.binary128 (a.toReal / b.toReal) :=
+  ExecFloat.Binary.abs_toReal_div_sub_le hb hab
 
-example (a b : Binary256) (ha : a.isFinite = true) (hb : b.isFinite = true)
-    (hab : (a - b).isFinite = true) :
+example (a b : Binary256) (hab : (a - b).isFinite = true) :
     (a - b).toReal = Model.roundAt (ExecFloat.Binary.descriptor 19 236) (a.toReal - b.toReal) :=
-  ExecFloat.Binary.toReal_sub (by decide) ha hb hab
+  ExecFloat.Binary.toReal_sub_eq_roundAt hab
 
 example (a : Binary64) (ha : a.isFinite = true) (hpos : a.signBit = false) :
     |a.sqrt.toReal - Real.sqrt a.toReal| ≤
-      Model.epsilonAt FloatFormat.binary64 (Real.sqrt a.toReal) :=
-  ExecFloat.Binary.abs_toReal_sqrt_sub_le (by decide) ha (.inr hpos)
+      Model.halfUlpAt FloatFormat.binary64 (Real.sqrt a.toReal) :=
+  ExecFloat.Binary.abs_toReal_sqrt_sub_le ha (.inr hpos)
+
+-- Fused multiply-add rounds the exact `a * b + c` once.
+example (a b c : Binary32) (habc : (ExecFloat.Binary.fma a b c).isFinite = true) :
+    (ExecFloat.Binary.fma a b c).toReal =
+        Model.roundAt FloatFormat.binary32 (a.toReal * b.toReal + c.toReal) ∧
+      |(ExecFloat.Binary.fma a b c).toReal - (a.toReal * b.toReal + c.toReal)| ≤
+        Model.halfUlpAt FloatFormat.binary32 (a.toReal * b.toReal + c.toReal) :=
+  ⟨ExecFloat.Binary.toReal_fma_eq_roundAt habc, ExecFloat.Binary.abs_toReal_fma_sub_le habc⟩
+
+section VariableFormat
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+
+-- For a variable format, the default finds the format proof in context, or it is passed by name.
+example (hformat : format.isIEEE = true) :
+    ExecFloat.Binary.toReal (1 : ExecFloat (Configured.Family format code plan)) = 1 :=
+  ExecFloat.Binary.toReal_one
+
+example (h : format.isIEEE = true) :
+    ExecFloat.Binary.isFinite (1 : ExecFloat (Configured.Family format code plan)) = true :=
+  ExecFloat.Binary.isFinite_one (hformat := h)
+
+-- Without one, the default says what it needs.
+/--
+error: this theorem needs an IEEE-encoded format.
+-/
+#guard_msgs (substring := true) in
+example : ExecFloat.Binary.toReal (1 : ExecFloat (Configured.Family format code plan)) = 1 :=
+  ExecFloat.Binary.toReal_one
+
+end VariableFormat
+
+-- A concrete format that is not IEEE encoded gets the same message.
+/--
+error: this theorem needs an IEEE-encoded format.
+-/
+#guard_msgs (substring := true) in
+example : (1 : ExecFloat.Binary 4 3 (encoding := .finite)).toReal = 1 :=
+  ExecFloat.Binary.toReal_one
 
 example (a : Binary32) (ha : a.isFinite = true) : a.toReal? = some a.toReal :=
   ExecFloat.Binary.toReal?_eq_some_toReal ha

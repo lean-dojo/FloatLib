@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.RootProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.HypotProof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
@@ -16,7 +17,8 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 The lossless codec preserves the full model result, including NaN payloads and signed zeros.
 For conventional IEEE descriptors, finite results also satisfy the model's nearest-even real
-rounding contracts. These statements do not depend on a particular carrier or width.
+rounding contracts, stated with the configured `toReal` like those of `Configured.Real`. These
+statements do not depend on a particular carrier or width.
 -/
 
 @[expose] public section
@@ -51,55 +53,46 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
   simp [rootN, toModel, Configured.Family.toModel]
 
 /-- A finite reciprocal square root rounds the exact real expression once. -/
-theorem toReal_rsqrt_eq_roundAt (value : Value)
-    (hfmt : format.isIEEE = true) (hvalue : isFinite value = true)
-    (hzero : isZero value = false) (hsign : signBit value = false)
-    (hfinite : isFinite (rsqrt value) = true) :
-    Model.toReal (toModel (rsqrt value)) =
-      Model.roundAt format (Real.sqrt (Model.toReal (toModel value)))⁻¹ := by
-  simpa only [toModel_rsqrt] using Model.toReal_rsqrt_eq_roundAt
-    (toModel value) hfmt hvalue hzero hsign
+theorem toReal_rsqrt_eq_roundAt (value : Value) (hvalue : isFinite value = true)
+    (hresult : isFinite (rsqrt value) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    toReal (rsqrt value) = Model.roundAt format (Real.sqrt (toReal value))⁻¹ := by
+  simpa only [toReal, toModel_rsqrt] using Model.toReal_rsqrt_eq_roundAt
+    (toModel value) hformat hvalue
     (show Model.isFinite (Model.rsqrt (toModel value)) = true by
-      simpa only [isFinite, toModel_rsqrt] using hfinite)
+      simpa only [isFinite, toModel_rsqrt] using hresult)
 
 /-- A finite norm rounds the exact sum of squares and square root once. -/
 theorem toReal_hypot_eq_roundAt (left right : Value)
-    (hfmt : format.isIEEE = true)
-    (hleft : isFinite left = true) (hright : isFinite right = true)
-    (hfinite : isFinite (hypot left right) = true) :
-    Model.toReal (toModel (hypot left right)) =
-      Model.roundAt format (Real.sqrt
-        (Model.toReal (toModel left) ^ 2 + Model.toReal (toModel right) ^ 2)) := by
-  simpa only [toModel_hypot] using Model.toReal_hypot_eq_roundAt
-    (toModel left) (toModel right) hfmt hleft hright
+    (hresult : isFinite (hypot left right) = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    toReal (hypot left right) =
+      Model.roundAt format (Real.sqrt (toReal left ^ 2 + toReal right ^ 2)) := by
+  simpa only [toReal, toModel_hypot] using Model.toReal_hypot_eq_roundAt
+    (toModel left) (toModel right) hformat
     (show Model.isFinite (Model.hypot (toModel left) (toModel right)) = true by
-      simpa only [isFinite, toModel_hypot] using hfinite)
+      simpa only [isFinite, toModel_hypot] using hresult)
 
-/-- A finite integer power of a finite nonzero base rounds the exact real power once. -/
+/-- A finite integer power of a finite base rounds the exact real power once. -/
 theorem toReal_powInt_eq_roundAt (value : Value) (exponent : Int)
-    (hfmt : format.isIEEE = true) (hvalue : isFinite value = true)
-    (hzero : isZero value = false) (hfinite : isFinite (powInt value exponent) = true) :
-    Model.toReal (toModel (powInt value exponent)) =
-      Model.roundAt format (Model.toReal (toModel value) ^ exponent) := by
-  simpa only [toModel_powInt] using Model.toReal_powInt_eq_roundAt
-    (toModel value) exponent hfmt hvalue hzero
+    (hvalue : isFinite value = true) (hresult : isFinite (powInt value exponent) = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    toReal (powInt value exponent) = Model.roundAt format (toReal value ^ exponent) := by
+  simpa only [toReal, toModel_powInt] using Model.toReal_powInt_eq_roundAt
+    (toModel value) exponent hformat hvalue
     (show Model.isFinite (Model.powInt (toModel value) exponent) = true by
-      simpa only [isFinite, toModel_powInt] using hfinite)
+      simpa only [isFinite, toModel_powInt] using hresult)
 
 /-- A finite integer root rounds the chosen signed real branch once. -/
 theorem toReal_rootN_eq_roundAt (value : Value) (degree : Int)
-    (hfmt : format.isIEEE = true) (hvalue : isFinite value = true)
-    (hzero : isZero value = false) (hdegree : degree ≠ 0)
-    (hdomain : signBit value = false ∨ degree % 2 ≠ 0)
-    (hfinite : isFinite (rootN value degree) = true) :
-    Model.toReal (toModel (rootN value degree)) =
-      Model.roundAt format (if signBit value then
-        -(|Model.toReal (toModel value)| ^ (degree : ℝ)⁻¹)
-        else |Model.toReal (toModel value)| ^ (degree : ℝ)⁻¹) := by
+    (hvalue : isFinite value = true) (hresult : isFinite (rootN value degree) = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    toReal (rootN value degree) =
+      Model.roundAt format (if signBit value then -(|toReal value| ^ (degree : ℝ)⁻¹)
+        else |toReal value| ^ (degree : ℝ)⁻¹) := by
   have hmodel := Model.toReal_rootN_eq_roundAt
-    (toModel value) degree hfmt hvalue hzero hdegree hdomain
+    (toModel value) degree hformat hvalue
     (show Model.isFinite (Model.rootN (toModel value) degree) = true by
-      simpa only [isFinite, toModel_rootN] using hfinite)
-  cases hsign : Model.signBit (toModel value) <;> simpa [signBit, hsign] using hmodel
+      simpa only [isFinite, toModel_rootN] using hresult)
+  cases hsign : Model.signBit (toModel value) <;> simpa [toReal, signBit, hsign] using hmodel
 
 end FloatLib.Floats.ExecFloat.Binary

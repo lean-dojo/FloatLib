@@ -15,9 +15,10 @@ import all Init.Data.Repr
 /-!
 # Decimal character preservation
 
-The digit scanner recovers the base-ten positional value of every digit list. This connects actual
-character strings to exact rationals, rather than assuming an abstract parser/formatter inverse.
-The dyadic conversion then preserves value by the identity `10^k = 2^k * 5^k`.
+Scanning the digits printed for a natural recovers it, and parsing the characters printed for a
+decimal record recovers the record, so `parse` returns the exact rational of formatted text. These
+are statements about the actual character lists, not an assumed parser/formatter inverse. The
+dyadic conversion then preserves value by the identity `10^k = 2^k * 5^k`.
 -/
 
 @[expose] public section

@@ -15,6 +15,8 @@ public import FloatLib.Numerics.Enclosure
 public import FloatLib.Numerics.Exact
 public import FloatLib.Numerics.IEEEComparison
 public import FloatLib.Numerics.IEEEStatus.Proof
+public import FloatLib.Numerics.MixedError.Basic
+public import FloatLib.Numerics.MixedError.Elementary
 public import FloatLib.Numerics.Operation
 public import FloatLib.Numerics.Quantization
 public import FloatLib.Numerics.Quantization.Affine.Real
@@ -29,7 +31,8 @@ public import FloatLib.Numerics.ShiftRightJam.Proof
 # Representation-independent numerical semantics
 
 Numerical systems, exact dyadic and rational values, quantization contracts, reduction errors,
-and primitive representations used by the concrete formats.
+mixed relative and absolute error bounds, and primitive representations used by the concrete
+formats.
 
 `At` and `AtFinite` attach erased proofs to a system's runtime carrier. Optional capabilities state
 the order, radix, rounding, error, or block-scaling assumptions needed by a theorem.

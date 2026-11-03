@@ -62,7 +62,14 @@ theorem candidateEligible_of_eligible (format : Format)
   unfold CandidateEligible
   omega
 
-/-- The positive-code exclusive upper endpoint represented in two native limbs. -/
+/--
+The positive-code exclusive upper endpoint `format.signMaskNat`, in two native limbs.
+
+The word is exact only for `Eligible` formats (`signMaskWord_toNat`), and every caller in the
+library has one. At width 129, which `CandidateEligible` admits, the endpoint `2 ^ 128` does not
+fit and `UInt128.ofNat` reduces it to zero, so candidate-width code must not compare against
+this word.
+-/
 @[inline] def signMaskWord (format : Format) :
     FloatLib.Numerics.FixedWord.UInt128 :=
   FloatLib.Numerics.FixedWord.UInt128.ofNat format.signMaskNat

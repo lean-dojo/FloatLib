@@ -19,10 +19,9 @@ FloatLib's reader is a static React application with hash routes:
 
 The sidebar holds chapter navigation, the dependency graph, and references, and search, theme
 selection, keyboard access, and mobile navigation all stay available. Inside this reader the graph
-is a page of its own. Legacy map URLs open the declaration graph and keep a selected declaration,
-and each declaration page links to its neighborhood in the graph. Put the supplied FloatLib logo in
-the navigation header, with “Verified floating point in Lean” beside it. That's the same cropped
-artwork the README uses.
+is a page of its own, and each declaration page links to its neighborhood in the graph. Put the
+supplied FloatLib logo in the navigation header, with “Verified floating point in Lean” beside it.
+That's the same cropped artwork the README uses.
 
 Label the two graph views for what they show. The module graph covers every source module under
 `FloatLib` plus the root entry point, and the declaration graph covers the guide's selected
@@ -44,9 +43,7 @@ case studies, and verification. Then come execution, models, and rounding, the f
 kernels and dispatch, followed by performance and the native-float comparison, external validation,
 interval proof automation, and further examples. Decimal arithmetic and elementary functions get
 their own chapters after the binary formats, and native-float semantics come after the performance
-chapter. Keep the bibliography as a reference list of its own, with no chapter number. When material
-moves, keep old chapter and section bookmarks working. A reordering should update chapter labels and
-links, but it shouldn't rename historical result records or duplicate their figures.
+chapter. Keep the bibliography as a reference list of its own, with no chapter number.
 
 ## Typography and figures
 
@@ -88,11 +85,6 @@ Explain the subject in depth. Take a worked example far enough that the reader c
 mechanism, and then connect it to the mathematics and the implementation. Keep the useful
 explanations, equations, checked examples, citations, and qualifications that are already there. Fix
 weak framing, but don't squash a substantial chapter into a summary.
-
-If the `research-storytelling` skill is available, follow it, and borrow whichever explanatory
-technique from its reference authors fits: a running example, a diagram built up over several steps,
-an experiment read from its evidence, or a derivation that makes sense of the implementation. Pick
-the technique to fit the chapter. Each chapter keeps its own argument and rhythm.
 
 Use direct explanations and worked calculations together. Keep a clear existing explanation when
 adding an example, and follow the calculation far enough to explain its result. Use “we” naturally
@@ -186,25 +178,14 @@ Numbered citations link to bibliography entries, and the entries' source URLs po
 publications. The data build also writes `data/reader-warnings.md` and the bundled MathJax
 stylesheet and fonts.
 
-## Evidence and measurement claims
+## Measurements
 
-Check numerical claims against the recorded results:
-
-- `benchmarks/results/main/release/benchmark/`: scalar timings, ratios, metadata, and preflight results.
-- `benchmarks/results/flocq-matched/`: matched binary timings, full-value comparisons, and captured sources.
-- `benchmarks/results/public-binary/`: paired public binary arithmetic timings, trial metadata, and fixture hashes.
-- `tests/results/main/release/external/`: direct external comparisons and their diagnostics.
-- `tests/results/main/ecosystem/`: wider upstream and workload results, including qualified outcomes.
-
-Before you interpret a series, read `benchmarks/docs/Comparison.md`, `tests/EXTERNAL.md`, and the
-result metadata that goes with it. The performance chapter opens with the public binary measurements
-in `content/assets/public-binary-performance.png`, and `format-comparison-main.png` compares the
-wider set of formats and libraries. Each figure script names its authoritative inputs, so don't keep
-duplicate benchmark CSVs under the site. Next to the detailed results, keep the machine, affinity,
-workload, implementation boundaries, exclusions, and measurement date. Different total widths need
-not imply equal precision across formats. Tell direct FloatLib comparisons apart from another
-project's own tests. When results disagree, keep the disagreement and explain it instead of showing
-one universal pass label.
+The performance chapter opens with the public binary measurements in
+`content/assets/public-binary-performance.png`, and `format-comparison-main.png` compares the wider
+set of formats and libraries. Each figure script names its inputs, so the site keeps no copies of
+benchmark CSVs. Different total widths need not imply equal precision across formats. Tell direct
+FloatLib comparisons apart from another project's own tests, and when results disagree, keep the
+disagreement and explain it instead of showing one universal pass label.
 
 ## Verification and build directories
 
@@ -216,7 +197,8 @@ and `FLOATLIB_SITE_SCRATCH` the chapter scratch directory. By default the site g
 maintained published figures stay in the repository.
 
 `bash site/build.sh` runs the full site check. Its export builds the modules listed in
-`content/phases.json`, including the optional binary transcendental and unchecked host APIs. After
+`content/phases.json`, including the optional binary transcendental, correctly rounded, and
+unchecked host APIs, the `roundoff` analysis, and the decimal certified proofs. After
 prose-only edits, `--skip-lean` may reuse a current declaration export, and it still checks chapter
 examples and figure freshness. The build regenerates result-derived figures in local scratch and
 compares their bytes with the maintained assets. For a release build it must never skip missing
@@ -228,13 +210,6 @@ prefixed with `import FloatLib`, and compiled against the local library build. C
 outputs are checked as well. An unresolved link, an unexpected compiler warning, an output mismatch,
 or a failing example fails the strict build. The chapter extractor never looks at the landing page,
 so a new Lean example there has to be checked in local scratch or copied verbatim from a checked
-chapter example. Delete temporary test sources once you've checked them, and don't add persistent
-test modules for prose or reader edits.
+chapter example.
 
-To preview, run `python3 site/serve.py --dir <local-output>`. Look at the built site in a browser at
-desktop and mobile widths: the introduction, all chapter routes, math, image loading, search,
-declaration links, themes, and moved section bookmarks. At both widths, check both graph views,
-search, selection, zoom, and dependency links. Chapter agenda ledes should still be absent.
-
-When the intended website behavior changes, update this contract. If a user's instructions conflict
-with an older design note, the instructions win.
+To preview, run `python3 site/serve.py --dir <local-output>`.

@@ -13,7 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 
 Lean's `Float.Model.UnpackedFloat.pack` assumes that finite inputs have already been normalized for
 the selected format. This module proves exact round trips for representable normal and subnormal
-values in Lean's width-parameterized IEEE model. Agreement with the descriptor's real decoder
+values in Lean's width-parameterized IEEE model, and that a finite logical value packs either to
+a finite value or to the infinity of its sign. Agreement with the descriptor's real decoder
 requires `fmt.isIEEE = true`.
 
 Numerical rounding is handled separately by the rounding semantics.
@@ -68,6 +69,40 @@ theorem noOverflow_of_isFinite_ofModel_finite
     simpa [isFinite, hencoding] using hfin
   exact (bne_iff_ne.mp hfinIEEE) hexponent
 
+/--
+A finite logical value whose packing is not finite packs to the infinity of its sign. Packing
+never produces a NaN from a finite logical value: an exponent beyond the encoding gives the
+infinity, and every other exponent gives a finite value.
+-/
+theorem ofModel_finite_eq_ofModel_infinity_of_isFinite_eq_false
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (sign : Sign) (mantissa : Nat) (exponent : Int) (hm : 0 < mantissa)
+    (hnonfinite : isFinite (ofModel fmt (.finite sign mantissa exponent hm)) = false) :
+    ofModel fmt (.finite sign mantissa exponent hm) = ofModel fmt (.infinity sign) := by
+  have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
+  have hfield (bits : BitVec (FloatFormat.toModel fmt).exponentBits)
+      (hbits : bits.toNat ≠ FloatFormat.expAllOnesNat fmt) fraction :
+      isFinite (ofModelBits (fmt := fmt)
+        (packComponents (FloatFormat.toModel fmt) sign bits fraction)) = true := by
+    have hexp : expField (ofModelBits (fmt := fmt)
+        (packComponents (FloatFormat.toModel fmt) sign bits fraction)) = bits.toNat := by
+      rw [← unpackExponent_toNat, toModelBits_ofModelBits, unpackExponent_packComponents]
+    simpa [isFinite, hencoding, IEEE.isFinite, hexp] using hbits
+  unfold ofModel at hnonfinite ⊢
+  congr 1
+  simp only [UnpackedFloat.pack] at hnonfinite ⊢
+  split_ifs at hnonfinite ⊢ with hoverflow
+  · rfl
+  · rw [hfield _ ?_ _] at hnonfinite
+    · contradiction
+    · rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+      change _ ≠ 2 ^ fmt.expWidth - 1
+      change ¬2 ^ fmt.expWidth ≤ _ at hoverflow
+      omega
+  · rw [hfield _ ?_ _] at hnonfinite
+    · contradiction
+    · simpa using (FloatFormat.expAllOnesNat_pos fmt).ne
+
 /-- A positive integer whose binary length is `p` lies between `2^(p-1)` and `2^p`. -/
 private theorem normalizedMantissa_bounds (mantissa p : Nat) (hm : mantissa ≠ 0)
     (hbits : mantissa.log2 + 1 = p) :
@@ -86,8 +121,6 @@ theorem unpack_pack_finite_normal
     (spec : Format) (sign : Sign) (mantissa : Nat) (exponent : Int)
     (hm : mantissa ≠ 0)
     (hbits : mantissa.log2 + 1 = spec.mantissaBits)
-    (hbiasedNonneg :
-      0 ≤ exponent + spec.exponentBias + spec.mantissaBitsWithoutImplicit)
     (hbiasedPos :
       0 < exponent + spec.exponentBias + spec.mantissaBitsWithoutImplicit)
     (hnoOverflow :
@@ -101,7 +134,7 @@ theorem unpack_pack_finite_normal
   have hbiasedInt :
       (biased : Int) = exponent + spec.exponentBias + spec.mantissaBitsWithoutImplicit := by
     rw [hbiased]
-    exact Int.toNat_of_nonneg hbiasedNonneg
+    exact Int.toNat_of_nonneg hbiasedPos.le
   rw [← hbiased] at hnoOverflow
   have hbiasedLt : biased < 2 ^ spec.exponentBits := by omega
   have hbiasedNeAllOnes : BitVec.ofNat spec.exponentBits biased ≠ -1#spec.exponentBits := by
@@ -152,15 +185,29 @@ theorem unpack_pack_finite_normal
     unpackSign_packComponents, hbiasedNeAllOnes, hbiasedNeZero, ite_false, hmantissaDecode, hsign]
   congr
 
+/-- A finite model value that packing round-trips keeps its exact real value when packed. -/
+private theorem toReal_ofModel_finite_of_unpack_pack
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (sign : Sign) (mantissa : Nat) (exponent : Int) (hm : mantissa ≠ 0)
+    (hround :
+      unpack (FloatFormat.toModel fmt)
+          (pack (FloatFormat.toModel fmt)
+            (.finite sign mantissa exponent (Nat.pos_of_ne_zero hm))) =
+        .finite sign mantissa exponent (Nat.pos_of_ne_zero hm)) :
+    toReal (ofModel fmt (.finite sign mantissa exponent (Nat.pos_of_ne_zero hm))) =
+      (if modelSignBit sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
+        FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix exponent := by
+  rw [toReal_eq_unpackedToReal_toModel hfmt]
+  unfold toModel ofModel toModelBits ofModelBits
+  rw [hround]
+  exact unpackedToReal_finite sign mantissa exponent (Nat.pos_of_ne_zero hm)
+
 /-- Packing a representable normal model value preserves its exact real value. -/
 theorem toReal_ofModel_finite_normal
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Sign) (mantissa : Nat) (exponent : Int)
     (hm : mantissa ≠ 0)
     (hbits : mantissa.log2 + 1 = (FloatFormat.toModel fmt).mantissaBits)
-    (hbiasedNonneg :
-      0 ≤ exponent + (FloatFormat.toModel fmt).exponentBias +
-        (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit)
     (hbiasedPos :
       0 < exponent + (FloatFormat.toModel fmt).exponentBias +
         (FloatFormat.toModel fmt).mantissaBitsWithoutImplicit)
@@ -170,12 +217,10 @@ theorem toReal_ofModel_finite_normal
         2 ^ (FloatFormat.toModel fmt).exponentBits) :
     toReal (ofModel fmt (.finite sign mantissa exponent (Nat.pos_of_ne_zero hm))) =
       (if modelSignBit sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
-        FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix exponent := by
-  rw [toReal_eq_unpackedToReal_toModel hfmt]
-  unfold toModel ofModel toModelBits ofModelBits
-  rw [unpack_pack_finite_normal (FloatFormat.toModel fmt) sign mantissa exponent hm
-    hbits hbiasedNonneg hbiasedPos hnoOverflow]
-  exact unpackedToReal_finite sign mantissa exponent (Nat.pos_of_ne_zero hm)
+        FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix exponent :=
+  toReal_ofModel_finite_of_unpack_pack fmt hfmt sign mantissa exponent hm
+    (unpack_pack_finite_normal (FloatFormat.toModel fmt) sign mantissa exponent hm
+      hbits hbiasedPos hnoOverflow)
 
 /-- Packing and unpacking a nonzero subnormal preserves its sign, mantissa, and exponent. -/
 theorem unpack_pack_finite_subnormal
@@ -193,8 +238,7 @@ theorem unpack_pack_finite_subnormal
         spec.mantissaBitsWithoutImplicit).toNat = 1 := by
     change ((1 : Int) - fmt.bias - fmt.fracWidth + fmt.bias + fmt.fracWidth).toNat = 1
     omega
-  have hpowFour : 4 ≤ 2 ^ fmt.expWidth := by
-    simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+  have hpowFour := fmt.four_le_two_pow_expWidth
   have hnotInf : ¬2 ^ spec.exponentBits ≤
       (FloatFormat.ieeeMinSubnormalExponent fmt + spec.exponentBias +
         spec.mantissaBitsWithoutImplicit).toNat + 1 := by
@@ -255,8 +299,8 @@ theorem unpack_pack_finite_subnormal
 
 /--
 Packing and unpacking any nonzero value on the minimum-exponent grid is exact up to and including
-the smallest normal value. The endpoint `2^p` changes encoding class, but not its unpacked logical
-value.
+the smallest normal value. The endpoint mantissa `2^fmt.fracWidth`, the smallest normal
+significand, changes encoding class, but not its unpacked logical value.
 -/
 theorem unpack_pack_finite_at_minSubnormal
     (fmt : FloatFormat) (sign : Sign) (mantissa : Nat)
@@ -274,10 +318,6 @@ theorem unpack_pack_finite_at_minSubnormal
     · simp
     · simp only [Nat.log2_two_pow, FloatFormat.toModel, Format.mantissaBits]
       omega
-    · change 0 ≤ FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth
-      unfold FloatFormat.ieeeMinSubnormalExponent
-      simp only [Int.ofNat_eq_natCast]
-      omega
     · change 0 < FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth
       unfold FloatFormat.ieeeMinSubnormalExponent
       simp only [Int.ofNat_eq_natCast]
@@ -285,10 +325,26 @@ theorem unpack_pack_finite_at_minSubnormal
     · change
         (FloatFormat.ieeeMinSubnormalExponent fmt + fmt.bias + fmt.fracWidth).toNat + 1 <
           2 ^ fmt.expWidth
-      have hfour : 4 ≤ 2 ^ fmt.expWidth := by
-        simpa using Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.expWidth_ge_two
+      have hfour := fmt.four_le_two_pow_expWidth
       simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]
       omega
+
+/--
+Every nonzero value on the minimum-exponent grid up to the smallest normal value keeps its exact
+real value when packed. The endpoint mantissa `2^fmt.fracWidth` packs as the smallest normal word.
+-/
+theorem toReal_ofModel_finite_at_minSubnormal
+    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+    (sign : Sign) (mantissa : Nat)
+    (hm : mantissa ≠ 0) (hfit : mantissa ≤ 2 ^ fmt.fracWidth) :
+    toReal (ofModel fmt
+        (.finite sign mantissa (FloatFormat.ieeeMinSubnormalExponent fmt)
+          (Nat.pos_of_ne_zero hm))) =
+      (if modelSignBit sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
+        FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix
+          (FloatFormat.ieeeMinSubnormalExponent fmt) :=
+  toReal_ofModel_finite_of_unpack_pack fmt hfmt sign mantissa _ hm
+    (unpack_pack_finite_at_minSubnormal fmt sign mantissa hm hfit)
 
 /-- Packing a representable nonzero subnormal preserves its exact real value. -/
 theorem toReal_ofModel_finite_subnormal
@@ -300,30 +356,8 @@ theorem toReal_ofModel_finite_subnormal
           (Nat.pos_of_ne_zero hm))) =
       (if modelSignBit sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
         FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix
-          (FloatFormat.ieeeMinSubnormalExponent fmt) := by
-  rw [toReal_eq_unpackedToReal_toModel hfmt]
-  unfold toModel ofModel toModelBits ofModelBits
-  rw [unpack_pack_finite_subnormal fmt sign mantissa hm hfit]
-  exact unpackedToReal_finite sign mantissa (FloatFormat.ieeeMinSubnormalExponent fmt)
-    (Nat.pos_of_ne_zero hm)
-
-/-- Every nonzero value on the minimum-exponent grid up to the smallest normal value
-keeps its exact real value when packed. -/
-theorem toReal_ofModel_finite_at_minSubnormal
-    (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
-    (sign : Sign) (mantissa : Nat)
-    (hm : mantissa ≠ 0) (hfit : mantissa ≤ 2 ^ fmt.fracWidth) :
-    toReal (ofModel fmt
-        (.finite sign mantissa (FloatFormat.ieeeMinSubnormalExponent fmt)
-          (Nat.pos_of_ne_zero hm))) =
-      (if modelSignBit sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
-        FloatLib.Floats.Formats.Flocq.bpow FloatLib.Numerics.binaryRadix
-          (FloatFormat.ieeeMinSubnormalExponent fmt) := by
-  rw [toReal_eq_unpackedToReal_toModel hfmt]
-  unfold toModel ofModel toModelBits ofModelBits
-  rw [unpack_pack_finite_at_minSubnormal fmt sign mantissa hm hfit]
-  exact unpackedToReal_finite sign mantissa (FloatFormat.ieeeMinSubnormalExponent fmt)
-    (Nat.pos_of_ne_zero hm)
+          (FloatFormat.ieeeMinSubnormalExponent fmt) :=
+  toReal_ofModel_finite_at_minSubnormal fmt hfmt sign mantissa hm hfit.le
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

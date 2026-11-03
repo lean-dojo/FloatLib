@@ -28,12 +28,46 @@ covering multiplication, aligned addition, and fused multiply-add. Runtime clien
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 
 /--
+A nonzero significand with leading bit `leading ≥ 23` and a normal total exponent
+`leading + exponent` whose rounding to 24 bits gives `rounded` without a carry is the normal
+binary32 word with that exponent and significand.
+-/
+theorem roundDyadic_normal_of_log2 (sign : Bool) (significand leading : Nat) (exponent : Int)
+    (rounded : Nat) (hsignificand : significand ≠ 0) (hleading : significand.log2 = leading)
+    (hwidth : 23 ≤ leading) (hnormal : -126 ≤ Int.ofNat leading + exponent)
+    (hoverflow : Int.ofNat leading + exponent ≤ 127)
+    (hround : Numerics.roundShiftRightEven significand (leading - 23) = rounded)
+    (hcarry : rounded ≠ 2 ^ 24) :
+    roundDyadic { negative := sign, significand, exponent } =
+      mkBits sign (Int.toNat (Int.ofNat leading + exponent + 127)) (rounded - 2 ^ 23) := by
+  unfold roundDyadic
+  simp only [beq_iff_eq, hsignificand, ite_false, hleading, not_lt_of_ge hnormal, hwidth,
+    ite_true, hround, Model.pow2_eq_two_pow, hcarry, gt_iff_lt, not_lt_of_ge hoverflow]
+
+/--
+When the rounding of a normal significand carries to `2 ^ 24`, the result is the normal binary32
+word one exponent up with a zero fraction.
+-/
+theorem roundDyadic_normal_carry_of_log2 (sign : Bool) (significand leading : Nat)
+    (exponent : Int) (hsignificand : significand ≠ 0) (hleading : significand.log2 = leading)
+    (hwidth : 23 ≤ leading) (hnormal : -126 ≤ Int.ofNat leading + exponent)
+    (hoverflow : Int.ofNat leading + exponent + 1 ≤ 127)
+    (hround : Numerics.roundShiftRightEven significand (leading - 23) = 2 ^ 24) :
+    roundDyadic { negative := sign, significand, exponent } =
+      mkBits sign (Int.toNat (Int.ofNat leading + exponent + 1 + 127)) 0 := by
+  unfold roundDyadic
+  simp only [beq_iff_eq, hsignificand, ite_false, hleading, not_lt_of_ge hnormal, hwidth,
+    ite_true, hround, Model.pow2_eq_two_pow, gt_iff_lt, not_lt_of_ge hoverflow, Nat.sub_self]
+
+/--
 An aligned remainder below half an ulp leaves a normal binary32 mantissa unchanged by rounding.
+
+With `gap = 0` the bound forces `small = 0` and the mantissa is already exact.
 -/
 theorem roundDyadic_shiftLeft_add_of_lt_half
     (sign : Bool) (small large gap : Nat) (exponent : Int)
     (hlargeLow : 2 ^ 23 ≤ large) (hlargeHigh : large < 2 ^ 24)
-    (hgap : 0 < gap) (hsmall : small < 2 ^ (gap - 1))
+    (hsmall : small < 2 ^ (gap - 1))
     (hnormal : -126 ≤ Int.ofNat (23 + gap) + exponent)
     (hoverflow : Int.ofNat (23 + gap) + exponent ≤ 127) :
     roundDyadic {
@@ -67,13 +101,11 @@ theorem roundDyadic_shiftLeft_add_of_lt_half
     (Nat.log2_eq_iff hcombinedNe).2 ⟨hlower, hupper⟩
   have hround :
       Numerics.roundShiftRightEven ((large <<< gap) + small) gap = large :=
-    Model.roundShiftRightEven_shiftLeft_add_of_lt_half large small gap hgap
+    Model.roundShiftRightEven_shiftLeft_add_of_lt_half large small gap
       (by simpa only [Model.pow2_eq_two_pow] using hsmall)
-  have hcarry : large ≠ 2 ^ 24 := hlargeHigh.ne
-  unfold roundDyadic
-  simp only [beq_iff_eq, hcombinedNe, ite_false, hleading, not_lt_of_ge hnormal,
-    Nat.le_add_right, ite_true, Nat.add_sub_cancel_left, hround, hcarry,
-    not_lt_of_ge hoverflow, Model.pow2_eq_two_pow]
+  exact roundDyadic_normal_of_log2 sign _ (23 + gap) exponent large hcombinedNe hleading
+    (Nat.le_add_right _ _) hnormal hoverflow (by rw [Nat.add_sub_cancel_left]; exact hround)
+    hlargeHigh.ne
 
 private theorem roundSubnormal_eq
     (sign : Bool) (nativeFraction : UInt64) (genericFraction : Nat)
@@ -106,6 +138,49 @@ private theorem roundSubnormal_eq
     · rw [ite_eq_left hfnormal, ite_eq_left (hfractionNormal.mp hfnormal)]
     · rw [ite_eq_right hfnormal,
         ite_eq_right (not_congr hfractionNormal |>.mp hfnormal), hfraction]
+
+/--
+At a native leading-bit position `position`, with generic total exponent
+`total = position - 298`, the native overflow test and biased-exponent encoding are the generic
+ones.
+-/
+private theorem positionEncoding_eq (sign : Bool) (position : UInt64) (positionNat : Nat)
+    (total : Int) (fraction : Nat) (hposition : position.toNat = positionNat)
+    (htotal : total = Int.ofNat positionNat - 298) (hpositionMin : 172 ≤ positionNat) :
+    (if position > 425 then
+        if sign = true then (0xff800000 : UInt32) else 0x7f800000
+      else
+        mkBits sign (position - 171).toNat fraction) =
+      if total > 127 then
+        if sign = true then (0xff800000 : UInt32) else 0x7f800000
+      else
+        mkBits sign (Int.toNat (total + 127)) fraction := by
+  have h171 : ((171 : UInt64).toNat) = 171 := by
+    decide
+  have h425 : ((425 : UInt64).toNat) = 425 := by
+    decide
+  have hoverflow : position > (425 : UInt64) ↔ total > 127 := by
+    change (425 : UInt64) < position ↔ (127 : Int) < total
+    rw [UInt64.lt_iff_toNat_lt, hposition, htotal, h425]
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  by_cases hnativeOverflow : position > (425 : UInt64)
+  · rw [ite_eq_left hnativeOverflow, ite_eq_left (hoverflow.mp hnativeOverflow)]
+  · rw [ite_eq_right hnativeOverflow, ite_eq_right (not_congr hoverflow |>.mp hnativeOverflow)]
+    have hpositionLe : (171 : UInt64) ≤ position := by
+      apply UInt64.le_iff_toNat_le.mpr
+      rw [hposition, h171]
+      omega
+    have hnonnegative : 0 ≤ total + 127 := by
+      rw [htotal]
+      simp only [Int.ofNat_eq_natCast]
+      omega
+    have hencoded : (position - (171 : UInt64)).toNat = Int.toNat (total + 127) := by
+      rw [UInt64.toNat_sub_of_le position (171 : UInt64) hpositionLe, hposition, h171,
+        ← Int.ofNat_inj, Int.toNat_of_nonneg hnonnegative, htotal]
+      simp only [Int.ofNat_eq_natCast]
+      omega
+    rw [hencoded]
 
 private theorem roundNormal_eq
     (sign : Bool)
@@ -156,10 +231,6 @@ private theorem roundNormal_eq
               else
                 genericRounded) -
             Model.pow2 23) := by
-  have h171 : ((171 : UInt64).toNat) = 171 := by
-    decide
-  have h425 : ((425 : UInt64).toNat) = 425 := by
-    decide
   have hminMantissa : ((0x800000 : UInt64).toNat) = 0x800000 := by
     decide
   have hcarry :
@@ -169,79 +240,16 @@ private theorem roundNormal_eq
     simp [hrounded, Model.pow2_eq_two_pow]
   by_cases hnativeCarry : nativeRounded = 0x1000000
   · have hgenericCarry := hcarry.mp hnativeCarry
-    simp only [ite_eq_left hnativeCarry, ite_eq_left hgenericCarry]
-    have hoverflow :
-        nativePosition + 1 > (425 : UInt64) ↔
-          genericTotal + 1 > 127 := by
-      change
-        (425 : UInt64) < nativePosition + 1 ↔
-          (127 : Int) < genericTotal + 1
-      rw [UInt64.lt_iff_toNat_lt, hpositionSucc, htotal]
-      simp only [h425]
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    by_cases hnativeOverflow : nativePosition + 1 > (425 : UInt64)
-    · rw [ite_eq_left hnativeOverflow, ite_eq_left (hoverflow.mp hnativeOverflow)]
-    · rw [ite_eq_right hnativeOverflow,
-        ite_eq_right (not_congr hoverflow |>.mp hnativeOverflow)]
-      have hpositionLe : (171 : UInt64) ≤ nativePosition + 1 := by
-        apply UInt64.le_iff_toNat_le.mpr
-        rw [hpositionSucc]
-        simp only [h171]
-        omega
-      have hnonnegative : 0 ≤ genericTotal + 1 + 127 := by
-        rw [htotal]
-        simp only [Int.ofNat_eq_natCast]
-        omega
-      have hencoded :
-          (nativePosition + 1 - (171 : UInt64)).toNat =
-            Int.toNat (genericTotal + 1 + 127) := by
-        rw [UInt64.toNat_sub_of_le
-          (nativePosition + 1) (171 : UInt64) hpositionLe]
-        rw [hpositionSucc]
-        simp only [h171]
-        rw [← Int.ofNat_inj, Int.toNat_of_nonneg hnonnegative, htotal]
-        simp only [Int.ofNat_eq_natCast]
-        omega
-      rw [hencoded]
-      norm_num [hminMantissa, Model.pow2_eq_two_pow]
+    simp only [ite_eq_left hnativeCarry, ite_eq_left hgenericCarry, hminMantissa, Nat.sub_self]
+    exact positionEncoding_eq sign _ _ _ 0 hpositionSucc
+      (by rw [htotal]; simp only [Int.ofNat_eq_natCast]; omega) (by omega)
   · have hgenericCarry : genericRounded ≠ Model.pow2 24 :=
       not_congr hcarry |>.mp hnativeCarry
-    simp only [ite_eq_right hnativeCarry, ite_eq_right hgenericCarry]
-    have hoverflow :
-        nativePosition > (425 : UInt64) ↔ genericTotal > 127 := by
-      change
-        (425 : UInt64) < nativePosition ↔
-          (127 : Int) < genericTotal
-      rw [UInt64.lt_iff_toNat_lt, hposition, htotal]
-      simp only [h425]
-      simp only [Int.ofNat_eq_natCast]
-      omega
-    by_cases hnativeOverflow : nativePosition > (425 : UInt64)
-    · rw [ite_eq_left hnativeOverflow, ite_eq_left (hoverflow.mp hnativeOverflow)]
-    · rw [ite_eq_right hnativeOverflow,
-        ite_eq_right (not_congr hoverflow |>.mp hnativeOverflow)]
-      have hpositionLe : (171 : UInt64) ≤ nativePosition := by
-        apply UInt64.le_iff_toNat_le.mpr
-        rw [hposition]
-        simp only [h171]
-        omega
-      have hnonnegative : 0 ≤ genericTotal + 127 := by
-        rw [htotal]
-        simp only [Int.ofNat_eq_natCast]
-        omega
-      have hencoded :
-          (nativePosition - (171 : UInt64)).toNat =
-            Int.toNat (genericTotal + 127) := by
-        rw [UInt64.toNat_sub_of_le
-          nativePosition (171 : UInt64) hpositionLe]
-        rw [hposition]
-        simp only [h171]
-        rw [← Int.ofNat_inj, Int.toNat_of_nonneg hnonnegative, htotal]
-        simp only [Int.ofNat_eq_natCast]
-        omega
-      rw [hencoded, hrounded]
-      norm_num [Model.pow2_eq_two_pow]
+    have hpow23 : Model.pow2 23 = 0x800000 := by
+      rw [Model.pow2_eq_two_pow]
+      norm_num
+    simp only [ite_eq_right hnativeCarry, ite_eq_right hgenericCarry, hrounded, hpow23]
+    exact positionEncoding_eq sign _ _ _ _ hposition htotal hpositionMin
 
 /--
 Native word rounding agrees with the generic dyadic rounder.
@@ -368,7 +376,7 @@ theorem roundProduct_eq_roundDyadic
                 product.toNat <<< (scale.toNat - 149) := by
             simpa only [← hshift, UInt64.ofNat_toNat] using
               FloatLib.Numerics.FixedWord.shiftLeft_toNat product
-                (scale.toNat - 149) hshiftLt hfit
+                (scale.toNat - 149) hfit
           rw [hnativeShift, hexponent]
       exact roundSubnormal_eq sign nativeFraction genericFraction hfraction
     · rw [ite_eq_right hsubnormal]
@@ -433,7 +441,7 @@ theorem roundProduct_eq_roundDyadic
               (by norm_num)
           simpa only [← hshift, UInt64.ofNat_toNat] using
             FloatLib.Numerics.FixedWord.shiftLeft_toNat product
-              (23 - product.toNat.log2) hshiftLt hfit
+              (23 - product.toNat.log2) hfit
         · have hleadingSmallNat :
               ¬product.toNat.log2 < 23 := by
             intro hlt

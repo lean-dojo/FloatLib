@@ -40,7 +40,7 @@ namespace FloatLib.Floats.Formats.Posit.Model.Spec
 
 variable {format : Format}
 
-/-- Exact addition followed by one standardized posit rounding. -/
+/-- Exact addition followed by one standardized posit rounding; NaR in either operand gives NaR. -/
 @[inline] def add (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
@@ -48,7 +48,9 @@ variable {format : Format}
   | _, _ =>
       nar format
 
-/-- Exact subtraction followed by one standardized posit rounding. -/
+/--
+Exact subtraction followed by one standardized posit rounding; NaR in either operand gives NaR.
+-/
 @[inline] def sub (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
@@ -56,7 +58,9 @@ variable {format : Format}
   | _, _ =>
       nar format
 
-/-- Exact multiplication followed by one standardized posit rounding. -/
+/--
+Exact multiplication followed by one standardized posit rounding; NaR in either operand gives NaR.
+-/
 @[inline] def mul (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
@@ -96,7 +100,9 @@ comparisons.
       else
         roundSqrtRat format rational
 
-/-- Exact fused multiply-add with a single final standardized rounding. -/
+/--
+Exact fused multiply-add with a single final standardized rounding; NaR in any operand gives NaR.
+-/
 @[inline] def fma (left right addend : Model format) : Model format :=
   match left.toRat?, right.toRat?, addend.toRat? with
   | some leftValue, some rightValue, some addendValue =>

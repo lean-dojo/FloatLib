@@ -17,6 +17,7 @@ import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.ModelBridge
 import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Proof
 import FloatLib.Numerics.ShiftRightJam.Proof
 import FloatLib.Kernels.FixedWord.Core.Proof.Rounding
+import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 
 /-!
 # Correctness of native-word fused multiply-add for generic binary32
@@ -65,57 +66,19 @@ private theorem roundFmaAlignedRight_eq
   have hshiftNatLe : (zProductScale - productScale).toNat ≤ 39 := by
     have h := UInt64.le_iff_toNat_le.mp hshift
     simpa using h
-  have hshiftNatLt : (zProductScale - productScale).toNat < 64 := by
-    omega
-  have hzNat : zMantissa.toNat ≠ 0 := by
-    simpa [← UInt64.toNat_inj] using hz
-  have hzLogLt : zMantissa.toNat.log2 < 24 := by
-    rw [Nat.log2_lt hzNat]
-    exact hzBound
-  have hzShiftedBound :
-      zMantissa.toNat <<< (zProductScale - productScale).toNat < 2 ^ 63 := by
-    calc
-      zMantissa.toNat <<< (zProductScale - productScale).toNat <
-          2 ^ (zMantissa.toNat.log2 + 1 +
-            (zProductScale - productScale).toNat) :=
-        Nat.shiftLeft_lt Nat.lt_log2_self
-      _ ≤ 2 ^ 63 := by
-        apply Nat.pow_le_pow_right
-        · decide
-        · omega
-  have hzShiftedFit :
-      zMantissa.toNat <<< (zProductScale - productScale).toNat < 2 ^ 64 :=
-    lt_trans hzShiftedBound (by norm_num)
-  have hzShiftedToNat :
-      (zMantissa <<< (zProductScale - productScale)).toNat =
-        zMantissa.toNat <<< (zProductScale - productScale).toNat := by
-    rw [UInt64.toNat_shiftLeft, Nat.mod_eq_of_lt hshiftNatLt,
-      Nat.mod_eq_of_lt hzShiftedFit]
-  have hzShiftedNatNonzero :
-      zMantissa.toNat <<< (zProductScale - productScale).toNat ≠ 0 := by
-    simp [Nat.shiftLeft_eq, hzNat]
-  have hzShiftedNonzero :
-      zMantissa <<< (zProductScale - productScale) ≠ 0 := by
-    intro h
-    have hnat := congrArg UInt64.toNat h
-    rw [hzShiftedToNat] at hnat
-    exact hzShiftedNatNonzero hnat
-  have hsum :
-      product.toNat +
-          (zMantissa <<< (zProductScale - productScale)).toNat <
-        2 ^ 64 := by
-    rw [hzShiftedToNat]
-    norm_num at hproductBound hzShiftedBound ⊢
-    omega
+  obtain ⟨hzShiftedToNat, hzShiftedNonzero, hsum⟩ :=
+    NativeSmallWord.shiftLeft_add_fits zMantissa product (zProductScale - productScale) 24
+      hzBound (by simpa [← UInt64.toNat_inj] using hz) (hproductBound.trans (by norm_num))
+      (by omega)
   have hround := roundAddMagnitudesAtScale_eq_roundDyadic
     productSign zSign product
       (zMantissa <<< (zProductScale - productScale))
-      productScale hproduct hzShiftedNonzero hsum hproductScaleBound
+      productScale hproduct hzShiftedNonzero (fun _ => by omega) hproductScaleBound
   rw [hzShiftedToNat, hshiftToNat] at hround
   have halign := addDyadic_alignRightOffset 298
     productSign zSign product.toNat zMantissa.toNat
     productScale.toNat zProductScale.toNat
-    (by simpa [← UInt64.toNat_inj] using hproduct) hzNat hscaleNat
+    (by simpa [← UInt64.toNat_inj] using hproduct) hscaleNat
   norm_num at halign
   exact hround.trans (congrArg roundDyadic halign.symm)
 
@@ -158,56 +121,18 @@ private theorem roundFmaAlignedLeft_eq
   have hshiftNatLe : (productScale - zProductScale).toNat ≤ 15 := by
     have h := UInt64.le_iff_toNat_le.mp hshift
     simpa using h
-  have hshiftNatLt : (productScale - zProductScale).toNat < 64 := by
-    omega
-  have hproductNat : product.toNat ≠ 0 := by
-    simpa [← UInt64.toNat_inj] using hproduct
-  have hproductLogLt : product.toNat.log2 < 48 := by
-    rw [Nat.log2_lt hproductNat]
-    exact hproductBound
-  have hproductShiftedBound :
-      product.toNat <<< (productScale - zProductScale).toNat < 2 ^ 63 := by
-    calc
-      product.toNat <<< (productScale - zProductScale).toNat <
-          2 ^ (product.toNat.log2 + 1 +
-            (productScale - zProductScale).toNat) :=
-        Nat.shiftLeft_lt Nat.lt_log2_self
-      _ ≤ 2 ^ 63 := by
-        apply Nat.pow_le_pow_right
-        · decide
-        · omega
-  have hproductShiftedFit :
-      product.toNat <<< (productScale - zProductScale).toNat < 2 ^ 64 :=
-    lt_trans hproductShiftedBound (by norm_num)
-  have hproductShiftedToNat :
-      (product <<< (productScale - zProductScale)).toNat =
-        product.toNat <<< (productScale - zProductScale).toNat := by
-    rw [UInt64.toNat_shiftLeft, Nat.mod_eq_of_lt hshiftNatLt,
-      Nat.mod_eq_of_lt hproductShiftedFit]
-  have hproductShiftedNatNonzero :
-      product.toNat <<< (productScale - zProductScale).toNat ≠ 0 := by
-    simp [Nat.shiftLeft_eq, hproductNat]
-  have hproductShiftedNonzero :
-      product <<< (productScale - zProductScale) ≠ 0 := by
-    intro h
-    have hnat := congrArg UInt64.toNat h
-    rw [hproductShiftedToNat] at hnat
-    exact hproductShiftedNatNonzero hnat
-  have hsum :
-      (product <<< (productScale - zProductScale)).toNat +
-          zMantissa.toNat <
-        2 ^ 64 := by
-    rw [hproductShiftedToNat]
-    norm_num at hzBound hproductShiftedBound ⊢
-    omega
+  obtain ⟨hproductShiftedToNat, hproductShiftedNonzero, hsum⟩ :=
+    NativeSmallWord.shiftLeft_add_fits product zMantissa (productScale - zProductScale) 48
+      hproductBound (by simpa [← UInt64.toNat_inj] using hproduct)
+      (hzBound.trans (by norm_num)) (by omega)
   have hround := roundAddMagnitudesAtScale_eq_roundDyadic
     productSign zSign
       (product <<< (productScale - zProductScale)) zMantissa
-      zProductScale hproductShiftedNonzero hz hsum hzScaleBound
+      zProductScale hproductShiftedNonzero hz (fun _ => hsum) hzScaleBound
   rw [hproductShiftedToNat, hshiftToNat] at hround
   have halign := addDyadic_alignLeftOffset 298
     productSign zSign product.toNat zMantissa.toNat
-    productScale.toNat zProductScale.toNat hproductNat
+    productScale.toNat zProductScale.toNat
     (by simpa [← UInt64.toNat_inj] using hz) hscaleNat
   norm_num at halign
   exact hround.trans (congrArg roundDyadic halign.symm)
@@ -228,7 +153,7 @@ private theorem roundFmaFarAddNormal
   have hsmallHalf : small < 2 ^ (gap - 1) :=
     hsmall.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
   rw [roundDyadic_shiftLeft_add_of_lt_half sign small large gap
-    (Int.ofNat smallScale - 298) hlargeLow hlargeHigh (by omega) hsmallHalf
+    (Int.ofNat smallScale - 298) hlargeLow hlargeHigh hsmallHalf
     (by simp only [Int.ofNat_eq_natCast]; omega)
     (by simp only [Int.ofNat_eq_natCast]; omega)]
   congr 1
@@ -283,7 +208,7 @@ private theorem roundFmaFarAddSubnormal
   have hround :
       Numerics.roundShiftRightEven ((large <<< gap) + small) gap = large :=
     Model.roundShiftRightEven_shiftLeft_add_of_lt_half
-      large small gap hgapPos hsmallHalf
+      large small gap hsmallHalf
   have hcombinedExponent :
       Int.ofNat smallScale - 298 + 149 =
         Int.negSucc (gap - 1) := by
@@ -349,25 +274,8 @@ private theorem roundFmaFarAddValue
       (signBit (toUInt32 z)) small (fracField (toUInt32 z)).toNat
       smallScale gap hsmall hlargePos hfraction hgap hscale']
     simpa [hexponent] using mkBits_fields (toUInt32 z)
-  · have hlarge :
-        (finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat =
-          Model.pow2 23 + (fracField (toUInt32 z)).toNat := by
-      simpa [hexponent] using
-        finiteMantissa_toNat
-          (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
-    have hlargeLow :
-        2 ^ 23 ≤
-          (finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat := by
-      rw [hlarge, Model.pow2_eq_two_pow]
-      omega
-    have hlargeHigh :
-        (finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat <
-          2 ^ 24 :=
-      finiteMantissa_lt
-        (expField (toUInt32 z)) (fracField (toUInt32 z)) hfraction
+  · obtain ⟨hlargeLow, hlargeHigh, hfractionValue⟩ :=
+      finiteMantissa_bounds _ _ hexponent hfraction
     have hscaleToNat :
         (finiteScale (expField (toUInt32 z))).toNat =
           (expField (toUInt32 z)).toNat - 1 := by
@@ -384,13 +292,6 @@ private theorem roundFmaFarAddValue
           (expField (toUInt32 z)).toNat := by
       rw [hscaleToNat]
       exact Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr hexponentNatNonzero)
-    have hfractionValue :
-        (finiteMantissa
-            (expField (toUInt32 z)) (fracField (toUInt32 z))).toNat -
-            2 ^ 23 =
-          (fracField (toUInt32 z)).toNat := by
-      rw [hlarge, Model.pow2_eq_two_pow]
-      omega
     rw [roundFmaFarAddNormal
       (signBit (toUInt32 z)) small
       (finiteMantissa
@@ -506,7 +407,7 @@ private theorem roundFmaJamAbove_eq
       calc zMantissa.toNat * 2 ^ 3 < 2 ^ 24 * 2 ^ 3 :=
             Nat.mul_lt_mul_of_pos_right hzBound (by decide)
         _ ≤ 2 ^ 64 := by norm_num
-    have h := FloatLib.Numerics.FixedWord.shiftLeft_toNat zMantissa 3 (by decide) hfit
+    have h := FloatLib.Numerics.FixedWord.shiftLeft_toNat zMantissa 3 hfit
     simpa [Nat.shiftLeft_eq] using h
   have hq : (shiftRightWord product (zProductScale - productScale - 3)).toNat =
       product.toNat / 2 ^ d := by
@@ -528,8 +429,7 @@ private theorem roundFmaJamAbove_eq
   have hmag := jamCombine_toNat (productSign == zSign)
     (isExactShift product (zProductScale - productScale - 3))
     (zMantissa <<< 3) (shiftRightWord product (zProductScale - productScale - 3))
-    product.toNat d hq hexact (by rw [hzShift, hq]; omega)
-    (fun _ => ⟨by rw [hzShift, hq]; omega, hproductLe⟩)
+    product.toNat d hq hexact (fun _ => by rw [hzShift, hq]; omega) (fun _ => hproductLe)
   have hscaleSum : (productScale + (zProductScale - productScale - 3)).toNat =
       productScale.toNat + d := by
     rw [UInt64.toNat_add, hdiscard]
@@ -565,7 +465,7 @@ private theorem roundFmaJamAbove_eq
       have := (Nat.le_log2 hpositive.ne').2 hbound
       omega)
   have halign := addDyadic_alignRightOffset 298 productSign zSign product.toNat zMantissa.toNat
-    productScale.toNat zProductScale.toNat hproductNe hzNe hscaleNat
+    productScale.toNat zProductScale.toNat hproductNe hscaleNat
   norm_num at halign
   rw [hlhs]
   simp only [Int.ofNat_eq_natCast]
@@ -576,8 +476,7 @@ private theorem roundFmaJamAbove_eq
     rw [addDyadic_sameSign_sameExponent _ _ _ _ hproductNe hzShiftedNe]
     simp only [beq_self_eq_true, ite_true, Nat.add_comm]
   · have hsignBeq : (productSign == zSign) = false := by simpa using hsign
-    rw [addDyadic_oppositeSign_sameExponent_largeRight _ _ _ _ _ hproductNe hzShiftedNe hsign
-      (by omega)]
+    rw [addDyadic_oppositeSign_sameExponent_largeRight _ _ _ _ _ hsign (by omega)]
     simp only [hsignBeq, Bool.false_eq_true, ite_false]
 
 /-- A product of at least `2^46` absorbs a far-below addend through a sticky bit. -/
@@ -629,8 +528,7 @@ private theorem roundFmaJamBelow_eq
   have hmag := jamCombine_toNat (productSign == zSign)
     (isExactShift zMantissa (productScale - zProductScale))
     product (shiftRightWord zMantissa (productScale - zProductScale))
-    zMantissa.toNat t hq hexact (by rw [hq]; omega)
-    (fun _ => ⟨by rw [hq]; omega, hzLe⟩)
+    zMantissa.toNat t hq hexact (fun _ => by rw [hq]; omega) (fun _ => hzLe)
   have hscaleSplit : productScale.toNat = zProductScale.toNat + t := by omega
   have hpowT : 2 ^ (46 + t) ≤ product.toNat * 2 ^ t := by
     rw [Nat.pow_add]
@@ -660,7 +558,7 @@ private theorem roundFmaJamBelow_eq
       have := (Nat.le_log2 hpositive.ne').2 hbound
       omega)
   have halign := addDyadic_alignLeftOffset 298 productSign zSign product.toNat zMantissa.toNat
-    productScale.toNat zProductScale.toNat hproductNe hzNe hltNat
+    productScale.toNat zProductScale.toNat hzNe hltNat
   norm_num at halign
   rw [hlhs]
   simp only [Int.ofNat_eq_natCast]
@@ -671,8 +569,7 @@ private theorem roundFmaJamBelow_eq
     rw [addDyadic_sameSign_sameExponent _ _ _ _ hproductShiftedNe hzNe]
     simp only [beq_self_eq_true, ite_true]
   · have hsignBeq : (productSign == zSign) = false := by simpa using hsign
-    rw [addDyadic_oppositeSign_sameExponent_largeLeft _ _ _ _ _ hproductShiftedNe hzNe hsign
-      (by omega)]
+    rw [addDyadic_oppositeSign_sameExponent_largeLeft _ _ _ _ _ hsign (by omega)]
     simp only [hsignBeq, Bool.false_eq_true, ite_false]
 
 /--
@@ -723,11 +620,11 @@ theorem fmaFiniteWord_eq (x y z : Value) :
   simp only [hxExceptional, hyExceptional, hzExceptional, hxZero, hyZero, hzZero,
     hproductZero, or_false, ite_false]
   have hxMantissaLt :=
-    finiteMantissa_lt_of_components x hxExponent hxFraction hxMantissa
+    finiteMantissa_lt_of_components x hxFraction hxMantissa
   have hyMantissaLt :=
-    finiteMantissa_lt_of_components y hyExponent hyFraction hyMantissa
+    finiteMantissa_lt_of_components y hyFraction hyMantissa
   have hzMantissaLt :=
-    finiteMantissa_lt_of_components z hzExponent hzFraction hzMantissa
+    finiteMantissa_lt_of_components z hzFraction hzMantissa
   have hproductNatBound :
       xMantissa.toNat * yMantissa.toNat < 2 ^ 48 := by
     norm_num at hxMantissaLt hyMantissaLt ⊢
@@ -788,126 +685,101 @@ theorem fmaFiniteWord_eq (x y z : Value) :
       rw [hproductToNat, hproductExponent, hzExponentValue] at hround
       exact congrArg (fun bits => some (ofUInt32 bits)) hround
     · rw [ite_eq_right hshift]
-      by_cases hfar : 48 < zProductScale - productScale
-      · by_cases hsign :
-          (signBit (toUInt32 x) ^^ signBit (toUInt32 y)) =
-            signBit (toUInt32 z)
-        · have hcondition :
-              (decide (48 < zProductScale - productScale) &&
-                ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
-                  signBit (toUInt32 z))) = true := by
-            simp [hfar, hsign]
-          rw [ite_eq_left hcondition]
-          have hscaleNat : productScale.toNat ≤ zProductScale.toNat :=
-            UInt64.le_iff_toNat_le.mp hscale
-          have hshiftToNat :
-              (zProductScale - productScale).toNat =
-                zProductScale.toNat - productScale.toNat := by
-            rw [UInt64.toNat_sub_of_le zProductScale productScale hscale]
-          have hfarNat :
-              48 < zProductScale.toNat - productScale.toNat := by
-            rw [← hshiftToNat]
-            have h := UInt64.lt_iff_toNat_lt.mp hfar
-            simpa using h
-          have hproductNatNonzero : product.toNat ≠ 0 := by
-            simpa [← UInt64.toNat_inj] using hproductZero
-          have hzNatNonzero : zMantissa.toNat ≠ 0 := by
-            simpa [← UInt64.toNat_inj] using hzZero
-          have hzShiftedNonzero :
-              zMantissa.toNat <<<
-                  (zProductScale.toNat - productScale.toNat) ≠ 0 := by
-            simp [Nat.shiftLeft_eq, hzNatNonzero]
-          have hzMantissaValue :
-              zMantissa =
-                finiteMantissa
-                  (expField (toUInt32 z)) (fracField (toUInt32 z)) := by
-            rw [hzMantissa, hzExponent, hzFraction]
-          have hzScaleValue :
-              zScale = finiteScale (expField (toUInt32 z)) := by
-            rw [hzScale, hzExponent]
-          have hzActualFinite :
-              expField (toUInt32 z) ≠ 0xff := by
-            rw [← hzExponent]
-            exact hzExceptional
-          have hscaleValue :
-              productScale.toNat +
-                  (zProductScale.toNat - productScale.toNat) =
-                (finiteScale (expField (toUInt32 z))).toNat + 149 := by
-            rw [← hzScaleValue, ← hzProductScaleToNat]
-            omega
-          have halign := addDyadic_alignRightOffset 298
-            (signBit (toUInt32 x) ^^ signBit (toUInt32 y))
-            (signBit (toUInt32 z))
-            product.toNat zMantissa.toNat
-            productScale.toNat zProductScale.toNat
-            hproductNatNonzero hzNatNonzero hscaleNat
-          norm_num at halign
-          have hround :
-              roundDyadic
+      by_cases hcondition :
+          (decide (48 < zProductScale - productScale) &&
+            ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
+              signBit (toUInt32 z))) = true
+      · rw [ite_eq_left hcondition]
+        simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at hcondition
+        obtain ⟨hfar, hsign⟩ := hcondition
+        have hscaleNat : productScale.toNat ≤ zProductScale.toNat :=
+          UInt64.le_iff_toNat_le.mp hscale
+        have hshiftToNat :
+            (zProductScale - productScale).toNat =
+              zProductScale.toNat - productScale.toNat := by
+          rw [UInt64.toNat_sub_of_le zProductScale productScale hscale]
+        have hfarNat :
+            48 < zProductScale.toNat - productScale.toNat := by
+          rw [← hshiftToNat]
+          have h := UInt64.lt_iff_toNat_lt.mp hfar
+          simpa using h
+        have hproductNatNonzero : product.toNat ≠ 0 := by
+          simpa [← UInt64.toNat_inj] using hproductZero
+        have hzNatNonzero : zMantissa.toNat ≠ 0 := by
+          simpa [← UInt64.toNat_inj] using hzZero
+        have hzShiftedNonzero :
+            zMantissa.toNat <<<
+                (zProductScale.toNat - productScale.toNat) ≠ 0 := by
+          simp [Nat.shiftLeft_eq, hzNatNonzero]
+        have hzMantissaValue :
+            zMantissa =
+              finiteMantissa
+                (expField (toUInt32 z)) (fracField (toUInt32 z)) := by
+          rw [hzMantissa, hzExponent, hzFraction]
+        have hzScaleValue :
+            zScale = finiteScale (expField (toUInt32 z)) := by
+          rw [hzScale, hzExponent]
+        have hzActualFinite :
+            expField (toUInt32 z) ≠ 0xff := by
+          rw [← hzExponent]
+          exact hzExceptional
+        have hscaleValue :
+            productScale.toNat +
+                (zProductScale.toNat - productScale.toNat) =
+              (finiteScale (expField (toUInt32 z))).toNat + 149 := by
+          rw [← hzScaleValue, ← hzProductScaleToNat]
+          omega
+        have halign := addDyadic_alignRightOffset 298
+          (signBit (toUInt32 x) ^^ signBit (toUInt32 y))
+          (signBit (toUInt32 z))
+          product.toNat zMantissa.toNat
+          productScale.toNat zProductScale.toNat
+          hproductNatNonzero hscaleNat
+        norm_num at halign
+        have hround :
+            roundDyadic
+                (Model.addDyadic
+                  { negative :=
+                      signBit (toUInt32 x) ^^ signBit (toUInt32 y)
+                    significand := product.toNat
+                    exponent := Int.ofNat productScale.toNat - 298 }
+                  { negative := signBit (toUInt32 z)
+                    significand := zMantissa.toNat
+                    exponent := Int.ofNat zProductScale.toNat - 298 }) =
+              toUInt32 z := by
+          simp only [Int.ofNat_eq_natCast] at halign ⊢
+          rw [halign, hsign]
+          rw [addDyadic_sameSign_sameExponent
+            (signBit (toUInt32 z)) product.toNat
+            (zMantissa.toNat <<<
+              (zProductScale.toNat - productScale.toNat))
+            ((productScale.toNat : Int) - 298)
+            hproductNatNonzero hzShiftedNonzero, Nat.add_comm product.toNat]
+          rw [hzMantissaValue]
+          exact roundFmaFarAddValue z product.toNat productScale.toNat
+            (zProductScale.toNat - productScale.toNat)
+            hproductBound hzActualFinite
+            (by simpa [hzMantissaValue] using hzZero)
+            hfarNat hscaleValue
+        rw [hproductToNat, hproductExponent, hzExponentValue] at hround
+        have hresult :
+            ofUInt32
+                (roundDyadic
                   (Model.addDyadic
                     { negative :=
                         signBit (toUInt32 x) ^^ signBit (toUInt32 y)
-                      significand := product.toNat
-                      exponent := Int.ofNat productScale.toNat - 298 }
+                      significand := xMantissa.toNat * yMantissa.toNat
+                      exponent :=
+                        (Int.ofNat xScale.toNat - 149) +
+                          (Int.ofNat yScale.toNat - 149) }
                     { negative := signBit (toUInt32 z)
                       significand := zMantissa.toNat
-                      exponent := Int.ofNat zProductScale.toNat - 298 }) =
-                toUInt32 z := by
-            simp only [Int.ofNat_eq_natCast] at halign ⊢
-            rw [halign, hsign]
-            rw [addDyadic_sameSign_sameExponent
-              (signBit (toUInt32 z)) product.toNat
-              (zMantissa.toNat <<<
-                (zProductScale.toNat - productScale.toNat))
-              ((productScale.toNat : Int) - 298)
-              hproductNatNonzero hzShiftedNonzero, Nat.add_comm product.toNat]
-            rw [hzMantissaValue]
-            exact roundFmaFarAddValue z product.toNat productScale.toNat
-              (zProductScale.toNat - productScale.toNat)
-              hproductBound hzActualFinite
-              (by simpa [hzMantissaValue] using hzZero)
-              hfarNat hscaleValue
-          rw [hproductToNat, hproductExponent, hzExponentValue] at hround
-          have hresult :
-              ofUInt32
-                  (roundDyadic
-                    (Model.addDyadic
-                      { negative :=
-                          signBit (toUInt32 x) ^^ signBit (toUInt32 y)
-                        significand := xMantissa.toNat * yMantissa.toNat
-                        exponent :=
-                          (Int.ofNat xScale.toNat - 149) +
-                            (Int.ofNat yScale.toNat - 149) }
-                      { negative := signBit (toUInt32 z)
-                        significand := zMantissa.toNat
-                        exponent := Int.ofNat zScale.toNat - 149 })) =
-                z := by
-            rw [hround]
-            exact ofUInt32_toUInt32 z
-          exact congrArg some hresult.symm
-        · have hcondition :
-              ¬(decide (48 < zProductScale - productScale) &&
-                ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
-                  signBit (toUInt32 z))) = true := by
-            simpa [hfar] using hsign
-          rw [ite_eq_right hcondition]
-          by_cases hzNormal : 0x800000 ≤ zMantissa
-          · rw [ite_eq_left hzNormal]
-            have hround := roundFmaJamAbove_eq
-              (signBit (toUInt32 x) ^^ signBit (toUInt32 y)) (signBit (toUInt32 z))
-              product zMantissa productScale zProductScale
-              hproductZero hproductBound hzNormal hzMantissaLt hzProductScaleLe hscale hshift
-            rw [hproductToNat, hproductExponent, hzExponentValue] at hround
-            exact congrArg (fun bits => some (ofUInt32 bits)) hround
-          · rw [ite_eq_right hzNormal]
-            unfold fmaExactFinite?
-            rw [hproductToNat, hproductExponent, hzExponentValue]
-      · have hcondition :
-            ¬(decide (48 < zProductScale - productScale) &&
-              ((signBit (toUInt32 x) ^^ signBit (toUInt32 y)) ==
-                signBit (toUInt32 z))) = true := by
-          simp [hfar]
-        rw [ite_eq_right hcondition]
+                      exponent := Int.ofNat zScale.toNat - 149 })) =
+              z := by
+          rw [hround]
+          exact ofUInt32_toUInt32 z
+        exact congrArg some hresult.symm
+      · rw [ite_eq_right hcondition]
         by_cases hzNormal : 0x800000 ≤ zMantissa
         · rw [ite_eq_left hzNormal]
           have hround := roundFmaJamAbove_eq

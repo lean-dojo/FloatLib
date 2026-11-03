@@ -15,6 +15,8 @@ public import FloatLibTests.Accounting
 models print a round-trip decimal, decimal fixed point keeps its scale, codebook values print
 their table entry, logarithmic values print their exact value or a power, decimal datums keep their
 quantum, and intervals, complex values and status outcomes show their components the same way.
+Status records list exactly their raised flags, and conversion outcomes and failure reasons print
+their constructors with a leading dot.
 -/
 
 @[expose] public section
@@ -49,8 +51,10 @@ def binaryDisplays : Nat :=
     , shown (some (Model.neg tenth)) == "some (-0.1)"
     , (shown (Model.Interval.mk tenth fifth)).drop 2 == "lo := 0.1, hi := 0.2 }"
     , (shown (ExecComplex.mk tenth (Model.neg fifth))).drop 2 == "re := 0.1, im := -0.2 }"
-    , ((shown (Model.add tenth fifth (status := true))).drop 2).startsWith
-        "value := 0.30000000000000004," ]
+    , shown (Model.add tenth fifth (status := true)) ==
+        "{ value := 0.30000000000000004, status := { inexact := true }, ternary := Ordering.gt }"
+    , (shown (Model.format tenth (status := true))).drop 2 ==
+        "text := \"0.1\", status := { inexact := true } }" ]
 
 /-- Exact and bounded decimal fixed point keep their scale, and other radices print exact values. -/
 def fixedPointDisplays : Nat :=
@@ -106,9 +110,91 @@ def decimalDisplays : Nat :=
     , datum (.finite false 5 (-9)) == "5e-9"
     , datum (.finite false 12 (-7)) == "0.0000012"
     , datum (.finite true 0 (-2)) == "-0.00"
+    , datum 1.50 == "1.50"
+    , datum (-1.2e4) == "-1.2e4"
+    , datum 5e-9 == "5e-9"
+    , datum (-0.00) == "-0.00"
     , datum (.infinity true) == "-inf"
     , datum (.nan false true 7) == "nan"
     , shown (some (Formats.DecimalInterchange.Datum.finite true 5 0)) == "some (-5)" ]
+
+/-- Whether `text` contains `part`. -/
+def mentions (text part : String) : Bool := (text.splitOn part).length > 1
+
+/-- The text names exactly the raised flags, and is `{}` exactly when none is raised. -/
+def listsRaised {α : Type} [Repr α] (flags : α) (fields : List (String × Bool)) : Bool :=
+  let text := shown flags
+  !mentions text ":= false" && (text == "{}") == fields.all (!·.2) &&
+    fields.all fun (name, raised) => mentions text (name ++ " := true") == raised
+
+/-- All 32 IEEE flag records and all 128 conversion flag records list their raised flags. -/
+def flagRecords : Nat :=
+  let ieee := (List.range 32).map fun bits =>
+    let status : IEEEStatus :=
+      { invalid := bits.testBit 0, divideByZero := bits.testBit 1, overflow := bits.testBit 2,
+        underflow := bits.testBit 3, inexact := bits.testBit 4 }
+    listsRaised status
+      [("invalid", status.invalid), ("divideByZero", status.divideByZero),
+        ("overflow", status.overflow), ("underflow", status.underflow),
+        ("inexact", status.inexact)]
+  let conversion := (List.range 128).map fun bits =>
+    let status : ExecFloat.ConversionStatus :=
+      { inexact := bits.testBit 0, overflow := bits.testBit 1, underflow := bits.testBit 2,
+        saturated := bits.testBit 3, wrapped := bits.testBit 4, mappedSpecial := bits.testBit 5,
+        invalid := bits.testBit 6 }
+    listsRaised status
+      [("inexact", status.inexact), ("overflow", status.overflow),
+        ("underflow", status.underflow), ("saturated", status.saturated),
+        ("wrapped", status.wrapped), ("mappedSpecial", status.mappedSpecial),
+        ("invalid", status.invalid)]
+  countFailures (ieee ++ conversion)
+
+/-- Sixteen-bit integers as a fixed-point grid with no fraction digits. -/
+abbrev Int16Grid := ExecFloat.BoundedFixedPoint binaryRadix 0 16
+
+/-- Outcomes, statuses and failure reasons print compactly, and a printed status is its value. -/
+def outcomeDisplays : Nat :=
+  let rounded := (16777216 : Binary32).add 1 (status := true)
+  countFailures
+    [ shown ({} : IEEEStatus) == "{}"
+    , shown rounded ==
+        "{ value := 16777216, status := { inexact := true }, ternary := Ordering.lt }"
+    , rounded.status == { inexact := true }
+    , shown ({ value := false, status := { invalid := true } } : IEEEComparison.Result) ==
+        "{ value := false, status := { invalid := true } }"
+    , shown ({ value := .finite false 150 (-2), status := { inexact := true } } :
+        Formats.DecimalInterchange.Outcome) == "{ value := 1.50, status := { inexact := true } }"
+    , shown ((1.5 : Binary32).cast (target := Binary64)) == ".success 1.5"
+    , shown ((70000 : Binary32).cast (target := Binary16)) ==
+        ".success inf { inexact := true, overflow := true }"
+    , ((70000 : Binary32).cast (target := Binary16)).status? ==
+        some { inexact := true, overflow := true }
+    , shown (some ((-(0 : Binary32)).cast (target := Binary64))) == "some (.success (-0))"
+    , shown (ExecFloat.cast (target := Int16Grid) (40000 : Binary64)) == ".failure .outOfRange"
+    , shown ((40000 : Binary64).cast (target := Int16Grid)
+        (context := ExecFloat.BoundedFixedPoint.OverflowPolicy.wrap)) ==
+        ".success (-25536) { inexact := true, overflow := true, wrapped := true }"
+    , shown (ExecFloat.ConversionOutcome.failure (α := Posit32) (.infinity .source false)) ==
+        ".failure (.infinity .source (negative := false))"
+    , shown (ExecFloat.ConversionOutcome.failure (α := Posit32)
+        (.exceptional (.operand 2) (.nan (payload := some 0)))) ==
+        ".failure (.exceptional (.operand 2) (.nan (payload := some 0)))"
+    , shown [ExecFloat.ConversionOutcome.failure (α := Binary32) .divisionByZero,
+        .failure .unsupportedPolicy] == "[.failure .divisionByZero, .failure .unsupportedPolicy]"
+    , shown ExecFloat.InputPosition.left == ".left"
+    , shown ExecFloat.InputPosition.right == ".right"
+    , shown ExecFloat.InputPosition.addend == ".addend"
+    , shown (ExecFloat.ConversionFailure.infinity .right true) ==
+        ".infinity .right (negative := true)"
+    , shown (ExecFloat.ConversionFailure.exceptional .addend .undefined) ==
+        ".exceptional .addend .undefined"
+    , shown ExceptionalValue.nan == ".nan"
+    , shown (ExceptionalValue.nan (negative := true) (signaling := true)) ==
+        ".nan (negative := true) (signaling := true)"
+    , shown (some ExceptionalValue.notAReal) == "some .notAReal"
+    , shown (some (ExceptionalValue.reserved (some 3))) == "some (.reserved (payload := some 3))"
+    , shown ExceptionalValue.reserved == ".reserved"
+    , shown ExceptionalValue.undefined == ".undefined" ]
 
 /-- Failure counts for the value displays of each family. -/
 def report : Thunk ReportSection := ⟨fun _ =>
@@ -116,6 +202,8 @@ def report : Thunk ReportSection := ⟨fun _ =>
     #[ ("binary values and models", binaryDisplays)
      , ("fixed point", fixedPointDisplays)
      , ("codebook and logarithmic", tableDisplays)
-     , ("decimal datums", decimalDisplays) ]⟩
+     , ("decimal datums", decimalDisplays)
+     , ("flag records", flagRecords)
+     , ("outcomes and failures", outcomeDisplays) ]⟩
 
 end FloatLibTests.Regression.Display

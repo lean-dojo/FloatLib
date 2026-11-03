@@ -6,7 +6,7 @@ summary: The spacing of a numerical grid explains rounding error, exact subtract
 phases: [rounding-theory]
 ---
 
-The binary32 addition `1 + 1e-8` from [Chapter 06](#/chapter/the-numerical-models) returns `1` because the increment is smaller than half the gap to the next representable value. The spacing between grid points bounds the possible error, and the rounding rule determines which neighbour is chosen. Above one the gap is $2^{-23}$; above two it is twice as large. We can describe that changing spacing on the real number line without choosing a packed bit layout.
+The binary32 addition `1 + 1e-8` from [Chapter 06](#/chapter/the-numerical-models) returns `1` because the increment is smaller than half the gap to the next representable value. The spacing between grid points bounds the possible error, and the rounding rule determines which neighbour is chosen. Above one the gap is $2^{-23}$, and above two it is twice as large. We can describe that changing spacing on the real number line without choosing a packed bit layout.
 
 Boldo and Melquiond's Flocq library for Coq develops this grid-based approach [@boldoMelquiond2011]. FloatLib follows it with an arbitrary radix and an exponent function, with proofs written in Lean against Mathlib [@leanMathlib2020]. To use a grid theorem for a packed format, we first prove that the format's operations agree with rounding on that grid, then check the theorem's hypotheses. The same proof can therefore apply to binary32, binary128, and custom IEEE-style descriptors without a case for each stored width.
 
@@ -28,7 +28,7 @@ With a grid step of $1/4$, we can do all three steps by hand. Rounding $11/8$ me
 
 This construction is [[FloatLib.Floats.Formats.Flocq.round]]. Much of the argument happens on the integers, where monotonicity, the half unit bound, and the choice of neighbour are elementary facts about $\mathrm{rnd}$, and scaling then carries them to the grid. When the exponent depends on the input magnitude, comparing two rounded values also requires handling changes of scale. [Figure 7.1](#/chapter/the-mathematics-of-rounding/figure-ch07-rounding-staircase) shows rounding on a grid with three binary digits. Each step is the set of reals sent to one grid point, and at the powers of two the canonical exponent changes and the steps double in width.
 
-![Round to nearest even on a grid with three binary digits, from 0.5 to 2.5: each step is the set of reals sent to one grid point, the steps double in width at 1 and at 2, and a filled end marks the neighbour a tie goes to](assets/ch07-rounding-staircase.png "Nearest-even rounding with three binary digits; filled endpoints show the tie choice.")
+![Round to nearest even on a grid with three binary digits, from 0.5 to 2.5: each step is the set of reals sent to one grid point, the steps double in width at 1 and at 2, and a filled end marks the neighbour a tie goes to](assets/ch07-rounding-staircase.png "Nearest-even rounding with three binary digits. Filled endpoints show the tie choice.")
 
 Back in binary32, the next representable value gives us the spacing above one directly:
 
@@ -95,7 +95,7 @@ example : Model.fexpOf FloatFormat.binary32 = fltExp (-149) 24 := by
 -- 1e-45
 ```
 
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.ulpAt]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.epsilonAt]] are the format level ulp and half ulp on this exponent function. The successor of zero above is the ulp of zero the theory predicts.
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.ulpAt]] and [[FloatLib.Floats.Formats.BinaryInterchange.Model.halfUlpAt]] are the format level ulp and half ulp on this exponent function. The successor of zero above is the ulp of zero the theory predicts.
 
 Substituting a few values into `fexpOf` gives the spacing changes from the opening example. At one the magnitude is $1$, so its canonical exponent is $\max(1-24,-149)=-23$. For two the magnitude is $2$, giving $-22$ instead, so one step above two is twice as large as one step above one. At the least normal value, $2^{-126}$, the magnitude is $-125$ and the canonical exponent is $\max(-125-24,-149)=-149$. Below that point the maximum keeps choosing $-149$ for positive values. So the subnormal grid continues with that same spacing all the way to zero, using fewer and fewer significant bits and never a smaller exponent.
 
@@ -136,14 +136,14 @@ example {β : FloatLib.Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
   error_bound_ulp rnd x
 
 example {β : FloatLib.Numerics.Radix} (prec : ℤ) (hprec : 0 < prec)
-    (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) (hx : x ≠ 0) :
+    (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
     ∃ δ : ℝ, |δ| ≤ bpow β (1 - prec) / 2 ∧
       @round β (flxExp prec) (flxValidExp prec hprec) rnd x = x * (1 + δ) :=
-  round_relative_error_FLX prec hprec rnd x hx
+  round_relative_error_FLX prec hprec rnd x
 
 example (x : ℝ) :
     |Model.roundAt FloatFormat.binary32 x - x| ≤
-      Model.epsilonAt FloatFormat.binary32 x :=
+      Model.halfUlpAt FloatFormat.binary32 x :=
   Model.abs_roundAt_sub_le FloatFormat.binary32 x
 
 example (x : ℝ) (hx : x ≠ 0)
@@ -163,7 +163,7 @@ example (x : ℝ) :
   Model.roundAt_standardModel FloatFormat.binary32 x
 ```
 
-Addition and subtraction do better. Both operands are multiples of the subnormal spacing, so an exact sum below the normal range is itself a grid point and rounds to itself. So for an IEEE descriptor, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_mul_one_add]] states $\mathrm{fl}(a+b) = (a+b)(1+\delta)$ with no $\eta$ term, assuming finite operands and result. For an addition tree this means the per-node premise of the mixed reduction bound later in this chapter holds with no absolute term.
+Addition and subtraction do better. Both operands are multiples of the subnormal spacing, so an exact sum below the normal range is itself a grid point and rounds to itself. So for an IEEE descriptor, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_mul_one_add]] states $\mathrm{fl}(a+b) = (a+b)(1+\delta)$ with no $\eta$ term, assuming only a finite result. For an addition tree this means the per-node premise of the mixed reduction bound later in this chapter holds with no absolute term.
 
 To bound a single operation, we first rewrite its executable result using the refinement equality. For addition, `abs_toReal_add_sub_le` then applies `abs_roundAt_sub_le` to the exact sum, and that argument also bounds a product, quotient, square root, or fused multiply-add. Once the refinement theorem's hypotheses hold, apply `error_bound_ulp` to the exact expression. For these operations the corresponding `*_standardModel` lemmas package the relative and absolute terms, and [Chapter 08](#/chapter/ieee-binary-formats/from-executable-arithmetic-to-real-rounding) works through the finite-value and domain hypotheses.
 
@@ -173,7 +173,7 @@ Sterbenz's lemma [@sterbenz1974] gives a condition under which subtraction is ex
 
 What we like about our [Sterbenz proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/Sterbenz.lean), `generic_format_FLX_sub_of_le_two_mul`, is that it never mentions rounding. A zero difference is already representable. Otherwise the operands are positive, and the ratio bound puts the magnitude indices of $x$ and $y$ at most one apart. So both are integer multiples of $\beta^{\mathrm{cexp}(y)}$, the smaller of the two canonical exponents, and so is their difference. Since $0 \le x - y \le y$, the canonical exponent of the difference is at most $\mathrm{cexp}(y)$, and an integer multiple of $\beta^{\mathrm{cexp}(y)}$ is then automatically on the grid at the difference's own exponent. [[FloatLib.Floats.Formats.Flocq.generic_format_FLX_sterbenz]] is the order symmetric form. In [Figure 7.3](#/chapter/the-mathematics-of-rounding/figure-ch07-sterbenz), the shaded wedge is the region that hypothesis describes. We checked a grid with three binary digits, and every pair of grid points inside the wedge has a difference on the grid, while outside it some do and some don't.
 
-![Sterbenz's hypothesis y/2 ≤ x ≤ 2y as a wedge in the plane, with every pair of grid points with three binary digits between 1/2 and 4 marked by whether x - y is on the grid: inside the wedge all 97 pairs are, outside it 38 are and 34 are not](assets/ch07-sterbenz.png "Subtraction is exact throughout the factor-of-two region; some pairs outside it also subtract exactly.")
+![Sterbenz's hypothesis y/2 ≤ x ≤ 2y as a wedge in the plane, with every pair of grid points with three binary digits between 1/2 and 4 marked by whether x - y is on the grid: inside the wedge all 97 pairs are, outside it 38 are and 34 are not](assets/ch07-sterbenz.png "Subtraction is exact throughout the factor-of-two region, and some pairs outside it also subtract exactly.")
 
 Packed binary values actually use FLT, and there the argument has two regimes. A difference small enough to be subnormal is automatically representable. Every FLT value is a multiple of $\beta^{e_{\min}}$, so the difference is too, by `generic_format_FIX_sub`. In the subnormal range that's all representability asks. Otherwise the difference is normal, the FLX theorem applies, and we transport the result back to FLT. That [FLT proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/SterbenzFLT.lean) is `generic_format_FLT_sterbenz`.
 
@@ -194,24 +194,23 @@ def onePlusUlp : Binary32 := ExecFloat.Binary.nextUp 1
 #eval (1.5 : Binary32) - onePlusUlp
 -- 0.49999988
 
-#eval (ExecFloat.Binary.sub (1.5 : Binary32) onePlusUlp (status := true)).2
--- { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := false }
+#eval (ExecFloat.Binary.sub (1.5 : Binary32) onePlusUlp (status := true)).status
+-- {}
 ```
 
-Here $x = 1.5$ and $y = 1 + 2^{-23}$ satisfy $y \le x \le 2y$. The difference $\tfrac12 - 2^{-23}$ is returned exactly, and the status word confirms that nothing was inexact. You can align the significands by hand to see why. At scale $2^{-23}$, the operands have integer significands $12582912$ and $8388609$, and their difference is $4194303$, which is the significand of the `0.49999988` printed above, $4194303 \cdot 2^{-23}$. That integer has fewer significant bits than either operand, so it fits easily once the result is normalized at its smaller magnitude. Cancellation made the answer smaller, but it didn't make us discard a single nonzero bit. Sterbenz's ratio condition guarantees this representability for the whole class of nearby operands, and gradual underflow gives the same protection when their difference reaches the fixed subnormal grid.
+Here $x = 1.5$ and $y = 1 + 2^{-23}$ satisfy $y \le x \le 2y$. The difference $\tfrac12 - 2^{-23}$ is returned exactly, and the empty status confirms that nothing was inexact. You can align the significands by hand to see why. At scale $2^{-23}$, the operands have integer significands $12582912$ and $8388609$, and their difference is $4194303$, which is the significand of the `0.49999988` printed above, $4194303 \cdot 2^{-23}$. That integer has fewer significant bits than either operand, so it fits easily once the result is normalized at its smaller magnitude. Cancellation made the answer smaller, but it didn't make us discard a single nonzero bit. Sterbenz's ratio condition guarantees this representability for the whole class of nearby operands, and gradual underflow gives the same protection when their difference reaches the fixed subnormal grid.
 
-A second exactness result is about the error of an addition. For any nearest rounding rule, `add_round_error_generic` proves that $\mathrm{round}(x + y) - (x + y)$ is representable whenever $x$ and $y$ are. [[FloatLib.Floats.Formats.Flocq.add_round_exact_error]] restates it as $x + y = \mathrm{round}(x+y) + e$ with $e$ in the format. That's the mathematical content of the TwoSum and FastTwoSum error-free transformations used in compensated summation. For those, see [Møller's 1965 paper on addition](https://doi.org/10.1007/BF01975722), Knuth [@knuth1997], and Dekker [@dekker1971]. The theorem needs nearest rounding and a monotone exponent function, and it fails for directed rounding. With three binary digits, $1 - 2^{-10}$ rounded down gives $7/8$, and the error $2^{-3} - 2^{-10}$ needs seven digits.
+A second exactness result is about the error of an addition. For any nearest rounding rule, `add_round_error_generic` proves that $\mathrm{round}(x + y) - (x + y)$ is representable whenever $x$ and $y$ are. [[FloatLib.Floats.Formats.Flocq.add_round_exact_error]] restates it as $x + y = \mathrm{round}(x+y) + e$ with $e$ in the format. That's the mathematical content of the TwoSum and FastTwoSum error-free transformations used in compensated summation. For those, see [Møller's 1965 paper on addition](https://doi.org/10.1007/BF01975722), Knuth [@knuth1997], and Dekker [@dekker1971]. The theorem needs nearest rounding and a monotone exponent function, and it fails for directed rounding. With three binary digits, take $x = 1$ and $y = -2^{-10}$. Rounding their sum $1 - 2^{-10}$ down gives $7/8$, and the error $2^{-3} - 2^{-10} = 127 \cdot 2^{-10}$ needs seven digits.
 
 What the theorem proves is that such an error value exists in the format, and `genericFormat_toReal_add_sub` carries that result to finite binary addition. Proving that TwoSum's sequence of floating-point operations actually computes $e$ would take a further argument, and we haven't included that algorithmic exactness proof. On packed values, the addition theorem requires a finite output so that its real value denotes the rounded sum:
 
 ```lean
 example {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
-    (hx : Model.isFinite x = true) (hy : Model.isFinite y = true)
     (hout : Model.isFinite (Model.add x y) = true) :
     genericFormat FloatLib.Numerics.binaryRadix (Model.fexpOf fmt)
       (Model.toReal (Model.add x y) - (Model.toReal x + Model.toReal y)) :=
-  Model.genericFormat_toReal_add_sub x y hfmt hx hy hout
+  Model.genericFormat_toReal_add_sub x y hfmt hout
 ```
 
 <details>
@@ -251,11 +250,11 @@ def c : Binary64 := 1 + b
 #eval ExecFloat.fma a b c
 -- 1.0000000596046448
 
-#eval (ExecFloat.cast (target := Binary32) (ExecFloat.fma a b c)).value?
--- some 1
+#eval ExecFloat.cast (target := Binary32) (ExecFloat.fma a b c)
+-- .success 1 { inexact := true }
 
-#eval (ExecFloat.fmaAs (target := Binary32) a b c).value?
--- some 1.0000001
+#eval ExecFloat.Mixed.fma (target := Binary32) a b c
+-- .success 1.0000001 { inexact := true }
 ```
 
 Here `a` is $2^{-29}$, `b` is $2^{-24}$, and `c` is $1 + 2^{-24}$. The first line is the binary64 rounding of $x$, which is $1 + 2^{-24}$, and casting it to binary32 gives $1$. Computing the same fused multiply-add exactly and rounding once into binary32 gives $1 + 2^{-23}$, the correctly rounded answer. This is the x87 spill problem from [chapter 04](#/chapter/why-verifying-floating-point-is-hard), and it's also why computing in a wider format doesn't by itself make the narrower result correctly rounded.
@@ -281,7 +280,7 @@ To check the midpoint claim, give the coarse grid a step $h$. Its midpoint betwe
 
 From the integer rules of the first section we get six rounding directions, the constructors of [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode]]. `down`, `up`, and `towardZero` round the scaled mantissa with `floorRound`, `ceilRound`, and `truncRound`, and `away` uses `awayRound`. The two nearest directions differ only at an exact tie. `nearest`, the default, is `nearestEven`, and `nearestAway` is `nearestChoice` with ties sent to the neighbour of larger magnitude. IEEE 754-2019 defines all of them except `away`. Our `down`, `up`, `towardZero`, `nearest`, and `nearestAway` are its roundTowardNegative, roundTowardPositive, roundTowardZero, roundTiesToEven, and roundTiesToAway [@ieee754_2019]. Rounding away from zero is GNU MPFR's `MPFR_RNDA` [@mpfrManual].
 
-[[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]] takes the direction as an option, `roundAt fmt x (mode := m)`. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_eq_round]] identifies each direction with Flocq's `round` under its integer rule [[FloatLib.Floats.Formats.Flocq.roundingFunction]]. So the grid theorems of this chapter that assume only `ValidRnd` hold in all six. Those that assume `ValidRndToNearest`, such as the half-ulp bound, hold for `nearest` and `nearestAway` only. Rounding $1 + 2^{-25}$ up in binary32 gives $1 + 2^{-23}$, an error of three quarters of an ulp. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_neg]] relates them under negation. Rounding $-x$ gives the negation of rounding $x$ in the direction `mode.negate`, which exchanges `up` and `down` and fixes the other four.
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt]] takes the direction as an option, `roundAt fmt x (mode := m)`. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_eq_round]] identifies each direction with Flocq's `round` under its integer rule [[FloatLib.Floats.Formats.Flocq.roundingFunction]]. So the grid theorems of this chapter that assume only `ValidRnd` hold in all six. Those that assume `ValidRndToNearest`, such as the half-ulp bound, hold for `nearest` and `nearestAway` only. Directed modes can be off by almost a full ulp: rounding $1 + 2^{-25}$ up in binary32 gives $1 + 2^{-23}$, an error of three quarters of an ulp. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_neg]] relates them under negation. Rounding $-x$ gives the negation of rounding $x$ in the direction `mode.negate`, which exchanges `up` and `down` and fixes the other four.
 
 A rounded value doesn't record which side of the exact result it lies on. MPFR returns that side with every operation as its ternary value [@fousseMpfr2007]. It is negative when the delivered value is below the exact result, zero when the two are equal, and positive when it is above. We keep the same orientation as an `Ordering`. With `(status := true)`, an operation returns an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome]]. Its three fields are the value, the five IEEE exception flags of [chapter 06](#/chapter/the-numerical-models/status-flags-as-data), and the ternary value, `Ordering.lt`, `Ordering.eq`, or `Ordering.gt`.
 
@@ -292,19 +291,13 @@ Results without a finite exact value follow fixed conventions. A NaN propagated 
 For a binary32 midpoint, the sum $1 + 2^{-24}$ lies exactly halfway between $1$ and its upper neighbour $1 + 2^{-23}$, and that's where the directions part ways. Here `0x33800000` is the word for $2^{-24}$:
 
 ```lean
-open FloatLib.Rounding
-
 def halfGap : Binary32 := ExecFloat.Binary.ofBits32 0x33800000
 
 #eval ExecFloat.Binary.add 1 halfGap (status := true)
--- { value := 1,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true },
---   ternary := Ordering.lt }
-#eval ExecFloat.Binary.add 1 halfGap (mode := nearestAway) (status := true)
--- { value := 1.0000001,
---   status := { invalid := false, divideByZero := false, overflow := false, underflow := false, inexact := true },
---   ternary := Ordering.gt }
-#eval (ExecFloat.Binary.add 1 halfGap (mode := towardZero) (status := true)).ternary
+-- { value := 1, status := { inexact := true }, ternary := Ordering.lt }
+#eval ExecFloat.Binary.add 1 halfGap (mode := .nearestAway) (status := true)
+-- { value := 1.0000001, status := { inexact := true }, ternary := Ordering.gt }
+#eval (ExecFloat.Binary.add 1 halfGap (mode := .towardZero) (status := true)).ternary
 -- Ordering.lt
 ```
 
@@ -314,13 +307,13 @@ Nearest-even keeps $1$, whose significand is even, so the delivered value lies b
 
 Each basic reference operation on a binary format uses exact arithmetic to determine a single rounding into the destination. The refinement theorems say so for single operations. Composing operations or casting their results can still round more than once. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] equates the decoded executable sum with $\mathrm{roundAt}$ of the exact real sum. Its siblings for subtraction, multiplication, division, square root, and fused multiply-add do the same, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]] forms $xy + z$ exactly and rounds once. Under their format, domain, and finiteness hypotheses these are exact equalities. In its default direction, $\mathrm{roundAt}$ is `round` at `nearestEven` with the descriptor's exponent function. So a grid theorem applies once its hypotheses have been established for that exponent function.
 
-Mixed format operations such as `fmaAs` above decode every operand into a common exact domain, evaluate, and quantize once. The [mixed-format conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Conversion/Proof.lean) `preparedSpec_fmaAs` states that contract. `roundOnce` similarly performs one final quantization of an expression in the chosen exact domain, with `preparedSpec_roundOnce` as its contract. Whether the expression's own operations were exact is another question. One final quantization doesn't undo rounding that already happened while the expression was being built.
+Mixed format operations such as `ExecFloat.Mixed.fma` above decode every operand into a common exact domain, evaluate, and quantize once. The [mixed-format conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Conversion/Proof.lean) `Mixed.preparedSpec_fma` states that contract. `roundOnce` similarly performs one final quantization of an expression in the chosen exact domain, with `preparedSpec_roundOnce` as its contract. Whether the expression's own operations were exact is another question. One final quantization doesn't undo rounding that already happened while the expression was being built.
 
-For signed-rational expressions targeting binary or other signed-zero-preserving destinations, directed cancellation also needs the rounding direction during exact addition or subtraction. Inside a `roundOnce` expression, `ExactExpression.add` and `ExactExpression.sub` take it as the same `mode` option. Ordinary `SignedRat` addition and subtraction keep the nearest-even zero-sign rule. A final cast or quantization preserves the zero sign it's given without recomputing how it arose. The generic quantizer contract describes quantization. It's up to an instance's exact-operation hooks to preserve its family's exact value semantics.
+For a destination that keeps the sign of zero, such as a binary format with signed zeros, a signed-rational expression needs the rounding direction during exact addition and subtraction, because that is where a cancelled zero gets its sign. Inside a `roundOnce` expression, `ExactExpression.add` and `ExactExpression.sub` take the same `mode` option as the final rounding. Ordinary `SignedRat` addition and subtraction always use the nearest-even zero-sign rule, and a final cast or quantization keeps whatever zero sign it receives without recomputing how it arose. The quantizer's contract covers only that last rounding, and keeping an exact operation faithful to its family's IEEE rules is the job of the family's `addExact` and `subExact`.
 
 Say we take exact signed-rational operands with values one and negative one. Ordinary `SignedRat` addition produces positive zero, and quantizing that zero downward into a binary destination keeps it positive, because the quantizer no longer has the two operands it would need to recover a cancellation rule. `ExactExpression.add` with that destination and `mode := .down` chooses negative zero while the operands are still available, before any quantization happens. Both paths have rational value zero. Their sign bits differ, and that's why preserving an exact numerical value and preserving the intended IEEE operation are two different obligations. Adding zeros of the same sign keeps the common sign under either rule.
 
-Our reductions accumulate every finite input as an exact dyadic and invoke the destination rounder once at the end. That's a guarantee we chose, since IEEE 754-2019 §9.4 permits implementation-defined reduction approximations and evaluation orders [@ieee754_2019]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite]] identifies a finite sum result with one nearest-even rounding of the mathematical sum. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite]] gives the corresponding statement for equal-length arrays and their exact product sum. Both real-valued contracts include empty input and cancellation to zero. The stored zero sign gets its own specification, in the reduction's zero-result theorems. Their finite-result premise excludes overflow to infinity. A cast rounds the value it receives, as [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt_of_isIEEE_destination]] states. So if that value is already the rounded result of an operation, the composition contains two roundings, as in the binary64-to-binary32 example.
+Our reductions accumulate every finite input as an exact dyadic and invoke the destination rounder once at the end. That's a guarantee we chose, since IEEE 754-2019 §9.4 permits implementation-defined reduction approximations and evaluation orders [@ieee754_2019]. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.sum_status_value_toReal_eq_roundAt_of_finite]] identifies a finite sum result with one nearest-even rounding of the mathematical sum. [[FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite]] gives the corresponding statement for equal-length arrays and their exact product sum. Both real-valued contracts include empty input and cancellation to zero. The stored zero sign gets its own specification, in the reduction's zero-result theorems. Their finite-result premise excludes overflow to infinity. A cast rounds the value it receives, as [[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_eq_roundAt]] states. So if that value is already the rounded result of an operation, the composition contains two roundings, as in the binary64-to-binary32 example.
 
 ## When every addition rounds
 

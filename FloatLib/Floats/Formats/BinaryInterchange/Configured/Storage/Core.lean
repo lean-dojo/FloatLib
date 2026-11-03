@@ -26,8 +26,8 @@ stored as two native words, which the two-word kernels read directly. Every othe
 a machine word keeps the exact-width proof model by default, and the generic kernel computes on
 it. Formats wider than 128 bits may opt into `StoragePlan.limbs`, a `LimbArray` of 32-bit limbs
 (`WideLimb.Value`) that is the carrier of the wide-limb kernels, and `ExecFloat.BinaryLimbs` names
-that choice. The limb carrier is not the automatic choice because every operation without a limb
-kernel, and every comparison or conversion, must first rebuild the proof model from the limbs.
+that choice. The limb carrier is not the default because every operation without a limb kernel,
+and every comparison or conversion, must first rebuild the proof model from the limbs.
 
 The plan is part of the type, not data stored in each value, so closed configured formats
 specialize to the selected carrier with erased range evidence. This module defines the plan, the
@@ -44,12 +44,14 @@ open FloatLib.Numerics
 /--
 A certified persistent-storage choice for one binary-interchange descriptor.
 
-The proof stored by each constructor is erased. `pair` stores two native words and is selected
-automatically for widths from 65 to 128 bits whose layout the two-word kernels serve. `wide` keeps
-the exact-width proof model as the carrier and is selected automatically for every other width
-above 64 bits. `limbs` stores a runtime-sized array of 32-bit limbs for widths above 128 bits. It
-is never chosen automatically: `ExecFloat.BinaryLimbs` opts into it to run the wide-limb
-arithmetic kernels, at the cost of conversions for operations that must rebuild the proof model.
+The proof stored by each constructor is erased. `forKnownWidth`, the default plan of
+`ExecFloat.Binary`, stores a format of at most 64 bits in the smallest machine word that holds it.
+`pair` stores two native words and is the default for widths from 65 to 128 bits whose layout the
+two-word kernels serve. `wide` keeps the exact-width proof model as the carrier and is the default
+for every other width above 64 bits. `limbs` stores a runtime-sized array of 32-bit limbs for
+widths above 128 bits. It is never the default: `ExecFloat.BinaryLimbs` opts into it to run the
+wide-limb arithmetic kernels, at the cost of conversions for operations that must rebuild the
+proof model.
 -/
 inductive StoragePlan (format : FloatFormat) where
   | byte (width_le : format.bitWidth ≤ 8)
@@ -93,10 +95,6 @@ abbrev forKnownWidth (format : FloatFormat) (width : Nat)
 abbrev limbsForKnownWidth (format : FloatFormat) (width : Nat)
     (width_eq : format.bitWidth = width) (width_gt : 128 < width) : StoragePlan format :=
   .limbs (by simpa [width_eq] using width_gt)
-
-/-- Choose storage from a closed descriptor. -/
-def automatic (format : FloatFormat) : StoragePlan format :=
-  forKnownWidth format format.bitWidth rfl
 
 /--
 Common execution-planner storage metadata corresponding to a certified plan.

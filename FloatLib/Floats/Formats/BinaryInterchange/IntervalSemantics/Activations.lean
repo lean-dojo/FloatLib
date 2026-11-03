@@ -35,28 +35,34 @@ section
 
 /-! ## ReLU -/
 
+/-- The ReLU endpoints of non-NaN bounds are non-NaN and decode to the endpoints clipped at zero. -/
+private theorem relu_endpoints {fmt : FloatFormat} {A : Interval fmt} (hA : ValidExtended A) :
+    isNaN (relu A).lo = false ∧ isNaN (relu A).hi = false ∧
+      toEReal (relu A).lo = max (toEReal A.lo) 0 ∧ toEReal (relu A).hi = max (toEReal A.hi) 0 :=
+  ⟨isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hA.lo_isNaN_eq_false (isNaN_zero fmt false),
+    isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hA.hi_isNaN_eq_false (isNaN_zero fmt false),
+    by rw [relu, toEReal_maximum_eq_max _ _ hA.lo_isNaN_eq_false (isNaN_zero fmt false),
+      toEReal_zero],
+    by rw [relu, toEReal_maximum_eq_max _ _ hA.hi_isNaN_eq_false (isNaN_zero fmt false),
+      toEReal_zero]⟩
+
 /-- The ReLU interval encloses each member's ReLU, including with infinite endpoints. -/
 theorem relu_sound_extended
     {fmt : FloatFormat} (A : Interval fmt) (hA : ValidExtended A)
     {x : ℝ} (hx : ERealMem A (x : EReal)) :
     ERealMem (relu A) ((max x 0 : ℝ) : EReal) := by
-  simpa only [ERealMem, relu,
-    toEReal_maximum_eq_max _ _ hA.lo_isNaN_eq_false (isNaN_zero fmt false),
-    toEReal_maximum_eq_max _ _ hA.hi_isNaN_eq_false (isNaN_zero fmt false),
-    toEReal_zero, FloatLib.Floats.Interval.coe_max, EReal.coe_zero] using
-    And.intro (max_le_max hx.1 (le_refl (0 : EReal))) (max_le_max hx.2 le_rfl)
+  obtain ⟨-, -, hlo, hhi⟩ := relu_endpoints hA
+  rw [ERealMem, hlo, hhi, FloatLib.Floats.Interval.coe_max, EReal.coe_zero]
+  exact ⟨max_le_max hx.1 le_rfl, max_le_max hx.2 le_rfl⟩
 
 /-- ReLU preserves ordered, non-NaN endpoints in every format. -/
 theorem relu_validExtended
     {fmt : FloatFormat} (A : Interval fmt) (hA : ValidExtended A) :
     ValidExtended (relu A) := by
-  apply validExtended_of_toEReal_le (I := relu A)
-    (isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hA.lo_isNaN_eq_false (isNaN_zero fmt false))
-    (isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hA.hi_isNaN_eq_false (isNaN_zero fmt false))
-  simpa only [relu,
-    toEReal_maximum_eq_max _ _ hA.lo_isNaN_eq_false (isNaN_zero fmt false),
-    toEReal_maximum_eq_max _ _ hA.hi_isNaN_eq_false (isNaN_zero fmt false)] using
-    max_le_max hA.toEReal_ordered (le_refl (toEReal (zero fmt false)))
+  obtain ⟨hloNaN, hhiNaN, hlo, hhi⟩ := relu_endpoints hA
+  apply validExtended_of_toEReal_le hloNaN hhiNaN
+  rw [hlo, hhi]
+  exact max_le_max hA.toEReal_ordered le_rfl
 
 /-- Executable interval ReLU encloses the ReLU of every represented real value. -/
 theorem relu_sound
@@ -67,15 +73,32 @@ theorem relu_sound
 
 /-! ## Absolute value -/
 
+/--
+In the zero-crossing branch of `abs`, the upper endpoint `maximum (-lo) hi` of non-NaN bounds is
+non-NaN and decodes to the larger of `-lo` and `hi`.
+-/
+private theorem abs_crossing_hi {fmt : FloatFormat} {A : Interval fmt} (hA : ValidExtended A) :
+    isNaN (maximum (Model.neg A.lo) A.hi) = false ∧
+      toEReal (maximum (Model.neg A.lo) A.hi) = max (-toEReal A.lo) (toEReal A.hi) := by
+  have hnegLoNaN : isNaN (Model.neg A.lo) = false := by
+    simpa using hA.lo_isNaN_eq_false
+  exact ⟨isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hnegLoNaN hA.hi_isNaN_eq_false,
+    by rw [toEReal_maximum_eq_max _ _ hnegLoNaN hA.hi_isNaN_eq_false,
+      toEReal_neg_of_isNaN_eq_false A.lo hA.lo_isNaN_eq_false]⟩
+
+/-- For a non-NaN upper bound, the executable test `hi ≤ -0` decodes to `hi ≤ 0`. -/
+private theorem leB_hi_negZero_iff {fmt : FloatFormat} {A : Interval fmt}
+    (hA : ValidExtended A) : leB A.hi (zero fmt true) = true ↔ toEReal A.hi ≤ 0 := by
+  simpa using leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
+    A.hi (zero fmt true) hA.hi_isNaN_eq_false (isNaN_zero fmt true)
+
 /-- Absolute value encloses every represented real magnitude, including with infinite endpoints. -/
 theorem abs_sound_extended
     {fmt : FloatFormat} (A : Interval fmt) (hA : ValidExtended A)
     {x : ℝ} (hx : ERealMem A (x : EReal)) :
     ERealMem (abs A) ((|x| : ℝ) : EReal) := by
   by_cases hneg : leB A.hi (zero fmt true) = true
-  · have hhiNonpos : toEReal A.hi ≤ 0 := by
-      simpa using (leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
-        A.hi (zero fmt true) hA.hi_isNaN_eq_false (isNaN_zero fmt true)).1 hneg
+  · have hhiNonpos : toEReal A.hi ≤ 0 := (leB_hi_negZero_iff hA).1 hneg
     have hxNonpos : x ≤ 0 := EReal.coe_nonpos.1 (hx.2.trans hhiNonpos)
     rw [abs, ite_eq_left hneg]
     simpa [abs_of_nonpos hxNonpos] using neg_sound_extended A hA hx
@@ -86,11 +109,7 @@ theorem abs_sound_extended
       have hxNonneg : 0 ≤ x := EReal.coe_nonneg.1 (hloNonneg.trans hx.1)
       rw [abs, ite_eq_right hneg, ite_eq_left hpos]
       simpa [abs_of_nonneg hxNonneg] using hx
-    · have hloNaN := hA.lo_isNaN_eq_false
-      have hhiNaN := hA.hi_isNaN_eq_false
-      have hnegLoNaN : isNaN (Model.neg A.lo) = false := by
-        simpa using hloNaN
-      have hxAbs :
+    · have hxAbs :
           ((|x| : ℝ) : EReal) ≤ max (-toEReal A.lo) (toEReal A.hi) := by
         by_cases hxNonpos : x ≤ 0
         · rw [abs_of_nonpos hxNonpos, EReal.coe_neg]
@@ -105,8 +124,7 @@ theorem abs_sound_extended
       · change
           ((|x| : ℝ) : EReal) ≤
             toEReal (maximum (Model.neg A.lo) A.hi)
-        rw [toEReal_maximum_eq_max (Model.neg A.lo) A.hi hnegLoNaN hhiNaN,
-          toEReal_neg_of_isNaN_eq_false A.lo hloNaN]
+        rw [(abs_crossing_hi hA).2]
         exact hxAbs
 
 /-- Absolute value preserves ordered, non-NaN endpoints in every format. -/
@@ -119,18 +137,11 @@ theorem abs_validExtended
   · split
     · exact hA
     next hneg _ =>
-      have hhiNonneg : 0 ≤ toEReal A.hi := by
-        have h := (leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
-          A.hi (zero fmt true) hA.hi_isNaN_eq_false (isNaN_zero fmt true)).not.mp hneg
-        simpa only [toEReal_zero] using le_of_not_ge h
-      have hnegLoNaN : isNaN (Model.neg A.lo) = false := by
-        simpa using hA.lo_isNaN_eq_false
-      refine validExtended_of_toEReal_le ?_ ?_ ?_
-      · exact isNaN_zero fmt false
-      · exact isNaN_maximum_eq_false_of_isNaN_eq_false _ _ hnegLoNaN hA.hi_isNaN_eq_false
-      · simpa only [toEReal_zero,
-          toEReal_maximum_eq_max _ _ hnegLoNaN hA.hi_isNaN_eq_false] using
-          hhiNonneg.trans (le_max_right (toEReal (Model.neg A.lo)) (toEReal A.hi))
+      have hhiNonneg : 0 ≤ toEReal A.hi := le_of_not_ge ((leB_hi_negZero_iff hA).not.mp hneg)
+      obtain ⟨hcrossNaN, hcross⟩ := abs_crossing_hi hA
+      refine validExtended_of_toEReal_le (isNaN_zero fmt false) hcrossNaN ?_
+      rw [toEReal_zero, hcross]
+      exact hhiNonneg.trans (le_max_right _ _)
 
 /-- Executable interval absolute value encloses the absolute value of every represented real. -/
 theorem abs_sound
@@ -184,7 +195,7 @@ theorem sqrt_validExtended
     hnonnegative.trans hA.toReal_ordered
   have hloNaN : isNaN (Model.sqrt A.lo (mode := .down)) = false :=
     isNaN_sqrt_down_eq_false_of_isFinite_of_nonnegative
-      A.lo hfmt hA.lo_isFinite hnonnegative
+      A.lo hA.lo_isFinite hnonnegative
   have hhiNaN : isNaN (Model.sqrt A.hi (mode := .up)) = false :=
     isNaN_sqrt_up_eq_false_of_isFinite_of_nonnegative
       A.hi hfmt hA.hi_isFinite hhiNonnegative

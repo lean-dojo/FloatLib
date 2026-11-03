@@ -105,34 +105,21 @@ theorem convertFormat_exact_status_of_representable (f : Format) (mode : Roundin
   rw [convertFormat_finite, hvalue]
   exact projectMagnitude_exact_status f mode s d r q hd
 
-/-- Exact conversion selects the quantum closest to the source quantum over the entire cohort. -/
+/-- Exact conversion selects the quantum closest to the source quantum over the entire cohort. The
+source need not be valid in the destination, so this covers conversion across different widths:
+any valid representation `(e, t)` of the source value is at least as far from the source quantum. -/
 theorem convertFormat_quantum_closest (f : Format) (mode : RoundingMode) (s : Bool)
-    (c : Nat) (q : Int) (h : (Datum.finite s c q).Valid f)
-    (d : Nat) (r : Int)
+    (c : Nat) (q : Int) (d : Nat) (r : Int)
     (hout : (convertFormat f mode (.finite s c q)).value = .finite s d r)
     (e : Nat) (t : Int) (he : (Datum.finite s e t).Valid f)
     (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (e : ℚ) * (10 : ℚ) ^ t) :
     |q - r| ≤ |q - t| := by
   rw [convertFormat_finite] at hout
-  exact projectMagnitude_quantum_closest f mode s c q q h d r hout e t he hvalue
-
-/-- Across different source and destination widths, exact conversion selects a
-destination cohort member whose quantum is closest to the source quantum. -/
-theorem convertFormat_quantum_closest_of_representable (f : Format) (mode : RoundingMode)
-    (s : Bool) (c d : Nat) (q r : Int) (hd : (Datum.finite s d r).Valid f)
-    (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r)
-    (e : Nat) (t : Int)
-    (hout : (convertFormat f mode (.finite s c q)).value = .finite s e t)
-    (a : Nat) (b : Int) (ha : (Datum.finite s a b).Valid f)
-    (heq : (c : ℚ) * (10 : ℚ) ^ q = (a : ℚ) * (10 : ℚ) ^ b) :
-    |q - t| ≤ |q - b| := by
-  rw [convertFormat_finite, hvalue] at hout
-  exact projectMagnitude_quantum_closest f mode s d r q hd e t hout a b ha
-    (hvalue.symm.trans heq)
+  exact projectMagnitude_quantum_closest f mode s c q q d r hout e t he hvalue
 
 /-- Both nearest directions bound the actual conversion error by half the selected grid unit. -/
 theorem convertFormat_error_le_half (f : Format) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a)
     (hfinite : (convertFormat f mode x).status.overflow = false) :
     ∃ value, (convertFormat f mode x).value.toRat? = some value ∧
@@ -152,41 +139,41 @@ theorem convertFormat_error_lt_one (f : Format) (mode : RoundingMode)
   exact project_error_lt_one f mode _ _ _ hfinite
 
 /-- Upward conversion encloses the input from above whenever it does not overflow. -/
-theorem le_convertFormat_towardPositive (f : Format) (x : Datum) (a : ℚ)
+theorem le_convertFormat_up (f : Format) (x : Datum) (a : ℚ)
     (hx : x.toRat? = some a)
-    (hfinite : (convertFormat f .towardPositive x).status.overflow = false) :
-    ∃ value, (convertFormat f .towardPositive x).value.toRat? = some value ∧ a ≤ value := by
+    (hfinite : (convertFormat f .up x).status.overflow = false) :
+    ∃ value, (convertFormat f .up x).value.toRat? = some value ∧ a ≤ value := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
-  exact le_project_towardPositive f _ _ _ hfinite
+  exact le_project_up f _ _ _ hfinite
 
 /-- Downward conversion encloses the input from below whenever it does not overflow. -/
-theorem convertFormat_towardNegative_le (f : Format) (x : Datum) (a : ℚ)
+theorem convertFormat_down_le (f : Format) (x : Datum) (a : ℚ)
     (hx : x.toRat? = some a)
-    (hfinite : (convertFormat f .towardNegative x).status.overflow = false) :
-    ∃ value, (convertFormat f .towardNegative x).value.toRat? = some value ∧ value ≤ a := by
+    (hfinite : (convertFormat f .down x).status.overflow = false) :
+    ∃ value, (convertFormat f .down x).value.toRat? = some value ∧ value ≤ a := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
-  exact project_towardNegative_le f _ _ _ hfinite
+  exact project_down_le f _ _ _ hfinite
 
-/-- Finite nonoverflowing conversion raises inexact exactly when the numerical value changes. -/
+/-- Finite conversion with a finite result raises inexact exactly when the numerical value
+changes, also when it overflows to the greatest finite datum. -/
 theorem convertFormat_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a)
-    (hfinite : (convertFormat f mode x).status.overflow = false)
     (hv : (convertFormat f mode x).value.toRat? = some value) :
     (convertFormat f mode x).status.inexact = true ↔ value ≠ a := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
-  exact project_inexact_iff f mode _ value _ _ hfinite hv
+  exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Decimal underflow uses the exact input magnitude and requires inexactness. -/
+/-- Decimal underflow uses the exact input magnitude and requires inexactness; an overflowing input
+is never tiny. -/
 theorem convertFormat_underflow_iff (f : Format) (mode : RoundingMode)
-    (x : Datum) (a : ℚ) (hx : x.toRat? = some a)
-    (hfinite : (convertFormat f mode x).status.overflow = false) :
+    (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
     (convertFormat f mode x).status.underflow = true ↔
       |a| < f.minNormal ∧ (convertFormat f mode x).status.inexact = true := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
-  exact project_underflow_iff f mode _ _ _ hfinite
+  exact project_underflow_iff f mode _ _ _
 
 end FloatLib.Floats.Formats.DecimalInterchange.Conversion

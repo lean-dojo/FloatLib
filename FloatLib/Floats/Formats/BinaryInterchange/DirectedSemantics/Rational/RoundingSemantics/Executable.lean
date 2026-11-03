@@ -7,12 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.RoundedReal
+import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 
 /-!
 # Executable packing semantics
 
-For a descriptor with `fmt.isIEEE = true` and a nonzero denominator, a finite result produced
-by `roundRatScaled` denotes `roundAt` applied to the corresponding real value.
+For a descriptor with `fmt.isIEEE = true`, a finite result produced by `roundRatScaled` denotes
+`roundAt` applied to the corresponding real value. Finiteness excludes the zero denominator, whose
+invalid result is a NaN.
 
 The positive proof covers underflow, subnormal and normal results, including a carry into the next
 exponent. Finiteness excludes the overflow branches. The signed theorem restores the sign through
@@ -34,10 +36,10 @@ section
 /-! ## Executable packing semantics -/
 
 /--
-Positive scaled-rational rounding denotes the independent nearest-even rounded-real value whenever
-the executable result is finite.
+Positive scaled-rational rounding of a nonzero quotient denotes the independent nearest-even
+rounded-real value whenever the executable result is finite.
 -/
-theorem toReal_roundRatScaled_false_eq_roundAt
+private theorem toReal_roundRatScaled_false_eq_roundAt_of_ne_zero
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hfmt : fmt.isIEEE = true)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
@@ -47,7 +49,7 @@ theorem toReal_roundRatScaled_false_eq_roundAt
   have hinfinity := FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
   have hsubnormalLt := minSubnormalExponent_lt_minNormalExponent fmt
   have hround :=
-    roundAt_scaledRat_eq fmt false numerator denominator exponent hnumerator hdenominator
+    roundAt_scaledRat_eq fmt false numerator denominator exponent hdenominator
   simp only [Bool.false_eq_true, ite_false, Int.ofNat_eq_natCast, Int.cast_natCast] at hround
   rcases lt_or_ge fmt.maxNormalExponent
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent) with hoverflow | hmax
@@ -61,8 +63,8 @@ theorem toReal_roundRatScaled_false_eq_roundAt
       roundQuotientEven_scaled_eq_zero numerator denominator _ hnumerator hdenominator
         (by omega)] at hround
     rw [roundRatScaled_false_eq_posZero_of_lt_minSubnormal_sub_one
-      fmt numerator denominator exponent hfmt hnumerator hdenominator hmax hunderflow,
-      toReal_posZero fmt hfmt, hround]
+      fmt numerator denominator exponent hfmt hnumerator hdenominator hunderflow,
+      toReal_posZero, hround]
     simp
   rcases lt_or_ge (Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
       fmt.minNormalExponent with hsubnormal | hnormal
@@ -80,19 +82,10 @@ theorem toReal_roundRatScaled_false_eq_roundAt
           (exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt))).2 = rounded
     have hroundedLe : rounded ≤ pow2 fmt.fracWidth := by
       rw [← hrounded]
-      rcases lt_or_ge (Numerics.RationalBinary.floorLog2 numerator denominator + exponent)
-          fmt.minSubnormalExponent with hbelow | hlow'
-      · exact (roundQuotientEven_le_one_of_lt _ _
-          (Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero numerator denominator _
-            hnumerator)
-          (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator _
-            hdenominator)
-          (scaleByPowerOfTwo_fst_lt_snd_of_neg_log numerator denominator _
-            hnumerator hdenominator (by omega))).trans (Nat.succ_le_of_lt (pow2_pos _))
-      · exact roundQuotientEven_subnormal_le
-          fmt numerator denominator exponent hnumerator hdenominator hlow' hsubnormal
+      exact roundQuotientEven_subnormal_le
+        fmt numerator denominator exponent hnumerator hdenominator hsubnormal
     by_cases hzero : rounded = 0
-    · simp [hzero, toReal_posZero fmt hfmt]
+    · simp [hzero, toReal_posZero]
     · simpa [hzero] using toReal_roundSubnormalUp fmt rounded hzero hroundedLe
   rw [fexpOf_total_eq_normal fmt _ hnormal,
     show exponent -
@@ -114,12 +107,12 @@ theorem toReal_roundRatScaled_false_eq_roundAt
           fmt.maxNormalExponent := by
       by_contra hnot
       rw [roundRatScaled_false_eq_posInf_of_carry
-        fmt numerator denominator exponent hfmt hnumerator hdenominator hnormal hmax hcarry
+        fmt numerator denominator exponent hfmt hnumerator hdenominator hmax hcarry
           (lt_of_not_ge hnot),
         isFinite_posInf fmt hinfinity] at hfinite
       exact absurd hfinite Bool.false_ne_true
     rw [roundRatScaled_false_eq_normal_of_carry
-      fmt numerator denominator exponent hfmt hnumerator hdenominator hnormal hcarry hcarryMax]
+      fmt numerator denominator exponent hfmt hnormal hcarry hcarryMax]
       at hfinite ⊢
     have hvalue :=
       toReal_ofFields_normalized fmt (pow2 fmt.fracWidth)
@@ -135,22 +128,41 @@ theorem toReal_roundRatScaled_false_eq_roundAt
     rw [toReal_ofFields_normalized fmt _ _ hbounds.1 (lt_of_le_of_ne hbounds.2 hcarry)
       hnormal hmax hfinite, hround]
 
+/-- The invalid-operation result of a conventional IEEE format, its canonical NaN, is not finite. -/
+private theorem isFinite_invalidResult_of_isIEEE (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
+    isFinite (invalidResult fmt) = false := by
+  have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
+  have hexponent : expField (invalidResult fmt) = fmt.expAllOnesNat := by
+    rw [invalidResult_eq_canonicalNaN_of_isIEEE fmt hfmt]
+    change expField (ofBits ((posInf fmt).bits ||| FloatFormat.quietBit fmt)) = _
+    rw [expField_or_quietBit]
+    change expField (posInf fmt) = _
+    rw [posInf_eq_ofModel_infinity, expField_ofModel_infinity]
+  simp [isFinite, IEEE.isFinite, hencoding, hexponent]
+
 /--
 Finite scaled rational rounding is exact signed rational evaluation followed by one nearest-even
-rounding in the destination format.
+rounding in the destination format. A zero numerator rounds to zero. A zero denominator produces
+the invalid NaN, which the finiteness hypothesis excludes.
 -/
 theorem toReal_roundRatScaled_eq_roundAt
     (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (hfmt : fmt.isIEEE = true)
-    (hnumerator : numerator ≠ 0)
-    (hdenominator : denominator ≠ 0)
     (hfinite : isFinite (roundRatScaled fmt sign numerator denominator exponent) = true) :
     toReal (roundRatScaled fmt sign numerator denominator exponent) =
       roundAt fmt
         (signedScaledRatToReal sign numerator denominator exponent) := by
+  have hdenominator : denominator ≠ 0 := by
+    rintro rfl
+    rw [roundRatScaled_den_zero, isFinite_invalidResult_of_isIEEE fmt hfmt] at hfinite
+    exact Bool.false_ne_true hfinite
+  by_cases hnumerator : numerator = 0
+  · subst numerator
+    rw [roundRatScaled_num_zero fmt sign denominator exponent hdenominator, toReal_zero]
+    simp [signedScaledRatToReal, scaledRatToReal]
   cases sign with
   | false =>
-      exact toReal_roundRatScaled_false_eq_roundAt
+      exact toReal_roundRatScaled_false_eq_roundAt_of_ne_zero
         fmt numerator denominator exponent hfmt hnumerator hdenominator hfinite
   | true =>
       rw [roundRatScaled_true_eq_neg_false
@@ -159,29 +171,9 @@ theorem toReal_roundRatScaled_eq_roundAt
           isFinite (roundRatScaled fmt false numerator denominator exponent) = true := by
         simpa using hfinite
       rw [toReal_neg _ hfiniteFalse,
-        toReal_roundRatScaled_false_eq_roundAt
+        toReal_roundRatScaled_false_eq_roundAt_of_ne_zero
           fmt numerator denominator exponent hfmt hnumerator hdenominator hfiniteFalse]
       simp [signedScaledRatToReal, roundAt_neg]
-
-
-/--
-Finite scaled-rational rounding agrees with nearest-even real rounding, including a zero
-numerator. A nonzero denominator is still required, because zero denominators produce an invalid
-result.
--/
-theorem toReal_roundRatScaled_eq_roundAt_of_isFinite
-    (fmt : FloatFormat) (sign : Bool) (numerator denominator : Nat)
-    (exponent : Int) (hfmt : fmt.isIEEE = true)
-    (hdenominator : denominator ≠ 0)
-    (hfinite : isFinite (roundRatScaled fmt sign numerator denominator exponent) = true) :
-    toReal (roundRatScaled fmt sign numerator denominator exponent) =
-      roundAt fmt (signedScaledRatToReal sign numerator denominator exponent) := by
-  by_cases hnumerator : numerator = 0
-  · subst numerator
-    rw [roundRatScaled_num_zero fmt sign denominator exponent hdenominator, toReal_zero]
-    simp [signedScaledRatToReal, scaledRatToReal]
-  · exact toReal_roundRatScaled_eq_roundAt
-      fmt sign numerator denominator exponent hfmt hnumerator hdenominator hfinite
 
 end
 

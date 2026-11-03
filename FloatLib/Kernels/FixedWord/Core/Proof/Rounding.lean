@@ -98,21 +98,9 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
   · have hlarge : 64 ≤ shift := Nat.le_of_not_gt hsmall
     by_cases heq : shift = 64
     · subst shift
-      have hquotient : value.toNat >>> 64 = 0 :=
-        Nat.shiftRight_eq_zero _ _ value.toNat_lt
       have hhalf : (0x8000000000000000 : UInt64).toNat = 2 ^ 63 := by
         decide
-      have hgeneric :
-          Numerics.roundShiftRightEven value.toNat 64 =
-            if 2 ^ 63 < value.toNat then 1 else 0 := by
-        rw [Numerics.roundShiftRightEven_def]
-        simp only [beq_iff_eq]
-        rw [ite_eq_right (by decide : (64 : Nat) ≠ 0)]
-        rw [show value.toNat.shiftRight 64 = 0 from hquotient]
-        rw [show Nat.shiftLeft 0 64 = 0 by simp [Nat.shiftLeft_eq]]
-        simp only [Nat.sub_zero, Nat.reduceSub, Nat.zero_mod]
-        split_ifs <;> omega
-      rw [hgeneric]
+      rw [Numerics.roundShiftRightEven_of_lt_two_pow _ _ (by decide) value.toNat_lt]
       unfold roundShiftRightEven
       simp [UInt64.lt_iff_toNat_lt, hhalf]
       split_ifs <;> rfl
@@ -120,21 +108,11 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
       have hvaluePow : value.toNat < 2 ^ shift := by
         exact lt_of_lt_of_le value.toNat_lt
           (Nat.pow_le_pow_right (by decide) (Nat.le_of_lt hgt))
-      have hquotient : value.toNat >>> shift = 0 :=
-        Nat.shiftRight_eq_zero _ _ hvaluePow
       have hhalfBound : value.toNat < 2 ^ (shift - 1) := by
         exact lt_of_lt_of_le value.toNat_lt
           (Nat.pow_le_pow_right (by decide) (by omega))
-      have hgeneric :
-          Numerics.roundShiftRightEven value.toNat shift = 0 := by
-        rw [Numerics.roundShiftRightEven_def]
-        simp only [beq_iff_eq]
-        rw [ite_eq_right hzero]
-        rw [show value.toNat.shiftRight shift = 0 from hquotient]
-        rw [show Nat.shiftLeft 0 shift = 0 by simp [Nat.shiftLeft_eq]]
-        simp only [Nat.sub_zero]
-        rw [ite_eq_left hhalfBound]
-      rw [hgeneric]
+      rw [Numerics.roundShiftRightEven_of_lt_two_pow _ _ hzero hvaluePow,
+        ite_eq_right (not_lt.mpr hhalfBound.le)]
       unfold roundShiftRightEven
       simp [beq_iff_eq, hzero, hsmall, heq]
 
@@ -162,14 +140,14 @@ for wider inputs.
 
 /--
 Native quotient rounding agrees with natural-number quotient rounding whenever the denominator is
-nonzero and the incremented quotient fits in one word.
+nonzero.
 
 No bound on `den` is needed, because the kernel compares the remainder with `den - remainder`
-instead of doubling it, so its intermediates never wrap.
+instead of doubling it, so its intermediates never wrap. The incremented quotient always fits: a
+round-up needs a nonzero remainder, so `den` is at least two and the quotient is below `2 ^ 63`.
 -/
 theorem roundQuotientEven_toNat (num den : UInt64)
-    (hden : den ≠ 0)
-    (hquotientFit : num.toNat / den.toNat + 1 < 2 ^ 64) :
+    (hden : den ≠ 0) :
     (roundQuotientEven num den).toNat =
       Numerics.roundQuotientEven num.toNat den.toNat := by
   have hdenNat : den.toNat ≠ 0 := by
@@ -177,6 +155,15 @@ theorem roundQuotientEven_toNat (num den : UInt64)
     apply hden
     apply UInt64.toNat_inj.mp
     simpa using h
+  by_cases hone : den.toNat = 1
+  · have hdenOne : den = 1 := UInt64.toNat_inj.mp (by simpa using hone)
+    subst hdenOne
+    simp [roundQuotientEven, Numerics.roundQuotientEven, Nat.mod_one]
+  have hquotientFit : num.toNat / den.toNat + 1 < 2 ^ 64 := by
+    have hhalf : num.toNat / den.toNat ≤ num.toNat / 2 :=
+      Nat.div_le_div_left (by omega) (by decide)
+    have := num.toNat_lt
+    omega
   have hremainderLt :
       num.toNat % den.toNat < den.toNat :=
     Nat.mod_lt _ (Nat.pos_of_ne_zero hdenNat)
@@ -225,13 +212,7 @@ theorem roundQuotientEvenNat_eq_roundQuotientEven (num den : Nat) :
       intro h
       have := congrArg UInt64.toNat h
       simp [hden64, Nat.ne_of_gt hdenPositive] at this
-    have hquotientFit : num / den + 1 < 2 ^ 64 := by
-      have hquotientLe : num / den ≤ num := Nat.div_le_self _ _
-      omega
-    rw [roundQuotientEven_toNat _ _ hdenNonzero]
-    · rw [hnum64, hden64]
-    · rw [hnum64, hden64]
-      exact hquotientFit
+    rw [roundQuotientEven_toNat _ _ hdenNonzero, hnum64, hden64]
   next hfit =>
     rw [Numerics.roundQuotientEven]
 
@@ -246,30 +227,40 @@ definition otherwise.
   exact (roundQuotientEvenNat_eq_roundQuotientEven num den).symm
 
 
-/-- The word sticky combination is the natural-number jam of the exact aligned value. -/
+/--
+The word sticky combination is the natural-number jam of the exact aligned value. A sum needs
+`A + q` to fit in the word; a difference needs only `B ≤ A * 2^d`, so exact cancellation to zero
+is included.
+-/
 theorem jamCombine_toNat (sameSign exact : Bool) (A q : UInt64) (B d : Nat)
     (hq : q.toNat = B / 2 ^ d) (hexact : exact = decide (B % 2 ^ d = 0))
-    (hfit : A.toNat + q.toNat + 1 < 2 ^ 64)
-    (hsub : sameSign = false → q.toNat + 1 ≤ A.toNat ∧ B ≤ A.toNat * 2 ^ d) :
+    (hfit : sameSign = true → A.toNat + q.toNat < 2 ^ 64)
+    (hsub : sameSign = false → B ≤ A.toNat * 2 ^ d) :
     (jamCombine sameSign exact A q).toNat =
       Numerics.shiftRightJam
         (if sameSign then A.toNat * 2 ^ d + B else A.toNat * 2 ^ d - B) d := by
   unfold jamCombine
   subst hexact
   cases sameSign
-  · obtain ⟨hlt, hB⟩ := hsub rfl
+  · have hB := hsub rfl
     simp only [Bool.false_eq_true, ite_false]
     rw [Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hB, ← hq]
-    have hle : q ≤ A := UInt64.le_iff_toNat_le.mpr (by omega)
+    have hle : q ≤ A := UInt64.le_iff_toNat_le.mpr (by
+      rw [hq]
+      exact Nat.div_le_of_le_mul (by rw [Nat.mul_comm]; exact hB))
     have hd : (A - q).toNat = A.toNat - q.toNat := UInt64.toNat_sub_of_le _ _ hle
     by_cases hz : B % 2 ^ d = 0
     · simp only [hz, decide_true, ite_true, hd]
     · simp only [hz, decide_false, Bool.false_eq_true, ite_false]
+      have hlt : q.toNat < A.toNat := by
+        rw [hq, Nat.div_lt_iff_lt_mul (Nat.two_pow_pos d)]
+        exact lt_of_le_of_ne hB fun h => hz (by rw [h, Nat.mul_mod_left])
       have hone : (1 : UInt64) ≤ A - q :=
         UInt64.le_iff_toNat_le.mpr (by rw [hd]; simp only [UInt64.reduceToNat]; omega)
       rw [UInt64.toNat_or, UInt64.toNat_sub_of_le _ _ hone, hd]
       rfl
-  · simp only [ite_true]
+  · have hfit := hfit rfl
+    simp only [ite_true]
     rw [Numerics.shiftRightJam_add_mul_two_pow, ← hq]
     have hsum : (A + q).toNat = A.toNat + q.toNat := by
       rw [UInt64.toNat_add]

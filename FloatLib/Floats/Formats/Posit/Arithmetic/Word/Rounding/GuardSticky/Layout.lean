@@ -32,72 +32,6 @@ one proof without depending on `UInt64`.
 
 namespace FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding
 
-/--
-Decode the all-ones positive payload.
-
-`maxPos` has a regime run occupying the complete payload, no terminator, and no trailing field.
-Its regime value is therefore `payloadBits - 1`.
--/
-theorem nonnegativeRatAt_maxPositive
-    (format : Format) :
-    Model.nonnegativeRatAt format (format.signMaskNat - 1) =
-      (2 : Rat) ^ ((Int.ofNat format.payloadBits - 1) * 4) := by
-  let code := format.signMaskNat - 1
-  let value := Model.ofNatBits (format := format) code
-  have hpayload : 0 < format.payloadBits :=
-    format.payloadBits_pos
-  have hmask :
-      format.signMaskNat = 2 ^ format.payloadBits := by
-    rfl
-  have hcode : code = 2 ^ format.payloadBits - 1 := by
-    dsimp [code]
-    rw [hmask]
-  have hcodePos : 0 < code := by
-    rw [hcode]
-    have hpower : 1 < 2 ^ format.payloadBits :=
-      Nat.one_lt_two_pow hpayload.ne'
-    omega
-  have hcodeLt : code < format.signMaskNat := by
-    dsimp [code]
-    exact Nat.sub_lt format.signMaskNat_pos (by decide)
-  have hsign : value.signBit = false :=
-    Model.signBit_ofNatBits_eq_false format code hcodeLt
-  have hmagnitude : value.magnitudeBits = code :=
-    Model.magnitudeBits_ofNatBits_of_lt_signMask
-      format code hcodeLt
-  have hregimeBit : value.regimeBit = true := by
-    unfold Model.regimeBit
-    rw [hmagnitude, hcode, Nat.testBit_two_pow_sub_one]
-    simp [hpayload]
-  have hrun :
-      value.regimeRunLength = format.payloadBits := by
-    unfold Model.regimeRunLength
-    rw [hmagnitude, hregimeBit]
-    rw [Model.countLeadingRun_true_eq_fixedComplement
-      code format.payloadBits]
-    · rw [hcode]
-      simp [Model.countLeadingRun_zero_false]
-    · rw [hcode]
-      exact Nat.sub_lt (Nat.two_pow_pos _) (by decide)
-  have htrailing : value.trailingBits = 0 := by
-    unfold Model.trailingBits Model.hasRegimeTerminator
-    rw [hrun]
-    simp
-  have hregime :
-      value.regimeValue =
-        Int.ofNat format.payloadBits - 1 := by
-    simp [Model.regimeValue, hregimeBit, hrun]
-  rw [Model.nonnegativeRatAt_of_pos_lt_signMask
-    format hcodePos hcodeLt]
-  rw [Model.decodeFields_toRat_eq_trailingRat_mul_regime
-    value hsign]
-  change
-    Model.trailingRat value.trailingBits value.magnitudeBits *
-        (2 : Rat) ^ (value.regimeValue * 4) =
-      (2 : Rat) ^ ((Int.ofNat format.payloadBits - 1) * 4)
-  rw [htrailing, hregime]
-  norm_num [Model.trailingRat, Model.natToRat]
-
 /-- The leading-zero run of a value lying between two consecutive powers of two. -/
 private theorem countLeadingRun_false_eq_of_two_pow_le_of_lt
     (value width trailing : Nat)
@@ -110,15 +44,14 @@ private theorem countLeadingRun_false_eq_of_two_pow_le_of_lt
     (Nat.log2_eq_iff hpos.ne').2 ⟨hlower, hupper⟩]
 
 /--
-Decode an interior code from its regime bit, regime run length, and retained tail.
+Decode a positive code from its regime bit, regime run length, and retained tail.
 
-Both interior layouts reduce to this bookkeeping about the decoder projections once the raw
-code's leading bit, leading run, and low bits are known.
+Both interior layouts and the full run of `maxPos` reduce to this bookkeeping about the decoder
+projections once the raw code's leading bit, leading run, and low bits are known.
 -/
 private theorem nonnegativeRatAt_of_regimeRun
     (format : Format) (code run tail : Nat) (bit : Bool)
     (hcodePos : 0 < code) (hcode : code < 2 ^ format.payloadBits)
-    (hrun : run < format.payloadBits)
     (hbit : code.testBit (format.payloadBits - 1) = bit)
     (hrunLength : Model.countLeadingRun code format.payloadBits bit = run)
     (htail : code % 2 ^ (format.payloadBits - run - 1) = tail) :
@@ -138,9 +71,7 @@ private theorem nonnegativeRatAt_of_regimeRun
     unfold Model.regimeRunLength
     rw [hmagnitude, hregimeBit, hrunLength]
   have htrailingBits : value.trailingBits = format.payloadBits - run - 1 := by
-    unfold Model.trailingBits Model.hasRegimeTerminator
-    rw [hrunLength']
-    simp [hrun]
+    rw [Model.trailingBits_eq, hrunLength']
   have hregimeValue :
       value.regimeValue = if bit then Int.ofNat run - 1 else -Int.ofNat run := by
     unfold Model.regimeValue
@@ -151,6 +82,27 @@ private theorem nonnegativeRatAt_of_regimeRun
     Model.trailingRat value.trailingBits value.magnitudeBits *
         (2 : Rat) ^ (value.regimeValue * 4) = _
   rw [htrailingBits, hmagnitude, hregimeValue, ← htail, Model.trailingRat_mod_twoPow]
+
+/--
+Decode the all-ones positive payload.
+
+`maxPos` has a regime run occupying the complete payload, no terminator, and no trailing field.
+Its regime value is therefore `payloadBits - 1`.
+-/
+theorem nonnegativeRatAt_maxPositive
+    (format : Format) :
+    Model.nonnegativeRatAt format (format.signMaskNat - 1) =
+      (2 : Rat) ^ ((Int.ofNat format.payloadBits - 1) * 4) := by
+  have hpayload := format.payloadBits_pos
+  have hmask : format.signMaskNat = 2 ^ format.payloadBits := rfl
+  have hpower : 1 < 2 ^ format.payloadBits := Nat.one_lt_two_pow hpayload.ne'
+  have hcode : format.signMaskNat - 1 < 2 ^ format.payloadBits := by omega
+  rw [nonnegativeRatAt_of_regimeRun format (format.signMaskNat - 1) format.payloadBits 0 true
+    (by omega) hcode (by simp [hmask, Nat.testBit_two_pow_sub_one, hpayload]) ?_
+    (by rw [Nat.sub_self, Nat.zero_sub, Nat.pow_zero, Nat.mod_one])]
+  · simp [Model.trailingRat, Model.natToRat]
+  · rw [Model.countLeadingRun_true_eq_fixedComplement _ _ hcode, hmask]
+    simp [Model.countLeadingRun_zero_false]
 
 /--
 Decode an interior positive-regime layout.
@@ -186,7 +138,7 @@ theorem nonnegativeRatAt_positiveInterior
   have hcodeUpper : code < 2 ^ format.payloadBits := by omega
   have hcodeLower : 2 ^ (format.payloadBits - 1) ≤ code := by omega
   refine nonnegativeRatAt_of_regimeRun format code run tail true
-    (by omega) hcodeUpper hrun ?_ ?_ ?_
+    (by omega) hcodeUpper ?_ ?_ ?_
   · exact (Nat.testBit_eq_true_iff_two_pow_le_of_lt (by
       rwa [Nat.sub_add_cancel format.payloadBits_pos])).2 hcodeLower
   · rw [Model.countLeadingRun_true_eq_fixedComplement code _ hcodeUpper,
@@ -222,7 +174,7 @@ theorem nonnegativeRatAt_negativeInterior
   have htopLt : 2 ^ (format.payloadBits - 1) < 2 ^ format.payloadBits :=
     Nat.pow_lt_pow_right (by decide) (by omega)
   refine nonnegativeRatAt_of_regimeRun format code run tail false
-    (by omega) (by omega) hrun ?_ ?_ ?_
+    (by omega) (by omega) ?_ ?_ ?_
   · exact Nat.testBit_eq_false_of_lt (by omega)
   · rw [countLeadingRun_false_eq_of_two_pow_le_of_lt _ _ (format.payloadBits - run - 1)
       (by omega) (by omega) (by omega)]
@@ -230,7 +182,7 @@ theorem nonnegativeRatAt_negativeInterior
   · rw [hcode, Nat.add_mod_left, Nat.mod_eq_of_lt htail]
 
 /--
-Decode the successor of a positive-regime code whose retained tail is all ones.
+Decode the successor of a code that starts with `run` one bits and whose retained tail is all ones.
 
 Adding one carries through the complete retained tail into the regime. For an interior run this
 produces the zero-tail base of the next positive regime; at the final run it produces `maxPos`.
@@ -239,7 +191,6 @@ successor are adjacent Posits.
 -/
 theorem nonnegativeRatAt_positiveInteriorCarry
     (format : Format) (run : Nat)
-    (hrunPos : 0 < run)
     (hrun : run < format.payloadBits) :
     Model.nonnegativeRatAt format
         ((2 ^ run - 1) * 2 ^ (format.payloadBits - run) +
@@ -371,6 +322,25 @@ theorem nonnegativeRatAt_negativeInteriorCarry
     simpa [Model.trailingRat, Model.natToRat] using hsemantic
 
 /--
+A tail of the retained width, extended by one appended bit, fits the one-bit-wider format, whose
+trailing width is one larger.
+-/
+private theorem nextPrecision_tail_facts
+    (format : Format) (run tail : Nat)
+    (hrun : run < format.payloadBits)
+    (htail : tail < 2 ^ (format.payloadBits - run - 1)) :
+    run < format.nextPrecision.payloadBits ∧
+      2 * tail + 1 < 2 ^ (format.nextPrecision.payloadBits - run - 1) ∧
+      format.nextPrecision.payloadBits - run - 1 = format.payloadBits - run - 1 + 1 := by
+  have hwidth :
+      format.nextPrecision.payloadBits - run - 1 = format.payloadBits - run - 1 + 1 := by
+    rw [Format.nextPrecision_payloadBits]
+    omega
+  refine ⟨by rw [Format.nextPrecision_payloadBits]; omega, ?_, hwidth⟩
+  rw [hwidth, Nat.pow_succ]
+  omega
+
+/--
 Decode the standard one-bit-wider boundary above a positive-regime retained code.
 
 Doubling the retained code appends `0`; adding one changes only that new bit. Consequently the
@@ -386,32 +356,13 @@ theorem nonnegativeRatAt_positiveInteriorThreshold
       Model.trailingRat
           (format.payloadBits - run - 1 + 1) (2 * tail + 1) *
         (2 : Rat) ^ ((Int.ofNat run - 1) * 4) := by
-  have hrunNext : run < format.nextPrecision.payloadBits := by
-    rw [Format.nextPrecision_payloadBits]
-    omega
-  have htailNext :
-      2 * tail + 1 <
-        2 ^ (format.nextPrecision.payloadBits - run - 1) := by
-    rw [Format.nextPrecision_payloadBits]
-    have hpower :
-        2 ^ (format.payloadBits - run - 1 + 1) =
-          2 * 2 ^ (format.payloadBits - run - 1) := by
-      rw [Nat.pow_succ]
-      omega
-    rw [show
-      format.payloadBits + 1 - run - 1 =
-        format.payloadBits - run - 1 + 1 by omega]
-    rw [hpower]
-    omega
+  obtain ⟨hrunNext, htailNext, hwidth⟩ :=
+    nextPrecision_tail_facts format run tail hrun htail
   have hsemantic :=
     nonnegativeRatAt_positiveInterior
       format.nextPrecision run (2 * tail + 1)
       hrunPos hrunNext htailNext
-  rw [show
-      format.nextPrecision.payloadBits - run - 1 =
-        format.payloadBits - run - 1 + 1 by
-      rw [Format.nextPrecision_payloadBits]
-      omega] at hsemantic
+  rw [hwidth] at hsemantic
   have hcode :
       (2 ^ run - 1) *
             2 ^ (format.nextPrecision.payloadBits - run) +
@@ -443,33 +394,14 @@ theorem nonnegativeRatAt_negativeInteriorThreshold
       Model.trailingRat
           (format.payloadBits - run - 1 + 1) (2 * tail + 1) *
         (2 : Rat) ^ (-(Int.ofNat run) * 4) := by
-  have hrunNext : run < format.nextPrecision.payloadBits := by
-    rw [Format.nextPrecision_payloadBits]
-    omega
-  have htailNext :
-      2 * tail + 1 <
-        2 ^ (format.nextPrecision.payloadBits - run - 1) := by
-    rw [Format.nextPrecision_payloadBits]
-    have hpower :
-        2 ^ (format.payloadBits - run - 1 + 1) =
-          2 * 2 ^ (format.payloadBits - run - 1) := by
-      rw [Nat.pow_succ]
-      omega
-    rw [show
-      format.payloadBits + 1 - run - 1 =
-        format.payloadBits - run - 1 + 1 by omega]
-    rw [hpower]
-    omega
+  obtain ⟨hrunNext, htailNext, hwidth⟩ :=
+    nextPrecision_tail_facts format run tail hrun htail
   have hsemantic :=
     nonnegativeRatAt_negativeInterior
       format.nextPrecision run (2 * tail + 1)
       hrunPos hrunNext htailNext
   dsimp only at hsemantic
-  rw [show
-      format.nextPrecision.payloadBits - run - 1 =
-        format.payloadBits - run - 1 + 1 by
-      rw [Format.nextPrecision_payloadBits]
-      omega] at hsemantic
+  rw [hwidth] at hsemantic
   have hcode :
       2 ^ (format.nextPrecision.payloadBits - run - 1) +
           (2 * tail + 1) =
@@ -480,12 +412,7 @@ theorem nonnegativeRatAt_negativeInteriorThreshold
         (format.payloadBits - run - 1) + 1 by omega]
     rw [Nat.pow_succ]
     ring
-  rw [← hcode]
-  rw [show
-      format.nextPrecision.payloadBits - run - 1 =
-        format.payloadBits - run - 1 + 1 by
-      rw [Format.nextPrecision_payloadBits]
-      omega]
+  rw [← hcode, hwidth]
   exact hsemantic
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding

@@ -122,7 +122,10 @@ def run (overflow : OverflowMode) :
   | .infinity _ | .exceptional _ =>
     .success (ofCode (Block.nan profile)) { mappedSpecial := true }
 
-/-- Destination specification uses the numerical lane-rounding relation at the selected scale. -/
+/--
+Destination specification. The rounded block is constrained by the numerical lane-rounding
+relation at the selected scale; the flags are specified as `status`, the same function `run` uses.
+-/
 def spec (overflow : OverflowMode) (input : NumericalValue (Vector SignedRat 32))
     (outcome : ExecFloat.ConversionOutcome (Standard profile)) : Prop :=
   match input with

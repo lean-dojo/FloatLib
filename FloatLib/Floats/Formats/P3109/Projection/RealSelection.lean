@@ -35,11 +35,10 @@ noncomputable def nearestEven (value : Real) : Nat :=
   simp
 
 /--
-Reaching a positive integer by nearest-even rounding is decided at its lower halfway point.
+Reaching an integer by nearest-even rounding is decided at its lower halfway point.
 At that point it is the parity of the upper integer that decides the tie.
 -/
-theorem le_nearestEven_iff (value : Real) (boundary : Nat) (_hb : 0 < boundary)
-    (hv : 0 ≤ value) :
+theorem le_nearestEven_iff (value : Real) (boundary : Nat) (hv : 0 ≤ value) :
     boundary ≤ nearestEven value ↔
       (boundary : Real) - 1 / 2 < value ∨
         (value = (boundary : Real) - 1 / 2 ∧ boundary % 2 = 0) := by
@@ -94,9 +93,10 @@ theorem le_nearestEven_iff (value : Real) (boundary : Nat) (_hb : 0 < boundary)
 
 /-- Floor-based stochastic selection is a comparison against an exact rational threshold. -/
 theorem floor_selection_iff (root : Real) (lower scale random : Nat)
-    (hscale : 0 < scale) (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
+    (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
     scale ≤ ⌊(root - lower) * scale⌋₊ + random ↔
       ((lower * scale + (scale - random) : Nat) : Real) / scale ≤ root := by
+  have hscale : 0 < scale := by omega
   have hnonneg : 0 ≤ (root - lower) * scale := by positivity
   have hsub : scale - random ≤ ⌊(root - lower) * scale⌋₊ ↔
       scale ≤ ⌊(root - lower) * scale⌋₊ + random := by omega
@@ -108,16 +108,16 @@ theorem floor_selection_iff (root : Real) (lower scale random : Nat)
 
 /-- Nearest-even stochastic selection includes its halfway point exactly for an even boundary. -/
 theorem nearestEven_selection_iff (root : Real) (lower scale random : Nat)
-    (hscale : 0 < scale) (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
+    (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
     scale ≤ nearestEven ((root - lower) * scale) + random ↔
       ((lower * (2 * scale) + (2 * (scale - random) - 1) : Nat) : Real) / (2 * scale) < root ∨
         (root = ((lower * (2 * scale) + (2 * (scale - random) - 1) : Nat) : Real) /
           (2 * scale) ∧ (scale - random) % 2 = 0) := by
-  have hb : 0 < scale - random := by omega
+  have hscale : 0 < scale := by omega
   have hnonneg : 0 ≤ (root - lower) * scale := by positivity
   have hsub : scale - random ≤ nearestEven ((root - lower) * scale) ↔
       scale ≤ nearestEven ((root - lower) * scale) + random := by omega
-  rw [← hsub, le_nearestEven_iff _ _ hb hnonneg]
+  rw [← hsub, le_nearestEven_iff _ _ hnonneg]
   have hs : (0 : Real) < scale := by exact_mod_cast hscale
   have ht :
       ((lower * (2 * scale) + (2 * (scale - random) - 1) : Nat) : Real) / (2 * scale) =

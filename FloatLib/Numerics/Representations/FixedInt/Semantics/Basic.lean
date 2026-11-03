@@ -71,28 +71,35 @@ theorem maxValue_eq (width : Nat) :
     maxValue width = (2 ^ (width - 1) : Int) - 1 := by
   simp [maxValue]
 
-/-- At positive width, the signed storage interval is nonempty. -/
-theorem minValue_le_maxValue {width : Nat} (hwidth : 0 < width) :
-    minValue width ≤ maxValue width := by
-  rw [minValue_eq hwidth, maxValue_eq]
-  have hpow : (0 : Int) < 2 ^ (width - 1) := Int.pow_pos (by decide)
-  omega
+/-- The signed storage interval is nonempty; at width zero it is the single value zero. -/
+theorem minValue_le_maxValue {width : Nat} :
+    minValue width ≤ maxValue width :=
+  BitVec.toInt_intMin_le _
 
-/-- Clamping at positive width always produces an in-range integer. -/
-theorem clamp_inRange {width : Nat} (hwidth : 0 < width) (value : Int) :
+/-- Clamping always produces an in-range integer. -/
+theorem clamp_inRange {width : Nat} (value : Int) :
     InRange width (clamp width value) :=
   ⟨Quantization.Saturating.lower_le_clamp _ _ _,
-    Quantization.Saturating.clamp_le_upper (minValue_le_maxValue hwidth)⟩
+    Quantization.Saturating.clamp_le_upper minValue_le_maxValue⟩
 
 /-- Clamping fixes every integer already in the signed storage interval. -/
 theorem clamp_eq_self {width : Nat} {value : Int} (hvalue : InRange width value) :
     clamp width value = value :=
   Quantization.Saturating.clamp_eq_self hvalue.1 hvalue.2
 
-/-- Encoding an in-range integer at positive width preserves its exact signed value. -/
-theorem toInt_ofInt_eq_self {width : Nat} (hwidth : 0 < width)
+/--
+Encoding an in-range integer preserves its exact signed value.
+
+At width zero the only in-range integer is zero, which every code denotes.
+-/
+theorem toInt_ofInt_eq_self {width : Nat}
     {value : Int} (hvalue : InRange width value) :
     (ofInt (width := width) value).toInt = value := by
+  rcases Nat.eq_zero_or_pos width with rfl | hwidth
+  · have hbounds := hvalue
+    simp only [InRange, minValue, maxValue, BitVec.toInt_zero_length] at hbounds
+    simp only [toInt, BitVec.toInt_zero_length]
+    omega
   apply BitVec.toInt_ofInt_eq_self hwidth
   · rw [← minValue_eq hwidth]
     exact hvalue.1
@@ -101,10 +108,9 @@ theorem toInt_ofInt_eq_self {width : Nat} (hwidth : 0 < width)
     omega
 
 /-- Saturating conversion denotes exact clamping to the signed storage interval. -/
-@[simp, grind =] theorem toInt_ofIntSaturating {width : Nat} (hwidth : 0 < width)
+@[simp, grind =] theorem toInt_ofIntSaturating {width : Nat}
     (value : Int) :
-    (ofIntSaturating (width := width) value).toInt = clamp width value := by
-  apply toInt_ofInt_eq_self hwidth
-  exact clamp_inRange hwidth value
+    (ofIntSaturating (width := width) value).toInt = clamp width value :=
+  toInt_ofInt_eq_self (clamp_inRange value)
 
 end FloatLib.Numerics.Representations.FixedInt

@@ -37,7 +37,7 @@ noncomputable def toReal (d : Dyadic) : ℝ :=
   cases hnegative : d.negative <;>
     simp [signedSignificand, hnegative]
 
-/-- A nonnegative dyadic constructor has the expected unsigned real denotation. -/
+/-- A dyadic with a clear sign bit denotes `significand * 2 ^ exponent` in the reals. -/
 @[simp] theorem toReal_mk_false (significand : Nat) (exponent : Int) :
     (Dyadic.mk false significand exponent).toReal =
       (significand : ℝ) * (2 : ℝ) ^ exponent := by

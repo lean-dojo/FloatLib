@@ -37,13 +37,15 @@ theorem tendsto_trigQuarter :
   simpa only [trigQuarter, Rat.cast_max, Rat.cast_min, Rat.cast_div, Rat.cast_one,
     Rat.cast_ofNat] using h
 
+/-- The gap between the upper pi-quarter bound and the clamped quarter period vanishes. -/
+theorem tendsto_piQuarter_hi_sub_trigQuarter :
+    Tendsto (fun n : Nat => ((piQuarter n).hi : ℝ) - (trigQuarter n : ℝ)) atTop (𝓝 0) := by
+  simpa using tendsto_piQuarter_hi.sub tendsto_trigQuarter
+
 /-- The accumulated period error tends to zero without requiring quotient stability. -/
 theorem tendsto_trigReductionError (x : ℚ) :
     Tendsto (fun n : Nat => (trigReductionError x n : ℝ)) atTop (𝓝 0) := by
-  have herr : Tendsto (fun n : Nat =>
-      ((piQuarter n).hi : ℝ) - (trigQuarter n : ℝ)) atTop (𝓝 0) := by
-    simpa using tendsto_piQuarter_hi.sub tendsto_trigQuarter
-  have hbound := herr.const_mul (8 * (|(x : ℝ)| + 1))
+  have hbound := tendsto_piQuarter_hi_sub_trigQuarter.const_mul (8 * (|(x : ℝ)| + 1))
   apply squeeze_zero (fun n => by exact_mod_cast trigReductionError_nonneg x n)
     (fun n => ?_)
     (by simpa using hbound)
@@ -51,22 +53,14 @@ theorem tendsto_trigReductionError (x : ℚ) :
 
 /-- The bounded reduced arguments give a uniform factorial majorant for the Taylor error. -/
 theorem trigRadius_reduced_le (x : ℚ) (degree : Nat) :
-    trigRadius (trigReducedArgument x degree) degree ≤ trigRadius 4 degree := by
-  unfold trigRadius
-  apply div_le_div_of_nonneg_right _ (Nat.cast_nonneg _)
-  apply pow_le_pow_left₀ (abs_nonneg _)
-  simpa using abs_trigReducedArgument_le x degree
+    trigRadius (trigReducedArgument x degree) degree ≤ trigRadius 4 degree :=
+  trigRadius_le_trigRadius_four (abs_trigReducedArgument_le x degree) degree
 
 /-- The reduced Taylor error tends to zero even though its rational argument varies. -/
 theorem tendsto_trigRadius_reduced (x : ℚ) :
     Tendsto (fun n : Nat => (trigRadius (trigReducedArgument x n) n : ℝ))
-      atTop (𝓝 0) := by
-  apply squeeze_zero (fun n => ?_) (fun n => ?_) (tendsto_trigRadius 4)
-  · have h : (0 : ℚ) ≤ trigRadius (trigReducedArgument x n) n := by
-      unfold trigRadius
-      positivity
-    exact_mod_cast h
-  · exact_mod_cast trigRadius_reduced_le x n
+      atTop (𝓝 0) :=
+  tendsto_trigRadius_of_abs_le_four (abs_trigReducedArgument_le x)
 
 /-- The complete radius of the reduced enclosure tends to zero. -/
 theorem tendsto_trigReducedRadius (x : ℚ) :
@@ -77,57 +71,43 @@ theorem tendsto_trigReducedRadius (x : ℚ) :
 /-- Reduced sine polynomials converge to the sine of the original argument. -/
 theorem tendsto_sinReducedTaylor (x : ℚ) :
     Tendsto (fun n : Nat => (sinTaylor (trigReducedArgument x n) n : ℝ)) atTop
-      (𝓝 (Real.sin (x : ℝ))) := by
-  rw [tendsto_iff_dist_tendsto_zero]
-  refine squeeze_zero (fun _ => dist_nonneg) (fun n => ?_) (tendsto_trigReducedRadius x)
-  simpa only [Real.dist_eq, abs_sub_comm] using abs_sin_sub_reducedTaylor_le x n
+      (𝓝 (Real.sin (x : ℝ))) :=
+  RationalInterval.tendsto_of_abs_sub_le (abs_sin_sub_reducedTaylor_le x)
+    (tendsto_trigReducedRadius x)
 
 /-- Reduced cosine polynomials converge to the cosine of the original argument. -/
 theorem tendsto_cosReducedTaylor (x : ℚ) :
     Tendsto (fun n : Nat => (cosTaylor (trigReducedArgument x n) n : ℝ)) atTop
-      (𝓝 (Real.cos (x : ℝ))) := by
-  rw [tendsto_iff_dist_tendsto_zero]
-  refine squeeze_zero (fun _ => dist_nonneg) (fun n => ?_) (tendsto_trigReducedRadius x)
-  simpa only [Real.dist_eq, abs_sub_comm] using abs_cos_sub_reducedTaylor_le x n
+      (𝓝 (Real.cos (x : ℝ))) :=
+  RationalInterval.tendsto_of_abs_sub_le (abs_cos_sub_reducedTaylor_le x)
+    (tendsto_trigReducedRadius x)
 
 /-- The reduced sine lower endpoints converge at every rational input. -/
 theorem tendsto_sinReduced_lo (x : ℚ) :
     Tendsto (fun n : Nat => ((sinReduced x n).lo : ℝ)) atTop
-      (𝓝 (Real.sin (x : ℝ))) := by
-  apply tendsto_restrictUnit_lo (intervals := fun n => RationalInterval.around
-    (sinTaylor (trigReducedArgument x n) n) (trigReducedRadius x n))
-  · simpa [RationalInterval.around] using
-      (tendsto_sinReducedTaylor x).sub (tendsto_trigReducedRadius x)
-  · exact (abs_le.mp (Real.abs_sin_le_one _)).1
+      (𝓝 (Real.sin (x : ℝ))) :=
+  tendsto_restrictUnit_around_lo (tendsto_sinReducedTaylor x) (tendsto_trigReducedRadius x)
+    (Real.abs_sin_le_one _)
 
 /-- The reduced sine upper endpoints converge at every rational input. -/
 theorem tendsto_sinReduced_hi (x : ℚ) :
     Tendsto (fun n : Nat => ((sinReduced x n).hi : ℝ)) atTop
-      (𝓝 (Real.sin (x : ℝ))) := by
-  apply tendsto_restrictUnit_hi (intervals := fun n => RationalInterval.around
-    (sinTaylor (trigReducedArgument x n) n) (trigReducedRadius x n))
-  · simpa [RationalInterval.around] using
-      (tendsto_sinReducedTaylor x).add (tendsto_trigReducedRadius x)
-  · exact (abs_le.mp (Real.abs_sin_le_one _)).2
+      (𝓝 (Real.sin (x : ℝ))) :=
+  tendsto_restrictUnit_around_hi (tendsto_sinReducedTaylor x) (tendsto_trigReducedRadius x)
+    (Real.abs_sin_le_one _)
 
 /-- The reduced cosine lower endpoints converge at every rational input. -/
 theorem tendsto_cosReduced_lo (x : ℚ) :
     Tendsto (fun n : Nat => ((cosReduced x n).lo : ℝ)) atTop
-      (𝓝 (Real.cos (x : ℝ))) := by
-  apply tendsto_restrictUnit_lo (intervals := fun n => RationalInterval.around
-    (cosTaylor (trigReducedArgument x n) n) (trigReducedRadius x n))
-  · simpa [RationalInterval.around] using
-      (tendsto_cosReducedTaylor x).sub (tendsto_trigReducedRadius x)
-  · exact (abs_le.mp (Real.abs_cos_le_one _)).1
+      (𝓝 (Real.cos (x : ℝ))) :=
+  tendsto_restrictUnit_around_lo (tendsto_cosReducedTaylor x) (tendsto_trigReducedRadius x)
+    (Real.abs_cos_le_one _)
 
 /-- The reduced cosine upper endpoints converge at every rational input. -/
 theorem tendsto_cosReduced_hi (x : ℚ) :
     Tendsto (fun n : Nat => ((cosReduced x n).hi : ℝ)) atTop
-      (𝓝 (Real.cos (x : ℝ))) := by
-  apply tendsto_restrictUnit_hi (intervals := fun n => RationalInterval.around
-    (cosTaylor (trigReducedArgument x n) n) (trigReducedRadius x n))
-  · simpa [RationalInterval.around] using
-      (tendsto_cosReducedTaylor x).add (tendsto_trigReducedRadius x)
-  · exact (abs_le.mp (Real.abs_cos_le_one _)).2
+      (𝓝 (Real.cos (x : ℝ))) :=
+  tendsto_restrictUnit_around_hi (tendsto_cosReducedTaylor x) (tendsto_trigReducedRadius x)
+    (Real.abs_cos_le_one _)
 
 end FloatLib.Numerics.Enclosure

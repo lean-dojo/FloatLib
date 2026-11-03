@@ -84,6 +84,21 @@ theorem toDyadic?_eq_none_iff (value : Model format) :
     value.toDyadic? = none ↔ value.isNaR = true := by
   simp [toDyadic?]
 
+/-- Generic decoding is exceptional precisely for the reserved quire NaR word. -/
+theorem decode_eq_exceptional_iff (value : Model format) :
+    value.decode = .exceptional .notAReal ↔ value.isNaR = true := by
+  rw [← toRat?_eq_none_iff]
+  unfold decode
+  cases value.toRat? <;> simp
+
+/-- Encoding an ordinary coefficient never produces quire NaR. -/
+private theorem isNaR_ofCoefficient_of_ordinary
+    {coefficient : Int}
+    (hcoefficient : OrdinaryCoefficient format coefficient) :
+    (ofCoefficient format coefficient).isNaR = false :=
+  (ordinaryCoefficient_iff_isNaR_eq_false _).mp
+    (by rwa [coefficient_ofCoefficient_of_ordinary hcoefficient])
+
 /-- Exact semantics of a successfully encoded ordinary coefficient. -/
 theorem toRat?_ofCoefficient_of_ordinary
     {coefficient : Int}
@@ -92,18 +107,16 @@ theorem toRat?_ofCoefficient_of_ordinary
       some
         (Rat.ofInt coefficient *
           (2 : Rat) ^ scaleExponent format) := by
-  have hstored :
-      (ofCoefficient format coefficient).coefficient = coefficient :=
-    coefficient_ofCoefficient_of_ordinary hcoefficient
-  have hordinary :
-      OrdinaryCoefficient format
-        (ofCoefficient format coefficient).coefficient := by
-    simpa [hstored] using hcoefficient
-  have hnar :
-      (ofCoefficient format coefficient).isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false
-      (ofCoefficient format coefficient)).mp hordinary
-  simp [toRat?, hnar, hstored]
+  simp [toRat?, isNaR_ofCoefficient_of_ordinary hcoefficient,
+    coefficient_ofCoefficient_of_ordinary hcoefficient]
+
+/-- Generic numerical value of a successfully encoded ordinary coefficient. -/
+theorem decode_ofCoefficient_of_ordinary
+    {coefficient : Int}
+    (hcoefficient : OrdinaryCoefficient format coefficient) :
+    (ofCoefficient format coefficient).decode =
+      .finite (Rat.ofInt coefficient * (2 : Rat) ^ scaleExponent format) := by
+  simp [decode, toRat?_ofCoefficient_of_ordinary hcoefficient]
 
 /-- Shared-dyadic semantics of a successfully encoded ordinary coefficient. -/
 theorem toDyadic?_ofCoefficient_of_ordinary
@@ -113,17 +126,7 @@ theorem toDyadic?_ofCoefficient_of_ordinary
       some
         (FloatLib.Numerics.Dyadic.ofScaledInt
           coefficient (scaleExponent format)) := by
-  have hstored :
-      (ofCoefficient format coefficient).coefficient = coefficient :=
-    coefficient_ofCoefficient_of_ordinary hcoefficient
-  have hordinary :
-      OrdinaryCoefficient format
-        (ofCoefficient format coefficient).coefficient := by
-    simpa [hstored] using hcoefficient
-  have hnar :
-      (ofCoefficient format coefficient).isNaR = false :=
-    (ordinaryCoefficient_iff_isNaR_eq_false
-      (ofCoefficient format coefficient)).mp hordinary
-  simp [toDyadic?, hnar, hstored]
+  simp [toDyadic?, isNaR_ofCoefficient_of_ordinary hcoefficient,
+    coefficient_ofCoefficient_of_ordinary hcoefficient]
 
 end FloatLib.Floats.Formats.Posit.Quire.Model

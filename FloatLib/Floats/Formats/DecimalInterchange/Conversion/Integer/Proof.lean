@@ -64,6 +64,8 @@ theorem convertToInteger_invalid_iff (destination : IntegerFormat) (mode : Round
       by_cases hr : destination.InRange (roundInteger mode value) <;>
         simp [convertToInteger_cases, hs, hr, invalidOutcome]
 
+/-- When the source is finite and its rounded integer fits the destination, the conversion delivers
+that integer; only the `Exact` variants raise inexact, and only on a numerical change. -/
 theorem convertToInteger_of_inRange (destination : IntegerFormat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value) (hr : destination.InRange (roundInteger mode value)) :
@@ -98,6 +100,7 @@ theorem convertToInteger_value_independent (destination : IntegerFormat) (mode :
   simp only [convertToInteger_cases]
   split <;> first | rfl | split <;> rfl
 
+/-- The variants without `Exact` never raise inexact, whatever the source. -/
 @[simp] theorem convertToInteger_quiet_inexact (destination : IntegerFormat)
     (mode : RoundingMode) (source : Datum) :
     (convertToInteger destination mode false source).status.inexact = false := by
@@ -131,8 +134,10 @@ theorem convertToInteger_range_flags (destination : IntegerFormat) (mode : Round
   simp only [convertToInteger_cases]
   split <;> first | exact ⟨rfl, rfl, rfl⟩ | split <;> exact ⟨rfl, rfl, rfl⟩
 
+/-- In both nearest modes, a successful conversion of a finite source is within half a unit of its
+exact value. -/
 theorem convertToInteger_error_le_half (destination : IntegerFormat) (mode : RoundingMode)
-    (hm : mode = .nearestEven ∨ mode = .nearestAway)
+    (hm : mode = .nearest ∨ mode = .nearestAway)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
     (hv : (convertToInteger destination mode signalInexact source).status.invalid = false) :
@@ -140,6 +145,8 @@ theorem convertToInteger_error_le_half (destination : IntegerFormat) (mode : Rou
   rw [convertToInteger_value destination mode signalInexact source value hs hv]
   exact roundInteger_error_le_half mode hm value
 
+/-- In every rounding direction, a successful conversion of a finite source is less than one unit
+from its exact value. -/
 theorem convertToInteger_error_lt_one (destination : IntegerFormat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
@@ -148,24 +155,30 @@ theorem convertToInteger_error_lt_one (destination : IntegerFormat) (mode : Roun
   rw [convertToInteger_value destination mode signalInexact source value hs hv]
   exact roundInteger_error_lt_one mode value
 
-theorem le_convertToInteger_towardPositive (destination : IntegerFormat)
+/-- Rounding toward positive, a successful conversion of a finite source is at least its exact
+value. -/
+theorem le_convertToInteger_up (destination : IntegerFormat)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
-    (hv : (convertToInteger destination .towardPositive signalInexact source).status.invalid =
+    (hv : (convertToInteger destination .up signalInexact source).status.invalid =
       false) :
-    value ≤ ((convertToInteger destination .towardPositive signalInexact source).value : ℚ) := by
-  rw [convertToInteger_value destination .towardPositive signalInexact source value hs hv]
-  exact le_roundInteger_towardPositive value
+    value ≤ ((convertToInteger destination .up signalInexact source).value : ℚ) := by
+  rw [convertToInteger_value destination .up signalInexact source value hs hv]
+  exact le_roundInteger_up value
 
-theorem convertToInteger_towardNegative_le (destination : IntegerFormat)
+/-- Rounding toward negative, a successful conversion of a finite source is at most its exact value.
+-/
+theorem convertToInteger_down_le (destination : IntegerFormat)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
-    (hv : (convertToInteger destination .towardNegative signalInexact source).status.invalid =
+    (hv : (convertToInteger destination .down signalInexact source).status.invalid =
       false) :
-    ((convertToInteger destination .towardNegative signalInexact source).value : ℚ) ≤ value := by
-  rw [convertToInteger_value destination .towardNegative signalInexact source value hs hv]
-  exact roundInteger_towardNegative_le value
+    ((convertToInteger destination .down signalInexact source).value : ℚ) ≤ value := by
+  rw [convertToInteger_value destination .down signalInexact source value hs hv]
+  exact roundInteger_down_le value
 
+/-- Rounding toward zero, a successful conversion of a finite source is no larger in magnitude than
+its exact value. -/
 theorem abs_convertToInteger_towardZero_le (destination : IntegerFormat)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
@@ -178,17 +191,8 @@ theorem abs_convertToInteger_towardZero_le (destination : IntegerFormat)
 theorem convertToFixedInt_toInt (width : Nat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) :
     (convertToFixedInt width mode signalInexact source).1.toInt =
-      (convertToInteger (.signed width) mode signalInexact source).value := by
-  cases width with
-  | zero =>
-      have hr := convertToInteger_inRange (.signed 0) mode signalInexact source
-      have hz : (convertToInteger (.signed 0) mode signalInexact source).value = 0 := by
-        change 0 ≤ _ ∧ _ ≤ 0 at hr
-        omega
-      simp [convertToFixedInt, hz, FixedInt.toInt, FixedInt.ofInt]
-  | succ width =>
-      exact FixedInt.toInt_ofInt_eq_self (Nat.succ_pos width)
-        (convertToInteger_inRange (.signed (width + 1)) mode signalInexact source)
+      (convertToInteger (.signed width) mode signalInexact source).value :=
+  FixedInt.toInt_ofInt_eq_self (convertToInteger_inRange (.signed width) mode signalInexact source)
 
 /-- Unsigned packing preserves the checked integer exactly, including invalid delivery as zero. -/
 theorem convertToUnsigned_toNat (width : Nat) (mode : RoundingMode)

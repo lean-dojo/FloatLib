@@ -80,16 +80,6 @@ theorem round_pos_small_cases (rnd : ℝ → ℤ) [ValidRnd rnd]
       simp [round, toReal, s, hm, hcexp]
     exact Or.inr (by simpa [e, ex] using hy)
 
-/-- Rounding in the small-magnitude regime produces a generic-format value. -/
-theorem generic_format_round_pos_small (rnd : ℝ → ℤ) [ValidRnd rnd]
-    (x : ℝ) (hx : 0 < x) (hsmall : magnitude β x ≤ fexp (magnitude β x)) :
-    genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) := by
-  rcases round_pos_small_cases (β := β) (fexp := fexp) rnd x hx hsmall with hy | hy
-  · rw [hy]
-    exact generic_format_zero
-  · rw [hy]
-    exact generic_format_bpow _ (validExp_small (fexp := fexp) hsmall)
-
 /--
 In the large-magnitude regime, the rounded value lies between the endpoints of the input
 magnitude bin, including the upper endpoint, and belongs to the generic format.
@@ -119,19 +109,10 @@ theorem round_pos_large_bounds_and_generic (rnd : ℝ → ℤ) [ValidRnd rnd]
   have hsUpper : s < (nUpper : ℝ) := by
     rw [← hnUpper, bpow.sub_exp, hsdiv]
     exact div_lt_div_of_pos_right hxUpper hbpowPos
-  have hmLower : (nLower : ℤ) ≤ rnd s := by
-    have hid : rnd (nLower : ℝ) = (nLower : ℤ) := by
-      simpa using ValidRnd.id (rnd := rnd) (nLower : ℤ)
-    rw [← hid]
-    exact ValidRnd.monotone (rnd := rnd) _ _ hsLower
+  have hmLower : (nLower : ℤ) ≤ rnd s :=
+    ValidRnd.le_of_intCast_le rnd (by exact_mod_cast hsLower)
   have hmUpper : rnd s ≤ (nUpper : ℤ) :=
     (valid_round_le_ceil (rnd := rnd) s).trans (Int.ceil_le.mpr (by simpa using hsUpper.le))
-  have hnLowerOne : (1 : ℝ) ≤ nLower := by
-    rw [← hnLower]
-    exact one_le_zpow₀ (Numerics.Radix.gt_one β).le (by linarith)
-  have hmPos : (0 : ℝ) < rnd s := by
-    have hmLowerR : (nLower : ℝ) ≤ (rnd s : ℝ) := by exact_mod_cast hmLower
-    linarith
   have hy : round (β := β) (fexp := fexp) rnd x = (rnd s : ℝ) * bpow β e := rfl
   have hyLower : bpow β (ex - 1) ≤ round (β := β) (fexp := fexp) rnd x := by
     rw [hy, show ex - 1 = (ex - 1 - e) + e by ring, bpow.add_exp, hnLower]
@@ -143,35 +124,25 @@ theorem round_pos_large_bounds_and_generic (rnd : ℝ → ℤ) [ValidRnd rnd]
   rcases hyUpper.eq_or_lt with hyEq | hyLt
   · rw [hyEq]
     exact generic_format_bpow ex (validExp_large (fexp := fexp) hlarge)
-  · have hyPos : 0 < round (β := β) (fexp := fexp) rnd x := by
-      rw [hy]
-      exact mul_pos hmPos hbpowPos
-    have hmagY : magnitude β (round (β := β) (fexp := fexp) rnd x) = ex :=
-      magnitude_eq_of_bpow_bounds β _ ex hyPos.ne'
-        (by simpa [abs_of_pos hyPos] using hyLower) (by simpa [abs_of_pos hyPos] using hyLt)
-    apply generic_format_of_scaled_mantissa_int (n := rnd s)
-    rw [scaledMantissa_eq_div, show cexp β fexp (round (β := β) (fexp := fexp) rnd x) = e by
-      simp [cexp, hmagY, he], hy]
-    exact mul_div_cancel_right₀ _ (bpow.ne_zero β e)
-
-/-- Rounding in the large-magnitude regime produces a generic-format value. -/
-theorem generic_format_round_pos_large (rnd : ℝ → ℤ) [ValidRnd rnd]
-    (x : ℝ) (hx : 0 < x) (hlarge : fexp (magnitude β x) < magnitude β x) :
-    genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) :=
-  (round_pos_large_bounds_and_generic
-    (β := β) (fexp := fexp) rnd x hx hlarge).2
+  · exact generic_format_of_mul_bpow_of_mem_bin (rnd s) hy hyLower hyLt
 
 /-- Every positive real rounds into the selected generic format. -/
-theorem generic_format_round_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
+private theorem generic_format_round_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
     (x : ℝ) (hx : 0 < x) :
     genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) := by
   by_cases hsmall : magnitude β x ≤ fexp (magnitude β x)
-  · exact generic_format_round_pos_small rnd x hx hsmall
-  · exact generic_format_round_pos_large rnd x hx (lt_of_not_ge hsmall)
+  · rcases round_pos_small_cases (β := β) (fexp := fexp) rnd x hx hsmall with hy | hy
+    · rw [hy]
+      exact generic_format_zero
+    · rw [hy]
+      exact generic_format_bpow _ (validExp_small (fexp := fexp) hsmall)
+  · exact (round_pos_large_bounds_and_generic
+      (β := β) (fexp := fexp) rnd x hx (lt_of_not_ge hsmall)).2
 
 /-- Conjugate a rounding rule by negation. -/
 def negRound (rnd : ℝ → ℤ) : ℝ → ℤ := fun x => -rnd (-x)
 
+/-- Conjugating a valid rounding rule by negation gives a valid rounding rule. -/
 instance negRoundValid (rnd : ℝ → ℤ) [ValidRnd rnd] :
     ValidRnd (negRound rnd) where
   monotone := by
@@ -221,10 +192,7 @@ theorem generic_format_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     rw [hround]
     exact generic_format_neg _ hgeneric
   · subst x
-    have hr0 : rnd 0 = 0 := by simpa using ValidRnd.id (rnd := rnd) (0 : ℤ)
-    have hround : round (β := β) (fexp := fexp) rnd 0 = 0 := by
-      simp [round, scaledMantissa, toReal, hr0]
-    rw [hround]
+    rw [round_zero]
     exact generic_format_zero
   · exact generic_format_round_pos rnd x hx
 

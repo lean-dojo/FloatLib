@@ -2,8 +2,7 @@
 
 We compare FloatLib with other arithmetic libraries to see where our kernels are doing well
 and where an optimization would help. The plots cover six scalar operations across storage
-widths from 2 to 4,096 bits. This guide explains how to rerun them and what each comparison
-means. Run the commands from the repository root.
+widths from 2 to 4,096 bits. Run the commands from the repository root.
 
 ## Recreate the saved tables and figures
 
@@ -14,7 +13,11 @@ benchmarks/scripts/verify-main-result.sh
 This checks the saved measurements and regenerates their tables and figures from the recorded
 trials. It needs Git, Python 3, and Matplotlib, but does not compile FloatLib or run the timed
 operations again. The [results README](../results/main/README.md) describes the files behind the
-[performance chapter](../../site/content/chapters/17-performance.md).
+[performance chapter](../../site/content/chapters/17-performance.md). The saved run leaves out
+Flocq and has one cell with four trials just under the 50 ms floor.
+`release/provenance/publication-exceptions.json` declares both, and
+`verify_release_matrix.py --exceptions` accepts exactly the declared departures. Without that
+option the verifier applies the full publication profile.
 
 The matched Flocq comparison has its own data and figure:
 
@@ -23,13 +26,28 @@ python3 benchmarks/plots/flocq_matched.py \
   --out "${TMPDIR:-/tmp}/floatlib-flocq-matched.png"
 ```
 
-This also checks the raw timing selection and complete numerical values. The
-[matched result README](../results/flocq-matched/README.md) describes its fixture-chain
-measurements and the complete-block square-root supplement.
+This also rebuilds the nine-trial medians from the raw trials and checks the complete
+numerical values. The [matched result README](../results/flocq-matched/README.md) describes
+its fixture-chain measurements and the complete-block square-root supplement.
+
+The public binary measurements that open the performance chapter are a record of their own in
+[`results/public-binary/`](../results/public-binary/). Its `measurements.csv` holds 1,512 raw
+trials in nanoseconds per public operation. They compare FloatLib's public binary arithmetic with
+MPFR at matching precision, exponent range, and rounding, for the six operations on 14 formats
+from 7 to 4,096 bits, with nine trials per format, operation, and implementation. The
+`metadata.json` beside it records the protocol. Both implementations share one pinned CPU and
+alternate their order AB, BA, AB, and so on. Each loop cycles through 16 prepared inputs after 512
+warmup iterations, and each measured interval targets 40 ms. The metadata also gives the Lean,
+Mathlib, and MPFR versions, the CPU and the affinity of every row, the SHA-256 of the measurements
+and of the fixture archive `site/content/assets/public-binary-fixtures.zip`, and under `measured`
+the date, the measured commit (`8c88715`, release 2.0.0), and how this run differs from the earlier
+three-trial campaign. For the 84 ordinary finite-input cases, every complete input and output
+encoding matched an integer oracle and MPFR, and every warmup and timed checksum was recomputed
+independently.
 
 The data belongs to the source and environment recorded with it. Rebuilding the figures lets us
-check the calculation of the plotted numbers; measuring an implementation change needs a new
-run. When Matplotlib versions differ, the verifier compares the tables exactly and checks that
+check the calculation of the plotted numbers, while measuring an implementation change needs a
+new run. When Matplotlib versions differ, the verifier compares the tables exactly and checks that
 figures can still be generated. Image files can differ between plotting versions.
 
 ## Measure the current code
@@ -53,7 +71,7 @@ FORMAT_COMPARE_DEVELOPMENT_ONLY=1 \
 benchmarks/scripts/format-comparison.sh 1 "${TMPDIR:-/tmp}/floatlib-format-check"
 ```
 
-Choose a new output directory outside the checkout for each run; the script rejects an
+Choose a new output directory outside the checkout for each run, since the script rejects an
 existing path. Without an output argument, it creates a timestamped directory under
 `${TMPDIR:-/tmp}/floatlib-benchmarks/format-comparison`. The shared
 [build helper](../../tests/lib/lake.sh) keeps Lean build products outside the checkout.
@@ -75,7 +93,7 @@ benchmarks/scripts/format-comparison.sh 9 /path/to/results/format-comparison
 The Python expression selects the first CPU available to the process. You can set
 `FORMAT_COMPARE_CPU` to another available CPU instead. The full run requires this setting,
 at least seven trials, and calibrated iteration counts. Each measured interval must last at
-least 50 ms by default; calibration aims for 200 ms.
+least 50 ms by default, and calibration aims for 200 ms.
 
 For a matched binary fixture-chain comparison with just FloatLib, Flocq, and MPFR:
 
@@ -99,7 +117,7 @@ Keep the recorded source, compiler, and machine details beside any numbers you c
 
 The full run checks the complete measurement matrix and rejects disabled calibration, changed
 agreement-prefix lengths, reused Lean executables, dirty external checkouts, and incomplete or
-short timing rows. `FORMAT_COMPARE_BUILD_JOBS` controls SoftFloat's `make -j` only; it does not
+short timing rows. `FORMAT_COMPARE_BUILD_JOBS` controls SoftFloat's `make -j` only. It does not
 change Lean or Lake parallelism.
 
 When working on a particular operation, we can shorten the run:
@@ -128,8 +146,8 @@ Choosing among fixed inputs keeps multiplication, division, and square root from
 overflowing, underflowing, or settling at a fixed point.
 
 These timings include input lookup, result checksums, and the arithmetic call. They measure
-the cost of that scalar loop; they do not measure throughput over independent operations or
-the latency of a bare CPU instruction.
+the cost of that scalar loop, not throughput over independent operations or the latency of a
+bare CPU instruction.
 
 Each implementation, width, and operation gets its own calibrated iteration count. We record
 the loop's final checksum and a digest of the chosen input indices. Different loop lengths
@@ -137,7 +155,7 @@ can produce different final checksums even when every operation agrees, so we ch
 with a separate, untimed prefix of 256 operations.
 
 FloatLib, MPFR, and enabled Flocq rows must agree on that prefix at every shared binary width.
-Native C and SoftFloat join the check at binary32 and binary64; CPython joins for the
+Native C and SoftFloat join the check at binary32 and binary64, and CPython joins for the
 binary64 operations it provides.
 The runner checks both the result checksum and the input trace, and rejects missing or
 disagreeing prefixes.
@@ -148,7 +166,7 @@ is always first or last. The complete order is saved in `environment/trial-order
 ## Formats and comparison points
 
 Posit storage widths are 2, 3, 4, 5, 6, 7, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, and 4096.
-We stop measuring at 4,096 bits here; that is not a library precision limit.
+We stop measuring at 4,096 bits here. That is not a library precision limit.
 
 Configured binary formats begin at four bits:
 
@@ -175,7 +193,7 @@ This emits the six operation rows for the chosen width. The comparison script al
 these widths as standalone binary rows. It checks cross-adapter agreement for requested
 FloatLib/MPFR pairs and rejects missing requested rows.
 Explicit lane selections can also run Flocq alone or with an unpaired FloatLib or MPFR lane.
-The verifier checks every requested row and its agreement-prefix length; it compares Flocq's
+The verifier checks every requested row and its agreement-prefix length, and it compares Flocq's
 result digests where the same cell has both FloatLib and MPFR partners.
 
 MPFR and Flocq use the significand precision of the binary format at the same storage width.
@@ -212,17 +230,15 @@ The Flocq wrapper rounds exact input fractions with its proved `Bdiv_correct_aux
 then calls its certified binary operations. Precision, exponent bounds, nearest-even rounding,
 and gradual underflow match FloatLib and MPFR. Flocq's `BinarySingleNaN` interface requires
 `precision < emax`, which excludes the custom 4-, 5-, and 7-bit layouts from this comparison.
-Its single NaN does not preserve payloads; the benchmark checks arithmetic values.
+Its single NaN does not preserve payloads, so the benchmark checks arithmetic values.
 
 Each campaign computes Flocq's 256-step agreement prefix once per format and operation, then
 reuses it outside timing across calibration and trials. The cache starts empty and is tied to
 the compiled executable's SHA-256. This avoids repeating expensive wide square-root checks.
 
-The website uses the [matched results](../results/flocq-matched/README.md) for Flocq.
-The [main archive](../results/main/README.md) retains its original Flocq rows, which use
-different input preparation and exponent bounds; those rows are excluded from the website
-curves. A supplied executable's hash is recorded alongside its results; keep its build
-recipe and dependency versions too.
+The website uses the [matched results](../results/flocq-matched/README.md) for Flocq, and the
+[main archive](../results/main/README.md) has no Flocq rows. A supplied executable's hash is
+recorded alongside its results, so keep its build recipe and dependency versions too.
 
 Before timing Universal, the C++ adapter checks all 16 operation results against fixed-width
 bit vectors generated by FloatLib. Unsupported or disagreeing format-operation pairs are
@@ -256,7 +272,7 @@ Selecting a subset does not skip the setup of other enabled implementations. Use
 ## Reading the output
 
 Lower time per operation is faster. The FloatLib curves can change kernels as the width
-changes; `plots/backend-regimes.csv` identifies the backend used for each operation and
+changes, and `plots/backend-regimes.csv` identifies the backend used for each operation and
 format. We keep individual trials so the summary does not hide their variation.
 
 A new run writes:
@@ -276,7 +292,7 @@ A new run writes:
 
 The CSV headers name the recorded fields, including implementation, format, storage width,
 operation, execution class, backend, iterations, elapsed nanoseconds, and result and trace
-checksums. Whole-process measurements include startup; the arithmetic timings exclude it.
+checksums. Whole-process measurements include startup, and the arithmetic timings exclude it.
 
 For very small formats, input lookup and checksums can account for much of the measured time.
 Even a narrow spread across trials cannot tell us that compiler or harness effects are absent.
@@ -285,5 +301,5 @@ This is why we describe the workload alongside the ratios.
 For arithmetic checks beyond these benchmark inputs, see
 [`tests/EXTERNAL.md`](../../tests/EXTERNAL.md), including the binary16 comparisons and
 [result status labels](../../tests/EXTERNAL.md#status-labels). Those comparisons test agreement
-with independent implementations; the Lean theorems establish the stated properties of
+with independent implementations, while the Lean theorems establish the stated properties of
 FloatLib's arithmetic.

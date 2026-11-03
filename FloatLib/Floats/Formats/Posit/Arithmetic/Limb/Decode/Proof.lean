@@ -53,6 +53,11 @@ theorem isZero_eq_true_iff (value : FloatLib.Numerics.FixedWord.UInt128) :
     subst value
     decide
 
+/-- The fixed-limb zero test fails exactly on words with a nonzero numerical value. -/
+theorem isZero_eq_false_iff (value : FloatLib.Numerics.FixedWord.UInt128) :
+    isZero value = false ↔ value.toNat ≠ 0 := by
+  rw [← Bool.not_eq_true, isZero_eq_true_iff]
+
 /-- Native two-limb bit inspection agrees with natural-number bit inspection. -/
 theorem bitAt_eq_testBit (value : FloatLib.Numerics.FixedWord.UInt128) (index : Nat) :
     bitAt value index = value.toNat.testBit index := by
@@ -76,7 +81,7 @@ theorem lowBits_toNat
         rw [← pow_add, Nat.add_sub_of_le (Nat.le_of_lt hsmall)]
       unfold lowBits FloatLib.Numerics.FixedWord.UInt128.toNat
       simp only [hsmall, ite_true, UInt64.reduceToNat, zero_mul, add_zero,
-        NativeWord.lowBits_toNat _ width hsmall]
+        NativeWord.lowBits_toNat _ width]
       rw [hpow]
       rw [show
         value.hi.toNat * (2 ^ width * 2 ^ (64 - width)) =
@@ -85,9 +90,6 @@ theorem lowBits_toNat
       exact (Nat.add_mul_mod_self_left _ _ _).symm
     · have hlarge : 64 ≤ width := Nat.le_of_not_gt hsmall
       let highWidth := width - 64
-      have hhighWidth : highWidth ≤ 64 := by
-        unfold highWidth
-        omega
       have hwidthEq : width = highWidth + 64 := by
         unfold highWidth
         omega
@@ -97,7 +99,7 @@ theorem lowBits_toNat
       have hhighRemainder :
           (NativeWord.lowBits value.hi highWidth).toNat =
             value.hi.toNat % 2 ^ highWidth :=
-        NativeWord.lowBits_toNat_of_le value.hi highWidth hhighWidth
+        NativeWord.lowBits_toNat value.hi highWidth
       have hhighBound :
           value.hi.toNat % 2 ^ highWidth < 2 ^ highWidth :=
         Nat.mod_lt _ (Nat.two_pow_pos highWidth)
@@ -195,10 +197,7 @@ theorem countLeadingZeros_eq_model
       (isZero_eq_true_iff truncated).mp hzero
     simp [hzero', Model.countLeadingRun_zero_false]
   next hnonzero =>
-    have hnonzero' : truncated.toNat ≠ 0 := by
-      intro equality
-      apply hnonzero
-      exact (isZero_eq_true_iff truncated).mpr equality
+    have hnonzero' : truncated.toNat ≠ 0 := mt (isZero_eq_true_iff truncated).mpr hnonzero
     rw [Model.countLeadingRun_false_eq_log2 truncated.toNat width
       (Nat.pos_of_ne_zero hnonzero') htruncatedLt]
     rw [← FloatLib.Numerics.FixedWord.UInt128.log2_toNat]
@@ -300,10 +299,7 @@ private theorem nonnegativeDyadicAt_eq_decodeFields
     rw [countLeadingRun_eq_model]
     unfold Model.regimeRunLength
     rw [hmagnitude]
-  have hcodeBool : isZero code = false := by
-    apply Bool.eq_false_iff.mpr
-    intro hzero
-    exact hnonzero ((isZero_eq_true_iff code).mp hzero)
+  have hcodeBool : isZero code = false := (isZero_eq_false_iff code).mpr hnonzero
   have hfractionBits : value.fractionBits < 128 := by
     have hrunPos := Model.regimeRunLength_pos value
     have hfields := Model.regimeRunLength_add_fractionBits_le_payload value
@@ -572,6 +568,16 @@ private theorem toDyadic?_eq_model_of_nar
   change none = (Model.nar format).toDyadic?
   exact (Model.toDyadic?_nar format).symm
 
+/-- Only the lone sign-bit word matches the NaR mask. -/
+private theorem beq_signMaskWord_eq_false
+    (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128)
+    (heligible : Eligible format)
+    (hcode : code.toNat ≠ format.signMaskNat) :
+    (code == signMaskWord format) = false :=
+  beq_eq_false_iff_ne.mpr fun equality => hcode (by
+    simpa [signMaskWord_toNat format heligible] using
+      congrArg FloatLib.Numerics.FixedWord.UInt128.toNat equality)
+
 /-- The direct decoder recognizes the unique zero encoding exactly. -/
 private theorem toDyadic?_eq_model_of_zero
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128)
@@ -579,41 +585,13 @@ private theorem toDyadic?_eq_model_of_zero
     (hzeroCode : code.toNat = 0) :
     toDyadic? format code =
       (Model.ofNatBits (format := format) code.toNat).toDyadic? := by
-  have hcodeZero :
-      code = FloatLib.Numerics.FixedWord.UInt128.ofNat 0 := by
-    apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective
-    rw [hzeroCode, FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat 0 (by norm_num)]
-  subst code
-  have htoNat :
-      (FloatLib.Numerics.FixedWord.UInt128.ofNat 0).toNat = 0 :=
-    FloatLib.Numerics.FixedWord.UInt128.toNat_ofNat 0 (by norm_num)
-  change
-    toDyadic? format (FloatLib.Numerics.FixedWord.UInt128.ofNat 0) =
-      (Model.ofNatBits
-        (format := format) (FloatLib.Numerics.FixedWord.UInt128.ofNat 0).toNat).toDyadic?
-  rw [htoNat]
-  change toDyadic? format (FloatLib.Numerics.FixedWord.UInt128.ofNat 0) =
-    (Model.zero format).toDyadic?
+  rw [hzeroCode]
+  change toDyadic? format code = (Model.zero format).toDyadic?
   rw [Model.toDyadic?_zero]
   unfold toDyadic?
-  have hmaskBool :
-      (FloatLib.Numerics.FixedWord.UInt128.ofNat 0 == signMaskWord format) =
-        false := by
-    apply beq_eq_false_iff_ne.mpr
-    intro equality
-    have equalityNat := congrArg
-      FloatLib.Numerics.FixedWord.UInt128.toNat equality
-    rw [htoNat] at equalityNat
-    have hmaskPositive :
-        0 < (signMaskWord format).toNat := by
-      rw [signMaskWord_toNat format heligible]
-      exact format.signMaskNat_pos
-    omega
-  have hzeroBool :
-      isZero (FloatLib.Numerics.FixedWord.UInt128.ofNat 0) = true :=
-    (isZero_eq_true_iff _).mpr htoNat
-  simp only [hmaskBool, hzeroBool, Bool.false_eq_true,
-    ite_false, ite_true]
+  simp only [beq_signMaskWord_eq_false format code heligible
+      (by rw [hzeroCode]; exact format.signMaskNat_pos.ne),
+    (isZero_eq_true_iff code).mpr hzeroCode, Bool.false_eq_true, ite_false, ite_true]
 
 -- Every ordinary in-range word takes the finite two-limb decoding branch.
 private theorem toDyadic?_eq_model_of_ordinary
@@ -625,34 +603,18 @@ private theorem toDyadic?_eq_model_of_ordinary
     toDyadic? format code =
       (Model.ofNatBits (format := format) code.toNat).toDyadic? := by
   let value := Model.ofNatBits (format := format) code.toNat
-  have hvalueBits : value.toNatBits = code.toNat :=
-    Model.toNatBits_ofNatBits_of_lt code.toNat hcode
-  have hvalueNaR : value ≠ Model.nar format := by
-    intro equality
-    have bitsEquality := congrArg Model.toNatBits equality
-    rw [hvalueBits, Model.nar_toNatBits] at bitsEquality
-    exact hnarCode bitsEquality
-  have hvalueZero : value ≠ Model.zero format := by
-    intro equality
-    have bitsEquality := congrArg Model.toNatBits equality
-    rw [hvalueBits, Model.zero_toNatBits] at bitsEquality
-    exact hzeroCode bitsEquality
-  have hzeroBool : isZero code = false := by
-    apply Bool.eq_false_iff.mpr
-    intro equality
-    exact hzeroCode ((isZero_eq_true_iff code).mp equality)
+  have hvalueNaR : value ≠ Model.nar format :=
+    Model.ofNatBits_ne_nar hcode hnarCode
+  have hvalueZero : value ≠ Model.zero format :=
+    Model.ofNatBits_ne_zero hcode hzeroCode
+  have hzeroBool : isZero code = false := (isZero_eq_false_iff code).mpr hzeroCode
   have hvalueNaRBool : value.isNaR = false :=
     Bool.eq_false_iff.mpr fun h => hvalueNaR ((Model.isNaR_eq_true_iff value).mp h)
   have hvalueZeroBool : value.isZero = false :=
     Bool.eq_false_iff.mpr fun h => hvalueZero ((Model.isZero_eq_true_iff value).mp h)
-  have hnarWordBool : (code == signMaskWord format) = false := by
-    apply beq_eq_false_iff_ne.mpr
-    intro equality
-    apply hnarCode
-    have equalityNat := congrArg
-      FloatLib.Numerics.FixedWord.UInt128.toNat equality
-    simpa [signMaskWord_toNat format heligible] using equalityNat
-  rw [toDyadic?, ite_eq_right (by simp [hnarWordBool]), ite_eq_right (by simp [hzeroBool]),
+  rw [toDyadic?,
+    ite_eq_right (by simp [beq_signMaskWord_eq_false format code heligible hnarCode]),
+    ite_eq_right (by simp [hzeroBool]),
     decodeFinite_eq_decodeFields format code heligible hcode hvalueNaR hvalueZero]
   exact
     (Model.toDyadic?_eq_some_decodeFields

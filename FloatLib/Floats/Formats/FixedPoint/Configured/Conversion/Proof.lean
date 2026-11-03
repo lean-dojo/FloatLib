@@ -33,7 +33,7 @@ variable {radix : Radix} {fractionalDigits : Nat}
     run (radix := radix) (fractionalDigits := fractionalDigits)
         () (.finite exact) =
       let rounded : ExecFloat.FixedPoint radix fractionalDigits :=
-        ExecFloat.FixedPoint.roundRat exact
+        ExecFloat.FixedPoint.ofRat exact
       .success rounded
         { inexact := ExecFloat.FixedPoint.toRat rounded != exact } :=
   rfl
@@ -46,7 +46,7 @@ theorem implements_run :
   intro context input
   cases input with
   | finite exact =>
-      exact ⟨coefficient_roundRat exact,
+      exact ⟨coefficient_ofRat exact,
         roundRatEven_error_le_half (exact * scale radix fractionalDigits),
         roundRatEven_even_of_error_eq_half (exact * scale radix fractionalDigits), rfl⟩
   | infinity negative => rfl
@@ -63,7 +63,7 @@ theorem spec_iff_eq_run (context : Unit) (input : NumericalValue Rat)
         cases outcome with
         | success rounded indicators =>
             rintro ⟨hcoefficient, _, _, rfl⟩
-            have hrounded : rounded = ExecFloat.FixedPoint.roundRat exact := by
+            have hrounded : rounded = ExecFloat.FixedPoint.ofRat exact := by
               apply Subtype.ext
               exact congrArg
                 (fun stored : Int => (⟨stored⟩ : Formats.FixedPoint.Code radix fractionalDigits))

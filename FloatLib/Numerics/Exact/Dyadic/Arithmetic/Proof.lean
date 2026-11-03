@@ -226,15 +226,20 @@ theorem add_same_sign_same_exponent
 /--
 At a shared exponent, opposite signs subtract magnitudes and retain the sign of the larger left
 operand.
+
+A zero smaller operand leaves the larger one unchanged.
 -/
 theorem add_opposite_sign_same_exponent_large_left
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
-    (hlarge : large ≠ 0) (hsmall : small ≠ 0)
     (hsign : largeSign ≠ smallSign) (hlt : small < large) :
     add
         { negative := largeSign, significand := large, exponent }
         { negative := smallSign, significand := small, exponent } =
       { negative := largeSign, significand := large - small, exponent } := by
+  have hlarge : large ≠ 0 := by omega
+  by_cases hsmall : small = 0
+  · subst hsmall
+    simp [add, addFields, hlarge]
   cases largeSign <;> cases smallSign
   · contradiction
   · have hpositive : (large : Int) + -small > 0 := by omega
@@ -284,7 +289,6 @@ operand.
 -/
 theorem add_opposite_sign_same_exponent_large_right
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
-    (hsmall : small ≠ 0) (hlarge : large ≠ 0)
     (hsign : smallSign ≠ largeSign) (hlt : small < large) :
     add
         { negative := smallSign, significand := small, exponent }
@@ -300,29 +304,35 @@ theorem add_opposite_sign_same_exponent_large_right
       add_comm _ _
     _ = { negative := largeSign, significand := large - small, exponent } :=
       add_opposite_sign_same_exponent_large_left
-        largeSign smallSign large small exponent hlarge hsmall hsign.symm hlt
+        largeSign smallSign large small exponent hsign.symm hlt
 
-/-- Equal nonzero magnitudes with opposite signs cancel to canonical positive zero. -/
+/--
+Equal magnitudes with opposite signs cancel to canonical positive zero.
+
+Two zeros of opposite sign also add to positive zero.
+-/
 theorem add_opposite_sign_same_exponent_eq_zero
     (leftSign rightSign : Bool) (magnitude : Nat) (exponent : Int)
-    (hmagnitude : magnitude ≠ 0) (hsign : leftSign ≠ rightSign) :
+    (hsign : leftSign ≠ rightSign) :
     add
         { negative := leftSign, significand := magnitude, exponent }
         { negative := rightSign, significand := magnitude, exponent } =
       { negative := false, significand := 0, exponent := 0 } := by
-  cases leftSign <;> cases rightSign <;>
+  by_cases hmagnitude : magnitude = 0 <;> cases leftSign <;> cases rightSign <;>
     simp_all [add, addFields]
 
 /--
-Align a nonzero right operand at the smaller left exponent before exact addition.
+With a nonzero left operand, align the right operand at the smaller left exponent before exact
+addition.
 
-This is the mathematical bridge used by bounded-word kernels that perform the shift explicitly.
+This is the mathematical bridge used by bounded-word kernels that perform the shift explicitly. A
+zero right operand stays zero after the shift, and both sides return the left operand.
 -/
 theorem add_align_right_to_left_exponent
     (leftNegative rightNegative : Bool)
     (leftSignificand rightSignificand : Nat)
     (leftExponent rightExponent : Int)
-    (hleft : leftSignificand ≠ 0) (hright : rightSignificand ≠ 0)
+    (hleft : leftSignificand ≠ 0)
     (hexponents : leftExponent ≤ rightExponent) :
     add
         { negative := leftNegative
@@ -340,6 +350,9 @@ theorem add_align_right_to_left_exponent
             rightSignificand.shiftLeft
               (Int.toNat (rightExponent - leftExponent))
           exponent := leftExponent } := by
+  by_cases hright : rightSignificand = 0
+  · subst hright
+    simp [add, addFields, hleft, Nat.shiftLeft_eq]
   have haligned :
       rightSignificand.shiftLeft
           (Int.toNat (rightExponent - leftExponent)) ≠ 0 := by
@@ -351,12 +364,15 @@ theorem add_align_right_to_left_exponent
     haligned, le_refl, hself]
   rfl
 
-/-- Align a nonzero left operand at the smaller right exponent before exact addition. -/
+/--
+With a nonzero right operand, align the left operand at the smaller right exponent before exact
+addition.
+-/
 theorem add_align_left_to_right_exponent
     (leftNegative rightNegative : Bool)
     (leftSignificand rightSignificand : Nat)
     (leftExponent rightExponent : Int)
-    (hleft : leftSignificand ≠ 0) (hright : rightSignificand ≠ 0)
+    (hright : rightSignificand ≠ 0)
     (hexponents : rightExponent < leftExponent) :
     add
         { negative := leftNegative
@@ -401,7 +417,7 @@ theorem add_align_left_to_right_exponent
           exponent := rightExponent } :=
       add_align_right_to_left_exponent
         rightNegative leftNegative rightSignificand leftSignificand
-        rightExponent leftExponent hright hleft hexponents.le
+        rightExponent leftExponent hright hexponents.le
     _ = add
         { negative := leftNegative
           significand :=
@@ -421,7 +437,7 @@ subtraction. The theorem is independent of any concrete floating-point width.
 -/
 theorem add_opposite_sign_adjacent_exponent_large_left
     (largeSign smallSign : Bool) (large small : Nat) (exponent : Int)
-    (hlarge : large ≠ 0) (hsmall : small ≠ 0)
+    (hsmall : small ≠ 0)
     (hsign : largeSign ≠ smallSign) (hlt : small < large.shiftLeft 1) :
     add
         { negative := largeSign, significand := large, exponent := exponent + 1 }
@@ -431,20 +447,20 @@ theorem add_opposite_sign_adjacent_exponent_large_left
         exponent } := by
   have hshift : Int.toNat ((exponent + 1) - exponent) = 1 := by
     omega
-  have haligned : large.shiftLeft 1 ≠ 0 := by
-    simp [Nat.shiftLeft_eq, hlarge]
   rw [add_align_left_to_right_exponent
     largeSign smallSign large small (exponent + 1) exponent
-    hlarge hsmall (by omega)]
+    hsmall (by omega)]
   simp only [hshift]
   exact add_opposite_sign_same_exponent_large_left
-    largeSign smallSign (large.shiftLeft 1) small exponent
-    haligned hsmall hsign hlt
+    largeSign smallSign (large.shiftLeft 1) small exponent hsign hlt
 
-/-- Symmetric adjacent-exponent subtraction with the larger magnitude on the right. -/
+/--
+Opposite-sign addition whose right operand has the larger magnitude one exponent higher is the
+exact difference at the lower exponent, with the right operand's sign.
+-/
 theorem add_opposite_sign_adjacent_exponent_large_right
     (smallSign largeSign : Bool) (small large : Nat) (exponent : Int)
-    (hsmall : small ≠ 0) (hlarge : large ≠ 0)
+    (hsmall : small ≠ 0)
     (hsign : smallSign ≠ largeSign) (hlt : small < large.shiftLeft 1) :
     add
         { negative := smallSign, significand := small, exponent }
@@ -465,7 +481,7 @@ theorem add_opposite_sign_adjacent_exponent_large_right
           exponent } :=
       add_opposite_sign_adjacent_exponent_large_left
         largeSign smallSign large small exponent
-        hlarge hsmall hsign.symm hlt
+        hsmall hsign.symm hlt
 
 /-! ## Rational denotation of aligned arithmetic -/
 

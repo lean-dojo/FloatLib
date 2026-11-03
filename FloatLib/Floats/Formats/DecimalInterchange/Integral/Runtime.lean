@@ -37,14 +37,14 @@ def roundToIntegral (f : Format) (mode : RoundingMode) (x : Datum) : Outcome :=
   { out with status := { out.status with inexact := false } }
 
 /-- Round to the nearest integral value, choosing the even integer at a tie. -/
-abbrev roundToIntegralTiesToEven (f : Format) := roundToIntegral f .nearestEven
+abbrev roundToIntegralTiesToEven (f : Format) := roundToIntegral f .nearest
 /-- Round to the nearest integral value, choosing away from zero at a tie. -/
 abbrev roundToIntegralTiesToAway (f : Format) := roundToIntegral f .nearestAway
 /-- Round to an integral value toward zero, without signaling inexact. -/
 abbrev roundToIntegralTowardZero (f : Format) := roundToIntegral f .towardZero
 /-- Round to an integral value toward positive infinity, without signaling inexact. -/
-abbrev roundToIntegralTowardPositive (f : Format) := roundToIntegral f .towardPositive
+abbrev roundToIntegralTowardPositive (f : Format) := roundToIntegral f .up
 /-- Round to an integral value toward negative infinity, without signaling inexact. -/
-abbrev roundToIntegralTowardNegative (f : Format) := roundToIntegral f .towardNegative
+abbrev roundToIntegralTowardNegative (f : Format) := roundToIntegral f .down
 
 end FloatLib.Floats.Formats.DecimalInterchange.Arithmetic

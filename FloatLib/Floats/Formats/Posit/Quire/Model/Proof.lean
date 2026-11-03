@@ -179,7 +179,7 @@ theorem coefficient_ofCoefficient_of_ordinary
     (ofCoefficient format value).coefficient = value := by
   unfold ofCoefficient
   rw [ite_eq_left hvalue]
-  apply FixedInt.toInt_ofInt_eq_self (width_pos format)
+  apply FixedInt.toInt_ofInt_eq_self
   exact ⟨le_of_lt hvalue.1, hvalue.2⟩
 
 /-- A coefficient outside the ordinary range, including the reserved minimum, becomes NaR. -/

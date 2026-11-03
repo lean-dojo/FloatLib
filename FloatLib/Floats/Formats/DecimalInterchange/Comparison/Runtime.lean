@@ -12,11 +12,12 @@ public import Mathlib.Order.WithBot
 /-!
 # Exact decimal comparisons
 
-IEEE 754-2019 §5.6.1 requires the 22 predicates of Tables 5.1–5.2.
-Comparison uses exact rational values extended by two infinities; it ignores
-finite cohorts and equates signed zeros. NaNs are unordered.
-Quiet comparisons raise invalid only for signaling NaNs; signaling comparisons
-raise invalid for either kind of NaN. No other exception is raised.
+IEEE 754-2019 §5.6.1 requires 22 comparison operations, and `Datum.compareQuiet` and
+`Datum.compareSignaling` take them as a predicate argument, so `x.compareQuiet .lessEqual y` is
+`compareQuietLessEqual`. Comparison uses exact rational values extended by two infinities. It
+ignores finite cohorts and equates signed zeros. NaNs are unordered. Quiet comparisons raise
+invalid only for signaling NaNs, and signaling comparisons raise invalid for either kind of NaN.
+No other exception is raised.
 -/
 
 @[expose] public section
@@ -32,101 +33,40 @@ def Datum.numericValue? : Datum → Option NumericValue
   | .infinity s => some (if s then ⊥ else ⊤)
   | .nan _ _ _ => none
 
-namespace Comparison
-
-/-- Four comparison relations: `none` is unordered, and `some` is less, equal or greater. -/
-def relation (x y : Datum) : Option Ordering := do
+/-- The order of two data: `none` when either is a NaN, and otherwise `some` of less, equal or
+greater. -/
+def Datum.compare (x y : Datum) : Option Ordering := do
   let a ← x.numericValue?
   let b ← y.numericValue?
-  some (compare a b)
+  some (Ord.compare a b)
 
-/-- Truth sets named in the IEEE comparison tables. -/
-abbrev Predicate := Numerics.IEEEComparison.Predicate
+/--
+An IEEE 754-2019 quiet comparison, with its invalid flag, raised only for a signaling NaN. The
+predicate selects the operation: `.equal` is `compareQuietEqual`, `.notEqual`
+`compareQuietNotEqual`, `.greater` `compareQuietGreater`, `.greaterEqual`
+`compareQuietGreaterEqual`, `.less` `compareQuietLess`, `.lessEqual` `compareQuietLessEqual`,
+`.unordered` `compareQuietUnordered`, `.ordered` `compareQuietOrdered`, `.lessUnordered`
+`compareQuietLessUnordered`, `.notGreater` `compareQuietNotGreater`, `.notLess`
+`compareQuietNotLess`, and `.greaterUnordered` `compareQuietGreaterUnordered`. Equal-valued
+cohorts and signed zeros compare equal.
+-/
+def Datum.compareQuiet (predicate : Numerics.IEEEComparison.Predicate) (x y : Datum) :
+    Numerics.IEEEComparison.Result :=
+  { value := predicate.accepts (x.compare y)
+    status := { invalid := x.isSNaN || y.isSNaN } }
 
-/-- A predicate result and its default IEEE exception flags. -/
-abbrev Result := Numerics.IEEEComparison.Result
-
-/-- Evaluate a quiet predicate, signaling invalid only for an sNaN operand. -/
-def quiet (predicate : Predicate) (x y : Datum) : Result :=
-  { value := predicate.accepts (relation x y)
-    status := { invalid := x.isSignaling || y.isSignaling } }
-
-/-- Evaluate a signaling predicate, signaling invalid for any NaN operand. -/
-def signaling (predicate : Predicate) (x y : Datum) : Result :=
-  { value := predicate.accepts (relation x y)
+/--
+An IEEE 754-2019 signaling comparison, with its invalid flag, raised for any NaN. The predicate
+selects the operation: `.equal` is `compareSignalingEqual`, `.notEqual`
+`compareSignalingNotEqual`, `.greater` `compareSignalingGreater`, `.greaterEqual`
+`compareSignalingGreaterEqual`, `.less` `compareSignalingLess`, `.lessEqual`
+`compareSignalingLessEqual`, `.notGreater` `compareSignalingNotGreater`, `.notLess`
+`compareSignalingNotLess`, `.lessUnordered` `compareSignalingLessUnordered`, and
+`.greaterUnordered` `compareSignalingGreaterUnordered`.
+-/
+def Datum.compareSignaling (predicate : Numerics.IEEEComparison.Predicate) (x y : Datum) :
+    Numerics.IEEEComparison.Result :=
+  { value := predicate.accepts (x.compare y)
     status := { invalid := x.isNaN || y.isNaN } }
 
-end Comparison
-
-namespace Arithmetic
-
-/-- Quiet equality; signed zeros and equal-valued cohorts compare equal. -/
-def compareQuietEqual (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .equal x y
-/-- Quiet inequality, true on unordered operands. -/
-def compareQuietNotEqual (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .notEqual x y
-/-- Quiet greater-than comparison. -/
-def compareQuietGreater (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .greater x y
-/-- Quiet greater-than-or-equal comparison. -/
-def compareQuietGreaterEqual (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .greaterEqual x y
-/-- Quiet less-than comparison. -/
-def compareQuietLess (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .less x y
-/-- Quiet less-than-or-equal comparison. -/
-def compareQuietLessEqual (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .lessEqual x y
-/-- Quiet test for an unordered pair. -/
-def compareQuietUnordered (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .unordered x y
-/-- Quiet test for an ordered pair. -/
-def compareQuietOrdered (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .ordered x y
-/-- Quiet less-than-or-unordered comparison, the complement of greater-than-or-equal. -/
-def compareQuietLessUnordered (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .lessUnordered x y
-/-- Quiet complement of greater-than, including unordered pairs. -/
-def compareQuietNotGreater (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .notGreater x y
-/-- Quiet complement of less-than, including unordered pairs. -/
-def compareQuietNotLess (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .notLess x y
-/-- Quiet greater-than-or-unordered comparison, the complement of less-than-or-equal. -/
-def compareQuietGreaterUnordered (x y : Datum) : Comparison.Result :=
-  Comparison.quiet .greaterUnordered x y
-
-/-- Signaling equality. -/
-def compareSignalingEqual (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .equal x y
-/-- Signaling inequality, true on unordered operands. -/
-def compareSignalingNotEqual (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .notEqual x y
-/-- Signaling greater-than comparison. -/
-def compareSignalingGreater (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .greater x y
-/-- Signaling greater-than-or-equal comparison. -/
-def compareSignalingGreaterEqual (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .greaterEqual x y
-/-- Signaling less-than comparison. -/
-def compareSignalingLess (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .less x y
-/-- Signaling less-than-or-equal comparison. -/
-def compareSignalingLessEqual (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .lessEqual x y
-/-- Signaling complement of greater-than. -/
-def compareSignalingNotGreater (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .notGreater x y
-/-- Signaling complement of less-than. -/
-def compareSignalingNotLess (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .notLess x y
-/-- Signaling less-than-or-unordered comparison. -/
-def compareSignalingLessUnordered (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .lessUnordered x y
-/-- Signaling greater-than-or-unordered comparison. -/
-def compareSignalingGreaterUnordered (x y : Datum) : Comparison.Result :=
-  Comparison.signaling .greaterUnordered x y
-
-end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange
